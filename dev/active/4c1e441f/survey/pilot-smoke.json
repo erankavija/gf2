@@ -1,0 +1,219 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "4c1e441f-dense-product-pilot-arms-smoke",
+  "issue": "4c1e441f",
+  "family": "gf256-shipped-dense-product",
+  "plan_sha256": "2538520954da46da74d2d6d3163170f5d95e99b7a5afbe75ca34cc643c5f9ce1",
+  "addendum": "dev/active/4c1e441f/addendum-v4-dense-product-pilot.json",
+  "addendum_sha256": "d45fa31bd7e04295fb780bf532df3639f72bd29f95c3257e6933c97f7b620e8e",
+  "cells": [
+    {
+      "cell_id": "matmul-n64-element",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-element",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=132608",
+          "windows": 0
+        },
+        {
+          "arm": "table-element",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=143360",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "matmul-n256-element",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-element",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2103296",
+          "windows": 0
+        },
+        {
+          "arm": "table-element",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2293760",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "matmul-n512-element",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-element",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=8400896",
+          "windows": 0
+        },
+        {
+          "arm": "table-element",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=9175040",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "matmul-n256-whole-element",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-element",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2103296",
+          "windows": 0
+        },
+        {
+          "arm": "table-element",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2293760",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "matmul-n64-wide",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-wide",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=163840",
+          "windows": 0
+        },
+        {
+          "arm": "table-wide",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=77824",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "matmul-n256-wide",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-wide",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=2621440",
+          "windows": 0
+        },
+        {
+          "arm": "table-wide",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=1245184",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "matmul-n512-wide",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-wide",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=10485760",
+          "windows": 0
+        },
+        {
+          "arm": "table-wide",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=4980736",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "matmul-n256-whole-wide",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-wide",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=2621440",
+          "windows": 0
+        },
+        {
+          "arm": "table-wide",
+          "role": "validation",
+          "executable": "target/4c1e441f-arm/release/gf256-gemm-arm",
+          "executable_sha256": "f41b5a86446979758014fc8fbdea9a8259d50119857fa70bb4d99cb36e214052",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=1245184",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
