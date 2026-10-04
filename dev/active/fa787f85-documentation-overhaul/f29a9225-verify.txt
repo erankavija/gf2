@@ -1,6 +1,5 @@
-marker dev/archive/026fc832-gf2-core-sota-stretch/.jit-container: 026fc832-a480-4d07-8d25-47b8bfcb69a3 (matches 026fc832-a480-4d07-8d25-47b8bfcb69a3)
-destinations 105 (moved by this execution 8): sha256 and size mismatches 0
-tracker references of those destinations 100: not naming the archive path 0
-relocated crate files 4: differing from dev/research/blas_sgemm_gf251 at b977e603b: 0; dev/research/blas_sgemm_gf251 exists: False
-link scan archive: files 82, local links 55, unresolved 0
-link scan repointed: files 2, local links 5, unresolved 0
+archive directories whose marker names 026fc832-a480-4d07-8d25-47b8bfcb69a3: 1
+planned destinations 109: sha256 or size mismatches 0
+sources removed by jit:f29a9225 commits 15: mirror differing from the last source blob 0, mirror without a tracker reference 0, tracker references naming the source 0
+link scan, archive directory: files 82, local links 55, unresolved 0
+link scan, Markdown files edited by jit:f29a9225 commits: files 3, local links 8, unresolved 0
