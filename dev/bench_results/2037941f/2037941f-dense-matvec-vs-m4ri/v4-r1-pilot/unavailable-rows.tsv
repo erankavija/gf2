@@ -1,0 +1,6 @@
+# addendum=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md sha256=7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2
+# family=2037941f-dense-matvec-vs-m4ri
+cell_id	stride_words	status	samples	comparisons	reason
+m4ri-gap-65x576-unqualified	9	unavailable	0	0	The matched-operation specification verifies no such shape
+m4ri-gap-65x4032-unqualified	63	unavailable	0	0	The matched-operation specification verifies no such shape
+m4ri-gap-65x4160-unqualified	65	unavailable	0	0	The matched-operation specification verifies no such shape
