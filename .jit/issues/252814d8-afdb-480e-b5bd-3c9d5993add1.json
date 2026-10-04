@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:36:30.654916967Z",
+  "dependencies": [],
+  "description": "`has_simd_gemm_classical` in `crates/gf2-core/src/field/traits.rs` returns `false` for $\\mathrm{GF}(2^8)$, so its three consumers take the scalar classical product on the table lane.\n\n## Background\n\nThe Rustdoc named the condition that ends this: a benchmark receipt covering those three consumers on the table lane. The source-comment sweep removed that statement, and this issue tracks it.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt from the overnight benchmark window measures the three consumers on the $\\mathrm{GF}(2^8)$ table lane with the probe on and off, per `@/inv/benchmark-backed-performance`.\n- [hard] REQ-02: The probe's value for $\\mathrm{GF}(2^8)$ follows the receipt, and results are equal on both settings under the shared field-matrix suite.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:36:30.654916967Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "252814d8-afdb-480e-b5bd-3c9d5993add1",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Decide the GF(2^8) classical SIMD GEMM probe from a receipt",
+  "updated_at": "2026-10-04T06:36:30.654916967Z"
+}

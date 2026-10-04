@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:37:37.000985636Z",
+  "dependencies": [],
+  "description": "The `ComputeBackend` abstraction in `crates/gf2-core/src/compute/` has CPU implementations only.\n\n## Background\n\nThe module documentation listed a HIP/ROCm `GpuBackend` as a later opt-in feature; the source-comment sweep removed that statement, and this issue tracks the decision. `@/inv/crate-dependency-direction` and `@/inv/unsafe-kernel-isolation` bound where GPU code may live.\n\n## Success Criteria\n\n- [hard] REQ-01: A design record states whether `ComputeBackend` gains a GPU implementation and through which crate, or the backend abstraction is documented as CPU-only and the decision closes this issue.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:37:37.000985636Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "ca9a5194-206b-4665-bb60-223a7a207738",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Decide a GPU ComputeBackend for gf2-core",
+  "updated_at": "2026-10-04T06:37:37.000985636Z"
+}

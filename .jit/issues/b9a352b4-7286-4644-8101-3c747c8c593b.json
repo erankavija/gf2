@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:46:25.075177777Z",
+  "dependencies": [],
+  "description": "`CodingTuning::CONSERVATIVE` in `crates/gf2-coding/src/tuning.rs` sets the crossovers among the decoder and encoder families without a committed measurement.\n\n## Background\n\nThe Rustdoc stated that no committed receipt has measured those crossovers; the source-comment sweep removed the statement, and this issue tracks the measurement.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt from the overnight benchmark window measures each crossover that `CodingTuning` exposes, per `@/inv/benchmark-backed-performance`.\n- [hard] REQ-02: Each constant's value follows its receipt or is recorded as an unmeasured conservative default in the tuning-profile reference page.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:46:25.075177777Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "b9a352b4-7286-4644-8101-3c747c8c593b",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Measure the gf2-coding tuning crossovers",
+  "updated_at": "2026-10-04T06:46:25.075177777Z"
+}

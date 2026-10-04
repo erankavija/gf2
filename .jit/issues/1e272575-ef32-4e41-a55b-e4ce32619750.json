@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:38:40.928839361Z",
+  "dependencies": [],
+  "description": "The sparse comparison harness in `crates/gf2-coding/examples/` (`bench_sparse_csv_emitter.rs`, `sparse_smoke_emit_expected.rs`) has no block-CSR, RCM or prefetch arms for $\\mathrm{GF}(p)$ and $\\mathrm{GF}(2^m)$, and no LinBox arm for $\\mathrm{GF}(2^m)$ sparse elimination; those cells are classified `not-yet-harnessed` and stay out of the smoke run.\n\n## Background\n\nThe example headers named these arms as missing; the source-comment sweep removed the statements, and this issue tracks the work.\n\n## Success Criteria\n\n- [hard] REQ-01: Each `not-yet-harnessed` cell has a harness arm validated for result equality against the existing arm, or is reclassified as unsupported with the reason recorded in the classification source.\n- [hard] REQ-02: Timed comparisons run only in the overnight benchmark window and commit their receipts, per `@/inv/benchmark-backed-performance`.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:38:40.928839361Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "1e272575-ef32-4e41-a55b-e4ce32619750",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Harness the not-yet-harnessed sparse comparison cells",
+  "updated_at": "2026-10-04T06:38:40.928839361Z"
+}

@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:37:29.253307475Z",
+  "dependencies": [],
+  "description": "The binary container header of `crates/gf2-core/src/io/` defines a compression flag and a checksum flag; readers and writers neither set nor interpret them.\n\n## Background\n\nThe module documentation marked both flags as not implemented; the source-comment sweep restated that as the present limitation, and this issue tracks the work.\n\n## Success Criteria\n\n- [hard] REQ-01: Each flag is implemented with round-trip tests, including a corrupted-payload test for the checksum, or is removed from the format definition with the header layout otherwise unchanged.\n- [hard] REQ-02: Files written before the change load with identical contents, shown by a test over committed fixtures.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:37:29.253307475Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "726bfeee-2960-45d8-a6ba-852bff385eaf",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Implement or retire the compression and checksum flags of the binary format",
+  "updated_at": "2026-10-04T06:37:29.253307475Z"
+}
