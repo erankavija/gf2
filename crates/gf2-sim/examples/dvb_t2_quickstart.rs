@@ -1,17 +1,6 @@
-//! DVB-T2 quickstart: build a pipeline, run a short SNR sweep, print the summary.
-//!
-//! The shortest path from nothing to a frame-error-rate number. It builds the
-//! production DVB-T2 BICM pipeline through the typestate preset
-//! ([`Pipeline::dvb_t2`]), configures a single waterfall SNR point with a small
-//! frame budget, drives the sweep with the convenience entry point
-//! [`Pipeline::run`], and prints the per-point columns.
-//!
-//! For the same chain hand-wired through the low-level graph API, see
-//! `examples/dvb_t2_graph_api.rs`; for the compile-time-checked builder order,
-//! see `examples/dvb_t2_typestate.rs`; for a non-standard chain with a custom
-//! stage, see `examples/novel_chain_via_graph.rs`.
-//!
-//! Runtime: ~5 s (24 frames of n = 64800 LDPC decode across the local CPU).
+//! DVB-T2 quickstart: builds the DVB-T2 BICM pipeline through the typestate
+//! preset ([`Pipeline::dvb_t2`]), runs one waterfall SNR point with a small
+//! frame budget through [`Pipeline::run`], and prints the per-point columns.
 //!
 //! Run with: `cargo run -p gf2-sim --example dvb_t2_quickstart --release`
 
@@ -26,8 +15,6 @@ use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::Pipeline;
 
 fn main() {
-    // Build the seven-stage DVB-T2 BICM pipeline: r1/2 16-QAM Normal, sum-product
-    // LDPC decode, exact log-MAP demap, AWGN at the 6.0 dB waterfall point.
     let mut pipeline = Pipeline::dvb_t2()
         .modcod(Modcod::Normal {
             rate: CodeRate::Rate1_2,
@@ -41,7 +28,6 @@ fn main() {
         .build()
         .expect("r1/2 16-QAM Normal is an in-scope MODCOD");
 
-    // Configure the sweep on the built pipeline's config, then run it.
     pipeline.config_mut().esn0_db_points = vec![6.0];
     pipeline.config_mut().max_frames = 24;
     let results = pipeline.run().expect("the DVB-T2 sweep runs end-to-end");

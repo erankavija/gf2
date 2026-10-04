@@ -1,43 +1,9 @@
-//! DVB-T2 BICM pipeline via the low-level graph API (`Chain`).
+//! Hand-wires the seven-stage DVB-T2 BICM chain (encode, interleave, map, AWGN,
+//! demap, deinterleave, decode) through the graph API (`Chain::new` / `add` /
+//! `connect` / `build`) and runs it at the r1/2 16-QAM waterfall point and seed
+//! of `examples/dvb_t2_typestate.rs`.
 //!
-//! Demonstrates how to hand-wire the complete DVB-T2 BICM chain — the same
-//! seven stages the typestate builder produces — using the explicit
-//! `Chain::new() / add() / connect() / build()` graph API:
-//!
-//! ```text
-//! Chain::new()
-//!     .add(DvbT2Encode)      // BitPackedBatch → BitPackedBatch
-//!     .add(BitInterleave)    // BitPackedBatch → BitPackedBatch
-//!     .add(GrayQamMap)       // BitPackedBatch → SymbolBatch
-//!     .add(Awgn)             // SymbolBatch    → SymbolBatch  (channel)
-//!     .add(GrayQamDemap)     // SymbolBatch    → LlrBatch
-//!     .add(BitDeinterleave)  // LlrBatch       → LlrBatch
-//!     .add(DvbT2Decode)      // LlrBatch       → HardDecisionBatch
-//!     + connect each stage to the next (type-checked)
-//!     .build()               // topological sort + validation → Pipeline
-//! ```
-//!
-//! The resulting [`Pipeline`] is structurally and execution-wise identical to
-//! one built through the typestate preset (see `examples/dvb_t2_typestate.rs`).
-//! The structural + single-frame execution equivalence is formally proved by
-//! `tests/preset_vs_graph.rs`; `tests/preset_vs_graph_byte_identity.rs` proves
-//! the run-level four-column (`fer`/`frames`/`errors`/`mean_iters`)
-//! byte-identity across all six in-scope MODCODs (50 waterfall frames per
-//! MODCOD, per the AMENDMENT 2026-06-11 on issue 8c8302c8).
-//!
-//! Like the typestate example, this runs at the r1/2 16-QAM **waterfall**
-//! Es/N0 (6.0 dB) and the same seed, so the simulation counters (`frames`,
-//! `errors`, `fer`, `mean_iters`) are byte-identical to the typestate output
-//! — the stdout formatting may differ between the two examples. The example
-//! body exceeds 50 code lines because the `PipelineConfig` struct literal
-//! (12 fields) and the graph wiring loop are unavoidably verbose; both are
-//! reader-facing demonstrations of the graph API surface.
-//!
-//! Run with:
-//!
-//! ```bash
-//! cargo run -p gf2-sim --example dvb_t2_graph_api --release
-//! ```
+//! Run with: `cargo run -p gf2-sim --example dvb_t2_graph_api --release`
 
 use std::num::NonZeroUsize;
 
@@ -61,9 +27,8 @@ fn main() {
     let modulation = DvbT2Modulation::Qam16;
     let decoder = DecoderConfig::new(DecoderAlgorithm::SumProduct, true);
 
-    // Build the chain via the graph API: dvb_t2_bicm_stages gives forward +
-    // inverse stage vecs; we add them with the AWGN channel in between, then
-    // connect consecutive pairs and build.
+    // `dvb_t2_bicm_stages` returns the forward and inverse stage vectors; the
+    // AWGN channel goes between them.
     let n0 = es_n0_db_to_n0(ES_N0_DB);
     let factory = dvb_t2_bicm_stages(rate, modulation, decoder, DemapMethod::ExactLogMap, n0);
 

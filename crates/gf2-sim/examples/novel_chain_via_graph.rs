@@ -1,21 +1,8 @@
-//! Novel chain via the graph API: splice a custom puncturing stage into a DAG.
-//!
-//! The presets ([`Pipeline::dvb_t2`], [`Pipeline::nr_5g`]) wire the *standard*
-//! BICM chains. For research you often want a **non-standard** chain — a custom
-//! stage the presets do not know about. This example shows the full recipe:
-//!
-//! 1. implement the [`Stage<I, O>`] trait for your own batch transform;
-//! 2. [`erase`] it into an [`AnyStage`](gf2_sim::stage::AnyStage) and
-//!    [`Chain::add`] it alongside the built-in stages;
-//! 3. [`Chain::connect`] the type-checked edges and [`Chain::build`];
-//! 4. drive one batch through with [`TopologyExecutor::run`].
-//!
-//! The custom stage here is a periodic **puncture** (`BitPackedBatch` →
-//! `BitPackedBatch`) that drops every `period`-th bit — the kind of stage you
-//! would splice between an encoder and a modulator to realise a higher code
-//! rate. It is wrapped between two `Tag` passthrough stages purely to show the
-//! puncturer composing with other graph nodes; the chain is self-contained
-//! (no LDPC/QAM math) so it runs in milliseconds.
+//! Splices a custom stage into a graph-built chain: implement [`Stage<I, O>`],
+//! [`erase`] it, [`Chain::add`] it beside other stages, [`Chain::connect`] the
+//! type-checked edges, [`Chain::build`], and drive one batch with
+//! [`TopologyExecutor::run`]. The custom stage is a periodic puncture
+//! (`BitPackedBatch` → `BitPackedBatch`) between two `Tag` passthrough stages.
 //!
 //! Run with: `cargo run -p gf2-sim --example novel_chain_via_graph --release`
 
@@ -29,8 +16,7 @@ use gf2_sim::graph::Chain;
 use gf2_sim::stage::{erase, ExecutionClass, Stage};
 use gf2_sim::{Scheduler, TopologyExecutor};
 
-/// An identity passthrough stage — stands in for any built-in `BitPackedBatch`
-/// graph node the custom stage composes with.
+/// Identity passthrough standing in for a built-in `BitPackedBatch` stage.
 struct Tag;
 
 impl Stage<BitPackedBatch, BitPackedBatch> for Tag {
@@ -46,11 +32,7 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Tag {
     }
 }
 
-/// A periodic puncturing stage: drops every `period`-th bit of every frame.
-///
-/// This is the "novel" stage the presets do not provide. It is an ordinary
-/// `Stage<BitPackedBatch, BitPackedBatch>` — the executor treats it exactly
-/// like any built-in stage once it is erased and added to the chain.
+/// Drops every `period`-th bit of every frame.
 struct Puncture {
     period: usize,
 }
@@ -84,7 +66,6 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Puncture {
 fn main() {
     const PERIOD: usize = 4; // drop every 4th bit → 75% rate
 
-    // 1+2+3. Wire Tag -> Puncture -> Tag through the graph API, type-checked.
     let mut chain = Chain::new();
     let a = chain.add(erase(Tag));
     let b = chain.add(erase(Puncture { period: PERIOD }));
@@ -97,7 +78,6 @@ fn main() {
         .expect("BitPackedBatch -> BitPackedBatch is compatible");
     let pipeline = chain.build().expect("the custom chain is a valid DAG");
 
-    // 4. Drive one 16-bit frame through the chain.
     let mut frame = BitVec::with_capacity(16);
     for i in 0..16 {
         frame.push_bit(i % 3 == 0);
