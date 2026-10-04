@@ -6,6 +6,7 @@ lists, never by a literal repository path (`@/inv/no-dev-path-coupling`).
 Usage:
   repository_files.py shared-producing-manifest
   repository_files.py package-directory <name>
+  repository_files.py file <name>
   repository_files.py document <name> <opening>
 
 Each command prints one root-relative path.
@@ -114,6 +115,14 @@ def document(root: Path, name: str, opening: bytes) -> str:
     return found[0]
 
 
+def live_file(root: Path, name: str) -> str:
+    """Root-relative path of the one live file called `name`."""
+    found = tracked_files(root, name)
+    if len(found) != 1:
+        raise LookupError(f"{len(found)} live files are called {name}; exactly one must be")
+    return found[0]
+
+
 def package_directory(root: Path, name: str) -> str:
     """Root-relative directory of the one live Cargo package called `name`."""
     found = [
@@ -131,6 +140,7 @@ def main() -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("shared-producing-manifest")
     commands.add_parser("package-directory").add_argument("name")
+    commands.add_parser("file").add_argument("name")
     by_opening = commands.add_parser("document")
     by_opening.add_argument("name")
     by_opening.add_argument("opening")
@@ -139,6 +149,8 @@ def main() -> int:
     try:
         if arguments.command == "package-directory":
             print(package_directory(root, arguments.name))
+        elif arguments.command == "file":
+            print(live_file(root, arguments.name))
         elif arguments.command == "document":
             print(document(root, arguments.name, arguments.opening.encode()))
         else:

@@ -7,12 +7,8 @@ and resume (lifecycle), and the behavior set plus manifests, lock files, build
 configuration and committed pre-timing evidence (build inputs). A family supplies
 those three declarations and the source directories the behavior set is derived
 from, so an added source file enters the closure without an edit to the family's
-generator. Import it as
-
-    sys.path.insert(0, os.path.join(root, "dev/scripts"))
-    import campaign_inputs
-
-and call `campaign_inputs.write_manifest(...)`.
+generator. A family's own generator puts this file's directory on `sys.path`,
+imports `campaign_inputs` and calls `campaign_inputs.write_manifest(...)`.
 """
 
 import json

@@ -5,19 +5,13 @@ Usage: make-plan.py --addendum A --label L --campaign-id ID --campaign-seed S
                     --lock PATH --executable BIN --producing-manifest M
                     --max-cells-per-session N [--pilot-pairs P] --output PLAN
 
-The projection itself is `dev/scripts/campaign_plan.py`, shared with every other
+The projection itself is `campaign_plan.py`, shared with every other
 lane-comparison family; this file declares what is this family's own: the two
 lanes, the two element representations, the consumer entry point and the case a
 dense-product cell decodes.
 """
 
-import os
-import subprocess
-import sys
-
-sys.path.insert(0, os.path.join(subprocess.run(
-    ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-).stdout.strip(), "dev/scripts"))
+import locate  # noqa: F401
 import campaign_plan  # noqa: E402
 
 POLY = 0x11D

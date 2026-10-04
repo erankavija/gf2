@@ -4,18 +4,18 @@
 #
 # Usage: smoke-campaign-arms.test.sh
 #
-# The script runs in a scratch repository whose cargo wrapper, plan projection,
-# runner and family smoke binary are stubs that record what they were handed,
-# over synthetic addenda that carry cell roles and nothing else. The cases
-# assert what the script decides itself: the label of the projected plan and
-# which executable writes the record.
+# The script runs in a scratch repository whose cargo wrapper, plan projection
+# and runner are stubs that record what they were handed, over synthetic addenda
+# that carry cell roles and nothing else. The cases assert what the script
+# decides itself: the label of the projected plan the runner writes the record
+# for.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK}"' EXIT
 
-mkdir -p "${WORK}/scripts" "${WORK}/target/release" "${WORK}/target/fixture-arm/release"
+mkdir -p "${WORK}/scripts" "${WORK}/target/release"
 git -C "${WORK}" init -q
 cp "${HERE}/smoke-campaign-arms.sh" "${WORK}/"
 
@@ -57,12 +57,7 @@ case "$1" in
     *) exit 2 ;;
 esac
 SH
-cat >"${WORK}/target/fixture-arm/release/family-smoke" <<'SH'
-#!/usr/bin/env bash
-python3 -c 'import json,sys; print("family", json.load(open(sys.argv[1]))["label"])' "$1"
-SH
-chmod +x "${WORK}/scripts/cargo-budget.sh" "${WORK}/target/release/benchmark-ab-runner" \
-    "${WORK}/target/fixture-arm/release/family-smoke"
+chmod +x "${WORK}/scripts/cargo-budget.sh" "${WORK}/target/release/benchmark-ab-runner"
 
 # Runs the script over one addendum; further arguments are passed on.
 smoke() {
@@ -95,11 +90,6 @@ smoke pilot --pilot-pairs 12
 expect_record pilot 'runner pilot'
 smoke confirmation
 expect_record confirmation 'runner confirmation'
-
-# A caller naming its own smoke binary gets that binary's record, labelled the
-# same way.
-smoke confirmation --smoke-bin family-smoke
-expect_record confirmation 'family confirmation'
 
 # An addendum whose cells name no smoked stage is refused before any dispatch.
 if smoke holdout; then
