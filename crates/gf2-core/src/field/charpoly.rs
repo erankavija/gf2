@@ -1,5 +1,6 @@
 //! Characteristic polynomial, minimal polynomial, and Frobenius normal
 //! form of a square [`FieldMatrix`] over an arbitrary [`FiniteField`].
+//!
 //! Singular inputs are accepted.
 
 use crate::field::matrix::{BasisReducer, ChainPolyArith, FieldMatrix, PackedMatvec};

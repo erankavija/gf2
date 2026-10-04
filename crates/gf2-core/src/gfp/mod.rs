@@ -1,6 +1,8 @@
-//! GF(p) prime-field arithmetic: [`Fp`] is a prime field over a
-//! const-generic modulus `P ≤ 2^63`, and [`specialized::GoldilocksFp`] carries
-//! the Goldilocks prime `2^64 − 2^32 + 1`, which exceeds that bound.
+//! GF(p) — Prime Field Arithmetic
+//!
+//! [`Fp`] is a prime field over a const-generic modulus. The Goldilocks prime
+//! `2^64 − 2^32 + 1` does not fit the `P ≤ 2^63` bound enforced by `Fp<P>`
+//! and is exposed via the dedicated [`specialized::GoldilocksFp`] type.
 
 mod montgomery;
 pub mod simd_ops;

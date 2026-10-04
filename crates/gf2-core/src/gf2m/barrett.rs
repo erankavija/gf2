@@ -1,6 +1,7 @@
-//! Barrett reduction for GF(2^m) polynomial arithmetic, with the constant
-//! `mu = x^(2m) / P(x)` precomputed per irreducible polynomial P(x) of
-//! degree m.
+//! Barrett reduction for GF(2^m) polynomial arithmetic.
+//!
+//! Given the irreducible polynomial P(x) of degree m, the Barrett constant
+//! `mu = x^(2m) / P(x)` is precomputed once.
 
 /// Carry-less multiplication of two GF(2) polynomials.
 ///

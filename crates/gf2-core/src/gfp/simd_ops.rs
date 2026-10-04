@@ -1,9 +1,11 @@
-//! SIMD dispatch hooks for `Fp<P>`: [`SimdVecOps`] is the element-wise
-//! dispatch used by [`crate::field::FieldVec`] and
-//! [`crate::gfpn::BatchExtField`], and `Fp<P>` overrides its default-`None`
-//! hooks to route through AVX2 kernels in `gf2-kernels-simd`. When the `simd`
-//! feature is disabled or AVX2 is unavailable at runtime, every `try_*` hook
-//! declines and callers fall back to their scalar path.
+//! SIMD dispatch hooks for `Fp<P>`.
+//!
+//! [`SimdVecOps`] is the element-wise SIMD dispatch used by
+//! [`crate::field::FieldVec`] and [`crate::gfpn::BatchExtField`]; `Fp<P>`
+//! overrides its default-`None` hooks to route through AVX2 kernels in
+//! `gf2-kernels-simd`. When the `simd` feature is disabled or AVX2 is
+//! unavailable at runtime, every `try_*` hook declines and callers fall back
+//! to their scalar path.
 
 use super::Fp;
 #[cfg(feature = "simd")]

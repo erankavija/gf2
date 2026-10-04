@@ -1,9 +1,11 @@
-//! Route selection for the residual branch of
-//! [`BitVec::shift_left`](crate::BitVec::shift_left) and
-//! [`shift_right`](crate::BitVec::shift_right), the branch a shift by `k` bits
-//! with non-zero `k % 64` takes: this module selects one of the two
-//! [`ResidualShiftRoute`]s for the funnel loop and owns the boundary word and
-//! the zero fill around it on either route.
+//! Route selection for the residual branch of the public `BitVec` shifts.
+//!
+//! A shift by `k` bits is word-aligned when `k % 64` is zero and residual
+//! otherwise. [`BitVec::shift_left`](crate::BitVec::shift_left) and
+//! [`shift_right`](crate::BitVec::shift_right) hand their residual branch to
+//! this module, which selects one of two routes for the funnel loop —
+//! [`ResidualShiftRoute`] names them — and owns the boundary word and the
+//! zero fill around it in either case.
 
 /// Which implementation of the residual funnel loop a call takes.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]

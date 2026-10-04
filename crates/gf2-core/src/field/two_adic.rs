@@ -1,3 +1,5 @@
+//! Two-adic finite fields: primitive 2^k-th roots of unity.
+//!
 //! [`TwoAdicField`] gives, for a field whose multiplicative group order is
 //! `m · 2^k` with `m` odd, the exponent `k` and a fixed primitive `2^k`-th
 //! root of unity; radix-2 NTT lengths are capped at `2^k`. The implementations
