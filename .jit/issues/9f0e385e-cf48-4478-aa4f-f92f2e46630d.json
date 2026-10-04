@@ -8,17 +8,17 @@
   "documents": [
     {
       "commit": null,
-      "doc_type": "notes",
-      "format": "markdown",
-      "label": "Coverage target and rule effect",
-      "path": "dev/active/9f0e385e/coverage-addressability.md"
-    },
-    {
-      "commit": null,
       "doc_type": "review",
       "format": "markdown",
       "label": "Lead review",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/9f0e385e-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Coverage target and rule effect",
+      "path": "dev/active/1a379447-zen3-cpu-performance/9f0e385e/coverage-addressability.md"
     }
   ],
   "done_at": "2026-09-27T19:15:00.384550356Z",
@@ -42,5 +42,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Resolve breakdown requirement coverage addressability",
-  "updated_at": "2026-09-27T19:15:00.384550356Z"
+  "updated_at": "2026-10-04T19:57:38.390965287Z"
 }
