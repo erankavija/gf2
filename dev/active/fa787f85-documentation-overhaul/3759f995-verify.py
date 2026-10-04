@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Evidence for issue 3759f995: re-archive of epics babcf05e and f9717e7e.
 
-Run from the repository root:
+Run from any directory of the checkout:
     python3 <this file>                      print the verification report
     python3 <this file> --reduce A.json ...  reduce `jit archive container <epic> --json`
                                              previews to the committed 3759f995-preexec.json
@@ -18,22 +18,17 @@ import tomllib
 import urllib.parse
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-PREEXEC = HERE / "3759f995-preexec.json"
 LINK = re.compile(r"\[(?:[^\[\]]|\[[^\]]*\])*\]\(\s*<?([^()\s<>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
 SKIP = re.compile(r"^(#|[A-Za-z][A-Za-z0-9+.-]*:)")
-REPOINTED = ("perf-evidence-catalog.md", "investigation.md", "036615b0-inventory-notes.md")
-ROWS = (
-    "dev/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md",
-    "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
-    "dev/bench_results/2026-04-27-asm-audit.md",
-    "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
-    "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
-    "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
-    "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
-    "dev/bench_results/c7791a20/2026-04-26-profile-release-delta.md",
-    "dev/benchmarks/gf2-sim/README.md",
-)
+ISSUE = "3759f995"
+
+
+def git(*args):
+    return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout
+
+
+ROOT = Path(git("rev-parse", "--show-toplevel").strip())
+PREEXEC = Path(__file__).with_name(f"{ISSUE}-preexec.json")
 
 
 def jit(*args):
@@ -85,26 +80,28 @@ def link_scan(files, root):
 
 
 def main():
-    root = Path.cwd()
     failed = 0
-    docs = {}
+    docs, placed_paths = {}, set()
     for epic, pre in json.loads(PREEXEC.read_text()).items():
         print(f"== {epic}")
         print(f"pre-execution preview: eligible={pre['eligible']} destination_root={pre['destination_root']} "
               f"blockers={len(pre['blockers'])} counts={json.dumps(pre['action_counts'], sort_keys=True)}")
-        marker = (root / pre["destination_root"] / ".jit-container").read_text().strip()
-        print(f"marker: {pre['destination_root']}/.jit-container names {marker}")
-        failed += not pre["eligible"] or bool(pre["blockers"]) or marker != pre["target"]
+        fresh = jit("archive", "container", epic)
+        archive = ROOT / fresh["destination_root"]
+        marker = (archive / ".jit-container").read_text().strip()
+        print(f"marker: {fresh['destination_root']}/.jit-container names {marker}")
+        failed += (not pre["eligible"] or bool(pre["blockers"]) or marker != pre["target"]
+                   or fresh["destination_root"] != pre["destination_root"])
 
         placed = [a for a in pre["artifacts"] if a["destination"]]
-        equal = sum(hashlib.sha256((root / a["destination"]).read_bytes()).hexdigest() == a["sha256"] for a in placed)
+        placed_paths.update(a["destination"] for a in placed)
+        equal = sum(hashlib.sha256((ROOT / a["destination"]).read_bytes()).hexdigest() == a["sha256"] for a in placed)
         deletes = [s for a in pre["artifacts"] for s in a["deletes"]]
-        gone = sum(not (root / s).exists() for s in deletes)
+        gone = sum(not (ROOT / s).exists() for s in deletes)
         print(f"byte verification: {equal}/{len(placed)} destinations carry the pre-execution sha256; "
               f"{gone}/{len(deletes)} deleted sources are absent")
         failed += equal != len(placed) or gone != len(deletes)
 
-        fresh = jit("archive", "container", epic)
         open_work = [a["source"] for a in fresh["artifacts"]
                      if a["pending_deletions"] or (a["action"] in ("move", "copy") and not a["already_archived"])]
         blockers = fresh["blockers"] + [b for a in fresh["artifacts"] for b in a["blockers"]]
@@ -122,20 +119,22 @@ def main():
         print(f"tracker references: {named}/{len(changes)} planned references name the archive path")
         failed += named != len(changes)
 
-        files, links, unresolved = link_scan(sorted((root / pre["destination_root"]).rglob("*.md")), root)
-        print(f"link scan of {pre['destination_root']}: {files} Markdown files, {links} local links, {unresolved} unresolved")
+        files, links, unresolved = link_scan(sorted(archive.rglob("*.md")), ROOT)
+        print(f"link scan of {fresh['destination_root']}: {files} Markdown files, {links} local links, {unresolved} unresolved")
         failed += bool(unresolved)
 
-    print("== repointed files")
-    files, links, unresolved = link_scan([HERE / f for f in REPOINTED], root)
+    print(f"== Markdown files touched by the commits tagged jit:{ISSUE}")
+    touched = git("-C", str(ROOT), "log", "--format=", "--name-only", "--grep", f"jit:{ISSUE}").split("\n")
+    files, links, unresolved = link_scan(sorted({ROOT / f for f in touched if f.endswith(".md") and (ROOT / f).is_file()}), ROOT)
     print(f"link scan: {files} Markdown files, {links} local links, {unresolved} unresolved")
     failed += bool(unresolved)
 
-    print("== manifest rows")
-    rows = {r["path"]: r for r in tomllib.loads((HERE / "migration/manifest.toml").read_text())["artifacts"]}
-    for path in ROWS:
-        print(f"{rows[path]['status']} {path} -> {rows[path]['destination']}")
-        failed += rows[path]["status"] != "complete"
+    print("== manifest rows whose destination the pre-execution plans place")
+    (manifest,) = PREEXEC.parent.rglob("manifest.toml")
+    for row in tomllib.loads(manifest.read_text())["artifacts"]:
+        if row["destination"] in placed_paths:
+            print(f"{row['status']} {row['path']} -> {row['destination']}")
+            failed += row["status"] != "complete"
     return 1 if failed else 0
 
 
