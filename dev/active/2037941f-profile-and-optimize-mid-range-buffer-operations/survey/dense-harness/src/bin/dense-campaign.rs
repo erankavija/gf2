@@ -5,12 +5,13 @@
 //! dense-campaign list    --family <id>
 //! dense-campaign cells   --family <id> --issue <8-hex> --frozen-utc <t> --output <path>
 //! dense-campaign verify  --family <id> --addendum <path>
+//! dense-campaign verify-confirmation --family <id> --addendum <path>
 //! dense-campaign unavailable --family <id> --addendum <path> --output <path>
 //! dense-campaign plan    --family <id> --addendum <path> --campaign-id <id>
 //!                        --campaign-seed <n> --lock <absolute> --gf2-executable <path>
 //!                        --producing-manifest <path> --output <path>
 //!                        [--candidate-executable <path>] [--scalar-executable <path>]
-//!                        [--m4ri-executable <path>] [--label pilot|smoke]
+//!                        [--m4ri-executable <path>] [--label pilot|smoke|confirmation]
 //!                        [--max-cells-per-session <n>]
 //! dense-campaign inputs  --producing-manifest <path> [--also <path>]...
 //! dense-campaign profile-request --family <id> --addendum <path>
@@ -19,7 +20,9 @@
 //!
 //! `verify` re-derives the transcription of the named family and compares it
 //! byte for byte with a candidate campaign addendum, so a campaign JSON that
-//! changes a cell, margin, limit or rule fails closed.
+//! changes a cell, margin, limit or rule fails closed. `verify-confirmation`
+//! holds a freezer-derived confirmation addendum to the same transcription and
+//! to the family's resolution ceiling.
 //!
 //! `inputs` refuses unless every path of the producing-input closure, plus each
 //! `--also` path, is tracked by git and identical to its committed content.
@@ -30,7 +33,9 @@ use dense_parity_harness::inputs;
 use dense_parity_harness::wire::Case;
 use std::collections::BTreeMap;
 use tuning_campaign_support::arm::{ArmRequest, PairPosition};
-use tuning_campaign_support::protocol::{FamilyAddendum, PlanCell, ReceiptLabel, SHARED_SETTINGS};
+use tuning_campaign_support::protocol::{
+    CellRole, FamilyAddendum, PlanCell, ReceiptLabel, SHARED_SETTINGS,
+};
 use tuning_campaign_support::transport;
 
 fn main() {
@@ -135,7 +140,7 @@ fn transcribe(arguments: &Arguments) -> Result<FamilyAddendum, String> {
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     let (command, rest) = raw.split_first().ok_or(
-        "usage: dense-campaign <pins|list|cells|verify|unavailable|plan|inputs|profile-request> --flag value ...",
+        "usage: dense-campaign <pins|list|cells|verify|verify-confirmation|unavailable|plan|inputs|profile-request> --flag value ...",
     )?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
@@ -163,6 +168,7 @@ fn run() -> Result<(), String> {
             Ok(())
         }
         "verify" => verify(&arguments),
+        "verify-confirmation" => verify_confirmation(&arguments),
         "unavailable" => unavailable(&arguments),
         "plan" => project(&arguments),
         "profile-request" => profile_request(&arguments),
@@ -316,6 +322,84 @@ fn verify(arguments: &Arguments) -> Result<(), String> {
     Ok(())
 }
 
+/// Largest pilot-derived resolution the frozen addendum lets a family confirm
+/// at (§ Effect, resolution, and complexity rules).
+fn resolution_ceiling(question: Question) -> f64 {
+    match question {
+        Question::IsolatedFusedParity => 0.020,
+        Question::AllocatedMatvec => 0.035,
+        Question::MatvecVsM4ri => 0.040,
+    }
+}
+
+/// Checks that `candidate` is the confirmation the frozen addendum admits.
+///
+/// The canonical freezer restates the family description and freeze time, pins
+/// the pilot-derived resolution with its evidence, and gives the family's
+/// confirmatory cells the confirmatory role. Every other field must equal the
+/// pilot transcription, and a resolution above the family ceiling is the
+/// addendum's `resolution-insufficient` outcome, which runs no confirmation.
+fn check_confirmation(question: Question, candidate: &FamilyAddendum) -> Result<(), String> {
+    let frozen = candidate
+        .frozen
+        .frozen_utc
+        .as_deref()
+        .ok_or("the confirmation addendum declares no freeze time")?;
+    let mut expected = campaign::addendum(question, &candidate.family.issue, frozen);
+    let anchors: Vec<String> = family_cells(question)
+        .into_iter()
+        .filter(|cell| cell.anchor)
+        .map(|cell| cell.cell_id)
+        .collect();
+    expected
+        .cells
+        .retain(|cell| anchors.contains(&cell.cell_id));
+    for cell in &mut expected.cells {
+        cell.role = CellRole::Confirmatory;
+    }
+    expected
+        .family
+        .description
+        .clone_from(&candidate.family.description);
+    expected.effect.measurement_resolution = candidate.effect.measurement_resolution;
+    expected
+        .effect
+        .resolution_evidence
+        .clone_from(&candidate.effect.resolution_evidence);
+    if expected != *candidate {
+        return Err(format!(
+            "the addendum is not the confirmation of {}: it changes a cell, margin, limit or \
+             rule of the frozen addendum",
+            question.family_id()
+        ));
+    }
+    let resolution = candidate
+        .effect
+        .measurement_resolution
+        .ok_or("the confirmation addendum pins no pilot-derived resolution")?;
+    let ceiling = resolution_ceiling(question);
+    if resolution > ceiling {
+        return Err(format!(
+            "resolution-insufficient: {resolution} exceeds the family ceiling {ceiling}"
+        ));
+    }
+    Ok(())
+}
+
+fn verify_confirmation(arguments: &Arguments) -> Result<(), String> {
+    let (question, candidate) = family_addendum(arguments)?;
+    let path = arguments.required("addendum")?;
+    check_confirmation(question, &candidate).map_err(|error| format!("{path}: {error}"))?;
+    println!(
+        "{path}: confirms {} cells of {} from {} ({})",
+        candidate.cells.len(),
+        question.family_id(),
+        dense_parity_harness::cells::ADDENDUM_PATH,
+        dense_parity_harness::cells::ADDENDUM_IDENTITY
+    );
+    Ok(())
+}
+
 /// Projects and writes the runner plan of one campaign addendum.
 fn project(arguments: &Arguments) -> Result<(), String> {
     let question = question(arguments)?;
@@ -328,7 +412,12 @@ fn project(arguments: &Arguments) -> Result<(), String> {
     let label = match arguments.optional("label").unwrap_or("pilot") {
         "pilot" => ReceiptLabel::Pilot,
         "smoke" => ReceiptLabel::Smoke,
-        other => return Err(format!("label {other:?} is not pilot or smoke")),
+        "confirmation" => ReceiptLabel::Confirmation,
+        other => {
+            return Err(format!(
+                "label {other:?} is not pilot, smoke or confirmation"
+            ))
+        }
     };
     let plan = campaign::plan(
         question,
@@ -424,4 +513,83 @@ fn profile_request(arguments: &Arguments) -> Result<(), String> {
     )?;
     print!("{}", transport::encode_case(&request)?);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dense_parity_harness::cells::ADDENDUM_FROZEN_UTC;
+    use tuning_campaign_support::protocol::ResolutionEvidence;
+
+    /// The confirmation the canonical freezer derives from one family's pilot.
+    fn confirmation(question: Question, resolution: f64) -> FamilyAddendum {
+        let mut derived = campaign::addendum(question, "e1f9a78f", ADDENDUM_FROZEN_UTC);
+        let anchors: Vec<String> = family_cells(question)
+            .into_iter()
+            .filter(|cell| cell.anchor)
+            .map(|cell| cell.cell_id)
+            .collect();
+        derived.cells.retain(|cell| anchors.contains(&cell.cell_id));
+        for cell in &mut derived.cells {
+            cell.role = CellRole::Confirmatory;
+        }
+        derived.family.description = "Confirmatory stage.".to_owned();
+        derived.effect.measurement_resolution = Some(resolution);
+        derived.effect.resolution_evidence = Some(ResolutionEvidence {
+            receipt: "dev/bench_results/2037941f/pilot/receipt.json".to_owned(),
+            sha256: "0".repeat(64),
+        });
+        derived
+    }
+
+    #[test]
+    fn a_confirmation_of_the_anchor_cells_within_the_ceiling_verifies() {
+        for question in Question::ALL {
+            let derived = confirmation(question, 0.02);
+            derived
+                .validate()
+                .unwrap_or_else(|errors| panic!("{}: {}", question.family_id(), errors.join("; ")));
+            check_confirmation(question, &derived)
+                .unwrap_or_else(|error| panic!("{}: {error}", question.family_id()));
+        }
+        let comparator = confirmation(Question::MatvecVsM4ri, 0.04);
+        let cells: Vec<&str> = comparator
+            .cells
+            .iter()
+            .map(|cell| cell.cell_id.as_str())
+            .collect();
+        assert_eq!(cells, ["m4ri-gap-65x512-warm", "m4ri-gap-65x4096-warm"]);
+        check_confirmation(Question::MatvecVsM4ri, &comparator).expect("at the ceiling");
+    }
+
+    #[test]
+    fn a_confirmation_that_departs_from_the_frozen_addendum_is_refused() {
+        let question = Question::MatvecVsM4ri;
+        let derived = confirmation(question, 0.02);
+
+        let insufficient = confirmation(question, 0.041);
+        let refusal = check_confirmation(question, &insufficient).unwrap_err();
+        assert!(refusal.starts_with("resolution-insufficient"), "{refusal}");
+
+        let mut widened = derived.clone();
+        widened.effect.material_gap_threshold = Some(1.2);
+        assert!(check_confirmation(question, &widened).is_err());
+
+        let mut narrowed = derived.clone();
+        narrowed.cells.pop();
+        assert!(check_confirmation(question, &narrowed).is_err());
+
+        let pilot = campaign::addendum(question, "e1f9a78f", ADDENDUM_FROZEN_UTC);
+        let mut promoted = derived.clone();
+        promoted
+            .cells
+            .push(pilot.cells.last().expect("a retained-state cell").clone());
+        promoted.cells.last_mut().expect("the pushed cell").role = CellRole::Confirmatory;
+        assert!(check_confirmation(question, &promoted).is_err());
+
+        let mut unresolved = derived;
+        unresolved.effect.measurement_resolution = None;
+        unresolved.effect.resolution_evidence = None;
+        assert!(check_confirmation(question, &unresolved).is_err());
+    }
 }

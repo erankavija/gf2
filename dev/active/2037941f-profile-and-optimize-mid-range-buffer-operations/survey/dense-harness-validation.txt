@@ -13,7 +13,7 @@
 # unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
-PASS harness contract: 50 tests pass
+PASS harness contract: 52 tests pass
 PASS matvec-cols-0-rows-0: 6 checks
 PASS matvec-cols-0-rows-1: 9 checks
 PASS matvec-cols-0-rows-63: 195 checks
@@ -128,6 +128,6 @@ PASS m4ri-65x65: 71 checks
 # dense-m4ri-arm sha256: 40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e
 # libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
 # dense-arm sha256: d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695
-# dense-campaign sha256: b464abafd7d9b511b2d3c9774ef8128179ca6787bbe2a343ce0593f0ab94b62b
+# dense-campaign sha256: 463f0f0c6de636bd52d98c9c43ec552ea24bc36f3d4a14657a8db8309abd869e
 # dense-oracle sha256: 895bb4106780f5f05c7fc287b79112fa00eff5212ad9638384dbcce88fd782aa
 # dense-arm (scalar-reference) sha256: ccbbc7e628fbf59b1ade0dd0f4cc9150ed96cd33cca6a25cd793c0ff7d39787c
