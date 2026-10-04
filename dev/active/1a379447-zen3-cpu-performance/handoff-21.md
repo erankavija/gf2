@@ -62,8 +62,8 @@
 
 - Epic: `jit issue show 1a379447`; progress: [progress.json](progress.json).
 - Shift review: [publication closure](reviews/a0812b83-r1.md), [story pitfalls](reviews/c04dd4ac-pitfall-audit.md), [background draft](../c04dd4ac-zen3-shifts-and-permutations/background-amendment-draft.md).
-- M4RI: [preparation](../50f0bd42/preparation.md), [amendment draft](../50f0bd42/unavailable-rows-amendment-draft.md), [example](../50f0bd42/unavailable-rows.example.tsv).
-- Accepted outcomes: [BMI2](../00dd43c3/confirmation-outcome.md), [dense baseline](../c73ffa25/outcome.md), [logical no-change](../fcb04d66/no-change-outcome.md), [BitSlice](../a1ad6d4e/outcome.md).
+- M4RI: [preparation](50f0bd42/preparation.md), [amendment draft](50f0bd42/unavailable-rows-amendment-draft.md), [example](50f0bd42/unavailable-rows.example.tsv).
+- Accepted outcomes: [BMI2](../00dd43c3/confirmation-outcome.md), [dense baseline](c73ffa25/outcome.md), [logical no-change](fcb04d66/no-change-outcome.md), [BitSlice](a1ad6d4e/outcome.md).
 - Worker branches fully merged: `worktree-agent-a0812b83` through `781db5419`, `worktree-agent-c04dd4ac-r1` through `e77bbdb22`, `worktree-agent-50f0bd42` through `2b75c6462`. M4RI tree is the pending timing pin; keep it. Reclaim other completed trees only through the skill script, preserving `target` caches and with no builds active.
 - Out-of-wave pinned GF256/LDPC trees and foreign `agent-02b8137c-run` remain untouched. See handoff-20 and earlier pins; never reuse `agent-c04dd4ac` (GF256), which differs from the documentation repair tree `agent-c04dd4ac-r1`.
 - Scratch review results and audit logs: `/tmp/gf2-wave3-session26/`; durable gates are under `.jit/gate-runs/`. No Astra was used. Sol high handled documentation; Sol xhigh handled M4RI. Configured gate model remains Terra.

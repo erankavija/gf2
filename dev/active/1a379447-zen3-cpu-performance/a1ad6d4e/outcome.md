@@ -12,13 +12,13 @@ or benchmark-window queue line.
 
 ## Consumer and source evidence
 
-The [frozen logical-buffer addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md#preserved-no-win-and-scope-exclusions)
+The [frozen logical-buffer addendum](../../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md#preserved-no-win-and-scope-exclusions)
 admits the isolated XOR, public row-XOR, NR construction, and ISA-L questions.
 Its zero-copy rule permits a no-candidate disposition and requires a versioned
 amendment before sampling any additional cell. The committed
-[profile case inventory](../../bench_results/2037941f/logical-profile/cases.txt),
-[profile summary](../../bench_results/2037941f/logical-profile/profile-summary.md),
-and [consumer baselines](../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md)
+[profile case inventory](../../../bench_results/2037941f/logical-profile/cases.txt),
+[profile summary](../../../bench_results/2037941f/logical-profile/profile-summary.md),
+and [consumer baselines](../../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md)
 cover XOR, row-XOR, and NR construction; they contain no BitSlice copy-inclusive
 consumer cell. The NR profile reports allocation symbols with display censoring,
 which does not attribute those allocations to BitSlice copying.
