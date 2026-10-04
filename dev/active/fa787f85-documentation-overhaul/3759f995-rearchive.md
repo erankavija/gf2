@@ -10,7 +10,7 @@ Issue 3759f995. Container archival of both epics is executed in commit
 |---|---|
 | `3759f995-preexec.json` | Per epic, the `jit archive container <epic> --json` preview taken immediately before execution, reduced to target, destination root, eligibility, blockers, action counts and per artifact source, action, destination, sha256 and deleted sources. |
 | `3759f995-verify.py` | Produces the report; `--reduce` produces `3759f995-preexec.json` from the raw previews. |
-| `3759f995-verify.txt` | Report of `python3 dev/active/fa787f85-documentation-overhaul/3759f995-verify.py`, run from the repository root at the commit that adds this record. It reads the working tree and the live tracker. |
+| `3759f995-verify.txt` | Report of `python3 dev/active/fa787f85-documentation-overhaul/3759f995-verify.py`, at the commit that last changes it. The script takes the repository root from git, the archive roots from the live previews, the expected files and hashes from `3759f995-preexec.json`, the scanned files from the commits tagged `jit:3759f995`, and the manifest rows from the destinations of the pre-execution plans. |
 
 ## Criteria
 
@@ -20,7 +20,7 @@ Issue 3759f995. Container archival of both epics is executed in commit
 | REQ-02 | `marker` lines | `BA/.jit-container` names `babcf05e-29e8-4c81-ba77-843ec6409cfa`; `FA/.jit-container` names `f9717e7e-3950-422c-a545-d940d119a440`. | – |
 | REQ-03 | `byte verification`: 26/26 and 16/16 destinations, 7/7 and 1/1 deleted sources; `tracker references`: 57/57 and 25/25 | Each destination of the pre-execution plan has the sha256 the plan records; each source the plan deletes is absent; each document reference the plan relinks names its archive path in the live tracker. | Anything about `crates/gf2-core/src/sparse.asm.txt`, which the babcf05e plan retains in place without a destination. |
 | REQ-04 | Table "Citations" below | – | – |
-| REQ-05 | `fresh preview` lines: 0 artifacts left to move, copy or delete, `pending_deletions` 0; `link scan` lines: 0 unresolved; `manifest rows`: 9 rows `complete` | A preview of each archived epic plans no publication and no deletion; no inline Markdown link with a local target in a Markdown file of `BA`, `FA` or the three repointed files is unresolved; the nine rows are complete. | The result of a second `--execute`; reference-style links, HTML links and links in non-Markdown files. |
+| REQ-05 | `archive-rerun-results.md`, rows babcf05e and f9717e7e: 0 publications, 0 reference changes, 0 deleted sources; `fresh preview` lines: 0 artifacts left to move, copy or delete; `link scan` lines: 0 unresolved; `manifest rows`: 11 rows `complete` | A second `--execute` of each epic changes nothing; a preview of each archived epic plans no publication and no deletion; no inline Markdown link with a local target is unresolved in a Markdown file of `BA` or `FA` or in a Markdown file the commits tagged `jit:3759f995` touch; each manifest row whose destination the plans place is complete. | Reference-style links, HTML links and links in non-Markdown files. |
 
 ## Files placed and deleted by the execution
 
@@ -51,8 +51,9 @@ babcf05e plan needs that source for its one publication.
 |---|---|---|
 | `perf-evidence-catalog.md` | 124 | `BA/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md` |
 | `perf-evidence-catalog.md` | 126, 197 | `BA/bench_results/2026-04-29-strassen-matmul-crossover.md` |
-| `investigation.md` | 52, 235 | `BA/active/babcf05e-handoff-5.md` |
-| `036615b0-inventory-notes.md` | 5 | `BA/active/babcf05e-handoff-5.md` |
+| `investigation.md` | 235 | `BA/active/babcf05e-handoff-5.md` |
+| `036615b0-inventory-notes.md` | 5 | `BA/active/babcf05e-handoff-5.md`; the byte-identical-copy clause covers the first listed file only |
+| `investigation.md` | 52 | The handoff leaves the list of files in `dev/active`. |
 
 `git grep -F` for the nine source paths and their file names finds no citation
 in a README, `AGENTS.md` or Rust source outside `dev/archive/` and receipt
@@ -68,7 +69,7 @@ Citations that keep their bytes:
 
 ## Manifest
 
-Nine rows are complete; the report lists them.
+The report lists eleven complete rows: the nine this unit completes and the two `gruvbox.css` rows of the same archives.
 
 Row `dev/benchmarks/gf2-sim/dvb-t2-regression-receipts.md` is corrected and is
 no row of this unit:
