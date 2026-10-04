@@ -17736,3 +17736,5 @@
 {"id":"cbaaa07b-6970-4bae-9d38-fc2d75546c26","issue_id":"8f451167-c774-42d0-b8e6-346a6df8ee7a","timestamp":"2026-10-04T08:14:13.313578943Z","type":"issue_completed"}
 {"from":"in_progress","id":"35e28ea9-8807-47b7-8549-e58b2a37473b","issue_id":"c6aa0e84-072e-4671-9c50-0c8e9d0d4f66","timestamp":"2026-10-04T08:14:13.406995909Z","to":"done","type":"issue_state_changed"}
 {"id":"f1d7cfaa-aa0f-41d1-b25c-b07b841dcf9a","issue_id":"c6aa0e84-072e-4671-9c50-0c8e9d0d4f66","timestamp":"2026-10-04T08:14:13.406995909Z","type":"issue_completed"}
+{"id":"04f15b77-a863-410a-9426-b985813a2185","issue_id":"ee3bf65e-c23e-4fab-ba12-651058d94e8e","priority":"normal","timestamp":"2026-10-04T08:30:48.370714690Z","title":"gf2-coding tests: dead TP07a loader branch and dev paths in string literals","type":"issue_created"}
+{"fields":["dependencies"],"id":"1e4de095-61bc-4a2e-998f-cbeac6e6a7df","issue_id":"b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e","timestamp":"2026-10-04T08:31:04.154607472Z","type":"issue_updated","updated_by":"dependency-add"}

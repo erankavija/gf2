@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T08:30:48.370714690Z",
+  "dependencies": [],
+  "description": "Two items in `crates/gf2-coding/tests/` reported by the comment-sweep rework need a code change.\n\n## Background\n\nReported locations: `tests/test_vectors/loader.rs:51` (`load_test_point` builds `TestPoint7a` for `tp = \"07a\"` where its sibling uses `TestPoint07`; the function is dead code under `#[allow(dead_code)]`); `tests/ebch_128_64_reference.rs:128,132` and `tests/grand_phase1_smoke.rs:383-477` (string literals hard-code `dev/` paths, contrary to `@/inv/no-dev-path-coupling`).\n\n## Success Criteria\n\n- [hard] REQ-01: `load_test_point` is removed, or a test calls it and shows that it loads the TP07a file.\n- [hard] REQ-02: The two test files locate development artifacts by content identity or through the configured repository root, or state no path.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T08:30:48.370714690Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "ee3bf65e-c23e-4fab-ba12-651058d94e8e",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "gf2-coding tests: dead TP07a loader branch and dev paths in string literals",
+  "updated_at": "2026-10-04T08:30:48.370714690Z"
+}
