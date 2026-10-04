@@ -1,0 +1,167 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "4c1e441f-r1-dense-product-confirmation",
+  "issue": "4c1e441f",
+  "label": "confirmation",
+  "campaign_seed": 2026091812,
+  "addendum": "dev/active/4c1e441f/addendum-v4-dense-product-confirmation.json",
+  "producing_manifest": "dev/active/4c1e441f/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "scalar-element": {
+      "build": "conservative-portable",
+      "description": "FieldMatrix<Gf2mElement> over Gf2mField::gf256(): the shipped gf2-core dense FieldMatrix product, which holds every GF(2^8) call on the route the library takes without the cached table through the shipped lane switch, which is a batched dot product per output cell for the runtime-context element and the carry-less-product whole-gemm kernel for the compile-time-configured value; conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/4c1e441f-arm/release/gf256-gemm-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_GF256_LANE": "scalar",
+        "GF2_GF256_REPR": "element"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "table-element": {
+      "build": "conservative-portable",
+      "description": "FieldMatrix<Gf2mElement> over Gf2mField::gf256(): the shipped gf2-core dense FieldMatrix product, which leaves the shipped lane switch clear, so gf256_table_dispatch selects the cached product table and one region multiply-accumulate per left-hand coefficient; conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/4c1e441f-arm/release/gf256-gemm-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_GF256_LANE": "table",
+        "GF2_GF256_REPR": "element"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "scalar-wide": {
+      "build": "conservative-portable",
+      "description": "FieldMatrix<Gf2mWide<1,Gf256x11d>>: the shipped gf2-core dense FieldMatrix product, which holds every GF(2^8) call on the route the library takes without the cached table through the shipped lane switch, which is a batched dot product per output cell for the runtime-context element and the carry-less-product whole-gemm kernel for the compile-time-configured value; conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/4c1e441f-arm/release/gf256-gemm-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_GF256_LANE": "scalar",
+        "GF2_GF256_REPR": "wide"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "table-wide": {
+      "build": "conservative-portable",
+      "description": "FieldMatrix<Gf2mWide<1,Gf256x11d>>: the shipped gf2-core dense FieldMatrix product, which leaves the shipped lane switch clear, so gf256_table_dispatch selects the cached product table and one region multiply-accumulate per left-hand coefficient; conservative-portable build",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/4c1e441f-arm/release/gf256-gemm-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_GF256_LANE": "table",
+        "GF2_GF256_REPR": "wide"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "matmul-n256-element",
+      "baseline_arm": "scalar-element",
+      "candidate_arm": "table-element",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4402,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "matmul-n512-element",
+      "baseline_arm": "scalar-element",
+      "candidate_arm": "table-element",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 512,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4403,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "matmul-n256-whole-element",
+      "baseline_arm": "scalar-element",
+      "candidate_arm": "table-element",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 4402,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "matmul-n256-wide",
+      "baseline_arm": "scalar-wide",
+      "candidate_arm": "table-wide",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4402,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "matmul-n512-wide",
+      "baseline_arm": "scalar-wide",
+      "candidate_arm": "table-wide",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 512,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "kernel-isolated",
+        "seed": 4403,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "matmul-n256-whole-wide",
+      "baseline_arm": "scalar-wide",
+      "candidate_arm": "table-wide",
+      "case": {
+        "operation": "matmul",
+        "bytes": 0,
+        "n": 256,
+        "k": 0,
+        "rows": 0,
+        "poly": 285,
+        "metric": "whole-consumer",
+        "seed": 4402,
+        "workers": 1
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 3
+}
