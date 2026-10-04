@@ -8,7 +8,15 @@
     "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
   ],
   "description": "The remaining flat `dev/active/` entries belong to epics b8206228, 86b9c719, ae03bcd0, b4b4b9ee and d77176e5. Those without a non-comment code consumer move under their owning epics' canonical directories; `02b8137c` and `3f664839`, whose paths gf2-sim code checks, are excluded.\n\n## Background\n\nThe entry list is in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A. Epic ae03bcd0 has workers editing its directory concurrently, so its entries move in a quiet window. Code-pinned entries d1b4f85e, 591a1c5e and fd9d5416 are excluded, along with 02b8137c and 3f664839.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for decoupling under the `no-dev-path-coupling` invariant before it moves. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n- [hard] REQ-06: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/eace5009-regroup.md"
+    }
+  ],
   "first_ready_at": "2026-10-04T19:25:40.984051554Z",
   "gates_required": [
     "cargo-ci",
@@ -33,5 +41,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Regroup the remaining flat dev/active entries under epic dirs",
-  "updated_at": "2026-10-04T19:29:41.284798398Z"
+  "updated_at": "2026-10-04T20:01:04.187366641Z"
 }
