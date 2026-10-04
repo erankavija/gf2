@@ -469,7 +469,7 @@ The source-path boundary is exact:
 - complete-envelope composition and raw-wrapper validation:
   `crates/gf2-algebra/tests/tuning_repository_envelopes.rs`;
 - the current permanent citation:
-  `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md`;
+  `dev/archive/legacy/crates/gf2-core/docs/KERNEL_OPTIMIZATION.md`;
 - append-only executed-state projection at the convention source:
   `dev/active/7d824b2f/design.md`;
 - generated evidence destinations under
