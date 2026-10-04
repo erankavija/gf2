@@ -25,16 +25,16 @@ use rand::{Rng, SeedableRng};
 use std::collections::BTreeSet;
 
 /// The DVB-T2 normal-frame splitting field, $\mathrm{GF}(2^{16})$ on
-/// $x^{16} + x^5 + x^3 + x^2 + 1$, from `@/citation/Etsi2015` Table 6b.
+/// $x^{16} + x^5 + x^3 + x^2 + 1$, $g_1(x)$ of `@/citation/Etsi2015` Table 7(a).
 const DVB_T2_FIELD_DEGREE: usize = 16;
 const DVB_T2_FIELD_POLYNOMIAL: u64 = 0b1_0000_0000_0010_1101;
 
-/// Designed distance of the normal-frame mother, $2t + 1$ for the table's
+/// Designed distance of the normal-frame mother, $2t + 1$ for the Table 6(a)
 /// rate-1/2 correction radius $t = 12$.
 const DVB_T2_DESIGNED_DISTANCE: u64 = 25;
 
 /// Leading message coordinates the normal-frame rate-1/2 row removes: the
-/// mother dimension 65343 less the table's $K_{bch} = 32208$.
+/// mother dimension 65343 less the Table 6(a) $K_{bch} = 32208$.
 const DVB_T2_SHORTENING: usize = 33135;
 
 const PACKED_WORD_BOUNDARIES: [usize; 5] = [0, 1, 63, 64, 65];
