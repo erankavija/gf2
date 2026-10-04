@@ -14,19 +14,13 @@
 //!   `mean_iters` across two runs at the same seed and excludes `ber` and
 //!   `wall_seconds`.
 //! - `tracing.jsonl` — structured JSON-lines tracing log, written through
-//!   [`gf2_sim::observability::install_campaign_subscriber`]. Events (each
-//!   carries a matching `event_type` field):
+//!   [`gf2_sim::observability::install_campaign_subscriber`]. Each event
+//!   carries a matching `event_type` field:
 //!   - `campaign_start` — once, at sweep start.
 //!   - `campaign_heartbeat` — every `--heartbeat-frames` observed frames per
-//!     SNR point (production runs only). Approximate progress, not exact
-//!     accounting: on the hybrid GPU path, frames in a batch discarded at an
-//!     interrupt are observed-but-unrecorded and re-observed on resume, and
-//!     the counter restarts each invocation.
-//!   - `snr_point_completed` — one per point with the CSV fields. The
-//!     production (checkpointed) path emits it at each SNR-point boundary
-//!     from inside [`gf2_sim::Scheduler::run_sweep_checkpointed`], with the
-//!     measured per-point `wall_seconds`; the calibration path emits it after
-//!     the run.
+//!     SNR point (production runs only); approximate progress, not exact
+//!     accounting.
+//!   - `snr_point_completed` — one per point with the CSV fields.
 //! - `README.md` — invocation, seed, host info, total wall-clock (production
 //!   runs only).
 //! - `checkpoints/` — per-SNR JSON files, written by the pipeline's

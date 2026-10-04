@@ -3,13 +3,6 @@
 //! target and an order-1 control on the seven `@/citation/Fossorier1994`
 //! abscissas.
 //!
-//! The reprocessing list of `@/citation/Fossorier1994` is mapped to increasing
-//! Hamming weight over the 64 MRI positions, with lexicographic ascending
-//! zero-based indices within each weight.  The source leaves reliability ties
-//! and equal-distance ties undefined: the shared decoder uses ascending
-//! original coordinate index for equal reliability magnitudes and retains the
-//! first generated candidate for an equal metric.
-//!
 //! `--max-samples` is an additional per-invocation sample bound. Reaching it
 //! records an interrupted cell so a later invocation can continue from the
 //! durable counters. `--target-block-errors` is the cumulative independent
