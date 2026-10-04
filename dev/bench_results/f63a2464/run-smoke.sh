@@ -20,16 +20,21 @@
 # request than a pilot's; queueing it on the pilot's smoke would leave that
 # wire contract unproven.
 #
-# Usage (from the worktree root): run-smoke.sh
+# Usage (from the worktree root): run-smoke.sh QUALITY_DIR
+#   QUALITY_DIR  the frozen `c077a88b` prepared quality records the arms reuse
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
 export PATH="$HOME/.cargo/bin:$PATH" RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
-SURVEY=dev/active/f63a2464/survey
+QUALITY_DIR=${1:?directory of the prepared c077a88b quality records}
+files=$(git ls-files --cached --others --exclude-standard -- ':(glob)**/repository_files.py')
+# The survey directory holds the arms workspace; the addenda lie beside it.
+SURVEY=$(dirname "$(python3 -B "$files" package-directory ldpc-qc-arms)")
+ACTIVE=$(dirname "$SURVEY")
 SCRATCH=target/ldpc-qc-smoke  # repo-relative: the plan names the addendum by a literal relative path
 BASELINE=$repo/target/ldpc-qc-baseline/release
 CANDIDATE=$repo/target/ldpc-qc-arms/release
-QUALITY=$repo/dev/bench_results/c077a88b/v3-preparation/quality
+QUALITY=$(realpath "$QUALITY_DIR")
 RUNNER=$repo/target/release/benchmark-ab-runner
 
 ./scripts/cargo-budget.sh cargo +1.95 build --offline --release -p tuning-campaign-support \
@@ -39,12 +44,12 @@ mkdir -p "$SCRATCH"
 
 for family in intra-frame-single-worker intra-frame-multicore comparator-single-worker; do
  for mode in pilot confirmation; do
-  python3 - "$family" "$mode" "$SCRATCH" <<'PY'
+  python3 - "$family" "$mode" "$SCRATCH" "$ACTIVE" <<'PY'
 import json, pathlib, sys
 
 family, mode, scratch = sys.argv[1], sys.argv[2], pathlib.Path(sys.argv[3])
 suffix = "-pilot" if mode == "pilot" else ""
-source = pathlib.Path(f"dev/active/f63a2464/addendum-ldpc-qc-{family}{suffix}.json")
+source = pathlib.Path(sys.argv[4]) / f"addendum-ldpc-qc-{family}{suffix}.json"
 addendum = json.loads(source.read_text())
 addendum["family"]["description"] = (
     "Throwaway wire-contract smoke of the arms this issue measures. It publishes no receipt "

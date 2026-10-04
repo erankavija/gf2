@@ -22,9 +22,27 @@ import argparse
 import json
 import os
 import pathlib
+import subprocess
+import sys
+
+
+def output(command):
+    return subprocess.run(command, check=True, capture_output=True, text=True).stdout.strip()
+
+
+ROOT = pathlib.Path(output(["git", "-C", str(pathlib.Path(__file__).resolve().parent),
+                            "rev-parse", "--show-toplevel"]))
+
+
+def located(*query):
+    """Root-relative path the repository-file helper prints for `query`."""
+    helper = output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
+                     "--exclude-standard", "--", ":(glob)**/repository_files.py"])
+    return pathlib.Path(output([sys.executable, "-B", str(ROOT / helper), *query]))
+
 
 LOCK = "/tmp/gf2-ccx1.lock"
-WRAPPER = "dev/scripts/ccx1-bench-flock.sh"
+WRAPPER = str(located("document", "ccx1-bench-flock.sh", "#!"))
 RUSTFLAGS = "-C target-cpu=native"
 CATALOGUE = json.loads((pathlib.Path(__file__).resolve().parent / "arms.json").read_text())
 
