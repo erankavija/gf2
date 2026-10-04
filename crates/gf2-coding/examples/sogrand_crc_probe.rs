@@ -1,19 +1,5 @@
-//! Probe for SOGRAND behaviour on the CRC(25,15) component at 1.0 dB E_b/N_0.
-//!
-//! This is a throwaway diagnostic used to investigate paper-alignment failures
-//! on Phase 2 Figure 4. It measures, over many frames:
-//!
-//! 1. single-component SOGRAND decodes (no turbo): list occupancy,
-//!    cumulative probability, query count, stop reason,
-//!    APP / extrinsic LLR magnitudes, list-BLER prediction, decode correctness;
-//! 2. full (625, 225) CRC-product turbo decodes: per-half-iteration query
-//!    counts and (rough) BLER.
-//!
-//! Run with:
-//!
-//! ```bash
-//! cargo run -p gf2-coding --release --example sogrand_crc_probe
-//! ```
+//! Diagnostic for SOGRAND on the CRC(25,15) component at 1.0 dB E_b/N_0: single-component decode
+//! statistics and (625, 225) CRC-product turbo decodes.
 
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::crc::CrcCode;
@@ -34,7 +20,6 @@ fn llrs_from_awgn(
     let n = codeword.len();
     let mut llrs = Vec::with_capacity(n);
     for i in 0..n {
-        // BPSK: 0 -> +1, 1 -> -1.
         let sym = if codeword.get(i) { -1.0 } else { 1.0 };
         let y = channel.transmit(sym, rng);
         // L = 2 y / sigma^2; positive means bit 0 more likely.
@@ -61,7 +46,6 @@ fn component_probe(
     let k = component.comp_k();
     let rate = k as f64 / n as f64;
 
-    // Variance matches BpskAwgnChannel convention (Es/N0 after BPSK).
     let eb_n0 = 10f64.powf(eb_n0_db / 10.0);
     let variance = 1.0 / (2.0 * rate * eb_n0);
 
@@ -87,16 +71,13 @@ fn component_probe(
     let mut list_bler_pred_sum = 0.0f64;
 
     for _ in 0..frames {
-        // Encode a random message (all-zero codeword is not representative
-        // under even-code optimization because hard_parity differs each frame).
-        let msg = BitVec::zeros(k); // all-zero message — simplest, parity stays 0
+        let msg = BitVec::zeros(k);
         let cw = component.encode(&msg);
         let rx = llrs_from_awgn(&cw, &channel, variance, &mut rng);
         let r = sogrand.decode_siso(&rx);
 
         queries_sum += r.query_count as u128;
-        // We need orbgrand.decode directly to inspect list occupancy &
-        // cumulative probability. Do a secondary decode (cheap in comparison).
+        // A second, direct ORBGRAND decode exposes list occupancy and cumulative probability.
         let orb = sogrand.orbgrand().decode(&rx);
         let bucket = orb.codewords.len().min(list_sizes.len() - 1);
         list_sizes[bucket] += 1;
@@ -106,7 +87,6 @@ fn component_probe(
         if !orb.codewords.is_empty() {
             found_any += 1;
             let best = orb.best_codeword().unwrap();
-            // Compare first k bits of codeword to original message.
             let mut ok = true;
             for i in 0..k {
                 if best.codeword.get(i) != msg.get(i) {
@@ -201,7 +181,6 @@ fn turbo_probe(
         if r.converged {
             converged_cnt += 1;
         }
-        // BLER vs all-zero message.
         let mut any = false;
         for i in 0..k * k {
             if r.decoded_bits.get(i) {
@@ -217,9 +196,7 @@ fn turbo_probe(
     let bler = bler_err as f64 / frames as f64;
     let avg_q = total_queries_sum as f64 / frames as f64;
     let avg_iters = iters_sum as f64 / frames as f64;
-    // Total component decodes: 2 * n * avg_iterations (assume full iters
-    // when not converged; iterations counts halved-pairs, each doing n+n
-    // component decodes, so approximate with 2*n per iter).
+    // Approximates the component decode count as 2n per iteration.
     let comp_decodes = 2.0 * n as f64 * avg_iters;
     let avg_q_per_comp = avg_q / comp_decodes;
 
@@ -235,15 +212,9 @@ fn turbo_probe(
 }
 
 fn main() {
-    // --- Component probes: single CRC(25,15) SOGRAND decode, no turbo. ---
-    // Baseline (legacy stop rule: exhaust max_queries or cum_prob ≈ 1).
     component_probe(1.0, 2000, 4, 100_000, None);
-    // Paper-aligned stop: list_size=4 OR list-BLER < 1e-4.
     component_probe(1.0, 2000, 4, 100_000, Some(1e-4));
-    // Same rule, tighter threshold.
     component_probe(1.0, 2000, 4, 100_000, Some(1e-5));
-
-    // --- Turbo probes at 1.0 dB with modest frame count. ---
     turbo_probe(1.0, 300, 4, 100_000, None);
     turbo_probe(1.0, 300, 4, 100_000, Some(1e-4));
     turbo_probe(1.0, 300, 4, 100_000, Some(1e-5));

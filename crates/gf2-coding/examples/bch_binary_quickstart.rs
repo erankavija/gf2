@@ -1,18 +1,8 @@
 //! A primitive narrow-sense binary BCH code, end to end.
-//!
 //! Builds BCH(63, 45) from a relative degree and a designed distance alone,
 //! encodes systematically one message and a batch, corrects errors with the
 //! bounded-distance decoder, materializes `G` and `H`, and saves both through
 //! the canonical checksummed `FieldMatrix` format before reloading them.
-//!
-//! The crate documentation's `bch` module states the conventions this example
-//! relies on.
-//!
-//! Run with:
-//!
-//! ```text
-//! ./scripts/cargo-budget.sh cargo run --release -p gf2-coding --example bch_binary_quickstart
-//! ```
 
 use gf2_coding::bch::{
     BchDecodeOutcome, BinaryBchCode, BinaryBchDecoder, DenseBchCode, DesignedDistance,
@@ -110,7 +100,6 @@ pub fn main() -> Result<()> {
         }
     }
 
-    // Save atomically, reload against the expected field, and compare.
     let directory = tempfile::Builder::new()
         .prefix("gf2-bch-quickstart-")
         .tempdir()?;

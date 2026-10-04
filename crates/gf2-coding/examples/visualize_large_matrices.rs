@@ -1,18 +1,4 @@
-//! Example: Visualizing Large Generator Matrices
-//!
-//! This example demonstrates visualization of large generator matrices (>500 rows or columns)
-//! using the BitMatrix image saving functionality. We create various LDPC codes and save
-//! their generator matrices as PNG images.
-//!
-//! Run with: cargo run --example visualize_large_matrices --features visualization
-//!
-//! The example includes:
-//! - DVB-T2 short frame LDPC codes (16200 bits)
-//! - Regular LDPC codes with various dimensions
-//! - Visualization of generator matrices (typically dense)
-//!
-//! Generator matrices (G) encode messages: codeword = message × G
-//! Unlike sparse parity-check matrices, generator matrices are typically dense.
+//! Saves the generator matrices of DVB-T2 short-frame LDPC codes as PNG images.
 
 #[cfg(not(feature = "visualization"))]
 fn main() {
@@ -29,7 +15,6 @@ fn main() {
     println!("=== Visualizing Large Generator Matrices ===\n");
     println!("Using DVB-T2 LDPC codes - industry-standard codes from digital TV broadcasting.\n");
 
-    // Example 1: DVB-T2 Short Frame (Rate 1/2)
     println!("Example 1: DVB-T2 short frame LDPC code (rate 1/2)...");
     let code1 = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
 
@@ -52,7 +37,6 @@ fn main() {
     );
     println!();
 
-    // Example 2: DVB-T2 Short Frame (Rate 2/3)
     println!("Example 2: DVB-T2 short frame LDPC code (rate 2/3)...");
     let code2 = LdpcCode::dvb_t2_short(CodeRate::Rate2_3);
 
@@ -75,7 +59,6 @@ fn main() {
     );
     println!();
 
-    // Example 3: DVB-T2 Short Frame (Rate 3/4)
     println!("Example 3: DVB-T2 short frame LDPC code (rate 3/4)...");
     let code3 = LdpcCode::dvb_t2_short(CodeRate::Rate3_4);
 
@@ -98,7 +81,6 @@ fn main() {
     );
     println!();
 
-    // Summary
     println!("=== Visualization Complete ===");
     println!("\nGenerated visualizations:");
     println!(

@@ -1,13 +1,5 @@
-//! Example: LDPC-coded transmission over AWGN channel with belief propagation decoding.
-//!
-//! This example demonstrates:
-//! - LDPC code construction (regular code)
-//! - Encoding (systematic, all-zero codewords for simplicity)
-//! - BPSK modulation over AWGN channel (via the shared modem framework)
-//! - Iterative belief propagation decoding
-//! - Frame error rate (FER) and convergence analysis
-//!
-//! Compares coded vs. uncoded performance to show LDPC coding gain.
+//! LDPC-coded BPSK over AWGN with iterative min-sum decoding: frame error rate and mean iteration
+//! count of a regular (3,6) code against the uncoded bit error rate and the BI-AWGN capacity.
 
 use gf2_coding::info_theory::{bi_awgn_capacity, ebn0_to_esn0, shannon_limit};
 use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
@@ -18,9 +10,6 @@ use gf2_core::BitVec;
 fn main() {
     println!("=== LDPC-Coded BPSK Transmission over AWGN ===\n");
 
-    // Create a regular (3,6) LDPC code
-    // Column weight 3, row weight 6
-    // This gives rate ≈ 1/2
     let (code, _n_checks, _n_vars) = create_regular_ldpc_3_6(24, 48);
 
     println!("LDPC Code Parameters:");
@@ -31,7 +20,6 @@ fn main() {
     println!("  Structure:           Regular (3,6)");
     println!();
 
-    // Show Shannon limit for this rate
     let shannon_limit_db = shannon_limit(code.rate());
     println!("Shannon Limit:");
     println!(
@@ -42,10 +30,9 @@ fn main() {
     println!("  (Theoretical limit for reliable communication)");
     println!();
 
-    let num_frames = 1000; // Number of codewords to test per SNR point
+    let num_frames = 1000;
     let max_iterations = 50;
 
-    // Eb/N0 range appropriate for rate-1/2 LDPC
     let eb_n0_range = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0];
 
     println!("Simulating {} frames per Eb/N0 point", num_frames);
@@ -85,29 +72,22 @@ fn main() {
     println!(
         "  Gap to Shannon limit at FER=0.01: ~{:.1} dB",
         5.0 - shannon_limit_db
-    ); // Approximate from results
+    );
     println!();
     println!("Typical results:");
     println!("  At Eb/N0 = 2 dB: FER ≈ 0.1-0.5 (converging)");
     println!("  At Eb/N0 = 4 dB: FER ≈ 0.01 (good performance)");
 }
 
-/// Creates a regular (3,6) LDPC code with specified dimensions.
-///
-/// Regular (dv, dc) code: column weight dv, row weight dc.
-/// For (3,6): each variable node connects to 3 checks, each check to 6 variables.
+/// Builds an `m × n` code with column weight 3 by cyclic row assignment.
 fn create_regular_ldpc_3_6(m: usize, n: usize) -> (LdpcCode, usize, usize) {
     let mut edges = Vec::new();
 
-    // Simple construction: distribute edges to maintain regularity
-    // This is a basic approach; production code would use proper construction algorithms
     let column_weight = 3;
     let row_weight = 6;
 
-    // Verify parameters are consistent
     assert_eq!(n * column_weight, m * row_weight, "Total edges must match");
 
-    // Build edges column by column
     for col in 0..n {
         for i in 0..column_weight {
             let row = ((col * column_weight) + i) % m;
@@ -136,29 +116,22 @@ fn simulate_ldpc_transmission(
     let mut total_bits = 0;
 
     for _frame in 0..num_frames {
-        // Transmit all-zero codeword (valid LDPC codeword)
-        // In practice, you'd encode actual message bits
+        // The all-zero word is a codeword of every linear code.
         let codeword = BitVec::zeros(code.n());
 
-        // Modulate + transmit + demap through the BPSK/AWGN reference
-        // channel (drives the modem framework internally).
         let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, code.rate(), &mut rng);
 
-        // Decode with belief propagation
         let result = decoder.decode_iterative(&llrs, max_iterations);
         total_iterations += result.iterations;
 
-        // Check for frame error
         if !result.converged || !result.syndrome_check_passed {
             frame_errors += 1;
         }
 
-        // Also track uncoded BER for comparison
         let hard_decoded: Vec<bool> = llrs.iter().map(|llr| llr.hard_decision()).collect();
         uncoded_bit_errors += hard_decoded.iter().filter(|&&b| b).count(); // Count 1s (errors from all-zero)
         total_bits += code.n();
 
-        // Reset decoder state between frames
         decoder.reset();
     }
 

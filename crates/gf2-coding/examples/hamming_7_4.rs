@@ -1,44 +1,10 @@
-//! Hamming (7,4) Code Example
-//!
-//! This example demonstrates the use of BitVec and BitMatrix for implementing
-//! the Hamming (7,4) error-correcting code. This code encodes 4 data bits into
-//! 7 bits by adding 3 parity bits, and can detect and correct single-bit errors.
-//!
-//! The example includes:
-//! - Encoding messages using the generator matrix
-//! - Simulating transmission through a Binary Symmetric Channel (BSC)
-//! - Decoding and error correction using the parity-check matrix
-//!
-//! This demonstrates the complete flow:
-//! message → encode → channel → received → decode
-//!
-//! The generator matrix G is 4x7 and the parity-check matrix H is 3x7.
-//! For standard Hamming (7,4):
-//!
-//! Generator matrix G (4x7):
-//! ```text
-//!   ┌             ┐
-//!   │ 1 0 0 0 1 1 0 │
-//!   │ 0 1 0 0 1 0 1 │
-//!   │ 0 0 1 0 0 1 1 │
-//!   │ 0 0 0 1 1 1 1 │
-//!   └             ┘
-//! ```
-//!
-//! Parity-check matrix H (3x7):
-//! ```text
-//!   ┌             ┐
-//!   │ 1 1 0 1 1 0 0 │
-//!   │ 1 0 1 1 0 1 0 │
-//!   │ 0 1 1 1 0 0 1 │
-//!   └             ┘
-//! ```
+//! Hamming (7,4) encoding and syndrome decoding with explicit generator and parity-check matrices
+//! over a binary symmetric channel.
 
 use gf2_core::BitMatrix;
 use gf2_core::BitVec;
 use rand::Rng;
 
-/// Creates the generator matrix G for Hamming (7,4) code
 fn create_generator_matrix() -> BitMatrix {
     gf2_core::bitmatrix![
         1, 0, 0, 0, 1, 1, 0;
@@ -48,7 +14,6 @@ fn create_generator_matrix() -> BitMatrix {
     ]
 }
 
-/// Creates the parity-check matrix H for Hamming (7,4) code
 fn create_parity_check_matrix() -> BitMatrix {
     gf2_core::bitmatrix![
         1, 1, 0, 1, 1, 0, 0;
@@ -57,9 +22,7 @@ fn create_parity_check_matrix() -> BitMatrix {
     ]
 }
 
-/// Encodes a 4-bit message using the generator matrix
 fn encode(message: &BitVec, g: &BitMatrix) -> BitVec {
-    // Convert message to 1x4 matrix
     let mut msg_matrix = BitMatrix::zeros(1, 4);
     for i in 0..4 {
         msg_matrix.set(0, i, message.get(i));
@@ -67,7 +30,6 @@ fn encode(message: &BitVec, g: &BitMatrix) -> BitVec {
 
     let codeword_matrix = &msg_matrix * g;
 
-    // Extract result as BitVec
     let mut codeword = BitVec::new();
     for i in 0..7 {
         codeword.push_bit(codeword_matrix.get(0, i));
@@ -76,9 +38,7 @@ fn encode(message: &BitVec, g: &BitMatrix) -> BitVec {
     codeword
 }
 
-/// Computes the syndrome of a received codeword
 fn syndrome(received: &BitVec, h: &BitMatrix) -> BitVec {
-    // Convert received to 7x1 column vector (transposed)
     let mut received_matrix = BitMatrix::zeros(7, 1);
     for i in 0..7 {
         received_matrix.set(i, 0, received.get(i));
@@ -86,7 +46,6 @@ fn syndrome(received: &BitVec, h: &BitMatrix) -> BitVec {
 
     let syndrome_matrix = h * &received_matrix;
 
-    // Extract syndrome as BitVec
     let mut s = BitVec::new();
     for i in 0..3 {
         s.push_bit(syndrome_matrix.get(i, 0));
@@ -95,23 +54,18 @@ fn syndrome(received: &BitVec, h: &BitMatrix) -> BitVec {
     s
 }
 
-/// Decodes a received 7-bit codeword, correcting single-bit errors
 fn decode(received: &BitVec, h: &BitMatrix) -> BitVec {
     let s = syndrome(received, h);
 
-    // Check if syndrome is zero (no error)
     let mut corrected = received.clone();
     if s.count_ones() > 0 {
-        // Non-zero syndrome indicates an error
-        // For Hamming (7,4), the syndrome directly gives the error position
-        // We need to find which column of H matches the syndrome
+        // A single error at position i gives the syndrome equal to column i of H.
         for i in 0..7 {
             let mut col = BitVec::new();
             for j in 0..3 {
                 col.push_bit(h.get(j, i));
             }
             if col == s {
-                // Flip bit at position i
                 corrected.set(i, !corrected.get(i));
                 println!("  Error detected and corrected at position {}", i);
                 break;
@@ -121,7 +75,6 @@ fn decode(received: &BitVec, h: &BitMatrix) -> BitVec {
         println!("  No errors detected");
     }
 
-    // Extract the first 4 bits (the data bits)
     let mut decoded = BitVec::new();
     for i in 0..4 {
         decoded.push_bit(corrected.get(i));
@@ -130,23 +83,7 @@ fn decode(received: &BitVec, h: &BitMatrix) -> BitVec {
     decoded
 }
 
-/// Simulates a binary symmetric channel (BSC) with error probability p.
-///
-/// Each bit in the codeword is flipped independently with probability `error_prob`.
-/// This models a noisy communication channel where transmission errors occur randomly.
-///
-/// # Arguments
-///
-/// * `codeword` - The bit vector to transmit through the channel
-/// * `error_prob` - Probability of bit flip (0.0 to 1.0)
-///
-/// # Returns
-///
-/// A new bit vector representing the received codeword after channel transmission
-///
-/// # Panics
-///
-/// Panics if `error_prob` is not in the range [0.0, 1.0]
+/// Flips each bit independently with probability `error_prob`; panics unless it lies in [0, 1].
 fn binary_symmetric_channel(codeword: &BitVec, error_prob: f64) -> BitVec {
     assert!(
         (0.0..=1.0).contains(&error_prob),
@@ -157,7 +94,6 @@ fn binary_symmetric_channel(codeword: &BitVec, error_prob: f64) -> BitVec {
     let mut received = codeword.clone();
 
     for i in 0..received.len() {
-        // Flip bit with probability error_prob
         if rng.gen::<f64>() < error_prob {
             received.set(i, !received.get(i));
         }
@@ -169,7 +105,6 @@ fn binary_symmetric_channel(codeword: &BitVec, error_prob: f64) -> BitVec {
 fn main() {
     println!("=== Hamming (7,4) Error-Correcting Code Demo ===\n");
 
-    // Create the generator and parity-check matrices
     let g = create_generator_matrix();
     let h = create_parity_check_matrix();
 
@@ -179,7 +114,6 @@ fn main() {
     println!("Parity-Check Matrix H (3x7):");
     println!("{}\n", h);
 
-    // Example 1: Encode and decode without errors
     println!("--- Example 1: Encoding and decoding without errors ---");
     let mut message1 = BitVec::new();
     message1.push_bit(true);
@@ -196,7 +130,6 @@ fn main() {
     assert_eq!(message1, decoded1);
     println!("✓ Decoding successful!\n");
 
-    // Example 2: Introduce a single-bit error and correct it
     println!("--- Example 2: Single-bit error correction ---");
     let mut message2 = BitVec::new();
     message2.push_bit(true);
@@ -208,7 +141,6 @@ fn main() {
     let mut codeword2 = encode(&message2, &g);
     println!("Encoded:  {}", codeword2);
 
-    // Introduce an error at position 2
     println!("Corrupting bit at position 2...");
     codeword2.set(2, !codeword2.get(2));
     println!("Received: {}", codeword2);
@@ -218,7 +150,6 @@ fn main() {
     assert_eq!(message2, decoded2);
     println!("✓ Error corrected successfully!\n");
 
-    // Example 3: Another message
     println!("--- Example 3: Another encoding/decoding example ---");
     let mut message3 = BitVec::new();
     message3.push_bit(false);
@@ -230,13 +161,11 @@ fn main() {
     let codeword3 = encode(&message3, &g);
     println!("Encoded:  {}", codeword3);
 
-    // No error this time
     let decoded3 = decode(&codeword3, &h);
     println!("Decoded:  {}", decoded3);
     assert_eq!(message3, decoded3);
     println!("✓ Decoding successful!\n");
 
-    // Example 4: Error at a different position
     println!("--- Example 4: Error correction at position 5 ---");
     let mut message4 = BitVec::new();
     message4.push_bit(true);
@@ -248,7 +177,6 @@ fn main() {
     let mut codeword4 = encode(&message4, &g);
     println!("Encoded:  {}", codeword4);
 
-    // Introduce an error at position 5
     println!("Corrupting bit at position 5...");
     codeword4.set(5, !codeword4.get(5));
     println!("Received: {}", codeword4);
@@ -258,7 +186,6 @@ fn main() {
     assert_eq!(message4, decoded4);
     println!("✓ Error corrected successfully!\n");
 
-    // Example 5: Using Binary Symmetric Channel
     println!("--- Example 5: Binary Symmetric Channel with p=0.1 ---");
     let mut message5 = BitVec::new();
     message5.push_bit(true);
@@ -270,11 +197,9 @@ fn main() {
     let codeword5 = encode(&message5, &g);
     println!("Encoded:         {}", codeword5);
 
-    // Pass through BSC with 10% error probability
     let received5 = binary_symmetric_channel(&codeword5, 0.1);
     println!("After Channel:   {}", received5);
 
-    // Check if any errors occurred
     let mut errors = Vec::new();
     for i in 0..7 {
         if codeword5.get(i) != received5.get(i) {
@@ -294,7 +219,6 @@ fn main() {
         println!("✗ Decoding failed (too many errors)\n");
     }
 
-    // Example 6: Multiple transmissions through BSC
     println!("--- Example 6: Multiple transmissions through BSC (p=0.15) ---");
     let mut message6 = BitVec::new();
     message6.push_bit(false);

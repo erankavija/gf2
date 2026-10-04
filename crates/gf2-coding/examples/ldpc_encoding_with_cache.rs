@@ -1,6 +1,4 @@
-//! LDPC Encoding with optional caching.
-//!
-//! Demonstrates both the simple (no cache) and cached encoder creation paths.
+//! LDPC encoder construction with and without an `EncodingCache`.
 
 use gf2_coding::ldpc::encoding::EncodingCache;
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
@@ -12,7 +10,6 @@ use std::time::Instant;
 fn main() {
     println!("=== LDPC Encoding: With and Without Cache ===\n");
 
-    // Example 1: Without cache (simplest)
     println!("1. Without cache (simple, always works):");
     println!("   Creating encoder for DVB-T2 short rate 1/2...");
 
@@ -31,7 +28,6 @@ fn main() {
         encoder_no_cache.k()
     );
 
-    // Example 2: With cache (first call)
     println!("2. With cache (first call - preprocesses and caches):");
 
     let cache = EncodingCache::new();
@@ -47,7 +43,6 @@ fn main() {
     );
     println!("   Cache entries: {}\n", cache.stats().entries);
 
-    // Example 3: With cache (second call - instant!)
     println!("3. With cache (second call - cache hit):");
 
     let start = Instant::now();
@@ -63,7 +58,6 @@ fn main() {
         time_first.as_secs_f64() / time_second.as_secs_f64()
     );
 
-    // Example 4: Encode some data with all encoders
     println!("4. Encoding performance (all encoders work the same):");
 
     let message = BitVec::zeros(encoder_no_cache.k());
@@ -82,7 +76,6 @@ fn main() {
         encode_time.as_secs_f64() * 1000.0
     );
 
-    // Example 5: Precomputing all configs
     println!("5. Precomputing all DVB-T2 configurations:");
     println!("   (This is recommended for production applications)");
 
@@ -99,7 +92,6 @@ fn main() {
     println!("   Cached entries: {}", cache_precomp.stats().entries);
     println!("   Memory: ~200 MB\n");
 
-    // Now all encoder creation is instant
     println!("   Creating encoders for different rates (all instant):");
 
     let rates = [CodeRate::Rate1_2, CodeRate::Rate3_5, CodeRate::Rate2_3];
