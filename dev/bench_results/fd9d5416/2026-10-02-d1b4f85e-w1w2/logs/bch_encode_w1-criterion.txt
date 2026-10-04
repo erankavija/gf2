@@ -1,0 +1,2422 @@
+# command: env CARGO_CI_NO_LOCK=1 GF2_BCH_DISPATCH_RECORD=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-d1b4f85e-run/dev/bench_results/fd9d5416/2026-10-02-d1b4f85e-w1w2/dispatch.jsonl RAYON_NUM_THREADS=6 ./dev/scripts/ccx1-bench-flock.sh ./scripts/cargo-budget.sh cargo bench -p gf2-coding --features parallel --bench bch_encode_w1 -- --noplot
+# started_utc: 2026-10-02T01:38:38Z
+# load_avg_start:  04:38:38 up 12 days,  6:43,  6 users,  load average: 1.22, 1.24, 1.10
+nice: cannot set niceness: Permission denied
+    Finished `bench` profile [optimized] target(s) in 0.06s
+     Running benches/bch_encode_w1.rs (target/release/deps/bch_encode_w1-348ed6863d00da1d)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=1: Collecting 100 samples in estimated 5.0006 s (21M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=1
+                        time:   [234.97 ns 235.14 ns 235.33 ns]
+                        thrpt:  [21.247 Melem/s 21.264 Melem/s 21.280 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low mild
+  8 (8.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=1: Collecting 100 samples in estimated 5.0017 s (13M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=1
+                        time:   [376.48 ns 376.66 ns 376.85 ns]
+                        thrpt:  [13.268 Melem/s 13.275 Melem/s 13.281 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=1: Collecting 100 samples in estimated 5.0001 s (86M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=1
+                        time:   [58.029 ns 58.101 ns 58.200 ns]
+                        thrpt:  [85.910 Melem/s 86.056 Melem/s 86.163 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=1: Collecting 100 samples in estimated 5.0003 s (61M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=1
+                        time:   [81.078 ns 81.214 ns 81.351 ns]
+                        thrpt:  [61.462 Melem/s 61.566 Melem/s 61.669 Melem/s]
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=1: Collecting 100 samples in estimated 5.0003 s (74M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=1
+                        time:   [67.206 ns 67.285 ns 67.364 ns]
+                        thrpt:  [74.223 Melem/s 74.311 Melem/s 74.399 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=1: Collecting 100 samples in estimated 5.0002 s (57M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=1
+                        time:   [87.251 ns 87.295 ns 87.341 ns]
+                        thrpt:  [57.247 Melem/s 57.277 Melem/s 57.306 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=1: Collecting 100 samples in estimated 5.0001 s (67M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=1
+                        time:   [72.263 ns 72.309 ns 72.361 ns]
+                        thrpt:  [69.098 Melem/s 69.147 Melem/s 69.192 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=1: Collecting 100 samples in estimated 5.0065 s (3.7M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=1
+                        time:   [1.3687 µs 1.3693 µs 1.3700 µs]
+                        thrpt:  [3.6495 Melem/s 3.6515 Melem/s 3.6532 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=16: Collecting 100 samples in estimated 5.0013 s (7.7M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=16
+                        time:   [654.42 ns 655.05 ns 655.72 ns]
+                        thrpt:  [122.00 Melem/s 122.13 Melem/s 122.25 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=16: Collecting 100 samples in estimated 5.0025 s (6.2M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=16
+                        time:   [798.98 ns 799.60 ns 800.29 ns]
+                        thrpt:  [99.964 Melem/s 100.05 Melem/s 100.13 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  9 (9.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=16: Collecting 100 samples in estimated 5.0002 s (8.1M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=16
+                        time:   [624.75 ns 625.50 ns 626.40 ns]
+                        thrpt:  [127.71 Melem/s 127.90 Melem/s 128.05 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=16: Collecting 100 samples in estimated 5.0040 s (5.0M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=16
+                        time:   [999.65 ns 1.0004 µs 1.0013 µs]
+                        thrpt:  [79.898 Melem/s 79.966 Melem/s 80.028 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=16: Collecting 100 samples in estimated 5.0029 s (7.7M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=16
+                        time:   [652.04 ns 652.96 ns 654.14 ns]
+                        thrpt:  [122.30 Melem/s 122.52 Melem/s 122.69 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=16: Collecting 100 samples in estimated 5.0015 s (5.3M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=16
+                        time:   [935.95 ns 936.38 ns 936.85 ns]
+                        thrpt:  [85.392 Melem/s 85.435 Melem/s 85.475 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=16: Collecting 100 samples in estimated 5.0081 s (803k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=16
+                        time:   [6.2417 µs 6.2590 µs 6.2739 µs]
+                        thrpt:  [12.751 Melem/s 12.782 Melem/s 12.817 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) low severe
+  2 (2.00%) low mild
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=16: Collecting 100 samples in estimated 5.0190 s (576k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=16
+                        time:   [8.7405 µs 8.7700 µs 8.7981 µs]
+                        thrpt:  [9.0929 Melem/s 9.1220 Melem/s 9.1528 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=256: Collecting 100 samples in estimated 5.0314 s (596k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=256
+                        time:   [8.4451 µs 8.4527 µs 8.4613 µs]
+                        thrpt:  [151.28 Melem/s 151.43 Melem/s 151.57 Melem/s]
+Found 18 outliers among 100 measurements (18.00%)
+  11 (11.00%) high mild
+  7 (7.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=256: Collecting 100 samples in estimated 5.0140 s (561k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=256
+                        time:   [8.9473 µs 8.9514 µs 8.9562 µs]
+                        thrpt:  [142.92 Melem/s 142.99 Melem/s 143.06 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  6 (6.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=256: Collecting 100 samples in estimated 5.0373 s (510k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=256
+                        time:   [9.8754 µs 9.8776 µs 9.8802 µs]
+                        thrpt:  [129.55 Melem/s 129.59 Melem/s 129.61 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=256: Collecting 100 samples in estimated 5.0358 s (308k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=256
+                        time:   [16.319 µs 16.328 µs 16.337 µs]
+                        thrpt:  [78.349 Melem/s 78.394 Melem/s 78.434 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  7 (7.00%) high mild
+  4 (4.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=256: Collecting 100 samples in estimated 5.0264 s (495k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=256
+                        time:   [10.281 µs 10.305 µs 10.325 µs]
+                        thrpt:  [123.97 Melem/s 124.21 Melem/s 124.50 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=256: Collecting 100 samples in estimated 5.0027 s (323k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=256
+                        time:   [15.475 µs 15.481 µs 15.487 µs]
+                        thrpt:  [82.650 Melem/s 82.683 Melem/s 82.713 Melem/s]
+Found 15 outliers among 100 measurements (15.00%)
+  10 (10.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=256: Collecting 100 samples in estimated 5.0081 s (465k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=256
+                        time:   [10.822 µs 10.843 µs 10.870 µs]
+                        thrpt:  [117.76 Melem/s 118.05 Melem/s 118.28 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  2 (2.00%) high mild
+  8 (8.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=256: Collecting 100 samples in estimated 5.0625 s (242k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=256
+                        time:   [20.807 µs 20.826 µs 20.850 µs]
+                        thrpt:  [61.391 Melem/s 61.460 Melem/s 61.517 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  7 (7.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=4096: Collecting 100 samples in estimated 5.4603 s (30k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B1/B=4096
+                        time:   [179.82 µs 179.90 µs 180.00 µs]
+                        thrpt:  [113.78 Melem/s 113.84 Melem/s 113.89 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  6 (6.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=4096: Collecting 100 samples in estimated 5.7800 s (30k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B1/B=4096
+                        time:   [188.98 µs 189.06 µs 189.14 µs]
+                        thrpt:  [108.28 Melem/s 108.33 Melem/s 108.37 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  7 (7.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=4096: Collecting 100 samples in estimated 5.0984 s (25k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B1/B=4096
+                        time:   [202.21 µs 202.31 µs 202.41 µs]
+                        thrpt:  [101.18 Melem/s 101.23 Melem/s 101.28 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=4096: Collecting 100 samples in estimated 6.2304 s (20k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B1/B=4096
+                        time:   [308.06 µs 308.18 µs 308.31 µs]
+                        thrpt:  [66.426 Melem/s 66.454 Melem/s 66.480 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  7 (7.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=4096: Collecting 100 samples in estimated 6.1525 s (25k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B1/B=4096
+                        time:   [243.28 µs 243.39 µs 243.54 µs]
+                        thrpt:  [84.093 Melem/s 84.145 Melem/s 84.183 Melem/s]
+Found 18 outliers among 100 measurements (18.00%)
+  9 (9.00%) low severe
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  4 (4.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=4096: Collecting 100 samples in estimated 5.0350 s (15k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B1/B=4096
+                        time:   [332.33 µs 332.43 µs 332.55 µs]
+                        thrpt:  [61.584 Melem/s 61.607 Melem/s 61.626 Melem/s]
+Found 17 outliers among 100 measurements (17.00%)
+  16 (16.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=4096: Collecting 100 samples in estimated 5.3518 s (61k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B1/B=4096
+                        time:   [87.930 µs 88.069 µs 88.205 µs]
+                        thrpt:  [232.19 Melem/s 232.54 Melem/s 232.91 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=4096: Collecting 100 samples in estimated 5.5902 s (25k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B1/B=4096
+                        time:   [218.95 µs 220.14 µs 221.36 µs]
+                        thrpt:  [92.518 Melem/s 93.032 Melem/s 93.538 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=1: Collecting 100 samples in estimated 5.0037 s (5.5M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=1
+                        time:   [908.27 ns 909.11 ns 910.02 ns]
+                        thrpt:  [70.328 Melem/s 70.398 Melem/s 70.463 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) low mild
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=1: Collecting 100 samples in estimated 5.0055 s (4.2M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=1
+                        time:   [1.1918 µs 1.1925 µs 1.1933 µs]
+                        thrpt:  [53.632 Melem/s 53.670 Melem/s 53.700 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=1: Collecting 100 samples in estimated 5.0003 s (20M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=1
+                        time:   [248.98 ns 249.15 ns 249.34 ns]
+                        thrpt:  [256.68 Melem/s 256.87 Melem/s 257.04 Melem/s]
+Found 12 outliers among 100 measurements (12.00%)
+  2 (2.00%) low severe
+  2 (2.00%) low mild
+  5 (5.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=1: Collecting 100 samples in estimated 5.0013 s (16M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=1
+                        time:   [306.81 ns 306.97 ns 307.16 ns]
+                        thrpt:  [208.36 Melem/s 208.49 Melem/s 208.60 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=1
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=1: Collecting 100 samples in estimated 5.0007 s (19M iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=1: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=1
+                        time:   [264.62 ns 264.86 ns 265.11 ns]
+                        thrpt:  [241.41 Melem/s 241.63 Melem/s 241.85 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=1: Collecting 100 samples in estimated 5.0000 s (13M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=1
+                        time:   [380.56 ns 380.75 ns 380.96 ns]
+                        thrpt:  [168.00 Melem/s 168.09 Melem/s 168.17 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=1: Collecting 100 samples in estimated 5.0004 s (13M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=1
+                        time:   [382.85 ns 383.07 ns 383.36 ns]
+                        thrpt:  [166.95 Melem/s 167.07 Melem/s 167.17 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=1: Collecting 100 samples in estimated 5.0017 s (13M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=1
+                        time:   [382.02 ns 382.20 ns 382.40 ns]
+                        thrpt:  [167.37 Melem/s 167.45 Melem/s 167.53 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  7 (7.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=1: Collecting 100 samples in estimated 5.0386 s (192k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=1
+                        time:   [26.214 µs 26.234 µs 26.256 µs]
+                        thrpt:  [2.4376 Melem/s 2.4396 Melem/s 2.4414 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  8 (8.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=16: Collecting 100 samples in estimated 5.0098 s (1.4M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=16
+                        time:   [3.5741 µs 3.5762 µs 3.5786 µs]
+                        thrpt:  [286.15 Melem/s 286.34 Melem/s 286.50 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=16: Collecting 100 samples in estimated 5.0047 s (1.3M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=16
+                        time:   [3.8223 µs 3.8248 µs 3.8281 µs]
+                        thrpt:  [267.49 Melem/s 267.73 Melem/s 267.90 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=16: Collecting 100 samples in estimated 5.0125 s (1.7M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=16
+                        time:   [2.9516 µs 2.9524 µs 2.9532 µs]
+                        thrpt:  [346.74 Melem/s 346.84 Melem/s 346.93 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  8 (8.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=16: Collecting 100 samples in estimated 5.0117 s (1.3M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=16
+                        time:   [3.8868 µs 3.8902 µs 3.8943 µs]
+                        thrpt:  [262.95 Melem/s 263.22 Melem/s 263.46 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=16
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=16: Collecting 100 samples in estimated 5.0111 s (1.6M iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=16: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=16
+                        time:   [3.0847 µs 3.0869 µs 3.0895 µs]
+                        thrpt:  [331.45 Melem/s 331.72 Melem/s 331.96 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=16: Collecting 100 samples in estimated 5.0049 s (1.1M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=16
+                        time:   [4.7398 µs 4.7417 µs 4.7437 µs]
+                        thrpt:  [215.86 Melem/s 215.96 Melem/s 216.04 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=16: Collecting 100 samples in estimated 5.0233 s (1.0M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=16
+                        time:   [4.8577 µs 4.8605 µs 4.8640 µs]
+                        thrpt:  [210.53 Melem/s 210.68 Melem/s 210.80 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  2 (2.00%) high mild
+  9 (9.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=16: Collecting 100 samples in estimated 5.0307 s (702k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=16
+                        time:   [7.0570 µs 7.0795 µs 7.1079 µs]
+                        thrpt:  [144.07 Melem/s 144.64 Melem/s 145.10 Melem/s]
+Found 19 outliers among 100 measurements (19.00%)
+  1 (1.00%) low mild
+  18 (18.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=16: Collecting 100 samples in estimated 5.0073 s (116k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=16
+                        time:   [42.524 µs 42.629 µs 42.732 µs]
+                        thrpt:  [23.963 Melem/s 24.021 Melem/s 24.080 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low severe
+  3 (3.00%) low mild
+  4 (4.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=256: Collecting 100 samples in estimated 5.3228 s (50k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=256
+                        time:   [105.95 µs 106.74 µs 107.51 µs]
+                        thrpt:  [152.40 Melem/s 153.50 Melem/s 154.65 Melem/s]
+Found 21 outliers among 100 measurements (21.00%)
+  15 (15.00%) low severe
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=256: Collecting 100 samples in estimated 5.0575 s (45k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=256
+                        time:   [110.61 µs 111.62 µs 112.55 µs]
+                        thrpt:  [145.57 Melem/s 146.78 Melem/s 148.13 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=256: Collecting 100 samples in estimated 5.0508 s (50k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=256
+                        time:   [112.37 µs 112.43 µs 112.49 µs]
+                        thrpt:  [145.65 Melem/s 145.73 Melem/s 145.81 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  1 (1.00%) high mild
+  8 (8.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=256: Collecting 100 samples in estimated 5.4511 s (45k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=256
+                        time:   [129.49 µs 130.08 µs 130.43 µs]
+                        thrpt:  [125.62 Melem/s 125.96 Melem/s 126.52 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=256
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=256: Collecting 100 samples in estimated 5.1914 s (50k iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=256: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=256
+                        time:   [111.81 µs 112.89 µs 113.80 µs]
+                        thrpt:  [143.97 Melem/s 145.14 Melem/s 146.53 Melem/s]
+Found 24 outliers among 100 measurements (24.00%)
+  18 (18.00%) low severe
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=256: Collecting 100 samples in estimated 5.8273 s (35k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=256
+                        time:   [176.86 µs 177.01 µs 177.14 µs]
+                        thrpt:  [92.492 Melem/s 92.559 Melem/s 92.639 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=256: Collecting 100 samples in estimated 5.2772 s (30k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=256
+                        time:   [179.13 µs 179.39 µs 179.71 µs]
+                        thrpt:  [91.171 Melem/s 91.334 Melem/s 91.464 Melem/s]
+Found 19 outliers among 100 measurements (19.00%)
+  3 (3.00%) high mild
+  16 (16.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=256: Collecting 100 samples in estimated 5.3956 s (66k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=256
+                        time:   [82.758 µs 82.900 µs 83.033 µs]
+                        thrpt:  [197.32 Melem/s 197.64 Melem/s 197.97 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) low severe
+  3 (3.00%) low mild
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=256: Collecting 100 samples in estimated 5.2839 s (76k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=256
+                        time:   [70.298 µs 70.626 µs 70.992 µs]
+                        thrpt:  [230.79 Melem/s 231.98 Melem/s 233.06 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=4096: Collecting 100 samples in estimated 5.1121 s (2400 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B2/B=4096
+                        time:   [2.1447 ms 2.1469 ms 2.1490 ms]
+                        thrpt:  [121.98 Melem/s 122.11 Melem/s 122.23 Melem/s]
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=4096: Collecting 100 samples in estimated 5.1648 s (2400 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B2/B=4096
+                        time:   [2.1521 ms 2.1532 ms 2.1542 ms]
+                        thrpt:  [121.69 Melem/s 121.75 Melem/s 121.81 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=4096: Collecting 100 samples in estimated 5.0503 s (2500 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B2/B=4096
+                        time:   [2.0132 ms 2.0138 ms 2.0145 ms]
+                        thrpt:  [130.13 Melem/s 130.17 Melem/s 130.22 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  8 (8.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=4096: Collecting 100 samples in estimated 5.2001 s (2300 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B2/B=4096
+                        time:   [2.2632 ms 2.2645 ms 2.2659 ms]
+                        thrpt:  [115.69 Melem/s 115.76 Melem/s 115.83 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) high mild
+  8 (8.00%) high severe
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=4096
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=4096: Collecting 100 samples in estimated 5.1256 s (2500 iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=4096: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/B2/B=4096
+                        time:   [2.0479 ms 2.0489 ms 2.0501 ms]
+                        thrpt:  [127.87 Melem/s 127.94 Melem/s 128.00 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=4096: Collecting 100 samples in estimated 5.0312 s (1600 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B2/B=4096
+                        time:   [3.1377 ms 3.1393 ms 3.1411 ms]
+                        thrpt:  [83.456 Melem/s 83.503 Melem/s 83.547 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=4096: Collecting 100 samples in estimated 5.1503 s (1600 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B2/B=4096
+                        time:   [3.2145 ms 3.2159 ms 3.2174 ms]
+                        thrpt:  [81.478 Melem/s 81.516 Melem/s 81.551 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  6 (6.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=4096: Collecting 100 samples in estimated 6.0506 s (10k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B2/B=4096
+                        time:   [593.64 µs 595.05 µs 596.55 µs]
+                        thrpt:  [439.43 Melem/s 440.54 Melem/s 441.59 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=4096: Collecting 100 samples in estimated 7.4519 s (10k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B2/B=4096
+                        time:   [733.62 µs 734.44 µs 735.30 µs]
+                        thrpt:  [356.51 Melem/s 356.93 Melem/s 357.33 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=1: Collecting 100 samples in estimated 5.0047 s (2.3M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=1
+                        time:   [2.1413 µs 2.1432 µs 2.1453 µs]
+                        thrpt:  [103.95 Melem/s 104.05 Melem/s 104.14 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=1: Collecting 100 samples in estimated 5.0060 s (2.0M iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=1
+                        time:   [2.4877 µs 2.4908 µs 2.4940 µs]
+                        thrpt:  [89.415 Melem/s 89.529 Melem/s 89.641 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=1: Collecting 100 samples in estimated 5.0013 s (13M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=1
+                        time:   [397.03 ns 397.48 ns 397.95 ns]
+                        thrpt:  [560.38 Melem/s 561.04 Melem/s 561.66 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=1: Collecting 100 samples in estimated 5.0013 s (8.2M iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=1
+                        time:   [611.99 ns 612.65 ns 613.28 ns]
+                        thrpt:  [363.62 Melem/s 364.00 Melem/s 364.38 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=1
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=1: Collecting 100 samples in estimated 5.0010 s (9.9M iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=1: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=1
+                        time:   [505.26 ns 505.50 ns 505.76 ns]
+                        thrpt:  [440.92 Melem/s 441.14 Melem/s 441.36 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=1: Collecting 100 samples in estimated 5.0039 s (6.0M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=1
+                        time:   [829.94 ns 830.53 ns 831.15 ns]
+                        thrpt:  [268.30 Melem/s 268.50 Melem/s 268.69 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=1: Collecting 100 samples in estimated 5.0035 s (6.1M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=1
+                        time:   [817.89 ns 818.23 ns 818.64 ns]
+                        thrpt:  [272.40 Melem/s 272.54 Melem/s 272.65 Melem/s]
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=1: Collecting 100 samples in estimated 5.0005 s (6.2M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=1
+                        time:   [805.26 ns 805.80 ns 806.41 ns]
+                        thrpt:  [276.54 Melem/s 276.74 Melem/s 276.93 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  9 (9.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=1: Collecting 100 samples in estimated 5.0515 s (192k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=1
+                        time:   [26.290 µs 26.299 µs 26.311 µs]
+                        thrpt:  [8.4755 Melem/s 8.4793 Melem/s 8.4823 Melem/s]
+Found 16 outliers among 100 measurements (16.00%)
+  10 (10.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=16: Collecting 100 samples in estimated 5.0279 s (687k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=16
+                        time:   [7.3169 µs 7.3193 µs 7.3219 µs]
+                        thrpt:  [487.31 Melem/s 487.48 Melem/s 487.64 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=16: Collecting 100 samples in estimated 5.0127 s (651k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=16
+                        time:   [7.6923 µs 7.6970 µs 7.7022 µs]
+                        thrpt:  [463.24 Melem/s 463.55 Melem/s 463.84 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=16: Collecting 100 samples in estimated 5.0119 s (889k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=16
+                        time:   [5.6342 µs 5.6361 µs 5.6385 µs]
+                        thrpt:  [632.79 Melem/s 633.06 Melem/s 633.28 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=16: Collecting 100 samples in estimated 5.0256 s (540k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=16
+                        time:   [9.2837 µs 9.2877 µs 9.2922 µs]
+                        thrpt:  [383.98 Melem/s 384.16 Melem/s 384.33 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  6 (6.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=16
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=16: Collecting 100 samples in estimated 5.0021 s (702k iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=16: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=16
+                        time:   [7.1172 µs 7.1201 µs 7.1238 µs]
+                        thrpt:  [500.86 Melem/s 501.12 Melem/s 501.32 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=16: Collecting 100 samples in estimated 5.0244 s (419k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=16
+                        time:   [11.881 µs 11.885 µs 11.889 µs]
+                        thrpt:  [300.10 Melem/s 300.21 Melem/s 300.31 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=16: Collecting 100 samples in estimated 5.0187 s (384k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=16
+                        time:   [12.741 µs 12.758 µs 12.778 µs]
+                        thrpt:  [279.24 Melem/s 279.66 Melem/s 280.03 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=16: Collecting 100 samples in estimated 5.0148 s (515k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=16
+                        time:   [9.7017 µs 9.8751 µs 10.056 µs]
+                        thrpt:  [354.80 Melem/s 361.31 Melem/s 367.77 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=16: Collecting 100 samples in estimated 5.1185 s (121k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=16
+                        time:   [42.351 µs 42.401 µs 42.454 µs]
+                        thrpt:  [84.044 Melem/s 84.150 Melem/s 84.248 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  7 (7.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=256: Collecting 100 samples in estimated 5.6284 s (25k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=256
+                        time:   [234.13 µs 234.30 µs 234.50 µs]
+                        thrpt:  [243.45 Melem/s 243.65 Melem/s 243.83 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=256: Collecting 100 samples in estimated 5.9086 s (25k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=256
+                        time:   [235.33 µs 235.64 µs 235.97 µs]
+                        thrpt:  [241.92 Melem/s 242.27 Melem/s 242.59 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  10 (10.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=256: Collecting 100 samples in estimated 5.1852 s (25k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=256
+                        time:   [204.85 µs 204.98 µs 205.14 µs]
+                        thrpt:  [278.29 Melem/s 278.51 Melem/s 278.68 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  2 (2.00%) high mild
+  7 (7.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=256: Collecting 100 samples in estimated 5.3494 s (20k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=256
+                        time:   [274.25 µs 276.37 µs 278.12 µs]
+                        thrpt:  [205.27 Melem/s 206.56 Melem/s 208.16 Melem/s]
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=256
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=256: Collecting 100 samples in estimated 6.2251 s (25k iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=256: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=256
+                        time:   [262.07 µs 262.32 µs 262.56 µs]
+                        thrpt:  [217.43 Melem/s 217.63 Melem/s 217.83 Melem/s]
+Found 26 outliers among 100 measurements (26.00%)
+  19 (19.00%) low severe
+  6 (6.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=256: Collecting 100 samples in estimated 6.7237 s (15k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=256
+                        time:   [442.56 µs 442.70 µs 442.85 µs]
+                        thrpt:  [128.91 Melem/s 128.95 Melem/s 128.99 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=256: Collecting 100 samples in estimated 6.7950 s (15k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=256
+                        time:   [458.85 µs 461.52 µs 463.73 µs]
+                        thrpt:  [123.11 Melem/s 123.70 Melem/s 124.42 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=256: Collecting 100 samples in estimated 5.4300 s (61k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=256
+                        time:   [89.558 µs 89.682 µs 89.811 µs]
+                        thrpt:  [635.65 Melem/s 636.56 Melem/s 637.44 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=256: Collecting 100 samples in estimated 5.1037 s (40k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=256
+                        time:   [127.30 µs 127.69 µs 128.05 µs]
+                        thrpt:  [445.82 Melem/s 447.09 Melem/s 448.44 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=4096: Collecting 100 samples in estimated 5.2021 s (1300 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/B3/B=4096
+                        time:   [3.9851 ms 3.9878 ms 3.9908 ms]
+                        thrpt:  [228.88 Melem/s 229.05 Melem/s 229.21 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  9 (9.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=4096: Collecting 100 samples in estimated 5.2171 s (1300 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/B3/B=4096
+                        time:   [4.0146 ms 4.0172 ms 4.0199 ms]
+                        thrpt:  [227.22 Melem/s 227.38 Melem/s 227.52 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=4096: Collecting 100 samples in estimated 5.0103 s (1300 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/B3/B=4096
+                        time:   [3.8394 ms 3.8414 ms 3.8437 ms]
+                        thrpt:  [237.64 Melem/s 237.78 Melem/s 237.90 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  4 (4.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=4096: Collecting 100 samples in estimated 5.2461 s (1100 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/B3/B=4096
+                        time:   [4.7573 ms 4.7601 ms 4.7632 ms]
+                        thrpt:  [191.76 Melem/s 191.89 Melem/s 192.00 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  7 (7.00%) high mild
+  4 (4.00%) high severe
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=4096
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=4096: Collecting 100 samples in estimated 5.4075 s (1200 iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=4096: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/B3/B=4096
+                        time:   [4.4869 ms 4.4891 ms 4.4915 ms]
+                        thrpt:  [203.36 Melem/s 203.47 Melem/s 203.57 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=4096: Collecting 100 samples in estimated 5.3547 s (700 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/B3/B=4096
+                        time:   [7.6446 ms 7.6489 ms 7.6536 ms]
+                        thrpt:  [119.34 Melem/s 119.42 Melem/s 119.48 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  7 (7.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=4096: Collecting 100 samples in estimated 5.4068 s (700 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/B3/B=4096
+                        time:   [7.7289 ms 7.7327 ms 7.7368 ms]
+                        thrpt:  [118.06 Melem/s 118.12 Melem/s 118.18 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.3s, enable flat sampling, or reduce sample count to 50.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=4096: Collecting 100 samples in estimated 7.2631 s (5050 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/B3/B=4096
+                        time:   [1.4290 ms 1.4355 ms 1.4421 ms]
+                        thrpt:  [633.38 Melem/s 636.29 Melem/s 639.19 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.7s, enable flat sampling, or reduce sample count to 50.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=4096: Collecting 100 samples in estimated 7.7478 s (5050 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/B3/B=4096
+                        time:   [1.5475 ms 1.5502 ms 1.5529 ms]
+                        thrpt:  [588.18 Melem/s 589.24 Melem/s 590.25 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1: Collecting 10 samples in estimated 5.0035 s (11k iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1
+                        time:   [445.40 µs 445.77 µs 446.33 µs]
+                        thrpt:  [36.329 Melem/s 36.375 Melem/s 36.406 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=1: Collecting 10 samples in estimated 5.0017 s (8650 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=1
+                        time:   [579.38 µs 579.59 µs 579.82 µs]
+                        thrpt:  [27.965 Melem/s 27.976 Melem/s 27.987 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1: Collecting 10 samples in estimated 5.0002 s (215k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=1
+                        time:   [23.115 µs 23.144 µs 23.180 µs]
+                        thrpt:  [699.52 Melem/s 700.61 Melem/s 701.48 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=1: Collecting 10 samples in estimated 5.0000 s (97k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=1
+                        time:   [51.168 µs 51.249 µs 51.347 µs]
+                        thrpt:  [315.79 Melem/s 316.40 Melem/s 316.90 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=1
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=1: Collecting 10 samples in estimated 5.0002 s (137k iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=1: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=1
+                        time:   [36.275 µs 36.290 µs 36.306 µs]
+                        thrpt:  [446.62 Melem/s 446.82 Melem/s 447.00 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) low mild
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=1: Collecting 10 samples in estimated 5.0010 s (37k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=1
+                        time:   [135.88 µs 136.08 µs 136.29 µs]
+                        thrpt:  [118.98 Melem/s 119.16 Melem/s 119.33 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=1: Collecting 10 samples in estimated 5.0009 s (37k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=1
+                        time:   [135.98 µs 136.11 µs 136.24 µs]
+                        thrpt:  [119.02 Melem/s 119.13 Melem/s 119.25 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=1: Collecting 10 samples in estimated 5.0000 s (37k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=1
+                        time:   [135.68 µs 135.89 µs 136.13 µs]
+                        thrpt:  [119.11 Melem/s 119.32 Melem/s 119.51 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=1: Collecting 10 samples in estimated 5.0001 s (29k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=1
+                        time:   [170.97 µs 171.12 µs 171.31 µs]
+                        thrpt:  [94.652 Melem/s 94.758 Melem/s 94.842 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16: Collecting 10 samples in estimated 5.0023 s (4020 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16
+                        time:   [1.2441 ms 1.2446 ms 1.2454 ms]
+                        thrpt:  [208.32 Melem/s 208.45 Melem/s 208.54 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=16: Collecting 10 samples in estimated 5.0118 s (3550 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=16
+                        time:   [1.4106 ms 1.4113 ms 1.4120 ms]
+                        thrpt:  [183.74 Melem/s 183.83 Melem/s 183.92 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16: Collecting 10 samples in estimated 5.0063 s (5350 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=16
+                        time:   [934.82 µs 935.49 µs 936.24 µs]
+                        thrpt:  [277.11 Melem/s 277.33 Melem/s 277.53 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=16: Collecting 10 samples in estimated 5.0050 s (3610 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=16
+                        time:   [1.3858 ms 1.3868 ms 1.3881 ms]
+                        thrpt:  [186.91 Melem/s 187.07 Melem/s 187.21 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=16
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=16: Collecting 10 samples in estimated 5.0040 s (4400 iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=16: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=16
+                        time:   [1.1348 ms 1.1352 ms 1.1356 ms]
+                        thrpt:  [228.45 Melem/s 228.54 Melem/s 228.62 Melem/s]
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=16: Collecting 10 samples in estimated 5.0178 s (1950 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=16
+                        time:   [2.5711 ms 2.5730 ms 2.5753 ms]
+                        thrpt:  [100.74 Melem/s 100.83 Melem/s 100.90 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=16: Collecting 10 samples in estimated 5.0181 s (1950 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=16
+                        time:   [2.5711 ms 2.5722 ms 2.5738 ms]
+                        thrpt:  [100.80 Melem/s 100.86 Melem/s 100.91 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=16: Collecting 10 samples in estimated 5.0033 s (9340 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=16
+                        time:   [526.68 µs 528.14 µs 529.48 µs]
+                        thrpt:  [489.99 Melem/s 491.23 Melem/s 492.59 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=16: Collecting 10 samples in estimated 5.0008 s (9160 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=16
+                        time:   [544.11 µs 545.29 µs 546.35 µs]
+                        thrpt:  [474.86 Melem/s 475.78 Melem/s 476.81 Melem/s]
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256: Collecting 10 samples in estimated 5.0922 s (310 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256
+                        time:   [16.393 ms 16.402 ms 16.413 ms]
+                        thrpt:  [252.92 Melem/s 253.08 Melem/s 253.22 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) low mild
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=256: Collecting 10 samples in estimated 5.1232 s (300 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=256
+                        time:   [17.043 ms 17.048 ms 17.054 ms]
+                        thrpt:  [243.41 Melem/s 243.49 Melem/s 243.57 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256: Collecting 10 samples in estimated 5.1248 s (340 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=256
+                        time:   [15.058 ms 15.064 ms 15.073 ms]
+                        thrpt:  [275.40 Melem/s 275.55 Melem/s 275.68 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=256: Collecting 10 samples in estimated 5.1204 s (230 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=256
+                        time:   [22.177 ms 22.195 ms 22.214 ms]
+                        thrpt:  [186.87 Melem/s 187.02 Melem/s 187.18 Melem/s]
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=256
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=256: Collecting 10 samples in estimated 5.1161 s (280 iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=256: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=256
+                        time:   [18.254 ms 18.272 ms 18.294 ms]
+                        thrpt:  [226.90 Melem/s 227.18 Melem/s 227.40 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=256: Collecting 10 samples in estimated 5.3558 s (130 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=256
+                        time:   [41.169 ms 41.192 ms 41.219 ms]
+                        thrpt:  [100.71 Melem/s 100.77 Melem/s 100.83 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=256: Collecting 10 samples in estimated 5.3573 s (130 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=256
+                        time:   [41.187 ms 41.209 ms 41.232 ms]
+                        thrpt:  [100.67 Melem/s 100.73 Melem/s 100.78 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=256: Collecting 10 samples in estimated 5.0473 s (690 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=256
+                        time:   [7.5113 ms 7.5818 ms 7.6543 ms]
+                        thrpt:  [542.31 Melem/s 547.50 Melem/s 552.64 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=256: Collecting 10 samples in estimated 5.0298 s (690 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=256
+                        time:   [7.2878 ms 7.3065 ms 7.3262 ms]
+                        thrpt:  [566.60 Melem/s 568.13 Melem/s 569.58 Melem/s]
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096: Collecting 10 samples in estimated 5.2701 s (20 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096
+                        time:   [263.13 ms 263.25 ms 263.39 ms]
+                        thrpt:  [252.16 Melem/s 252.30 Melem/s 252.41 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=4096: Collecting 10 samples in estimated 5.4754 s (20 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2S-mother/B=4096
+                        time:   [274.14 ms 274.73 ms 275.35 ms]
+                        thrpt:  [241.21 Melem/s 241.75 Melem/s 242.27 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096: Collecting 10 samples in estimated 7.2134 s (30 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2S-mother/B=4096
+                        time:   [240.56 ms 240.67 ms 240.79 ms]
+                        thrpt:  [275.83 Melem/s 275.97 Melem/s 276.10 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=4096: Collecting 10 samples in estimated 7.1343 s (20 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2S-mother/B=4096
+                        time:   [356.18 ms 356.31 ms 356.45 ms]
+                        thrpt:  [186.33 Melem/s 186.40 Melem/s 186.47 Melem/s]
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=4096
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=4096: Collecting 10 samples in estimated 5.8572 s (20 iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=4096: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/T2S-mother/B=4096
+                        time:   [292.44 ms 292.71 ms 293.02 ms]
+                        thrpt:  [226.66 Melem/s 226.90 Melem/s 227.11 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 6.6s.
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=4096: Collecting 10 samples in estimated 6.5975 s (10 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2S-mother/B=4096
+                        time:   [660.38 ms 660.76 ms 661.19 ms]
+                        thrpt:  [100.45 Melem/s 100.52 Melem/s 100.57 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 6.6s.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=4096: Collecting 10 samples in estimated 6.6286 s (10 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2S-mother/B=4096
+                        time:   [662.20 ms 662.74 ms 663.37 ms]
+                        thrpt:  [100.12 Melem/s 100.22 Melem/s 100.30 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=4096: Collecting 10 samples in estimated 5.7331 s (50 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2S-mother/B=4096
+                        time:   [114.41 ms 114.49 ms 114.58 ms]
+                        thrpt:  [579.67 Melem/s 580.12 Melem/s 580.51 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=4096: Collecting 10 samples in estimated 5.9329 s (50 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2S-mother/B=4096
+                        time:   [118.38 ms 118.43 ms 118.50 ms]
+                        thrpt:  [560.50 Melem/s 560.80 Melem/s 561.07 Melem/s]
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1: Collecting 10 samples in estimated 5.0162 s (3030 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1
+                        time:   [1.6499 ms 1.6508 ms 1.6517 ms]
+                        thrpt:  [39.560 Melem/s 39.583 Melem/s 39.604 Melem/s]
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=1
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=1: Collecting 10 samples in estimated 5.0160 s (2090 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=1: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=1
+                        time:   [2.4000 ms 2.4020 ms 2.4040 ms]
+                        thrpt:  [27.181 Melem/s 27.204 Melem/s 27.227 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1: Collecting 10 samples in estimated 5.0001 s (24k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=1
+                        time:   [204.66 µs 204.83 µs 205.02 µs]
+                        thrpt:  [318.72 Melem/s 319.01 Melem/s 319.28 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=1
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=1: Collecting 10 samples in estimated 5.0013 s (15k iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=1: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=1
+                        time:   [323.66 µs 323.84 µs 324.04 µs]
+                        thrpt:  [201.65 Melem/s 201.78 Melem/s 201.89 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=1
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=1: Collecting 10 samples in estimated 5.0015 s (19k iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=1: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=1
+                        time:   [257.82 µs 257.93 µs 258.04 µs]
+                        thrpt:  [253.23 Melem/s 253.33 Melem/s 253.44 Melem/s]
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=1: Collecting 10 samples in estimated 5.0014 s (8080 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=1
+                        time:   [618.87 µs 619.32 µs 619.83 µs]
+                        thrpt:  [105.42 Melem/s 105.51 Melem/s 105.58 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=1: Collecting 10 samples in estimated 5.0041 s (8100 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=1
+                        time:   [618.63 µs 619.19 µs 619.86 µs]
+                        thrpt:  [105.42 Melem/s 105.53 Melem/s 105.63 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=1: Collecting 10 samples in estimated 5.0039 s (8080 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=1
+                        time:   [618.41 µs 618.96 µs 619.52 µs]
+                        thrpt:  [105.47 Melem/s 105.57 Melem/s 105.66 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=1: Collecting 10 samples in estimated 5.0011 s (7630 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=1
+                        time:   [653.31 µs 654.13 µs 655.40 µs]
+                        thrpt:  [99.699 Melem/s 99.894 Melem/s 100.02 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16: Collecting 10 samples in estimated 5.0478 s (980 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16
+                        time:   [5.1492 ms 5.1518 ms 5.1554 ms]
+                        thrpt:  [202.79 Melem/s 202.94 Melem/s 203.04 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=16
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=16: Collecting 10 samples in estimated 5.0203 s (850 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=16: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=16
+                        time:   [5.9013 ms 5.9028 ms 5.9043 ms]
+                        thrpt:  [177.07 Melem/s 177.12 Melem/s 177.16 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16: Collecting 10 samples in estimated 5.0209 s (1340 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=16
+                        time:   [3.7460 ms 3.7488 ms 3.7519 ms]
+                        thrpt:  [278.66 Melem/s 278.88 Melem/s 279.09 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=16
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=16: Collecting 10 samples in estimated 5.0062 s (880 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=16: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=16
+                        time:   [5.6522 ms 5.6567 ms 5.6626 ms]
+                        thrpt:  [184.63 Melem/s 184.82 Melem/s 184.97 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=16
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=16: Collecting 10 samples in estimated 5.0200 s (1100 iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=16: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=16
+                        time:   [4.5551 ms 4.5578 ms 4.5605 ms]
+                        thrpt:  [229.25 Melem/s 229.39 Melem/s 229.52 Melem/s]
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=16: Collecting 10 samples in estimated 5.0625 s (490 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=16
+                        time:   [10.332 ms 10.336 ms 10.341 ms]
+                        thrpt:  [101.10 Melem/s 101.15 Melem/s 101.19 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=16: Collecting 10 samples in estimated 5.0644 s (490 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=16
+                        time:   [10.334 ms 10.340 ms 10.345 ms]
+                        thrpt:  [101.06 Melem/s 101.12 Melem/s 101.17 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=16: Collecting 10 samples in estimated 5.0106 s (2340 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=16
+                        time:   [2.1470 ms 2.1586 ms 2.1706 ms]
+                        thrpt:  [481.66 Melem/s 484.35 Melem/s 486.96 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) low mild
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=16: Collecting 10 samples in estimated 5.0030 s (2390 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=16
+                        time:   [2.0807 ms 2.0860 ms 2.0918 ms]
+                        thrpt:  [499.80 Melem/s 501.18 Melem/s 502.48 Melem/s]
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256: Collecting 10 samples in estimated 5.3141 s (80 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256
+                        time:   [66.211 ms 66.260 ms 66.327 ms]
+                        thrpt:  [252.20 Melem/s 252.46 Melem/s 252.65 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=256
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=256: Collecting 10 samples in estimated 5.5456 s (80 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=256: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=256
+                        time:   [69.249 ms 69.318 ms 69.395 ms]
+                        thrpt:  [241.05 Melem/s 241.32 Melem/s 241.56 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256: Collecting 10 samples in estimated 5.3917 s (90 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=256
+                        time:   [59.755 ms 59.784 ms 59.813 ms]
+                        thrpt:  [279.67 Melem/s 279.80 Melem/s 279.94 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=256
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=256: Collecting 10 samples in estimated 5.4151 s (60 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=256: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=256
+                        time:   [90.105 ms 90.167 ms 90.234 ms]
+                        thrpt:  [185.38 Melem/s 185.52 Melem/s 185.65 Melem/s]
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=256
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=256: Collecting 10 samples in estimated 5.0922 s (70 iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=256: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=256
+                        time:   [72.666 ms 72.708 ms 72.771 ms]
+                        thrpt:  [229.87 Melem/s 230.07 Melem/s 230.20 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=256: Collecting 10 samples in estimated 6.6183 s (40 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=256
+                        time:   [165.13 ms 165.22 ms 165.33 ms]
+                        thrpt:  [101.18 Melem/s 101.25 Melem/s 101.30 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=256: Collecting 10 samples in estimated 6.6653 s (40 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=256
+                        time:   [166.46 ms 166.53 ms 166.61 ms]
+                        thrpt:  [100.40 Melem/s 100.45 Melem/s 100.49 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=256: Collecting 10 samples in estimated 5.1434 s (170 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=256
+                        time:   [28.996 ms 29.754 ms 30.702 ms]
+                        thrpt:  [544.84 Melem/s 562.21 Melem/s 576.90 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=256: Collecting 10 samples in estimated 5.0974 s (170 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=256
+                        time:   [29.971 ms 29.988 ms 30.001 ms]
+                        thrpt:  [557.57 Melem/s 557.81 Melem/s 558.13 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) low severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 10.6s.
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096: Collecting 10 samples in estimated 10.639 s (10 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096
+                        time:   [1.0634 s 1.0649 s 1.0669 s]
+                        thrpt:  [250.87 Melem/s 251.33 Melem/s 251.69 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=4096
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 11.1s.
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=4096: Collecting 10 samples in estimated 11.110 s (10 iterations)
+Benchmarking bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=4096: Analyzing
+bch_encode_w1/family=bitslice-interleaved[scalar]/W1/warm-reuse/T2N-mother/B=4096
+                        time:   [1.1109 s 1.1116 s 1.1124 s]
+                        thrpt:  [240.61 Melem/s 240.78 Melem/s 240.93 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 9.6s.
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096: Collecting 10 samples in estimated 9.6238 s (10 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[avx2-pclmul]/W1/warm-reuse/T2N-mother/B=4096
+                        time:   [962.06 ms 962.51 ms 963.01 ms]
+                        thrpt:  [277.93 Melem/s 278.07 Melem/s 278.20 Melem/s]
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=4096
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 14.5s.
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=4096: Collecting 10 samples in estimated 14.481 s (10 iterations)
+Benchmarking bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=4096: Analyzing
+bch_encode_w1/family=clmul-fold[scalar]/W1/warm-reuse/T2N-mother/B=4096
+                        time:   [1.4445 s 1.4460 s 1.4475 s]
+                        thrpt:  [184.90 Melem/s 185.09 Melem/s 185.29 Melem/s]
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=4096
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 11.8s.
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=4096: Collecting 10 samples in estimated 11.759 s (10 iterations)
+Benchmarking bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=4096: Analyzing
+bch_encode_w1/family=table-remainder/W1/warm-reuse/T2N-mother/B=4096
+                        time:   [1.1755 s 1.1761 s 1.1769 s]
+                        thrpt:  [227.41 Melem/s 227.56 Melem/s 227.69 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 26.5s.
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=4096: Collecting 10 samples in estimated 26.501 s (10 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/T2N-mother/B=4096
+                        time:   [2.6489 s 2.6496 s 2.6502 s]
+                        thrpt:  [100.99 Melem/s 101.02 Melem/s 101.04 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 26.6s.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=4096: Collecting 10 samples in estimated 26.610 s (10 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/T2N-mother/B=4096
+                        time:   [2.6610 s 2.6621 s 2.6633 s]
+                        thrpt:  [100.50 Melem/s 100.54 Melem/s 100.58 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=4096: Collecting 10 samples in estimated 9.2026 s (20 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/T2N-mother/B=4096
+                        time:   [460.03 ms 460.27 ms 460.58 ms]
+                        thrpt:  [581.11 Melem/s 581.49 Melem/s 581.80 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=4096: Collecting 10 samples in estimated 9.4984 s (20 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/T2N-mother/B=4096
+                        time:   [474.83 ms 475.30 ms 476.00 ms]
+                        thrpt:  [562.27 Melem/s 563.10 Melem/s 563.67 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=1
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=1: Collecting 10 samples in estimated 5.0009 s (32k iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=1: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=1
+                        time:   [160.23 µs 160.44 µs 160.65 µs]
+                        thrpt:  [43.771 Melem/s 43.829 Melem/s 43.887 Melem/s]
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=1
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=1: Collecting 10 samples in estimated 5.0013 s (31k iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=1: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=1
+                        time:   [158.44 µs 158.83 µs 159.18 µs]
+                        thrpt:  [44.177 Melem/s 44.274 Melem/s 44.383 Melem/s]
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=16
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=16: Collecting 10 samples in estimated 5.0226 s (1690 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=16: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=16
+                        time:   [2.9693 ms 2.9726 ms 2.9760 ms]
+                        thrpt:  [37.806 Melem/s 37.850 Melem/s 37.892 Melem/s]
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=16
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=16: Collecting 10 samples in estimated 5.0025 s (1690 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=16: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=16
+                        time:   [2.9639 ms 2.9656 ms 2.9679 ms]
+                        thrpt:  [37.910 Melem/s 37.939 Melem/s 37.961 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=256
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=256: Collecting 10 samples in estimated 5.2384 s (110 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=256: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=256
+                        time:   [47.606 ms 47.640 ms 47.666 ms]
+                        thrpt:  [37.767 Melem/s 37.787 Melem/s 37.814 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=256
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=256: Collecting 10 samples in estimated 5.2393 s (110 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=256: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=256
+                        time:   [47.488 ms 47.555 ms 47.610 ms]
+                        thrpt:  [37.811 Melem/s 37.855 Melem/s 37.908 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=4096
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 7.6s.
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=4096: Collecting 10 samples in estimated 7.6230 s (10 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=4096: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2S/B=4096
+                        time:   [761.99 ms 762.49 ms 763.00 ms]
+                        thrpt:  [37.750 Melem/s 37.775 Melem/s 37.800 Melem/s]
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=4096
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 7.6s.
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=4096: Collecting 10 samples in estimated 7.5964 s (10 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=4096: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2S/B=4096
+                        time:   [759.90 ms 760.36 ms 760.74 ms]
+                        thrpt:  [37.862 Melem/s 37.881 Melem/s 37.904 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=1
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=1: Collecting 10 samples in estimated 5.0003 s (6280 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=1: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=1
+                        time:   [796.54 µs 797.26 µs 798.05 µs]
+                        thrpt:  [40.358 Melem/s 40.399 Melem/s 40.435 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=1
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=1: Collecting 10 samples in estimated 5.0036 s (6380 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=1: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=1
+                        time:   [783.19 µs 783.65 µs 784.19 µs]
+                        thrpt:  [41.072 Melem/s 41.100 Melem/s 41.124 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=16
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=16: Collecting 10 samples in estimated 5.0687 s (390 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=16: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=16
+                        time:   [13.008 ms 13.025 ms 13.040 ms]
+                        thrpt:  [39.519 Melem/s 39.565 Melem/s 39.615 Melem/s]
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=16
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=16: Collecting 10 samples in estimated 5.0378 s (390 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=16: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=16
+                        time:   [12.872 ms 12.941 ms 13.030 ms]
+                        thrpt:  [39.550 Melem/s 39.821 Melem/s 40.034 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=256
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=256: Collecting 10 samples in estimated 6.2811 s (30 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=256: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=256
+                        time:   [209.59 ms 209.73 ms 209.87 ms]
+                        thrpt:  [39.287 Melem/s 39.314 Melem/s 39.340 Melem/s]
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=256
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=256: Collecting 10 samples in estimated 6.2182 s (30 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=256: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=256
+                        time:   [206.05 ms 206.13 ms 206.22 ms]
+                        thrpt:  [39.983 Melem/s 40.001 Melem/s 40.016 Melem/s]
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=4096
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 33.6s.
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=4096: Collecting 10 samples in estimated 33.585 s (10 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=4096: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/fresh-alloc/T2N/B=4096
+                        time:   [3.3590 s 3.3610 s 3.3626 s]
+                        thrpt:  [39.233 Melem/s 39.251 Melem/s 39.275 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=4096
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 33.5s.
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=4096: Collecting 10 samples in estimated 33.488 s (10 iterations)
+Benchmarking bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=4096: Analyzing
+bch_encode_w1/route=shortened-restriction/W1/warm-reuse/T2N/B=4096
+                        time:   [3.2974 s 3.2994 s 3.3009 s]
+                        thrpt:  [39.966 Melem/s 39.985 Melem/s 40.008 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=1: Collecting 100 samples in estimated 5.0005 s (49M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=1
+                        time:   [101.06 ns 101.13 ns 101.20 ns]
+                        thrpt:  [39.524 Melem/s 39.554 Melem/s 39.582 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=1: Collecting 100 samples in estimated 5.0005 s (44M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=1
+                        time:   [113.99 ns 114.06 ns 114.13 ns]
+                        thrpt:  [35.047 Melem/s 35.069 Melem/s 35.090 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=1: Collecting 100 samples in estimated 5.0004 s (45M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=1
+                        time:   [110.28 ns 110.37 ns 110.48 ns]
+                        thrpt:  [36.207 Melem/s 36.241 Melem/s 36.270 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=1: Collecting 100 samples in estimated 5.0012 s (17M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=1
+                        time:   [290.31 ns 290.45 ns 290.60 ns]
+                        thrpt:  [13.765 Melem/s 13.772 Melem/s 13.778 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  2 (2.00%) low mild
+  8 (8.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=16: Collecting 100 samples in estimated 5.0038 s (3.9M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=16
+                        time:   [1.2862 µs 1.2870 µs 1.2879 µs]
+                        thrpt:  [49.695 Melem/s 49.728 Melem/s 49.759 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  7 (7.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=16: Collecting 100 samples in estimated 5.0021 s (3.5M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=16
+                        time:   [1.4154 µs 1.4167 µs 1.4180 µs]
+                        thrpt:  [45.134 Melem/s 45.177 Melem/s 45.216 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=16: Collecting 100 samples in estimated 5.0155 s (783k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=16
+                        time:   [6.4323 µs 6.4473 µs 6.4627 µs]
+                        thrpt:  [9.9030 Melem/s 9.9266 Melem/s 9.9498 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=16: Collecting 100 samples in estimated 5.0044 s (707k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=16
+                        time:   [7.0792 µs 7.0903 µs 7.1013 µs]
+                        thrpt:  [9.0124 Melem/s 9.0264 Melem/s 9.0406 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=256: Collecting 100 samples in estimated 5.0763 s (247k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=256
+                        time:   [20.464 µs 20.473 µs 20.483 µs]
+                        thrpt:  [49.993 Melem/s 50.018 Melem/s 50.039 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  5 (5.00%) high mild
+  4 (4.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=256: Collecting 100 samples in estimated 5.0137 s (197k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=256
+                        time:   [25.273 µs 25.294 µs 25.317 µs]
+                        thrpt:  [40.447 Melem/s 40.484 Melem/s 40.517 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=256: Collecting 100 samples in estimated 5.0293 s (343k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=256
+                        time:   [14.804 µs 14.870 µs 14.941 µs]
+                        thrpt:  [68.538 Melem/s 68.864 Melem/s 69.171 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  8 (8.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=256: Collecting 100 samples in estimated 5.0470 s (232k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=256
+                        time:   [21.727 µs 21.748 µs 21.770 µs]
+                        thrpt:  [47.036 Melem/s 47.085 Melem/s 47.130 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=4096: Collecting 100 samples in estimated 6.5961 s (20k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N1/B=4096
+                        time:   [326.07 µs 326.25 µs 326.47 µs]
+                        thrpt:  [50.186 Melem/s 50.219 Melem/s 50.247 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=4096: Collecting 100 samples in estimated 6.1074 s (15k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N1/B=4096
+                        time:   [403.11 µs 403.27 µs 403.44 µs]
+                        thrpt:  [40.611 Melem/s 40.628 Melem/s 40.644 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=4096: Collecting 100 samples in estimated 5.5001 s (35k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N1/B=4096
+                        time:   [155.06 µs 155.27 µs 155.48 µs]
+                        thrpt:  [105.38 Melem/s 105.52 Melem/s 105.66 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) low mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=4096: Collecting 100 samples in estimated 5.0008 s (20k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N1/B=4096
+                        time:   [246.77 µs 247.21 µs 247.63 µs]
+                        thrpt:  [66.163 Melem/s 66.276 Melem/s 66.394 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=1: Collecting 100 samples in estimated 5.0015 s (14M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=1
+                        time:   [362.61 ns 363.11 ns 363.65 ns]
+                        thrpt:  [60.498 Melem/s 60.588 Melem/s 60.672 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) low mild
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=1: Collecting 100 samples in estimated 5.0000 s (13M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=1
+                        time:   [380.58 ns 380.81 ns 381.08 ns]
+                        thrpt:  [57.731 Melem/s 57.771 Melem/s 57.807 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=1: Collecting 100 samples in estimated 5.0016 s (13M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=1
+                        time:   [376.14 ns 376.37 ns 376.63 ns]
+                        thrpt:  [58.413 Melem/s 58.453 Melem/s 58.489 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=1: Collecting 100 samples in estimated 5.0005 s (7.1M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=1
+                        time:   [701.12 ns 701.50 ns 701.91 ns]
+                        thrpt:  [31.343 Melem/s 31.362 Melem/s 31.378 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=16: Collecting 100 samples in estimated 5.0012 s (914k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=16
+                        time:   [5.4666 µs 5.4704 µs 5.4749 µs]
+                        thrpt:  [64.294 Melem/s 64.346 Melem/s 64.391 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=16: Collecting 100 samples in estimated 5.0118 s (889k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=16
+                        time:   [5.6239 µs 5.6274 µs 5.6311 µs]
+                        thrpt:  [62.510 Melem/s 62.551 Melem/s 62.590 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  5 (5.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=16: Collecting 100 samples in estimated 5.0132 s (692k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=16
+                        time:   [7.1494 µs 7.1649 µs 7.1858 µs]
+                        thrpt:  [48.986 Melem/s 49.128 Melem/s 49.235 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  7 (7.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=16: Collecting 100 samples in estimated 5.0224 s (601k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=16
+                        time:   [8.2367 µs 8.2656 µs 8.2945 µs]
+                        thrpt:  [42.438 Melem/s 42.586 Melem/s 42.736 Melem/s]
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=256: Collecting 100 samples in estimated 5.3389 s (61k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=256
+                        time:   [88.004 µs 88.047 µs 88.091 µs]
+                        thrpt:  [63.934 Melem/s 63.966 Melem/s 63.997 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=256: Collecting 100 samples in estimated 5.1833 s (56k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=256
+                        time:   [93.075 µs 93.128 µs 93.185 µs]
+                        thrpt:  [60.439 Melem/s 60.476 Melem/s 60.510 Melem/s]
+Found 14 outliers among 100 measurements (14.00%)
+  9 (9.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=256: Collecting 100 samples in estimated 5.1073 s (116k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=256
+                        time:   [43.529 µs 43.594 µs 43.664 µs]
+                        thrpt:  [128.99 Melem/s 129.19 Melem/s 129.39 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=256: Collecting 100 samples in estimated 5.0896 s (96k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=256
+                        time:   [52.876 µs 52.908 µs 52.940 µs]
+                        thrpt:  [106.39 Melem/s 106.45 Melem/s 106.51 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) low severe
+  4 (4.00%) low mild
+  2 (2.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.1s, enable flat sampling, or reduce sample count to 50.
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=4096: Collecting 100 samples in estimated 7.1188 s (5050 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N2/B=4096
+                        time:   [1.4073 ms 1.4080 ms 1.4087 ms]
+                        thrpt:  [63.967 Melem/s 64.000 Melem/s 64.030 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  5 (5.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.6s, enable flat sampling, or reduce sample count to 50.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=4096: Collecting 100 samples in estimated 7.5523 s (5050 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N2/B=4096
+                        time:   [1.4917 ms 1.4930 ms 1.4947 ms]
+                        thrpt:  [60.286 Melem/s 60.358 Melem/s 60.408 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=4096: Collecting 100 samples in estimated 5.5247 s (10k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N2/B=4096
+                        time:   [545.31 µs 546.92 µs 548.46 µs]
+                        thrpt:  [164.30 Melem/s 164.76 Melem/s 165.25 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=4096: Collecting 100 samples in estimated 7.4166 s (10k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N2/B=4096
+                        time:   [731.82 µs 733.37 µs 734.91 µs]
+                        thrpt:  [122.62 Melem/s 122.87 Melem/s 123.13 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) low mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=1: Collecting 100 samples in estimated 5.0032 s (3.2M iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=1
+                        time:   [1.5164 µs 1.5233 µs 1.5294 µs]
+                        thrpt:  [3.9230 Melem/s 3.9387 Melem/s 3.9568 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=1: Collecting 100 samples in estimated 5.0051 s (2.9M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=1
+                        time:   [1.7775 µs 1.7804 µs 1.7832 µs]
+                        thrpt:  [3.3646 Melem/s 3.3700 Melem/s 3.3755 Melem/s]
+Found 22 outliers among 100 measurements (22.00%)
+  10 (10.00%) low severe
+  2 (2.00%) low mild
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=1: Collecting 100 samples in estimated 5.0024 s (3.3M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=1
+                        time:   [1.5488 µs 1.5495 µs 1.5503 µs]
+                        thrpt:  [3.8702 Melem/s 3.8722 Melem/s 3.8740 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=1: Collecting 100 samples in estimated 5.0126 s (1.6M iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=1
+                        time:   [3.0728 µs 3.0751 µs 3.0776 µs]
+                        thrpt:  [1.9496 Melem/s 1.9511 Melem/s 1.9526 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) low mild
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=16: Collecting 100 samples in estimated 5.1011 s (212k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=16
+                        time:   [23.925 µs 23.935 µs 23.946 µs]
+                        thrpt:  [4.0091 Melem/s 4.0109 Melem/s 4.0126 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=16: Collecting 100 samples in estimated 5.0934 s (152k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=16
+                        time:   [28.347 µs 28.359 µs 28.374 µs]
+                        thrpt:  [3.3834 Melem/s 3.3852 Melem/s 3.3867 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  3 (3.00%) low mild
+  4 (4.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=16: Collecting 100 samples in estimated 5.0352 s (96k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=16
+                        time:   [52.008 µs 52.114 µs 52.216 µs]
+                        thrpt:  [1.8385 Melem/s 1.8421 Melem/s 1.8459 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=16: Collecting 100 samples in estimated 5.2363 s (86k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=16
+                        time:   [60.672 µs 60.796 µs 60.928 µs]
+                        thrpt:  [1.5756 Melem/s 1.5791 Melem/s 1.5823 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  7 (7.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=256: Collecting 100 samples in estimated 6.8972 s (15k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=256
+                        time:   [448.92 µs 449.27 µs 449.66 µs]
+                        thrpt:  [3.4159 Melem/s 3.4189 Melem/s 3.4216 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=256: Collecting 100 samples in estimated 5.5530 s (10k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=256
+                        time:   [542.14 µs 545.00 µs 547.77 µs]
+                        thrpt:  [2.8041 Melem/s 2.8183 Melem/s 2.8332 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) low severe
+  2 (2.00%) low mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=256: Collecting 100 samples in estimated 7.6081 s (10k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=256
+                        time:   [753.25 µs 753.48 µs 753.70 µs]
+                        thrpt:  [2.0379 Melem/s 2.0386 Melem/s 2.0392 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) low severe
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=256: Collecting 100 samples in estimated 8.3304 s (10k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=256
+                        time:   [825.68 µs 826.07 µs 826.46 µs]
+                        thrpt:  [1.8585 Melem/s 1.8594 Melem/s 1.8603 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=4096: Collecting 100 samples in estimated 5.3625 s (700 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N3/B=4096
+                        time:   [7.6705 ms 7.6802 ms 7.6895 ms]
+                        thrpt:  [3.1960 Melem/s 3.1999 Melem/s 3.2039 Melem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=4096: Collecting 100 samples in estimated 5.1515 s (600 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N3/B=4096
+                        time:   [8.4071 ms 8.5573 ms 8.7071 ms]
+                        thrpt:  [2.8225 Melem/s 2.8719 Melem/s 2.9232 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=4096: Collecting 100 samples in estimated 5.9485 s (500 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N3/B=4096
+                        time:   [11.902 ms 11.906 ms 11.912 ms]
+                        thrpt:  [2.0631 Melem/s 2.0641 Melem/s 2.0649 Melem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=4096: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=4096: Collecting 100 samples in estimated 5.1911 s (400 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N3/B=4096
+                        time:   [12.966 ms 12.976 ms 12.985 ms]
+                        thrpt:  [1.8927 Melem/s 1.8940 Melem/s 1.8954 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) low mild
+  2 (2.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=1
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=1: Collecting 100 samples in estimated 5.3285 s (61k iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=1: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=1
+                        time:   [87.769 µs 87.799 µs 87.832 µs]
+                        thrpt:  [2.5389 Melem/s 2.5399 Melem/s 2.5408 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=1: Collecting 100 samples in estimated 5.3791 s (61k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=1
+                        time:   [88.530 µs 88.571 µs 88.618 µs]
+                        thrpt:  [2.5164 Melem/s 2.5178 Melem/s 2.5189 Melem/s]
+Found 11 outliers among 100 measurements (11.00%)
+  8 (8.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=1: Collecting 100 samples in estimated 5.3242 s (61k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=1
+                        time:   [87.731 µs 87.771 µs 87.819 µs]
+                        thrpt:  [2.5393 Melem/s 2.5407 Melem/s 2.5419 Melem/s]
+Found 10 outliers among 100 measurements (10.00%)
+  3 (3.00%) high mild
+  7 (7.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=1
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=1: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=1: Collecting 100 samples in estimated 5.0469 s (56k iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=1: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=1
+                        time:   [90.828 µs 90.868 µs 90.914 µs]
+                        thrpt:  [2.4529 Melem/s 2.4541 Melem/s 2.4552 Melem/s]
+Found 13 outliers among 100 measurements (13.00%)
+  6 (6.00%) high mild
+  7 (7.00%) high severe
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=16
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=16: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.1s, enable flat sampling, or reduce sample count to 50.
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=16: Collecting 100 samples in estimated 7.1291 s (5050 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=16: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=16
+                        time:   [1.4104 ms 1.4112 ms 1.4121 ms]
+                        thrpt:  [2.5267 Melem/s 2.5284 Melem/s 2.5297 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  7 (7.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=16: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.2s, enable flat sampling, or reduce sample count to 50.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=16: Collecting 100 samples in estimated 7.1943 s (5050 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=16
+                        time:   [1.4237 ms 1.4241 ms 1.4247 ms]
+                        thrpt:  [2.5044 Melem/s 2.5054 Melem/s 2.5062 Melem/s]
+Found 13 outliers among 100 measurements (13.00%)
+  3 (3.00%) high mild
+  10 (10.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=16: Collecting 100 samples in estimated 5.3717 s (600 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=16
+                        time:   [8.9449 ms 8.9554 ms 8.9653 ms]
+                        thrpt:  [397.98 Kelem/s 398.42 Kelem/s 398.89 Kelem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) low severe
+  2 (2.00%) low mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=16
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=16: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=16: Collecting 100 samples in estimated 5.3966 s (600 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=16: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=16
+                        time:   [8.9908 ms 9.0035 ms 9.0160 ms]
+                        thrpt:  [395.74 Kelem/s 396.29 Kelem/s 396.85 Kelem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=256
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=256: Collecting 100 samples in estimated 6.7701 s (300 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=256: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=256
+                        time:   [22.582 ms 22.591 ms 22.601 ms]
+                        thrpt:  [2.5260 Melem/s 2.5271 Melem/s 2.5280 Melem/s]
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=256: Warming up for 3.0000 s
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=256: Collecting 100 samples in estimated 6.8433 s (300 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=256
+                        time:   [22.789 ms 22.797 ms 22.805 ms]
+                        thrpt:  [2.5033 Melem/s 2.5042 Melem/s 2.5051 Melem/s]
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=256: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 14.3s, or reduce sample count to 30.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=256: Collecting 100 samples in estimated 14.261 s (100 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=256
+                        time:   [142.25 ms 142.34 ms 142.42 ms]
+                        thrpt:  [400.83 Kelem/s 401.08 Kelem/s 401.33 Kelem/s]
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=256
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=256: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 14.3s, or reduce sample count to 30.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=256: Collecting 100 samples in estimated 14.292 s (100 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=256: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=256
+                        time:   [142.84 ms 142.92 ms 142.99 ms]
+                        thrpt:  [399.24 Kelem/s 399.44 Kelem/s 399.66 Kelem/s]
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=4096
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 36.1s, or reduce sample count to 10.
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=4096: Collecting 100 samples in estimated 36.117 s (100 iterations)
+Benchmarking bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=4096: Analyzing
+bch_encode_w1/family=poly-remainder-scalar/W1/warm-reuse/N4/B=4096
+                        time:   [360.78 ms 360.86 ms 360.94 ms]
+                        thrpt:  [2.5306 Melem/s 2.5312 Melem/s 2.5318 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 37.1s, or reduce sample count to 10.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=4096: Collecting 100 samples in estimated 37.123 s (100 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=4096
+                        time:   [371.12 ms 371.22 ms 371.32 ms]
+                        thrpt:  [2.4599 Melem/s 2.4606 Melem/s 2.4612 Melem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 226.7s, or reduce sample count to 10.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=4096: Collecting 100 samples in estimated 226.71 s (100 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=4096
+                        time:   [2.2740 s 2.2746 s 2.2751 s]
+                        thrpt:  [401.48 Kelem/s 401.57 Kelem/s 401.67 Kelem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) low mild
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=4096
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 228.8s, or reduce sample count to 10.
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=4096: Collecting 100 samples in estimated 228.79 s (100 iterations)
+Benchmarking bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=4096: Analyzing
+bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=4096
+                        time:   [2.2887 s 2.2890 s 2.2892 s]
+                        thrpt:  [399.00 Kelem/s 399.05 Kelem/s 399.10 Kelem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+# finished_utc: 2026-10-02T02:32:06Z
+# load_avg_end:  05:32:06 up 12 days,  7:37,  6 users,  load average: 5.91, 5.24, 3.72

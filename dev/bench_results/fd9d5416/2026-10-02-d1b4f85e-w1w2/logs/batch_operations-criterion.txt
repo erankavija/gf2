@@ -1,0 +1,73 @@
+# command: env CARGO_CI_NO_LOCK=1 GF2_BCH_DISPATCH_RECORD=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-d1b4f85e-run/dev/bench_results/fd9d5416/2026-10-02-d1b4f85e-w1w2/dispatch.jsonl ./dev/scripts/ccx1-bench-flock.sh --full-host ./scripts/cargo-budget.sh cargo bench -p gf2-coding --bench batch_operations -- bch_ --noplot
+# started_utc: 2026-10-02T01:36:34Z
+# load_avg_start:  04:36:34 up 12 days,  6:41,  6 users,  load average: 2.27, 1.35, 1.12
+nice: cannot set niceness: Permission denied
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/batch_operations.rs (target/release/deps/batch_operations-3468e3c53ef32ecc)
+Benchmarking bch_encode_pns_16383_16215/1
+Benchmarking bch_encode_pns_16383_16215/1: Warming up for 3.0000 s
+Benchmarking bch_encode_pns_16383_16215/1: Collecting 100 samples in estimated 5.1463 s (81k iterations)
+Benchmarking bch_encode_pns_16383_16215/1: Analyzing
+bch_encode_pns_16383_16215/1
+                        time:   [63.776 µs 63.863 µs 63.959 µs]
+                        thrpt:  [30.209 MiB/s 30.255 MiB/s 30.296 MiB/s]
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_encode_pns_16383_16215/10
+Benchmarking bch_encode_pns_16383_16215/10: Warming up for 3.0000 s
+Benchmarking bch_encode_pns_16383_16215/10: Collecting 100 samples in estimated 6.4350 s (10k iterations)
+Benchmarking bch_encode_pns_16383_16215/10: Analyzing
+bch_encode_pns_16383_16215/10
+                        time:   [638.96 µs 639.24 µs 639.58 µs]
+                        thrpt:  [30.222 MiB/s 30.238 MiB/s 30.251 MiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  3 (3.00%) low mild
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+Benchmarking bch_encode_pns_16383_16215/50
+Benchmarking bch_encode_pns_16383_16215/50: Warming up for 3.0000 s
+Benchmarking bch_encode_pns_16383_16215/50: Collecting 100 samples in estimated 5.1179 s (1600 iterations)
+Benchmarking bch_encode_pns_16383_16215/50: Analyzing
+bch_encode_pns_16383_16215/50
+                        time:   [3.2016 ms 3.2025 ms 3.2033 ms]
+                        thrpt:  [30.171 MiB/s 30.179 MiB/s 30.187 MiB/s]
+Found 6 outliers among 100 measurements (6.00%)
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_encode_pns_16383_16215/100
+Benchmarking bch_encode_pns_16383_16215/100: Warming up for 3.0000 s
+Benchmarking bch_encode_pns_16383_16215/100: Collecting 100 samples in estimated 5.1043 s (800 iterations)
+Benchmarking bch_encode_pns_16383_16215/100: Analyzing
+bch_encode_pns_16383_16215/100
+                        time:   [6.3990 ms 6.4018 ms 6.4051 ms]
+                        thrpt:  [30.179 MiB/s 30.194 MiB/s 30.207 MiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+
+Benchmarking bch_sequential_vs_batch/sequential_loop
+Benchmarking bch_sequential_vs_batch/sequential_loop: Warming up for 3.0000 s
+Benchmarking bch_sequential_vs_batch/sequential_loop: Collecting 100 samples in estimated 5.0365 s (556k iterations)
+Benchmarking bch_sequential_vs_batch/sequential_loop: Analyzing
+bch_sequential_vs_batch/sequential_loop
+                        time:   [9.0340 µs 9.0434 µs 9.0565 µs]
+                        thrpt:  [14.426 MiB/s 14.447 MiB/s 14.462 MiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low severe
+  2 (2.00%) low mild
+  8 (8.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_sequential_vs_batch/batch_operation
+Benchmarking bch_sequential_vs_batch/batch_operation: Warming up for 3.0000 s
+Benchmarking bch_sequential_vs_batch/batch_operation: Collecting 100 samples in estimated 5.0227 s (778k iterations)
+Benchmarking bch_sequential_vs_batch/batch_operation: Analyzing
+bch_sequential_vs_batch/batch_operation
+                        time:   [6.4651 µs 6.4733 µs 6.4825 µs]
+                        thrpt:  [20.155 MiB/s 20.183 MiB/s 20.209 MiB/s]
+Found 5 outliers among 100 measurements (5.00%)
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+
+# finished_utc: 2026-10-02T01:37:31Z
+# load_avg_end:  04:37:31 up 12 days,  6:42,  6 users,  load average: 1.46, 1.29, 1.11

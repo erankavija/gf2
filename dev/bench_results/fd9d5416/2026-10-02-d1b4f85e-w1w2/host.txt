@@ -1,0 +1,31 @@
+# command: dev/active/d1b4f85e/run.sh dev/bench_results/fd9d5416/2026-10-02-d1b4f85e-w1w2
+# issue: d1b4f85e
+# generated: 2026-10-02T01:36:34Z
+# gf2 revision: eb557549529294f3090b6f7dd63ff8f0e11962c9
+# tree state at run start: clean (git status --porcelain was empty)
+
+## uptime at run start
+ 04:36:34 up 12 days,  6:41,  6 users,  load average: 2.27, 1.35, 1.12
+
+## uname
+Linux 7.2.6-arch2-1 x86_64
+
+## CPU model (/proc/cpuinfo)
+AMD Ryzen 9 5900X 12-Core Processor
+
+## CPU flags relevant to the encode kernel bundle
+avx2 bmi2 pclmulqdq vpclmulqdq 
+
+## nproc
+24
+
+## CPU frequency governor (cpu0)
+powersave
+
+## toolchain
+rustc 1.97.0 (2d8144b78 2026-07-07)
+cargo 1.97.0 (c980f4866 2026-06-30)
+
+## measurement window
+start_utc: 2026-10-02T01:36:34Z
+end_utc: 2026-10-02T03:18:46Z
