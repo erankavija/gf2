@@ -6,13 +6,11 @@
 # so the plan resolves the same arms as the campaign, and redirects the ledger
 # into `target/` so the family's own append-only ledger stays untouched.
 #
-# Two checks run over each throwaway plan. `ldpc-plan-check` decodes the plan
-# strictly, validates the addendum against `addendum.schema.json` and the
-# protocol's semantic rules, and validates the plan against the addendum: the
-# checks the runner applies before opening a campaign. `qc-arm-smoke` then
-# drives every arm of every cell with the runner's own case encoder, request
-# sentinel and child environment in the `validation` role, so each arm performs
-# one untimed dispatch, applies its placement and decision checks and returns no
+# Two shared checks run over each throwaway plan. `benchmark-ab-runner check`
+# applies the decode and validation the runner applies before its first
+# measurement. `benchmark-ab-runner smoke`, whose contract
+# `tuning_campaign_support::arm::smoke` states, then drives every arm of every
+# cell once in the untimed validation position and fails an arm that reports a
 # timing window. A campaign is queued only after both pass, because reading the
 # arm sources does not establish the wire contract between the runner and a
 # child.
@@ -22,28 +20,36 @@
 # request than a pilot's; queueing it on the pilot's smoke would leave that
 # wire contract unproven.
 #
-# Usage (from the worktree root): run-smoke.sh
+# Usage (from the worktree root): run-smoke.sh QUALITY_DIR
+#   QUALITY_DIR  the frozen `c077a88b` prepared quality records the arms reuse
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
 export PATH="$HOME/.cargo/bin:$PATH" RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
-SURVEY=dev/active/f63a2464/survey
+QUALITY_DIR=${1:?directory of the prepared c077a88b quality records}
+files=$(git ls-files --cached --others --exclude-standard -- ':(glob)**/repository_files.py')
+# The survey directory holds the arms workspace; the addenda lie beside it.
+SURVEY=$(dirname "$(python3 -B "$files" package-directory ldpc-qc-arms)")
+ACTIVE=$(dirname "$SURVEY")
 SCRATCH=target/ldpc-qc-smoke  # repo-relative: the plan names the addendum by a literal relative path
 BASELINE=$repo/target/ldpc-qc-baseline/release
 CANDIDATE=$repo/target/ldpc-qc-arms/release
-QUALITY=$repo/dev/bench_results/c077a88b/v3-preparation/quality
+QUALITY=$(realpath "$QUALITY_DIR")
+RUNNER=$repo/target/release/benchmark-ab-runner
 
+./scripts/cargo-budget.sh cargo +1.95 build --offline --release -p tuning-campaign-support \
+  --bin benchmark-ab-runner >/dev/null
 rm -rf "$SCRATCH"
 mkdir -p "$SCRATCH"
 
 for family in intra-frame-single-worker intra-frame-multicore comparator-single-worker; do
  for mode in pilot confirmation; do
-  python3 - "$family" "$mode" "$SCRATCH" <<'PY'
+  python3 - "$family" "$mode" "$SCRATCH" "$ACTIVE" <<'PY'
 import json, pathlib, sys
 
 family, mode, scratch = sys.argv[1], sys.argv[2], pathlib.Path(sys.argv[3])
 suffix = "-pilot" if mode == "pilot" else ""
-source = pathlib.Path(f"dev/active/f63a2464/addendum-ldpc-qc-{family}{suffix}.json")
+source = pathlib.Path(sys.argv[4]) / f"addendum-ldpc-qc-{family}{suffix}.json"
 addendum = json.loads(source.read_text())
 addendum["family"]["description"] = (
     "Throwaway wire-contract smoke of the arms this issue measures. It publishes no receipt "
@@ -61,8 +67,8 @@ PY
     --bundles-dir "$repo/target/ldpc-inputs" --quality-dir "$QUALITY" \
     --campaign-id "f63a2464-smoke-$family-$mode" --pilot-pairs 6 \
     --max-cells-per-session 1 --output "$SCRATCH/$family-$mode.plan.json"
-  "$BASELINE/ldpc-plan-check" "$SCRATCH/$family-$mode.plan.json"
-  "$CANDIDATE/qc-arm-smoke" "$SCRATCH/$family-$mode.plan.json"
+  "$RUNNER" check "$SCRATCH/$family-$mode.plan.json"
+  "$RUNNER" smoke "$SCRATCH/$family-$mode.plan.json" --record "$SCRATCH/$family-$mode.smoke.json"
  done
 done
 echo "smoke complete: $SCRATCH"

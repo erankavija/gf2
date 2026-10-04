@@ -1,0 +1,242 @@
+{
+  "schema": "ldpc-candidate-peak-memory-v1",
+  "method": "ru_maxrss reported by wait4 for one `benchmark-ab-runner smoke` process over a plan whose single cell names one arm in both positions: the largest resident set among the runner and the arm children it reaps, each arm child performing one untimed dispatch of the cell's declared workload. Linux reports the value in KiB. The floor is the same observation of `benchmark-ab-runner check`, which launches no arm; a spawned process starts from its launcher's resident set, so the floor bounds what the launcher and the runner contribute and an observation above it is an arm's.",
+  "commands": {
+    "observation": "target/release/benchmark-ab-runner smoke <single-arm plan>",
+    "floor": "target/release/benchmark-ab-runner check <family plan>"
+  },
+  "runner": {
+    "executable": "target/release/benchmark-ab-runner",
+    "sha256": "9c79ac6a615ab000c915251ff2de9d70db00cdb16dcaf0ea8aaed4dab444282b"
+  },
+  "arms": {
+    "gf2-nms-f32-nr-bg1-z384": {
+      "executable": "target/ldpc-qc-baseline/release/gf2-throughput-arm",
+      "sha256": "3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447"
+    },
+    "qc-intra-frame-nms-f32-nr-bg1-z384": {
+      "executable": "target/ldpc-qc-arms/release/qc-decoder-arm",
+      "sha256": "6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236"
+    }
+  },
+  "floor": {
+    "samples_kib": [
+      24644,
+      24888,
+      24888,
+      25080,
+      25080,
+      29260,
+      29260,
+      29260,
+      29260,
+      29260
+    ],
+    "count": 10,
+    "min_kib": 24644,
+    "median_kib": 27170.0,
+    "max_kib": 29260
+  },
+  "observations": [
+    {
+      "family": "ldpc-qc-intra-frame-single-worker-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-w1",
+      "arm": "gf2-nms-f32-nr-bg1-z384",
+      "workers": 1,
+      "frames_per_worker_call": 8,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        36396,
+        36332,
+        36572,
+        36716,
+        36684
+      ],
+      "count": 5,
+      "min_kib": 36332,
+      "median_kib": 36572,
+      "max_kib": 36716
+    },
+    {
+      "family": "ldpc-qc-intra-frame-single-worker-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-w1",
+      "arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "workers": 1,
+      "frames_per_worker_call": 8,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        34084,
+        33928,
+        33592,
+        33924,
+        33852
+      ],
+      "count": 5,
+      "min_kib": 33592,
+      "median_kib": 33924,
+      "max_kib": 34084
+    },
+    {
+      "family": "ldpc-qc-intra-frame-single-worker-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-latency",
+      "arm": "gf2-nms-f32-nr-bg1-z384",
+      "workers": 1,
+      "frames_per_worker_call": 1,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        36592,
+        36544,
+        36720,
+        36540,
+        36600
+      ],
+      "count": 5,
+      "min_kib": 36540,
+      "median_kib": 36592,
+      "max_kib": 36720
+    },
+    {
+      "family": "ldpc-qc-intra-frame-single-worker-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-latency",
+      "arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "workers": 1,
+      "frames_per_worker_call": 1,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        33732,
+        33672,
+        34176,
+        33924,
+        33904
+      ],
+      "count": 5,
+      "min_kib": 33672,
+      "median_kib": 33904,
+      "max_kib": 34176
+    },
+    {
+      "family": "ldpc-qc-intra-frame-multicore-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-w6",
+      "arm": "gf2-nms-f32-nr-bg1-z384",
+      "workers": 6,
+      "frames_per_worker_call": 8,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        61452,
+        61684,
+        61632,
+        61396,
+        61476
+      ],
+      "count": 5,
+      "min_kib": 61396,
+      "median_kib": 61476,
+      "max_kib": 61684
+    },
+    {
+      "family": "ldpc-qc-intra-frame-multicore-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-w6",
+      "arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "workers": 6,
+      "frames_per_worker_call": 8,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        40852,
+        40908,
+        40620,
+        40704,
+        40592
+      ],
+      "count": 5,
+      "min_kib": 40592,
+      "median_kib": 40704,
+      "max_kib": 40908
+    },
+    {
+      "family": "ldpc-qc-intra-frame-multicore-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-w12",
+      "arm": "gf2-nms-f32-nr-bg1-z384",
+      "workers": 12,
+      "frames_per_worker_call": 8,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        91612,
+        91648,
+        91600,
+        91632,
+        91584
+      ],
+      "count": 5,
+      "min_kib": 91584,
+      "median_kib": 91612,
+      "max_kib": 91648
+    },
+    {
+      "family": "ldpc-qc-intra-frame-multicore-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-w12",
+      "arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "workers": 12,
+      "frames_per_worker_call": 8,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        48928,
+        48764,
+        48824,
+        48740,
+        48508
+      ],
+      "count": 5,
+      "min_kib": 48508,
+      "median_kib": 48764,
+      "max_kib": 48928
+    },
+    {
+      "family": "ldpc-qc-intra-frame-multicore-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-w24",
+      "arm": "gf2-nms-f32-nr-bg1-z384",
+      "workers": 24,
+      "frames_per_worker_call": 8,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        146560,
+        146444,
+        146652,
+        146556,
+        146380
+      ],
+      "count": 5,
+      "min_kib": 146380,
+      "median_kib": 146556,
+      "max_kib": 146652
+    },
+    {
+      "family": "ldpc-qc-intra-frame-multicore-v1",
+      "addendum": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json",
+      "cell_id": "nr-bg1-z384-qc-w24",
+      "arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "workers": 24,
+      "frames_per_worker_call": 8,
+      "bundle": "target/ldpc-inputs/nr-bg1-z384-mother",
+      "samples_kib": [
+        63580,
+        63464,
+        63420,
+        63752,
+        63636
+      ],
+      "count": 5,
+      "min_kib": 63420,
+      "median_kib": 63580,
+      "max_kib": 63752
+    }
+  ]
+}

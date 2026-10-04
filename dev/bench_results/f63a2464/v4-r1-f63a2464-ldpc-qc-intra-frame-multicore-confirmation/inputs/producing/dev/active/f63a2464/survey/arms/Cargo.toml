@@ -1,0 +1,45 @@
+# Timed arms of the QC-aware intra-frame candidate (jit:f63a2464).
+#
+# A standalone workspace, like the `c077a88b`, `3be770d5` and `07ca8585` survey
+# crates it extends: it adds no target, feature or dependency to the production
+# workspace and keeps its own target directory, so the pinned executables of
+# the harnesses it reuses stay byte-identical.
+#
+# It reuses `3be770d5`'s pinned worker pool, recorded-bundle loader and
+# steady-state driver, and `c077a88b`'s child framing, timing windows and
+# quality accumulator through them. The candidate decoder is this issue's
+# prototype crate; the baseline and external arms are the `3be770d5` harness's
+# own, built from the same tree so a pair is a valid A/B. The external arm is
+# an executable this crate launches, never a library it links, so this crate
+# declares no AFF3CT feature.
+
+[workspace]
+
+[package]
+name = "ldpc-qc-arms"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
+ldpc-throughput-harness = { path = "../../../3be770d5/survey/harness" }
+ldpc-candidate-prototypes = { path = "../prototypes" }
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[[bin]]
+name = "qc-decoder-arm"
+path = "src/bin/qc-decoder-arm.rs"
+
+[[bin]]
+name = "qc-arm-smoke"
+path = "src/bin/qc-arm-smoke.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = "line-tables-only"

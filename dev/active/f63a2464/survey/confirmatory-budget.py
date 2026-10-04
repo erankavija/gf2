@@ -9,16 +9,37 @@ Both constants are read from the protocol's source of truth and the attempt
 index from the family's append-only ledger, so this records the arithmetic
 rather than a remembered number.
 
+`--entries N` reads the first N lines of each chain: the prefix a freeze reads
+before the attempt it sizes reserves its own line.
+
 Usage (from the worktree root):
-  confirmatory-budget.py LEDGER... > dev/bench_results/f63a2464/confirmatory-budget.json
+  confirmatory-budget.py [--entries N] LEDGER... > RESULTS_DIR/confirmatory-budget.json
 """
 
 import json
 import pathlib
+import subprocess
 import sys
 
-PROTOCOL = pathlib.Path("dev/tools/tuning-campaign-support/src/protocol.rs")
-RECEIPT = pathlib.Path("dev/tools/tuning-campaign-support/src/receipt.rs")
+
+def output(command):
+    return subprocess.run(command, check=True, capture_output=True, text=True).stdout.strip()
+
+
+ROOT = pathlib.Path(output(["git", "-C", str(pathlib.Path(__file__).resolve().parent),
+                            "rev-parse", "--show-toplevel"]))
+
+
+def located(*query):
+    """Root-relative path the repository-file helper prints for `query`."""
+    helper = output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
+                     "--exclude-standard", "--", ":(glob)**/repository_files.py"])
+    return pathlib.Path(output([sys.executable, "-B", str(ROOT / helper), *query]))
+
+
+SUPPORT = ROOT / located("package-directory", "tuning-campaign-support") / "src"
+PROTOCOL = SUPPORT / "protocol.rs"
+RECEIPT = SUPPORT / "receipt.rs"
 TAIL_RULE = "|| f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;"
 MIN_TAIL_DRAWS = 20.0
 
@@ -33,8 +54,12 @@ def frozen(name):
 
 def main():
     ledgers = sys.argv[1:]
+    prefix = None
+    if ledgers[:1] == ["--entries"] and len(ledgers) > 1:
+        prefix = int(ledgers[1])
+        ledgers = ledgers[2:]
     if not ledgers:
-        sys.exit("usage: confirmatory-budget.py LEDGER...")
+        sys.exit("usage: confirmatory-budget.py [--entries N] LEDGER...")
     if TAIL_RULE not in RECEIPT.read_text(encoding="utf-8"):
         sys.exit(f"{RECEIPT} no longer carries the tail-support rule this derivation reads")
 
@@ -48,7 +73,7 @@ def main():
             json.loads(line)
             for line in path.read_text(encoding="utf-8").splitlines()
             if line.strip()
-        ]
+        ][:prefix]
         spending = sum(1 for entry in entries if entry.get("comparisons", 0) > 0)
         # The next confirmation is attempt `spending + 1`, and `attempt_alpha`
         # floors the count at one, so an untouched chain yields attempt one.

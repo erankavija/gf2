@@ -16,6 +16,10 @@ executes or from a file it reads.
 Usage (from the worktree root):
   record-preparation.py OUT_DIR --aff3ct-root DIR
       --baseline-dir DIR --candidate-dir DIR
+      --inputs-archive TAR_GZ --quality-dir DIR
+
+The archive and the quality directory are the frozen `c077a88b` recorded inputs
+and prepared quality records, named root-relative as the records cite them.
 """
 
 import argparse
@@ -88,6 +92,8 @@ def main():
     parser.add_argument("--aff3ct-root", required=True)
     parser.add_argument("--baseline-dir", required=True)
     parser.add_argument("--candidate-dir", required=True)
+    parser.add_argument("--inputs-archive", required=True)
+    parser.add_argument("--quality-dir", required=True)
     args = parser.parse_args()
 
     if pathlib.Path.cwd() != pathlib.Path(ROOT):
@@ -133,16 +139,14 @@ def main():
             "static_library_sha256": None if static_library is None else digest(static_library),
         },
         "inputs": {
-            "archive": "dev/bench_results/c077a88b/v3-preparation/source-inputs/recorded-inputs.tar.gz",
-            "archive_sha256": digest(
-                "dev/bench_results/c077a88b/v3-preparation/source-inputs/recorded-inputs.tar.gz"
-            ),
+            "archive": args.inputs_archive,
+            "archive_sha256": digest(args.inputs_archive),
             "extracted_to": "target/ldpc-inputs",
         },
         "prepared_quality": {
             str(path): digest(path)
             for path in sorted(
-                pathlib.Path("dev/bench_results/c077a88b/v3-preparation/quality").glob("*.json")
+                pathlib.Path(args.quality_dir).glob("*.json")
             )
         },
     }
@@ -166,7 +170,8 @@ def main():
     manifests += baseline_manifests
     base["behavior_sources"] = sorted(
         set(base["behavior_sources"])
-        | {path for path in behavior if not path.endswith(("summarize-quality.py",))}
+        | {path for path in behavior
+           if not path.endswith(("summarize-quality.py", "summarize-timing.py"))}
     )
     base["build_inputs"] = sorted(
         set(base["build_inputs"])

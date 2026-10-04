@@ -34,10 +34,6 @@ serde_json = { version = "1", features = ["float_roundtrip"] }
 name = "qc-decoder-arm"
 path = "src/bin/qc-decoder-arm.rs"
 
-[[bin]]
-name = "qc-arm-smoke"
-path = "src/bin/qc-arm-smoke.rs"
-
 [profile.release]
 opt-level = 3
 lto = true

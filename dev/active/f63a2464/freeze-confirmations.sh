@@ -4,7 +4,7 @@
 # Usage: ./freeze-confirmations.sh <frozen-utc>
 #
 # The freezer is the canonical one,
-# `dev/active/c7113c5a/survey/freeze-confirmation.py`. For each family it pins
+# `freeze-confirmation.py` of `c7113c5a`. For each family it pins
 # that family's committed pilot receipt by path and SHA-256, derives the
 # measurement resolution from that receipt's own intervals, refuses a margin
 # the resolution does not admit, and writes the derivation record beside the
@@ -19,12 +19,17 @@
 # pilots' measured ratios.
 
 set -euo pipefail
-repo=$(git rev-parse --show-toplevel)
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+repo=$(git -C "$here" rev-parse --show-toplevel)
 cd "$repo"
 FROZEN_UTC=${1:?usage: freeze-confirmations.sh <frozen-utc>}
-ACTIVE=dev/active/f63a2464
-RESULTS=dev/bench_results/f63a2464
-FREEZER=dev/active/c7113c5a/survey/freeze-confirmation.py
+ACTIVE=$(realpath --relative-to="$repo" "$here")
+# The results directory is where the pilot addenda place their family ledgers.
+RESULTS=$(python3 -c 'import json,os,sys; print(os.path.dirname(json.load(open(sys.argv[1]))["family_wise"]["ledger_path"]))' \
+  "$ACTIVE/addendum-ldpc-qc-intra-frame-single-worker-pilot.json")
+files=$(git ls-files --cached --others --exclude-standard -- ':(glob)**/repository_files.py')
+FREEZER=$(python3 -B "$files" document freeze-confirmation.py \
+  $'#!/usr/bin/env python3\n"""Freeze a confirmation addendum from its accepted pilot.')
 
 SHARED="The steady-state operation of \`3be770d5\`, unchanged: every worker is a thread pinned to one resolved CPU and owns one decoder built before timing. AList parsing and construction are reported as setup, outside the timed windows. A timed call makes every worker decode its declared batch of recorded frames of fixture bank zero, including conversion of the recorded f32 LLRs, the dispatch to the workers and extraction of the information-window decisions. The candidate is the QC-aware intra-frame prototype of \`f63a2464\`, which declares the canonical numerical contract unchanged: f32 flooding normalized min-sum at factor 0.75, iteration cap 50, syndrome stopping, one frame per decoder invocation, vectorized across the lifted positions of one frame's circulant blocks rather than across frames, so it fills no batch. The \`c077a88b\` prepared 128-frame quality evidence is reused without resampling and every timed execution checks each worker's per-frame bit errors against it, so a candidate that parted from the contract fails the run. The DVB-T2 workload declares no cell in this family: its check rows carry no equal-degree circulant block partition, which \`f63a2464\`'s numerical-contract review records with its evidence. Arms report observed per-worker affinity, CPUs and process thread counts; no nested pool is declared."
 
