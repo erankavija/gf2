@@ -1,69 +1,8 @@
-//! Sparse-side CSV emitter for issue 47698404 — Re-run sparse post-PPC scorecard.
-//!
-//! Companion to `crates/gf2-core/examples/bench_csv_emitter.rs`. That binary
-//! emits the dense rows of the post-PPC scorecard; this one emits the sparse
-//! rows for the operations promoted in § 4 of the corpus design doc
-//! `@/issue/a3412e15`:
-//!
-//!   - `spmv`           — `y = A·x` over GF(2), GF(p), GF(2^m)
-//!   - `sparse-matmul`  — `C = A·B` (sparse·sparse) over the same fields
-//!   - `sparse×dense`   — `C = A·B` (sparse·dense) over the same fields
-//!   - `sparse-elim`    — sparse RREF. In `--quick`, emitted for GF(2) and
-//!     each GF(p) prime in `{7, 251, 65521, 2^31-1}` at n ∈ `{256, 1024}`
-//!     (paired with the LinBox reference rows from `linbox_sparse_bench`).
-//!     The GF(2^m) sparse-elim sweep remains gated behind `--full`.
-//!
-//! Lives under `gf2-coding/examples/` because we need access to the
-//! gf2-coding LDPC / BCH constructors for the coding-theory corpus class
-//! (§ 3.3 of the design doc) — DVB-T2 short/normal LDPC parity-check
-//! matrices and 5G NR BG1/BG2 lifted parity-check matrices. The random
-//! and structured corpus classes (§ 3.1, § 3.2) are sampled via the
-//! shared `gf2_core::bench_seed` helpers so the input matrices are
-//! byte-identical to whatever a future fflas-ffpack / LinBox C++ harness
-//! would consume from `benchmarks/reference/seed_helpers.h`.
-//!
-//! ## Layout variants (§ 1 of the scorecard)
-//!
-//! Acceptance criterion #1 of the consumer issue 47698404 requires
-//! "CSR/CSC, block-CSR, RCM, and prefetch variants are represented where
-//! relevant". Today the layout-variant inventory in `gf2-core` is:
-//!
-//!   - GF(2)    : CSR (`SpBitMatrix`), CSC-dual (`SpBitMatrixDual`),
-//!     block-CSR (`SpBitMatrixBlockCsr`), RCM (`reorder_rcm`),
-//!     prefetch (`matvec_with_prefetch_distance`).
-//!   - GF(p)    : CSR (`SparseFieldMatrix<Fp<P>>`), CSC (`SparseFieldMatrixCsc`).
-//!     No block-CSR / RCM / prefetch yet — classified
-//!     `not-yet-harnessed` in the scorecard.
-//!   - GF(2^m)  : Same as GF(p): CSR + CSC only.
-//!
-//! For each `(operation, field)` cell we emit the CSR row as the canonical
-//! reference; for GF(2) `spmv` we additionally emit one row per layout
-//! variant so the side-by-side renderer can quote the per-layout speedup.
-//!
-//! ## Sweep profiles
-//!
-//! `--quick`  (default in CI): `n = 1024 × d = 10/n × all 7 fields`.
-//!            (≈ 7 cells per operation; ≈ 30 s wall budget on Zen 3.)
-//!            For `sparse-elim`, `--quick` walks `n ∈ {256, 1024}` over
-//!            GF(2) + GF(p) (5 fields × 2 sizes); GF(2^m) is `--full`-gated.
-//! `--full`   : the full `n × d × field` sweep per § 3.1 of the design
-//!              doc — 63 cells per operation, plus the 6-matrix structured
-//!              class (§ 3.2) and 5-matrix coding-theory class (§ 3.3).
-//!              Wall budget: minutes to tens of minutes.
-//!
-//! ## Output
-//!
-//! Emits the schema documented in `benchmarks/README.md` § *CSV schema*:
-//!
-//! ```text
-//! lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
-//! ```
-//!
-//! `lib` is `gf2`; `operation` is one of the four sparse operations above;
-//! `rank_regime` carries the layout variant (`csr`, `csc`, `block-csr`,
-//! `rcm-reordered`, `prefetch-d8`) for layout-variant rows, otherwise
-//! `density_<value>` for random/structured cells and `coding-theory` for
-//! § 3.3 cells.
+//! Emits gf2's sparse benchmark CSV rows (`spmv`, `sparse-matmul`, `sparse×dense`, `sparse-elim`)
+//! over GF(2), GF(p) and GF(2^m) in the `gf2_core::bench_seed::CSV_HEADER` schema, with inputs
+//! drawn from the `gf2_core::bench_seed` helpers. The `rank_regime` column carries
+//! `density_<d>_<layout>` for random cells, `structured_<name>` for `--structured` cells and
+//! `coding-theory_<name>` for `--coding-theory` cells.
 
 use std::fs::{self, File};
 use std::io::{BufWriter, Write};
@@ -163,7 +102,6 @@ impl Args {
                     i += 2;
                 }
                 "--quick" => {
-                    // Default — only random class at n=1024, d=10/n.
                     full = false;
                     structured = false;
                     coding_theory = false;
@@ -243,15 +181,10 @@ fn cell_passes(filter: &Option<String>, key: &str) -> bool {
     }
 }
 
-/// Format `density` using the C printf `%.6e` convention (zero-padded
-/// 2-digit exponent), so the regime strings emitted here byte-match the
-/// fflas / linbox C++ harnesses' `std::snprintf("%.6e", ...)` output.
-/// Rust's default `{:.6e}` strips leading zeros from the exponent
-/// (`9.765625e-3` instead of `9.765625e-03`), which would split the
-/// `(operation, field)` cell groups in `analyze.py`.
+/// Formats `density` as C `%.6e` (two-digit exponent) so regime strings byte-match the C++
+/// harnesses' `snprintf` output; Rust's `{:.6e}` writes `e-3` where C writes `e-03`.
 fn fmt_density_c(density: f64) -> String {
     let raw = format!("{density:.6e}");
-    // Split into mantissa and exponent.
     if let Some((m, e)) = raw.split_once('e') {
         let (sign, digits) = if let Some(stripped) = e.strip_prefix('-') {
             ("-", stripped)
@@ -305,16 +238,9 @@ impl CsvSink {
     }
 }
 
-// ─── GF(2) random ER ────────────────────────────────────────────────────────
-
 fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::Result<()> {
     let field = "GF(2)";
-    // sparse-elim cells use a separate seed walk and a separate size list
-    // so the LinBox cross-library reference at n ∈ {256, 1024} (matching
-    // `linbox_sparse_bench --quick`) gets a gf2-side companion regardless
-    // of the spmv `sizes` selection above. This re-uses the
-    // `derive_seed("spelim-er", 3, si, 1)` convention that
-    // `linbox_sparse_bench.cpp:269-271` already emits against.
+    // sparse-elim sizes and seeds match `linbox_sparse_bench --quick`, independent of `sizes`.
     for (si, &elim_n) in [256usize, 1024].iter().enumerate() {
         let elim_density = 10.0 / (elim_n as f64);
         let elim_key = format!("sparse-elim/{field}/{elim_n}/csr");
@@ -344,7 +270,6 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
         )?;
     }
     for (si, &n) in sizes.iter().enumerate() {
-        // d = 10/n is the canonical sparse-design density per § 3.1.
         let density = 10.0 / (n as f64);
         let regime = format!("density_{}_csr", fmt_density_c(density));
         let key = format!("spmv/{field}/{n}/csr");
@@ -379,12 +304,8 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
             tput(nnz as f64, wall),
         )?;
 
-        // ── Layout variants ────────────────────────────────────────────────
-        // CSC dual.
         let dual_key = format!("spmv/{field}/{n}/csc");
         if cell_passes(&args.filter, &dual_key) {
-            // SpBitMatrixDual is built from dense; reuse the bench_seed helper
-            // would re-roll. Easier: build from the same CSR matrix's coordinates.
             let dual = build_dual_from_csr(&a);
             eprintln!("[gf2-sparse] {dual_key}");
             let (wall_dual, _) = time_op(
@@ -407,7 +328,6 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
             )?;
         }
 
-        // Block-CSR (default block_rows = 64).
         let blk_key = format!("spmv/{field}/{n}/block-csr");
         if cell_passes(&args.filter, &blk_key) {
             let blocked = a.to_default_block_csr();
@@ -431,7 +351,6 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
                 tput(nnz as f64, wall_blk),
             )?;
 
-            // Prefetch variant (distance 8).
             let pf_key = format!("spmv/{field}/{n}/prefetch-d8");
             if cell_passes(&args.filter, &pf_key) {
                 eprintln!("[gf2-sparse] {pf_key}");
@@ -458,10 +377,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
             }
         }
 
-        // RCM-reordered. Following cbf576d1's amortized protocol: the
-        // permutation is built outside the timer; the input vector is
-        // pre-permuted; the timer measures only the matvec on the
-        // reordered matrix.
+        // The permutation and the permuted input are built outside the timer.
         let rcm_key = format!("spmv/{field}/{n}/rcm-reordered");
         if cell_passes(&args.filter, &rcm_key) {
             let (reordered, perm) = a.reorder_rcm();
@@ -487,7 +403,6 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
             )?;
         }
 
-        // ── sparse-matmul (CSR only — landed via 2403c054) ────────────────
         let mm_key = format!("sparse-matmul/{field}/{n}/csr");
         if cell_passes(&args.filter, &mm_key) {
             let other_seed = derive_seed(args.master_seed, "spmm-er-b", 1, si as u64, 1);
@@ -514,12 +429,7 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
             )?;
         }
 
-        // ── sparse×dense (CSR · dense BitMatrix → dense BitMatrix) ────────
-        // Closes scorecard § 5 #6 by emitting the gf2-core side of the
-        // `sparse×dense × GF(2)` cell. Uses `SpBitMatrix::matmat` against a
-        // dense `BitMatrix` of shape `n × n`. Throughput counted as
-        // `nnz(A) · n` word-XOR work (each nonzero contributes one row-XOR
-        // of length n bits into the output row).
+        // Throughput counts `nnz(A) · n` operations: each nonzero XORs one n-bit row.
         let sd_key = format!("sparse×dense/{field}/{n}/csr");
         if cell_passes(&args.filter, &sd_key) {
             let dense_seed = derive_seed(args.master_seed, "spdn-b", 2, si as u64, 1);
@@ -550,7 +460,6 @@ fn run_gf2_random_er(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::i
     Ok(())
 }
 
-/// Build a SpBitMatrixDual from a CSR matrix by serialising COO triplets.
 fn build_dual_from_csr(csr: &SpBitMatrix) -> gf2_core::sparse::SpBitMatrixDual {
     let mut entries: Vec<(usize, usize)> = Vec::with_capacity(csr.nnz());
     for r in 0..csr.rows() {
@@ -561,18 +470,12 @@ fn build_dual_from_csr(csr: &SpBitMatrix) -> gf2_core::sparse::SpBitMatrixDual {
     gf2_core::sparse::SpBitMatrixDual::from_coo(csr.rows(), csr.cols(), &entries)
 }
 
-// ─── Generic Fp/GF(2^m) random ER ──────────────────────────────────────────
-
 fn run_fp_random_er<const P: u64>(
     args: &Args,
     sink: &mut CsvSink,
     field_label: &str,
     sizes: &[usize],
 ) -> std::io::Result<()> {
-    // sparse-elim cells (GF(p)). Mirrors the GF(2) emitter block above and
-    // the LinBox `Method::SparseElimination` rows in
-    // `linbox_sparse_bench.cpp:269-271`. SparseFieldMatrix::<Fp<P>>::rref
-    // is the gf2-core entry-point exercised here.
     for (si, &elim_n) in [256usize, 1024].iter().enumerate() {
         let elim_density = 10.0 / (elim_n as f64);
         let elim_key = format!("sparse-elim/{field_label}/{elim_n}/csr");
@@ -610,7 +513,6 @@ fn run_fp_random_er<const P: u64>(
         let nnz = a.nnz();
         let x = fp_vec_from_seed::<P>(n, vec_seed);
 
-        // spmv
         let key = format!("spmv/{field_label}/{n}/csr");
         if cell_passes(&args.filter, &key) {
             eprintln!("[gf2-sparse] {key}");
@@ -634,7 +536,6 @@ fn run_fp_random_er<const P: u64>(
             )?;
         }
 
-        // sparse-matmul (eb57f944)
         let mm_key = format!("sparse-matmul/{field_label}/{n}/csr");
         if cell_passes(&args.filter, &mm_key) {
             let b_seed = derive_seed(args.master_seed, "spmm-er-b", 1, si as u64, 1);
@@ -661,7 +562,6 @@ fn run_fp_random_er<const P: u64>(
             )?;
         }
 
-        // sparse×dense (matmat)
         let sd_key = format!("sparse×dense/{field_label}/{n}/csr");
         if cell_passes(&args.filter, &sd_key) {
             let b_seed = derive_seed(args.master_seed, "spdn-b", 2, si as u64, 1);
@@ -674,7 +574,6 @@ fn run_fp_random_er<const P: u64>(
                 args.warmup,
                 args.iters,
             );
-            // Throughput = nnz(A) * n (each non-zero contributes n MACs against B's row).
             let work_ops = (a.nnz() as f64) * (n as f64);
             sink.emit(
                 "sparse×dense",
@@ -819,12 +718,8 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
             )?;
         }
 
-        // sparse-elim (rref). GF(2^m) is `not-yet-harnessed` in the
-        // LinBox/fflas reference — `linbox_sparse_bench.cpp` does not
-        // emit sparse-elim,GF(2^m) rows, so these gf2-side numbers are
-        // evidence-only (path runs) rather than a side-by-side cell.
-        // Kept gated behind `--full` so the default `--quick` profile
-        // stays focused on the GF(2)/GF(p) cells the scorecard owes.
+        // GF(2^m) sparse-elim runs under `--full` only; `linbox_sparse_bench.cpp` emits no
+        // GF(2^m) sparse-elim reference rows.
         if args.full {
             let elim_n = 256;
             let elim_key = format!("sparse-elim/{field_label}/{elim_n}/csr");
@@ -857,14 +752,11 @@ fn run_gf2m_random_er<C: Gf2mWideConfig<1>>(
     Ok(())
 }
 
-// ─── Coding-theory matrices (§ 3.3) ────────────────────────────────────────
-
 fn run_coding_theory(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
     eprintln!("[gf2-sparse] === coding-theory class ===");
 
     let field = "GF(2)";
 
-    // 1. DVB-T2 short rate-1/2: H is 8400 × 16200, very sparse.
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let h = ldpc_h_to_csr(&code);
     let n_cols = code.n();
@@ -898,7 +790,6 @@ fn run_coding_theory(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
         tput(h.nnz() as f64, wall),
     )?;
 
-    // 2. DVB-T2 normal rate-2/3: H is 21600 × 64800.
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate2_3);
     let h = ldpc_h_to_csr(&code);
     let n_cols = code.n();
@@ -932,7 +823,6 @@ fn run_coding_theory(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
         tput(h.nnz() as f64, wall),
     )?;
 
-    // 3. 5G NR BG1, Z=384.
     let qc = QuasiCyclicLdpc::nr_5g(1, 384);
     let m_rows = qc.expanded_rows();
     let n_cols = qc.expanded_cols();
@@ -963,7 +853,6 @@ fn run_coding_theory(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
         tput(h.nnz() as f64, wall),
     )?;
 
-    // 4. 5G NR BG2, Z=208.
     let qc = QuasiCyclicLdpc::nr_5g(2, 208);
     let m_rows = qc.expanded_rows();
     let n_cols = qc.expanded_cols();
@@ -997,17 +886,8 @@ fn run_coding_theory(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Convert an `LdpcCode`'s parity-check matrix to a `SpBitMatrix`. The
-/// parity matrix is exposed via syndrome computation: H·c=s for a
-/// codeword c. We could cycle through unit-vectors to recover columns,
-/// but the cleaner path is to use the QC structure. For the DVB-T2
-/// case, we go through the dvb_t2 builder (public) directly.
+/// Recovers H column by column: column j is the syndrome of the unit vector e_j.
 fn ldpc_h_to_csr(code: &LdpcCode) -> SpBitMatrix {
-    // We don't have public access to the H matrix from the LdpcCode
-    // object directly (it's pub(crate)). Reconstruct H by syndrome
-    // probes: column j is H·e_j where e_j is the j-th unit vector.
-    // For the DVB-T2 sizes (k≈n) this is `n` syndrome calls; cost is
-    // amortised since the corpus harness only runs this once per matrix.
     let n_cols = code.n();
     let m_rows = code.m();
     let mut entries: Vec<(usize, usize)> = Vec::new();
@@ -1024,14 +904,11 @@ fn ldpc_h_to_csr(code: &LdpcCode) -> SpBitMatrix {
     SpBitMatrix::from_coo(m_rows, n_cols, &entries)
 }
 
-// ─── Structured corpus (§ 3.2) ─────────────────────────────────────────────
-
 fn run_structured(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::Result<()> {
     eprintln!("[gf2-sparse] === structured class (GF(2) only in --quick) ===");
     let field = "GF(2)";
 
     for (si, &n) in sizes.iter().enumerate() {
-        // banded-w8
         let key = format!("spmv/{field}/{n}/banded-w8");
         if cell_passes(&args.filter, &key) {
             let h = build_banded(n, 8);
@@ -1060,7 +937,6 @@ fn run_structured(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::
             )?;
         }
 
-        // banded-w64
         let key = format!("spmv/{field}/{n}/banded-w64");
         if cell_passes(&args.filter, &key) {
             let h = build_banded(n, 64);
@@ -1089,7 +965,6 @@ fn run_structured(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::
             )?;
         }
 
-        // circulant-w8
         let key = format!("spmv/{field}/{n}/circulant-w8");
         if cell_passes(&args.filter, &key) {
             let h = build_circulant(
@@ -1122,11 +997,7 @@ fn run_structured(args: &Args, sink: &mut CsvSink, sizes: &[usize]) -> std::io::
             )?;
         }
 
-        // rcm-permuted-er: take a § 3.1 ER matrix and apply RCM, time the
-        // matvec on the reordered matrix (already covered by the random
-        // class's RCM layout-variant row, but we emit a structured-class
-        // row here too so the side-by-side report can render the
-        // structured-corpus column for RCM specifically).
+        // Same matrix and seeds as the random class's RCM row, under the structured regime label.
         let key = format!("spmv/{field}/{n}/rcm-permuted-er");
         if cell_passes(&args.filter, &key) {
             let density = 10.0 / (n as f64);
@@ -1173,7 +1044,6 @@ fn build_banded(n: usize, bandwidth: usize) -> SpBitMatrix {
 }
 
 fn build_circulant(n: usize, weight: usize, seed: u64) -> SpBitMatrix {
-    // Pick `weight` distinct column offsets deterministically.
     let mut st = seed;
     let mut offsets: Vec<usize> = Vec::with_capacity(weight);
     while offsets.len() < weight {
@@ -1211,7 +1081,6 @@ fn main() -> std::io::Result<()> {
         &[1024]
     };
 
-    // Random ER class for every field.
     run_gf2_random_er(&args, &mut sink, sizes)?;
     run_fp_random_er::<PRIME_7>(&args, &mut sink, "GF(7)", sizes)?;
     run_fp_random_er::<PRIME_251>(&args, &mut sink, "GF(251)", sizes)?;

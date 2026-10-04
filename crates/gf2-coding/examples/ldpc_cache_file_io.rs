@@ -1,17 +1,4 @@
-//! Demonstrates LDPC encoding cache with file I/O.
-//!
-//! This example shows how to use persistent file-based caching to avoid
-//! expensive preprocessing (2-3 seconds per configuration).
-//!
-//! # Usage
-//!
-//! ```bash
-//! # Generate cache files (slow, one-time operation)
-//! cargo run --example ldpc_cache_file_io -- generate
-//!
-//! # Use cached files (instant)
-//! cargo run --example ldpc_cache_file_io -- use
-//! ```
+//! Loads the DVB-T2 LDPC encoding cache from `data/ldpc/dvb_t2` and builds encoders from it.
 
 use gf2_coding::ldpc::encoding::EncodingCache;
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
@@ -24,7 +11,6 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     let mode = args.get(1).map(|s| s.as_str()).unwrap_or("use");
 
-    // Use data directory by default, or target for examples
     let cache_dir = Path::new("data/ldpc/dvb_t2");
 
     match mode {
@@ -60,7 +46,6 @@ fn generate_cache(cache_dir: &Path) {
                 cache_dir.display()
             );
 
-            // Show file sizes
             if let Ok(entries) = std::fs::read_dir(cache_dir) {
                 let mut total_size = 0;
                 let mut count = 0;
@@ -95,7 +80,6 @@ fn use_cache(cache_dir: &Path) {
         std::process::exit(1);
     }
 
-    // Load cache from disk
     println!("Loading cache from {}...", cache_dir.display());
     let load_start = Instant::now();
 
@@ -110,7 +94,6 @@ fn use_cache(cache_dir: &Path) {
     let load_time = load_start.elapsed();
     println!("✓ Cache loaded in {:.1}ms\n", load_time.as_millis());
 
-    // Test a few configurations
     let configs = vec![
         ("Short 1/2", CodeRate::Rate1_2, true),
         ("Short 3/5", CodeRate::Rate3_5, true),
@@ -144,7 +127,6 @@ fn use_cache(cache_dir: &Path) {
         }
     }
 
-    // Demonstrate encoding
     println!("\nEncoding example message...");
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let encoder = LdpcEncoder::with_cache(code, &cache);

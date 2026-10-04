@@ -1,18 +1,5 @@
-//! DVB-T2 BCH Code Example
-//!
-//! Demonstrates DVB-T2 BCH outer codes from ETSI EN 302 755.
-//! These codes provide error correction before LDPC inner coding.
-//!
-//! Shows:
-//! - Different frame sizes (short, normal) and code rates
-//! - Error correction capabilities up to t errors
-//! - Concatenation with LDPC codes
-//!
-//! Run with:
-//!
-//! ```text
-//! ./scripts/cargo-budget.sh cargo run --release -p gf2-coding --example dvb_t2_bch_demo
-//! ```
+//! DVB-T2 BCH outer codes of `@/citation/Etsi2015`: parameters per frame size
+//! and code rate, and decoding with up to and beyond `t` errors.
 
 use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchDecoder, FrameSize};
 use gf2_coding::bch::BchDecodeOutcome;
@@ -28,11 +15,9 @@ fn main() -> Result<()> {
     println!("DVB-T2 BCH Outer Code Example");
     println!("=============================\n");
 
-    // Short frame, rate 1/2
     demo_configuration(FrameSize::Short, CodeRate::Rate1_2)?;
     println!();
 
-    // Normal frame, rate 1/2
     demo_configuration(FrameSize::Normal, CodeRate::Rate1_2)?;
     println!();
 
@@ -40,7 +25,6 @@ fn main() -> Result<()> {
     demo_configuration(FrameSize::Normal, CodeRate::Rate2_3)?;
     println!();
 
-    // Demonstrate error correction
     println!("\n================================================");
     println!("Error Correction Demonstration");
     println!("================================================\n");
@@ -66,7 +50,6 @@ fn demo_configuration(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
         decoder.correction_radius()
     );
 
-    // Test: Simple roundtrip without errors
     let mut rng = StdRng::seed_from_u64(0xAE03_BCD0);
     let message = BitVec::random(code.k(), &mut rng);
     let codeword = code.encode(&message)?;
@@ -91,20 +74,16 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
     println!("  BCH({}, {}, t={})", code.n(), code.k(), t);
     println!("  Can correct up to {} bit errors\n", t);
 
-    // Create a random message
     let mut rng = StdRng::seed_from_u64(0xAE03_BCD0);
     let message = BitVec::random(code.k(), &mut rng);
 
-    // Encode
     let codeword = code.encode(&message)?;
     println!("  Original message: {} bits", message.len());
     println!("  Encoded codeword: {} bits", codeword.len());
 
-    // Test error correction at different error levels
     for num_errors in [0, t / 2, t] {
         println!("\n  Testing with {} error(s):", num_errors);
 
-        // Introduce random errors
         let mut corrupted = codeword.clone();
         let mut error_positions = Vec::new();
 
@@ -121,14 +100,11 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
             println!("    Error positions: {:?}", error_positions);
         }
 
-        // Decode
         let (_, decoded) = decoder.decode(&corrupted)?;
 
-        // Check result
         if decoded == message {
             println!("    ✓ Successfully corrected all errors!");
         } else {
-            // Count bit differences
             let mut differences = 0;
             for i in 0..message.len() {
                 if decoded.get(i) != message.get(i) {
@@ -140,7 +116,6 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
         }
     }
 
-    // Test beyond error correction capability
     let num_errors = t + 1;
     println!(
         "\n  Testing with {} errors (beyond capability):",

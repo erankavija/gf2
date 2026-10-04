@@ -1,14 +1,10 @@
-//! Demonstration of LLR operations for soft-decision decoding.
-//!
-//! This example shows the various LLR operations used in LDPC and turbo code decoding,
-//! including exact and approximate box-plus operations for check node updates.
+//! LLR arithmetic for soft-decision decoding: exact and min-sum box-plus, binary and multi-operand.
 
 use gf2_coding::llr::Llr;
 
 fn main() {
     println!("=== LLR Operations for Soft-Decision Decoding ===\n");
 
-    // Basic LLR operations
     println!("1. Basic LLR Operations");
     println!("{}", "-".repeat(50));
 
@@ -31,7 +27,6 @@ fn main() {
     println!("  Hard decision: {}", llr_weak.hard_decision());
     println!("  Magnitude (confidence): {:.2}\n", llr_weak.magnitude());
 
-    // Binary box-plus operations
     println!("2. Binary Box-Plus (XOR in LLR domain)");
     println!("{}", "-".repeat(50));
 
@@ -59,7 +54,6 @@ fn main() {
     println!("  Exact box-plus: {:.4}", xor_mixed.value());
     println!("  Min-sum approx: {:.4}\n", xor_mixed_minsum.value());
 
-    // Multi-operand box-plus (LDPC check nodes)
     println!("3. Multi-Operand Box-Plus (LDPC Check Nodes)");
     println!("{}", "-".repeat(50));
 
@@ -95,16 +89,10 @@ fn main() {
         (exact.value() - offset.value()).abs()
     );
 
-    // Mixed sign case (important for LDPC)
     println!("4. Mixed Signs (Parity Check Constraint)");
     println!("{}", "-".repeat(50));
 
-    let mixed_llrs = vec![
-        Llr::new(4.0),  // Strongly 0
-        Llr::new(-3.0), // Strongly 1
-        Llr::new(5.0),  // Strongly 0
-        Llr::new(-2.0), // Moderately 1
-    ];
+    let mixed_llrs = vec![Llr::new(4.0), Llr::new(-3.0), Llr::new(5.0), Llr::new(-2.0)];
 
     println!("Variable nodes with mixed beliefs:");
     for (i, llr) in mixed_llrs.iter().enumerate() {
@@ -136,7 +124,6 @@ fn main() {
         minsum_mixed.hard_decision()
     );
 
-    // Numerical stability
     println!("5. Numerical Stability");
     println!("{}", "-".repeat(50));
 
@@ -171,7 +158,6 @@ fn main() {
         saturated_a.boxplus(saturated_b).value()
     );
 
-    // Performance comparison hint
     println!("6. Performance Considerations");
     println!("{}", "-".repeat(50));
     println!("For LDPC decoding with thousands of iterations:");

@@ -1,30 +1,12 @@
-//! Emits the predeclared BCH conformance corpus that the external oracles read.
+//! Emits the BCH conformance corpus that the external oracles read: for each
+//! row `gf2_coding::test_support::visit_bch_corpus` constructs, the field
+//! presentations, the primitive $n$-th root of unity, the code parameters and
+//! the seeded messages. It writes no generator polynomial and no codeword; the
+//! oracles derive their own and `bch_oracle_agreement` recomputes gf2's.
 //!
-//! The evidence protocol in `dev/active/ae03bcd0-general-bch/plan.md` fixes
-//! eight rows and one message seed. `gf2_coding::test_support::visit_bch_corpus`
-//! owns the construction; this example reduces each constructed row to the
-//! *inputs* an external oracle needs to build the identical code: the base- and
-//! splitting-field presentations gf2 selected, the primitive $n$-th root of
-//! unity $\alpha$ gf2 derived, the code parameters, and the seeded messages.
-//!
-//! It deliberately writes no generator polynomial and no codeword. Those are
-//! the quantities under comparison; the oracles derive their own and the
-//! integration suite `bch_oracle_agreement` recomputes gf2's.
-//!
-//! # Canonical index
-//!
-//! Every field element is written as its *canonical index*: the integer whose
+//! Every field element is written as its canonical index: the integer whose
 //! base-$p$ digits are the element's canonical prime coordinates, coordinate
-//! zero least significant. That is exactly the numbering
-//! `FieldIdentity::write_prime_coords` defines, so the index is a property of
-//! the field presentation rather than of any carrier type.
-//!
-//! # Usage
-//!
-//! ```text
-//! ./scripts/cargo-budget.sh cargo run --release --features test-support \
-//!     --example bch_oracle_messages -- <output.json>
-//! ```
+//! zero least significant, as `FieldIdentity::write_prime_coords` numbers them.
 
 use std::fmt::Write as _;
 
