@@ -1,11 +1,9 @@
-//! Typed execution tuning and the process-wide resolution authority.
-//!
-//! [`PreparedEnvelope`] is the one installable container for crate-owned
-//! [`TuningSection`] values. Installation and first access race through one
-//! process-wide authority: installation wins once, while access before install
-//! permanently resolves missing sections to their owner defaults. With the
-//! `tuning-profile` feature, an explicit `ProfileRegistry` strictly decodes
-//! or encodes canonical format-2 envelopes.
+//! Typed execution tuning: [`PreparedEnvelope`] is the one installable
+//! container for crate-owned [`TuningSection`] values. Installation and first
+//! access race through one process-wide authority: installation wins once,
+//! while access before install permanently resolves missing sections to their
+//! owner defaults. With the `tuning-profile` feature, an explicit
+//! `ProfileRegistry` strictly decodes or encodes canonical format-2 envelopes.
 //!
 //! ```
 //! use gf2_core::tuning::{

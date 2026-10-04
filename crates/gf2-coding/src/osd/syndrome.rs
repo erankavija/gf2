@@ -1,9 +1,6 @@
-//! Syndrome-domain ordered-statistics decoding for parity-check matrices.
-//!
-//! The adapter computes `s = H yᵀ`, solves `H eᵀ = s`, and searches error
-//! patterns with ascending-magnitude pivots over the shared
-//! [`MostReliableBasis`] and [`reprocess`] engine.  Candidates have cost
-//! `sum_i e_i |L_i|`; the global order-`m` minimum is attained only in an
+//! Syndrome-domain ordered-statistics decoding for parity-check matrices, over
+//! the shared [`MostReliableBasis`] and [`reprocess`] engine.  Candidates have
+//! cost `sum_i e_i |L_i|`; the global order-`m` minimum is attained only in an
 //! uncapped exhaustive configuration.
 
 use std::fmt;

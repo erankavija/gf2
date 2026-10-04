@@ -1,10 +1,7 @@
-//! DVB-T2 BCH outer codes on the canonical construction model.
-//!
-//! `@/citation/Etsi2015` defines the outer BCH code of each FECFRAME as a
-//! shortened primitive narrow-sense BCH code over the splitting field its
-//! frame size selects. [`dvb_t2_bch_code`] builds that code from the
-//! standard's tables as a [`Shortened<DvbT2MotherCode>`](Shortened) in the
-//! standard's transmission order, [`DVB_T2_LAYOUT`].
+//! DVB-T2 BCH outer codes of `@/citation/Etsi2015`: [`dvb_t2_bch_code`] builds
+//! the shortened primitive narrow-sense code of a frame size and code rate in
+//! the standard's transmission order, [`DVB_T2_LAYOUT`], and
+//! [`DvbT2BchDecoder`] decodes it.
 
 pub mod generators;
 pub mod params;

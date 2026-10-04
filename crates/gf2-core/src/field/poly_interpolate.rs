@@ -1,8 +1,6 @@
-//! Lagrange polynomial interpolation over any [`FiniteField`].
-//!
-//! Each entry point returns the unique polynomial of degree at most `n − 1`
-//! through `n` points with distinct `x_i`, or
-//! [`InterpolationError::DuplicatePoint`].
+//! Lagrange polynomial interpolation over any [`FiniteField`]: each entry
+//! point returns the unique polynomial of degree at most `n − 1` through `n`
+//! points with distinct `x_i`, or [`InterpolationError::DuplicatePoint`].
 
 use crate::field::batch_ops::batch_inverse;
 use crate::field::poly::build_subproduct_tree;

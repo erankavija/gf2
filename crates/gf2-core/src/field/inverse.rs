@@ -1,10 +1,6 @@
 //! Matrix inversion, linear-system solving, and determinant over an
-//! arbitrary [`FiniteField`].
-//!
-//! [`FieldMatrix::inv`], [`FieldMatrix::solve`],
-//! [`FieldMatrix::solve_batch`] and [`FieldMatrix::det`] compose the PLE
-//! decomposition with the triangular kernels
-//! (`@/citation/DumasPernet2012` §2.3, Table 2).
+//! arbitrary [`FiniteField`], composed from the PLE decomposition and the
+//! triangular kernels (`@/citation/DumasPernet2012` §2.3, Table 2).
 
 use crate::field::matrix::FieldMatrix;
 #[cfg(any(test, feature = "test-support"))]

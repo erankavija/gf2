@@ -1,10 +1,7 @@
-//! Structure-of-Arrays (SoA) batch layout for GF(p^n) extension fields.
-//!
-//! [`BatchExtField<F, N>`] stores the coefficients of many independent
-//! extension-field elements by coefficient position: `coeffs[i]` is a
-//! contiguous buffer holding coefficient `i` of every element, so
-//! extension-field arithmetic decomposes into base-field passes over
-//! contiguous slices. The quadratic and cubic products dispatch through
+//! Structure-of-Arrays batch layout for GF(p^n) extension fields:
+//! [`BatchExtField<F, N>`] stores coefficient `i` of every element in one
+//! contiguous buffer, so extension-field arithmetic runs as base-field passes
+//! over slices. The quadratic and cubic products dispatch through
 //! [`SimdKaratsubaHook`].
 
 use std::array;

@@ -1,10 +1,6 @@
-//! BCH-specific construction and decoding errors.
-//!
-//! [`BchError`] is the boundary between BCH algorithms and the lower-level
-//! error layers.  Field failures remain [`FieldError`] sources, generic code
-//! and buffer failures remain [`CodeError`] sources, and the variants in this
-//! module add only BCH mathematical validation context. Automatic extension
-//! selection reports its lower-level failure through [`BchError::ModulusSelection`].
+//! BCH-specific construction and decoding errors: [`BchError`] keeps field
+//! failures as [`FieldError`] sources and generic code and buffer failures as
+//! [`CodeError`] sources, and adds BCH mathematical validation context.
 
 use crate::bch::encode::EncodeFamily;
 use crate::error::CodeError;

@@ -1,8 +1,5 @@
-//! Provenance maps for coordinates of derived codes.
-//!
-//! [`CoordinateMap`] always points from a derived code to its mother code: an
-//! input position is a derived-code position and the returned value is the
-//! corresponding mother-code position.
+//! Provenance maps for coordinates of derived codes: a [`CoordinateMap`]
+//! points from a derived code to its mother code.
 
 use crate::error::CodeError;
 use std::collections::HashSet;
