@@ -4,9 +4,6 @@
 //! [`CheckpointWriter`] and [`CheckpointReader`] adapt the persistence
 //! mechanism of [`crate::checkpoint`] to the `snr_<NNNN>.json` naming and
 //! translate its load failures into [`FatalError`].
-//! [`run_snr_point_checkpointed`] and [`run_sweep_checkpointed`] run frames in
-//! heartbeat-sized chunks over [`run_snr_point_range`] and flush a checkpoint
-//! after each chunk.
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};

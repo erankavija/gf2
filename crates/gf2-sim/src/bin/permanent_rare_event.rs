@@ -1,6 +1,6 @@
 //! Runner for the independent importance-sampling cross-check. Its one argument
 //! is the repository-relative path of a frozen configuration in the schema of
-//! the preregistered design `dev/active/3f664839/design.md`; the run is
+//! the preregistered design; the run is
 //! [`gf2_sim::permanent_rare_event::runner`].
 //!
 //! `RAYON_NUM_THREADS` declares the worker count. `GF2_RARE_EVENT_BLOCK_BUDGET`
