@@ -12,7 +12,7 @@
     "8b42d23b-d94b-4c2b-84a5-9776619123c5",
     "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
   ],
-  "description": "The gf2-core crate guides and benchmark result notes served as fact sources for the permanent pages. Once mined, they leave the crate and are preserved in the legacy mirror.\n\n## Background\n\nInbound citations include the crate README, Rustdoc in `src/field/winograd.rs` and `src/field/expr.rs`, bench headers and several `dev/active/` documents (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5).\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-core/docs/` and the Markdown notes under `crates/gf2-core/benches/` live under `dev/archive/legacy/<original-relative-path>`, moved with history preserved, and the original paths no longer exist.\n- [hard] REQ-02: Each inbound citation outside the mirror points to the permanent page covering the topic, to the mirror path, or is removed as design-history provenance.\n- [hard] REQ-03: A link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n",
+  "description": "The gf2-core crate guides and benchmark result notes served as fact sources for the permanent pages. Once mined, they leave the crate and are preserved in the legacy mirror.\n\n## Background\n\nInbound citations include the crate README, Rustdoc in `src/field/winograd.rs` and `src/field/expr.rs`, bench headers and several `dev/active/` documents (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5).\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-core/docs/` and the Markdown notes under `crates/gf2-core/benches/` live under `dev/archive/legacy/<original-relative-path>`, moved with history preserved, and the original paths no longer exist.\n- [hard] REQ-02: Each inbound citation outside the mirror points to the permanent page covering the topic, to the mirror path, or is removed as design-history provenance; digest-pinned machine inputs keep their bytes.\n- [hard] REQ-03: A link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n\n## Decisions\n\n- DEC-01: The owner ruled on 2026-10-04 that digest-pinned machine inputs keep their bytes (REQ-02 carries the amendment), and that the descriptions of terminal tracker issues are historical records that keep their text: a path of a moved file inside such a description is outside REQ-02.\n",
   "documents": [
     {
       "commit": null,
@@ -73,5 +73,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Move gf2-core crate guides into the legacy mirror",
-  "updated_at": "2026-10-04T19:50:03.220979595Z"
+  "updated_at": "2026-10-04T20:52:59.741159227Z"
 }

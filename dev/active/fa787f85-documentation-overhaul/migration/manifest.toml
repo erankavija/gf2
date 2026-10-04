@@ -2483,9 +2483,11 @@ artifacts = [
 # can move the container-archive sources beneath it, and its path is absent from `permanent_paths` while listed.
 # Each entry is removed by d6ebc4ec when the container-archive rows it serves are complete; removal returns the path
 # to `permanent_paths` unless the path is gone. Container-archive sources under `docs/` lie outside `development_root`
-# and move by `git mv` under contract relocation-protocol.
+# and move by `git mv` under contract relocation-protocol; `dev/docs` is the source path the planner derives for them
+# under `dev/archive/<epic>/docs/`.
 policy = [
 { key = "documentation.managed_paths", value = "dev/archive", removal = "d6ebc4ec", status = "pending" },
+{ key = "documentation.managed_paths", value = "dev/docs", removal = "d6ebc4ec", status = "pending" },
 { key = "documentation.managed_paths", value = "dev/reference_data", removal = "d6ebc4ec", status = "pending" },
 { key = "documentation.managed_paths", value = "dev/research", removal = "d6ebc4ec", status = "pending" },
 { key = "documentation.managed_paths", value = "dev/simulation_results", removal = "d6ebc4ec", status = "pending" },
