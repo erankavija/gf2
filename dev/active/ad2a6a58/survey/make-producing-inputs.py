@@ -10,65 +10,25 @@ compiles, the harness crates (this family's arm and the two byte-field survey
 crates it reuses), the shared campaign generators, the launcher, the shared lock
 wrapper and the shared campaign tooling.
 
-Every location is resolved under the repository root git reports: this family's
-own files from this file's directory, shared scripts and the launcher by file
-name, harness and tool crates by package name.
+`locate.py` beside this file resolves every location at run time.
 """
 
 import os
-import subprocess
 import sys
-from pathlib import Path
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = subprocess.run(
-    ["git", "-C", HERE, "rev-parse", "--show-toplevel"], check=True, capture_output=True,
-    text=True,
-).stdout.strip()
-
-
-def shared_scripts():
-    """Root-relative directory of the shared campaign scripts.
-
-    Receipt input snapshots hold byte copies of it under an `inputs` directory;
-    the live one is the path outside them.
-    """
-    listing = subprocess.run(
-        ["git", "-C", ROOT, "ls-files", "--", ":(glob)**/campaign_inputs.py"], check=True,
-        capture_output=True, text=True,
-    ).stdout.split()
-    live = [path for path in listing if "inputs" not in path.split("/")[:-1]]
-    if len(live) != 1:
-        raise SystemExit(f"{len(live)} live campaign_inputs.py files; exactly one must exist")
-    return os.path.dirname(live[0])
-
-
-SHARED = shared_scripts()
-sys.path.insert(0, os.path.join(ROOT, SHARED))
+import locate
 import campaign_inputs  # noqa: E402
-import repository_files  # noqa: E402
 
-
-def package(name):
-    return repository_files.package_directory(Path(ROOT), name)
-
-
-def live_file(name):
-    """Root-relative path of the one live file called `name`."""
-    found = repository_files.tracked_files(Path(ROOT), name)
-    if len(found) != 1:
-        raise SystemExit(f"{len(found)} live files are called {name}; exactly one must be")
-    return found[0]
-
-
-SURVEY = os.path.relpath(HERE, ROOT)
-ISSUE = os.path.dirname(SURVEY)
-ARM = package("gf256-axpy-arm")
-ARM_COMMON = package("byte-field-arm-common")
-GF2_SIDE = package("byte-field-gf2-side")
-TOOL = package("tuning-campaign-support")
+ROOT = locate.ROOT
+SHARED = locate.SHARED
+SURVEY = locate.SURVEY
+ISSUE = locate.ISSUE
+ARM = locate.package("gf256-axpy-arm")
+ARM_COMMON = locate.package("byte-field-arm-common")
+GF2_SIDE = locate.package("byte-field-gf2-side")
+TOOL = locate.package("tuning-campaign-support")
 LOCK_WRAPPER = f"{SHARED}/ccx1-bench-flock.sh"
-LAUNCHER = live_file("run-axpy-confirmation.sh")
+LAUNCHER = locate.LAUNCHER
 EVIDENCE = f"{ISSUE}/conformance"
 
 LIFECYCLE = [
@@ -92,6 +52,8 @@ BEHAVIOR_EXTRA = [
     LAUNCHER,
     f"{SHARED}/campaign_plan.py",
     f"{SHARED}/verify-campaign-log.py",
+    f"{SHARED}/repository_files.py",
+    f"{SURVEY}/locate.py",
     f"{SURVEY}/make-plan.py",
 ]
 
@@ -133,7 +95,7 @@ SOURCE_DIRS = [
 
 
 def main():
-    output = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "producing-inputs.json")
+    output = sys.argv[1] if len(sys.argv) > 1 else os.path.join(locate.HERE, "producing-inputs.json")
     campaign_inputs.write_manifest(ROOT, output, SOURCE_DIRS, BEHAVIOR_EXTRA, LIFECYCLE,
                                    BUILD_EXTRA)
 
