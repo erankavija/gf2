@@ -53,13 +53,46 @@ The path each arm reported after its timed windows, as the receipt records it.
 
 ## Confirmation
 
-No committed confirmation receipt at `dev/bench_results/ad2a6a58/r1-axpy-confirmation`.
+Campaign `ad2a6a58-r1-axpy-confirmation`, verdict `accepted`, qualifies `True`.
+
+| family                  | comparisons | family alpha | attempt alpha | corrected alpha      | per-comparison confidence |
+|-------------------------|-------------|--------------|---------------|----------------------|---------------------------|
+| gf256-shipped-axpy-lane | 6           | 0.05         | 0.025         | 0.004166666666666667 | 0.9958333333333333        |
+
+| cell                   | outcome | pairs | estimate           | lower              | upper              | flagged windows | total windows |
+|------------------------|---------|-------|--------------------|--------------------|--------------------|-----------------|---------------|
+| axpy-4k-element        | pass    | 24    | 12.37272246751369  | 12.31473476009745  | 12.46280747652316  | 0               | 240           |
+| axpy-128k-element      | pass    | 24    | 12.943866247940566 | 12.439631058081785 | 12.972935969194168 | 0               | 240           |
+| axpy-2m-stream-element | pass    | 24    | 4.921609380983697  | 4.908746197194139  | 4.931084699028448  | 0               | 240           |
+| axpy-4k-wide           | pass    | 24    | 155.6847030509637  | 150.73430470372176 | 156.08638396248827 | 0               | 240           |
+| axpy-128k-wide         | pass    | 24    | 168.9019015326745  | 161.98454408072436 | 169.1625201093093  | 0               | 240           |
+| axpy-2m-stream-wide    | pass    | 24    | 86.50163576975567  | 86.21044386877473  | 86.68697684416075  | 0               | 240           |
+
+### Confirmation lane witness
+
+The path each arm reported after its timed windows, as the receipt records it.
+
+| cell                   | position  | arm            | selected path                                                                                      | executions |
+|------------------------|-----------|----------------|----------------------------------------------------------------------------------------------------|------------|
+| axpy-128k-element      | baseline  | scalar-element | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0           | 24         |
+| axpy-128k-element      | candidate | table-element  | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1            | 24         |
+| axpy-128k-wide         | baseline  | scalar-wide    | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0 | 24         |
+| axpy-128k-wide         | candidate | table-wide     | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1  | 24         |
+| axpy-2m-stream-element | baseline  | scalar-element | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0           | 24         |
+| axpy-2m-stream-element | candidate | table-element  | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1            | 24         |
+| axpy-2m-stream-wide    | baseline  | scalar-wide    | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0 | 24         |
+| axpy-2m-stream-wide    | candidate | table-wide     | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1  | 24         |
+| axpy-4k-element        | baseline  | scalar-element | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0           | 24         |
+| axpy-4k-element        | candidate | table-element  | gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1            | 24         |
+| axpy-4k-wide           | baseline  | scalar-wide    | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0 | 24         |
+| axpy-4k-wide           | candidate | table-wide     | gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1  | 24         |
 
 ## Family ledger
 
-| sequence | family                  | campaign               | protocol | comparisons | addendum sha256  |
-|----------|-------------------------|------------------------|----------|-------------|------------------|
-| 0        | gf256-shipped-axpy-lane | ad2a6a58-r1-axpy-pilot | 4        | 0           | 6fd13ee5f2e28713 |
+| sequence | family                  | campaign                      | protocol | comparisons | addendum sha256  |
+|----------|-------------------------|-------------------------------|----------|-------------|------------------|
+| 0        | gf256-shipped-axpy-lane | ad2a6a58-r1-axpy-pilot        | 4        | 0           | 6fd13ee5f2e28713 |
+| 1        | gf256-shipped-axpy-lane | ad2a6a58-r1-axpy-confirmation | 4        | 6           | 2a22a6ecefc65fe2 |
 
 ## Direction agreement with the pinned vector-family confirmation
 
@@ -69,15 +102,24 @@ Agreement is on the direction alone. That campaign measured a prototype that con
 its operands and did not write results in place; the shipped path writes in place
 through the consumer's own hook, so the sizes need not match.
 
-No committed confirmation receipt, so no direction is stated yet.
+| cell                   | this family estimate | pinned estimate    | direction               |
+|------------------------|----------------------|--------------------|-------------------------|
+| axpy-4k-element        | 12.37272246751369    | 2.42613325318344   | agrees                  |
+| axpy-128k-element      | 12.943866247940566   | 2.434821706981551  | agrees                  |
+| axpy-2m-stream-element | 4.921609380983697    |                    | no matching pinned cell |
+| axpy-4k-wide           | 155.6847030509637    |                    | no matching pinned cell |
+| axpy-128k-wide         | 168.9019015326745    | 111.60246231393981 | agrees                  |
+| axpy-2m-stream-wide    | 86.50163576975567    |                    | no matching pinned cell |
 
 ## Source
 
-| path                                                                      | sha256                                                           |
-|---------------------------------------------------------------------------|------------------------------------------------------------------|
-| dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl                       | 484133560a5afe20a8720bcc23ff3fc6ceee245903a0dcebdc2845d9f3554c4e |
-| dev/active/ad2a6a58/pinned-vector-confirmation.json                       | 32d1bfb05003fdf7276a8004d30c4837a36c2564739ef41bc7db2421c90614ad |
-| dev/bench_results/19513245/r1-vector-confirmation/receipt.json            | 53f8c413dd1bf90190c6ad7bd51680d4b231063fb7e5aca7f977ead1e99a3b74 |
-| dev/bench_results/19513245/r1-vector-confirmation/acceptance-summary.json | 4030e2d63c7af0641960f6352fdc6d597efeea36da18a80e0928daea611a0699 |
-| dev/bench_results/ad2a6a58/r1-axpy-pilot/receipt.json                     | 60b5311ca7655d61be5bba58e6b28c99efb002b5791dfac8cf6322e1cdd1ce9c |
-| dev/bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.json          | 6021eeb9d0a9d233663bf465b68df18d5e76149652aea8837813793312d7c5bd |
+| path                                                                      | sha256                                                           | acceptance findings |
+|---------------------------------------------------------------------------|------------------------------------------------------------------|---------------------|
+| dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl                       | 77d312c365cb6a71ca370ed6f753172b499b04f953a3a92d1caee628f4792a26 |                     |
+| dev/active/ad2a6a58/pinned-vector-confirmation.json                       | 32d1bfb05003fdf7276a8004d30c4837a36c2564739ef41bc7db2421c90614ad |                     |
+| dev/bench_results/19513245/r1-vector-confirmation/receipt.json            | 53f8c413dd1bf90190c6ad7bd51680d4b231063fb7e5aca7f977ead1e99a3b74 |                     |
+| dev/bench_results/19513245/r1-vector-confirmation/acceptance-summary.json | 4030e2d63c7af0641960f6352fdc6d597efeea36da18a80e0928daea611a0699 |                     |
+| dev/bench_results/ad2a6a58/r1-axpy-pilot/receipt.json                     | 60b5311ca7655d61be5bba58e6b28c99efb002b5791dfac8cf6322e1cdd1ce9c |                     |
+| dev/bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.json          | 6021eeb9d0a9d233663bf465b68df18d5e76149652aea8837813793312d7c5bd | 0                   |
+| dev/bench_results/ad2a6a58/r1-axpy-confirmation/receipt.json              | 88ebc629f1583b0a20a7802a02ac154590e964af0a00fe1d695d1514f21c72a0 |                     |
+| dev/bench_results/ad2a6a58/r1-axpy-confirmation/acceptance-summary.json   | 43ad8896e26e41ac2686794c3a26a630bc93c28f39d9869d940feb91288fd334 | 0                   |

@@ -2,11 +2,11 @@
 # Shared non-timed harness smoke of every arm and cell of a frozen family.
 #
 # Usage (from the worker worktree root), with every flag required except the
-# last:
+# bracketed ones:
 #   dev/scripts/smoke-campaign-arms.sh --issue ID --addendum JSON
-#       --arm-manifest Cargo.toml --arm-bin NAME --smoke-bin NAME
-#       --plan-tool PY --producing JSON --record TXT --campaign-id ID
-#       --seed N --max-cells N [--pilot-pairs N]
+#       --arm-manifest Cargo.toml --arm-bin NAME --plan-tool PY
+#       --producing JSON --record PATH --campaign-id ID --seed N
+#       --max-cells N [--pilot-pairs N] [--smoke-bin NAME]
 #
 # A campaign that reaches the benchmark window and dies on its first arm spends
 # the window and measures nothing, and reading the runner and the arm side by
@@ -14,9 +14,16 @@
 # establish it. The arm workspace's tests pin the request mirror against
 # `benchmark-ab-runner`'s own `ArmRequest` declaration, so the record can only be
 # regenerated while the two agree; `benchmark-ab-runner check` applies the decode
-# and validation the runner applies before its first measurement; the family's
-# smoke binary drives every arm of every declared cell over the runner's wire in
-# the `validation` position, one untimed dispatch each.
+# and validation the runner applies before its first measurement;
+# `benchmark-ab-runner smoke`, whose contract `tuning_campaign_support::arm::smoke`
+# states, drives every arm of every declared cell once in the `validation`
+# position and writes the record. `--smoke-bin` names a binary of the arm
+# workspace that takes the plan and writes the record on stdout in the runner's
+# place.
+#
+# The projected plan carries the label of the stage the addendum freezes:
+# `confirmation` when a cell is confirmatory, `pilot` when every cell is
+# exploratory.
 #
 # Nothing here is timed: the throwaway plan and its unused lock live under
 # `target/`, the family ledger is never opened, no receipt is finalized and no
@@ -30,6 +37,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 }
 
 PILOT_PAIRS=
+SMOKE_BIN_NAME=
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --issue) ISSUE=$2 ;;
@@ -49,12 +57,11 @@ while [[ $# -gt 0 ]]; do
     shift 2
 done
 : "${ISSUE:?--issue}" "${ADDENDUM:?--addendum}" "${MANIFEST:?--arm-manifest}"
-: "${ARM_BIN:?--arm-bin}" "${SMOKE_BIN_NAME:?--smoke-bin}" "${PLAN_TOOL:?--plan-tool}"
+: "${ARM_BIN:?--arm-bin}" "${PLAN_TOOL:?--plan-tool}"
 : "${PRODUCING:?--producing}" "${RECORD:?--record}" "${CAMPAIGN_ID:?--campaign-id}"
 : "${SEED:?--seed}" "${MAX_CELLS:?--max-cells}"
 
 ARM_TARGET="${REPO}/target/${ISSUE}-arm"
-SMOKE_BIN="${ARM_TARGET}/release/${SMOKE_BIN_NAME}"
 RUNNER="${REPO}/target/release/benchmark-ab-runner"
 # Repository-relative: the plan names the addendum by a literal relative path,
 # so both the projection and the smoke resolve it from the worktree root.
@@ -76,12 +83,24 @@ mkdir -p "${SCRATCH}"
 # ever locks: the smoke spawns no timed execution, so it needs no host mutex.
 touch "${SCRATCH}/unused.lock"
 
-# The plan the campaigns measure, differing only in the campaign identity, the
+LABEL=$(python3 -B - "${ADDENDUM}" <<'PY'
+import json, sys
+roles = {cell["role"] for cell in json.load(open(sys.argv[1]))["cells"]}
+if "confirmatory" in roles:
+    print("confirmation")
+elif roles == {"exploratory"}:
+    print("pilot")
+else:
+    raise SystemExit(f"{sys.argv[1]}: cell roles {sorted(roles)} name no smoked stage")
+PY
+)
+
+# The plan the campaign measures, differing only in the campaign identity, the
 # seed and the unused lock, so every arm, cell and case reaching the smoke is the
 # one the window will measure.
 python3 -B "${PLAN_TOOL}" \
     --addendum "${ADDENDUM}" \
-    --label pilot \
+    --label "${LABEL}" \
     --campaign-id "${CAMPAIGN_ID}" \
     --campaign-seed "${SEED}" \
     --lock "$(realpath "${SCRATCH}/unused.lock")" \
@@ -92,6 +111,10 @@ python3 -B "${PLAN_TOOL}" \
     --output "${SCRATCH}/plan.json"
 "${RUNNER}" check "${SCRATCH}/plan.json"
 
-"${SMOKE_BIN}" "${SCRATCH}/plan.json" >"${RECORD}"
-cat "${RECORD}"
+if [[ -n "${SMOKE_BIN_NAME}" ]]; then
+    "${ARM_TARGET}/release/${SMOKE_BIN_NAME}" "${SCRATCH}/plan.json" >"${RECORD}"
+    cat "${RECORD}"
+else
+    "${RUNNER}" smoke "${SCRATCH}/plan.json" --record "${RECORD}"
+fi
 echo "smoke record: ${RECORD}" >&2

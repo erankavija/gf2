@@ -3,8 +3,8 @@
 
 A family supplies its title, its stages, its ledger and its receipt pin; the
 stage sections, the lane-witness table, the ledger table, the direction-agreement
-table and the source digests are the same for every such family and live here.
-Import it as
+table and the source digests with each stage's acceptance finding count are the
+same for every such family and live here. Import it as
 
     sys.path.insert(0, os.path.join(root, "dev/scripts"))
     import campaign_tables
@@ -167,8 +167,13 @@ def main(root, output, title, generator, stages, ledger, pin_path, agreement_hea
             candidate = f"{directory}/{name}"
             if os.path.isfile(os.path.join(root, candidate)):
                 sources.append(candidate)
-    lines += table([[path, digest(os.path.join(root, path))] for path in sources],
-                   ["path", "sha256"])
+    # An acceptance summary's row carries the number of findings it records.
+    findings = {f"{directory}/acceptance-summary.json": len(summary["findings"])
+                for (label, directory) in stages
+                if (summary := summaries[label]) is not None}
+    lines += table([[path, digest(os.path.join(root, path)), findings.get(path, "")]
+                    for path in sources],
+                   ["path", "sha256", "acceptance findings"])
 
     with open(output, "w") as handle:
         handle.write("\n".join(lines) + "\n")
