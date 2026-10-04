@@ -47,13 +47,46 @@ The path each arm reported after its timed windows, as the receipt records it.
 
 ## Confirmation
 
-No committed confirmation receipt at `dev/bench_results/4c1e441f/r1-dense-product-confirmation`.
+Campaign `4c1e441f-r1-dense-product-confirmation`, verdict `accepted`, qualifies `True`.
+
+| family                      | comparisons | family alpha | attempt alpha | corrected alpha      | per-comparison confidence |
+|-----------------------------|-------------|--------------|---------------|----------------------|---------------------------|
+| gf256-shipped-dense-product | 6           | 0.05         | 0.025         | 0.004166666666666667 | 0.9958333333333333        |
+
+| cell                      | outcome | pairs | estimate           | lower              | upper              | flagged windows | total windows |
+|---------------------------|---------|-------|--------------------|--------------------|--------------------|-----------------|---------------|
+| matmul-n256-element       | pass    | 24    | 8.945313544811988  | 8.932833454030616  | 8.989075169355083  | 0               | 240           |
+| matmul-n512-element       | pass    | 24    | 10.467858220715161 | 10.44978210081634  | 10.513880164495303 | 0               | 240           |
+| matmul-n256-whole-element | pass    | 24    | 8.322311386480122  | 8.311471598654563  | 8.338782349587335  | 0               | 240           |
+| matmul-n256-wide          | pass    | 24    | 3.4427728689795942 | 3.436556012973102  | 3.4491205909360003 | 0               | 240           |
+| matmul-n512-wide          | pass    | 24    | 3.67782138904945   | 3.671531515431996  | 3.682564674228203  | 0               | 240           |
+| matmul-n256-whole-wide    | pass    | 24    | 3.4207282953104357 | 3.4161335905003916 | 3.4259316347027684 | 0               | 240           |
+
+### Confirmation lane witness
+
+The path each arm reported after its timed windows, as the receipt records it.
+
+| cell                      | position  | arm            | selected path                                                                                                                                                                                          | executions |
+|---------------------------|-----------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| matmul-n256-element       | baseline  | scalar-element | gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2103296   | 24         |
+| matmul-n256-element       | candidate | table-element  | gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2293760    | 24         |
+| matmul-n256-whole-element | baseline  | scalar-element | gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2103296   | 24         |
+| matmul-n256-whole-element | candidate | table-element  | gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=2293760    | 24         |
+| matmul-n256-whole-wide    | baseline  | scalar-wide    | gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=2621440  | 24         |
+| matmul-n256-whole-wide    | candidate | table-wide     | gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=1245184   | 24         |
+| matmul-n256-wide          | baseline  | scalar-wide    | gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=2621440  | 24         |
+| matmul-n256-wide          | candidate | table-wide     | gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=1245184   | 24         |
+| matmul-n512-element       | baseline  | scalar-element | gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=8400896   | 24         |
+| matmul-n512-element       | candidate | table-element  | gf2-core/field::matrix::gemm<Gf2mElement>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=per-cell-batch-dot/vpclmulqdq-batch/allocs-per-call=5/alloc-bytes-per-call=9175040    | 24         |
+| matmul-n512-wide          | baseline  | scalar-wide    | gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-table-declined/table-builds=0/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=10485760 | 24         |
+| matmul-n512-wide          | candidate | table-wide     | gf2-core/field::matrix::gemm<Gf2mWide<1,Gf256x11d>>/poly=0x11D/lane=gf256-product-table/table-builds=1/route-without-table=whole-gemm/vpclmulqdq-gemm/allocs-per-call=5/alloc-bytes-per-call=4980736   | 24         |
 
 ## Family ledger
 
-| sequence | family                      | campaign                        | protocol | comparisons | addendum sha256  |
-|----------|-----------------------------|---------------------------------|----------|-------------|------------------|
-| 0        | gf256-shipped-dense-product | 4c1e441f-r1-dense-product-pilot | 4        | 0           | d45fa31bd7e04295 |
+| sequence | family                      | campaign                               | protocol | comparisons | addendum sha256  |
+|----------|-----------------------------|----------------------------------------|----------|-------------|------------------|
+| 0        | gf256-shipped-dense-product | 4c1e441f-r1-dense-product-pilot        | 4        | 0           | d45fa31bd7e04295 |
+| 1        | gf256-shipped-dense-product | 4c1e441f-r1-dense-product-confirmation | 4        | 6           | 05a6341637595d52 |
 
 ## Direction agreement with the pinned matrix-family confirmation
 
@@ -64,15 +97,24 @@ table per product, converted its operands and did not write results in place; th
 path caches the table for the life of the process and writes in place through the consumer's
 own hook, so the sizes need not match.
 
-No committed confirmation receipt, so no direction is stated yet.
+| cell                      | this family estimate | pinned estimate    | direction |
+|---------------------------|----------------------|--------------------|-----------|
+| matmul-n256-element       | 8.945313544811988    | 10.035507976086905 | agrees    |
+| matmul-n512-element       | 10.467858220715161   | 10.106140741486445 | agrees    |
+| matmul-n256-whole-element | 8.322311386480122    | 9.542165340341121  | agrees    |
+| matmul-n256-wide          | 3.4427728689795942   | 3.0726421207665666 | agrees    |
+| matmul-n512-wide          | 3.67782138904945     | 3.1210553236369485 | agrees    |
+| matmul-n256-whole-wide    | 3.4207282953104357   | 3.049305994508083  | agrees    |
 
 ## Source
 
-| path                                                                      | sha256                                                           |
-|---------------------------------------------------------------------------|------------------------------------------------------------------|
-| dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl              | 859c4520a130d1a12db77ba21c3fd38da1fa7f70b9ff80edd39a2d44ebaaa407 |
-| dev/active/4c1e441f/pinned-matrix-confirmation.json                       | 97a985f791aff368069cef3a965458941a2dce8f5edb10fb42b6b90ab162d3d5 |
-| dev/bench_results/19513245/r1-matrix-confirmation/receipt.json            | 0610976ca4c2b0d04681b29f4ff87949c58edb9f5e9dfdea4d4cc5e81c88d8a2 |
-| dev/bench_results/19513245/r1-matrix-confirmation/acceptance-summary.json | abfaf06e2e20c63b895e195a772f8d30f85ca46aeef62945433eff20accf5419 |
-| dev/bench_results/4c1e441f/r1-dense-product-pilot/receipt.json            | fdba1b601318ed2660225ceca8cf0edb9a96f4ca72759dda46a2ef28c6c7762f |
-| dev/bench_results/4c1e441f/r1-dense-product-pilot/acceptance-summary.json | 6551a6b8c83a069b3a726e7f5b04b678f0f6b051e233b502081255e618257abd |
+| path                                                                             | sha256                                                           |
+|----------------------------------------------------------------------------------|------------------------------------------------------------------|
+| dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl                     | 71aae1fa7cbc35aa240aac73e09116e73edbac0db6244f81f6c82bd37be68d65 |
+| dev/active/4c1e441f/pinned-matrix-confirmation.json                              | 97a985f791aff368069cef3a965458941a2dce8f5edb10fb42b6b90ab162d3d5 |
+| dev/bench_results/19513245/r1-matrix-confirmation/receipt.json                   | 0610976ca4c2b0d04681b29f4ff87949c58edb9f5e9dfdea4d4cc5e81c88d8a2 |
+| dev/bench_results/19513245/r1-matrix-confirmation/acceptance-summary.json        | abfaf06e2e20c63b895e195a772f8d30f85ca46aeef62945433eff20accf5419 |
+| dev/bench_results/4c1e441f/r1-dense-product-pilot/receipt.json                   | fdba1b601318ed2660225ceca8cf0edb9a96f4ca72759dda46a2ef28c6c7762f |
+| dev/bench_results/4c1e441f/r1-dense-product-pilot/acceptance-summary.json        | 6551a6b8c83a069b3a726e7f5b04b678f0f6b051e233b502081255e618257abd |
+| dev/bench_results/4c1e441f/r1-dense-product-confirmation/receipt.json            | a1f53ad3e194915bd3c31410515dff71df2897539a587c908a0bee98b51396e6 |
+| dev/bench_results/4c1e441f/r1-dense-product-confirmation/acceptance-summary.json | f59b846650c8c128a9786d0f9c6b251cf0d01bde874e1afe30d86b8cbe9c0278 |
