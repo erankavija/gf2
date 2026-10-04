@@ -4,10 +4,12 @@ Output of the BCH receipt renderer's test on its synthetic run, before and
 after the renderer and its test locate their committed inputs by content
 identity: the result of each test of `RenderReceiptTest`, then the receipt the
 renderer produces for the test's default synthetic run directory. The raw
-captures are committed beside this record.
+capture is committed beside this record.
 
-Baseline source: `808f03aeb22871bef3bfb3cf33099549e13e8b4e`, the commit whose
-renderer and test the baseline run executes. After source:
+Baseline source: `fde2218e31f8d7f6c40072aabab4aba645f0b644`, the commit that adds this record and the
+receipt printer; its renderer and test are those of its parent
+`808f03aeb22871bef3bfb3cf33099549e13e8b4e` (`git diff` of the two commits
+lists three added record files). After source:
 `b42dc76c0d8dd89d58057deb61a9f38259feb845`.
 
 ## Command
