@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:51:56.040402875Z",
+  "dependencies": [],
+  "description": "`proofs/Gf2Core/Proofs/QuotientReduction.lean` and `RelativeExtension.lean` cite `crates/gf2-core/src/field/axiom_tests.rs:<line>` for the Rust tests their statements mirror. The cited lines pointed at closing braces and mid-function expressions before the comment sweep, and the sweep shifted them further.\n\n## Background\n\nA content match of the cited lines against the file at commit `1b1f1c748` shows the earlier drift. `@/inv/single-source-prose` applies: a line number is a volatile fact.\n\n## Success Criteria\n\n- [hard] REQ-01: Each citation names the Rust test or check function by symbol, without a line number.\n- [hard] REQ-02: `(cd proofs && lake build)` passes.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:51:56.040402875Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "8966d8da-0247-4d46-b39b-de75fcf06d58",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:proofs",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Lean proof comments cite stale line numbers in axiom_tests.rs",
+  "updated_at": "2026-10-04T06:51:56.040402875Z"
+}

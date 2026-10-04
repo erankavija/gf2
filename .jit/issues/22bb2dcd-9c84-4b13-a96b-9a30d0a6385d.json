@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:52:10.842407400Z",
+  "dependencies": [],
+  "description": "Several behaviors reported by sweep workers contradict a documented or implied contract in `crates/gf2-coding/src/`.\n\n## Background\n\nReported locations: `bin/sim_runner.rs:675` (point seeds overlap when `max_frames > 1_000_000`; frame-parallel early stop depends on scheduling); `simulation.rs` (the parallel runner seeds `0xDEAD_BEEF` when `rng_seed` is `None`; checkpoint-resumed points are appended again to CSV/JSONL); `crc.rs` `CrcCode::new` (`n > 64` unchecked); `ConvolutionalEncoder::new` (`constraint_length >= 32` unchecked); `BcjrDecoder::new` (`n < m` underflows); `BlockCode::redundancy` (documents a panic that wraps in release). `@/inv/deterministic-seeded-execution` and `@/inv/campaign-resumability` apply to the runner items.\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces each reported behavior at the cited location, or a record shows the report does not hold and that item is dropped with the evidence.\n- [hard] REQ-02: Each constructor validates its domain or documents the precondition under the `_unchecked` convention.\n- [hard] REQ-03: Seeded runs are identical across worker counts and across a resume, covered by tests.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:52:10.842407400Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "22bb2dcd-9c84-4b13-a96b-9a30d0a6385d",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "gf2-coding constructor-bound and simulation-runner defects reported by the comment sweep",
+  "updated_at": "2026-10-04T06:52:10.842407400Z"
+}

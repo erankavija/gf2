@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:52:03.509599268Z",
+  "dependencies": [],
+  "description": "Several behaviors reported by sweep workers contradict a documented or implied contract in `crates/gf2-core/src/`.\n\n## Background\n\nReported locations: `io/bitvec.rs:233` (hex with too few words hits the `from_words` assert); `io/sparse.rs:187,228,422,476` (`Vec::with_capacity` on an untrusted `nnz`); `io/sparse.rs:110` (`as u32` truncates silently); `bench_seed.rs:151` (`bitmatrix_from_seed` uses `StdRng`, while the removed doc claimed a SplitMix64 stream byte-identical to `m4ri_bench.c`); `field/axiom_tests.rs:189` (`ilog2(p) * m` equals $\\lfloor \\log_2 p^m \\rfloor$ only for $p = 2$); `field/triangular.rs:1109` (`trtrm` passes the full `U22` block to `gemm_into_view`, so cells below the diagonal of `U` are read); `field/matrix.rs:2284` (`UnitDiagView::transpose` drops the implicit unit diagonal; its constructor is dead code).\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces each reported behavior at the cited location, or a record shows the report does not hold and that item is dropped with the evidence.\n- [hard] REQ-02: Loaders return an error on malformed input, covered by tests.\n- [hard] REQ-03: Each remaining item is fixed with a test, or its precondition is stated in Rustdoc.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:52:03.509599268Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "d73ac633-da5d-46ee-a2fb-0f4fb9a3a8a6",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "gf2-core loader, seed-stream and field-kernel defects reported by the comment sweep",
+  "updated_at": "2026-10-04T06:52:03.509599268Z"
+}

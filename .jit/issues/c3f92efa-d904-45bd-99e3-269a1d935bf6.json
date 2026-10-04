@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T06:52:18.267819828Z",
+  "dependencies": [],
+  "description": "Sweep workers reported tests that assert less than their names state and measured figures hard-coded in code without provenance.\n\n## Background\n\nTests: `crates/gf2-coding/tests/ldpc_simd_validation.rs` `test_simd_vs_scalar_consistency` (never compares scalar with SIMD); `tests/ldpc_validation.rs` `test_syndrome_linearity`, `test_codeword_closure_under_xor` (two zero words); `tests/test_vector_parser.rs:16` (empty test); `tests/uncoded_ber_baseline.rs` (unseeded RNG; the message at line 65 quotes a wrong BER); `tests/modem_reference_model.rs` (`axis4_non_gray_spec` labels are Gray); `examples/ldpc_bler_check.rs` (`decoder_bp` is plain min-sum); `crates/gf2-coding/src/simulation.rs` (`prop_ber_between_zero_and_one`, `prop_bler_between_zero_and_one`, the `matches_legacy_bpsk` property); `crates/gf2-sim/tests/campaign_cli_flags.rs` `cli_resume_byte_identical_to_uninterrupted` (SIGINT after a fixed sleep, exit status ignored); `crates/gf2-sim/tests/checkpoint_compat.rs` (empty non-unix `send_sigint`). Constants: `ATTESTED_MBPS` in `crates/gf2-sim/benches/`, baseline fps constants in the throughput binaries, `MEASURED_WORST_ABS_DIFF` in `tests/gpu_demap_byte_identity.rs:25` (`@/inv/runtime-observed-provenance`). Path: `crates/gf2-sim/tests/osd_campaign_protocol.rs` near line 781 hard-codes `../../dev/simulation_results/...` (`@/inv/no-dev-path-coupling`).\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed test asserts the property its name states, or is removed.\n- [hard] REQ-02: Each measured constant cites its committed receipt by identity or is removed.\n- [hard] REQ-03: The hard-coded `dev/` path resolves through the configured repository root or content identity.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T06:52:18.267819828Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "c3f92efa-d904-45bd-99e3-269a1d935bf6",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Weak tests and unattributed measured constants in gf2-coding and gf2-sim targets",
+  "updated_at": "2026-10-04T06:52:18.267819828Z"
+}

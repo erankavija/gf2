@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-04T06:52:25.897263418Z",
   "context": {},
   "created_at": "2026-10-02T11:28:20.594884090Z",
   "dependencies": [
@@ -24,7 +25,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Tersify comments in the dev/tools crates",
-  "updated_at": "2026-10-03T16:21:57.333405297Z"
+  "updated_at": "2026-10-04T06:52:25.897263418Z"
 }
