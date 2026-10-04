@@ -1733,8 +1733,7 @@ fn assert_cut_point_recovery<A: PublishableArtifact>(
     }
 }
 
-/// Rooted at `target/` rather than the system temp mount: these artifacts are
-/// large enough that a tmpfs `/tmp` is the wrong place for them.
+/// Rooted at `target/`: these artifacts are too large for a tmpfs `/tmp`.
 fn artifact_tempdir(prefix: &str) -> gf2_core::test_scratch::Scratch {
     gf2_core::test_scratch::scratch_in(Path::new("target"), prefix)
 }
@@ -2302,8 +2301,6 @@ fn linked_target_checkpoint(
     }
 }
 
-/// Every destination is derived from its payload, so no caller can place one
-/// artifact kind or attempt phase under another's name.
 #[test]
 fn rare_event_destinations_bind_payload_kind_and_phase() {
     let target = identity(ScientificIdentityV1::target());
@@ -2342,7 +2339,6 @@ fn rare_event_destinations_bind_payload_kind_and_phase() {
         vec!["attempts", "000000000000", "terminal"]
     );
 
-    // A receipt cannot be bound to the other phase's destination type.
     assert!(AttemptStartArtifactV1::new(attempt_receipt(&terminal_envelope)).is_err());
     assert!(AttemptTerminalArtifactV1::new(attempt_receipt(&start_envelope)).is_err());
 
@@ -2371,7 +2367,6 @@ fn rare_event_destinations_bind_payload_kind_and_phase() {
         ArtifactKindV1::CoverageValidation
     );
 
-    // A payload published into a dataset it does not belong to is refused.
     let root = artifact_tempdir("rare-event-destination-identity-");
     let target_dataset = dataset_directory(&root, &target);
     assert!(publish_artifact(&target_dataset, &coverage_block).is_err());
@@ -2382,8 +2377,6 @@ fn rare_event_destinations_bind_payload_kind_and_phase() {
         .is_file());
 }
 
-/// Every lookup below a pinned dataset root refuses a symbolic link, so a
-/// swapped name cannot redirect a published or verified artifact.
 #[test]
 fn rare_event_publication_refuses_symlinked_boundaries() {
     let identity = identity(ScientificIdentityV1::target());
@@ -2407,7 +2400,6 @@ fn rare_event_publication_refuses_symlinked_boundaries() {
     assert!(reconstruct_published_checkpoints(&dataset, &identity).is_err());
     assert_eq!(fs::read_dir(&decoy).unwrap().count(), 0);
 
-    // Byte-identical content reached through a symbolic link is still refused.
     let file_root = artifact_tempdir("rare-event-symlink-file-");
     let file_dataset = dataset_directory(&file_root, &identity);
     let published = publish_artifact(&file_dataset, &checkpoint).unwrap();
@@ -2418,7 +2410,6 @@ fn rare_event_publication_refuses_symlinked_boundaries() {
     assert!(verify_artifact_dir(published.path(), &identity).is_err());
     assert!(reconstruct_published_checkpoints(&file_dataset, &identity).is_err());
 
-    // A whole published directory swapped for a link to identical content.
     let dir_root = artifact_tempdir("rare-event-symlink-directory-");
     let dir_dataset = dataset_directory(&dir_root, &identity);
     let published = publish_artifact(&dir_dataset, &checkpoint).unwrap();
@@ -2434,8 +2425,6 @@ fn rare_event_publication_refuses_symlinked_boundaries() {
     assert!(reconstruct_published_checkpoints(&dir_dataset, &identity).is_err());
 }
 
-/// A directory component swapped for a symbolic link while publication runs
-/// never diverts an artifact: the pinned descriptor, not the name, is used.
 #[test]
 fn rare_event_publication_refuses_concurrent_symlink_swap() {
     let identity = identity(ScientificIdentityV1::target());
@@ -2467,9 +2456,7 @@ fn rare_event_publication_refuses_concurrent_symlink_swap() {
             }
         })
     };
-    // Each publication synchronizes two files, its staging directory, and the
-    // parent, so the iteration count is what keeps this inside the fast tier.
-    // The swap runs continuously, so every iteration is a fresh interleaving.
+    // The iteration count keeps this inside the fast tier.
     for _ in 0..48 {
         let _ = publish_artifact(&dataset, &start);
     }
@@ -2483,8 +2470,6 @@ fn rare_event_publication_refuses_concurrent_symlink_swap() {
     publish_artifact(&dataset, &start).unwrap();
 }
 
-/// Recovery reads the PID, its occupant's start token, the boot identity, and
-/// the observation time from the operating system at the recovery barrier.
 #[test]
 fn rare_event_recovery_observes_os_process_liveness() {
     let identity = identity(ScientificIdentityV1::target());
@@ -2553,7 +2538,6 @@ fn rare_event_recovery_observes_os_process_liveness() {
     assert_eq!(observed["recorded_process_id"], child.id());
     assert_eq!(observed["observed_at_utc"], *end_utc);
 
-    // A PID now held by an unrelated process is not the recorded child.
     let self_identity = observe_self_identity().unwrap();
     let reuse_root = artifact_tempdir("rare-event-pid-reuse-");
     let reuse_dataset = dataset_directory(&reuse_root, &identity);
@@ -2575,7 +2559,6 @@ fn rare_event_recovery_observes_os_process_liveness() {
         .join("attempts/000000000000/terminal")
         .is_dir());
 
-    // The same PID with the recorded start token is still the recorded child.
     let live_self_root = artifact_tempdir("rare-event-live-self-");
     let live_self_dataset = dataset_directory(&live_self_root, &identity);
     let live_self_start = start_artifact(&start_envelope_with_process(
@@ -2590,8 +2573,6 @@ fn rare_event_recovery_observes_os_process_liveness() {
     );
 }
 
-/// A terminal and a resume reconstruct their checkpoint partition from the
-/// published directories, so a byte-valid but unpublished block cannot enter.
 #[test]
 fn rare_event_terminal_requires_published_checkpoints() {
     let identity = identity(ScientificIdentityV1::target());
@@ -2648,7 +2629,6 @@ fn rare_event_terminal_requires_published_checkpoints() {
         1
     );
 
-    // A checkpoint that is byte-valid but never published cannot be claimed.
     let unpublished_files = encode_artifact_files(&RareEventArtifactEnvelopeV1 {
         envelope_schema: ENVELOPE_SCHEMA_V1.into(),
         artifact_kind: ArtifactKindV1::TrajectoryCheckpoint,
@@ -2670,7 +2650,6 @@ fn rare_event_terminal_requires_published_checkpoints() {
     ));
     assert!(finish_attempt(&dataset, &validated_start, &claimed_terminal).is_err());
 
-    // Omitting a published block is equally refused.
     let empty_terminal = terminal_artifact(&terminal_envelope(
         identity.clone(),
         &start_envelope,
@@ -2679,7 +2658,6 @@ fn rare_event_terminal_requires_published_checkpoints() {
     ));
     assert!(finish_attempt(&dataset, &validated_start, &empty_terminal).is_err());
 
-    // The reconstructed partition is the only accepted claim.
     let exact_terminal = terminal_artifact(&terminal_envelope(
         identity.clone(),
         &start_envelope,
@@ -2691,7 +2669,6 @@ fn rare_event_terminal_requires_published_checkpoints() {
     assert_eq!(attempts.completed_phases().len(), 2);
     assert!(attempts.open_start().is_none());
 
-    // The next start resumes exactly the reconstructed durable prefix.
     let mut resume_envelope = start_envelope.clone();
     let RareEventPayloadV1::ExecutionAttempt(payload) = &mut resume_envelope.payload else {
         unreachable!()
@@ -2711,7 +2688,6 @@ fn rare_event_terminal_requires_published_checkpoints() {
     *resume_checkpoint_refs = vec![published_zero.checkpoint_ref().clone()];
     begin_attempt(&dataset, &start_artifact(&resume_envelope)).unwrap();
 
-    // An incomplete set never forms a complete lineage.
     assert!(reconstruct_execution_lineage(&dataset, &identity).is_err());
     assert_eq!(unpublished_ref.block_address, "target/00/0001");
     assert!(!dataset.join("blocks/target/00/0001").exists());
@@ -2763,8 +2739,6 @@ fn invoke_runner(root: &Path, arguments: &[&str], budget: Option<&str>) -> std::
     command.output().expect("the runner binary runs")
 }
 
-/// The production runner is a one-argument delegate: it decodes the frozen
-/// configuration, hands the whole run to the library, and maps the status.
 #[test]
 fn rare_event_runner_delegates_one_frozen_configuration() {
     let root = artifact_tempdir("rare-event-runner-");
@@ -2775,7 +2749,7 @@ fn rare_event_runner_delegates_one_frozen_configuration() {
         .join("dev/simulation_results/permanent-rare-event")
         .join(dataset_id(&identity).unwrap());
 
-    // One bounded run publishes exactly its budget and reports work remaining.
+    // Exit status 10 reports published progress with work remaining.
     let first = invoke_runner(root.path(), &[&relative], Some("1"));
     assert_eq!(
         first.status.code(),
@@ -2793,7 +2767,6 @@ fn rare_event_runner_delegates_one_frozen_configuration() {
         "coverage/q3/b000/r00/0000"
     );
 
-    // The next bounded run resumes from the reconstructed published prefix.
     let second = invoke_runner(root.path(), &[&relative], Some("1"));
     assert_eq!(
         second.status.code(),
@@ -2819,7 +2792,6 @@ fn rare_event_runner_delegates_one_frozen_configuration() {
     };
     assert_eq!(resume_checkpoint_refs.len(), 1);
 
-    // The argument vector is exactly one configuration path.
     assert_eq!(invoke_runner(root.path(), &[], None).status.code(), Some(2));
     assert_eq!(
         invoke_runner(root.path(), &[&relative, &relative], None)
@@ -2835,8 +2807,6 @@ fn rare_event_runner_delegates_one_frozen_configuration() {
     );
 }
 
-/// The reducers and the validators are two halves of one contract: a produced
-/// payload passes the independent revalidation the final receipt applies.
 #[test]
 fn rare_event_reducers_produce_revalidating_payloads() {
     let target_identity = identity(ScientificIdentityV1::target());
@@ -2878,7 +2848,6 @@ fn rare_event_reducers_produce_revalidating_payloads() {
     )
     .unwrap();
 
-    // A contradicting exact value is preserved as a contradiction verdict.
     let contradicting = canonical_bytes(&ExactTargetResultV1 {
         exact_result_schema: EXACT_TARGET_RESULT_SCHEMA_V1.into(),
         q: 3,
@@ -2932,8 +2901,6 @@ fn rare_event_reducers_produce_revalidating_payloads() {
     .unwrap();
 }
 
-/// Acceptance runs before the first filesystem effect, so an unusable
-/// configuration, configuration path, or artifact root leaves nothing on disk.
 #[test]
 fn rare_event_runner_validates_before_touching_the_filesystem() {
     use gf2_sim::permanent_rare_event::runner::{dataset_identity, execute_frozen_run};
@@ -2942,7 +2909,6 @@ fn rare_event_runner_validates_before_touching_the_filesystem() {
     let relative = "dev/simulation_results/permanent-rare-event/configuration.json";
     dataset_identity(&configuration, relative).expect("the frozen fixture is accepted");
 
-    // A configuration path outside the normalized repository-relative grammar.
     for path in [
         "/etc/passwd",
         "dev/../escaped.json",
@@ -2957,7 +2923,6 @@ fn rare_event_runner_validates_before_touching_the_filesystem() {
         );
     }
 
-    // An absolute artifact root refuses, and creates nothing.
     let root = artifact_tempdir("rare-event-unsafe-root-");
     let absolute = root.path().join("escaped");
     let mut hostile = configuration.clone();
@@ -2969,7 +2934,6 @@ fn rare_event_runner_validates_before_touching_the_filesystem() {
         "an absolute artifact root was created on disk"
     );
 
-    // An artifact root traversing out of the repository refuses the same way.
     let mut traversal = configuration.clone();
     traversal.artifact_root = "target/rare-event-guard/../escaped".into();
     assert!(dataset_identity(&traversal, relative).is_err());
@@ -2980,7 +2944,7 @@ fn rare_event_runner_validates_before_touching_the_filesystem() {
     );
     assert!(!Path::new("target/rare-event-guard").exists());
 
-    // An artifact root inside the raw campaign samples stays refused.
+    // An artifact root inside the raw campaign samples.
     let mut raw = configuration.clone();
     raw.artifact_root =
         "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829".into();

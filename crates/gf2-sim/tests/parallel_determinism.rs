@@ -1,26 +1,7 @@
-//! Within-SNR parallel determinism regression (issue `3fcb7025`, design doc
-//! §3 / §11).
-//!
-//! Asserts the [hard] success criterion: a parallel run on `{1, 2, 4, 8, 24}`
-//! workers produces **byte-identical** `fer` / `frames` / `errors` /
-//! `mean_iters` versus single-thread for the same seed, across at least three
-//! `(rate, modulation)` configurations.
-//!
-//! This is the slow-tier regression: each config runs a Normal-frame
-//! (n = 64800) DVB-T2 BICM decode for `FRAMES` frames per worker count, so it is
-//! `#[ignore]`d. The three configs are split into three tests
-//! (`determinism_r1_2_16qam_sumproduct`, `determinism_r2_3_16qam_nms`,
-//! `determinism_r1_2_64qam_minsum`) so each stays under the slow tier's
-//! 120 s/test cap. Run them all explicitly with:
-//!
-//! ```bash
-//! cargo nextest run -p gf2-sim --release --profile slow \
-//!     --run-ignored ignored-only -E 'test(determinism_r)'
-//! ```
-//!
-//! A fast-tier smoke guard for the seek/aggregation logic ({1,2} workers,
-//! synthetic closure) lives in `parallel/mod.rs`'s unit tests so CI still guards
-//! the core logic without the full LDPC decode cost.
+//! A parallel [`run_snr_point`] run produces byte-identical `fer` / `frames` /
+//! `errors` / `mean_iters` to the single-worker run for the same seed, on each
+//! worker count in [`WORKER_COUNTS`] and for three DVB-T2 `(rate, modulation)`
+//! configurations.
 
 use std::num::NonZeroUsize;
 
@@ -34,16 +15,10 @@ use gf2_sim::parallel::{run_snr_point, WorkerCounters};
 mod common;
 use common::assert_four_columns_byte_identical;
 
-/// Worker counts the byte-identity must hold across (the issue's exact set).
 const WORKER_COUNTS: [usize; 5] = [1, 2, 4, 8, 24];
 
-/// Frames per worker-count run. Chosen to straddle the waterfall (some frames
-/// decode, some fail) at the chosen SNRs so the test exercises non-trivial
-/// `errors` / `mean_iters`, not just the all-converge or all-fail degenerate
-/// cases. Kept modest so the slow tier stays well under its 120 s/test budget.
 const FRAMES: usize = 12;
 
-/// Fixed base seed for the run.
 const SEED: u64 = 0xC0DE_F00D;
 
 fn run_all_worker_counts(
@@ -71,15 +46,10 @@ fn assert_byte_identical(results: &[WorkerCounters], label: &str) {
     let baseline = results[0]; // 1-worker reference.
     for (i, c) in results.iter().enumerate() {
         let w = WORKER_COUNTS[i];
-        // The four byte-identity columns (fer/frames/errors/mean_iters) and the
-        // BER exclusion are pinned by the shared SSOT helper (design doc §11).
         assert_four_columns_byte_identical(c, &baseline, &format!("{label} @ {w} workers"));
     }
 }
 
-/// Asserts byte-identity across all worker counts for one `(rate, modulation)`
-/// configuration at a waterfall Es/N0 (frames straddle decode success/failure).
-///
 /// `snr_idx` only selects the [`SNR_STRIDE`](gf2_sim::parallel::SNR_STRIDE)
 /// region; distinct values per config keep their RNG streams disjoint.
 fn assert_config_byte_identical(
@@ -102,14 +72,6 @@ fn assert_config_byte_identical(
     assert_eq!(results[0].frames, FRAMES as u64, "{label}: frame budget");
     assert_byte_identical(&results, &label);
 }
-
-// The three configs are split into separate tests so each stays under the slow
-// tier's 120 s/test cap; together they satisfy the [hard] criterion of
-// byte-identity across {1,2,4,8,24} workers over >= 3 (rate, modulation)
-// configs. Run them all with:
-//
-//   cargo nextest run -p gf2-sim --release --profile slow \
-//       --run-ignored ignored-only -E 'test(determinism_r)'
 
 #[test]
 #[ignore = "sim: determinism across workers — r1/2 16-QAM SumProduct/ExactLogMap"]

@@ -1,28 +1,7 @@
-//! Failure-mode wiring tests (issue `42eac5cc`, design doc §8).
-//!
-//! Covers all four success criteria:
-//!
-//! 1. **OOM auto-fallback** (SC1), function-level: forced OOM → fallback
-//!    produces the same output as the CPU-only path, satisfying the §11 3-column
-//!    contract at the `dispatch_with_fallback` boundary using the shared
-//!    injectors. The **run-level** SC1 proof (a forced OOM during a real hybrid
-//!    run yielding the same `fer`/`frames`/`errors` columns as a CPU-only run)
-//!    lives in [`tests/executor_oom_fallback_run.rs`](./executor_oom_fallback_run.rs).
-//! 2. **Shared injectors** (SC2): `OomInjector` / `KernelErrorInjector` are
-//!    consumed via `mod common;` — no copy-paste.
-//! 3. **Hard-fail path** (SC3), function-level: fatal kernel error →
-//!    `dispatch_with_fallback` returns `Err` and writes a JSON dump to
-//!    `diagnostic_dump_dir`. The **process-exit** half of SC3 (non-zero process
-//!    exit + the `tracing::error!` event) is proven by a real subprocess in
-//!    [`tests/hard_fail_subprocess.rs`](./hard_fail_subprocess.rs) — an
-//!    in-process `Err` return does not prove a non-zero process exit.
-//! 4. **`strict_gpu` honored** (SC4): OOM with `strict_gpu=true` is promoted to
-//!    `FatalError::OutOfMemory` (no fallback), and a dump is written.
-//!
-//! # No GPU required
-//!
-//! All tests in this binary use `dispatch_with_fallback` directly and the
-//! host-only injectors from `tests/common/mod.rs`. No real HIP device is needed.
+//! `dispatch_with_fallback` decision tree: a recoverable OOM runs the CPU
+//! fallback, a fatal error propagates and writes a JSON diagnostic dump, and
+//! `strict_gpu` promotes OOM to `FatalError::OutOfMemory` without fallback.
+//! Uses the host-only injectors of `tests/common`; no GPU is required.
 
 mod common;
 
@@ -32,10 +11,6 @@ use gf2_sim::executor::failure::{default_dump_dir, dispatch_with_fallback, Fault
 use gf2_sim::stage::{erase, Stage};
 
 use std::path::PathBuf;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 fn test_dump_dir(tag: &str) -> (gf2_core::test_scratch::Scratch, PathBuf) {
     let scratch = gf2_core::test_scratch::scratch(&format!("gf2sim-failmode-{tag}"));
@@ -52,65 +27,42 @@ fn ctx() -> FaultContext {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SC1: OOM auto-fallback — fallback output == CPU-only output
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// When a GPU stage returns OOM, `dispatch_with_fallback` (non-strict) must
-/// invoke the fallback and return its output. This mirrors the §11 OOM-fallback
-/// substitution path: since the fallback runs the same CPU-stage logic as the
-/// CPU-only reference, the output (and therefore `fer`/`frames`/`errors`) is
-/// byte-identical.
-///
-/// This test exercises the function-level boundary that both the C.1 scheduler
-/// (`worker_partition_hybrid`) and the topology executor (`execute_gpu_stage`)
-/// delegate to.
 #[test]
 fn test_oom_fallback_output_matches_cpu_only_path() {
     let (_scratch, dir) = test_dump_dir("oom-fallback");
     let input = TinyBatch(55);
 
-    // Simulate what the GPU path returns: an OOM error.
     let gpu_result: Result<TinyBatch, StageError> =
         Err(StageError::Recoverable(RecoverableError::OutOfMemory {
             device_id: 0,
             bytes_requested: 4096,
         }));
 
-    // The fallback runs the same Identity stage logic as the CPU-only reference.
     let identity = Identity;
     let fallback = || identity.process(&input, &mut ());
 
     let fallback_out = dispatch_with_fallback(gpu_result, fallback, ctx(), false, &dir)
         .expect("OOM non-strict must succeed via fallback");
 
-    // CPU-only path: the same Identity stage applied directly.
     let cpu_out = Identity.process(&input, &mut ()).unwrap();
 
     assert_eq!(
         fallback_out, cpu_out,
         "fallback output must be byte-identical to CPU-only output (§11 3-column contract)"
     );
-    // Non-strict OOM + successful fallback does NOT produce a dump.
     assert!(
         !dir.exists(),
         "no dump dir must be created for non-strict OOM with successful fallback"
     );
 }
 
-/// OOM injector wired through a mini erased-stage pipeline (the SC2 integration
-/// path): inject OOM on the 1st call, fallback produces same value as Identity
-/// running directly.
 #[test]
 fn test_oom_injector_dispatched_via_dispatch_with_fallback() {
     let (_scratch, dir) = test_dump_dir("oom-injector");
     let input = TinyBatch(99);
 
-    // The injector reports itself as CpuOnly (like a GPU stage, but with
-    // cpu_fallback pointing back to Identity). We call it manually here rather
-    // than through a full pipeline to keep the test fast.
     let inj = OomInjector::new(Identity, 1);
-    let gpu_result = inj.process(&input, &mut ()); // 1st call → OOM
+    let gpu_result = inj.process(&input, &mut ());
     assert!(
         matches!(
             gpu_result,
@@ -121,18 +73,14 @@ fn test_oom_injector_dispatched_via_dispatch_with_fallback() {
         "injector must produce OOM on call 1"
     );
 
-    // Pass the OOM through dispatch_with_fallback with a CPU fallback.
     let fallback = || Identity.process(&input, &mut ());
     let out = dispatch_with_fallback(gpu_result, fallback, ctx(), false, &dir)
         .expect("OOM + successful fallback must succeed");
     assert_eq!(out, TinyBatch(99), "fallback must return identity output");
 
-    // No dump for non-strict OOM + successful fallback.
     assert!(!dir.exists());
 }
 
-/// When OOM happens and the fallback ALSO fails, the result is
-/// `FatalError::CpuFallbackAlsoFailed` and a dump IS written.
 #[test]
 fn test_oom_fallback_also_fails_produces_dump_and_cpu_fallback_also_failed() {
     let (_scratch, dir) = test_dump_dir("oom-fb-fail");
@@ -171,23 +119,6 @@ fn test_oom_fallback_also_fails_produces_dump_and_cpu_fallback_also_failed() {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SC3: Hard-fail path — fatal kernel error → dump + propagate + tracing::error!
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Fatal `KernelLaunch` error → `dispatch_with_fallback` returns the original
-/// `Err(Fatal)` unchanged and writes a valid JSON dump file with the expected
-/// fields.
-///
-/// This is the **function-level** half of the SC3 hard-fail criterion: it
-/// proves the dump-write + error-propagation mechanics at the
-/// `dispatch_with_fallback` boundary. The **process-exit** half of SC3 (a forced
-/// kernel error yields a *non-zero process exit* plus the `tracing::error!`
-/// event) is proven by a real subprocess in
-/// [`tests/hard_fail_subprocess.rs`](./hard_fail_subprocess.rs) — an in-process
-/// `Err` return does NOT prove the process exits non-zero (a reasoning rejected
-/// by formal review on this project), so the exit status is asserted there by
-/// actually spawning a process and reading its status.
 #[test]
 fn test_fatal_kernel_error_writes_dump_and_propagates() {
     let (_scratch, dir) = test_dump_dir("fatal-kernel");
@@ -206,7 +137,6 @@ fn test_fatal_kernel_error_writes_dump_and_propagates() {
     )
     .expect_err("fatal error must propagate");
 
-    // SC3a: error propagates unchanged.
     assert!(
         matches!(
             err,
@@ -215,7 +145,6 @@ fn test_fatal_kernel_error_writes_dump_and_propagates() {
         "fatal must propagate as KernelLaunch(301), got {err:?}"
     );
 
-    // SC3b: a JSON dump file was written.
     let entries: Vec<_> = std::fs::read_dir(&dir)
         .expect("dump dir must exist after fatal error")
         .filter_map(|e| e.ok())
@@ -227,7 +156,6 @@ fn test_fatal_kernel_error_writes_dump_and_propagates() {
         "exactly one JSON dump file must be written for one fatal error"
     );
 
-    // SC3c: the dump is valid JSON with the expected fields.
     let path = entries[0].path();
     let content = std::fs::read_to_string(&path).expect("dump file must be readable");
     let v: serde_json::Value = serde_json::from_str(&content).expect("dump must be valid JSON");
@@ -239,20 +167,17 @@ fn test_fatal_kernel_error_writes_dump_and_propagates() {
     assert_eq!(v["device_id"], 0_i64, "device_id must match context");
 }
 
-/// `KernelErrorInjector` consumed via `mod common;` (SC2 + SC3): inject a fatal
-/// error on the 1st call and verify the dump is written.
 #[test]
 fn test_kernel_error_injector_via_common_mod_writes_dump() {
     let (_scratch, dir) = test_dump_dir("kernel-injector");
     let input = TinyBatch(0);
 
-    // Consume KernelErrorInjector from the shared common module (SC2 mandate).
     let inj = KernelErrorInjector::new(Identity, 1).with_launch_params(
         7,
         "ldpc_bp",
         "injected for 42eac5cc test",
     );
-    let gpu_result = inj.process(&input, &mut ()); // 1st call → KernelLaunch
+    let gpu_result = inj.process(&input, &mut ());
     assert!(
         matches!(
             gpu_result,
@@ -289,13 +214,6 @@ fn test_kernel_error_injector_via_common_mod_writes_dump() {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SC4: strict_gpu honored — OOM → FatalError::OutOfMemory (no fallback)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// With `strict_gpu=true`, OOM is promoted to `FatalError::OutOfMemory` without
-/// invoking the CPU fallback. A dump is written. The fallback closure is never
-/// called (verified by the sentinel).
 #[test]
 fn test_strict_gpu_promotes_oom_to_fatal_without_fallback() {
     let (_scratch, dir) = test_dump_dir("strict-gpu");
@@ -328,7 +246,6 @@ fn test_strict_gpu_promotes_oom_to_fatal_without_fallback() {
         "fallback must NOT be called when strict_gpu=true"
     );
 
-    // A dump is written even for strict-mode OOM.
     let entries: Vec<_> = std::fs::read_dir(&dir)
         .expect("dump dir must exist after strict OOM")
         .filter_map(|e| e.ok())
@@ -339,16 +256,13 @@ fn test_strict_gpu_promotes_oom_to_fatal_without_fallback() {
     );
 }
 
-/// With `strict_gpu=true`, `OomInjector` (consumed from `mod common;`) triggers
-/// the strict promotion path — no fallback, `FatalError::OutOfMemory`.
 #[test]
 fn test_strict_gpu_with_oom_injector_from_common_mod() {
     let (_scratch, dir) = test_dump_dir("strict-oom-injector");
     let input = TinyBatch(5);
 
-    // SC2: consume OomInjector from common.
     let inj = OomInjector::new(Identity, 1);
-    let gpu_result = inj.process(&input, &mut ()); // OOM on 1st call.
+    let gpu_result = inj.process(&input, &mut ());
 
     let err = dispatch_with_fallback(
         gpu_result,
@@ -371,12 +285,6 @@ fn test_strict_gpu_with_oom_injector_from_common_mod() {
     assert!(!entries.is_empty(), "dump must be written on strict OOM");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// default_dump_dir sanity
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// `default_dump_dir()` returns a non-empty path (the default directory is
-/// deterministic and does not change across invocations).
 #[test]
 fn test_default_dump_dir_is_non_empty() {
     let dir = default_dump_dir();
@@ -390,20 +298,12 @@ fn test_default_dump_dir_is_non_empty() {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Erase / pipeline integration smoke test (SC2 in erased-stage form)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Verify that `erase(OomInjector(...))` compiles and its `cpu_fallback_process_any`
-/// invokes the fallback correctly. This is the integration path
-/// `execute_gpu_stage` in topology.rs uses (SC2: injectors via `mod common;`).
 #[test]
 fn test_erased_oom_injector_cpu_fallback_process_any() {
     let input = TinyBatch(77);
-    let inj = OomInjector::new(Identity, 1); // OOM on first call.
+    let inj = OomInjector::new(Identity, 1);
     let erased = erase(inj);
 
-    // The erased stage's cpu_fallback_process_any must call Identity::process.
     let result = erased
         .cpu_fallback_process_any(&input, &mut ())
         .expect("OomInjector's cpu_fallback (Identity) must be present");

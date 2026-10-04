@@ -1,9 +1,6 @@
-//! Behavioral coverage for the frozen pre-draw campaign validation phase.
-//!
-//! These tests exercise the reusable library computation, the durable
-//! no-redraw journal, and the immutable receipt contract on focused anchors.
-//! The committed ten-anchor plan is loaded and content-verified here, but its
-//! 400,000-draw evidence run belongs to the execution lead, not to this tier.
+//! Exercises the pre-draw campaign validation computation, its no-redraw
+//! journal and its receipt contract on focused anchors, and content-verifies
+//! the committed frozen plan.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -33,15 +30,13 @@ use gf2_sim::permanent_campaign::validation::{
 use gf2_stats::binomial::two_sided_test;
 use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
 
-/// Committed frozen plan, verified by this suite before the execution lead
-/// consumes it. Its tracked file name locates the evidence bundle.
+/// Its tracked file name locates the evidence bundle.
 const FROZEN_PREREGISTRATION_FILE: &str = "pre-draw-validation-v1-preregistration.json";
 const FROZEN_CONTINUATION_FILE: &str = "pre-draw-validation-v2-continuation.json";
 const FROZEN_JOURNAL_DIRECTORY: &str = "validation-journal";
-/// Established validation namespace recorded in `exact-anchors.csv`.
+/// Validation namespace recorded in `exact-anchors.csv`.
 const VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
-/// Focused draw count: large enough to exercise the exact test, small enough
-/// for the fast tier. The protocol's own count is fixed at 400,000.
+/// Small enough for the fast tier; the frozen protocol draws 400,000.
 const FOCUSED_DRAWS: u64 = 4_096;
 
 /// One labelled single-field mutation of an otherwise valid artifact.
@@ -148,10 +143,8 @@ fn focused_protocol() -> ValidationProtocol {
         retry_rule: RetryRule::NoRedraw,
         backend_batch_matrix_count: 64,
         sample_backend: Backend::BatchParallel,
-        // The accelerator is excluded from the focused inventory because this
-        // tier builds without the optional HIP feature. Under the frozen plan
-        // an unavailable required backend fails validation; it is never
-        // silently skipped.
+        // The accelerator needs the optional `hip` feature, and an unavailable
+        // required backend fails validation.
         selectable_backends: Backend::campaign_inventory()
             .iter()
             .copied()
@@ -182,8 +175,6 @@ fn passing_receipt(label: &str) -> (ValidationReceipt, ScratchPath) {
     (receipt, state)
 }
 
-/// Regenerates a validation-purpose stream independently of the campaign
-/// scheduler and counts zero permanents with the generic Ryser reference.
 fn independent_zero_count<const Q: u64>(
     field_order: FieldOrder,
     n: usize,
@@ -251,8 +242,6 @@ fn frozen_preregistration_binds_the_committed_protocol_and_manifest() {
         "the frozen plan fixes the protocol's ten anchors in address order"
     );
 
-    // The selectable inventory is the frozen manifest's backend union, in
-    // schema order, rather than a hand-listed subset.
     let manifest_root = Path::new(plan.authorities.manifest.path.as_str())
         .parent()
         .expect("the manifest lies in its campaign directory");
@@ -333,10 +322,6 @@ fn every_required_backend_and_the_determinant_path_reproduce_the_oracle() {
         );
         let mut compared = 0;
         for agreement in &exact.backend_agreements {
-            // A backend is recorded as unsupported only when the one canonical
-            // domain rule excludes the cell. Everything else must have been
-            // compared per matrix; an unavailable required backend is a
-            // failure, never a silent omission.
             if !backend_supports_cell(agreement.backend, spec.q, spec.n) {
                 assert_eq!(agreement.status, BackendAgreementStatus::Unsupported);
                 assert_eq!(agreement.matrices_compared, 0);
@@ -391,8 +376,8 @@ fn replay_uses_two_fresh_instances_over_the_first_preregistered_matrices() {
     let (receipt, _state) = passing_receipt("validation-replay");
     for anchor in &receipt.anchors {
         let replay = anchor.replay.as_ref().expect("the replay phase completed");
-        // `MatrixSampler` exposes no worker-count choice, so the protocol's
-        // second fresh serial pass applies and the receipt records it.
+        // `MatrixSampler` exposes no worker-count choice, so the replay is
+        // two fresh serial passes.
         assert_eq!(replay.mode, ReplayMode::TwoFreshSerial);
         assert_eq!(replay.matrix_count, 1_024);
         assert_eq!(replay.mismatch_count, 0);
@@ -498,7 +483,6 @@ fn the_field_generic_computation_covers_every_supported_prime_field() {
         .expect("each supported field evaluates");
         assert_eq!(outcome.verdict, ValidationVerdict::Passed, "q={q} n={n}");
     }
-    // The const parameter must name the anchor's own field.
     assert!(evaluate_validation_anchor::<5>(&protocol, &focused_anchor(3, 2, 33), 1).is_err());
     assert!(evaluate_validation_anchor::<3>(&protocol, &focused_anchor(3, 2, 33), 0).is_err());
 }
@@ -542,7 +526,6 @@ fn an_exact_component_failure_is_preserved_and_stops_before_replay() {
         anchor.exact.is_some(),
         "the contradicting evidence is preserved with the failure"
     );
-    // Every anchor still reaches a terminal record, so nothing is lost.
     assert_eq!(receipt.anchors.len(), plan.anchors.len());
     assert_eq!(receipt.anchors[1].verdict, ValidationVerdict::Passed);
 
@@ -559,8 +542,6 @@ fn a_lost_terminal_record_preserves_an_interruption_without_a_redraw() {
         run_validation(&plan, focused_identity(), 1, &state).expect("the first run completes");
     assert!(first.passed());
 
-    // Simulate a crash between the last durable phase marker and the terminal
-    // record: the start markers survive, the terminal record does not.
     let terminal = state.join("q3-n02-s0.terminal.json");
     assert!(
         terminal.is_file(),
@@ -587,7 +568,6 @@ fn a_lost_terminal_record_preserves_an_interruption_without_a_redraw() {
     assert_eq!(anchor.statistical_status, PhaseStatus::MechanicalFailure);
     assert_eq!(anchor.started_at, first.anchors[0].started_at);
 
-    // The preserved interruption is itself terminal and is adopted unchanged.
     let third = run_validation(&plan, focused_identity(), 1, &state)
         .expect("the interruption record is terminal");
     assert_eq!(third, second);
@@ -1703,7 +1683,6 @@ fn validation_writes_no_campaign_artifact_and_leaves_the_frozen_payload_intact()
         "validation must not change the frozen campaign payload or its inventory"
     );
 
-    // The journal holds run state, phase markers, and terminal records only.
     let mut published: Vec<String> = fs::read_dir(&state)
         .expect("the journal directory reads")
         .map(|entry| {
@@ -1828,8 +1807,6 @@ fn the_preflight_admits_every_backend_the_focused_plan_requires() {
     let plan = focused_plan();
     preflight_required_backends(&plan, 2).expect("every required CPU backend executes");
 
-    // A backend outside a cell's kernel domain is not required there, so its
-    // absence from that anchor is not a refusal.
     let mut narrow = plan.clone();
     narrow.protocol.sample_backend = Backend::GenericRyser;
     narrow.protocol.selectable_backends = vec![Backend::IntraMatrixParallel, Backend::GenericRyser];
@@ -1843,10 +1820,6 @@ fn the_preflight_admits_every_backend_the_focused_plan_requires() {
     assert!(error.to_string().contains("worker count"), "{error}");
 }
 
-/// Without the accelerator build every anchor's required accelerator is
-/// unavailable, so the preflight must refuse rather than let the run open an
-/// address it could never redraw. This build has no HIP support, so the refusal
-/// comes from the kernel inventory and touches no device.
 #[cfg(not(feature = "hip"))]
 #[test]
 fn a_required_but_unavailable_backend_is_refused_before_any_address() {
@@ -1864,12 +1837,6 @@ fn a_required_but_unavailable_backend_is_refused_before_any_address() {
     assert!(message.contains("cannot execute"), "{message}");
 }
 
-/// The frozen runner must refuse a wrong producing toolchain before it creates
-/// the journal, because an address opened under a refused build could never be
-/// redrawn.
-///
-/// A 1.95.0 build would pass that check and begin the lead's evidence run, so
-/// this test disables itself there rather than drawing 400,000 matrices.
 #[test]
 fn the_frozen_runner_refuses_a_wrong_toolchain_before_creating_the_journal() {
     if is_frozen_validation_toolchain(env!("GF2_BUILD_RUSTC_VERSION")) {
