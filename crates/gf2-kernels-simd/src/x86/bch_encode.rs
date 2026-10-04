@@ -1,7 +1,6 @@
-//! Accelerated BCH batch-encoding kernels.
-//!
-//! Two kernels of `crate::bch_encode`'s bundle live here, each under the
-//! processor features it alone needs; the bundle's predicate is their union.
+//! Accelerated BCH batch-encoding kernels: two kernels of `crate::bch_encode`'s
+//! bundle, each under the processor features it alone needs; the bundle's
+//! predicate is their union.
 
 use core::arch::x86_64::*;
 

@@ -1,10 +1,8 @@
-//! Generic `BatchedBipedalLike<C>` framework.
-//!
-//! `C: BipedalLikeConfig` supplies the lane types and the lane-level
-//! add/sub/mul/neg formulas of one prime, which [`BatchedBipedalLike`]
-//! exposes. Every method is `#[inline(always)]` so that it inlines into the
-//! `#[target_feature(enable = "avx2")]` batch entry points in
-//! `crate::x86::bipedal_avx2`.
+//! Generic `BatchedBipedalLike<C>` framework: `C: BipedalLikeConfig` supplies
+//! the lane types and the lane-level add/sub/mul/neg formulas of one prime,
+//! which [`BatchedBipedalLike`] exposes. Every method is `#[inline(always)]` so
+//! that it inlines into the `#[target_feature(enable = "avx2")]` batch entry
+//! points in `crate::x86::bipedal_avx2`.
 
 use core::marker::PhantomData;
 

@@ -1,6 +1,8 @@
 //! Carry-less-multiply and Barrett-reduction helpers shared by the AVX2 +
 //! VPCLMULQDQ GF(2^m) kernels `gf2m_batch` and `gf2m_gemm`, `m in {8, 16, 32}`.
 //!
+//! # Safety
+//!
 //! The intrinsic helpers are `unsafe` and `#[inline(always)]`: callers invoke
 //! them from a `#[target_feature(enable = "avx2", enable = "vpclmulqdq",
 //! enable = "pclmulqdq", enable = "sse4.1")]` context, whose feature scope the

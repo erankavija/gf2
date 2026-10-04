@@ -1,8 +1,6 @@
 //! F_3 instantiation of the generic [`super::framework::BatchedBipedalLike`]
-//! framework.
-//!
-//! The `(mag, sgn)` encoding follows `@/citation/Scheinerman2024` §2.2:
-//! `0 ↔ (0, 0)`, `1 ↔ (1, 0)`, `2 ↔ (1, 1)`; canonical pairs satisfy
+//! framework. The `(mag, sgn)` encoding follows `@/citation/Scheinerman2024`
+//! §2.2: `0 ↔ (0, 0)`, `1 ↔ (1, 0)`, `2 ↔ (1, 1)`; canonical pairs satisfy
 //! `sgn & !mag == 0`, and the alt-zero `(0, 1)` also decodes to 0.
 
 use super::framework::BipedalLikeConfig;

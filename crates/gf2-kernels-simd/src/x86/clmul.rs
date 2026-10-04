@@ -1,5 +1,4 @@
-//! Raw carry-less multiplication kernels using PCLMULQDQ and VPCLMULQDQ.
-//!
+//! Raw carry-less multiplication kernels using PCLMULQDQ and VPCLMULQDQ:
 //! `clmul_u64` and the batch lanes return the unreduced product;
 //! `clmul_barrett_reduce` multiplies and reduces modulo a field polynomial.
 

@@ -1,7 +1,6 @@
-//! Fixed kernel-launch geometry.
-//!
-//! [`LaunchDims::for_batch`] derives the grid from the work-item count alone,
-//! so its launch geometry is reproducible for a fixed problem.
+//! Fixed kernel-launch geometry: [`LaunchDims::for_batch`] derives the grid
+//! from the work-item count alone, so its launch geometry is reproducible for a
+//! fixed problem.
 
 /// The fixed block size (threads per block) of [`LaunchDims::for_batch`]: a
 /// multiple of the 32- and 64-lane wavefront sizes.

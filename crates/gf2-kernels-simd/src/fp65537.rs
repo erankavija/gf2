@@ -1,9 +1,8 @@
-//! SIMD batch kernels for `Fp<65537>` arithmetic.
-//!
-//! `P = 65537 = 2^16 + 1` satisfies `2^16 ≡ -1 (mod P)`, so a product splits
-//! on the 16-bit boundary, one subtract folds the halves, and a conditional
-//! subtract canonicalises. [`detect`] returns safe function-pointer wrappers
-//! in [`Fp65537Fns`], or `None` without AVX2.
+//! SIMD batch kernels for `Fp<65537>` arithmetic. `P = 65537 = 2^16 + 1`
+//! satisfies `2^16 ≡ -1 (mod P)`, so a product splits on the 16-bit boundary,
+//! one subtract folds the halves, and a conditional subtract canonicalises.
+//! [`detect`] returns safe function-pointer wrappers in [`Fp65537Fns`], or
+//! `None` without AVX2.
 
 /// Lane-wise batch multiply for `Fp<65537>`.
 ///

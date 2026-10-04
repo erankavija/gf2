@@ -1,9 +1,10 @@
-//! AVX2 byte-lane batch kernels for small `Fp<P>` with `P <= 251`.
+//! AVX2 byte-lane batch kernels for small `Fp<P>` with `P <= 251`. Inputs and
+//! outputs are canonical bytes (`u8`, value `< P`), processed 16 per pass in
+//! 16-bit lanes. Barrett constant: `μ = ⌊2¹⁶ / P⌋`. For `n ∈ [0, 2¹⁶)` the
+//! bound `r = n − ⌊n·μ / 2¹⁶⌋ · P ∈ [0, 2P)` holds, so a single conditional
+//! subtract canonicalises.
 //!
-//! Inputs and outputs are canonical bytes (`u8`, value `< P`), processed 16
-//! per pass in 16-bit lanes. Barrett constant: `μ = ⌊2¹⁶ / P⌋`. For
-//! `n ∈ [0, 2¹⁶)` the bound `r = n − ⌊n·μ / 2¹⁶⌋ · P ∈ [0, 2P)` holds, so a
-//! single conditional subtract canonicalises.
+//! # Safety
 //!
 //! All public functions are `unsafe`: callers must ensure AVX2 is available
 //! at runtime. `crate::fp_small::detect` returns the safe dispatched table.
