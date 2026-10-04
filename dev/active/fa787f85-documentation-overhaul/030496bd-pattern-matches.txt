@@ -1,0 +1,5 @@
+crates/gf2-sim/src/executor/topology.rs:59:/// One completed wave member: `(stage position, output batch, returned
+crates/gf2-sim/src/executor/topology.rs:711:/// The per-wave input of one stage: the run's root batch, a single producer's
+crates/gf2-sim/src/executor/topology.rs:802:    /// stages within a wave run in parallel across the scheduler's workers.
+crates/gf2-sim/src/executor/topology.rs:816:    /// wave run in parallel on the scheduler's rayon pool. A fan-in stage
+crates/gf2-sim/src/executor/topology.rs:884:            // Prepare each wave member's input + scratch outside the parallel
