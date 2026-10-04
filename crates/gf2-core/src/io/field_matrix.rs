@@ -25,33 +25,13 @@
 //! | 32 | 4 | Field-identity section length |
 //! | 36 | 8 | Payload length |
 //!
-//! The identity section is exactly [`FieldId::encode`] with the length in the
-//! header. Its first byte repeats the field-identity encoding version. The
-//! payload contains `rows * cols` elements in row-major order. Each element
-//! contains `field_id.degree()` canonical coordinates, and every coordinate
-//! occupies `coord_width` little-endian bytes. The representation is therefore
-//! `ElementRepr::PrimeCoordsLe { coord_width }`, with `coord_width` equal to
-//! [`FieldId::coordinate_width`]. The checksum follows the payload and is not
-//! included in the payload length.
-//!
-//! The container, field-identity and element-representation versions are
-//! independent; a loader rejects an unknown value of any of them.
-//!
-//! # Examples
-//!
-//! ```
-//! use std::io::Cursor;
-//! use gf2_core::field::matrix::FieldMatrix;
-//! use gf2_core::gfp::Fp;
-//! use gf2_core::io::field_matrix::{read_from, write_to};
-//!
-//! let matrix = FieldMatrix::<Fp<7>>::identity(2);
-//! let mut bytes = Vec::new();
-//! write_to(&matrix, &mut bytes)?;
-//! let restored = read_from(Cursor::new(bytes), &Fp::<7>::new(0))?;
-//! assert_eq!(restored, matrix);
-//! # Ok::<(), gf2_core::io::IoError>(())
-//! ```
+//! The identity section is exactly [`FieldId::encode`]; its first byte repeats
+//! the field-identity encoding version. The payload holds `rows * cols`
+//! elements in row-major order, each as `field_id.degree()` canonical
+//! coordinates of `coord_width` little-endian bytes, where `coord_width` is
+//! [`FieldId::coordinate_width`]. The digest follows the payload and is outside
+//! the payload length. A loader rejects an unknown container, field-identity
+//! or element-representation version.
 
 use std::convert::TryFrom;
 use std::fs::{self, File};

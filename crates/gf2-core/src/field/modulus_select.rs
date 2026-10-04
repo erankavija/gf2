@@ -1,9 +1,5 @@
 //! Deterministic selection of irreducible extension-field moduli.
 //!
-//! A selected modulus is a [`FieldPoly`] whose coefficients belong to the
-//! supplied field witness: selecting over a tower field produces a relative
-//! presentation, never one flattened to the prime field.
-//!
 //! # Candidate order
 //!
 //! If no registry entry applies, the selector searches the complete finite
@@ -13,14 +9,11 @@
 //! `x^r + c_(r-1)x^(r-1) + ... + c_1x + c_0`, so the constant coefficient
 //! varies fastest.  Each coefficient's rank is its canonical index, whose
 //! prime-field digits are in the coordinate order defined by [`FieldId`].
-//! Ranks start at zero and increase by one.  The first candidate for which
-//! [`prove_irreducible`] succeeds is returned.  There is no randomness,
-//! parallel iteration, or unordered collection in this path.
+//! Ranks ascend from zero, and the first candidate for which
+//! [`prove_irreducible`] succeeds is returned.
 //!
 //! This order is part of the field identity contract: changing it changes
-//! the presentation selected for a serialized field.  The search range is
-//! represented by `u128`; requests whose range or coefficient materialization
-//! cannot be represented return a typed error.
+//! the presentation selected for a serialized field.
 
 use std::fmt;
 

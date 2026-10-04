@@ -1,11 +1,8 @@
 //! Reductions for primes with special algebraic structure.
 //!
 //! [`classify`] detects three shapes at compile time: Mersenne primes
-//! `2^n - 1`, reduced by mask-and-add folds; Proth primes `k·2^n + 1`,
-//! reduced by `%` on a compile-time-constant divisor; and the Goldilocks
-//! prime `2^64 - 2^32 + 1`, reduced through `2^64 ≡ 2^32 - 1 (mod p)`.
-//! `Fp<P>` stores canonical values for the shapes that
-//! `use_specialized_storage` in the parent module selects.
+//! `2^n - 1`, Proth primes `k·2^n + 1` and the Goldilocks prime
+//! `2^64 - 2^32 + 1`.
 
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};

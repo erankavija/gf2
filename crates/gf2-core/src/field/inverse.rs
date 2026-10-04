@@ -4,9 +4,7 @@
 //! [`FieldMatrix::inv`], [`FieldMatrix::solve`],
 //! [`FieldMatrix::solve_batch`] and [`FieldMatrix::det`] compose the PLE
 //! decomposition with the triangular kernels
-//! (`@/citation/DumasPernet2012` §2.3, Table 2). They panic on non-square
-//! input; a singular input yields `None` (`inv`, `solve`, `solve_batch`)
-//! or the field zero (`det`).
+//! (`@/citation/DumasPernet2012` §2.3, Table 2).
 
 use crate::field::matrix::FieldMatrix;
 #[cfg(any(test, feature = "test-support"))]

@@ -1,11 +1,7 @@
 //! Characteristic polynomial, minimal polynomial, and Frobenius normal
 //! form of a square [`FieldMatrix`] over an arbitrary [`FiniteField`].
 //!
-//! [`FieldMatrix::charpoly`] dispatches between a deterministic cubic
-//! Krylov path and the Las-Vegas Keller–Gehrig path
-//! (`@/citation/DumasPernet2012`, theorems 13.1 and 13.4);
-//! [`FieldMatrix::minpoly`] dispatches between Wiedemann and
-//! cyclic-decomposition paths. Singular inputs are accepted.
+//! Singular inputs are accepted.
 
 use crate::field::matrix::{BasisReducer, ChainPolyArith, FieldMatrix, PackedMatvec};
 use crate::field::poly::FieldPoly;

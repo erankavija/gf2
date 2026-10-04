@@ -1,15 +1,8 @@
 //! Extension-field scalar Wiedemann minimal polynomial.
 //!
-//! [`try_extension_wiedemann_fp`] serves `Fp<P>` matrices with `q ≤ n` by
-//! running scalar Wiedemann over an extension of degree `k` with `q^k > n`.
-//! The matrix stays in base form: an extension vector is `k` base-field
-//! component arrays, a base-field projection vector yields `k` base scalar
-//! sequences from one Krylov chain, and Berlekamp–Massey on each gives a
-//! base-field divisor of the minimal polynomial; their LCM is the candidate.
-//! A candidate of degree below `n` is returned only after the Las-Vegas check
-//! `crate::field::charpoly::poly_annihilates_a_lasvegas` accepts it.
-//! [`crate::field::traits::FiniteField::try_extension_wiedemann_minpoly`]
-//! dispatches here for `Fp<P>`.
+//! [`try_extension_wiedemann_fp`] serves `n × n` `Fp<P>` matrices with
+//! `P ≤ n` by running scalar Wiedemann over an extension of degree `k` with
+//! `P^k > n`. The matrix stays in base form.
 
 use crate::field::charpoly::{berlekamp_massey, poly_lcm, splitmix64};
 use crate::field::matrix::FieldMatrix;
