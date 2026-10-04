@@ -2938,7 +2938,7 @@
         "text": "| Convergence-shape comparison is a likelihood on counts | The model comparison is computed from the observed zero counts under their binomial sampling distribution, not by weighted least squares on $\\hat p$ compared by AIC. This supersedes study \u00a77.5, whose text stands. The comparison produces its own artefact and the hard report never waits on it, since an aspirational result cannot block a hard one. |"
       },
       {
-        "path": "dev/active/64fd3afd/proof-sketch.md",
+        "path": "dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md",
         "line": 327,
         "text": "`QuotientField`, `ConstExt` over both binomial and general-quotient"
       },
