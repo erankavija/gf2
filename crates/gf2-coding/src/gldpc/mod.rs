@@ -1,7 +1,9 @@
-//! Generalized LDPC (GLDPC) codes with quasi-cyclic structure, after
-//! `@/citation/Lentmaier2010a`: check nodes use component codes in place of
-//! single-parity-check constraints, and circulant permutation matrices build
-//! the adjacency matrix.
+//! Generalized LDPC (GLDPC) codes with quasi-cyclic structure.
+//!
+//! This module implements GLDPC codes where check nodes use component codes
+//! (e.g., BCH codes) instead of simple single-parity-check constraints. The
+//! construction follows `@/citation/Lentmaier2010a`, using circulant permutation matrices
+//! to build the adjacency matrix.
 
 use crate::grand::{OrbGrand, OrbGrandConfig, SoGrand};
 use crate::llr::Llr;

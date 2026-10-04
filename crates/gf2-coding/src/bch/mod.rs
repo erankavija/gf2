@@ -1,8 +1,10 @@
-//! BCH (Bose-Chaudhuri-Hocquenghem) codes: [`spec`] constructs them over any
-//! supported base field, [`encode`] and [`matrix`] encode them systematically
-//! and materialize $G$ and $H$, and [`BinaryBchDecoder`] decodes the binary
-//! ones. Extended, shortened, and punctured BCH codes are
-//! [`Extended`](crate::transform::Extended),
+//! BCH (Bose-Chaudhuri-Hocquenghem) codes.
+//!
+//! [`spec`] constructs BCH codes over any supported base field, [`encode`]
+//! and [`matrix`] encode them systematically and materialize $G$ and $H$, and
+//! [`BinaryBchDecoder`] decodes the binary ones; codes over other base fields
+//! have construction, encoding, and matrices. Extended, shortened, and
+//! punctured BCH codes are [`Extended`](crate::transform::Extended),
 //! [`Shortened`](crate::transform::Shortened), and
 //! [`Punctured`](crate::transform::Punctured) over a canonical code.
 //!

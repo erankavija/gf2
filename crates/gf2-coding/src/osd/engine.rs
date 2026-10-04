@@ -1,8 +1,10 @@
-//! Most-reliable-basis reprocessing shared by every OSD semantic adapter: the
-//! reliability-ordered independent basis, the bounded order-`m` reprocessing
-//! loop, the soft ranking, and the work metadata.  A semantic adapter supplies
-//! the initial basis representation, the candidate reconstruction, and the
-//! validity rule.
+//! Most-reliable-basis reprocessing shared by every OSD semantic adapter.
+//!
+//! The engine owns the parts of ordered-statistics decoding that do not depend
+//! on what a candidate means: the reliability-ordered independent basis, the
+//! bounded order-`m` reprocessing loop, the soft ranking, and the work
+//! metadata.  A semantic adapter supplies the initial basis representation, the
+//! candidate reconstruction, and the validity rule.
 
 use std::fmt;
 use std::sync::atomic::AtomicBool;

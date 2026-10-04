@@ -16,6 +16,7 @@ use std::sync::Arc;
 
 pub mod block {
     //! The canonical static block-code interfaces.
+    //!
     //! A code declares its symbol field through [`BlockCode::Symbol`] and its
     //! storage through [`BlockCode::Symbols`]; the capability traits
     //! [`BlockEncoder`], [`GeneratorMatrixAccess`], and

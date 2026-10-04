@@ -3,6 +3,7 @@
 //! presentations, the primitive $n$-th root of unity, the code parameters and
 //! the seeded messages. It writes no generator polynomial and no codeword; the
 //! oracles derive their own and `bch_oracle_agreement` recomputes gf2's.
+//!
 //! Every field element is written as its canonical index: the integer whose
 //! base-$p$ digits are the element's canonical prime coordinates, coordinate
 //! zero least significant, as `FieldIdentity::write_prime_coords` numbers them.

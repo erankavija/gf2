@@ -1,4 +1,5 @@
 //! Transformations that derive one code coordinate space from another.
+//!
 //! Coordinate positions are zero-based and are always interpreted in the
 //! coordinate space of the value being transformed.  A transformation's
 //! [`CoordinateMap`] points in the other direction: position `i` in the
