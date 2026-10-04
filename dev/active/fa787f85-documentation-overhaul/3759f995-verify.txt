@@ -12,9 +12,9 @@ byte verification: 16/16 destinations carry the pre-execution sha256; 1/1 delete
 fresh preview: eligible=True blockers=0 counts={"already_archived": 16, "block": 0, "copy": 1, "move": 15, "pending_deletions": 0, "retain": 0} artifacts left to move, copy or delete=0
 tracker references: 25/25 planned references name the archive path
 link scan of dev/archive/f9717e7e-gf2-sim: 23 Markdown files, 5 local links, 0 unresolved
-== repointed files
-link scan: 3 Markdown files, 0 local links, 0 unresolved
-== manifest rows
+== Markdown files touched by the commits tagged jit:3759f995
+link scan: 6 Markdown files, 0 local links, 0 unresolved
+== manifest rows whose destination the pre-execution plans place
 complete dev/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md -> dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-handoff-5.md
 complete dev/bench_results/2026-04-26-uncompetitiveness-profile.md -> dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-26-uncompetitiveness-profile.md
 complete dev/bench_results/2026-04-27-asm-audit.md -> dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-27-asm-audit.md
@@ -24,3 +24,5 @@ complete dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md -> dev/arch
 complete dev/bench_results/2026-04-29-strassen-matmul-crossover.md -> dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-strassen-matmul-crossover.md
 complete dev/bench_results/c7791a20/2026-04-26-profile-release-delta.md -> dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/c7791a20/2026-04-26-profile-release-delta.md
 complete dev/benchmarks/gf2-sim/README.md -> dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/README.md
+complete dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/themes/gruvbox.css -> dev/archive/babcf05e-gf2-core-ppc-spiral/presentations/babcf05e-ppc-spiral/themes/gruvbox.css
+complete dev/presentations/f9717e7e-gf2-sim/themes/gruvbox.css -> dev/archive/f9717e7e-gf2-sim/presentations/themes/gruvbox.css
