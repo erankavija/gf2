@@ -691,9 +691,6 @@ mod tests {
 
     #[test]
     fn test_rref_simple_2x3() {
-        // Matrix: [1 0 1]
-        //         [0 1 1]
-        // Already in RREF
         let mut m = BitMatrix::zeros(2, 3);
         m.set(0, 0, true);
         m.set(0, 2, true);
@@ -708,10 +705,6 @@ mod tests {
 
     #[test]
     fn test_rref_needs_elimination() {
-        // Matrix: [1 1 0]
-        //         [1 0 1]
-        // RREF should be: [1 0 1]
-        //                 [0 1 1]
         let mut m = BitMatrix::zeros(2, 3);
         m.set(0, 0, true);
         m.set(0, 1, true);
@@ -733,10 +726,6 @@ mod tests {
 
     #[test]
     fn test_rref_rank_deficient() {
-        // Matrix: [1 0 1]
-        //         [1 0 1]  (duplicate row)
-        // RREF: [1 0 1]
-        //       [0 0 0]
         let mut m = BitMatrix::zeros(2, 3);
         m.set(0, 0, true);
         m.set(0, 2, true);
@@ -856,8 +845,6 @@ mod tests {
 
     #[test]
     fn test_rref_pivot_from_right() {
-        // Matrix: [1 1 0]
-        //         [0 1 1]
         let mut m = BitMatrix::zeros(2, 3);
         m.set(0, 0, true);
         m.set(0, 1, true);

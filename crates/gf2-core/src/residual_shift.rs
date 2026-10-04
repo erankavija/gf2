@@ -232,7 +232,6 @@ mod tests {
         out
     }
 
-    /// The right branch as written.
     fn reference_right(data: &[u64], word_shift: usize, bit_shift: u32) -> Vec<u64> {
         let mut out = data.to_vec();
         portable_shift_right_funnel(&mut out, word_shift, bit_shift);

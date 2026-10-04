@@ -141,19 +141,19 @@ impl BitVec {
         bv
     }
 
-    /// Returns a slice of the underlying word storage.
+    /// Underlying word storage.
     #[inline]
     pub fn words(&self) -> &[u64] {
         &self.data
     }
 
-    /// Returns the number of bits in the `BitVec`.
+    /// Length in bits.
     #[inline]
     pub fn len(&self) -> usize {
         self.len_bits
     }
 
-    /// Returns `true` if the `BitVec` contains no bits.
+    /// Whether the length is zero.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len_bits == 0
@@ -461,7 +461,7 @@ impl BitVec {
         let index = self.rank_select_index.lock().unwrap();
         let index = index.as_ref().unwrap();
 
-        let target = k + 1; // We want the position where rank equals k+1
+        let target = k + 1;
 
         // `superblocks[i]` is the cumulative count before superblock `i`, so an
         // exact match at `i` places the target bit in superblock `i - 1`.
@@ -1097,7 +1097,7 @@ mod tests {
         let bv = BitVec::ones(65);
         assert_eq!(bv.len(), 65);
         assert_eq!(bv.count_ones(), 65);
-        assert_eq!(bv.data[1], 0x1); // Only bit 0 of second word should be set
+        assert_eq!(bv.data[1], 0x1);
     }
 
     #[test]
@@ -1115,8 +1115,6 @@ mod tests {
         }
     }
 
-    /// Padding bits above `len % 64` in the last word are zero and trailing
-    /// words are all padding.
     fn assert_padding_zero(bv: &BitVec) {
         let len = bv.len();
         let used_words = len.div_ceil(64);
@@ -1445,7 +1443,6 @@ mod tests {
         assert_eq!(bytes.len(), 2);
 
         let bv2 = BitVec::from_bytes_le(&bytes);
-        // Note: from_bytes_le creates a bitvec with len = bytes.len() * 8
         assert_eq!(bv2.len(), 16);
     }
 
@@ -1461,11 +1458,11 @@ mod tests {
 
     #[test]
     fn test_bit_slice_basic() {
-        let bv = BitVec::from_bytes_le(&[0b1010_1100]); // 8 bits
+        let bv = BitVec::from_bytes_le(&[0b1010_1100]);
         let s = bv.bit_slice(2..6);
         assert_eq!(s.len(), 4);
-        assert!(s.get(0)); // original bit 2
-        assert!(s.get(3)); // original bit 5
+        assert!(s.get(0));
+        assert!(s.get(3));
         let round = BitVec::from_bitslice(s);
         assert_eq!(round.len(), 4);
         assert!(round.get(0));
@@ -1519,21 +1516,21 @@ mod tests {
 
     #[test]
     fn test_parity_from_bytes() {
-        let bv = BitVec::from_bytes_le(&[0xFF]); // 8 bits = even
+        let bv = BitVec::from_bytes_le(&[0xFF]);
         assert!(!bv.parity());
 
-        let bv = BitVec::from_bytes_le(&[0x7F]); // 7 bits = odd
+        let bv = BitVec::from_bytes_le(&[0x7F]);
         assert!(bv.parity());
 
-        let bv = BitVec::from_bytes_le(&[0x00]); // 0 bits = even
+        let bv = BitVec::from_bytes_le(&[0x00]);
         assert!(!bv.parity());
     }
 
     #[test]
     fn test_parity_xor_property() {
-        let bv_all_ones = BitVec::from_bytes_le(&[0xFF]); // 8 bits = even parity
-        let bv_all_zeros = BitVec::from_bytes_le(&[0x00]); // 0 bits = even parity
-        let bv_single = BitVec::from_bytes_le(&[0x01]); // 1 bit = odd parity
+        let bv_all_ones = BitVec::from_bytes_le(&[0xFF]);
+        let bv_all_zeros = BitVec::from_bytes_le(&[0x00]);
+        let bv_single = BitVec::from_bytes_le(&[0x01]);
 
         assert!(!bv_all_ones.parity());
         assert!(!bv_all_zeros.parity());
@@ -1567,7 +1564,7 @@ mod tests {
 
     #[test]
     fn test_find_first_one_first_bit() {
-        let bv = BitVec::from_bytes_le(&[0x01]); // bit 0 set
+        let bv = BitVec::from_bytes_le(&[0x01]);
         assert_eq!(bv.find_first_one(), Some(0));
     }
 
@@ -1577,7 +1574,7 @@ mod tests {
         for _ in 0..63 {
             bv.push_bit(false);
         }
-        bv.push_bit(true); // bit 63 set
+        bv.push_bit(true);
         assert_eq!(bv.find_first_one(), Some(63));
     }
 
@@ -1587,19 +1584,19 @@ mod tests {
         for _ in 0..64 {
             bv.push_bit(false);
         }
-        bv.push_bit(true); // bit 64 set
+        bv.push_bit(true);
         assert_eq!(bv.find_first_one(), Some(64));
     }
 
     #[test]
     fn test_find_first_one_middle_bit() {
-        let bv = BitVec::from_bytes_le(&[0b0001_0000]); // bit 4 set
+        let bv = BitVec::from_bytes_le(&[0b0001_0000]);
         assert_eq!(bv.find_first_one(), Some(4));
     }
 
     #[test]
     fn test_find_first_one_multiple_bits() {
-        let bv = BitVec::from_bytes_le(&[0b1111_1000]); // bits 3-7 set
+        let bv = BitVec::from_bytes_le(&[0b1111_1000]);
         assert_eq!(bv.find_first_one(), Some(3));
     }
 
@@ -1624,13 +1621,13 @@ mod tests {
 
     #[test]
     fn test_find_first_zero_first_bit() {
-        let bv = BitVec::from_bytes_le(&[0xFE]); // bit 0 clear
+        let bv = BitVec::from_bytes_le(&[0xFE]);
         assert_eq!(bv.find_first_zero(), Some(0));
     }
 
     #[test]
     fn test_find_first_zero_middle_bit() {
-        let bv = BitVec::from_bytes_le(&[0b1110_1111]); // bit 4 clear
+        let bv = BitVec::from_bytes_le(&[0b1110_1111]);
         assert_eq!(bv.find_first_zero(), Some(4));
     }
 
@@ -1640,13 +1637,13 @@ mod tests {
         for _ in 0..64 {
             bv.push_bit(true);
         }
-        bv.push_bit(false); // bit 64 clear
+        bv.push_bit(false);
         assert_eq!(bv.find_first_zero(), Some(64));
     }
 
     #[test]
     fn test_find_first_zero_respects_length() {
-        let bv = BitVec::from_bytes_le(&[0x00]); // 8 bits, all zero
+        let bv = BitVec::from_bytes_le(&[0x00]);
         assert_eq!(bv.len(), 8);
         assert_eq!(bv.find_first_zero(), Some(0));
     }
@@ -1654,7 +1651,6 @@ mod tests {
     #[test]
     fn test_rank_empty() {
         let bv = BitVec::new();
-        // Empty bitvec has no valid indices
         assert_eq!(bv.len(), 0);
     }
 
@@ -1688,17 +1684,16 @@ mod tests {
 
     #[test]
     fn test_rank_multiple_bits() {
-        // Pattern: 10110100
         let bv = BitVec::from_bytes_le(&[0b00101101]);
 
-        assert_eq!(bv.rank(0), 1); // bit 0 is set
-        assert_eq!(bv.rank(1), 1); // bit 1 is clear
-        assert_eq!(bv.rank(2), 2); // bit 2 is set
-        assert_eq!(bv.rank(3), 3); // bit 3 is set
-        assert_eq!(bv.rank(4), 3); // bit 4 is clear
-        assert_eq!(bv.rank(5), 4); // bit 5 is set
-        assert_eq!(bv.rank(6), 4); // bit 6 is clear
-        assert_eq!(bv.rank(7), 4); // bit 7 is clear
+        assert_eq!(bv.rank(0), 1);
+        assert_eq!(bv.rank(1), 1);
+        assert_eq!(bv.rank(2), 2);
+        assert_eq!(bv.rank(3), 3);
+        assert_eq!(bv.rank(4), 3);
+        assert_eq!(bv.rank(5), 4);
+        assert_eq!(bv.rank(6), 4);
+        assert_eq!(bv.rank(7), 4);
     }
 
     #[test]
@@ -1732,7 +1727,6 @@ mod tests {
     #[test]
     #[allow(clippy::manual_div_ceil)]
     fn test_rank_alternating_pattern() {
-        // Pattern: 01010101
         let bv = BitVec::from_bytes_le(&[0b10101010]);
 
         for i in 0..8 {
@@ -1782,14 +1776,13 @@ mod tests {
 
     #[test]
     fn test_select_multiple_bits() {
-        // Pattern: 10110100
         let bv = BitVec::from_bytes_le(&[0b00101101]);
 
-        assert_eq!(bv.select(0), Some(0)); // 1st one at position 0
-        assert_eq!(bv.select(1), Some(2)); // 2nd one at position 2
-        assert_eq!(bv.select(2), Some(3)); // 3rd one at position 3
-        assert_eq!(bv.select(3), Some(5)); // 4th one at position 5
-        assert_eq!(bv.select(4), None); // no 5th one
+        assert_eq!(bv.select(0), Some(0));
+        assert_eq!(bv.select(1), Some(2));
+        assert_eq!(bv.select(2), Some(3));
+        assert_eq!(bv.select(3), Some(5));
+        assert_eq!(bv.select(4), None);
     }
 
     #[test]
@@ -1826,7 +1819,6 @@ mod tests {
 
     #[test]
     fn test_select_alternating_pattern() {
-        // Pattern: 01010101
         let bv = BitVec::from_bytes_le(&[0b10101010]);
 
         assert_eq!(bv.select(0), Some(1));
@@ -1897,7 +1889,6 @@ mod select_edge_cases {
     fn test_select_exact_superblock_match() {
         let mut bv = BitVec::zeros(1024);
 
-        // Set exactly 512 bits in the first superblock (words 0-7)
         for i in 0..512 {
             bv.set(i, true);
         }
@@ -1949,7 +1940,6 @@ mod kani_proofs {
         let num_words = len.div_ceil(64);
         let used_bits = len % 64;
 
-        // Simulate the ones() last-word logic
         let last_word = if used_bits != 0 {
             (1u64 << used_bits) - 1
         } else {

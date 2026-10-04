@@ -2,16 +2,15 @@
 //! `@/citation/LidlNiederreiter1996`, `@/citation/Menezes1997`,
 //! `@/citation/Etsi2015`, `@/citation/ThreeGpp2017`,
 //! `@/citation/Seroussi1998`, `@/citation/Zivkovic1994`,
-//! `@/citation/Nist2013` Appendix D and `@/citation/Lubeck2024`. Entries for
-//! `m <= 16` are verified primitive; entries for `m = 64..=127` are verified
-//! irreducible only (see [`PrimitivePolynomialDatabase::standard_u128`]).
+//! `@/citation/Nist2013` Appendix D and `@/citation/Lubeck2024`.
+//! [`PrimitivePolynomialDatabase::standard_u128`] states the guarantee per
+//! degree.
 
 use crate::field::extension::FieldId;
 use crate::field::modulus_select::{ModulusRegistry, RegistryEntry, RegistryProvenance};
 
-/// Database of well-known polynomials for GF(2^m). Entries for
-/// `m = 64..=127` are irreducible but not verified primitive; see
-/// [`Self::standard_u128`].
+/// Database of well-known polynomials for GF(2^m); [`Self::standard_u128`]
+/// states the guarantee per degree.
 pub struct PrimitivePolynomialDatabase;
 
 impl ModulusRegistry for PrimitivePolynomialDatabase {
@@ -146,9 +145,6 @@ impl PrimitivePolynomialDatabase {
         Self::seroussi_u128(m)
     }
 
-    /// Entries for `m = 64..=127` from `@/citation/Seroussi1998` and
-    /// `@/citation/Nist2013`, each verified irreducible over GF(2) by
-    /// `test_standard_u128_entries_are_irreducible`.
     fn seroussi_u128(m: usize) -> Option<u128> {
         let tri = |m: usize, k: usize| Some((1u128 << m) | (1u128 << k) | 1);
         let penta = |m: usize, a: usize, b: usize, c: usize| {
@@ -234,8 +230,7 @@ impl PrimitivePolynomialDatabase {
         }
     }
 
-    /// Human-readable note clarifying the irreducibility-only guarantee for
-    /// `m >= 64` entries returned by [`Self::standard_u128`].
+    /// Prose form of the `m = 64..=127` guarantee of [`Self::standard_u128`].
     pub const fn standard_u128_irreducibility_note() -> &'static str {
         "PrimitivePolynomialDatabase::standard_u128 entries for m = 64..=127 \
          are verified irreducible over GF(2) but are NOT independently \
@@ -250,8 +245,6 @@ impl PrimitivePolynomialDatabase {
 mod tests {
     use super::*;
 
-    /// Polynomial multiplication modulo `p(x)` of degree `m`, over GF(2),
-    /// with both operands represented as `u128`. Schoolbook shift-and-reduce.
     fn mul_mod_u128(a: u128, b: u128, m: u32, p: u128) -> u128 {
         assert!((1..=127).contains(&m));
         let mask = (1u128 << m) - 1;
@@ -271,7 +264,6 @@ mod tests {
         acc & mask
     }
 
-    /// Scalar GCD of two polynomials over GF(2), both represented as `u128`.
     fn gcd_poly_u128(mut a: u128, mut b: u128) -> u128 {
         loop {
             if b == 0 {
@@ -290,10 +282,9 @@ mod tests {
         }
     }
 
-    /// Rabin irreducibility test for `p(x)` of degree `m` over GF(2) using
-    /// `u128` storage (supports `m` up to 127).
+    /// Rabin's test: `x^(2^m) ≡ x (mod p)` and, for each prime `q | m`,
+    /// `gcd(p, x^(2^(m/q)) - x) = 1`.
     fn is_irreducible_u128(p: u128, m: u32) -> bool {
-        // Test 1: x^(2^m) ≡ x (mod p)
         let mut cur: u128 = 2;
         for _ in 0..m {
             cur = mul_mod_u128(cur, cur, m, p);
@@ -301,7 +292,6 @@ mod tests {
         if cur != 2 {
             return false;
         }
-        // Test 2: for each prime q | m, gcd(p, x^(2^(m/q)) - x) = 1
         let mut n = m;
         let mut q = 2u32;
         let mut primes_of_m: Vec<u32> = Vec::new();
@@ -433,8 +423,6 @@ mod tests {
 
     #[test]
     fn test_standard_m32_value() {
-        // `f_{2,32}` of `@/citation/Lubeck2024`:
-        // x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1.
         let poly = PrimitivePolynomialDatabase::standard(32).expect("m=32 entry");
         assert_eq!(poly, 0x1_0000_8299u64);
         let expected_bits = [0u32, 3, 4, 7, 9, 15, 32];
