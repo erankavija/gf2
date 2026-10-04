@@ -83,6 +83,10 @@ named here.
   `crates/gf2-coding/tests/data/bch_oracle/sage.json` and the headers of
   `crates/gf2-algebra/tests/data/cas_permanent_f3_batch.csv` and
   `cas_permanent_f5_f7.csv` record.
+- `DvbVerification2010` is the stream set as a whole; a comment names the
+  configuration it reads.
+- `Coreutils2026` is the manual version whose text states the check-file
+  format the comments restate; no file pins a coreutils version.
 - `GapGroup2026` is the version
   `crates/gf2-coding/tests/data/bch_oracle/gap.json` records, and
   `AeneasVerif2026` the pair `scripts/verify-lean.sh` pins.

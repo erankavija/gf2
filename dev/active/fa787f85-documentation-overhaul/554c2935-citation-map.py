@@ -138,7 +138,7 @@ ROWS = [
     ("Etsi2015", r"standard's|of §6:|q in standard",
      r"ldpc/dvb_t2/(?:concat|mod|params)\.rs", None),
     ("Etsi2015", r"The standard's shortening", r"bch_oracle_agreement\.rs", None),
-    ("Etsi2015", r"the table's", r"shortened_fast_path\.rs", None),
+    ("Etsi2015", r"Table 6\(a\)", r"shortened_fast_path\.rs", None),
     ("Etsi2015", r"\(DVB-T2\)$", r"gf2-core/src/primitive_polys\.rs", None),
     ("Etsi2015", r"\(DVB-T2 (?:Short|Normal)\)", r"gpu_bch_syndrome_field\.rs", None),
     ("Etsi2012", r"its table value", r"dvb_t2_awgn_campaign\.rs", None),
@@ -172,6 +172,9 @@ ROWS = [
     ("Bryan2013", r"JSON Pointer", None, None),
     ("Wright2022", r"draft 2020-12", None, None),
     ("MacKay2006", r"AList format", None, None),
+    ("Lubeck2024", r"Conway polynomial", r"gf2pow32_matmul\.rs", None),
+    ("Coreutils2026", r"`sha256sum` check-file format|coreutils separators",
+     r"permanent_campaign/provenance\.rs", None),
 ]
 
 HEURISTIC = re.compile(
