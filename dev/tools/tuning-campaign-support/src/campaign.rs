@@ -1,7 +1,6 @@
-//! Neutral, durable campaign contracts shared by owners and the driver.
-//!
-//! Owners supply ordered manifests and validate the mathematical meaning of
-//! opaque case/result payloads. This layer validates identities, progress and
+//! Neutral, durable campaign contracts shared by owners and the driver. Owners
+//! supply ordered manifests and validate the mathematical meaning of opaque
+//! case/result payloads. This layer validates identities, progress and
 //! durability. The binary owns OS process launch, concurrent pipe draining,
 //! process-tree reaping and independent flock observations: those observations
 //! are explicit inputs here, never inferred from a wrapper's exit alone.

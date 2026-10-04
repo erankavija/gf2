@@ -1,10 +1,8 @@
-//! Independent acceptance evaluation of a Zen 3 benchmark receipt directory.
-//!
-//! `benchmark-acceptance <receipt-dir>` recomputes every
-//! digest, statistic and decision from the receipt's raw parts, writes
-//! `acceptance-summary.json` and `acceptance-summary.md` beside the receipt,
-//! and exits 0 when the receipt is accepted, 1 when it is rejected, and 2 on
-//! a usage or I/O error.
+//! Independent acceptance evaluation of a Zen 3 benchmark receipt directory:
+//! `benchmark-acceptance <receipt-dir>` recomputes every digest, statistic and
+//! decision from the receipt's raw parts, writes `acceptance-summary.json` and
+//! `acceptance-summary.md` beside the receipt, and exits 0 when the receipt is
+//! accepted, 1 when it is rejected, and 2 on a usage or I/O error.
 
 use std::env;
 use std::fs;

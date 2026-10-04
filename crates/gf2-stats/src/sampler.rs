@@ -1,10 +1,4 @@
 //! Uniform matrix sampling from reproducible, domain-separated ChaCha20 streams.
-//!
-//! An address becomes a 32-byte seed made from four little-endian `u64` words:
-//! campaign root, field order, matrix dimension, and a final word with an
-//! eight-bit purpose tag above a 56-bit stream index. Entries are then drawn by
-//! exact byte rejection, so reducing an accepted byte modulo the field order
-//! is unbiased. Matrix entry `k` is stored at row `k / n`, column `k % n`.
 
 use std::error::Error;
 use std::fmt;

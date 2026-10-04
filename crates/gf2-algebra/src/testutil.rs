@@ -1,10 +1,9 @@
-//! Test-only helpers shared across the crate's test modules.
-//!
-//! Centralises the deterministic pseudo-random matrix generators used by the
-//! `permanent_*` algorithm family's cross-check tests, plus the brute-force
-//! oracles those tests compare the production kernels against. All random
-//! helpers route through the workspace SSOT RNG [`gf2_core::rng::Lcg`] so that
-//! seed values reproduce bit-identical streams across modules.
+//! Test-only helpers shared across the crate's test modules: the deterministic
+//! pseudo-random matrix generators used by the `permanent_*` algorithm family's
+//! cross-check tests, plus the brute-force oracles those tests compare the
+//! production kernels against. All random helpers route through the workspace
+//! SSOT RNG [`gf2_core::rng::Lcg`] so that seed values reproduce bit-identical
+//! streams across modules.
 
 use gf2_core::field::FiniteField;
 use gf2_core::gfp::Fp;

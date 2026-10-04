@@ -1,10 +1,8 @@
-//! Scalar-vs-AVX2 sanity sweep for the single-word F_3 permanent kernels.
-//!
-//! Times `permanent_bipedal3_singleword` and
-//! `permanent_bipedal3_singleword_simd` on the same seeded matrices at
-//! n ∈ {16, 20, 24}, panics unless their `Fp<3>` results are bit-identical, and
-//! prints CSV rows to stdout. When AVX2 is not detected, the AVX2 row times the
-//! scalar path again.
+//! Scalar-vs-AVX2 sanity sweep for the single-word F_3 permanent kernels: times
+//! `permanent_bipedal3_singleword` and `permanent_bipedal3_singleword_simd` on
+//! the same seeded matrices at n ∈ {16, 20, 24}, panics unless their `Fp<3>`
+//! results are bit-identical, and prints CSV rows to stdout. When AVX2 is not
+//! detected, the AVX2 row times the scalar path again.
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::bipedal3::{

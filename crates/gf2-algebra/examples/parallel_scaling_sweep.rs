@@ -1,10 +1,11 @@
-//! Parallel scaling sweep for `permanent_bipedal3_parallel`.
+//! Parallel scaling sweep for `permanent_bipedal3_parallel`: times the same K
+//! seeded matrices per n at every rayon thread count in `THREAD_COUNTS`, panics
+//! unless each matrix's `Fp<3>` result is identical across thread counts, and
+//! reports the per-matrix scaling factor `T_1[k] / (T × T_T[k])` as a mean with
+//! a two-sided 95% CI per (n, T). A cell passes when the CI lower bound is
+//! ≥ 0.85.
 //!
-//! Times the same K seeded matrices per n at every rayon thread count in
-//! `THREAD_COUNTS`, panics unless each matrix's `Fp<3>` result is identical
-//! across thread counts, and reports the per-matrix scaling factor
-//! `T_1[k] / (T × T_T[k])` as a mean with a two-sided 95% CI per (n, T). A cell
-//! passes when the CI lower bound is ≥ 0.85.
+//! # Output
 //!
 //! Writes `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-<DATE>.csv`
 //! (date overridable via `SA_DATE`) with columns `n, threads, mean_us, std_us,

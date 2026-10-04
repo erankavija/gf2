@@ -1,5 +1,4 @@
 //! Append-only family attempt accounting for versioned protocol families.
-//!
 //! Reservations precede measurement and never disappear after a failure. Each
 //! exact JSON line binds its predecessor. A receipt freezes the entire prefix,
 //! including its reservation; no supplied prior-trial count decides correction.

@@ -1,8 +1,7 @@
-//! Reproducible rare-event estimates for permanental rank deficiency.
-//!
-//! The ignored test is an explicitly invoked campaign. It uses the production
-//! rank predicate, the production domain-separated sampler, and the production
-//! exact binomial interval implementation, then writes the committed receipt.
+//! Reproducible rare-event estimates for permanental rank deficiency. The
+//! ignored test is an explicitly invoked campaign. It uses the production rank
+//! predicate, the production domain-separated sampler, and the production exact
+//! binomial interval implementation, then writes the committed receipt.
 
 use std::fmt::Write as _;
 use std::path::PathBuf;

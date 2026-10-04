@@ -1,5 +1,7 @@
 //! Packed `F_7` element / vector encoding.
 //!
+//! # Encoding
+//!
 //! Each `u64` packs 16 elements at 4-bit slots; slot `i` occupies bits
 //! `[4i .. 4i+4)` and holds a canonical value `0..=6`, so bit `4i+3` is
 //! always zero. Binary ops go through three 64 KiB compile-time lookup

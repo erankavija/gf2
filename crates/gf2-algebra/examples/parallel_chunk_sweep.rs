@@ -1,6 +1,5 @@
-//! Chunk-size sweep for `permanent_bipedal3_parallel_with_chunk` at n=28.
-//!
-//! Times `SAMPLES_PER_CHUNK` seeded matrices per chunk size in `CHUNK_SIZES` and
+//! Chunk-size sweep for `permanent_bipedal3_parallel_with_chunk` at n=28: times
+//! `SAMPLES_PER_CHUNK` seeded matrices per chunk size in `CHUNK_SIZES` and
 //! writes `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-<DATE>.csv`
 //! (date overridable via `SA_DATE`) with columns `chunk_size`, `mean_us`,
 //! `std_us`, `throughput_subsets_per_sec` (`(2^n - 1) / (mean_us * 1e-6)`) and

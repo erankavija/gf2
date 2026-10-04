@@ -1,7 +1,5 @@
 //! Gray-code subset enumeration used by Ryser's permanent formula and the
-//! `permanent_bipedal*` kernels.
-//!
-//! Re-exported as [`crate::permanent::gray`].
+//! `permanent_bipedal*` kernels, re-exported as [`crate::permanent::gray`].
 
 /// Convert a Gray-code sequential index to the corresponding subset bitmask.
 ///
