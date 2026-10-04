@@ -14,8 +14,8 @@ verdict is in the confirmation's
 ## Verdict per cell
 
 The acceptance summary records the confirmation receipt as `accepted` and as
-qualifying for production selection; its `findings` array holds the finding
-count. Each confirmatory cell has one row in the tables' Confirmation section,
+qualifying for production selection; the summary's row in the tables' Source
+section holds its finding count. Each confirmatory cell has one row in the tables' Confirmation section,
 with its outcome, its pair count and its interval at the per-comparison
 confidence of the family row above it, and one entry in the summary's `cells`
 array, with its `status`, `decision` and `outcome`.

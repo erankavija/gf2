@@ -46,7 +46,7 @@ the ratio the estimator forms.
 | Frozen pilot family | [`addendum-v4-dense-product-pilot.json`](addendum-v4-dense-product-pilot.json) | committed before launch |
 | Family ledger | [`dense-product-family-ledger.jsonl`](../../bench_results/4c1e441f/dense-product-family-ledger.jsonl) | opened empty; carries one reservation per campaign |
 | Lane equivalence | [`conformance/lane-equivalence.txt`](conformance/lane-equivalence.txt) | both lanes on every declared shape |
-| Arm smoke | [`survey/runner-smoke.txt`](survey/runner-smoke.txt) | every arm, cell and operation of the stage it names, untimed |
+| Arm smoke | [`survey/pilot-smoke.json`](survey/pilot-smoke.json), [`survey/confirmation-smoke.json`](survey/confirmation-smoke.json) | every arm and cell of each stage, untimed |
 | Pilot campaign | [`r1-dense-product-pilot`](../../bench_results/4c1e441f/r1-dense-product-pilot) | measured, verified from its own log, receipt committed |
 | Confirmation addendum | [`addendum-v4-dense-product-confirmation.json`](addendum-v4-dense-product-confirmation.json) | frozen from the committed pilot receipt, with [its derivation record](confirmation-derivation-dense-product.txt) |
 | Confirmation campaign | [`r1-dense-product-confirmation`](../../bench_results/4c1e441f/r1-dense-product-confirmation) | measured, verified from its own log, receipt committed |
@@ -54,15 +54,18 @@ the ratio the estimator forms.
 | Published outcome | [`outcome.md`](outcome.md) | each cell's recorded verdict, the retention decision and the direction agreement |
 
 Every stage that measures is preceded by an untimed one.
-`survey/smoke-arms.sh` takes the stage whose frozen addendum it drives, projects
-a throwaway plan from that addendum,
-validates it with the runner's own `check`, and drives every arm of every
-declared cell through `gf256-gemm-smoke`, which speaks the runner's wire — its
-case encoder, fresh-child sentinel, child environment and result parser — in the
-`validation` position. Each arm performs one untimed dispatch and reports no
-timing window; the smoke refuses one that does, and the record is a build input
-of both campaigns, so a timed run refuses to launch until the smoke is
-committed. Timing belongs to the benchmark window alone.
+`survey/smoke-arms.sh` hands each stage's frozen addendum to the shared
+`smoke-campaign-arms.sh`, which projects a throwaway plan carrying that stage's
+label, validates it with the runner's own `check`, and drives every arm of every
+declared cell through `benchmark-ab-runner smoke`, whose contract
+`tuning_campaign_support::arm::smoke` states. Each arm performs one untimed
+dispatch in the `validation` position and reports no timing window; the smoke
+refuses one that does. The arm workspace's `request_mirror` test pins the
+request the arm decodes against the runner's own request declaration. Each
+stage's record names the executable every dispatch drove, and the launcher
+refuses a timed run whose built arm differs from it. Each receipt's
+producing-input snapshot holds the smoke record its campaign pins as a build
+input. Timing belongs to the benchmark window alone.
 
 The freezer derives the measurement resolution from the whole pilot, dropped
 cells included, so a dropped cell's width sizes the confirmation's margins. A
@@ -83,12 +86,16 @@ beside the confirmation addendum.
 The family owns its declarations and nothing else. The plan projection, the
 producing-input manifest, the result tables, the prior-receipt pin, the arm
 smoke script and the execution-log verification are the shared forms under
-`dev/scripts`, parameterized by the family that calls them; the lane switch, the
-element representations and the lane witness are the vector family's arm library
-`dev/active/ad2a6a58/survey/axpy-arm`; the byte-region conversions, the consumer
-entry points, the runner wire and the smoke driver are the byte-field survey's
-`dev/active/6c6b09b1/survey` crates. The vector family calls the same shared
-forms, and each of its generated artifacts is byte-identical across the change.
+`dev/scripts`, parameterized by the family that calls them; the smoke itself is
+the runner's; the lane switch, the element representations and the lane witness
+are the vector family's arm library `gf256-axpy-arm`; the byte-region
+conversions, the consumer entry points and the arm's side of the runner wire are
+the byte-field survey's `byte-field-gf2-side` and `byte-field-arm-common`
+crates. The vector family calls the same shared forms.
+
+The family's scripts and generators carry no repository path: each resolves the
+root from git, its own files from its directory and every other location by
+file or package name, the generators through `survey/locate.py`.
 
 ## Receipts and publication
 
