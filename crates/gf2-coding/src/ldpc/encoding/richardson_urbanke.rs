@@ -1,8 +1,4 @@
 //! Systematic LDPC encoding from a dense parity matrix.
-//!
-//! [`RuEncodingMatrices::preprocess`] row-reduces H (m × n) to select m parity
-//! columns and stores the parity part P of G = [I_k | P]; encoding computes
-//! `parity = P^T × message`.
 
 use gf2_core::alg::rref::rref;
 use gf2_core::sparse::SpBitMatrixDual;

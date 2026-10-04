@@ -1,11 +1,7 @@
 //! Product code construction and iterative block turbo decoder
-//! (`@/citation/Pyndiah1998`).
-//!
-//! A component (n, k) code encodes the rows and then the columns of a k x k
-//! information matrix, giving an (n^2, k^2) product code.  [`TurboDecoder`]
-//! iterates between row and column SISO decoding with [`SoGrand`] or
-//! [`BcjrDecoder`] components; [`ChasePyndiahDecoder`] uses Chase-Pyndiah
-//! components.
+//! (`@/citation/Pyndiah1998`): a component (n, k) code encodes the rows and
+//! then the columns of a k x k information matrix, giving an (n^2, k^2)
+//! product code.
 
 pub mod chase_pyndiah;
 

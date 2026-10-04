@@ -1,8 +1,4 @@
 //! Shared minimum, second-minimum and sign reduction for check-node updates.
-//!
-//! [`min_sum_check_row`] computes every outgoing message of a check node of
-//! degree `d_c` in `2 d_c` reads, against `d_c (d_c - 1)` for one leave-one-out
-//! reduction per outgoing edge.
 
 use crate::llr::Llr;
 
