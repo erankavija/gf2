@@ -2,27 +2,24 @@
 """Generate this family's result tables (jit:ad2a6a58).
 
 Usage: make-tables.py [output]
-       (default dev/bench_results/ad2a6a58/tables.md)
+       (default tables.md beside the launcher)
 
-The rendering is `dev/scripts/campaign_tables.py`, shared with every other
-lane-comparison family; this file declares this family's stages, ledger, receipt
-pin and the paragraph that says what the pinned receipt is cited for.
+The rendering is the shared `campaign_tables.py`, which `locate.py` beside this
+file puts on the import path; this file declares this family's stages, ledger,
+receipt pin and the paragraph that says what the pinned receipt is cited for.
 """
 
 import os
-import subprocess
 import sys
 
-sys.path.insert(0, os.path.join(subprocess.run(
-    ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-).stdout.strip(), "dev/scripts"))
+import locate
 import campaign_tables  # noqa: E402
 
 ISSUE = "ad2a6a58"
-RESULTS = f"dev/bench_results/{ISSUE}"
-GENERATOR = f"dev/active/{ISSUE}/survey/make-tables.py"
+RESULTS = locate.RESULTS
+GENERATOR = os.path.relpath(os.path.abspath(__file__), locate.ROOT)
 LEDGER = f"{RESULTS}/axpy-family-ledger.jsonl"
-PIN = f"dev/active/{ISSUE}/pinned-vector-confirmation.json"
+PIN = f"{locate.ISSUE}/pinned-vector-confirmation.json"
 STAGES = [
     ("pilot", f"{RESULTS}/r1-axpy-pilot"),
     ("confirmation", f"{RESULTS}/r1-axpy-confirmation"),
@@ -36,9 +33,7 @@ AGREEMENT_NOTE = [
 
 
 def main():
-    root = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-    ).stdout.strip()
+    root = locate.ROOT
     output = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, RESULTS, "tables.md")
     campaign_tables.main(
         root=root,

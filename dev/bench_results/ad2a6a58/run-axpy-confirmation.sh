@@ -2,15 +2,15 @@
 # Shipped GF(2^8) axpy lane campaigns (jit:ad2a6a58).
 #
 # Usage (from the worker worktree root):
-#   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh build
-#   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh window pilot|confirmation
-#   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh freeze
-#   dev/bench_results/ad2a6a58/run-axpy-confirmation.sh tables
+#   run-axpy-confirmation.sh build
+#   run-axpy-confirmation.sh window pilot|confirmation
+#   run-axpy-confirmation.sh freeze
+#   run-axpy-confirmation.sh tables
 #
 # `build` runs the correctness checks that precede timing — the two lanes of
 # the measured executable agree on every byte coefficient at the word-boundary
 # lengths, and the shipped crate's GF(2^8) table suites pass — and commits
-# their evidence under dev/active/ad2a6a58/conformance/.
+# their evidence under the family's conformance directory.
 #
 # `window` is the only timed action and the only command a queue line carries.
 # It refuses outside a benchmark window, refuses a campaign input that is not
@@ -29,26 +29,38 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../.." && pwd)"
+REPO=$(git -C "${HERE}" rev-parse --show-toplevel)
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || {
     echo 'invoke from the worker worktree root' >&2
     exit 2
 }
 
+# The one live file called $1, repository-relative: receipt input snapshots hold
+# byte copies under an `inputs` directory, and the live file lies outside them.
+live() {
+    local found
+    mapfile -t found < <(git ls-files -- ":(glob)**/$1" | grep -v '/inputs/')
+    [[ ${#found[@]} -eq 1 ]] || {
+        echo "${#found[@]} live files are called $1; exactly one must be" >&2
+        exit 2
+    }
+    printf '%s\n' "${found[0]}"
+}
+
 ISSUE=ad2a6a58
-SURVEY=dev/active/${ISSUE}/survey
-EVIDENCE=dev/active/${ISSUE}/conformance
-RESULTS=dev/bench_results/${ISSUE}
+RESULTS=$(realpath --relative-to="${REPO}" "${HERE}")
+FAMILY=$(dirname "$(live addendum-v4-axpy-pilot.json)")
+SURVEY=${FAMILY}/survey
+EVIDENCE=${FAMILY}/conformance
 LEDGER=${RESULTS}/axpy-family-ledger.jsonl
 PRODUCING=${SURVEY}/producing-inputs.json
 PLAN_TOOL=${SURVEY}/make-plan.py
-LAUNCHER=${RESULTS}/run-axpy-confirmation.sh
-PIN=dev/active/${ISSUE}/pinned-vector-confirmation.json
-FREEZER=dev/active/c7113c5a/survey/freeze-confirmation.py
-LOG_CHECKER=dev/scripts/verify-campaign-log.py
-PILOT_ADDENDUM=dev/active/${ISSUE}/addendum-v4-axpy-pilot.json
-CONFIRMATION_ADDENDUM=dev/active/${ISSUE}/addendum-v4-axpy-confirmation.json
-DERIVATION=dev/active/${ISSUE}/confirmation-derivation-axpy.txt
+PIN=${FAMILY}/pinned-vector-confirmation.json
+LOG_CHECKER=$(live verify-campaign-log.py)
+LOCK_WRAPPER=$(live ccx1-bench-flock.sh)
+PILOT_ADDENDUM=${FAMILY}/addendum-v4-axpy-pilot.json
+CONFIRMATION_ADDENDUM=${FAMILY}/addendum-v4-axpy-confirmation.json
+DERIVATION=${FAMILY}/confirmation-derivation-axpy.txt
 ARM_TARGET="${REPO}/target/${ISSUE}-arm"
 ARM="${ARM_TARGET}/release/gf256-axpy-arm"
 VERIFY="${ARM_TARGET}/release/gf256-axpy-verify"
@@ -108,6 +120,9 @@ if [[ "${ACTION}" == freeze ]]; then
             exit 2
         }
     done
+    # The canonical freezer, by its name and opening among the same-named scripts.
+    FREEZER=$(python3 -B "$(live repository_files.py)" document freeze-confirmation.py \
+        $'#!/usr/bin/env python3\n"""Freeze a confirmation addendum from its accepted pilot.')
     python3 -B "${FREEZER}" \
         --pilot-addendum "${PILOT_ADDENDUM}" \
         --pilot "${RESULTS}/r1-axpy-pilot" \
@@ -161,7 +176,7 @@ fi
 }
 [[ "${GF2_BENCH_WINDOW:-0}" == 1 ]] || {
     echo "timed runs of ${ISSUE} happen in the scheduled benchmark window; queue the command in \
-dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv" >&2
+the benchmark-window queue" >&2
     exit 2
 }
 
@@ -268,7 +283,7 @@ while ! python3 -B "${LOG_CHECKER}" --log "${STAGE}/execution.log" --stage-compl
     session=$((session + 1))
     echo "# session ${session} started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"${LAUNCH_LOG}"
     set +e
-    GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host \
+    GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "${LOCK_WRAPPER}" --full-host \
         "${RUNNER}" run "${STAGE}" "${PLAN}" 2>&1 | tee -a "${LAUNCH_LOG}"
     rc=${PIPESTATUS[0]}
     set -e
