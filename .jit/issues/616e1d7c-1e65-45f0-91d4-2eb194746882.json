@@ -100,10 +100,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T22:00:40.365993958Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T22:05:38.373099393Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T22:09:08.049945267Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:24.270815537Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T22:00:55.808973465Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "616e1d7c-1e65-45f0-91d4-2eb194746882",
@@ -116,5 +131,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
-  "updated_at": "2026-10-04T21:55:47.080246278Z"
+  "updated_at": "2026-10-04T22:09:08.049945267Z"
 }

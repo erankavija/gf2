@@ -12,6 +12,7 @@
   ],
   "description": "`dev/bench_results/` is an operational receipt store read by CI with hard-coded prefixes. Its receipt directories stay; its loose narrative Markdown reports move to their owners or the legacy mirror.\n\n## Background\n\nCI consumers and receipt structure are in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1, §3.10 and §6.\n\n## Success Criteria\n\n- [hard] REQ-01: No loose narrative Markdown file remains at the top level of `dev/bench_results/`; receipt directories and files read by scripts or tests are unchanged.\n- [hard] REQ-02: Reports owned by terminal epics live in those epics' archive directories; reports owned by open epics live under their epic's `dev/active/` directory and are linked; unowned reports live in the legacy mirror.\n- [hard] REQ-03: Citations of moved reports are repointed, a link scan of the touched files reports no unresolved local link, and the receipt checks in the Rust CI gate pass.\n- [hard] REQ-04: The manifest records each row as complete.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T22:09:24.484002023Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -33,7 +34,7 @@
     "satisfies:fa787f85/REQ-14"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Relocate loose narrative reports out of dev/bench_results",
-  "updated_at": "2026-10-02T09:38:29.075675052Z"
+  "updated_at": "2026-10-04T22:09:24.484002023Z"
 }

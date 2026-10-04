@@ -11,6 +11,7 @@
   ],
   "description": "A few `dev/` entries fit no live epic: files of terminal owners left in `dev/active/`, two entries without a defensible owner, and an unmarked code stub inside `dev/archive/`.\n\n## Background\n\nStrays: `37e0b235/` (rejected task under archived 806eb14e), `babcf05e-gf2-core-ppc-spiral/` and `e095a100-gfpm-arithmetic/`. Ownerless: `DOCUMENTATION_AUDIT.md` and `charon-patch-backup-2026-05-15/`. Stub: `dev/archive/packed_field_stub/`. Evidence in `dev/active/fa787f85-documentation-overhaul/investigation.md` §1.1 and Appendices A and B.\n\n## Success Criteria\n\n- [hard] REQ-01: Each terminal-owned stray is in its owning epic's marker-backed archive directory as a byte-verified copy, or is removed as identical to a file already archived there, as recorded in the manifest.\n- [hard] REQ-02: Each ownerless entry and the unmarked code stub live under `dev/archive/legacy/<original-relative-path>`.\n- [hard] REQ-03: Inbound citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: The manifest records each row as complete.\n- [hard] REQ-05: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T22:09:24.413785005Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -33,7 +34,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Resolve stray and ownerless dev entries",
-  "updated_at": "2026-10-02T09:38:18.769263982Z"
+  "updated_at": "2026-10-04T22:09:24.413785005Z"
 }

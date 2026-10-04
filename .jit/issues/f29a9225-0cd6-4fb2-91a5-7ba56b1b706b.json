@@ -68,6 +68,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md"
     }
   ],
+  "done_at": "2026-10-04T22:09:24.098290994Z",
   "first_ready_at": "2026-10-04T19:25:41.029446560Z",
   "gates_required": [
     "cargo-ci",
@@ -78,22 +79,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:03:02.955291480Z",
+      "updated_at": "2026-10-04T21:57:11.947232555Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T21:19:53.560926809Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T22:03:38.437350877Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:22:46.234064093Z",
+      "updated_at": "2026-10-04T22:06:26.777781995Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:16:12.308967466Z",
+      "updated_at": "2026-10-04T22:00:44.228095054Z",
       "updated_by": "auto:executor"
     }
   },
@@ -106,7 +107,7 @@
     "satisfies:fa787f85/REQ-19"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Re-archive epic 026fc832 to collect its terminal stories",
-  "updated_at": "2026-10-04T21:55:47.172092796Z"
+  "updated_at": "2026-10-04T22:09:24.098290994Z"
 }

@@ -14,6 +14,7 @@
   ],
   "description": "Rewrite the root README as gf2's concise entry point for researchers evaluating or adopting the library. The page presents only supported current behavior and directs readers to canonical crate, workflow, reference and performance material.\n\n## Background\n\nThe current README omits gf2-sim from its layout table, contains an API tour, marketing wording, future-facing contributor notes, and links to crate-local guides and the contributor guide (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5, §3.6 and finding 9).\n\n## Success Criteria\n\n- [hard] REQ-01: `README.md` briefly states what gf2 strives to provide for research-grade finite-field computing and coding theory without marketing superlatives or future promises.\n- [hard] REQ-02: The workspace capability map accurately includes `gf2-core`, `gf2-coding`, `gf2-algebra` and `gf2-sim`; SIMD and HIP crates are described as implementation backends through their supported integration paths.\n- [hard] REQ-03: Acceleration and feature claims are verified against current manifests and code, including correct ownership of GPU LDPC belief propagation and default features.\n- [hard] REQ-04: Installation instructions describe only mechanisms available in the current tree and identify material toolchain or hardware constraints.\n- [hard] REQ-05: The README carries no performance claims or result figures; readers reach performance evidence through the permanent documentation index.\n- [hard] REQ-06: The README links to the permanent documentation index and the research tutorials without embedding elementary API tutorials or duplicating Rustdoc.\n- [hard] REQ-07: All README links, commands, crate names and feature names pass the documentation gates.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T22:09:24.623507523Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
@@ -33,7 +34,7 @@
     "satisfies:fa787f85/REQ-03"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Rewrite README for research adoption",
-  "updated_at": "2026-10-03T13:10:22.142167729Z"
+  "updated_at": "2026-10-04T22:09:24.623507523Z"
 }

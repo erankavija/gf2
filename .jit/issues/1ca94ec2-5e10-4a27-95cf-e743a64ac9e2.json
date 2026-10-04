@@ -42,6 +42,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md"
     }
   ],
+  "done_at": "2026-10-04T22:09:24.319537485Z",
   "first_ready_at": "2026-10-04T19:25:40.656058579Z",
   "gates_required": [
     "cargo-ci",
@@ -50,10 +51,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T21:59:30.632500115Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T22:05:01.785460771Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T22:07:59.364956148Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:20.236207845Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T22:00:51.947467711Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "1ca94ec2-5e10-4a27-95cf-e743a64ac9e2",
@@ -65,7 +81,7 @@
     "satisfies:fa787f85/REQ-19"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
-  "updated_at": "2026-10-04T21:55:46.482260538Z"
+  "updated_at": "2026-10-04T22:09:24.319537485Z"
 }
