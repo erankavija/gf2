@@ -2,7 +2,7 @@
 
 Container `97bf0879-357e-4151-bdeb-781987cd0902`, archive directory
 `dev/archive/97bf0879-gf2-core-sota-performance`. Execution commit on main:
-`92756ce0a`. Verification base: main `b977e603b`.
+`92756ce0a`. Verification base: main `0d16a2be5`.
 
 | File | Content |
 |---|---|
@@ -79,35 +79,34 @@ source.
 
 ## REQ-05: rerun, links, manifest
 
-Fresh preview at main `b977e603b` (script section `rerun`): eligible, 0
-blockers, 83 moves all `already_archived`, 0 move sources present, 0 pending
-deletions, 7 retains. The preview lists 91 reference changes whether or not
-the tracker already names the target; all 91 are in the set verified under
-REQ-03.
+| Check | Result |
+|---|---|
+| `jit archive container 97bf0879 --execute --json` on main ([archive rerun results](archive-rerun-results.md)) | 0 publications, 0 reference changes, 0 deleted sources, no event appended |
+| Preview at main `0d16a2be5` (script section `rerun`) | eligible, 0 blockers, 83 moves all `already_archived`, 0 move sources present, 0 pending deletions, 7 retains |
+| Archive directory, Markdown inline links and HTML `href`/`src` (script section `links`) | 60 local links, 0 unresolved |
+| Six repointed files, `dev/archive/` path tokens (script section `links`) | 16, 0 unresolved |
+| Manifest rows with `epic = "97bf0879"` (script section `manifest`) | 5 of 5 `complete` |
+| `python3 dev/active/fa787f85-documentation-overhaul/migration/check.py` | exit 0 |
 
-Link scan (script section `links`):
+The preview lists 91 reference changes whether or not the tracker already
+names the target; all 91 are in the set verified under REQ-03. The link scan
+does not check anchors, URLs, fenced code or backticked paths in Markdown.
 
-| Scope | Checked | Unresolved |
+The execution deletes one source and adopts one publication; neither source
+has a manifest row. The archive plan retains three files of this epic in
+place, because tracker references pin them to a commit (`pinned-historical`).
+Their rows record that state: disposition `retained-operational`, empty
+destination, status `complete`.
+
+| Row `path` | Pinned commit | Retaining references (issue, document index) |
 |---|---|---|
-| Archive directory, Markdown inline links and HTML `href`/`src` | 60 local links | 0 |
-| Six repointed files, `dev/archive/` path tokens | 16 | 0 |
+| `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md` | `11be30fe6f32` | 7a106fe4 0, 97bf0879 7, cc5de315 1 |
+| same file | `4cde8a8f93c9` | cc5de315 2 |
+| `dev/plans/small_prime_kernel_strategy.md` | `3f62600971b0` | 5cacaec5 0, 662f7a15 0, 97bf0879 6, b9aed0d8 0 |
+| `dev/plans/sota_target_matrix.md` | `47e452544b04` | 4c0d0202 0, 97bf0879 5, cbecfced 3 |
 
-The scan does not check anchors, URLs, fenced code or backticked paths in
-Markdown.
-
-Manifest: the execution deletes one source, which has no manifest row, and
-adopts one publication whose source has no manifest row. This unit changes no
-row. Rows with `epic = "97bf0879"` and disposition `jit-container-archive`,
-all with status `pending`:
-
-| Row `path` | Plan action | Evidence |
-|---|---|---|
-| `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md` | retain, `pinned-historical` | References pin commits `11be30fe6f32` (7a106fe4 document 0, 97bf0879 document 7, cc5de315 document 1) and `4cde8a8f93c9` (cc5de315 document 2) |
-| `dev/plans/small_prime_kernel_strategy.md` | retain, `pinned-historical` | References pin commit `3f62600971b0` (5cacaec5 document 0, 662f7a15 document 0, 97bf0879 document 6, b9aed0d8 document 0) |
-| `dev/plans/sota_target_matrix.md` | retain, `pinned-historical` | References pin commit `47e452544b04` (4c0d0202 document 0, 97bf0879 document 5, cbecfced document 3) |
-| `dev/bench_results/2026-05-06-662f7a15-f-vs-c-verification.md` | not in the plan | Owner 662f7a15 resolves under container 026fc832; the file is at `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-06-662f7a15-f-vs-c-verification.md`; unit f29a9225 |
-| `dev/plans/flint_promotion_evidence.md` | not in the plan | Owners 73ab8eef and cbecfced resolve under container 026fc832; unit f29a9225 |
-| `dev/plans/ntl_promotion_evidence.md` | not in the plan | Owners 73ab8eef and cbecfced resolve under container 026fc832; unit f29a9225 |
+The other two rows of this epic are `deletion` rows of absent
+`dev/active/` directories.
 
 ## Commands
 

@@ -19,4 +19,6 @@ links
   benchmarks/reference/ntl_bench.cpp: 3 dev/archive path tokens
   benchmarks/reference/sparse_smoke.cpp: 4 dev/archive path tokens
   dev/bench_results/run_41096af5_post_wire_in_bench.sh: 1 dev/archive path tokens
+manifest
+  rows of epic 97bf0879 with status complete: 5 of 5
 result: PASS (0 failed checks)
