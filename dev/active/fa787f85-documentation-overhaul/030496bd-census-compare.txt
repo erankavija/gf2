@@ -1,5 +1,5 @@
 baseline: e3bfdfae782161c1f5031daac98f77ef48db2281
-after:    24bdf9068e09144c82b82009cc4bd1c80f0c1e4d
+after:    1078dc1a5a4bfa2ad8181b03cab82bf70707faae
                                    comment         non-blank             share           pattern
 crate                       before   after    before   after    before   after    before   after
 crates/gf2-algebra            7788    2015     22990   17205    33.88%  11.71%         9       0

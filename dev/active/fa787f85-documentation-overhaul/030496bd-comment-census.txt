@@ -1,4 +1,4 @@
-commit: 24bdf9068e09144c82b82009cc4bd1c80f0c1e4d
+commit: 1078dc1a5a4bfa2ad8181b03cab82bf70707faae
 files: 706
 crate                       comment  non-blank   share  pattern
 crates/gf2-algebra             2015      17205  11.71%        0
