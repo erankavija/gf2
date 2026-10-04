@@ -1,7 +1,7 @@
 // benchmarks/reference/linbox_sparse_bench.cpp
 //
 // Sparse reference harness for LinBox 1.7.1, scoped to the cells where
-// LinBox is the canonical reference per `dev/plans/sparse_benchmark_corpus.md`
+// LinBox is the canonical reference per `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md`
 // § 4:
 //
 //   - `sparse-elim × GF(2)` and `sparse-elim × GF(p)` (canonical LinBox
@@ -261,7 +261,7 @@ static void bench_spmv(const Field& F,
 //
 // The triples are walked once per `applyLeft` and dispatched via
 // `MatrixDomain::saxpyin(Y_row, t.elt, X_row)`, matching the row-block
-// strategy in `dev/plans/sparse_benchmark_corpus.md:169`.
+// strategy in `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:169`.
 template <typename Field>
 static void bench_sparse_dense(const Field& F,
                                const char* field_label,
@@ -476,7 +476,7 @@ int main(int argc, char** argv) {
     // to the GF(p) cells.
     //
     // sparse-elim and sparse_dense are both wired for GF(2). The design doc
-    // (`dev/plans/sparse_benchmark_corpus.md:168`) names LinBox as canonical
+    // (`dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:168`) names LinBox as canonical
     // for `sparse×dense × GF(2)`; this provides the LinBox-canonical row.
     // Throughput-unit comparison vs gf2-core's bit-packed `SpBitMatrix::matmat`
     // requires normalisation (LinBox counts byte ops, gf2-core counts bit ops
