@@ -1,65 +1,15 @@
-//! CRC (Cyclic Redundancy Check) codes used as linear block codes.
-//!
-//! A CRC polynomial of degree r defines an (n, n-r) linear block code.
-//! When used for error correction (rather than just detection), the code is
-//! treated as a standard linear block code with a systematic generator
-//! matrix derived from the CRC polynomial.
-//!
-//! # CRC polynomial conventions
-//!
-//! A CRC generator polynomial of degree r has the form:
-//!
-//! g(x) = x^r + c\_{r-1} x^{r-1} + ... + c\_1 x + c\_0
-//!
-//! There are two common hexadecimal representations:
-//!
-//! - **Full representation** (degree-r bit set): includes the leading x^r term.
-//!   For a degree-10 polynomial, this is an 11-bit value.
-//! - **Truncated representation** (degree-r bit omitted): the leading coefficient
-//!   is always 1 and is implied.
-//!
-//! This module uses the **full representation** in constructors. For example,
-//! the CRC-10 polynomial x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + x^0 is
-//! `0x6b9` in full form (bit 10 set) or `0x2b9` in truncated form.
-//!
-//! # Example: CRC(25,15)
-//!
-//! The CRC(25,15) code uses the degree-10 polynomial `0x6b9`, matching the
-//! "CRC-0x2b9" notation in Yuan, Médard, Galligan & Duffy, "Soft-output
-//! (SO) GRAND and Iterative Decoding to Outperform LDPCs" (the paper uses
-//! the truncated `0x2b9` convention without the leading x^10 bit):
-//!
-//! ```text
-//! g(x) = x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1
-//!      = 0b110_1011_1001 = 0x6b9 (full, with x^10 bit)
-//!      = 0b010_1011_1001 = 0x2b9 (truncated, without x^10 bit)
-//! ```
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::crc::CrcCode;
-//! use gf2_coding::traits::BlockEncoder;
-//! use gf2_core::BitVec;
-//!
-//! let code = CrcCode::crc_25_15();
-//! assert_eq!(code.n(), 25);
-//! assert_eq!(code.k(), 15);
-//!
-//! let msg = BitVec::ones(15);
-//! let cw = code.encode(&msg);
-//! assert_eq!(cw.len(), 25);
-//! ```
+//! CRC codes used as systematic linear block codes: a generator polynomial of
+//! degree r defines an (n, n-r) code. Polynomials are in the full
+//! representation, with the leading x^r bit set: the CRC(25,15) polynomial
+//! x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1 is `0x6b9`, written `0x2b9` in the
+//! truncated notation of `@/citation/Yuan2025`.
 
 use crate::linear::LinearBlockCode;
 use crate::traits::{BlockEncoder, GeneratorMatrixAccess};
 use gf2_core::{BitMatrix, BitVec};
 
-/// A CRC code treated as a linear block code.
-///
-/// The generator matrix is constructed from the CRC polynomial using
-/// systematic encoding: for each basis message, the parity bits are the
-/// remainder of dividing x^r * m(x) by g(x).
+/// A CRC code as a systematic linear block code: the parity bits of a message
+/// m(x) are the remainder of x^r * m(x) divided by g(x).
 #[derive(Debug, Clone)]
 pub struct CrcCode {
     inner: LinearBlockCode,
@@ -68,15 +18,8 @@ pub struct CrcCode {
 }
 
 impl CrcCode {
-    /// Creates a CRC-based linear block code from a generator polynomial.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Codeword length
-    /// * `k` - Message length
-    /// * `poly` - CRC generator polynomial in **full representation** (the
-    ///   leading x^r coefficient bit is set). The polynomial must have degree
-    ///   exactly `n - k`.
+    /// Creates the (n, k) code whose generator polynomial `poly`, in the full
+    /// representation, has degree `n - k`.
     ///
     /// # Panics
     ///
@@ -89,7 +32,6 @@ impl CrcCode {
         assert!(n > k, "n must be greater than k");
         let r = n - k;
 
-        // Verify polynomial degree
         let degree = 63 - poly.leading_zeros() as usize;
         assert_eq!(
             degree, r,
@@ -97,22 +39,14 @@ impl CrcCode {
             degree, r
         );
 
-        // Build generator matrix by systematic encoding each basis vector.
-        // For message m_i = e_i (i-th basis vector), the codeword is
-        // [m_i | remainder of x^r * m_i(x) / g(x)].
         let mut g = BitMatrix::zeros(k, n);
 
         for i in 0..k {
-            // Identity part
             g.set(i, i, true);
 
-            // Compute remainder: the message polynomial for basis vector i
-            // has a single 1 at position i. In the polynomial representation,
-            // message bit 0 is the highest-degree coefficient (x^{k-1}), so
-            // basis vector i corresponds to x^{k-1-i}.
+            // Message bit 0 is the highest-degree coefficient, so basis vector i is x^{k-1-i}.
             let remainder = Self::crc_remainder(1u64 << (k - 1 - i), k, r, poly);
 
-            // Set parity bits (columns k..n)
             for j in 0..r {
                 if (remainder >> (r - 1 - j)) & 1 == 1 {
                     g.set(i, k + j, true);
@@ -120,14 +54,11 @@ impl CrcCode {
             }
         }
 
-        // Build H matrix: H = [P^T | I_r]
         let mut h = BitMatrix::zeros(r, n);
         for i in 0..r {
-            // P^T part: column i of P^T = row i across all k message parity contributions
             for j in 0..k {
                 h.set(i, j, g.get(j, k + i));
             }
-            // Identity part
             h.set(i, k + i, true);
         }
 
@@ -139,11 +70,9 @@ impl CrcCode {
     /// Computes the CRC remainder of `msg_val` (a polynomial of degree < `k`)
     /// divided by `poly` (of degree `r`). Returns an `r`-bit remainder.
     fn crc_remainder(msg_val: u64, k: usize, r: usize, poly: u64) -> u64 {
-        // Shift message by r positions (multiply by x^r)
         let mut dividend = msg_val << r;
         let deg = k + r; // maximum possible degree + 1
 
-        // Long division from highest bit
         for i in (0..deg).rev() {
             if (dividend >> i) & 1 == 1 {
                 // Only subtract if this would reduce degree
@@ -153,7 +82,6 @@ impl CrcCode {
             }
         }
 
-        // Remainder is the low r bits
         dividend & ((1u64 << r) - 1)
     }
 
@@ -167,28 +95,18 @@ impl CrcCode {
         self.inner.k()
     }
 
-    /// Returns the CRC generator polynomial in full representation.
-    ///
-    /// The returned value has the leading x^r bit set. For example, the
-    /// degree-10 polynomial `x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1`
-    /// is returned as `0x6b9`.
+    /// The generator polynomial in full representation (leading x^r bit set).
     pub fn poly(&self) -> u64 {
         self.poly
     }
 
-    /// Creates the CRC(25,15) code used in GRAND product code constructions.
-    ///
-    /// Generator polynomial: `g(x) = x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1`.
-    ///
-    /// - Full representation (with x^10 bit): `0x6b9`
-    /// - Truncated representation (without x^10 bit): `0x2b9`
+    /// The CRC(25,15) code of `@/citation/Yuan2025`, with
+    /// `g(x) = x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1` (`0x6b9`).
     pub fn crc_25_15() -> Self {
-        // x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1
-        // = 0b110_1011_1001 = 0x6b9
         Self::new(25, 15, 0x6b9)
     }
 
-    /// Returns the parity-check matrix H.
+    /// The parity-check matrix H = [P^T | I_r].
     pub fn parity_check(&self) -> &BitMatrix {
         self.inner
             .parity_check()
@@ -197,11 +115,9 @@ impl CrcCode {
 
     /// Returns whether all codewords have even Hamming weight.
     ///
-    /// CRC codes are generally **not** even codes. This flag is used by
-    /// ORBGRAND's even-code optimization.
+    /// O(k * n): tests the weight of every generator row.
     pub fn is_even(&self) -> bool {
-        // Check if the all-ones codeword has even weight by checking
-        // if the sum of each row of G has even weight
+        // A linear code is even iff every generator row has even weight.
         let g = self.inner.generator_matrix();
         for i in 0..self.inner.k() {
             let mut weight = 0;
@@ -217,7 +133,6 @@ impl CrcCode {
         true
     }
 
-    /// Returns the inner [`LinearBlockCode`].
     pub fn inner(&self) -> &LinearBlockCode {
         &self.inner
     }
@@ -297,24 +212,19 @@ mod tests {
                 i
             );
         }
-        // All zeros
         let cw = code.encode(&BitVec::zeros(code.k()));
         let syn = code.inner().syndrome(&cw).unwrap();
         assert_eq!(syn.count_ones(), 0);
-        // All ones
         let cw = code.encode(&BitVec::ones(code.k()));
         let syn = code.inner().syndrome(&cw).unwrap();
         assert_eq!(syn.count_ones(), 0);
     }
 
-    /// Verify minimum distance by checking that no weight-1 or weight-2
-    /// pattern has zero syndrome, and find the actual d_min.
     #[test]
     fn test_crc_25_15_minimum_distance_lower_bound() {
         let code = CrcCode::crc_25_15();
         let n = code.n();
 
-        // Weight 1: all must have nonzero syndrome
         for i in 0..n {
             let mut e = BitVec::zeros(n);
             e.set(i, true);
@@ -326,7 +236,6 @@ mod tests {
             );
         }
 
-        // Weight 2: all must have nonzero syndrome
         for i in 0..n {
             for j in (i + 1)..n {
                 let mut e = BitVec::zeros(n);
@@ -343,14 +252,11 @@ mod tests {
         }
     }
 
-    /// Compute the exact minimum distance by searching weight-3 patterns.
-    /// This verifies d_min >= 3 (checked above) and determines if d_min > 3.
     #[test]
     fn test_crc_25_15_minimum_distance_exact() {
         let code = CrcCode::crc_25_15();
         let n = code.n();
 
-        // Search weight-3 for zero syndrome
         let mut min_weight_found = n + 1;
         for i in 0..n {
             for j in (i + 1)..n {
@@ -368,7 +274,6 @@ mod tests {
         }
 
         if min_weight_found > 3 {
-            // Check weight-4
             'w4: for i in 0..n {
                 for j in (i + 1)..n {
                     for l in (j + 1)..n {
@@ -389,8 +294,6 @@ mod tests {
             }
         }
 
-        // CRC(25,15) with polynomial 0x6b9 has d_min = 4
-        // (verified by exhaustive search up to weight 4 above)
         assert_eq!(
             min_weight_found, 4,
             "CRC(25,15) d_min should be exactly 4, found {}",
@@ -400,22 +303,20 @@ mod tests {
 
     #[test]
     fn test_crc_polynomial_full_representation() {
-        // Verify that 0x6b9 encodes the right polynomial
         let poly: u64 = 0x6b9;
         // x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1
-        // bit10=1, bit9=1, bit8=0, bit7=1, bit6=0, bit5=1, bit4=1, bit3=1, bit2=0, bit1=0, bit0=1
         assert_eq!(poly, 0b110_1011_1001);
-        assert_eq!((poly >> 10) & 1, 1); // x^10
-        assert_eq!((poly >> 9) & 1, 1); // x^9
-        assert_eq!((poly >> 8) & 1, 0); // no x^8
-        assert_eq!((poly >> 7) & 1, 1); // x^7
-        assert_eq!((poly >> 6) & 1, 0); // no x^6
-        assert_eq!((poly >> 5) & 1, 1); // x^5
-        assert_eq!((poly >> 4) & 1, 1); // x^4
-        assert_eq!((poly >> 3) & 1, 1); // x^3
-        assert_eq!((poly >> 2) & 1, 0); // no x^2
-        assert_eq!((poly >> 1) & 1, 0); // no x^1
-        assert_eq!(poly & 1, 1); // x^0
+        assert_eq!((poly >> 10) & 1, 1);
+        assert_eq!((poly >> 9) & 1, 1);
+        assert_eq!((poly >> 8) & 1, 0);
+        assert_eq!((poly >> 7) & 1, 1);
+        assert_eq!((poly >> 6) & 1, 0);
+        assert_eq!((poly >> 5) & 1, 1);
+        assert_eq!((poly >> 4) & 1, 1);
+        assert_eq!((poly >> 3) & 1, 1);
+        assert_eq!((poly >> 2) & 1, 0);
+        assert_eq!((poly >> 1) & 1, 0);
+        assert_eq!(poly & 1, 1);
     }
 }
 
@@ -426,7 +327,6 @@ mod proptests {
     use proptest::prelude::*;
 
     proptest! {
-        /// For any random message, the encoded codeword must have zero syndrome.
         #[test]
         fn prop_crc_25_15_syndrome_zero(
             msg_bits in prop::collection::vec(any::<bool>(), 15)
@@ -441,7 +341,6 @@ mod proptests {
             prop_assert_eq!(syn.count_ones(), 0, "syndrome must be zero for valid codeword");
         }
 
-        /// The sum of two codewords must also be a codeword (linearity).
         #[test]
         fn prop_crc_25_15_linearity(
             msg1_bits in prop::collection::vec(any::<bool>(), 15),

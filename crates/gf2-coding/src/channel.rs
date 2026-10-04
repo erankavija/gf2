@@ -1,41 +1,11 @@
-//! AWGN (Additive White Gaussian Noise) channel noise sampler.
-//!
-//! # Overview
-//!
-//! This module provides [`AwgnChannel`], a thin wrapper around a Gaussian
-//! RNG configured for a particular per-component noise variance `sigma^2`.
-//! It is the noise source used by the modem framework's AWGN link adapter
-//! (see [`crate::modem::awgn_link`]) and by the legacy BPSK simulation
-//! channel [`crate::simulation::BpskAwgnChannel`].
-//!
-//! # AWGN Channel Model
-//!
-//! The AWGN channel adds Gaussian noise to transmitted symbols:
-//! ```text
-//! r = s + n, where n ~ N(0, sigma^2)
-//! ```
-//!
-//! The noise variance `sigma^2` relates to `Eb/N0` (in dB) by:
-//! ```text
-//! sigma^2 = 1 / (2 * R * 10^(Eb/N0_dB / 10))
-//! ```
-//! where `R` is the code rate.
-//!
-//! # What does NOT live here
-//!
-//! Modulation, demapping, and LLR computation are the exclusive
-//! responsibility of the modem framework at
-//! [`crate::modem`]. Shannon-capacity / Shannon-limit information-theory
-//! utilities moved to [`crate::info_theory`].
+//! AWGN noise sampler: [`AwgnChannel`] draws per-component real noise
+//! `n ~ N(0, sigma^2)`. Modulation, demapping and LLR computation belong to
+//! [`crate::modem`].
 
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
-/// AWGN channel noise sampler.
-///
-/// Samples per-component real-valued noise `n ~ N(0, sigma^2)`. Used by
-/// the modem framework's AWGN link and the legacy BPSK simulation channel
-/// as the underlying Gaussian source.
+/// Sampler of per-component real noise `n ~ N(0, sigma^2)`.
 pub struct AwgnChannel {
     sigma_squared: f64,
     noise_dist: Normal<f64>,
@@ -57,33 +27,15 @@ impl AwgnChannel {
         }
     }
 
-    /// Creates a new AWGN channel from Eb/N0 in dB and code rate, using
-    /// the BPSK convention (one bit per real symbol, unit symbol energy).
+    /// Creates the channel for Eb/N0 in dB at code rate `rate` under the BPSK
+    /// convention (one bit per real symbol, unit symbol energy):
+    /// `sigma^2 = 1 / (2 R 10^{Eb/N0_dB / 10})`. For more than one bit per symbol
+    /// use [`crate::modem::awgn_link::unit_energy_sigma_sq_from_eb_n0_db`].
     ///
-    /// For BPSK at code rate `R`, `sigma^2 = 1 / (2 R 10^{Eb/N0_dB / 10})`.
-    /// For modulation schemes with more than one bit per symbol use
-    /// [`crate::modem::awgn_link::unit_energy_sigma_sq_from_eb_n0_db`]
-    /// directly — that helper accepts `m = bits_per_symbol` and is the
-    /// single source of truth for Eb/N0 -> noise conversion across the
-    /// modem framework.
-    ///
-    /// # Arguments
-    ///
-    /// * `eb_n0_db` - Energy per bit to noise power spectral density ratio in dB
-    /// * `rate` - Code rate (k/n), where k is message length and n is codeword length
     ///
     /// # Panics
     ///
     /// Panics if `rate` is not in `(0, 1]`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::channel::AwgnChannel;
-    ///
-    /// // Uncoded BPSK (rate = 1.0) at 3 dB
-    /// let channel = AwgnChannel::from_eb_n0_db(3.0, 1.0);
-    /// ```
     pub fn from_eb_n0_db(eb_n0_db: f64, rate: f64) -> Self {
         let sigma_squared =
             crate::modem::awgn_link::unit_energy_sigma_sq_from_eb_n0_db(1, rate, eb_n0_db);
