@@ -157,6 +157,20 @@
       "format": "markdown",
       "label": "Session 8 handoff",
       "path": "dev/active/fa787f85-documentation-overhaul/handoff-7.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Session 9 handoff",
+      "path": "dev/active/fa787f85-documentation-overhaul/handoff-8.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Worker brief for move and archive units",
+      "path": "dev/active/fa787f85-documentation-overhaul/wave11-worker-brief.md"
     }
   ],
   "first_ready_at": "2026-07-14T20:40:18.243561271Z",
@@ -184,5 +198,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-04T14:17:56.283762858Z"
+  "updated_at": "2026-10-04T22:15:13.910366540Z"
 }

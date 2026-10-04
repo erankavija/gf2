@@ -68,6 +68,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md"
     }
   ],
+  "done_at": "2026-10-04T22:14:18.011093078Z",
   "first_ready_at": "2026-10-04T19:25:41.074669876Z",
   "gates_required": [
     "cargo-ci",
@@ -78,22 +79,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:35:35.167215074Z",
+      "updated_at": "2026-10-04T22:10:34.461620317Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T21:46:30.365896409Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T22:13:54.282514315Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:49:12.628538815Z",
+      "updated_at": "2026-10-04T22:13:50.781952169Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:36:56.881312257Z",
+      "updated_at": "2026-10-04T22:10:38.319180887Z",
       "updated_by": "auto:executor"
     }
   },
@@ -105,7 +106,7 @@
     "satisfies:fa787f85/REQ-10"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Bring the hand-archived OSD epic under container archival",
-  "updated_at": "2026-10-04T21:49:12.628538815Z"
+  "updated_at": "2026-10-04T22:14:18.011093078Z"
 }

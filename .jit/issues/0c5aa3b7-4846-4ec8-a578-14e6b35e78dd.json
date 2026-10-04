@@ -8,6 +8,7 @@
   ],
   "description": "`dev/simulation_results/` and `dev/studies/` are operational inputs read by gf2-sim code and tests. Their loose narrative Markdown moves to owner directories or the legacy mirror while every consumed file stays in place.\n\n## Background\n\nCode and test consumers are listed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1 and §0 finding 4.\n\n## Success Criteria\n\n- [hard] REQ-01: No narrative Markdown that no code, test or campaign reads remains in `dev/simulation_results/` or `dev/studies/`; files read through dataset paths, `include_bytes!`, campaign configs or tests are unchanged.\n- [hard] REQ-02: Moved notes owned by open epics live under their epic's `dev/active/` directory and are linked; notes owned by terminal epics live in their archive directories; unowned notes live in the legacy mirror.\n- [hard] REQ-03: Citations of moved notes are repointed, a link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T22:14:18.083642289Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-14"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Relocate loose narrative Markdown out of simulation_results and studies",
-  "updated_at": "2026-10-02T09:38:18.983025177Z"
+  "updated_at": "2026-10-04T22:14:18.083642289Z"
 }
