@@ -1,69 +1,9 @@
-//! LDPC-only AWGN-BPSK BLER sweep for the external-library comparison harness.
-//!
-//! Part of issue `18e69a1a` (`dev/benchmarks/gf2-sim/comparison/`). This is the
-//! `gf2-sim`-side curve generator for the side-by-side comparison against
-//! aff3ct. It runs the **isolated LDPC decoder** over an AWGN-BPSK channel —
-//! deliberately *no* QAM, *no* bit interleaver, *no* BCH outer code — so the
-//! comparison is apples-to-apples with an aff3ct run on the same parity-check
-//! matrix and the same channel (`--mdm-type BPSK`, `--src-type AZCW`).
-//!
-//! # Why all-zero codeword (AZCW)?
-//!
-//! Both sides transmit the all-zero codeword (always a valid codeword of any
-//! linear code) over AWGN-BPSK. This removes the encoder from the comparison
-//! entirely: aff3ct's systematic encoder and `gf2-coding`'s IRA/RU encoder
-//! produce *different* codewords for a nonzero message even from the same `H`,
-//! which would make a nonzero-message BLER comparison sensitive to the encoder
-//! rather than the decoder. With AZCW both sides decode noisy realisations of
-//! the same transmitted word and a **frame error** is "decoder output is not
-//! all-zero on the K message bits" — aff3ct's exact default FER definition.
-//!
-//! # Channel and LLR convention
-//!
-//! BPSK maps bit `b -> 1 - 2b` (all-zero codeword -> every symbol `+1`). The
-//! AWGN sample is `r = +1 + N(0, sigma)`, with the channel LLR `2r/N0`,
-//! `N0 = 2·sigma²`. The noise std maps from **Es/N0** (energy per *coded*
-//! symbol over noise PSD): `sigma = sqrt(1 / (2 · 10^(EsN0_dB/10)))` for unit
-//! symbol energy `Es = 1`. This matches aff3ct's `--sim-noise-type ESN0`
-//! with `--mdm-type BPSK` (Es is the BPSK symbol energy, here 1). The CSV
-//! header records the convention. The deterministic noise source is
-//! [`gf2_sim::testutil::AwgnLlrSource`] (the SSOT SplitMix64 + Box-Muller
-//! channel-LLR generator); the per-Es/N0-point seed is `base_seed ^ point_idx`
-//! so points are independent yet reproducible.
-//!
-//! # Codes
-//!
-//! Selected by `--code`, matching `export_alist`'s exports (the AList fed to
-//! aff3ct is the same `H`):
-//!
-//! * `dvb-t2-r12` — `LdpcCode::dvb_t2_normal(Rate1_2)` (N = 64800, K = 32400).
-//! * `nr-bg1-r12` — the mother code of
-//!   `QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448)` (BG1, Z = 384;
-//!   N = 68·384 = 26112, K = 22·384 = 8448). The comparison decodes the
-//!   mother code directly (matching the exported AList), not the rate-matched
-//!   short code.
-//!
-//! # Decoder
-//!
-//! Normalized min-sum (NMS) with scale 0.75 and early termination, the 5G NR
-//! default and a standard DVB-T2 choice — matched on the aff3ct side with
-//! `--dec-implem NMS --dec-type BP_FLOODING` (flooding schedule) and the same
-//! `--dec-ite` cap and `--dec-norm 0.75`.
-//!
-//! # Output
-//!
-//! A CSV with header `es_n0_db,gf2_sim_bler,gf2_sim_fps` (the columns the
-//! comparison driver merges with the aff3ct columns into the committed
-//! `*-vs-aff3ct.csv`). One row per Es/N0 point.
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --features test-support --bin ldpc_bler_sweep -- \
-//!     --code dvb-t2-r12 --esn0-range 0.8:1.6:0.2 \
-//!     --max-frames 20000 --target-errors 200 --max-iter 50 \
-//!     --seed 42 --output gf2_dvb.csv
-//! ```
+//! LDPC-only AWGN-BPSK BLER sweep for comparison against aff3ct
+//! (`@/citation/Cassagne2019`). The isolated LDPC decoder (normalized min-sum,
+//! early termination) decodes noisy all-zero codewords of the `--code`
+//! [`ComparisonCode`] drawn from [`gf2_sim::testutil::AwgnLlrSource`]; a frame
+//! error is a nonzero bit among the K message bits. The output CSV has header
+//! `es_n0_db,gf2_sim_bler,gf2_sim_fps` and one row per Es/N0 point.
 
 use std::io::Write;
 use std::path::PathBuf;
@@ -76,10 +16,8 @@ use gf2_coding::traits::IterativeSoftDecoder;
 use gf2_coding::LdpcCode;
 use gf2_sim::testutil::{AwgnLlrSource, ComparisonCode};
 
-/// Default NMS scale (5G NR standard; also a common DVB-T2 choice).
 const NMS_SCALE: f32 = 0.75;
 
-/// Parsed CLI configuration.
 struct Cfg {
     code: ComparisonCode,
     esn0: Vec<f64>,
@@ -90,8 +28,7 @@ struct Cfg {
     output: PathBuf,
 }
 
-/// Parses `a:b:step` into an inclusive `f64` range (same convention as the
-/// DVB-T2 campaign binary's `--esn0-range`).
+/// Parses `start:stop:step` into an inclusive range.
 fn parse_range(s: &str) -> Result<Vec<f64>, String> {
     let parts: Vec<&str> = s.split(':').collect();
     if parts.len() != 3 {
@@ -182,12 +119,9 @@ fn esn0_db_to_sigma(esn0_db: f64) -> f64 {
 /// Runs one Es/N0 point: decodes frames until `target_errors` frame errors or
 /// `max_frames` frames, whichever first. Returns `(bler, frames, errors, fps)`.
 ///
-/// Frames are split across rayon workers in fixed contiguous chunks; each
-/// worker owns an independent `AwgnLlrSource` seeded by `point_seed` mixed with
-/// the worker's first global frame index, so the result is reproducible and
-/// the work parallelises. Because the run stops early on the error budget, the
-/// frame count is the global frame index at which the budget was hit (rounded
-/// up to a chunk boundary) — recorded exactly in the CSV.
+/// Each `chunk`-frame slice owns an `AwgnLlrSource` seeded from `point_seed`
+/// and the slice's first frame index. The error budget is checked between
+/// waves of `chunk · workers` frames.
 fn run_point(
     code: &LdpcCode,
     point_seed: u64,
@@ -198,18 +132,13 @@ fn run_point(
 ) -> (f64, u64, u64, f64) {
     let n = code.n();
     let k = code.k();
-    // Small per-worker slice so the error-budget check between waves stops the
-    // run promptly at deep BLER (where a frame error is near-certain): a wave
-    // is `chunk · workers` frames, and at BLER ~ 1 the `target_errors` budget
-    // is reached within the first wave, capping overshoot to one wave.
+    // Small slices bound the overshoot past `target_errors` to one wave.
     let chunk: u64 = 32;
 
     let start = Instant::now();
     let mut frames_done: u64 = 0;
     let mut errors: u64 = 0;
 
-    // Process in waves of `chunk * num_workers` frames so we can check the
-    // error budget between waves while still parallelising each wave.
     let workers = rayon::current_num_threads().max(1) as u64;
     let wave = chunk * workers;
 
@@ -218,13 +147,11 @@ fn run_point(
         let wave_end = (wave_start + wave).min(max_frames);
         let wave_len = wave_end - wave_start;
 
-        // Each worker handles one `chunk`-sized slice of this wave.
         let slice_starts: Vec<u64> = (wave_start..wave_end).step_by(chunk as usize).collect();
         let wave_errors: u64 = slice_starts
             .par_iter()
             .map(|&slice_start| {
                 let slice_end = (slice_start + chunk).min(wave_end);
-                // Per-slice independent, reproducible noise stream.
                 let mut src = AwgnLlrSource::new(point_seed ^ slice_start.wrapping_mul(0x9E37));
                 let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(NMS_SCALE), true);
                 let mut dec = LdpcDecoder::with_config(code.clone(), cfg);
@@ -232,7 +159,6 @@ fn run_point(
                 for _ in slice_start..slice_end {
                     let llrs = src.frame_all_zero(n, sigma);
                     let res = dec.decode_iterative(&llrs, max_iter);
-                    // Frame error: any of the K message bits is nonzero.
                     debug_assert_eq!(res.decoded_bits.len(), k);
                     if (0..k).any(|i| res.decoded_bits.get(i)) {
                         local_err += 1;
@@ -317,8 +243,7 @@ mod tests {
         assert!((pts[2] - 1.0).abs() < 1e-12);
     }
 
-    /// The committed full-sweep DVB range: negative endpoints, float step —
-    /// must produce 6 points spanning [-1.8, -0.8] despite f64 step drift.
+    /// f64 step drift must not drop the stop endpoint.
     #[test]
     fn test_parse_range_negative_float_step() {
         let pts = parse_range("-1.8:-0.8:0.2").unwrap();
@@ -336,17 +261,15 @@ mod tests {
 
     #[test]
     fn test_parse_range_rejects_malformed() {
-        assert!(parse_range("1:2").is_err()); // missing step
-        assert!(parse_range("1:2:3:4").is_err()); // too many parts
-        assert!(parse_range("a:2:1").is_err()); // bad start
-        assert!(parse_range("1:b:1").is_err()); // bad stop
-        assert!(parse_range("1:2:c").is_err()); // bad step
-        assert!(parse_range("1:2:0").is_err()); // zero step
-        assert!(parse_range("1:2:-0.5").is_err()); // negative step
+        assert!(parse_range("1:2").is_err());
+        assert!(parse_range("1:2:3:4").is_err());
+        assert!(parse_range("a:2:1").is_err());
+        assert!(parse_range("1:b:1").is_err());
+        assert!(parse_range("1:2:c").is_err());
+        assert!(parse_range("1:2:0").is_err());
+        assert!(parse_range("1:2:-0.5").is_err());
     }
 
-    /// `sigma = sqrt(1 / (2 * 10^(EsN0/10)))` for unit-energy BPSK:
-    /// 0 dB -> sigma^2 = 0.5; 10 dB -> sigma^2 = 0.05; -10 dB -> sigma^2 = 5.
     #[test]
     fn test_esn0_db_to_sigma_known_values() {
         assert!((esn0_db_to_sigma(0.0) - 0.5f64.sqrt()).abs() < 1e-12);
@@ -354,8 +277,6 @@ mod tests {
         assert!((esn0_db_to_sigma(-10.0) - 5.0f64.sqrt()).abs() < 1e-12);
     }
 
-    /// The N0 the LLR uses is `2 * sigma^2 = 10^(-EsN0_dB/10)` — the README's
-    /// channel convention (aff3ct `--sim-noise-type ESN0`, Es = 1).
     #[test]
     fn test_esn0_db_to_sigma_n0_relation() {
         for &db in &[-4.3, -1.4, 0.0, 3.7] {

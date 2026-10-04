@@ -1,30 +1,9 @@
-//! GPU Gray-QAM max-log demap-stage throughput benchmark (issue `d3f1616a`,
-//! parallelism-pays receipt).
-//!
-//! Measures **demap-stage** symbols/second (and frames/second) for DVB-T2
-//! 16-QAM / 64-QAM max-log soft demapping, demap-vs-demap (the user-approved
-//! 2026-06-09 apples-to-apples amendment): the GPU
-//! `GpuGrayQamDemapper` (`gf2_sim::gpu::demap`, `feature = "hip"`) `demap_batch`
-//! kernel (H2D + kernel + D2H, per-worker-owned device demapper) against the
-//! CPU [`FastGrayQamDemapper`](gf2_coding::modem::FastGrayQamDemapper)
-//! demap-step measured in isolation, at 1 thread and 24 threads. MaxLog only
-//! (the GPU kernel computes max-log only).
-//!
-//! The gate divisor is the **single-thread CPU `FastGrayQamDemapper`
-//! demap-step** at the matching modulation/method (the apples-to-apples
-//! amendment): the full-frame `c0b1702d` 1.6216 fps baseline is category-confused
-//! for a demap-only kernel (demap is a small fraction of a frame) and is printed
-//! for CONTEXT only.
-//!
-//! Manually invoked (not a nextest test). Without `--features hip` it prints a
-//! notice and exits 0.
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --features hip --bin gpu_demap_throughput -- \
-//!     --frames 64 --symbols 16200 --repeats 5
-//! ```
+//! Measures max-log demap-stage symbols per second for DVB-T2 16-QAM and
+//! 64-QAM: the GPU `GpuGrayQamDemapper` (`gf2_sim::gpu::demap`) `demap_batch`
+//! kernel against the CPU
+//! [`FastGrayQamDemapper`](gf2_coding::modem::FastGrayQamDemapper) at one
+//! thread and at the rayon pool size. Without `--features hip` the binary
+//! prints a notice and exits 0.
 
 fn main() {
     #[cfg(not(feature = "hip"))]
@@ -56,11 +35,7 @@ mod imp {
     const SEED: u64 = 0xD3F1_616A_C0DE;
     const FULL_FRAME_1T_BASELINE_FPS: f64 = 1.6216;
 
-    /// Deterministic signed-unit f32 stream (SplitMix64 → [-1.5, 1.5)).
-    ///
-    /// NOT a copy of `gf2_sim::testutil::AwgnLlrSource` (review F3): a uniform
-    /// IQ symbol filler (no Box-Muller, no LLR) — a different generator
-    /// contract.
+    /// Uniform I/Q filler: SplitMix64 mapped to [-1.5, 1.5).
     fn fill_iq(state: &mut u64, n: usize) -> (Vec<f32>, Vec<f32>) {
         let mut next = || {
             *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
@@ -111,20 +86,13 @@ mod imp {
             println!();
             println!("== {modulation:?} (m={m}) ==");
 
-            // Pre-generate the frame population once (shared by all paths).
             let mut state = SEED ^ (order as u64);
             let iq: Vec<(Vec<f32>, Vec<f32>)> =
                 (0..frames).map(|_| fill_iq(&mut state, symbols)).collect();
             let total_symbols = (frames * symbols) as f64;
 
-            // ---- GPU demap-stage throughput ----
-            //
-            // The whole population is demapped as ONE device launch (all
-            // `frames * symbols` symbols concatenated into a single `SymbolBatch`
-            // frame), amortising the per-call H2D/sync/D2H launch overhead — the
-            // genuine batched-GPU throughput path, mirroring the LDPC bench's
-            // single batched call. (The per-frame `Stage::process` loop is
-            // launch-overhead-bound and is not the throughput path.)
+            // One device launch demaps the whole population: all
+            // `frames * symbols` symbols form a single `SymbolBatch` frame.
             let stage = GpuGrayQamDemapper::new(modulation, DemapMethod::MaxLog, noise_var);
             let big = frames * symbols;
             let demapper = stage.build_demapper(big).expect("build GPU demapper");
@@ -141,10 +109,8 @@ mod imp {
             }
             let (gpu_mean, gpu_sigma) = mean_sigma(&gpu_sps);
 
-            // ---- CPU single-thread demap-step throughput ----
-            // Deliberately NOT the shared `stages::GrayQamDemapCore` frame loop:
-            // the per-iteration `out` allocation and raw `demap_llrs` call ARE
-            // the measured quantity (benchmark geometry, not a stage duplicate).
+            // The per-frame `out` allocation and `demap_llrs` call are the
+            // measured quantity.
             let cpu = FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(order));
             let nv = vec![noise_var; symbols];
             let mut cpu1_sps = Vec::new();
@@ -172,17 +138,12 @@ mod imp {
             }
             let (cpu1_mean, cpu1_sigma) = mean_sigma(&cpu1_sps);
 
-            // ---- CPU 24-thread demap-step throughput (rayon over frames) ----
             let mut cpu24_sps = Vec::new();
             for _ in 0..repeats {
                 let t0 = Instant::now();
                 let results: Vec<f32> = (0..frames)
                     .into_par_iter()
                     .map(|fi| {
-                        // Per-frame independent demapper (the demap is a pure
-                        // function of the frame's I/Q, deterministic per thread);
-                        // hand-rolled for the same benchmark-geometry reason as
-                        // the single-thread loop above.
                         let dem =
                             FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(order));
                         let (ri, rq) = &iq[fi];

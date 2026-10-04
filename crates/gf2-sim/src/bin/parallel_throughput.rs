@@ -1,22 +1,5 @@
-//! Within-SNR parallel throughput benchmark (issue `3fcb7025`).
-//!
-//! Measures frames/second for the DVB-T2 r1/2 16-QAM canonical config at
-//! Es/N0 = 6.5 dB across worker counts, establishing the canonical CPU
-//! 24-thread baseline that downstream GPU receipts reference. Compares against
-//! the single-thread headline baseline of 1.6216 fps
-//! (`dev/benchmarks/gf2-sim/baseline-single-thread.md`).
-//!
-//! This is a manually-invoked benchmark, not a nextest test (it far exceeds the
-//! 5 s fast-tier limit).
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --bin parallel_throughput -- \
-//!     --frames 96 --workers 1,2,4,8,24 --repeats 3
-//! ```
-//!
-//! Defaults: `--frames 96 --workers 1,24 --repeats 3 --es-n0 6.5`.
+//! Measures frames per second of the DVB-T2 rate-1/2 16-QAM chain (SumProduct,
+//! ExactLogMap) at one Es/N0 across worker counts.
 
 use std::num::NonZeroUsize;
 use std::time::Instant;
@@ -113,8 +96,6 @@ fn main() {
             );
             let secs = start.elapsed().as_secs_f64();
             last_frames = counters.frames;
-            // Real mean BP iterations per frame (no longer a sentinel); the same
-            // across worker counts at a fixed seed (byte-identity contract).
             last_mean_iters = counters.mean_iters();
             let fps = counters.frames as f64 / secs;
             fps_samples.push(fps);
