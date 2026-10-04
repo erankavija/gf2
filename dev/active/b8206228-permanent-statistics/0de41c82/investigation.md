@@ -397,7 +397,7 @@ re-derive. Paths are repo-relative; each was opened.
   cycle; the failure modes a study of this shape hits at gate time.
 - `dev/studies/b488f02c/literature-search-2026-08-08.md` — external-baseline
   search record; relevant only to the sampling epic, not to kernel design.
-- `dev/plans/806eb14e-hip-gpu-prototype/hip_gpu_prototype_wave.md` — the wave
+- `dev/archive/806eb14e-hip-gpu-prototype/plans/hip_gpu_prototype_wave.md` — the wave
   plan that established the crate's evidence protocol (`## Evidence protocol`,
   `:51`) and the multi-arch `.co` seam (design doc §6, referenced from
   `build.rs:50` and `host/arch.rs:4`).
