@@ -1,0 +1,22 @@
+marker
+  dev/archive/97bf0879-gf2-core-sota-performance/.jit-container: 97bf0879-357e-4151-bdeb-781987cd0902
+hashes
+  destinations matching planned sha256 and size: 83 of 83
+  move sources absent: 83 of 83
+references
+  tracker references naming the archive path: 91 of 91 on 33 issues
+rerun
+  eligible: True; blockers: 0; action_counts: {"already_archived": 83, "block": 0, "copy": 0, "move": 83, "pending_deletions": 0, "retain": 7}
+  planned publications not yet archived: 0
+  move sources present: 0
+  pending deletions: 0
+  listed reference changes outside the verified set: 0
+links
+  dev/archive/97bf0879-gf2-core-sota-performance: 60 local links in Markdown and HTML files
+  benchmarks/analyze.py: 4 dev/archive path tokens
+  benchmarks/reference/fflas_sparse_bench.cpp: 1 dev/archive path tokens
+  benchmarks/reference/linbox_sparse_bench.cpp: 3 dev/archive path tokens
+  benchmarks/reference/ntl_bench.cpp: 3 dev/archive path tokens
+  benchmarks/reference/sparse_smoke.cpp: 4 dev/archive path tokens
+  dev/bench_results/run_41096af5_post_wire_in_bench.sh: 1 dev/archive path tokens
+result: PASS (0 failed checks)
