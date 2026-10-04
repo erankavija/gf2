@@ -15,7 +15,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../../.." && pwd)"
 {
   echo "# Generated-tree summary for JIT issue 7d7c647c."
-  echo "# Reproduce with: dev/active/7d7c647c/probes/tree-summary.sh"
+  echo "# Reproduce with: dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/tree-summary.sh"
   echo "# Captured: $(date -Is)"
   for d in "$HERE"/A*_lean; do
     [ -d "$d" ] || continue

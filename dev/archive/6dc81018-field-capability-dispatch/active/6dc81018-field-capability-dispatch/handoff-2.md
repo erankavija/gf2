@@ -17,7 +17,7 @@
 
 - Build chain PID 326324 (PPID 1): 256 candidate-arm builds into `/tmp/gf2-ens4/`, expected done ~2026-08-21T22:10Z; writes `/tmp/gf2-ens4/logs/build-phase-end.txt` last. Reference arm already done: 256/256 built, 0 failures, 256 distinct SHA-256, 256 distinct page offsets.
 - Continuation driver PID 754889 (setsid, log `/tmp/gf2-ens4/logs/continue-driver.log`): waits for the marker, verifies both arms' realized construction (v2 §A4, `verify-construction.py`), runs the 512-execution timed phase in one `ccx1-bench-flock.sh` session (`run-ensemble.sh`, v1 §5.2 order, guard aborts on HEAD/porcelain movement), copies everything durable into the repo untracked, then runs the committed `--compare` and `--layout-audit` modes. Terminal log line: `DRIVER: COMPLETE` or `DRIVER: ABORTED <reason>`. Expected complete ~2026-08-21T23:50Z.
-- Outputs land untracked at: `dev/benchmarks/tuning_profiles/2026-08-22-ensemble-{reference,candidate}-arm-4.csv`, `2026-08-22-member-provenance-{ref,cand}-4.tsv`; logs, scripts, `comparison.txt`, `layout-audit.txt`, and `sha256-manifest.txt` at `dev/active/50b47eae/s4-session/`.
+- Outputs land untracked at: `dev/benchmarks/tuning_profiles/2026-08-22-ensemble-{reference,candidate}-arm-4.csv`, `2026-08-22-member-provenance-{ref,cand}-4.tsv`; logs, scripts, `comparison.txt`, `layout-audit.txt`, and `sha256-manifest.txt` at `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s4-session/`.
 
 ## What just happened
 
@@ -31,7 +31,7 @@
 
 - [ ] Read the LAST line of `/tmp/gf2-ens4/logs/continue-driver.log`.
 - [ ] If `DRIVER: ABORTED` **before any timed window** (build-phase or construction or preflight failure): artifacts are intact; diagnose from the named log, fix, relaunch `bash /tmp/gf2-ens4/continue-driver.sh` detached. If aborted **mid-timed-phase** (partial arm CSVs exist): the partial record stands as taken — preserve it, do not delete or re-run, escalate to the owner.
-- [ ] If `DRIVER: COMPLETE`: read `dev/active/50b47eae/s4-session/comparison.txt` (verdict, τ_cell 5 % / τ_set 2 %) and `layout-audit.txt` (four preconditions at K=256).
+- [ ] If `DRIVER: COMPLETE`: read `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s4-session/comparison.txt` (verdict, τ_cell 5 % / τ_set 2 %) and `layout-audit.txt` (four preconditions at K=256).
 - [ ] Author `dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md` in receipt-3's register from those outputs. It must include the revision ruling: candidate rows record the RUN-time HEAD (this handoff's commit — the harness reads `git rev-parse HEAD` at execution, `selector_non_regression.rs:1020`) while the candidate binaries were built at `ec857d2f`; verify and state the empty build-input diff `ec857d2f..<run HEAD>` (only `dev/active/` + `.jit/` files), per the owner ruling recorded as escalation #18 in `progress.json` (receipt-3 precedent).
 - [ ] Commit the CSVs, TSVs, receipt, and session logs; `jit doc add 50b47eae` each durable artifact.
 - [ ] Run `jit gate evaluate 50b47eae doc-review`. Tier 1.5 applies: prior findings F1 (no passing receipt) and F2 (untracked rework) — F2's chain is complete (2a85f728, 972e2b88, 676f55a2, 9162956b all done).
@@ -56,7 +56,7 @@ None. (DEC-I fully settled this session; the next decision point is the measured
 ## Reference artefacts
 
 - Epic: `jit issue show 6dc81018`; open child: `jit issue show 50b47eae`
-- This session's pipeline: `/tmp/gf2-ens4/` (scripts, ledgers, logs, staged binaries); after completion also `dev/active/50b47eae/s4-session/`
+- This session's pipeline: `/tmp/gf2-ens4/` (scripts, ledgers, logs, staged binaries); after completion also `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s4-session/`
 - Dispatch spec the pipeline implements: `/tmp/claude-1000/-home-vkaskivuo-Projects-gf2/dd15bd2b-2781-4d8b-be26-e343821a8677/scratchpad/dispatch-50b47eae-session4.md` (scratchpad may be gone; the governing documents below are authoritative)
 - Frozen procedure: `dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md`; control arm: `across-build-control-arm-v1.md`; verdict: `layout-attribution-verdict-v1.md` + owner-approved `layout-attribution-verdict-v2.md` (DEC-I)
 - Prior receipts (preserved, FAIL): `2026-08-20-post-cutover-receipt{,-2,-3}.md`; baseline: `2026-08-19-pre-cutover-baseline.md`/`.csv`

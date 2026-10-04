@@ -16,16 +16,16 @@
 **A detached session-6 pipeline is running.** Do not start builds, benches, or heavy CI on this host until it finishes, and NOTHING may commit on main after THIS handoff's commit until the driver reaches its terminal line (the timed-phase guard aborts on HEAD or porcelain movement; the candidate arm must also build and run at one revision — this handoff's commit is intended to be that revision):
 
 - Driver PID 2036725 (PPID 1, own SID), log `/tmp/gf2-ens6/logs/continue-driver.log` (1 line at launch), terminal line `DRIVER: COMPLETE` or `DRIVER: ABORTED <reason>`.
-- Pipeline scripts are byte-equivalent to the committed `dev/active/50b47eae/s5-session/` texts modulo `ens5→ens6` / `s5→s6` / `-5→-6` path swaps, verified by round-trip diff at launch.
+- Pipeline scripts are byte-equivalent to the committed `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s5-session/` texts modulo `ens5→ens6` / `s5→s6` / `-5→-6` path swaps, verified by round-trip diff at launch.
 - Phases: ref build (~30 min from 16:39:44Z) → cand build (~30 min) → per-arm + cross-arm verification (v4 C2/C3) → idle-wait + preflight → timed phase, 256 executions in one lock session (~47 min) → copy durables → committed `--compare` and `--layout-audit`. Expected complete ~18:35Z.
-- Outputs land untracked at `dev/benchmarks/tuning_profiles/2026-08-22-ensemble-{reference,candidate}-arm-6.csv`, `2026-08-22-member-provenance-{ref,cand}-6.tsv`, and `dev/active/50b47eae/s6-session/`.
+- Outputs land untracked at `dev/benchmarks/tuning_profiles/2026-08-22-ensemble-{reference,candidate}-arm-6.csv`, `2026-08-22-member-provenance-{ref,cand}-6.tsv`, and `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s6-session/`.
 
 ## What just happened (session 8, in order)
 
 - Session-5 driver read `DRIVER: COMPLETE`. Audit PASS on all preconditions; comparison FAIL at exactly two cells: `polynomial/mul_fast/len=32` 1.058269 and `len=64` 1.050254 (set geomean 1.001087). Receipt-4's excursion cell read 1.000593 — `fc976a80`'s construction-artifact diagnosis confirmed by the arbitration.
 - **Receipt-5 committed** (`2026-08-22-post-cutover-receipt-5.md`, commit `1d7a1f58`) with CSVs, TSVs, `s5-session/` record; all durables `jit doc add`-linked to `50b47eae`. §7.1 extraction correctly used the ledger row with E=0 (execution 2, φ=1 arm).
 - **DEC-L** (escalation, owner): track rework, diagnose first → task `eb9b324c` created (gates cargo-ci/code-review/doc-review; DAG: `50b47eae → eb9b324c → fc976a80`).
-- **Brainstorm with codex** over the user's forum-poc mailbox bus (user-directed): converged two-site diagnosis, committed as `dev/active/eb9b324c/diagnosis-brainstorm.md`. Key: excursion is 2-periodic in E (VA bit 5); candidate/reference E-parity maps to OPPOSITE absolute phases (φ differs); `not_inplace/words=1` is ~17 % bit5-sensitive in BOTH revisions (pre-existing, v4-balanced).
+- **Brainstorm with codex** over the user's forum-poc mailbox bus (user-directed): converged two-site diagnosis, committed as `dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/diagnosis-brainstorm.md`. Key: excursion is 2-periodic in E (VA bit 5); candidate/reference E-parity maps to OPPOSITE absolute phases (φ differs); `not_inplace/words=1` is ~17 % bit5-sensitive in BOTH revisions (pre-existing, v4-balanced).
 - **fc976a80 closed** after DEC-M: doc-review F1 found REQ-01's premise (a code/codegen cause) falsified by the diagnosis itself; owner amended REQ-01 to admit the construction-property branch; doc-review re-run PASS; cargo-ci and code-review PASS. Commit `4612d3f3`.
 - **eb9b324c dispatched** (opus worker), returned: Site-A fix `dd3eee59` (one `mul_dispatch` inner dispatcher on a resolved threshold; single `tuning::active()` per call; selectors delegate to `*_resolved` helpers), E2 perf (whole-suite counters null by construction; symbol-level rules out instruction-execution cost — 7–13 cycles/call vs ≈420-cycle term), 16-member pilot: 0.997219/1.000586 at the two failing cells at matched page offsets, parity split 1.0800 → 0.9994. Honest disclosures: sensitivity relocates to `mul/len=16,32` (inside τ_cell pooled at pilot scale, outside at one phase); Karatsuba relief is placement-borne (Site B untouched, byte-identical function, only its address moved).
 - Review round 1: code-review FAIL (F1 blocking dangling `@/inv/canonical-abstraction` → `convention-convergence`; F2 rustdoc opening; F3 phase-ratio labeling). Rework `619a9666` fixed all three; all gates re-run PASS at that commit; **eb9b324c closed** (`9cdfb11d`).
@@ -35,7 +35,7 @@
 
 - [ ] Read the LAST line of `/tmp/gf2-ens6/logs/continue-driver.log` (match only lines past the launch baseline of 1 line).
 - [ ] `DRIVER: ABORTED` before any timed window: diagnose from the named log. A **cross-arm** verification failure (v4 C3) goes to the OWNER — fact of the revision pair, no in-session remedy. Other pre-timed failures: fix and relaunch `bash /tmp/gf2-ens6/continue-driver.sh` detached (logs dir already exists). Aborted mid-timed-phase: partial record stands as taken — preserve, do not re-run, escalate to owner.
-- [ ] `DRIVER: COMPLETE`: read `dev/active/50b47eae/s6-session/comparison.txt` and `layout-audit.txt`.
+- [ ] `DRIVER: COMPLETE`: read `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s6-session/comparison.txt` and `layout-audit.txt`.
 - [ ] Author `dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-6.md` in receipt-5's register. Cover: v4/DEC-K governing text + DEC-N dispatch; K=128 E-only; per-arm φ (`phi-{ref,cand}.txt` — the FIXED candidate's base moved to `0x1e840`, so read the realized φ from the ledger, do not assume session 5's); cross-arm verification output; revision ruling — candidate binaries build AND run at this handoff's commit (verify `head=` in `build-cand.log` equals the run-time `git_revision` and state it; if anything committed in between, apply the escalation-#18 empty-build-input-diff treatment); §7.1 extraction — select the candidate ordinary build by the ledger row with E=0, execution = that row's j+1; run `--self-check`/`--list-cells` from the staged ordinary members (s5 deviation: post-hoc is acceptable, record it); read `mul/len=16` and `mul/len=32` with receipt-5's care (pilot flagged relocated phase sensitivity there), and the Karatsuba cells.
 - [ ] Commit CSVs, TSVs, receipt, session record; `jit doc add 50b47eae` each durable.
 - [ ] Verdict PASS + audit PASS → `50b47eae` REQ-01 met, REQ-02 met (receipts 1–5 preserved; fc976a80 + eb9b324c tracked and closed). Evaluate 50b47eae gates (Tier 1.5 prior findings: F1 "no passing receipt" — answered by receipt-6 — and F2 rework chain complete: fc976a80 AND eb9b324c both closed). Close `50b47eae`.
@@ -61,11 +61,11 @@ None. DEC-L, DEC-M and DEC-N settled this session's decision points; session 6's
 ## Reference artefacts
 
 - Epic: `jit issue show 6dc81018`; open child: `50b47eae`
-- Session-6 pipeline: `/tmp/gf2-ens6/` (driver PID 2036725); after completion also `dev/active/50b47eae/s6-session/`
+- Session-6 pipeline: `/tmp/gf2-ens6/` (driver PID 2036725); after completion also `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s6-session/`
 - Governing chain: plan v1 → verdict v1 → v2 (DEC-I) → v3 (DEC-J) → v4 (DEC-K), all under `dev/benchmarks/tuning_profiles/`; DEC-L/M/N in `progress.json` escalations #25–#27
 - Receipts (preserved): pre-cutover baseline; post-cutover 1–3 (FAIL, unattributable), 4 (FAIL, attributable, construction — fc976a80), 5 (FAIL, attributable, code — fixed by eb9b324c)
-- Fix + diagnosis: `dev/active/eb9b324c/` (findings.md, diagnosis-brainstorm.md, perf/, pilot/); commits `dd3eee59`, `619a9666`
+- Fix + diagnosis: `dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/` (findings.md, diagnosis-brainstorm.md, perf/, pilot/); commits `dd3eee59`, `619a9666`
 - fc976a80 record: `dev/active/fc976a80/findings.md` (REQ-01 as amended by DEC-M)
-- Session-5 record: `dev/active/50b47eae/s5-session/`; staged binaries `/tmp/gf2-ens5/` (KEEP until epic close)
+- Session-5 record: `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s5-session/`; staged binaries `/tmp/gf2-ens5/` (KEEP until epic close)
 - Progress: `progress.json` beside this file
 - Out-of-epic follow-ons under `86b9c719`: `a6636671`, `4dd5372a`, `99c92597`, `389aa4de`, `76665001`

@@ -15,7 +15,7 @@
 
 - Driver PID 1157173 (PPID 1, own SID), log `/tmp/gf2-ens5/logs/continue-driver.log`, terminal line `DRIVER: COMPLETE` or `DRIVER: ABORTED <reason>`.
 - Phases: ref build (~30 min from 11:02Z) → cand build (~30 min) → per-arm + cross-arm verification (v4 C2/C3) → idle-wait + preflight → timed phase, 256 executions in one lock session (~50 min) → copy durables → committed `--compare` and `--layout-audit`. Expected complete ~13:15Z.
-- Outputs land untracked at `dev/benchmarks/tuning_profiles/2026-08-22-ensemble-{reference,candidate}-arm-5.csv`, `2026-08-22-member-provenance-{ref,cand}-5.tsv`, and `dev/active/50b47eae/s5-session/` (logs, ledgers, scripts, `comparison.txt`, `layout-audit.txt`, `sha256-manifest.txt`).
+- Outputs land untracked at `dev/benchmarks/tuning_profiles/2026-08-22-ensemble-{reference,candidate}-arm-5.csv`, `2026-08-22-member-provenance-{ref,cand}-5.tsv`, and `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s5-session/` (logs, ledgers, scripts, `comparison.txt`, `layout-audit.txt`, `sha256-manifest.txt`).
 
 ## What just happened (session 7, in order)
 
@@ -29,7 +29,7 @@
 
 - [ ] Read the LAST line of `/tmp/gf2-ens5/logs/continue-driver.log`.
 - [ ] `DRIVER: ABORTED` before any timed window: build/verification failure — diagnose from the named log. A **cross-arm** verification failure goes to the OWNER (v4 C3: it is a fact of the revision pair, no in-session remedy). Other pre-timed failures: fix and relaunch `bash /tmp/gf2-ens5/continue-driver.sh` detached (mkdir logs dir first if recreating). Aborted mid-timed-phase: partial record stands as taken — preserve, do not re-run, escalate to owner.
-- [ ] `DRIVER: COMPLETE`: read `dev/active/50b47eae/s5-session/comparison.txt` and `layout-audit.txt`.
+- [ ] `DRIVER: COMPLETE`: read `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s5-session/comparison.txt` and `layout-audit.txt`.
 - [ ] Author `dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-5.md` in receipt-4's register. Cover: v4/DEC-K governing text; K=128 E-only; per-arm φ (ledgers + `phi-{ref,cand}.txt`); cross-arm verification output; revision ruling — candidate binaries build at the run's HEAD (this handoff's commit; verify and state the empty build-input diff `ec857d2f..<run HEAD>`, escalation-#18 treatment; NOTE: unlike session 4, session 5 BUILDS at the current HEAD too, so build and run revisions coincide — state it plainly); §7.1 extraction — **the ordinary build is the ledger row with E=0, which is member j=1 (execution 2) in a φ=1 arm, not execution 1** — select by E, not by execution index.
 - [ ] Commit CSVs, TSVs, receipt, session record; `jit doc add 50b47eae` each durable artifact.
 - [ ] Verdict PASS + audit PASS → 50b47eae REQ-01 met (receipt shows tolerance holds), REQ-02 met (receipts 1–4 preserved + fc976a80 tracked). Evaluate 50b47eae gates (`jit gate evaluate 50b47eae doc-review`; Tier 1.5 prior findings: F1 "no passing receipt" — now answered — and F2 rework chain complete). Close `50b47eae`. Then close `fc976a80` (REQ-01 findings committed, REQ-02 DEC-K amendment branch, REQ-03 session 5 arbitrated; evaluate its cargo-ci/code-review/doc-review gates — docs-only issue, no crate change). Then Section 10: reconcile `surfaced_pitfalls` (one REQ-05 entry "open", one 1ac74567 entry "reconcile at completion") against the epic criteria, `jit gate evaluate-all 6dc81018` (repo-validate, doc-review, holistic-review), completion report, close epic, archive progress + handoffs per documentation config.
@@ -53,9 +53,9 @@ None. DEC-J and DEC-K settled this session's two decision points; the next decis
 ## Reference artefacts
 
 - Epic: `jit issue show 6dc81018`; open children: `50b47eae`, `fc976a80`
-- Session-5 pipeline: `/tmp/gf2-ens5/` (driver PID 1157173); after completion also `dev/active/50b47eae/s5-session/`
+- Session-5 pipeline: `/tmp/gf2-ens5/` (driver PID 1157173); after completion also `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s5-session/`
 - Governing chain: plan v1 → verdict v1 → v2 (DEC-I) → v3 (DEC-J) → **v4 (DEC-K)**, all under `dev/benchmarks/tuning_profiles/`
 - Receipts (preserved): pre-cutover baseline; post-cutover 1, 2, 3 (FAIL, unattributable) and 4 (FAIL, attributable, construction-artifact per fc976a80 findings)
-- Diagnosis: `dev/active/fc976a80/findings.md`; session-4 record: `dev/active/50b47eae/s4-session/`
+- Diagnosis: `dev/active/fc976a80/findings.md`; session-4 record: `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s4-session/`
 - Progress: `progress.json` beside this file (waves 15–16 appended; escalations #24 DEC-J, #25 DEC-K)
 - Out-of-epic follow-ons under `86b9c719`: `a6636671`, `4dd5372a`, `99c92597`, `389aa4de`, `76665001`

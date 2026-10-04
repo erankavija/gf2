@@ -22,12 +22,12 @@ that class:
 
 | Extracted definition | Generated Lean | Rust source |
 |---|---|---|
-| `field.traits.FiniteFieldExt.square.default` | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:25-32` | `crates/gf2-core/src/field/traits.rs:1053-1055` |
-| `field.traits.FiniteFieldExt.frobenius.default` | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:135-148` | `crates/gf2-core/src/field/traits.rs:1120-1131` |
+| `field.traits.FiniteFieldExt.square.default` | `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:25-32` | `crates/gf2-core/src/field/traits.rs:1053-1055` |
+| `field.traits.FiniteFieldExt.frobenius.default` | `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:135-148` | `crates/gf2-core/src/field/traits.rs:1120-1131` |
 
 `frobenius.default` is served by two lifted loop helpers,
 `frobenius.default_loop.body`
-(`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:105-117`) and
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:105-117`) and
 `frobenius.default_loop` (`:123-130`).
 
 ### 1.1 What the generated Lean supports, by citation
@@ -36,7 +36,7 @@ Three structural claims decide the factoring. Each is verified against the
 generated file.
 
 **`square.default` is complete and dictionary-parameterised.**
-`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:25-32` binds `{Self :
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:25-32` binds `{Self :
 Type}`, `{Clause0_Clause0_Characteristic : Type}`, `{Clause0_Clause0_Wide :
 Type}` and the explicit parameter `(FiniteFieldExtInst :
 field.traits.FiniteFieldExt Self Clause0_Clause0_Characteristic
@@ -47,18 +47,18 @@ at `:31` and `FiniteFieldExtInst.FiniteFieldInst.coreopsarithMulInst.mul` at
 all (`dev/active/1ac74567/elaboration/elaborate.log:91`).
 
 One precision the spike's record does not make.
-`dev/active/34d85cb9/findings.md:826-828` states that both targets "take the
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:826-828` states that both targets "take the
 `FiniteField` dictionary as a parameter". The parameter is the
 **`FiniteFieldExt`** dictionary; the `FiniteField` dictionary is reached
 through its first field, `FiniteFieldInst`
-(`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:119-120`). The lemma
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:119-120`). The lemma
 statements in §3 therefore bind both structures: the `FiniteFieldExt`
 dictionary because the extracted definitions are applied to it, and the
 `FiniteField` dictionary as a parameter in its own right, tied to the first by
 the hypothesis `dict.FiniteFieldInst = ff`.
 
 **`frobenius.default_loop` is complete, and its loop state carries no `Self`.**
-`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:123-125` gives the loop the
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:123-125` gives the loop the
 signature `(iter : core.ops.range.Range Std.Usize) (p : Std.U64) (exp :
 Std.U64) : Result Std.U64` — no type parameters, no dictionary, no `sorry`. The
 body at `:105-117` takes `(p : Std.U64) (iter : core.ops.range.Range Std.Usize)
@@ -68,12 +68,12 @@ This is the contrast with `pow`: `pow.default_loop.body` at `:38-41` and
 Could not find: type_var_id: 1 from ExtractBase.Item-/` and `... : 2 ...` in
 the two associated-type argument positions their parent `pow.default` binds
 properly at `:87-89`. That is finding F4 of the spike
-(`dev/active/34d85cb9/findings.md:356-372`), and it reproduces here.
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:356-372`), and it reproduces here.
 
 **`frobenius.default` calls the dictionary's `pow`, not `pow.default`.**
-`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:148` is
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:148` is
 `FiniteFieldExtInst.pow self exp` — a projection of the `pow` field declared at
-`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:122`, not a call to
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:122`, not a call to
 `field.traits.FiniteFieldExt.pow.default` at `:86`. The Rust it translates,
 `self.pow(exp)` at `crates/gf2-core/src/field/traits.rs:1130`, resolves through
 the trait's method table for the same reason. So the specification of
@@ -87,13 +87,13 @@ All three claims hold. None of them is falsified.
 
 ### 1.2 Why `pow` is not a target
 
-`pow.default` (`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:86-99`) is
+`pow.default` (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:86-99`) is
 well-formed in isolation but calls `pow.default_loop`, whose signature contains
 the two F4 `sorry` placeholders. Under the elaborator this is not a cosmetic
 defect: each `sorry` elaborates to a *distinct* opaque constant, so the
 application at `:98` does not type-check
 (`dev/active/1ac74567/elaboration/elaborate.log:70-77`). `pow` is excluded,
-matching `dev/active/34d85cb9/findings.md:830-831`.
+matching `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:830-831`.
 
 ---
 
@@ -176,14 +176,14 @@ structure CharIs [Field Self] (ff : field.traits.FiniteField Self Char Wide)
 `LawfulDict` and `CharIs` are stated over `ff` because every field they
 mention is a `FiniteField` field: `corecloneCloneInst`, `coreopsarithMulInst`
 and `characteristic` are declared at
-`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112`. `LawfulPow` takes
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112`. `LawfulPow` takes
 the `FiniteFieldExt` dictionary instead, because `pow` is a field of
-`FiniteFieldExt` (`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:122`) and
+`FiniteFieldExt` (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:122`) and
 of nothing below it — the split is forced by the extraction, not chosen.
 
 `CharIs` carries the `core.convert.Into Char Std.U64` dictionary because
 `frobenius.default` takes it as an explicit parameter
-(`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:139-140`), which is the
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:139-140`), which is the
 extraction of the Rust `where Self::Characteristic: Into<u64>` bound at
 `crates/gf2-core/src/field/traits.rs:1122`.
 
@@ -211,7 +211,7 @@ theorem square_default_mul_hom [Field Self]
 ```
 
 L1's hypothesis set closes: `LawfulDict` and the `hff` tie are the whole of it,
-and the body at `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:31-32` is a
+and the body at `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:31-32` is a
 two-step monadic chain through `clone` and `mul`. L2 is stated in success-conditional form on
 purpose — it is then true of any dictionary satisfying `LawfulDict`, and it
 stays true if a future dictionary makes `mul` partial.
@@ -238,14 +238,14 @@ theorem frobenius_default_loop_overflow
 L3 and L4 are the two laws that bind no dictionary and carry no `hff` tie.
 `frobenius.default_loop` has the signature `(iter : core.ops.range.Range
 Std.Usize) (p : Std.U64) (exp : Std.U64) : Result Std.U64`
-(`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:123-125`): no type
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:123-125`): no type
 parameter, no `FiniteFieldExt` dictionary, and so no `FiniteField` dictionary
 to state anything over. Their content is arithmetic on `U64`, and §1.1 records
 that this is what makes the loop separable from the field.
 
 L3's hypothesis is forced by the extraction, not by the mathematics: the loop
 computes the exponent by repeated `U64.checked_mul`
-(`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:114`) and raises through
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:114`) and raises through
 `core.option.Option.expect` with the message `"Frobenius exponent overflow"`
 (`:116`), the extraction of `crates/gf2-core/src/field/traits.rs:1128`. L4 is
 the necessity direction and makes the restriction visible rather than hiding it
@@ -314,13 +314,13 @@ Hypotheses, stated explicitly rather than assumed:
   `CharIs`, stated over the `FiniteField` dictionary, discharge the
   `characteristic` bind that the extracted body reaches through
   `FiniteFieldExtInst.FiniteFieldInst`
-  (`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:143`).
+  (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:143`).
 - **`LawfulPow`.** `frobenius.default` delegates the arithmetic entirely to
-  `dict.pow` (`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:148`), so no
+  `dict.pow` (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:148`), so no
   law about it is stronger than what that field satisfies. §7.1 records why
   this hypothesis cannot currently be closed from the extraction.
 - **`CharIs`.** The characteristic is read per element
-  (`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:143-144`), so the
+  (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:143-144`), so the
   hypothesis is universally quantified over elements. For a carrier whose
   `characteristic` is a constant — which is every production carrier in §4 — it
   is immediate.
@@ -536,19 +536,19 @@ flowchart LR
 
 | Lemma | Rust item | Extraction invocation | Generated Lean |
 |---|---|---|---|
-| L1, L2 | `FiniteFieldExt::square`, `crates/gf2-core/src/field/traits.rs:1053-1055` | `dev/active/34d85cb9/extraction/R8b.cmd` then `dev/active/34d85cb9/extraction/A8b.cmd` | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:25-32`; dictionaries in `dev/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112` and `:117-124` |
-| L3, L4 | the `for _ in 0..k` loop of `FiniteFieldExt::frobenius`, `crates/gf2-core/src/field/traits.rs:1127-1129` | same | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:105-117` and `:123-130` |
-| L5–L8b | `FiniteFieldExt::frobenius`, `crates/gf2-core/src/field/traits.rs:1120-1131` | same | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:135-148`; dictionaries in `dev/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112` and `:117-124` |
+| L1, L2 | `FiniteFieldExt::square`, `crates/gf2-core/src/field/traits.rs:1053-1055` | `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/R8b.cmd` then `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b.cmd` | `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:25-32`; dictionaries in `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112` and `:117-124` |
+| L3, L4 | the `for _ in 0..k` loop of `FiniteFieldExt::frobenius`, `crates/gf2-core/src/field/traits.rs:1127-1129` | same | `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:105-117` and `:123-130` |
+| L5–L8b | `FiniteFieldExt::frobenius`, `crates/gf2-core/src/field/traits.rs:1120-1131` | same | `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:135-148`; dictionaries in `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112` and `:117-124` |
 
 `R8b.cmd` starts from `gf2_core::field::traits::FiniteFieldExt::pow`, keeps
 `--opaque 'gf2_core::field'` and re-narrows it with `--include
 'gf2_core::field::traits::FiniteFieldExt'`, runs under
-`RUSTUP_TOOLCHAIN=1.95.0` (`dev/active/34d85cb9/extraction/R8b.cmd:1`), and
+`RUSTUP_TOOLCHAIN=1.95.0` (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/R8b.cmd:1`), and
 omits `--translate-all-methods`, which panics Charon
-(`dev/active/34d85cb9/findings.md:821-824`). `A8b.cmd` is `aeneas -backend lean
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:821-824`). `A8b.cmd` is `aeneas -backend lean
 -dest … -split-files -print-error-emitters`. The `.llbc` intermediate is
 regenerable and deliberately uncommitted
-(`dev/active/34d85cb9/findings.md:118-122`).
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:118-122`).
 
 ### 5.2 Strategy
 
@@ -567,7 +567,7 @@ formulation before any loop reasoning.
 
 **L3 — `frobenius_default_loop_eq_pow`.** The real work. The loop is Aeneas's
 `loop` combinator over `(iter, exp)`
-(`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:127-130`); the proof is an
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:127-130`); the proof is an
 induction on the remaining range length with the invariant "`exp.val` $= p^i$
 after $i$ steps, and $p^i \le$ `U64.max`", strengthened so the `checked_mul` at
 `:114` is known to return `some`. The precedent is `Gf2mSpec.specLoop` at
@@ -586,7 +586,7 @@ medium, and it shares its induction skeleton with L3, so prove them together.
 
 **L5 — `frobenius_default_eq_pow_char`.** Compose: `hff` rewrites the
 `FiniteFieldInst` projection at
-`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:143` so `CharIs.char_ok`
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:143` so `CharIs.char_ok`
 discharges the two binds at `:143-144`, L3 discharges the loop, and
 `LawfulPow.pow_ok` discharges the tail call at `:148`. Expected difficulty:
 low, conditional on L3.
@@ -630,7 +630,7 @@ one.
 
 ## 6. Does the extracted Lean elaborate?
 
-**No.** `dev/active/34d85cb9/extraction/A8b_lean/` as generated does not
+**No.** `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/` as generated does not
 elaborate. The failure is recorded here as a finding.
 
 The harness is `dev/active/1ac74567/elaboration/elaborate.sh`; the committed
@@ -670,7 +670,7 @@ Two distinct defects.
 
 **D1 — duplicate structure fields.** The generated `structure
 field.traits.FiniteField`
-(`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112`) declares six
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112`) declares six
 field names more than once: `corecloneCloneInst` three times (`:78`, `:94`,
 `:99`) and `corecmpPartialEqInst`, `corecmpEqInst`, `corefmtDebugInst`,
 `coreopsarithAddInst`, `coreopsarithAddAssignInst` twice each. The cause is in
@@ -689,10 +689,10 @@ committed pipeline: `proofs/WORKAROUNDS.md:5-14` describes it and names
 deduplicated names.
 
 **D2 — a missing module.**
-`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:5` imports
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:5` imports
 `R8bGf2Core.FunsExternal`, and the A8b run generated no file for it — the
 directory holds `Funs.lean` and `Types.lean` only, and unlike
-`dev/active/34d85cb9/extraction/A2_lean/FunsExternal_Template.lean` there is no
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A2_lean/FunsExternal_Template.lean` there is no
 template to seed from. The A8b extraction declares no external function, so the
 harness supplies an empty module
 (`dev/active/1ac74567/elaboration/FunsExternal.lean`). Any elaboration of this
@@ -722,7 +722,7 @@ This is F4 at the elaborator. Each `sorry` in a type position elaborates to a
 `pow.default_loop` cannot be applied to the dictionary that
 `pow.default_loop.body` expects, and `pow.default` cannot be applied to its own
 loop. The spike's account of F4 as a signature defect
-(`dev/active/34d85cb9/findings.md:356-372`) is confirmed and sharpened: the
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:356-372`) is confirmed and sharpened: the
 `sorry`s do not merely weaken the `pow` signature, they make the `pow` chain
 fail to type-check.
 
@@ -744,7 +744,7 @@ at `dev/active/1ac74567/elaboration/elaborate.log:104-106` as `decide
 ("Frobenius exponent overflow".toByteArray.size ≤ Aeneas.Std.U32.max) = true`.
 It is a `native_decide` fact about the length of the panic-message string
 literal that `toStr` introduces at
-`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:116`. It is benign and
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:116`. It is benign and
 independent of the field mathematics, but it is a trusted axiom and the
 follow-on round states it as such rather than claiming the `frobenius` chain is
 axiom-free.
@@ -775,10 +775,10 @@ and this issue must not.
    zero times in `proofs/Gf2Core/Types.lean` and `proofs/Gf2Core/Funs.lean` —
    so merging the R8b root into the existing gf2-core leg is the alternative,
    and it changes the byte-for-byte reproducibility that
-   `dev/active/34d85cb9/upgrade/pipeline-regression.sh` checks.
+   `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/pipeline-regression.sh` checks.
 4. **A decision on `pow`.** With the `pow` chain present, the library does not
    build. Dropping `pow` from the invocation is not available: it is R8b's
-   start root (`dev/active/34d85cb9/extraction/R8b.cmd:4`). The choice is
+   start root (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/R8b.cmd:4`). The choice is
    between rewriting `pow.default_loop` and its body to `axiom`s, in the manner
    `scripts/fix-aeneas-gf2algebra.py` already uses for unresolvable impl
    wrappers (`proofs/WORKAROUNDS.md:146-162`), and deleting them in
@@ -796,7 +796,7 @@ Items 3 and 4 are the follow-on work. Items 1 and 2 are mechanical.
 ### 7.1 `LawfulPow` cannot be closed from the extraction
 
 `frobenius.default` is specified relative to `dict.pow`
-(`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:148`). Closing `LawfulPow`
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Funs.lean:148`). Closing `LawfulPow`
 for a concrete carrier requires knowing what that field holds, and
 `FiniteFieldExt` is blanket-implemented for every `T: FiniteField`
 (`crates/gf2-core/src/field/traits.rs:1135`), so for every production carrier
@@ -812,7 +812,7 @@ extracted Rust while F4 stands. `square`'s laws L1 and L2 carry no such
 dependency.
 
 Three ways forward, none chosen here: prove `pow.default_loop` after F4 is
-fixed upstream (option DEC-B of `dev/active/34d85cb9/findings.md:796-802`);
+fixed upstream (option DEC-B of `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:796-802`);
 prove the `pow` obligation against a monomorphised free function in the manner
 of `gf2m_mul_raw` (`proofs/WORKAROUNDS.md:108-123`); or leave `LawfulPow` as a
 named assumption of the backend instantiation, in the manner `ValidExtConfig`
@@ -878,18 +878,18 @@ is tracked as issue `99c92597`.
 
 ### 7.5 Corrections to the spike record
 
-- `dev/active/34d85cb9/findings.md:826-828` states that the two targets take
+- `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:826-828` states that the two targets take
   the `FiniteField` dictionary as a parameter. They take the `FiniteFieldExt`
   dictionary; `FiniteField` is reached through its `FiniteFieldInst` field
-  (`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:119-120`). The
+  (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:119-120`). The
   distinction matters for the lemma statements, which bind both dictionaries
   and tie them.
-- `dev/active/34d85cb9/findings.md:434-445` scopes elaboration out and names it
+- `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:434-445` scopes elaboration out and names it
   as the follow-up's required step. It does not anticipate that the generated
   `Types.lean` fails before any target is reached, nor that the repository's
   own `scripts/fix-aeneas-dupes.py` is what clears it. §6.1 and §6.2 record
   both.
-- `dev/active/34d85cb9/findings.md:832-834` budgets "a `lake build` step". A
+- `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:832-834` budgets "a `lake build` step". A
   `lake build` is not available for this extraction without adding a library to
   `proofs/`; §6 uses `lake env lean`, which reads the same environment without
   modifying the project. The follow-on round needs §6.5's items 3 and 4 before
@@ -898,7 +898,7 @@ is tracked as issue `99c92597`.
 The executed proof-surface seam leaves every obligation in §3 unchanged. The
 pinned A8b artifact at this sketch's anchor contains four tuning-selector
 members in its historical generated structure
-(`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:74-77`), but no lemma in
+(`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean:74-77`), but no lemma in
 §3 projects them. The current `FiniteField` extraction and generated
 dictionaries contain no tuning-selector member; the active profile is kept
 outside the proof surface through the opaque seam. The exact generated-tree
@@ -924,12 +924,12 @@ the resulting kernel-strategy surface in §2.4 and §4.3.
 
 Appended 2026-08-22. Additive: nothing above this heading changes.
 
-`dev/active/e6ea0dde/record.md` extracts the same two targets with both Charon
+`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md` extracts the same two targets with both Charon
 and Aeneas exiting 0, keeping the `pow` default out at the invocation boundary
 with a Charon `--exclude` pattern instead of deleting the `pow` chain from
 generated output. §3's lemma statements elaborate against that extraction with
 exit 0 and the same nine deliberately unproved bodies
-(`dev/active/e6ea0dde/elaboration/elaborate.log`). `elaboration/statements.lean`
+(`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.log`). `elaboration/statements.lean`
 carries over unchanged apart from two addresses: the generated module prefix,
 which follows the LLBC file name and is `X3Gf2Core` there, and L4's docstring
 citation of the `checked_mul` line, readdressed to the tree it elaborates

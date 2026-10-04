@@ -33,7 +33,7 @@ than worked around, the failure it repairs stays in this record as evidence per
 through issue `4dd5372a`.
 
 Every command in the matrices below is executed from a committed `.cmd` file via
-`dev/active/e6ea0dde/extraction/run.sh`, which prints the command file into the
+`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/run.sh`, which prints the command file into the
 log before executing it. The command text quoted in this record is therefore
 byte-identical to what ran.
 
@@ -41,7 +41,7 @@ byte-identical to what ran.
 
 ## Question
 
-The spike record `dev/active/34d85cb9/findings.md` documents an Aeneas
+The spike record `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md` documents an Aeneas
 invocation (A8b) that exits 1: the blanket-default `pow` item its finding F4
 falsifies poisons the run, and the proof-obligation sketch
 `dev/active/1ac74567/proof-sketch.md` elaborates its lemma statements only
@@ -60,8 +60,8 @@ standard?
 ## Toolchain and host
 
 Captured at run time in
-`dev/active/e6ea0dde/extraction/excerpts/toolchain-versions.txt` (regenerate
-with `dev/active/e6ea0dde/extraction/versions.sh`). Three toolchains are in
+`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/excerpts/toolchain-versions.txt` (regenerate
+with `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/versions.sh`). Three toolchains are in
 play:
 
 | Component | Version | Role |
@@ -120,7 +120,7 @@ invocation-boundary exclusions of `pow`.
 | AX3 | `extraction/AX3.cmd` | **0** | 4 defs, 0 `sorry`; `pow.default` absent entirely | `logs-trimmed/AX3.log`, `extraction/AX3_lean/` |
 
 `AX1_lean/Types.lean` is byte-identical to the spike's
-`dev/active/34d85cb9/extraction/A8b_lean/Types.lean`, and `AX1_lean/Funs.lean`
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/Types.lean`, and `AX1_lean/Funs.lean`
 is identical to the spike's modulo the generated module prefix, so the control
 confirms this worktree reproduces the spike's toolchain behaviour exactly.
 
@@ -148,7 +148,7 @@ RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
   --opaque 'gf2_core::primitive_polys' \
   --opaque 'gf2_core::io' \
   --opaque 'gf2_core::macros' \
-  --dest-file dev/active/e6ea0dde/extraction/X3_gf2_core.llbc \
+  --dest-file dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/X3_gf2_core.llbc \
   -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features
 ```
 
@@ -157,10 +157,10 @@ followed by
 ```
 aeneas \
   -backend lean \
-  -dest dev/active/e6ea0dde/extraction/AX3_lean \
+  -dest dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean \
   -split-files \
   -print-error-emitters \
-  dev/active/e6ea0dde/extraction/X3_gf2_core.llbc
+  dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/X3_gf2_core.llbc
 ```
 
 Three things change relative to the spike's R8b: the start roots become the two
@@ -205,9 +205,9 @@ supplied later.
 
 ## Elaboration
 
-`dev/active/e6ea0dde/elaboration/elaborate.sh` stages the generated tree into a
+`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.sh` stages the generated tree into a
 fresh `mktemp` directory and elaborates it under the `proofs/` lake environment.
-The committed receipt is `dev/active/e6ea0dde/elaboration/elaborate.log`. Stage
+The committed receipt is `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.log`. Stage
 1 takes the tree exactly as Aeneas wrote it; the sanctioned normalization
 enters at stage 2, in its own section below.
 
@@ -429,7 +429,7 @@ at all; the full diff is in `elaboration/elaborate.log`. On that tree:
   it is unavoidable at the invocation boundary.
 - **REQ-03 — met.** The sketch's lemma statements elaborate at exit 0 against
   that tree, with the two addressing adjustments recorded above. The spike
-  record `dev/active/34d85cb9/findings.md` and the sketch
+  record `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md` and the sketch
   `dev/active/1ac74567/proof-sketch.md` each carry an appended amendment citing
   this record, adding lines and changing none.
 
@@ -441,20 +441,20 @@ All paths relative to the repository root.
 
 | Path | Contents |
 |---|---|
-| `dev/active/e6ea0dde/extraction/run.sh` | Runner: executes one `.cmd` file, tees to `logs/<run>.log` |
-| `dev/active/e6ea0dde/extraction/X{1,2,3}.cmd`, `AX{1,2,3}.cmd` | The chain's six exact invocations |
-| `dev/active/e6ea0dde/extraction/Q{1..6}.cmd`, `AQ{1,3,4,5,6}.cmd` | The exclusion-mechanism probes |
-| `dev/active/e6ea0dde/extraction/AX3_lean/` | **The generated Lean of record** |
-| `dev/active/e6ea0dde/extraction/AX{1,2}_lean/` | Control and `--opaque`-variant Lean |
-| `dev/active/e6ea0dde/extraction/AQ*_lean/` | Probe output, including the two partial trees |
-| `dev/active/e6ea0dde/extraction/excerpts/toolchain-versions.txt` | Toolchain identities, captured at run time |
-| `dev/active/e6ea0dde/extraction/excerpts/tree-summary.txt` | Per-tree definitions, `sorry` counts and colliding field names |
-| `dev/active/e6ea0dde/extraction/{versions,tree-summary,trim-logs}.sh` | Regenerate the derived artifacts above |
-| `dev/active/e6ea0dde/logs-trimmed/` | Trimmed log per run, each opening with its command and closing with `exit=`/`elapsed=` |
-| `dev/active/e6ea0dde/elaboration/elaborate.sh` | Three-stage elaboration harness |
-| `dev/active/e6ea0dde/elaboration/elaborate.log` | Its committed receipt, including the stage-1 failure |
-| `dev/active/e6ea0dde/elaboration/Statements.lean` | The sketch's lemma statements, readdressed to this tree |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/run.sh` | Runner: executes one `.cmd` file, tees to `logs/<run>.log` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/X{1,2,3}.cmd`, `AX{1,2,3}.cmd` | The chain's six exact invocations |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/Q{1..6}.cmd`, `AQ{1,3,4,5,6}.cmd` | The exclusion-mechanism probes |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean/` | **The generated Lean of record** |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX{1,2}_lean/` | Control and `--opaque`-variant Lean |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ*_lean/` | Probe output, including the two partial trees |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/excerpts/toolchain-versions.txt` | Toolchain identities, captured at run time |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/excerpts/tree-summary.txt` | Per-tree definitions, `sorry` counts and colliding field names |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/{versions,tree-summary,trim-logs}.sh` | Regenerate the derived artifacts above |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/` | Trimmed log per run, each opening with its command and closing with `exit=`/`elapsed=` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.sh` | Three-stage elaboration harness |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.log` | Its committed receipt, including the stage-1 failure |
+| `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/Statements.lean` | The sketch's lemma statements, readdressed to this tree |
 
 `.llbc` files are not committed: `.gitignore:62` excludes them and they are
 regenerable from the committed `.cmd` files. Raw logs are excluded by
-`dev/active/e6ea0dde/.gitignore`; `logs-trimmed/` is the committed evidence.
+`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/.gitignore`; `logs-trimmed/` is the committed evidence.
