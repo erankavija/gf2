@@ -44,13 +44,14 @@ the ratio the estimator forms.
 | Stage | Artifact | State |
 |---|---|---|
 | Frozen pilot family | [`addendum-v4-dense-product-pilot.json`](addendum-v4-dense-product-pilot.json) | committed before launch |
-| Family ledger | [`dense-product-family-ledger.jsonl`](../../bench_results/4c1e441f/dense-product-family-ledger.jsonl) | opened empty; carries the pilot reservation |
+| Family ledger | [`dense-product-family-ledger.jsonl`](../../bench_results/4c1e441f/dense-product-family-ledger.jsonl) | opened empty; carries one reservation per campaign |
 | Lane equivalence | [`conformance/lane-equivalence.txt`](conformance/lane-equivalence.txt) | both lanes on every declared shape |
 | Arm smoke | [`survey/runner-smoke.txt`](survey/runner-smoke.txt) | every arm, cell and operation of the stage it names, untimed |
 | Pilot campaign | [`r1-dense-product-pilot`](../../bench_results/4c1e441f/r1-dense-product-pilot) | measured, verified from its own log, receipt committed |
 | Confirmation addendum | [`addendum-v4-dense-product-confirmation.json`](addendum-v4-dense-product-confirmation.json) | frozen from the committed pilot receipt, with [its derivation record](confirmation-derivation-dense-product.txt) |
-| Confirmation campaign | `dev/bench_results/4c1e441f/r1-dense-product-confirmation` | queued for the benchmark window |
-| Published outcome | [`tables.md`](../../bench_results/4c1e441f/tables.md) | generated from committed receipts |
+| Confirmation campaign | [`r1-dense-product-confirmation`](../../bench_results/4c1e441f/r1-dense-product-confirmation) | measured, verified from its own log, receipt committed |
+| Result tables | [`tables.md`](../../bench_results/4c1e441f/tables.md) | generated from committed receipts |
+| Published outcome | [`outcome.md`](outcome.md) | each cell's recorded verdict, the retention decision and the direction agreement |
 
 Every stage that measures is preceded by an untimed one.
 `survey/smoke-arms.sh` takes the stage whose frozen addendum it drives, projects
@@ -61,7 +62,7 @@ case encoder, fresh-child sentinel, child environment and result parser — in t
 `validation` position. Each arm performs one untimed dispatch and reports no
 timing window; the smoke refuses one that does, and the record is a build input
 of both campaigns, so a timed run refuses to launch until the smoke is
-committed. Timing belongs to the queued window alone.
+committed. Timing belongs to the benchmark window alone.
 
 The freezer derives the measurement resolution from the whole pilot, dropped
 cells included, so a dropped cell's width sizes the confirmation's margins. A
@@ -89,7 +90,7 @@ entry points, the runner wire and the smoke driver are the byte-field survey's
 `dev/active/6c6b09b1/survey` crates. The vector family calls the same shared
 forms, and each of its generated artifacts is byte-identical across the change.
 
-## After the window
+## Receipts and publication
 
 A receipt directory carries the producing-input snapshot, whose nested
 `Cargo.lock` files `.gitignore` excludes: committing a receipt means
@@ -97,12 +98,11 @@ A receipt directory carries the producing-input snapshot, whose nested
 `python3 dev/scripts/check-receipt-input-snapshots.py`, which reads the index
 rather than the working tree and fails CI on an omission.
 
-The post-window session commits the pilot receipt, runs
-`dev/bench_results/4c1e441f/run-dense-product-confirmation.sh freeze`, commits
-the confirmation addendum and its derivation record, queues the confirmation
-line, and then publishes: `run-dense-product-confirmation.sh tables` regenerates
-the result tables from the committed receipts, the family ledger and the pinned
-matrix-family confirmation, and the findings state each cell's recorded verdict,
-the retention decision the frozen rule yields and whether the direction agrees
-with that pinned receipt. Every quantitative statement points at a generated
-table row rather than repeating it.
+`dev/bench_results/4c1e441f/run-dense-product-confirmation.sh freeze` derives
+the confirmation addendum and its derivation record from the committed pilot
+receipt, and `run-dense-product-confirmation.sh tables` regenerates the result
+tables from the committed receipts, the family ledger and the pinned
+matrix-family confirmation. [The outcome](outcome.md) states each cell's
+recorded verdict, the retention decision the frozen rule yields and whether the
+direction agrees with that pinned receipt; every quantitative statement in it
+points at a generated table row, an acceptance summary field or a ledger line.

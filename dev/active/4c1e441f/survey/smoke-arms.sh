@@ -5,16 +5,16 @@
 # Usage (from the worker worktree root):
 #   dev/active/4c1e441f/survey/smoke-arms.sh [pilot|confirmation]
 #
-# The argument names the stage whose frozen addendum the smoke drives; it
-# defaults to the stage this family queues next, the confirmation. The record
-# the launcher's `window` stage reads is the same file either way, so the
-# committed record always describes the plan the next timed run measures.
+# The argument names the stage whose frozen addendum the smoke drives and
+# defaults to the confirmation. The record the launcher's `window` stage reads
+# is the same file either way, so the committed record describes the stage
+# smoked last.
 #
 # The three untimed steps are `dev/scripts/smoke-campaign-arms.sh`, shared with
 # every other lane-comparison family; this script carries this family's own
 # constants: its frozen addendum, its arm workspace, its binaries, its throwaway
-# campaign identity and seed, and the session cell budget and pilot pair count
-# the queued campaign uses.
+# campaign identity and seed, and each stage's session cell budget and pilot
+# pair count.
 set -euo pipefail
 
 STAGE=${1:-confirmation}
