@@ -2,27 +2,24 @@
 """Generate this family's result tables (jit:4c1e441f).
 
 Usage: make-tables.py [output]
-       (default dev/bench_results/4c1e441f/tables.md)
+       (default tables.md beside the family launcher)
 
-The rendering is `dev/scripts/campaign_tables.py`, shared with every other
+The rendering is `campaign_tables.py`, shared with every other
 lane-comparison family; this file declares this family's stages, ledger, receipt
 pin and the paragraph that says what the pinned receipt is cited for.
 """
 
 import os
-import subprocess
 import sys
 
-sys.path.insert(0, os.path.join(subprocess.run(
-    ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-).stdout.strip(), "dev/scripts"))
+import locate
 import campaign_tables  # noqa: E402
 
 ISSUE = "4c1e441f"
-RESULTS = f"dev/bench_results/{ISSUE}"
-GENERATOR = f"dev/active/{ISSUE}/survey/make-tables.py"
+RESULTS = locate.RESULTS
+GENERATOR = os.path.relpath(os.path.abspath(__file__), locate.ROOT)
 LEDGER = f"{RESULTS}/dense-product-family-ledger.jsonl"
-PIN = f"dev/active/{ISSUE}/pinned-matrix-confirmation.json"
+PIN = f"{locate.ISSUE}/pinned-matrix-confirmation.json"
 STAGES = [
     ("pilot", f"{RESULTS}/r1-dense-product-pilot"),
     ("confirmation", f"{RESULTS}/r1-dense-product-confirmation"),
@@ -37,9 +34,7 @@ AGREEMENT_NOTE = [
 
 
 def main():
-    root = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-    ).stdout.strip()
+    root = locate.ROOT
     output = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, RESULTS, "tables.md")
     campaign_tables.main(
         root=root,
