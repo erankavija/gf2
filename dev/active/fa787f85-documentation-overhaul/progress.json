@@ -738,6 +738,13 @@
      "status": "done"
     },
     {
+     "id": "fa4939c3-2cc8-4ff2-b609-d368d3b25a24",
+     "short_id": "fa4939c3",
+     "title": "Read every Rust comment line for citations the map's patterns miss",
+     "classification": "research",
+     "status": "in_progress"
+    },
+    {
      "id": "ffc35b8c-5f2a-4a37-8eef-905b362b615d",
      "short_id": "ffc35b8c",
      "title": "Workspace source-comment tersification sweep",
@@ -1404,6 +1411,11 @@
    "id": "10a729d3",
    "epic": "b4b4b9ee",
    "reason": "planned work removed by 66858db0"
+  },
+  {
+   "id": "fa4939c3",
+   "epic": "fa787f85",
+   "reason": "holistic-review F2 of ffc35b8c: the citation map's pattern list cannot establish exhaustive citation coverage (554c2935 REQ-01)"
   }
  ],
  "escalations": [
@@ -1609,6 +1621,17 @@
    "issue": "545b113f",
    "question": "Dispatch shape for the module-doc unit.",
    "resolution": "Owner: split by crate in parallel worktrees, reviewed as one net-negative diff (2026-10-04)."
+  },
+  {
+   "issue": "ffc35b8c",
+   "question": "OPEN: holistic-review F1 (2026-10-04): decisions are written `DEC-nn`, but `.jit/config.toml` [item_kinds.decision] id-pattern is `D-[0-9]+`, so `jit item show ffc35b8c/DEC-01` and `93aed46a/DEC-01` fail; the sweep completion record relies on them for the REQ-26 exceptions. 25 issues in six epics use `DEC-nn`; two use `D-nn`. Which form is canonical?",
+   "options": [
+    "widen the id-pattern in .jit/config.toml to accept `DEC-nn` (one config line; every recorded decision becomes addressable)",
+    "rename `DEC-nn` to `D-nn` in the Decisions sections of the overhaul's issues and in the records that cite them (description edits on about 19 issues of this epic; six issues of other epics stay unaddressable)",
+    "rename in every issue of every epic"
+   ],
+   "recommendation": "first option: one line, no description edits, and commit bodies that say DEC-nn stay true",
+   "resolution": null
   }
  ],
  "rework_counts": {

@@ -1,0 +1,27 @@
+{
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-04T13:25:36.323825273Z",
+  "context": {},
+  "created_at": "2026-10-04T13:25:23.725416009Z",
+  "dependencies": [],
+  "description": "The citation map of issue 554c2935 finds prose citations by a pattern list, and its record states that a prose citation in a form the list does not match appears in no section. A read of every comment and Rustdoc line closes that gap for the source-comment sweep.\n\n## Background\n\nThe holistic review of story ffc35b8c on 2026-10-04 found that the map cannot establish that every external work cited in a Rust comment has a registry key. The map, its script and its scope and edition rules are `554c2935-citation-map.md`, `554c2935-citation-map.py` and `554c2935-citation-map.txt` in the epic's directory; the registry is `.jit/references.toml`.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked record names the commit read and lists, for each tracked Rust file under `crates/` and `dev/tools/`, the number of comment and Rustdoc lines read and each line that names an external work under the map's scope rule; the per-file line counts equal those of the sweep census at that commit.\n- [hard] REQ-02: Each external work the read finds that the citation map lists in no section has a registry entry with bibliographic data verified against the publisher, the archive or the standards body, a row in the map script's tables, and its `@/citation/<key>` address in the citing comment; a work that cannot be identified is listed in the map's section of citations without a registry entry.\n- [hard] REQ-03: The citation map is regenerated, its script exits with status 0, and its record states that its coverage rests on the pattern list and on this read.\n- [hard] REQ-04: Rust source changes are comment and Rustdoc edits only, and the Rust CI gate passes.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T13:25:23.725416009Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "docs-mechanical"
+  ],
+  "gates_status": {},
+  "id": "fa4939c3-2cc8-4ff2-b609-d368d3b25a24",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:docs",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "in_progress",
+  "title": "Read every Rust comment line for citations the map's patterns miss",
+  "updated_at": "2026-10-04T13:25:36.323825273Z"
+}

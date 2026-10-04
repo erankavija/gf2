@@ -17884,3 +17884,13 @@
 {"id":"9b4d3533-b8ef-43ea-9f8f-bcfaa5c849c2","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T13:13:56.744933972Z","type":"issue_completed"}
 {"from":"ready","id":"2ca3ba21-7bac-4aba-910d-f43385cb296f","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:14:07.095594309Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:jit-execution-lead","id":"fb37f665-47f0-4baa-8c11-c97c961ecf46","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:14:07.095594309Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"ff5fd7fc-0df1-4f31-8c91-1ef32e71f968","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:15:16.885819297Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"c12abfe6-ea16-46e0-b302-d5d5fe95b710","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:15:20.712062607Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"repo-validate","id":"10c13b63-32b6-4eca-84ae-85107246d208","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:15:35.688527559Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"810096ba-cfb1-47cd-ac4b-6ec806835936","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:17:15.714287369Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"510d28a0-d6f0-467b-ab44-aed076583dba","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:19:33.777334167Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"holistic-review","id":"144e0b6d-c72d-480d-901c-d6ac4035b062","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:23:56.268584496Z","type":"gate_failed","updated_by":"auto:executor"}
+{"id":"39a0e0c4-9a91-40fc-9732-a29e849d533e","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","priority":"normal","timestamp":"2026-10-04T13:25:23.725416009Z","title":"Read every Rust comment line for citations the map's patterns miss","type":"issue_created"}
+{"fields":["dependencies"],"id":"ed401567-d06e-485f-bcb0-f5843b880daa","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:25:36.196783661Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"8f68bf2a-d573-4a3f-b7f8-2c007b836089","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T13:25:36.323825273Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"54cdac9e-33a4-4071-8085-4e7e87ee102f","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T13:25:36.323825273Z","type":"issue_claimed"}
