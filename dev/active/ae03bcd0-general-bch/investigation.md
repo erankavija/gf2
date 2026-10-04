@@ -273,7 +273,7 @@ Documentation, campaign, data, presentation, and development references:
 `dev/simulation_results/phase1_comparison_report.md`,
 `dev/simulation_results/phase4_comparison_report.md`, every file under
 `dev/simulation_results/osd-ebch-128-64/`,
-`dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md`,
+`dev/archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md`,
 `dev/archive/6efb756b-grand/docs/presentations/6efb756b-grand-sogrand/talk.html`,
 `dev/archive/6efb756b-grand/docs/presentations/figures/fig5_ebch_64_57_comparison.svg`,
 `fig6_ebch_16_7_comparison.svg`, and
