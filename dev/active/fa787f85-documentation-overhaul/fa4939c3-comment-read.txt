@@ -1,0 +1,1397 @@
+commit read: 04c00d0ba3116652526ba51728390b427fdcad8f
+tree crates: read 04b0f86f09747a1c1bfcdfc971b493f6e51f6046 listed 4d6bd38f36d7037211ea900fb77f98664479e344
+tree dev/tools: read 0009776d910dd68924a583327b649dcca488be70 listed 694a7ff2b2520ae45647b6dc54b856847963ae7f
+
+# 1. path | lines read | lines beginning with //
+crates/gf2-algebra/benches/batched_f3_permanent.rs | 13 | 12
+crates/gf2-algebra/benches/determinant_companion.rs | 7 | 7
+crates/gf2-algebra/benches/permanent.rs | 5 | 4
+crates/gf2-algebra/benches/s1_n36_speedup.rs | 26 | 23
+crates/gf2-algebra/benches/tuning_calibration.rs | 9 | 9
+crates/gf2-algebra/examples/paper_repro_slope.rs | 31 | 29
+crates/gf2-algebra/examples/parallel_chunk_sweep.rs | 14 | 6
+crates/gf2-algebra/examples/parallel_scaling_sweep.rs | 23 | 23
+crates/gf2-algebra/examples/permanent_demo.rs | 7 | 7
+crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs | 13 | 13
+crates/gf2-algebra/src/gpu.rs | 127 | 127
+crates/gf2-algebra/src/gray.rs | 49 | 49
+crates/gf2-algebra/src/lib.rs | 9 | 9
+crates/gf2-algebra/src/packed/bipedal3.rs | 171 | 165
+crates/gf2-algebra/src/packed/mod.rs | 73 | 73
+crates/gf2-algebra/src/packed/packed5.rs | 106 | 104
+crates/gf2-algebra/src/packed/packed7.rs | 110 | 107
+crates/gf2-algebra/src/packed/scalar.rs | 19 | 19
+crates/gf2-algebra/src/parallel.rs | 4 | 4
+crates/gf2-algebra/src/permanent/bipedal3.rs | 162 | 162
+crates/gf2-algebra/src/permanent/bipedal3_multiword.rs | 84 | 83
+crates/gf2-algebra/src/permanent/bipedal5.rs | 55 | 55
+crates/gf2-algebra/src/permanent/bipedal7.rs | 47 | 47
+crates/gf2-algebra/src/permanent/compressed_rank.rs | 171 | 171
+crates/gf2-algebra/src/permanent/exact.rs | 87 | 87
+crates/gf2-algebra/src/permanent/mod.rs | 6 | 6
+crates/gf2-algebra/src/permanent/parallel_bipedal3.rs | 99 | 98
+crates/gf2-algebra/src/permanent/rank.rs | 84 | 84
+crates/gf2-algebra/src/permanent/reference.rs | 47 | 47
+crates/gf2-algebra/src/permanent/ryser.rs | 73 | 72
+crates/gf2-algebra/src/testutil.rs | 56 | 56
+crates/gf2-algebra/src/tuning.rs | 31 | 31
+crates/gf2-algebra/tests/batched_f3_permanent_harness.rs | 4 | 3
+crates/gf2-algebra/tests/cas_cross_validation.rs | 11 | 11
+crates/gf2-algebra/tests/compressed_rank.rs | 5 | 5
+crates/gf2-algebra/tests/gpu_dispatcher.rs | 14 | 14
+crates/gf2-algebra/tests/permanent_effective_partition.rs | 1 | 1
+crates/gf2-algebra/tests/permanent_exact_anchors.rs | 5 | 5
+crates/gf2-algebra/tests/permanent_vectors.rs | 66 | 66
+crates/gf2-algebra/tests/permanental_rank.rs | 71 | 59
+crates/gf2-algebra/tests/rank_event_rates.rs | 8 | 8
+crates/gf2-algebra/tests/support/fresh_tuning_process.rs | 0 | 0
+crates/gf2-algebra/tests/tuning_calibration_harness.rs | 1 | 1
+crates/gf2-algebra/tests/tuning_default.rs | 1 | 1
+crates/gf2-algebra/tests/tuning_profile_permanent_install.rs | 2 | 2
+crates/gf2-algebra/tests/tuning_profile_permanent_install_large_chunk.rs | 2 | 2
+crates/gf2-algebra/tests/tuning_repository_envelopes.rs | 4 | 4
+crates/gf2-algebra/tests/tuning_section.rs | 0 | 0
+crates/gf2-coding/benches/allocation_optimization.rs | 0 | 0
+crates/gf2-coding/benches/batch_operations.rs | 5 | 5
+crates/gf2-coding/benches/bch_encode_w1.rs | 17 | 17
+crates/gf2-coding/benches/bch_genmatrix.rs | 20 | 20
+crates/gf2-coding/benches/bch_parallel.rs | 4 | 4
+crates/gf2-coding/benches/bch_workloads.rs | 32 | 32
+crates/gf2-coding/benches/bench_support.rs | 4 | 4
+crates/gf2-coding/benches/cpu_dispatch_probe.rs | 10 | 10
+crates/gf2-coding/benches/ldpc_decode.rs | 3 | 3
+crates/gf2-coding/benches/ldpc_throughput.rs | 1 | 1
+crates/gf2-coding/benches/linear_codes.rs | 1 | 1
+crates/gf2-coding/benches/llr_simd.rs | 2 | 2
+crates/gf2-coding/benches/modem_cpu.rs | 3 | 3
+crates/gf2-coding/benches/modem_generic_vs_fast.rs | 3 | 3
+crates/gf2-coding/benches/profile_ldpc_decode.rs | 0 | 0
+crates/gf2-coding/benches/profile_ldpc_encode.rs | 0 | 0
+crates/gf2-coding/benches/quick_parallel.rs | 2 | 2
+crates/gf2-coding/benches/simulation_no_analysis_overhead.rs | 7 | 7
+crates/gf2-coding/benches/sparse_preprocessing.rs | 2 | 2
+crates/gf2-coding/examples/awgn_uncoded.rs | 3 | 2
+crates/gf2-coding/examples/bch_binary_quickstart.rs | 21 | 21
+crates/gf2-coding/examples/bch_nonbinary_explicit.rs | 25 | 25
+crates/gf2-coding/examples/bch_oracle_messages.rs | 10 | 10
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs | 14 | 14
+crates/gf2-coding/examples/block_code_intro.rs | 2 | 2
+crates/gf2-coding/examples/dvb_t2_bch_demo.rs | 3 | 3
+crates/gf2-coding/examples/dvb_t2_bicm_chain.rs | 8 | 6
+crates/gf2-coding/examples/dvb_t2_ldpc_basic.rs | 1 | 1
+crates/gf2-coding/examples/gen_presentation_figures.rs | 21 | 10
+crates/gf2-coding/examples/generator_from_parity_check.rs | 2 | 2
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs | 22 | 22
+crates/gf2-coding/examples/hamming_7_4.rs | 4 | 4
+crates/gf2-coding/examples/hamming_basic.rs | 1 | 1
+crates/gf2-coding/examples/ldpc_awgn.rs | 5 | 4
+crates/gf2-coding/examples/ldpc_bler_check.rs | 2 | 2
+crates/gf2-coding/examples/ldpc_cache_file_io.rs | 1 | 1
+crates/gf2-coding/examples/ldpc_encoding_with_cache.rs | 1 | 1
+crates/gf2-coding/examples/ldpc_mother_check.rs | 1 | 1
+crates/gf2-coding/examples/llr_operations.rs | 1 | 1
+crates/gf2-coding/examples/modem_custom_constellation.rs | 3 | 3
+crates/gf2-coding/examples/modem_gray_qam_preset.rs | 3 | 2
+crates/gf2-coding/examples/modem_simulation_harness.rs | 2 | 2
+crates/gf2-coding/examples/nasa_rate_half_k3.rs | 4 | 4
+crates/gf2-coding/examples/qc_ldpc_demo.rs | 2 | 1
+crates/gf2-coding/examples/sogrand_crc_probe.rs | 5 | 5
+crates/gf2-coding/examples/sparse_smoke_emit_expected.rs | 69 | 69
+crates/gf2-coding/examples/visualize_large_matrices.rs | 1 | 1
+crates/gf2-coding/src/bch/core.rs | 473 | 466
+crates/gf2-coding/src/bch/dvb_t2/generators.rs | 12 | 11
+crates/gf2-coding/src/bch/dvb_t2/mod.rs | 136 | 136
+crates/gf2-coding/src/bch/dvb_t2/params.rs | 35 | 21
+crates/gf2-coding/src/bch/encode.rs | 1228 | 1228
+crates/gf2-coding/src/bch/error.rs | 52 | 52
+crates/gf2-coding/src/bch/matrix.rs | 269 | 269
+crates/gf2-coding/src/bch/mod.rs | 51 | 51
+crates/gf2-coding/src/bch/spec.rs | 407 | 407
+crates/gf2-coding/src/bcjr/mod.rs | 40 | 39
+crates/gf2-coding/src/bin/check_encoding.rs | 0 | 0
+crates/gf2-coding/src/bin/generate_ldpc_cache.rs | 1 | 1
+crates/gf2-coding/src/bin/sim_checkpoint_helper.rs | 8 | 7
+crates/gf2-coding/src/bin/sim_runner.rs | 65 | 65
+crates/gf2-coding/src/bin/validate_ldpc_cache.rs | 3 | 3
+crates/gf2-coding/src/channel.rs | 22 | 22
+crates/gf2-coding/src/convolutional.rs | 29 | 28
+crates/gf2-coding/src/crc.rs | 35 | 34
+crates/gf2-coding/src/drm.rs | 90 | 80
+crates/gf2-coding/src/dvb_t2_bicm_harness.rs | 52 | 51
+crates/gf2-coding/src/error.rs | 49 | 49
+crates/gf2-coding/src/fading.rs | 98 | 97
+crates/gf2-coding/src/gldpc/mod.rs | 210 | 205
+crates/gf2-coding/src/grand/mod.rs | 5 | 5
+crates/gf2-coding/src/grand/orbgrand.rs | 260 | 252
+crates/gf2-coding/src/grand/sogrand.rs | 145 | 143
+crates/gf2-coding/src/info_theory.rs | 76 | 76
+crates/gf2-coding/src/ldpc/core.rs | 359 | 350
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs | 128 | 128
+crates/gf2-coding/src/ldpc/dvb_t2/builder.rs | 38 | 36
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs | 158 | 157
+crates/gf2-coding/src/ldpc/dvb_t2/dvb_t2_matrices.rs | 2 | 2
+crates/gf2-coding/src/ldpc/dvb_t2/mod.rs | 5 | 5
+crates/gf2-coding/src/ldpc/dvb_t2/params.rs | 12 | 12
+crates/gf2-coding/src/ldpc/edge_layout.rs | 72 | 72
+crates/gf2-coding/src/ldpc/encoding/cache.rs | 54 | 54
+crates/gf2-coding/src/ldpc/encoding/ira.rs | 39 | 39
+crates/gf2-coding/src/ldpc/encoding/mod.rs | 1 | 1
+crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs | 68 | 68
+crates/gf2-coding/src/ldpc/min_sum.rs | 63 | 63
+crates/gf2-coding/src/ldpc/mod.rs | 1 | 1
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs | 44 | 44
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs | 43 | 43
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs | 59 | 58
+crates/gf2-coding/src/ldpc/nr_5g/lifting.rs | 19 | 19
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs | 363 | 333
+crates/gf2-coding/src/lib.rs | 8 | 8
+crates/gf2-coding/src/linear.rs | 96 | 94
+crates/gf2-coding/src/llr.rs | 122 | 122
+crates/gf2-coding/src/modem/analysis.rs | 336 | 327
+crates/gf2-coding/src/modem/analysis_capture.rs | 29 | 29
+crates/gf2-coding/src/modem/awgn_link.rs | 92 | 90
+crates/gf2-coding/src/modem/bit_pack.rs | 13 | 13
+crates/gf2-coding/src/modem/builder.rs | 78 | 78
+crates/gf2-coding/src/modem/demapper.rs | 76 | 76
+crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs | 111 | 107
+crates/gf2-coding/src/modem/gpu_demapper.rs | 34 | 34
+crates/gf2-coding/src/modem/gray_qam_mapper.rs | 41 | 38
+crates/gf2-coding/src/modem/mapper.rs | 24 | 24
+crates/gf2-coding/src/modem/mod.rs | 6 | 6
+crates/gf2-coding/src/modem/presets.rs | 109 | 107
+crates/gf2-coding/src/modem/ref_demapper.rs | 53 | 51
+crates/gf2-coding/src/modem/ref_mapper.rs | 15 | 13
+crates/gf2-coding/src/modem/scalar.rs | 23 | 23
+crates/gf2-coding/src/modem/spec.rs | 57 | 57
+crates/gf2-coding/src/modem/test_oracle.rs | 26 | 26
+crates/gf2-coding/src/modem/types.rs | 93 | 93
+crates/gf2-coding/src/modem/view.rs | 37 | 37
+crates/gf2-coding/src/osd/bp_osd.rs | 82 | 82
+crates/gf2-coding/src/osd/engine.rs | 369 | 369
+crates/gf2-coding/src/osd/generator.rs | 85 | 85
+crates/gf2-coding/src/osd/mod.rs | 4 | 4
+crates/gf2-coding/src/osd/patterns.rs | 127 | 127
+crates/gf2-coding/src/osd/syndrome.rs | 108 | 108
+crates/gf2-coding/src/product/chase_pyndiah.rs | 73 | 73
+crates/gf2-coding/src/product/mod.rs | 176 | 174
+crates/gf2-coding/src/simulation.rs | 460 | 435
+crates/gf2-coding/src/test_support.rs | 406 | 406
+crates/gf2-coding/src/traits.rs | 435 | 435
+crates/gf2-coding/src/transform/coordinate_map.rs | 73 | 73
+crates/gf2-coding/src/transform/mod.rs | 399 | 399
+crates/gf2-coding/src/tuning.rs | 49 | 49
+crates/gf2-coding/tests/backend_integration.rs | 1 | 1
+crates/gf2-coding/tests/bch_conformance.rs | 107 | 107
+crates/gf2-coding/tests/bch_encode_dispatch.rs | 47 | 47
+crates/gf2-coding/tests/bch_encode_dispatch_allocation.rs | 5 | 5
+crates/gf2-coding/tests/bch_encode_dispatch_default.rs | 2 | 2
+crates/gf2-coding/tests/bch_encode_dispatch_installed.rs | 3 | 3
+crates/gf2-coding/tests/bch_encode_dispatch_profile.rs | 2 | 2
+crates/gf2-coding/tests/bch_examples.rs | 2 | 2
+crates/gf2-coding/tests/bch_matrix_allocation.rs | 10 | 10
+crates/gf2-coding/tests/bch_oracle_agreement.rs | 82 | 82
+crates/gf2-coding/tests/bch_primitive_verification.rs | 7 | 6
+crates/gf2-coding/tests/bch_tests.rs | 45 | 38
+crates/gf2-coding/tests/channel_capacity.rs | 15 | 15
+crates/gf2-coding/tests/common/mod.rs | 11 | 10
+crates/gf2-coding/tests/data/nr5g_regression_vectors.rs | 2 | 2
+crates/gf2-coding/tests/dvb_t2_bch_verification.rs | 3 | 3
+crates/gf2-coding/tests/dvb_t2_bicm_chain.rs | 8 | 4
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs | 7 | 7
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs | 19 | 19
+crates/gf2-coding/tests/dvb_t2_ldpc_tests.rs | 1 | 1
+crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs | 2 | 2
+crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs | 4 | 3
+crates/gf2-coding/tests/ebch_128_64_reference.rs | 8 | 8
+crates/gf2-coding/tests/gldpc_phase3_smoke.rs | 1 | 1
+crates/gf2-coding/tests/grand_phase1_smoke.rs | 2 | 2
+crates/gf2-coding/tests/gray_qam_mapper.rs | 2 | 2
+crates/gf2-coding/tests/ira_encoder_correctness.rs | 4 | 4
+crates/gf2-coding/tests/ldpc_cache_io.rs | 3 | 3
+crates/gf2-coding/tests/ldpc_check_update_contract.rs | 48 | 48
+crates/gf2-coding/tests/ldpc_decode_allocations.rs | 30 | 30
+crates/gf2-coding/tests/ldpc_encoding_tests.rs | 2 | 2
+crates/gf2-coding/tests/ldpc_simd_validation.rs | 1 | 1
+crates/gf2-coding/tests/ldpc_systematic_encoding.rs | 2 | 2
+crates/gf2-coding/tests/ldpc_validation.rs | 5 | 5
+crates/gf2-coding/tests/linear_codes_integration.rs | 4 | 3
+crates/gf2-coding/tests/llr_reliability.rs | 1 | 1
+crates/gf2-coding/tests/llr_simd_integration.rs | 2 | 1
+crates/gf2-coding/tests/modem_analysis_integration.rs | 17 | 17
+crates/gf2-coding/tests/modem_builder.rs | 2 | 2
+crates/gf2-coding/tests/modem_data_model.rs | 4 | 4
+crates/gf2-coding/tests/modem_properties.rs | 13 | 13
+crates/gf2-coding/tests/modem_reference_model.rs | 15 | 14
+crates/gf2-coding/tests/modem_regression.rs | 21 | 19
+crates/gf2-coding/tests/modem_traits.rs | 2 | 2
+crates/gf2-coding/tests/nr5g_diag_test.rs | 0 | 0
+crates/gf2-coding/tests/nr5g_external_vectors.rs | 9 | 9
+crates/gf2-coding/tests/nr5g_regression.rs | 3 | 3
+crates/gf2-coding/tests/osd_reprocessing_engine.rs | 23 | 23
+crates/gf2-coding/tests/qc_ldpc_tests.rs | 7 | 3
+crates/gf2-coding/tests/ref_mapper.rs | 4 | 4
+crates/gf2-coding/tests/shortened_fast_path.rs | 26 | 26
+crates/gf2-coding/tests/sparse_dual_ldpc.rs | 2 | 2
+crates/gf2-coding/tests/sparse_ldpc_compatibility.rs | 2 | 2
+crates/gf2-coding/tests/support/fresh_tuning_process.rs | 57 | 57
+crates/gf2-coding/tests/test_vector_parser.rs | 2 | 2
+crates/gf2-coding/tests/test_vectors/config.rs | 2 | 2
+crates/gf2-coding/tests/test_vectors/loader.rs | 8 | 4
+crates/gf2-coding/tests/test_vectors/mod.rs | 1 | 1
+crates/gf2-coding/tests/test_vectors/parser.rs | 8 | 8
+crates/gf2-coding/tests/uncoded_ber_baseline.rs | 4 | 4
+crates/gf2-coding/tests/verify_cached_generator.rs | 7 | 7
+crates/gf2-core/benches/batch_inverse.rs | 3 | 3
+crates/gf2-core/benches/bitvec.rs | 0 | 0
+crates/gf2-core/benches/charpoly.rs | 6 | 6
+crates/gf2-core/benches/common/seed.rs | 2 | 2
+crates/gf2-core/benches/field_clone.rs | 1 | 1
+crates/gf2-core/benches/field_matrix.rs | 0 | 0
+crates/gf2-core/benches/field_matrix_fusion.rs | 2 | 2
+crates/gf2-core/benches/field_matrix_gemm.rs | 4 | 4
+crates/gf2-core/benches/field_poly.rs | 6 | 6
+crates/gf2-core/benches/field_sparse_matrix.rs | 4 | 4
+crates/gf2-core/benches/fieldmatrix_charpoly.rs | 5 | 5
+crates/gf2-core/benches/fieldmatrix_gemm.rs | 10 | 10
+crates/gf2-core/benches/fieldmatrix_gemm_delayed.rs | 3 | 3
+crates/gf2-core/benches/fieldmatrix_gf2m_batch_gemm.rs | 2 | 2
+crates/gf2-core/benches/fieldmatrix_ple.rs | 7 | 7
+crates/gf2-core/benches/fieldmatrix_solve.rs | 5 | 5
+crates/gf2-core/benches/fieldvec_dot_product.rs | 4 | 2
+crates/gf2-core/benches/fp_montgomery.rs | 2 | 2
+crates/gf2-core/benches/fp_specialized.rs | 9 | 8
+crates/gf2-core/benches/generation.rs | 0 | 0
+crates/gf2-core/benches/gf2m_mul_strategies.rs | 45 | 36
+crates/gf2-core/benches/gf2m_wide_mul.rs | 6 | 6
+crates/gf2-core/benches/inverse.rs | 4 | 4
+crates/gf2-core/benches/m4rm_components.rs | 2 | 1
+crates/gf2-core/benches/m4rm_gray_schedule.rs | 0 | 0
+crates/gf2-core/benches/m4rm_profile.rs | 0 | 0
+crates/gf2-core/benches/matmul.rs | 2 | 2
+crates/gf2-core/benches/matrix_inversion.rs | 1 | 1
+crates/gf2-core/benches/matrix_transpose.rs | 3 | 3
+crates/gf2-core/benches/matrix_vector.rs | 1 | 1
+crates/gf2-core/benches/mersenne_gemm_regression.rs | 5 | 5
+crates/gf2-core/benches/ple.rs | 4 | 4
+crates/gf2-core/benches/polar.rs | 0 | 0
+crates/gf2-core/benches/polynomial.rs | 8 | 6
+crates/gf2-core/benches/primitive_poly.rs | 6 | 6
+crates/gf2-core/benches/random.rs | 0 | 0
+crates/gf2-core/benches/rank_select.rs | 1 | 1
+crates/gf2-core/benches/rref.rs | 2 | 2
+crates/gf2-core/benches/rref_profile.rs | 1 | 1
+crates/gf2-core/benches/scan.rs | 4 | 2
+crates/gf2-core/benches/selector_non_regression.rs | 181 | 179
+crates/gf2-core/benches/shifts.rs | 17 | 12
+crates/gf2-core/benches/simd_vs_scalar.rs | 3 | 3
+crates/gf2-core/benches/soa_batch.rs | 4 | 4
+crates/gf2-core/benches/sparse.rs | 8 | 8
+crates/gf2-core/benches/sparse_field_matmul.rs | 6 | 6
+crates/gf2-core/benches/sparse_matmul.rs | 5 | 5
+crates/gf2-core/benches/sparse_rref.rs | 6 | 6
+crates/gf2-core/benches/sparse_rref_scorecard.rs | 6 | 6
+crates/gf2-core/benches/sparse_spmv.rs | 5 | 5
+crates/gf2-core/benches/strassen_threshold.rs | 6 | 6
+crates/gf2-core/benches/triangular.rs | 4 | 4
+crates/gf2-core/benches/tuning_calibration.rs | 391 | 389
+crates/gf2-core/benches/wide_logical.rs | 0 | 0
+crates/gf2-core/examples/bench_csv_emitter.rs | 24 | 24
+crates/gf2-core/examples/bitvec_basics.rs | 2 | 2
+crates/gf2-core/examples/field_linear_algebra.rs | 10 | 10
+crates/gf2-core/examples/helper_methods_demo.rs | 3 | 0
+crates/gf2-core/examples/lto_opacity_audit.rs | 11 | 11
+crates/gf2-core/examples/m4rm_gray_table_perfstat.rs | 2 | 2
+crates/gf2-core/examples/m4rm_multiply_perfstat.rs | 10 | 10
+crates/gf2-core/examples/matrix_basics.rs | 4 | 4
+crates/gf2-core/examples/ple_timing.rs | 2 | 2
+crates/gf2-core/examples/primitive_polynomial_verification.rs | 1 | 1
+crates/gf2-core/examples/primitive_polynomial_warning.rs | 2 | 2
+crates/gf2-core/examples/random_generation.rs | 1 | 1
+crates/gf2-core/examples/sparse_block_csr_perfstat.rs | 3 | 3
+crates/gf2-core/examples/sparse_display.rs | 0 | 0
+crates/gf2-core/examples/visualize_matrix.rs | 5 | 1
+crates/gf2-core/src/alg/gauss.rs | 58 | 58
+crates/gf2-core/src/alg/m4rm.rs | 208 | 208
+crates/gf2-core/src/alg/matmul.rs | 3 | 3
+crates/gf2-core/src/alg/mod.rs | 1 | 1
+crates/gf2-core/src/alg/rref.rs | 155 | 155
+crates/gf2-core/src/alg/strassen.rs | 2 | 2
+crates/gf2-core/src/bench_seed.rs | 58 | 58
+crates/gf2-core/src/bitslice.rs | 23 | 22
+crates/gf2-core/src/bitvec.rs | 196 | 196
+crates/gf2-core/src/bitvec_sync_tests.rs | 4 | 1
+crates/gf2-core/src/compute/backend.rs | 31 | 31
+crates/gf2-core/src/compute/batch_tests.rs | 1 | 1
+crates/gf2-core/src/compute/cpu.rs | 7 | 7
+crates/gf2-core/src/compute/field.rs | 30 | 30
+crates/gf2-core/src/compute/mod.rs | 11 | 11
+crates/gf2-core/src/field/axiom_tests.rs | 207 | 207
+crates/gf2-core/src/field/batch_ops.rs | 59 | 59
+crates/gf2-core/src/field/charpoly.rs | 431 | 420
+crates/gf2-core/src/field/expr.rs | 283 | 259
+crates/gf2-core/src/field/extension.rs | 977 | 977
+crates/gf2-core/src/field/extension_wiedemann.rs | 84 | 82
+crates/gf2-core/src/field/inverse.rs | 141 | 141
+crates/gf2-core/src/field/irreducibility.rs | 73 | 73
+crates/gf2-core/src/field/matrix.rs | 552 | 543
+crates/gf2-core/src/field/mod.rs | 1 | 1
+crates/gf2-core/src/field/modulus_select.rs | 129 | 129
+crates/gf2-core/src/field/ntt.rs | 51 | 51
+crates/gf2-core/src/field/ple.rs | 336 | 335
+crates/gf2-core/src/field/poly.rs | 594 | 567
+crates/gf2-core/src/field/poly_interpolate.rs | 147 | 141
+crates/gf2-core/src/field/sparse_matrix.rs | 264 | 264
+crates/gf2-core/src/field/test_random_matrix.rs | 28 | 28
+crates/gf2-core/src/field/traits.rs | 195 | 195
+crates/gf2-core/src/field/triangular.rs | 282 | 282
+crates/gf2-core/src/field/two_adic.rs | 72 | 69
+crates/gf2-core/src/field/vec.rs | 170 | 167
+crates/gf2-core/src/field/winograd.rs | 116 | 109
+crates/gf2-core/src/gf2m/barrett.rs | 231 | 223
+crates/gf2-core/src/gf2m/batch.rs | 39 | 39
+crates/gf2-core/src/gf2m/byte_table.rs | 135 | 135
+crates/gf2-core/src/gf2m/field.rs | 258 | 245
+crates/gf2-core/src/gf2m/generation.rs | 28 | 28
+crates/gf2-core/src/gf2m/mod.rs | 3 | 3
+crates/gf2-core/src/gf2m/mul_raw.rs | 48 | 48
+crates/gf2-core/src/gf2m/poly_helpers.rs | 33 | 33
+crates/gf2-core/src/gf2m/thread_safety_tests.rs | 0 | 0
+crates/gf2-core/src/gf2m/uint_ext.rs | 24 | 24
+crates/gf2-core/src/gf2m/wide.rs | 398 | 392
+crates/gf2-core/src/gf2m/wide_config.rs | 48 | 48
+crates/gf2-core/src/gfp/mod.rs | 178 | 178
+crates/gf2-core/src/gfp/montgomery.rs | 41 | 35
+crates/gf2-core/src/gfp/simd_ops.rs | 486 | 473
+crates/gf2-core/src/gfp/specialized.rs | 188 | 184
+crates/gf2-core/src/gfpn/batch.rs | 173 | 171
+crates/gf2-core/src/gfpn/cubic.rs | 115 | 111
+crates/gf2-core/src/gfpn/ext_config.rs | 41 | 41
+crates/gf2-core/src/gfpn/mod.rs | 5 | 5
+crates/gf2-core/src/gfpn/quadratic.rs | 109 | 108
+crates/gf2-core/src/gfpn/quotient.rs | 576 | 576
+crates/gf2-core/src/io/bitvec.rs | 7 | 7
+crates/gf2-core/src/io/error.rs | 21 | 21
+crates/gf2-core/src/io/field_matrix.rs | 81 | 81
+crates/gf2-core/src/io/format.rs | 25 | 25
+crates/gf2-core/src/io/formats.rs | 18 | 18
+crates/gf2-core/src/io/header.rs | 4 | 4
+crates/gf2-core/src/io/matrix.rs | 10 | 9
+crates/gf2-core/src/io/mod.rs | 34 | 34
+crates/gf2-core/src/io/sparse.rs | 18 | 17
+crates/gf2-core/src/kernels/aarch64.rs | 3 | 3
+crates/gf2-core/src/kernels/backend.rs | 42 | 40
+crates/gf2-core/src/kernels/mod.rs | 3 | 3
+crates/gf2-core/src/kernels/ops.rs | 50 | 50
+crates/gf2-core/src/kernels/scalar/logical.rs | 4 | 4
+crates/gf2-core/src/kernels/scalar/mod.rs | 1 | 1
+crates/gf2-core/src/kernels/scalar/primitives.rs | 23 | 10
+crates/gf2-core/src/kernels/simd/mod.rs | 15 | 15
+crates/gf2-core/src/kernels/test_utils.rs | 9 | 1
+crates/gf2-core/src/kernels/x86.rs | 6 | 5
+crates/gf2-core/src/lib.rs | 88 | 88
+crates/gf2-core/src/macros.rs | 13 | 13
+crates/gf2-core/src/matrix.rs | 255 | 255
+crates/gf2-core/src/matrix_like.rs | 47 | 47
+crates/gf2-core/src/primitive_polys.rs | 106 | 43
+crates/gf2-core/src/residual_shift.rs | 69 | 69
+crates/gf2-core/src/rng.rs | 16 | 16
+crates/gf2-core/src/sparse.rs | 355 | 354
+crates/gf2-core/src/test_scratch.rs | 43 | 43
+crates/gf2-core/src/tuning/baked.rs | 28 | 28
+crates/gf2-core/src/tuning/mechanism.rs | 140 | 140
+crates/gf2-core/src/tuning/mod.rs | 350 | 350
+crates/gf2-core/src/tuning/profile.rs | 71 | 71
+crates/gf2-core/tests/backend_selection.rs | 3 | 3
+crates/gf2-core/tests/backend_selection_baked.rs | 4 | 4
+crates/gf2-core/tests/backend_selection_profile.rs | 2 | 2
+crates/gf2-core/tests/backend_selection_profile_above.rs | 0 | 0
+crates/gf2-core/tests/backend_selection_resolution.rs | 0 | 0
+crates/gf2-core/tests/backend_selection_tunable.rs | 2 | 2
+crates/gf2-core/tests/bench_seed_compat.rs | 7 | 7
+crates/gf2-core/tests/bitmatrix_macro.rs | 1 | 0
+crates/gf2-core/tests/clmul_wide_conformance.rs | 34 | 34
+crates/gf2-core/tests/common/mod.rs | 60 | 60
+crates/gf2-core/tests/field_linear_algebra_example.rs | 3 | 2
+crates/gf2-core/tests/field_vec_baked.rs | 6 | 6
+crates/gf2-core/tests/field_vec_dot_chunk.rs | 4 | 4
+crates/gf2-core/tests/gemm_tiles_baked.rs | 6 | 6
+crates/gf2-core/tests/gf256_axpy_allocation.rs | 12 | 12
+crates/gf2-core/tests/gf256_gemm_allocation.rs | 18 | 18
+crates/gf2-core/tests/gf256_gemm_conformance.rs | 28 | 28
+crates/gf2-core/tests/gf256_table_conformance.rs | 28 | 28
+crates/gf2-core/tests/gf2pow32_constant_drift.rs | 5 | 5
+crates/gf2-core/tests/gf2pow32_matmul.rs | 14 | 14
+crates/gf2-core/tests/gfpn_nested_towers.rs | 18 | 14
+crates/gf2-core/tests/gfpn_wide_nested.rs | 11 | 11
+crates/gf2-core/tests/inversion.rs | 6 | 6
+crates/gf2-core/tests/karatsuba_cross_verify.rs | 26 | 26
+crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs | 0 | 0
+crates/gf2-core/tests/matmul.rs | 2 | 1
+crates/gf2-core/tests/matrix.rs | 8 | 1
+crates/gf2-core/tests/matrix_selection_baked.rs | 3 | 3
+crates/gf2-core/tests/matrix_vector.rs | 14 | 12
+crates/gf2-core/tests/mul_operator.rs | 12 | 12
+crates/gf2-core/tests/ordered_column_elimination.rs | 18 | 18
+crates/gf2-core/tests/phase2_prime_sweep_proptests.rs | 11 | 11
+crates/gf2-core/tests/ple_panel_effective_no_simd.rs | 0 | 0
+crates/gf2-core/tests/polar_tests.rs | 13 | 13
+crates/gf2-core/tests/popcount_routes.rs | 11 | 11
+crates/gf2-core/tests/prime_route_baked.rs | 11 | 11
+crates/gf2-core/tests/prime_route_dispatch.rs | 8 | 8
+crates/gf2-core/tests/prime_route_reporter.rs | 11 | 11
+crates/gf2-core/tests/prime_route_toggle.rs | 6 | 6
+crates/gf2-core/tests/primitive_warnings.rs | 2 | 2
+crates/gf2-core/tests/property_tests.rs | 3 | 3
+crates/gf2-core/tests/random_generation.rs | 2 | 2
+crates/gf2-core/tests/rank_select_proptests.rs | 1 | 1
+crates/gf2-core/tests/residual_shift_routes.rs | 37 | 37
+crates/gf2-core/tests/route_a_gf251_parity.rs | 10 | 10
+crates/gf2-core/tests/route_a_gf251_production_dispatch_proptests.rs | 6 | 6
+crates/gf2-core/tests/route_c_gf251_parity.rs | 9 | 9
+crates/gf2-core/tests/rref_comprehensive.rs | 9 | 9
+crates/gf2-core/tests/selector_non_regression_harness.rs | 5 | 4
+crates/gf2-core/tests/simd_equiv/mod.rs | 27 | 27
+crates/gf2-core/tests/simd_equiv_demo.rs | 10 | 10
+crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs | 2 | 2
+crates/gf2-core/tests/simd_equiv_gf2m_batch.rs | 8 | 8
+crates/gf2-core/tests/simd_equiv_matmul.rs | 1 | 1
+crates/gf2-core/tests/simd_equiv_matvec.rs | 1 | 1
+crates/gf2-core/tests/sparse.rs | 1 | 1
+crates/gf2-core/tests/sparse_conversion.rs | 0 | 0
+crates/gf2-core/tests/sparse_dense_image_equivalence.rs | 0 | 0
+crates/gf2-core/tests/sparse_display.rs | 1 | 0
+crates/gf2-core/tests/sparse_dual.rs | 1 | 1
+crates/gf2-core/tests/sparse_iter_transpose.rs | 0 | 0
+crates/gf2-core/tests/sparse_proptests.rs | 0 | 0
+crates/gf2-core/tests/sparse_visualization_tests.rs | 0 | 0
+crates/gf2-core/tests/strassen_matmul.rs | 1 | 1
+crates/gf2-core/tests/support/core_tuning.rs | 1 | 1
+crates/gf2-core/tests/support/fresh_tuning_process.rs | 0 | 0
+crates/gf2-core/tests/support/measured_format2.rs | 2 | 2
+crates/gf2-core/tests/transpose_lane_contract.rs | 25 | 25
+crates/gf2-core/tests/tuning_calibration_harness.rs | 5 | 4
+crates/gf2-core/tests/tuning_conservative_cfg.rs | 1 | 1
+crates/gf2-core/tests/tuning_envelope_v2.rs | 0 | 0
+crates/gf2-core/tests/tuning_extent_candidates.rs | 1 | 1
+crates/gf2-core/tests/tuning_extent_runtime.rs | 0 | 0
+crates/gf2-core/tests/tuning_observation_quiet.rs | 1 | 1
+crates/gf2-core/tests/tuning_process_lifecycle.rs | 0 | 0
+crates/gf2-core/tests/tuning_profile_charpoly_install.rs | 3 | 3
+crates/gf2-core/tests/tuning_profile_committed.rs | 0 | 0
+crates/gf2-core/tests/tuning_profile_default.rs | 0 | 0
+crates/gf2-core/tests/tuning_profile_dense_inverse_install.rs | 7 | 7
+crates/gf2-core/tests/tuning_profile_gemm_install.rs | 2 | 2
+crates/gf2-core/tests/tuning_profile_gemm_install_above.rs | 2 | 2
+crates/gf2-core/tests/tuning_profile_install.rs | 0 | 0
+crates/gf2-core/tests/tuning_profile_interpolate_install.rs | 0 | 0
+crates/gf2-core/tests/tuning_profile_m4rm_install.rs | 26 | 26
+crates/gf2-core/tests/tuning_profile_m4rm_wide_tier_install.rs | 16 | 16
+crates/gf2-core/tests/tuning_profile_matrix_install.rs | 8 | 8
+crates/gf2-core/tests/tuning_profile_ple_byte_lane_install.rs | 18 | 18
+crates/gf2-core/tests/tuning_profile_ple_install.rs | 9 | 9
+crates/gf2-core/tests/tuning_profile_ple_install_above.rs | 13 | 13
+crates/gf2-core/tests/tuning_profile_ple_scalar_base_install.rs | 14 | 14
+crates/gf2-core/tests/tuning_profile_ple_u16_lane_install.rs | 13 | 13
+crates/gf2-core/tests/tuning_profile_polynomial_install.rs | 0 | 0
+crates/gf2-core/tests/tuning_profile_soa_batch_install.rs | 24 | 23
+crates/gf2-core/tests/tuning_profile_triangular_base_install.rs | 1 | 1
+crates/gf2-core/tests/tuning_profile_triangular_base_install_above.rs | 1 | 1
+crates/gf2-core/tests/tuning_profile_triangular_install.rs | 10 | 10
+crates/gf2-core/tests/tuning_profile_triangular_install_above.rs | 3 | 3
+crates/gf2-core/tests/tuning_profile_winograd_install.rs | 5 | 5
+crates/gf2-core/tests/tuning_profile_winograd_install_above.rs | 4 | 4
+crates/gf2-core/tests/visualization_tests.rs | 0 | 0
+crates/gf2-kernels-hip/benches/gpu_vs_cpu_gray_qam.rs | 10 | 10
+crates/gf2-kernels-hip/build.rs | 26 | 22
+crates/gf2-kernels-hip/src/ffi.rs | 212 | 212
+crates/gf2-kernels-hip/src/host/alloc.rs | 176 | 175
+crates/gf2-kernels-hip/src/host/arch.rs | 75 | 75
+crates/gf2-kernels-hip/src/host/events.rs | 70 | 70
+crates/gf2-kernels-hip/src/host/launch.rs | 20 | 20
+crates/gf2-kernels-hip/src/host/mod.rs | 14 | 14
+crates/gf2-kernels-hip/src/host/streams.rs | 122 | 120
+crates/gf2-kernels-hip/src/launch_bch_syndrome.rs | 96 | 96
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs | 136 | 136
+crates/gf2-kernels-hip/src/launch_ldpc_bp.rs | 189 | 189
+crates/gf2-kernels-hip/src/lib.rs | 225 | 217
+crates/gf2-kernels-hip/src/permanent/mod.rs | 578 | 578
+crates/gf2-kernels-hip/tests/common/mod.rs | 22 | 21
+crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs | 11 | 10
+crates/gf2-kernels-hip/tests/gpu_bench_support.rs | 5 | 5
+crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs | 4 | 4
+crates/gf2-kernels-hip/tests/gpu_gray_qam_demapper.rs | 10 | 10
+crates/gf2-kernels-hip/tests/permanent_f3.rs | 18 | 17
+crates/gf2-kernels-hip/tests/permanent_f5.rs | 14 | 13
+crates/gf2-kernels-hip/tests/permanent_f7.rs | 27 | 26
+crates/gf2-kernels-hip/tests/permanent_timing.rs | 4 | 4
+crates/gf2-kernels-hip/tests/throughput_bench.rs | 2 | 2
+crates/gf2-kernels-simd/src/bch_encode.rs | 338 | 336
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs | 38 | 38
+crates/gf2-kernels-simd/src/bipedal/framework.rs | 90 | 90
+crates/gf2-kernels-simd/src/bipedal/lanes.rs | 53 | 53
+crates/gf2-kernels-simd/src/bipedal/mod.rs | 74 | 74
+crates/gf2-kernels-simd/src/bipedal/packed5.rs | 81 | 81
+crates/gf2-kernels-simd/src/bipedal/packed7.rs | 79 | 78
+crates/gf2-kernels-simd/src/clmul_scalar.rs | 4 | 4
+crates/gf2-kernels-simd/src/fp65537.rs | 73 | 73
+crates/gf2-kernels-simd/src/fp_generic.rs | 19 | 18
+crates/gf2-kernels-simd/src/fp_medium.rs | 46 | 46
+crates/gf2-kernels-simd/src/fp_medium_f64.rs | 29 | 29
+crates/gf2-kernels-simd/src/fp_medium_ple.rs | 81 | 81
+crates/gf2-kernels-simd/src/fp_small.rs | 100 | 100
+crates/gf2-kernels-simd/src/fp_small_f32.rs | 39 | 36
+crates/gf2-kernels-simd/src/fp_small_panel.rs | 36 | 36
+crates/gf2-kernels-simd/src/fp_small_ple.rs | 66 | 66
+crates/gf2-kernels-simd/src/gf2m.rs | 66 | 64
+crates/gf2-kernels-simd/src/gf2m_batch.rs | 42 | 38
+crates/gf2-kernels-simd/src/gf2m_gemm.rs | 21 | 20
+crates/gf2-kernels-simd/src/gf2m_wide.rs | 48 | 46
+crates/gf2-kernels-simd/src/lib.rs | 76 | 76
+crates/gf2-kernels-simd/src/llr.rs | 38 | 38
+crates/gf2-kernels-simd/src/mersenne.rs | 37 | 37
+crates/gf2-kernels-simd/src/modem.rs | 153 | 151
+crates/gf2-kernels-simd/src/prefetch.rs | 9 | 9
+crates/gf2-kernels-simd/src/shift_funnel.rs | 66 | 66
+crates/gf2-kernels-simd/src/transpose.rs | 129 | 129
+crates/gf2-kernels-simd/src/x86/avx2.rs | 55 | 53
+crates/gf2-kernels-simd/src/x86/bch_encode.rs | 72 | 72
+crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs | 79 | 79
+crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs | 82 | 82
+crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs | 55 | 55
+crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs | 45 | 45
+crates/gf2-kernels-simd/src/x86/clmul.rs | 103 | 87
+crates/gf2-kernels-simd/src/x86/fp65537.rs | 119 | 119
+crates/gf2-kernels-simd/src/x86/fp_generic.rs | 10 | 8
+crates/gf2-kernels-simd/src/x86/fp_medium.rs | 238 | 232
+crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs | 111 | 110
+crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs | 59 | 59
+crates/gf2-kernels-simd/src/x86/fp_small.rs | 291 | 279
+crates/gf2-kernels-simd/src/x86/fp_small_f32.rs | 148 | 148
+crates/gf2-kernels-simd/src/x86/fp_small_panel.rs | 86 | 77
+crates/gf2-kernels-simd/src/x86/fp_small_ple.rs | 52 | 51
+crates/gf2-kernels-simd/src/x86/gf2m_batch.rs | 38 | 38
+crates/gf2-kernels-simd/src/x86/gf2m_common.rs | 37 | 37
+crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs | 33 | 33
+crates/gf2-kernels-simd/src/x86/gf2m_wide.rs | 61 | 61
+crates/gf2-kernels-simd/src/x86/mersenne.rs | 79 | 79
+crates/gf2-kernels-simd/src/x86/mod.rs | 0 | 0
+crates/gf2-kernels-simd/src/x86/popcount.rs | 90 | 90
+crates/gf2-kernels-simd/src/x86/shift_funnel.rs | 42 | 42
+crates/gf2-kernels-simd/src/x86/transpose.rs | 106 | 106
+crates/gf2-sim/benches/nr_5g_realtime.rs | 15 | 15
+crates/gf2-sim/build.rs | 0 | 0
+crates/gf2-sim/examples/dvb_t2_graph_api.rs | 7 | 7
+crates/gf2-sim/examples/dvb_t2_quickstart.rs | 4 | 4
+crates/gf2-sim/examples/dvb_t2_typestate.rs | 6 | 6
+crates/gf2-sim/examples/gpu_hybrid.rs | 9 | 9
+crates/gf2-sim/examples/novel_chain_via_graph.rs | 9 | 8
+crates/gf2-sim/examples/nr_5g_quickstart.rs | 7 | 7
+crates/gf2-sim/examples/parallel_byte_identity.rs | 5 | 5
+crates/gf2-sim/src/batch.rs | 32 | 32
+crates/gf2-sim/src/bin/checkpoint_sweep.rs | 31 | 29
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs | 55 | 54
+crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs | 27 | 27
+crates/gf2-sim/src/bin/export_alist.rs | 20 | 20
+crates/gf2-sim/src/bin/gpu_awgn_throughput.rs | 7 | 6
+crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs | 17 | 17
+crates/gf2-sim/src/bin/gpu_demap_throughput.rs | 12 | 11
+crates/gf2-sim/src/bin/gpu_ldpc_throughput.rs | 8 | 8
+crates/gf2-sim/src/bin/hard_fail_probe.rs | 13 | 11
+crates/gf2-sim/src/bin/hybrid_throughput.rs | 4 | 4
+crates/gf2-sim/src/bin/ldpc_bler_sweep.rs | 18 | 18
+crates/gf2-sim/src/bin/parallel_throughput.rs | 2 | 2
+crates/gf2-sim/src/bin/permanent_campaign.rs | 9 | 9
+crates/gf2-sim/src/bin/permanent_dataset.rs | 24 | 24
+crates/gf2-sim/src/bin/permanent_rare_event.rs | 16 | 16
+crates/gf2-sim/src/bin/permanent_validation.rs | 23 | 23
+crates/gf2-sim/src/channels/awgn.rs | 33 | 33
+crates/gf2-sim/src/channels/mod.rs | 23 | 23
+crates/gf2-sim/src/channels/rayleigh.rs | 27 | 27
+crates/gf2-sim/src/channels/rician.rs | 43 | 43
+crates/gf2-sim/src/checkpoint/mod.rs | 131 | 131
+crates/gf2-sim/src/config.rs | 41 | 41
+crates/gf2-sim/src/connector.rs | 18 | 18
+crates/gf2-sim/src/error.rs | 125 | 125
+crates/gf2-sim/src/executor/drain.rs | 281 | 278
+crates/gf2-sim/src/executor/failure.rs | 92 | 89
+crates/gf2-sim/src/executor/hybrid_core.rs | 121 | 121
+crates/gf2-sim/src/executor/mod.rs | 6 | 6
+crates/gf2-sim/src/executor/results.rs | 22 | 22
+crates/gf2-sim/src/executor/scheduler.rs | 202 | 199
+crates/gf2-sim/src/executor/topology.rs | 371 | 370
+crates/gf2-sim/src/frame_sim.rs | 93 | 93
+crates/gf2-sim/src/gpu/awgn.rs | 166 | 166
+crates/gf2-sim/src/gpu/demap.rs | 126 | 126
+crates/gf2-sim/src/gpu/ldpc_bp.rs | 156 | 156
+crates/gf2-sim/src/gpu/mod.rs | 92 | 92
+crates/gf2-sim/src/gpu/nr_5g_ldpc.rs | 88 | 88
+crates/gf2-sim/src/graph/mod.rs | 227 | 226
+crates/gf2-sim/src/lib.rs | 43 | 43
+crates/gf2-sim/src/observability.rs | 15 | 15
+crates/gf2-sim/src/osd_campaign.rs | 400 | 400
+crates/gf2-sim/src/parallel/mod.rs | 173 | 172
+crates/gf2-sim/src/permanent_campaign/acceptance.rs | 69 | 69
+crates/gf2-sim/src/permanent_campaign/coordinator.rs | 351 | 351
+crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs | 0 | 0
+crates/gf2-sim/src/permanent_campaign/fixture.rs | 35 | 35
+crates/gf2-sim/src/permanent_campaign/launch_cost.rs | 64 | 64
+crates/gf2-sim/src/permanent_campaign/mod.rs | 3 | 3
+crates/gf2-sim/src/permanent_campaign/provenance.rs | 254 | 254
+crates/gf2-sim/src/permanent_campaign/root_fs.rs | 17 | 17
+crates/gf2-sim/src/permanent_campaign/schedule.rs | 280 | 280
+crates/gf2-sim/src/permanent_campaign/schema.rs | 250 | 250
+crates/gf2-sim/src/permanent_campaign/validation.rs | 291 | 291
+crates/gf2-sim/src/permanent_rare_event/artifact.rs | 678 | 678
+crates/gf2-sim/src/permanent_rare_event/artifact/observe.rs | 77 | 77
+crates/gf2-sim/src/permanent_rare_event/artifact/result.rs | 46 | 46
+crates/gf2-sim/src/permanent_rare_event/artifact/store.rs | 36 | 36
+crates/gf2-sim/src/permanent_rare_event/mod.rs | 68 | 68
+crates/gf2-sim/src/permanent_rare_event/runner.rs | 74 | 74
+crates/gf2-sim/src/pipeline.rs | 106 | 106
+crates/gf2-sim/src/presets/dvb_t2.rs | 125 | 125
+crates/gf2-sim/src/presets/mod.rs | 12 | 12
+crates/gf2-sim/src/presets/nr_5g.rs | 237 | 235
+crates/gf2-sim/src/snr_checkpoint.rs | 262 | 256
+crates/gf2-sim/src/stage.rs | 130 | 130
+crates/gf2-sim/src/stages/mod.rs | 135 | 135
+crates/gf2-sim/src/stages/nr_5g.rs | 71 | 71
+crates/gf2-sim/src/testutil.rs | 46 | 46
+crates/gf2-sim/tests/build_errors.rs | 5 | 5
+crates/gf2-sim/tests/campaign_byte_identity.rs | 6 | 6
+crates/gf2-sim/tests/campaign_cli_flags.rs | 12 | 11
+crates/gf2-sim/tests/channels_determinism.rs | 11 | 11
+crates/gf2-sim/tests/channels_smoke.rs | 12 | 12
+crates/gf2-sim/tests/checkpoint_compat.rs | 27 | 25
+crates/gf2-sim/tests/common/mod.rs | 50 | 48
+crates/gf2-sim/tests/compile_fail.rs | 4 | 4
+crates/gf2-sim/tests/compile_fail/no_public_field_sidecar_mutator.rs | 2 | 2
+crates/gf2-sim/tests/compile_fail/nr_wrong_order.rs | 5 | 5
+crates/gf2-sim/tests/compile_fail/wrong_order.rs | 4 | 4
+crates/gf2-sim/tests/cyclic_chain.rs | 3 | 3
+crates/gf2-sim/tests/dag_topology.rs | 33 | 32
+crates/gf2-sim/tests/determinism.rs | 19 | 16
+crates/gf2-sim/tests/dvb_t2_chain_via_graph.rs | 5 | 5
+crates/gf2-sim/tests/dvb_t2_regression.rs | 9 | 9
+crates/gf2-sim/tests/dvb_t2_stage_roundtrip.rs | 7 | 7
+crates/gf2-sim/tests/ebch_osd_campaign_cli.rs | 2 | 2
+crates/gf2-sim/tests/executor_failure_modes.rs | 5 | 4
+crates/gf2-sim/tests/executor_oom_fallback_run.rs | 20 | 19
+crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs | 18 | 18
+crates/gf2-sim/tests/gpu_byte_identity.rs | 20 | 20
+crates/gf2-sim/tests/gpu_cpu_fallback_present.rs | 3 | 3
+crates/gf2-sim/tests/gpu_demap_byte_identity.rs | 15 | 14
+crates/gf2-sim/tests/gpu_fault_injection.rs | 3 | 3
+crates/gf2-sim/tests/gpu_ldpc_byte_identity.rs | 5 | 5
+crates/gf2-sim/tests/gpu_nr_5g_byte_identity.rs | 5 | 5
+crates/gf2-sim/tests/hard_fail_subprocess.rs | 7 | 7
+crates/gf2-sim/tests/hybrid_resume.rs | 32 | 30
+crates/gf2-sim/tests/hybrid_scheduler.rs | 6 | 6
+crates/gf2-sim/tests/osd_campaign_protocol.rs | 24 | 24
+crates/gf2-sim/tests/parallel_determinism.rs | 7 | 6
+crates/gf2-sim/tests/permanent_campaign_bin.rs | 0 | 0
+crates/gf2-sim/tests/permanent_rare_event.rs | 0 | 0
+crates/gf2-sim/tests/permanent_rare_event_artifacts.rs | 6 | 6
+crates/gf2-sim/tests/permanent_validation.rs | 16 | 16
+crates/gf2-sim/tests/pipeline_run_cpu.rs | 4 | 3
+crates/gf2-sim/tests/preset_vs_graph.rs | 20 | 19
+crates/gf2-sim/tests/preset_vs_graph_byte_identity.rs | 10 | 10
+crates/gf2-sim/tests/stage_driven_byte_identity.rs | 9 | 9
+crates/gf2-sim/tests/type_mismatch.rs | 4 | 4
+crates/gf2-stats/src/accumulator.rs | 146 | 146
+crates/gf2-stats/src/binomial.rs | 95 | 95
+crates/gf2-stats/src/intervals.rs | 99 | 99
+crates/gf2-stats/src/lib.rs | 4 | 4
+crates/gf2-stats/src/numerics.rs | 2 | 2
+crates/gf2-stats/src/sampler.rs | 100 | 100
+crates/gf2-stats/src/weighted.rs | 70 | 70
+crates/gf2-stats/tests/accumulator_contract.rs | 0 | 0
+crates/gf2-stats/tests/binomial_contract.rs | 5 | 5
+crates/gf2-stats/tests/interval_contract.rs | 9 | 9
+crates/gf2-stats/tests/sampler_contract.rs | 0 | 0
+crates/gf2-stats/tests/weighted_contract.rs | 0 | 0
+dev/tools/tuning-campaign-support/src/abtest.rs | 59 | 59
+dev/tools/tuning-campaign-support/src/arm.rs | 147 | 147
+dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs | 8 | 8
+dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs | 67 | 67
+dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs | 5 | 5
+dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs | 148 | 148
+dev/tools/tuning-campaign-support/src/campaign.rs | 395 | 395
+dev/tools/tuning-campaign-support/src/host.rs | 65 | 65
+dev/tools/tuning-campaign-support/src/journal.rs | 145 | 145
+dev/tools/tuning-campaign-support/src/lib.rs | 3 | 3
+dev/tools/tuning-campaign-support/src/process.rs | 36 | 36
+dev/tools/tuning-campaign-support/src/protocol.rs | 166 | 166
+dev/tools/tuning-campaign-support/src/provenance.rs | 30 | 30
+dev/tools/tuning-campaign-support/src/receipt.rs | 155 | 155
+dev/tools/tuning-campaign-support/src/repository.rs | 29 | 29
+dev/tools/tuning-campaign-support/src/schema.rs | 14 | 14
+dev/tools/tuning-campaign-support/src/scratch.rs | 38 | 38
+dev/tools/tuning-campaign-support/src/seed.rs | 5 | 5
+dev/tools/tuning-campaign-support/src/statistics.rs | 46 | 46
+dev/tools/tuning-campaign-support/src/timing.rs | 32 | 32
+dev/tools/tuning-campaign-support/src/transport.rs | 18 | 18
+dev/tools/tuning-campaign-support/src/trial_ledger.rs | 24 | 24
+dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs | 9 | 9
+dev/tools/tuning-campaign-support/tests/campaign_contracts.rs | 13 | 7
+dev/tools/tuning-campaign-support/tests/checkpoint_provenance.rs | 1 | 1
+dev/tools/tuning-campaign-support/tests/contracts.rs | 4 | 4
+dev/tools/tuning-campaign-support/tests/driver_launcher.rs | 16 | 16
+dev/tools/tuning-campaign-support/tests/host_process_contracts.rs | 5 | 5
+dev/tools/tuning-campaign-support/tests/protocol_contracts.rs | 64 | 64
+dev/tools/tuning-campaign-support/tests/schema_subset.rs | 0 | 0
+dev/tools/tuning-profile-compose/src/main.rs | 1 | 1
+
+# 2. crate | files | lines read | lines beginning with // | census
+crates/gf2-algebra | 48 | 2013 | 1971 | 1971
+crates/gf2-coding | 190 | 10796 | 10603 | 10603
+crates/gf2-core | 260 | 12762 | 12465 | 12465
+crates/gf2-kernels-hip | 24 | 2066 | 2046 | 2046
+crates/gf2-kernels-simd | 53 | 4022 | 3955 | 3955
+crates/gf2-sim | 119 | 7667 | 7622 | 7622
+crates/gf2-stats | 12 | 530 | 530 | 530
+dev/tools/tuning-campaign-support | 30 | 1747 | 1741 | -
+dev/tools/tuning-profile-compose | 1 | 1 | 1 | -
+total | 737 | 41604 | 40934 | -
+
+# 3. path:line | disposition | key or reason | found by | comment
+crates/gf2-algebra/benches/tuning_calibration.rs:6 | not a citation | section of an internal design or protocol document | read | //! Protocol: `dev/active/a83583e0/premeasurement-protocol.md` §3, 6, 8, 8.1, 10.
+crates/gf2-algebra/examples/paper_repro_slope.rs:1 | keyed | Scheinerman2024 | read | //! Reproduces the Table 2 scaling slope of `@/citation/Scheinerman2024` with
+crates/gf2-algebra/examples/paper_repro_slope.rs:3 | keyed | Scheinerman2024 | read | //! (the cited table covers `n ∈ {24, 26, …, 36}`), fits `ln(mean_us) = a + b*n`
+crates/gf2-algebra/examples/paper_repro_slope.rs:40 | keyed | Scheinerman2024 | read | // n=24 is the bottom of the cited Table 2 range, so the sweep overlaps it.
+crates/gf2-algebra/src/packed/bipedal3.rs:3 | keyed | Scheinerman2024 | map | //! Arithmetic follows the bitwise formulas of `@/citation/Scheinerman2024`
+crates/gf2-algebra/src/packed/bipedal3.rs:4 | keyed | Scheinerman2024 | read | //! (Theorem 2.1).
+crates/gf2-algebra/src/packed/bipedal3.rs:107 | keyed | Scheinerman2024 | read | /// halving fold (`@/citation/Scheinerman2024` §3.3).
+crates/gf2-algebra/src/packed/bipedal3.rs:194 | keyed | Scheinerman2024 | read | /// `@/citation/Scheinerman2024` Theorem 2.1: 6 word-level operations.
+crates/gf2-algebra/src/packed/bipedal3.rs:209 | keyed | Scheinerman2024 | read | /// `@/citation/Scheinerman2024` §2.2: 6 word-level operations.
+crates/gf2-algebra/src/packed/bipedal3.rs:233 | keyed | Scheinerman2024 | map | /// `@/citation/Scheinerman2024` product: 2 word-level operations.
+crates/gf2-algebra/src/packed/bipedal3.rs:901 | keyed | Scheinerman2024 | map | // Identity of the `@/citation/Scheinerman2024` product: (mag=1, sgn=0)
+crates/gf2-algebra/src/packed/bipedal3.rs:1075 | keyed | Scheinerman2024 | read | /// Per-word `@/citation/Scheinerman2024` Theorem 2.1 sum.
+crates/gf2-algebra/src/packed/bipedal3.rs:1099 | keyed | Scheinerman2024 | read | /// Per-word `@/citation/Scheinerman2024` §2.2 difference.
+crates/gf2-algebra/src/packed/bipedal3.rs:1123 | keyed | Scheinerman2024 | map | /// Per-word `@/citation/Scheinerman2024` product.
+crates/gf2-algebra/src/permanent/bipedal3.rs:675 | keyed | SageMath2026 | map | /// Four-lane batches agree with the committed `@/citation/SageMath2026` vectors.
+crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:5 | keyed | Scheinerman2024 | read | //! `@/citation/Scheinerman2024` Theorem 2.1 formulas. For `n ≤`
+crates/gf2-algebra/src/permanent/rank.rs:14 | keyed | GGK2025 | read | //! in `@/citation/GGK2025`, whose theorem hypothesises `k ≤ 0.1 · sqrt(n)`.
+crates/gf2-algebra/src/permanent/reference.rs:1 | keyed | Scheinerman2024 | map | //! `permanent_mod3_reference` — Rust port of `@/citation/Scheinerman2024`
+crates/gf2-algebra/src/permanent/reference.rs:2 | keyed | Scheinerman2024 | read | //! Algorithm 1 / Listing 1 (Julia naive Ryser): a scalar `i32` implementation
+crates/gf2-algebra/src/permanent/reference.rs:57 | keyed | Scheinerman2024 | read | // Column sums in i32, as in the listing; reduced to Fp<3> only at exit.
+crates/gf2-algebra/src/testutil.rs:152 | keyed | Hinnant2021 | read | /// `civil_from_days` of `@/citation/Hinnant2021`; negative `secs` give pre-1970
+crates/gf2-algebra/tests/cas_cross_validation.rs:4 | keyed | SageMath2026 | map | //! `@/citation/SageMath2026` `Matrix.permanent()`. The CSV header records the
+crates/gf2-algebra/tests/cas_cross_validation.rs:59 | keyed | SageMath2026 | map | /// `permanent_bipedal5` matches the `@/citation/SageMath2026` permanent on every `q = 5` row.
+crates/gf2-algebra/tests/cas_cross_validation.rs:85 | keyed | SageMath2026 | map | /// `permanent_bipedal7` matches the `@/citation/SageMath2026` permanent on every `q = 7` row.
+crates/gf2-algebra/tests/permanent_vectors.rs:135 | not a citation | pen-and-paper computation | read | /// Case 10: n=3, paper case [[1,2,0],[2,1,2],[0,2,1]]. permanent = 0 (mod 3).
+crates/gf2-algebra/tests/tuning_repository_envelopes.rs:188 | not a citation | section of an internal design or protocol document | read | /// Protocol: `dev/active/dbd8787d/premeasurement-protocol.md` §6.
+crates/gf2-coding/benches/bch_workloads.rs:2 | not a citation | repository document or harness | read | //! workload-selection contract fixes for the BCH workload benches, included
+crates/gf2-coding/benches/bch_workloads.rs:18 | not a citation | section of an internal design or protocol document | read | /// Batch sizes $B$ of the contract's § 3.
+crates/gf2-coding/benches/bch_workloads.rs:21 | not a citation | section of an internal design or protocol document | read | /// The parallel worker count $W > 1$ of the contract's § 6.
+crates/gf2-coding/benches/bch_workloads.rs:27 | not a citation | repository document or harness | read | /// One binary benchmark code: the contract row it realizes and its cost tier.
+crates/gf2-coding/benches/bch_workloads.rs:33 | not a citation | repository document or harness | read | /// Primitive polynomial, matching the contract's `prim` column.
+crates/gf2-coding/benches/bch_workloads.rs:45 | not a citation | repository document or harness | read | /// The binary rows, in contract order.
+crates/gf2-coding/benches/bch_workloads.rs:71 | not a citation | section of an internal design or protocol document | read | // The DVB-T2 rows at the mother lengths § 9 fixes.
+crates/gf2-coding/examples/bch_oracle_messages.rs:1 | not a citation | no external work named | read | //! Emits the BCH conformance corpus that the external oracles read: for each
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:184 | not a citation | repository document or harness | read | /// Formats `density` as C `%.6e` (two-digit exponent) so regime strings byte-match the C++
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:243 | not a citation | repository document or harness | read | // sparse-elim sizes and seeds match `linbox_sparse_bench --quick`, independent of `sizes`.
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:721 | not a citation | repository document or harness | read | // GF(2^m) sparse-elim runs under `--full` only; `linbox_sparse_bench.cpp` emits no
+crates/gf2-coding/examples/dvb_t2_bch_demo.rs:1 | keyed | Etsi2015 | map | //! DVB-T2 BCH outer codes of `@/citation/Etsi2015`: parameters per frame size
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:1 | not a citation | repository document or harness | read | //! Emits the GF(2^32) matmul ground truth that `benchmarks/reference/ntl_gf2pow32_smoke.cpp` loads:
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:12 | not a citation | method or object name | read | //! conway  : u64                  (full Conway polynomial bits including bit 32)
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:19 | not a citation | repository document or harness | read | //! byte-level protocol of `gf2pow32_constants.h`.
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:112 | not a citation | repository document or harness | read | // Seed derivation mirrors `ntl_gf2pow32_smoke.cpp::main`.
+crates/gf2-coding/examples/ldpc_bler_check.rs:1 | not a citation | standard or code family named as a topic | read | //! Block error rate of the rate-matched 5G NR (256,121) code at 3 dB under normalized min-sum
+crates/gf2-coding/examples/ldpc_mother_check.rs:1 | not a citation | standard or code family named as a topic | read | //! Block error rate of the 5G NR BG2, Z=13 mother code (no rate matching) under min-sum decoding.
+crates/gf2-coding/examples/nasa_rate_half_k3.rs:2 | keyed | Ccsds2017 | read | //! encoding and hard-decision Viterbi decoding. A short-constraint-length analogue of the K=7 code
+crates/gf2-coding/examples/nasa_rate_half_k3.rs:3 | keyed | Ccsds2017 | map | //! of `@/citation/Ccsds2017`.
+crates/gf2-coding/examples/sparse_smoke_emit_expected.rs:661 | keyed | FflasFfpack2021 | read | /// The C++ harness checks this cell against fflas-ffpack `fgemm` over the
+crates/gf2-coding/src/bch/core.rs:11 | not a citation | standard or code family named as a topic | read | /// Code rates for DVB-T2 standard.
+crates/gf2-coding/src/bch/dvb_t2/generators.rs:2 | keyed | Etsi2015 | map | //! `@/citation/Etsi2015`. The generator polynomial of a t-error-correcting
+crates/gf2-coding/src/bch/dvb_t2/mod.rs:1 | keyed | Etsi2015 | map | //! DVB-T2 BCH outer codes of `@/citation/Etsi2015`: [`dvb_t2_bch_code`] builds
+crates/gf2-coding/src/bch/dvb_t2/mod.rs:3 | keyed | Etsi2015 | read | //! the standard's transmission order, [`DVB_T2_LAYOUT`], and
+crates/gf2-coding/src/bch/dvb_t2/mod.rs:27 | keyed | Etsi2015 | map | /// `@/citation/Etsi2015` writes the message polynomial with its first information
+crates/gf2-coding/src/bch/dvb_t2/mod.rs:29 | keyed | Etsi2015 | read | /// the standard's transmission order is
+crates/gf2-coding/src/bch/dvb_t2/mod.rs:33 | keyed | Etsi2015 | read | /// The DVB-T2 outer BCH mother code presented in the standard's transmission
+crates/gf2-coding/src/bch/dvb_t2/mod.rs:167 | keyed | Etsi2015 | read | /// `received` is a codeword-length word in the standard's transmission
+crates/gf2-coding/src/bch/dvb_t2/mod.rs:310 | keyed | Etsi2015 | read | /// The twelve configurations `@/citation/Etsi2015` Tables 6a and 6b define.
+crates/gf2-coding/src/bch/dvb_t2/params.rs:1 | keyed | Etsi2015 | map | //! DVB-T2 BCH code parameters from `@/citation/Etsi2015`.
+crates/gf2-coding/src/bch/dvb_t2/params.rs:22 | keyed | Etsi2015 | read | /// BCH information bits (Kbch in standard)
+crates/gf2-coding/src/bch/dvb_t2/params.rs:40 | keyed | Etsi2015 | read | // From `@/citation/Etsi2015` Table 6a
+crates/gf2-coding/src/bch/dvb_t2/params.rs:50 | keyed | Etsi2015 | read | // From `@/citation/Etsi2015` Table 6b
+crates/gf2-coding/src/bch/encode.rs:2435 | not a citation | no external work named | read | /// A constructor whose standard transmits another layout declares it by
+crates/gf2-coding/src/bch/matrix.rs:1536 | not a citation | standard or code family named as a topic | read | /// with the start of the parity block, which for the DVB-T2 mother codes
+crates/gf2-coding/src/bch/mod.rs:20 | not a citation | standard or code family named as a topic | read | //! [`dvb_t2::DvbT2BchDecoder`] performs that mapping for the DVB-T2 layout.
+crates/gf2-coding/src/bcjr/mod.rs:2 | keyed | Bahl1974,Wolf1978 | map | //! (`@/citation/Bahl1974`) on the syndrome trellis (`@/citation/Wolf1978`,
+crates/gf2-coding/src/bcjr/mod.rs:3 | keyed | McEliece1996 | map | //! `@/citation/McEliece1996`), in the log-MAP formulation.
+crates/gf2-coding/src/bin/generate_ldpc_cache.rs:1 | not a citation | standard or code family named as a topic | read | //! Generate DVB-T2 LDPC cache files
+crates/gf2-coding/src/bin/sim_runner.rs:28 | not a citation | code identifier | read | /// `channel = { kind = "rician", preset = "fig8" }`.
+crates/gf2-coding/src/bin/sim_runner.rs:33 | not a citation | code identifier | read | /// Required when `kind = "rician"`: one of `"fig8"`, `"fig9"`, `"fig10"`.
+crates/gf2-coding/src/bin/sim_runner.rs:128 | not a citation | standard or code family named as a topic | read | /// 5G NR base graph (1 or 2).
+crates/gf2-coding/src/bin/sim_runner.rs:144 | not a citation | code identifier | read | /// GLDPC code variant: `"lentmaier_1024"`.
+crates/gf2-coding/src/bin/sim_runner.rs:201 | keyed | Yuan2025 | read | /// Per-component list-BLER early-stop threshold of `@/citation/Yuan2025` § V:
+crates/gf2-coding/src/crc.rs:5 | keyed | Yuan2025 | map | //! truncated notation of `@/citation/Yuan2025`.
+crates/gf2-coding/src/crc.rs:103 | keyed | Yuan2025 | map | /// The CRC(25,15) code of `@/citation/Yuan2025`, with
+crates/gf2-coding/src/drm.rs:2 | keyed | CoskunPfister2022 | map | //! after the dRM ensemble of `@/citation/CoskunPfister2022`. Generators are
+crates/gf2-coding/src/dvb_t2_bicm_harness.rs:1 | not a citation | standard or code family named as a topic | read | //! DVB-T2 BICM-AWGN channel chain, FEC-encoder adapter and baseline-CSV
+crates/gf2-coding/src/dvb_t2_bicm_harness.rs:29 | not a citation | standard or code family named as a topic | read | /// Returns 1.0 for any code rate not in the DVB-T2 baseline set.
+crates/gf2-coding/src/dvb_t2_bicm_harness.rs:102 | not a citation | standard or code family named as a topic | read | /// [`ChannelModel`] for the DVB-T2 BICM chain over AWGN: bit interleave, QAM
+crates/gf2-coding/src/fading.rs:84 | keyed | Yuan2025 | read | /// `@/citation/Yuan2025` channel K = 5, N_c = 128, t = 4: a 1024-bit frame.
+crates/gf2-coding/src/fading.rs:93 | keyed | Yuan2025 | read | /// `@/citation/Yuan2025` channel K = 8, N_c = 256, t = 2: a 1024-bit frame.
+crates/gf2-coding/src/fading.rs:102 | keyed | Yuan2025 | read | /// `@/citation/Yuan2025` channel K = 6, N_c = 256, t = 8: a 4096-bit frame.
+crates/gf2-coding/src/gldpc/mod.rs:2 | keyed | Lentmaier2010a | map | //! `@/citation/Lentmaier2010a`: check nodes use component codes in place of
+crates/gf2-coding/src/gldpc/mod.rs:55 | not a citation | no external work named | read | // uses the standard primitive polynomial, and its designed distance
+crates/gf2-coding/src/gldpc/mod.rs:230 | keyed | Lentmaier2010a | map | /// Constructed using circulant permutation matrices following the `@/citation/Lentmaier2010a`
+crates/gf2-coding/src/gldpc/mod.rs:270 | keyed | Lentmaier2010a | map | /// Creates a QC-GLDPC code using the `@/citation/Lentmaier2010a` construction.
+crates/gf2-coding/src/gldpc/mod.rs:285 | keyed | Lentmaier2010a | map | /// This is the target construction from `@/citation/Lentmaier2010a` for comparison
+crates/gf2-coding/src/gldpc/mod.rs:286 | keyed | Yuan2025 | read | /// with 5G NR LDPC codes in `@/citation/Yuan2025` (Fig. 7).
+crates/gf2-coding/src/grand/mod.rs:1 | keyed | Duffy2019 | map | //! Guessing Random Additive Noise Decoding (`@/citation/Duffy2019`,
+crates/gf2-coding/src/grand/mod.rs:2 | keyed | Solomon2020 | map | //! `@/citation/Solomon2020`): decoders that work with any linear block code by
+crates/gf2-coding/src/grand/mod.rs:5 | keyed | Yuan2025 | map | //! (`@/citation/Yuan2025`).
+crates/gf2-coding/src/grand/orbgrand.rs:1 | keyed | Duffy2022 | map | //! Ordered Reliability Bits GRAND (ORBGRAND, `@/citation/Duffy2022`): a
+crates/gf2-coding/src/grand/orbgrand.rs:36 | keyed | Yuan2025 | map | /// (`@/citation/Yuan2025`).
+crates/gf2-coding/src/grand/orbgrand.rs:48 | keyed | Duffy2022 | map | /// 1-line ORBGRAND intercept (`IC` in `@/citation/Duffy2022`).
+crates/gf2-coding/src/grand/orbgrand.rs:62 | keyed | Duffy2022 | read | ///   slope heuristic of that work:
+crates/gf2-coding/src/grand/orbgrand.rs:95 | keyed | Duffy2022 | map | /// `|LLR|` magnitudes, using the slope heuristic of `@/citation/Duffy2022`.
+crates/gf2-coding/src/grand/orbgrand.rs:309 | keyed | Duffy2022 | map | // `P_notGuess` initialisation (`@/citation/Duffy2022`,
+crates/gf2-coding/src/grand/orbgrand.rs:310 | keyed | Yuan2025 | read | // `@/citation/Yuan2025` § V). For even codes the noise parity is
+crates/gf2-coding/src/grand/orbgrand.rs:338 | keyed | Yuan2025 | map | // patterns (`@/citation/Yuan2025`), keeping P(C\L) consistent, so the
+crates/gf2-coding/src/grand/orbgrand.rs:343 | keyed | Yuan2025 | read | // (`@/citation/Yuan2025` eq. (17) uses `2^-(s-1)` for even codes
+crates/gf2-coding/src/grand/orbgrand.rs:544 | keyed | Duffy2022 | read | /// (`@/citation/Duffy2022` § III.C).
+crates/gf2-coding/src/grand/orbgrand.rs:605 | keyed | Duffy2022 | map | /// `@/citation/Duffy2022`.
+crates/gf2-coding/src/grand/orbgrand.rs:622 | keyed | Yuan2025 | read | /// `@/citation/Yuan2025` § V.
+crates/gf2-coding/src/grand/sogrand.rs:1 | keyed | Yuan2025 | map | //! Soft-Output GRAND (SOGRAND, `@/citation/Yuan2025`): [`SoGrand`] turns the
+crates/gf2-coding/src/grand/sogrand.rs:111 | keyed | Yuan2025 | read | /// Per `@/citation/Yuan2025` Corollary 1, for a general (not even) code:
+crates/gf2-coding/src/grand/sogrand.rs:136 | keyed | Yuan2025 | read | // codes: the initial `P_notGuess` of `@/citation/Yuan2025` § III,
+crates/gf2-coding/src/grand/sogrand.rs:137 | keyed | Yuan2025 | read | // eq. (17).
+crates/gf2-coding/src/grand/sogrand.rs:145 | keyed | Yuan2025 | read | // (`@/citation/Yuan2025` eq. (17) correction: all 2^k codewords carry
+crates/gf2-coding/src/grand/sogrand.rs:163 | keyed | Yuan2025 | read | /// Compute per-bit APP LLRs according to `@/citation/Yuan2025` eq. (17).
+crates/gf2-coding/src/grand/sogrand.rs:201 | keyed | Yuan2025 | read | // likelihood (`@/citation/Yuan2025` § III.C). `P_notL` is
+crates/gf2-coding/src/grand/sogrand.rs:222 | keyed | Machler2012 | map | /// Uses the identity of `@/citation/Machler2012`:
+crates/gf2-coding/src/grand/sogrand.rs:252 | keyed | Yuan2025 | map | /// Codebook ratio with the even-code correction of `@/citation/Yuan2025`
+crates/gf2-coding/src/grand/sogrand.rs:253 | keyed | Yuan2025 | read | /// eq. (17).
+crates/gf2-coding/src/grand/sogrand.rs:287 | keyed | Yuan2025 | map | /// The untested mass: `P_notGuess` of `@/citation/Yuan2025` starts
+crates/gf2-coding/src/grand/sogrand.rs:293 | keyed | Machler2012 | map | /// Equal to `cap + log1mexp(x - cap)` (`@/citation/Machler2012`), which
+crates/gf2-coding/src/info_theory.rs:71 | keyed | PPV2010 | map | /// `a = sqrt(2·Es/N0)`; this is the BI-AWGN capacity of `@/citation/PPV2010` with
+crates/gf2-coding/src/info_theory.rs:86 | keyed | PPV2010 | map | /// (the BI-AWGN dispersion of `@/citation/PPV2010` with `P = 2·Es/N0`). It is the
+crates/gf2-coding/src/ldpc/core.rs:90 | keyed | Etsi2015 | read | /// `@/citation/Etsi2015` tables.
+crates/gf2-coding/src/ldpc/core.rs:109 | keyed | Etsi2015 | read | /// `@/citation/Etsi2015` tables.
+crates/gf2-coding/src/ldpc/core.rs:781 | not a citation | standard or code family named as a topic | read | /// systematic column mapping (e.g., 5G NR rate-matched codes that use
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:2 | keyed | Etsi2015 | read | //! (`@/citation/Etsi2015` §6.1.3, Tables 9 and 10).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:13 | keyed | Etsi2015 | read | /// QPSK: 2 bits per cell, no §6.1.3 interleaving applied.
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:16 | keyed | Etsi2015 | read | /// Tables 9 and 10 (Nc=8).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:19 | keyed | Etsi2015 | read | /// Tables 9 and 10 (Nc=12).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:24 | keyed | Etsi2015 | read | /// Number of coded bits per QAM cell (η_mod in the spec).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:63 | keyed | Etsi2015 | read | /// Interleaver configuration from `@/citation/Etsi2015` §6.1.3, Tables 9
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:64 | keyed | Etsi2015 | read | /// and 10.
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:67 | keyed | Etsi2015 | read | /// Number of columns (Nc from Table 9 — NOT equal to η_mod).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:69 | keyed | Etsi2015 | read | /// Number of rows (Nr = N_ldpc / Nc, from Table 9).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:71 | keyed | Etsi2015 | read | /// Column-twist offsets, one per column (tc[0..Nc]), from Table 10;
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:107 | keyed | Etsi2015 | read | // Tables 9 and 10; Nc differs from η_mod (bits per cell).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:121 | keyed | Etsi2015 | read | // For QPSK, §6.1.3 does not apply: Q_ldpc = 0 (no parity interleaving).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:141 | keyed | Etsi2015 | read | /// DVB-T2 bit interleaver (§6.1.3): parity interleaving + column-twist.
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:194 | keyed | Etsi2015 | read | // §6.1.3 covers "16-QAM, 64-QAM and 256-QAM" only.
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:249 | keyed | Etsi2015 | read | /// Number of interleaver columns (Nc from Table 9 — NOT η_mod).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:254 | keyed | Etsi2015 | read | /// Number of interleaver rows (Nr = frame_bits / Nc, from Table 9).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:259 | keyed | Etsi2015 | read | /// Column-twist offsets (one per column, from Table 10).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:265 | keyed | Etsi2015 | read | /// §6.1.3 algorithm.
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:393 | keyed | Knuth1997 | read | // LCG: a=6364136223846793005, c=1, m=2^64 (Knuth/MMIX).
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:586 | keyed | Etsi2015 | read | /// Nc values from Table 9 of `@/citation/Etsi2015`; Nc depends only on
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:614 | keyed | Etsi2015 | read | /// Twist offsets from Table 10 of `@/citation/Etsi2015`.
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:690 | keyed | Etsi2015 | read | /// `@/citation/Etsi2015` §6.1.3 is titled "Bit Interleaving
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:725 | keyed | Etsi2015 | read | /// Per `@/citation/Etsi2015` §6.1.3, for 64-QAM Normal (Nc=12, Nr=5400):
+crates/gf2-coding/src/ldpc/dvb_t2/builder.rs:1 | keyed | Etsi2015 | read | //! Sparse parity-check matrix edge lists from the `@/citation/Etsi2015` tables.
+crates/gf2-coding/src/ldpc/dvb_t2/builder.rs:41 | not a citation | standard or code family named as a topic | read | /// Build sparse parity-check matrix edges from DVB-T2 table format.
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:1 | keyed | Etsi2015 | read | //! DVB-T2 BCH+LDPC concatenated codec (`@/citation/Etsi2015` §6):
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:63 | keyed | Etsi2015 | read | /// DVB-T2 concatenated BCH + LDPC FEC codec (`@/citation/Etsi2015` §6).
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:73 | keyed | Etsi2015 | read | /// standard's `K_bch`.
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:102 | keyed | Etsi2015 | read | /// Panics if the standard's table row for this configuration does not
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:361 | keyed | Etsi2015 | read | /// Lengths of `@/citation/Etsi2015` Table 6a for Normal 1/2.
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:371 | keyed | Etsi2015 | read | /// Lengths of `@/citation/Etsi2015` Table 6a for Normal 2/3.
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:381 | keyed | Etsi2015 | read | /// Lengths of `@/citation/Etsi2015` Table 6a for Normal 3/4.
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:533 | keyed | DvbVerification2010 | map | /// TP04→TP06 chain via concat API with the `@/citation/DvbVerification2010`
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:536 | keyed | DvbVerification2010 | read | /// Reads VV001-CR35 (Normal, Rate 3/5) TP04 and TP06 vectors and verifies
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:537 | keyed | DvbVerification2010 | map | /// that [`DvbT2Concat::encode`] reproduces TP06 from TP04 for the first
+crates/gf2-coding/src/ldpc/dvb_t2/dvb_t2_matrices.rs:1 | keyed | Etsi2015 | map | //! LDPC parity-index tables of `@/citation/Etsi2015`, expanded into
+crates/gf2-coding/src/ldpc/dvb_t2/mod.rs:1 | keyed | Etsi2015 | map | //! DVB-T2 LDPC codes built from the `@/citation/Etsi2015` tables, and the
+crates/gf2-coding/src/ldpc/dvb_t2/mod.rs:2 | keyed | Etsi2015 | read | //! DVB-T2 BICM (Bit-Interleaved Coded Modulation) components of §6: BCH and
+crates/gf2-coding/src/ldpc/dvb_t2/params.rs:1 | keyed | Etsi2015 | map | //! DVB-T2 LDPC code parameters from `@/citation/Etsi2015`.
+crates/gf2-coding/src/ldpc/dvb_t2/params.rs:23 | keyed | Etsi2015 | read | /// Step size for block structure (q in standard)
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:1 | keyed | ThreeGpp2017 | read | //! 5G NR LDPC Base Graph 1 (BG1) from `@/citation/ThreeGpp2017` Table 5.3.2-2:
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:16 | keyed | ThreeGpp2017 | map | /// Determines the lifting set index i_LS from Z using `@/citation/ThreeGpp2017`
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:17 | keyed | ThreeGpp2017 | read | /// Table 5.3.2-1, selects the corresponding shift table from Table 5.3.2-2,
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:32 | keyed | ThreeGpp2017 | read | /// Entries are the verbatim `V` values from `@/citation/ThreeGpp2017` Table 5.3.2-2
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:42 | keyed | ThreeGpp2017 | read | // BG1 shift tables from 3GPP TS 38.212 Table 5.3.2-2.
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs:1 | keyed | ThreeGpp2017 | read | //! 5G NR LDPC Base Graph 2 (BG2) from `@/citation/ThreeGpp2017` Table 5.3.2-3:
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs:17 | keyed | ThreeGpp2017 | read | /// i_LS determined from the lifting size Z (per `@/citation/ThreeGpp2017` Table 5.3.2-1),
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs:32 | keyed | ThreeGpp2017 | read | /// Entries are the verbatim `V` values from `@/citation/ThreeGpp2017` Table 5.3.2-3
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs:42 | keyed | ThreeGpp2017 | read | // BG2 shift tables from 3GPP TS 38.212 Table 5.3.2-3.
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:1 | keyed | ThreeGpp2020 | read | //! 5G NR rate-matching bit interleaver (`@/citation/ThreeGpp2020` clause
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:2 | keyed | ThreeGpp2020 | read | //! 5.4.2.2): after bit selection (clause 5.4.2.1,
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:10 | keyed | ThreeGpp2020 | read | /// Builds the `@/citation/ThreeGpp2020` §5.4.2.2 output-interleaver gather permutation for a
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:15 | keyed | ThreeGpp2020 | read | /// `i ∈ [0, q_m)`. Interleaving is the gather `f[p] = e[perm[p]]`; the spec
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:18 | keyed | Sionna2026 | read | /// `generate_out_int` routine of `@/citation/Sionna2026`.
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:22 | keyed | ThreeGpp2020 | read | /// Panics if `q_m == 0` or if `e_len` is not a multiple of `q_m` (the spec
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:61 | keyed | ThreeGpp2020 | read | /// Interleaves a rate-matched bit sequence per `@/citation/ThreeGpp2020` §5.4.2.2.
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:79 | keyed | ThreeGpp2020 | read | /// Deinterleaves an LLR sequence per the inverse of `@/citation/ThreeGpp2020` §5.4.2.2.
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:99 | keyed | ThreeGpp2020 | read | /// The spec's worked example: Q_m = 2, E = 6. Writing e row-by-row into a
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:101 | keyed | Sionna2026 | read | /// This reproduces `generate_out_int(6, 2)` of `@/citation/Sionna2026`.
+crates/gf2-coding/src/ldpc/nr_5g/lifting.rs:1 | keyed | ThreeGpp2017 | read | //! 5G NR LDPC lifting sizes from `@/citation/ThreeGpp2017` Table 5.3.2-1: each
+crates/gf2-coding/src/ldpc/nr_5g/lifting.rs:5 | keyed | ThreeGpp2017 | read | /// All valid lifting sizes from `@/citation/ThreeGpp2017` Table 5.3.2-1.
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1 | keyed | ThreeGpp2017 | read | //! 5G NR LDPC code construction from `@/citation/ThreeGpp2017` Section 5.3.2:
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:2 | keyed | ThreeGpp2017 | read | //! base graphs BG1 and BG2 expanded by a lifting size Z from Table 5.3.2-1
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:14 | keyed | ThreeGpp2017 | read | /// Entries are the verbatim `V` values from `@/citation/ThreeGpp2017` Table 5.3.2-2
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:15 | keyed | ThreeGpp2017 | read | /// (BG1) or Table 5.3.2-3 (BG2) for the given lifting set index `i_ls`:
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:20 | keyed | Sionna2026 | map | /// External reference data (e.g. the committed `@/citation/Sionna2026` tables
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:71 | keyed | ThreeGpp2017 | read | /// `@/citation/ThreeGpp2017` Section 5.2.2.
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:75 | keyed | ThreeGpp2017 | read | /// `8` for `192 < B <= 560`, and `6` for `B <= 192`. The standard selects a
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:108 | keyed | ThreeGpp2017 | read | /// The `@/citation/ThreeGpp2017` §5.2.2 Z-selection picks the smallest valid `Z` with
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:157 | keyed | ThreeGpp2017 | read | // has the §5.2.2 bands {10, 9, 8, 6}. The first self-consistent candidate
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:167 | keyed | ThreeGpp2017 | read | // Self-consistency: the §5.2.2 band the payload `kb * z` lands in must
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:175 | keyed | ThreeGpp2017 | read | // every Z in Table 5.3.2-1 (kb=10 for Z >= 72, kb=9 for Z = 64,
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:265 | keyed | ThreeGpp2017 | read | // `@/citation/ThreeGpp2017` Section 5.2.2: K_b for Z selection depends
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:270 | keyed | ThreeGpp2017 | read | //   (a) kb_for_z * Z >= target_k  (§5.2.2 Z selection criterion)
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:351 | keyed | ThreeGpp2017 | map | /// Parameters of the `@/citation/ThreeGpp2017` rate matching applied to a 5G NR LDPC code.
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:370 | keyed | ThreeGpp2017 | read | /// These are the first 2*Z columns, per `@/citation/ThreeGpp2017` Section 5.3.2.
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:625 | keyed | ThreeGpp2017 | map | /// A 5G NR LDPC code with `@/citation/ThreeGpp2017` rate matching.
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1190 | keyed | ThreeGpp2017 | read | // By the §5.2.2 K_b rules, target_k=49 <= 192 so K_b_for_z=6,
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1272 | keyed | ThreeGpp2017 | read | // BG2: the §5.2.2 bands with exact boundary semantics (>, not >=).
+crates/gf2-coding/src/modem/analysis.rs:310 | keyed | TenBrink2001 | map | // `@/citation/TenBrink2001`, with sigma^2 = 2 * mean(L | bit=0) for
+crates/gf2-coding/src/modem/analysis.rs:735 | not a citation | method or object name | read | /// Chan-Golub-LeVeque numerically stable combine for two running-stats
+crates/gf2-coding/src/modem/presets.rs:387 | keyed | Etsi2015 | read | /// the level mapping of `@/citation/Etsi2015` Table 14; the standard
+crates/gf2-coding/src/modem/presets.rs:388 | not a citation | part of a sentence whose citation is listed at an adjacent line | read | /// takes the I label from the even-indexed and the Q label from the
+crates/gf2-coding/src/modem/presets.rs:389 | not a citation | part of a sentence whose citation is listed at an adjacent line | read | /// odd-indexed cell-word bits, so labels agree with it for orders 2 and
+crates/gf2-coding/src/product/chase_pyndiah.rs:2 | keyed | Chase1972,Pyndiah1998 | map | //! (`@/citation/Chase1972`, `@/citation/Pyndiah1998`).
+crates/gf2-coding/src/product/mod.rs:2 | keyed | Pyndiah1998 | map | //! (`@/citation/Pyndiah1998`): a component (n, k) code encodes the rows and
+crates/gf2-coding/src/product/mod.rs:485 | keyed | Yuan2025 | map | /// (`@/citation/Yuan2025`).
+crates/gf2-coding/src/product/mod.rs:490 | keyed | Yuan2025 | read | /// valid codewords (`@/citation/Yuan2025` § V, step 1).
+crates/gf2-coding/src/product/mod.rs:518 | keyed | Pyndiah1998 | map | /// `@/citation/Pyndiah1998`.
+crates/gf2-coding/src/simulation.rs:1638 | keyed | Hinnant2021 | map | // `civil_from_days` of `@/citation/Hinnant2021`.
+crates/gf2-coding/src/test_support.rs:5 | keyed | DvbVerification2010 | read | //! derived-code conformance cases, and a reader for the DVB-T2 reference
+crates/gf2-coding/src/test_support.rs:6 | keyed | DvbVerification2010 | map | //! streams (`@/citation/DvbVerification2010`).
+crates/gf2-coding/src/test_support.rs:202 | keyed | DvbVerification2010 | read | /// Root of the DVB-T2 reference-stream tree
+crates/gf2-coding/src/test_support.rs:203 | keyed | DvbVerification2010 | map | /// (`@/citation/DvbVerification2010`): `$DVB_TEST_VECTORS_PATH`, or
+crates/gf2-coding/src/test_support.rs:215 | keyed | DvbVerification2010 | map | /// Parses a CSP test-point file of `@/citation/DvbVerification2010` into
+crates/gf2-coding/src/test_support.rs:261 | keyed | DvbVerification2010 | read | /// Builds the canonical path to a VV001-CR35 test-point file under
+crates/gf2-coding/src/test_support.rs:262 | keyed | DvbVerification2010 | read | /// `<config_dir>/TestPoint<NN>/VV001-CR35_TP<NN>_CSP.txt`.
+crates/gf2-coding/src/test_support.rs:273 | keyed | DvbVerification2010 | map | /// Builds `<config_dir>/TestPoint<NN>/<stem>_TP<tp>_CSP.txt` for a
+crates/gf2-coding/src/test_support.rs:274 | keyed | DvbVerification2010 | read | /// `VV<num>-<name>_CSP` directory: `<stem>` is the directory basename without
+crates/gf2-coding/src/test_support.rs:276 | keyed | DvbVerification2010 | read | /// `.../VV014-64QAM34_CSP` and `"07a"` give
+crates/gf2-coding/src/test_support.rs:277 | keyed | DvbVerification2010 | read | /// `.../VV014-64QAM34_CSP/TestPoint07/VV014-64QAM34_TP07a_CSP.txt`.
+crates/gf2-coding/src/test_support.rs:297 | not a citation | repository document or harness | read | /// The message seed the evidence protocol predeclares for the conformance
+crates/gf2-coding/src/test_support.rs:313 | not a citation | repository document or harness | read | /// Row identifier from the evidence protocol, such as `"B1"`.
+crates/gf2-coding/tests/bch_conformance.rs:44 | not a citation | repository document or harness | read | /// The seed the evidence protocol predeclares for this corpus, reused for the
+crates/gf2-coding/tests/bch_encode_dispatch.rs:2 | not a citation | repository document or harness | read | //! The rows and the batch ladder are those of the workload-selection
+crates/gf2-coding/tests/bch_encode_dispatch.rs:29 | not a citation | repository document or harness | read | /// `prim` column.
+crates/gf2-coding/tests/bch_encode_dispatch.rs:40 | not a citation | repository document or harness | read | /// The contract's binary conformance rows carry their exact lengths; the two
+crates/gf2-coding/tests/bch_encode_dispatch.rs:348 | not a citation | repository document or harness | read | /// The batch ladder of the workload-selection contract steps over the lane
+crates/gf2-coding/tests/bch_encode_dispatch_installed.rs:3 | not a citation | repository document or harness | read | //! at every worker count the workload-selection contract declares.
+crates/gf2-coding/tests/bch_matrix_allocation.rs:68 | not a citation | repository document or harness | read | /// The workload contract's B3 row, $255 \times 223$ over `GF(2^8)`.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:1 | not a citation | no external work named | read | //! Agreement of the predeclared BCH corpus with two external oracles,
+crates/gf2-coding/tests/bch_oracle_agreement.rs:2 | keyed | SageMath2026,Joyner2026 | read | //! `codes.BCHCode` of `@/citation/SageMath2026` and `BCHCode` of
+crates/gf2-coding/tests/bch_oracle_agreement.rs:3 | keyed | Joyner2026 | map | //! `@/citation/Joyner2026`, each run on gf2's primitive $n$-th root of unity
+crates/gf2-coding/tests/bch_oracle_agreement.rs:4 | not a citation | repository document or harness | read | //! $\alpha$. The evidence protocol predeclares the corpus; the fixtures under
+crates/gf2-coding/tests/bch_oracle_agreement.rs:187 | not a citation | no external work named | read | /// `native` holds the oracle's own cyclic encoding $c(x) = m(x)\,g(x)$ and
+crates/gf2-coding/tests/bch_oracle_agreement.rs:188 | not a citation | no external work named | read | /// `systematic` the oracle's systematic codeword, both in canonical
+crates/gf2-coding/tests/bch_oracle_agreement.rs:384 | not a citation | no external work named | read | /// Checks one oracle's generator polynomial, dimension and defining set.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:427 | not a citation | no external work named | read | /// Checks one oracle's codewords against the encoder, for the rows a tier
+crates/gf2-coding/tests/bch_oracle_agreement.rs:459 | keyed | Joyner2026 | read | /// Checks GUAVA's unaided `BCHCode` object against the gf2 code carrying the
+crates/gf2-coding/tests/bch_oracle_agreement.rs:460 | keyed | Joyner2026 | read | /// root GUAVA built it on.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:462 | keyed | Joyner2026 | read | /// GUAVA's `BCHCode` selects `PrimitiveUnityRoot(q, n)`. Where that element is
+crates/gf2-coding/tests/bch_oracle_agreement.rs:466 | keyed | Joyner2026 | read | /// so GUAVA's own code object is the compared object on every row.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:539 | not a citation | repository document or harness | read | /// Every corpus row the protocol predeclares.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:542 | keyed | Joyner2026 | read | /// The rows whose GUAVA result is derived without a code object, because the
+crates/gf2-coding/tests/bch_oracle_agreement.rs:543 | keyed | Joyner2026 | read | /// generator matrix `BCHCode` materializes does not fit the run's heap at that
+crates/gf2-coding/tests/bch_oracle_agreement.rs:670 | not a citation | no external work named | read | /// Members through which each oracle states the exact build it ran as. The
+crates/gf2-coding/tests/bch_oracle_agreement.rs:680 | keyed | Joyner2026,GapGroup2026 | read | /// [`SAGE_IDENTITY`] for GAP with GUAVA.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:733 | keyed | Joyner2026 | read | // taken after the `BCHCode` attempt and the second after the row's
+crates/gf2-coding/tests/bch_oracle_agreement.rs:734 | keyed | Joyner2026 | read | // `GeneratorPolCode` attempt, so the second covers both and neither
+crates/gf2-coding/tests/bch_oracle_agreement.rs:748 | keyed | Joyner2026 | read | // GUAVA's `BCHCode` builds on `PrimitiveUnityRoot`. Its generator
+crates/gf2-coding/tests/bch_oracle_agreement.rs:751 | not a citation | code identifier | read | // generators, and `guava_bchcode_objects_agree_at_their_own_root`
+crates/gf2-coding/tests/bch_oracle_agreement.rs:752 | keyed | Joyner2026 | map | // compares the `BCHCode` object with the gf2 code on GUAVA's root.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:776 | not a citation | no external work named | read | /// The encoding map the oracle records for a row whose code object the run's
+crates/gf2-coding/tests/bch_oracle_agreement.rs:780 | keyed | Joyner2026 | read | /// A row whose `BCHCode` attempt exceeded the run's heap carries GUAVA's own
+crates/gf2-coding/tests/bch_oracle_agreement.rs:832 | keyed | Etsi2015 | map | /// The `@/citation/Etsi2015` normal-frame parameters the corpus row B4 uses.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:851 | keyed | Etsi2015 | map | /// The `@/citation/Etsi2015` generator product $g_1 \cdots g_t$ as ascending bits.
+crates/gf2-coding/tests/bch_oracle_agreement.rs:933 | keyed | DvbVerification2010 | map | /// The `@/citation/DvbVerification2010` stream set this suite consumes, whose
+crates/gf2-coding/tests/bch_oracle_agreement.rs:1036 | keyed | Etsi2015 | read | // The standard's shortening places the payload at the low message
+crates/gf2-coding/tests/bch_primitive_verification.rs:2 | keyed | Etsi2015 | read | //! `@/citation/Etsi2015`, and the polynomial database flags another primitive
+crates/gf2-coding/tests/bch_tests.rs:777 | keyed | Etsi2015 | map | /// Short-frame parameters of `@/citation/Etsi2015`.
+crates/gf2-coding/tests/bch_tests.rs:812 | keyed | Etsi2015 | map | /// Normal-frame parameters of `@/citation/Etsi2015`.
+crates/gf2-coding/tests/channel_capacity.rs:22 | not a citation | no external work named | read | /// Published BPSK Shannon limits (minimum Eb/N0 in dB) at rates spanning
+crates/gf2-coding/tests/channel_capacity.rs:26 | keyed | Lentmaier2010 | read | /// - Rates 1/3, 1/2, 2/3, 3/4: `@/citation/Lentmaier2010` Table II, column
+crates/gf2-coding/tests/channel_capacity.rs:27 | keyed | Lentmaier2010 | read | ///   `(Eb/N0)_sh`, printed to 0.001 dB.
+crates/gf2-coding/tests/channel_capacity.rs:28 | keyed | Ccsds2020 | read | /// - Rates 1/6, 1/4: `@/citation/Ccsds2020` §3.3 (vertical asymptotes of
+crates/gf2-coding/tests/channel_capacity.rs:29 | keyed | Ccsds2020 | read | ///   Figure 3-3), printed to 0.1 dB.
+crates/gf2-coding/tests/data/nr5g_regression_vectors.rs:2 | keyed | ThreeGpp2017 | read | // Created from encoder output with per-i_LS shift tables and 3GPP K_b Z selection.
+crates/gf2-coding/tests/dvb_t2_bch_verification.rs:1 | keyed | DvbVerification2010 | read | //! The DVB-T2 outer BCH code and its decoder against the VV001-CR35 TP04
+crates/gf2-coding/tests/dvb_t2_bch_verification.rs:2 | keyed | DvbVerification2010 | read | //! BBFRAMEs and TP05 BCH codewords (`@/citation/DvbVerification2010`). Each
+crates/gf2-coding/tests/dvb_t2_bicm_chain.rs:22 | keyed | Knuth1997 | read | /// Pseudo-random BBFRAME from the MMIX LCG multiplier (`@/citation/Knuth1997`).
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:1 | keyed | DvbVerification2010 | read | //! Bit-interleaver tests on the VV001-CR35 reference stream
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:2 | keyed | DvbVerification2010 | map | //! (`@/citation/DvbVerification2010`).
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:3 | keyed | DvbVerification2010 | read | //! VV001-CR35 is a Normal-frame, rate 3/5, 256-QAM stream, a modulation
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:4 | keyed | DvbVerification2010 | read | //! `DvbT2Modulation` does not represent. These tests check the TP06 and TP07a
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:5 | keyed | DvbVerification2010 | map | //! block structure and the rate 3/5 round trip on TP06 data;
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:6 | keyed | DvbVerification2010 | read | //! `dvb_t2_chain_tp07a` asserts the bit-exact TP06 → TP07a mapping on the
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:1 | keyed | DvbVerification2010 | read | //! TP06 → TP07a validation of `DvbT2BitInterleaver` against the DVB-T2
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:2 | keyed | DvbVerification2010 | map | //! reference streams (`@/citation/DvbVerification2010`).
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:3 | keyed | Etsi2015,DvbVerification2010 | read | //! TP07a is the output of `@/citation/Etsi2015` §6.1.3 (parity interleaving
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:5 | keyed | DvbVerification2010 | map | //! `interleave(TP06) = TP07a` and `deinterleave(TP07a) = TP06` bit-exactly on
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:6 | keyed | DvbVerification2010 | read | //! the first 10 blocks of VV020-FEF (16-QAM, rate 1/2), VV009-4KFFT (64-QAM,
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:7 | keyed | DvbVerification2010 | read | //! rate 2/3) and VV014-64QAM34 (64-QAM, rate 3/4). They also check the block
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:77 | keyed | DvbVerification2010 | read | /// Discover all `VV*_CSP` directories under `base` that contain TP05, TP06,
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:78 | keyed | DvbVerification2010 | read | /// TP07a, and TP08 files and whose TP06 block size is 64800 (Normal FECFRAME).
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:80 | keyed | DvbVerification2010 | read | // In-scope Normal FECFRAME k values (TP05 bits per block).
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:86 | keyed | DvbVerification2010 | read | // In-scope samples-per-block for TP08 (bits per QAM cell / bits per block):
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:166 | keyed | DvbVerification2010 | read | /// Applies `DvbT2BitInterleaver::interleave` to TP06 block 0 of every
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:167 | keyed | DvbVerification2010 | read | /// discovered vector and compares it with TP07a block 0. A match also asserts
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:168 | keyed | DvbVerification2010 | read | /// `deinterleave(TP07a) = TP06`; a mismatch is logged with its bit count.
+crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs:1 | keyed | DvbVerification2010 | read | //! DVB-T2 LDPC encoding of the first 10 VV001-CR35 TP05 blocks against TP06
+crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs:2 | keyed | DvbVerification2010 | map | //! (`@/citation/DvbVerification2010`).
+crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs:1 | keyed | DvbVerification2010 | read | //! DVB-T2 LDPC encoding and decoding against the VV001-CR35 TP05 and TP06
+crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs:2 | keyed | DvbVerification2010 | map | //! streams (`@/citation/DvbVerification2010`) under `$DVB_TEST_VECTORS_PATH`.
+crates/gf2-coding/tests/ebch_128_64_reference.rs:1 | not a citation | no external work named | read | //! Conformance tests for the named eBCH(128,64,22) reference construction.
+crates/gf2-coding/tests/ldpc_validation.rs:181 | keyed | Etsi2015 | map | /// Normal-frame parameters of `@/citation/Etsi2015`.
+crates/gf2-coding/tests/ldpc_validation.rs:226 | keyed | Etsi2015 | map | /// Short-frame parameters of `@/citation/Etsi2015`.
+crates/gf2-coding/tests/modem_regression.rs:303 | not a citation | code identifier | read | // exact `frame_bits()` for fig8.
+crates/gf2-coding/tests/nr5g_external_vectors.rs:2 | keyed | ThreeGpp2017 | read | //! (`@/citation/ThreeGpp2017` Tables 5.3.2-2 and 5.3.2-3, lifting sets
+crates/gf2-coding/tests/nr5g_external_vectors.rs:3 | keyed | Sionna2026 | map | //! `i_LS` = 0..7) bit-exactly against the `@/citation/Sionna2026` CSV tables
+crates/gf2-coding/tests/nr5g_external_vectors.rs:5 | keyed | ThreeGpp2017 | read | //! BG2 rate coverage stops at 2/3: clause 7.2.2 selects BG2 only for
+crates/gf2-coding/tests/nr5g_external_vectors.rs:16 | keyed | Sionna2026 | read | /// Parses a Sionna base-graph CSV (format in `data/ldpc/nr_5g/PROVENANCE.md`)
+crates/gf2-coding/tests/osd_reprocessing_engine.rs:431 | not a citation | no external work named | read | /// the reference implementation is exact.
+crates/gf2-coding/tests/shortened_fast_path.rs:28 | keyed | Etsi2015 | read | /// $x^{16} + x^5 + x^3 + x^2 + 1$, from `@/citation/Etsi2015` Table 6b.
+crates/gf2-coding/tests/shortened_fast_path.rs:32 | keyed | Etsi2015 | read | /// Designed distance of the normal-frame mother, $2t + 1$ for the table's
+crates/gf2-coding/tests/shortened_fast_path.rs:37 | keyed | Etsi2015 | read | /// mother dimension 65343 less the table's $K_{bch} = 32208$.
+crates/gf2-coding/tests/support/fresh_tuning_process.rs:35 | not a citation | repository document or harness | read | /// two lengths every case encodes; it is a rung of the workload-selection
+crates/gf2-coding/tests/support/fresh_tuning_process.rs:183 | not a citation | repository document or harness | read | /// The corpus row B3 of the workload-selection contract: the smallest row
+crates/gf2-coding/tests/support/fresh_tuning_process.rs:306 | not a citation | repository document or harness | read | /// The worker counts every case encodes at, spanning the contract's
+crates/gf2-coding/tests/test_vector_parser.rs:1 | keyed | DvbVerification2010 | read | //! Integration tests for the DVB test-vector parser; the ignored tests read
+crates/gf2-coding/tests/test_vector_parser.rs:2 | keyed | DvbVerification2010 | read | //! external DVB vectors (`@/citation/DvbVerification2010`).
+crates/gf2-coding/tests/test_vectors/config.rs:43 | keyed | DvbVerification2010 | read | /// Parses a reference name of the form `VV001-CR35`; the frame size is
+crates/gf2-coding/tests/test_vectors/loader.rs:70 | keyed | DvbVerification2010 | map | // The directory name drops the letter suffix: "07a" -> "TestPoint07".
+crates/gf2-coding/tests/test_vectors/mod.rs:19 | keyed | DvbVerification2010 | read | /// Returns from the calling test when the DVB test vectors (`@/citation/DvbVerification2010`) are absent.
+crates/gf2-coding/tests/test_vectors/parser.rs:162 | keyed | DvbVerification2010 | read | // VV001-CR35_TP04_CSP.txt -> ("VV001-CR35", "TP04")
+crates/gf2-core/benches/charpoly.rs:16 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/field_matrix_gemm.rs:13 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial `x^8 + x^4 + x^3 + x + 1`
+crates/gf2-core/benches/field_matrix_gemm.rs:14 | keyed | Nist2001 | map | /// (`@/citation/Nist2001`); the leading bit is implicit, so `MODULUS` is `0x1B`.
+crates/gf2-core/benches/field_sparse_matrix.rs:15 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial `x^8 + x^4 + x^3 + x + 1`
+crates/gf2-core/benches/field_sparse_matrix.rs:16 | keyed | Nist2001 | map | /// (`@/citation/Nist2001`); the leading bit is implicit, so `MODULUS` is `0x1B`.
+crates/gf2-core/benches/fieldmatrix_charpoly.rs:20 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/fieldmatrix_charpoly.rs:29 | keyed | Lubeck2024 | map | /// GF(2^16) with the Conway polynomial (`@/citation/Lubeck2024`).
+crates/gf2-core/benches/fieldmatrix_gemm.rs:42 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial `x^8 + x^4 + x^3 + x + 1` (`@/citation/Nist2001`).
+crates/gf2-core/benches/fieldmatrix_gemm.rs:51 | keyed | Lubeck2024 | map | /// GF(2^16) with the Conway polynomial `x^16 + x^5 + x^3 + x^2 + 1` (`@/citation/Lubeck2024`).
+crates/gf2-core/benches/fieldmatrix_ple.rs:26 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/fieldmatrix_ple.rs:35 | keyed | Lubeck2024 | map | /// GF(2^16) with the Conway polynomial (`@/citation/Lubeck2024`).
+crates/gf2-core/benches/fieldmatrix_ple.rs:48 | not a citation | repository document or harness | read | /// `op_idx` 1 (`pluq`) and 2 (`echelon`) follow the operation enumeration of
+crates/gf2-core/benches/fieldmatrix_ple.rs:49 | not a citation | repository document or harness | read | /// `benchmarks/reference/fflas_bench.cpp`.
+crates/gf2-core/benches/fieldmatrix_solve.rs:25 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/fieldmatrix_solve.rs:34 | keyed | Lubeck2024 | map | /// GF(2^16) with the Conway polynomial (`@/citation/Lubeck2024`).
+crates/gf2-core/benches/gf2m_mul_strategies.rs:532 | not a citation | repository document or harness | read | // x^12 + x^6 + x^4 + x + 1 (from primitive_polys database)
+crates/gf2-core/benches/gf2m_wide_mul.rs:10 | keyed | Seroussi1998 | read | /// GF(2^256), `@/citation/Seroussi1998` Table 1 row m = 256: `x^256 + x^10 + x^5 + x^2 + 1`.
+crates/gf2-core/benches/gf2m_wide_mul.rs:19 | keyed | Nist2013 | read | /// GF(2^571), `@/citation/Nist2013` B-571/K-571 polynomial: `x^571 + x^10 + x^5 + x^2 + 1`.
+crates/gf2-core/benches/inverse.rs:16 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/matrix_transpose.rs:3 | keyed | Warren2012 | read | //! scalar fallback (`@/citation/Warren2012` Section 7-3).
+crates/gf2-core/benches/ple.rs:12 | keyed | Nist2001 | map | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/polynomial.rs:1 | not a citation | repository document or harness | read | //! Benchmarks GF(2^m) polynomial arithmetic. Benchmarks marked `[SAGE_CMP]`
+crates/gf2-core/benches/polynomial.rs:2 | not a citation | repository document or harness | read | //! have counterparts in `scripts/sage_benchmarks.py`.
+crates/gf2-core/benches/polynomial.rs:45 | not a citation | repository document or harness | read | /// [SAGE_CMP] `poly1 * poly2` in the polynomial ring over GF(2^m).
+crates/gf2-core/benches/polynomial.rs:262 | not a citation | repository document or harness | read | /// [SAGE_CMP] `a * b` for a, b ∈ GF(2^m).
+crates/gf2-core/benches/polynomial.rs:292 | not a citation | repository document or harness | read | /// [SAGE_CMP]
+crates/gf2-core/benches/primitive_poly.rs:2 | keyed | Rabin1980 | map | //! the irreducibility test of `@/citation/Rabin1980` alone. Benchmarks marked
+crates/gf2-core/benches/primitive_poly.rs:3 | not a citation | repository document or harness | read | //! `[SAGE_CMP]` have counterparts in `scripts/sage_benchmarks.py`.
+crates/gf2-core/benches/primitive_poly.rs:61 | not a citation | repository document or harness | read | /// [SAGE_CMP] `GF(2^m, modulus=poly).is_primitive()`.
+crates/gf2-core/benches/primitive_poly.rs:81 | not a citation | repository document or harness | read | /// [SAGE_CMP] `poly.is_irreducible()`.
+crates/gf2-core/benches/rref.rs:119 | keyed | Etsi2015 | map | // DVB-T2 short frame, rate 3/5 (`@/citation/Etsi2015`): 6,480 × 16,200
+crates/gf2-core/benches/rref.rs:127 | keyed | Etsi2015 | map | // DVB-T2 short frame, rate 1/2 (`@/citation/Etsi2015`): 9,000 × 16,200
+crates/gf2-core/benches/selector_non_regression.rs:1930 | not a citation | repository document or harness | read | /// Prints the pinned set as the committed procedure tabulates it, so the
+crates/gf2-core/benches/selector_non_regression.rs:1931 | not a citation | repository document or harness | read | /// document and this harness can be checked against each other.
+crates/gf2-core/benches/selector_non_regression.rs:2811 | not a citation | section of an internal design or protocol document | read | /// The enumeration the predeclaration fixes — `layout-attribution-verdict-v1.md`
+crates/gf2-core/benches/selector_non_regression.rs:2812 | not a citation | section of an internal design or protocol document | read | /// §3.1 — gives distinct members whose level sum has the parity of the
+crates/gf2-core/benches/selector_non_regression.rs:2813 | not a citation | section of an internal design or protocol document | read | /// member index, which is what makes §3.2's half-split balanced on every
+crates/gf2-core/benches/selector_non_regression.rs:2814 | not a citation | section of an internal design or protocol document | read | /// axis. Both rungs of §6.6's ladder are checked.
+crates/gf2-core/benches/sparse.rs:2 | not a citation | repository document or harness | read | //! `[SAGE_CMP]` have counterparts in `scripts/sage_benchmarks.py`.
+crates/gf2-core/benches/sparse.rs:13 | not a citation | repository document or harness | read | /// [SAGE_CMP] `sparse_matrix * vector` over GF(2).
+crates/gf2-core/benches/sparse.rs:65 | not a citation | repository document or harness | read | /// [SAGE_CMP] `matrix.transpose()` for sparse GF(2) matrices.
+crates/gf2-core/benches/sparse_field_matmul.rs:13 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/sparse_rref.rs:13 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/sparse_rref_scorecard.rs:12 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial `x^8 + x^4 + x^3 + x + 1` (`@/citation/Nist2001`).
+crates/gf2-core/benches/sparse_spmv.rs:25 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/strassen_threshold.rs:15 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial `x^8 + x^4 + x^3 + x + 1` (`@/citation/Nist2001`).
+crates/gf2-core/benches/triangular.rs:14 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/benches/tuning_calibration.rs:607 | not a citation | section of an internal design or protocol document | read | /// preregistered in `dev/active/eaae1b56/premeasurement-protocol.md` §3.
+crates/gf2-core/benches/tuning_calibration.rs:619 | not a citation | section of an internal design or protocol document | read | /// `dev/active/dbd8787d/premeasurement-protocol.md` §2. Their `_max_`
+crates/gf2-core/benches/tuning_calibration.rs:1196 | new work | KlyneNewman2002 | read | /// Formats a UTC instant in the RFC 3339 (`@/citation/KlyneNewman2002`) form `Rfc3339Utc::parse` accepts.
+crates/gf2-core/examples/bench_csv_emitter.rs:49 | keyed | Lubeck2024 | read | /// GF(2^32) with the Conway polynomial `f_{2,32}` of `@/citation/Lubeck2024`,
+crates/gf2-core/examples/bench_csv_emitter.rs:732 | keyed | AlbrechtBard2026 | read | /// `benchmarks/reference/m4ri_bench.c` (`@/citation/AlbrechtBard2026`).
+crates/gf2-core/examples/bench_csv_emitter.rs:903 | not a citation | repository document or harness | read | /// per-cell derivation, as in `benchmarks/reference/ntl_bench.cpp`
+crates/gf2-core/examples/bench_csv_emitter.rs:904 | keyed | Shoup2025 | map | /// (`@/citation/Shoup2025`).
+crates/gf2-core/examples/bench_csv_emitter.rs:977 | not a citation | repository document or harness | read | /// checks the same derivation against a port of the C reference.
+crates/gf2-core/src/alg/rref.rs:33 | keyed | AlbrechtBard2026 | read | /// Left-to-right pivoting uses an M4RI-style (`@/citation/AlbrechtBard2026`)
+crates/gf2-core/src/bench_seed.rs:24 | keyed | Vigna2015 | read | /// Advances `state` by one SplitMix64 step (`@/citation/Vigna2015`) and
+crates/gf2-core/src/bench_seed.rs:36 | not a citation | repository document or harness | read | /// `master`, as `gf2_bench_derive_seed` does in the C reference.
+crates/gf2-core/src/field/axiom_tests.rs:732 | keyed | Seroussi1998 | map | /// GF(2^256) over `x^256 + x^10 + x^5 + x^2 + 1` (`@/citation/Seroussi1998`
+crates/gf2-core/src/field/axiom_tests.rs:733 | keyed | Seroussi1998 | read | /// Table 1, m = 256).
+crates/gf2-core/src/field/batch_ops.rs:1 | keyed | Montgomery1987 | read | //! Montgomery's batch inversion trick (`@/citation/Montgomery1987`) for
+crates/gf2-core/src/field/charpoly.rs:898 | keyed | Massey1969 | read | /// Berlekamp–Massey (`@/citation/Massey1969`) over an arbitrary
+crates/gf2-core/src/field/charpoly.rs:1405 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012`, theorem 13.1): the product of the
+crates/gf2-core/src/field/charpoly.rs:1459 | keyed | DumasPernet2012 | read | /// squaring (`@/citation/DumasPernet2012`, theorem 13.4).
+crates/gf2-core/src/field/charpoly.rs:1702 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/src/field/charpoly.rs:1711 | not a citation | method or object name | read | /// Conway-irreducible Gf2mWide<16>.
+crates/gf2-core/src/field/expr.rs:1950 | keyed | Nist2001 | read | // GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/src/field/extension.rs:2749 | keyed | Seroussi1998 | read | /// `x^256 + x^10 + x^5 + x^2 + 1` (`@/citation/Seroussi1998`, Table 1 row
+crates/gf2-core/src/field/inverse.rs:3 | keyed | DumasPernet2012 | read | //! triangular kernels (`@/citation/DumasPernet2012` §2.3, Table 2).
+crates/gf2-core/src/field/inverse.rs:57 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.3, Table 2). The route reported by
+crates/gf2-core/src/field/inverse.rs:157 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.3, Table 2).
+crates/gf2-core/src/field/inverse.rs:262 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.3, Table 2), at full rank
+crates/gf2-core/src/field/inverse.rs:340 | keyed | Higham2002 | read | /// (`@/citation/Higham2002` §14.1): `L · Y = I`, `E · X = Y`, then `Pᵀ`
+crates/gf2-core/src/field/inverse.rs:411 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/src/field/inverse.rs:420 | not a citation | method or object name | read | /// GF(2^16) with the Conway polynomial.
+crates/gf2-core/src/field/inverse.rs:898 | keyed | DumasPernet2012 | read | // Reference driver (`@/citation/DumasPernet2012` §2.3, Table 2): PLE,
+crates/gf2-core/src/field/irreducibility.rs:1 | keyed | Rabin1980 | read | //! Complete irreducibility validation for finite-field polynomials by Rabin's
+crates/gf2-core/src/field/irreducibility.rs:2 | keyed | Rabin1980 | map | //! criterion (`@/citation/Rabin1980`), with a certificate that lets a
+crates/gf2-core/src/field/irreducibility.rs:72 | keyed | Rabin1980 | read | /// Rabin's finite-field irreducibility criterion (`@/citation/Rabin1980`).
+crates/gf2-core/src/field/irreducibility.rs:82 | keyed | Rabin1980 | map | /// The decision uses Rabin's criterion.  For a monic degree-`n` polynomial
+crates/gf2-core/src/field/irreducibility.rs:110 | keyed | Rabin1980 | map | /// field, and `p` its characteristic.  Rabin's checks use
+crates/gf2-core/src/field/matrix.rs:221 | not a citation | names software without attributing a method or number | read | /// Equivalent to [`FieldMatrix::zeros`]; named for Armadillo parity.
+crates/gf2-core/src/field/matrix.rs:1717 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §1.2): `B` is transposed once and each
+crates/gf2-core/src/field/matrix.rs:3307 | keyed | Nist2001 | read | // GF(2^8) with the AES reduction polynomial x^8 + x^4 + x^3 + x + 1
+crates/gf2-core/src/field/matrix.rs:3308 | keyed | Nist2001 | map | // (`@/citation/Nist2001`); `MODULUS` stores the low byte `0x1B`.
+crates/gf2-core/src/field/modulus_select.rs:32 | not a citation | repository document or harness | read | /// A canonical Conway polynomial from the registry's cited source.
+crates/gf2-core/src/field/ntt.rs:63 | keyed | GentlemanSande1966 | map | // (`@/citation/GentlemanSande1966`); `i < j` swaps each pair once.
+crates/gf2-core/src/field/ple.rs:2 | keyed | DumasPernet2012 | read | //! (`@/citation/DumasPernet2012` §2.2, alg. 2.5) and the row-echelon, RREF,
+crates/gf2-core/src/field/ple.rs:563 | keyed | DumasPernetSultan2017 | map | /// recursive PLUQ of `@/citation/DumasPernetSultan2017`.
+crates/gf2-core/src/field/ple.rs:826 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.2, alg. 2.5).
+crates/gf2-core/src/field/ple.rs:876 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.2, alg. 2.6).
+crates/gf2-core/src/field/ple.rs:938 | keyed | DumasPernet2012 | read | /// `X · self = R` and `R` in RREF (`@/citation/DumasPernet2012` §2.2,
+crates/gf2-core/src/field/ple.rs:939 | keyed | DumasPernet2012 | read | /// alg. 2.7).
+crates/gf2-core/src/field/ple.rs:1399 | keyed | Nist2001 | read | /// GF(2^8) with the AES reduction polynomial (`@/citation/Nist2001`).
+crates/gf2-core/src/field/ple.rs:1408 | not a citation | method or object name | read | /// Gf2mWide<16>: Conway polynomial x^16 + x^5 + x^3 + x^2 + 1
+crates/gf2-core/src/field/sparse_matrix.rs:741 | keyed | LinBox2025 | read | /// pivot priority of `GaussDomain::NoReordering` in
+crates/gf2-core/src/field/sparse_matrix.rs:742 | keyed | LinBox2025 | map | /// `@/citation/LinBox2025`.
+crates/gf2-core/src/field/sparse_matrix.rs:1163 | keyed | Nist2001 | read | // GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/src/field/traits.rs:117 | not a citation | code identifier | read | /// `theorem_4_operand_bound()²`, so summing at most
+crates/gf2-core/src/field/traits.rs:526 | keyed | SageMath2026 | map | // Expected values: `@/citation/SageMath2026`, GF(2^4) with modulus x^4+x+1.
+crates/gf2-core/src/field/triangular.rs:2 | keyed | DumasPernet2012 | read | //! `trtri` and `trtrm` (`@/citation/DumasPernet2012` §2.1, alg. 2.1–2.4),
+crates/gf2-core/src/field/triangular.rs:7 | keyed | Higham2002 | read | //! `@/citation/Higham2002` §14.1.
+crates/gf2-core/src/field/triangular.rs:160 | keyed | DumasPernet2012 | read | /// with `X` (`@/citation/DumasPernet2012` §2.1, alg. 2.1).
+crates/gf2-core/src/field/triangular.rs:204 | keyed | DumasPernet2012 | read | /// with `X` (`@/citation/DumasPernet2012` §2.1, alg. 2.1).
+crates/gf2-core/src/field/triangular.rs:247 | keyed | Higham2002 | map | /// [`trsm_upper`] as a row-panel blocked solve (`@/citation/Higham2002`
+crates/gf2-core/src/field/triangular.rs:248 | keyed | Higham2002 | read | /// §14.1): `a` is tiled into panels of `block_size` rows, processed last to
+crates/gf2-core/src/field/triangular.rs:297 | keyed | Higham2002 | map | /// [`trsm_lower`] as a row-panel blocked solve (`@/citation/Higham2002`
+crates/gf2-core/src/field/triangular.rs:298 | keyed | Higham2002 | read | /// §14.1): the mirror of [`trsm_upper_blocked`], processing the panels first
+crates/gf2-core/src/field/triangular.rs:343 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.1, alg. 2.2).
+crates/gf2-core/src/field/triangular.rs:378 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.1, alg. 2.2).
+crates/gf2-core/src/field/triangular.rs:413 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.1, alg. 2.3). Cells strictly below the
+crates/gf2-core/src/field/triangular.rs:439 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.1, alg. 2.3). Cells strictly above the
+crates/gf2-core/src/field/triangular.rs:465 | keyed | DumasPernet2012 | read | /// lower-triangular `L` (`@/citation/DumasPernet2012` §2.1, alg. 2.4),
+crates/gf2-core/src/field/triangular.rs:1155 | keyed | Nist2001 | read | // GF(2^8) with the AES reduction polynomial (`@/citation/Nist2001`).
+crates/gf2-core/src/field/two_adic.rs:68 | keyed | Plonky2026 | map | // Generators are the `@/citation/Plonky2026` constants: a
+crates/gf2-core/src/field/two_adic.rs:74 | keyed | HardyWright2008 | read | /// (`@/citation/HardyWright2008` §7.3), so `3` itself is the primitive
+crates/gf2-core/src/field/two_adic.rs:86 | keyed | Plonky2026 | map | /// `TWO_ADICITY = 27`. The `@/citation/Plonky2026` generator `g_mult = 31` is
+crates/gf2-core/src/field/two_adic.rs:99 | keyed | Plonky2026 | map | /// `TWO_ADICITY = 24`. The `@/citation/Plonky2026` generator `g_mult = 3` is
+crates/gf2-core/src/field/two_adic.rs:112 | keyed | Plonky2026 | map | /// The 31-bit BabyBear field of `@/citation/Plonky2026`.
+crates/gf2-core/src/field/two_adic.rs:118 | keyed | Plonky2026 | map | /// The 31-bit KoalaBear field of `@/citation/Plonky2026`.
+crates/gf2-core/src/field/two_adic.rs:259 | keyed | HardyWright2008 | read | // 3 is a primitive root mod 65537 (`@/citation/HardyWright2008` §7.3).
+crates/gf2-core/src/field/two_adic.rs:272 | keyed | Plonky2026 | map | // `@/citation/Plonky2026` uses g_mult = 31 as a multiplicative generator.
+crates/gf2-core/src/field/two_adic.rs:285 | keyed | Plonky2026 | map | // `@/citation/Plonky2026` uses g_mult = 3 as a multiplicative generator.
+crates/gf2-core/src/field/vec.rs:252 | keyed | DumasPernet2012 | read | /// wide products before reducing (`@/citation/DumasPernet2012` §1.2,
+crates/gf2-core/src/field/vec.rs:253 | keyed | DumasPernet2012 | read | /// theorem 4 classical case), so the `Wide` accumulator does not overflow.
+crates/gf2-core/src/field/vec.rs:296 | keyed | DumasPernet2012 | read | // At most kmax wide products per chunk (`@/citation/DumasPernet2012` §1.2).
+crates/gf2-core/src/field/winograd.rs:2 | keyed | DumasPernet2012 | read | //! [`FiniteField`] (`@/citation/DumasPernet2012` §1.4, algorithm 1.6):
+crates/gf2-core/src/field/winograd.rs:88 | not a citation | code identifier | read | /// products recurse, unless [`theorem_4_bound`] at the next depth exceeds
+crates/gf2-core/src/field/winograd.rs:137 | keyed | DumasPernet2012 | read | /// public entry points, and feeds the theorem-4 gate.
+crates/gf2-core/src/field/winograd.rs:164 | keyed | DumasPernet2012 | read | // Refuse to recurse when the `@/citation/DumasPernet2012` §1.4
+crates/gf2-core/src/field/winograd.rs:165 | keyed | DumasPernet2012 | read | // theorem 4 bound on an intermediate cell at depth `level + 1` exceeds
+crates/gf2-core/src/field/winograd.rs:228 | keyed | DumasPernet2012 | read | // S, T, M and U follow `@/citation/DumasPernet2012` §1.4,
+crates/gf2-core/src/field/winograd.rs:229 | keyed | DumasPernet2012 | read | // algorithm 1.6.
+crates/gf2-core/src/field/winograd.rs:260 | not a citation | code identifier | read | /// `theorem_4_bound(level, k, p_minus_1)`.
+crates/gf2-core/src/field/winograd.rs:405 | keyed | DumasPernet2012 | read | /// The `@/citation/DumasPernet2012` §1.4 theorem 4 bound: after `levels`
+crates/gf2-core/src/field/winograd.rs:443 | keyed | Nist2001 | read | // GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
+crates/gf2-core/src/field/winograd.rs:651 | not a citation | part of a sentence whose citation is listed at an adjacent line | read | /// every S/T block entering a recursive multiply has canonical values
+crates/gf2-core/src/field/winograd.rs:652 | keyed | DumasPernet2012 | map | /// within the theorem-4 bound of the level being entered.
+crates/gf2-core/src/field/winograd.rs:821 | keyed | DumasPernet2012 | map | /// Asserts the theorem-4 bound on every unreduced intermediate of the
+crates/gf2-core/src/field/winograd.rs:822 | not a citation | part of a sentence whose citation is listed at an adjacent line | read | /// Winograd recursion and returns the padded output shadow.
+crates/gf2-core/src/gf2m/barrett.rs:1036 | keyed | Seroussi1998 | read | /// P(x) = x^256 + x^10 + x^5 + x^2 + 1 (`@/citation/Seroussi1998`, Table 1 row
+crates/gf2-core/src/gf2m/field.rs:459 | keyed | Rabin1980 | map | /// Uses the irreducibility test of `@/citation/Rabin1980`, then checks
+crates/gf2-core/src/gf2m/field.rs:494 | keyed | Rabin1980 | map | /// Tests irreducibility using the test of `@/citation/Rabin1980`.
+crates/gf2-core/src/gf2m/field.rs:567 | not a citation | repository document or harness | read | /// This constructor checks the provided polynomial against the standard database:
+crates/gf2-core/src/gf2m/field.rs:600 | keyed | Nist2001 | read | /// This is not the AES polynomial 0x11B (`@/citation/Nist2001` Section 4.2).
+crates/gf2-core/src/gf2m/field.rs:605 | not a citation | no external work named | read | /// Creates a GF(2^16) field with standard primitive polynomial x^16 + x^12 + x^3 + x + 1.
+crates/gf2-core/src/gf2m/field.rs:1600 | keyed | Etsi2015 | read | // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for short frames
+crates/gf2-core/src/gf2m/field.rs:1607 | keyed | Etsi2015 | read | // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for normal frames
+crates/gf2-core/src/gf2m/field.rs:1614 | keyed | Etsi2015 | read | // x^14 + x^5 + 1 is not primitive; `@/citation/Etsi2015` (DVB-T2) uses
+crates/gf2-core/src/gf2m/field.rs:1845 | keyed | Seroussi1998 | read | /// (`@/citation/Seroussi1998`, via `PrimitivePolynomialDatabase::standard_u128(64)`;
+crates/gf2-core/src/gf2m/field.rs:2485 | keyed | Etsi2015 | read | // `@/citation/Etsi2015` (DVB-T2): bit 0 is highest coefficient
+crates/gf2-core/src/gf2m/field.rs:3054 | keyed | Etsi2015 | read | // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for short frames
+crates/gf2-core/src/gf2m/field.rs:3061 | keyed | Etsi2015 | read | // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for normal frames
+crates/gf2-core/src/gf2m/field.rs:3210 | keyed | Etsi2015 | read | // `@/citation/Etsi2015` (DVB-T2) short-frame BCH generator g_1(x)
+crates/gf2-core/src/gf2m/field.rs:3393 | keyed | Etsi2015 | read | // 12 consecutive roots, the `@/citation/Etsi2015` (DVB-T2) BCH t = 12 case
+crates/gf2-core/src/gf2m/field.rs:3456 | keyed | Etsi2015 | read | // First three `@/citation/Etsi2015` (DVB-T2) short-frame BCH generators
+crates/gf2-core/src/gf2m/generation.rs:137 | keyed | Swan1962 | map | // gcd(m, k) > 1, and is reducible when 8 | m (`@/citation/Swan1962`).
+crates/gf2-core/src/gf2m/generation.rs:226 | keyed | Oeis2026 | read | // Primitive-polynomial counts per degree: `@/citation/Oeis2026` (A011260).
+crates/gf2-core/src/gf2m/mod.rs:9 | keyed | AeneasVerif2026 | read | /// Charon/Aeneas (`@/citation/AeneasVerif2026`).
+crates/gf2-core/src/gf2m/mul_raw.rs:3 | keyed | AeneasVerif2026 | read | /// Monomorphized to `u64` for formal verification via Charon/Aeneas
+crates/gf2-core/src/gf2m/mul_raw.rs:4 | keyed | AeneasVerif2026 | map | /// (`@/citation/AeneasVerif2026`).
+crates/gf2-core/src/gf2m/poly_helpers.rs:55 | keyed | Etsi2015 | read | /// This matches the `@/citation/Etsi2015` (DVB-T2) convention of "MSB-first" codewords where
+crates/gf2-core/src/gf2m/wide.rs:1415 | keyed | Seroussi1998 | read | /// `x^256 + x^10 + x^5 + x^2 + 1` (`@/citation/Seroussi1998`, Table 1 row
+crates/gf2-core/src/gf2m/wide.rs:1425 | keyed | Nist2013 | read | /// GF(2^571) B-571/K-571 binary-field polynomial (`@/citation/Nist2013`,
+crates/gf2-core/src/gf2m/wide.rs:1426 | keyed | Nist2013 | read | /// Appendix D): `x^571 + x^10 + x^5 + x^2 + 1`.
+crates/gf2-core/src/gfp/mod.rs:518 | keyed | DumasPernet2012 | read | /// Theorem-4 (`@/citation/DumasPernet2012` §1.4) per-cell operand bound `P - 1`. See
+crates/gf2-core/src/gfp/simd_ops.rs:451 | keyed | GotoGeijn2008 | map | /// panelized micro-kernel (`@/citation/GotoGeijn2008`); set through
+crates/gf2-core/src/gfp/simd_ops.rs:459 | keyed | GotoGeijn2008 | map | /// (`crate::simd::maybe_fp_small_panel`, `@/citation/GotoGeijn2008`).
+crates/gf2-core/src/gfp/specialized.rs:660 | keyed | DumasPernet2012 | read | /// Theorem-4 (`@/citation/DumasPernet2012` §1.4) per-cell operand bound: `p - 1` for the Goldilocks prime.
+crates/gf2-core/src/gfpn/cubic.rs:4 | keyed | Devegili2006 | map | //! `@/citation/Devegili2006` and inversion the adjugate/norm method of
+crates/gf2-core/src/gfpn/cubic.rs:5 | keyed | Beuchat2010 | map | //! `@/citation/Beuchat2010`.
+crates/gf2-core/src/gfpn/ext_config.rs:40 | keyed | AeneasVerif2026 | read | /// Charon (`@/citation/AeneasVerif2026`) can continue extracting the quadratic and cubic arithmetic while
+crates/gf2-core/src/gfpn/ext_config.rs:42 | keyed | AeneasVerif2026 | read | /// deliberate: Aeneas then generates the same Lean trait field name as the
+crates/gf2-core/src/gfpn/quadratic.rs:3 | keyed | Devegili2006 | map | //! [`ExtConfig`]. Multiplication is Karatsuba (`@/citation/Devegili2006`).
+crates/gf2-core/src/io/field_matrix.rs:8 | not a citation | method or object name | read | //! element payload, and a 32-byte BLAKE3 digest of every preceding byte,
+crates/gf2-core/src/lib.rs:230 | keyed | GotoGeijn2008,VanZee2015 | map | /// (`@/citation/GotoGeijn2008`, `@/citation/VanZee2015`) for `P ≤ 251`,
+crates/gf2-core/src/macros.rs:21 | not a citation | names software without attributing a method or number | read | /// Create a BitMatrix using nalgebra-like row/column literals.
+crates/gf2-core/src/macros.rs:24 | not a citation | names software without attributing a method or number | read | /// - Rows without brackets (nalgebra-like):
+crates/gf2-core/src/matrix.rs:1169 | not a citation | names software without attributing a method or number | read | /// Formats the BitMatrix in nalgebra-like style.
+crates/gf2-core/src/primitive_polys.rs:2 | keyed | LidlNiederreiter1996,Menezes1997 | map | //! `@/citation/LidlNiederreiter1996`, `@/citation/Menezes1997`,
+crates/gf2-core/src/primitive_polys.rs:3 | keyed | Etsi2015,ThreeGpp2017 | map | //! `@/citation/Etsi2015`, `@/citation/ThreeGpp2017`,
+crates/gf2-core/src/primitive_polys.rs:4 | keyed | Seroussi1998,Zivkovic1994 | map | //! `@/citation/Seroussi1998`, `@/citation/Zivkovic1994`,
+crates/gf2-core/src/primitive_polys.rs:5 | keyed | Nist2013,Lubeck2024 | read | //! `@/citation/Nist2013` Appendix D and `@/citation/Lubeck2024`.
+crates/gf2-core/src/primitive_polys.rs:87 | keyed | Etsi2015 | read | // x^14 + x^5 + x^3 + x + 1 (DVB-T2)
+crates/gf2-core/src/primitive_polys.rs:89 | keyed | Etsi2015 | read | // x^16 + x^5 + x^3 + x^2 + 1 (DVB-T2)
+crates/gf2-core/src/primitive_polys.rs:90 | keyed | Lubeck2024 | read | // Conway polynomial `f_{2,32}` of `@/citation/Lubeck2024`, hence
+crates/gf2-core/src/primitive_polys.rs:131 | keyed | Nist2013,Seroussi1998 | map | /// comes from `@/citation/Seroussi1998` or `@/citation/Nist2013`
+crates/gf2-core/src/primitive_polys.rs:132 | keyed | Nist2013 | read | /// Appendix D.
+crates/gf2-core/src/primitive_polys.rs:285 | keyed | Rabin1980 | map | /// Rabin's test: `x^(2^m) ≡ x (mod p)` and, for each prime `q | m`,
+crates/gf2-core/src/rng.rs:1 | keyed | Knuth1997 | read | //! Seed-reproducible 64-bit linear-congruential generator with the MMIX
+crates/gf2-core/src/rng.rs:2 | keyed | Knuth1997 | map | //! constants of `@/citation/Knuth1997`, for simulation, test and benchmark
+crates/gf2-core/src/sparse.rs:1308 | not a citation | names software without attributing a method or number | read | /// Formats the SpBitMatrix in nalgebra-like style.
+crates/gf2-core/src/sparse.rs:1339 | not a citation | names software without attributing a method or number | read | /// Formats the `SpBitMatrixBlockCsr` in nalgebra-like style.
+crates/gf2-core/src/sparse.rs:1376 | not a citation | names software without attributing a method or number | read | /// Formats the SpBitMatrixDual in nalgebra-like style.
+crates/gf2-core/src/sparse.rs:1783 | keyed | Knuth1997 | map | /// LCG with the multiplier of `@/citation/Knuth1997`.
+crates/gf2-core/src/sparse.rs:2095 | not a citation | method or object name | read | // splitmix64, for reproducibility under proptest shrinking.
+crates/gf2-core/src/tuning/mod.rs:137 | new work | KlyneNewman2002 | read | /// An RFC 3339 (`@/citation/KlyneNewman2002`) UTC instant written with a `Z` suffix.
+crates/gf2-core/src/tuning/mod.rs:147 | new work | KlyneNewman2002 | read | /// RFC 3339 form or contains an out-of-range clock or calendar component.
+crates/gf2-core/src/tuning/mod.rs:308 | keyed | AlbrechtBard2026 | read | /// The M4RI inversion dimension threshold.
+crates/gf2-core/src/tuning/mod.rs:884 | keyed | AlbrechtBard2026 | read | /// Returns the minimum dimension for M4RI inversion.
+crates/gf2-core/tests/clmul_wide_conformance.rs:22 | keyed | Steele2014 | read | /// SplitMix64 (`@/citation/Steele2014`), the seeded generator the operand
+crates/gf2-core/tests/clmul_wide_conformance.rs:268 | keyed | Seroussi1998 | read | /// GF(2^256) with the `@/citation/Seroussi1998` Table 1 pentanomial for m = 256.
+crates/gf2-core/tests/common/mod.rs:43 | keyed | SageMath2026 | map | /// `@/citation/SageMath2026`.
+crates/gf2-core/tests/common/mod.rs:54 | keyed | SageMath2026 | map | /// `@/citation/SageMath2026`.
+crates/gf2-core/tests/gf2pow32_constant_drift.rs:1 | keyed | Lubeck2024 | read | //! Drift check between the GF(2^32) Conway polynomial (`@/citation/Lubeck2024`)
+crates/gf2-core/tests/gf2pow32_matmul.rs:10 | keyed | Lubeck2024 | read | /// Low 32 bits of the GF(2^32) Conway polynomial (`@/citation/Lubeck2024`);
+crates/gf2-core/tests/gf2pow32_matmul.rs:14 | not a citation | method or object name | read | /// GF(2^32) under the Conway polynomial.
+crates/gf2-core/tests/gf2pow32_matmul.rs:42 | not a citation | method or object name | read | /// An n×n row-major matrix of SplitMix64-derived elements, one step per
+crates/gf2-core/tests/gfpn_nested_towers.rs:4 | keyed | SageMath2025 | map | //! vectors from `@/citation/SageMath2025` generated by
+crates/gf2-core/tests/gfpn_nested_towers.rs:188 | keyed | SageMath2025 | read | // `set_random_seed(42)` under Sage 10.8 (`@/citation/SageMath2025`): flat
+crates/gf2-core/tests/residual_shift_routes.rs:49 | keyed | Steele2014 | read | /// Deterministic SplitMix64 (`@/citation/Steele2014`) fill, so a failure
+crates/gf2-core/tests/transpose_lane_contract.rs:12 | keyed | Steele2014 | read | /// SplitMix64 (`@/citation/Steele2014`), so a failing case is reproducible
+crates/gf2-kernels-hip/src/ffi.rs:95 | not a citation | method or object name | read | /// Launch the device ChaCha20 raw-word stream kernel.
+crates/gf2-kernels-hip/src/ffi.rs:97 | not a citation | method or object name | read | /// Writes `n_words` consecutive 32-bit ChaCha20 keystream words starting at
+crates/gf2-kernels-hip/src/ffi.rs:102 | not a citation | method or object name | read | /// - `key`: device ptr, `[8]` u32 little-endian ChaCha key words.
+crates/gf2-kernels-hip/src/ffi.rs:103 | not a citation | method or object name | read | /// - `base_word_pos`: absolute ChaCha 32-bit-word position to start at.
+crates/gf2-kernels-hip/src/ffi.rs:118 | not a citation | method or object name | read | /// Launch the device ChaCha20 + Box-Muller AWGN noise-sample kernel.
+crates/gf2-kernels-hip/src/ffi.rs:121 | not a citation | method or object name | read | /// one thread per sample. Sample `s` consumes the 4 ChaCha words at
+crates/gf2-kernels-hip/src/ffi.rs:125 | not a citation | method or object name | read | /// - `key`: device ptr, `[8]` u32 little-endian ChaCha key words.
+crates/gf2-kernels-hip/src/ffi.rs:126 | not a citation | method or object name | read | /// - `base_word_pos`: frame's `worker_offset(...)` in ChaCha word units
+crates/gf2-kernels-hip/src/host/streams.rs:120 | not a citation | names software without attributing a method or number | read | // `hipStreamQuery`, which the HIP runtime documents as thread-safe for
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:18 | keyed | RandCore2025 | map | /// `SeedableRng::seed_from_u64` in `@/citation/RandCore2025`.
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:25 | keyed | RandCore2025 | map | // PCG32 constants of `seed_from_u64` in `@/citation/RandCore2025`.
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:113 | not a citation | code identifier | read | /// compares the words with a host `ChaCha20Rng::seed_from_u64(seed)`
+crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs:74 | keyed | Etsi2015 | read | // GF(2^14) (DVB-T2 Short) and GF(2^16) (DVB-T2 Normal) primitive polys
+crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs:75 | keyed | Etsi2015 | map | // (`@/citation/Etsi2015`).
+crates/gf2-kernels-simd/src/bch_encode.rs:605 | keyed | Steele2014 | read | /// SplitMix64 (`@/citation/Steele2014`).
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:2 | keyed | Scheinerman2024 | map | //! framework. The `(mag, sgn)` encoding follows `@/citation/Scheinerman2024`
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:3 | keyed | Scheinerman2024 | read | //! §2.2: `0 ↔ (0, 0)`, `1 ↔ (1, 0)`, `2 ↔ (1, 1)`; canonical pairs satisfy
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:25 | keyed | Scheinerman2024 | map | /// Implements [`BipedalLikeConfig`] with the `@/citation/Scheinerman2024`
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:26 | keyed | Scheinerman2024 | read | /// §2.2 formulas over [`Avx2Lane`].
+crates/gf2-kernels-simd/src/bipedal/framework.rs:39 | keyed | Scheinerman2024 | read | /// (`@/citation/Scheinerman2024` §2.2).
+crates/gf2-kernels-simd/src/bipedal/framework.rs:67 | keyed | Scheinerman2024 | read | /// For F_3: `m_x = m1 & m2; s_x = s1 ^ s2` (`@/citation/Scheinerman2024` §2.2).
+crates/gf2-kernels-simd/src/fp_small_panel.rs:2 | keyed | GotoGeijn2008,VanZee2015 | map | //! after `@/citation/GotoGeijn2008`, `@/citation/VanZee2015` and
+crates/gf2-kernels-simd/src/fp_small_panel.rs:3 | keyed | Amd2020 | map | //! `@/citation/Amd2020`: the safe wrapper layer over
+crates/gf2-kernels-simd/src/lib.rs:122 | keyed | Mula2018 | map | /// lookup (`@/citation/Mula2018`).
+crates/gf2-kernels-simd/src/transpose.rs:189 | keyed | Warren2012 | read | /// mask-and-shift pattern (`@/citation/Warren2012` ch. 7-3).
+crates/gf2-kernels-simd/src/transpose.rs:260 | keyed | Steele2014 | read | /// SplitMix64 (`@/citation/Steele2014`).
+crates/gf2-kernels-simd/src/x86/clmul.rs:327 | keyed | Steele2014 | read | /// SplitMix64 (`@/citation/Steele2014`), so random operands are
+crates/gf2-kernels-simd/src/x86/fp_medium.rs:497 | keyed | VanZee2015 | map | /// Outer-N panel grouping (NC blocking of `@/citation/VanZee2015`) for the
+crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:5 | keyed | DumasPernet2012 | read | //! `@/citation/DumasPernet2012` §2.2 Alg. 2.5.
+crates/gf2-kernels-simd/src/x86/fp_small.rs:650 | keyed | MollerGranlund2011 | map | /// # Algorithm (`@/citation/MollerGranlund2011`, one-step branchless)
+crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:2 | keyed | GotoGeijn2008,VanZee2015 | map | //! in the style of `@/citation/GotoGeijn2008` and `@/citation/VanZee2015`. B is
+crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:4 | keyed | DumasPernet2012 | read | //! writes as the column-major base case of `@/citation/DumasPernet2012` §2.2
+crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:5 | keyed | DumasPernet2012 | read | //! Alg. 2.5.
+crates/gf2-kernels-simd/src/x86/popcount.rs:5 | keyed | Mula2018 | map | //! (`@/citation/Mula2018`). A buffer shorter than one 512-byte block reaches
+crates/gf2-kernels-simd/src/x86/popcount.rs:17 | keyed | Mula2018 | map | /// carry-save adders instead of sixteen lookups (`@/citation/Mula2018`).
+crates/gf2-kernels-simd/src/x86/popcount.rs:67 | keyed | Mula2018 | map | /// bit column (`@/citation/Mula2018`). Five Boolean operations over three
+crates/gf2-kernels-simd/src/x86/transpose.rs:11 | keyed | Warren2012 | read | /// Runs the mask-shift-XOR recursion of `@/citation/Warren2012` Section 7-3.
+crates/gf2-sim/examples/nr_5g_quickstart.rs:4 | keyed | ThreeGpp2017 | map | //! QPSK. Z = 384 belongs to lifting set `i_LS = 1` (`@/citation/ThreeGpp2017`
+crates/gf2-sim/examples/nr_5g_quickstart.rs:5 | keyed | ThreeGpp2017 | read | //! Table 5.3.2-1: 384 = 3 * 2^7). Run with
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:401 | keyed | Etsi2012 | read | // `@/citation/Etsi2012` Table 44 AWGN C/N at BER=1e-7 after LDPC (Normal frames):
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:408 | keyed | Etsi2012 | read | // Each center sits 0.5 to 1.1 dB below its table value.
+crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs:3 | keyed | Fossorier1994 | map | //! target and an order-1 control on the seven `@/citation/Fossorier1994`
+crates/gf2-sim/src/bin/export_alist.rs:1 | new work | MacKay2006 | read | //! Exports a gf2-coding LDPC parity-check matrix to the AList format of `@/citation/MacKay2006`, so
+crates/gf2-sim/src/bin/export_alist.rs:2 | keyed | Cassagne2019 | read | //! that aff3ct (`@/citation/Cassagne2019`, `--dec-h-path <file.alist>`) decodes
+crates/gf2-sim/src/bin/export_alist.rs:6 | new work | MacKay2006 | map | //! # AList format
+crates/gf2-sim/src/bin/ldpc_bler_sweep.rs:1 | keyed | Cassagne2019 | read | //! LDPC-only AWGN-BPSK BLER sweep for comparison against aff3ct
+crates/gf2-sim/src/bin/ldpc_bler_sweep.rs:2 | keyed | Cassagne2019 | map | //! (`@/citation/Cassagne2019`). The isolated LDPC decoder (normalized min-sum,
+crates/gf2-sim/src/error.rs:186 | keyed | ThreeGpp2017 | map | /// (`@/citation/ThreeGpp2017`).
+crates/gf2-sim/src/error.rs:190 | keyed | ThreeGpp2017 | read | /// for example a lifting size `Z` outside Table 5.3.2-1 or a modulation
+crates/gf2-sim/src/error.rs:192 | keyed | ThreeGpp2020 | read | /// `E` (`@/citation/ThreeGpp2020` §5.4.2.2).
+crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:9 | keyed | ThreeGpp2017 | read | //! Rate matching (`@/citation/ThreeGpp2017` Section 5.3.2) is a host-side map:
+crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:171 | keyed | ThreeGpp2017 | map | /// `@/citation/ThreeGpp2017` places message bit `i` at codeword position
+crates/gf2-sim/src/osd_campaign.rs:18 | keyed | MaurerPontil2009 | map | //! - `mu` by the empirical-Bernstein bound of `@/citation/MaurerPontil2009`
+crates/gf2-sim/src/permanent_campaign/coordinator.rs:82 | not a citation | repository document or harness | read | /// Recorded bounded q=5/q=7 literature-search identity.
+crates/gf2-sim/src/permanent_campaign/coordinator.rs:1767 | not a citation | repository document or harness | read | /// The recorded search locates no prior q=5/q=7 numerics, subject to every
+crates/gf2-sim/src/permanent_campaign/coordinator.rs:1772 | not a citation | no external work named | read | /// Evidence class of one published q=3 source row.
+crates/gf2-sim/src/permanent_campaign/coordinator.rs:1778 | not a citation | no external work named | read | /// Published source Monte Carlo counts.
+crates/gf2-sim/src/permanent_campaign/coordinator.rs:1782 | not a citation | no external work named | read | /// Source table containing a q=3 target row.
+crates/gf2-sim/src/permanent_campaign/provenance.rs:1059 | not a citation | names software without attributing a method or number | read | /// Renders integrity entries in the `sha256sum` check-file format.
+crates/gf2-sim/src/permanent_campaign/provenance.rs:1076 | not a citation | names software without attributing a method or number | read | /// Parses an integrity file in the `sha256sum` check-file format.
+crates/gf2-sim/src/permanent_campaign/provenance.rs:1078 | not a citation | names software without attributing a method or number | read | /// Both coreutils separators are accepted: two spaces for text mode and a space
+crates/gf2-sim/src/permanent_campaign/schema.rs:39 | not a citation | repository document or harness | read | /// and the prior-art targets live beside the campaigns, not inside one.
+crates/gf2-sim/src/presets/mod.rs:2 | not a citation | no external work named | read | //! standard's BICM chain over [`Chain`](crate::graph::Chain) and emits a
+crates/gf2-sim/src/presets/mod.rs:4 | keyed | Etsi2015 | map | //! chain (`@/citation/Etsi2015`) and [`nr_5g`] the 5G NR LDPC chain
+crates/gf2-sim/src/presets/mod.rs:5 | keyed | ThreeGpp2017 | map | //! (`@/citation/ThreeGpp2017`).
+crates/gf2-sim/src/presets/nr_5g.rs:22 | keyed | ThreeGpp2017 | read | //! `@/citation/ThreeGpp2017` clause 5.4.2.1 bit-selection formula, so `E` is
+crates/gf2-sim/src/presets/nr_5g.rs:23 | keyed | ThreeGpp2020 | read | //! a multiple of `Q_m` as the `@/citation/ThreeGpp2020` clause 5.4.2.2
+crates/gf2-sim/src/presets/nr_5g.rs:47 | keyed | ThreeGpp2017 | read | /// A 5G NR LDPC base graph (`@/citation/ThreeGpp2017` Section 5.3.2).
+crates/gf2-sim/src/presets/nr_5g.rs:104 | keyed | ThreeGpp2017a | map | /// A 5G NR data-channel modulation (`@/citation/ThreeGpp2017a`): `Q_m` bits per QAM symbol.
+crates/gf2-sim/src/presets/nr_5g.rs:347 | keyed | ThreeGpp2017 | read | /// `@/citation/ThreeGpp2017` Table 5.3.2-1).
+crates/gf2-sim/src/presets/nr_5g.rs:359 | keyed | ThreeGpp2017 | map | /// [`build`](Builder::build) requires a `@/citation/ThreeGpp2017`
+crates/gf2-sim/src/presets/nr_5g.rs:360 | keyed | ThreeGpp2017 | read | /// Table 5.3.2-1 lifting size.
+crates/gf2-sim/src/presets/nr_5g.rs:441 | keyed | ThreeGpp2017 | read | ///   `@/citation/ThreeGpp2017` Table 5.3.2-1 lifting size; if a
+crates/gf2-sim/src/presets/nr_5g.rs:645 | keyed | ThreeGpp2017 | read | /// // Z = 384 belongs to lifting set i_LS = 1 (the a = 3 set of TS 38.212
+crates/gf2-sim/src/presets/nr_5g.rs:646 | keyed | ThreeGpp2017 | read | /// // Table 5.3.2-1: 384 = 3 * 2^7) — derive the index, don't hardcode it.
+crates/gf2-sim/src/stages/nr_5g.rs:1 | keyed | ThreeGpp2017 | map | //! 5G NR LDPC BICM-chain [`Stage`] wrappers (`@/citation/ThreeGpp2017`) over
+crates/gf2-sim/src/stages/nr_5g.rs:3 | keyed | ThreeGpp2020 | read | //! [`Nr5gRateMatchedDecoder`] decode, and the `@/citation/ThreeGpp2020` clause
+crates/gf2-sim/src/stages/nr_5g.rs:4 | keyed | ThreeGpp2020 | read | //! 5.4.2.2 [`interleaver`](gf2_coding::ldpc::nr_5g::interleaver)). Every stage
+crates/gf2-sim/src/testutil.rs:8 | keyed | Cassagne2019 | read | /// The LDPC codes of the comparison against AFF3CT
+crates/gf2-sim/src/testutil.rs:9 | keyed | Cassagne2019 | map | /// (`@/citation/Cassagne2019`).
+crates/gf2-sim/src/testutil.rs:16 | keyed | Etsi2015 | read | /// DVB-T2 r1/2 Normal LDPC (`@/citation/Etsi2015`): N = 64800, K = 32400.
+crates/gf2-sim/src/testutil.rs:60 | not a citation | no external work named | read | /// standard AWGN-BPSK LLR).
+crates/gf2-sim/src/testutil.rs:142 | keyed | Vigna2015 | map | // SplitMix64(seed = 0) reference outputs (`@/citation/Vigna2015`).
+crates/gf2-sim/tests/determinism.rs:64 | keyed | Etsi2012 | read | /// Each Es/N0 lies above the `@/citation/Etsi2012` Table 44 QEF C/N of its
+crates/gf2-stats/src/intervals.rs:163 | keyed | MaurerPontil2009 | read | /// Computes a Maurer-Pontil empirical-Bernstein interval for a bounded mean.
+crates/gf2-stats/src/intervals.rs:171 | keyed | MaurerPontil2009 | read | /// Maurer and Pontil (`@/citation/MaurerPontil2009`) bound the one-sided
+dev/tools/tuning-campaign-support/src/abtest.rs:27 | keyed | Vigna2015 | map | /// SplitMix64 stream (`@/citation/Vigna2015`) used to expand one seed into generator state.
+dev/tools/tuning-campaign-support/src/abtest.rs:45 | keyed | BlackmanVigna2021 | map | /// xoshiro256** generator (`@/citation/BlackmanVigna2021`) seeded through SplitMix64.
+dev/tools/tuning-campaign-support/src/abtest.rs:345 | not a citation | method or object name | read | /// Hoeffding's inequality gives simultaneous two-sided coverage `confidence`.
+dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:147 | not a citation | section of an internal design or protocol document | read | /// Protocol §7 host admission. Driver and validator both require this exact
+dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:2798 | not a citation | section of an internal design or protocol document | read | /// Protocol §9 repository destinations, all derived from the run ID.
+dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:2833 | not a citation | section of an internal design or protocol document | read | /// The protocol §9 destination of one published stage file: the measured
+dev/tools/tuning-campaign-support/src/journal.rs:2305 | keyed | Hinnant2021 | read | // `civil_from_days` of `@/citation/Hinnant2021`.
+dev/tools/tuning-campaign-support/src/receipt.rs:676 | not a citation | section of an internal design or protocol document | read | /// evaluator checks the version-4 attempt rules of P-11 against them. A
+dev/tools/tuning-campaign-support/src/receipt.rs:798 | not a citation | section of an internal design or protocol document | read | /// Version-4 P-11 attempt rules for one cell: it completes at most once, and
+dev/tools/tuning-campaign-support/src/receipt.rs:921 | not a citation | section of an internal design or protocol document | read | /// family-wise error control (protocol document, "Families and
+dev/tools/tuning-campaign-support/src/schema.rs:5 | new work | Bryan2013 | read | /// One violation, addressed by JSON Pointer (`@/citation/Bryan2013`) into the instance.
+dev/tools/tuning-campaign-support/src/schema.rs:8 | new work | Bryan2013 | map | /// JSON Pointer to the instance location at which the violation occurred.
+dev/tools/tuning-campaign-support/src/schema.rs:10 | new work | Bryan2013 | map | /// JSON Pointer to the schema location which produced the violation.
+dev/tools/tuning-campaign-support/src/schema.rs:18 | new work | Wright2022 | read | /// supported draft 2020-12 (`@/citation/Wright2022`) object keywords are handled without a full schema
+
+# 4. hit counts: disposition | found by | key or reason
+  165  keyed | map
+  311  keyed | read
+    3  new work | map
+    6  new work | read
+  139  not a citation | read
+    9  not a citation | code identifier
+   18  not a citation | method or object name
+   11  not a citation | names software without attributing a method or number
+   19  not a citation | no external work named
+    4  not a citation | part of a sentence whose citation is listed at an adjacent line
+    1  not a citation | pen-and-paper computation
+   48  not a citation | repository document or harness
+   17  not a citation | section of an internal design or protocol document
+   12  not a citation | standard or code family named as a topic
+  624  total
