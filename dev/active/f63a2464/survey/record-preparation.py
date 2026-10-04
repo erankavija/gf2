@@ -166,7 +166,8 @@ def main():
     manifests += baseline_manifests
     base["behavior_sources"] = sorted(
         set(base["behavior_sources"])
-        | {path for path in behavior if not path.endswith(("summarize-quality.py",))}
+        | {path for path in behavior
+           if not path.endswith(("summarize-quality.py", "summarize-timing.py"))}
     )
     base["build_inputs"] = sorted(
         set(base["build_inputs"])
