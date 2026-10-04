@@ -1,13 +1,13 @@
 {
   "record_version": 2,
   "id": "jit-default",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "compatible_jit": ">=1.0.0, <2.0.0",
   "origin": {
     "source": "directory",
     "location": "packages/jit-default"
   },
-  "package_hash": "20a18a3e8c49cdaa8a3a5f418586633b8110d9da965b4185106e2e5ce6257b56",
+  "package_hash": "2dc844f6bcfb29b58e4739a37300c5445b50a330e0d9dd9b08d266d57d13c425",
   "variables": {},
   "claims": [
     {
@@ -288,7 +288,7 @@
           }
         }
       },
-      "base_fingerprint": "f05aa9d9acc0e4b591034817f30dca3b1177b5c748132ac4fb5c5b233d97b7a6",
+      "base_fingerprint": "d7c643037d7acae4c41760c6854f1ba386749935ea53c2ede631e7308dc8de2b",
       "retain_if_unowned": true
     },
     {

@@ -104,7 +104,7 @@ section = "success_criteria"
 source-of-truth = "markdown-first"
 
 [item_kinds.decision]
-id-pattern = "D-[0-9]+"
+id-pattern = "D(EC)?-[0-9]+"
 link-namespaces = ["per"]
 markers = []
 scope = "issue"

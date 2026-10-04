@@ -17915,3 +17915,5 @@
 {"gate_key":"doc-review","id":"7673b5b6-c7b7-47b4-b37d-2f8240e2cdd0","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T14:14:58.747693976Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"holistic-review","id":"2c6b25bf-412c-428e-98af-6386ebe61f01","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T14:17:20.031700249Z","type":"gate_failed","updated_by":"auto:executor"}
 {"fields":["documents"],"id":"aed57949-425e-487a-85ad-247442e23098","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-04T14:17:56.283762858Z","type":"issue_updated","updated_by":"doc-add"}
+{"id":"1e6f016e-db7a-4ade-8a38-012c6b7b1307","isolated_torn_tail":false,"operation":"upgrade","profiles":[{"id":"jit-default","status":"upgraded","variables":[]}],"timestamp":"2026-10-04T19:12:30.170252956Z","type":"profile_lifecycle"}
+{"fields":["description"],"id":"fbd5bd5c-773a-4654-a71a-6bd9f6130603","issue_id":"2596b143-9284-450b-bf60-8e6510c7032b","timestamp":"2026-10-04T19:13:42.247261684Z","type":"issue_updated","updated_by":"issue-update"}
