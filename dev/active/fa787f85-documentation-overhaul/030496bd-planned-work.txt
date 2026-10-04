@@ -1,0 +1,204 @@
+# 1. unit | commit | statement | id
+13dfe1a5 | 2d0ef6c17 | AVX2 min-sum NaN and negative-zero kernel contract (tests/ldpc_check_update_contract.rs) | 39cbde20
+13dfe1a5 | 2d0ef6c17 | C++ smoke harness asserts the sparse-dense invariant (examples/sparse_smoke_emit_expected.rs) | 96fde7c7
+13dfe1a5 | 2d0ef6c17 | GPU crossover report reads the scalar dispatch figures (benches/cpu_dispatch_probe.rs) | 9c37ec8c
+13dfe1a5 | 2d0ef6c17 | baseline for SIMD tuning of the Gray-QAM kernels (benches/modem_generic_vs_fast.rs) | c5cee991
+13dfe1a5 | 2d0ef6c17 | block-CSR, RCM, prefetch and LinBox sparse harness arms (examples/bench_sparse_csv_emitter.rs, examples/sparse_smoke_emit_expected.rs) | 1e272575
+13dfe1a5 | 2d0ef6c17 | demapper math correctness lives with the Gray-QAM fast backend (tests/modem_traits.rs) | 52112411
+13dfe1a5 | 2d0ef6c17 | demapper math correctness lives with the reference backend (tests/modem_traits.rs) | 51334873
+13dfe1a5 | 2d0ef6c17 | shortened DVB-T2 BCH presentations reach the canonical model (tests/bch_encode_dispatch.rs) | 97410c80
+13dfe1a5 | 2d0ef6c17 | trait layer consumes the public demap-method values (tests/modem_data_model.rs) | d36ae697
+13dfe1a5 | 50c1efca0 | block-CSR, RCM, prefetch and LinBox sparse harness arms | 1e272575
+13dfe1a5 | 680938c07 | AVX2 min-sum NaN and negative-zero contract | 39cbde20
+290b8716 | 8323db600 | ZMM wide-multiply lane | c7c0e991
+290b8716 | 8323db600 | transpose selector calibration | 63bad95d
+290b8716 | 8ec3e1ec2 | ZMM VPCLMULQDQ wide-multiply lane | c7c0e991
+290b8716 | 8ec3e1ec2 | transpose production selector calibration | 63bad95d
+290b8716 | ec1103ee0 | gather-based AVX2 F_7 lookup | f6ee400a
+3da13f39 | 04224cbe8 | medium-prime row-panel matvec | cfc2e9a9
+3da13f39 | 2ef7fd6fe | medium-prime row-panel matvec | cfc2e9a9
+3da13f39 | f8e325e89 | medium-prime row-panel matvec | cfc2e9a9
+4997a3ed | 24a254239 | widen verify_primitive to u128 storage | d1e5db10
+4997a3ed | bccaeb29a | converge ordered elimination onto blocked kernel (alg/rref.rs, ordered_column_elimination) | c0bb2ab1
+50201002 | 0f5e71c7f | acceptance summaries name the attempt allocation distinctly (src/protocol.rs, src/receipt.rs, tests/protocol_contracts.rs) | c5e01de3
+57436474 | 3c0bbcef1 | parallel permanents for F_5 and F_7 | 2c109c8d
+57436474 | 958b6325f | parallel permanents for F_5 and F_7 | 2c109c8d
+57436474 | c2a66fb9b | parallel permanents for F_5 and F_7 | 2c109c8d
+66858db0 | 1078dc1a5 | divide-and-conquer batch GCD (crates/gf2-core/src/field/poly.rs) | 10a729d3
+67b5d1d8 | 3821ed316 | Barrett m = 64..=127 extension | 6fb4abad
+67b5d1d8 | e0d635033 | extend Barrett to m = 64..=127 | 6fb4abad
+72768e37 | eab90716f | 400,000-draw evidence run of the ten-anchor plan (tests/permanent_validation.rs) | 02b8137c
+72768e37 | eab90716f | RF front-end excluded from the decode-rate bench (benches/nr_5g_realtime.rs) | 23d3525f
+72768e37 | eab90716f | executor substitution test reuses the fault injectors (tests/common/mod.rs, tests/gpu_fault_injection.rs, tests/determinism.rs) | 42eac5cc
+72768e37 | eab90716f | frame parallelism consumes the shared stage factory (tests/dvb_t2_stage_roundtrip.rs) | 3fcb7025
+72768e37 | eab90716f | frozen configuration committed by the campaign that executes (src/bin/permanent_rare_event.rs) | 6639435f
+72768e37 | eab90716f | graph construction consumes the shared stage factory (tests/dvb_t2_stage_roundtrip.rs) | c09d3e95
+72768e37 | eab90716f | hybrid executor downstream of the hand-composed suite (tests/gpu_byte_identity.rs) | 75c22fa8
+72768e37 | eab90716f | multi-day sweep monitor reads the campaign tracing log (src/bin/dvb_t2_awgn_campaign.rs) | e4849f07
+72768e37 | eab90716f | runnable-Pipeline CPU-vs-GPU regression once the executor exists (tests/gpu_byte_identity.rs) | 0d9cb8e3
+72768e37 | eab90716f | stage-graph executor downstream of the hand-composed suite (tests/gpu_byte_identity.rs) | de160fc5
+72768e37 | eab90716f | typestate preset and its graph-vs-preset byte equality (tests/dvb_t2_chain_via_graph.rs, tests/dvb_t2_stage_roundtrip.rs) | 81d05bab
+7bfad039 | 62ce88981 | Pipeline::run for the 5G NR preset | 54a483a3
+7bfad039 | 62ce88981 | multi-GPU per-device stream pools | f6603b37
+7bfad039 | d3a367260 | Pipeline::run for the 5G NR preset | 54a483a3
+7bfad039 | d3a367260 | multi-GPU per-device stream pools | f6603b37
+8f451167 | 5ab8395dc | receipt deciding the GF(2^8) classical SIMD GEMM probe | 252814d8
+93aed46a | 258e97838 | per-target kernel blobs and LaunchDims call sites | 0ecf6fcd
+93aed46a | 4fe673ed6 | per-device stream pools for multi-GPU | f6603b37
+9dda3958 | b04ee547e | Strassen-amenable Keller-Gehrig inversion, lower threshold | b53a6036
+9f47bb94 | 1381bbafb | AVX-512 bipedal F_3 kernels | f8d230ef
+9f47bb94 | 1381bbafb | AVX-512 gather F_7 lane | 4b5d8948
+9f47bb94 | 1381bbafb | AVX-512 vpternlog F_5 circuit | 4b5d8948
+9f47bb94 | 1381bbafb | AVX2 nibble-LUT F_7 path | bb64ee0e
+9f47bb94 | 1381bbafb | ZMM VPCLMULQDQ wide clmul lane | c7c0e991
+9f47bb94 | 1381bbafb | extract_quad_hi for wider degrees | 7c8ab1e2
+9f47bb94 | 1381bbafb | tile-of-tiles transpose outer loop | ebd26779
+9f47bb94 | 42dc2f197 | AVX-512 bipedal F_3 kernels | f8d230ef
+9f47bb94 | 42dc2f197 | AVX-512 gather F_7 lane | 4b5d8948
+9f47bb94 | 42dc2f197 | AVX-512 vpternlog F_5 circuit | 4b5d8948
+9f47bb94 | 42dc2f197 | AVX2 nibble-LUT F_7 path | bb64ee0e
+9f47bb94 | 42dc2f197 | ZMM VPCLMULQDQ wide clmul lane | c7c0e991
+9f47bb94 | 42dc2f197 | extract_quad_hi for wider degrees | 7c8ab1e2
+9f47bb94 | 42dc2f197 | tile-of-tiles transpose outer loop | ebd26779
+aa0558c1 | 1eb6529b3 | receipts for the coding tuning crossovers | b9a352b4
+aa0558c1 | 2b1d4dc55 | SIMD kernels for LLR batch saturation and hard decision (llr.rs) | e1ff915f
+aa0558c1 | 2b1d4dc55 | boundary removal follows the BCH generalization (traits.rs) | ae03bcd0
+aa0558c1 | 2b1d4dc55 | receipts for the coding tuning crossovers (tuning.rs) | b9a352b4
+aa0558c1 | 2b1d4dc55 | removal condition recorded in the BCH API design (traits.rs) | 7a3a6738
+aa0558c1 | 2b1d4dc55 | remove the binary-code-v1 compatibility boundary (traits.rs) | 3931ac6f
+aa0558c1 | ac6ee4ca7 | SIMD kernels for LLR batches | e1ff915f
+aa0558c1 | ac6ee4ca7 | remove binary-code-v1 compatibility boundary | 3931ac6f
+c6aa0e84 | 1f6b86bd9 | NEON and PMULL AArch64 kernels | 194b902a
+c6aa0e84 | 1f6b86bd9 | rayon path for CpuBackend matmul | c11640f2
+c6aa0e84 | 1f6b86bd9 | runtime AArch64 crypto detection | 194b902a
+c6aa0e84 | d84bb9f4d | GPU ComputeBackend | ca9a5194
+c6aa0e84 | d84bb9f4d | compression and checksum header flags | 726bfeee
+eba21481 | 612d4e93e | AVX-512 ZMM carry-less multiply lane (benches/gf2m_wide_mul.rs) | c7c0e991
+eba21481 | 612d4e93e | GF(2^32) gemm field left unmeasured (benches/fieldmatrix_gemm.rs) | e046803d
+eba21481 | 612d4e93e | GF(2^m) sparse-elimination rows of the scorecard (benches/sparse_rref_scorecard.rs) | 2cfc4372
+eba21481 | 612d4e93e | LinBox sparse harness for the SpMV comparison (benches/sparse_spmv.rs, examples/bench_csv_emitter.rs) | 47698404
+eba21481 | 612d4e93e | charpoly sweep against the reference numbers (benches/charpoly.rs) | b87362a3
+eba21481 | 612d4e93e | fflas-ffpack baseline comparison of gemm (benches/field_matrix_gemm.rs) | 64c88ae4
+eba21481 | 612d4e93e | generic-prime dispatch extension keeps the Mersenne31 branch (benches/mersenne_gemm_regression.rs) | 9e12659b
+eba21481 | 612d4e93e | larger gemm cells run in the full harness (benches/fieldmatrix_gemm_delayed.rs) | 6ed7f050
+eba21481 | 612d4e93e | later kernel tiers follow the equivalence-test shape (tests/simd_equiv_demo.rs) | babcf05e
+eba21481 | 612d4e93e | multi-word PCLMULQDQ and Barrett support above m = 63 (benches/gf2m_mul_strategies.rs) | 6fb4abad
+eba21481 | 612d4e93e | n = 4096 PLE reference cell deferred (benches/fieldmatrix_ple.rs) | a03b2556
+eba21481 | 612d4e93e | n = 4096 PLE reference cell left unmeasured (benches/fieldmatrix_ple.rs) | e046803d
+eba21481 | 612d4e93e | n = 512 minpoly cell deferral recorded (examples/bench_csv_emitter.rs) | a9ab0a4f
+eba21481 | 612d4e93e | n = 512 minpoly cell left unmeasured (examples/bench_csv_emitter.rs) | e046803d
+eba21481 | 612d4e93e | optional GF(31) and GF(2^32) gemm fields deferred (benches/fieldmatrix_gemm.rs) | 6ed7f050
+eba21481 | 612d4e93e | small-prime dispatch extension keeps the Mersenne31 branch (benches/mersenne_gemm_regression.rs) | 662f7a15
+eba21481 | 938ff374c | AVX-512 ZMM carry-less multiply lane | c7c0e991
+eba21481 | c48da77e6 | deferred minpoly, GF(2^32) and n=4096 benchmark cells | e046803d
+ee2b0c0c | dc78a03f0 | AVX2 min-sum sign/NaN discrepancy | 39cbde20
+ee2b0c0c | dc78a03f0 | is_systematic structural check | 2a9cc72c
+ee2b0c0c | e1419f530 | AVX2 min-sum sign and NaN discrepancy | 39cbde20
+ee2b0c0c | e1419f530 | is_systematic structural check | 2a9cc72c
+f2064e90 | 3925d9b08 | Strassen-Winograd recursion excluded from `gemm` (matrix.rs) | ad597ede
+f2064e90 | 3925d9b08 | fused `A·B + C` evaluation through the transpose proxy (matrix.rs, `Transposed` and `FieldMatrix::t`) | d48a3cfd
+f2064e90 | 3925d9b08 | in-place PLE compression calls `trtrm` (triangular.rs) | c3f8c1cb
+f2064e90 | 3925d9b08 | lazy-transpose proxy is a placeholder for the expression layer (matrix.rs, `Transposed`) | cdcebf6a
+f22ec590 | 22af859bc | converge campaign execution stacks | 90a88fa9
+f22ec590 | 22af859bc | rand 0.8 holdout named exception | c1b253cb
+f46046f0 | 4bdb3afdd | continuation admission removal | 02ed3c51
+f46046f0 | 4bdb3afdd | deterministic fallback in checkpointed sweep | c04d3f1c
+f46046f0 | 4bdb3afdd | target campaign commits exact result | b05c908b
+f46046f0 | 517c89c40 | continuation admission removal | 02ed3c51
+f46046f0 | 517c89c40 | deterministic fallback in checkpointed sweep | c04d3f1c
+f46046f0 | 517c89c40 | target campaign commits exact result | b05c908b
+# 2. entries without an id: unit | commit | text
+13dfe1a5 | 1f3695200 | none. The audit covered every deleted line of this diff; none states planned, deferred or excluded work.
+13dfe1a5 | 3b210ae63 | none
+13dfe1a5 | f10058039 | none. The audit covered both deleted lines.
+3783c4c8 | 477348ffc | none (the audit covered every deleted line)
+3aef9e33 | 3953bfb52 | none
+3aef9e33 | e2ab8b20e | none
+50201002 | 6046f8c80 | none
+50201002 | 6769bb2d0 | none
+57436474 | dee2f5fbe | F_5/F_7 parallel permanent companions -> unmatched
+66858db0 | 0376b472a | none matched in the tracker
+66858db0 | 5ab246d0d | none
+72768e37 | 29b22cf7d | none
+8a9db61a | a4b905baf | none
+8f451167 | d4913bd82 | none matched to a tracked issue
+9dda3958 | a48c5f237 | none matched. The removed charpoly statements about replacing the Keller-Gehrig K^-1 solve with a sub-cubic inversion and then lowering the dispatch threshold have no open tracker issue; they are reported to the lead as unmatched planned work.
+bfb37a21 | 1fbc4f6c5 | none
+bfb37a21 | a502bc5ee | none
+bfb37a21 | bc242c17f | none
+c6aa0e84 | 17c067215 | none
+cafb463c | 838b4e3e8 | none
+eba21481 | 281b6a658 | none
+f2064e90 | 2c991a75d | none
+f2064e90 | fc4e232c3 | none
+# 3. jit issue show <id> | units
+02b8137c | 72768e37
+02ed3c51 | f46046f0
+0d9cb8e3 | 72768e37
+0ecf6fcd | 93aed46a
+10a729d3 | 66858db0
+194b902a | c6aa0e84
+1e272575 | 13dfe1a5
+23d3525f | 72768e37
+252814d8 | 8f451167
+2a9cc72c | ee2b0c0c
+2c109c8d | 57436474
+2cfc4372 | eba21481
+3931ac6f | aa0558c1
+39cbde20 | 13dfe1a5 ee2b0c0c
+3fcb7025 | 72768e37
+42eac5cc | 72768e37
+47698404 | eba21481
+4b5d8948 | 9f47bb94
+51334873 | 13dfe1a5
+52112411 | 13dfe1a5
+54a483a3 | 7bfad039
+63bad95d | 290b8716
+64c88ae4 | eba21481
+662f7a15 | eba21481
+6639435f | 72768e37
+6ed7f050 | eba21481
+6fb4abad | 67b5d1d8 eba21481
+726bfeee | c6aa0e84
+75c22fa8 | 72768e37
+7a3a6738 | aa0558c1
+7c8ab1e2 | 9f47bb94
+81d05bab | 72768e37
+90a88fa9 | f22ec590
+96fde7c7 | 13dfe1a5
+97410c80 | 13dfe1a5
+9c37ec8c | 13dfe1a5
+9e12659b | eba21481
+a03b2556 | eba21481
+a9ab0a4f | eba21481
+ad597ede | f2064e90
+ae03bcd0 | aa0558c1
+b05c908b | f46046f0
+b53a6036 | 9dda3958
+b87362a3 | eba21481
+b9a352b4 | aa0558c1
+babcf05e | eba21481
+bb64ee0e | 9f47bb94
+c04d3f1c | f46046f0
+c09d3e95 | 72768e37
+c0bb2ab1 | 4997a3ed
+c11640f2 | c6aa0e84
+c1b253cb | f22ec590
+c3f8c1cb | f2064e90
+c5cee991 | 13dfe1a5
+c5e01de3 | 50201002
+c7c0e991 | 290b8716 9f47bb94 eba21481
+ca9a5194 | c6aa0e84
+cdcebf6a | f2064e90
+cfc2e9a9 | 3da13f39
+d1e5db10 | 4997a3ed
+d36ae697 | 13dfe1a5
+d48a3cfd | f2064e90
+de160fc5 | 72768e37
+e046803d | eba21481
+e1ff915f | aa0558c1
+e4849f07 | 72768e37
+ebd26779 | 9f47bb94
+f6603b37 | 7bfad039 93aed46a
+f6ee400a | 290b8716
+f8d230ef | 9f47bb94
