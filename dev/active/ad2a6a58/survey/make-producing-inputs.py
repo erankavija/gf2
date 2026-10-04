@@ -15,18 +15,20 @@ wrapper and the shared campaign tooling.
 
 import os
 import sys
+from pathlib import Path
 
 import locate
 import campaign_inputs  # noqa: E402
+from repository_files import package_directory  # noqa: E402
 
 ROOT = locate.ROOT
 SHARED = locate.SHARED
 SURVEY = locate.SURVEY
 ISSUE = locate.ISSUE
-ARM = locate.package("gf256-axpy-arm")
-ARM_COMMON = locate.package("byte-field-arm-common")
-GF2_SIDE = locate.package("byte-field-gf2-side")
-TOOL = locate.package("tuning-campaign-support")
+ARM = package_directory(Path(ROOT), "gf256-axpy-arm")
+ARM_COMMON = package_directory(Path(ROOT), "byte-field-arm-common")
+GF2_SIDE = package_directory(Path(ROOT), "byte-field-gf2-side")
+TOOL = package_directory(Path(ROOT), "tuning-campaign-support")
 LOCK_WRAPPER = f"{SHARED}/ccx1-bench-flock.sh"
 LAUNCHER = locate.LAUNCHER
 EVIDENCE = f"{ISSUE}/conformance"

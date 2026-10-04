@@ -1,9 +1,9 @@
 """Runtime locations of this family's generators (jit:4c1e441f).
 
 Every location is resolved under the repository root git reports: this family's
-own files from this file's directory, shared scripts and the launcher by file
-name, harness and tool crates by package name. Importing this module puts the
-shared campaign scripts on `sys.path`.
+own files from this file's directory, the launcher by file name through the
+shared `repository_files`, which also names harness and tool crates by package.
+Importing this module puts the shared campaign scripts on `sys.path`.
 """
 
 import os
@@ -38,21 +38,7 @@ SHARED = _shared_scripts()
 sys.path.insert(0, os.path.join(ROOT, SHARED))
 import repository_files  # noqa: E402
 
-
-def package(name):
-    """Root-relative directory of the one live Cargo package called `name`."""
-    return repository_files.package_directory(Path(ROOT), name)
-
-
-def live_file(name):
-    """Root-relative path of the one live file called `name`."""
-    found = repository_files.tracked_files(Path(ROOT), name)
-    if len(found) != 1:
-        raise SystemExit(f"{len(found)} live files are called {name}; exactly one must be")
-    return found[0]
-
-
 SURVEY = os.path.relpath(HERE, ROOT)
 ISSUE = os.path.dirname(SURVEY)
-LAUNCHER = live_file("run-dense-product-confirmation.sh")
+LAUNCHER = repository_files.live_file(Path(ROOT), "run-dense-product-confirmation.sh")
 RESULTS = os.path.dirname(LAUNCHER)

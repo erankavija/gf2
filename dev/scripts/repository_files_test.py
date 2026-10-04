@@ -19,6 +19,7 @@ from repository_files import (  # noqa: E402
     SHARED_PRODUCING_MANIFEST,
     SNAPSHOT_DIRECTORY,
     document,
+    live_file,
     package_directory,
     shared_producing_manifest,
 )
@@ -103,6 +104,20 @@ class Document(Fixture):
             document(self.root, "record.md", b"# Twice\n")
         with self.assertRaisesRegex(LookupError, "^0 distinct"):
             document(self.root, "record.md", b"# Absent\n")
+
+
+class LiveFile(Fixture):
+    def test_file_is_located_by_name_outside_snapshots(self):
+        self.write("x/tool.sh", b"live\n")
+        self.write(f"r/{SNAPSHOT_DIRECTORY}/x/tool.sh", b"copy\n")
+        self.assertEqual(live_file(self.root, "tool.sh"), "x/tool.sh")
+
+    def test_absent_and_repeated_names_are_rejected(self):
+        self.write("x/twice.sh", b"")
+        self.write("y/twice.sh", b"")
+        for name in ("twice.sh", "absent.sh"):
+            with self.assertRaises(LookupError):
+                live_file(self.root, name)
 
 
 class PackageDirectory(Fixture):

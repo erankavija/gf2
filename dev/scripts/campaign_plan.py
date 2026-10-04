@@ -4,12 +4,9 @@
 A lane-comparison family supplies its lanes, its element representations, the
 entry point they name and the case its cells decode; the argument surface, the
 per-cell arm pairing, the build-identity check against the declaration and the
-plan envelope are the same for every such family and live here. Import it as
-
-    sys.path.insert(0, os.path.join(root, "dev/scripts"))
-    import campaign_plan
-
-and call `campaign_plan.main(...)` from the family's own generator.
+plan envelope are the same for every such family and live here. A family's own
+generator puts this file's directory on `sys.path`, imports `campaign_plan` and
+calls `campaign_plan.main(...)`.
 
 Both arms of a pair are the one executable the projection names; the environment
 selects the lane and the element representation, and the runner records that
@@ -21,6 +18,8 @@ the declaration about what a cell measures.
 
 import argparse
 import json
+import os
+import subprocess
 
 # A conservative-portable build sets no target feature: the kernels a declining
 # lane reaches are dispatched at run time and are present in such a build, and a
@@ -31,9 +30,19 @@ RUSTFLAGS = None
 BUILD = "conservative-portable"
 
 # The shipped GF(2^8) lane contract's environment names, as the arm library
-# `dev/active/ad2a6a58/survey/axpy-arm` declares them.
+# `gf256-axpy-arm` declares them.
 LANE_VAR = "GF2_GF256_LANE"
 REPR_VAR = "GF2_GF256_REPR"
+
+
+def lock_wrapper():
+    """The host lock wrapper beside this file, repository-relative as a plan names it."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    root = subprocess.run(
+        ["git", "-C", here, "rev-parse", "--show-toplevel"], check=True, capture_output=True,
+        text=True,
+    ).stdout.strip()
+    return os.path.relpath(os.path.join(here, "ccx1-bench-flock.sh"), root)
 
 
 def parse_arguments():
@@ -119,7 +128,7 @@ def main(lanes, representations, entry_point, case_for):
         "addendum": args.addendum,
         "producing_manifest": args.producing_manifest,
         "lock_path": args.lock,
-        "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+        "wrapper": f"{lock_wrapper()} --full-host",
         "timing_override": None,
         "arms": plan_arms,
         "cells": cells,
