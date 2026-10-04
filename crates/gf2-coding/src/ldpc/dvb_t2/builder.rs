@@ -1,4 +1,4 @@
-//! Sparse parity-check matrix edge lists from the DVB-T2 standard tables.
+//! Sparse parity-check matrix edge lists from the `@/citation/Etsi2015` tables.
 
 use super::params::DvbParams;
 

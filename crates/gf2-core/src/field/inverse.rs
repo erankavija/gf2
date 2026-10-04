@@ -417,7 +417,7 @@ mod tests {
     }
     type Gf2m8 = Gf2mWide<1, InvGf2m8Cfg>;
 
-    /// GF(2^16) with the Conway polynomial.
+    /// GF(2^16) with the Conway polynomial (`@/citation/Lubeck2024`).
     struct InvGf2m16Cfg;
     impl Gf2mWideConfig<1> for InvGf2m16Cfg {
         const M: usize = 16;

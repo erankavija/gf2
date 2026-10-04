@@ -657,7 +657,7 @@ impl FiniteField for GoldilocksFp {
         }
     }
 
-    /// Theorem-4 per-cell operand bound: `p - 1` for the Goldilocks prime.
+    /// Theorem-4 (`@/citation/DumasPernet2012` §1.4) per-cell operand bound: `p - 1` for the Goldilocks prime.
     /// See [`FiniteField::theorem_4_operand_bound`] for the semantics.
     #[inline]
     fn theorem_4_operand_bound() -> u128 {

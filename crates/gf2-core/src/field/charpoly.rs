@@ -1708,7 +1708,7 @@ mod tests {
     }
     type Gf2m8 = Gf2mWide<1, CpGf2m8Cfg>;
 
-    /// Conway-irreducible Gf2mWide<16>.
+    /// Conway-irreducible Gf2mWide<16> (`@/citation/Lubeck2024`).
     struct CpGf2m16Cfg;
     impl Gf2mWideConfig<1> for CpGf2m16Cfg {
         const M: usize = 16;

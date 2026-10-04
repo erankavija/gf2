@@ -9,7 +9,7 @@
 //! n       : u32                  (matrix dimension; this emitter writes 16)
 //! a_seed  : u64                  (master-derived seed for matrix A)
 //! b_seed  : u64                  (master-derived seed for matrix B)
-//! conway  : u64                  (full Conway polynomial bits including bit 32)
+//! conway  : u64                  (Conway polynomial bits of `@/citation/Lubeck2024`, bit 32 included)
 //! a_bytes : 4 * n * n bytes      (row-major u32 LE for A)
 //! b_bytes : 4 * n * n bytes      (row-major u32 LE for B)
 //! c_bytes : 4 * n * n bytes      (row-major u32 LE for C = A * B)
