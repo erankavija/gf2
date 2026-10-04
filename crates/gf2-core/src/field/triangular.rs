@@ -41,8 +41,6 @@ pub fn trsm_route(n: usize) -> TrsmRoute {
     trsm_route_resolved(tuning::active().triangular().trsm_blocked_min_dim(), n)
 }
 
-/// Reports the triangular-solve arm against an already-resolved
-/// `trsm_blocked_min_dim`.
 pub(crate) fn trsm_route_resolved(trsm_blocked_min_dim: usize, n: usize) -> TrsmRoute {
     if n >= trsm_blocked_min_dim {
         TrsmRoute::Blocked
@@ -98,8 +96,6 @@ pub fn triangular_route(m: usize) -> TriangularRoute {
     triangular_route_resolved(tuning::active().triangular().base_case_max_dim(), m)
 }
 
-/// Reports the triangular base-case arm against an already-resolved
-/// `triangular.base_case_max_dim()` value.
 fn triangular_route_resolved(base_case_max_dim: usize, m: usize) -> TriangularRoute {
     if m <= base_case_max_dim {
         TriangularRoute::BaseCase
@@ -657,7 +653,6 @@ fn trsm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>
     }
 }
 
-/// Body of [`trsm_upper_blocked`] with `base_case_max_dim` already resolved.
 fn trsm_upper_blocked_inner<F: FiniteField, O: ObservationPolicy>(
     a: MatView<'_, F>,
     mut b: MatViewMut<'_, F>,
@@ -702,7 +697,6 @@ fn trsm_upper_blocked_inner<F: FiniteField, O: ObservationPolicy>(
     }
 }
 
-/// Body of [`trsm_lower_blocked`] with `base_case_max_dim` already resolved.
 fn trsm_lower_blocked_inner<F: FiniteField, O: ObservationPolicy>(
     a: MatView<'_, F>,
     mut b: MatViewMut<'_, F>,
