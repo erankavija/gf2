@@ -40,7 +40,6 @@ mod tests {
 
     #[test]
     fn test_feature_detection() {
-        // Just verify that feature detection doesn't panic
         let _ = has_avx2();
         let _ = has_avx512f();
         let _ = has_pclmulqdq();

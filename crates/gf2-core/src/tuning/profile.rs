@@ -416,9 +416,8 @@ impl ProfileRegistry {
             serde_json::from_str(text).map_err(|_| ProfileError::Malformed)?;
         let envelope = canonical_object(&canonical)?;
 
-        // Phase 2: validate envelope identity and assembly semantics without
-        // inspecting any section wrapper. Phase 1 above is the only parse of
-        // the input bytes and has already rejected duplicate keys and floats.
+        // Envelope identity and assembly semantics come before any section
+        // wrapper; the parse above has rejected duplicate keys and floats.
         let profile_format_version = canonical_u32(
             envelope
                 .get("profile_format_version")
@@ -460,8 +459,8 @@ impl ProfileRegistry {
             return Err(ProfileError::Malformed);
         }
 
-        // Phase 3: the digest covers the raw canonical section values. No
-        // wrapper, measurement, or selector field is required before this.
+        // The digest covers the raw canonical section values, so it needs no
+        // wrapper, measurement, or selector field.
         let found_digest = Sha256::parse(&wire_assembly.content_sha256)?;
         let expected_digest =
             raw_content_digest(profile_format_version, profile_id_text, sections)?;
@@ -472,8 +471,8 @@ impl ProfileRegistry {
             });
         }
 
-        // Phase 4: validate every present stable ID and dispatch it to the
-        // explicit registry before looking at any wrapper contents.
+        // Every present stable ID resolves in the registry before any wrapper
+        // contents are read.
         for id in sections.keys() {
             if !valid_owned_section_id(id) {
                 return Err(ProfileError::Malformed);
@@ -483,8 +482,8 @@ impl ProfileRegistry {
             }
         }
 
-        // Phase 5: inspect only schema_version for every registered section.
-        // A bad version therefore wins over malformed measurement/body data.
+        // Only schema_version is read here, so a bad version wins over
+        // malformed measurement or body data.
         for (id, section) in sections {
             let codec = self
                 .codecs
@@ -500,8 +499,6 @@ impl ProfileRegistry {
             }
         }
 
-        // Phase 6: require the complete wrapper, decode measurement semantics,
-        // then invoke the owner codec's measurement and body/range validation.
         let mut entries = BTreeMap::new();
         for (id, raw_section) in sections {
             let codec = self

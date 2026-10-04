@@ -1,4 +1,4 @@
-//! Scalar backend module with sub-modules for different operation types.
+//! Portable scalar kernels.
 
 mod logical;
 pub mod primitives;
