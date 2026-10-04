@@ -18,22 +18,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T07:51:19.613879367Z",
+      "updated_at": "2026-10-04T08:41:29.728217507Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-04T08:06:41.098280567Z",
+      "updated_at": "2026-10-04T08:54:56.560158715Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T08:03:58.837388041Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T08:49:52.099448319Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T07:54:01.946445684Z",
+      "updated_at": "2026-10-04T08:47:20.932906600Z",
       "updated_by": "auto:executor"
     }
   },
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-coding tests, benches and examples",
-  "updated_at": "2026-10-04T08:06:41.098280567Z"
+  "updated_at": "2026-10-04T08:54:56.560158715Z"
 }

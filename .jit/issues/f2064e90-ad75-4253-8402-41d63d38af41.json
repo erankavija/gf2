@@ -8,6 +8,7 @@
   ],
   "description": "Bring the comments and Rustdoc in gf2-core dense field matrix modules to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-core/src/field/` files `matrix.rs`, `ple.rs` and `triangular.rs`, about 5,000 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
   "documents": [],
+  "done_at": "2026-10-04T08:57:10.159927744Z",
   "first_ready_at": "2026-10-03T16:21:58.602027787Z",
   "gates_required": [
     "cargo-ci",
@@ -18,22 +19,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T07:46:41.832293314Z",
+      "updated_at": "2026-10-04T08:42:39.146809844Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T08:01:29.129352586Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T08:54:49.032884023Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T07:56:17.697040757Z",
+      "updated_at": "2026-10-04T08:50:25.615114089Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T07:53:46.782352519Z",
+      "updated_at": "2026-10-04T08:47:24.735634197Z",
       "updated_by": "auto:executor"
     }
   },
@@ -50,7 +51,7 @@
     "satisfies:ffc35b8c/REQ-26"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Tersify comments in gf2-core dense field matrix modules",
-  "updated_at": "2026-10-04T08:01:29.129352586Z"
+  "updated_at": "2026-10-04T08:57:10.159927744Z"
 }
