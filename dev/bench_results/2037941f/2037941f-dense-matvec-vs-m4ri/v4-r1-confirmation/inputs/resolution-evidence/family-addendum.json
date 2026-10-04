@@ -1,0 +1,279 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "2037941f-dense-matvec-vs-m4ri",
+    "issue": "e1f9a78f",
+    "purpose": "consumer-family",
+    "description": "Whole-consumer comparison of public BitMatrix::matvec with the qualified external M4RI mzd_mul over the qualified shapes, both arms charging construction, conversion, execution and output. This addendum is the pilot: every cell is exploratory and no cell decides adoption."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-28T06:22:24Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "The comparator family holds no improvement or non-regression cell, so its worthwhile speedup is unresolved by design.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "Five percent separates a comparable external arm from a recorded difference at this family's resolution.",
+    "material_gap_threshold": 1.1,
+    "material_gap_rationale": "A ten-percent external gap warrants attribution, not selection; M4RI throughput cannot authorise an incompatible production route."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "Zero production lines and zero unsafe kernels; no production change is selected from an external comparator."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 4,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "m4ri-gap-65x512-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-65x512-warm",
+        "size": {
+          "columns": 512,
+          "retained_state": 0,
+          "rows": 65,
+          "words": 8
+        },
+        "seed": 7672081787005044783
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "m4ri-gap-65x4096-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-65x4096-warm",
+        "size": {
+          "columns": 4096,
+          "retained_state": 0,
+          "rows": 65,
+          "words": 64
+        },
+        "seed": 13335509090648851657
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "m4ri-gap-1x1-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-1x1-warm",
+        "size": {
+          "columns": 1,
+          "retained_state": 0,
+          "rows": 1,
+          "words": 1
+        },
+        "seed": 10284644971133057240
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "m4ri-gap-63x63-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-63x63-warm",
+        "size": {
+          "columns": 63,
+          "retained_state": 0,
+          "rows": 63,
+          "words": 1
+        },
+        "seed": 3310169354135099474
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "m4ri-gap-64x64-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-64x64-warm",
+        "size": {
+          "columns": 64,
+          "retained_state": 0,
+          "rows": 64,
+          "words": 1
+        },
+        "seed": 6547711948922860820
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "m4ri-gap-65x65-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-65x65-warm",
+        "size": {
+          "columns": 65,
+          "retained_state": 0,
+          "rows": 65,
+          "words": 2
+        },
+        "seed": 12159084965721420153
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "m4ri-gap-65x512-retained-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-65x512-retained-warm",
+        "size": {
+          "columns": 512,
+          "retained_state": 1,
+          "rows": 65,
+          "words": 8
+        },
+        "seed": 13625264189506356630
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "m4ri-gap-65x4096-retained-warm",
+      "objective": "comparator-gap",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-65x4096-retained-warm",
+        "size": {
+          "columns": 4096,
+          "retained_state": 1,
+          "rows": 65,
+          "words": 64
+        },
+        "seed": 6734222009069916026
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
