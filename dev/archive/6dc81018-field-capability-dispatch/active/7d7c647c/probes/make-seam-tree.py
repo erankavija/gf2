@@ -23,8 +23,8 @@ tasks instead.
 
 Usage, from the repository root:
 
-    python3 dev/active/7d7c647c/probes/make-seam-tree.py apply
-    python3 dev/active/7d7c647c/probes/make-seam-tree.py revert
+    python3 dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/make-seam-tree.py apply
+    python3 dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/make-seam-tree.py revert
 
 `revert` restores the files from the `.probe-orig` copies `apply` writes.
 """

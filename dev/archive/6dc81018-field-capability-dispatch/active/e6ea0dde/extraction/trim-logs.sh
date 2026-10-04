@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Trim the raw run logs of dev/active/e6ea0dde/logs/ into committed evidence.
+# Trim the raw run logs of dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs/ into committed evidence.
 #
 # Strips ANSI escapes, terminal progress-bar redraws, and the rustc dead-code
 # warning blocks that dominate every `charon cargo` run, keeping the command
 # header, Charon/Aeneas diagnostics, exceptions and the exit/elapsed footer.
-# Same filter set as dev/active/34d85cb9/extraction/trim-logs.sh.
+# Same filter set as dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/trim-logs.sh.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"

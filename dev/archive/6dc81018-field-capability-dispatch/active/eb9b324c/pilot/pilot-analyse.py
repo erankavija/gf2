@@ -8,8 +8,8 @@ import collections
 
 REPO = "/home/vkaskivuo/Projects/gf2"
 S5 = f"{REPO}/dev/benchmarks/tuning_profiles"
-LED = f"{REPO}/dev/active/50b47eae/s5-session"
-PILOT = f"{REPO}/dev/active/eb9b324c/pilot"
+LED = f"{REPO}/dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s5-session"
+PILOT = f"{REPO}/dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot"
 PILOT_CSV = f"{PILOT}/pilot-cand-fixed.csv"
 PILOT_LED = f"{PILOT}/ledger-cand-fixed.tsv"
 

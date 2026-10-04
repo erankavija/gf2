@@ -1,0 +1,35 @@
+== preview
+eligible, no blocker: ok {"already_archived": 124, "block": 0, "copy": 78, "move": 443, "pending_deletions": 395, "retain": 25}
+moves by entry: {'34d85cb9': 180, '50b47eae': 57, '7d7c647c': 87, 'e6ea0dde': 66, 'eb9b324c': 5}
+copies by entry: {'50b47eae': 6}
+each deletion is the source of a planned move: ok 395 deletions
+== marker
+dev/archive/6dc81018-field-capability-dispatch/.jit-container: ok 6dc81018-9a8e-4318-9572-148670d1c272
+== bytes
+destinations at 50de04a6b with the planned sha256: ok 401/401
+move sources absent at the execution commit and in the working tree: ok 395/395
+copy sources present with the planned sha256: ok 6/6
+destinations differing from the plan are files changed after execution: ok 112 differ, 289 hold the planned sha256
+copy sources under the active area: 35 present, 33 equal to their archive file
+  differs from its archive file dev/active/6dc81018-field-capability-dispatch/investigation.md
+  differs from its archive file dev/active/eaae1b56/premeasurement-protocol.md
+== excluded
+dev/active/a83583e0 unchanged, not published, not deleted: ok 9 tracked files
+dev/active/dbd8787d unchanged, not published, not deleted: ok 3 tracked files
+== references
+tracker documents naming the planned archive path: ok 522/522 on 25 issues
+pinned sources of the excluded entries present: ok 8
+== rerun
+fresh preview eligible, no blocker, nothing to publish or delete: ok {"already_archived": 525, "block": 0, "copy": 78, "move": 443, "pending_deletions": 0, "retain": 25}
+== links
+dev/archive/6dc81018-field-capability-dispatch: Markdown files 60, local links 239: ok unresolved 0, resolving from the plan source path only 3
+files of this issue under the active area: Markdown files 3, local links 10: ok unresolved 0
+  source path only dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-11.md:140 ../../../.agents/skills/jit-execution-lead/SKILL.md
+  source path only dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:82 ../../../crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json
+  source path only dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:98 ../../../crates/gf2-algebra/data/tuning-profiles/conservative.json
+== manifest
+   431 jit-container-archive / complete / in plan
+    33 retained-operational / complete / in plan
+     1 retained-operational / pending / not in plan
+  not complete dev/active/389aa4de/receipt-notes.md
+rows of plan sources complete: ok

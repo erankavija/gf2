@@ -16,7 +16,7 @@ CHARON=https://github.com/AeneasVerif/charon
 {
   echo "# Upstream topology receipt for the 34d85cb9 upgrade leg."
   echo "# Captured: $(date -Is)"
-  echo "# Reproduce with: dev/active/34d85cb9/upgrade/topology.sh"
+  echo "# Reproduce with: dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/topology.sh"
   echo
   echo "## \$ git ls-remote $AENEAS HEAD refs/heads/main"
   git ls-remote "$AENEAS" HEAD refs/heads/main

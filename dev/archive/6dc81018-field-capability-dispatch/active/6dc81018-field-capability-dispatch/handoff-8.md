@@ -58,6 +58,6 @@
 - Escalated issue: `jit issue show 5bdc9552`; `jit gate status 5bdc9552 doc-review --findings`
 - Designs: `dev/active/7d7c647c/design.md`, `dev/active/7d824b2f/design.md`, `dev/active/3fa7c9d0/design.md`
 - Epic execution state: `dev/active/6dc81018-field-capability-dispatch/progress.json`
-- Proof-drift evidence: `dev/active/34d85cb9/findings.md`
+- Proof-drift evidence: `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md`
 - Calibration checklist: `dev/active/389aa4de/receipt-notes.md`
 - Coordination forum: `/home/vkaskivuo/Projects/forum-poc`

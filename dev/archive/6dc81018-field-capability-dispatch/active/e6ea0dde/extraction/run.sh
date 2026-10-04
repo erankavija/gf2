@@ -2,7 +2,7 @@
 # Runner for JIT issue e6ea0dde.
 #
 # Usage (from the repository root):
-#   ./dev/active/e6ea0dde/extraction/run.sh X1
+#   ./dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/run.sh X1
 #
 # Each run id holds its exact command line in `<ID>.cmd` next to this script.
 # The runner prints that file into the log and then executes it verbatim, so

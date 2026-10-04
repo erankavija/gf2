@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runner for the newest-upstream leg of JIT issue 34d85cb9.
 #
-# Same contract as dev/active/34d85cb9/extraction/run.sh: execute `<RUN>.cmd`
+# Same contract as dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/run.sh: execute `<RUN>.cmd`
 # verbatim from the repository root and tee to `../logs/<RUN>.log`, so the
 # command text quoted in findings.md is byte-identical to what ran.
 #

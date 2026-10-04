@@ -70,10 +70,10 @@ Two Charon invocations reach these constants, and both are probed.
 | Invocation | Roots | Trait module | Probe |
 |---|---|---|---|
 | The committed pipeline (`scripts/verify-lean.sh:103-131`), which produces `proofs/Gf2Core/` | `gf2_core::gfp`, `gf2_core::gfpn`, `gf2_core::gf2m::mul_raw` | `--opaque 'gf2_core::field'` | S1 / AS1 |
-| The extraction chain of record, X3/AX3 of `dev/active/e6ea0dde/record.md:101-138` | `FiniteFieldExt::square`, `FiniteFieldExt::frobenius` | `--opaque 'gf2_core::field'` plus `--include` on `FiniteFieldExt` | X1 / AX1 |
+| The extraction chain of record, X3/AX3 of `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md:101-138` | `FiniteFieldExt::square`, `FiniteFieldExt::frobenius` | `--opaque 'gf2_core::field'` plus `--include` on `FiniteFieldExt` | X1 / AX1 |
 
 `AX1_lean/Types.lean` is byte-identical to the record's committed
-`dev/active/e6ea0dde/extraction/AX3_lean/Types.lean` after normalising the
+`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean/Types.lean` after normalising the
 generated module prefix, so the control confirms this worktree reproduces the
 record's toolchain behaviour exactly.
 
@@ -224,7 +224,7 @@ the hook this design adds.
 
 ### 3.4 Why the extraction chain of record is unaffected
 
-The chain of record is X3/AX3 of `dev/active/e6ea0dde/record.md`, whose subject
+The chain of record is X3/AX3 of `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md`, whose subject
 is `FiniteFieldExt::square` and `frobenius`. Three facts make the seam inert
 for it.
 
@@ -232,16 +232,16 @@ Its REQ-01 result stands: X2 and AX2 both exit 0 with the constants gone, as
 X3 and AX3 do with them present. Its REQ-02 finding stands unchanged: the
 blocker is six repeated field names arising from bounds on `Self`,
 `Self::Characteristic` and `Self::Wide`
-(`dev/active/e6ea0dde/record.md:206-219`), and probe AX2 emits the same six.
+(`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md:206-219`), and probe AX2 emits the same six.
 Its REQ-03 result stands: the sketch's lemma statements project
 `corecloneCloneInst`, `coreopsarithMulInst`, `characteristic` and `pow`
-(`dev/active/e6ea0dde/record.md:347`), none of which the seam touches.
+(`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md:347`), none of which the seam touches.
 
 The seam improves the record's position in one respect it is worth naming.
 `AX2_lean` carries no `FunsExternal_Template.lean`, because the four constants
 were that file's entire content. The rename step the record's elaboration
 harness performs between Aeneas and Lean
-(`dev/active/e6ea0dde/record.md:186-189`) has nothing left to rename, and the
+(`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md:186-189`) has nothing left to rename, and the
 generated tree stops being `noncomputable`.
 
 ---
@@ -344,11 +344,11 @@ them the way 220cab0b §2.7 records the pilot's.
 
 | Value | Provenance |
 |---|---|
-| `WINOGRAD_THRESHOLD` = 128 | Sweep over $\{32, 64, 128, 256, 512, 1024\}$ against a classical baseline at $n = 2048$ on Mersenne-31, `crates/gf2-core/benches/strassen_threshold_results.md:29-53`; 32, 64 and 128 tie within single-run noise at $1.75$–$1.81\times$ and 128 is selected for the shorter recursion tree and L2-resident blocks. Both Mersenne-31 and `Gf2mWide<1, Gf2m8>` cross over at $\approx 128$ (`:56-58`). Landed by `66c4759b`. |
+| `WINOGRAD_THRESHOLD` = 128 | Sweep over $\{32, 64, 128, 256, 512, 1024\}$ against a classical baseline at $n = 2048$ on Mersenne-31, `dev/archive/legacy/crates/gf2-core/benches/strassen_threshold_results.md:29-53`; 32, 64 and 128 tie within single-run noise at $1.75$–$1.81\times$ and 128 is selected for the shorter recursion tree and L2-resident blocks. Both Mersenne-31 and `Gf2mWide<1, Gf2m8>` cross over at $\approx 128$ (`:56-58`). Landed by `66c4759b`. |
 | `TRI_BASE_THRESHOLD` = 8 | Criterion sweep over $\{4, 8, 16, 32, 64\}$ on `Fp<MERSENNE_31>` at $n \in \{256, 1024\}$ for `trsm_upper`, `trsm_lower` and `pluq`, on an AMD Ryzen 9 5900X (Zen 3) with `rustc 1.95.0`: `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md:26-33` for the host and `:79-110` for the sweep tables and the selection. Recorded again at `.../active/97bf0879-handoff-10.md:41`. |
 | `PLE_BASE_COLS` = 1 | Same Criterion session; values 1, 4, 8 and 16 evaluated, with 8 producing a $\approx 80\,\%$ regression on `pluq/Fp_M31/uniform/256` because the Mersenne-31 blocked GEMM amortises its delayed `u128` reduction and the schoolbook leaf does not: `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md:146`. |
 | `PLE_PANEL_COLS` = 256, byte lanes | `KC = 256` is the byte-lane panel kernel's L1d-fit blocking factor, derived at `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:98-102`; route-C measurement at `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel-aggregate.csv`. |
-| `PLE_PANEL_COLS` = 128, u16 lanes | `KC_U16 = 128`, half the byte-lane factor for the 2× lane-density gap, on the 5900X reference host: `dev/bench_results/2026-05-27-68db401b-fp-medium-ple.md:30-31` with the host at `:8`. |
+| `PLE_PANEL_COLS` = 128, u16 lanes | `KC_U16 = 128`, half the byte-lane factor for the 2× lane-density gap, on the 5900X reference host: `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-68db401b-fp-medium-ple.md:30-31` with the host at `:8`. |
 
 Two of these receipts sit in `dev/archive/`, so the cutover cites the archive
 path rather than the `dev/bench_results/` path the constants' current rustdoc
@@ -432,7 +432,7 @@ hook replacing the boolean `has_simd_ple_panel_base()`, plus two profile fields.
 **Rejected: one profile field, `ple.panel_max_cols`.** The two lane widths are
 different physical facts. `KC = 256` and `KC_U16 = 128` are each a panel's
 L1d-fit bound at its own lane density
-(`fp_small_panel.rs:98-102`, `dev/bench_results/2026-05-27-68db401b-fp-medium-ple.md:30-31`),
+(`fp_small_panel.rs:98-102`, `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-68db401b-fp-medium-ple.md:30-31`),
 and the u16 kernel additionally asserts a hard `tail_len <= 256` bound at
 `crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:270-273`. A single field
 either overshoots one kernel's budget or undershoots the other's.
@@ -644,7 +644,7 @@ field that holds the live value.
 ## 9. Probe index
 
 All commands are committed as `.cmd` files under
-`dev/active/7d7c647c/probes/` and executed through `probes/run.sh`, which
+`dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/` and executed through `probes/run.sh`, which
 prints the command file into the log before running it, so the text quoted here
 is byte-identical to what ran. Toolchain identities captured at run time are in
 `probes/excerpts/toolchain-versions.txt`: `charon 0.1.217` on
@@ -711,7 +711,7 @@ the pinned pipeline generates
 `packed.packed5.Packed5.to_raw_planes` in
 `proofs/Gf2Algebra/Funs.lean` from the Rust method introduced by commit
 `9b78666c`, while the committed algebra tree predates that method.
-`dev/active/34d85cb9/findings.md` records this as the pipeline's sole
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md` records this as the pipeline's sole
 non-comment Gf2Algebra drift.
 
 This exception permits exactly that generated definition, requires the

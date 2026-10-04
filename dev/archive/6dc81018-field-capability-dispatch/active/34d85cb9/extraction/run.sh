@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Spike runner for JIT issue 34d85cb9.
 #
-# Usage (from the worktree root):  ./dev/active/34d85cb9/extraction/run.sh R1
+# Usage (from the worktree root):  ./dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/run.sh R1
 #
 # Each run id RN has a command file `RN.cmd` next to this script holding the
 # exact Charon command line that was executed.  The runner executes that file

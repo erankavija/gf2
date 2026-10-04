@@ -68,8 +68,8 @@ Everything else: none. The next likely decision points: (a) any attributable sur
 ## Reference artefacts
 
 - Epic: `jit issue show 6dc81018`; wave plan + escalations: `progress.json` beside this file
-- Receipt-6 (REQ-04 met): `dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-6.md`; session record `dev/active/50b47eae/s6-session/`
-- Extraction chain of record (REQ-05): `dev/active/e6ea0dde/record.md` (+ AX3_lean tree, probes)
+- Receipt-6 (REQ-04 met): `dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-6.md`; session record `dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s6-session/`
+- Extraction chain of record (REQ-05): `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md` (+ AX3_lean tree, probes)
 - Follow-on migration design: `dev/active/7d824b2f/design.md`; seam design: `dev/active/7d7c647c/design.md` (+ probes)
 - Governing standing docs: `dev/active/220cab0b/design.md` (now with 7d824b2f amendment), classification (now with §4.2/§4.4 reclassification + §7 removed), `dev/benchmarks/tuning_profiles/` chain (plan v1 → verdict v1–v4)
 - Holistic round-1 verdict: `jit gate status 6dc81018 holistic-review --findings`
