@@ -7,7 +7,25 @@
     "554c2935-f2ba-4b37-8c7d-d9288cb9a351"
   ],
   "description": "Bring every comment and Rustdoc block in the workspace's Rust sources to the documentation contract: current state only, non-obvious content only, shortest form. Source documentation then starts from a clean baseline.\n\n## Background\n\nThe root `AGENTS.md` states that comments and Rustdoc carry only what the code leaves non-obvious (the contract, an invariant, the reason behind a choice, or a pointer to evidence), that history belongs in git and the tracker, and that a module-level orientation is at most one short paragraph. The `present-tense-prose` invariant puts change-relative narration in commit messages and issue history. Planned, deferred and excluded scope is work-tracking content.\n\nExisting sources drift from this contract. Comment lines make up 17–45% of each crate's Rust lines; hundreds of comment lines carry narration or scope markers (non-goals, out of scope, deferred to, phase or wave designators, task and story references, legacy and migration language), and hundreds more embed tracker short IDs as provenance.\n\n## Success Criteria\n\n- [hard] REQ-21: Every Rust file under `crates/` (sources, tests, benches, examples and build scripts) meets the root `AGENTS.md` comment rule: no comment restates the adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-22: No comment or Rustdoc narrates history or process: commit, task, story, phase, wave or session designators, old/new contrasts, legacy or migration language, and design-history provenance are absent.\n- [hard] REQ-23: No comment or Rustdoc states planned, deferred, excluded or out-of-scope work. Where such a statement described a current limitation, the limitation is restated in the present tense (for example as a panic or supported-domain condition), and the planned work exists as a tracked issue.\n- [hard] REQ-24: A case-insensitive grep of `crates/` comment lines for the pattern below returns only lines listed, each with a one-line justification, in the story's linked completion record.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-25: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-26: The change contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace diff review of every hunk.\n- [hard] REQ-27: The linked completion record reports each crate's comment-line share before and after the sweep, and lists every tracked issue created or matched under REQ-23.\n- [hard] REQ-28: Every Rust file under `dev/tools/` meets REQ-21, REQ-22 and REQ-23 through comment, Rustdoc and whitespace edits only.\n\n## Notes\n\nGenerated data tables (for example LDPC parity-check constants) keep their provenance headers. Comments that cite an external standard, paper or committed receipt are evidence pointers and remain, in shortened form. Criterion IDs begin at REQ-21 and stay stable.\n\n\n\n## Decisions\n\n- DEC-01: The owner decided on 2026-10-04 that a behavior-preserving hunk which `rustfmt` or `clippy` forces after a comment deletion (array layout, a trailing comma, dropped braces, a collapsed nested `if`) is inside the sweep and consistent with REQ-26, provided the unit's commit body names the hunk. The owner also approved one string-literal edit in `crates/gf2-kernels-hip/build.rs`, recorded as DEC-01 on issue 93aed46a.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "23a6a5d70add18844021413445e77fc95e04fc5f4147105ab2030654d1285395",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "62f0d0e6-comment-census.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/62f0d0e6-comment-census.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Sweep completion record",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-sweep-completion.md"
+    }
+  ],
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -34,5 +52,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Workspace source-comment tersification sweep",
-  "updated_at": "2026-10-04T11:02:51.528254774Z"
+  "updated_at": "2026-10-04T11:43:26.457508420Z"
 }

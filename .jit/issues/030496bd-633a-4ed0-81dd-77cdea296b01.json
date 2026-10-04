@@ -32,7 +32,82 @@
     "f46046f0-3672-4bec-8d57-83bc77a6043b"
   ],
   "description": "The source-comment sweep closes with a record comparing each crate's comment share before and after, listing every justified pattern match, and naming the tracked issues that now hold removed planned-work statements.\n\n## Success Criteria\n\n- [hard] REQ-01: The completion record states each crate's comment share after the sweep by the same command as the baseline, beside the baseline figures.\n- [hard] REQ-02: A case-insensitive grep of `crates/` comment lines for the sweep pattern below returns only lines that the record lists, each with a one-line justification.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-03: The record lists every tracked issue created or matched for a removed planned, deferred or out-of-scope statement.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "23a6a5d70add18844021413445e77fc95e04fc5f4147105ab2030654d1285395",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "62f0d0e6-comment-census.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/62f0d0e6-comment-census.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Sweep completion record",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-sweep-completion.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "After census output",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-comment-census.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "After pattern lines",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-pattern-matches.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "After pattern cross-check",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-pattern-crosscheck.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "Census comparison script",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-census-compare.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "Census comparison output",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-census-compare.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Planned-work extraction script",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-planned-work.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Planned-work issue list",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-planned-work.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Token diff script",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-token-diff.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "Non-comment hunks of the sweep",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-token-diff.txt"
+    }
+  ],
   "first_ready_at": "2026-10-04T11:28:56.531774684Z",
   "gates_required": [
     "cargo-ci",
@@ -59,5 +134,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Close the sweep with the after census and justification list",
-  "updated_at": "2026-10-04T11:30:22.433099431Z"
+  "updated_at": "2026-10-04T11:43:26.426835598Z"
 }
