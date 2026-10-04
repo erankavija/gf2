@@ -1,10 +1,5 @@
-//! Process-level contract tests for the pinned eBCH OSD campaign executable.
-//!
-//! The fixture deliberately uses tiny per-invocation sample bounds.  It checks
-//! that the executable maps the pinned cells into the shared protocol, writes
-//! both durable outputs, resumes the interrupted cell without replaying a
-//! terminal cell, and rejects malformed command lines before doing campaign
-//! work.
+//! Process-level contract tests for the eBCH OSD campaign executable: cell
+//! mapping, durable outputs, resume, and command-line rejection.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -77,10 +72,6 @@ fn usage_names_pinned_configuration_and_output_paths() {
     assert!(usage.contains("source-undefined"), "usage: {usage}");
 }
 
-/// The worker count is invocation-local provenance, not campaign
-/// configuration: the same cell evidence comes out at any worker count, and
-/// the resolved count is always part of the recorded argument vector — the
-/// default included, so the record reproduces the run.
 #[test]
 fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
     let defaulted_dir = temp_dir("workers-default");
@@ -123,8 +114,6 @@ fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
         "the defaulted worker count must appear in the recorded argument vector"
     );
 
-    // The single-worker run is the reference the invariance contract is stated
-    // against; the real eBCH/OSD evaluator must reproduce it at every count.
     let reference_dir = temp_dir("workers-1");
     let reference_run = run(&workers_campaign_args(
         reference_dir.path(),
@@ -167,9 +156,6 @@ fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
     );
 }
 
-/// The first pinned cell's sampled evidence at seed 42 is a recorded fixture:
-/// the eBCH(128,64,22) construction, its systematic encoder, and the OSD
-/// generator it hands the decoder determine every counter below.
 #[test]
 fn first_cell_evidence_at_the_pinned_seed_is_a_recorded_fixture() {
     let dir = temp_dir("pinned-evidence");

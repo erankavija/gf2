@@ -1,18 +1,6 @@
-//! Verifies that every Phase B GPU stage has its `Stage::CpuFallback` properly
-//! declared and `cpu_fallback()` returns `Some(&self.fallback)` (issue
-//! `ed575f15`, deliverable 2; design doc §8).
-//!
-//! All three GPU stages are constructible without a real HIP device — they build
-//! their CPU fallback eagerly at construction time and defer device-specific
-//! resources to the throughput path. This test file therefore requires
-//! `feature = "hip"` for the type definitions but DOES NOT REQUIRE a real GPU:
-//! construction and fallback access are pure host operations.
-//!
-//! Stages verified:
-//! - [`GpuAwgn`] — `CpuFallback = channels::Awgn` (in-crate)
-//! - [`GpuLdpcBp`] — `CpuFallback = CpuLdpcBp` (orphan-rule wrapper)
-//! - [`GpuGrayQamDemapper`] — `CpuFallback = CpuGrayQamDemapper` (orphan-rule
-//!   wrapper); also covers the `ExactLogMap` → `CpuOnly` execution-class path.
+//! Each GPU stage declares a `Stage::CpuFallback` and returns it from
+//! `cpu_fallback()`. Construction and fallback access use no device, so these
+//! tests need the `hip` feature but no GPU.
 
 #![cfg(feature = "hip")]
 
@@ -25,12 +13,6 @@ use gf2_sim::gpu::demap::GpuGrayQamDemapper;
 use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
 use gf2_sim::stage::{ExecutionClass, Stage};
 
-// ────────────────────────────────────────────────────────────────────────────
-// GpuAwgn — CpuFallback = channels::Awgn
-// ────────────────────────────────────────────────────────────────────────────
-
-/// `GpuAwgn::cpu_fallback()` must return `Some` carrying the eagerly-built
-/// CPU `Awgn` stage with matching parameters (no GPU required).
 #[test]
 fn test_gpu_awgn_cpu_fallback_is_some() {
     let stage = GpuAwgn::new(6.25, 4);
@@ -54,7 +36,6 @@ fn test_gpu_awgn_cpu_fallback_is_some() {
     );
 }
 
-/// `GpuAwgn` is `ExecutionClass::GpuOnly`.
 #[test]
 fn test_gpu_awgn_execution_class_is_gpu_only() {
     let stage = GpuAwgn::new(6.25, 4);
@@ -65,7 +46,6 @@ fn test_gpu_awgn_execution_class_is_gpu_only() {
     );
 }
 
-/// The fallback stage from a seek-parameterised `GpuAwgn` is still present.
 #[test]
 fn test_gpu_awgn_fallback_survives_seek_and_device_setters() {
     let stage = GpuAwgn::new(5.0, 6).with_seek(99, 2, 1).on_device(0);
@@ -76,12 +56,6 @@ fn test_gpu_awgn_fallback_survives_seek_and_device_setters() {
     assert_eq!(fb.bits_per_symbol(), 6);
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// GpuLdpcBp — CpuFallback = CpuLdpcBp (orphan-rule wrapper around LdpcDecoder)
-// ────────────────────────────────────────────────────────────────────────────
-
-/// `GpuLdpcBp::cpu_fallback()` must return `Some` carrying a `CpuLdpcBp`
-/// with the same code dimensions and iteration cap. No GPU required.
 #[test]
 fn test_gpu_ldpc_bp_cpu_fallback_is_some() {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
@@ -108,7 +82,6 @@ fn test_gpu_ldpc_bp_cpu_fallback_is_some() {
     );
 }
 
-/// `GpuLdpcBp` is `ExecutionClass::GpuOnly`.
 #[test]
 fn test_gpu_ldpc_bp_execution_class_is_gpu_only() {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
@@ -120,9 +93,6 @@ fn test_gpu_ldpc_bp_execution_class_is_gpu_only() {
     );
 }
 
-/// The `CpuLdpcBp` wrapper (the registered fallback for `GpuLdpcBp`) must
-/// itself return `Some(&self)` from `cpu_fallback` (it is its own fallback —
-/// a CPU-only stage per design §8).
 #[test]
 fn test_cpu_ldpc_bp_is_its_own_fallback() {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
@@ -130,7 +100,6 @@ fn test_cpu_ldpc_bp_is_its_own_fallback() {
     let fb = stage
         .cpu_fallback()
         .expect("GpuLdpcBp has a CpuLdpcBp fallback");
-    // CpuLdpcBp is its own fallback (cpu_fallback returns Some(&self)).
     assert!(
         fb.cpu_fallback().is_some(),
         "CpuLdpcBp must be its own cpu_fallback (CpuOnly stage)"
@@ -142,12 +111,6 @@ fn test_cpu_ldpc_bp_is_its_own_fallback() {
     );
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// GpuGrayQamDemapper (MaxLog) — CpuFallback = CpuGrayQamDemapper
-// ────────────────────────────────────────────────────────────────────────────
-
-/// `GpuGrayQamDemapper` in MaxLog mode: `cpu_fallback()` must return `Some`
-/// carrying a `CpuGrayQamDemapper` with matching parameters. No GPU required.
 #[test]
 fn test_gpu_gray_qam_demapper_max_log_cpu_fallback_is_some() {
     let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam16, DemapMethod::MaxLog, 0.25);
@@ -172,7 +135,6 @@ fn test_gpu_gray_qam_demapper_max_log_cpu_fallback_is_some() {
     );
 }
 
-/// `GpuGrayQamDemapper` in MaxLog mode is `ExecutionClass::GpuOnly`.
 #[test]
 fn test_gpu_gray_qam_demapper_max_log_execution_class_is_gpu_only() {
     let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam64, DemapMethod::MaxLog, 0.5);
@@ -183,7 +145,6 @@ fn test_gpu_gray_qam_demapper_max_log_execution_class_is_gpu_only() {
     );
 }
 
-/// The `CpuGrayQamDemapper` wrapper must be its own fallback (CPU-only stage).
 #[test]
 fn test_cpu_gray_qam_demapper_is_its_own_fallback() {
     let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam16, DemapMethod::MaxLog, 0.25);
@@ -201,14 +162,6 @@ fn test_cpu_gray_qam_demapper_is_its_own_fallback() {
     );
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// GpuGrayQamDemapper (ExactLogMap) — routes to CPU, fallback still present
-// ────────────────────────────────────────────────────────────────────────────
-
-/// `GpuGrayQamDemapper` constructed for `ExactLogMap` has no GPU exact-log-map
-/// kernel; it reports `CpuOnly` and routes `process` through the CPU fallback
-/// (design doc §8: `ExactLogMap → ExecutionClass::CpuOnly`). The `cpu_fallback`
-/// still returns `Some` so the executor can always access the fallback path.
 #[test]
 fn test_gpu_gray_qam_demapper_exact_log_map_is_cpu_only_with_fallback() {
     let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam16, DemapMethod::ExactLogMap, 0.3);
@@ -227,7 +180,6 @@ fn test_gpu_gray_qam_demapper_exact_log_map_is_cpu_only_with_fallback() {
     );
 }
 
-/// 64-QAM MaxLog fallback has the correct `m`.
 #[test]
 fn test_gpu_gray_qam_demapper_qam64_max_log_fallback_m() {
     let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam64, DemapMethod::MaxLog, 0.7);

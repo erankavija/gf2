@@ -1,26 +1,8 @@
-//! CPU-vs-GPU byte-identity of the LDPC belief-propagation hard decision
-//! (issue `a930be7f`, criterion 1; design doc §11).
-//!
-//! For DVB-T2 r1/2 (n = 64800) at a fixed seed, 200 frames at each of three
-//! SNRs, the GPU [`GpuLdpcBp`](gf2_sim::gpu::ldpc_bp::GpuLdpcBp) hard-decision
-//! codeword must equal the CPU
-//! [`LdpcDecoder::decode_to_codeword`](gf2_coding::ldpc::LdpcDecoder)
-//! hard-decision codeword **bit-for-bit**, across MinSum, NormalizedMinSum(0.75),
-//! and SumProduct. The hard-decision verdict is robust to the 1-3 ULP RDNA2
-//! transcendental drift (design §11), so bit-for-bit holds even for SumProduct's
-//! `tanh`/`atanh` box-plus.
-//!
-//! The test feeds the **same** channel LLRs to both paths (so the comparison is
-//! purely decode-vs-decode) and is gated on GPU presence — it skips cleanly with
-//! no usable GPU, like the other `gf2-sim` GPU tests.
-//!
-//! Performance: the GPU decodes each 200-frame SNR set in one batched call (one
-//! set of per-iteration kernel launches over the whole batch); the CPU reference
-//! runs the same 200 frames across the rayon pool (per-frame independent
-//! `LdpcDecoder`s — the per-frame outcome is deterministic regardless of which
-//! thread runs it). This keeps the full 3-algorithm × 3-SNR × 200-frame sweep
-//! within the 120 s slow-tier budget. It carries `#[ignore]` per
-//! `@/inv/test-tier-budgets`; run command in the receipt.
+//! CPU-vs-GPU identity of the LDPC BP hard decision: for DVB-T2 r1/2
+//! (n = 64800) on identical channel LLRs, the [`GpuLdpcBp`] hard-decision
+//! codeword equals the CPU [`LdpcDecoder::decode_to_codeword`] codeword bit for
+//! bit under MinSum, NormalizedMinSum(0.75) and SumProduct. Skips when no GPU
+//! is usable.
 
 #![cfg(feature = "hip")]
 
@@ -29,16 +11,10 @@ use gf2_coding::{CodeRate, Llr};
 use gf2_core::BitVec;
 use gf2_kernels_hip::host::device_mem_info;
 use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
-// The deterministic SplitMix64 + Box-Muller AWGN LLR source is the shared
-// `testutil::AwgnLlrSource` (SSOT; review F3, jit:23d3525f) — bit-identical
-// draw sequence to the original in-file copy, so the pinned per-seed LLR
-// frames (and thus the byte-identity outcomes) are unchanged.
 use gf2_sim::testutil::AwgnLlrSource;
 use gf2_sim::LlrBatch;
 use rayon::prelude::*;
 
-/// A stable small tag per algorithm for seeding (so each algorithm's frame
-/// population is distinct and reproducible).
 fn algorithm_tag(alg: DecoderAlgorithm) -> u32 {
     match alg {
         DecoderAlgorithm::MinSum => 0,
@@ -63,12 +39,6 @@ fn gpu_ldpc_hard_decision_byte_identical_to_cpu() {
     let n = code.n();
     let max_iterations = 50usize;
     let frames_per_snr = 200usize;
-
-    // Three SNRs spanning the waterfall: a noisy point (≈50 BP iterations / some
-    // frames at the floor), a waterfall point (≈26 iterations, successful
-    // decode), and a clean point (fast convergence). Sigmas for the all-zero
-    // BPSK signal; the mix produces a variety of decode outcomes so the
-    // comparison is non-vacuous across the early-termination depth.
     let sigmas = [0.95_f64, 0.80, 0.65];
 
     let algorithms = [
@@ -85,8 +55,6 @@ fn gpu_ldpc_hard_decision_byte_identical_to_cpu() {
             .expect("build GPU LDPC decoder on gfx1030");
 
         for (snr_idx, &sigma) in sigmas.iter().enumerate() {
-            // Fixed per-(algorithm, SNR) seed so the LLR frames are reproducible
-            // and identical between the CPU and GPU passes.
             let seed = 0xA930_BE7F_0000_0000
                 ^ ((algorithm_tag(algorithm) as u64) << 32)
                 ^ (snr_idx as u64);
@@ -95,9 +63,6 @@ fn gpu_ldpc_hard_decision_byte_identical_to_cpu() {
                 .map(|_| src.frame_all_zero(n, sigma))
                 .collect();
 
-            // CPU reference: full n-bit hard-decision codeword per frame, run
-            // across the rayon pool (each frame's outcome is a deterministic pure
-            // function of its LLRs, independent of thread).
             let cpu: Vec<BitVec> = frames
                 .par_iter()
                 .map(|llrs| {
@@ -106,7 +71,6 @@ fn gpu_ldpc_hard_decision_byte_identical_to_cpu() {
                 })
                 .collect();
 
-            // GPU: the same LLR frames in one batched decode.
             let gpu_batch = stage
                 .decode_batch(&LlrBatch::new(frames.clone()), &decoder)
                 .expect("gpu decode batch");
@@ -122,8 +86,6 @@ fn gpu_ldpc_hard_decision_byte_identical_to_cpu() {
                     c.len()
                 );
                 if g != c {
-                    // A single differing bit means a decision-boundary flip — the
-                    // lead must hear exactly where (do NOT relax criterion 1).
                     let first = (0..n).find(|&b| g.get(b) != c.get(b));
                     panic!(
                         "BYTE-IDENTITY VIOLATION alg={algorithm:?} snr_idx={snr_idx} \
