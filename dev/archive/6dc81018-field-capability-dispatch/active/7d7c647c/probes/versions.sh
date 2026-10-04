@@ -5,7 +5,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../../.." && pwd)"
 {
   echo "# Toolchain identities for JIT issue 7d7c647c, captured at run time."
-  echo "# Reproduce with: dev/active/7d7c647c/probes/versions.sh"
+  echo "# Reproduce with: dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/versions.sh"
   echo "# Captured: $(date -Is)"
   echo
   echo "RUSTUP_TOOLCHAIN=1.95.0 cargo --version: $(RUSTUP_TOOLCHAIN=1.95.0 cargo --version)"

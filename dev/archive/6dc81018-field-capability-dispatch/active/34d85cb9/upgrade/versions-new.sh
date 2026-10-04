@@ -9,7 +9,7 @@ NEW=/data/aeneas-upgrade-34d85cb9
 {
   echo "# Newest-upstream toolchain built for the 34d85cb9 upgrade leg."
   echo "# Built from fresh clones under $NEW; NOT installed into ~/.cargo/bin."
-  echo "# Reproduce with: dev/active/34d85cb9/upgrade/versions-new.sh"
+  echo "# Reproduce with: dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/versions-new.sh"
   echo "# Captured: $(date -Is)"
   echo
   echo "## Newest-upstream pair"

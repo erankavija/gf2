@@ -20,5 +20,5 @@ RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
   --opaque 'gf2_core::primitive_polys' \
   --opaque 'gf2_core::io' \
   --opaque 'gf2_core::macros' \
-  --dest-file dev/active/e6ea0dde/extraction/Q2_gf2_core.llbc \
+  --dest-file dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/Q2_gf2_core.llbc \
   -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features

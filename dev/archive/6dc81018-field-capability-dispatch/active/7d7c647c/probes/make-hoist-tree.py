@@ -10,8 +10,8 @@ Charon and Aeneas pair emit.
 
 Usage, from the repository root:
 
-    python3 dev/active/7d7c647c/probes/make-hoist-tree.py apply
-    python3 dev/active/7d7c647c/probes/make-hoist-tree.py revert
+    python3 dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/make-hoist-tree.py apply
+    python3 dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/make-hoist-tree.py revert
 """
 import shutil, sys
 from pathlib import Path

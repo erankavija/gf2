@@ -11,7 +11,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../../.." && pwd)"
 {
   echo "# Toolchain versions observed in the worktree of JIT issue 34d85cb9."
-  echo "# Reproduce with: dev/active/34d85cb9/extraction/versions.sh"
+  echo "# Reproduce with: dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/versions.sh"
   echo "# Captured: $(date -Is)"
   echo
   echo "## Workspace toolchain — pinned to the MSRV for every run"

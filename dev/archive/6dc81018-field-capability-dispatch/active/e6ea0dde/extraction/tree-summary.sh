@@ -10,7 +10,7 @@ set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 {
   echo "# Generated-tree summary for JIT issue e6ea0dde."
-  echo "# Reproduce with: dev/active/e6ea0dde/extraction/tree-summary.sh"
+  echo "# Reproduce with: dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/tree-summary.sh"
   echo "# Captured: $(date -Is)"
   for d in "$HERE"/A*_lean; do
     [ -d "$d" ] || continue
