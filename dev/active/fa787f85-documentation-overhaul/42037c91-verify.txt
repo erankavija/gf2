@@ -1,0 +1,22 @@
+== 6efb756b
+pre-execution preview: eligible=True destination_root=dev/archive/6efb756b-grand blockers=0 counts={"already_archived": 17, "block": 0, "copy": 0, "move": 17, "pending_deletions": 1, "retain": 0}
+marker: dev/archive/6efb756b-grand/.jit-container names 6efb756b-bee0-4dc1-9ee6-a1a0a61034d4
+byte verification: 17/17 destinations carry the pre-execution sha256, 0 outside the archive directory; 1/1 deleted sources are absent
+fresh preview: eligible=True blockers=0 counts={"already_archived": 22, "block": 0, "copy": 0, "move": 22, "pending_deletions": 0, "retain": 0} artifacts left to move, copy or delete=0
+tracker references: 21/21 planned references name the archive path
+link scan of dev/archive/6efb756b-grand: 14 Markdown and HTML files, 5 local links, 0 unresolved
+== bb85c68a
+pre-execution preview: eligible=True destination_root=dev/archive/bb85c68a-field-linear-algebra blockers=0 counts={"already_archived": 18, "block": 0, "copy": 0, "move": 17, "pending_deletions": 0, "retain": 11}
+marker: dev/archive/bb85c68a-field-linear-algebra/.jit-container names bb85c68a-f88e-46fb-b0ab-cddc3487cbc9
+byte verification: 17/17 destinations carry the pre-execution sha256, 0 outside the archive directory; 0/0 deleted sources are absent
+fresh preview: eligible=True blockers=0 counts={"already_archived": 20, "block": 0, "copy": 0, "move": 19, "pending_deletions": 0, "retain": 11} artifacts left to move, copy or delete=0
+tracker references: 18/18 planned references name the archive path
+link scan of dev/archive/bb85c68a-field-linear-algebra: 15 Markdown and HTML files, 2 local links, 0 unresolved
+== issues holding one path in several document references
+831bfc4a: 2 references name dev/archive/6efb756b-grand/simulation_results/phase4_comparison_report.md
+== files touched by the commits tagged jit:42037c91
+link scan: 2 Markdown and HTML files, 0 local links, 0 unresolved
+== manifest rows
+rows with epic 6efb756b: {"complete": 15}
+rows with epic bb85c68a: {"complete": 7}
+complete jit-container-archive dev/simulation_results/phase4_comparison_report.md -> dev/archive/6efb756b-grand/simulation_results/phase4_comparison_report.md
