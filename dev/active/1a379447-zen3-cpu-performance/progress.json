@@ -1333,9 +1333,9 @@
       "issue": "f63a2464",
       "question": "the decision record caps confirmatory campaigns at one per family while QC has three ledgers; the worker queued three confirmations under the ledger reading (findings.md Limits). Confirm before the 2026-09-20 window or hold the lines",
       "recommendation": "confirm the ledger reading",
-      "status": "open",
+      "status": "resolved",
       "raised_at": "2026-09-19T15:40Z",
-      "resolution": null
+      "resolution": "Invoker (session 27, 2026-10-05): \"enable the five held confirmation rows\". The three QC confirmations run under the ledger reading the question recommended."
     },
     {
       "category": "rework limit",
@@ -2049,7 +2049,8 @@
     "2026-09-28: approved M4RI v2 amendment merged; final458f38afe preserves v1 bytes, exact8qualified cells×24pairs and fixed.040 ceiling. Generic receipt and sampling prose now distinguishes runtime-unavailable measured cells from3predeclared exclusions in companion. Full merged CI passes; final source pins, release tests/oracles and zero-window smoke pass. Pilot queue activated for next authorized02:00Helsinki window; no timings run in session.",
     "Session 27 (2026-10-04/05): resumed from handoff-22. Collected the M4RI pilot (50f0bd42): worker commits 8593574b8..e6e32756f on worktree-agent-50f0bd42, replayed onto main through replay-50f0bd42 (outcome.md and confirmation-smoke.json land under dev/active/1a379447-zen3-cpu-performance/50f0bd42/ because jit:4f161183 moved that directory; outcome links repointed at replay).",
     "Session 27 decision (lead, routine): the frozen dense-parity addendum states the resolution is rounded upward to the next 0.001 over the confirmatory cells, so the confirmation freezes that value; the canonical freezer gained --resolution-decimals (default 2, existing records reproduce) under the worker brief rule to extend the freezer at its source.",
-    "Session 27: queue.tsv row dbd8787d (another epic, issue done) has no done marker after rc=1 on 2026-10-02; its worktree is gone, so run-window.sh logs it missing and skips it."
+    "Session 27: queue.tsv row dbd8787d (another epic, issue done) has no done marker after rc=1 on 2026-10-02; its worktree is gone, so run-window.sh logs it missing and skips it.",
+    "Session 27: invoker lifted the wave-3 hold on the five out-of-wave confirmation rows; queue.tsv rows uncommented with their original keys; pinned trees verified clean at 706450eed, a00540a8f, 897ca69ab."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2090,7 +2091,7 @@
   "session_scope": {
     "session": 27,
     "date": "2026-10-04",
-    "instruction": "Invoked with /jit-execution-lead and no scope statement; wave discipline keeps the session on wave 3. The hold on the 4c1e441f, ad2a6a58 and f63a2464 confirmation rows is an open question to the invoker.",
+    "instruction": "Invoker (2026-10-05): enable the five held confirmation rows (f63a2464 x3, ad2a6a58, 4c1e441f) alongside the M4RI confirmation. Wave 3 remains the current wave.",
     "wave_3_containers": [
       "2037941f"
     ],
