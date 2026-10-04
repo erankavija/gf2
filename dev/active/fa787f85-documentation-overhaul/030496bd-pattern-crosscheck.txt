@@ -1,4 +1,4 @@
-commit: 1078dc1a5a4bfa2ad8181b03cab82bf70707faae
+commit: 70bdb151b3fd885e72a5755547a8b4e906553af7
 crates/gf2-algebra 0
 crates/gf2-coding 0
 crates/gf2-core 0

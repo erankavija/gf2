@@ -1,12 +1,12 @@
 baseline: e3bfdfae782161c1f5031daac98f77ef48db2281
-after:    1078dc1a5a4bfa2ad8181b03cab82bf70707faae
+after:    70bdb151b3fd885e72a5755547a8b4e906553af7
                                    comment         non-blank             share           pattern
 crate                       before   after    before   after    before   after    before   after
-crates/gf2-algebra            7788    2015     22990   17205    33.88%  11.71%         9       0
-crates/gf2-coding            26946   10944     94570   78578    28.49%  13.93%        74       0
-crates/gf2-core              37360   12728    135122  110467    27.65%  11.52%       279       0
+crates/gf2-algebra            7788    1997     22990   17187    33.88%  11.62%         9       0
+crates/gf2-coding            26946   10638     94570   78272    28.49%  13.59%        74       0
+crates/gf2-core              37360   12529    135122  110268    27.65%  11.36%       279       0
 crates/gf2-kernels-hip        4799    2056     10239    7496    46.87%  27.43%        33       0
-crates/gf2-kernels-simd       7984    3992     23772   19780    33.59%  20.18%        48       0
-crates/gf2-sim               18038    7702     70819   60474    25.47%  12.74%       197       5
+crates/gf2-kernels-simd       7984    3974     23772   19762    33.59%  20.11%        48       0
+crates/gf2-sim               18038    7647     70819   60419    25.47%  12.66%       197       5
 crates/gf2-stats               623     541      3410    3328    18.27%  16.26%         0       0
-total                       103538   39978    360922  297328    28.69%  13.45%       640       5
+total                       103538   39382    360922  296732    28.69%  13.27%       640       5
