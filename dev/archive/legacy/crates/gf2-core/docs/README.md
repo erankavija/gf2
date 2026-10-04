@@ -7,8 +7,8 @@ This directory contains supplementary documentation for the `gf2-core` crate. Fo
 Documentation for users of the library:
 
 ### Getting Started
-- **[../README.md](../README.md)** - Main introduction with quick start guides for BitVec and BitMatrix
-- **[../examples/](../examples/)** - Runnable code examples:
+- **[../README.md](../../../../../../crates/gf2-core/README.md)** - Main introduction with quick start guides for BitVec and BitMatrix
+- **[../examples/](../../../../../../crates/gf2-core/examples/)** - Runnable code examples:
   - `bitvec_basics.rs` - Essential BitVec operations tutorial
   - `matrix_basics.rs` - Essential BitMatrix operations tutorial
   - `sparse_display.rs` - Sparse matrix visualization
@@ -89,13 +89,13 @@ Documentation related to testing and quality:
 
 - **[QUALITY_AUDIT_PLAN.md](QUALITY_AUDIT_PLAN.md)** - Quality audit plan (historical)
 - **[QUALITY_AUDIT_REPORT.md](QUALITY_AUDIT_REPORT.md)** - Quality audit findings (historical)
-- **[DOCUMENTATION_AUDIT_PLAN.md](DOCUMENTATION_AUDIT_PLAN.md)** - Documentation audit plan (2025-12-01)
-- **[DOCUMENTATION_AUDIT_REPORT.md](DOCUMENTATION_AUDIT_REPORT.md)** - Documentation audit findings and deliverables
+- **[DOCUMENTATION_AUDIT_PLAN.md](archive/DOCUMENTATION_AUDIT_PLAN.md)** - Documentation audit plan (2025-12-01)
+- **[DOCUMENTATION_AUDIT_REPORT.md](archive/DOCUMENTATION_AUDIT_REPORT.md)** - Documentation audit findings and deliverables
 
 ## Document Categories by Audience
 
 ### For New Users
-1. Start with [../README.md](../README.md) - Focus on BitVec/BitMatrix quick starts
+1. Start with [../README.md](../../../../../../crates/gf2-core/README.md) - Focus on BitVec/BitMatrix quick starts
 2. Run examples: `cargo run --example bitvec_basics` and `cargo run --example matrix_basics`
 3. Explore rustdocs: `cargo doc --no-deps --open`
 
@@ -112,7 +112,7 @@ Documentation related to testing and quality:
 ### For Contributors
 1. [KERNEL_OPTIMIZATION.md](KERNEL_OPTIMIZATION.md) - Understand kernel architecture
 2. [RREF_DESIGN_PLAN.md](RREF_DESIGN_PLAN.md), [POLAR_IMPLEMENTATION_PLAN.md](POLAR_IMPLEMENTATION_PLAN.md) - Algorithm designs
-3. [DOCUMENTATION_AUDIT_PLAN.md](DOCUMENTATION_AUDIT_PLAN.md) - Current documentation goals
+3. [DOCUMENTATION_AUDIT_PLAN.md](archive/DOCUMENTATION_AUDIT_PLAN.md) - Current documentation goals
 
 ## Maintenance
 

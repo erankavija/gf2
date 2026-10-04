@@ -45,7 +45,7 @@ Evidence shorthand: jit states as of 2026-10-01 (`jit query all --json`,
 
 | Item | Class | Evidence | Conf |
 |---|---|---|---|
-| Primitive polynomial testing matches/exceeds CAS | DONE | `crates/gf2-core/src/primitive_polys.rs`; `crates/gf2-core/docs/BENCHMARKS.md` (3-340x vs SageMath). | high |
+| Primitive polynomial testing matches/exceeds CAS | DONE | `crates/gf2-core/src/primitive_polys.rs`; `dev/archive/legacy/crates/gf2-core/docs/BENCHMARKS.md` (3-340x vs SageMath). | high |
 | GF(2^m) arithmetic via zero-cost abstractions + SIMD | DONE | `crates/gf2-kernels-simd/src/gf2m*.rs`; `2c7548ae`, `577b9e7f`. | high |
 | Top-tier in Polynomial Systems Solving benchmarks | DROPPED | No Groebner/system-solving work anywhere; the CAS comparison moved to FieldMatrix linear algebra vs fflas-ffpack/M4RI (`64c88ae4`, `01ae4c20`). | low |
 | GRAND for short codes | DONE | `crates/gf2-coding/src/grand/`. | high |
@@ -117,7 +117,7 @@ Evidence shorthand: jit states as of 2026-10-01 (`jit query all --json`,
 | Integration tests with real-world signals | TRACKED | `dfca71b8`. | high |
 | Educational examples with decoding traces | TRACKED | `315f4de5` ready. | high |
 | Research notes documenting experiments | DONE | `dev/research/`, `dev/studies/`. | high |
-| Performance analysis and optimization guides | DONE | `dev/archive/legacy/crates/gf2-coding/docs/SIMD_PERFORMANCE_GUIDE.md`, `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md`; sweep `f357b3dc` backlog. | high |
+| Performance analysis and optimization guides | DONE | `dev/archive/legacy/crates/gf2-coding/docs/SIMD_PERFORMANCE_GUIDE.md`, `dev/archive/legacy/crates/gf2-core/docs/KERNEL_OPTIMIZATION.md`; sweep `f357b3dc` backlog. | high |
 
 ## 2. crates/gf2-core/ROADMAP.md
 
@@ -125,7 +125,7 @@ Evidence shorthand: jit states as of 2026-10-01 (`jit query all --json`,
 
 | Item | Class | Evidence | Conf |
 |---|---|---|---|
-| Benchmark poly utilities vs SageMath/NTL (optional) | DONE | `73ab8eef` (NTL/FLINT), `53c5a8c0`; `crates/gf2-core/docs/POLY_UTILITIES_PERFORMANCE.md`. | low |
+| Benchmark poly utilities vs SageMath/NTL (optional) | DONE | `73ab8eef` (NTL/FLINT), `53c5a8c0`; `dev/archive/legacy/crates/gf2-core/docs/POLY_UTILITIES_PERFORMANCE.md`. | low |
 | Migrate `poly_from_exponents` into gf2-coding BCH | DONE | gf2-coding roadmap Technical Debt row marks it complete; `bch/spec.rs` uses core polynomials. | high |
 
 ### 2.2 Phase 2 wide buffer optimization
