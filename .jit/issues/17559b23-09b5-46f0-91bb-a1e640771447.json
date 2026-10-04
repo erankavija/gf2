@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T07:34:18.299179077Z",
+  "dependencies": [],
+  "description": "Two behaviors reported by the comment-sweep rework in `crates/gf2-core/src/` contradict the error contract of the surrounding API.\n\n## Background\n\nReported locations: `io/sparse.rs:198` (the binary sparse reader passes unvalidated `(row, col)` pairs to `from_coo_deduplicated`, which asserts, while the text reader returns `Err` for the same data; `:443` `from_csr_csc` is also unvalidated); `field/matrix.rs:227` (`FieldMatrix::zeros` multiplies `rows * cols` unchecked, and the `bench_seed` fills inherit it).\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces each reported behavior at the cited location, or a record shows the report does not hold and that item is dropped with the evidence.\n- [hard] REQ-02: The binary sparse reader returns an error for out-of-range coordinates and for inconsistent CSR or CSC arrays, covered by tests.\n- [hard] REQ-03: `FieldMatrix::zeros` panics with a stated message on `rows * cols` overflow, and its Rustdoc states the panic.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T07:34:18.299179077Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "17559b23-09b5-46f0-91bb-a1e640771447",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Binary sparse reader panics on malformed input; FieldMatrix::zeros multiplies unchecked",
+  "updated_at": "2026-10-04T07:34:18.299179077Z"
+}

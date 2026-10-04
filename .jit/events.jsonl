@@ -17698,3 +17698,5 @@
 {"gate_key":"doc-review","id":"54d96460-e3d5-4c70-8824-f672b0f8c9c7","issue_id":"8f451167-c774-42d0-b8e6-346a6df8ee7a","timestamp":"2026-10-04T07:13:45.982050256Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"e3cf56b0-0c9d-426f-ac34-93169fc72f5f","issue_id":"f2064e90-ad75-4253-8402-41d63d38af41","timestamp":"2026-10-04T07:14:10.888180719Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"221c258b-8e4b-443e-be64-6283ea56c5f1","issue_id":"aa0558c1-8143-44b9-a2ca-27282d1cf015","timestamp":"2026-10-04T07:14:13.425734046Z","type":"gate_failed","updated_by":"auto:executor"}
+{"id":"e0bd49c3-0779-43fd-92cf-c22f0f2e85e3","issue_id":"17559b23-09b5-46f0-91bb-a1e640771447","priority":"normal","timestamp":"2026-10-04T07:34:18.299179077Z","title":"Binary sparse reader panics on malformed input; FieldMatrix::zeros multiplies unchecked","type":"issue_created"}
+{"fields":["dependencies"],"id":"8d1f4b55-c01c-4149-89ab-b93105de2fe0","issue_id":"b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e","timestamp":"2026-10-04T07:34:32.989680433Z","type":"issue_updated","updated_by":"dependency-add"}
