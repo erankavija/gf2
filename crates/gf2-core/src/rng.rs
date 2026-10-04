@@ -42,13 +42,13 @@ impl Lcg {
         (self.next_u32() as f64 / u32::MAX as f64) * 2.0 - 1.0
     }
 
-    /// Returns a pseudo-uniform `f32` in the closed interval `[lo, hi]`.
+    /// Returns `lo + t · (hi - lo)` for a pseudo-uniform `f32` `t` in `[0, 1]`.
     #[inline]
     pub fn next_positive_f32(&mut self, lo: f32, hi: f32) -> f32 {
         lo + (self.next_u32() as f32 / u32::MAX as f32) * (hi - lo)
     }
 
-    /// Returns a pseudo-uniform `f64` in the closed interval `[lo, hi]`.
+    /// Returns `lo + t · (hi - lo)` for a pseudo-uniform `f64` `t` in `[0, 1]`.
     #[inline]
     pub fn next_positive_f64(&mut self, lo: f64, hi: f64) -> f64 {
         lo + (self.next_u32() as f64 / u32::MAX as f64) * (hi - lo)

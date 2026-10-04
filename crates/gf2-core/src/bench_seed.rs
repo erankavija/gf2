@@ -51,7 +51,8 @@ pub fn derive_seed(master: u64, tag: &str, op_idx: u64, size_idx: u64, regime_id
 }
 
 /// `rows × cols` matrix whose `(i, j)` element is the `(i*cols + j + 1)`-th
-/// SplitMix64 output of `seed` reduced modulo `P`.
+/// SplitMix64 output of `seed` reduced modulo `P`. Compiles only for
+/// `2 <= P <= 2^63` (const assertion of [`Fp`]).
 pub fn fp_matrix_from_seed<const P: u64>(
     rows: usize,
     cols: usize,
@@ -69,7 +70,8 @@ pub fn fp_matrix_from_seed<const P: u64>(
 }
 
 /// Length-`n` vector of successive SplitMix64 outputs of `seed` reduced
-/// modulo `P`.
+/// modulo `P`. Compiles only for `2 <= P <= 2^63` (const assertion of
+/// [`Fp`]).
 pub fn fp_vec_from_seed<const P: u64>(n: usize, seed: u64) -> FieldVec<Fp<P>> {
     let mut st = seed;
     (0..n)
@@ -120,8 +122,9 @@ pub fn gf2m_wide_1_vec_from_seed<C: Gf2mWideConfig<1>>(
 const RANK_DEF_L_SALT: u64 = 0xA5A5_A5A5_A5A5_A5A5;
 const RANK_DEF_R_SALT: u64 = 0x5A5A_5A5A_5A5A_5A5A;
 
-/// `m × n` matrix of rank at most `r`: the product `L · R` of a uniform
-/// `m × r` and a uniform `r × n` matrix.
+/// `m × n` matrix of rank at most `r`: the product `L · R` of the `m × r` and
+/// `r × n` fills of [`fp_matrix_from_seed`] under two salts of `seed`.
+/// Compiles only for `2 <= P <= 2^63` (const assertion of [`Fp`]).
 pub fn fp_rank_deficient_from_seed<const P: u64>(
     m: usize,
     n: usize,
@@ -165,7 +168,9 @@ pub fn bitmatrix_rank_deficient_from_seed(m: usize, n: usize, r: usize, seed: u6
 }
 
 /// `m × n` sparse matrix over GF(2): one SplitMix64 draw of `seed` per cell
-/// in row-major order, the cell set when the draw is below `density · 2^64`.
+/// in row-major order, the cell set when the draw is below
+/// `(density · 2^64) as u64`. The cast saturates: `density <= 0` or NaN sets
+/// no cell, and `density >= 1` sets every cell whose draw is not `u64::MAX`.
 pub fn bitmatrix_sparse_from_seed(m: usize, n: usize, density: f64, seed: u64) -> SpBitMatrix {
     let mut st = seed;
     let mut dense = BitMatrix::zeros(m, n);
@@ -203,9 +208,10 @@ pub struct CsvRow<'a> {
     pub throughput_ops: f64,
 }
 
-/// `rows × cols` sparse matrix whose cells are included independently with
-/// probability `density`, each holding a non-zero value; inclusion and value
-/// come from the SplitMix64 stream of `seed_val`.
+/// `rows × cols` sparse matrix: one SplitMix64 draw of `seed_val` per cell in
+/// row-major order under the threshold of [`bitmatrix_sparse_from_seed`]; a
+/// cell below it takes the next draw reduced into `1..P`. Compiles only for
+/// `2 <= P <= 2^63` (const assertion of [`Fp`]).
 pub fn fp_sparse_from_seed<const P: u64>(
     rows: usize,
     cols: usize,
@@ -229,7 +235,8 @@ pub fn fp_sparse_from_seed<const P: u64>(
     SparseFieldMatrix::from_dense(&m)
 }
 
-/// [`fp_sparse_from_seed`] over `Gf2mWide<1, C>`.
+/// [`fp_sparse_from_seed`] over `Gf2mWide<1, C>`: a cell below the threshold
+/// takes the next draw masked to its `C::M` low bits, with 0 replaced by 1.
 pub fn gf2m_wide_1_sparse_from_seed<C: Gf2mWideConfig<1>>(
     rows: usize,
     cols: usize,

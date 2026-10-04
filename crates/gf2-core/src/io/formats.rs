@@ -15,11 +15,13 @@ pub enum SerializationFormat {
 }
 
 impl SerializationFormat {
-    /// Guesses the format of `bytes`: binary by its magic; text for an input
-    /// under 8 bytes of digits and blanks; hex when the second line has a hex
-    /// letter or is a multiple of 16 hex digits that are not all `0`/`1`;
-    /// text when the leading bytes are mostly `0`/`1` or the first line is a
-    /// dimension header. `None` when no rule matches.
+    /// Guesses the format of `bytes` by the first rule that applies: binary
+    /// by its magic; under 8 bytes, text for a non-empty run of digits and
+    /// blanks and `None` otherwise; hex when the second line has a hex letter
+    /// or is a positive multiple of 16 hex digits that are not all `0`/`1`;
+    /// text when the first 100 bytes are digits and blanks with at least 70%
+    /// `0`/`1`, or the first line starts with a digit and holds only digits,
+    /// spaces and tabs. `None` otherwise.
     pub fn detect(bytes: &[u8]) -> Option<Self> {
         if bytes.is_empty() {
             return None;
