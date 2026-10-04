@@ -134,6 +134,20 @@
       "format": "markdown",
       "label": "Sweep worker brief template",
       "path": "dev/active/fa787f85-documentation-overhaul/ffc35b8c-sweep-brief-template.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Session 5 handoff",
+      "path": "dev/active/fa787f85-documentation-overhaul/handoff-4.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Session 6 handoff",
+      "path": "dev/active/fa787f85-documentation-overhaul/handoff-5.md"
     }
   ],
   "first_ready_at": "2026-07-14T20:40:18.243561271Z",
@@ -161,5 +175,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-03T21:45:16.037729230Z"
+  "updated_at": "2026-10-04T09:10:10.066715005Z"
 }
