@@ -8,17 +8,18 @@ it. The standard output line carries the same two values for the freeze script.
 
 import hashlib
 import json
-import pathlib
 import re
 import sys
 
-from resolution_rule import ROOT, accepted_pilot, ceiling as family_ceiling, half_widths, rounded
+from repo_artifacts import ROOT, addendum as campaign_addendum, receipt, tracked
+from resolution_rule import accepted_pilot, ceiling as family_ceiling, half_widths, rounded
 
-STORY = pathlib.Path("dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations")
-PILOT = pathlib.Path("dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot")
-ADDENDUM = STORY / "campaigns/dense-matvec-vs-m4ri.json"
-RULES = STORY / "dense-parity-addendum.md"
-SUPPORT = pathlib.Path("dev/tools/tuning-campaign-support/src")
+CAMPAIGN = "v4-r1-2037941f-dense-matvec-vs-m4ri"
+PILOT = receipt(CAMPAIGN)
+ADDENDUM = campaign_addendum(CAMPAIGN)
+RULES = tracked("dense-parity-addendum.md")
+EVALUATOR = tracked("receipt.rs")
+LEDGER_RULES = tracked("trial_ledger.rs")
 # The evaluator's P-20 tail-support test and the ledger's sequential attempt
 # budget, as the sources state them; the arithmetic below follows both.
 TAIL_SUPPORT = re.compile(r"bootstrap_resamples\) \* corrected_alpha / 2\.0 < (\d+)\.0")
@@ -37,8 +38,8 @@ def main() -> None:
     if not ids or any(cell_id not in measured for cell_id in ids):
         raise ValueError("the pilot lacks a confirmatory cell of the frozen addendum")
 
-    tail = TAIL_SUPPORT.search((ROOT / SUPPORT / "receipt.rs").read_text())
-    if not tail or ATTEMPT_ALPHA not in (ROOT / SUPPORT / "trial_ledger.rs").read_text():
+    tail = TAIL_SUPPORT.search((ROOT / EVALUATOR).read_text())
+    if not tail or ATTEMPT_ALPHA not in (ROOT / LEDGER_RULES).read_text():
         raise ValueError("the P-20 tail-support test or the attempt budget has changed")
     minimum_draws = int(tail.group(1))
     ledger = ROOT / addendum["family_wise"]["ledger_path"]
@@ -83,8 +84,8 @@ def main() -> None:
         f"Ledger `{addendum['family_wise']['ledger_path']}` through the pilot: "
         f"{len(entries)} reservation(s), "
         f"{reserved} reserved comparison(s), so the confirmation is attempt $t={attempt}$ with "
-        f"$\\alpha_t={attempt_alpha:g}$ (`{SUPPORT / 'trial_ledger.rs'}`). P-20 requires "
-        f"{minimum_draws} expected bootstrap draws per tail (`{SUPPORT / 'receipt.rs'}`), which "
+        f"$\\alpha_t={attempt_alpha:g}$ (`{LEDGER_RULES}`). P-20 requires "
+        f"{minimum_draws} expected bootstrap draws per tail (`{EVALUATOR}`), which "
         f"admits {capacity} further comparison(s) at {resamples} resamples. The family's "
         f"$m={len(ids)}$ confirmatory cells give $\\alpha_c={alpha:g}$ and "
         f"{resamples * alpha / 2:g} expected draws per tail.\n\n"

@@ -193,6 +193,7 @@
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_arm.c",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_probe.c",
+    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/repo_artifacts.py",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh",
     "dev/scripts/ccx1-bench-flock.sh",
@@ -220,6 +221,7 @@
     "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
   ],
   "lifecycle_sources": [
+    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/repo_artifacts.py",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh",
     "dev/scripts/ccx1-bench-flock.sh",
     "dev/tools/tuning-campaign-support/src/abtest.rs",
@@ -450,6 +452,7 @@
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_arm.c",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_probe.c",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-producing-inputs.py",
+    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/repo_artifacts.py",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh",
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh",
     "dev/active/f547c394/addendum.schema.json",
