@@ -1,25 +1,20 @@
-//! Canonical, identity-carrying serialization for [`FieldMatrix`].
-//!
-//! The format is deliberately independent of the [`BitMatrix`](crate::BitMatrix) `.gf2`
-//! format. It stores algebraic field identity and element representation, so
-//! a byte stream is meaningful only when the caller supplies an equivalent
-//! field witness while loading.
+//! Serialization of [`FieldMatrix`] that stores the field identity and element
+//! representation; a loader checks them against a field witness supplied by
+//! the caller.
 //!
 //! # Format specification
 //!
 //! A file consists of a fixed header, an encoded [`FieldId`], a row-major
-//! element payload, and a 32-byte BLAKE3 digest. All integers are unsigned
-//! little-endian values. The digest is computed over every preceding byte in
-//! the file: the fixed header, the field identity, and the payload. Thus a
-//! change to either metadata or element bytes is detected before elements are
-//! reconstructed.
+//! element payload, and a 32-byte BLAKE3 digest of every preceding byte,
+//! which a loader verifies before it reconstructs elements. All integers are
+//! unsigned little-endian values.
 //!
 //! The fixed header is 44 bytes:
 //!
 //! | Offset | Size | Field |
 //! | ---: | ---: | --- |
 //! | 0 | 8 | Magic `GF2FMAT\0` |
-//! | 8 | 2 | Container format version, currently [`FIELD_MATRIX_FORMAT_VERSION`] |
+//! | 8 | 2 | Container format version, [`FIELD_MATRIX_FORMAT_VERSION`] |
 //! | 10 | 1 | [`FIELD_ID_ENCODING_VERSION`] used by the identity section |
 //! | 11 | 1 | [`ELEMENT_REPR_VERSION`] used by the representation fields |
 //! | 12 | 1 | Element representation tag, `1` for `PrimeCoordsLe` |
@@ -39,10 +34,8 @@
 //! [`FieldId::coordinate_width`]. The checksum follows the payload and is not
 //! included in the payload length.
 //!
-//! Container, field-identity, and element-representation versions are
-//! independent compatibility boundaries. A loader rejects an unknown version;
-//! it never guesses how to reinterpret an older or newer stream. The legacy
-//! `BitMatrix` format remains a separate format and is not accepted here.
+//! The container, field-identity and element-representation versions are
+//! independent; a loader rejects an unknown value of any of them.
 //!
 //! # Examples
 //!
@@ -84,11 +77,8 @@ pub const FIELD_MATRIX_HEADER_SIZE: usize = 44;
 const CHECKSUM_SIZE: usize = 32;
 const ELEMENT_REPR_TAG_PRIME_COORDS_LE: u8 = 1;
 
-/// Writes a `FieldMatrix` in the canonical binary format to `writer`.
-///
-/// This low-level function does not provide atomicity. Use
-/// [`FieldMatrix::save_to_file`] for a destination path that must be replaced
-/// atomically.
+/// Writes `matrix` to `writer`, without the atomic replacement of
+/// [`FieldMatrix::save_to_file`].
 ///
 /// # Errors
 ///
@@ -101,8 +91,9 @@ pub fn write_to<F: FieldIdentity, W: Write>(matrix: &FieldMatrix<F>, writer: &mu
     Ok(())
 }
 
-/// Reads a canonical `FieldMatrix` from `reader` using `expected_field` as the
-/// reconstruction witness and identity contract.
+/// Reads a matrix from `reader`; `expected_field` supplies the identity the
+/// file must name and the witness that reconstructs each element, so a
+/// runtime-configured field passes an element of the intended field.
 ///
 /// # Errors
 ///
@@ -119,70 +110,47 @@ pub fn read_from<F: FieldIdentity, R: Read>(
 }
 
 impl<F: FieldIdentity> FieldMatrix<F> {
-    /// Atomically replaces `path` with this matrix's canonical serialization.
+    /// Atomically replaces `path` with this matrix's serialization.
     ///
-    /// The complete byte stream is written to a PID-tagged sibling temporary
-    /// file, synced, renamed into place, and followed by a directory sync. A
-    /// failure before rename removes the temporary file and leaves the
-    /// destination at its prior state. A directory-sync failure is reported
-    /// after the complete replacement has already been renamed into place.
+    /// A failure before the rename removes the temporary file and leaves the
+    /// destination unchanged; a directory-sync failure is reported after the
+    /// replacement is already in place.
     ///
     /// # Errors
     ///
     /// Returns [`IoError::FieldIdentityMismatch`] for inconsistent element
     /// identities, [`IoError::Field`] for an invalid element coordinate, or
     /// [`IoError::Io`] for serialization and filesystem failures.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use gf2_core::field::matrix::FieldMatrix;
-    /// # use gf2_core::gfp::Fp;
-    /// # let matrix = FieldMatrix::<Fp<7>>::identity(2);
-    /// let path = std::env::temp_dir().join("gf2-field-matrix-example.bin");
-    /// matrix.save_to_file(&path)?;
-    /// let restored = FieldMatrix::<Fp<7>>::load_from_file(&path, &Fp::<7>::new(0))?;
-    /// assert_eq!(restored, matrix);
-    /// let _ = std::fs::remove_file(path);
-    /// # Ok::<(), gf2_core::io::IoError>(())
-    /// ```
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let bytes = encode(self)?;
         atomic_write(path.as_ref(), &bytes)
     }
 
-    /// Loads a matrix from `path` and validates it against `expected_field`.
-    ///
-    /// The expected field supplies both the algebraic identity check and the
-    /// witness used to reconstruct each element. Runtime-configured fields
-    /// must therefore pass an element from the desired runtime field.
+    /// Loads a matrix from `path` as [`read_from`] does.
     ///
     /// # Errors
     ///
-    /// Returns a typed [`IoError`] for every rejected version, malformed or
-    /// truncated stream, identity or representation mismatch, inconsistent
-    /// dimensions, checksum failure, I/O failure, or invalid coordinate.
+    /// Returns the errors of [`read_from`], or [`IoError::Io`] if `path`
+    /// cannot be opened.
     pub fn load_from_file<P: AsRef<Path>>(path: P, expected_field: &F) -> Result<Self> {
         let mut file = File::open(path)?;
         read_from(&mut file, expected_field)
     }
 
-    /// Writes this matrix to an arbitrary writer in the canonical format.
+    /// Method form of the free [`write_to`].
     ///
     /// # Errors
     ///
-    /// Returns the same serialization and writer errors as [`write_to`]. This
-    /// method is not atomic; use [`Self::save_to_file`] for filesystem output.
+    /// Returns the errors of [`write_to`].
     pub fn write_to<W: Write>(&self, writer: &mut W) -> Result<()> {
         write_to(self, writer)
     }
 
-    /// Reads a matrix from an arbitrary reader and validates its field.
+    /// Method form of the free [`read_from`].
     ///
     /// # Errors
     ///
-    /// Returns the same typed validation, corruption, and reader errors as
-    /// [`read_from`].
+    /// Returns the errors of [`read_from`].
     pub fn read_from<R: Read>(reader: R, expected_field: &F) -> Result<Self> {
         read_from(reader, expected_field)
     }

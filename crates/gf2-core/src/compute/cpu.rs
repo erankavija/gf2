@@ -1,51 +1,18 @@
-//! CPU-based compute backend.
-//!
-//! Implements `ComputeBackend` using CPU execution with optional rayon parallelism.
-//! Automatically selects the best kernel backend (Scalar or SIMD) based on CPU
-//! capabilities.
+//! [`ComputeBackend`] on the CPU.
 
 use super::backend::ComputeBackend;
 use crate::{alg::rref::RrefResult, kernels::Backend, BitMatrix, BitVec};
 
-/// CPU compute backend with optional parallel execution.
-///
-/// Uses the best available kernel backend (SIMD if available, otherwise scalar)
-/// and optionally leverages rayon for parallel matrix operations when the
-/// `parallel` feature is enabled.
-///
-/// Uses rayon's global thread pool, which can be controlled via the
-/// `RAYON_NUM_THREADS` environment variable.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::{BitMatrix, compute::{ComputeBackend, CpuBackend}};
-///
-/// let backend = CpuBackend::new();
-/// let a = BitMatrix::identity(10);
-/// let b = BitMatrix::ones(10, 5);
-/// let c = backend.matmul(&a, &b);
-/// assert_eq!(c, b);
-/// ```
+/// [`ComputeBackend`] over a kernel backend chosen at construction; the batch
+/// operations use rayon's global pool under the `parallel` feature.
 pub struct CpuBackend {
     kernel: Box<dyn Backend>,
 }
 
 impl CpuBackend {
-    /// Creates a new CPU backend with optimal configuration.
-    ///
-    /// Automatically selects:
-    /// - Best kernel backend (SIMD if available, otherwise scalar)
-    /// - Uses rayon's global thread pool (respects RAYON_NUM_THREADS env var)
-    ///
-    /// # Thread Control
-    ///
-    /// Set `RAYON_NUM_THREADS` environment variable to control parallelism:
-    /// ```bash
-    /// RAYON_NUM_THREADS=8 cargo bench
-    /// ```
+    /// Selects the SIMD kernel backend when the `simd` feature is enabled and
+    /// the CPU supports it, otherwise the scalar one.
     pub fn new() -> Self {
-        // Auto-select best kernel backend
         #[cfg(feature = "simd")]
         let kernel: Box<dyn Backend> = {
             if let Some(simd) = crate::kernels::simd::maybe_simd() {
@@ -88,12 +55,11 @@ impl ComputeBackend for CpuBackend {
     }
 
     fn matmul(&self, a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
-        // Serial in every configuration; a rayon path is tracked in `@/issue/c11640f2`.
+        // Serial in every configuration.
         a * b
     }
 
     fn rref(&self, matrix: &BitMatrix, pivot_from_right: bool) -> RrefResult {
-        // Use existing RREF implementation
         crate::alg::rref::rref(matrix, pivot_from_right)
     }
 
@@ -120,7 +86,6 @@ impl ComputeBackend for CpuBackend {
     }
 
     fn batch_matvec(&self, matrix: &BitMatrix, vectors: &[BitVec]) -> Vec<BitVec> {
-        // Validate all vectors have correct dimension
         for (i, vec) in vectors.iter().enumerate() {
             assert_eq!(
                 vec.len(),
@@ -136,7 +101,6 @@ impl ComputeBackend for CpuBackend {
         {
             use rayon::prelude::*;
             use std::sync::Arc;
-            // Share matrix across threads (now that BitMatrix is Sync)
             let matrix = Arc::new(matrix);
             (0..vectors.len())
                 .into_par_iter()
@@ -151,7 +115,6 @@ impl ComputeBackend for CpuBackend {
     }
 
     fn batch_matvec_transpose(&self, matrix: &BitMatrix, vectors: &[BitVec]) -> Vec<BitVec> {
-        // Validate all vectors have correct dimension
         for (i, vec) in vectors.iter().enumerate() {
             assert_eq!(
                 vec.len(),
@@ -167,7 +130,6 @@ impl ComputeBackend for CpuBackend {
         {
             use rayon::prelude::*;
             use std::sync::Arc;
-            // Share matrix across threads (now that BitMatrix is Sync)
             let matrix = Arc::new(matrix);
             (0..vectors.len())
                 .into_par_iter()
@@ -206,8 +168,6 @@ mod tests {
     fn test_kernel_backend_works() {
         let backend = CpuBackend::new();
         let kernel = backend.kernel_backend();
-
-        // Test that kernel backend can perform XOR
         let mut dst = vec![0xFF, 0x00];
         let src = vec![0x0F, 0xF0];
         kernel.xor(&mut dst, &src);
@@ -217,8 +177,6 @@ mod tests {
     #[test]
     fn test_matmul_correctness() {
         let backend = CpuBackend::new();
-
-        // Test with known result: Identity × Matrix = Matrix
         let identity = BitMatrix::identity(2);
 
         let mut b = BitMatrix::zeros(2, 2);
@@ -242,8 +200,6 @@ mod tests {
         let a = BitMatrix::random(3, 4, &mut rng);
         let b = BitMatrix::random(4, 5, &mut rng);
         let c = BitMatrix::random(5, 6, &mut rng);
-
-        // (A × B) × C = A × (B × C)
         let left = backend.matmul(&backend.matmul(&a, &b), &c);
         let right = backend.matmul(&a, &backend.matmul(&b, &c));
 
@@ -253,11 +209,6 @@ mod tests {
     #[test]
     fn test_rref_simple_matrix() {
         let backend = CpuBackend::new();
-
-        // [1 0 1]
-        // [0 1 1]
-        // [1 1 0]
-        // Note: row 2 = row 0 XOR row 1, so rank is 2, not 3
         let mut m = BitMatrix::zeros(3, 3);
         m.set(0, 0, true);
         m.set(0, 2, true);
@@ -267,8 +218,6 @@ mod tests {
         m.set(2, 1, true);
 
         let result = backend.rref(&m, false);
-
-        // Matrix is rank deficient
         assert_eq!(
             result.rank, 2,
             "Matrix has rank 2 (row 2 = row 0 XOR row 1)"
@@ -278,10 +227,7 @@ mod tests {
     #[test]
     fn test_rref_rank_deficient() {
         let backend = CpuBackend::new();
-
-        // [1 0 1]
-        // [0 1 0]  <- Linearly dependent (row 0 + row 1 = row 2)
-        // [1 1 1]
+        // Row 2 is row 0 + row 1.
         let mut m = BitMatrix::zeros(3, 3);
         m.set(0, 0, true);
         m.set(0, 2, true);
@@ -306,11 +252,7 @@ mod tests {
 
         let left_pivot = backend.rref(&m, false);
         let right_pivot = backend.rref(&m, true);
-
-        // Same rank regardless of pivot direction
         assert_eq!(left_pivot.rank, right_pivot.rank);
-
-        // Both results should be in RREF form
         assert!(left_pivot.reduced.rows() == m.rows());
         assert!(right_pivot.reduced.rows() == m.rows());
     }

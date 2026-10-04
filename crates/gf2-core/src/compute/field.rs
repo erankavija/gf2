@@ -1,15 +1,6 @@
-//! Rayon-backed compute helpers for batched extension-field arithmetic.
-//!
-//! The public field API stays on [`crate::gfpn::BatchExtField`]. This module
-//! only owns the V10 execution policy: split large Structure-of-Arrays batches
-//! into cache-local chunks and let each rayon worker run the same SIMD-batched
-//! Karatsuba kernels used by the single-thread path.
-//!
-//! # Thread control
-//!
-//! When the `parallel` feature is enabled, rayon's global pool controls the
-//! number of workers. Set `RAYON_NUM_THREADS=1`, `2`, `4`, … before the process
-//! starts to reproduce strong-scaling measurements.
+//! Rayon execution of [`crate::gfpn::BatchExtField`] products: a
+//! Structure-of-Arrays batch is split into chunks and each rayon task runs
+//! the kernels of the single-thread path on one chunk.
 
 use crate::field::ConstField;
 use crate::gfpn::{BatchExtField, ExtConfig, SimdKaratsubaHook};
@@ -17,29 +8,16 @@ use crate::tuning;
 
 pub use super::{SOA_PARALLEL_CHUNK_LEN, SOA_PARALLEL_MIN_LEN};
 
-/// Records the `parallel_chunk_len` value most recently consumed by the
-/// parallel arm of a soa_batch entry point (`batch_mul_quadratic_parallel`,
-/// `batch_square_quadratic_parallel`, `batch_mul_cubic_parallel`, or
-/// `batch_square_cubic_parallel`). Zero means "not recorded since the last
-/// [`reset_last_effective_soa_chunk`] call";
-/// [`crate::tuning::SoaBatchSelectors::parallel_chunk_len`] floors at 1, so
-/// zero is never a live value. Read through [`last_effective_soa_chunk`].
+/// Chunk length last used by a parallel batch product; zero when none ran
+/// since [`reset_last_effective_soa_chunk`].
+/// [`crate::tuning::SoaBatchSelectors::parallel_chunk_len`] is at least 1, so
+/// zero is never a recorded value.
 #[cfg(any(test, feature = "test-support"))]
 static LAST_EFFECTIVE_SOA_CHUNK: std::sync::atomic::AtomicUsize =
     std::sync::atomic::AtomicUsize::new(0);
 
-/// Route-observation hook: returns the `parallel_chunk_len` value most
-/// recently consumed by the parallel arm of a soa_batch entry point, or
-/// `None` if no parallel arm has run since the last
-/// [`reset_last_effective_soa_chunk`] call.
-///
-/// Exists only under `cfg(test)` or the `test-support` feature. The parallel
-/// and scalar arms are bit-exact for every valid chunk length, so comparing
-/// a parallel entry point's output against direct scalar arithmetic is not
-/// evidence that the resolved `parallel_chunk_len` actually reached the
-/// parallel arm — every valid chunk length produces the same output. This
-/// hook lets a route-observation test read the value production code
-/// received, directly, instead of inferring it from output equality.
+/// Returns the chunk length the most recent parallel batch product received,
+/// or `None` if none ran since [`reset_last_effective_soa_chunk`].
 #[cfg(any(test, feature = "test-support"))]
 #[must_use]
 pub fn last_effective_soa_chunk() -> Option<usize> {
@@ -49,22 +27,12 @@ pub fn last_effective_soa_chunk() -> Option<usize> {
     }
 }
 
-/// Runs `f` inside a dedicated rayon pool with the given thread count, so
-/// a route-observation test can GUARANTEE the parallel arm's thread gate
-/// holds instead of tolerating whatever pool the process happens to have —
-/// a witness that merely tolerates a single-threaded pool can pass without
-/// ever exercising the installed chunk length. `rayon::current_num_threads`
-/// inside `f` reports this pool's size, so
-/// [`should_parallelize_soa_batch_resolved`]'s gate observes it.
-///
-/// Exists only under `cfg(test)` or the `test-support` feature, with the
-/// `parallel` feature.
+/// Runs `f` inside a dedicated rayon pool of `threads` workers, so that
+/// `rayon::current_num_threads` inside `f` reports `threads`.
 ///
 /// # Panics
 ///
-/// Panics if the dedicated rayon pool cannot be built — e.g. `threads`
-/// is zero on a platform where rayon rejects it, or thread spawning
-/// fails. Test-only code: a panic is the correct failure mode.
+/// Panics if the pool cannot be built.
 #[cfg(all(feature = "parallel", any(test, feature = "test-support")))]
 pub fn run_in_dedicated_parallel_pool<R: Send>(threads: usize, f: impl FnOnce() -> R + Send) -> R {
     rayon::ThreadPoolBuilder::new()
@@ -74,17 +42,13 @@ pub fn run_in_dedicated_parallel_pool<R: Send>(threads: usize, f: impl FnOnce() 
         .install(f)
 }
 
-/// Clears the value [`last_effective_soa_chunk`] reports, so a subsequent
-/// call can be observed in isolation — including observing that a scalar-arm
-/// call (below `soa_batch.parallel_min_len()`) records nothing.
-///
-/// Exists only under `cfg(test)` or the `test-support` feature.
+/// Clears the value [`last_effective_soa_chunk`] reports.
 #[cfg(any(test, feature = "test-support"))]
 pub fn reset_last_effective_soa_chunk() {
     LAST_EFFECTIVE_SOA_CHUNK.store(0, std::sync::atomic::Ordering::SeqCst);
 }
 
-/// The selected arm of the `should_parallelize_soa_batch_resolved` length dispatch.
+/// Arm that [`soa_parallel_route`] selects for a batch length.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SoaParallelRoute {
     /// Run the batch on the calling thread.
@@ -93,19 +57,14 @@ pub enum SoaParallelRoute {
     Parallel,
 }
 
-/// Reports the length-based arm of `should_parallelize_soa_batch_resolved` for a
-/// SoA batch of `len` elements.
-///
-/// The comparison uses the active `soa_batch.parallel_min_len()` profile
-/// value. It does not account for rayon thread availability;
-/// `should_parallelize_soa_batch_resolved` applies that separately.
+/// Compares `len` with the active `soa_batch.parallel_min_len()` profile
+/// value. A [`SoaParallelRoute::Parallel`] batch still runs on the calling
+/// thread when the rayon pool has one worker.
 #[must_use]
 pub fn soa_parallel_route(len: usize) -> SoaParallelRoute {
     soa_parallel_route_resolved(tuning::active().soa_batch().parallel_min_len(), len)
 }
 
-/// Reports the [`soa_parallel_route`] arm against an already-resolved
-/// `parallel_min_len`.
 fn soa_parallel_route_resolved(parallel_min_len: usize, len: usize) -> SoaParallelRoute {
     if len >= parallel_min_len {
         SoaParallelRoute::Parallel
@@ -114,13 +73,8 @@ fn soa_parallel_route_resolved(parallel_min_len: usize, len: usize) -> SoaParall
     }
 }
 
-/// Returns whether a SoA batch of `len` elements should use rayon, against
-/// an already-resolved `parallel_min_len`.
-///
-/// The public batch entry points resolve `tuning::active().soa_batch()`
-/// exactly once and pass `parallel_min_len` here and `parallel_chunk_len`
-/// to the parallel arm, per the design's single-read obligation
-/// (`dev/active/7d824b2f/design.md` §2.3).
+/// Returns whether a SoA batch of `len` elements fans out: `len` reaches
+/// `parallel_min_len` and the rayon pool has more than one worker.
 #[cfg(feature = "parallel")]
 #[inline]
 pub(crate) fn should_parallelize_soa_batch_resolved(parallel_min_len: usize, len: usize) -> bool {
@@ -128,12 +82,8 @@ pub(crate) fn should_parallelize_soa_batch_resolved(parallel_min_len: usize, len
         && rayon::current_num_threads() > 1
 }
 
-/// Parallel Karatsuba multiplication for quadratic SoA batches.
-///
-/// This is bit-exact with [`BatchExtField::batch_mul_quadratic`]; it only
-/// changes the schedule by assigning contiguous coefficient-lane chunks to
-/// rayon workers. The chunk length is the `soa_batch.parallel_chunk_len()` profile value,
-/// resolved once by the caller at the public entry and passed in. Complexity is `O(len)`.
+/// [`BatchExtField::batch_mul_quadratic`] with `chunk_len` elements per rayon
+/// task.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_mul_quadratic_parallel<F, C>(
     lhs: &BatchExtField<F, 2>,
@@ -178,10 +128,7 @@ where
     BatchExtField::new([c0, c1])
 }
 
-/// Parallel Karatsuba squaring for quadratic SoA batches.
-///
-/// The chunk length is the active `soa_batch.parallel_chunk_len()` profile
-/// value, resolved once for this call.
+/// Quadratic batch squaring with `chunk_len` elements per rayon task.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_square_quadratic_parallel<F, C>(
     xs: &BatchExtField<F, 2>,
@@ -242,13 +189,7 @@ where
     }
 }
 
-/// Parallel Karatsuba-3 multiplication for cubic SoA batches.
-///
-/// Each rayon task receives contiguous SoA slices and then dispatches through
-/// the same fused SIMD hook (or scalar straight-line fallback) as the
-/// single-thread implementation. The chunk length is the active
-/// `soa_batch.parallel_chunk_len()` profile value, resolved once for this
-/// call. Complexity is `O(len)`.
+/// Cubic batch multiplication with `chunk_len` elements per rayon task.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_mul_cubic_parallel<F, C>(
     lhs: &BatchExtField<F, 3>,
@@ -298,10 +239,7 @@ where
     BatchExtField::new([c0, c1, c2])
 }
 
-/// Parallel Karatsuba-3 squaring for cubic SoA batches.
-///
-/// The chunk length is the active `soa_batch.parallel_chunk_len()` profile
-/// value, resolved once for this call.
+/// Cubic batch squaring with `chunk_len` elements per rayon task.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_square_cubic_parallel<F, C>(
     xs: &BatchExtField<F, 3>,
