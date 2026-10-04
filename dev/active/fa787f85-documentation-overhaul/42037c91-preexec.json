@@ -1,0 +1,396 @@
+{
+ "6efb756b": {
+  "action_counts": {
+   "already_archived": 17,
+   "block": 0,
+   "copy": 0,
+   "move": 17,
+   "pending_deletions": 1,
+   "retain": 0
+  },
+  "artifacts": [
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/45649554-run-phase-2-awgn-simulations-figs-4-6-additional/45649554-paper-alignment-resolution.md",
+    "sha256": "d58086564d983775d2bb57f3182bf872cc490f64f39312d56d9d0a9d6c36e3b5",
+    "source": "dev/active/45649554-run-phase-2-awgn-simulations-figs-4-6-additional/45649554-paper-alignment-resolution.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/45649554-run-phase-2-awgn-simulations-figs-4-6-additional/phase2_fig4_alignment_investigation.md",
+    "sha256": "4fad7a2fa46b226db85539b696ddbc451f2368089dcb4c10c19cf59696777bc0",
+    "source": "dev/active/45649554-run-phase-2-awgn-simulations-figs-4-6-additional/phase2_fig4_alignment_investigation.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/6efb756b-completion-report.md",
+    "sha256": "ef75e970bc69a7c3d75dee757056edaf82e7a6bb6084eea41dccfa510d558223",
+    "source": "dev/active/6efb756b-completion-report.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/6efb756b-progress.json",
+    "sha256": "decad9e3a9a3cbb971ce4cd2d45ec7b9d24c572f779f180443efcfe81a44e624",
+    "source": "dev/active/6efb756b-progress.json"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/6efb756b-session-handoff-2026-04-16.md",
+    "sha256": "4d1a6106ff508841db5fb8e9f61ebb1d8299b5a66c6f13c528d288f2c2ffcaab",
+    "source": "dev/active/6efb756b-session-handoff-2026-04-16.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/6efb756b-session-handover.md",
+    "sha256": "cb0c623925df920bd393442be75dee158a0f1c2149283e108d9a8b00e4514767",
+    "source": "dev/active/6efb756b-session-handover.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/831bfc4a-run-phase-4-fading-channel-simulations-figs-8-10/831bfc4a-completion.md",
+    "sha256": "35a8ef42361fa37cd4853b0536bd93739dd890b090f1797ca55361f15e494914",
+    "source": "dev/active/831bfc4a-run-phase-4-fading-channel-simulations-figs-8-10/831bfc4a-completion.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/8b1609a8/drm-dynamic-frozen-bits.md",
+    "sha256": "85460bfce11ba862d0490711b0da9959d5552d41add46bced5809cabf84b017e",
+    "source": "dev/active/8b1609a8/drm-dynamic-frozen-bits.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/a2026f8c/a2026f8c-incremental-logging-plan.md",
+    "sha256": "20558a2510260558a847b7f454a6b4a1b4503462ce7ad340fa8dedc2ae37e083",
+    "source": "dev/active/a2026f8c/a2026f8c-incremental-logging-plan.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/a4d86b3d-configurable-simulation-campaign-runner/a4d86b3d-campaign-runner-plan.md",
+    "sha256": "7f765ea84003a6644ae16dc011e2eefd7f98dc6d74aed4f2a9b46615bd8ca23f",
+    "source": "dev/active/a4d86b3d-configurable-simulation-campaign-runner/a4d86b3d-campaign-runner-plan.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/bcjr-siso-decoder-plan.md",
+    "sha256": "d677eb6740e3e0749363074be91d2d72f86cbb4eee83b604e5321ce15e902978",
+    "source": "dev/active/bcjr-siso-decoder-plan.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/active/sogrand-n32-analysis.md",
+    "sha256": "d40a59e2bc6be3ab769a9949af84f4c11e4ca0b496fe7b1188a1f236084fa942",
+    "source": "dev/active/sogrand-n32-analysis.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/docs/presentations/6efb756b-grand-sogrand/talk.html",
+    "sha256": "419c5dcce589943321f0e993a74b73f6079d4d8355880db0b9759835ff46f957",
+    "source": "dev/docs/presentations/6efb756b-grand-sogrand/talk.html"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/docs/presentations/6efb756b-grand-sogrand/themes/gruvbox.css",
+    "sha256": "b835feba6c82b645f3a4eb98bfc49622501b1b8f4b1a0d28bf4241bb5b147401",
+    "source": "dev/docs/presentations/6efb756b-grand-sogrand/themes/gruvbox.css"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/docs/presentations/figures/generate_grand_comparison_plots.py",
+    "sha256": "9591264dd19fc3fa155206e03778efce4ab72513e77f774d335c31dbd8381016",
+    "source": "dev/docs/presentations/figures/generate_grand_comparison_plots.py"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/6efb756b-grand/plans/grand_5gnr_ldpc_comparison.md",
+    "sha256": "a8a81d94c1fe97e3f56ed1165ef7f4b0b178cb78d195ad4e0d66411ab9562edd",
+    "source": "dev/plans/grand_5gnr_ldpc_comparison.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [
+     "dev/simulation_results/phase4_comparison_report.md"
+    ],
+    "destination": "dev/archive/6efb756b-grand/simulation_results/phase4_comparison_report.md",
+    "sha256": "bb67307c14b6445f3636ff4986a25b1432e951519487d84af676aaae3204642b",
+    "source": "dev/simulation_results/phase4_comparison_report.md"
+   }
+  ],
+  "blockers": [],
+  "destination_root": "dev/archive/6efb756b-grand",
+  "eligible": true,
+  "target": "6efb756b-bee0-4dc1-9ee6-a1a0a61034d4"
+ },
+ "bb85c68a": {
+  "action_counts": {
+   "already_archived": 18,
+   "block": 0,
+   "copy": 0,
+   "move": 17,
+   "pending_deletions": 0,
+   "retain": 11
+  },
+  "artifacts": [
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md",
+    "sha256": "b6dcfdf5cc3272c36f74b432fd64751ae9a42c5646f7b0493eb6d071eec14186",
+    "source": "dev/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-completion-report.md",
+    "sha256": "450a2f79eb3a82b251ddccd7404e0cc0d194d92c984fbf55ba2437ce9b23ad78",
+    "source": "dev/active/bb85c68a-completion-report.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-handoff-2.md",
+    "sha256": "75d47b529452b3bfeab47b5dd14a358853a5f3f41e0c15960fedf4e1b11de2ce",
+    "source": "dev/active/bb85c68a-handoff-2.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-handoff-3.md",
+    "sha256": "5b2e61a8578309ae2ae0cc81a3b2093625b022cb9dfdb2278abdb28170dd8c38",
+    "source": "dev/active/bb85c68a-handoff-3.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-handoff-4.md",
+    "sha256": "5ccfe9f69599b9d41e2c543fbd4e87466e216a794c03f60334eafe9c30d8c211",
+    "source": "dev/active/bb85c68a-handoff-4.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-handoff-5.md",
+    "sha256": "2a413194084837d28e419f733b3438d695ac39d1479f8758e67f0a958d8dbc78",
+    "source": "dev/active/bb85c68a-handoff-5.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-handoff-6.md",
+    "sha256": "4cc3b928c1fcd818b6368685b3db2bfcdd8a1f127663ad26f1e5bacc3365553c",
+    "source": "dev/active/bb85c68a-handoff-6.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-handoff.md",
+    "sha256": "bbae9af47a03f4f0e0e47036b6b6a58ed084a16d8c276d17203920aa89794f2a",
+    "source": "dev/active/bb85c68a-handoff.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-progress.json",
+    "sha256": "f4938e5778b1b1f2aacc8a7d59a0f2956723624812b6999558e473a2f5593edf",
+    "source": "dev/active/bb85c68a-progress.json"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/active/c3f8c1cb-implement-ple-decomposition-and-echelon-forms-ov/c3f8c1cb-ple-replan.md",
+    "sha256": "e5693b68f3a6a23a2da5fa3d03e9dd530acdc83c32b80ecd367af7c40202f63c",
+    "source": "dev/active/c3f8c1cb-implement-ple-decomposition-and-echelon-forms-ov/c3f8c1cb-ple-replan.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26-uncompetitiveness-profile.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-27-asm-audit.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-7c954fb5-criterion.txt"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-strassen-matmul-crossover.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": true,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-30-post-ppc-delta-appendix.md"
+   },
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/c7791a20/2026-04-26-profile-release-delta.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/bench_results/2026-04-26.md",
+    "sha256": "f22f42270c983790cf99951479babb69169ccf4425dabc9bf6f55389423d3da9",
+    "source": "dev/bench_results/2026-04-26.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/docs/presentations/bb85c68a-fieldmatrix/talk.html",
+    "sha256": "137b698731bb1ef70aa8a81f3cae7be6c7d6bd4ef0db057b0a39185a3ff88307",
+    "source": "dev/docs/presentations/bb85c68a-fieldmatrix/talk.html"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/docs/presentations/bb85c68a-fieldmatrix/themes/gruvbox.css",
+    "sha256": "b835feba6c82b645f3a4eb98bfc49622501b1b8f4b1a0d28bf4241bb5b147401",
+    "source": "dev/docs/presentations/bb85c68a-fieldmatrix/themes/gruvbox.css"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/plans/armadillo_ux_mapping.md",
+    "sha256": "122e832636fd64c0f5a390a4ffe2e0eeda7bb9d6526453941a12b18fc1e518c7",
+    "source": "dev/plans/armadillo_ux_mapping.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md",
+    "sha256": "0e2a1c498445ec0c5ec1e363a1c9a5c8dfdac6e61a6bdbdbc343523086363951",
+    "source": "dev/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/plans/dumas_pernet_takeaways.md",
+    "sha256": "2f6e8713aa7201c8390c2ea146686beddb5e7fc219a9a1acf762f35e5e3927a6",
+    "source": "dev/plans/dumas_pernet_takeaways.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/bb85c68a-field-linear-algebra/plans/fflas_ffpack_analysis.md",
+    "sha256": "8a68036d7e1286a1f9adc60d127365e3a102f1032303d2884d15a3b791b24536",
+    "source": "dev/plans/fflas_ffpack_analysis.md"
+   }
+  ],
+  "blockers": [],
+  "destination_root": "dev/archive/bb85c68a-field-linear-algebra",
+  "eligible": true,
+  "target": "bb85c68a-f88e-46fb-b0ab-cddc3487cbc9"
+ }
+}
