@@ -1,8 +1,6 @@
-//! Dense vector of finite field elements with arithmetic operations.
-//!
-//! This module provides [`FieldVec<F>`], a newtype wrapper around `Vec<F>` for any
-//! type implementing [`FiniteField`], together with [`StridedIter`] for column access
-//! in row-major matrix layouts.
+//! Dense vector of finite field elements: [`FieldVec<F>`], a newtype over
+//! `Vec<F>` for any [`FiniteField`], and [`StridedIter`] for column access in
+//! row-major matrix layouts.
 
 use crate::field::{ConstField, FiniteField};
 use std::ops::Index;

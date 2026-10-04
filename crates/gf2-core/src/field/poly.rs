@@ -1,8 +1,6 @@
-//! Generic univariate polynomials over any [`FiniteField`].
-//!
-//! [`FieldPoly`] stores coefficients in ascending-degree order (`coeffs[i]` is
-//! the coefficient of `x^i`) over any [`FiniteField`], including fields with
-//! runtime parameters; [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) is an alias of
+//! Generic univariate polynomials: [`FieldPoly`] over any [`FiniteField`],
+//! including fields with runtime parameters;
+//! [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) is an alias of
 //! `FieldPoly<Gf2mElement_<V>>`.
 
 use crate::field::{FiniteField, TwoAdicField};

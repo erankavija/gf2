@@ -1,10 +1,6 @@
-//! Radix-2 Number Theoretic Transform (NTT) over a [`TwoAdicField`].
-//!
+//! Radix-2 Number Theoretic Transform (NTT) over a [`TwoAdicField`]:
 //! [`ntt_inplace`] is the decimation-in-time (Cooley–Tukey) transform behind
-//! [`FieldPoly::mul_ntt`](crate::field::FieldPoly::mul_ntt): a bit-reversal
-//! permutation, then per stage `s` the butterflies
-//! `(u, v) → (u + ω·v, u − ω·v)` over the powers of
-//! `F::two_adic_root_of_unity(s)`.
+//! [`FieldPoly::mul_ntt`](crate::field::FieldPoly::mul_ntt).
 
 use crate::field::TwoAdicField;
 

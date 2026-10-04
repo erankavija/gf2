@@ -1,14 +1,8 @@
 //! Cached GF(2^8) byte product tables and the region kernel that reads them.
-//!
 //! One table holds the product of every byte pair under one degree-8
-//! reduction polynomial, keyed by that polynomial's low eight bits.
-//! [`gf256_table_dispatch`] is the one function that selects between the
-//! table lane and the consumer's scalar element loop.
-//!
-//! A table occupies 65536 bytes; the registry holds one per key used, at most
-//! 16 MiB, and never evicts. A table's contents are a function of its key
-//! alone, so results are identical across worker counts, scheduling and lane
-//! switches.
+//! reduction polynomial, keyed by that polynomial's low eight bits. A table
+//! occupies 65536 bytes; the registry holds one per key used, at most 16 MiB,
+//! and never evicts.
 
 use std::sync::OnceLock;
 

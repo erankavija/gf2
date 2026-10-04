@@ -1,10 +1,6 @@
-//! Batch element-wise GF(2^m) multiply / square.
-//!
-//! These free functions wrap the SIMD-dispatched batch kernel
-//! (`crate::simd::maybe_gf2m_batch`), taken for `m ∈ {8, 16, 32}` when the
-//! runtime CPU advertises `avx2 + vpclmulqdq + pclmulqdq + sse4.1`; every
-//! other case takes a scalar path with identical results. Inputs are
-//! canonical (each element `< 2^m`).
+//! Batch element-wise GF(2^m) multiply and square over canonical inputs
+//! (each element `< 2^m`), through a SIMD kernel for `m ∈ {8, 16, 32}` where
+//! the CPU supports it and a scalar path otherwise.
 
 #[cfg(feature = "simd")]
 use crate::gf2m::barrett::BarrettReducer;
