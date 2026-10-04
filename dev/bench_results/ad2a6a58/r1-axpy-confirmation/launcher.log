@@ -1,0 +1,27 @@
+# command: dev/bench_results/ad2a6a58/run-axpy-confirmation.sh window confirmation
+# invocation: new
+# started_utc: 2026-10-04T23:05:34Z
+# gf2 revision (informational): a00540a8f7b303e020376cf9cb8cf90793710b1e
+# addendum: dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json sha256=2a22a6ecefc65fe20d13467b3f23a2a2d05ad0c18647ea019e0435c5c9da31e8
+# producing manifest: dev/active/ad2a6a58/survey/producing-inputs.json sha256=ece1a6425f6044bca943e5c5daea284d83cd339ac93b6f639fa9aca242f69ec4
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-campaigns/ad2a6a58-r1-axpy-confirmation.plan.json sha256=96e4b0a7553f101fe97a39db6744600dcf8e343ecb15e23892c8e0ac1375da4c
+# ledger: dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl sha256=484133560a5afe20a8720bcc23ff3fc6ceee245903a0dcebdc2845d9f3554c4e
+# arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-arm/release/gf256-axpy-arm sha256=9f8b8f70bcf18a95356edaf2ac50a669e3f5cce237dcf64f25602a6df31d8d38
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/release/benchmark-ab-runner sha256=f349e85297a681a462773bd8ec4bb6bd29a91aea501d56c7dca307702d2e37cf
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/release/benchmark-acceptance sha256=e05f21a7687d5d4d515313eb052fad4c16f9bb4a23aeac22dc15b9cf685c5913
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 5.72 5.75 2.78
+# session 1 started_utc: 2026-10-04T23:05:34Z
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-campaigns/ad2a6a58-r1-axpy-confirmation/execution.log
+# session 1 exit: 3
+# session 2 started_utc: 2026-10-04T23:07:11Z
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a357f94/target/ad2a6a58-campaigns/ad2a6a58-r1-axpy-confirmation/execution.log
+# session 2 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/ad2a6a58/r1-axpy-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+# acceptance exit: 0
+# sessions this invocation: 2
+# load_avg_end: 1.20 3.51 2.44
+# finished_utc: 2026-10-04T23:08:41Z
