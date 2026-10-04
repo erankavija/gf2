@@ -1,13 +1,5 @@
 //! Chase-Pyndiah soft-input soft-output (SISO) decoder for turbo product codes
 //! (`@/citation/Chase1972`, `@/citation/Pyndiah1998`).
-//!
-//! Each component decode flips subsets of the `p` least reliable positions,
-//! maps every test pattern to a codeword, and takes the candidate maximising
-//! the bipolar correlation `M = sum_j L_j * (1 - 2*bit_j)`.  The soft output is
-//! `W_i = c_ML_i_bipolar * (M_ML - M_comp_i) / 2` against the best competitor
-//! differing at position `i`, or the input when there is none.  The extrinsic
-//! `L_E = W - L_input` is clamped to `beta_h * mean_j |L_j|` and scaled by
-//! `alpha_h`.
 
 use crate::llr::{Llr, ReliabilityPermutation};
 use gf2_core::{BitMatrix, BitVec};

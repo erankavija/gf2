@@ -1,7 +1,7 @@
 //! Coding-owned tuning selectors and their process-wide typed accessor; the
 //! generic process authority is [`gf2_core::tuning`]. The one selector family
 //! is `encode`, the profile half of the batch-encoding family dispatch of
-//! [`crate::bch::encode`](crate::bch::encode#algorithm-families).
+//! [`crate::bch::encode::EncodeFamily`].
 
 use std::fmt;
 

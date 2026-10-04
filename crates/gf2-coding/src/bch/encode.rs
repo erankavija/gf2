@@ -11,150 +11,10 @@
 //! message occupies the internal coordinates $n-k$ to $n-1$, and the parity
 //! occupies $0$ to $n-k-1$.
 //!
-//! # Algorithm families
-//!
-//! Within one representation, a batch encode chooses among the registered
-//! algorithm families of [`EncodeFamily`]. They are mathematically
-//! equivalent: each computes the remainder of $x^r m(x)$ modulo the
-//! generator, so a batch encoded under any two of them is bit-identical, and
-//! they differ only in how many message coefficients one reduction step
-//! consumes and in what precomputation that step reads.
-//!
-//! Selection is a conjunction of two independent decisions, and neither can
-//! overrule the other:
-//!
-//! - **availability** — [`SystematicKernel::family_available`] answers
-//!   whether the representation implements a family for the plan at hand.
-//!   [`EncodeFamily::REFERENCE`] is available for every plan in every
-//!   representation, which is what makes the dispatch total;
-//! - **admission** — the `encode` selector family of
-//!   [`crate::tuning::CodingTuning`] answers whether the active profile
-//!   admits it at this redundancy and batch length. The conservative section
-//!   admits only the reference, so a process that installs no profile
-//!   encodes every batch with the reference recurrence.
-//!
-//! The seam walks [`EncodeFamily::REGISTERED`] in order and takes the first
-//! entry both decisions accept, which the reference always terminates. A
-//! caller that needs a named family rather than the selected one, as a
-//! differential check does, calls
-//! [`encode_batch_family_into`](BchCode::encode_batch_family_into) and
-//! receives [`BchError::EncodeFamilyUnavailable`] rather than a silent
-//! substitution.
-//!
-//! # Complexity
-//!
-//! Let $r = n - k$. Encoding one message under
-//! [`EncodeFamily::REFERENCE`] costs $O(k r)$ base-field multiply-adds in
-//! the field-generic path and $O(k \lceil r/64 \rceil)$ word operations plus
-//! $O(n)$ bit writes in the packed binary path.
-//! [`EncodeFamily::TableRemainder`] runs
-//! $O((k / 32) \lceil r/64 \rceil)$ word operations over the same $O(n)$ bit
-//! writes, after a table build of $O(1024 \lceil r/64 \rceil)$ word writes
-//! paid once per batch call. [`EncodeFamily::BitsliceInterleaved`] spends
-//! $O(k r)$ word operations, or $O(k r / 4)$ 256-bit operations under its
-//! AVX2 kernels, on a whole lane group of
-//! [`gf2_kernels_simd::bch_encode::BITSLICE_LANES`] frames, so $O(k r / 64)$
-//! word-equivalents per message plus the same $O(n)$ bit writes. A batch
-//! shorter than the lane width still pays a whole group, which is what makes
-//! its admission a batch-length question.
-//! [`EncodeFamily::ClmulFold`] spends
-//! $O((k / 64)(1 + \lceil r/64 \rceil))$ carry-less multiplies per message
-//! over the same $O(n)$ bit writes, after a Barrett constant of
-//! $O(\lceil r/64 \rceil)$ word operations over 64 division steps. It
-//! reduces one message at a time, so a batch changes none of that and its
-//! admission bound exists to amortize that constant alone.
-//!
-//! # Workspaces
-//!
-//! The entry points that take no workspace —
-//! [`encode_systematic`](BchCode::encode_systematic),
-//! [`encode_systematic_into`](BchCode::encode_systematic_into),
-//! [`BlockEncoder::encode_into`], and
-//! [`encode_batch`](BchCode::encode_batch) — run over thread-local registers,
-//! one set per register word type. They are sized on the thread's first such
-//! encode, reset in place at $O(r)$ per call afterwards, and held until the
-//! thread exits, so concurrent encodes over one shared code take no lock.
-//! These entry points prepare the selected family alone.
-//!
-//! A workspace belongs to the code that produced it. It carries a fingerprint
-//! of that code, and an encode rejects a foreign workspace with
-//! [`BchError::WorkspaceMismatch`] even when its buffer lengths happen to
-//! match. The fingerprint covers the dimensions, the presentations of the base
-//! and splitting fields, and the defining set; a layout does not enter it,
-//! because the layout is coordinate arithmetic outside the registers, so one
-//! workspace serves every [`SystematicLayout`] of its code.
-//!
-//! # Batch encoding
-//!
-//! [`encode_batch_into`](BchCode::encode_batch_into) runs the selected
-//! family over a slice of messages with one workspace.
-//! [`encode_batch_parallel_into`](BchCode::encode_batch_parallel_into) splits
-//! the same slice into one contiguous partition per supplied workspace and
-//! encodes the partitions concurrently. The split is balanced: with $m$
-//! messages over $w \le m$ workspaces each partition holds
-//! $\lfloor m/w \rfloor$ messages and the first $m \bmod w$ hold one more, so
-//! every workspace receives a non-empty partition whether or not $w$ divides
-//! $m$. Each worker owns its workspace and writes only its own output
-//! positions, so:
-//!
-//! - the output is in input order for every worker count, because a partition
-//!   writes the codeword of message $i$ at position $i$ and nothing reassembles
-//!   the results afterwards;
-//! - the bytes are identical across worker counts, because the worker count
-//!   chooses partition boundaries and each message's codeword is a function of
-//!   that message alone.
-//!
-//! The family is selected once for the whole batch, from the message count
-//! rather than from any partition's length, and every worker then runs that
-//! one family over its own registers. The bytes are therefore identical
-//! across worker counts and across families alike, and a worker count never
-//! changes which algorithm the batch runs.
-//!
-//! One worker runs the whole batch directly on the calling thread, so a
-//! one-worker dispatch reaches no pool. Above one, the workspaces are halved
-//! until each half holds one and the halves go to the rayon pool, whose width
-//! is [`max_parallel_batch_workers`]; a larger worker count is still valid and
-//! still produces those bytes, its partitions sharing the threads there are.
-//! Without the `parallel` feature every worker count runs its partitions in
-//! index order on the calling thread.
-//!
 //! # Examples
 //!
-//! A binary primitive narrow-sense code. The default layout leaves the
-//! message in the first $k$ coordinates.
-//!
-//! ```
-//! use gf2_coding::bch::encode::SystematicLayout;
-//! use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
-//! use gf2_coding::traits::block::{BlockCode, BlockEncoder};
-//! use gf2_core::field::extension::BinaryPrimeExt;
-//! use gf2_core::gf2m::Gf2mField;
-//! use gf2_core::BitVec;
-//!
-//! let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011))?;
-//! let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
-//!     extension,
-//!     designed_distance: DesignedDistance::try_from(5)?,
-//! })?;
-//!
-//! let mut message = BitVec::zeros(code.k());
-//! message.set(0, true);
-//! message.set(3, true);
-//! let codeword = code.encode(&message)?;
-//!
-//! assert_eq!(codeword.len(), code.n());
-//! for coordinate in 0..code.k() {
-//!     assert_eq!(codeword.get(coordinate), message.get(coordinate));
-//! }
-//! assert_eq!(
-//!     code.systematic_message(&codeword, SystematicLayout::default())?,
-//!     message
-//! );
-//! # Ok::<(), Box<dyn std::error::Error>>(())
-//! ```
-//!
-//! The performance path over a batch: one workspace per worker, allocated
-//! once, and an output slice the caller owns.
+//! A parallel batch encode: one workspace per worker, allocated once, and an
+//! output slice the caller owns.
 //!
 //! ```
 //! use gf2_coding::bch::encode::SystematicLayout;
@@ -703,9 +563,9 @@ pub struct EncodeRegisters<W> {
 /// [`encode_systematic_with`](BchCode::encode_systematic_with) or
 /// [`encode_batch_into`](BchCode::encode_batch_into) call: the buffers are
 /// sized there and only overwritten afterwards, so the per-message path
-/// touches no allocator. See the [module level](self#workspaces) for the whole
-/// no-allocation argument and for why one workspace serves every layout of its
-/// code.
+/// touches no allocator. An encode rejects a workspace built by another code
+/// with [`BchError::WorkspaceMismatch`], and one workspace serves every
+/// [`SystematicLayout`] of its code.
 #[derive(Clone, Debug)]
 pub struct BchEncodeWorkspace<W> {
     /// Fingerprint of the producing code, checked on every encode.
@@ -734,8 +594,7 @@ impl<W> BchEncodeWorkspace<W> {
 /// This is the rayon pool's width with the `parallel` feature, and one
 /// without it. A larger worker count remains valid and produces the same
 /// bytes: it fixes the partition boundaries and the workspace count, and the
-/// partitions then share the threads available. See the
-/// [module level](self#batch-encoding).
+/// partitions then share the threads available.
 #[must_use]
 pub fn max_parallel_batch_workers() -> NonZeroUsize {
     #[cfg(feature = "parallel")]
@@ -866,8 +725,7 @@ pub(crate) fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, us
 /// scratch registers. A representation that implements an algorithm family
 /// beyond the reference declares it through
 /// [`family_available`](Self::family_available) and runs it from
-/// [`encode_systematic_family`](Self::encode_systematic_family); see the
-/// [module level](self#algorithm-families).
+/// [`encode_systematic_family`](Self::encode_systematic_family).
 pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     /// The word this representation's shift register is stored in.
     ///
@@ -1891,7 +1749,7 @@ where
     ///
     /// The recurrence runs over the calling thread's scratch registers, so
     /// the call allocates nothing once that thread has encoded in this code's
-    /// word type; see the [module level](self#workspaces).
+    /// word type.
     ///
     /// # Errors
     ///
@@ -1905,7 +1763,9 @@ where
     ///
     /// # Complexity
     ///
-    /// See the [module-level summary](self#complexity).
+    /// The reference recurrence: $O(k r)$ base-field multiply-adds
+    /// field-generic, $O(k \lceil r/64 \rceil)$ word operations plus $O(n)$
+    /// bit writes packed, each plus the $O(r)$ register reset.
     pub fn encode_systematic_into(
         &self,
         message: &S,
@@ -2015,9 +1875,8 @@ where
     /// `codewords`, reusing one `workspace`.
     ///
     /// The algorithm family comes from the batch length and the active
-    /// profile, through the seam described at the
-    /// [module level](self#algorithm-families). It is a family this code's
-    /// representation makes available, so the family error
+    /// profile, through the walk over [`EncodeFamily::REGISTERED`]. It is a
+    /// family this code's representation makes available, so the family error
     /// [`encode_batch_family_into`](Self::encode_batch_family_into) can
     /// report is unreachable from here.
     ///
@@ -2157,8 +2016,10 @@ where
     /// The batch is split into one contiguous partition per workspace, and
     /// each worker encodes its own partition into the matching positions of
     /// `codewords`. The output is therefore in input order, and identical for
-    /// every worker count; see the [module level](self#batch-encoding) for
-    /// that argument and for what runs where.
+    /// every worker count. The family is selected once for the whole batch,
+    /// from the message count. One workspace runs the batch on the calling
+    /// thread; more split across the rayon pool under the `parallel` feature
+    /// and run in index order on the calling thread without it.
     ///
     /// The split is balanced to within one message, so every workspace up to
     /// the batch length receives a non-empty partition whether or not the
@@ -2557,8 +2418,7 @@ where
     ///
     /// The call owns no buffers: it writes the caller's `codeword` and runs
     /// the recurrence over the calling thread's scratch registers, so a
-    /// repeated encode reaches no allocator. See the
-    /// [module level](self#workspaces).
+    /// repeated encode reaches no allocator.
     ///
     /// # Errors
     ///
