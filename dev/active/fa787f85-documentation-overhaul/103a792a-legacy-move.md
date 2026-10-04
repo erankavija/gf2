@@ -2,8 +2,8 @@
 
 ## Moved files
 
-29 files, `git mv`, paths below `dev/archive/legacy/` equal the original
-repository-relative paths.
+29 files, `git mv`, paths below `dev/archive/legacy/` repeat the
+repository-relative path of each file.
 
 | Rule | Files |
 | --- | --- |
@@ -17,8 +17,7 @@ sources and `common/`.
 
 Choice codes: P = permanent page, M = mirror path, R = removed provenance.
 Every citation sits in a development document and no permanent page covers
-the cited artifact, so each is M. Line numbers are the pre-edit lines, which
-the edit preserves.
+the cited artifact, so each is M. Line numbers are those of the committed files.
 
 | File:line | Choice | Target |
 | --- | --- | --- |
@@ -44,17 +43,16 @@ Files that keep their bytes:
 | --- | --- |
 | `dev/active/a83583e0/premeasurement-protocol.md`, `dev/active/eaae1b56/premeasurement-protocol.md` | preregistrations |
 | `dev/active/53c5a8c0/survey/source-evidence.json`, `dev/active/ae03bcd0-general-bch/breakdown.json`, `dev/active/fa787f85-documentation-overhaul/breakdown.json` | recorded data |
-| `dev/active/fa787f85-documentation-overhaul/migration/manifest.toml` | rows carry the original paths as keys |
+| `dev/active/fa787f85-documentation-overhaul/migration/manifest.toml` | rows key on the `crates/gf2-core/` paths |
 
 No tracker document reference names a moved file; `target/103a792a-relink.sh`
 holds only the link check.
 
 ## Links inside moved files
 
-15 local links, all relative to the original directory, are rebased to the
-mirror location: 4 in `KERNEL_OPTIMIZATION.md` and `QUALITY_AUDIT_REPORT.md`
+15 local links resolve from the mirror location: 4 in `KERNEL_OPTIMIZATION.md` and `QUALITY_AUDIT_REPORT.md`
 (`dev/benchmarks/tuning_profiles/`), 6 in `README.md` (crate README, examples,
-audit pair now under `archive/`), 5 in `archive/README.old.md`.
+audit pair under `archive/`), 5 in `archive/README.old.md`.
 
 ## Verification
 
