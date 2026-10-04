@@ -3,7 +3,7 @@
 > **Diátaxis Type:** Explanation
 
 Issue `@/issue/4c1e441f` is the dense-product confirmation leaf of
-[the cached-table design](../613574db/design.md). It measures the GF(2^8)
+[the cached-table design](../1a379447-zen3-cpu-performance/613574db/design.md). It measures the GF(2^8)
 product-table route `gf2-core` ships against the route `field::matrix::gemm`
 takes without it, as a protocol-version-4 A/B family with a pilot and a
 confirmation.
@@ -15,7 +15,7 @@ shipped crate with the `simd` and `test-support` features. `test-support` is
 where `gf2m::byte_table` compiles the process-global lane switch and the lane
 witness, so a release benchmark executable reaches both without any change to
 production selection behaviour; the design fixes this
-([design](../613574db/design.md) § Contracts this design preserves, scalar
+([design](../1a379447-zen3-cpu-performance/613574db/design.md) § Contracts this design preserves, scalar
 fallback). The baseline arm calls `force_scalar_gf256_table(true)` before its
 first dispatch, so every GF(2^8) product runs the route the library takes
 without the table; the candidate arm leaves the switch clear. One executable,

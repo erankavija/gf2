@@ -14,7 +14,7 @@ implementation and confirmation leaves are in
 
 The byte-field assessment measures both routes on every GF(2^8) consumer and
 ends in a proceed-to-design decision
-([findings](../19513245/findings.md) § Decision). Three things it establishes
+([findings](../../19513245/findings.md) § Decision). Three things it establishes
 bound this design.
 
 **Where the current cost sits.** `FieldVec::axpy` consults one hook whose
@@ -35,11 +35,11 @@ fraction of a small dense product and a negligible fraction of a large one
 `matmul-n64-*-prototype` against `matmul-n256-*-prototype`). The findings draw
 exactly one production conclusion from that row pair: a production design
 caches the table per field rather than rebuilding it per product
-([findings](../19513245/findings.md) § Results, the profile's matrix
+([findings](../../19513245/findings.md) § Results, the profile's matrix
 attribution). The no-reuse control repeats the conclusion from the other
 side: one table build is a large fraction of a 128 KiB pairwise call, so the
 profile supports a field-cached table and not per-call construction
-([findings](../19513245/findings.md) § Results, the profile's no-reuse
+([findings](../../19513245/findings.md) § Results, the profile's no-reuse
 control).
 
 **What is confirmed, and what is not.** Three accepted confirmations qualify.
@@ -59,7 +59,7 @@ this design copies none of them.
 
 `FieldMatrix::matvec` has a profile row and no A/B cell. The profile records it
 as an unconfirmed candidate rather than an adoption result
-([findings](../19513245/findings.md) § Results, the profile's matrix
+([findings](../../19513245/findings.md) § Results, the profile's matrix
 attribution), and this design excludes it.
 
 ## Scope and non-goals
@@ -78,7 +78,7 @@ Non-goals, each with the reason it stays out:
   touch `try_simd_matvec` (`matvec-hook`).
 - **A public byte-region API.** The confirmed consumers reach byte arithmetic
   without one, so the region kernel stays `pub(crate)`
-  ([findings](../19513245/findings.md) § Decision).
+  ([findings](../../19513245/findings.md) § Decision).
 - **Byte-packed `FieldVec` or `FieldMatrix` storage.** The hooks read and write
   the representations callers already hold.
 - **A vectorised successor.** The split-table byte shuffle needs intrinsics and
@@ -433,7 +433,7 @@ have a profile row and no cell. A separate paired campaign decides them.
 
 **OPEN-03: polynomials other than 0x11D in production.** The assessment finds
 no production consumer configured with 0x11B
-([findings](../19513245/findings.md) § Comparator semantics). The design serves
+([findings](../../19513245/findings.md) § Comparator semantics). The design serves
 every degree-8 polynomial anyway because the table is built from the field's
 own modulus; no cell measures a non-0x11D field.
 
@@ -447,7 +447,7 @@ convergence condition.
 
 The design names no intrinsic, so its feasibility question is whether the
 cache and kernel shapes compile at the MSRV. The committed MSRV record
-[`conformance/msrv-intrinsics.txt`](../19513245/conformance/msrv-intrinsics.txt)
+[`conformance/msrv-intrinsics.txt`](../../19513245/conformance/msrv-intrinsics.txt)
 covers the separate question a vectorised successor would start from — the
 AVX2 split-table shuffle and the gather and scatter around a `u64`-lane
 representation, each carrying the `target_feature` attribute a shipped kernel
