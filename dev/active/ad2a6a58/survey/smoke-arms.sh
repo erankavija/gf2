@@ -1,18 +1,32 @@
 #!/usr/bin/env bash
 # Non-timed harness smoke of every arm and cell of the frozen axpy family
-# (jit:ad2a6a58), writing dev/active/ad2a6a58/survey/<stage>-smoke.json.
+# (jit:ad2a6a58), writing <stage>-smoke.json beside this script.
 #
 # Usage (from the worker worktree root):
-#   dev/active/ad2a6a58/survey/smoke-arms.sh [pilot|confirmation]...
+#   smoke-arms.sh [pilot|confirmation]...
 #
 # Each argument names a stage whose frozen addendum the smoke drives; with none
-# it drives both. The three untimed steps are `dev/scripts/smoke-campaign-arms.sh`,
-# shared with every other lane-comparison family, whose record is the one
-# `benchmark-ab-runner smoke` writes; this script carries this family's own
-# constants: its frozen addenda, its arm workspace and binary, its throwaway
-# campaign identities and seeds, and the session cell budget and pilot pair
-# count each queued campaign uses.
+# it drives both. The three untimed steps are the shared
+# `smoke-campaign-arms.sh`, whose record is the one `benchmark-ab-runner smoke`
+# writes; this script carries this family's own constants: its frozen addenda,
+# its arm workspace and binary, its throwaway campaign identities and seeds, and
+# the session cell budget and pilot pair count each queued campaign uses.
+#
+# Every path is repository-relative, as the plan and the record name them: this
+# family's files from this script's directory, the shared script by file name
+# among the files git lists outside receipt input snapshots.
 set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT=$(git -C "${HERE}" rev-parse --show-toplevel)
+SURVEY=$(realpath --relative-to="${ROOT}" "${HERE}")
+FAMILY=$(dirname "${SURVEY}")
+mapfile -t SHARED < <(git -C "${ROOT}" ls-files -- ':(glob)**/smoke-campaign-arms.sh' |
+    grep -v '/inputs/')
+[[ ${#SHARED[@]} -eq 1 ]] || {
+    echo "${#SHARED[@]} live smoke-campaign-arms.sh files; exactly one must exist" >&2
+    exit 2
+}
 
 [[ $# -gt 0 ]] || set -- pilot confirmation
 for STAGE in "$@"; do
@@ -21,14 +35,14 @@ for STAGE in "$@"; do
         confirmation) SEED=20260919 MAX_CELLS=3 PILOT_PAIRS=() ;;
         *) echo "stage must be pilot or confirmation" >&2; exit 2 ;;
     esac
-    dev/scripts/smoke-campaign-arms.sh \
+    "${SHARED[0]}" \
         --issue ad2a6a58 \
-        --addendum "dev/active/ad2a6a58/addendum-v4-axpy-${STAGE}.json" \
-        --arm-manifest dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml \
+        --addendum "${FAMILY}/addendum-v4-axpy-${STAGE}.json" \
+        --arm-manifest "${SURVEY}/axpy-arm/Cargo.toml" \
         --arm-bin gf256-axpy-arm \
-        --plan-tool dev/active/ad2a6a58/survey/make-plan.py \
-        --producing dev/active/ad2a6a58/survey/producing-inputs.json \
-        --record "dev/active/ad2a6a58/survey/${STAGE}-smoke.json" \
+        --plan-tool "${SURVEY}/make-plan.py" \
+        --producing "${SURVEY}/producing-inputs.json" \
+        --record "${SURVEY}/${STAGE}-smoke.json" \
         --campaign-id "ad2a6a58-axpy-${STAGE}-arms-smoke" \
         --seed "${SEED}" \
         --max-cells "${MAX_CELLS}" \
