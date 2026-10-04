@@ -1,26 +1,7 @@
-//! Property-based axiom test harness for [`FiniteField`] implementations.
-//!
-//! Provides a generic, reusable test suite that verifies all field axioms using
-//! proptest's programmatic `TestRunner` API. Adding a new field type requires only
-//! writing a `proptest::Strategy` and calling [`test_field_axioms`].
-//!
-//! # Axioms tested
-//!
-//! - Additive group: associativity, commutativity, identity, inverse, subtraction consistency
-//! - Multiplicative group: associativity, commutativity, identity, inverse, division consistency
-//! - Ring: distributivity, zero annihilation
-//! - Characteristic: `p` copies of one = zero
-//! - Hash consistency: equal elements have equal hashes
-//! - Wide accumulator: roundtrip and mul consistency
-//!
-//! # Extension laws
-//!
-//! [`test_field_identity_laws`] and [`test_extension_laws`] are the companion
-//! conformance entry points for the relative field-extension abstraction in
-//! [`crate::field::extension`]: canonical-coordinate round trips and identity
-//! agreement for a single carrier, and embedding, membership, restriction,
-//! relative degree, order relationships, and relative Frobenius for a
-//! [`FieldExtension`] witness.
+//! Property-based law suites for [`FiniteField`] implementations, driven
+//! through proptest's `TestRunner`: [`test_field_axioms`] for the field
+//! axioms, and [`test_field_identity_laws`] and [`test_extension_laws`] for
+//! the [`crate::field::extension`] abstraction.
 
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
@@ -47,9 +28,7 @@ use crate::gfpn::{ConstQuotient, ConstQuotientConfig, QuotientElement, QuotientF
 use crate::gfpn::{CubicExt, ExtConfig, QuadraticExt};
 
 /// Number of random test cases per axiom for the default entry points
-/// [`test_field_axioms`] and [`test_const_field_axioms`]. Specialised
-/// callers that want a smaller case count pass an explicit value through
-/// [`test_field_axioms_with_cases`] instead.
+/// [`test_field_axioms`] and [`test_const_field_axioms`].
 const CASES_PER_AXIOM: u32 = 1000;
 
 /// Number of random test cases per law for the extension entry points
@@ -57,10 +36,6 @@ const CASES_PER_AXIOM: u32 = 1000;
 /// [`CASES_PER_AXIOM`] because each extension law drives up to `[E : B]`
 /// Frobenius steps, every one of which is a full field exponentiation.
 const CASES_PER_EXTENSION_LAW: u32 = 128;
-
-// ---------------------------------------------------------------------------
-// Strategies
-// ---------------------------------------------------------------------------
 
 /// Strategy that generates uniformly random `Gf2mElement` values (including zero).
 fn gf2m_strategy(field: &Gf2mField) -> BoxedStrategy<Gf2mElement> {
@@ -71,10 +46,6 @@ fn gf2m_strategy(field: &Gf2mField) -> BoxedStrategy<Gf2mElement> {
 
 /// Strategy that generates uniformly random `Gf2mElement_<u128>` values
 /// (including zero) for fields with extension degree up to 127.
-///
-/// Draws two independent `u64`s, concatenates them into a `u128`, and masks to
-/// the field degree. This gives full coverage for all catalogued `m` values in
-/// the u128 range even though proptest does not natively produce `u128`s.
 fn gf2m_u128_strategy(field: &Gf2mField_<u128>) -> BoxedStrategy<Gf2mElement_<u128>> {
     let field_clone = field.clone();
     let m = field.degree();
@@ -91,55 +62,16 @@ fn gf2m_u128_strategy(field: &Gf2mField_<u128>) -> BoxedStrategy<Gf2mElement_<u1
         .boxed()
 }
 
-// ---------------------------------------------------------------------------
-// Generic axiom harness
-// ---------------------------------------------------------------------------
-
-/// Run the full field axiom test suite for a [`FiniteField`] implementation.
+/// Runs the shared field-law suite for a [`FiniteField`] implementation,
+/// including the [`FiniteFieldExt`] laws, with `CASES_PER_AXIOM` cases per
+/// law.
 ///
-/// Drives a `proptest` [`TestRunner`] through every axiom the trait must
-/// satisfy: additive group (associativity, commutativity, identity, inverse,
-/// subtraction consistency), multiplicative group (associativity,
-/// commutativity, identity, inverse, division consistency), ring
-/// distributivity, zero annihilation, field characteristic (`p · a = 0`),
-/// hash consistency, wide-accumulator roundtrip / mul consistency, and the
-/// [`FiniteFieldExt`] extras (`square`, `pow`, Frobenius, Freshman's dream).
-/// Used both by the crate's own in-module `#[test]` functions and by
-/// integration tests that layer new tower shapes on top of existing base
-/// fields.
-///
-/// # Arguments
-///
-/// * `strategy` — a `proptest` [`BoxedStrategy<F>`] that samples uniformly
-///   random field elements, **including zero** (each axiom either handles
-///   zero natively or filters it out locally where needed, e.g., the
-///   multiplicative-inverse axiom).
-/// * `characteristic` — the prime characteristic `p` of the field as a
-///   `u64`. For GF(2ᵐ) this is 2; for `Fp<P>` or towers over it, `P` itself.
-///   The value is used both by the characteristic axiom (`p·a = 0`) and by
-///   Frobenius / Freshman's-dream checks (`a^p`, `(a+b)^p = a^p + b^p`).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{fp_strategy, test_field_axioms};
-///
-/// // Exercise Fp<7> under the canonical axiom harness. Uses the module's
-/// // built-in 1000-cases-per-axiom configuration.
-/// test_field_axioms(fp_strategy::<7>(), 7);
-/// ```
+/// `strategy` samples the field, including zero; `characteristic` is the
+/// prime `p`.
 ///
 /// # Panics
 ///
-/// Panics (via `proptest`'s `TestRunner`) on the first axiom violation it
-/// detects — that is the entire point of the harness. A proptest shrink
-/// report is included in the panic message.
-///
-/// # Complexity
-///
-/// `O(CASES_PER_AXIOM × axiom_count × cost_of_field_ops)` where
-/// `CASES_PER_AXIOM` is the module-level constant (currently 1000) and
-/// `axiom_count` is roughly 18.
+/// Panics on the first law violation, reporting the shrunk failing input.
 pub fn test_field_axioms<F: FiniteField + Debug>(strategy: BoxedStrategy<F>, characteristic: u64)
 where
     F::Characteristic: Into<u64>,
@@ -147,41 +79,11 @@ where
     test_field_axioms_with_cases(strategy, characteristic, CASES_PER_AXIOM);
 }
 
-/// Same as [`test_field_axioms`] but with an explicit proptest-case count.
-///
-/// Used by very-large-field tests (e.g. `Gf2mWide<4, Gf2m256TestConfig>`) that
-/// want a fast in-suite tier plus a separate `#[ignore]`-gated stress tier at
-/// the full `CASES_PER_AXIOM` budget.
-///
-/// # Arguments
-///
-/// * `strategy` — proptest strategy producing random field elements.
-/// * `characteristic` — the prime characteristic of the field.
-/// * `cases` — number of proptest cases per axiom.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{fp_strategy, test_field_axioms_with_cases};
-///
-/// // Run the full FiniteField axiom suite over Fp<7> at a reduced
-/// // 64-case budget (useful in doctests or when driving a very slow field).
-/// test_field_axioms_with_cases(fp_strategy::<7>(), 7, 64);
-/// ```
+/// [`test_field_axioms`] with an explicit proptest case count per axiom.
 ///
 /// # Panics
 ///
-/// Panics — via a proptest `TestRunner` abort — if any axiom check fails on a
-/// random sample (e.g. an implementation of the target [`FiniteField`] violates
-/// associativity, distributivity, or any other algebraic law the harness
-/// verifies). Also panics if `cases == 0`, because `proptest` treats a
-/// zero-case runner as a configuration error.
-///
-/// # Complexity
-///
-/// `O(cases × axiom_count × cost_of_field_ops)`, where `axiom_count` is the
-/// ~18 axioms run by this harness. Linear in `cases`, so halving it halves
-/// wall-clock time.
+/// Panics on the first law violation.
 pub fn test_field_axioms_with_cases<F: FiniteField + Debug>(
     strategy: BoxedStrategy<F>,
     characteristic: u64,
@@ -189,35 +91,28 @@ pub fn test_field_axioms_with_cases<F: FiniteField + Debug>(
 ) where
     F::Characteristic: Into<u64>,
 {
-    // Additive group
     check_additive_associativity(&mut runner(cases), &strategy);
     check_additive_commutativity(&mut runner(cases), &strategy);
     check_additive_identity(&mut runner(cases), &strategy);
     check_additive_inverse(&mut runner(cases), &strategy);
     check_subtraction_consistency(&mut runner(cases), &strategy);
 
-    // Multiplicative group
     check_multiplicative_associativity(&mut runner(cases), &strategy);
     check_multiplicative_commutativity(&mut runner(cases), &strategy);
     check_multiplicative_identity(&mut runner(cases), &strategy);
     check_multiplicative_inverse(&mut runner(cases), &strategy);
     check_division_consistency(&mut runner(cases), &strategy);
 
-    // Ring axioms
     check_distributivity(&mut runner(cases), &strategy);
     check_zero_annihilation(&mut runner(cases), &strategy);
 
-    // Characteristic
     check_characteristic(&mut runner(cases), &strategy, characteristic);
 
-    // Hash consistency
     check_hash_consistency(&mut runner(cases), &strategy);
 
-    // Wide accumulator
     check_wide_roundtrip(&mut runner(cases), &strategy);
     check_mul_wide_consistency(&mut runner(cases), &strategy);
 
-    // FiniteFieldExt convenience methods
     check_square_consistency(&mut runner(cases), &strategy);
     check_pow_consistency(&mut runner(cases), &strategy);
     check_frobenius_consistency(&mut runner(cases), &strategy, characteristic);
@@ -236,42 +131,15 @@ fn runner(cases: u32) -> TestRunner {
     TestRunner::new(ProptestConfig::with_cases(cases))
 }
 
-/// Run the full axiom suite for a [`ConstField`] implementation.
+/// Runs [`test_field_axioms`] for a [`ConstField`] and additionally checks
+/// that `F::zero()` and `F::one()` satisfy the identity predicates and that
+/// `F::order()` equals `p^m` for `m = extension_degree()`.
 ///
-/// Superset of [`test_field_axioms`]: runs every `FiniteField` axiom and
-/// additionally checks that the const identities agree with the instance
-/// identities (`F::zero().is_zero()`, `F::one().is_one()`) and that
-/// `F::order()` matches `p^m` where `m = extension_degree()`. Used by every
-/// `Fp<P>` and tower-extension test in the crate.
-///
-/// # Arguments
-///
-/// * `strategy` — a `proptest` [`BoxedStrategy<F>`] sampling uniformly over
-///   the field, including zero.
-/// * `characteristic` — the prime characteristic `p` of the field as a
-///   `u64`. For towers, this is the base-prime `P`, not `p^m`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{fp_strategy, test_const_field_axioms};
-///
-/// // Exercise Fp<7> under the full ConstField axiom harness (also checks
-/// // `F::order() == 7^1` and const zero/one identities).
-/// test_const_field_axioms(fp_strategy::<7>(), 7);
-/// ```
+/// `characteristic` is the prime `p`, also for a tower.
 ///
 /// # Panics
 ///
-/// Panics on the first axiom violation the underlying `TestRunner` detects,
-/// or if `F::order()` disagrees with `p^m`, or if the const zero/one do not
-/// match the predicates. See [`test_field_axioms`] for the axiom catalogue.
-///
-/// # Complexity
-///
-/// Same big-O as [`test_field_axioms`]:
-/// `O(CASES_PER_AXIOM × axiom_count × cost_of_field_ops)`. The const-only
-/// extra checks are three `assert!` calls and contribute a constant.
+/// Panics on the first violation.
 pub fn test_const_field_axioms<F: ConstField + Debug>(
     strategy: BoxedStrategy<F>,
     characteristic: u64,
@@ -281,21 +149,14 @@ pub fn test_const_field_axioms<F: ConstField + Debug>(
     test_const_field_axioms_with_cases(strategy, characteristic, CASES_PER_AXIOM);
 }
 
-/// Variant of [`test_const_field_axioms`] that accepts a custom per-axiom
-/// case budget. See [`test_field_axioms_with_cases`] for the rationale.
+/// [`test_const_field_axioms`] with an explicit case count per axiom.
 ///
-/// The `ConstField::order()` check is skipped when
-/// `F::order_log2() > 127`, i.e. when the field order exceeds
-/// `u128::MAX` and `order()` would panic. For those fields (the canonical
-/// example being `Gf2mWide<4, _>` for `GF(2^256)`) we instead verify
-/// that [`ConstField::order_log2`] agrees with the characteristic and
-/// extension-degree: `log2(p^m) = log2(p) * m`.
+/// When `F::order_log2() > 127` the order exceeds `u128::MAX` and `order()`
+/// would panic, so the check is `order_log2() == ilog2(p) · m` instead.
 ///
 /// # Panics
 ///
-/// Same as [`test_const_field_axioms`], plus: panics if
-/// `F::order_log2()` disagrees with the characteristic/extension-degree
-/// pair for fields whose order does not fit in `u128`.
+/// Panics on the first violation.
 pub fn test_const_field_axioms_with_cases<F: ConstField + Debug>(
     strategy: BoxedStrategy<F>,
     characteristic: u64,
@@ -313,7 +174,6 @@ pub fn test_const_field_axioms_with_cases<F: ConstField + Debug>(
     let order_log2 = F::order_log2();
 
     if order_log2 <= 127 {
-        // Order fits in a `u128`; check the full order() value directly.
         let p128 = characteristic as u128;
         let expected_order = p128.pow(m);
         assert_eq!(
@@ -325,11 +185,7 @@ pub fn test_const_field_axioms_with_cases<F: ConstField + Debug>(
             expected_order
         );
     } else {
-        // Order > u128::MAX — `order()` would panic, so check the
-        // bit-width invariant via `order_log2` instead:
-        //   log2(p^m) = log2(p) * m
-        // which pins down `order()` modulo a choice of floor/ceil. For
-        // characteristic-2 fields this is an exact equality.
+        // `order()` would panic; `ilog2(p) · m` is exact for characteristic 2.
         let expected_log2 = (characteristic as u128).ilog2() * m;
         assert_eq!(
             order_log2,
@@ -341,10 +197,6 @@ pub fn test_const_field_axioms_with_cases<F: ConstField + Debug>(
         );
     }
 }
-
-// ---------------------------------------------------------------------------
-// Additive group axioms
-// ---------------------------------------------------------------------------
 
 fn check_additive_associativity<F: FiniteField + Debug>(
     runner: &mut TestRunner,
@@ -421,10 +273,6 @@ fn check_subtraction_consistency<F: FiniteField + Debug>(
         .expect("subtraction consistency");
 }
 
-// ---------------------------------------------------------------------------
-// Multiplicative group axioms
-// ---------------------------------------------------------------------------
-
 fn check_multiplicative_associativity<F: FiniteField + Debug>(
     runner: &mut TestRunner,
     strategy: &BoxedStrategy<F>,
@@ -476,7 +324,6 @@ fn check_multiplicative_inverse<F: FiniteField + Debug>(
     runner: &mut TestRunner,
     strategy: &BoxedStrategy<F>,
 ) {
-    // Non-zero elements must have inverses
     let nonzero = strategy.clone().prop_filter("non-zero", |a| !a.is_zero());
     runner
         .run(&nonzero, |a| {
@@ -487,7 +334,6 @@ fn check_multiplicative_inverse<F: FiniteField + Debug>(
         })
         .expect("multiplicative inverse (non-zero)");
 
-    // Zero must not have an inverse
     runner
         .run(strategy, |a| {
             let zero = a.zero_like();
@@ -514,10 +360,6 @@ fn check_division_consistency<F: FiniteField + Debug>(
         .expect("division consistency");
 }
 
-// ---------------------------------------------------------------------------
-// Ring axioms
-// ---------------------------------------------------------------------------
-
 fn check_distributivity<F: FiniteField + Debug>(
     runner: &mut TestRunner,
     strategy: &BoxedStrategy<F>,
@@ -526,12 +368,10 @@ fn check_distributivity<F: FiniteField + Debug>(
         .run(
             &(strategy.clone(), strategy.clone(), strategy.clone()),
             |(a, b, c)| {
-                // Left distributivity
                 let lhs = a.clone() * (b.clone() + c.clone());
                 let rhs = (a.clone() * b.clone()) + (a.clone() * c.clone());
                 prop_assert_eq!(lhs, rhs, "left distributivity: a*(b+c) != a*b + a*c");
 
-                // Right distributivity
                 let lhs2 = (a.clone() + b.clone()) * c.clone();
                 let rhs2 = (a * c.clone()) + (b * c);
                 prop_assert_eq!(lhs2, rhs2, "right distributivity: (a+b)*c != a*c + b*c");
@@ -555,10 +395,6 @@ fn check_zero_annihilation<F: FiniteField + Debug>(
         .expect("zero annihilation");
 }
 
-// ---------------------------------------------------------------------------
-// Characteristic
-// ---------------------------------------------------------------------------
-
 /// Compute `scalar * elem` using double-and-add in O(log scalar) additions.
 fn scalar_mul<F: FiniteField>(elem: &F, scalar: u64) -> F {
     let mut result = elem.zero_like();
@@ -581,7 +417,6 @@ fn check_characteristic<F: FiniteField + Debug>(
 ) {
     runner
         .run(strategy, |a| {
-            // Sum of p copies of one must be zero
             let one = a.one_like();
             let sum_one = scalar_mul(&one, p);
             prop_assert!(
@@ -590,7 +425,6 @@ fn check_characteristic<F: FiniteField + Debug>(
                 p
             );
 
-            // Sum of p copies of any element a must be zero (p·a = 0)
             let sum_a = scalar_mul(&a, p);
             prop_assert!(sum_a.is_zero(), "p·a != 0 for p={}", p);
 
@@ -598,10 +432,6 @@ fn check_characteristic<F: FiniteField + Debug>(
         })
         .expect("characteristic");
 }
-
-// ---------------------------------------------------------------------------
-// Hash consistency
-// ---------------------------------------------------------------------------
 
 fn check_hash_consistency<F: FiniteField + Debug>(
     runner: &mut TestRunner,
@@ -617,7 +447,6 @@ fn check_hash_consistency<F: FiniteField + Debug>(
                 "equal elements must have equal hashes"
             );
 
-            // Also verify that a + 0 produces the same hash as a
             let a_plus_zero = a.clone() + a.zero_like();
             prop_assert_eq!(&a, &a_plus_zero, "a + 0 should equal a");
             prop_assert_eq!(
@@ -637,10 +466,6 @@ fn compute_hash<T: Hash>(val: &T) -> u64 {
     val.hash(&mut hasher);
     hasher.finish()
 }
-
-// ---------------------------------------------------------------------------
-// Wide accumulator
-// ---------------------------------------------------------------------------
 
 fn check_wide_roundtrip<F: FiniteField + Debug>(
     runner: &mut TestRunner,
@@ -671,10 +496,6 @@ fn check_mul_wide_consistency<F: FiniteField + Debug>(
         .expect("mul_to_wide consistency");
 }
 
-// ---------------------------------------------------------------------------
-// FiniteFieldExt axioms
-// ---------------------------------------------------------------------------
-
 fn check_square_consistency<F: FiniteField + Debug>(
     runner: &mut TestRunner,
     strategy: &BoxedStrategy<F>,
@@ -695,13 +516,10 @@ fn check_pow_consistency<F: FiniteField + Debug>(
 ) {
     runner
         .run(strategy, |a| {
-            // pow(0) == 1
             prop_assert!(a.pow(0).is_one(), "a.pow(0) != 1");
 
-            // pow(1) == a
             prop_assert_eq!(a.pow(1), a.clone(), "a.pow(1) != a");
 
-            // pow(a+b) == pow(a) * pow(b)
             let exp_a = 3u64;
             let exp_b = 5u64;
             let lhs = a.pow(exp_a + exp_b);
@@ -722,7 +540,6 @@ fn check_frobenius_consistency<F: FiniteField + Debug>(
 {
     runner
         .run(strategy, |a| {
-            // frobenius(1) == a^p
             let frob = a.frobenius(1);
             let pow_p = a.pow(p);
             prop_assert_eq!(frob, pow_p, "frobenius(1) != a^p");
@@ -740,7 +557,6 @@ fn check_freshman_dream<F: FiniteField + Debug>(
 {
     runner
         .run(&(strategy.clone(), strategy.clone()), |(a, b)| {
-            // Freshman's dream: (a + b)^p == a^p + b^p
             let lhs = (a.clone() + b.clone()).pow(p);
             let rhs = a.pow(p) + b.pow(p);
             prop_assert_eq!(lhs, rhs, "Freshman's dream: (a+b)^p != a^p + b^p");
@@ -748,10 +564,6 @@ fn check_freshman_dream<F: FiniteField + Debug>(
         })
         .expect("Freshman's dream");
 }
-
-// ---------------------------------------------------------------------------
-// Concrete tests for Gf2mElement
-// ---------------------------------------------------------------------------
 
 #[test]
 fn test_gf2_4_field_axioms() {
@@ -765,17 +577,14 @@ fn test_gf2_8_field_axioms() {
     test_field_axioms(gf2m_strategy(&field), 2);
 }
 
-/// The runtime-context GF(2^8) element over `x^8 + x^4 + x^3 + x + 1`, the
-/// modulus whose low eight bits are 0x1B. The polynomial identity is read from
-/// the value passed here, not from a constructor's name.
+/// GF(2^8) over `x^8 + x^4 + x^3 + x + 1` (0x11B).
 #[test]
 fn test_gf2_8_poly_11b_field_axioms() {
     let field = Gf2mField::new(8, 0b1_0001_1011);
     test_field_axioms(gf2m_strategy(&field), 2);
 }
 
-/// The runtime-context GF(2^8) element over `x^8 + x^4 + x^3 + x^2 + 1`, the
-/// modulus whose low eight bits are 0x1D.
+/// GF(2^8) over `x^8 + x^4 + x^3 + x^2 + 1` (0x11D).
 #[test]
 fn test_gf2_8_poly_11d_field_axioms() {
     let field = Gf2mField::new(8, 0b1_0001_1101);
@@ -788,11 +597,6 @@ fn test_gf2_16_field_axioms() {
     test_field_axioms(gf2m_strategy(&field), 2);
 }
 
-// ---------------------------------------------------------------------------
-// Concrete tests for Gf2mElement_<u128> at the full m = 17..=127 range
-// ---------------------------------------------------------------------------
-
-/// Helper: build a `Gf2mField_<u128>` using the catalogued standard polynomial.
 #[cfg(test)]
 fn gf2m_u128_field_from_standard(m: usize) -> Gf2mField_<u128> {
     let poly = crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128(m)
@@ -824,48 +628,14 @@ fn test_gf2_127_u128_field_axioms() {
     test_field_axioms(gf2m_u128_strategy(&field), 2);
 }
 
-/// Also exercise `Gf2mField_<u128>` at a small `m` that fits in `u64` to prove
-/// the generic backend routes correctly regardless of storage width.
+/// A degree that fits in `u64`, carried in `u128` storage.
 #[test]
 fn test_gf2_8_via_u128_field_axioms() {
     let field = Gf2mField_::<u128>::new(8, 0b100011101);
     test_field_axioms(gf2m_u128_strategy(&field), 2);
 }
 
-// ---------------------------------------------------------------------------
-// Strategies and concrete tests for Fp<P>
-// ---------------------------------------------------------------------------
-
-/// Strategy that generates uniformly random [`Fp<P>`] values (including zero).
-///
-/// The canonical sampler used by every prime-field axiom test in the crate
-/// and by tower-extension integration tests that need to sample Fp
-/// coefficients. Each draw is a uniform `u64` in `0..P`, then lifted through
-/// `Fp::<P>::new`, so zero is produced with probability `1/P`.
-///
-/// # Arguments
-///
-/// * `P` — the const-generic prime modulus. Must be a prime so that
-///   `Fp<P>` is actually a field; the strategy does not itself check
-///   primality (the [`Fp`] construction does).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{fp_strategy, test_field_axioms};
-///
-/// // Compose the strategy with the axiom harness to exercise Fp<7>.
-/// test_field_axioms(fp_strategy::<7>(), 7);
-/// ```
-///
-/// # Panics
-///
-/// None. The strategy is infallible: every sampled `u64` in `0..P` is a
-/// valid input to `Fp::<P>::new`.
-///
-/// # Complexity
-///
-/// Constant time per sample.
+/// Strategy that samples [`Fp<P>`] uniformly, including zero.
 pub fn fp_strategy<const P: u64>() -> BoxedStrategy<Fp<P>> {
     (0..P).prop_map(Fp::<P>::new).boxed()
 }
@@ -900,10 +670,6 @@ fn test_fp_mersenne61_const_field_axioms() {
     test_const_field_axioms(fp_strategy::<2305843009213693951>(), 2305843009213693951);
 }
 
-// ---------------------------------------------------------------------------
-// Specialized primes: axiom coverage
-// ---------------------------------------------------------------------------
-
 /// `Fp<P>` for the 31-bit Mersenne prime `2^31 - 1` (compile-time specialised).
 #[test]
 fn test_fp_mersenne31_const_field_axioms() {
@@ -912,7 +678,7 @@ fn test_fp_mersenne31_const_field_axioms() {
 }
 
 /// `Fp<P>` for the BabyBear Proth prime `15·2^27 + 1 = 2013265921`
-/// (compile-time specialised; widely used in zk-STARK frameworks).
+/// (compile-time specialised).
 #[test]
 fn test_fp_babybear_const_field_axioms() {
     use crate::field::two_adic::BABYBEAR_P;
@@ -927,7 +693,6 @@ fn test_fp_koalabear_const_field_axioms() {
     test_const_field_axioms(fp_strategy::<KOALABEAR_P>(), KOALABEAR_P);
 }
 
-// Goldilocks strategy and axiom test.
 use crate::gfp::specialized::{GoldilocksFp, GOLDILOCKS_PRIME};
 
 fn goldilocks_strategy() -> BoxedStrategy<GoldilocksFp> {
@@ -950,64 +715,11 @@ fn test_goldilocks_const_field_axioms() {
     test_const_field_axioms(goldilocks_strategy(), GOLDILOCKS_PRIME);
 }
 
-// ---------------------------------------------------------------------------
-// Strategy and concrete tests for Gf2mWide<N, Cfg>
-// ---------------------------------------------------------------------------
-
-/// Strategy that generates uniformly random [`Gf2mWide<N, Cfg>`] values
-/// (including zero) for any multi-word binary extension field.
-///
-/// Draws `2 * N` independent `u64` values, pairs them so that adjacent pairs
-/// are XOR-mixed for bit coverage, packs the result into a `[u64; N]` array,
-/// and delegates to [`Gf2mWide::new`] which tail-masks any bits above
-/// `Cfg::M` to zero. The strategy therefore produces uniformly distributed
-/// elements across all `2^(Cfg::M)` field elements without over-counting the
-/// all-zero element.
-///
-/// # Arguments
-///
-/// * `N` — const generic word count; must match `Cfg`'s `N`.
-/// * `Cfg` — the [`Gf2mWideConfig`] marker that selects the irreducible
-///   polynomial and extension degree.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{gf2m_wide_strategy, test_field_axioms};
-/// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-///
-/// struct Gf2m256DocConfig;
-/// impl Gf2mWideConfig<4> for Gf2m256DocConfig {
-///     const M: usize = 256;
-///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-/// }
-///
-/// // Build the strategy (ready to feed into `test_field_axioms`,
-/// // which runs `CASES_PER_AXIOM` = 1000 proptest cases per axiom).
-/// // Calling the full harness is omitted here to keep the doctest fast.
-/// let strat = gf2m_wide_strategy::<4, Gf2m256DocConfig>();
-/// let _ = strat;
-/// ```
-///
-/// # Panics
-///
-/// None from the strategy itself. [`Gf2mWide::new`] panics in debug builds if
-/// its internal `debug_assert!` fires — but since we always pass raw `u64`
-/// arrays (which may have high bits), we call `new` rather than `from_words`,
-/// so the masking is applied unconditionally.
-///
-/// # Complexity
-///
-/// Constant time per sample: `O(N)` XOR operations and one call to
-/// `Gf2mWide::new`.
+/// Strategy that samples [`Gf2mWide<N, Cfg>`] uniformly, including zero.
 pub fn gf2m_wide_strategy<const N: usize, Cfg: Gf2mWideConfig<N>>(
 ) -> BoxedStrategy<Gf2mWide<N, Cfg>> {
-    // Generate 2*N u64 values. Adjacent pairs are XOR-mixed to pack extra
-    // entropy into N words, giving good coverage of all bit positions even
-    // though proptest draws u64 values independently.
     proptest::collection::vec(any::<u64>(), 2 * N)
         .prop_map(|vals| {
-            // Pack pairs into N words: word[i] = vals[2*i] ^ vals[2*i+1]
             let mut words = [0u64; N];
             for i in 0..N {
                 words[i] = vals[2 * i] ^ vals[2 * i + 1];
@@ -1017,18 +729,8 @@ pub fn gf2m_wide_strategy<const N: usize, Cfg: Gf2mWideConfig<N>>(
         .boxed()
 }
 
-// ---------------------------------------------------------------------------
-// Test config: GF(2^256) with irreducible x^256 + x^10 + x^5 + x^2 + 1
-// (Seroussi HPL-98-135 Table 1, m = 256).
-// ---------------------------------------------------------------------------
-
-/// GF(2^256) test configuration.
-///
-/// Irreducible polynomial: `x^256 + x^10 + x^5 + x^2 + 1`.
-/// Cited from Seroussi, "Table of Low-Weight Binary Irreducible Polynomials",
-/// HP Laboratories technical report HPL-98-135 (1998), Table 1 row m = 256.
-///
-/// Low-order bits: `x^10 + x^5 + x^2 + 1 = 1024 + 32 + 4 + 1 = 1061 = 0x425`.
+/// GF(2^256) over `x^256 + x^10 + x^5 + x^2 + 1` (`@/citation/Seroussi1998`
+/// Table 1, m = 256).
 #[cfg(test)]
 struct Gf2m256TestConfig;
 
@@ -1040,54 +742,27 @@ impl Gf2mWideConfig<4> for Gf2m256TestConfig {
     const NAME: &'static str = "Gf2m256TestConfig";
 }
 
-/// `ConstField` axiom-harness integration test for
-/// `Gf2mWide<4, Gf2m256TestConfig>` at a reduced 100-case-per-axiom budget
-/// for the routine `cargo test` pass.
-///
-/// Uses [`test_const_field_axioms_with_cases`] — the standard `ConstField`
-/// harness. It exercises the full field axiom suite plus the const-only
-/// zero/one/order checks; for `M = 256` the `order()` check is
-/// automatically skipped because `order_log2() > 127`, and the bit-width
-/// invariant `order_log2 == log2(p) * m` is verified instead.
-///
-/// The 1000-case full-budget variant lives in
-/// [`test_axioms_gf2m_wide_256_stress`] as `#[ignore]`-gated; this
-/// 100-case variant keeps the routine suite well under the 60 s
-/// workspace-test budget even if a future reviewer adds new axioms
-/// or a slower field config.
+/// For `M = 256`, `order_log2() > 127`, so the harness checks `order_log2`
+/// in place of `order()`. Runs 100 cases per axiom; the full budget is
+/// [`test_axioms_gf2m_wide_256_stress`].
 #[test]
 fn test_axioms_gf2m_wide_256() {
     test_const_field_axioms_with_cases(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2, 100);
 }
 
-/// Documents the u128 overflow limitation of `ConstField::order()` for large
-/// extension degrees.
-///
-/// `order()` on `Gf2mWide<N, Cfg>` panics for `Cfg::M >= 128` because `2^M`
-/// does not fit in a `u128`. Callers that need a non-panicking width probe
-/// should use [`ConstField::order_log2`] instead, which returns `Cfg::M` for
-/// all `M` including `>= 128`.
+/// `2^256` does not fit in `u128`; [`ConstField::order_log2`] is the non-panicking probe.
 #[test]
 #[should_panic(expected = "Gf2mWide::order exceeds u128 for M = 256")]
 fn test_order_panics_at_m256() {
     let _ = <Gf2mWide<4, Gf2m256TestConfig> as crate::field::ConstField>::order();
 }
 
-/// Full-budget stress variant of `test_axioms_gf2m_wide_256` — runs the
-/// `ConstField` axiom harness at `CASES_PER_AXIOM = 1000` cases per
-/// axiom. Skipped by default; run with `cargo test -- --ignored` for
-/// thorough coverage.
-///
-/// Expected wall-clock ≈ 200 ms release on the reference Zen 3 host.
+/// `test_axioms_gf2m_wide_256` at the full `CASES_PER_AXIOM` budget.
 #[test]
 #[ignore]
 fn test_axioms_gf2m_wide_256_stress() {
     test_const_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2);
 }
-
-// ---------------------------------------------------------------------------
-// Single-word GF(2^8) wide configurations, one per reduction polynomial
-// ---------------------------------------------------------------------------
 
 /// GF(2^8) over `x^8 + x^4 + x^3 + x + 1`; low-order bits `0x1b`.
 #[cfg(test)]
@@ -1127,10 +802,6 @@ fn test_axioms_gf2m_wide_gf256_poly_11d() {
     test_const_field_axioms(gf2m_wide_strategy::<1, Gf256Poly11dTestConfig>(), 2);
 }
 
-// ---------------------------------------------------------------------------
-// Strategies for the tower extension carriers
-// ---------------------------------------------------------------------------
-
 /// Strategy that generates uniformly random [`QuadraticExt<C>`] values from a
 /// strategy over the base field.
 ///
@@ -1138,20 +809,6 @@ fn test_axioms_gf2m_wide_gf256_poly_11d() {
 /// `c0 + c1·u`. Composing this with itself samples a nested tower: feeding
 /// `quadratic_strategy::<Inner>(fp_strategy::<3>())` into
 /// `quadratic_strategy::<Outer>` samples GF(3⁴) presented over GF(3²).
-///
-/// # Arguments
-///
-/// * `base` — a strategy over `C::BaseField`, which must sample zero as well
-///   as the non-zero elements for the axiom and extension harnesses to cover
-///   the degenerate cases.
-///
-/// # Panics
-///
-/// None. Every pair of base-field elements is a valid `QuadraticExt<C>`.
-///
-/// # Complexity
-///
-/// Two base-field draws per sample.
 pub fn quadratic_strategy<C>(base: BoxedStrategy<C::BaseField>) -> BoxedStrategy<QuadraticExt<C>>
 where
     C: ExtConfig + 'static,
@@ -1167,19 +824,6 @@ where
 ///
 /// The cubic counterpart of [`quadratic_strategy`]: draws three independent
 /// base-field coefficients and assembles `c0 + c1·v + c2·v²`.
-///
-/// # Arguments
-///
-/// * `base` — a strategy over `C::BaseField` that samples zero as well as the
-///   non-zero elements.
-///
-/// # Panics
-///
-/// None. Every triple of base-field elements is a valid `CubicExt<C>`.
-///
-/// # Complexity
-///
-/// Three base-field draws per sample.
 pub fn cubic_strategy<C>(base: BoxedStrategy<C::BaseField>) -> BoxedStrategy<CubicExt<C>>
 where
     C: ExtConfig + 'static,
@@ -1224,10 +868,6 @@ where
         .boxed()
 }
 
-// ---------------------------------------------------------------------------
-// Field-identity laws
-// ---------------------------------------------------------------------------
-
 /// Run the shared [`FieldIdentity`] law suite for one carrier.
 ///
 /// Every carrier that names its algebraic identity runs this suite, which
@@ -1245,11 +885,6 @@ where
 /// - **Conversion and encoding.** [`convert_element`] into the same field is
 ///   the identity, and `FieldId::decode(id.encode())` round-trips.
 ///
-/// # Arguments
-///
-/// * `strategy` — a `proptest` [`BoxedStrategy<F>`] sampling uniformly over
-///   the field, including zero.
-///
 /// # Panics
 ///
 /// Panics — via a proptest `TestRunner` abort — on the first law violation,
@@ -1263,22 +898,11 @@ pub fn test_field_identity_laws<F: FieldIdentity>(strategy: BoxedStrategy<F>) {
     test_field_identity_laws_with_cases(strategy, CASES_PER_EXTENSION_LAW);
 }
 
-/// Variant of [`test_field_identity_laws`] that accepts a custom per-law case
-/// budget.
-///
-/// Used by carriers whose coordinate vectors are long enough that the default
-/// budget would crowd the fast-tier suite limit — GF(2²⁵⁶) writes 256
-/// coordinates and encodes a 257-coefficient modulus per case.
-///
-/// # Arguments
-///
-/// * `strategy` — proptest strategy producing random field elements.
-/// * `cases` — number of proptest cases per law.
+/// [`test_field_identity_laws`] with an explicit case count per law.
 ///
 /// # Panics
 ///
-/// Same as [`test_field_identity_laws`], plus a `proptest` configuration
-/// panic when `cases == 0`.
+/// Same as [`test_field_identity_laws`].
 pub fn test_field_identity_laws_with_cases<F: FieldIdentity>(
     strategy: BoxedStrategy<F>,
     cases: u32,
@@ -1420,10 +1044,6 @@ fn check_field_id_encoding_round_trip<F: FieldIdentity>(
         .expect("field id encoding round trip");
 }
 
-// ---------------------------------------------------------------------------
-// Relative extension laws
-// ---------------------------------------------------------------------------
-
 /// Run the shared [`FieldExtension`] law suite for one extension witness.
 ///
 /// Every witness of the relation `B ⊆ E` runs this suite. It pins the
@@ -1441,12 +1061,6 @@ fn check_field_id_encoding_round_trip<F: FieldIdentity>(
 /// - **Relative Frobenius.** `φ⁰` and `φʳ` are the identity, `φ` is additive
 ///   and multiplicative, `φ` has period `r`, and its fixed set is exactly the
 ///   image of `embed`.
-///
-/// # Arguments
-///
-/// * `ext` — the extension witness under test.
-/// * `base_strategy` — uniform sampler over `X::Base`, including zero.
-/// * `ext_strategy` — uniform sampler over `X::Ext`, including zero.
 ///
 /// # Panics
 ///
@@ -1466,23 +1080,11 @@ pub fn test_extension_laws<X: FieldExtension>(
     test_extension_laws_with_cases(ext, base_strategy, ext_strategy, CASES_PER_EXTENSION_LAW);
 }
 
-/// Variant of [`test_extension_laws`] that accepts a custom per-law case
-/// budget.
-///
-/// Used by witnesses whose Frobenius orbit is long enough that the default
-/// budget would crowd the fast-tier suite limit.
-///
-/// # Arguments
-///
-/// * `ext` — the extension witness under test.
-/// * `base_strategy` — uniform sampler over `X::Base`.
-/// * `ext_strategy` — uniform sampler over `X::Ext`.
-/// * `cases` — number of proptest cases per law.
+/// [`test_extension_laws`] with an explicit case count per law.
 ///
 /// # Panics
 ///
-/// Same as [`test_extension_laws`], plus a `proptest` configuration panic
-/// when `cases == 0`.
+/// Same as [`test_extension_laws`].
 pub fn test_extension_laws_with_cases<X: FieldExtension>(
     ext: &X,
     base_strategy: BoxedStrategy<X::Base>,
@@ -1689,10 +1291,6 @@ fn check_relative_frobenius<X: FieldExtension>(
         .expect("relative Frobenius");
 }
 
-// ---------------------------------------------------------------------------
-// Test configurations for the tower carriers
-// ---------------------------------------------------------------------------
-
 /// GF(7²) as GF(7)[u]/(u² − 3); 3 is a quadratic non-residue modulo 7.
 #[cfg(test)]
 struct Gf49Config;
@@ -1733,8 +1331,7 @@ impl ExtConfig for Gf9Config {
 #[cfg(test)]
 pub(crate) type Gf9 = QuadraticExt<Gf9Config>;
 
-/// GF(3⁴) as GF(3²)[y]/(y² − (1 + u)), the relative tower presentation of the
-/// design's worked GF(3²) ⊂ GF(3⁴) example.
+/// GF(3⁴) as GF(3²)[y]/(y² − (1 + u)).
 ///
 /// `1 + u` is a non-square in GF(9): the squares of GF(9)* are its four
 /// fourth-roots of unity, and `(1 + u)² = 2u`, so `(1 + u)⁴ = 4u² = −4 = 2 ≠ 1`.
@@ -1782,10 +1379,6 @@ fn quotient_gf81() -> QuotientField<Gf9> {
     .expect("y^2 - (1 + u) is irreducible over GF(9)")
 }
 
-// ---------------------------------------------------------------------------
-// Runtime quotient field-law coverage
-// ---------------------------------------------------------------------------
-
 #[test]
 fn test_quotient_gf16_field_axioms() {
     let field = quotient_gf16();
@@ -1807,14 +1400,9 @@ fn test_quotient_gf81_over_gf9_field_axioms() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Compile-time quotient field-law coverage
-//
-// Every registration here builds its witness through the validating
-// `ConstQuotient::extension` path, so each in-tree compile-time declaration is
-// decided by `prove_irreducible` in CI instead of resting on the type-level
-// declaration. A reducible declaration is never registered.
-// ---------------------------------------------------------------------------
+// Each test below builds its witness through the validating
+// `ConstQuotient::extension` path, so `prove_irreducible` decides every
+// in-tree compile-time declaration.
 
 #[test]
 fn test_const_quotient_gf16_const_field_axioms() {
@@ -1844,10 +1432,6 @@ fn test_const_quotient_gf81_over_gf9_const_field_axioms() {
         3,
     );
 }
-
-// ---------------------------------------------------------------------------
-// Field-identity law coverage
-// ---------------------------------------------------------------------------
 
 #[test]
 fn test_identity_laws_fp2() {
@@ -1977,11 +1561,7 @@ fn test_identity_laws_const_quotient_gf81_over_gf9() {
     ));
 }
 
-// ---------------------------------------------------------------------------
-// Extension law coverage
-// ---------------------------------------------------------------------------
-
-/// GF(2) ⊂ GF(2⁴) over `x⁴ + x + 1`, the design's first worked example.
+/// GF(2) ⊂ GF(2⁴) over `x⁴ + x + 1`.
 #[test]
 fn test_extension_laws_gf2_in_gf16() {
     let field = Gf2mField::new(4, 0b10011);
@@ -1989,7 +1569,6 @@ fn test_extension_laws_gf2_in_gf16() {
     test_extension_laws(&ext, fp_strategy::<2>(), gf2m_strategy(&field));
 }
 
-/// GF(2) ⊂ GF(2⁸), the corpus row N4 base field.
 #[test]
 fn test_extension_laws_gf2_in_gf256() {
     let field = Gf2mField::gf256();
@@ -2017,7 +1596,6 @@ fn test_extension_laws_gf2_in_gf2m_degree_65() {
     test_extension_laws_with_cases(&ext, fp_strategy::<2>(), gf2m_u128_strategy(&field), 32);
 }
 
-/// GF(7) ⊂ GF(7²) through the `ExtConfig` quadratic tower.
 #[test]
 fn test_extension_laws_fp7_in_gf49() {
     let ext = ConstExt::<QuadraticExt<Gf49Config>>::new();
@@ -2028,7 +1606,6 @@ fn test_extension_laws_fp7_in_gf49() {
     );
 }
 
-/// GF(7) ⊂ GF(7³) through the `ExtConfig` cubic tower.
 #[test]
 fn test_extension_laws_fp7_in_gf343() {
     let ext = ConstExt::<CubicExt<Gf343Config>>::new();
@@ -2039,8 +1616,8 @@ fn test_extension_laws_fp7_in_gf343() {
     );
 }
 
-/// GF(3²) ⊂ GF(3⁴), the design's tower worked example: `base_degree() > 1`, so
-/// the relative Frobenius takes two absolute steps per relative step.
+/// GF(3²) ⊂ GF(3⁴): `base_degree() > 1`, so the relative Frobenius takes two
+/// absolute steps per relative step.
 #[test]
 fn test_extension_laws_gf9_in_gf81() {
     let ext = ConstExt::<QuadraticExt<Gf81Config>>::new();
@@ -2122,15 +1699,12 @@ fn test_extension_laws_gf9_in_const_quotient_gf81() {
     );
 }
 
-/// The trivial extension over a compile-time prime field.
 #[test]
 fn test_extension_laws_trivial_fp7() {
     let ext = TrivialExt::new(Fp::<7>::new(0));
     test_extension_laws(&ext, fp_strategy::<7>(), fp_strategy::<7>());
 }
 
-/// The trivial extension over a runtime GF(2^m) carrier — the corpus row N4
-/// shape, where the base and the splitting field coincide.
 #[test]
 fn test_extension_laws_trivial_gf256() {
     let field = Gf2mField::gf256();
