@@ -406,6 +406,14 @@
       "assets": [
         {
           "asset_type": "local",
+          "content_hash": "04a230ae926a63a3da93386544c32d1cf11a6da0bb2bfb2f840fb572d0943572",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-conformance.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-conformance.md"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
           "is_shared": false,
           "mime_type": "text/markdown",
@@ -427,20 +435,12 @@
           "mime_type": "text/plain",
           "original_path": "m4ri-probe-record.txt",
           "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "04a230ae926a63a3da93386544c32d1cf11a6da0bb2bfb2f840fb572d0943572",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "dense-parity-conformance.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-conformance.md"
         }
       ],
       "commit": null,
       "doc_type": "reference",
       "format": "markdown",
-      "label": "Current dense-parity harness and companion semantics",
+      "label": "Dense-parity harness description",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-harness.md"
     },
     {
@@ -459,83 +459,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "7bb612d45531e30d685081bd201df4e56179d9f3b3a0017b2a3848972d333c60",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../c73ffa25/outcome.md",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/c73ffa25/outcome.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "10cc1516edf6044d902e3cf29fbdf7bc3c6bd5c25fa3903915aa6a97ce35f880",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e38dab765dfac1413626475cf48239910c412e111123383db67da6a9ad131870",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "0b413c01fc045b6017a1bcee71784e9ca4f3f158ff7593a01f8f598b7bb99d77",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7f174969f8171ab06800a10448de754809a48a744939e979050acf73722ed89a",
+          "content_hash": "1f53ef33f6242fef5daecf1f9b448dd38f75b647bf9711ccd0d96df7c794dd03",
           "is_shared": false,
           "mime_type": null,
           "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json",
           "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "64004e045aad1122061373f23226d15863845b60168eb14954db6a9572895a0b",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a36fcacf5d3548e4d40008eb1037052c7aae0e91386688e8021910b5a25f4bde",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a115a5f3b1bbec080dcfc117246cb3be2f7adfc7951313b6ea33f0ec58161c7b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../c7113c5a/survey/freeze-confirmation.py",
-          "resolved_path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
         },
         {
           "asset_type": "local",
@@ -547,11 +475,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "content_hash": "64004e045aad1122061373f23226d15863845b60168eb14954db6a9572895a0b",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
         },
         {
           "asset_type": "local",
@@ -563,17 +491,97 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "422d860cc0cd81062b58d3c4fe4c2a3dc4889f6b4154c989abda4bc2b86a072a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../c7113c5a/survey/freeze-confirmation.py",
+          "resolved_path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a36fcacf5d3548e4d40008eb1037052c7aae0e91386688e8021910b5a25f4bde",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0b413c01fc045b6017a1bcee71784e9ca4f3f158ff7593a01f8f598b7bb99d77",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../../f547c394/protocol.md",
           "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "13dca64fe3b1cdec02be932eea05b48867acc7226d8f03ce90ade1a5ee423a91",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/50f0bd42/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a108d5cc39a349d652b0e2ef069cf7274afae3c9770aa0fd92593bdcc20eaff9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7bb612d45531e30d685081bd201df4e56179d9f3b3a0017b2a3848972d333c60",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c73ffa25/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/c73ffa25/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "10cc1516edf6044d902e3cf29fbdf7bc3c6bd5c25fa3903915aa6a97ce35f880",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
         }
       ],
       "commit": null,
       "doc_type": "research",
       "format": "markdown",
-      "label": "M4RI comparison frozen preparation and criterion disposition",
+      "label": "M4RI comparison preparation",
       "path": "dev/active/1a379447-zen3-cpu-performance/50f0bd42/preparation.md"
     },
     {
@@ -692,107 +700,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "55f4ee09c456b6e73fc4e234cd223756b02dd23b02e6d031c2a45879ceb06247",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/execution.log",
-          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/execution.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7066d88d8e698976c78fe5da08f9bcd7282e9d76fc236d9d44e65d1322976aee",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../scripts/verify-campaign-log.py",
-          "resolved_path": "dev/scripts/verify-campaign-log.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a108d5cc39a349d652b0e2ef069cf7274afae3c9770aa0fd92593bdcc20eaff9",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "4492e5914d8231f501e58be0b16b522380c5bf836258348fc749912b1b9db8e2",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "0cac9bc398fe804d12ebe1859ccd48e11345b66518f45448e261a8db1cfc0597",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/plan.json",
-          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/plan.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7bb612d45531e30d685081bd201df4e56179d9f3b3a0017b2a3848972d333c60",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../c73ffa25/outcome.md",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/c73ffa25/outcome.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a43736c7db45038bc91fbcaed559b31c3b235254b571822b257266d3ece0de7b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/launcher.log",
-          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/launcher.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "25d81872e07c01b19e70850cd5db019c42474567ae719b7fe072232c33ebc184",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "380166cd16eaf3bcc9bb0fe5695bb7db82d2ef9ad01cfd5292d0bd5e4b130636",
           "is_shared": false,
           "mime_type": null,
           "original_path": "confirmation-smoke.json",
           "resolved_path": "dev/active/1a379447-zen3-cpu-performance/50f0bd42/confirmation-smoke.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "2f71d2fab2c3bb03d35f63654a1d9be63b9f4c0446b1758f1a446f29ba716e0b",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../5cbb6545/findings.md",
-          "resolved_path": "dev/active/5cbb6545/findings.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "f1f93cfec3fe7a661de8d1fe0db87c265e1b749b2df4b0523cfe51c450acd6ae",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../../bench_results/2037941f/m4ri-gap-resolution.md",
-          "resolved_path": "dev/bench_results/2037941f/m4ri-gap-resolution.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "47f9b31cae0a9403a0658ab82ef44df91121202ef62139a2537731c078ca693e",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation-derivation.txt",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation-derivation.txt"
         },
         {
           "asset_type": "local",
@@ -804,51 +716,35 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "3fd35ada607b18424113ac7eab787cea283e362524966da187ee0f199841f0ec",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../bench-window/queue.tsv",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "content_hash": "47f9b31cae0a9403a0658ab82ef44df91121202ef62139a2537731c078ca693e",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation-derivation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation-derivation.txt"
         },
         {
           "asset_type": "local",
-          "content_hash": "5ab6669684c24af2caafeacc80db1a3137c3516e8088f428e5c55919e7d30697",
+          "content_hash": "2f71d2fab2c3bb03d35f63654a1d9be63b9f4c0446b1758f1a446f29ba716e0b",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../../bench_results/2037941f/m4ri-gap-tables.md",
-          "resolved_path": "dev/bench_results/2037941f/m4ri-gap-tables.md"
+          "original_path": "../../5cbb6545/findings.md",
+          "resolved_path": "dev/active/5cbb6545/findings.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
+          "content_hash": "55f4ee09c456b6e73fc4e234cd223756b02dd23b02e6d031c2a45879ceb06247",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/unavailable-rows.tsv",
-          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/unavailable-rows.tsv"
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/execution.log"
         },
         {
           "asset_type": "local",
-          "content_hash": "714223d50a6774a7a793db6848c162e45b29958672fc12d807e94ad7d61ba9ab",
+          "content_hash": "a43736c7db45038bc91fbcaed559b31c3b235254b571822b257266d3ece0de7b",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json",
-          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "10cc1516edf6044d902e3cf29fbdf7bc3c6bd5c25fa3903915aa6a97ce35f880",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/launcher.log"
         },
         {
           "asset_type": "local",
@@ -860,17 +756,169 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "5f1e3a1cfde0800bff7a267f66f8d83fa3a7e08f573e0dc7a001c481fbe8438f",
+          "content_hash": "6c132b3ec0166f7d6a4d23cd20adacd6a680e2513a04e4767852356667391b16",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7bb612d45531e30d685081bd201df4e56179d9f3b3a0017b2a3848972d333c60",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c73ffa25/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/c73ffa25/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/unavailable-rows.tsv",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/unavailable-rows.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2d005e9765b8e7a4c66d9919e3dd07b8011e7580a1af96c82fdfff29378bb8f2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/plan.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/plan.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "acefa5e7f453de1a22492b18f687d02b350a14af82f9c213cf6d8bf13e8686f7",
           "is_shared": false,
           "mime_type": null,
           "original_path": "../../../bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl",
           "resolved_path": "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f1f93cfec3fe7a661de8d1fe0db87c265e1b749b2df4b0523cfe51c450acd6ae",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/m4ri-gap-resolution.md",
+          "resolved_path": "dev/bench_results/2037941f/m4ri-gap-resolution.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bc3c5fa640f1857576ea7f8bbc80b4e82fedc5374cf491931f2826e5439cc838",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0cac9bc398fe804d12ebe1859ccd48e11345b66518f45448e261a8db1cfc0597",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/plan.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/plan.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "10cc1516edf6044d902e3cf29fbdf7bc3c6bd5c25fa3903915aa6a97ce35f880",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7066d88d8e698976c78fe5da08f9bcd7282e9d76fc236d9d44e65d1322976aee",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../scripts/verify-campaign-log.py",
+          "resolved_path": "dev/scripts/verify-campaign-log.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bcc2606debbe8ba23d4a278a34520bd6e928b98ba7032eb988d7302d2d4c4b4b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "714223d50a6774a7a793db6848c162e45b29958672fc12d807e94ad7d61ba9ab",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3e36fdf488bb0f5c94903915b2dcf6d87947780e4a9464cb95d8049754f234af",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/m4ri-gap-tables.md",
+          "resolved_path": "dev/bench_results/2037941f/m4ri-gap-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4492e5914d8231f501e58be0b16b522380c5bf836258348fc749912b1b9db8e2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "714223d50a6774a7a793db6848c162e45b29958672fc12d807e94ad7d61ba9ab",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/inputs/resolution-evidence/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/inputs/resolution-evidence/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "25d81872e07c01b19e70850cd5db019c42474567ae719b7fe072232c33ebc184",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a108d5cc39a349d652b0e2ef069cf7274afae3c9770aa0fd92593bdcc20eaff9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
         }
       ],
       "commit": null,
       "doc_type": "research",
       "format": "markdown",
-      "label": "M4RI pilot-stage outcome",
+      "label": "Dense-parity decision record",
       "path": "dev/active/1a379447-zen3-cpu-performance/50f0bd42/outcome.md"
     },
     {
@@ -964,6 +1012,32 @@
       "doc_type": "tool",
       "label": "Shared resolution rule",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/resolution_rule.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "M4RI confirmation receipt",
+      "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "M4RI confirmation acceptance summary",
+      "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "M4RI confirmation execution log",
+      "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "M4RI confirmation unavailable rows",
+      "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv"
     }
   ],
   "first_ready_at": "2026-09-16T22:37:53.286171086Z",
@@ -998,5 +1072,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
-  "updated_at": "2026-10-04T21:31:32.760344381Z"
+  "updated_at": "2026-10-04T23:21:51.999211450Z"
 }
