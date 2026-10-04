@@ -1,7 +1,9 @@
-//! Expression-template proxy algebra over [`FieldMatrix<F>`]: operators on
-//! matrix references build lazy proxies that [`Evaluate`] writes with one
-//! kernel call per fused pattern, as in `(&a * &b + &c).into()`. Converting
-//! a subexpression to a [`FieldMatrix<F>`] evaluates it and ends the fusion.
+//! Expression-template proxy algebra over [`FieldMatrix<F>`].
+//!
+//! Operators on matrix references build lazy proxies that [`Evaluate`] writes
+//! with one kernel call per fused pattern, as in `(&a * &b + &c).into()`.
+//! Converting a subexpression to a [`FieldMatrix<F>`] evaluates it and ends
+//! the fusion.
 
 use std::cell::Cell;
 use std::ops::{Add, Mul, Neg, Sub};

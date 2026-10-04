@@ -1,4 +1,5 @@
 //! Cached GF(2^8) byte product tables and the region kernel that reads them.
+//!
 //! One table holds the product of every byte pair under one degree-8
 //! reduction polynomial, keyed by that polynomial's low eight bits. A table
 //! occupies 65536 bytes; the registry holds one per key used, at most 16 MiB,

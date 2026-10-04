@@ -1,5 +1,8 @@
-//! [`ExtConfig`]: the base field and non-residue β that define the binomial
-//! extensions `x² − β` (`QuadraticExt<C>`) and `x³ − β` (`CubicExt<C>`).
+//! Configuration trait for algebraic field extensions.
+//!
+//! [`ExtConfig`] names the base field and the non-residue β that define the
+//! binomial extensions `x² − β` (`QuadraticExt<C>`) and `x³ − β`
+//! (`CubicExt<C>`).
 
 use crate::field::ConstField;
 

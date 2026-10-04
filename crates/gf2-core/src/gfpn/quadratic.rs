@@ -1,6 +1,9 @@
-//! Quadratic extension field arithmetic: [`QuadraticExt<C>`] holds elements
-//! `c0 + c1·u` with `u² = β` over any [`ConstField`] base, β coming from an
-//! [`ExtConfig`]. Multiplication is Karatsuba (`@/citation/Devegili2006`).
+//! Quadratic extension field arithmetic: elements `c0 + c1·u` where `u² = β`.
+//!
+//! [`QuadraticExt<C>`] is a degree-2 extension of any base field that
+//! implements [`ConstField`], parameterized by an [`ExtConfig`] specifying the
+//! non-residue β. Multiplication is Karatsuba with 3 base-field
+//! multiplications (`@/citation/Devegili2006`).
 
 use std::fmt;
 use std::hash::{Hash, Hasher};

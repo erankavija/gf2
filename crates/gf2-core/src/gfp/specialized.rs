@@ -1,6 +1,8 @@
-//! Reductions for primes with special algebraic structure: Mersenne primes
+//! Reductions for primes with special algebraic structure.
+//!
+//! [`classify`] detects three shapes at compile time: Mersenne primes
 //! `2^n - 1`, Proth primes `k·2^n + 1` and the Goldilocks prime
-//! `2^64 - 2^32 + 1`, the shapes [`classify`] detects at compile time.
+//! `2^64 - 2^32 + 1`.
 
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};

@@ -1,6 +1,8 @@
-//! Reduced row echelon form over GF(2): [`rref`] pivots in a fixed direction,
-//! and [`ordered_column_elimination`] follows an explicit column preference
-//! and returns the row transform that produced the reduced matrix.
+//! Reduced Row Echelon Form (RREF) computation over GF(2).
+//!
+//! [`rref`] pivots in a fixed direction. [`ordered_column_elimination`] takes
+//! an explicit column preference instead, and additionally returns the
+//! invertible row transform that produced the reduced matrix.
 
 use std::fmt;
 

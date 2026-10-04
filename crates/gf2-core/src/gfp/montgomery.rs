@@ -1,5 +1,7 @@
-//! Montgomery multiplication helpers for GF(p): compile-time constants and
-//! runtime Montgomery reduction (REDC) with `R = 2^64`, both for odd P.
+//! Montgomery multiplication helpers for GF(p).
+//!
+//! Compile-time constants and runtime Montgomery reduction (REDC) with
+//! `R = 2^64`. The constants and REDC require P odd.
 
 /// Compile-time Montgomery constants for a prime modulus P.
 pub(super) struct MontConsts<const P: u64>;

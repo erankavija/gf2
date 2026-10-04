@@ -1,7 +1,11 @@
-//! Binary-field-specific inherent methods on
-//! [`FieldPoly<Gf2mElement_<V>>`](crate::field::FieldPoly), which rely on the
-//! GF(2^m) encoding of field elements as bits rather than on the generic
-//! [`FiniteField`](crate::field::FiniteField) surface.
+//! Binary-field-specific polynomial helpers.
+//!
+//! These inherent methods are attached to
+//! [`FieldPoly<Gf2mElement_<V>>`](crate::field::FieldPoly) (and therefore
+//! also to the [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) alias) because
+//! they rely on the GF(2^m) encoding of field elements as bits rather
+//! than on the generic [`FiniteField`](crate::field::FiniteField)
+//! surface.
 
 use crate::field::FieldPoly;
 use crate::gf2m::{Gf2mElement_, Gf2mField_, UintExt};

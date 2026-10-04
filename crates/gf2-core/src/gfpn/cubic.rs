@@ -1,8 +1,11 @@
-//! Cubic extension field arithmetic: [`CubicExt<C>`] holds elements
-//! `c0 + c1·v + c2·v²` with `v³ = β` over any [`ConstField`] base, β coming
-//! from an [`ExtConfig`]. Multiplication is the Karatsuba-style formula of
-//! `@/citation/Devegili2006` and inversion the adjugate/norm method of
-//! `@/citation/Beuchat2010`.
+//! Cubic extension field arithmetic: elements `c0 + c1·v + c2·v²` where `v³ = β`.
+//!
+//! [`CubicExt<C>`] is a degree-3 extension of any base field that
+//! implements [`ConstField`], parameterized by an [`ExtConfig`] specifying the
+//! non-residue β. Multiplication is the Karatsuba-style formula with 6
+//! base-field multiplications (`@/citation/Devegili2006`); inversion is the
+//! adjugate/norm method with a single base-field inversion
+//! (`@/citation/Beuchat2010`).
 
 use std::fmt;
 use std::hash::{Hash, Hasher};
