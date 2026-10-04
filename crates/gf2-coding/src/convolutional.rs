@@ -28,6 +28,7 @@ impl ConvolutionalEncoder {
         self.state
     }
 
+    /// Number of shift-register stages K, counting the newest input bit.
     pub fn constraint_length(&self) -> usize {
         self.constraint_length
     }

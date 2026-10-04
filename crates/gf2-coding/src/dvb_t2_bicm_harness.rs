@@ -74,10 +74,12 @@ pub fn mod_str(m: DvbT2Modulation) -> &'static str {
 /// [`BlockEncoder`] adapter for [`DvbT2Concat`]: `k` is the BBFRAME length
 /// `k_bch` and `n` the FECFRAME length `n_ldpc`.
 pub struct BicmFecEncoder {
+    /// The BCH and LDPC codec whose `encode` and frame lengths the adapter exposes.
     pub concat: DvbT2Concat,
 }
 
 impl BicmFecEncoder {
+    /// Takes ownership of `concat`, which stays reachable through the public field.
     pub fn new(concat: DvbT2Concat) -> Self {
         Self { concat }
     }
@@ -101,6 +103,7 @@ impl BlockEncoder for BicmFecEncoder {
 /// map, per-axis AWGN, soft demap, bit deinterleave. Es/N0 follows from
 /// `eb_n0_db` and the code rate through [`ebn0_to_esn0`].
 pub struct BicmAwgnChannel {
+    /// Interleaves the coded bits before mapping and deinterleaves the LLRs after demapping.
     pub interleaver: DvbT2BitInterleaver,
     /// Bits per QAM symbol (4 for 16-QAM, 6 for 64-QAM).
     pub bits_per_symbol: usize,
