@@ -1,22 +1,6 @@
-// Batch Operations Benchmarks
-//
-// Measures performance of batch encoding/decoding with ComputeBackend.
-// Run with: cargo bench --bench batch_operations
-//
-// The BCH groups encode with `gf2_coding::bch::spec::BinaryBchCode`.
-//
-// - `bch_encode_pns_16383_16215` encodes batches of 1, 10, 50 and 100
-//   all-zero messages with the primitive narrow-sense binary BCH code over
-//   GF(2^14) at designed distance 25 (n = 16383, k = 16215, 168 parity bits).
-//   Each iteration calls `BinaryBchCode::encode_batch`, which allocates its
-//   result.
-// - `bch_sequential_vs_batch` encodes 100 messages with the (15, 11) code over
-//   GF(2^4) at designed distance 3. `sequential_loop` calls the allocating
-//   `BlockEncoder::encode` once per message and `batch_operation` calls
-//   `BinaryBchCode::encode_batch`.
-//
-// Each BCH benchmark appends the family its measured call runs to the
-// dispatch record `bch_workloads` documents.
+//! Batch encoding and decoding benchmarks. Each BCH benchmark appends the
+//! family its measured call runs to the dispatch record `bch_workloads`
+//! documents.
 
 mod bch_workloads;
 
@@ -36,7 +20,6 @@ use gf2_core::BitVec;
 use serde_json::json;
 use std::path::PathBuf;
 
-/// Load LDPC cache from standard location
 fn load_cache() -> Option<EncodingCache> {
     let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/dvb_t2");
     if cache_dir.exists() {
@@ -46,7 +29,6 @@ fn load_cache() -> Option<EncodingCache> {
     }
 }
 
-/// Benchmark LDPC batch encoding with ComputeBackend
 fn bench_ldpc_batch_backend(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let cache = load_cache();
@@ -84,7 +66,6 @@ fn primitive_code(degree: usize, modulus: u64, designed_distance: u64) -> Binary
     BinaryBchCode::primitive_narrow_sense(extension, designed_distance).unwrap()
 }
 
-/// Appends the dispatch record of one BCH encoding benchmark.
 fn record_bch(id: String, n: usize, k: usize, batch: usize, entry: &str, family: EncodeFamily) {
     record(&json!({
         "id": id,
@@ -98,9 +79,7 @@ fn record_bch(id: String, n: usize, k: usize, batch: usize, entry: &str, family:
     }));
 }
 
-/// Benchmark BCH batch encoding
 fn bench_bch_batch(c: &mut Criterion) {
-    // Primitive narrow-sense BCH over GF(2^14), t = 12 (designed distance 25).
     let code = primitive_code(14, 0b100000000101011, 25);
     assert_eq!((code.n(), code.k()), (16383, 16215));
     let k = code.k();
@@ -139,7 +118,6 @@ fn bench_bch_batch(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark comparison: sequential vs batch for LDPC
 fn bench_ldpc_sequential_vs_batch(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let cache = load_cache();
@@ -174,7 +152,6 @@ fn bench_ldpc_sequential_vs_batch(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark BCH sequential vs batch
 fn bench_bch_sequential_vs_batch(c: &mut Criterion) {
     let code = primitive_code(4, 0b10011, 3);
     assert_eq!((code.n(), code.k()), (15, 11));

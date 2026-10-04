@@ -1,9 +1,7 @@
 //! Workload W1, large-batch systematic BCH encoding, over every encode path
-//! the canonical model exposes. The cells, their IDs, and the dispatch record
-//! are the d1b4f85e amendment of `dev/active/4e732b56/workload-selection.md`.
-//! Every path of a row and batch is checked to write the same codewords
-//! before it is timed; the `W6` cells need the `parallel` feature and
-//! `RAYON_NUM_THREADS=6`.
+//! the canonical model exposes. Every path of a row and batch is checked to
+//! write the same codewords before it is timed; the `W6` cells need the
+//! `parallel` feature and `RAYON_NUM_THREADS=6`.
 
 mod bch_workloads;
 
@@ -41,7 +39,6 @@ use serde_json::json;
 
 const GROUP: &str = "bch_encode_w1";
 
-/// The kernel bundle name of the portable arm.
 const SCALAR_KERNEL: &str = "scalar";
 
 /// Whether `family` runs the `gf2_kernels_simd::bch_encode` kernel bundle,
@@ -136,7 +133,6 @@ fn register(
     (function, parameter)
 }
 
-/// Registers every batch-encoding cell of one row of a BCH code.
 fn encode_cells<X, S, M>(
     group: &mut BenchmarkGroup<'_, WallTime>,
     agreement: &mut Agreement,
@@ -160,7 +156,6 @@ fn encode_cells<X, S, M>(
         let batch_messages = &messages[..batch];
         group.throughput(Throughput::Elements((batch * k) as u64));
 
-        // W = 1, warm-reuse: every available family by name.
         for &family in EncodeFamily::REGISTERED {
             if !code.encode_family_available(family, layout) {
                 continue;
@@ -219,7 +214,6 @@ fn encode_cells<X, S, M>(
             force_scalar_encode_kernels(false);
         }
 
-        // The profile-selected entry points.
         let selected = code.selected_encode_family(layout, batch);
         let kernel = runs_kernel_bundle(selected).then(selected_encode_kernel);
         let selected_cell = |workers: usize, cache: &'static str, entry: &'static str| Cell {
@@ -233,7 +227,6 @@ fn encode_cells<X, S, M>(
             kernel,
         };
 
-        // W = 1, fresh-alloc: the allocating batch entry point.
         let codewords = code
             .encode_batch(batch_messages, layout)
             .expect("encode_batch");
@@ -254,7 +247,6 @@ fn encode_cells<X, S, M>(
             });
         });
 
-        // W = 6, warm-reuse: one workspace per worker, reused output.
         let mut workspaces = code.encode_workspaces(workers);
         let mut codewords = vec![S::zeroed(n, &zero); batch];
         code.encode_batch_parallel_into(batch_messages, layout, &mut workspaces, &mut codewords)
@@ -283,7 +275,6 @@ fn encode_cells<X, S, M>(
             });
         });
 
-        // W = 6, fresh-alloc: workspaces and output allocated per call.
         let codewords = code
             .encode_batch_parallel(batch_messages, layout, workers)
             .expect("encode_batch_parallel");

@@ -1,11 +1,5 @@
-//! Quick parallel scaling benchmark (runs in <1 minute)
-//!
-//! Measures thread scaling with small batch sizes for fast feedback.
-//! Run with: RAYON_NUM_THREADS=N cargo bench --bench quick_parallel --features parallel
-//!
-//! Examples:
-//!   RAYON_NUM_THREADS=1 cargo bench --bench quick_parallel --features parallel
-//!   RAYON_NUM_THREADS=8 cargo bench --bench quick_parallel --features parallel
+//! Thread-scaling benchmarks on small LDPC batches; they need the `parallel`
+//! feature and read `RAYON_NUM_THREADS`.
 
 use criterion::{criterion_group, criterion_main, Criterion};
 
@@ -36,7 +30,6 @@ fn load_cache() -> Option<EncodingCache> {
     }
 }
 
-/// Quick LDPC encode benchmark (small batch)
 #[cfg(feature = "parallel")]
 fn bench_ldpc_encode_quick(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
@@ -47,7 +40,7 @@ fn bench_ldpc_encode_quick(c: &mut Criterion) {
     };
 
     let message = BitVec::zeros(encoder.k());
-    let batch_size = 10; // Small batch for quick runs
+    let batch_size = 10;
     let messages: Vec<_> = (0..batch_size).map(|_| message.clone()).collect();
 
     let mut group = c.benchmark_group("ldpc_encode_quick");
@@ -60,12 +53,11 @@ fn bench_ldpc_encode_quick(c: &mut Criterion) {
     group.finish();
 }
 
-/// Quick LDPC decode benchmark (small batch, few iterations)
 #[cfg(feature = "parallel")]
 fn bench_ldpc_decode_quick(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
-    let batch_size = 10; // Small batch for quick runs
+    let batch_size = 10;
     let llr_blocks: Vec<Vec<Llr>> = (0..batch_size).map(|_| llrs.clone()).collect();
 
     let mut group = c.benchmark_group("ldpc_decode_quick");
@@ -76,7 +68,7 @@ fn bench_ldpc_decode_quick(c: &mut Criterion) {
             black_box(LdpcDecoder::decode_batch(
                 black_box(&code),
                 black_box(&llr_blocks),
-                20, // Fewer iterations for speed
+                20,
             ))
         });
     });
@@ -84,7 +76,6 @@ fn bench_ldpc_decode_quick(c: &mut Criterion) {
     group.finish();
 }
 
-/// Compare different batch sizes
 #[cfg(feature = "parallel")]
 fn bench_batch_sizes(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
@@ -114,7 +105,6 @@ fn bench_batch_sizes(c: &mut Criterion) {
     group.finish();
 }
 
-/// Print current thread configuration
 #[cfg(feature = "parallel")]
 fn print_config(c: &mut Criterion) {
     use std::env;

@@ -1,29 +1,8 @@
-//! CPU scalar-vs-AVX2 crossover probe for the Gray-PAM distance kernel.
-//!
-//! Pairs with the GPU/CPU bench at
-//! `crates/gf2-kernels-hip/benches/gpu_vs_cpu_gray_qam.rs`, but stays on
-//! the CPU side: it measures the `f64` Gray-PAM squared-distance kernel
-//! that backs `FastGrayQamDemapper` on the same `(order, batch)` sweep.
-//! The full `FastGrayQamDemapper` always auto-dispatches to the best
-//! available kernel (AVX2 on x86_64 hosts that advertise it, scalar
-//! otherwise), so to observe the dispatch crossover we bench the raw
-//! kernel bundles exposed by `gf2_kernels_simd::modem` directly against
-//! a scalar reference.
-//!
-//! Layout choice: the bench lives in `gf2-coding/benches/` rather than
-//! `gf2-kernels-simd/benches/` because `gf2-coding` already pulls
-//! `criterion` and the `ModemSpec` preset machinery that generates
-//! representative PAM level tables. No new dependencies are introduced.
-//!
-//! Run with:
-//!
-//! ```text
-//! cargo bench -p gf2-coding --bench cpu_dispatch_probe
-//! ```
-//!
-//! The report backing JIT issue `9c37ec8c` reads the throughput figures
-//! from this bench alongside the GPU vs CPU bench to decide whether
-//! scalar hosts would see a different crossover picture.
+//! CPU scalar-vs-AVX2 probe of the `f64` Gray-PAM squared-distance kernel
+//! behind `FastGrayQamDemapper`, on the `(order, batch)` sweep of
+//! `crates/gf2-kernels-hip/benches/gpu_vs_cpu_gray_qam.rs`. The demapper
+//! auto-dispatches, so the raw `gf2_kernels_simd::modem` kernel bundles are
+//! benched against a scalar reference.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
@@ -35,13 +14,8 @@ use gf2_coding::modem::{
 
 use gf2_kernels_simd::modem::{detect_f64, scalar_fns_f64, GrayPamDistanceFnsF64};
 
-/// Reads the canonical post-normalization PAM level table for a given
-/// modulation order off the Gray-QAM fast-path demapper, which is the
-/// SSOT for Gray-PAM levels in the workspace (see
-/// [`gf2_coding::modem::presets::gray_pam_levels`] via
-/// [`FastGrayQamDemapper::pam_levels`]). This ensures the bench feeds
-/// the scalar and AVX2 kernels with the **exact same axis** that the
-/// production demapper would — no re-derivation, no drift.
+/// PAM level table of `order`, read off the Gray-QAM fast-path demapper so
+/// both kernels see the production axis.
 fn axis_for_order(order: usize) -> Vec<f64> {
     let spec = ModemSpec::<f64>::gray_square_qam_with_scalar(order);
     let demapper = FastGrayQamDemapper::<f64>::new(spec);
@@ -62,7 +36,6 @@ fn gen_batch_f64(batch: usize, seed: u64) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
 }
 
 fn bench_cpu_dispatch(c: &mut Criterion) {
-    // Match the GPU bench sweep so the resulting tables line up 1:1.
     let orders = [4usize, 16, 64, 256];
     let batches = [256usize, 1_024, 4_096, 16_384];
 
@@ -74,12 +47,7 @@ fn bench_cpu_dispatch(c: &mut Criterion) {
 
         let mut group = c.benchmark_group(format!("pam_sq_distance/order={order}"));
         for &batch in &batches {
-            // Throughput is reported per symbol so a single "kernel call"
-            // on a batch of `batch` pre-rotated I-axis samples counts as
-            // `batch` elements. The demapper actually invokes the kernel
-            // twice per batch (I + Q axis) for QAM, but we bench a single
-            // axis call here because the AVX2 savings scale linearly with
-            // axis calls.
+            // One element is one sample of a single-axis kernel call.
             group.throughput(Throughput::Elements(batch as u64));
             let (z, g, inv) = gen_batch_f64(batch, 0xBEEF_u64 ^ order as u64);
             let mut out = vec![0.0f64; batch * pam.len()];
@@ -102,14 +70,8 @@ fn bench_cpu_dispatch(c: &mut Criterion) {
     }
 }
 
-/// Full-demapper scalar-vs-best crossover: constructs two
-/// `FastGrayQamDemapper<f32>` instances that share the same spec but
-/// pin different PAM distance kernels (scalar vs auto-detected best)
-/// and benches `demap_llrs` end-to-end. This is the full-demapper
-/// scalar baseline the GPU crossover decision (JIT `9c37ec8c`)
-/// reports alongside the per-axis kernel probe above — it captures
-/// per-symbol overhead (validation, axis reduction, LLR assembly)
-/// that the raw kernel bench omits.
+/// `demap_llrs` end to end on two `FastGrayQamDemapper<f32>` instances of one
+/// spec, one pinned to the scalar PAM distance kernel and one auto-dispatched.
 fn bench_full_demapper_scalar_vs_best(c: &mut Criterion) {
     let orders = [4usize, 16, 64, 256];
     let batches = [256usize, 1_024, 4_096, 16_384];
