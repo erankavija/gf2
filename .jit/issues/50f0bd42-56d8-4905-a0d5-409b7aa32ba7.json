@@ -1048,9 +1048,24 @@
     "asm-artefact-present"
   ],
   "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-10-04T23:22:04.813947194Z",
+      "updated_by": "auto:executor"
+    },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-28T06:40:53.145597475Z",
+      "updated_at": "2026-10-04T23:23:18.375464300Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T23:25:24.668901734Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T23:27:31.429855617Z",
       "updated_by": "auto:executor"
     }
   },
@@ -1072,5 +1087,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
-  "updated_at": "2026-10-04T23:21:51.999211450Z"
+  "updated_at": "2026-10-04T23:27:31.429855617Z"
 }
