@@ -1,21 +1,5 @@
-//! Shared DVB-T2 BICM-AWGN harness wiring.
-//!
-//! This module is the **single source of truth** for the DVB-T2 BICM-AWGN
-//! channel building blocks used by both the campaign binary
-//! (`crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs`, migrated to the
-//! gf2-sim pipeline by `bbf6b6ee`) and the standalone
-//! baseline measurement harness
-//! (`dev/benchmarks/gf2-sim/baseline_runner/src/main.rs`).
-//!
-//! # Provided items
-//!
-//! - [`rate_f64`] — Code rate as a floating-point fraction.
-//! - [`rate_display`] — Human-readable slash notation (`"1/2"`, `"2/3"`, …).
-//! - [`rate_underscore`] — Filename-safe underscore notation (`"1_2"`, `"2_3"`, …).
-//! - [`mod_str`] — Modulation string (`"16qam"`, `"64qam"`, …).
-//! - [`BicmFecEncoder`] — [`BlockEncoder`] adapter for [`DvbT2Concat`].
-//! - [`BicmAwgnChannel`] — [`ChannelModel`] for the full DVB-T2 BICM chain
-//!   (bit-interleave → QAM-map → AWGN → QAM-soft-demap → bit-deinterleave).
+//! DVB-T2 BICM-AWGN channel chain, FEC-encoder adapter and baseline-CSV
+//! helpers shared by the simulation harnesses.
 
 #![deny(unsafe_code)]
 
@@ -31,43 +15,14 @@ use crate::CodeRate;
 use gf2_core::BitVec;
 use rand::Rng;
 
-// ---------------------------------------------------------------------------
-// Box-Muller noise
-// ---------------------------------------------------------------------------
-
-/// One standard-normal sample via the cosine branch of the Box-Muller transform.
-///
-/// This is the **single source of truth** for the per-axis AWGN noise sample
-/// used by the DVB-T2 BICM chain (both [`BicmAwgnChannel`] and the `gf2-sim`
-/// parallel frame kernel). The caller supplies the two uniforms; this function
-/// applies the `u1.max(1e-15)` clamp internally (to avoid `ln(0)`) and returns
-/// `((-2*ln(u1)).sqrt() * cos(2*pi*u2)) as f32`. Keeping the formula here lets
-/// each call site choose its own RNG (e.g. `rand 0.8` vs `rand_chacha 0.9`)
-/// while sharing identical noise math.
-///
-/// # Arguments
-///
-/// - `u1`: First uniform in `[0, 1)` (clamped to `>= 1e-15` internally).
-/// - `u2`: Second uniform in `[0, 1)`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::dvb_t2_bicm_harness::box_muller_cos;
-/// // u2 = 0 → cos(0) = 1, so the sample is +sqrt(-2 ln u1).
-/// let n = box_muller_cos(0.5_f64.exp().recip(), 0.0);
-/// // u1 = e^-0.5 → -2 ln u1 = 1 → sqrt = 1.
-/// assert!((n - 1.0).abs() < 1e-6);
-/// ```
+/// One standard-normal sample by the cosine branch of the Box-Muller transform,
+/// `sqrt(-2 ln u1) * cos(2π u2)`, for uniforms `u1`, `u2` in `[0, 1)`; `u1` is
+/// clamped to at least `1e-15`.
 #[inline]
 pub fn box_muller_cos(u1: f64, u2: f64) -> f32 {
     let u1 = u1.max(1e-15);
     ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32
 }
-
-// ---------------------------------------------------------------------------
-// Naming helpers
-// ---------------------------------------------------------------------------
 
 /// Code rate as a floating-point fraction.
 ///
@@ -116,26 +71,13 @@ pub fn mod_str(m: DvbT2Modulation) -> &'static str {
     }
 }
 
-// ---------------------------------------------------------------------------
-// BICM FEC encoder wrapper
-// ---------------------------------------------------------------------------
-
-/// [`BlockEncoder`] adapter for [`DvbT2Concat`].
-///
-/// Wraps the concatenated BCH+LDPC codec so it can be passed to
-/// [`SimulationRunner::run_with_decoder`](crate::simulation::SimulationRunner::run_with_decoder)
-/// as a `&dyn BlockEncoder`.
-///
-/// - `k()` returns `k_bch` (BBFRAME bit count).
-/// - `n()` returns `n_ldpc` (FECFRAME bit count).
-/// - `encode()` performs BCH outer coding followed by LDPC inner coding.
+/// [`BlockEncoder`] adapter for [`DvbT2Concat`]: `k` is the BBFRAME length
+/// `k_bch` and `n` the FECFRAME length `n_ldpc`.
 pub struct BicmFecEncoder {
-    /// The underlying concatenated BCH+LDPC codec.
     pub concat: DvbT2Concat,
 }
 
 impl BicmFecEncoder {
-    /// Create a new [`BicmFecEncoder`] from an already-configured [`DvbT2Concat`].
     pub fn new(concat: DvbT2Concat) -> Self {
         Self { concat }
     }
@@ -155,26 +97,10 @@ impl BlockEncoder for BicmFecEncoder {
     }
 }
 
-// ---------------------------------------------------------------------------
-// BICM AWGN channel model
-// ---------------------------------------------------------------------------
-
-/// [`ChannelModel`] for the full DVB-T2 BICM chain over AWGN.
-///
-/// [`transmit_and_demodulate`][BicmAwgnChannel::transmit_and_demodulate]
-/// receives `n_ldpc` FECFRAME bits (encoder output) and performs:
-///
-/// 1. Bit interleaving (FECFRAME order → interleaved order).
-/// 2. QAM mapping (interleaved bits → I/Q symbols).
-/// 3. AWGN noise injection (Box-Muller on each I/Q axis independently).
-/// 4. QAM soft demapping → interleaved LLRs.
-/// 5. Bit deinterleaving (interleaved LLRs → FECFRAME-order LLRs).
-///
-/// The caller ([`SimulationRunner`][crate::simulation::SimulationRunner]) passes
-/// `eb_n0_db` and the code rate; Es/N0 is computed internally via
-/// [`ebn0_to_esn0`].
+/// [`ChannelModel`] for the DVB-T2 BICM chain over AWGN: bit interleave, QAM
+/// map, per-axis AWGN, soft demap, bit deinterleave. Es/N0 follows from
+/// `eb_n0_db` and the code rate through [`ebn0_to_esn0`].
 pub struct BicmAwgnChannel {
-    /// DVB-T2 bit interleaver / deinterleaver.
     pub interleaver: DvbT2BitInterleaver,
     /// Bits per QAM symbol (4 for 16-QAM, 6 for 64-QAM).
     pub bits_per_symbol: usize,
@@ -183,22 +109,16 @@ pub struct BicmAwgnChannel {
 }
 
 impl BicmAwgnChannel {
-    /// Create a new [`BicmAwgnChannel`].
+    /// Uses the Gray square QAM of order `2^bits_per_symbol`.
     ///
-    /// # Arguments
+    /// # Panics
     ///
-    /// - `interleaver`: Pre-configured [`DvbT2BitInterleaver`] for the MODCOD.
-    /// - `bits_per_symbol`: 2 for QPSK, 4 for 16-QAM, 6 for 64-QAM.
-    /// - `demap`: Soft-demapping method ([`DemapMethod::MaxLog`] or
-    ///   [`DemapMethod::ExactLogMap`]).
+    /// Panics if `bits_per_symbol` is not one of `1, 2, 4, 6, 8`.
     pub fn new(
         interleaver: DvbT2BitInterleaver,
         bits_per_symbol: usize,
         demap: DemapMethod,
     ) -> Self {
-        // Gray-square-QAM constellation order = 2^bits_per_symbol: QPSK→4,
-        // 16-QAM→16, 64-QAM→64. (The earlier `if ==4 {16} else {64}` mis-mapped
-        // QPSK to order 64, panicking on the symbol-count mismatch.)
         let order = 1usize << bits_per_symbol;
         let spec = ModemSpec::<f32>::gray_square_qam(order);
         Self {
@@ -209,56 +129,17 @@ impl BicmAwgnChannel {
         }
     }
 
-    /// Runs the canonical DVB-T2 BICM-AWGN transmit/demod chain with a
-    /// caller-supplied noise generator.
+    /// Runs the chain with caller-supplied noise and returns FECFRAME-order LLRs.
     ///
-    /// This is the **single source of truth** for the chain math
-    /// (bit-interleave → QAM-map → per-axis AWGN → QAM-soft-demap →
-    /// bit-deinterleave). The `eb_n0`-driven [`ChannelModel`] implementation and
-    /// the `gf2-sim` parallel frame kernel both call this method; they differ
-    /// only in how they draw noise samples (which RNG / version), which is why
-    /// `sigma` / `noise_var` and the noise generator are passed in rather than
-    /// derived from an SNR here.
+    /// `sigma` is the per-axis noise standard deviation and `noise_var` the
+    /// per-symbol complex noise variance (`2 * sigma^2`) given to the demapper.
+    /// `next_noise` yields standard-normal samples; it is called
+    /// `bits.len() / bits_per_symbol` times for the I axis, then as many times
+    /// for the Q axis.
     ///
-    /// # Arguments
+    /// # Panics
     ///
-    /// - `bits`: FECFRAME codeword (`n_ldpc` bits).
-    /// - `sigma`: Per-axis noise standard deviation (`sqrt(sigma_sq)`); each
-    ///   noise sample is scaled by this before being added to the symbol axis.
-    /// - `noise_var`: Per-symbol total complex noise variance (`N0 = 2*sigma_sq`)
-    ///   passed to the soft demapper.
-    /// - `next_noise`: Standard-normal sample generator. **Draw contract:** it is
-    ///   called `num_symbols` times for the I axis first, then `num_symbols`
-    ///   times for the Q axis, in that order, where
-    ///   `num_symbols = bits.len() / bits_per_symbol`.
-    ///
-    /// # Returns
-    ///
-    /// FECFRAME-order soft LLRs (`n_ldpc` values).
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::dvb_t2_bicm_harness::{BicmAwgnChannel, box_muller_cos};
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation};
-    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
-    /// use gf2_coding::modem::DemapMethod;
-    /// use gf2_coding::CodeRate;
-    /// use gf2_core::BitVec;
-    /// use rand::Rng;
-    ///
-    /// let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
-    /// let il = DvbT2BitInterleaver::new(modcod);
-    /// let channel = BicmAwgnChannel::new(il, 4, DemapMethod::ExactLogMap);
-    /// let codeword = BitVec::zeros(64800);
-    /// let mut rng = rand::thread_rng();
-    /// let llrs = channel.transmit_and_demodulate_with_noise(&codeword, 0.5, 0.5, || {
-    ///     let u1 = rng.gen::<f64>();
-    ///     let u2 = rng.gen::<f64>();
-    ///     box_muller_cos(u1, u2)
-    /// });
-    /// assert_eq!(llrs.len(), 64800);
-    /// ```
+    /// Panics if `bits.len()` differs from the interleaver's frame length.
     pub fn transmit_and_demodulate_with_noise(
         &self,
         bits: &BitVec,
@@ -272,18 +153,14 @@ impl BicmAwgnChannel {
         let mapper = self.spec.preferred_mapper();
         let demapper = self.spec.preferred_soft_demapper();
 
-        // 1. Bit interleave: FECFRAME order → interleaved order.
         let interleaved = self.interleaver.interleave(bits);
 
-        // 2. QAM map: interleaved bits → I/Q symbols.
         let interleaved_bits: Vec<bool> =
             (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
         let mut tx_i = vec![0.0_f32; num_symbols];
         let mut tx_q = vec![0.0_f32; num_symbols];
         mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
 
-        // 3. AWGN: independent noise on the I axis (all symbols) then the Q axis
-        //    (all symbols), per the documented draw contract.
         for s in tx_i.iter_mut() {
             *s += sigma * next_noise();
         }
@@ -291,7 +168,6 @@ impl BicmAwgnChannel {
             *s += sigma * next_noise();
         }
 
-        // 4. QAM soft demap → interleaved LLRs.
         let noise_var_buf = vec![noise_var; num_symbols];
         let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
         demapper.demap_llrs(
@@ -306,15 +182,13 @@ impl BicmAwgnChannel {
             &mut interleaved_llrs,
         );
 
-        // 5. Bit deinterleave LLRs → FECFRAME order.
         self.interleaver.deinterleave_llrs(&interleaved_llrs)
     }
 }
 
 impl ChannelModel for BicmAwgnChannel {
     fn batch_alignment(&self) -> usize {
-        // FECFRAME length is always divisible by bits_per_symbol for DVB-T2.
-        // Return 1 since the runner passes the full n_ldpc-bit codeword.
+        // The runner passes whole FECFRAMEs, whose length is a multiple of `bits_per_symbol`.
         1
     }
 
@@ -329,17 +203,12 @@ impl ChannelModel for BicmAwgnChannel {
         rate: f64,
         rng: &mut R,
     ) -> Vec<Llr> {
-        // Convert Eb/N0 → Es/N0 → per-component noise variance.
-        // Es/N0 = Eb/N0 + 10*log10(m * r)
-        // sigma^2 = 1 / (2 * 10^(Es_N0/10))
         let es_n0_db = ebn0_to_esn0(eb_n0_db, self.bits_per_symbol, rate);
         let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
         let sigma_sq = 1.0 / (2.0 * es_n0_lin);
         let sigma_f32 = (sigma_sq as f32).sqrt();
         let noise_var_f32 = (2.0 * sigma_sq) as f32; // N0 = 2 * sigma^2
 
-        // Delegate to the canonical chain; draw u1 then u2 per sample so the
-        // byte stream is unchanged from the prior inline implementation.
         self.transmit_and_demodulate_with_noise(bits, sigma_f32, noise_var_f32, || {
             let u1 = rng.gen::<f64>();
             let u2 = rng.gen::<f64>();
@@ -348,15 +217,7 @@ impl ChannelModel for BicmAwgnChannel {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Baseline-runner matrix and CSV helpers
-// ---------------------------------------------------------------------------
-
 /// A parsed row from the baseline measurement CSV.
-///
-/// Used by the standalone baseline runner to write and diff throughput
-/// receipts. Exposed here so the logic can be covered by `cargo test -p
-/// gf2-coding`.
 #[derive(Debug, Clone)]
 pub struct BaselineCellResult {
     pub rate: String,
@@ -405,19 +266,6 @@ impl BaselineCellResult {
 /// [`BaselineCellResult`] rows.
 ///
 /// Lines that cannot be parsed are silently skipped.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::dvb_t2_bicm_harness::parse_baseline_csv;
-/// let csv = "\
-/// rate,modulation,es_n0_db,decoder,demap,frames,wall_seconds,frames_per_sec,mean_iters,ber,fer,commit_sha,date\n\
-/// 1/2,16qam,6.25,SumProduct,ExactLogMap,200,123.456,1.6216,32.100,0.000500,0.050000,abc1234567,2026-06-07\n";
-/// let rows = parse_baseline_csv(csv);
-/// assert_eq!(rows.len(), 1);
-/// assert_eq!(rows[0].rate, "1/2");
-/// assert!((rows[0].frames_per_sec - 1.6216).abs() < 1e-4);
-/// ```
 pub fn parse_baseline_csv(content: &str) -> Vec<BaselineCellResult> {
     let mut out = Vec::new();
     for line in content.lines().skip(1) {
@@ -465,58 +313,39 @@ pub fn parse_baseline_csv(content: &str) -> Vec<BaselineCellResult> {
     out
 }
 
-/// Number of cells in the standard baseline measurement matrix.
-///
-/// The matrix covers 3 MODCODs × 3 SNR points × 3 decoder/demap pairs = 27
-/// cells.  This constant is exposed so downstream callers and tests can assert
-/// against it without re-deriving the product.
+/// Cells of the baseline matrix: 3 MODCODs × 3 SNR points × 3 decoder/demap pairs.
 pub const BASELINE_MATRIX_CELL_COUNT: usize = 27;
-
-// ---------------------------------------------------------------------------
-// Unit tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 
-    // --- Naming helpers: all 6 baseline MODCODs ---
-
     #[test]
     fn test_naming_all_6_modcods() {
-        // rate_display
         assert_eq!(rate_display(CodeRate::Rate1_2), "1/2");
         assert_eq!(rate_display(CodeRate::Rate2_3), "2/3");
         assert_eq!(rate_display(CodeRate::Rate3_4), "3/4");
 
-        // rate_underscore
         assert_eq!(rate_underscore(CodeRate::Rate1_2), "1_2");
         assert_eq!(rate_underscore(CodeRate::Rate2_3), "2_3");
         assert_eq!(rate_underscore(CodeRate::Rate3_4), "3_4");
 
-        // rate_f64
         assert_eq!(rate_f64(CodeRate::Rate1_2), 0.5);
         assert!((rate_f64(CodeRate::Rate2_3) - 2.0 / 3.0).abs() < 1e-15);
         assert_eq!(rate_f64(CodeRate::Rate3_4), 0.75);
 
-        // mod_str
         assert_eq!(mod_str(DvbT2Modulation::Qam16), "16qam");
         assert_eq!(mod_str(DvbT2Modulation::Qam64), "64qam");
     }
 
-    // --- Matrix cell count ---
-
     #[test]
     fn test_baseline_matrix_cell_count() {
-        // 3 MODCODs × 3 SNR points × 3 decoder/demap pairs = 27 cells.
         assert_eq!(
             BASELINE_MATRIX_CELL_COUNT, 27,
             "matrix must be 3 MODCODs × 3 SNR × 3 decoder/demap = 27 cells"
         );
     }
-
-    // --- CSV parse and delta helpers ---
 
     #[test]
     fn test_parse_baseline_csv_single_row() {
@@ -552,7 +381,6 @@ bad,row\n\
 
     #[test]
     fn test_parse_baseline_csv_delta_match() {
-        // Simulate a delta comparison: new result vs baseline.
         let csv_new = "\
 rate,modulation,es_n0_db,decoder,demap,frames,wall_seconds,frames_per_sec,mean_iters,ber,fer,commit_sha,date\n\
 1/2,16qam,6.25,SumProduct,ExactLogMap,200,110.0,1.818,30.0,0.000400,0.040000,new123,2026-06-08\n";
@@ -564,7 +392,6 @@ rate,modulation,es_n0_db,decoder,demap,frames,wall_seconds,frames_per_sec,mean_i
         assert_eq!(new_rows.len(), 1);
         assert_eq!(old_rows.len(), 1);
 
-        // Find the matching baseline row (same rate, mod, snr, decoder, demap).
         let r = &new_rows[0];
         let bline = old_rows.iter().find(|b| {
             b.rate == r.rate
@@ -577,7 +404,6 @@ rate,modulation,es_n0_db,decoder,demap,frames,wall_seconds,frames_per_sec,mean_i
         let delta_pct = (r.frames_per_sec - bline.unwrap().frames_per_sec)
             / bline.unwrap().frames_per_sec
             * 100.0;
-        // new is faster: 1.818 vs 1.6216 ≈ +12%
         assert!(delta_pct > 0.0, "new should be faster in this fixture");
     }
 

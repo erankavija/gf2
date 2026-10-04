@@ -1,9 +1,4 @@
 //! Errors shared by generic coding and code-transformation APIs.
-//!
-//! The error layer belongs to `gf2-coding`, rather than to an individual code
-//! family.  It therefore contains no BCH-specific vocabulary.  Generic code
-//! traits, coordinate maps, matrix materializers, and runtime-erased handles
-//! can all report these conditions without exposing a concrete implementation.
 
 use gf2_core::field::extension::FieldId;
 use std::any::TypeId;
@@ -20,9 +15,6 @@ pub struct RepresentationId(TypeId);
 
 impl RepresentationId {
     /// Returns the representation identity for the `'static` Rust type `T`.
-    ///
-    /// Two calls for the same type return equal identities.  Different Rust
-    /// types are expected to have different identities within one process.
     pub fn of<T: 'static>() -> Self {
         Self(TypeId::of::<T>())
     }
@@ -55,9 +47,8 @@ impl fmt::Display for CodeCapability {
 
 /// Failures shared by coding, encoding, matrix, and transformation APIs.
 ///
-/// Each variant describes a caller-visible invalid condition.  BCH-specific
-/// construction and decoding failures belong to [`crate::bch::error::BchError`]
-/// and are deliberately absent here.
+/// Each variant describes a caller-visible invalid condition. BCH-specific
+/// construction and decoding failures belong to [`crate::bch::error::BchError`].
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum CodeError {

@@ -1,30 +1,9 @@
-//! Helper binary for the subprocess-SIGINT resume integration test
-//! (`test_resume_after_interrupt`).
-//!
-//! # Contract
-//!
-//! Accepts exactly one positional argument — a path to a directory that will
-//! hold checkpoint files and a `results.csv` output.  Runs a tiny, fully
-//! deterministic simulation:
-//!
-//! - Code: Hamming(7,4), decoded by OrbGrand
-//! - Channel: BPSK/AWGN at 0.0 dB (guaranteed frame errors)
-//! - Config: seed=12345, min_errors=10, max_frames=1000,
-//!   heartbeat_every_frames=5
-//!
-//! On a normal run the binary exits with code 0 and `results.csv` contains
-//! one row.  When interrupted mid-run (SIGINT/SIGTERM), `ctrlc` sets the
-//! interrupt flag, the runner flushes a partial checkpoint, and the binary
-//! exits with code 1.  Re-running with the same argument resumes from the
-//! checkpoint.
-//!
-//! The integration test spawns this binary, delivers SIGINT, then re-runs
-//! and verifies that the final CSV matches a reference uninterrupted run.
-//!
-//! # Feature gate
-//!
-//! Only compiled when `sim-observability` is enabled (the default).
-//! Without the feature the binary prints a message and exits with code 2.
+//! Helper binary for the subprocess-SIGINT resume test
+//! (`test_resume_after_interrupt`): runs a seeded Hamming(7,4)/OrbGrand
+//! BPSK-AWGN simulation that checkpoints into the directory given as its one
+//! argument. It exits 0 after a complete run, 1 when interrupted after
+//! flushing a checkpoint, and 2 on a usage error or without the
+//! `sim-observability` feature; a rerun with the same directory resumes.
 
 fn main() {
     #[cfg(feature = "sim-observability")]
@@ -39,11 +18,7 @@ fn main() {
         use std::path::PathBuf;
         use std::time::Duration;
 
-        // Per-frame sleep wrapper so the test's 50 ms SIGINT poll arrives while
-        // the simulation is still running.  Without it, Hamming(7,4) at BLER=1.0
-        // finishes all 10 frames in < 1 ms — before the polling loop can fire.
-        // 20 ms × 10 frames = 200 ms total; heartbeat at frame 5 = 100 ms, leaving
-        // a 100 ms window for the test to send SIGINT.
+        // The per-frame sleep keeps the run alive long enough for the test to deliver SIGINT.
         struct ThrottledChannel {
             inner: BpskAwgnChannel,
             delay: Duration,
@@ -69,13 +44,12 @@ fn main() {
         }
         let ckpt_dir = PathBuf::from(&args[1]);
 
-        // Ensure the output directory exists.
         std::fs::create_dir_all(&ckpt_dir).unwrap_or_else(|e| {
             eprintln!("Cannot create checkpoint dir: {e}");
             std::process::exit(2);
         });
 
-        let code = LinearBlockCode::hamming(3); // Hamming(7,4)
+        let code = LinearBlockCode::hamming(3);
         let h = code
             .parity_check()
             .expect("Hamming code must have H")
@@ -95,7 +69,7 @@ fn main() {
             output_path: Some(ckpt_dir.join("results.csv")),
             checkpoint_dir: Some(ckpt_dir.clone()),
             tracing_log_path: None,
-            heartbeat_every_frames: Some(5), // write checkpoint every 5 frames
+            heartbeat_every_frames: Some(5),
         };
 
         SimulationRunner::run_coded(&code, &decoder, &channel, &config);

@@ -1,15 +1,7 @@
-//! Coding-owned selectors and process-wide typed access.
-//!
-//! The generic process authority lives in [`gf2_core::tuning`]. This module
-//! owns only the coding crate's selector vocabulary, conservative value,
-//! optional format-2 codec, and typed accessor.
-//!
-//! The one selector family carried here is `encode`, the profile half of the
-//! batch-encoding family dispatch described in
-//! [`crate::bch::encode`](crate::bch::encode#algorithm-families). Its
-//! thresholds decide which registered family the batch entry points select;
-//! the other half is representation availability, which the kernels answer
-//! and no profile can override.
+//! Coding-owned tuning selectors and their process-wide typed accessor; the
+//! generic process authority is [`gf2_core::tuning`]. The one selector family
+//! is `encode`, the profile half of the batch-encoding family dispatch of
+//! [`crate::bch::encode`](crate::bch::encode#algorithm-families).
 
 use std::fmt;
 
@@ -40,20 +32,14 @@ pub struct EncodeSelectors {
 }
 
 impl EncodeSelectors {
-    /// Builds the encode selector family.
-    ///
-    /// Every `usize` combination is admissible, because a bound decides only
-    /// which of several equivalent algorithms runs: zero opens an arm at
-    /// every redundancy or batch length the representation implements it for,
-    /// and [`usize::MAX`] closes it, which is the value the conservative
-    /// section carries for the table family's redundancy bound and for the
-    /// bit-sliced and fold families' batch bounds.
+    /// Builds the encode selector family. Every `usize` combination is
+    /// admissible: zero opens an arm at every redundancy or batch length the
+    /// representation implements it for, and [`usize::MAX`] closes it.
     ///
     /// # Errors
     ///
-    /// The [`SectionError`] result is the shape every owner codec builds a
-    /// selector family through; this vocabulary admits every value, so the
-    /// error arm stays open for a bound a later selector constrains.
+    /// Never returns an error; the [`SectionError`] result is the shape every
+    /// owner codec builds a selector family through.
     pub fn try_new(
         table_remainder_min_redundancy: usize,
         table_remainder_min_batch: usize,
@@ -125,14 +111,9 @@ pub struct CodingTuning {
 }
 
 impl CodingTuning {
-    /// Complete parser-free conservative coding section.
-    ///
-    /// The table family's redundancy bound is
-    /// [`TABLE_REMAINDER_MIN_REDUNDANCY`], the bit-sliced family's batch
-    /// bound is [`BITSLICE_INTERLEAVED_MIN_BATCH`], and the fold family's is
-    /// [`CLMUL_FOLD_MIN_BATCH`], so the conservative section selects the
-    /// scalar reference for every code: the crossovers among the families are
-    /// measurements no committed receipt has made yet.
+    /// Complete parser-free conservative coding section: every bound is the
+    /// corresponding [`crate::bch::encode`] constant, which selects the scalar
+    /// reference for every code.
     pub const CONSERVATIVE: Self = Self {
         encode: EncodeSelectors {
             table_remainder_min_redundancy: TABLE_REMAINDER_MIN_REDUNDANCY,

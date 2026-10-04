@@ -10,14 +10,12 @@ use std::path::Path;
 fn main() {
     println!("=== LDPC Cache Validation with Error Correction ===\n");
 
-    // Load cache
     println!("Loading cache from data/ldpc/dvb_t2...");
     let cache =
         EncodingCache::from_directory(Path::new("data/ldpc/dvb_t2")).expect("Failed to load cache");
 
     println!("✓ Cache loaded: {} entries\n", cache.stats().entries);
 
-    // Create encoder/decoder
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate3_5);
     let encoder = LdpcEncoder::with_cache(code.clone(), &cache);
     let mut decoder = LdpcDecoder::new(code);
@@ -27,11 +25,9 @@ fn main() {
     println!("  k = {} (message length)", encoder.k());
     println!("  r = {} (parity length)\n", encoder.n() - encoder.k());
 
-    // Test 1: Error-free roundtrip
     println!("Test 1: Error-free roundtrip");
     test_roundtrip(&encoder, &mut decoder, 0);
 
-    // Test 2: Increasing error counts
     println!("\nTest 2: Error correction capability");
     for num_errors in [1, 5, 10, 20, 50, 100, 200, 500, 1000] {
         test_roundtrip(&encoder, &mut decoder, num_errors);
@@ -43,7 +39,6 @@ fn main() {
 fn test_roundtrip(encoder: &LdpcEncoder, decoder: &mut LdpcDecoder, num_errors: usize) {
     use rand::Rng;
 
-    // Create random message
     let mut rng = rand::thread_rng();
     let mut message = gf2_core::BitVec::zeros(encoder.k());
     for i in 0..encoder.k() {
@@ -52,11 +47,9 @@ fn test_roundtrip(encoder: &LdpcEncoder, decoder: &mut LdpcDecoder, num_errors: 
         }
     }
 
-    // Encode
     let codeword = encoder.encode(&message);
     assert_eq!(codeword.len(), encoder.n());
 
-    // Add errors
     let mut received = codeword.clone();
     if num_errors > 0 {
         let mut error_positions = Vec::new();
@@ -72,14 +65,12 @@ fn test_roundtrip(encoder: &LdpcEncoder, decoder: &mut LdpcDecoder, num_errors: 
         }
     }
 
-    // Convert to LLRs (hard decision: +∞ for 0, -∞ for 1)
     // Use finite values for numerical stability
     let llrs: Vec<Llr> = (0..encoder.n())
         .map(|i| Llr::new(if received.get(i) { -10.0 } else { 10.0 }))
         .collect();
 
-    // Decode with soft decoder
-    let result = decoder.decode_iterative(&llrs, 50); // Max 50 iterations
+    let result = decoder.decode_iterative(&llrs, 50);
 
     if result.converged {
         let decoded_cw = result.decoded_bits;
@@ -90,7 +81,6 @@ fn test_roundtrip(encoder: &LdpcEncoder, decoder: &mut LdpcDecoder, num_errors: 
             decoded_msg.set(i, decoded_cw.get(i));
         }
 
-        // Check if decoded message matches original
         let success = decoded_msg == message;
 
         if success {
@@ -108,7 +98,6 @@ fn test_roundtrip(encoder: &LdpcEncoder, decoder: &mut LdpcDecoder, num_errors: 
         } else {
             println!("  ✗ {:4} errors: INCORRECT DECODING", num_errors);
 
-            // Count bit errors in decoded vs original
             let mut bit_errors = 0;
             for i in 0..message.len() {
                 if decoded_msg.get(i) != message.get(i) {

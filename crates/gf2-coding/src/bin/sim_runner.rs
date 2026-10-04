@@ -1,23 +1,5 @@
-//! Configurable simulation campaign runner.
-//!
-//! Parses a TOML campaign config defining curves (LDPC, product code, GLDPC)
-//! and runs them via the existing [`SimulationRunner`] infrastructure.
-//!
-//! # Usage
-//!
-//! ```bash
-//! # Dry run -- verify parsing
-//! cargo run -p gf2-coding --release --all-features --bin sim_runner -- \
-//!     dev/campaigns/phase1_fig3.toml --dry-run
-//!
-//! # Run single curve
-//! cargo run -p gf2-coding --release --all-features --bin sim_runner -- \
-//!     dev/campaigns/phase1_fig3.toml --curve fig3_ldpc_nms --parallel
-//!
-//! # Run all curves in a campaign
-//! cargo run -p gf2-coding --release --all-features --bin sim_runner -- \
-//!     dev/campaigns/phase1_fig3.toml --parallel
-//! ```
+//! Simulation campaign runner: reads a TOML campaign of LDPC, product-code and
+//! GLDPC curves and runs each through [`SimulationRunner`].
 
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
@@ -42,28 +24,17 @@ use gf2_coding::simulation::SimulationResult;
 #[cfg(feature = "parallel")]
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-// ---------------------------------------------------------------------------
-// Channel selection
-// ---------------------------------------------------------------------------
-
-/// TOML sub-table for per-curve channel selection.
-///
-/// ```toml
-/// channel = { kind = "rician", preset = "fig8" }
-/// ```
-///
-/// Omitting the `channel` key defaults to BPSK/AWGN (existing behaviour).
+/// TOML sub-table selecting a curve's channel, e.g.
+/// `channel = { kind = "rician", preset = "fig8" }`.
 #[derive(Debug, Deserialize)]
 struct ChannelToml {
-    /// `"awgn"` (default) or `"rician"`.
+    /// `"awgn"` or `"rician"`.
     kind: String,
     /// Required when `kind = "rician"`: one of `"fig8"`, `"fig9"`, `"fig10"`.
     preset: Option<String>,
 }
 
-/// Unified channel variant that dispatches to either the BPSK/AWGN or the
-/// QPSK/Rician path.  Wrapping both in an enum lets every helper function
-/// remain generic (`impl ChannelModel`) without needing a trait object.
+/// Either channel behind one type, so the helpers stay generic over `ChannelModel`.
 enum AnyChannel {
     Awgn(BpskAwgnChannel),
     Rician(QpskRicianChannelModel),
@@ -98,8 +69,7 @@ impl ChannelModel for AnyChannel {
     }
 }
 
-/// Builds an `AnyChannel` from an optional `ChannelToml`.  Returns
-/// `AnyChannel::Awgn` when the TOML key is absent.
+/// An absent `channel` key selects BPSK/AWGN.
 fn build_channel(cfg: Option<&ChannelToml>) -> Result<AnyChannel, String> {
     match cfg {
         None => Ok(AnyChannel::Awgn(BpskAwgnChannel)),
@@ -123,20 +93,13 @@ fn build_channel(cfg: Option<&ChannelToml>) -> Result<AnyChannel, String> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Config types
-// ---------------------------------------------------------------------------
-
 /// Top-level campaign configuration, deserialized from a TOML file.
 #[derive(Debug, Deserialize)]
 struct CampaignConfig {
-    /// Campaign-level metadata.
     campaign: CampaignMeta,
-    /// One or more simulation curves to run.
     curve: Vec<CurveConfig>,
 }
 
-/// Campaign-level metadata (name, output directory).
 #[derive(Debug, Deserialize)]
 struct CampaignMeta {
     /// Human-readable campaign name (used in log output).
@@ -159,11 +122,9 @@ enum CurveType {
 struct CurveConfig {
     /// Unique name used in output file names and `--curve` filtering.
     name: String,
-    /// Code type: `"ldpc"`, `"product"`, or `"gldpc"`.
     #[serde(rename = "type")]
     curve_type: CurveType,
 
-    // -- LDPC fields (optional) --
     /// 5G NR base graph (1 or 2).
     base_graph: Option<u8>,
     /// Target codeword length after rate matching.
@@ -175,20 +136,16 @@ struct CurveConfig {
     /// Scaling factor for NMS / offset for offset-MS.
     scale: Option<f32>,
 
-    // -- Product fields (optional) --
     /// Component code name: `"ebch_16_11"`, `"ebch_16_7"`, `"ebch_32_26"`,
     /// `"ebch_64_57"`, `"drm_32_21"`, `"drm_32_21_dynamic"`.
     component: Option<String>,
-    /// Turbo decoder configuration.
     turbo: Option<TurboConfig>,
 
-    // -- GLDPC fields (optional) --
     /// GLDPC code variant: `"lentmaier_1024"`.
     variant: Option<String>,
     /// SOGRAND configuration for GLDPC check-node decoder.
     sogrand: Option<SograndConfig>,
 
-    // -- Common --
     /// Optional channel selection; omit for BPSK/AWGN (default).
     channel: Option<ChannelToml>,
     /// Eb/N0 sweep range.
@@ -241,15 +198,11 @@ struct TurboConfig {
     extrinsic_clamp: Option<f32>,
     list_size: usize,
     max_queries: usize,
-    /// Paper-aligned per-component list-BLER early-stop threshold.
-    ///
-    /// When set, each SOGRAND component decode exits as soon as the list
-    /// has `list_size` codewords OR the predicted list-BLER drops below
-    /// this value. The turbo loop itself still terminates only when every
-    /// row and every column of the hard decision is a valid component
-    /// codeword (paper § V, step 1); the threshold is not applied at the
-    /// turbo level. Typical values: `1e-4` for AWGN product codes,
-    /// `1e-5` for the GLDPC configuration (see SO-GRAND paper Figs 1/7/8).
+    /// Per-component list-BLER early-stop threshold of `@/citation/Yuan2025` § V:
+    /// a SOGRAND component decode stops once the list holds `list_size`
+    /// codewords or the predicted list-BLER falls below this value. The turbo
+    /// loop still stops only when every row and column is a valid component
+    /// codeword.
     list_bler_threshold: Option<f64>,
     /// Disable early termination (always run max_iterations).
     no_early_termination: Option<bool>,
@@ -278,14 +231,13 @@ struct ChasePyndiahToml {
 struct SograndConfig {
     list_size: usize,
     max_queries: usize,
-    /// Enable even-code parity optimization (halves search space for codes
-    /// where all codewords have even weight, such as extended BCH).
+    /// Set for codes whose codewords all have even weight, such as extended BCH.
     #[serde(default)]
     even_code: bool,
-    /// Extrinsic damping factor for check-to-variable messages (default 0.7).
+    /// Extrinsic damping factor for check-to-variable messages.
     #[serde(default = "default_alpha")]
     alpha: f32,
-    /// Maximum absolute LLR value for variable-node beliefs (default 25.0).
+    /// Maximum absolute LLR value for variable-node beliefs.
     #[serde(default = "default_saturation")]
     llr_saturation: f32,
 }
@@ -298,17 +250,12 @@ fn default_saturation() -> f32 {
     25.0
 }
 
-// ---------------------------------------------------------------------------
-// CLI parsing
-// ---------------------------------------------------------------------------
-
-/// Parsed command-line arguments.
 struct CliArgs {
     /// Path to the TOML campaign file (first positional argument).
     toml_path: String,
     /// Curve name filter (may be specified more than once).
     curves: Vec<String>,
-    /// Use parallel SNR sweep (rayon).
+    /// Use the rayon-parallel runners.
     parallel: bool,
     /// Override RNG seed.
     seed: u64,
@@ -375,22 +322,12 @@ fn parse_args() -> Result<CliArgs, String> {
     })
 }
 
-// ---------------------------------------------------------------------------
-// TOML loading
-// ---------------------------------------------------------------------------
-
-/// Loads and parses a campaign TOML file.
 fn load_campaign(path: &str) -> Result<CampaignConfig, String> {
     let content =
         std::fs::read_to_string(path).map_err(|e| format!("failed to read {path}: {e}"))?;
     toml::from_str(&content).map_err(|e| format!("failed to parse {path}: {e}"))
 }
 
-// ---------------------------------------------------------------------------
-// Decoder algorithm resolution
-// ---------------------------------------------------------------------------
-
-/// Maps a string algorithm name + optional scale to a `DecoderAlgorithm`.
 fn resolve_algorithm(name: &str, scale: Option<f32>) -> Result<DecoderAlgorithm, String> {
     match name {
         "nms" => Ok(DecoderAlgorithm::NormalizedMinSum(scale.unwrap_or(0.75))),
@@ -404,11 +341,6 @@ fn resolve_algorithm(name: &str, scale: Option<f32>) -> Result<DecoderAlgorithm,
     }
 }
 
-// ---------------------------------------------------------------------------
-// Curve execution
-// ---------------------------------------------------------------------------
-
-/// Builds a `SimulationConfig` from a `CurveConfig` and CLI overrides.
 fn build_sim_config(curve: &CurveConfig, output_dir: &str, seed: u64) -> SimulationConfig {
     let snr_points = curve.snr.to_points();
     let output_csv = format!("{}/{}.csv", output_dir, curve.name);
@@ -425,7 +357,6 @@ fn build_sim_config(curve: &CurveConfig, output_dir: &str, seed: u64) -> Simulat
     }
 }
 
-/// Runs a single curve according to its type, returning the simulation results.
 fn run_curve(
     curve: &CurveConfig,
     output_dir: &str,
@@ -472,8 +403,7 @@ fn run_curve(
                 .as_ref()
                 .ok_or("product curve requires `turbo` config")?;
 
-            // Dispatch on component name. We need two instances: one for the
-            // ProductCode encoder and one for the TurboDecoder.
+            // One component instance goes to the encoder, one to the decoder.
             match comp_name {
                 "ebch_16_11" => run_product(
                     ExtendedBchComponent::ebch_16_11(),
@@ -605,7 +535,6 @@ fn run_curve(
     Ok(results)
 }
 
-/// Builds a `TurboDecoderConfig` from the TOML turbo parameters.
 fn build_turbo_decoder_config(turbo_cfg: &TurboConfig) -> TurboDecoderConfig {
     TurboDecoderConfig {
         max_iterations: turbo_cfg.max_iterations,
@@ -623,7 +552,6 @@ fn build_turbo_decoder_config(turbo_cfg: &TurboConfig) -> TurboDecoderConfig {
     }
 }
 
-/// Builds a `ChasePyndiahConfig` from optional TOML overrides.
 fn build_chase_pyndiah_config(cp_toml: &ChasePyndiahToml) -> ChasePyndiahConfig {
     let mut cp_config = ChasePyndiahConfig::default();
     if let Some(p) = cp_toml.p {
@@ -635,7 +563,6 @@ fn build_chase_pyndiah_config(cp_toml: &ChasePyndiahToml) -> ChasePyndiahConfig 
     cp_config
 }
 
-/// Helper: runs a product-code curve for any `ProductComponent` and channel type.
 fn run_product<C, CH>(
     encoder_component: C,
     decoder_component: C,
@@ -683,16 +610,10 @@ where
 #[cfg(feature = "parallel")]
 type ProductDecodeFn = Box<dyn FnMut(&[gf2_coding::llr::Llr]) -> gf2_coding::traits::DecoderResult>;
 
-/// Frame-parallel product code simulation.
-///
-/// For each SNR point, frames are distributed across rayon worker threads.
-/// Each worker creates its own decoder instance (via `map_init`) since
-/// `TurboDecoder` and `ChasePyndiahDecoder` are not `Send`. Shared
-/// atomic counters enable early stopping once enough frame errors are
+/// Frame-parallel product-code simulation: SNR points run sequentially and the
+/// frames of each point are spread over rayon workers, one decoder per worker.
+/// Shared atomic counters stop a point once `min_errors` frame errors are
 /// collected.
-///
-/// SNR points are processed sequentially to preserve resume and progress
-/// reporting semantics.
 #[cfg(feature = "parallel")]
 fn run_product_frame_parallel<C, CH>(
     product: ProductCode<C>,
@@ -717,7 +638,6 @@ where
     let rate = k as f64 / n as f64;
     let base_seed = config.rng_seed.unwrap_or(0xDEAD_BEEF);
 
-    // Determine decoder variant from config.
     let is_chase_pyndiah = turbo_cfg.chase_pyndiah.is_some();
     let cp_config = turbo_cfg
         .chase_pyndiah
@@ -735,7 +655,6 @@ where
     for (point_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
         let point_start = std::time::Instant::now();
 
-        // Shared atomic counters for cross-thread accumulation.
         let total_frames = AtomicUsize::new(0);
         let total_frame_errors = AtomicUsize::new(0);
         let total_bit_errors = AtomicUsize::new(0);
@@ -743,17 +662,12 @@ where
         let total_queries = AtomicUsize::new(0);
         let stop_flag = AtomicBool::new(false);
 
-        // Derive a unique per-point seed so different SNR points use
-        // independent RNG streams regardless of execution order.
         let point_seed = base_seed.wrapping_add(point_idx as u64 * 1_000_000);
 
-        // Clone values that need to move into the closure.
         let decoder_comp = decoder_component.clone();
         let cp_cfg = cp_config.clone();
         let turbo_cfg_inner = turbo_config.clone();
 
-        // Process frames in parallel using rayon's map_init to create
-        // one decoder per worker thread.
         (0..config.max_frames)
             .into_par_iter()
             .map_init(
@@ -770,7 +684,6 @@ where
                     }
                 },
                 |decode_fn, frame_idx| {
-                    // Check early-stop before doing work.
                     if stop_flag.load(Ordering::Relaxed) {
                         return;
                     }
@@ -783,7 +696,6 @@ where
                     let result = decode_fn(&llrs);
                     let bit_errs = count_bit_errors(&message, &result.decoded_bits);
 
-                    // Update shared accumulators.
                     total_frames.fetch_add(1, Ordering::Relaxed);
                     total_bit_errors.fetch_add(bit_errs, Ordering::Relaxed);
                     total_iterations.fetch_add(result.iterations, Ordering::Relaxed);
@@ -801,7 +713,6 @@ where
             )
             .collect::<Vec<()>>();
 
-        // Collect final counter values.
         let frames = total_frames.load(Ordering::Relaxed);
         let frame_errors = total_frame_errors.load(Ordering::Relaxed);
         let bit_errors = total_bit_errors.load(Ordering::Relaxed);
@@ -844,7 +755,6 @@ where
 
         let point_elapsed = point_start.elapsed();
 
-        // Report point completion.
         let remaining: Vec<f64> = config.eb_n0_range_db[point_idx + 1..].to_vec();
         let secs = point_elapsed.as_secs();
         let elapsed_str = if secs >= 3600 {
@@ -870,7 +780,6 @@ where
             remaining.len(),
         );
 
-        // Incremental CSV append.
         if let Some(ref path) = config.output_path {
             sim_result.append_csv_row_to(path);
         }
@@ -880,18 +789,12 @@ where
     }
 
     let results = SimulationResults { points };
-    // Final overwrite with clean, complete file.
     if let Some(ref path) = config.output_path {
         results.write_to(path);
     }
     results
 }
 
-// ---------------------------------------------------------------------------
-// Dry-run display
-// ---------------------------------------------------------------------------
-
-/// Prints a summary of what would be run, without actually executing.
 fn print_dry_run(campaign: &CampaignConfig, curves: &[&CurveConfig], seed: u64, parallel: bool) {
     println!("Campaign: {}", campaign.campaign.name);
     println!("Output:   {}", campaign.campaign.output_dir);
@@ -971,10 +874,6 @@ fn print_dry_run(campaign: &CampaignConfig, curves: &[&CurveConfig], seed: u64, 
     }
 }
 
-// ---------------------------------------------------------------------------
-// main
-// ---------------------------------------------------------------------------
-
 fn main() {
     let args = match parse_args() {
         Ok(a) => a,
@@ -992,7 +891,6 @@ fn main() {
         }
     };
 
-    // Filter curves if --curve was specified.
     let selected: Vec<&CurveConfig> = if args.curves.is_empty() {
         campaign.curve.iter().collect()
     } else {
@@ -1017,7 +915,6 @@ fn main() {
         return;
     }
 
-    // Ensure output directory exists.
     std::fs::create_dir_all(&campaign.campaign.output_dir).unwrap_or_else(|e| {
         panic!(
             "Failed to create output directory '{}': {e}",
@@ -1066,7 +963,6 @@ fn main() {
             }
         };
 
-        // Write JSON alongside the CSV output.
         let json_path = format!("{}/{}.json", campaign.campaign.output_dir, curve.name);
         results.write_to(Path::new(&json_path));
 
@@ -1100,10 +996,6 @@ fn main() {
         campaign.campaign.name
     );
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -1163,7 +1055,6 @@ max_frames = 1000
         assert_eq!(config.campaign.output_dir, "/tmp/sim_test");
         assert_eq!(config.curve.len(), 4);
 
-        // LDPC NMS
         let ldpc = &config.curve[0];
         assert_eq!(ldpc.name, "test_ldpc_nms");
         assert_eq!(ldpc.curve_type, CurveType::Ldpc);
@@ -1175,13 +1066,11 @@ max_frames = 1000
         assert_eq!(ldpc.min_errors, 100);
         assert_eq!(ldpc.max_frames, 500000);
 
-        // LDPC SP
         let sp = &config.curve[1];
         assert_eq!(sp.curve_type, CurveType::Ldpc);
         assert_eq!(sp.algorithm.as_deref(), Some("sum_product"));
         assert!(sp.scale.is_none());
 
-        // Product
         let prod = &config.curve[2];
         assert_eq!(prod.curve_type, CurveType::Product);
         assert_eq!(prod.component.as_deref(), Some("ebch_16_11"));
@@ -1191,7 +1080,6 @@ max_frames = 1000
         assert_eq!(turbo.list_size, 4);
         assert_eq!(turbo.max_queries, 1_000_000);
 
-        // GLDPC
         let gldpc = &config.curve[3];
         assert_eq!(gldpc.curve_type, CurveType::Gldpc);
         assert_eq!(gldpc.variant.as_deref(), Some("lentmaier_1024"));
@@ -1342,11 +1230,6 @@ max_frames = 1
         assert!(output_dir.join("crc_25_15_smoke.csv").is_file());
     }
 
-    /// Verifies that a product-code curve routed through the Rician fading
-    /// channel (`channel = { kind = "rician", preset = "fig8" }`) produces
-    /// monotonically decreasing BLER across the SNR sweep and that high-SNR
-    /// BLER is strictly lower than low-SNR BLER — a basic sanity check that
-    /// the fading path wires up correctly end-to-end.
     #[test]
     #[ignore = "sim: Rician product-code BLER decay across 3 SNR points, ~30-60 s"]
     fn test_run_curve_rician_product_bler_decays() {
@@ -1371,10 +1254,8 @@ max_frames = 30
 
         let results = run_curve(&config.curve[0], output_dir.to_str().unwrap(), false, 42).unwrap();
 
-        // Expect three SNR points: 2.0, 5.0, 8.0 dB.
         assert_eq!(results.points.len(), 3);
 
-        // All BLERs must be finite and in [0, 1].
         for pt in &results.points {
             assert!(
                 pt.bler.is_finite(),
@@ -1389,7 +1270,6 @@ max_frames = 30
             );
         }
 
-        // High-SNR BLER (8 dB) must be strictly below low-SNR BLER (2 dB).
         let bler_low = results.points[0].bler;
         let bler_high = results.points[2].bler;
         assert!(
@@ -1398,9 +1278,6 @@ max_frames = 30
         );
     }
 
-    /// Verifies that the TOML parser correctly deserialises
-    /// `channel = { kind = "rician", preset = "fig8" }` and that
-    /// `build_channel` returns the Rician variant.
     #[test]
     fn test_build_channel_rician_preset_parsing() {
         let toml_str = r#"
@@ -1415,7 +1292,6 @@ preset = "fig8"
         assert!(matches!(chan, AnyChannel::Rician(_)));
     }
 
-    /// Verifies that omitting the `channel` key defaults to BPSK/AWGN.
     #[test]
     fn test_build_channel_default_awgn() {
         let chan = build_channel(None).unwrap();
