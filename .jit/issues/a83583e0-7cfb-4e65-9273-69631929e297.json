@@ -43,44 +43,44 @@
       "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298-evidence.md"
     },
     {
-      "commit": null,
+      "commit": "87b5b733cfe48080df53aff8603574b9e0fc82af",
       "doc_type": "data",
       "label": "campaign-declaration.json",
       "path": "dev/active/a83583e0/campaign-declaration.json"
     },
     {
-      "commit": null,
+      "commit": "eebbc778c30372261278891f480647c8ea9a363f",
       "doc_type": "notes",
       "format": "markdown",
       "label": "README.md",
       "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/README.md"
     },
     {
-      "commit": null,
+      "commit": "eebbc778c30372261278891f480647c8ea9a363f",
       "doc_type": "data",
       "label": "source-after.json",
       "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/build/source-after.json"
     },
     {
-      "commit": null,
+      "commit": "eebbc778c30372261278891f480647c8ea9a363f",
       "doc_type": "data",
       "label": "source-before.json",
       "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/build/source-before.json"
     },
     {
-      "commit": null,
+      "commit": "eebbc778c30372261278891f480647c8ea9a363f",
       "doc_type": "data",
       "label": "staging-input.json",
       "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/build/staging-input.json"
     },
     {
-      "commit": null,
+      "commit": "eebbc778c30372261278891f480647c8ea9a363f",
       "doc_type": "log",
       "label": "execution.log",
       "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/execution.log"
     },
     {
-      "commit": null,
+      "commit": "eebbc778c30372261278891f480647c8ea9a363f",
       "doc_type": "data",
       "label": "stage-sha256.txt",
       "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/stage-sha256.txt"
@@ -121,5 +121,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-10-03T16:30:29.095211658Z"
+  "updated_at": "2026-10-04T21:25:34.915639847Z"
 }
