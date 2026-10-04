@@ -1,40 +1,23 @@
-//! BCH (Bose-Chaudhuri-Hocquenghem) codes.
-//!
-//! [`spec`] constructs BCH codes over any supported base field, [`encode`]
-//! and [`matrix`] encode them systematically and materialize $G$ and $H$, and
-//! [`BinaryBchDecoder`] decodes the binary ones; codes over other base fields
-//! have construction, encoding, and matrices. Extended, shortened, and
-//! punctured BCH codes are [`Extended`](crate::transform::Extended),
+//! BCH (Bose-Chaudhuri-Hocquenghem) codes: [`spec`] constructs them over any
+//! supported base field, [`encode`] and [`matrix`] encode them systematically
+//! and materialize $G$ and $H$, and [`BinaryBchDecoder`] decodes the binary
+//! ones. Extended, shortened, and punctured BCH codes are
+//! [`Extended`](crate::transform::Extended),
 //! [`Shortened`](crate::transform::Shortened), and
 //! [`Punctured`](crate::transform::Punctured) over a canonical code.
 //!
 //! # Coordinate conventions
 //!
-//! - **Internal.** Coordinate $i$ is the coefficient of $x^i$, so a
-//!   codeword is the coefficient vector of a multiple of $g$ modulo
-//!   $x^n - 1$ ([`spec`](spec#coordinate-convention)).
-//! - **User layout.** A [`SystematicLayout`] maps user coordinates to
-//!   internal ones; every layout carries the message in user coordinates
-//!   $0$ to $k-1$. The default ascending layout is a cyclic rotation by
-//!   $n - k$; the descending layout is a reversal.
-//! - **Matrices.** $G = [\,I_k \mid P\,]$ and
-//!   $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$ in the default layout, and
-//!   [`LayoutView`] presents both in a declared one ([`matrix`]).
-//! - **Decoding.** [`BinaryBchDecoder`] reads internal coordinates. A
-//!   cyclic rotation of a codeword is a codeword, so a default-layout word
-//!   decodes directly and the reported error positions index the supplied
-//!   word. A reversed codeword belongs to the reciprocal code, which in
-//!   general differs, so a descending-layout word is mapped to internal
-//!   coordinates first, through
-//!   [`SystematicPlan::internal_coordinate`](encode::SystematicPlan::internal_coordinate);
-//!   [`dvb_t2::DvbT2BchDecoder`] performs that mapping for the DVB-T2 layout.
-//! - **Bits.** Packed words use the canonical little-endian bit indexing of
-//!   `gf2-core`: coordinate $i$ is bit $i \bmod 64$ of word $\lfloor i/64
-//!   \rfloor$.
-//!
-//! `docs/reference/standards-conformance.md` relates these
-//! layouts to the `[message | parity]` convention of the other code
-//! families.
+//! Internal coordinate $i$ is the coefficient of $x^i$
+//! ([`spec`](spec#coordinate-convention)), a [`SystematicLayout`] maps user
+//! coordinates to internal ones, and [`matrix`] states the layout of $G$ and
+//! $H$. [`BinaryBchDecoder`] reads internal coordinates. A cyclic rotation of
+//! a codeword is a codeword, so a default-layout word decodes directly and the
+//! reported error positions index the supplied word. A reversed codeword
+//! belongs to the reciprocal code, which in general differs, so a
+//! descending-layout word is mapped to internal coordinates first, through
+//! [`SystematicPlan::internal_coordinate`](encode::SystematicPlan::internal_coordinate);
+//! [`dvb_t2::DvbT2BchDecoder`] performs that mapping for the DVB-T2 layout.
 //!
 //! # Examples
 //!

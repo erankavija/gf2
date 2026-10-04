@@ -1,15 +1,11 @@
-//! Error-correcting codes built on `gf2-core` primitives.
-//!
-//! This crate provides implementations of error-correcting codes over the
-//! field abstractions of the `gf2-core` library: the canonical trait surface
-//! is generic over the code symbol field and representation
+//! Error-correcting codes built on `gf2-core` primitives. The canonical trait
+//! surface is generic over the code symbol field and representation
 //! ([`FieldVec`](gf2_core::field::FieldVec)/[`FieldMatrix`](gf2_core::field::matrix::FieldMatrix)),
 //! with packed binary specializations using
 //! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::BitMatrix).
 //! It provides linear block, BCH, convolutional, LDPC, GLDPC, product and CRC
 //! codes and Reed-Muller subcodes; BCJR, GRAND, and ordered-statistics
-//! decoders; modems, channels, and Monte Carlo simulation. The module index
-//! lists each.
+//! decoders; modems, channels, and Monte Carlo simulation.
 
 #![deny(unsafe_code)]
 

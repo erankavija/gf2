@@ -1,11 +1,6 @@
-//! Ordered Reliability Bits GRAND (ORBGRAND, `@/citation/Duffy2022`).
-//!
-//! A soft-input decoder for any linear block code.  It flips the hard
-//! decisions by noise patterns in ascending combined weight `IC·w + lw`, where
-//! `w` is the Hamming weight and the logistic weight `lw` is the sum of the
-//! 1-based reliability ranks (least reliable first) of the flipped positions,
-//! and collects the patterns with zero syndrome, each annotated with its noise
-//! log-probability `ln p(z|r)`.
+//! Ordered Reliability Bits GRAND (ORBGRAND, `@/citation/Duffy2022`): a
+//! soft-input list decoder for any linear block code that tests noise patterns
+//! in ascending combined weight `IC·w + lw`.
 
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, SoftDecoder};

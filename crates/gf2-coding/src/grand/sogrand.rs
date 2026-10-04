@@ -1,8 +1,6 @@
-//! Soft-Output GRAND (SOGRAND, `@/citation/Yuan2025`).
-//!
-//! [`SoGrand`] wraps an [`OrbGrand`] list decoder and turns its list into
-//! per-bit a-posteriori probability (APP) LLRs, extrinsic LLRs and the
-//! predicted list BLER `P(C\L)`, computed in the log domain.
+//! Soft-Output GRAND (SOGRAND, `@/citation/Yuan2025`): [`SoGrand`] turns the
+//! list of an [`OrbGrand`] decoder into per-bit a-posteriori probability (APP)
+//! LLRs, extrinsic LLRs and the predicted list BLER `P(C\L)`.
 
 use super::orbgrand::{log_sum_exp, OrbGrand, OrbGrandResult};
 use crate::llr::Llr;

@@ -1,18 +1,18 @@
 //! Generator and parity-check matrix materialization for BCH codes.
 //!
-//! Both matrices are written in the default user layout,
+//! # Layout
+//!
+//! Both matrices of a [`BchCode`] are written in the default user layout,
 //! [`MessageParityAscending`](crate::bch::encode::SystematicLayout::MessageParityAscending):
 //! user coordinate $u$ carries the coefficient of $x^{(u + n - k) \bmod n}$,
 //! so the first $k$ coordinates carry the message in ascending degree and the
 //! remaining $n - k$ carry the parity in ascending degree. Row $i$ of the
 //! generator matrix is the codeword the systematic encoder writes for message
-//! basis vector $i$, so the generator is $G = [\,I_k \mid P\,]$ and
-//! [`is_systematic`](GeneratorMatrixAccess::is_systematic) holds. The
+//! basis vector $i$, so the generator is $G = [\,I_k \mid P\,]$. The
 //! parity-check matrix is $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$: it has full
 //! row rank $n - k$ and satisfies $G H^{\mathsf T} = 0$.
 //!
-//! That layout is the matrix contract of [`BchCode`] rather than a per-call
-//! option. A code declaring another layout is a
+//! A code declaring another layout is a
 //! [`LayoutView`]: its matrices are these with the rows and columns permuted
 //! by the correspondence $\sigma$ from the declared layout's coordinates to
 //! the default layout's coordinates that carry the same internal coordinate.
@@ -20,14 +20,6 @@
 //! the default one, and entry $(j, c)$ of its parity check is entry
 //! $(\sigma(k + j) - k, \sigma(c))$, so the view keeps both block forms:
 //! $\sigma$ maps the message coordinates onto themselves.
-//!
-//! # Complexity
-//!
-//! The generator costs $O(k \lceil n/64 \rceil)$ word operations packed, and
-//! $O(kn)$ cell writes with $O(kr)$ base-field multiply-adds field-generic;
-//! both are the size of the output. The parity check transposes the same
-//! recurrence one coordinate at a time, so it costs $O(kr)$ coordinate writes
-//! over its $O(rn)$ output.
 
 use std::any::Any;
 use std::sync::Mutex;
@@ -207,6 +199,11 @@ where
     /// advances $P_{i,j} = P_{i-1,\,j-1} - P_{i-1,\,r-1}\,g_j$ inside the
     /// output, and writes the identity column last, so every row the
     /// recurrence reads carries its parity block alone.
+    ///
+    /// # Complexity
+    ///
+    /// $O(kn)$ cell writes and $O(kr)$ base-field multiply-adds; the
+    /// [`BitMatrix`] override costs $O(k \lceil n/64 \rceil)$ word operations.
     fn fill_generator(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F) {
         let length = self.cols();
         let redundancy = length - dimension;
@@ -255,6 +252,10 @@ where
     /// The provided body reads the same recurrence on columns: column $i$ of
     /// the leading block is $-P_i$, so the output is the only state the walk
     /// needs.
+    ///
+    /// # Complexity
+    ///
+    /// $O(kr)$ coordinate writes over the $O(rn)$ output.
     fn fill_parity_check(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F) {
         let redundancy = self.rows();
         let length = self.cols();
