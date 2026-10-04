@@ -1,93 +1,30 @@
-//! Reed-Muller subcodes for GRAND decoding.
-//!
-//! This module provides Reed-Muller (RM) subcodes suitable as component
-//! codes in product code turbo decoders with GRAND-family algorithms.
-//!
-//! # Constructions
-//!
-//! Two constructions are available:
-//!
-//! - [`DrmCode::new`]: generic RM subcode from monomial evaluations
-//!   (degree-then-lexicographic order).
-//! - [`DrmCode::extended_rm`]: a generalized construction that extends
-//!   RM(r,m) with greedy d\_min-maximizing rows from the polar transform.
-//! - [`DrmCode::drm_32_21`]: the standard (32, 21, 6) code, computed via
-//!   [`extended_rm(5, 21)`](DrmCode::extended_rm) and cached with `OnceLock`.
-//!
-//! The (32, 21, 6) code achieves d\_min=6, the maximum for any binary
-//! linear (32, 21) code by the Hamming sphere-packing bound. The
-//! construction extends RM(2,5) with 5 additional rows found by greedy
-//! d\_min-maximizing search over random linear combinations of polar
-//! transform rows, inspired by the dRM ensemble of Coskun & Pfister
-//! (arxiv:2103.16680).
-//!
-//! # Systematic form
-//!
-//! The constructor applies Gaussian elimination with column permutation
-//! to produce a systematic generator matrix G = [I\_k | P]. The
-//! parity-check matrix is H = [P^T | I\_r]. This is standard practice
-//! for GRAND decoding, which only needs G and H with the orthogonality
-//! property.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::drm::DrmCode;
-//! use gf2_coding::traits::BlockEncoder;
-//! use gf2_core::BitVec;
-//!
-//! let code = DrmCode::drm_32_21();
-//! assert_eq!(code.n(), 32);
-//! assert_eq!(code.k(), 21);
-//!
-//! let msg = BitVec::ones(21);
-//! let cw = code.encode(&msg);
-//! assert_eq!(cw.len(), 32);
-//! ```
+//! Reed-Muller subcodes used as component codes with GRAND-family decoders,
+//! after the dRM ensemble of `@/citation/CoskunPfister2022`. Generators are
+//! held in systematic form `G = [I_k | P]` with `H = [P^T | I_r]`, in a
+//! coordinate order permuted so that the pivot columns come first.
 
 use crate::linear::LinearBlockCode;
 use crate::traits::{BlockEncoder, GeneratorMatrixAccess};
 use gf2_core::{BitMatrix, BitVec};
 use std::sync::OnceLock;
 
-/// Cached (32, 21, 6) code constructed by `extended_rm(5, 21)`.
 static DRM_32_21_CACHE: OnceLock<LinearBlockCode> = OnceLock::new();
 
-/// A decreasing Reed-Muller code.
-///
-/// The code is stored internally as a [`LinearBlockCode`] with generator
-/// and parity-check matrices computed from monomial evaluations.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::drm::DrmCode;
-/// use gf2_coding::traits::BlockEncoder;
-/// use gf2_core::BitVec;
-///
-/// let code = DrmCode::drm_32_21();
-/// let msg = BitVec::zeros(21);
-/// let cw = code.encode(&msg);
-/// assert_eq!(cw.len(), 32);
-/// ```
+/// A decreasing Reed-Muller code, held as a systematic
+/// [`LinearBlockCode`].
 #[derive(Debug, Clone)]
 pub struct DrmCode {
     inner: LinearBlockCode,
 }
 
 impl DrmCode {
-    /// Constructs a decreasing Reed-Muller code with m variables and k
-    /// monomials in decreasing order.
-    ///
-    /// # Arguments
-    ///
-    /// * `m` - Number of variables (n = 2^m evaluation points)
-    /// * `k` - Number of monomials (rows of the generator matrix)
+    /// Constructs the code spanned by the first `k` monomials over `m`
+    /// variables, ordered by degree then lexicographically, evaluated at the
+    /// 2^m points of GF(2)^m.
     ///
     /// # Panics
     ///
-    /// Panics if `k` exceeds 2^m (more monomials than evaluation points)
-    /// or if `m` is 0.
+    /// Panics if `k` exceeds 2^m or if `m` is 0.
     ///
     /// # Complexity
     ///
@@ -98,11 +35,9 @@ impl DrmCode {
         let n = 1usize << m;
         assert!(k <= n, "k must not exceed 2^m = {}", n);
 
-        // Enumerate all monomials in degree order, lexicographic within degree.
         let monomials = Self::enumerate_monomials(m, k);
         assert_eq!(monomials.len(), k);
 
-        // Evaluate each monomial at all 2^m points of GF(2)^m.
         let mut g = BitMatrix::zeros(k, n);
         for (row, mono) in monomials.iter().enumerate() {
             for point in 0..n {
@@ -113,7 +48,6 @@ impl DrmCode {
             }
         }
 
-        // Put G in systematic form via row reduction, and compute H.
         let (g_sys, h) = Self::systematic_form(g, k, n);
 
         let inner = LinearBlockCode::new_systematic(g_sys, Some(h));
@@ -123,22 +57,10 @@ impl DrmCode {
     /// Creates a (2^m, k) code by extending RM(r,m) with greedy
     /// d\_min-maximizing rows from the polar transform.
     ///
-    /// The algorithm:
-    /// 1. Compute the polar transform G\_N (N = 2^m).
-    /// 2. Select RM(r,m) base rows: all G\_N rows whose index has
-    ///    popcount >= m-r, where r is the maximum order such that
-    ///    the resulting RM code has at most k rows.
-    /// 3. Greedily extend by adding random XOR combinations of G\_N
-    ///    rows, accepting a candidate only if d\_min of the extended
-    ///    code remains above a threshold computed from the base RM code.
-    ///
-    /// The construction is deterministic: a fixed seed derived from
-    /// (m, k) always produces the same code.
-    ///
-    /// # Arguments
-    ///
-    /// * `m` - Number of variables (n = 2^m)
-    /// * `k` - Target dimension (number of generator rows)
+    /// The base is the largest RM(r,m) with at most `k` rows. Each extension
+    /// row is a random XOR combination of polar-transform rows, drawn from an
+    /// RNG seeded by `(m, k)` and accepted only if the extended code keeps
+    /// the target d\_min.
     ///
     /// # Panics
     ///
@@ -146,21 +68,9 @@ impl DrmCode {
     /// in u32), or if the greedy search fails to find enough extension
     /// rows with the required d\_min.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    ///
-    /// // (32, 21) extended RM code with d_min >= 6
-    /// let code = DrmCode::extended_rm(5, 21);
-    /// assert_eq!(code.n(), 32);
-    /// assert_eq!(code.k(), 21);
-    /// ```
-    ///
     /// # Complexity
     ///
-    /// O(2^k) for coset weight verification at each extension step,
-    /// with up to O(k\_ext * max\_candidates) extension attempts.
+    /// O(2^k) per candidate extension row, for the coset weight check.
     pub fn extended_rm(m: usize, k: usize) -> Self {
         assert!(m > 0, "m must be positive");
         let n = 1usize << m;
@@ -171,29 +81,11 @@ impl DrmCode {
         Self { inner }
     }
 
-    /// Creates the (32, 21, 6) code — the standard dRM for GRAND product codes.
+    /// The (32, 21, 6) code of [`extended_rm(5, 21)`](Self::extended_rm),
+    /// built once per process and cloned from the cache.
     ///
-    /// Delegates to [`extended_rm(5, 21)`](Self::extended_rm) and caches
-    /// the result with `OnceLock` for efficient repeated access.
-    ///
-    /// The code achieves d\_min=6, the maximum for any binary linear
-    /// (32, 21) code by the Hamming sphere-packing bound.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    /// use gf2_coding::traits::BlockEncoder;
-    /// use gf2_core::BitVec;
-    ///
-    /// let code = DrmCode::drm_32_21();
-    /// assert_eq!(code.n(), 32);
-    /// assert_eq!(code.k(), 21);
-    ///
-    /// let msg = BitVec::ones(21);
-    /// let cw = code.encode(&msg);
-    /// assert_eq!(cw.len(), 32);
-    /// ```
+    /// d\_min = 6 is the maximum for a binary linear (32, 21) code by the
+    /// Hamming sphere-packing bound.
     pub fn drm_32_21() -> Self {
         let inner = DRM_32_21_CACHE.get_or_init(|| Self::build_extended_rm(5, 21));
         Self {
@@ -201,10 +93,7 @@ impl DrmCode {
         }
     }
 
-    /// Alias for [`drm_32_21`](Self::drm_32_21) — the dynamic (32, 21, 6) code.
-    ///
-    /// Retained for backward compatibility and explicitness when
-    /// emphasizing the dynamic construction.
+    /// Alias for [`drm_32_21`](Self::drm_32_21).
     pub fn drm_32_21_dynamic() -> Self {
         Self::drm_32_21()
     }
@@ -227,9 +116,6 @@ impl DrmCode {
     }
 
     /// Returns whether all codewords have even Hamming weight.
-    ///
-    /// Used by ORBGRAND's even-code optimization to skip half the
-    /// noise pattern search space.
     pub fn is_even(&self) -> bool {
         let g = self.inner.generator_matrix();
         for i in 0..self.inner.k() {
@@ -251,25 +137,8 @@ impl DrmCode {
         &self.inner
     }
 
-    // ---- Polar transform and extended RM construction ----
-
-    /// Computes the N=2^m rows of the polar transform G\_N.
-    ///
-    /// Row i of G\_N has bit j set iff (i AND j) == j, i.e., the
-    /// support of j is a subset of the support of i. This is the
-    /// standard Kronecker power of [[1,0],[1,1]].
-    ///
-    /// # Arguments
-    ///
-    /// * `m` - Number of variables (N = 2^m rows, each an N-bit word)
-    ///
-    /// # Returns
-    ///
-    /// A vector of N `u32` values, each representing a row of G\_N.
-    ///
-    /// # Complexity
-    ///
-    /// O(N^2) where N = 2^m.
+    /// Rows of the polar transform G\_N, N = 2^m, as bit words: row i has
+    /// bit j set iff (i AND j) == j (the Kronecker power of [[1,0],[1,1]]).
     fn polar_transform(m: usize) -> Vec<u32> {
         let n = 1usize << m;
         (0..n)
@@ -285,27 +154,14 @@ impl DrmCode {
             .collect()
     }
 
-    /// Selects RM(r,m) base rows from the polar transform by popcount
-    /// threshold, returning the maximum r such that the number of
-    /// selected rows does not exceed `k_max`.
+    /// Selects the largest RM(r,m) with at most `k_max` rows: the polar
+    /// transform rows whose index has popcount >= m-r.
     ///
-    /// RM(r,m) consists of all polar transform rows whose index has
-    /// popcount >= m-r. The function finds the largest r (equivalently,
-    /// lowest popcount threshold) that keeps the row count <= k\_max.
-    ///
-    /// # Returns
-    ///
-    /// `(base_rows, popcount_threshold, target_dmin)` where:
-    /// - `base_rows` are the selected polar transform row words
-    /// - `popcount_threshold` is the minimum popcount used
-    /// - `target_dmin` is the minimum distance of the base RM code (2^(m-r))
+    /// Returns `(base_rows, popcount_threshold, base_dmin)` with
+    /// `popcount_threshold = m-r` and `base_dmin = 2^(m-r)`.
     fn select_rm_base(g_n: &[u32], m: usize, k_max: usize) -> (Vec<u32>, u32, usize) {
         let n = g_n.len();
 
-        // Try increasing popcount thresholds (decreasing r) to find the
-        // largest RM(r,m) that fits in k_max rows.
-        // popcount_threshold = m - r, so lower threshold = higher r = more rows.
-        // We want the smallest threshold such that count <= k_max.
         let mut best_threshold = m as u32; // RM(0,m): only the all-ones row
         for threshold in 0..=m as u32 {
             let count = (0..n)
@@ -329,10 +185,7 @@ impl DrmCode {
         (base_rows, best_threshold, base_dmin)
     }
 
-    /// Builds the extended RM code as a `LinearBlockCode`.
-    ///
-    /// This is the core algorithm: compute polar transform, select RM
-    /// base rows, greedily extend to k rows while maintaining d\_min.
+    /// Construction behind [`Self::extended_rm`].
     fn build_extended_rm(m: usize, k: usize) -> LinearBlockCode {
         use rand::rngs::StdRng;
         use rand::{Rng, SeedableRng};
@@ -343,35 +196,24 @@ impl DrmCode {
         let (mut rows, _threshold, base_dmin) = Self::select_rm_base(&g_n, m, k);
         let k_base = rows.len();
 
-        // If base RM already has enough rows, truncate to k.
         if k_base >= k {
             rows.truncate(k);
             return Self::rows_to_code(&rows, n);
         }
 
-        // Target d_min for extension: we aim for d_min >= base_dmin / 2
-        // but at least 4, and for the specific (32,21) case we know d_min=6
-        // is achievable.
-        // For RM(2,5) base (d_min=8), target = max(8/2, 4) = max(4, 4) = 4.
-        // But we actually want d_min=6 for (32,21). Use a heuristic:
-        // try base_dmin first, then base_dmin-2, etc.
         let target_dmin = Self::compute_target_dmin(m, k, base_dmin);
 
-        // Derive a deterministic seed from (m, k).
         let seed = Self::deterministic_seed(m, k);
 
         let k_ext = k - k_base;
         let mut rng = StdRng::seed_from_u64(seed);
 
-        // Enumerate all codewords of the current base code.
         let mut codewords = Self::enumerate_codewords_internal(&rows);
 
-        // Greedily add extension rows.
         let max_candidates_per_row = 100_000;
         for _ext in 0..k_ext {
             let mut found_row = false;
             for _ in 0..max_candidates_per_row {
-                // Generate a random linear combination of G_N rows.
                 let mut candidate = 0u32;
                 for &g_row in &g_n {
                     if rng.gen_bool(0.5) {
@@ -382,13 +224,12 @@ impl DrmCode {
                     continue;
                 }
 
-                // Check the new coset: candidate XOR each existing codeword.
+                // Only the new coset `candidate ^ c` can lower d_min.
                 let coset_ok = codewords
                     .iter()
                     .all(|&c| (candidate ^ c).count_ones() >= target_dmin as u32);
 
                 if coset_ok {
-                    // Extend codeword list with the new coset.
                     let new_codewords: Vec<u32> =
                         codewords.iter().map(|&c| candidate ^ c).collect();
                     codewords.extend_from_slice(&new_codewords);
@@ -408,18 +249,13 @@ impl DrmCode {
         Self::rows_to_code(&rows, n)
     }
 
-    /// Computes a target d\_min for the greedy extension.
-    ///
-    /// For known good parameters, returns the optimal d\_min. Otherwise
-    /// uses a heuristic based on the base RM code's d\_min.
+    /// Target d\_min for the greedy extension.
     fn compute_target_dmin(m: usize, k: usize, base_dmin: usize) -> usize {
-        // Known optimal d_min values for specific (n, k) pairs.
         let n = 1usize << m;
         match (n, k) {
             (32, 21) => 6,
             (16, 11) => 4,
             _ => {
-                // Heuristic: half of base d_min, at least 4.
                 let half = base_dmin / 2;
                 if half >= 4 {
                     half
@@ -430,15 +266,12 @@ impl DrmCode {
         }
     }
 
-    /// Derives a deterministic seed from (m, k) parameters.
-    ///
-    /// For the known (32, 21) case, uses seed=3 which is known to produce
-    /// a d\_min=6 code. For other parameters, uses a hash-like combination.
+    /// Seed of the extension search; seed 3 yields d\_min = 6 for (32, 21).
     fn deterministic_seed(m: usize, k: usize) -> u64 {
         match (1usize << m, k) {
             (32, 21) => 3,
             _ => {
-                // Simple deterministic hash: m * large_prime + k
+                // The multiplier is 2^64 / φ.
                 (m as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ (k as u64)
             }
         }
@@ -461,9 +294,7 @@ impl DrmCode {
         LinearBlockCode::new_systematic(g_sys, Some(h))
     }
 
-    /// Enumerates all codewords of a code given by its generator row words.
-    ///
-    /// Uses Gray code enumeration for O(2^k) XOR operations.
+    /// All 2^k codewords spanned by `rows`, in Gray-code order of the message.
     fn enumerate_codewords_internal(rows: &[u32]) -> Vec<u32> {
         let k = rows.len();
         let total = 1u64 << k;
@@ -478,17 +309,11 @@ impl DrmCode {
         codewords
     }
 
-    // ---- Monomial construction helpers ----
-
-    /// Enumerates the first `k` monomials in decreasing monomial order
-    /// over `m` variables.
-    ///
-    /// Each monomial is represented as a bitmask where bit i indicates
-    /// that variable x\_i appears in the product.
+    /// First `k` monomials over `m` variables, by degree then
+    /// lexicographically, as bitmasks: bit i is set when x\_i is a factor.
     fn enumerate_monomials(m: usize, k: usize) -> Vec<u32> {
         let mut monomials = Vec::with_capacity(k);
 
-        // Group by degree, enumerate lexicographically within each degree.
         for degree in 0..=m {
             let combos = Self::combinations(m, degree);
             for combo in combos {
@@ -502,7 +327,7 @@ impl DrmCode {
         monomials
     }
 
-    /// Returns all k-element subsets of {0, 1, ..., m-1} as bitmasks,
+    /// Returns all `degree`-element subsets of {0, 1, ..., m-1} as bitmasks,
     /// in lexicographic order.
     fn combinations(m: usize, degree: usize) -> Vec<u32> {
         let mut result = Vec::new();
@@ -540,19 +365,16 @@ impl DrmCode {
     ///
     /// The point is encoded as an integer where bit i is the value of variable x\_i.
     fn evaluate_monomial(monomial: &u32, point: usize, _m: usize) -> bool {
-        // The monomial evaluates to 1 iff all variables in the monomial are 1
-        // at the given point.
         let mono = *monomial as usize;
         (point & mono) == mono
     }
 
-    /// Converts a generator matrix to systematic form [I_k | P] via row
-    /// reduction, and computes H = [P^T | I_r].
+    /// Row-reduces `g` and moves the pivot columns first, giving [I_k | P] in
+    /// a permuted coordinate order, and computes H = [P^T | I_r].
     fn systematic_form(g: BitMatrix, k: usize, n: usize) -> (BitMatrix, BitMatrix) {
         let r = n - k;
         let mut work = g;
 
-        // Gaussian elimination to get RREF
         let mut pivot_cols = Vec::with_capacity(k);
         let mut current_row = 0;
 
@@ -560,7 +382,6 @@ impl DrmCode {
             if current_row >= k {
                 break;
             }
-            // Find pivot in this column
             let mut pivot = None;
             for row in current_row..k {
                 if work.get(row, col) {
@@ -569,11 +390,9 @@ impl DrmCode {
                 }
             }
             if let Some(pivot_row) = pivot {
-                // Swap rows
                 if pivot_row != current_row {
                     work.swap_rows(current_row, pivot_row);
                 }
-                // Eliminate all other rows
                 for row in 0..k {
                     if row != current_row && work.get(row, col) {
                         work.row_xor(row, current_row);
@@ -591,8 +410,6 @@ impl DrmCode {
             k
         );
 
-        // Now rearrange columns so pivot columns come first (systematic form).
-        // Build a column permutation: pivot_cols first, then the rest.
         let non_pivot_cols: Vec<usize> = (0..n).filter(|c| !pivot_cols.contains(c)).collect();
         assert_eq!(non_pivot_cols.len(), r);
 
@@ -606,7 +423,6 @@ impl DrmCode {
             }
         }
 
-        // Build H = [P^T | I_r]
         let mut h = BitMatrix::zeros(r, n);
         for i in 0..r {
             for j in 0..k {
@@ -615,31 +431,16 @@ impl DrmCode {
             h.set(i, k + i, true);
         }
 
-        // We also need to un-permute the columns so the code operates on
-        // the original coordinate system. Build the full permuted G and H.
-        // Actually, for a code defined by evaluation, the column permutation
-        // just reorders the coordinate positions. The code is the same code
-        // in a permuted coordinate system. For our purposes (GRAND decoding
-        // with H matrix), this is fine as long as G and H are consistent.
-
         (g_sys, h)
     }
 
-    /// Computes the exact minimum distance by enumerating all 2^k codewords.
-    ///
-    /// Uses a Gray code enumeration to update the codeword incrementally
-    /// (one row XOR per step), achieving O(2^k) XOR operations total.
-    ///
-    /// # Complexity
-    ///
-    /// O(2^k) — only practical for small k (k <= ~22).
+    /// Exact minimum distance over all 2^k codewords, by Gray-code stepping.
     #[cfg(test)]
     fn compute_dmin_exhaustive(code: &DrmCode) -> usize {
         let k = code.k();
         let n = code.n();
         let g = code.inner.generator();
 
-        // Precompute each row of G as a u32 word (n <= 32).
         assert!(n <= 32, "compute_dmin_exhaustive only supports n <= 32");
         let row_words: Vec<u32> = (0..k)
             .map(|row| {
@@ -656,7 +457,6 @@ impl DrmCode {
         let total = 1u64 << k;
         let mut dmin = n + 1;
 
-        // Gray code enumeration: codeword updates by XORing one row per step.
         let mut cw: u32 = 0;
         for msg in 1..total {
             // The bit that changes in Gray code step msg is the position of
@@ -767,7 +567,6 @@ mod tests {
 
     #[test]
     fn test_drm_rm_2_5_is_subcode() {
-        // RM(2,5) = dRM(32,16) should produce a valid code
         let code = DrmCode::new(5, 16);
         assert_eq!(code.n(), 32);
         assert_eq!(code.k(), 16);
@@ -785,7 +584,6 @@ mod tests {
 
     #[test]
     fn test_drm_rm_1_5() {
-        // RM(1,5) = dRM(32,6)
         let code = DrmCode::new(5, 6);
         assert_eq!(code.n(), 32);
         assert_eq!(code.k(), 6);
@@ -793,13 +591,6 @@ mod tests {
 
     #[test]
     fn test_monomial_enumeration() {
-        // For m=3, degree ordering should be:
-        // deg 0: {} (constant) -> 1 monomial
-        // deg 1: {0}, {1}, {2} -> 3 monomials
-        // deg 2: {0,1}, {0,2}, {1,2} -> 3 monomials
-        // deg 3: {0,1,2} -> 1 monomial
-        // Total: 8 = 2^3
-
         let monos = DrmCode::enumerate_monomials(3, 8);
         assert_eq!(monos.len(), 8);
         assert_eq!(monos[0], 0b000); // constant
@@ -814,7 +605,6 @@ mod tests {
 
     #[test]
     fn test_evaluate_monomial_constant() {
-        // Constant monomial (no variables) evaluates to 1 at every point
         for point in 0..8 {
             assert!(DrmCode::evaluate_monomial(&0, point, 3));
         }
@@ -822,7 +612,6 @@ mod tests {
 
     #[test]
     fn test_evaluate_monomial_single_var() {
-        // x0 = variable 0: evaluates to bit 0 of the point
         for point in 0..8 {
             let expected = (point & 1) == 1;
             assert_eq!(DrmCode::evaluate_monomial(&1, point, 3), expected);
@@ -831,20 +620,17 @@ mod tests {
 
     #[test]
     fn test_evaluate_monomial_product() {
-        // x0*x1 (mask = 0b11): evaluates to 1 only when both bits 0 and 1 are set
         for point in 0..8 {
             let expected = (point & 0b11) == 0b11;
             assert_eq!(DrmCode::evaluate_monomial(&0b11, point, 3), expected);
         }
     }
 
-    /// Verify minimum distance by checking weight-1 and weight-2 patterns.
     #[test]
     fn test_drm_32_21_minimum_distance_lower_bound() {
         let code = DrmCode::drm_32_21();
         let n = code.n();
 
-        // Weight 1
         for i in 0..n {
             let mut e = BitVec::zeros(n);
             e.set(i, true);
@@ -852,7 +638,6 @@ mod tests {
             assert!(syn.count_ones() > 0, "weight-1 at {} has zero syndrome", i);
         }
 
-        // Weight 2
         for i in 0..n {
             for j in (i + 1)..n {
                 let mut e = BitVec::zeros(n);
@@ -868,7 +653,6 @@ mod tests {
             }
         }
 
-        // Weight 3
         for i in 0..n {
             for j in (i + 1)..n {
                 for l in (j + 1)..n {
@@ -887,9 +671,7 @@ mod tests {
                 }
             }
         }
-        // d_min >= 4 proven above. The dynamic dRM(32,21) has d_min=6,
-        // so we verify no weight-4 or weight-5 codewords exist among
-        // single-row generator codewords.
+        // No error of weight <= 3 has zero syndrome, so d_min >= 4.
         use crate::traits::BlockEncoder;
         let k = code.k();
         for bit in 0..k {
@@ -903,8 +685,6 @@ mod tests {
             );
         }
     }
-
-    // ---- Extended RM tests ----
 
     #[test]
     fn test_extended_rm_32_21_parameters() {
@@ -929,14 +709,10 @@ mod tests {
 
     #[test]
     fn test_extended_rm_16_11() {
-        // RM(2,4) has C(4,0)+C(4,1)+C(4,2) = 1+4+6 = 11 rows.
-        // So extended_rm(4, 11) should just use RM(2,4) directly
-        // with no extension needed.
+        // RM(2,4) has C(4,0)+C(4,1)+C(4,2) = 11 rows: no extension rows.
         let code = DrmCode::extended_rm(4, 11);
         assert_eq!(code.n(), 16);
         assert_eq!(code.k(), 11);
-
-        // Verify G*H^T = 0
         let g = code.generator_matrix();
         let h = code.parity_check();
         let h_t = h.transpose();
@@ -950,7 +726,6 @@ mod tests {
 
     #[test]
     fn test_polar_transform_m3() {
-        // G_8 should be 8x8 with row i having bit j set iff (i&j)==j.
         let g = DrmCode::polar_transform(3);
         assert_eq!(g.len(), 8);
 
@@ -995,7 +770,6 @@ mod tests {
 
     #[test]
     fn test_drm_dynamic_dmin_at_least_6() {
-        // Exhaustively verify d_min >= 6 by enumerating all 2^21 codewords.
         let code = DrmCode::drm_32_21_dynamic();
         let dmin = DrmCode::compute_dmin_exhaustive(&code);
         assert!(
@@ -1025,12 +799,8 @@ mod tests {
             }
             let cw = code.encode(&msg);
             assert_eq!(cw.len(), 32);
-
-            // Verify syndrome is zero
             let syn = code.inner().syndrome(&cw).unwrap();
             assert_eq!(syn.count_ones(), 0, "trial {trial}: nonzero syndrome");
-
-            // BCJR decode at high SNR and verify message recovery
             let llrs: Vec<Llr> = (0..32)
                 .map(|j| {
                     if cw.get(j) {
@@ -1051,10 +821,6 @@ mod tests {
     #[test]
     fn test_drm_dynamic_is_even() {
         let code = DrmCode::drm_32_21_dynamic();
-        // The code is an extension of RM(2,5) where all rows have even
-        // weight (weight is always a power of 2). Extension rows are also
-        // even-weight since they are XORs of G_32 rows (which all have
-        // weights that are powers of 2). So the code is even.
         assert!(
             code.is_even(),
             "dynamic dRM(32,21) should be an even-weight code"
@@ -1068,12 +834,8 @@ mod tests {
 
         let code = DrmCode::drm_32_21_dynamic();
         let decoder = BcjrDecoder::new(code.parity_check());
-
-        // Encode the all-ones message.
         let msg = BitVec::ones(21);
         let cw = code.encode(&msg);
-
-        // High-SNR LLR: +10.0 for 0, -10.0 for 1.
         let llrs: Vec<Llr> = (0..32)
             .map(|j| {
                 if cw.get(j) {
@@ -1085,7 +847,6 @@ mod tests {
             .collect();
 
         let result = decoder.decode_siso(&llrs);
-        // Check hard decisions match the original codeword.
         for j in 0..32 {
             let hard = result.app_llrs[j].value() < 0.0;
             assert_eq!(hard, cw.get(j), "BCJR hard decision mismatch at bit {}", j);
@@ -1095,8 +856,6 @@ mod tests {
     #[test]
     #[ignore = "slow: constructs two DrmCode::extended_rm(5,21) instances for determinism check"]
     fn test_extended_rm_deterministic() {
-        // Two calls to extended_rm with the same parameters must produce
-        // the same code.
         let code1 = DrmCode::extended_rm(5, 21);
         let code2 = DrmCode::extended_rm(5, 21);
         let g1 = code1.generator_matrix();
@@ -1122,7 +881,6 @@ mod proptests {
     use proptest::prelude::*;
 
     proptest! {
-        /// For any random message, the encoded codeword must have zero syndrome.
         #[test]
         fn prop_drm_32_21_syndrome_zero(
             msg_bits in prop::collection::vec(any::<bool>(), 21)
@@ -1137,7 +895,6 @@ mod proptests {
             prop_assert_eq!(syn.count_ones(), 0, "syndrome must be zero for valid codeword");
         }
 
-        /// The sum of two codewords must be a codeword (linearity).
         #[test]
         fn prop_drm_32_21_linearity(
             msg1_bits in prop::collection::vec(any::<bool>(), 21),

@@ -21,16 +21,6 @@
 /// - `bits_per_symbol`: Coded bits per constellation symbol `m` (1 for
 ///   BPSK, 4 for 16-QAM).
 /// - `code_rate`: Code rate `R` as a fraction (0.5 for rate 1/2).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::info_theory::{ebn0_to_esn0, esn0_to_ebn0};
-/// // BPSK, rate 3/4: Es/N0 sits 10·log10(0.75) ≈ −1.249 dB below Eb/N0.
-/// let es_n0 = ebn0_to_esn0(2.0, 1, 0.75);
-/// assert!((es_n0 - (2.0 + 10.0 * 0.75_f64.log10())).abs() < 1e-12);
-/// assert!((esn0_to_ebn0(es_n0, 1, 0.75) - 2.0).abs() < 1e-12);
-/// ```
 pub fn esn0_to_ebn0(es_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
     es_n0_db - 10.0 * (bits_per_symbol as f64 * code_rate).log10()
 }
@@ -78,22 +68,13 @@ fn bi_awgn_expectation(es_n0_db: f64, f: impl Fn(f64) -> f64) -> f64 {
 /// at symbol SNR `es_n0_db`, in bits per channel use.
 ///
 /// `C = E[i]` with `i = 1 − log2(1 + exp(−2a·y))`, `y ~ N(a, 1)`,
-/// `a = sqrt(2·Es/N0)`; this is the BI-AWGN capacity of \[PPV2010\] with
+/// `a = sqrt(2·Es/N0)`; this is the BI-AWGN capacity of `@/citation/PPV2010` with
 /// channel SNR `P = 2·Es/N0`. To evaluate at a bit SNR, convert with
 /// [`ebn0_to_esn0`] using `bits_per_symbol = 1` and the code rate.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::info_theory::{bi_awgn_capacity, ebn0_to_esn0};
-/// // Rate 3/4 at its Shannon limit (Eb/N0 ≈ 1.626 dB) has capacity 3/4.
-/// let c = bi_awgn_capacity(ebn0_to_esn0(1.626, 1, 0.75));
-/// assert!((c - 0.75).abs() < 1e-3);
-/// ```
-///
 /// # Complexity
 ///
-/// O(N) for the fixed node count N = 2400; effectively constant time.
+/// O(N) in the fixed quadrature node count N.
 pub fn bi_awgn_capacity(es_n0_db: f64) -> f64 {
     bi_awgn_expectation(es_n0_db, |i| i).clamp(0.0, 1.0)
 }
@@ -102,13 +83,13 @@ pub fn bi_awgn_capacity(es_n0_db: f64) -> f64 {
 /// `es_n0_db`, in bits² per channel use.
 ///
 /// `V = Var[i]` for the information density of [`bi_awgn_capacity`]
-/// (the BI-AWGN dispersion of \[PPV2010\] with `P = 2·Es/N0`). It is the
+/// (the BI-AWGN dispersion of `@/citation/PPV2010` with `P = 2·Es/N0`). It is the
 /// second-order term of the normal approximation
 /// `R ≈ C − sqrt(V/n)·Q⁻¹(ε)`.
 ///
 /// # Complexity
 ///
-/// O(N) for the fixed node count N = 2400; effectively constant time.
+/// O(N) in the fixed quadrature node count N.
 pub fn bi_awgn_dispersion(es_n0_db: f64) -> f64 {
     let mean = bi_awgn_expectation(es_n0_db, |i| i);
     bi_awgn_expectation(es_n0_db, |i| (i - mean) * (i - mean)).max(0.0)
@@ -128,8 +109,7 @@ pub fn bi_awgn_dispersion(es_n0_db: f64) -> f64 {
 ///
 /// # Complexity
 ///
-/// O(K · N) for K = 64 bisection steps and the N capacity-integration
-/// nodes; effectively constant time.
+/// A fixed number of bisection steps, each one capacity evaluation.
 pub fn shannon_limit(rate: f64) -> f64 {
     assert!(
         rate > 0.0 && rate <= 1.0,

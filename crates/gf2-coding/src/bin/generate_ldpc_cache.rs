@@ -56,7 +56,6 @@ fn generate_short_frames(output_dir: &Path) {
         let elapsed = start.elapsed();
         println!("  Preprocessed in {:.1}s", elapsed.as_secs_f64());
 
-        // Save immediately
         match cache.save_to_directory(output_dir) {
             Ok(()) => println!("  ✓ Saved to disk"),
             Err(e) => {
@@ -78,7 +77,6 @@ fn generate_all(output_dir: &Path) {
     println!("Generating ALL 12 DVB-T2 LDPC cache files...");
     println!("Output directory: {}", output_dir.display());
 
-    // Load existing cache files if any
     let cache = match EncodingCache::from_directory(output_dir) {
         Ok(cache) => {
             let existing = cache.stats().entries;
@@ -100,10 +98,8 @@ fn generate_all(output_dir: &Path) {
 
     let start = std::time::Instant::now();
 
-    // Precompute remaining configs
     cache.precompute_dvb_t2();
 
-    // Save all to directory
     match cache.save_to_directory(output_dir) {
         Ok(()) => {
             let elapsed = start.elapsed();

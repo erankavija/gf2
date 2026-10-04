@@ -1,100 +1,9 @@
-//! Traits for error-correcting codes.
-//!
-//! The module holds three groups of interfaces:
-//!
-//! - [`block`] is the canonical block-code surface. It is generic over the
-//!   symbol field and over the representation that stores symbols and
-//!   matrices, and it carries packed `BitVec`/`BitMatrix` specializations for
-//!   codes over `GF(2)`.
-//! - [`compat::binary_v1`] is the named, versioned `binary-code-v1`
-//!   compatibility boundary holding the bit-only encoder and generator-matrix
-//!   contracts that code families outside the canonical surface implement
-//!   directly. Its two traits are re-exported at this module's root, so
-//!   `crate::traits::BlockEncoder` and `crate::traits::GeneratorMatrixAccess`
-//!   name the version-1 contracts.
-//! - The decoder and streaming traits ([`HardDecisionDecoder`],
-//!   [`SoftDecoder`], [`IterativeSoftDecoder`], [`StreamingEncoder`],
-//!   [`StreamingDecoder`]) together with [`DecoderResult`].
-//!
-//! # Runtime-erased handles
-//!
-//! [`ErasedBlockCode`] and its capability-specific companions are leaf
-//! adapters over fully constructed static codes. They erase the symbol field
-//! and representation so exploratory code can hold heterogeneous code values,
-//! but they do not erase construction specifications, select a field, or
-//! provide a dynamic alternative to
-//! [`FieldExtension`](gf2_core::field::extension::FieldExtension). Static
-//! trait calls remain the allocation-free, monomorphized path.
-//!
-//! A small exploratory collection can therefore retain the static encoders'
-//! semantics while choosing the code at run time:
-//!
-//! ```
-//! use gf2_coding::traits::{
-//!     block, ErasedBlockCode, ErasedBlockEncoder, ErasedSymbols,
-//! };
-//! use gf2_coding::traits::block::BlockCode;
-//! use gf2_coding::LinearBlockCode;
-//! use gf2_core::gfp::Fp;
-//! use gf2_core::BitVec;
-//!
-//! #[derive(Clone)]
-//! struct DelegatingCode(LinearBlockCode);
-//!
-//! impl block::BlockCode for DelegatingCode {
-//!     type Symbol = Fp<2>;
-//!     type Symbols = BitVec;
-//!
-//!     fn symbol_zero(&self) -> Self::Symbol {
-//!         block::BlockCode::symbol_zero(&self.0)
-//!     }
-//!
-//!     fn k(&self) -> usize {
-//!         block::BlockCode::k(&self.0)
-//!     }
-//!
-//!     fn n(&self) -> usize {
-//!         block::BlockCode::n(&self.0)
-//!     }
-//! }
-//!
-//! impl block::BlockEncoder for DelegatingCode {
-//!     fn encode_into(
-//!         &self,
-//!         message: &Self::Symbols,
-//!         codeword: &mut Self::Symbols,
-//!     ) -> Result<(), gf2_coding::CodeError> {
-//!         block::BlockEncoder::encode_into(&self.0, message, codeword)
-//!     }
-//! }
-//!
-//! let binary = LinearBlockCode::hamming(2);
-//! let wrapped = DelegatingCode(LinearBlockCode::hamming(3));
-//! let codes: Vec<ErasedBlockCode> = vec![
-//!     ErasedBlockCode::new(binary.clone()),
-//!     ErasedBlockCode::new(wrapped.clone()),
-//! ];
-//! let encoders = vec![
-//!     ErasedBlockEncoder::new(binary.clone()),
-//!     ErasedBlockEncoder::new(wrapped.clone()),
-//! ];
-//!
-//! let binary_message = BitVec::zeros(binary.k());
-//! let binary_expected = block::BlockEncoder::encode(&binary, &binary_message).unwrap();
-//! let binary_actual = encoders[0]
-//!     .encode(&ErasedSymbols::new(&binary, binary_message))
-//!     .unwrap();
-//! assert_eq!(binary_actual.downcast_ref(&binary).unwrap(), &binary_expected);
-//!
-//! let wrapped_message = BitVec::zeros(wrapped.k());
-//! let wrapped_expected = block::BlockEncoder::encode(&wrapped, &wrapped_message).unwrap();
-//! let wrapped_actual = encoders[1]
-//!     .encode(&ErasedSymbols::new(&wrapped, wrapped_message))
-//!     .unwrap();
-//! assert_eq!(wrapped_actual.downcast_ref(&wrapped).unwrap(), &wrapped_expected);
-//! assert_eq!(codes[0].n(), binary.n());
-//! assert_eq!(codes[1].n(), wrapped.n());
-//! ```
+//! Traits for error-correcting codes: the canonical block-code surface in
+//! [`block`], generic over the symbol field and its storage; the bit-only
+//! `binary-code-v1` boundary in [`compat::binary_v1`], whose two traits are
+//! re-exported at this module's root; the decoder and streaming traits with
+//! [`DecoderResult`]; and runtime-erased handles ([`ErasedBlockCode`] and its
+//! capability-specific companions) over fully constructed static codes.
 
 use crate::error::CodeError;
 pub use crate::error::RepresentationId;
@@ -111,24 +20,10 @@ pub mod block {
     //! A code declares its symbol field through [`BlockCode::Symbol`] and its
     //! storage through [`BlockCode::Symbols`]; the capability traits
     //! [`BlockEncoder`], [`GeneratorMatrixAccess`], and
-    //! [`ParityCheckMatrixAccess`] refine it, each owning exactly the
-    //! representation its own result needs. A code over `GF(2)` selects
+    //! [`ParityCheckMatrixAccess`] refine it. A code over `GF(2)` selects
     //! `Fp<2>` with [`BitVec`] and [`BitMatrix`] and is then recognized by the
     //! marker traits [`BinaryBlockCode`], [`BinaryGeneratorMatrixAccess`], and
-    //! [`BinaryParityCheckMatrixAccess`], which give binary algorithms the
-    //! packed types directly rather than through a parallel trait hierarchy.
-    //!
-    //! # Dispatch
-    //!
-    //! These traits are the static half of the static/erased split fixed by
-    //! the epic `ae03bcd0` BCH API design document (`bch-api-design.md`,
-    //! sections "Static and erased type split" and "Canonical trait surface").
-    //! A generic function bounded by them monomorphizes to one concrete symbol
-    //! type and one concrete representation per instantiation, so selecting
-    //! the representation costs nothing at run time and no encoding or matrix
-    //! path acquires a virtual call. Runtime exploration uses the separate
-    //! erased handles described there, and no trait in this module accepts an
-    //! erased value.
+    //! [`BinaryParityCheckMatrixAccess`].
     //!
     //! # Examples
     //!
@@ -179,10 +74,8 @@ pub mod block {
         /// Creates a zero-filled sequence of `len` symbols.
         fn zeroed(len: usize, zero: &F) -> Self;
 
-        /// Returns the number of symbols in the sequence.
         fn len(&self) -> usize;
 
-        /// Returns whether the sequence contains no symbols.
         fn is_empty(&self) -> bool {
             self.len() == 0
         }
@@ -192,9 +85,8 @@ pub mod block {
 
         /// Stores a symbol at `index`.
         ///
-        /// The method validates only the sequence index. Field identity of a
-        /// stored symbol is a [`BlockCode`] conformance law, not an input
-        /// check performed by this representation contract.
+        /// Validates only the index; field identity of the stored symbol is
+        /// a [`BlockCode`] conformance law.
         ///
         /// # Errors
         ///
@@ -214,10 +106,8 @@ pub mod block {
         /// Creates a zero-filled matrix with the requested shape.
         fn zeroed(rows: usize, cols: usize, zero: &F) -> Self;
 
-        /// Returns the number of rows.
         fn rows(&self) -> usize;
 
-        /// Returns the number of columns.
         fn cols(&self) -> usize;
 
         /// Returns a copy of a cell, or `None` when its coordinates are out of range.
@@ -225,9 +115,8 @@ pub mod block {
 
         /// Stores a symbol at `(row, col)`.
         ///
-        /// The method validates only the matrix coordinates. Field identity
-        /// of a stored symbol is a [`BlockCode`] conformance law, not an input
-        /// check performed by this representation contract.
+        /// Validates only the coordinates; field identity of the stored
+        /// symbol is a [`BlockCode`] conformance law.
         ///
         /// # Errors
         ///
@@ -402,10 +291,9 @@ pub mod block {
     pub trait BlockEncoder: BlockCode {
         /// Encodes into an already sized `n()`-symbol buffer.
         ///
-        /// This is the primitive operation: the caller owns the output
-        /// buffer, so encoding allocates no result. Implementations validate
-        /// `message.len() == k()`, `codeword.len() == n()`, and any
-        /// layout-specific precondition before writing any output symbol.
+        /// Implementations validate `message.len() == k()`,
+        /// `codeword.len() == n()`, and any layout-specific precondition
+        /// before writing any output symbol.
         ///
         /// # Errors
         ///
@@ -444,9 +332,7 @@ pub mod block {
 
         /// Materializes the generator matrix.
         ///
-        /// This default allocates a fresh matrix for every call. Matrix
-        /// access is deliberately uncached; use an explicit cache wrapper
-        /// when retaining a materialization is wanted.
+        /// The default allocates a fresh matrix on every call.
         ///
         /// # Errors
         ///
@@ -476,19 +362,11 @@ pub mod block {
         /// Reports whether the code carries message symbol `i` at codeword
         /// coordinate `i`, the canonical message-coordinate order.
         ///
-        /// [`Self::is_systematic`] answers for whatever order the code
-        /// records for its message coordinates; this answers where that
-        /// order puts them. The two together are the statement that the
-        /// generator's first `k()` columns are the identity, which is what a
-        /// caller needs before it may read a coordinate below `k()` as a
-        /// message coordinate — a derived code restricting its mother to the
-        /// messages that vanish on chosen coordinates, for one.
-        ///
-        /// The answer is about the layout alone and says nothing about
-        /// systematicity, so a code that is not systematic still answers for
-        /// the order it would record. The default reports the canonical
-        /// order, the layout the repository's matrix contract writes; a code
-        /// that records another message-coordinate order overrides this.
+        /// Together with [`Self::is_systematic`] this states that the
+        /// generator's first `k()` columns are the identity. The answer
+        /// concerns the layout alone, so a code that is not systematic still
+        /// answers for the order it records. The default reports the
+        /// canonical order.
         ///
         /// # Errors
         ///
@@ -504,7 +382,12 @@ pub mod block {
         /// The matrix representation used for the parity check.
         type ParityCheckMatrix: SymbolMatrix<Self::Symbol>;
 
-        /// Returns the number of parity-check rows.
+        /// Returns the number of parity-check rows, by default
+        /// [`BlockCode::redundancy`].
+        ///
+        /// # Panics
+        ///
+        /// The default panics as [`BlockCode::redundancy`] does.
         fn parity_check_rows(&self) -> usize {
             self.redundancy()
         }
@@ -522,14 +405,16 @@ pub mod block {
 
         /// Materializes the parity-check matrix.
         ///
-        /// This default allocates a fresh matrix for every call. Matrix
-        /// access is deliberately uncached; use an explicit cache wrapper
-        /// when retaining a materialization is wanted.
+        /// The default allocates a fresh matrix on every call.
         ///
         /// # Errors
         ///
         /// Propagates the [`CodeError`] returned by
         /// [`Self::parity_check_matrix_into`].
+        ///
+        /// # Panics
+        ///
+        /// Panics as [`Self::parity_check_rows`] does.
         fn parity_check_matrix(&self) -> Result<Self::ParityCheckMatrix, CodeError> {
             let mut out = Self::ParityCheckMatrix::zeroed(
                 self.parity_check_rows(),
@@ -570,14 +455,9 @@ pub mod block {
 
     /// Shared behavioral checks for canonical representations and code capabilities.
     ///
-    /// Each function is one law of the traits in this module, written once and
-    /// applied to every implementor. Crate-internal unit tests call them on
-    /// their own module's fixtures; the integration suite
-    /// `tests/bch_conformance.rs` calls the same functions over the
-    /// predeclared BCH conformance corpus and the whole implementor roster,
-    /// which is what `@/invariant/shared-test-contracts` asks of a shared
-    /// interface. Reaching the second consumer is why the module is public
-    /// under the `test-support` feature; it carries no production code.
+    /// Each function is one law of the traits in this module; crate unit
+    /// tests and `tests/bch_conformance.rs` apply the same functions to every
+    /// implementor.
     #[cfg(any(test, feature = "test-support"))]
     pub mod conformance {
         use super::*;
@@ -793,6 +673,11 @@ pub mod block {
         ///
         /// A code without a parity-check capability satisfies the law
         /// vacuously and the check returns.
+        ///
+        /// # Panics
+        ///
+        /// Panics when a product is nonzero or the generator does not
+        /// materialize.
         pub fn generator_parity_orthogonality<C>(code: &C)
         where
             C: GeneratorMatrixAccess + ParityCheckMatrixAccess,
@@ -1005,12 +890,10 @@ where
 
 /// A type-erased sequence of symbols.
 ///
-/// The field and representation identities are retained beside the
-/// `Any` payload. Use [`ErasedSymbols::new`] with the static code that owns a
-/// value, then use [`ErasedSymbols::downcast_ref`] or
-/// [`ErasedSymbols::downcast`] with that code to recover it. The checked
-/// operations return [`CodeError::FieldMismatch`] before a representation
-/// check, and never coerce a value between fields or representations.
+/// The field and representation identities are retained beside the payload.
+/// [`ErasedSymbols::downcast_ref`] and [`ErasedSymbols::downcast`] recover the
+/// value with the static code that owns it; they check the field before the
+/// representation and never coerce a value between fields or representations.
 #[derive(Clone)]
 pub struct ErasedSymbols {
     field_id: FieldId,
@@ -1031,9 +914,8 @@ impl fmt::Debug for ErasedSymbols {
 impl ErasedSymbols {
     /// Erases a symbol sequence owned by `code`.
     ///
-    /// This constructor does not inspect or change the sequence. The caller
-    /// supplies the static code so the runtime field identity is retained even
-    /// for an empty sequence.
+    /// The static code supplies the field identity, which an empty sequence
+    /// cannot.
     pub fn new<C>(code: &C, value: C::Symbols) -> Self
     where
         C: block::BlockCode + ?Sized,
@@ -1074,8 +956,7 @@ impl ErasedSymbols {
     ///
     /// Returns [`CodeError::FieldMismatch`] or
     /// [`CodeError::RepresentationMismatch`] when `code` does not own this
-    /// erased value. A representation downcast is attempted only after both
-    /// identities match.
+    /// erased value.
     pub fn downcast_ref<C>(&self, code: &C) -> Result<&C::Symbols, CodeError>
     where
         C: block::BlockCode + ?Sized,
@@ -1150,9 +1031,8 @@ impl ErasedSymbols {
 
 /// A type-erased matrix value.
 ///
-/// As with [`ErasedSymbols`], this is a leaf adapter over a matrix already
-/// materialized by a static code. Its checked downcasts validate both the
-/// mathematical field and the process-local Rust representation identity.
+/// Holds a matrix already materialized by a static code. Its downcasts
+/// validate the field and the process-local representation identity.
 #[derive(Clone)]
 pub struct ErasedMatrix {
     field_id: FieldId,
@@ -1212,8 +1092,7 @@ impl ErasedMatrix {
     ///
     /// Returns [`CodeError::FieldMismatch`] or
     /// [`CodeError::RepresentationMismatch`] when the supplied field or
-    /// matrix representation differs. A matrix downcast is attempted only
-    /// after both identities match.
+    /// matrix representation differs.
     pub fn downcast_ref<C, M>(&self, code: &C) -> Result<&M, CodeError>
     where
         C: block::BlockCode + ?Sized,
@@ -1306,8 +1185,7 @@ fn validate_erased_value(
 
 /// A type-erased view of a static [`block::BlockCode`].
 ///
-/// This is metadata only: it has no construction or encoding behavior and
-/// never chooses a field. Use [`ErasedBlockEncoder`] for the encoding
+/// Carries metadata only; [`ErasedBlockEncoder`] adds the encoding
 /// capability.
 #[derive(Clone)]
 pub struct ErasedBlockCode {
@@ -1352,10 +1230,7 @@ impl ErasedBlockCode {
         self.inner.n()
     }
 
-    /// Recovers the concrete static code when its type is known.
-    ///
-    /// The `TypeId` check is performed before the `Any` downcast. A mismatch
-    /// returns `None` and cannot panic or coerce one code type into another.
+    /// Recovers the concrete static code, or `None` when `C` is not its type.
     pub fn downcast_ref<C: 'static>(&self) -> Option<&C> {
         if self.inner.code_type_id() != TypeId::of::<C>() {
             return None;
@@ -1557,32 +1432,13 @@ impl ErasedParityCheckMatrixAccess {
 pub mod compat {
     pub mod binary_v1 {
         //! The `binary-code-v1` compatibility boundary, version
-        //! [`BINARY_CODE_COMPAT_VERSION`].
-        //!
-        //! The module holds the two bit-only contracts that code families
-        //! outside the canonical [`crate::traits::block`] surface implement
-        //! directly, plus the root shims that keep
-        //! `crate::traits::BlockEncoder`,
-        //! `crate::traits::GeneratorMatrixAccess`, and their trait-object uses
-        //! naming those contracts. A code that implements the canonical traits
-        //! over `Fp<2>`, [`BitVec`], and [`BitMatrix`] reaches this boundary
-        //! through the blanket adapters instead, which are the only place a
-        //! canonical [`CodeError`](crate::error::CodeError) becomes version-1
-        //! panic behavior. A family therefore has either a direct version-1
-        //! implementation or the adapter, never both.
-        //!
-        //! The boundary is closed: no further code family or public API enters
-        //! it.
-        //!
-        //! # Removal condition
-        //!
-        //! Story `3931ac6f` owns removal after epic `ae03bcd0`. Its
-        //! mechanical, auditable condition — every boundary family migrated,
-        //! no remaining reference to this module or the root shims, and the
-        //! shared binary suites passing through the canonical packed
-        //! specialization — is recorded in that epic's BCH API design document
-        //! (`bch-api-design.md`, section "Removal condition"), authored under
-        //! JIT issue `7a3a6738`, which is its single source of truth.
+        //! [`BINARY_CODE_COMPAT_VERSION`]: the two bit-only contracts that
+        //! code families outside the canonical [`crate::traits::block`]
+        //! surface implement directly. A code that implements the canonical
+        //! traits over `Fp<2>`, [`BitVec`], and [`BitMatrix`] reaches this
+        //! boundary through the blanket adapters, the only place a canonical
+        //! [`CodeError`](crate::error::CodeError) becomes version-1 panic
+        //! behavior.
 
         use gf2_core::{BitMatrix, BitVec};
 
@@ -1613,9 +1469,7 @@ pub mod compat {
 
         /// Version-1 bit-only generator-matrix contract.
         ///
-        /// Materializing the `k × n` generator is intended for code analysis,
-        /// validation, and teaching rather than for a hot encoding path,
-        /// which uses [`BlockEncoder`] instead. The canonical replacement is
+        /// The canonical replacement is
         /// [`crate::traits::block::GeneratorMatrixAccess`], whose methods
         /// return typed errors and admit a matrix representation other than
         /// [`BitMatrix`].
@@ -1714,9 +1568,6 @@ where
 }
 
 /// Result of a soft-decision decoding operation.
-///
-/// Contains the decoded bits along with metadata about the decoding process,
-/// particularly useful for iterative decoders like LDPC and turbo codes.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DecoderResult {
     /// The decoded message bits
@@ -1731,18 +1582,13 @@ pub struct DecoderResult {
     /// Whether the syndrome check passed (for linear codes)
     pub syndrome_check_passed: bool,
 
-    /// Number of parity-check queries performed during decoding.
-    ///
-    /// This is a finer-grained measure of decoder work than iterations.
-    /// For belief-propagation decoders, this counts the total number of
-    /// check-node or variable-node messages exchanged.
-    /// When `None`, the simulation harness falls back to `iterations`
-    /// for computing `avg_queries_per_bit`.
+    /// Number of parity-check queries performed during decoding, when the
+    /// decoder counts them.
     pub queries: Option<usize>,
 }
 
 impl DecoderResult {
-    /// Creates a new decoder result.
+    /// Creates a decoder result with no query count.
     pub fn new(
         decoded_bits: BitVec,
         iterations: usize,
@@ -1782,19 +1628,8 @@ impl DecoderResult {
 }
 
 /// Hard-decision decoder for block codes.
-///
-/// A hard-decision decoder takes a received codeword (where each bit is a hard 0 or 1 decision)
-/// and attempts to recover the original message bits, potentially correcting errors.
 pub trait HardDecisionDecoder {
     /// Decodes a received codeword and returns the estimated message bits.
-    ///
-    /// # Arguments
-    ///
-    /// * `received` - The received bit vector (potentially with errors)
-    ///
-    /// # Returns
-    ///
-    /// A bit vector containing the decoded message bits
     ///
     /// # Panics
     ///
@@ -1804,16 +1639,8 @@ pub trait HardDecisionDecoder {
 
 /// Soft-decision decoder for block codes.
 ///
-/// A soft-decision decoder uses log-likelihood ratios (LLRs) to make better
-/// decoding decisions than hard-decision decoders. This trait supports both
-/// single-shot and iterative decoding algorithms.
-///
-/// # LLR Convention
-///
-/// LLR values follow the convention:
-/// - Positive LLR → bit is more likely 0
-/// - Negative LLR → bit is more likely 1
-/// - Magnitude represents confidence
+/// A positive LLR means the bit is more likely 0, a negative one more likely
+/// 1; the magnitude is the confidence.
 pub trait SoftDecoder {
     /// Returns the number of message bits (dimension).
     fn k(&self) -> usize;
@@ -1821,47 +1648,19 @@ pub trait SoftDecoder {
     /// Returns the number of codeword bits (length).
     fn n(&self) -> usize;
 
-    /// Decodes using soft information (LLRs).
-    ///
-    /// This is the primary decoding method for soft-decision decoders.
-    ///
-    /// # Arguments
-    ///
-    /// * `llrs` - Log-likelihood ratios for each codeword bit position
-    ///
-    /// # Returns
-    ///
-    /// Decoded message bits
+    /// Decodes the LLRs of one codeword and returns the message bits.
     ///
     /// # Panics
     ///
     /// Panics if `llrs.len() != n()`
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_coding::traits::SoftDecoder;
-    ///
-    /// let llrs: Vec<Llr> = received_symbols.iter()
-    ///     .map(|&s| Llr::from_bpsk_symbol(s, noise_variance))
-    ///     .collect();
-    /// let decoded = decoder.decode_soft(&llrs);
-    /// ```
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec;
 
-    /// Decodes and returns detailed result information.
+    /// Decodes and returns the bits with decoder metadata; the default
+    /// reports [`DecoderResult::success`].
     ///
-    /// Similar to `decode_soft` but returns additional metadata useful for
-    /// analysis and debugging.
+    /// # Panics
     ///
-    /// # Arguments
-    ///
-    /// * `llrs` - Log-likelihood ratios for each codeword bit position
-    ///
-    /// # Returns
-    ///
-    /// A `DecoderResult` containing decoded bits and metadata
+    /// Panics as [`Self::decode_soft`] does.
     fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
         let decoded = self.decode_soft(llrs);
         DecoderResult::success(decoded)
@@ -1869,92 +1668,31 @@ pub trait SoftDecoder {
 }
 
 /// Iterative soft-decision decoder for LDPC and turbo codes.
-///
-/// Extends `SoftDecoder` with iteration control and early stopping criteria.
-/// Iterative decoders repeatedly refine LLR estimates until convergence or
-/// a maximum iteration count is reached.
-///
-/// # Typical Usage Pattern
-///
-/// ```ignore
-/// let mut decoder = LdpcDecoder::new(code);
-/// let result = decoder.decode_iterative(&channel_llrs, 50); // max 50 iterations
-///
-/// if result.converged {
-///     println!("Converged in {} iterations", result.iterations);
-/// } else {
-///     println!("Failed to converge after {} iterations", result.iterations);
-/// }
-/// ```
 pub trait IterativeSoftDecoder: SoftDecoder {
-    /// Decodes with iteration control.
-    ///
-    /// Performs iterative belief propagation or similar algorithm until
-    /// convergence or maximum iterations reached.
-    ///
-    /// # Arguments
-    ///
-    /// * `llrs` - Initial log-likelihood ratios from channel
-    /// * `max_iterations` - Maximum number of iterations to perform
-    ///
-    /// # Returns
-    ///
-    /// A `DecoderResult` containing decoded bits and convergence information
-    ///
-    /// # Early Stopping
-    ///
-    /// The decoder should stop early if:
-    /// - Syndrome check passes (for linear codes)
-    /// - LLR updates fall below threshold (converged)
-    /// - Maximum iterations reached
+    /// Decodes the channel LLRs, iterating until convergence or
+    /// `max_iterations`.
     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult;
 
     /// Returns the number of iterations used in the last decode.
-    ///
-    /// Useful for tracking decoder performance without full `DecoderResult`.
     fn last_iteration_count(&self) -> usize;
 
-    /// Resets internal decoder state.
-    ///
-    /// Should be called between decoding different codewords to ensure
-    /// no state leaks between frames.
+    /// Resets internal decoder state, so that none leaks between codewords.
     fn reset(&mut self);
 }
 
-/// Streaming encoder for convolutional codes.
-///
-/// A streaming encoder processes bits one at a time, maintaining internal state
-/// across multiple encode operations. This is used for convolutional codes.
+/// Streaming encoder for convolutional codes; state persists across calls.
 pub trait StreamingEncoder {
     /// Encodes a single input bit and returns the output symbol(s).
-    ///
-    /// # Arguments
-    ///
-    /// * `input` - The input bit to encode
-    ///
-    /// # Returns
-    ///
-    /// A vector of output bits (the encoded symbols)
     fn encode_bit(&mut self, input: bool) -> Vec<bool>;
 
     /// Resets the encoder state to initial conditions.
     fn reset(&mut self);
 }
 
-/// Streaming decoder for convolutional codes.
-///
-/// A streaming decoder processes received symbols and maintains internal state
-/// across multiple decode operations.
+/// Streaming decoder for convolutional codes; state persists across calls.
 pub trait StreamingDecoder {
-    /// Decodes received symbol(s) and potentially outputs decoded bit(s).
-    ///
-    /// # Arguments
-    ///
-    /// * `symbols` - The received symbols to decode
-    ///
-    /// # Returns
-    ///
-    /// Decoded bits (may be empty if more symbols are needed)
+    /// Decodes received symbols; the result is empty while more symbols are
+    /// needed.
     fn decode_symbols(&mut self, symbols: &[bool]) -> Vec<bool>;
 
     /// Resets the decoder state to initial conditions.
@@ -2007,8 +1745,6 @@ mod tests {
         assert_eq!(result1, result2);
     }
 
-    // Mock implementations for testing trait contracts
-
     struct MockSoftDecoder {
         k: usize,
         n: usize,
@@ -2025,7 +1761,6 @@ mod tests {
 
         fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
             assert_eq!(llrs.len(), self.n);
-            // Simple hard decision for testing
             let mut result = BitVec::new();
             for &llr in llrs.iter().take(self.k) {
                 result.push_bit(llr.hard_decision());
@@ -2102,11 +1837,10 @@ mod tests {
         let decoded = decoder.decode_soft(&llrs);
         assert_eq!(decoded.len(), 4);
 
-        // Check hard decisions
-        assert!(!decoded.get(0)); // 3.0 → 0
-        assert!(decoded.get(1)); // -2.0 → 1
-        assert!(!decoded.get(2)); // 1.0 → 0
-        assert!(decoded.get(3)); // -0.5 → 1
+        assert!(!decoded.get(0));
+        assert!(decoded.get(1));
+        assert!(!decoded.get(2));
+        assert!(decoded.get(3));
     }
 
     #[test]
@@ -2143,7 +1877,7 @@ mod tests {
 
         let result = decoder.decode_iterative(&llrs, 50);
 
-        assert_eq!(result.iterations, 5); // Converges at 5
+        assert_eq!(result.iterations, 5);
         assert!(result.converged);
         assert_eq!(decoder.last_iteration_count(), 5);
     }
@@ -2158,10 +1892,10 @@ mod tests {
 
         let llrs = vec![Llr::new(1.0); 7];
 
-        let result = decoder.decode_iterative(&llrs, 3); // Less than convergence point
+        let result = decoder.decode_iterative(&llrs, 3);
 
         assert_eq!(result.iterations, 3);
-        assert!(!result.converged); // Didn't converge
+        assert!(!result.converged);
         assert_eq!(decoder.last_iteration_count(), 3);
     }
 
@@ -2185,7 +1919,7 @@ mod tests {
     #[should_panic(expected = "left == right")]
     fn test_soft_decoder_wrong_length_panics() {
         let decoder = MockSoftDecoder { k: 4, n: 7 };
-        let llrs = vec![Llr::new(1.0); 5]; // Wrong length
+        let llrs = vec![Llr::new(1.0); 5];
         decoder.decode_soft(&llrs);
     }
 }
@@ -2195,7 +1929,6 @@ mod generator_matrix_tests {
     use super::*;
     use gf2_core::BitMatrix;
 
-    // Mock implementation for testing trait contract
     struct MockLinearCode {
         k: usize,
         n: usize,
@@ -2226,7 +1959,6 @@ mod generator_matrix_tests {
     #[test]
     fn test_is_systematic_identity() {
         let mut g = BitMatrix::zeros(3, 5);
-        // Set identity in first 3 columns
         for i in 0..3 {
             g.set(i, i, true);
         }
@@ -2244,10 +1976,8 @@ mod generator_matrix_tests {
     #[test]
     fn test_is_systematic_partial_identity() {
         let mut g = BitMatrix::zeros(3, 5);
-        // Set partial identity (missing one)
         g.set(0, 0, true);
         g.set(1, 1, true);
-        // Missing g.set(2, 2, true);
         let code = MockLinearCode { k: 3, n: 5, g };
         assert!(!code.is_systematic());
     }
