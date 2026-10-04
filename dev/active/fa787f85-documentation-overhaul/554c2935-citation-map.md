@@ -81,10 +81,6 @@ named here.
   `crates/gf2-coding/tests/data/bch_oracle/sage.json` and the headers of
   `crates/gf2-algebra/tests/data/cas_permanent_f3_batch.csv` and
   `cas_permanent_f5_f7.csv` record.
-- Mismatch: `crates/gf2-core/benches/sparse.rs`, `primitive_poly.rs` and
-  `polynomial.rs` cite `SageMath2026` for
-  `crates/gf2-core/scripts/sage_benchmarks.py`, which records Sage 10.7. The
-  registry holds no entry for that version.
 - `Higham2002` and `Warren2012` are the editions whose section numbers the
   comments use: chapter 14 of the 2nd edition of the first is matrix inversion,
   and section 7-3 of the 2nd edition of the second transposes a bit matrix.
