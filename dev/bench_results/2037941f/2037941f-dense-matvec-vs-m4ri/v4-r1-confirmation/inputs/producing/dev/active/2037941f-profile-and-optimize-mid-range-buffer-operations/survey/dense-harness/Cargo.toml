@@ -1,0 +1,66 @@
+# Dense-parity measurement harness for story 2037941f (jit:e1f9a78f).
+#
+# A standalone workspace: the campaign arms are fresh child processes speaking
+# the canonical child-v2 framing, and the M4RI arm links the separately
+# qualified external library, so neither belongs in a production crate's
+# benchmark target.
+#
+# `simd` is a default feature so the ordinary arms carry the runtime-dispatched
+# SIMD lane the production `matvec` selector takes, and so the addendum's
+# scalar-reference arm is the same configuration built with
+# `--no-default-features`. The release profile mirrors the workspace's own
+# `conservative-portable` release settings.
+
+[workspace]
+
+[package]
+name = "dense-parity-harness"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+build = "build.rs"
+
+[lib]
+name = "dense_parity_harness"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dense-arm"
+path = "src/bin/dense-arm.rs"
+
+[[bin]]
+name = "dense-campaign"
+path = "src/bin/dense-campaign.rs"
+
+[[bin]]
+name = "dense-oracle"
+path = "src/bin/dense-oracle.rs"
+
+[[bin]]
+name = "dense-m4ri-arm"
+path = "src/bin/dense-m4ri-arm.rs"
+required-features = ["m4ri"]
+
+[features]
+default = ["simd"]
+# Runtime-dispatched gf2-core kernels; removing it selects the scalar
+# four-accumulator row-parity route the addendum's reference arm measures.
+simd = ["gf2-core/simd"]
+# Links the qualified external M4RI build; see build.rs.
+m4ri = []
+
+[dependencies]
+gf2-core = { path = "../../../../../crates/gf2-core" }
+gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+
+[build-dependencies]
+cc = "1"
+sha2 = "0.10"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

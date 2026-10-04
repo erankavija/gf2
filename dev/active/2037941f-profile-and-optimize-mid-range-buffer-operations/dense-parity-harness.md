@@ -106,14 +106,15 @@ the ceiling, refuses the run.
 ## Family ledgers
 
 `tuning_campaign_support::trial_ledger::reserve` runs for every protocol
-version at or above 2 and fails when the family ledger file is absent, so all
-three ledger paths named by the frozen addendum exist as committed empty files
+version at or above 2 and fails when the family ledger file is absent, so each
+of the three ledger paths named by the frozen addendum is a committed file
 under `dev/bench_results/2037941f/`. An empty ledger is the explicit genesis
-state; it reserves nothing. A family's confirmatory count is whatever that
-ledger and the campaign addendum's non-exploratory cells admit; the harness
-carries no confirmatory constant. The non-timed smoke reserves nothing at all
-and names a throwaway ledger path under `target/`, so the committed ledgers
-stay at genesis.
+state; it reserves nothing, and each timed campaign appends its own
+reservation. A family's confirmatory count is whatever that ledger and the
+campaign addendum's non-exploratory cells admit; the harness carries no
+confirmatory constant. The staged non-timed smoke names a throwaway ledger
+path under `target/`, and the plan smoke opens no ledger, so neither reserves
+anything.
 
 ## Routes and provenance
 
@@ -393,7 +394,8 @@ them, so no executable can carry bytes they never saw. It then projects the
 plan, prints the execution log path, runs the
 runner under `dev/scripts/ccx1-bench-flock.sh --full-host` until the log's
 terminal record is `complete`, finalizes the receipt under
-`dev/bench_results/2037941f/<family>/<run-id>-pilot`, and evaluates it with
+`dev/bench_results/2037941f/<family>/<run-id>-pilot` or, with `--confirmation`,
+`<run-id>-confirmation`, and evaluates it with
 `benchmark-acceptance`. A resumed invocation reuses the stored plan and refuses
 when the current projection differs.
 

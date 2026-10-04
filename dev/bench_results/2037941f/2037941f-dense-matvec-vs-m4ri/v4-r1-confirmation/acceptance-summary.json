@@ -1,0 +1,84 @@
+{
+  "schema": "zen3-benchmark-acceptance-v2",
+  "receipt_sha256": "bc3c5fa640f1857576ea7f8bbc80b4e82fedc5374cf491931f2826e5439cc838",
+  "campaign_id": "v4-r1-confirmation-2037941f-dense-matvec-vs-m4ri",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "2037941f-dense-matvec-vs-m4ri",
+    "comparisons": 2,
+    "family_alpha": 0.05,
+    "attempt_alpha": 0.025,
+    "corrected_alpha": 0.0125,
+    "per_comparison_confidence": 0.9875,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "m4ri-gap-65x512-warm",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.002823523195407866,
+        "lower": 0.0028189642730566556,
+        "upper": 0.002832530204061976,
+        "confidence": 0.9875,
+        "alpha": 0.0125,
+        "resamples": 10000,
+        "seed": 14701104127329283296,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "m4ri-gap-65x4096-warm",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.0009215594563480026,
+        "lower": 0.0009204684024268627,
+        "upper": 0.0009362054095406437,
+        "confidence": 0.9875,
+        "alpha": 0.0125,
+        "resamples": 10000,
+        "seed": 16611910572266715488,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

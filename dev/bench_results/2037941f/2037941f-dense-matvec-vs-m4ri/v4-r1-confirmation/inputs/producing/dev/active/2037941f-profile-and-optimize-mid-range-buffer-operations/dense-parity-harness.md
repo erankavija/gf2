@@ -1,0 +1,458 @@
+# Dense-parity measurement harness
+
+> **Diátaxis Type:** Reference
+>
+> **Interface identity:** `2037941f-parity-measurement-interface-v1`
+>
+> **Owning issue:** `e1f9a78f`
+>
+> **Implements:** [`dense-parity-addendum.md`](dense-parity-addendum.md),
+> identity `2037941f-dense-parity-v2`
+
+This document is the `parity-measurement-interface` named by
+[`plan.md`](plan.md). It fixes cell identity, semantic validation, route
+provenance, append-only logging, checkpoint/resume, and machine-readable output
+for the dense-parity questions.
+[`dense-parity-conformance.md`](dense-parity-conformance.md) maps the frozen
+addendum clause by clause onto the harness location that carries it and the test
+that binds it.
+
+The harness changes no production code and no production selection. Every
+numeric setting reaches it from the frozen addendum or from the protocol's
+shared settings in `dev/tools/tuning-campaign-support/src/protocol.rs`; the
+launcher adds none.
+
+## Target choice
+
+The harness is one story-specific Cargo project, `survey/dense-harness/`
+(package `dense-parity-harness`), outside the production workspace. No
+established benchmark target is extended.
+
+An established target is unsuitable here for three reasons that are properties
+of the measurement, not preferences. The campaign arms are fresh child
+processes speaking the canonical child-v2 framing of
+`tuning_campaign_support::transport`, which a Criterion `[[bench]]` target does
+not speak. The addendum's reference arm is the same sources built without the
+`simd` feature, so two gf2 executables with different feature sets measure the
+same cells. The M4RI arm links a separately qualified external library and a C
+translation unit that reaches its public coordinate accessors, which are
+`static inline` in `m4ri/mzd.h`. Extending `crates/gf2-core/benches/` with any
+of those properties would change that target's behavioral identity, which
+`@/inv/behavioral-evidence-validity` forbids.
+
+The project is a standalone Cargo workspace. Its `Cargo.lock` is committed so a
+receipt pins the dependency graph it measured. It is the sibling of
+`survey/harness/`, the logical-buffer harness of issue `bb769456`, and follows
+its structure; the git closure guard `src/inputs.rs` is byte-identical in both,
+because the epic's provenance freeze holds `tuning_campaign_support` at its
+current surface.
+
+## Cell identity and generation
+
+`Question` has three ledger-owning variants in the order the addendum lists
+them: `isolated-fused-parity`, `allocated-matvec`, `matvec-vs-m4ri`.
+`dense_parity_harness::cells()` returns the complete cell table in that order,
+then in each question's listed axis order: the normative primary product first,
+then the exact exploratory additions in document order.
+
+| Question | Cells | Identifier form |
+|---|---:|---|
+| `isolated-fused-parity` | 12 | `and-popcnt-{W}w-{warm,streaming}` |
+| `allocated-matvec` | 24 | `matvec-r1024-{W}w[-tail1][-scalar-reference]-{warm,cold,streaming}` |
+| `matvec-vs-m4ri` | 8 | `m4ri-gap-{R}x{C}[-retained]-warm` |
+
+The addendum's fourth question, `scalar-reference`, owns no ledger. Its cells
+are the five `matvec-r1024-{W}w-scalar-reference-warm` rows of the allocated
+family, whose baseline arm is the executable built without the `simd` feature
+and whose compared arm is the ordinary build.
+
+The campaign seed is `0x2037_941f_96c9_4b81`. Cell ordinal zero carries the
+campaign seed as its workload seed; ordinal $i$ carries the $i$-th subsequent
+output of one `tuning_campaign_support::abtest::SplitMix64` stream started at
+the campaign seed. Ordinals run across the whole table, not per question, so a
+family's seeds depend on the position of its question in the addendum. Each
+additional fixture bank consumes the next output of that cell's own stream,
+started at its workload seed.
+
+The three rows the addendum declares unavailable in advance,
+`m4ri-gap-65x576-unqualified`, `m4ri-gap-65x4032-unqualified` and
+`m4ri-gap-65x4160-unqualified`, carry no workload and no samples, so they take
+no ordinal and generate no seed. They are not runner cells; the harness
+publishes them as `cells::UNAVAILABLE_ROWS` with their strides and reasons.
+`dense-campaign unavailable` projects them to an `unavailable-rows.tsv`
+companion beside the M4RI receipt with zero samples and comparisons.
+
+`dense-campaign cells` transcribes one family into a protocol version-4
+campaign JSON addendum against `dev/active/f547c394/addendum.schema.json`. The
+transcription is a pilot: every cell is `exploratory`,
+`effect.measurement_resolution` and `effect.resolution_evidence` are null, and
+`family_wise.prior_confirmatory_trials` is zero, because a version-4 addendum
+derives prior comparisons from its authoritative ledger. A confirmation
+addendum is derived from the committed pilot receipt by the canonical freezer
+`dev/active/c7113c5a/survey/freeze-confirmation.py`; this harness writes no
+confirmation addendum.
+
+Margins, complexity budgets, search budgets, ledger paths, cache states,
+objectives, metric kinds, and core arms are transcribed from the frozen
+addendum's tables. `dense-campaign verify` re-derives the transcription and
+compares it byte for byte with a candidate campaign JSON, so a campaign JSON
+that changes a cell, margin, limit, or rule fails closed.
+`dense-campaign verify-confirmation` holds a freezer-derived confirmation to
+the same transcription: the family's confirmatory cells with the confirmatory
+role, a restated description and freeze time, and a pinned resolution at or
+below the family's frozen ceiling. Any other difference, or a resolution above
+the ceiling, refuses the run.
+
+## Family ledgers
+
+`tuning_campaign_support::trial_ledger::reserve` runs for every protocol
+version at or above 2 and fails when the family ledger file is absent, so all
+three ledger paths named by the frozen addendum exist as committed empty files
+under `dev/bench_results/2037941f/`. An empty ledger is the explicit genesis
+state; it reserves nothing. A family's confirmatory count is whatever that
+ledger and the campaign addendum's non-exploratory cells admit; the harness
+carries no confirmatory constant. The non-timed smoke reserves nothing at all
+and names a throwaway ledger path under `target/`, so the committed ledgers
+stay at genesis.
+
+## Routes and provenance
+
+`GF2_DENSE_ROUTE` selects one route in `dense-arm`. The M4RI route is the whole
+of `dense-m4ri-arm`. A route names the entry point it calls; the gf2 routes
+reach nothing past a public API, and the isolated route reaches the detected
+bundle exactly as the public `matvec` does.
+
+| Route | Timed body | Build identity |
+|---|---|---|
+| `and-popcnt-a`, `and-popcnt-b` | one `and_popcnt_fn` call on the detected bundle, behind an optimisation barrier | `conservative-portable` |
+| `matvec-a`, `matvec-b` | one public `BitMatrix::matvec`, output allocation and appends inside, release outside | `conservative-portable` |
+| `matvec-scalar-reference` | the same public call from the build without `simd`, which reaches the four-accumulator scalar row parity | `conservative-portable` |
+| `m4ri-peer-gf2` | one public `BitMatrix::matvec` whose returned `BitVec` is also released inside the call | `conservative-portable` |
+| `m4ri-mzd-mul` | `mzd_init` for `A`, `x`, `y`, packing, `mzd_mul(y, A, x, 0)`, unpacking into a gf2 `BitVec`, disposal | `external` |
+
+`Route::check_build` refuses a route the running executable cannot serve: the
+reference route requires the build without `simd` and every other route
+requires the build with it, so neither executable can stand in for the other.
+
+The `-a` and `-b` route pairs are the byte-identical public identity arms the
+frozen addendum requires for a pre-candidate campaign. A candidate campaign
+replaces only the compared build, through `--candidate-executable`; the route
+names do not change, because the candidate is a different kernel body in the
+bundle, not a different consumer entry.
+
+Every arm reports `selected_path` from what it observes at run time: the entry
+point, the lane `matvec_route` resolves for the cell's stride, the observed
+rows, columns, stride and allocation base modulo 64, and the resident working
+set. The isolated arm adds both operand addresses modulo 64. The M4RI arm adds
+the matched operation, the qualified shape, the coordinate accessors, and the
+path and digest of the shared object it loaded. No arm embeds a prior figure,
+file inventory, or host assertion.
+
+Before timing is enabled, every allocated and comparator arm verifies the
+constructed public objects: `verify_shape` checks the observed rows, columns,
+vector length and stride against the frozen declaration, and `verify_lane`
+checks that the stride and the build resolve the declared lane and that the
+host detected a bundle when the SIMD lane is required. A mismatch makes the
+cell unavailable; the harness never substitutes another shape.
+
+### Output release and the allocated boundary
+
+The allocated boundary charges the output allocation and its appends and
+excludes the release, which the addendum states explicitly when it contrasts
+the two gf2 arms: the comparator arm charges releasing the returned `BitVec`
+and the allocated arm does not. `routes::OutputSink` implements that boundary.
+Each timed call's output is retained in a `Vec`, and the batch is released in the
+timing helper's post-window callback, which runs strictly outside the measured
+interval and refuses a window that retained anything other than one output per
+call. The sink reserves and releases only outside a window, so no window clears,
+truncates or reallocates it.
+
+`OutputSink::admit` reserves one window's outputs before the window opens and
+refuses, naming the cell, the call count and the bound, a count above
+`MAX_RETAINED_OUTPUTS`. A cell with the addendum's frozen fixed call count is
+admitted before any measured work; a calibrated cell is admitted from the
+post-calibration callback, which the timing helper runs before the first window
+opens, because the calibrated count does not exist earlier. The calibration
+probes retain their own outputs and release none.
+
+The bound is derived, not chosen per cell: `RETAINED_BUDGET_BYTES` of retained
+residency divided by the bytes of the largest declared retained output, which is
+one 1024-bit `BitVec` because every retaining cell is an allocated-matvec cell.
+A contract test states the resulting peak against the budget and the per-call
+cost the bound covers at the protocol's window target. Whether a calibrated
+cell fits is observed at run time: `admit` refuses a count above the bound
+before the window opens. The arm reports that bound in `selected_path`.
+
+One consequence belongs in the record rather than in a silent choice: while a
+window retains its outputs, the allocator cannot reuse a freed block, so the
+allocation cost the window charges is the cost of fresh blocks. The alternative,
+charging the release inside the call, measures a different boundary from the one
+the addendum froze. Both arms of every allocated cell pay the same retention, so
+the paired statistic is unaffected; the absolute nanoseconds per `matvec` carry
+that caveat.
+
+## Cache policies
+
+`Cache` implements the addendum's three states exactly. `warm` runs one untimed
+pass of the measured operation over the cell's complete working set, including
+the output the timed call writes, before calibration: one call per item of
+every bank, which for a warm cell is its one item. `streaming` builds eight
+fixture banks whose fixture bytes reach 8 MiB each, rounded up to a whole
+number of tuples, touches every initialized byte outside timing without
+executing the measured operation, and rotates banks once per operation, for a
+reported working set of at least 64 MiB. A bank's size is the bytes it holds,
+so the item count and the allocation come from one measure. `cold` requires the
+frozen fixed call count, executes no measured operation before the first
+window, and calibrates nothing.
+
+Each timed execution runs the protocol's five windows at its 100 ms target and
+each measured exploratory cell runs its pilot maximum of paired executions,
+both frozen by the addendum. The projected plan therefore states that pair count rather
+than leaving the protocol to select its pilot minimum, and every arm refuses a
+request whose window count or target is neither that protocol nor the validation
+position's zero-window budget.
+
+## Semantic oracle
+
+`dense_parity_harness::oracle::run` is deterministic, untimed, and emits no
+timing sample. It reports one `PASS <case>: <n> checks` line per case. Each row
+parity is recomputed bit by bit through the public `get` accessors of the
+matrix and the vector, so the oracle shares no code with the measured route.
+
+| Case group | Coverage |
+|---|---|
+| `matvec-cols-{C}-rows-{R}` | every pairing of the logical boundaries 0, 1, 63, 64, 65 on both the column count and the output length: every output bit against the parity oracle, the output length, `get` against the output words, zero tail padding, and immutability of the matrix and the vector against a rebuild at the same seed |
+| `matvec-{W}w-{full,tail1}` | all seven word counts in both column shapes: the same product checks plus the zero padding bit of every `tail1` row and of the vector |
+| `matvec-anchor-{W}w` | the five anchors at the frozen 1024-row geometry: observed rows, columns, stride, the lane the build resolves, and every output bit |
+| `and-popcnt-{W}w` | all seven word counts: the bundle entry's count against an independent per-word count, its low bit against the row parity, and purity across two calls |
+| `m4ri-{R}x{C}` | in `dense-m4ri-arm --oracle`: every unpacked output bit against the gf2 peer, zero tail padding, the retained arm against the fresh arm, and input immutability |
+
+The oracle runs from both gf2 builds, so the reference arm's scalar route is
+checked against the same parity oracle as the SIMD lane.
+
+## Logging, checkpoint, and resume
+
+Execution logging, checkpointing, and resume belong to the session loop shared
+by `benchmark-ab-runner run` and staged `smoke` over the canonical
+`tuning_campaign_support::journal`: one append-only `execution.log` per stage,
+one immutable checkpoint unit per cell, and a manifest
+pinning the run's resume identity over the protocol document, the producing-input
+closure, the ordered cell list, the arm descriptors, every arm executable, the
+campaign addendum and the plan. The harness adds no session of its own; the
+launcher prints the canonical log path before launching work, treats console
+output as a view of that record, and bounds one session with
+`max_cells_per_session`. The staged smoke opens a validation session per cell,
+pauses after each nonfinal cell, and leaves its receipt absent.
+
+The timed launcher verifies completion from the execution log, never from an exit
+code: the terminal record is `complete` and every declared cell has one
+`cell-complete`.
+
+## Machine-readable output
+
+The receipt directory is the canonical output of a timed run: `receipt.json`,
+the plan, the pinned inputs, the execution log, the checkpoint manifest, and the
+acceptance summary written by `benchmark-acceptance`. The M4RI directory also
+contains the generated `unavailable-rows.tsv` companion for predeclared
+unqualified shapes; they are absent from `receipt.json`. Arms emit exactly one
+`zen3-benchmark-arm-result-v1` line each; the runner assembles
+`zen3-benchmark-receipt-v1`. The harness defines no receipt schema of its own.
+
+The non-timed smoke produces no receipt. Its output is the shared
+`zen3-arm-smoke-record-v1` that `benchmark-ab-runner smoke --record` writes under
+`target/`, projected into the committed `survey/dense-runner-smoke.txt` by
+`survey/check-dense-smoke.py`.
+
+## Provenance artifacts
+
+`survey/make-dense-producing-inputs.py` writes
+`survey/dense-producing-inputs.json`, the content closure every receipt
+snapshots: the measured crates' sources, the harness sources, the C comparator
+shim, the shared campaign support, the canonical and archived addenda, the
+approved M4RI amendment, the matched-operation
+specification and its qualification record, the protocol and contract
+documents, and the build inputs. The build inputs carry every Cargo manifest and
+lock file a timed executable is built from and the closure manifest itself,
+which the window guard reads to decide what to check. The harness contract test
+derives that manifest set from `cargo metadata` for both workspaces, so a new
+crate on either path fails the test rather than slipping past the guard.
+
+The source sections are a snapshot of the tree they were enumerated from, so
+`make-dense-producing-inputs.py --check` regenerates the closure from the
+current tree, writes nothing, and exits non-zero naming every added and removed
+path when the committed manifest differs. The window runs it immediately before
+the closure guard, so a source added to a measured crate after the last
+regeneration refuses the run instead of being timed outside the closure. A
+harness contract test copies the committed build inputs into a scratch tree,
+adds a source under a measured crate and asserts the refusal names it.
+
+`survey/make-dense-parity-source-evidence.py` writes
+`survey/dense-parity-source-evidence.json`, where every source claim the frozen
+addendum makes records its project, commit, path, line, the verbatim line and
+why. Both are regenerated rather than edited, so a claim that moves fails its
+generator instead of going stale in prose.
+
+## External comparator
+
+`dense-m4ri-arm` builds only against the install the qualification record
+[`m4ri-probe-record.txt`](m4ri-probe-record.txt) pins. `build.rs` reads the
+pinned installed-library digest from that record and the compiler from the
+install's own `gf2-m4ri-build-record.txt`, verifies the library against the
+digest, and compiles `survey/m4ri_matvec_arm.c` with that compiler at the
+qualification's own flags. A different install fails the build rather than
+producing an arm whose external identity is unknown. The install is created by
+`survey/run-m4ri-matvec-probe.sh` under the primary checkout's
+`.agents/ext/92385645/prefix-qualified-v3` and is shared, never rebuilt
+destructively.
+
+### The loaded object, observed at run time
+
+The executed qualification of `92385645` links M4RI as a shared object, and the
+comparator is that arm only while it does the same, so the harness keeps the
+dynamic link rather than making the library part of the executable. The link is
+a `RUNPATH`, which `LD_LIBRARY_PATH` overrides, so the arm's own digest does not
+say which object the loader hands the timed process.
+
+Every entry point of `dense-m4ri-arm` therefore reads `/proc/self/maps`, takes
+the one mapped file whose name begins `libm4ri.so`, hashes its bytes, and
+refuses unless that digest is the one the qualification record pins;
+`survey/dense-harness/src/external.rs` holds the observation and the refusal.
+The pin reaches the arm from `build.rs`, which already reads it from the record,
+so no prior digest is typed in the arm's source. Zero mapped objects and several
+distinct ones are refusals of their own: the first says the arm is not running
+what it linked against, the second that no sample could name which object
+executed.
+
+The identity travels in the provenance the arm reports: `--backend` adds
+`loaded_library` and `loaded_sha256`, and each timed sample's `selected_path`
+carries `loaded=<path>/sha256=<digest>`, so a receipt names the object that
+produced it. Contract tests cover the mapping-table decode, the refusal on a
+substituted object, and the provenance fields.
+
+The shim exposes exactly the charged components the matched-operation
+specification defines and holds no timing loop: one fresh whole-consumer call,
+and the retain, call and release of a retained-state cell. The arm converts the
+one item its warm bank holds, which is the arrangement every comparator cell
+declares, and refuses a cell declaring another cache state.
+
+## Entry points
+
+The launcher is `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh`,
+invoked from the worktree root. It exports `~/.cargo/bin` on `PATH` itself,
+because the benchmark-window unit has no login shell.
+
+```
+STORY=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
+$STORY/survey/run-dense-harness.sh build [--m4ri]
+$STORY/survey/run-dense-harness.sh cells --family <family-id> --issue <8-hex> \
+    --frozen-utc <YYYY-MM-DDTHH:MM:SSZ> --output <path>
+$STORY/survey/run-dense-harness.sh smoke [--m4ri]
+$STORY/survey/run-dense-harness.sh window --family <family-id> \
+    --addendum <committed campaign JSON> --run-id <id> [--m4ri] \
+    [--confirmation] [--smoke <record>]
+```
+
+`window --confirmation` takes a freezer-derived confirmation addendum, labels
+the plan `confirmation`, stages it under its own campaign identity, and writes
+the receipt to `<run-id>-confirmation`. `window --smoke <record>` projects the
+same plan and drives it through `benchmark-ab-runner smoke` with no timing
+window, lock, ledger reservation, or receipt.
+
+The launcher drives one Rust tool, `dense-campaign`, which a leaf may also call
+directly: `pins` prints the frozen addendum's path, pinned digest, identity,
+freeze time, the three family ledgers and the declared unavailable rows, and
+fails when the document's bytes differ from the pin; `list` prints one family's
+cells with their ordinals, arms and seeds; `cells`, `verify`,
+`verify-confirmation` and `plan` are the transcription, the two comparisons and
+the plan projection; `inputs` is the
+producing-input closure guard. The untimed smoke and the timed run are
+`benchmark-ab-runner` subcommands over a projected plan.
+
+`build` compiles the gf2 arms `conservative-portable` into
+`target/e1f9a78f-arms` and the reference arm into `target/e1f9a78f-scalar-arm`,
+runs the crate's own contract tests and both builds' semantic oracle, and writes
+`survey/dense-harness-validation.txt`. With `--m4ri` it also compiles
+`dense-m4ri-arm` against the qualified install into `target/e1f9a78f-m4ri-arm`.
+
+`cells` writes one family's campaign JSON addendum. `--family` is one of
+`2037941f-dense-isolated-fused-parity`, `2037941f-dense-allocated-matvec`,
+`2037941f-dense-matvec-vs-m4ri`.
+
+`window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
+SHA-256 equals the pin the harness carries, and the campaign JSON matches
+`dense-campaign verify`. It then rebuilds every executable it launches from the
+current tree, regenerates the closure with
+`make-dense-producing-inputs.py --check`, and only afterwards runs
+`dense-campaign inputs`, which refuses unless every path of the producing-input
+closure, plus the campaign JSON and the family ledger, is tracked by git and
+identical to its committed content. A source added to a measured crate stops the
+run either way: the freshness check catches one the committed closure does not
+yet name, and the guard catches one it names that git does not track. The two
+closure checks are the last steps before the launch: nothing rebuilds after
+them, so no executable can carry bytes they never saw. It then projects the
+plan, prints the execution log path, runs the
+runner under `dev/scripts/ccx1-bench-flock.sh --full-host` until the log's
+terminal record is `complete`, finalizes the receipt under
+`dev/bench_results/2037941f/<family>/<run-id>-pilot`, and evaluates it with
+`benchmark-acceptance`. A resumed invocation reuses the stored plan and refuses
+when the current projection differs.
+
+Each arm also refuses a hand invocation outside the window: without the child-v2
+sentinel it requires `GF2_BENCH_WINDOW=1` and `GF2_BENCH=1` and exits before
+reading a request.
+
+`window` queues nothing by itself. Each timed line lives in
+`dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` in the form
+`issue<TAB>worktree<TAB>est_minutes<TAB>command`, where the command is the
+`window` invocation above, and reaches the queue only after that family's
+campaign JSON addendum is committed.
+
+## Untimed release smoke
+
+```
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh smoke [--m4ri]
+```
+
+The record's own `# command:` header names the invocation that wrote it, so the
+committed `survey/dense-runner-smoke.txt` states whether its run covered the
+M4RI family.
+
+The command runs from the worktree root, takes no benchmark lock, never calls
+`dev/scripts/ccx1-bench-flock.sh`, and writes nothing under `dev/bench_results/`.
+It checks, in order:
+
+1. **Cell generation.** Every family of the frozen addendum transcribes twice to
+   identical bytes and validates against the version-4 schema through
+   `FamilyAddendum::decode` and `validate`, including the comparator family when
+   this smoke does not drive its arms.
+2. **Semantics.** `dense-oracle` from both gf2 builds and, when the M4RI arm is
+   built, `dense-m4ri-arm --oracle` report every case as `PASS`.
+3. **The arms.** `benchmark-ab-runner smoke <plan.json> --stage <dir> --record <path>` drives
+   every arm of each family's projected plan, whose throwaway campaign addendum
+   names a ledger path under `target/`. The allocated family contributes its warm
+   anchor, the frozen cold cell and the scalar-reference cell, so warm, the frozen
+   cold call count and the reference build all reach an arm; the isolated family
+   adds a streaming cell and the comparator family adds a retained-state cell.
+4. **The sessions and record.** The runner checkpoints one cell per validation
+   session, appends to the same execution log on resume, and completes without
+   repeating a cell. The judge checks each session's log prefix and the
+   runner's refusal to finalize the validation stage as a receipt. Every
+   dispatch answers in the validation position with its declared cache state
+   and no timing window. Each
+   gf2 arm names the fixture banks it built and a working set those banks account
+   for; each comparator arm names the shared object it loaded, with its digest,
+   and a family whose comparator arms disagree on that object fails.
+
+`build` writes `survey/dense-harness-validation.txt` the same way: the
+toolchain, the pins, the contract-test count, every oracle line and the
+executable digests, all observed by that run.
+
+The record is `survey/dense-runner-smoke.txt`, projected from the families'
+smoke records and the oracle's output by `survey/check-dense-smoke.py`. It
+carries no clock reading, so a rerun on the same executables reproduces it byte
+for byte, and its timing-window counts are the arms' own.
+
+The smoke is the `smoke` subcommand, never `benchmark-ab-runner run`: the
+runner's measurement path computes each cell's paired statistic from the median
+of every execution's windows, which an untimed execution cannot supply, so a
+`run` over these plans would measure outside the benchmark window.

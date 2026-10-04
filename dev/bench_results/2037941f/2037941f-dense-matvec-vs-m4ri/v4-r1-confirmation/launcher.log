@@ -1,0 +1,26 @@
+# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh window --family 2037941f-dense-matvec-vs-m4ri --addendum dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json --run-id v4-r1 --m4ri --confirmation
+# started_utc: 2026-10-04T23:12:55Z
+# gf2 revision (informational): e6e32756fc7e3e0b4596dbe8e41f0717935cf7d6
+# addendum=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md
+# addendum_sha256=7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2
+# addendum_identity=2037941f-dense-parity-v2
+# addendum_frozen_utc=2026-09-28T06:22:24Z
+# comparator=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md
+# family=2037941f-dense-isolated-fused-parity ledger=dev/bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl cells=12
+# family=2037941f-dense-allocated-matvec ledger=dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl cells=24
+# family=2037941f-dense-matvec-vs-m4ri ledger=dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl cells=8
+# unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
+# unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
+# unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
+# campaign addendum: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json sha256=25d81872e07c01b19e70850cd5db019c42474567ae719b7fe072232c33ebc184
+# producing manifest: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json sha256=7f174969f8171ab06800a10448de754809a48a744939e979050acf73722ed89a
+# gf2 arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-50f0bd42/target/e1f9a78f-arms/release/dense-arm sha256=d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695
+# scalar arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-50f0bd42/target/e1f9a78f-scalar-arm/release/dense-arm sha256=ccbbc7e628fbf59b1ade0dd0f4cc9150ed96cd33cca6a25cd793c0ff7d39787c
+# m4ri arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-50f0bd42/target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm sha256=40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-50f0bd42/target/e1f9a78f-campaigns/v4-r1-confirmation-2037941f-dense-matvec-vs-m4ri.plan.json sha256=2d005e9765b8e7a4c66d9919e3dd07b8011e7580a1af96c82fdfff29378bb8f2
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14);binary: rustc;commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860;commit-date: 2026-04-14;host: x86_64-unknown-linux-gnu;release: 1.95.0;LLVM version: 22.1.2;
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-50f0bd42/target/e1f9a78f-campaigns/v4-r1-confirmation-2037941f-dense-matvec-vs-m4ri/execution.log
+# session 1 exit: 0
+GF2_BENCHMARK_RECEIPT=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-50f0bd42/dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
