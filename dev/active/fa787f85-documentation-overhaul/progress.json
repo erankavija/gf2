@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 8,
+ "current_wave": 9,
  "waves": [
   {
    "wave_number": 1,
@@ -487,7 +487,7 @@
      "short_id": "13dfe1a5",
      "title": "Tersify comments in gf2-coding tests, benches and examples",
      "classification": "documentation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "290b8716-2442-42af-9383-08f9d629219d",
@@ -676,14 +676,21 @@
      "short_id": "157c305c",
      "title": "Document the finite NR filler LLR that de-rate-matching writes",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "4b8cebcf-924d-495b-b912-dd79f0d4e341",
      "short_id": "4b8cebcf",
      "title": "Supersede the sub-diagonal wrap statement of the DVB-T2 table note",
      "classification": "documentation",
-     "status": "in_progress"
+     "status": "done"
+    },
+    {
+     "id": "3783c4c8-6116-4467-b8cf-a7d6d2877906",
+     "short_id": "3783c4c8",
+     "title": "Reduce the DVB-T2 LDPC table module doc to the comment contract",
+     "classification": "documentation",
+     "status": "done"
     }
    ]
   },
@@ -695,7 +702,7 @@
      "short_id": "030496bd",
      "title": "Close the sweep with the after census and justification list",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "37099e5b-66ef-44ef-a6ef-a58dafd93c9e",
@@ -1375,6 +1382,11 @@
    "id": "4b8cebcf",
    "epic": "fa787f85",
    "reason": "superseding record for the sub-diagonal wrap statement of the digest-pinned DVB-T2 table note (owner ruling)"
+  },
+  {
+   "id": "3783c4c8",
+   "epic": "fa787f85",
+   "reason": "dvb_t2_matrices.rs module doc outside story REQ-21 (surfaced pitfall of ee2b0c0c)"
   }
  ],
  "escalations": [
@@ -1548,6 +1560,22 @@
    "issue": "bfb37a21",
    "question": "Record the library-first-generality exception of bch/dvb_t2/mod.rs on issue 1a8f6acd?",
    "resolution": "Owner did not authorize the edit of 1a8f6acd (2026-10-04); the pitfall stays for the ffc35b8c story gate."
+  },
+  {
+   "issue": "13dfe1a5",
+   "question": "code-review failed on the collapsed nested if (445b6169c) as a code change under REQ-05; the owner ruling of 2026-10-04 was recorded on the story only.",
+   "resolution": "Lead recorded the existing ruling as DEC-02 on the issue; code-review then passed."
+  },
+  {
+   "issue": "3fd3db5e",
+   "question": "OPEN: fd9d5416 (epic ae03bcd0, session gf2-4e) is merged at 08ed81546 and failed research-review (receipt omits bootstrap RNG implementation and Python version) and doc-review (F1 protocol outside dev/active/<epic>-<slug>/; F2 literal dev/ paths in render_receipt.py and its test; F3 receipt pins no renderer/protocol identity; F4 comparison rows lack citation keys; F5 option table, fallback language, title 'after the cutover'). Its session's permission classifier denied the move and the renderer edits. F2 is 3fd3db5e REQ-02/REQ-04 work and F1 is the move the migration manifest plans, while 3fd3db5e REQ-01 forbids edits while fd9d5416 is in progress. Who performs the fd9d5416 rework, and does 3fd3db5e fold into it?",
+   "options": [
+    "fd9d5416's session does the whole rework including the path fix; 3fd3db5e is then rejected as absorbed",
+    "amend 3fd3db5e REQ-01 so the overhaul fixes the paths and performs the move now, on behalf of fd9d5416",
+    "keep both as they are and wait"
+   ],
+   "recommendation": "first option: one owner for the renderer while its issue is open",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -1682,17 +1710,17 @@
   {
    "issue": "157c305c",
    "finding": "629e0ff0 rework states the filler LLR 15.0 and its reason in public Rustdoc; 157c305c REQ-01 met, REQ-02 not (prose value beside a private const).",
-   "disposition": "157c305c is label-only (outside the DAG); owner decides"
+   "disposition": "resolved: 157c305c pulled into the epic and done"
   },
   {
    "issue": "bfb37a21",
    "finding": "bch/dvb_t2/mod.rs lost its library-first-generality tracked-exception citation (@/issue/1a8f6acd) because reviewers class an issue reference in Rustdoc as planned work.",
-   "disposition": "record the exception on issue 1a8f6acd; verify at the story gate"
+   "disposition": "open: owner did not authorize recording the exception on 1a8f6acd (2026-10-04); check at the ffc35b8c story gate"
   },
   {
    "issue": "ee2b0c0c",
    "finding": "ldpc/dvb_t2/dvb_t2_matrices.rs module doc is multi-section with prose ETSI citations (kept as a generated-data header); ldpc/dvb_t2/table_interpretation.md claims a sub-diagonal wrap the code lacks and is listed by producing-inputs surveys.",
-   "disposition": "check at the ffc35b8c story gate; table_interpretation.md is a digest-pinned input"
+   "disposition": "resolved: 3783c4c8 (module doc) and 4b8cebcf (superseding record), both done"
   },
   {
    "issue": "9f47bb94",
@@ -1730,7 +1758,8 @@
   "Owner instruction 2026-10-04 (binding for every dispatch prompt): workers run clippy with -D warnings and cargo fmt --check on the crates they touch before the last commit, whether or not the issue carries the cargo-ci gate. Cause: 13dfe1a5 deleted a comment between two nested ifs (tests/ldpc_validation.rs:482) and clippy::collapsible_if failed cargo-ci for all six wave D units. Owner ruling the same day: collapse the if under 13dfe1a5, and story ffc35b8c DEC-01 admits behavior-preserving hunks that rustfmt or clippy force after a comment deletion when the commit body names them. The sweep brief template lacks the clippy step: add 'CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh cargo clippy -p <crate> --all-targets --all-features -- -D warnings' to its verification list before any further sweep dispatch.",
   "Session 5 ended by owner request (2026-10-04) with handoff-4.md. Wave D is merged; cargo-ci last recorded as failed at caa4b7929 (clippy collapsible_if); the fix 445b6169c is on main and workspace clippy and fmt pass there; cargo-ci has not been re-run. The wave D review batch was stopped: all six doc-reviews failed on the cargo-ci evidence, with content findings on 13dfe1a5 (tests/nr5g_regression.rs:96), c6aa0e84 (bench_seed.rs:53 panic contracts, :167 density threshold statement) and f2064e90 (field/matrix.rs:19 tautological Rustdoc); code-reviews did not complete. Wave E branches worktree-agent-eba21481 (c48da77e6) and worktree-agent-50201002 (6769bb2d0) are complete, clippy-clean and unmerged. SageMath2025 (10.8), Hinnant2021 and Lentmaier2010a are registered.",
   "Session 6 (2026-10-04): wave E merged (70fea53e9, 4e6327377). Fix lane 5 (39a68b205) and fix lane 6 (merge 'second wave 8 review fix lane') reworked the wave D and E review findings; cargo-ci passed on each merged tree and was reused with evaluate-many. Done with all gates passed: 8f451167, c6aa0e84, f2064e90, aa0558c1, 72768e37, eba21481, 50201002, 554c2935. 13dfe1a5 is the only open sweep unit: doc-review passes, code-review fails on four pub-helper docs after rework 2 of 2 (open escalation). 030496bd, ffc35b8c and every later wave wait on it. The binding rule pair that passed five units: a doc on a private item that echoes its name is deleted; a pub item keeps one line that states something the name and signature do not. Each unit's planned-work audit (every deleted comment line of every tagged commit, matched to tracker ids named in a commit body) is in the fix-lane commit bodies 2d0ef6c17, 3925d9b08, eab90716f, 2b1d4dc55, 0f5e71c7f, 612d4e93e. 554c2935: record rewritten to the current state (2223efcc3); the generator gained section 5 (key to citing files for address-only works); three gf2-core bench headers lost a SageMath2026 key that did not match the script's recorded version (lead commit tagged jit:eba21481); scripts/sage_benchmarks.py:298 hard-codes sage_version 10.7 in its output. Lead commit a747d0fdc removed the scipy routine name from tests/channel_capacity.rs. For the 030496bd record: sweep-pattern comment hits in crates/ are five lines of gf2-sim/src/executor/topology.rs where 'wave' is scheduler vocabulary; narration in string literals is tracked by de0528d2. Worker-reported, unfiled: pub items that never had Rustdoc (BaselineCellResult fields, six pub fn run() in gf2-sim binaries, 15 items in gf2-coding tests); gfp/mod.rs:63 calls the const-assertion failure of Fp<P> a construction panic. Any later edit to Rust comments shifts the line numbers in 554c2935-citation-map.txt: rerun the record's command and commit the output before the ffc35b8c story gate.",
-  "Session 7 (2026-10-04): owner interviewed on the open points; rulings are in escalations. Wave 8 gains 157c305c (pulled in) and 4b8cebcf (new); they and rework 3 of 13dfe1a5 run before the 030496bd census. Owner instruction for this session: subagent model by task difficulty, no fable; watch net-negative line change; review the documentation invariants rigorously."
+  "Session 7 (2026-10-04): owner interviewed on the open points; rulings are in escalations. Wave 8 gains 157c305c (pulled in) and 4b8cebcf (new); they and rework 3 of 13dfe1a5 run before the 030496bd census. Owner instruction for this session: subagent model by task difficulty, no fable; watch net-negative line change; review the documentation invariants rigorously.",
+  "Session 7: wave 8 closed (13dfe1a5 rework 3, 157c305c, 4b8cebcf, 3783c4c8; merges 05c8002f0, e6f9381e9, 05fb3c877 and the 4b8cebcf merge; cargo-ci forced once at 9c1a6662d). Owner instruction 2026-10-04 (standing): never stop to ask; an issue needing owner input is blocked and its question recorded in escalations; write the handoff after waves 8 and 9 finish or when only owner-blocked work remains; check workers every 30 min. 157c305c finding: the earlier doc reason (atanh divergence) was false, Llr::boxplus_n clamps the tanh product; a probe found identical decoding with an infinite filler prior, so whether FILLER_LLR must be finite is unsettled (variable_node_update at ldpc/core.rs:746 could give NaN on a min-sum check with all other inputs infinite; unproven). Out-of-scope narration in string literals at examples/dvb_t2_ldpc_basic.rs:23-36 belongs to de0528d2."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
