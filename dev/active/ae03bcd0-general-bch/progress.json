@@ -295,7 +295,7 @@
           "title": "Author the formal-proof sketch for the algebraic foundations",
           "classification": "design",
           "difficulty": "hard",
-          "status": "done: native Opus architect, doc-review R2 + research-review R2 after one rework (anchor honesty + pipeline-doc rewrite); sketch at dev/active/64fd3afd/proof-sketch.md"
+          "status": "done: native Opus architect, doc-review R2 + research-review R2 after one rework (anchor honesty + pipeline-doc rewrite); sketch at dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md"
         }
       ]
     },
@@ -660,7 +660,7 @@
     },
     {
       "source": "1c9a0f9f worker (Luna) sign-off",
-      "finding": "dev/active/64fd3afd/proof-sketch.md:922 still says the L4.3 test is required although it is implemented",
+      "finding": "dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md:922 still says the L4.3 test is required although it is implemented",
       "disposition": "closed session 9: the L4.3 test (the_generator_vanishes_at_every_defining_set_root) does not exist in the tree (grep), so the sketch line is correct and the Luna report was wrong; b1bd75ca adds it"
     },
     {

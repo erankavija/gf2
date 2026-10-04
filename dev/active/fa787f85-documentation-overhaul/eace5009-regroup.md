@@ -59,57 +59,41 @@ current depth and at no other.
 `make-receipt.py:264-266` prints three literals of the entry's own directory;
 they are REQ-06 edits of the move.
 
-## Byte-stable receipts with unresolved links
+## Digest-pinned files that keep the flat path
 
-These three receipts are byte-stable under REQ-03, and their seven inline links
-to the flat 0de41c82 paths do not resolve.
-`dev/active/b8206228-permanent-statistics/receipt-inventory.md` cites the
-SHA-256 digests of `dev/studies/6c7fcb38/receipts.md` and
-`dev/studies/91605d4d/receipts.md`.
+Sweep: `git grep -nF 'dev/active/<entry>/'` and `git grep -nF '../active/<entry>/'`
+for each of the seven moved entries, over the tree outside `.jit/`, the
+migration manifest and receipt `inputs/` trees. Each hit outside this record
+lies in a file of this table; a digest pins each file.
 
-| Location | Link target |
-|---|---|
-| `dev/studies/6c7fcb38/receipts.md:970` | `../../active/0de41c82/plan.md` |
-| `dev/studies/6c7fcb38/receipts.md:1036` | `../../active/0de41c82/investigation.md` |
-| `dev/studies/6c7fcb38/receipts.md:2094` | `../../active/0de41c82/plan.md` |
-| `dev/studies/91605d4d/receipts.md:908` | `../../active/0de41c82/plan.md` |
-| `dev/studies/91605d4d/receipts.md:1449` | `../../active/0de41c82/plan.md` |
-| `dev/studies/a9284086/receipt.md:714` | `../../active/0de41c82/plan.md` |
-| `dev/studies/a9284086/receipt.md:717` | `../../active/0de41c82/investigation.md` |
-
-Tracker link check, measured with `jit doc check-links --scope <scope>`:
-
-| Checkout | Scope | Result |
+| File | Hits | Pin |
 |---|---|---|
-| main at `a1f2e4f45` | `all` | summary 42 error(s); 103 error lines: 58 `broken_link`, 26 `missing_asset`, 19 `unreachable_url`; no line names the three receipts |
-| branch at `ec71b73d8` | `all` | six `missing_asset` lines name the three receipts, two each |
-| branch | `issue:6c7fcb38` | 3 `broken_link` |
-| branch | `issue:91605d4d` | 2 `broken_link` |
-| branch | `issue:a9284086` | 2 `broken_link` |
+| `dev/studies/6c7fcb38/receipts.md:970,1036,2094` | 3 inline links, targets `../../active/0de41c82/plan.md`, `../../active/0de41c82/investigation.md`, `../../active/0de41c82/plan.md` | SHA-256 at `dev/active/b8206228-permanent-statistics/receipt-inventory.md:44` |
+| `dev/studies/91605d4d/receipts.md:908,1449` | 2 inline links, both to `../../active/0de41c82/plan.md` | SHA-256 at `dev/active/b8206228-permanent-statistics/receipt-inventory.md:35` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/investigation.md:524-525` | 2 code spans of 0de41c82 | content hash in the container-archive event at `.jit/events.jsonl:15839` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:492` | 1 code span of 150d7d79 | content hash in the container-archive event at `.jit/events.jsonl:15839` |
 
-The branch `all` run also reports the tracker references that
-`eace5009-relink.sh` repoints and `target/doc` links absent from the worktree,
-so its summary count is not a measure of the receipts.
+The five receipt links do not resolve.
+`jit doc check-links --scope issue:6c7fcb38` reports 3 `broken_link` and
+`--scope issue:91605d4d` reports 2.
 
-## Repointed study documents
+## Repointed files outside the moved entries
 
-`dev/studies/0dffa759/findings.md` and
-`dev/studies/0dffa759/req08-amendment-draft.md` are in scope because each links
-a moved 0de41c82 file and no digest pins either.
+Each file cites a moved path, and no digest pins it: `git grep -n -F` of its
+SHA-256 and of its git blob id over the tree outside `.jit/` returns no line,
+its manifest row has `digest_pinned = false`, and inside `.jit/` the digests
+occur only as `content_hash` of scanned document assets.
 
-| Evidence | Command | Result |
+| File | Tool that reads it | Effect of the path edit on the tool |
 |---|---|---|
-| Manifest | `digest_pinned` of both rows | `false` |
-| Digest citation | `git grep -l <sha256 of the file at 98e238917> 98e238917 -- .` with `b751a65181c19a7d12cb6411504395793df77f53e16283b1cdb515b807e5483b` (findings) and `8cd7cf0e149230d029f596921490e9e4a31189f9e3c4a660a7ec0a3900bd285f` (draft) | no file |
+| `dev/studies/0dffa759/findings.md`, `req08-amendment-draft.md` | none | — |
+| `dev/studies/a9284086/receipt.md` | `dev/studies/a9284086/analysis.py:1092` | none: it matches stated count phrases |
+| `dev/active/ae03bcd0-general-bch/progress.json` | none | — |
+| `dev/active/f547c394/research-r3-sweep-resolutions.md`, `research-r3-sweeps.json` | none | — |
+| `dev/active/6dc81018-field-capability-dispatch/investigation.md` | none | — |
+| `dev/active/ae03bcd0-general-bch/handoff-4.md` to `handoff-7.md`, two `b1bd75ca` session prompts | none | — |
+| `dev/active/b8206228-permanent-statistics/sessions/2026-08-09-b8206228-planning-handoff.md` | none | — |
+| `proofs/Gf2Core/Proofs/BchSystematicEncoding.lean` (header comment, line 6) | Lean build | none: comment text |
 
-## Citations that keep the source path
-
-| File | Citations | Reason |
-|---|---|---|
-| the three receipts above | 7 inline links into 0de41c82 | byte-stable under REQ-03 |
-| `dev/active/6dc81018-field-capability-dispatch/investigation.md:524-525` | 2 code spans of 0de41c82 | main changed the adjoining line 523 after `98e238917`; the repoint on this branch conflicts in the merge (`git merge-tree --write-tree main <commit>` exits 1), and `target/eace5009-post-merge.sh` applies it on main |
-| `dev/active/ae03bcd0-general-bch/progress.json` | 2 strings of 64fd3afd | JSON state of the session working on ae03bcd0 |
-| `dev/active/f547c394/research-r3-sweeps.json`, `research-r3-sweep-resolutions.md` | citations of 64fd3afd | sweep output of an excluded code-pinned entry |
-| `dev/active/b8206228-permanent-statistics/0de41c82/breakdown.json` | 24 strings | breakdown manifest; each names a planned output that does not exist |
-| `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:692,706`, `plan.md:165,179` | 4 code spans | each states what `jit doc dir` resolved at authoring time |
-| `dev/archive/` | 3 | archived copies keep their bytes |
+The moved 0de41c82 files `investigation.md`, `plan.md` and `breakdown.json`
+cite their own directory by its destination path.
