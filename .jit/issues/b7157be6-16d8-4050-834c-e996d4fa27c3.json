@@ -1,4 +1,5 @@
 {
+  "archived_from": "done",
   "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-08-24T19:46:28.778997228Z",
   "context": {},
@@ -17,7 +18,7 @@
       "doc_type": "review",
       "format": "markdown",
       "label": "External epic review 2026-08-07",
-      "path": "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
+      "path": "dev/archive/b7157be6-osd/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
     },
     {
       "commit": null,
@@ -89,7 +90,7 @@
     "cites:@/citation/Roffe2020"
   ],
   "priority": "high",
-  "state": "done",
+  "state": "archived",
   "title": "Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-10-03T16:30:31.932245454Z"
+  "updated_at": "2026-10-04T19:56:14.055399145Z"
 }
