@@ -52,6 +52,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/fa4939c3-hits.tsv"
     }
   ],
+  "done_at": "2026-10-04T14:10:12.453802882Z",
   "first_ready_at": "2026-10-04T13:25:23.725416009Z",
   "gates_required": [
     "cargo-ci",
@@ -59,7 +60,28 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T14:05:32.630728561Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T14:09:59.304532145Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T14:08:52.926621685Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-04T14:05:36.564923942Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "fa4939c3-2cc8-4ff2-b609-d368d3b25a24",
   "labels": [
     "epic:documentation-overhaul",
@@ -67,7 +89,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Read every Rust comment line for citations the map's patterns miss",
-  "updated_at": "2026-10-04T13:54:27.939407412Z"
+  "updated_at": "2026-10-04T14:10:12.453802882Z"
 }
