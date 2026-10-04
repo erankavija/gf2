@@ -13,12 +13,11 @@ pub fn test_vectors_path() -> PathBuf {
     gf2_coding::test_support::dvb_vectors_path()
 }
 
-/// Check if test vectors are available
 pub fn test_vectors_available() -> bool {
     test_vectors_path().join("VV001-CR35_CSP").exists()
 }
 
-/// Skip test with helpful message if vectors not found
+/// Returns from the calling test when the DVB test vectors are absent.
 #[macro_export]
 macro_rules! require_test_vectors {
     () => {

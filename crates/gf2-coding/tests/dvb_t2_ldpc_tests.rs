@@ -1,6 +1,4 @@
 //! Tests for DVB-T2 LDPC code construction.
-//!
-//! These tests verify DVB-T2 LDPC codes built directly from standard tables.
 
 use gf2_coding::ldpc::LdpcCode;
 use gf2_coding::CodeRate;

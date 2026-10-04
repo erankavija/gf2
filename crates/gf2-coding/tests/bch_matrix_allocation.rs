@@ -1,15 +1,7 @@
-//! Allocation witness for the caller-buffer matrix materialization.
-//!
-//! `generator_matrix_into` and `parity_check_matrix_into` carry the parity
-//! recurrence in the caller's own buffer, so a correctly sized buffer is the
-//! only storage a call needs. Witnessing that from outside the crate takes a
-//! counting global allocator, a global allocator is a process-wide choice,
-//! and the counter is process-wide too, so this witness owns its own test
+//! Allocation witness: `generator_matrix_into` and `parity_check_matrix_into`
+//! allocate nothing given a correctly sized buffer. The counting global
+//! allocator and its counter are process-wide, so this witness owns its test
 //! binary and runs a single test in it.
-//!
-//! `unsafe` appears here for the [`GlobalAlloc`] implementation alone. This
-//! is a test binary; the production crates outside `gf2-kernels-simd` and
-//! `gf2-kernels-hip` keep `#![deny(unsafe_code)]`.
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -30,10 +22,8 @@ use gf2_core::BitMatrix;
 /// while [`ARMED`] is set.
 struct CountingAllocator;
 
-/// Whether allocations are currently being counted.
 static ARMED: AtomicBool = AtomicBool::new(false);
 
-/// Allocating calls observed since the counter was last reset.
 static ALLOCATIONS: AtomicUsize = AtomicUsize::new(0);
 
 fn record() {
@@ -69,8 +59,6 @@ unsafe impl GlobalAlloc for CountingAllocator {
 #[global_allocator]
 static ALLOCATOR: CountingAllocator = CountingAllocator;
 
-/// Runs `body` with the counter armed and returns how many allocating calls
-/// it made.
 fn allocations_during(body: impl FnOnce()) -> usize {
     ALLOCATIONS.store(0, Ordering::Relaxed);
     ARMED.store(true, Ordering::Relaxed);

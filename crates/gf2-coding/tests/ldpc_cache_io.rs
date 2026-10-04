@@ -1,10 +1,6 @@
-//! Tests for LDPC cache file I/O integration.
-//!
-//! The cache stores RREF ([`RuEncodingMatrices`]) preprocessing results. Note
-//! that `LdpcEncoder::with_cache` only consults the cache on the RREF *fallback*
-//! path: every DVB-T2 code takes the IRA fast path and never populates it. These
-//! tests therefore drive the cache through [`EncodingCache::get_or_compute`],
-//! which is the API that actually fills it.
+//! LDPC encoding-cache file I/O. `LdpcEncoder::with_cache` consults the cache
+//! only on the RREF fallback path, which no DVB-T2 code takes, so these tests
+//! fill it through [`EncodingCache::get_or_compute`].
 
 mod common;
 
@@ -15,17 +11,14 @@ use gf2_core::test_scratch::scratch;
 use std::path::Path;
 use std::sync::Arc;
 
-/// Helper: create a simple test LDPC code
 fn simple_ldpc_code() -> LdpcCode {
     LdpcCode::dvb_t2_short(CodeRate::Rate1_2)
 }
 
-/// Cache key for a code.
 fn key_of(code: &LdpcCode) -> CacheKey {
     CacheKey::from_params(code.n(), code.k(), code.parity_check_matrix())
 }
 
-/// Populate `cache` with the RREF matrices for `code` (~2-3 s for a Short rate).
 fn populate(
     cache: &EncodingCache,
     code: &LdpcCode,
@@ -41,15 +34,12 @@ fn test_cache_save_to_directory() {
     let temp_dir = scratch("gf2-ldpc-cache-io");
     let cache = EncodingCache::new();
 
-    // Precompute one entry
     let code = simple_ldpc_code();
     populate(&cache, &code);
     assert_eq!(cache.stats().entries, 1, "Cache should hold one entry");
 
-    // Save cache to directory
     cache.save_to_directory(temp_dir.path()).unwrap();
 
-    // Verify file was created
     let files: Vec<_> = std::fs::read_dir(temp_dir.path())
         .unwrap()
         .map(|e| e.unwrap().file_name())
@@ -64,16 +54,13 @@ fn test_cache_save_to_directory() {
 fn test_cache_load_from_directory() {
     let temp_dir = scratch("gf2-ldpc-cache-io");
 
-    // Create and save cache
     let cache1 = EncodingCache::new();
     let code = simple_ldpc_code();
     populate(&cache1, &code);
     cache1.save_to_directory(temp_dir.path()).unwrap();
 
-    // Load into new cache
     let cache2 = EncodingCache::from_directory(temp_dir.path()).unwrap();
 
-    // Verify the loaded cache holds the same entry, reachable without recompute
     let loaded = cache2.get(&key_of(&code)).expect("entry must round-trip");
     assert_eq!(loaded.k(), 7200);
 }
@@ -88,18 +75,15 @@ fn test_cache_load_is_fast() {
 
     let temp_dir = scratch("gf2-ldpc-cache-io");
 
-    // Save cache
     let cache1 = EncodingCache::new();
     let code = simple_ldpc_code();
     populate(&cache1, &code);
     cache1.save_to_directory(temp_dir.path()).unwrap();
 
-    // Load and measure time
     let start = std::time::Instant::now();
     let cache2 = EncodingCache::from_directory(temp_dir.path()).unwrap();
     let load_time = start.elapsed();
 
-    // Look up from the loaded cache (should be instant — no preprocessing)
     let start = std::time::Instant::now();
     let matrices = cache2.get(&key_of(&code));
     let lookup_time = start.elapsed();
@@ -108,8 +92,6 @@ fn test_cache_load_is_fast() {
     println!("Load time: {:?}", load_time);
     println!("Lookup time: {:?}", lookup_time);
 
-    // Should be much faster than 2-3 seconds of preprocessing
-    // Load time includes deserializing ~30M edges, so 500ms is reasonable
     assert!(load_time.as_millis() < 500, "Load should be <500ms");
     assert!(lookup_time.as_micros() < 100, "Lookup should be <100μs");
 }
@@ -124,10 +106,8 @@ fn test_precompute_and_save_dvb_t2() {
 
     let temp_dir = scratch("gf2-ldpc-cache-io");
 
-    // Precompute and save all DVB-T2 configs (slow, but one-time)
     EncodingCache::precompute_and_save_dvb_t2(temp_dir.path()).unwrap();
 
-    // Verify all 12 files were created
     let files: Vec<_> = std::fs::read_dir(temp_dir.path())
         .unwrap()
         .map(|e| e.unwrap())
@@ -135,7 +115,6 @@ fn test_precompute_and_save_dvb_t2() {
 
     assert_eq!(files.len(), 12, "Should create 12 files for DVB-T2 configs");
 
-    // Check file sizes are reasonable (~800 KB each)
     for entry in files {
         let metadata = entry.metadata().unwrap();
         let size_kb = metadata.len() / 1024;
@@ -157,13 +136,10 @@ fn test_load_dvb_t2_cache() {
 
     let temp_dir = scratch("gf2-ldpc-cache-io");
 
-    // Precompute and save
     EncodingCache::precompute_and_save_dvb_t2(temp_dir.path()).unwrap();
 
-    // Load cache
     let cache = EncodingCache::from_directory(temp_dir.path()).unwrap();
 
-    // Verify all 12 configs are present and reachable without recompute
     let configs = [
         (
             gf2_coding::ldpc::dvb_t2::FrameSize::Short,
@@ -236,7 +212,6 @@ fn test_load_dvb_t2_cache() {
 fn test_cache_roundtrip_encoding() {
     let temp_dir = scratch("gf2-ldpc-cache-io");
 
-    // Save cache
     let cache1 = EncodingCache::new();
     let code = simple_ldpc_code();
     let matrices1 = populate(&cache1, &code);
@@ -246,12 +221,10 @@ fn test_cache_roundtrip_encoding() {
 
     cache1.save_to_directory(temp_dir.path()).unwrap();
 
-    // Load cache and encode the same message from the deserialized matrices
     let cache2 = EncodingCache::from_directory(temp_dir.path()).unwrap();
     let matrices2 = cache2.get(&key_of(&code)).expect("entry must round-trip");
     let codeword2 = matrices2.encode(&message);
 
-    // Results should be identical
     assert_eq!(codeword1, codeword2, "Encoding should survive save/load");
 }
 
@@ -259,7 +232,6 @@ fn test_cache_roundtrip_encoding() {
 fn test_empty_directory_loads_empty_cache() {
     let temp_dir = scratch("gf2-ldpc-cache-io");
 
-    // Load from empty directory
     let cache = EncodingCache::from_directory(temp_dir.path()).unwrap();
 
     let stats = cache.stats();

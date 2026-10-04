@@ -1,5 +1,4 @@
 //! Differential evidence for the batch-encoding family dispatch seam.
-//!
 //! The rows are the predeclared corpus of the workload-selection contract
 //! (`dev/active/4e732b56/workload-selection.md` § 2), and the batch ladder is
 //! its § 3. Every registered family is checked bit-identical against
@@ -32,7 +31,6 @@ struct Row {
     modulus: u64,
     /// Designed distance $\delta$ of the contract row.
     designed_distance: u64,
-    /// Batch lengths from the contract's ladder that this row is encoded at.
     batches: &'static [usize],
 }
 
@@ -43,9 +41,7 @@ const LAYOUTS: &[SystematicLayout] = &[
 
 /// The contract's binary conformance rows carry their exact lengths; the two
 /// DVB-T2 rows carry their generator polynomials at the mother length
-/// $2^m - 1$, which is where the canonical construction model reaches them
-/// until the shortened presentations migrate (`97410c80`). See the
-/// 2026-09-01 amendment in the workload-selection contract.
+/// $2^m - 1$.
 const ROWS: &[Row] = &[
     Row {
         name: "B1",
@@ -140,7 +136,6 @@ fn messages(code: &BinaryBchCode, count: usize) -> Vec<BitVec> {
         .collect()
 }
 
-/// Encodes `messages` under `family` and returns the codewords.
 fn encode_under(
     code: &BinaryBchCode,
     family: EncodeFamily,
@@ -160,8 +155,6 @@ fn check_families_agree(row: &Row) {
     check_families_agree_at(row, row.batches);
 }
 
-/// Checks every available family against the reference at every batch length
-/// of `batches`, on every declared layout.
 fn check_families_agree_at(row: &Row, batches: &[usize]) {
     let code = build(row);
     for &layout in LAYOUTS {

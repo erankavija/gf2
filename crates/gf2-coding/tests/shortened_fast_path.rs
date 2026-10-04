@@ -1,23 +1,8 @@
-//! Shortening BCH mother codes through both derivations of `Shortened<C>`.
-//!
-//! `Shortened<C>` derives its code either by restricting a systematic mother
-//! to the messages that vanish on the removed message positions, or by
-//! reducing a basis of the mother codewords that vanish on the removed
-//! coordinates. The wrapper's own unit suite covers the selection rule and
-//! the boundary codes on generic linear fixtures; this suite runs the rule
-//! against BCH mothers, where the systematic restriction is what makes the
-//! DVB-T2 rows constructible at all.
-//!
-//! `gf2_coding::test_support::RankDerivedMother` reports no systematic
-//! layout and delegates everything else, so one mother yields both
-//! derivations of one code and the suite compares them directly.
-//!
-//! The nonbinary rows are the conformance corpus rows N1, N2 and N3 that
-//! `gf2_coding::test_support::visit_bch_corpus` builds. Each case here names
-//! the one row it compares the two derivations on, so the rows are constructed
-//! directly rather than through the visitor, which hands out the whole corpus
-//! in one pass. `bch_conformance.rs` is where every row runs the shared
-//! shortening contract under both derivations.
+//! Shortening BCH mother codes through both derivations of `Shortened<C>`:
+//! restriction of a systematic mother, and reduction of a basis of the mother
+//! codewords that vanish on the removed coordinates.
+//! `gf2_coding::test_support::RankDerivedMother` reports no systematic layout,
+//! so one mother yields both derivations and the suite compares them.
 
 use gf2_coding::bch::spec::{
     BchLength, BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent,
@@ -40,7 +25,7 @@ use rand::{Rng, SeedableRng};
 use std::collections::BTreeSet;
 
 /// The DVB-T2 normal-frame splitting field, $\mathrm{GF}(2^{16})$ on
-/// $x^{16} + x^5 + x^3 + x^2 + 1$, from ETSI EN 302 755 Table 6b.
+/// $x^{16} + x^5 + x^3 + x^2 + 1$, from `@/citation/Etsi2015` Table 6b.
 const DVB_T2_FIELD_DEGREE: usize = 16;
 const DVB_T2_FIELD_POLYNOMIAL: u64 = 0b1_0000_0000_0010_1101;
 
@@ -55,7 +40,6 @@ const DVB_T2_SHORTENING: usize = 33135;
 /// Packed word boundaries every bit-packed length assertion covers.
 const PACKED_WORD_BOUNDARIES: [usize; 5] = [0, 1, 63, 64, 65];
 
-/// Builds the DVB-T2 normal-frame mother code on the canonical BCH model.
 fn dvb_t2_normal_mother() -> BinaryBchCode {
     let extension =
         BinaryPrimeExt::new(Gf2mField::new(DVB_T2_FIELD_DEGREE, DVB_T2_FIELD_POLYNOMIAL))
@@ -68,8 +52,6 @@ fn dvb_t2_normal_mother() -> BinaryBchCode {
     .expect("the DVB-T2 normal-frame mother code")
 }
 
-/// Builds a binary primitive narrow-sense mother of the given extension
-/// degree and designed distance.
 fn binary_mother(degree: usize, designed_distance: u64) -> BinaryBchCode {
     BinaryBchCode::<u64>::primitive_narrow_sense_auto(
         Fp::<2>::zero(),
@@ -79,18 +61,13 @@ fn binary_mother(degree: usize, designed_distance: u64) -> BinaryBchCode {
     .expect("a binary primitive narrow-sense mother")
 }
 
-/// Returns the number of elements in the field `zero` witnesses.
 fn field_order<F: FieldIdentity>(zero: &F) -> u128 {
     let identity = zero.field_id();
     u128::from(identity.characteristic()).pow(identity.degree() as u32)
 }
 
-/// Draws a seeded message of `length` symbols from the field `zero`
-/// witnesses.
-///
-/// Symbols are drawn as canonical field indices, the numbering
-/// [`bch_corpus_element`] inverts, from the repository's standard seeded
-/// test generator.
+/// Draws symbols as canonical field indices, the numbering
+/// [`bch_corpus_element`] inverts.
 fn seeded_message<S, F>(rng: &mut StdRng, length: usize, zero: &F) -> S
 where
     F: FieldIdentity,
@@ -257,8 +234,6 @@ fn shortened_dvb_t2_encodes_agree_with_the_zero_prefixed_mother_message() {
     }
 }
 
-/// Builds the full-space mother of `length` coordinates, whose generator is
-/// the identity and whose dimension equals its length.
 fn full_space_mother(length: usize) -> LinearBlockCode {
     let mut generator = BitMatrix::zeros(length, length);
     for index in 0..length {
@@ -394,12 +369,9 @@ fn both_derivations_agree_on_a_gf9_bch_mother() {
     }
 }
 
-/// Materializes the shortened DVB-T2 matrices and checks the systematic
-/// prefix and orthogonality on sampled rows.
-///
 /// Writing the derived generator materializes the mother's first, so the
-/// call holds both at once. That memory, not its wall time, is why this sits
-/// in the nightly tier rather than beside the construction witness above.
+/// call holds both at once. That memory, not its wall time, places this in
+/// the nightly tier.
 #[test]
 #[ignore = "slow: holds the 65343 x 65535 DVB-T2 mother generator and the \
             32208 x 32400 derived one at once"]

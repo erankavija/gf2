@@ -1,8 +1,4 @@
-//! Integration tests for ComputeBackend with gf2-coding algorithms.
-//!
-//! These tests verify that the LDPC batch paths use the ComputeBackend
-//! abstraction for parallelization, and that the BCH batch encoder agrees
-//! with single-message encoding.
+//! The LDPC and BCH batch paths agree with per-item encoding and decoding.
 
 use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
 use gf2_coding::bch::SystematicLayout;
@@ -16,12 +12,10 @@ use gf2_core::BitVec;
 
 #[test]
 fn test_ldpc_encoder_uses_backend_for_batch() {
-    // Create a simple LDPC code
     let edges = vec![(0, 0), (0, 1), (0, 2)];
     let code = LdpcCode::from_edges(1, 3, &edges);
     let encoder = LdpcEncoder::new(code);
 
-    // Create multiple messages
     let messages: Vec<BitVec> = (0..100)
         .map(|i| {
             let mut msg = BitVec::with_capacity(2);
@@ -31,10 +25,8 @@ fn test_ldpc_encoder_uses_backend_for_batch() {
         })
         .collect();
 
-    // Batch encode should use backend internally
     let codewords = encoder.encode_batch(&messages);
 
-    // Verify results match individual encoding
     assert_eq!(codewords.len(), 100);
     for (msg, cw) in messages.iter().zip(codewords.iter()) {
         let expected = encoder.encode(msg);
@@ -47,11 +39,9 @@ fn test_ldpc_encoder_uses_backend_for_batch() {
 
 #[test]
 fn test_ldpc_decoder_uses_backend_for_batch() {
-    // Create a simple LDPC code
     let edges = vec![(0, 0), (0, 1), (0, 2)];
     let code = LdpcCode::from_edges(1, 3, &edges);
 
-    // Create multiple LLR blocks
     let llr_blocks: Vec<Vec<Llr>> = (0..50)
         .map(|i| {
             if i % 2 == 0 {
@@ -62,10 +52,8 @@ fn test_ldpc_decoder_uses_backend_for_batch() {
         })
         .collect();
 
-    // Batch decode should use backend internally
     let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
 
-    // Verify results
     assert_eq!(results.len(), 50);
     for (i, result) in results.iter().enumerate() {
         assert!(result.converged);
@@ -79,7 +67,6 @@ fn test_ldpc_decoder_uses_backend_for_batch() {
 
 #[test]
 fn test_bch_encode_batch_matches_single_encoding() {
-    // Create BCH(15, 11, 1) code
     let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())
         .expect("x^4 + x + 1 presents GF(16)");
     let code = BinaryBchCode::primitive_narrow_sense(
@@ -88,7 +75,6 @@ fn test_bch_encode_batch_matches_single_encoding() {
     )
     .expect("the primitive narrow-sense BCH(15, 11) code");
 
-    // Create multiple messages
     let messages: Vec<BitVec> = (0..100)
         .map(|i| {
             let mut msg = BitVec::with_capacity(11);
@@ -99,12 +85,10 @@ fn test_bch_encode_batch_matches_single_encoding() {
         })
         .collect();
 
-    // Batch encode through the selected encoding family
     let codewords = code
         .encode_batch(&messages, SystematicLayout::default())
         .expect("every message has k bits");
 
-    // Verify results match individual encoding
     assert_eq!(codewords.len(), 100);
     for (msg, cw) in messages.iter().zip(codewords.iter()) {
         let expected = CanonicalBlockEncoder::encode(&code, msg).expect("a k-bit message encodes");
@@ -117,12 +101,10 @@ fn test_bch_encode_batch_matches_single_encoding() {
 
 #[test]
 fn test_ldpc_batch_operations_are_deterministic() {
-    // Create LDPC code
     let edges = vec![(0, 0), (0, 1), (0, 2), (1, 1), (1, 2), (1, 3)];
     let code = LdpcCode::from_edges(2, 4, &edges);
     let encoder = LdpcEncoder::new(code.clone());
 
-    // Create messages
     let messages: Vec<BitVec> = (0..20)
         .map(|i| {
             let mut msg = BitVec::with_capacity(2);
@@ -132,7 +114,6 @@ fn test_ldpc_batch_operations_are_deterministic() {
         })
         .collect();
 
-    // Encode multiple times - should be deterministic
     let codewords1 = encoder.encode_batch(&messages);
     let codewords2 = encoder.encode_batch(&messages);
 
@@ -147,7 +128,6 @@ fn test_ldpc_batch_operations_are_deterministic() {
 
 #[test]
 fn test_backend_batch_operations_empty_input() {
-    // Test that empty batches work correctly
     let edges = vec![(0, 0), (0, 1), (0, 2)];
     let code = LdpcCode::from_edges(1, 3, &edges);
     let encoder = LdpcEncoder::new(code.clone());
@@ -163,7 +143,6 @@ fn test_backend_batch_operations_empty_input() {
 
 #[test]
 fn test_backend_batch_single_item() {
-    // Batch operations should work correctly with single item
     let edges = vec![(0, 0), (0, 1), (0, 2)];
     let code = LdpcCode::from_edges(1, 3, &edges);
     let encoder = LdpcEncoder::new(code.clone());
@@ -185,14 +164,12 @@ fn test_backend_batch_single_item() {
 
 #[test]
 fn test_ldpc_batch_parallel_correctness() {
-    // Verify parallel batch operations produce same results as sequential
     let edges: Vec<(usize, usize)> = (0..10)
         .flat_map(|i| (0..5).map(move |j| (i, (i * 3 + j) % 20)))
         .collect();
     let code = LdpcCode::from_edges(10, 20, &edges);
     let encoder = LdpcEncoder::new(code);
 
-    // Create large batch to trigger parallelization
     let messages: Vec<BitVec> = (0..1000)
         .map(|i| {
             let mut msg = BitVec::with_capacity(10);
@@ -205,7 +182,6 @@ fn test_ldpc_batch_parallel_correctness() {
 
     let codewords = encoder.encode_batch(&messages);
 
-    // Verify each codeword is correct
     assert_eq!(codewords.len(), 1000);
     for (msg, cw) in messages.iter().zip(codewords.iter()) {
         let expected = encoder.encode(msg);

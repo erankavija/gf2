@@ -1,5 +1,4 @@
 //! Guarded fresh-process protocol for the coding tuning section.
-//!
 //! Installing a profile resolves the process-wide tuning authority once, so
 //! every case that needs its own installed value runs in a child process
 //! started from the test binary. This mirrors the algebra owner's protocol at
@@ -266,6 +265,11 @@ fn encoded_envelope(selectors: EncodeSelectors) -> PreparedEnvelope {
     registry.from_json(&json).unwrap()
 }
 
+/// Runs `case` in the child process.
+///
+/// # Panics
+///
+/// Panics when the profile install or a case assertion fails.
 pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
     match case {
         FreshProcessCase::ConservativeDefault => execute_conservative_child(),

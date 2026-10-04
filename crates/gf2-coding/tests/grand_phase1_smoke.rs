@@ -1,8 +1,5 @@
-//! Smoke tests for Phase 1 AWGN simulation pipeline.
-//!
-//! Verifies that both product code and LDPC code construction, encoding,
-//! channel transmission, and decoding pipelines produce valid results
-//! without running full Monte Carlo simulations.
+//! Smoke tests for the product-code and NR LDPC AWGN pipelines and their
+//! committed campaign artifacts.
 
 use gf2_coding::drm::DrmCode;
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
@@ -16,10 +13,6 @@ use rand::SeedableRng;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
-
-// =========================================================================
-// Fig 3: (256, 121) eBCH product code
-// =========================================================================
 
 #[test]
 fn test_fig3_ebch_product_code_construction() {
@@ -57,7 +50,6 @@ fn test_fig3_ebch_product_encode_decode() {
     let n = product.n();
     let rate = k as f64 / n as f64;
 
-    // Run 3 frames at a high SNR (should decode correctly)
     let eb_n0_db = 4.0;
     for _ in 0..3 {
         let message = BitVec::random(k, &mut rng);
@@ -70,16 +62,11 @@ fn test_fig3_ebch_product_encode_decode() {
         let result = turbo.decode(&llrs);
         assert_eq!(result.decoded_bits.len(), k);
         assert!(result.iterations > 0);
-        // BER should be finite (not NaN)
         let bit_errors = count_bit_errors(&message, &result.decoded_bits);
         let ber = bit_errors as f64 / k as f64;
         assert!(ber.is_finite(), "BER must be finite, got {ber}");
     }
 }
-
-// =========================================================================
-// Fig 3: (256, 121) 5G NR LDPC
-// =========================================================================
 
 #[test]
 fn test_fig3_nr5g_ldpc_construction() {
@@ -150,10 +137,6 @@ fn test_fig3_ldpc_simulation_runner() {
     assert!(point.num_frames <= 5);
 }
 
-// =========================================================================
-// Fig 1: (1024, 441) dRM product code
-// =========================================================================
-
 #[test]
 fn test_fig1_drm_product_code_construction() {
     let component = DrmCode::drm_32_21();
@@ -191,7 +174,6 @@ fn test_fig1_drm_product_encode_decode() {
     let n = product.n();
     let rate = k as f64 / n as f64;
 
-    // Run 3 frames at high SNR
     let eb_n0_db = 4.0;
     for _ in 0..3 {
         let message = BitVec::random(k, &mut rng);
@@ -210,10 +192,6 @@ fn test_fig1_drm_product_encode_decode() {
         assert!(ber.is_finite(), "BER must be finite, got {ber}");
     }
 }
-
-// =========================================================================
-// Fig 1: (1024, 441) 5G NR LDPC
-// =========================================================================
 
 #[test]
 fn test_fig1_nr5g_ldpc_construction() {
@@ -253,10 +231,6 @@ fn test_fig1_nr5g_ldpc_encode_decode() {
         assert!(ber.is_finite(), "BER must be finite, got {ber}");
     }
 }
-
-// =========================================================================
-// CSV output format test
-// =========================================================================
 
 #[test]
 fn test_csv_output_format() {

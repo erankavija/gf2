@@ -1,5 +1,4 @@
 //! Contract tests for the shared OSD most-reliable-basis reprocessing engine.
-//!
 //! The engine is exercised through one abstract adapter per supported shape,
 //! neither of which carries coding semantics: a basis-reprocessing adapter
 //! whose candidates are the row space of the eliminated matrix, and a
@@ -15,10 +14,6 @@ use gf2_coding::osd::{
 use gf2_core::alg::rref::OrderedEliminationError;
 use gf2_core::{BitMatrix, BitVec};
 use proptest::prelude::*;
-
-// ---------------------------------------------------------------------------
-// Fixtures and independent reference implementations
-// ---------------------------------------------------------------------------
 
 fn matrix_from_rows(rows: &[&str]) -> BitMatrix {
     let cols = rows[0].len();
@@ -40,8 +35,6 @@ fn word(bits: &str) -> BitVec {
     vector
 }
 
-/// Sums the magnitudes of the coordinates where `candidate` and `reference`
-/// disagree, without consulting the engine.
 fn naive_metric(candidate: &BitVec, reference: &BitVec, magnitudes: &[f32]) -> f64 {
     let mut total = 0.0;
     for (column, &magnitude) in magnitudes.iter().enumerate() {
@@ -52,7 +45,6 @@ fn naive_metric(candidate: &BitVec, reference: &BitVec, magnitudes: &[f32]) -> f
     total
 }
 
-/// Computes `message * matrix` with a naive double loop.
 fn naive_row_combination(matrix: &BitMatrix, message: &[bool]) -> BitVec {
     let mut product = BitVec::zeros(matrix.cols());
     for col in 0..matrix.cols() {
@@ -136,10 +128,6 @@ fn exhaustive_solution_best(
     best
 }
 
-// ---------------------------------------------------------------------------
-// Abstract semantic adapters
-// ---------------------------------------------------------------------------
-
 /// Basis-reprocessing shape: candidates are row-space words and the patterns
 /// perturb the independent basis columns.
 struct RowSpaceSemantics;
@@ -216,8 +204,6 @@ impl OsdSemantics for SolutionSemantics {
     }
 }
 
-/// Sets a cancellation flag once the wrapped adapter has judged `limit`
-/// candidates.
 struct CancelAfter<'a> {
     limit: usize,
     seen: Cell<usize>,
@@ -246,7 +232,6 @@ impl OsdSemantics for CancelAfter<'_> {
     }
 }
 
-/// Rejects every candidate, so none reaches the ranking.
 struct RejectAllSemantics;
 
 impl OsdSemantics for RejectAllSemantics {
@@ -267,7 +252,6 @@ impl OsdSemantics for RejectAllSemantics {
     }
 }
 
-/// Rejects the first candidate it evaluates and accepts the rest.
 struct RejectFirst {
     seen: Cell<usize>,
 }
@@ -317,10 +301,6 @@ impl OsdSemantics for MalformedSemantics {
         true
     }
 }
-
-// ---------------------------------------------------------------------------
-// REQ-01: most-reliable independent basis
-// ---------------------------------------------------------------------------
 
 #[test]
 fn basis_is_the_greedy_independent_set_of_the_most_reliable_columns() {
@@ -375,8 +355,6 @@ fn least_reliable_preference_selects_the_opposite_basis() {
 
 #[test]
 fn free_columns_follow_the_preference_order_not_the_column_order() {
-    // Column 0 is the most reliable and column 3 the least, so the preference
-    // order is [0, 1, 2, 3] reversed only by magnitude.
     let matrix = matrix_from_rows(&["1000", "0100"]);
     let magnitudes = [1.0, 4.0, 2.0, 3.0];
     let reference = word("0000");
@@ -427,10 +405,6 @@ fn nan_magnitudes_panic_through_the_canonical_permutation() {
         ColumnPreference::MostReliableFirst,
     );
 }
-
-// ---------------------------------------------------------------------------
-// REQ-05: exhaustive-search equivalence for both adapter shapes
-// ---------------------------------------------------------------------------
 
 fn matrix_strategy(rows: usize, cols: usize) -> impl Strategy<Value = BitMatrix> {
     proptest::collection::vec(any::<bool>(), rows * cols).prop_map(move |bits| {
@@ -574,10 +548,6 @@ proptest! {
     }
 }
 
-// ---------------------------------------------------------------------------
-// REQ-02: deterministic ranking and tie behavior
-// ---------------------------------------------------------------------------
-
 #[test]
 fn a_strictly_better_later_candidate_replaces_the_order_zero_candidate() {
     // The single generator row flips every coordinate; the basis coordinate
@@ -672,11 +642,6 @@ fn order_zero_tests_only_the_base_candidate() {
     assert_eq!(work.termination(), OsdTermination::Exhaustive);
     assert_eq!(outcome.best().unwrap().pattern(), &[] as &[usize]);
 }
-
-// ---------------------------------------------------------------------------
-// REQ-03 and REQ-04: work metadata, rank deficiency, inconsistency, caps,
-// cancellation
-// ---------------------------------------------------------------------------
 
 #[test]
 fn rank_deficiency_shrinks_the_search_space_without_failing() {
@@ -931,15 +896,12 @@ fn rejection_withholds_a_tested_candidate_from_the_ranking_only() {
     )
     .unwrap();
 
-    // Accepted, the order-zero candidate wins with a metric of 1.0.
     let accepted = reprocess(&basis, &RowSpaceSemantics, OsdConfig::new(1)).unwrap();
     assert_eq!(accepted.best().unwrap().metric(), 1.0);
 
     let semantics = RejectFirst { seen: Cell::new(0) };
     let outcome = reprocess(&basis, &semantics, OsdConfig::new(1)).unwrap();
 
-    // All three candidates were generated and tested, but the ranking saw only
-    // the two the semantics accepted.
     let work = outcome.work();
     assert_eq!(work.generated_patterns(), 3);
     assert_eq!(work.tested_candidates(), 3);
@@ -969,10 +931,6 @@ fn an_unrepresentable_candidate_bound_is_reported_before_reprocessing() {
     let error = reprocess(&basis, &RowSpaceSemantics, OsdConfig::new(64)).unwrap_err();
     assert!(matches!(error, OsdEngineError::Patterns(_)));
 }
-
-// ---------------------------------------------------------------------------
-// Dimension and adapter conformance
-// ---------------------------------------------------------------------------
 
 #[test]
 fn magnitude_and_reference_lengths_must_match_the_column_count() {

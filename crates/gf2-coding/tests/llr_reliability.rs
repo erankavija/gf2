@@ -1,4 +1,4 @@
-//! Conformance tests for canonical reliability index ordering.
+//! Canonical reliability index ordering: ties, signed zero, infinities and NaN rejection.
 
 use gf2_coding::llr::{Llr, ReliabilityPermutation};
 use proptest::prelude::*;

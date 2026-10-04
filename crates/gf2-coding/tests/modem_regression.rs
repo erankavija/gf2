@@ -1,28 +1,7 @@
-//! Framework-level regression tests for the modem surface
-//! (JIT issue `dafb938a`).
-//!
-//! These tests extend `modem_reference_model.rs` and `modem_data_model.rs`
-//! into regression protection for both the reference path and the
-//! optimized Gray-QAM fast path, plus the migrated compatibility entry
-//! points (`BpskAwgnChannel`, `QpskRicianChannelModel`). Every seed is
-//! fixed so any future change that moves the LLR outputs or the resolved
-//! BER/FER tallies trips a clear numeric diff.
-//!
-//! Test categories:
-//!
-//! 1. **Round-trip fidelity per preset** (`test_round_trip_*`) — random
-//!    bits → mapper → noise-free → soft demapper → hard decisions →
-//!    bits, for both [`ReferenceMapper`]/[`ReferenceSoftDemapper`] and
-//!    [`GrayQamMapper`]/[`FastGrayQamDemapper`].
-//! 2. **Fast vs reference parity** (`test_fast_ref_parity_*`) — at fixed
-//!    seeds and two SNRs (low / high), the two LLR paths agree to within
-//!    the LLR-storage f32 tolerance.
-//! 3. **Migrated entry points** (`test_bpsk_awgn_channel_ber_locked`,
-//!    `test_qpsk_rician_channel_locked`) — end-to-end BER at a locked
-//!    Eb/N0 and a locked seed.
-//! 4. **Noise-convention lock** (`test_noise_convention_bpsk_closed_form`,
-//!    `test_noise_convention_qpsk_projection`) — framework demapper output
-//!    matches the textbook closed form at `N0 = 2 sigma^2`.
+//! Fixed-seed regression tests for the reference modem path, the Gray-QAM
+//! fast path and the `BpskAwgnChannel` and `QpskRicianChannelModel` channel
+//! models: round trip, fast-versus-reference LLR parity, banded BER, and the
+//! `N0 = 2 sigma^2` noise convention.
 
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::fading::{QpskRicianChannelModel, RicianConfig};
@@ -39,15 +18,10 @@ use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
 use gf2_core::BitVec;
 use rand::{rngs::StdRng, SeedableRng};
 
-/// Constellation orders that the framework promises to support end-to-end
-/// through the preset surface (BPSK + Gray square-QAM).
 const PRESET_ORDERS: [usize; 5] = [2, 4, 16, 64, 256];
 
-/// Box-Muller pair of unit-variance Gaussian samples `(N_I, N_Q)` drawn
-/// from the shared deterministic `Lcg`. Done by hand (rather than via
-/// `rand_distr`) so the generated noise vector depends only on the
-/// workspace SSOT RNG and is reproducible across platforms. SSOT helper
-/// shared between both f32 and f64 regression sites.
+/// Box-Muller pair of unit-variance Gaussian samples from the shared `Lcg`,
+/// so the noise is reproducible across platforms.
 fn box_muller_pair_f64(rng: &mut Lcg) -> (f64, f64) {
     let u1 = (rng.next_u32() as f64 / u32::MAX as f64).max(1e-12);
     let u2 = rng.next_u32() as f64 / u32::MAX as f64;
@@ -61,9 +35,6 @@ fn box_muller_pair_f32(rng: &mut Lcg) -> (f32, f32) {
     (a as f32, b as f32)
 }
 
-/// Builds a `BitVec` from a `[bool]` slice using the crate's dense bit
-/// storage. Used to feed [`BpskAwgnChannel::transmit_and_demodulate`],
-/// which takes a `gf2_core::BitVec`.
 fn bits_to_bitvec(bits: &[bool]) -> BitVec {
     let mut bv = BitVec::zeros(bits.len());
     for (i, &b) in bits.iter().enumerate() {
@@ -74,14 +45,6 @@ fn bits_to_bitvec(bits: &[bool]) -> BitVec {
     bv
 }
 
-// ---------------------------------------------------------------------
-// 1. Round-trip fidelity per preset
-// ---------------------------------------------------------------------
-
-/// Pushes `bits` through a caller-supplied mapper + soft demapper at tiny
-/// noise and asserts every hard-decision bit recovers the transmitted
-/// bit. Shared between the reference-path and fast-path round-trip tests
-/// so the two sides cannot drift in shape.
 fn check_round_trip_clean<M, D>(mapper: &M, demapper: &D, bits: &[bool], m: u8)
 where
     M: BatchMapper<f64>,
@@ -92,8 +55,7 @@ where
     let mut tx_q = vec![0.0_f64; num_symbols];
     mapper.map_bits(bits, &mut tx_i, &mut tx_q);
 
-    // Tiny, strictly-positive noise variance so the log-MAP path is
-    // well-defined but hard decisions still match the transmitted bits.
+    // Strictly positive so the log-MAP path is well-defined.
     let nv = vec![1e-6_f64; num_symbols];
     let input = DemapInput::<f64> {
         rx_i: &tx_i,
@@ -115,11 +77,8 @@ where
     }
 }
 
-/// Round-trip check for the reference path on every supported preset.
 #[test]
 fn test_round_trip_reference_path_all_presets() {
-    // One fixed seed per preset so any future LLR-storage change gives
-    // a per-preset diff rather than a single lumped failure.
     let seeds: [(usize, u64); 5] = [
         (2, 0x4253_504B), // 'BSPK'
         (4, 0x5150_534B),
@@ -137,9 +96,6 @@ fn test_round_trip_reference_path_all_presets() {
     }
 }
 
-/// Round-trip check for the optimized Gray-QAM pair on every supported
-/// preset (including BPSK, which the fast path handles via the
-/// axis-separable BPSK branch).
 #[test]
 fn test_round_trip_fast_path_all_presets() {
     let seeds: [(usize, u64); 5] = [
@@ -159,13 +115,6 @@ fn test_round_trip_fast_path_all_presets() {
     }
 }
 
-// ---------------------------------------------------------------------
-// 2. Fast vs reference parity at two SNRs per preset
-// ---------------------------------------------------------------------
-
-/// Drives both demapper backends with the same seeded RNG and asserts
-/// their LLR outputs agree to within `tol` (on the f32-backed [`Llr`]
-/// storage). Returns the max absolute diff observed for diagnostics.
 #[allow(clippy::too_many_arguments)]
 fn parity_f64(
     spec: ModemSpec<f64>,
@@ -181,9 +130,6 @@ fn parity_f64(
     let fast = FastGrayQamDemapper::new(spec.clone());
     let reference = ReferenceSoftDemapper::new(spec.clone());
 
-    // Build a received stream that represents mapped transmit symbols
-    // plus AWGN, using the shared unit-energy helpers so the SNR is
-    // interpreted the same way by both backends.
     let sigma_sq = unit_energy_sigma_sq_from_eb_n0_db(m, rate, eb_n0_db);
     let n0 = 2.0 * sigma_sq;
     let std = sigma_sq.sqrt();
@@ -233,8 +179,6 @@ fn parity_f64(
 
 #[test]
 fn test_fast_ref_parity_low_snr_all_presets_f64() {
-    // 0 dB Eb/N0: deeply-noisy regime, exact log-MAP and max-log both
-    // exercised so both reductions are locked.
     for &order in &PRESET_ORDERS {
         let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(order);
         for method in [DemapMethod::ExactLogMap, DemapMethod::MaxLog] {
@@ -254,9 +198,6 @@ fn test_fast_ref_parity_low_snr_all_presets_f64() {
 
 #[test]
 fn test_fast_ref_parity_high_snr_all_presets_f64() {
-    // 10 dB Eb/N0: high-confidence regime where LLR magnitudes grow and
-    // the min-shift in the log-sum-exp dominates; pins the numerical
-    // behaviour of both backends.
     for &order in &PRESET_ORDERS {
         let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(order);
         for method in [DemapMethod::ExactLogMap, DemapMethod::MaxLog] {
@@ -267,11 +208,7 @@ fn test_fast_ref_parity_high_snr_all_presets_f64() {
                 10.0,
                 1.0,
                 method,
-                // LLR magnitudes at 10 dB can be large (>100) for the
-                // outer 256-QAM bits, so the f32-storage quantization
-                // pushes the observed diff above 1e-4 for those orders.
-                // 1e-2 is consistent with the existing in-crate parity
-                // tests at this SNR.
+                // f32 LLR storage quantizes the large 10 dB magnitudes.
                 1e-2,
                 &format!("f64 high-SNR order={order} method={method:?}"),
             );
@@ -281,9 +218,7 @@ fn test_fast_ref_parity_high_snr_all_presets_f64() {
 
 #[test]
 fn test_fast_ref_parity_f32_awgn_all_presets() {
-    // The f32 scalar path carries all its own quantization noise on
-    // the rx samples before the demappers even start; 1e-2 matches the
-    // in-crate parity convention.
+    // f32 rx samples carry their own quantization, hence the 1e-2 tolerance.
     for &order in &PRESET_ORDERS {
         let spec: ModemSpec<f32> = ModemSpec::<f32>::gray_square_qam(order);
         let m = spec.bits_per_symbol() as usize;
@@ -334,18 +269,8 @@ fn test_fast_ref_parity_f32_awgn_all_presets() {
     }
 }
 
-// ---------------------------------------------------------------------
-// 3. Migrated compatibility entry points
-// ---------------------------------------------------------------------
-
 #[test]
 fn test_bpsk_awgn_channel_ber_locked() {
-    // Locks the end-to-end BER at a fixed Eb/N0 and a fixed RNG seed for
-    // the `BpskAwgnChannel` compatibility surface. The absolute value is
-    // the realised BER of the current code path; the test exists to
-    // catch silent regressions in the modem-framework-backed
-    // `ChannelModel` implementation (mapper, demapper, RNG-stream shape,
-    // and noise-scale derivation).
     let channel = BpskAwgnChannel;
     let n_bits = 2048;
     let mut rng = StdRng::seed_from_u64(0xB9_B95C_5EED_0003u64);
@@ -361,44 +286,24 @@ fn test_bpsk_awgn_channel_ber_locked() {
             errors += 1;
         }
     }
-    // BPSK uncoded BER at 3 dB Eb/N0 is ~0.023. With 2048 bits and the
-    // locked seed above, the observed count is deterministic. Lock it
-    // to a tight interval so harmless RNG-stream tweaks still trip the
-    // test but random noise within the theoretical regime does not.
+    // The theoretical uncoded BPSK BER at 3 dB Eb/N0 is about 0.023.
     let ber = errors as f64 / n_bits as f64;
     assert!(
         (0.005..=0.06).contains(&ber),
         "BpskAwgnChannel BER at 3 dB = {ber} ({errors}/{n_bits}) outside expected band"
     );
-    // Positive-confidence lock: at 3 dB the BER should comfortably beat
-    // an unbiased coin (0.5) and the high-noise tail (0.1).
     assert!(ber < 0.1, "BpskAwgnChannel BER at 3 dB too high: {ber}");
 }
 
 #[test]
 fn test_qpsk_rician_channel_locked() {
-    // Locked-value test for the migrated Rician fading link. The legacy
-    // entry point routes through the modem framework; this test guards
-    // against regressions in the adapter glue (interleaver, QPSK mapper,
-    // demapper, noise-scale conversion).
-    //
-    // Two-sided protection:
-    //   1. Band the high-SNR BER: regression to an open-loop /
-    //      coefficient-swapped implementation collapses BER toward ~0.5,
-    //      which trips the `< 0.25` upper bound.
-    //   2. Separately catch the "noise scale collapsed to 0" failure mode
-    //      at a low Eb/N0: if the noise step is silently dropped, BER
-    //      at -2 dB also collapses to 0 even though the channel is
-    //      deep in the noise-limited regime. The lower-bound assertion
-    //      below forces at least one bit error across a 4 096-bit
-    //      low-SNR run, which is trivially satisfied by any non-zero
-    //      noise floor but impossible under a dropped-noise regression.
+    // A coefficient-swapped or open-loop adapter drives the 10 dB BER toward
+    // 0.5; a dropped noise step drives the -2 dB error count to 0.
     let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
     let n_bits = 1024; // exact `frame_bits()` for fig8.
     let tx_bits = bit_stream(0xF1_0FAD_EF16_0008u64, n_bits);
     let tx_bv = bits_to_bitvec(&tx_bits);
 
-    // High-SNR sweep: band the BER.
     {
         let mut rng = StdRng::seed_from_u64(0xFADE_5EED);
         let llrs = channel.transmit_and_demodulate(&tx_bv, 10.0, 1.0, &mut rng);
@@ -415,10 +320,6 @@ fn test_qpsk_rician_channel_locked() {
         );
     }
 
-    // Noise-floor probe at low SNR: four independent 1024-bit frames,
-    // each at Eb/N0 = -2 dB. If the noise step is dropped the aggregate
-    // error count collapses to 0; otherwise it should sit near the
-    // Rician BER curve (well above a single bit).
     {
         let mut rng = StdRng::seed_from_u64(0xD15E_A5ED);
         let mut total_errors = 0usize;
@@ -443,16 +344,10 @@ fn test_qpsk_rician_channel_locked() {
     }
 }
 
-// ---------------------------------------------------------------------
-// 4. Noise-convention lock
-// ---------------------------------------------------------------------
-
 #[test]
 fn test_noise_convention_bpsk_closed_form() {
-    // For BPSK with points {+1, -1} and noise_var = N0 = 2 sigma^2,
-    // the textbook LLR is 2 * r / sigma^2 = 4 * r / N0.
-    // Cross-check that the framework's reference demapper agrees with
-    // this closed form for a sweep of received values and SNRs.
+    // BPSK with points {+1, -1} and noise_var = N0 = 2 sigma^2 has
+    // LLR = 2 r / sigma^2 = 4 r / N0.
     let spec: ModemSpec<f64> = ModemSpec::<f64>::bpsk_with_scalar();
     let demapper = ReferenceSoftDemapper::new(spec);
 
@@ -483,7 +378,6 @@ fn test_noise_convention_bpsk_closed_form() {
         }
     }
 
-    // And via the shared Eb/N0 helper — prove the conversion chain.
     let sigma_sq = unit_energy_sigma_sq_from_eb_n0_db(1, 1.0, 6.0);
     let n0_helper = unit_energy_n0_from_eb_n0_db(1, 1.0, 6.0);
     assert!((n0_helper - 2.0 * sigma_sq).abs() < 1e-15);
@@ -491,13 +385,9 @@ fn test_noise_convention_bpsk_closed_form() {
 
 #[test]
 fn test_noise_convention_qpsk_projection() {
-    // For Gray QPSK at unit-average-symbol energy, the per-axis
-    // amplitude is `s = 1/sqrt(2)`. MSB is the I-axis sign bit. Under
-    // max-log the exact LLR on bit 0 is
-    //   LLR = (d(-s, y_q) - d(+s, y_q)) / N0
-    //       = ((y_i + s)^2 - (y_i - s)^2) / N0
-    //       = 4 * s * y_i / N0
-    // which is the canonical "Gray-QAM projection" closed form.
+    // Gray QPSK at unit average symbol energy has per-axis amplitude
+    // s = 1/sqrt(2) and the MSB is the I-axis sign bit. Max-log LLR on bit 0:
+    //   ((y_i + s)^2 - (y_i - s)^2) / N0 = 4 * s * y_i / N0
     let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(4);
     let demapper = FastGrayQamDemapper::new(spec);
     let s = 1.0_f64 / 2.0_f64.sqrt();
@@ -526,9 +416,7 @@ fn test_noise_convention_qpsk_projection() {
             };
             let mut out = [Llr::new(0.0), Llr::new(0.0)];
             demapper.demap_llrs(input, &mut out);
-            // MSB (bit 0, I-axis): 4 * s * y_i / N0.
             let expected_msb = 4.0 * s * y_i / n0;
-            // LSB (bit 1, Q-axis): 4 * s * y_q / N0.
             let expected_lsb = 4.0 * s * y_q / n0;
             let got_msb = out[0].value() as f64;
             let got_lsb = out[1].value() as f64;
@@ -546,19 +434,13 @@ fn test_noise_convention_qpsk_projection() {
 
 #[test]
 fn test_awgn_channel_helper_matches_unit_energy_helper() {
-    // The `AwgnChannel::from_eb_n0_db` convenience constructor must
-    // route through the shared unit-energy helper; this is the last
-    // remaining place where a mis-derivation of the noise scale would
-    // silently produce off-by-`2` LLRs through a framework link.
     for m in [1usize, 2, 4, 6, 8] {
         for &rate in &[0.5_f64, 1.0] {
             for &ebn0 in &[0.0, 3.0, 6.0, 10.0] {
                 let ch = AwgnChannel::from_eb_n0_db(ebn0, rate);
                 let expected = unit_energy_sigma_sq_from_eb_n0_db(1, rate, ebn0);
-                // `AwgnChannel::from_eb_n0_db` is hard-wired to m=1
-                // (BPSK-axis) per its doc comment; verify the contract.
-                // The loop over `m` exercises the helper itself at
-                // higher m to pin the 1/(2 m R 10^(Eb_N0/10)) formula.
+                // `AwgnChannel::from_eb_n0_db` is fixed to m = 1; the loop
+                // over `m` exercises the helpers at higher m.
                 assert!(
                     (ch.variance() - expected).abs() < 1e-12,
                     "AwgnChannel::from_eb_n0_db rate={rate} ebn0={ebn0}: variance {} != expected {}",

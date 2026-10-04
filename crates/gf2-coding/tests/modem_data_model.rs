@@ -1,8 +1,4 @@
-//! Integration tests for the shared modem data model (`c87c5043`).
-//!
-//! These tests exercise the public surface of [`gf2_coding::modem`]:
-//! preset construction, invariants observable through the public API,
-//! view accessors, and property-based bijection properties.
+//! Integration tests for the public modem data model in [`gf2_coding::modem`].
 
 use gf2_coding::modem::{
     BitChannelId, BitChannelSemantics, DemapMethod, LabelWord, ModemSpec, ModemView, Normalization,
@@ -45,7 +41,7 @@ fn test_public_view_is_copy_across_boundaries() {
     let spec = ModemSpec::gray_square_qam(16);
     let v = spec.view();
     let n1 = count_points(v);
-    let n2 = count_points(v); // Copy is fine
+    let n2 = count_points(v);
     assert_eq!(n1, n2);
 }
 
@@ -61,7 +57,6 @@ fn test_public_capabilities_populated_for_presets() {
     }
     assert!(caps.supports_exact_log_map);
     assert!(caps.supports_max_log);
-    // BPSK preset ships a single-entry analysis slice.
     assert_eq!(caps.analysis.len(), 1);
 }
 
@@ -86,8 +81,7 @@ fn test_public_bpsk_point_layout() {
 
 #[test]
 fn test_public_qpsk_matches_legacy_layout_under_scaling() {
-    // The Gray-square-QAM(4) preset must place its four symbols at
-    // delta = 1/sqrt(2) (unit symbol energy), the canonical QPSK layout.
+    // Unit symbol energy places the four symbols at delta = 1/sqrt(2).
     let spec = ModemSpec::gray_square_qam(4);
     let delta = (0.5_f64).sqrt();
     // bit0 (MSB) toggles I sign, bit1 (LSB) toggles Q sign.
@@ -112,8 +106,6 @@ fn test_public_qpsk_matches_legacy_layout_under_scaling() {
 
 #[test]
 fn test_public_demap_method_values() {
-    // DemapMethod variants remain distinct and constructible at crate
-    // root so trait-layer (d36ae697) can consume them directly.
     assert_ne!(DemapMethod::ExactLogMap, DemapMethod::MaxLog);
 }
 
