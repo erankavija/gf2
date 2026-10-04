@@ -39,6 +39,6 @@ records the rejected newline request. The
 fresh-child parser. The completed
 [profile log](../../bench_results/2037941f/dense-baseline-profile-r2/execution.log)
 and [profile summary](../../bench_results/2037941f/dense-baseline-profile-r2/profile-summary.md)
-retain the current cost evidence. The [portfolio outcome](../c73ffa25/outcome.md)
+retain the current cost evidence. The [portfolio outcome](../1a379447-zen3-cpu-performance/c73ffa25/outcome.md)
 records the frozen-rule no-candidate decision, preserves the established fused
 AND-popcount path and carry-save no-win, and authorizes no production change.
