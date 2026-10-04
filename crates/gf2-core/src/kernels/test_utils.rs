@@ -1,12 +1,7 @@
-//! Integration tests for kernel backends.
-//!
-//! These tests verify that all backend implementations produce identical results
-//! for the same operations. This ensures correctness across scalar, SIMD, and
-//! future GPU/FPGA backends.
+//! Conformance checks that every kernel `Backend` implementation runs.
 
 use super::Backend;
 
-/// Property: All backends must produce identical results for AND operation.
 pub fn test_backend_and_equivalence<B: Backend + ?Sized>(backend: &B) {
     let test_cases = vec![
         (vec![0xFF, 0xFF], vec![0x0F, 0xF0], vec![0x0F, 0xF0]),
@@ -34,7 +29,6 @@ pub fn test_backend_and_equivalence<B: Backend + ?Sized>(backend: &B) {
     }
 }
 
-/// Property: All backends must produce identical results for OR operation.
 pub fn test_backend_or_equivalence<B: Backend + ?Sized>(backend: &B) {
     let test_cases = vec![
         (vec![0xF0, 0x0F], vec![0x0F, 0xF0], vec![0xFF, 0xFF]),
@@ -58,7 +52,6 @@ pub fn test_backend_or_equivalence<B: Backend + ?Sized>(backend: &B) {
     }
 }
 
-/// Property: All backends must produce identical results for XOR operation.
 pub fn test_backend_xor_equivalence<B: Backend + ?Sized>(backend: &B) {
     let test_cases = vec![
         (vec![0xFF, 0xFF], vec![0x0F, 0xF0], vec![0xF0, 0x0F]),
@@ -86,7 +79,6 @@ pub fn test_backend_xor_equivalence<B: Backend + ?Sized>(backend: &B) {
     }
 }
 
-/// Property: All backends must produce identical results for NOT operation.
 pub fn test_backend_not_equivalence<B: Backend + ?Sized>(backend: &B) {
     let test_cases = vec![
         (vec![0xFFFFFFFFFFFFFFFFu64], vec![0x0000000000000000u64]),
@@ -106,7 +98,6 @@ pub fn test_backend_not_equivalence<B: Backend + ?Sized>(backend: &B) {
     }
 }
 
-/// Property: All backends must produce identical popcount results.
 pub fn test_backend_popcount_equivalence<B: Backend + ?Sized>(backend: &B) {
     let test_cases = vec![
         (vec![0u64], 0u64),
@@ -130,7 +121,6 @@ pub fn test_backend_popcount_equivalence<B: Backend + ?Sized>(backend: &B) {
     }
 }
 
-/// Property: XOR parity must satisfy: parity(a ^ b) = parity(a) ^ parity(b).
 pub fn test_backend_parity_xor_property<B: Backend + ?Sized>(backend: &B) {
     let test_values = vec![
         0u64,
@@ -163,7 +153,6 @@ pub fn test_backend_parity_xor_property<B: Backend + ?Sized>(backend: &B) {
     }
 }
 
-/// Property: Parity must match count_ones() % 2 == 1.
 pub fn test_backend_parity_correctness<B: Backend + ?Sized>(backend: &B) {
     let test_cases = vec![
         (0u64, false),
@@ -192,7 +181,6 @@ pub fn test_backend_parity_correctness<B: Backend + ?Sized>(backend: &B) {
     }
 }
 
-/// Property: trailing_zeros must return position of lowest set bit.
 pub fn test_backend_trailing_zeros_correctness<B: Backend + ?Sized>(backend: &B) {
     let test_cases = vec![
         (0u64, 64u32),
@@ -221,7 +209,6 @@ pub fn test_backend_trailing_zeros_correctness<B: Backend + ?Sized>(backend: &B)
     }
 }
 
-/// Property: leading_zeros must return 64 - position_of_highest_bit - 1.
 pub fn test_backend_leading_zeros_correctness<B: Backend + ?Sized>(backend: &B) {
     let test_cases = vec![
         (0u64, 64u32),
@@ -249,7 +236,6 @@ pub fn test_backend_leading_zeros_correctness<B: Backend + ?Sized>(backend: &B) 
     }
 }
 
-/// Test that operations work correctly on empty slices.
 pub fn test_backend_empty_slices<B: Backend + ?Sized>(backend: &B) {
     let mut dst: Vec<u64> = vec![];
     let src: Vec<u64> = vec![];
@@ -270,7 +256,6 @@ pub fn test_backend_empty_slices<B: Backend + ?Sized>(backend: &B) {
     assert_eq!(count, 0, "popcount on empty slice should be 0");
 }
 
-/// Test that operations work correctly on single-word slices.
 pub fn test_backend_single_word<B: Backend + ?Sized>(backend: &B) {
     let mut dst = vec![0xFFFFFFFFFFFFFFFFu64];
     let src = vec![0x0F0F0F0F0F0F0F0Fu64];
@@ -290,7 +275,6 @@ pub fn test_backend_single_word<B: Backend + ?Sized>(backend: &B) {
     assert_eq!(dst, vec![0x0F0F0F0F0F0F0F0Fu64]);
 }
 
-/// Test that operations work correctly on large slices (stress test).
 pub fn test_backend_large_slice<B: Backend + ?Sized>(backend: &B) {
     const SIZE: usize = 1024;
     let mut dst = vec![0xAAAAAAAAAAAAAAAAu64; SIZE];
@@ -311,7 +295,6 @@ mod backend_tests {
     use super::*;
     use crate::kernels::scalar::ScalarBackend;
 
-    // Run all tests on the scalar backend
     #[test]
     fn scalar_and_equivalence() {
         test_backend_and_equivalence(&ScalarBackend);
@@ -372,7 +355,6 @@ mod backend_tests {
         test_backend_large_slice(&ScalarBackend);
     }
 
-    // SIMD backend tests - only run when SIMD feature is enabled
     #[cfg(feature = "simd")]
     mod simd_tests {
         use super::*;

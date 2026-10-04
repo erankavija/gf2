@@ -1,39 +1,12 @@
-//! Primitive bit manipulation operations for single words.
-//!
-//! This module provides optimized implementations of fundamental bit operations.
-//! Each operation uses the fastest implementation available, typically leveraging
-//! hardware instructions on modern CPUs (popcount, trailing_zeros, leading_zeros)
-//! or efficient branchless algorithms (masked_merge, power-of-2 operations).
+//! Single-word bit primitives.
 
-/// Computes XOR parity of a word.
-///
-/// Returns `true` if there is an odd number of 1 bits, `false` otherwise.
-/// This is a fundamental GF(2) operation.
-///
-/// # Algorithm
-/// Uses hardware popcount instruction (available on all modern CPUs).
-/// Benchmarked ~465 ps per operation, 40-80% faster than bit-twiddling alternatives.
-///
-/// # Performance
-/// - x86-64: 1-3 cycles (POPCNT instruction)
-/// - ARM: 1-4 cycles (VCNT instruction)
+/// Returns `true` if `v` has an odd number of 1 bits.
 #[inline(always)]
 pub fn parity(v: u64) -> bool {
     (v.count_ones() & 1) != 0
 }
 
-/// Counts trailing zeros (position of lowest set bit).
-///
-/// Returns 64 if the word is zero.
-///
-/// # Algorithm
-/// Uses hardware trailing zero count instruction (available on all modern CPUs).
-/// Benchmarked to be fastest - bit-twiddling alternatives (De Bruijn, binary search)
-/// provide no benefit on modern architectures.
-///
-/// # Performance
-/// - x86-64: 1-3 cycles (TZCNT/BSF instruction)
-/// - ARM: 1-4 cycles (CLZ + RBIT, or CTZ on ARMv8)
+/// Counts trailing zeros (position of lowest set bit); 64 if `v` is zero.
 #[inline(always)]
 pub fn trailing_zeros(v: u64) -> u32 {
     if v == 0 {
@@ -43,68 +16,27 @@ pub fn trailing_zeros(v: u64) -> u32 {
     }
 }
 
-/// Counts leading zeros (63 - position of highest set bit).
-///
-/// Returns 64 if the word is zero.
-///
-/// # Algorithm
-/// Uses hardware leading zero count instruction (available on all modern CPUs).
-///
-/// # Performance
-/// - x86-64: 1-3 cycles (LZCNT/BSR instruction)
-/// - ARM: 1-2 cycles (CLZ instruction)
+/// Counts leading zeros (63 - position of highest set bit); 64 if `v` is zero.
 #[inline(always)]
 pub fn leading_zeros(v: u64) -> u32 {
     v.leading_zeros()
 }
 
-/// Branchless masked merge: selects bits from `a` or `b` based on `mask`.
-///
-/// Returns a word where bits are taken from `b` if the corresponding bit in `mask` is 1,
-/// otherwise from `a`.
-///
-/// # Algorithm
-/// Uses XOR-based formula: `a ^ ((a ^ b) & mask)` (4 operations)
-/// Benchmarked to be equivalent or faster than traditional `(a & !mask) | (b & mask)` (5 operations)
-/// due to better instruction-level parallelism.
-///
-/// # Performance
-/// - 4 bitwise operations (XOR, XOR, AND, XOR)
-/// - No branches - constant time regardless of mask pattern
-/// - Optimal for CPU pipelines
+/// Takes each bit from `b` where `mask` is 1 and from `a` where it is 0,
+/// without a branch.
 #[inline(always)]
 pub fn masked_merge(a: u64, b: u64, mask: u64) -> u64 {
     a ^ ((a ^ b) & mask)
 }
 
-/// Check if a value is a power of 2.
-///
-/// Returns `true` if `v` has exactly one bit set, `false` otherwise.
-/// Note: Returns `false` for 0.
-///
-/// # Algorithm
-/// Classic bit trick: `v & (v - 1) == 0` for power-of-2 detection.
-/// Works because subtracting 1 flips all trailing zeros and the lowest set bit.
-///
-/// # Performance
-/// - 3 operations (SUB, AND, CMP)
-/// - No branches
+/// Returns `true` if `v` has exactly one bit set.
 #[inline(always)]
 pub fn is_power_of_2(v: u64) -> bool {
     v != 0 && (v & (v.wrapping_sub(1))) == 0
 }
 
-/// Round up to the next power of 2.
-///
-/// Returns the smallest power of 2 greater than or equal to `v`.
-/// Returns 0 if `v` is 0 or would overflow (v > 2^63).
-///
-/// # Algorithm
-/// Uses bit-filling technique: propagate highest set bit right, then add 1.
-///
-/// # Performance
-/// - 12 operations (SUB, OR×6, ADD)
-/// - No branches
+/// Returns the smallest power of 2 greater than or equal to `v`, or 0 if `v`
+/// is 0 or exceeds 2^63.
 #[inline(always)]
 pub fn next_power_of_2(v: u64) -> u64 {
     if v == 0 {
@@ -128,7 +60,6 @@ pub fn next_power_of_2(v: u64) -> u64 {
 mod tests {
     use super::*;
 
-    // Test vectors: (input, expected_parity)
     const TEST_CASES: &[(u64, bool)] = &[
         (0, false),
         (1, true),
@@ -153,7 +84,6 @@ mod tests {
         }
     }
 
-    // Property: parity(a ^ b) = parity(a) ^ parity(b)
     #[test]
     fn test_parity_xor_property() {
         let values = [0u64, 1, 7, 0xFF, 0xAAAAAAAAAAAAAAAA, 0x5555555555555555];
@@ -174,7 +104,6 @@ mod tests {
         }
     }
 
-    // Property: parity(v) matches count_ones(v) % 2
     #[test]
     fn test_parity_matches_popcount() {
         for &(input, _) in TEST_CASES {
@@ -188,7 +117,6 @@ mod tests {
         }
     }
 
-    // Trailing zeros tests
     const TRAILING_ZEROS_CASES: &[(u64, u32)] = &[
         (0, 64),
         (1, 0),
@@ -223,7 +151,6 @@ mod tests {
         }
     }
 
-    // Leading zeros tests
     const LEADING_ZEROS_CASES: &[(u64, u32)] = &[
         (0, 64),
         (1, 63),
@@ -256,14 +183,12 @@ mod tests {
         }
     }
 
-    // Property: if v != 0, trailing_zeros gives position of lowest bit
     #[test]
     fn test_trailing_zeros_finds_lowest_bit() {
         for i in 0..63 {
             let v = 1u64 << i;
             assert_eq!(trailing_zeros(v), i, "Should find bit at position {}", i);
 
-            // Add more bits above, result shouldn't change
             let v_with_more = v | (u64::MAX << (i + 1));
             assert_eq!(
                 trailing_zeros(v_with_more),
@@ -273,23 +198,17 @@ mod tests {
             );
         }
 
-        // Test bit 63 separately
         assert_eq!(trailing_zeros(1u64 << 63), 63);
     }
 
-    // Masked merge tests
     #[test]
     fn test_masked_merge_basic() {
-        // Select all from b
         assert_eq!(masked_merge(0x00, 0xFF, 0xFF), 0xFF);
 
-        // Select all from a
         assert_eq!(masked_merge(0xFF, 0x00, 0x00), 0xFF);
 
-        // Select lower nibble from b, upper from a
         assert_eq!(masked_merge(0xF0, 0x0F, 0x0F), 0xFF);
 
-        // Alternating bits
         assert_eq!(
             masked_merge(0xAAAAAAAAAAAAAAAA, 0x5555555555555555, 0x5555555555555555),
             0xFFFFFFFFFFFFFFFF
@@ -305,18 +224,14 @@ mod tests {
         ];
 
         for (a, b) in test_cases {
-            // Mask of all 0s should select all from a
             assert_eq!(masked_merge(a, b, 0), a);
 
-            // Mask of all 1s should select all from b
             assert_eq!(masked_merge(a, b, u64::MAX), b);
 
-            // Merging with itself should return itself regardless of mask
             assert_eq!(masked_merge(a, a, 0x123456789ABCDEF0), a);
         }
     }
 
-    // Power of 2 tests
     #[test]
     fn test_is_power_of_2_correctness() {
         assert!(!is_power_of_2(0));
@@ -369,7 +284,6 @@ mod tests {
         for n in 0..63 {
             let pow2 = 1u64 << n;
 
-            // Next power of 2 of a power of 2 is itself
             assert_eq!(
                 next_power_of_2(pow2),
                 pow2,
@@ -379,8 +293,7 @@ mod tests {
             );
 
             if pow2 > 1 {
-                // For values > 1: next_power_of_2(pow2 - 1) should be pow2
-                // But for pow2=2: next_power_of_2(1) = 1, not 2
+                // next_power_of_2(1) is 1, not 2.
                 let prev = pow2 - 1;
                 let expected = if prev == 1 { 1 } else { pow2 };
                 assert_eq!(
@@ -391,7 +304,6 @@ mod tests {
                 );
             }
 
-            // Next power of 2 of (pow2 + 1) should be next power
             if n < 62 {
                 assert_eq!(next_power_of_2(pow2 + 1), pow2 << 1);
             }
@@ -400,13 +312,11 @@ mod tests {
 
     #[test]
     fn test_next_power_of_2_overflow() {
-        // Values > 2^63 should return 0 (overflow)
         assert_eq!(next_power_of_2(1u64 << 63), 1u64 << 63);
         assert_eq!(next_power_of_2((1u64 << 63) + 1), 0);
         assert_eq!(next_power_of_2(u64::MAX), 0);
     }
 
-    // Property: next_power_of_2 result is always a power of 2
     #[test]
     fn test_next_power_of_2_produces_powers() {
         for v in [1u64, 7, 15, 31, 63, 127, 255, 511, 1023, 2047] {

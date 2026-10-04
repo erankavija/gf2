@@ -1,45 +1,29 @@
-//! Header serialization and deserialization.
+//! Reading and writing the GF2DATA fixed header.
 
 use super::{error::*, format::*};
 use std::io::{Read, Write};
 
 impl Header {
-    /// Write header to a writer
+    /// Writes the 32-byte header.
     pub fn write_to<W: Write>(&self, writer: &mut W) -> Result<()> {
-        // Magic bytes (8 bytes)
         writer.write_all(MAGIC_BYTES)?;
-
-        // Version (2 bytes, little-endian)
         writer.write_all(&self.version.to_le_bytes())?;
-
-        // Type tag (1 byte)
         writer.write_all(&[self.type_tag as u8])?;
-
-        // Flags (1 byte)
         writer.write_all(&[self.flags.to_u8()])?;
-
-        // Reserved (8 bytes, zeros - for alignment to 32 bytes)
         writer.write_all(&[0u8; 8])?;
-
-        // Metadata length (4 bytes, little-endian)
         writer.write_all(&self.metadata_len.to_le_bytes())?;
-
-        // Data length (8 bytes, little-endian)
         writer.write_all(&self.data_len.to_le_bytes())?;
 
         Ok(())
     }
 
-    /// Read header from a reader
+    /// Reads and validates the 32-byte header.
     pub fn read_from<R: Read>(reader: &mut R) -> Result<Self> {
-        // Read magic bytes
         let mut magic = [0u8; 8];
         reader.read_exact(&mut magic)?;
         if &magic != MAGIC_BYTES {
             return Err(IoError::InvalidMagic);
         }
-
-        // Read version
         let mut version_bytes = [0u8; 2];
         reader.read_exact(&mut version_bytes)?;
         let version = u16::from_le_bytes(version_bytes);
@@ -47,28 +31,18 @@ impl Header {
         if version != FORMAT_VERSION {
             return Err(IoError::UnsupportedVersion(version));
         }
-
-        // Read type tag
         let mut type_byte = [0u8; 1];
         reader.read_exact(&mut type_byte)?;
         let type_tag = TypeTag::from_u8(type_byte[0]).ok_or(IoError::UnknownType(type_byte[0]))?;
-
-        // Read flags
         let mut flags_byte = [0u8; 1];
         reader.read_exact(&mut flags_byte)?;
         let flags = Flags::from_u8(flags_byte[0]);
-
-        // Read reserved (8 bytes)
         let mut reserved = [0u8; 8];
         reader.read_exact(&mut reserved)?;
-        // We don't validate reserved bytes for forward compatibility
-
-        // Read metadata length
+        // Reserved bytes are not validated.
         let mut metadata_len_bytes = [0u8; 4];
         reader.read_exact(&mut metadata_len_bytes)?;
         let metadata_len = u32::from_le_bytes(metadata_len_bytes);
-
-        // Read data length
         let mut data_len_bytes = [0u8; 8];
         reader.read_exact(&mut data_len_bytes)?;
         let data_len = u64::from_le_bytes(data_len_bytes);
@@ -131,7 +105,7 @@ mod tests {
     fn test_header_read_unsupported_version() {
         let mut buffer = Vec::new();
         buffer.extend_from_slice(MAGIC_BYTES);
-        buffer.extend_from_slice(&99u16.to_le_bytes()); // Wrong version
+        buffer.extend_from_slice(&99u16.to_le_bytes());
         buffer.resize(HEADER_SIZE, 0);
 
         let mut cursor = Cursor::new(buffer);
@@ -145,7 +119,7 @@ mod tests {
         let mut buffer = Vec::new();
         buffer.extend_from_slice(MAGIC_BYTES);
         buffer.extend_from_slice(&FORMAT_VERSION.to_le_bytes());
-        buffer.push(99); // Invalid type tag
+        buffer.push(99);
         buffer.resize(HEADER_SIZE, 0);
 
         let mut cursor = Cursor::new(buffer);

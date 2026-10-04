@@ -1,18 +1,10 @@
-//! SIMD backend implementation.
-//!
-//! This module wraps the `gf2-kernels-simd` crate and provides a `Backend`
-//! implementation that uses AVX2 instructions on x86/x86_64.
-//!
-//! The SIMD backend is optional and requires the `simd` feature flag.
-//! Runtime CPU feature detection ensures we only use instructions that are available.
+//! [`Backend`] over the AVX2 kernels of `gf2-kernels-simd`, selected by
+//! runtime CPU detection.
 
 use crate::kernels::Backend;
 use std::sync::LazyLock;
 
-/// SIMD backend using AVX2 instructions.
-///
-/// This backend wraps function pointers from `gf2-kernels-simd` which uses
-/// unsafe intrinsics but exposes a safe API.
+/// [`Backend`] over the safe function bundle that `gf2-kernels-simd` detects.
 #[derive(Copy, Clone)]
 pub struct SimdBackend {
     fns: gf2_kernels_simd::LogicalFns,
@@ -20,9 +12,8 @@ pub struct SimdBackend {
 }
 
 impl SimdBackend {
-    /// Attempt to detect and create a SIMD backend for the current CPU.
-    ///
-    /// Returns `None` if no suitable SIMD instructions are available.
+    /// Returns the backend for the current CPU, or `None` if it lacks the
+    /// required SIMD instructions.
     pub fn detect() -> Option<Self> {
         gf2_kernels_simd::detect().map(|fns| SimdBackend { fns, name: "avx2" })
     }
@@ -53,8 +44,7 @@ impl Backend for SimdBackend {
         (self.fns.popcnt_fn)(buf)
     }
 
-    // Single-word operations use scalar implementations
-    // (SIMD doesn't help for single values)
+    // Single-word operations keep the trait's scalar defaults.
 }
 
 /// Global SIMD backend instance, lazily initialized on first access.
@@ -66,26 +56,18 @@ pub fn maybe_simd() -> Option<&'static SimdBackend> {
     SIMD_BACKEND.as_ref()
 }
 
-// The GF(2^m) kernel accessors below are thin pass-throughs to the
-// canonical `crate::simd` accessors (defined in lib.rs). The kernel
-// detection state lives in OnceLocks on that canonical path; these
-// public re-exports exist only because `crate::simd` is `pub(crate)`
-// and external test crates need a reachable accessor. Do not add new
-// per-kernel statics here; extend `crate::simd` instead.
+// The GF(2^m) accessors below expose `crate::simd`, which is `pub(crate)` and
+// owns the kernel detection state, to external test crates.
 
-/// Get the GF(2^m) batch SIMD function bundle if available.
-///
-/// Stricter than [`maybe_simd`]: requires `vpclmulqdq` / `pclmulqdq`
-/// in addition to AVX2.
+/// GF(2^m) batch kernel bundle; `None` on hosts lacking AVX2, VPCLMULQDQ,
+/// PCLMULQDQ or SSE4.1.
 #[inline]
 pub fn maybe_gf2m_batch() -> Option<&'static gf2_kernels_simd::gf2m_batch::Gf2mBatchFns> {
     crate::simd::maybe_gf2m_batch()
 }
 
-/// Get the GF(2^m) panelized GEMM SIMD function bundle if available.
-///
-/// Same feature requirements as [`maybe_gf2m_batch`]. Returns `None`
-/// when the host lacks `avx2 + vpclmulqdq + pclmulqdq + sse4.1`.
+/// GF(2^m) panelized GEMM kernel bundle, under the host requirements of
+/// [`maybe_gf2m_batch`].
 #[inline]
 pub fn maybe_gf2m_gemm() -> Option<&'static gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns> {
     crate::simd::maybe_gf2m_gemm()
@@ -97,7 +79,6 @@ mod tests {
 
     #[test]
     fn test_simd_backend_detection() {
-        // This test should pass even if SIMD is not available
         let backend = SimdBackend::detect();
 
         if let Some(backend) = backend {
@@ -111,14 +92,10 @@ mod tests {
     #[test]
     fn test_simd_backend_implements_trait() {
         if let Some(backend) = &*SIMD_BACKEND {
-            // Just verify the trait is implemented correctly
             let _name = backend.name();
             assert!(!_name.is_empty());
         }
     }
-
-    // ===== SIMD vs Scalar Equivalence Tests =====
-    // These tests verify that SIMD and Scalar backends produce identical results
 
     use rand::{Rng, SeedableRng};
 

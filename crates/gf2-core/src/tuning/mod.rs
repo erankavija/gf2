@@ -569,10 +569,9 @@ impl BitBackendSelectors {
 
     /// Returns the profile's minimum word count for the SIMD backend.
     ///
-    /// `CoreTuningCodec` encodes this field in the core section, and
-    /// [`active`] exposes its installed or conservative value. The bit-backend
-    /// routing boundary uses a compile-time constant instead, per DEC-G in
-    /// `dev/active/220cab0b/design.md`.
+    /// The bit-backend routing boundary is the compile-time constant of
+    /// [`crate::kernels::select_backend_for_size`], which this field does not
+    /// change.
     pub fn simd_min_words(&self) -> usize {
         self.simd_min_words
     }

@@ -1,10 +1,9 @@
-//! Sparse matrix serialization and deserialization.
+//! Sparse GF(2) matrix serialization.
 
 use super::{error::*, format::*};
 use crate::{SpBitMatrix, SpBitMatrixDual};
 use std::io::{Read, Write};
 
-/// Metadata for SpBitMatrix serialization
 #[derive(Debug)]
 #[cfg_attr(feature = "io", derive(serde::Serialize, serde::Deserialize))]
 struct SpBitMatrixMetadata {
@@ -17,7 +16,6 @@ struct SpBitMatrixMetadata {
     version: u32,
 }
 
-/// Metadata for SpBitMatrixDual serialization
 #[derive(Debug)]
 #[cfg_attr(feature = "io", derive(serde::Serialize, serde::Deserialize))]
 struct SpBitMatrixDualMetadata {
@@ -83,7 +81,6 @@ impl SpBitMatrix {
         self.write_binary(writer)
     }
 
-    /// Write SpBitMatrix in binary COO format
     fn write_binary<W: Write>(&self, writer: &mut W) -> Result<()> {
         let metadata = SpBitMatrixMetadata {
             type_name: "SpBitMatrix".to_string(),
@@ -97,7 +94,6 @@ impl SpBitMatrix {
         let metadata_json = serde_json::to_vec(&metadata)
             .map_err(|e| IoError::InvalidData(format!("Failed to serialize metadata: {}", e)))?;
 
-        // Data: pairs of (row, col) as u32
         let data_len = self.nnz() * 8; // 2 u32s per edge
 
         let header = Header::new(
@@ -109,7 +105,6 @@ impl SpBitMatrix {
 
         writer.write_all(&metadata_json)?;
 
-        // Write COO format: iterate through CSR and output (row, col) pairs
         for row in 0..self.rows() {
             for col in self.row_iter(row) {
                 writer.write_all(&(row as u32).to_le_bytes())?;
@@ -120,7 +115,6 @@ impl SpBitMatrix {
         Ok(())
     }
 
-    /// Write SpBitMatrix in text format (edge list)
     fn write_text<W: Write>(&self, writer: &mut W) -> Result<()> {
         writeln!(writer, "{} {} {}", self.rows(), self.cols(), self.nnz())?;
 
@@ -152,7 +146,6 @@ impl SpBitMatrix {
         Self::read_binary(reader)
     }
 
-    /// Read SpBitMatrix from binary COO format
     fn read_binary<R: Read>(reader: &mut R) -> Result<Self> {
         let header = Header::read_from(reader)?;
 
@@ -191,7 +184,6 @@ impl SpBitMatrix {
             )));
         }
 
-        // Read COO edges
         let mut edges = Vec::with_capacity(metadata.nnz);
         for _ in 0..metadata.nnz {
             let mut row_buf = [0u8; 4];
@@ -210,7 +202,6 @@ impl SpBitMatrix {
         ))
     }
 
-    /// Read SpBitMatrix from text format (edge list)
     fn read_text<R: Read>(reader: &mut R) -> Result<Self> {
         use std::io::BufRead;
         let mut reader = std::io::BufReader::new(reader);
@@ -312,7 +303,6 @@ impl SpBitMatrixDual {
         self.write_binary(writer)
     }
 
-    /// Write SpBitMatrixDual in binary format (CSR + CSC)
     fn write_binary<W: Write>(&self, writer: &mut W) -> Result<()> {
         let metadata = SpBitMatrixDualMetadata {
             type_name: "SpBitMatrixDual".to_string(),
@@ -325,7 +315,6 @@ impl SpBitMatrixDual {
         let metadata_json = serde_json::to_vec(&metadata)
             .map_err(|e| IoError::InvalidData(format!("Failed to serialize metadata: {}", e)))?;
 
-        // Data: row offsets (rows+1) + row indices (nnz) + col offsets (cols+1) + col indices (nnz)
         let data_len = (self.rows() + 1 + self.nnz() + self.cols() + 1 + self.nnz()) * 4;
 
         let header = Header::new(
@@ -337,26 +326,21 @@ impl SpBitMatrixDual {
 
         writer.write_all(&metadata_json)?;
 
-        // Access internal CSR structure
-        // Row offsets
         let row_offsets = self.row_offsets();
         for &offset in row_offsets {
             writer.write_all(&(offset as u32).to_le_bytes())?;
         }
 
-        // Row indices (column indices for each row)
         let row_indices = self.row_indices();
         for &idx in row_indices {
             writer.write_all(&(idx as u32).to_le_bytes())?;
         }
 
-        // Col offsets
         let col_offsets = self.col_offsets();
         for &offset in col_offsets {
             writer.write_all(&(offset as u32).to_le_bytes())?;
         }
 
-        // Col indices (row indices for each column)
         let col_indices = self.col_indices();
         for &idx in col_indices {
             writer.write_all(&(idx as u32).to_le_bytes())?;
@@ -365,7 +349,6 @@ impl SpBitMatrixDual {
         Ok(())
     }
 
-    /// Write SpBitMatrixDual in text format (edge list, same as SpBitMatrix)
     fn write_text<W: Write>(&self, writer: &mut W) -> Result<()> {
         writeln!(writer, "{} {} {}", self.rows(), self.cols(), self.nnz())?;
 
@@ -397,7 +380,6 @@ impl SpBitMatrixDual {
         Self::read_binary(reader)
     }
 
-    /// Read SpBitMatrixDual from binary format
     fn read_binary<R: Read>(reader: &mut R) -> Result<Self> {
         let header = Header::read_from(reader)?;
 
@@ -430,7 +412,6 @@ impl SpBitMatrixDual {
             )));
         }
 
-        // Read row offsets
         let mut row_offsets = Vec::with_capacity(metadata.rows + 1);
         for _ in 0..=metadata.rows {
             let mut buf = [0u8; 4];
@@ -438,7 +419,6 @@ impl SpBitMatrixDual {
             row_offsets.push(u32::from_le_bytes(buf) as usize);
         }
 
-        // Read row indices
         let mut row_indices = Vec::with_capacity(metadata.nnz);
         for _ in 0..metadata.nnz {
             let mut buf = [0u8; 4];
@@ -446,7 +426,6 @@ impl SpBitMatrixDual {
             row_indices.push(u32::from_le_bytes(buf) as usize);
         }
 
-        // Read col offsets
         let mut col_offsets = Vec::with_capacity(metadata.cols + 1);
         for _ in 0..=metadata.cols {
             let mut buf = [0u8; 4];
@@ -454,7 +433,6 @@ impl SpBitMatrixDual {
             col_offsets.push(u32::from_le_bytes(buf) as usize);
         }
 
-        // Read col indices
         let mut col_indices = Vec::with_capacity(metadata.nnz);
         for _ in 0..metadata.nnz {
             let mut buf = [0u8; 4];
@@ -462,7 +440,6 @@ impl SpBitMatrixDual {
             col_indices.push(u32::from_le_bytes(buf) as usize);
         }
 
-        // Reconstruct from CSR/CSC data
         Ok(SpBitMatrixDual::from_csr_csc(
             metadata.rows,
             metadata.cols,
@@ -473,7 +450,6 @@ impl SpBitMatrixDual {
         ))
     }
 
-    /// Read SpBitMatrixDual from text format (edge list)
     fn read_text<R: Read>(reader: &mut R) -> Result<Self> {
         use std::io::BufRead;
         let mut reader = std::io::BufReader::new(reader);
@@ -635,12 +611,10 @@ mod tests {
 
     #[test]
     fn test_compression_ratio_dvb_t2_simulation() {
-        // Simulate DVB-T2 Normal LDPC matrix: 32400 x 64800 with ~194400 nonzeros
         let rows = 32400;
         let cols = 64800;
         let target_nnz = 194400;
 
-        // Create edges (3 per column on average)
         let mut edges = Vec::new();
         for col in 0..cols {
             for i in 0..3 {
@@ -652,16 +626,13 @@ mod tests {
 
         let sparse = SpBitMatrix::from_coo_deduplicated(rows, cols, &edges);
 
-        // Serialize
         let mut sparse_buf = Vec::new();
         sparse.write_to(&mut sparse_buf).unwrap();
 
-        // Dense would be: rows * ceil(cols/64) * 8 bytes
         let dense_size = rows * cols.div_ceil(64) * 8;
         let sparse_size = sparse_buf.len();
         let compression = dense_size as f64 / sparse_size as f64;
 
-        // Verify excellent compression
         assert!(
             compression > 100.0,
             "Expected >100x compression, got {:.1}x",
@@ -670,7 +641,6 @@ mod tests {
         assert_eq!(sparse.nnz(), target_nnz);
     }
 
-    // Property-based tests
     #[cfg(test)]
     mod proptests {
         use super::*;
