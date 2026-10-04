@@ -5,6 +5,8 @@
 //! owner defaults. With the `tuning-profile` feature, an explicit
 //! `ProfileRegistry` strictly decodes or encodes canonical format-2 envelopes.
 //!
+//! # Examples
+//!
 //! ```
 //! use gf2_core::tuning::{
 //!     self, BitBackendSelectors, CompiledProfileProvenance, CoreSelectors,
