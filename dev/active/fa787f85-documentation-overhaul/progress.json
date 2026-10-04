@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 10,
+ "current_wave": 11,
  "waves": [
   {
    "wave_number": 1,
@@ -749,7 +749,7 @@
      "short_id": "ffc35b8c",
      "title": "Workspace source-comment tersification sweep",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     }
    ]
   },
@@ -1642,6 +1642,17 @@
    "issue": "2596b143",
    "question": "Is the doctest execution time of REQ-01 a timed measurement for the overnight window?",
    "resolution": "Owner: informational wall-clock with host load stated; DEC-01 on the issue (2026-10-04)."
+  },
+  {
+   "issue": "1ca94ec2, 42037c91",
+   "question": "OPEN: the archive previews of bb85c68a, 6efb756b, d4851c3d and e095a100 report `unmanaged-selected-root` for the files that 130d5fd7 and the deck moves placed under `dev/archive/<epic>/docs/`: the planner maps `dev/archive/<epic>/docs/x` back to the source `dev/docs/x`, and `dev/docs` is outside `managed_paths`. A scratch-worktree probe with `dev/docs` added to `managed_paths` reports all four eligible with no blocker; moving the files to `dev/archive/<epic>/presentations/` reports `missing-source`. May `dev/docs` join `managed_paths` in .jit/config.toml and packages/jit-default as a temporary entry (ec7d2aec REQ-03 removes entries naming absent paths; d6ebc4ec narrows the policy afterwards)?",
+   "options": [
+    "add `dev/docs` to managed_paths as a temporary entry recorded in the manifest policy notes, re-mint jit-default",
+    "amend REQ-01 of 1ca94ec2 and 42037c91 to accept the four previews with these retained files as blockers",
+    "another placement of the relocated docs/ files chosen by the owner"
+   ],
+   "recommendation": "first option: one policy entry, same class as the owner-approved temporary `dev/archive` entry (ec7d2aec DEC-01)",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -1841,7 +1852,8 @@
   "Session 7 end: wave 9 closed (030496bd, all gates passed first run; merge of worktree-agent-030496bd without rebase because the record's measured commit 1078dc1a5 is on that branch). Wave 10 is 545b113f, then the ffc35b8c story gate. 545b113f REQ-05 regenerates the 030496bd outputs. Scan command for long module docs is in handoff-6.md.",
   "Session 8 (2026-10-04): owner rulings applied (3fd3db5e and 7dbcde0c REQ-01 amended, DEC-01 each; exception recorded on 1a8f6acd). Wave 10: 545b113f split by crate; code-review round 1 failed because the lead had workers restore title lines; the reviewer reads title line + overview paragraph as two paragraphs. Round 2 merged titles into one orientation paragraph across all crates and dev/tools (211 files, 859 insertions, 1659 deletions against 808f03aeb) and passed. 3fd3db5e done after one fix of the baseline record's source commit.",
   "Session 8 end: wave 10 tasks done (545b113f, 3fd3db5e, fa4939c3). ffc35b8c story gates: all pass except holistic-review, which fails twice on one finding (DEC-nn decision identifiers do not match the configured D-[0-9]+ pattern); open escalation, owner input needed. Wave 11 waits on the story. Six re-archive previews report blockers from tracker references to absent paths (see handoff-7.md).",
-  "Session 9 (2026-10-04): the owner withdrew the standing never-stop-to-ask instruction of 2026-10-03; escalations follow the skill policy and the owner instructs case by case. Subagent model follows task difficulty; Fable is excluded. Reviews weigh net-negative line change and the documentation invariants."
+  "Session 9 (2026-10-04): owner instruction for this session: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when waves 11 and 12 finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty; Fable is excluded. Reviews weigh net-negative line change and the documentation invariants.",
+  "Session 9: six stale worktrees of other epics removed with owner approval (agent-8bd873f7, agent-c73ffa25, agent-dbd8787d-publish, agent-dbd8787d-run, two under .claude/worktrees); the unmerged branches worktree-agent-aa4df2631e461c6ae and worktree-agent-ab61dd5f4d07bfb81 remain."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
