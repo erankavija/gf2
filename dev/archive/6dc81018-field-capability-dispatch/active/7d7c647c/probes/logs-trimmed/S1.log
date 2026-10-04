@@ -1,0 +1,99 @@
+=== S1 === 2026-08-23T00:38:32+03:00
+--- command ---
+RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
+  --preset aeneas \
+  --rustc-arg=--cfg=verify_lean \
+  --start-from 'gf2_core::gfp' \
+  --start-from 'gf2_core::gfpn' \
+  --start-from 'gf2_core::gf2m::mul_raw' \
+  --opaque 'gf2_core::field' \
+  --opaque 'gf2_core::gf2m::field' \
+  --opaque 'gf2_core::gf2m::generation' \
+  --opaque 'gf2_core::gf2m::uint_ext' \
+  --opaque 'gf2_core::gf2m::thread_safety_tests' \
+  --opaque 'gf2_core::gf2m::barrett' \
+  --opaque 'gf2_core::gfpn::batch' \
+  --opaque 'gf2_core::gfp::simd_ops' \
+  --opaque 'gf2_core::gfp::specialized::batch_mul_mersenne31' \
+  --opaque 'gf2_core::gfp::specialized::batch_mul_add_mersenne31' \
+  --opaque 'gf2_core::gfp::specialized::batch_dot_mersenne31' \
+  --opaque 'gf2_core::bitvec' \
+  --opaque 'gf2_core::bitslice' \
+  --opaque 'gf2_core::matrix' \
+  --opaque 'gf2_core::sparse' \
+  --opaque 'gf2_core::alg' \
+  --opaque 'gf2_core::compute' \
+  --opaque 'gf2_core::kernels' \
+  --opaque 'gf2_core::primitive_polys' \
+  --opaque 'gf2_core::io' \
+  --opaque 'gf2_core::macros' \
+  --dest-file dev/active/7d7c647c/probes/S1_gf2_core.llbc \
+  -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features
+--- output ---
+    Updating crates.io index
+     Locking 180 packages to latest compatible versions
+      Adding criterion v0.5.1 (available: v0.8.2)
+      Adding generic-array v0.14.7 (available: v0.14.9)
+      Adding rand v0.8.7 (available: v0.10.2)
+      Adding rand v0.9.5 (available: v0.10.2)
+      Adding rand_chacha v0.3.1 (available: v0.10.0)
+      Adding rand_chacha v0.9.0 (available: v0.10.0)
+      Adding rand_core v0.9.5 (available: v0.10.1)
+      Adding rand_distr v0.4.3 (available: v0.6.0)
+      Adding serial_test v3.5.0 (available: v4.0.1)
+      Adding sha2 v0.10.9 (available: v0.11.0)
+      Adding thiserror v1.0.69 (available: v2.0.20)
+      Adding toml v0.8.23 (available: v1.1.4+spec-1.1.0)
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-7d7c647c/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-7d7c647c/crates/gf2-core)
+
+ 52 | impl BitMatrix {
+
+           - Self::Type0 = TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::Characteristic
+           - Self::Type1 = CubicExtWide<TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::Wide>
+           - Self::Clause5::Type0 = impl_Add_CubicExt_for_CubicExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause7::Type0 = impl_Sub_CubicExt_for_CubicExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause9::Type0 = impl_Mul_CubicExt_for_CubicExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause11::Type0 = impl_Div_CubicExt_for_CubicExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause13::Type0 = impl_Neg_for_CubicExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause21::Type0 = impl_Add_CubicExtWide_for_CubicExtWide<TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::Wide>[TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::ImpliedClause21]::Output
+           - ClauseBound(0, 0)::Type0 = @TypeBound(0, 1)
+           - ClauseBound(0, 0)::Clause0::Clause0::Type0 = @TypeBound(0, 2)
+           - ClauseBound(0, 0)::Clause0::Clause0::Type1 = @TypeBound(0, 3)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause5::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause6::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause7::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause8::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause9::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause10::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause11::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause12::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause13::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause21::Type0 = TraitClauseBound(0, 0)::Wide
+...   |
+
+           - Self::Type0 = TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::Characteristic
+           - Self::Type1 = QuadraticExtWide<TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::Wide>
+           - Self::Clause5::Type0 = impl_Add_QuadraticExt_for_QuadraticExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause7::Type0 = impl_Sub_QuadraticExt_for_QuadraticExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause9::Type0 = impl_Mul_QuadraticExt_for_QuadraticExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause11::Type0 = impl_Div_QuadraticExt_for_QuadraticExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause13::Type0 = impl_Neg_for_QuadraticExt<@TypeBound(0, 0)>[TraitClauseBound(0, 0)]::Output
+           - Self::Clause21::Type0 = impl_Add_QuadraticExtWide_for_QuadraticExtWide<TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::Wide>[TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::ImpliedClause21]::Output
+           - ClauseBound(0, 0)::Type0 = @TypeBound(0, 1)
+           - ClauseBound(0, 0)::Clause0::Clause0::Type0 = @TypeBound(0, 2)
+           - ClauseBound(0, 0)::Clause0::Clause0::Type1 = @TypeBound(0, 3)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause5::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause6::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause7::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause8::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause9::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause10::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause11::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause12::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause13::Type0 = @TypeBound(0, 0)
+           - ClauseBound(0, 0)::Clause0::Clause0::Clause21::Type0 = TraitClauseBound(0, 0)::Wide
+...   |
+
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.31s
+--- exit=0 elapsed=5s ---

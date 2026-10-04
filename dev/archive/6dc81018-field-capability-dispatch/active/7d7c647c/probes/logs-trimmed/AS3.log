@@ -1,0 +1,209 @@
+=== AS3 === 2026-08-23T00:54:43+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/7d7c647c/probes/AS3_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/7d7c647c/probes/S3_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/7d7c647c/probes/S3_gf2_core.llbc
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::ops::arith::Mul<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{core::ops::arith::Mul<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::mul'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 460:4-466:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::norm because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>}::norm'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 352:4-362:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::mul'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 497:4-517:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<@Clause0_Clause0_Clause0_Wide>>}::inv'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 662:4-675:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<@Clause0_Clause0_Clause0_Wide>>}::inv'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 611:4-617:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 91:4-91:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl core::ops::arith::Add<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{core::ops::arith::Add<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::add'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 455:4-457:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 91:4-91:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 203:4-203:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl core::ops::arith::Sub<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::sub because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{core::ops::arith::Sub<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::sub'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 469:4-471:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 203:4-203:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::{impl core::ops::function::FnOnce<(Clause0_BaseField,), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::closure<'_0, '_1, '_2, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::call_once because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<@Clause0_Clause0_Clause0_Wide>>}::inv::{core::ops::function::FnOnce<gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<@Clause0_Clause0_Clause0_Wide>>}::inv::closure<'0, '1, '2, @C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, (@Clause0_BaseField), gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::call_once'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 674:17-674:82
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::norm because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>}::norm'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 346:4-350:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::{impl core::ops::function::FnOnce<(Clause0_BaseField,), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::closure<'_0, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::call_once because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<@Clause0_Clause0_Clause0_Wide>>}::inv::{core::ops::function::FnOnce<gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<@Clause0_Clause0_Clause0_Wide>>}::inv::closure<'0, @C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, (@Clause0_BaseField), gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::call_once'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 616:17-616:80
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 706:4-706:33
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::neg because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::neg'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 483:4-485:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 706:4-706:33
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 91:4-91:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::add'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 418:4-420:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 91:4-91:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 203:4-203:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::ops::arith::Sub<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::sub because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{core::ops::arith::Sub<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::sub'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 432:4-434:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 203:4-203:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 706:4-706:33
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::neg because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::neg'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 446:4-448:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 706:4-706:33
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 706:4-706:33
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::conjugate because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>}::conjugate'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 320:4-322:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 706:4-706:33
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/InterpPaths.ml, line 264
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::ext_config::ExtConfig::mul_by_non_residue because of previous error
+Name pattern: 'gf2_core::gfpn::ext_config::ExtConfig::mul_by_non_residue'
+Definition span: 'crates/gf2-core/src/gfpn/ext_config.rs', lines 100:4-109:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 152:4-157:5
+Compiler source: interp/InterpBorrowsCore.ml, line 1498
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::fmt::Debug for gf2_core::gfpn::quadratic::QuadraticExtWide<W>}::fmt because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{core::fmt::Debug<gf2_core::gfpn::quadratic::QuadraticExtWide<@W>>}::fmt'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 152:4-157:5
+Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 152:4-157:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 168:4-174:5
+Compiler source: interp/InterpBorrowsCore.ml, line 1498
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl core::fmt::Debug for gf2_core::gfpn::cubic::CubicExtWide<W>}::fmt because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{core::fmt::Debug<gf2_core::gfpn::cubic::CubicExtWide<@W>>}::fmt'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 168:4-174:5
+Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 168:4-174:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Found type error in the output of charon
+Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-751:1
+Compiler source: symbolic/SymbolicToPureTypes.ml, line 189
+[Warn ] Could not translate the trait instance 'gf2_core::gfpn::cubic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>} because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<@Clause0_Clause0_Clause0_Wide>>}'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-751:1
+Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-751:1
+Compiler source: Translate.ml, line 587
+
+[Error] Found type error in the output of charon
+Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-696:1
+Compiler source: symbolic/SymbolicToPureTypes.ml, line 189
+[Warn ] Could not translate the trait instance 'gf2_core::gfpn::quadratic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>} because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<@Clause0_Clause0_Clause0_Wide>>}'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-696:1
+Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-696:1
+Compiler source: Translate.ml, line 587
+
+[Info ] Creating missing directory: dev/active/7d7c647c/probes/AS3_lean
+[Info ] Generated the partial file (because of 20 errors, including 3 unique errors): dev/active/7d7c647c/probes/AS3_lean/TypesExternal_Template.lean
+[Info ] Generated the partial file (because of 20 errors, including 3 unique errors): dev/active/7d7c647c/probes/AS3_lean/Types.lean
+[Info ] Generated the partial file (because of 20 errors, including 3 unique errors): dev/active/7d7c647c/probes/AS3_lean/FunsExternal_Template.lean
+[Error] Internal error: please file an issue
+Compiler source: Translate.ml, line 1088
+[Error] Could not find: trait_impl_id: 94
+Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 757:0-778:1
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Internal error: please file an issue
+Compiler source: Translate.ml, line 1088
+[Error] Could not find: trait_impl_id: 127
+Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 702:0-718:1
+Compiler source: extract/ExtractBase.ml, line 484
+[Info ] Generated the partial file (because of 24 errors, including 5 unique errors): dev/active/7d7c647c/probes/AS3_lean/Funs.lean
+[Info ] Total execution time: 1.977205 seconds
+--- exit=1 elapsed=2s ---

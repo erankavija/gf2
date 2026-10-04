@@ -1,0 +1,17 @@
+=== AM2 === 2026-08-23T00:44:48+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/7d7c647c/probes/AM2_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/7d7c647c/probes/M2_seam_shape.llbc
+--- output ---
+[Info ] Imported: dev/active/7d7c647c/probes/M2_seam_shape.llbc
+
+[Info ] Creating missing directory: dev/active/7d7c647c/probes/AM2_lean
+[Info ] Generated: dev/active/7d7c647c/probes/AM2_lean/Types.lean
+[Info ] Generated: dev/active/7d7c647c/probes/AM2_lean/FunsExternal_Template.lean
+[Info ] Generated: dev/active/7d7c647c/probes/AM2_lean/Funs.lean
+[Info ] Total execution time: 0.176321 seconds
+--- exit=0 elapsed=0s ---
