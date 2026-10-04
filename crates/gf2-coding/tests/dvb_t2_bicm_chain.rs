@@ -34,7 +34,6 @@ fn bitvec_to_bools(bv: &BitVec) -> Vec<bool> {
     (0..bv.len()).map(|i| bv.get(i)).collect()
 }
 
-/// Bit 0 → +magnitude, bit 1 → −magnitude.
 fn noiseless_llrs_from_bitvec(bv: &BitVec, magnitude: f32) -> Vec<Llr> {
     (0..bv.len())
         .map(|i| {
@@ -208,7 +207,6 @@ fn test_interleaver_llr_path_identity_64qam_normal() {
     }
 }
 
-/// Asserts bit-exact BBFRAME recovery through the full BICM chain.
 fn run_full_bicm_roundtrip_fs(
     frame_size: FrameSize,
     code_rate: CodeRate,

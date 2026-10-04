@@ -21,7 +21,6 @@ pub const BATCHES: [usize; 4] = [1, 16, 256, 4096];
 /// The parallel worker count $W > 1$ of the contract's § 6.
 pub const PARALLEL_WORKERS: usize = 6;
 
-/// Environment variable naming the dispatch-record file.
 pub const DISPATCH_RECORD_ENV: &str = "GF2_BCH_DISPATCH_RECORD";
 
 /// One binary benchmark code: the contract row it realizes and its cost tier.
@@ -114,7 +113,6 @@ pub fn binary_message_seed(index: usize) -> u64 {
     gf2_coding::test_support::BCH_CORPUS_SEED.wrapping_add(index as u64)
 }
 
-/// `count` seeded binary messages of `k` bits.
 pub fn binary_messages(k: usize, count: usize) -> Vec<BitVec> {
     (0..count)
         .map(|index| BitVec::random_seeded(k, binary_message_seed(index)))

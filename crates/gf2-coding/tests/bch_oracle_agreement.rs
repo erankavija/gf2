@@ -952,8 +952,6 @@ fn sha256_of(path: &Path) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-/// Returns `path` relative to `base` when it lies under it, and `path` itself
-/// otherwise.
 fn under<'a>(path: &'a Path, base: &Path) -> &'a Path {
     path.strip_prefix(base).unwrap_or(path)
 }

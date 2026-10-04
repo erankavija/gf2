@@ -11,7 +11,6 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use test_vectors::{test_vectors_available, test_vectors_path, TestVectorSet};
 
-/// The production code for the stream set's frame size and code rate.
 fn stream_code(vectors: &TestVectorSet) -> DvbT2BchCode {
     dvb_t2_bch_code(vectors.config.frame_size.to_bch(), vectors.config.code_rate)
         .expect("a standard DVB-T2 configuration")

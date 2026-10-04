@@ -8,7 +8,6 @@ pub use parser::ParseError;
 
 use std::path::PathBuf;
 
-/// Root of the DVB-T2 reference-stream tree.
 pub fn test_vectors_path() -> PathBuf {
     gf2_coding::test_support::dvb_vectors_path()
 }
