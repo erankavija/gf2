@@ -183,7 +183,7 @@ flowchart LR
 
 - [Investigation](investigation.md) — exhaustive claim classification, consumer inventory, and primitive verification remain there.
 - [Representation study](bipedal-f5-f7-representation-study.md) — fold formulas, arithmetic candidates, benchmark shapes, architectural boundary options.
-- [Feasibility study](../../studies/b488f02c/feasibility-study.md) — baseline receipts, preregistered protocol, measured GPU-versus-CPU ordering, censored cells, and the §7.3 stream-allocation requirement.
+- [Feasibility study](../../../studies/b488f02c/feasibility-study.md) — baseline receipts, preregistered protocol, measured GPU-versus-CPU ordering, censored cells, and the §7.3 stream-allocation requirement.
 
 Source ids used by the manifest resolve as follows.
 

@@ -482,7 +482,7 @@ dev/research: `permanent-sampling-feas/src/{backend,equivalence,main,protocol}.r
 `perm_uniformity/tests/smoke.rs`, `dev/studies/b488f02c/anchor-report/src/main.rs`.
 
 Docs: `crates/gf2-algebra/README.md`, `ROADMAP.md`,
-`dev/active/150d7d79/150d7d79-toolchain-upgrade.md`,
+`dev/active/86b9c719-quality-documentation-tech-debt/150d7d79/150d7d79-toolchain-upgrade.md`,
 `dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md`,
 `dev/studies/b488f02c/feasibility-study.md`, plus the archived handoffs and
 plan docs listed by the sweep.
@@ -515,7 +515,7 @@ Same dev/research and doc consumers as `Packed7`.
 - `dev/research/perm_uniformity/src/main.rs`, `perm_uniformity_gpu/src/main.rs`,
   `dev/studies/b488f02c/anchor-report/src/main.rs`.
 - Docs: `crates/gf2-algebra/README.md`, `feasibility-study.md:82-85`,
-  `dev/active/0de41c82/bipedal-f5-f7-representation-study.md:66,88-89`.
+  `dev/active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md:66,88-89`.
 
 **Two stale doc references found in production rustdoc.** `packed5.rs:45`
 cites `dev/plans/6b3f6054/r1_f5_encoding_decision.md` and `packed7.rs:34`
@@ -589,7 +589,7 @@ should be sized as its own worker task; it is a prerequisite of every
 candidate-measurement task, not a rider on one.
 
 The exact marginal expectations REQ-10 wants compared against are already
-tabulated in `dev/active/0de41c82/bipedal-f5-f7-representation-study.md:160-166`
+tabulated in `dev/active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md:160-166`
 (F_5 n=20: 1.153 %; F_5 n=24: 0.472 %; F_7 n=16: 8.489 %; F_7 n=20: 4.582 %;
 F_7 n=24: 2.473 % nonzero slow path).
 
