@@ -1,5 +1,5 @@
 //! Integration tests for the DVB test-vector parser; the ignored tests read
-//! external DVB vectors.
+//! external DVB vectors (`@/citation/DvbVerification2010`).
 
 mod common;
 mod test_vectors;

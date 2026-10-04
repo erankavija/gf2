@@ -37,7 +37,7 @@ pub trait ExtConfig {
     /// Returns the non-residue β defining the extension polynomial.
     ///
     /// This method-only shape is used only by `scripts/verify-lean.sh` so
-    /// Charon can continue extracting the quadratic and cubic arithmetic while
+    /// Charon (`@/citation/AeneasVerif2026`) can continue extracting the quadratic and cubic arithmetic while
     /// avoiding its associated-const type-checking bug. The uppercase name is
     /// deliberate: Aeneas then generates the same Lean trait field name as the
     /// normal associated const, keeping downstream proof workarounds stable.

@@ -2,7 +2,7 @@
 
 use serde_json::{Map, Value};
 
-/// One violation, addressed by JSON Pointer into the instance.
+/// One violation, addressed by JSON Pointer (`@/citation/Bryan2013`) into the instance.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SchemaViolation {
     /// JSON Pointer to the instance location at which the violation occurred.
@@ -15,7 +15,7 @@ pub struct SchemaViolation {
 
 /// Validates `instance` against `schema`, returning every violation in
 /// document order (an empty vector means valid). Boolean schemas and the
-/// supported draft 2020-12 object keywords are handled without a full schema
+/// supported draft 2020-12 (`@/citation/Wright2022`) object keywords are handled without a full schema
 /// compiler. `$ref` values must be local `#/$defs/<name>` pointers.
 ///
 /// Unknown references, unsupported keywords, and malformed supported

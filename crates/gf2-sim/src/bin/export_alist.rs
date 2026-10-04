@@ -1,4 +1,4 @@
-//! Exports a gf2-coding LDPC parity-check matrix to MacKay AList format, so
+//! Exports a gf2-coding LDPC parity-check matrix to the AList format of `@/citation/MacKay2006`, so
 //! that aff3ct (`@/citation/Cassagne2019`, `--dec-h-path <file.alist>`) decodes
 //! the same matrix. The code selection is [`ComparisonCode`], shared with the
 //! `ldpc_bler_sweep` binary.

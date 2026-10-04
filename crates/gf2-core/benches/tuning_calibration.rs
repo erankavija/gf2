@@ -1193,7 +1193,7 @@ fn require_clean_source(source_dirty: bool, source_revision: &GitRevision) -> Re
     }
 }
 
-/// Formats a UTC instant in the RFC 3339 form `Rfc3339Utc::parse` accepts.
+/// Formats a UTC instant in the RFC 3339 (`@/citation/KlyneNewman2002`) form `Rfc3339Utc::parse` accepts.
 #[cfg(test)]
 #[allow(dead_code)]
 fn rfc3339_utc(instant: SystemTime) -> io::Result<String> {

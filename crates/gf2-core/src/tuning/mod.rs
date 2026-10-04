@@ -134,7 +134,7 @@ impl Sha256 {
     }
 }
 
-/// An RFC 3339 UTC instant written with a `Z` suffix.
+/// An RFC 3339 (`@/citation/KlyneNewman2002`) UTC instant written with a `Z` suffix.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rfc3339Utc(String);
 
