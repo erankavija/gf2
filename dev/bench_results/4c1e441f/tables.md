@@ -108,13 +108,13 @@ own hook, so the sizes need not match.
 
 ## Source
 
-| path                                                                             | sha256                                                           |
-|----------------------------------------------------------------------------------|------------------------------------------------------------------|
-| dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl                     | 71aae1fa7cbc35aa240aac73e09116e73edbac0db6244f81f6c82bd37be68d65 |
-| dev/active/4c1e441f/pinned-matrix-confirmation.json                              | 97a985f791aff368069cef3a965458941a2dce8f5edb10fb42b6b90ab162d3d5 |
-| dev/bench_results/19513245/r1-matrix-confirmation/receipt.json                   | 0610976ca4c2b0d04681b29f4ff87949c58edb9f5e9dfdea4d4cc5e81c88d8a2 |
-| dev/bench_results/19513245/r1-matrix-confirmation/acceptance-summary.json        | abfaf06e2e20c63b895e195a772f8d30f85ca46aeef62945433eff20accf5419 |
-| dev/bench_results/4c1e441f/r1-dense-product-pilot/receipt.json                   | fdba1b601318ed2660225ceca8cf0edb9a96f4ca72759dda46a2ef28c6c7762f |
-| dev/bench_results/4c1e441f/r1-dense-product-pilot/acceptance-summary.json        | 6551a6b8c83a069b3a726e7f5b04b678f0f6b051e233b502081255e618257abd |
-| dev/bench_results/4c1e441f/r1-dense-product-confirmation/receipt.json            | a1f53ad3e194915bd3c31410515dff71df2897539a587c908a0bee98b51396e6 |
-| dev/bench_results/4c1e441f/r1-dense-product-confirmation/acceptance-summary.json | f59b846650c8c128a9786d0f9c6b251cf0d01bde874e1afe30d86b8cbe9c0278 |
+| path                                                                             | sha256                                                           | acceptance findings |
+|----------------------------------------------------------------------------------|------------------------------------------------------------------|---------------------|
+| dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl                     | 71aae1fa7cbc35aa240aac73e09116e73edbac0db6244f81f6c82bd37be68d65 |                     |
+| dev/active/4c1e441f/pinned-matrix-confirmation.json                              | 97a985f791aff368069cef3a965458941a2dce8f5edb10fb42b6b90ab162d3d5 |                     |
+| dev/bench_results/19513245/r1-matrix-confirmation/receipt.json                   | 0610976ca4c2b0d04681b29f4ff87949c58edb9f5e9dfdea4d4cc5e81c88d8a2 |                     |
+| dev/bench_results/19513245/r1-matrix-confirmation/acceptance-summary.json        | abfaf06e2e20c63b895e195a772f8d30f85ca46aeef62945433eff20accf5419 |                     |
+| dev/bench_results/4c1e441f/r1-dense-product-pilot/receipt.json                   | fdba1b601318ed2660225ceca8cf0edb9a96f4ca72759dda46a2ef28c6c7762f |                     |
+| dev/bench_results/4c1e441f/r1-dense-product-pilot/acceptance-summary.json        | 6551a6b8c83a069b3a726e7f5b04b678f0f6b051e233b502081255e618257abd | 0                   |
+| dev/bench_results/4c1e441f/r1-dense-product-confirmation/receipt.json            | a1f53ad3e194915bd3c31410515dff71df2897539a587c908a0bee98b51396e6 |                     |
+| dev/bench_results/4c1e441f/r1-dense-product-confirmation/acceptance-summary.json | f59b846650c8c128a9786d0f9c6b251cf0d01bde874e1afe30d86b8cbe9c0278 | 0                   |
