@@ -314,6 +314,7 @@ pub struct CellRecord {
     pub checkpoint_sha256: Option<String>,
 }
 
+/// The [`RECEIPT_FILE`] document of one campaign, whose claims [`evaluate`] recomputes.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct BenchmarkReceipt {
@@ -847,6 +848,7 @@ fn attempt_violations(attempts: &[CellAttempt]) -> Vec<String> {
     violations
 }
 
+/// Whether a finding rejects the receipt.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Severity {
@@ -856,6 +858,7 @@ pub enum Severity {
     Note,
 }
 
+/// One protocol-rule violation or note the evaluation reports, optionally for one cell.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Finding {
