@@ -1,17 +1,9 @@
-//! Shared behavioural suite for every residual `BitVec` shift route
-//! (jit:f8dd4dde).
-//!
-//! The residual branch of [`BitVec::shift_left`] and [`BitVec::shift_right`] is
-//! the one a non-zero `k % 64` reaches. One corpus and one independent
-//! bit-addressed zero-fill reference drive both of its routes: the force switch
-//! of [`gf2_core::residual_shift`] holds callers on the scalar funnel for one
-//! arm and releases them for the other, and the lane witness says which route
-//! each arm actually ran. The corpus shape is the one the planning-time record's
-//! prototype uses
-//! (`dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md`):
-//! the repository's word-boundary lengths and offsets, offsets at and beyond
-//! the length, lengths leaving an incomplete final word, and lengths long
-//! enough for an unrolled funnel loop to run.
+//! Behavioural suite shared by both routes of the residual branch of
+//! [`BitVec::shift_left`] and [`BitVec::shift_right`], the branch a non-zero
+//! `k % 64` reaches. One corpus and one bit-addressed zero-fill reference
+//! drive the scalar funnel, held by the force switch of
+//! [`gf2_core::residual_shift`], and the route the library selects once the
+//! switch is released; the lane witness says which route each arm ran.
 
 use gf2_core::residual_shift::{
     force_scalar_residual_shift, last_residual_shift_route, reset_last_residual_shift_route,
@@ -54,9 +46,8 @@ fn reference(direction: Direction, bits: &[bool], k: usize) -> Vec<bool> {
         .collect()
 }
 
-/// Deterministic case fill, so a failure names a reproducible case.
-///
-/// SplitMix64 [Steele2014], the mixer the repository's harnesses use.
+/// Deterministic SplitMix64 (`@/citation/Steele2014`) fill, so a failure
+/// names a reproducible case.
 fn splitmix_bits(len: usize, seed: u64) -> Vec<bool> {
     let mut state = seed;
     (0..len)
@@ -107,7 +98,6 @@ fn offsets(len: usize) -> Vec<usize> {
     all
 }
 
-/// Builds a vector of `bits.len()` bits holding `bits`.
 fn bitvec_from_bits(bits: &[bool]) -> BitVec {
     let mut bv = BitVec::zeros(bits.len());
     for (i, &bit) in bits.iter().enumerate() {
@@ -133,8 +123,6 @@ fn assert_zero_tail_padding(bv: &BitVec, label: &str) {
     }
 }
 
-/// Runs one case: shift, then compare every bit against the reference and
-/// assert the length and the zero tail padding survive.
 fn assert_case(direction: Direction, bits: &[bool], k: usize, label: &str) {
     let mut bv = bitvec_from_bits(bits);
     direction.apply(&mut bv, k);
@@ -147,10 +135,7 @@ fn assert_case(direction: Direction, bits: &[bool], k: usize, label: &str) {
     assert_zero_tail_padding(&bv, label);
 }
 
-/// The whole corpus, against whichever route the library currently selects.
-///
-/// `route` names the route in every failure message; a caller that has forced
-/// a route passes its name so a failure says which one broke.
+/// `route` names the route in every failure message.
 fn assert_shift_corpus(route: &str) {
     for len in LENGTHS {
         for k in offsets(len) {
@@ -164,10 +149,8 @@ fn assert_shift_corpus(route: &str) {
     }
 }
 
-/// Runs one residual shift and returns the route the witness recorded for it.
-///
-/// A caller holds [`ROUTE_MUTEX`] across this, because both the switch the route
-/// depends on and the shift it observes are process-wide.
+/// The caller holds [`ROUTE_MUTEX`]: the switch and the witness are
+/// process-wide.
 fn observed_route() -> ResidualShiftRoute {
     reset_last_residual_shift_route();
     let mut bv = BitVec::ones(200);
@@ -175,12 +158,10 @@ fn observed_route() -> ResidualShiftRoute {
     last_residual_shift_route().expect("a shift by 65 bits reaches the residual branch")
 }
 
-/// Serialises the whole toggle-execute-observe-restore section of every test
-/// that touches the process-wide force switch, following
-/// `crates/gf2-core/tests/prime_route_dispatch.rs`.
+/// Serialises the toggle-execute-observe-restore section of every test that
+/// touches the process-wide force switch.
 static ROUTE_MUTEX: Mutex<()> = Mutex::new(());
 
-/// Whether this host reports the processor feature the kernel route needs.
 fn host_has_bmi2() -> bool {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {

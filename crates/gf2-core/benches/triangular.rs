@@ -1,34 +1,5 @@
-//! Block-recursive triangular primitives — `trsm`, `trmm`, `trtri`, `trtrm`.
-//!
-//! Issues `83b1ad8b` (initial harness) and `73ec5da3` (TRSM coverage +
-//! `triangular.base_case_max_dim` sweep). Measures five primitives (`trsm_upper`,
-//! `trsm_lower`, `trmm_upper`, `trtri_upper`, `trtrm`) at
-//! `n ∈ {64, 256, 1024}` for `Fp<7>`, `Fp<MERSENNE_31>`, and
-//! `Gf2mWide<1, AES>`. Each primitive lives in its own Criterion group so
-//! individual cases can be filtered:
-//!
-//! ```text
-//! triangular/trsm_upper/Fp_7/64
-//! triangular/trsm_upper/Fp_M31/256
-//! triangular/trsm_lower/Fp_M31/1024
-//! triangular/trtri_upper/Gf2m8/1024
-//! triangular/trtrm/Fp_M31/1024
-//! ```
-//!
-//! ## Usage
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench triangular --features rand
-//! # Smoke run:
-//! cargo bench -p gf2-core --bench triangular --features rand -- --test
-//! # Filter to a single primitive at a single size:
-//! cargo bench -p gf2-core --bench triangular --features rand -- triangular/trsm_upper/Fp_M31/256
-//! ```
-//!
-//! All benches run with no profile installed, so the live
-//! `triangular.base_case_max_dim` bound resolves to its conservative
-//! default of 8, selected by the Criterion sweep in jit:73ec5da3. An
-//! installed calibrated profile propagates here without bench code changes.
+//! Benchmarks the triangular primitives `trsm_upper`, `trsm_lower`,
+//! `trmm_upper`, `trtri_upper` and `trtrm` over prime fields and GF(2^8).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
@@ -40,7 +11,7 @@ use rand::{Rng, SeedableRng};
 
 const MERSENNE_31: u64 = 2_147_483_647;
 
-/// GF(2^8) with AES irreducible.
+/// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
 struct TriBenchGf2m8Cfg;
 impl Gf2mWideConfig<1> for TriBenchGf2m8Cfg {
     const M: usize = 8;
@@ -50,8 +21,6 @@ impl Gf2mWideConfig<1> for TriBenchGf2m8Cfg {
 type Gf2m8 = Gf2mWide<1, TriBenchGf2m8Cfg>;
 
 const SIZES: &[usize] = &[64, 256, 1024];
-
-// ─── Random matrix builders ────────────────────────────────────────────────
 
 fn random_fp_matrix<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
     let mut rng = StdRng::seed_from_u64(seed);
@@ -148,12 +117,9 @@ fn random_strict_lower_gf2m8(n: usize, seed: u64) -> FieldMatrix<Gf2m8> {
     m
 }
 
-// ─── Per-primitive benches ─────────────────────────────────────────────────
-
 fn bench_trsm_upper(c: &mut Criterion) {
     let mut g = c.benchmark_group("triangular/trsm_upper");
     for &n in SIZES {
-        // Fp<7>
         let a = random_upper_fp::<7>(n, 0xA1A1 + n as u64);
         let b = random_fp_matrix::<7>(n, n, 0xA2A2 + n as u64);
         g.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |bencher, _| {
@@ -164,7 +130,6 @@ fn bench_trsm_upper(c: &mut Criterion) {
                 },
             );
         });
-        // Fp<251> — small-prime byte-lane AVX2 cell (issue `40195c09`).
         let a251 = random_upper_fp::<251>(n, 0xA3A3 + n as u64);
         let b251 = random_fp_matrix::<251>(n, n, 0xA4A4 + n as u64);
         g.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |bencher, _| {
@@ -175,7 +140,6 @@ fn bench_trsm_upper(c: &mut Criterion) {
                 },
             );
         });
-        // Fp<65521> — largest medium-prime u16-lane AVX2 cell.
         let a65 = random_upper_fp::<65521>(n, 0xA5A5 + n as u64);
         let b65 = random_fp_matrix::<65521>(n, n, 0xA6A6 + n as u64);
         g.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |bencher, _| {
@@ -186,7 +150,6 @@ fn bench_trsm_upper(c: &mut Criterion) {
                 },
             );
         });
-        // Fp<MERSENNE_31>
         let a31 = random_upper_fp::<MERSENNE_31>(n, 0xB1B1 + n as u64);
         let b31 = random_fp_matrix::<MERSENNE_31>(n, n, 0xB2B2 + n as u64);
         g.bench_with_input(BenchmarkId::new("Fp_M31", n), &n, |bencher, _| {
@@ -197,7 +160,6 @@ fn bench_trsm_upper(c: &mut Criterion) {
                 },
             );
         });
-        // Gf2m8
         let a8 = random_upper_gf2m8(n, 0xC1C1 + n as u64);
         let b8 = random_gf2m8_matrix(n, n, 0xC2C2 + n as u64);
         g.bench_with_input(BenchmarkId::new("Gf2m8", n), &n, |bencher, _| {
@@ -215,7 +177,6 @@ fn bench_trsm_upper(c: &mut Criterion) {
 fn bench_trsm_lower(c: &mut Criterion) {
     let mut g = c.benchmark_group("triangular/trsm_lower");
     for &n in SIZES {
-        // Fp<7>
         let a = random_lower_fp::<7>(n, 0xA1A1 + n as u64);
         let b = random_fp_matrix::<7>(n, n, 0xA2A2 + n as u64);
         g.bench_with_input(BenchmarkId::new("Fp_7", n), &n, |bencher, _| {
@@ -226,7 +187,6 @@ fn bench_trsm_lower(c: &mut Criterion) {
                 },
             );
         });
-        // Fp<251> — small-prime byte-lane AVX2 cell (issue `40195c09`).
         let a251 = random_lower_fp::<251>(n, 0xA3A3 + n as u64);
         let b251 = random_fp_matrix::<251>(n, n, 0xA4A4 + n as u64);
         g.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |bencher, _| {
@@ -237,7 +197,6 @@ fn bench_trsm_lower(c: &mut Criterion) {
                 },
             );
         });
-        // Fp<65521> — largest medium-prime u16-lane AVX2 cell.
         let a65 = random_lower_fp::<65521>(n, 0xA5A5 + n as u64);
         let b65 = random_fp_matrix::<65521>(n, n, 0xA6A6 + n as u64);
         g.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |bencher, _| {
@@ -248,7 +207,6 @@ fn bench_trsm_lower(c: &mut Criterion) {
                 },
             );
         });
-        // Fp<MERSENNE_31>
         let a31 = random_lower_fp::<MERSENNE_31>(n, 0xB1B1 + n as u64);
         let b31 = random_fp_matrix::<MERSENNE_31>(n, n, 0xB2B2 + n as u64);
         g.bench_with_input(BenchmarkId::new("Fp_M31", n), &n, |bencher, _| {
@@ -259,7 +217,6 @@ fn bench_trsm_lower(c: &mut Criterion) {
                 },
             );
         });
-        // Gf2m8
         let a8 = random_lower_gf2m8(n, 0xC1C1 + n as u64);
         let b8 = random_gf2m8_matrix(n, n, 0xC2C2 + n as u64);
         g.bench_with_input(BenchmarkId::new("Gf2m8", n), &n, |bencher, _| {

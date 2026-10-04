@@ -1,21 +1,8 @@
 //! Route observation for the prime-field GEMM dispatchers in the default
-//! build.
-//!
-//! `prime_gemm_route` walks the dispatchers' own gate chain — eligibility
-//! window, shape guard, `select_f32_path` / `select_f64_path`, the GF(251)
-//! toggles, and the kernel-registration lookups — so these assertions observe
-//! the production selection rather than a copy of it. The `prime_route` family
-//! is baked (`dev/active/7d824b2f/design.md` §3.11), so the default build's
-//! boundaries are the conservative table's values and no installed profile
-//! moves them; `prime_route_baked.rs` witnesses the committed conservative
-//! boundaries under `--cfg gf2_tuning_baked`.
-//!
-//! Whether a cascade kernel is registered is a host property, so each boundary
-//! test reads the arm at a reference cell above the bound and asserts against
-//! that arm: on a host carrying the kernel the arm changes exactly at the
-//! bound, and on a host without it the arm cannot change at all. No test here
-//! touches the GF(251) debug toggles, which stay at their `false` production
-//! default; `prime_route_toggle.rs` covers the toggled arm.
+//! build, where the baked `prime_route` family holds the conservative
+//! boundaries. Whether a cascade kernel is registered is a host property, so
+//! each boundary test reads the arm at a reference cell above the bound and
+//! asserts against that arm.
 #![cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 
 use gf2_core::gfp::simd_ops::{prime_gemm_route, PrimeGemmRoute};

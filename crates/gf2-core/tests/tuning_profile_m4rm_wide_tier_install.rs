@@ -1,11 +1,8 @@
 //! Installed-profile route observation for the M4RM schedule selectors, with
 //! the wide-tier boundary moved *above* the conservative default.
-//!
 //! `tuning::install` is one-shot per process, so this file owns exactly one
-//! installed profile and one test, following
-//! `tests/tuning_profile_polynomial_install.rs`. The three table budgets are
-//! omitted from the document so the loader resolves them to the conservative
-//! defaults while the two ceilings and the boundary move.
+//! installed profile and one test. The profile omits the three table budgets,
+//! which resolve to the conservative defaults.
 
 #[path = "support/core_tuning.rs"]
 mod support;
@@ -57,7 +54,6 @@ support::fresh_tuning_test!(
             M4rmScheduleTier::SmallN
         );
 
-        // The neighbours of the installed boundary.
         let n_below = (boundary - 1) * 64;
         let n_at = n_below + 1;
         assert_eq!(
@@ -92,8 +88,6 @@ support::fresh_tuning_test!(
         assert!(!m4rm_schedule_route(k, n_tiled_below).tiled_stride_admitted());
         assert!(m4rm_schedule_route(k, n_tiled_below + 1).tiled_stride_admitted());
 
-        // The product is still the product at the width the conservative table
-        // would have routed to the wide tier.
         let a = BitMatrix::random_seeded(16, 33, 0x1f2e_3d4c);
         let b = BitMatrix::random_seeded(33, n_conservative_wide, 0x5b6a_7988);
         assert_eq!(multiply(&a, &b), naive_multiply(&a, &b));

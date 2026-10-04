@@ -1,39 +1,6 @@
-//! `FieldMatrix::gemm` — Criterion benchmarks at every (field, size)
-//! cell of the `64c88ae4` story matrix.
-//!
-//! Issue `6ed7f050`. Sibling of the reference container harness
-//! (`benchmarks/reference/fflas_bench.cpp`). The matrices fed to gemm
-//! here are byte-identical to the reference fixtures — both sides
-//! consume the master seed from `benchmarks/seeds/seed.txt` through the
-//! shared SplitMix64 derivation in [`mod@seed`].
-//!
-//! ## Coverage
-//!
-//! - **Square**: `n ∈ {64, 256, 1024, 4096}`.
-//! - **Rectangular**: `(m, k, n) ∈ { (1024, 1024, 32), (1024, 1024, 8) }`
-//!   — the skinny-output Winograd-crossover sweep promised by the story.
-//!   `1024^0.5 ≈ 32` and `1024^0.3 ≈ 8` match the issue spec.
-//! - **Fields**: `Fp<7>`, `Fp<251>`, `Fp<65521>`, `Fp<2^31-1>`,
-//!   `Gf2mWide<1, M=8 AES>`, `Gf2mWide<1, M=16 Conway>`. The optional
-//!   `GF(31)` and `GF(2^32)` fields from the original story spec are
-//!   deferred — see the breakdown notes for `6ed7f050`.
-//!
-//! ## Wall-clock contract
-//!
-//! At `n = 4096` a single gemm iteration on Mersenne-31 is multiple
-//! seconds even on a modern host. We use criterion's `sample_size = 10`
-//! and `measurement_time = 5 s` for `n ≥ 1024`, plus a per-cell budget
-//! cap (`seed::CELL_BUDGET_NS`, 30 s) mirroring the reference harness's
-//! `kCellBudgetNs`. **Do not run `cargo bench --bench fieldmatrix_gemm`
-//! from an automated agent loop**: the full sweep takes minutes.
-//!
-//! ## Usage
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench fieldmatrix_gemm --features rand
-//! cargo bench -p gf2-core --bench fieldmatrix_gemm --features rand -- --test
-//! cargo bench -p gf2-core --bench fieldmatrix_gemm --features rand -- gemm/Fp_M31/256
-//! ```
+//! Benchmarks `gemm` on square and skinny-output rectangular shapes over prime
+//! fields, GF(2^8) and GF(2^16), with inputs derived from the shared bench
+//! seed.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::field::matrix::{gemm, FieldMatrix};
@@ -43,8 +10,6 @@ use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 mod seed;
 
 use seed::{derive_seed, fp_matrix_from_seed, gf2m_wide_1_matrix_from_seed, MASTER_SEED};
-
-// ─── Field configurations ───────────────────────────────────────────────────
 
 const PRIME_7: u64 = 7;
 const PRIME_11: u64 = 11;
@@ -61,41 +26,20 @@ const PRIME_65521: u64 = 65521;
 const PRIME_65537: u64 = 65537;
 const MERSENNE_31: u64 = 2_147_483_647;
 
-/// Sizes for the small-prime sweep (issue 662f7a15): n ∈ {256, 1024}.
-/// n=64 is omitted — small-n is harness-overhead-dominated and does not
-/// inform the structural crossover question.
 const SQUARE_SIZES_SMALL_PRIME: &[usize] = &[256, 1024];
 
-/// Sizes for the GF(127)/GF(241) benchmark sweep including n=64 and n=4096
-/// (jit:98336ab4 SC#1 — consolidated n=4096 re-bench for all 6 primes):
-/// n ∈ {64, 256, 1024, 4096}.
-/// n=64 is retained per 695350fd R1 non-regression requirement (SC#2 completion).
-/// n=4096 is added so the 98336ab4 bench filter
-/// `gemm/Fp_(7|31|127|241|251|65521)/.../4096$` captures all 6 primes.
 const SQUARE_SIZES_SMALL_PRIME_N64_TO_4096: &[usize] = &[64, 256, 1024, 4096];
 
-/// Sizes for the GF(31) small-prime sweep including n=64 and n=4096
-/// (issue 27bb2f75). The n=64 cell is the per-call-overhead target of the
-/// small-n dispatch rework; n=4096 is required by the `[hard]`
-/// non-regression criterion (n ∈ {256, 1024, 4096}) — previously omitted,
-/// causing an evidence gap caught in R0 code-review.
 const SQUARE_SIZES_GF31_SMALL_N: &[usize] = &[64, 256, 1024, 4096];
 
-// ----- Medium-prime sweep cells (issue 9e12659b R1) ------------------------
-// These three primes exercise the SIMD `fp_medium` AVX2 kernel across the
-// width of the eligibility window (P ∈ (251, 65536)):
-//   * 257   — just above the small-prime/Modular<float> cap
-//   * 8191  — Mersenne-shape mid-range (2^13 - 1) with a nontrivial Barrett m
-//   * 32749 — largest prime below 2^15, exercising the upper Barrett band
-// They share the SQUARE_SIZES_MEDIUM sweep (n ∈ {64, 256, 1024}); n=4096 is
-// not added here because the rework's evidence requirement ends at n=1024
-// per the reviewer's resolution note.
+// 257 is the smallest prime above 251, 8191 = 2^13 - 1, and 32749 is the
+// largest prime below 2^15.
 const PRIME_257: u64 = 257;
 const PRIME_8191: u64 = 8191;
 const PRIME_32749: u64 = 32749;
 const SQUARE_SIZES_MEDIUM: &[usize] = &[64, 256, 1024];
 
-/// GF(2^8) AES irreducible `x^8 + x^4 + x^3 + x + 1`.
+/// GF(2^8) with the AES polynomial `x^8 + x^4 + x^3 + x + 1` (`@/citation/Nist2001`).
 struct GemmGf2m8Cfg;
 impl Gf2mWideConfig<1> for GemmGf2m8Cfg {
     const M: usize = 8;
@@ -104,7 +48,7 @@ impl Gf2mWideConfig<1> for GemmGf2m8Cfg {
 }
 type Gf2m8 = Gf2mWide<1, GemmGf2m8Cfg>;
 
-/// GF(2^16) Conway polynomial `x^16 + x^5 + x^3 + x^2 + 1`.
+/// GF(2^16) with the Conway polynomial `x^16 + x^5 + x^3 + x^2 + 1` (`@/citation/Lubeck2024`).
 struct GemmGf2m16Cfg;
 impl Gf2mWideConfig<1> for GemmGf2m16Cfg {
     const M: usize = 16;
@@ -113,22 +57,12 @@ impl Gf2mWideConfig<1> for GemmGf2m16Cfg {
 }
 type Gf2m16 = Gf2mWide<1, GemmGf2m16Cfg>;
 
-// Per the issue's `(operation, field, size)` matrix and the reference
-// CSV schema. Indexes here become the `op_idx`/`size_idx` salts in
-// `derive_seed`, so the gf2 side matches the reference harness's
-// `derive_seed("fgemm", 0, si, 0)` cells exactly.
+// Order matters: a size's index is its `derive_seed` salt.
 const SQUARE_SIZES: &[usize] = &[64, 256, 1024, 4096];
 
-/// Rectangular shapes from the story spec: `(m, k, n)` with skewed
-/// output dimension. The order is `(1024 × 1024 × 32)` and
-/// `(1024 × 1024 × 8)` — `1024^0.5 ≈ 32`, `1024^0.3 ≈ 8`. Indexes are
-/// passed to `derive_seed` as `size_idx + SQUARE_SIZES.len()` so the
-/// rectangular cells get disjoint seeds from the square ones.
+/// `(m, k, n)` shapes with a skinny output: `1024^0.5 = 32`, `1024^0.3 = 8`.
 const RECT_SHAPES: &[(usize, usize, usize)] = &[(1024, 1024, 32), (1024, 1024, 8)];
 
-// ─── Bench bodies ───────────────────────────────────────────────────────────
-
-/// Square gemm sweep over every `n` in [`SQUARE_SIZES`] for one field.
 fn bench_square<F, FillFn>(
     c: &mut Criterion,
     group_name: &str,
@@ -158,7 +92,6 @@ fn bench_square<F, FillFn>(
     group.finish();
 }
 
-/// Rectangular gemm sweep over every `(m, k, n)` in [`RECT_SHAPES`].
 fn bench_rect<F, FillFn>(
     c: &mut Criterion,
     group_name: &str,
@@ -206,10 +139,6 @@ fn bench_gemm_fp_7(c: &mut Criterion) {
         fp_matrix_from_seed::<PRIME_7>,
     );
 }
-
-// ─── Small-prime sweep (issue 662f7a15): GF(11)..GF(241) ────────────────────
-// These bench functions measure square gemm at n ∈ {256, 1024} only —
-// the structural crossover question requires n≥256 for meaningful data.
 
 fn bench_gemm_fp_11(c: &mut Criterion) {
     bench_square::<gf2_core::gfp::Fp<PRIME_11>, _>(
@@ -282,9 +211,6 @@ fn bench_gemm_fp_31(c: &mut Criterion) {
 }
 
 fn bench_gemm_fp_127(c: &mut Criterion) {
-    // Uses SQUARE_SIZES_SMALL_PRIME_N64_TO_4096 (n ∈ {64, 256, 1024, 4096}).
-    // n=64 retained per 695350fd R1 non-regression (SC#2); n=4096 added by
-    // 98336ab4 SC#1 (consolidated 6-prime n=4096 re-bench).
     bench_square::<gf2_core::gfp::Fp<PRIME_127>, _>(
         c,
         "gemm/Fp_127",
@@ -295,9 +221,6 @@ fn bench_gemm_fp_127(c: &mut Criterion) {
 }
 
 fn bench_gemm_fp_241(c: &mut Criterion) {
-    // Uses SQUARE_SIZES_SMALL_PRIME_N64_TO_4096 (n ∈ {64, 256, 1024, 4096}).
-    // n=64 retained per 695350fd R1 non-regression (SC#2); n=4096 added by
-    // 98336ab4 SC#1 (consolidated 6-prime n=4096 re-bench).
     bench_square::<gf2_core::gfp::Fp<PRIME_241>, _>(
         c,
         "gemm/Fp_241",
@@ -308,25 +231,6 @@ fn bench_gemm_fp_241(c: &mut Criterion) {
 }
 
 fn bench_gemm_fp_251(c: &mut Criterion) {
-    // Per jit:41096af5: route A (reworked Candidate F) is now the
-    // production default for GF(251)/n >= 512. `select_f32_path`
-    // returns `true` for `P == 251 && n >= 512`, routing those cells
-    // through the `from_mont_f32` lookup-table pack + vectorized AVX2
-    // Barrett kernel automatically when the AtomicBool toggle is off.
-    // GF(251)/n < 512 (n=64, n=256) continues to use Candidate C by default.
-    //
-    // Env var `GF2_GF251_ROUTE_A=1` is an explicit override: it forces
-    // route A ON for any n (including n < 512) via the AtomicBool toggle.
-    // This preserves backward compatibility with the `run_68cdf4c8_route_a_bench.sh`
-    // driver. When the env var is unset, the AtomicBool stays at `false`
-    // (default), so production dispatch is exercised: n >= 512 → route A
-    // (via `select_f32_path`), n < 512 → Candidate C.
-    //
-    // `GF2_GF251_ROUTE_C=1` overrides to route C (Goto/BLIS panel, issue
-    // fc182ed5). Route C is dormant by default and not selected by
-    // `select_f32_path`. If both env vars are set, route A wins (the
-    // dispatch in `fp_small_try_gemm_classical` checks route A first).
-    // The bench drivers toggle exactly one route at a time per phase.
     let route_a = std::env::var("GF2_GF251_ROUTE_A")
         .map(|v| v == "1")
         .unwrap_or(false);
@@ -349,8 +253,7 @@ fn bench_gemm_fp_251(c: &mut Criterion) {
         RECT_SHAPES,
         fp_matrix_from_seed::<PRIME_251>,
     );
-    // Reset to the production default to avoid bleeding the toggles
-    // into subsequent bench groups that share the criterion process.
+    // The route toggles are process-wide: restore the default for later groups.
     gf2_core::gfp::simd_ops::set_route_a_gf251_enabled(false);
     gf2_core::gfp::simd_ops::set_route_c_gf251_enabled(false);
 }

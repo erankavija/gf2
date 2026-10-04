@@ -1,6 +1,5 @@
 //! PLE route observation under an installed tuning profile whose selector
 //! values sit below the conservative defaults.
-//!
 //! `tuning::install` resolves once per process, so the above-default half of
 //! both boundaries lives in `tuning_profile_ple_install_above.rs`.
 
@@ -28,7 +27,6 @@ support::fresh_tuning_test!(installed_ple_profile_lowers_both_route_boundaries, 
     assert_eq!(ple.panel_base_max_cols(), 32);
     assert_eq!(ple.blocked_back_sub_min_dim(), 8);
 
-    // ── Panel-width boundary ────────────────────────────────────────────────
     let panel_base_max_cols = ple.panel_base_max_cols();
     assert_eq!(
         ple_panel_route(Some(PlePanelLane::Byte), panel_base_max_cols),
@@ -46,7 +44,6 @@ support::fresh_tuning_test!(installed_ple_profile_lowers_both_route_boundaries, 
         "the conservative panel width now splits into sub-panels"
     );
 
-    // ── Back-substitution boundary ──────────────────────────────────────────
     let blocked_back_sub_min_dim = ple.blocked_back_sub_min_dim();
     assert_eq!(
         back_sub_route(blocked_back_sub_min_dim - 1, blocked_back_sub_min_dim - 1),
@@ -63,8 +60,6 @@ support::fresh_tuning_test!(installed_ple_profile_lowers_both_route_boundaries, 
         "a dimension below the conservative threshold now takes the blocked arm"
     );
 
-    // ── The lowered values reach the dispatchers ────────────────────────────
-    //
     // A window wider than the installed panel width drives the sub-panel
     // recursion on hosts whose `Fp<251>` exposes a SIMD panel lane, and the
     // recursive trsm + gemm split elsewhere; both reconstruct their input.

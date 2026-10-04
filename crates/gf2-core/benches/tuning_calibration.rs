@@ -1,17 +1,8 @@
-//! Crate-owned calibration of retained core thresholds and execution extents.
-//!
-//! The neutral campaign driver owns scheduling, durable logging, checkpointing,
-//! and the outer host reservation. This producer owns typed cases, fixtures,
-//! installed core-only envelopes, scalar witnesses, effective execution checks,
-//! and `tuning-calibration-v4` artifact decisions. Only fresh child operations
-//! install tuning. Owner reporting, validation, analysis, and emission never do.
-//!
-//! The exact experiment is declared in
-//! `dev/active/dbd8787d/premeasurement-protocol.md`, which amends
-//! `dev/active/a83583e0/premeasurement-protocol.md` and its cumulative
-//! reference to the immutable retained threshold protocol. `--owner-operation`
-//! accepts one canonical neutral request on stdin and emits one framed response.
-//! The reporting flags perform no measurement or artifact publication.
+//! Crate-owned calibration of retained core thresholds and execution extents for
+//! the neutral campaign driver: typed cases, fixtures, installed core-only
+//! envelopes, scalar witnesses and `tuning-calibration-v4` artifact decisions.
+//! Only fresh child operations install tuning. The experiment is declared in
+//! `dev/active/dbd8787d/premeasurement-protocol.md`.
 use std::env;
 use std::fmt;
 use std::fs;
@@ -358,10 +349,6 @@ const MERSENNE_31: u64 = 2_147_483_647;
 /// panel lane, so the two panel-lane selectors stay unreachable.
 type M31 = Fp<MERSENNE_31>;
 
-// ---------------------------------------------------------------------
-// Calibrated fields and their grids
-// ---------------------------------------------------------------------
-
 /// The retained threshold selector fields this sweep measures.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -410,10 +397,8 @@ impl CalibratedField {
         Self::PleScalarBaseMaxCols,
     ];
 
-    /// Stable input to [`seed_for`], independent of enum declaration order.
-    ///
-    /// Stable tags make every field's stream independent of enum declaration
-    /// order, so adding or reordering a variant cannot change a fixture.
+    /// Stable input to [`seed_for`], independent of enum declaration order, so adding
+    /// or reordering a variant cannot change a fixture.
     fn seed_tag(self) -> u64 {
         match self {
             Self::SimdMinWords => 0,
@@ -624,15 +609,12 @@ impl CalibratedField {
     ///
     /// `karatsuba_max_out_len` counts product lengths, and a product of two
     /// equal-length operands has odd length `2n - 1`; its grid therefore uses
-    /// the odd lengths bracketing the default. It reaches 511 so the sweep
-    /// spans the region where `mul_fast`'s two arms are recorded as converging,
-    /// and it carries both 127 and 129 so the step across the default's own
-    /// boundary is measured directly.
+    /// the odd lengths bracketing the default, with 127 and 129 measuring the
+    /// step across the default's own boundary directly.
     ///
     /// The two large-operand fields reach two octaves further below their
     /// default than the small-operand ones, because their conservative arms are
-    /// quadratic and a crossover several octaves below the default is the
-    /// ordinary case for them rather than a surprise.
+    /// quadratic.
     ///
     /// The three seam grids are preregistered in
     /// `dev/active/dbd8787d/premeasurement-protocol.md` §2. Their `_max_`
@@ -791,10 +773,6 @@ impl fmt::Display for ArmSource {
     }
 }
 
-// ---------------------------------------------------------------------
-// Command line
-// ---------------------------------------------------------------------
-
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 struct Protocol {
@@ -858,9 +836,7 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
 /// An absolute path is used as given; a relative one is taken as
 /// repository-relative, because `cargo bench` runs this binary with its working
 /// directory at the package root while the receipts and profiles it names are
-/// written relative to the repository root. This matches the resolution the
-/// sibling receipt harness uses, so one command works from where the procedure
-/// says to run it.
+/// written relative to the repository root.
 fn resolve_repository_path(path: &Path) -> PathBuf {
     if path.is_absolute() {
         path.to_owned()
@@ -870,10 +846,6 @@ fn resolve_repository_path(path: &Path) -> PathBuf {
             .join(path)
     }
 }
-
-// ---------------------------------------------------------------------
-// Child-process arms
-// ---------------------------------------------------------------------
 
 /// What a child process is asked to do with the arm it forces.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
@@ -923,10 +895,6 @@ struct FreshProcessCase {
     spec: ChildSpec,
     protocol: Protocol,
 }
-
-// ---------------------------------------------------------------------
-// Observed host facts
-// ---------------------------------------------------------------------
 
 /// Everything the emitted provenance records that this run observes rather than
 /// takes from its own protocol constants.
@@ -1270,18 +1238,11 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     (if month <= 2 { year + 1 } else { year }, month, day)
 }
 
-// ---------------------------------------------------------------------
-// Fixtures
-// ---------------------------------------------------------------------
-
 /// `BIT_FIXTURES` buffers of `len` words laid out contiguously, each starting
 /// on a 64-byte boundary.
 ///
-/// The alignment is controlled rather than left to the allocator: a 64-byte
-/// cache line holds eight `u64`, a wide load that straddles two lines costs
-/// materially more than one that does not, and the allocator's address phase
-/// differs between processes. An uncontrolled bank would make the two arms of
-/// this family measure a property of the heap.
+/// The alignment is fixed because the allocator's address phase differs between
+/// processes; an uncontrolled bank would make the two arms measure the heap.
 struct BitBank {
     storage: Vec<u64>,
     offset: usize,
@@ -1532,7 +1493,7 @@ impl ExtConfig for CubicBeta3 {
     const NON_RESIDUE: F = F::new(3);
 }
 
-/// Exact eight-bank fixture for one follow-on fresh child.
+/// Exact eight-bank fixture for one fresh child.
 enum FollowOnFixture {
     Transpose(Vec<BitMatrix>),
     Soa {
@@ -3022,8 +2983,8 @@ fn execute_direct_timed(spec: ChildSpec, fixture: &mut Fixture, logical_index: u
     }
 }
 
-/// Executes only the declared production operation for one timed follow-on
-/// fixture call. The SoA case assumes the child already entered its one
+/// Executes only the declared production operation for one timed
+/// `FollowOnFixture` call. The SoA case assumes the child already entered its one
 /// dedicated four-thread pool.
 fn execute_follow_on_timed(spec: ChildSpec, fixture: &FollowOnFixture, logical_index: usize) {
     let bank = logical_index & (BIT_FIXTURES - 1);
@@ -3118,10 +3079,6 @@ fn simd_backend() -> Option<&'static dyn Backend> {
     }
 }
 
-// ---------------------------------------------------------------------
-// Timing
-// ---------------------------------------------------------------------
-
 use tuning_campaign_support::timing::TimingSample;
 
 /// Destination and source bank indices for call number `index`, offset so a
@@ -3163,10 +3120,6 @@ fn execution_windows(
     )
     .expect("validated test timing protocol")
 }
-
-// ---------------------------------------------------------------------
-// Forcing an arm in a child process
-// ---------------------------------------------------------------------
 
 /// What a child process reports back on its standard output.
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
@@ -4566,10 +4519,6 @@ fn run_capability_report(protocol: &Protocol) -> Result<(), String> {
     Ok(())
 }
 
-// ---------------------------------------------------------------------
-// Statistics and the selection rule
-// ---------------------------------------------------------------------
-
 /// One arm's timed windows at one grid point and the statistics derived from
 /// them by the selection rule.
 #[derive(Clone, Debug, PartialEq, serde::Serialize)]
@@ -4984,10 +4933,6 @@ fn build_profile(
     })
 }
 
-// ---------------------------------------------------------------------
-// Reporting and output
-// ---------------------------------------------------------------------
-
 #[cfg(test)]
 #[allow(dead_code)]
 fn print_grid() {
@@ -5301,9 +5246,8 @@ fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), S
 /// A field that keeps its default after a comparison — no grid point beat the
 /// noise band, or the crossover was non-monotone — is a calibration outcome and
 /// stays in the document. A field for which any predeclared grid point lacks a
-/// two-arm comparison is uncalibrated, and design §5 condition 5 requires the
-/// document to omit it rather than state a value: "a profile that carries an
-/// uncalibrated value is a `@/inv/benchmark-backed-performance` defect".
+/// two-arm comparison is uncalibrated, and the document omits it rather than state
+/// a value (`@/inv/benchmark-backed-performance`).
 ///
 /// These are not the whole omission set: [`omitted_fields`] adds every schema
 /// field no sweep covers, which the same rule governs for the same reason.
@@ -5376,9 +5320,8 @@ fn schema_fields(document: &str) -> Result<Vec<SchemaField>, String> {
 ///
 /// The set is the complement of what this run measured, so it covers both a
 /// swept field with any missing predeclared comparison and every schema field
-/// outside the sweep, whatever the schema has grown since. Design §5 condition
-/// 5 admits an omitted field and forbids an unmeasured stated one, so the
-/// complement is the rule rather than a conservative approximation of it.
+/// outside the sweep. An omitted field is admissible and an unmeasured stated one
+/// is a defect, so the complement is the rule rather than an approximation of it.
 #[cfg(test)]
 #[allow(dead_code)]
 fn omitted_fields(document: &str, sweeps: &[FieldSweep]) -> Result<Vec<SchemaField>, String> {
@@ -5530,10 +5473,6 @@ fn require_campaign_environment() -> Result<(), String> {
 
     validate_rayon_threads(env::var(RAYON_THREADS_VAR).ok().as_deref())
 }
-
-// ---------------------------------------------------------------------
-// Entry point
-// ---------------------------------------------------------------------
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = parse_args(env::args().skip(1))?;

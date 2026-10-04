@@ -1,71 +1,18 @@
-//! Benchmarks for `FieldVec::dot_product` across different field types and sizes.
-//!
-//! Measures throughput of the delayed-reduction dot product for `Fp<P>` at several
-//! prime sizes and vector lengths, plus GF(2^m) baselines for comparison.
-//!
-//! ## Measured comparison: gf2-core vs fflas-ffpack
-//!
-//! Measured on Linux 6.19 x86_64 (GCC 15.2, fflas-ffpack with OpenBLAS).
-//! Build the C++ harness with `./benches/build_fflas_bench.sh`.
-//!
-//! ### n = 1000 (ns/elem, lower is better)
-//!
-//! | Prime         | gf2-core `dot_product` | fflas `fdot<int64_t>` | fflas `fdot<double>` |
-//! |---------------|------------------------|-----------------------|----------------------|
-//! | p = 65521     | 1.72                   | 0.49                  | 0.11 (BLAS ddot)     |
-//! | p = 2^31 - 1  | 1.77                   | 1.11                  | n/a                  |
-//! | p ~ 2^62      | 2.72                   | **not supported**     | n/a                  |
-//!
-//! ### All sizes (ns/elem, gf2-core / fflas-ffpack int64)
-//!
-//! | Prime         |  n=100       |  n=1000      |  n=10000     |
-//! |---------------|--------------|--------------|--------------|
-//! | p = 65521     | 1.75 / 0.53  | 1.72 / 0.49  | 1.63 / 0.36  |
-//! | p = 2^31 - 1  | 1.80 / 1.21  | 1.77 / 1.11  | 1.72 / 1.09  |
-//! | p ~ 2^62      | 2.41 / ---   | 2.72 / ---   | 2.36 / ---   |
-//!
-//! **Key findings:**
-//! - For small primes, fflas-ffpack's `Modular<double>` delegates to BLAS `ddot`,
-//!   giving ~15x throughput advantage.  Its `Modular<int64_t>` path is ~3.5x faster.
-//! - For 31-bit primes, the gap narrows to ~1.6x (both use delayed reduction).
-//! - For primes near 2^62, fflas-ffpack's `Modular<int64_t>` max cardinality is
-//!   ~2^31 — it simply cannot represent these fields.  gf2-core handles them
-//!   natively via Montgomery multiplication with chunked delayed reduction.
-//!
-//! References:
-//! - Dumas, Giorgi, Pernet. "Dense Linear Algebra over Word-Size Prime Fields:
-//!   the FFLAS and FFPACK Packages." ACM TOMS 35(3), 2008.
-//! - FFLAS-FFPACK source: <https://github.com/linbox-team/fflas-ffpack>
-//! - C++ harness: `benches/fflas_fdot_bench.cpp`
+//! Benchmarks `FieldVec::dot_product` over `Fp<P>` at three prime sizes and
+//! the scalar and SIMD dot products over GF(2^m).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::field::FieldVec;
 use gf2_core::gf2m::Gf2mField;
 use gf2_core::gfp::Fp;
 
-// ---------------------------------------------------------------------------
-// Prime constants
-// ---------------------------------------------------------------------------
-
-/// Small prime fitting in 16 bits. fflas-ffpack would use Modular<double> + BLAS ddot.
 const SMALL_PRIME: u64 = 65521;
 
-/// Mersenne prime 2^31 - 1. fflas-ffpack uses Modular<int64_t> with delayed reduction.
 const MERSENNE_31: u64 = (1u64 << 31) - 1;
 
-/// Large prime near 2^62. Stresses the delayed-reduction chunking logic since
-/// kmax is small (fewer products before reduction is required).
 const LARGE_PRIME: u64 = 4_611_686_018_427_387_847; // largest prime < 2^62
 
-// ---------------------------------------------------------------------------
-// Vector lengths
-// ---------------------------------------------------------------------------
-
 const LENGTHS: &[usize] = &[100, 1_000, 10_000];
-
-// ---------------------------------------------------------------------------
-// Helper: build deterministic FieldVec<Fp<P>>
-// ---------------------------------------------------------------------------
 
 fn make_fp_vecs<const P: u64>(n: usize) -> (FieldVec<Fp<P>>, FieldVec<Fp<P>>) {
     let a: Vec<Fp<P>> = (0..n)
@@ -76,10 +23,6 @@ fn make_fp_vecs<const P: u64>(n: usize) -> (FieldVec<Fp<P>>, FieldVec<Fp<P>>) {
         .collect();
     (FieldVec::from(a), FieldVec::from(b))
 }
-
-// ---------------------------------------------------------------------------
-// Fp<65521> benchmarks (small prime)
-// ---------------------------------------------------------------------------
 
 fn bench_dot_fp_65521(c: &mut Criterion) {
     let mut group = c.benchmark_group("fieldvec_dot/fp_65521");
@@ -95,10 +38,6 @@ fn bench_dot_fp_65521(c: &mut Criterion) {
     group.finish();
 }
 
-// ---------------------------------------------------------------------------
-// Fp<2^31-1> benchmarks (Mersenne-31)
-// ---------------------------------------------------------------------------
-
 fn bench_dot_fp_mersenne31(c: &mut Criterion) {
     let mut group = c.benchmark_group("fieldvec_dot/fp_mersenne31");
 
@@ -113,10 +52,6 @@ fn bench_dot_fp_mersenne31(c: &mut Criterion) {
     group.finish();
 }
 
-// ---------------------------------------------------------------------------
-// Fp<~2^62> benchmarks (large prime)
-// ---------------------------------------------------------------------------
-
 fn bench_dot_fp_large(c: &mut Criterion) {
     let mut group = c.benchmark_group("fieldvec_dot/fp_large");
 
@@ -130,10 +65,6 @@ fn bench_dot_fp_large(c: &mut Criterion) {
 
     group.finish();
 }
-
-// ---------------------------------------------------------------------------
-// GF(2^m) helpers and benchmarks
-// ---------------------------------------------------------------------------
 
 fn make_gf2m_vecs(
     m: usize,
@@ -193,10 +124,6 @@ fn bench_dot_gf2m_8(c: &mut Criterion) {
     group.finish();
 }
 
-// ---------------------------------------------------------------------------
-// GF(2^12) benchmarks (scalar vs SIMD)
-// ---------------------------------------------------------------------------
-
 fn bench_dot_gf2m_12(c: &mut Criterion) {
     let mut group = c.benchmark_group("fieldvec_dot/gf2m_12");
 
@@ -215,10 +142,6 @@ fn bench_dot_gf2m_12(c: &mut Criterion) {
 
     group.finish();
 }
-
-// ---------------------------------------------------------------------------
-// GF(2^16) benchmarks (scalar vs SIMD)
-// ---------------------------------------------------------------------------
 
 fn bench_dot_gf2m_16(c: &mut Criterion) {
     let mut group = c.benchmark_group("fieldvec_dot/gf2m_16");

@@ -2,13 +2,6 @@
 //! extension: seeded random matrices are multiplied, decomposed through PLE,
 //! solved, inverted and reduced to a characteristic polynomial, and every
 //! result is checked against an independent identity; a mismatch exits non-zero.
-//!
-//! Run with:
-//!
-//! ```text
-//! ./scripts/cargo-budget.sh cargo run --release -p gf2-core --example field_linear_algebra -- \
-//!     [--n 512] [--charpoly-n 256] [--seed 1]
-//! ```
 
 use std::time::Instant;
 

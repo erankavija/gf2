@@ -27,12 +27,8 @@ fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
 }
 
 fn row_xor_fallback_inputs() -> (BitMatrix, BitMatrix) {
-    // Production-path proof for this benchmark:
-    // - choose_k_block(k=1, n=8192) must return 1 because the M4RM selector
-    //   cannot choose any k_block > k.
-    // - n=8192 is 128 words, well above the conservative profile's 8-word
-    //   default SIMD dispatch threshold (a `--cfg gf2_tuning_baked` build
-    //   selects the committed calibrated threshold at compile time).
+    // k = 1 forces a panel width of 1, and the row width exceeds the
+    // conservative profile's SIMD dispatch threshold.
     assert_eq!(FALLBACK_INNER, 1);
     assert!(FALLBACK_COLS.div_ceil(64) >= CoreTuning::CONSERVATIVE.bit_backend().simd_min_words());
 

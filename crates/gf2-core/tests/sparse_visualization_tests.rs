@@ -12,7 +12,6 @@ fn test_sparse_save_identity_matrix() {
     s.save_image(path).unwrap();
     assert!(std::path::Path::new(path).exists());
 
-    // Verify image dimensions
     let img = ImageReader::open(path).unwrap().decode().unwrap();
     assert_eq!(img.width(), 8);
     assert_eq!(img.height(), 8);

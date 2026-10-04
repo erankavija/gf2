@@ -1,9 +1,6 @@
-//! Fixed-iteration sparse matvec harness for `perf stat`.
-//!
-//! Criterion adapts iteration counts per benchmark function, which can obscure
-//! cache-event rates when comparing CSR with transformed layouts. This example
-//! executes exactly the requested number of LDPC-sized matvecs for each mode so
-//! `perf stat -r 10` compares the same operation count.
+//! Fixed-iteration sparse matvec harness for `perf stat`: each mode runs
+//! exactly the requested number of LDPC-sized matvecs, where Criterion would
+//! adapt the iteration count.
 
 use gf2_core::sparse::{deterministic_ldpc_like_fixture, deterministic_sparse_bitvec_fixture};
 use std::env;

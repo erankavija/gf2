@@ -1,5 +1,4 @@
 //! Triangular-solve route observation under an installed above-default profile.
-//!
 //! The below-default boundary and the panel-width production-path witness
 //! live in `tuning_profile_triangular_install`.
 

@@ -1,9 +1,6 @@
-//! Baked routing witness for `bit_matrix.matvec_simd_min_words`.
-//!
-//! This target is compiled by the CI baked step with
-//! `RUSTFLAGS="--cfg gf2_tuning_baked"`. The installed profile deliberately
-//! carries a different value; the production route remains at the baked
-//! boundary.
+//! Baked routing witness for `bit_matrix.matvec_simd_min_words`: the installed
+//! profile carries a different value and the production route stays at the
+//! baked boundary.
 #![cfg(gf2_tuning_baked)]
 
 #[path = "support/core_tuning.rs"]

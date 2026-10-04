@@ -1,10 +1,8 @@
 //! Installed-profile route observation for the M4RM schedule selectors, with
 //! the wide-tier boundary moved *below* the conservative default.
-//!
 //! `tuning::install` is one-shot per process, so this file owns exactly one
-//! installed profile and one test, following
-//! `tests/tuning_profile_polynomial_install.rs`. Every size is derived from the
-//! installed profile's accessors rather than from a literal.
+//! installed profile and one test. Every size is derived from the installed
+//! profile's accessors.
 
 #[path = "support/core_tuning.rs"]
 mod support;
@@ -117,9 +115,6 @@ support::fresh_tuning_test!(
         assert!(m4rm_schedule_route(k, n_tiled_at).tiled_stride_admitted());
         assert!(!m4rm_schedule_route(k, (tiled_min - 3) * 64).tiled_stride_admitted());
 
-        // The product is still the product on both sides of the moved boundary,
-        // with the register-tiled C-update gate at the installed
-        // `tiled_min_stride_words` rather than the conservative one.
         let rows = 16;
         let inner = 33;
         for n in [n_below, n_at] {

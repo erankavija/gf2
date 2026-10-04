@@ -1,13 +1,9 @@
-//! Shared behavioural suite for every population-count and fused
-//! AND-population-count route (jit:5cbb6545).
-//!
-//! One reference count and one set of buffers drive every route the library
-//! can take: the scalar backend, the resolved routes of
-//! `kernels::ops::resolve_popcount` and `resolve_and_popcount`, and, when the
-//! host has the kernels, each function pointer of the detected bundle called
-//! directly. The lengths bracket the empty buffer, the sub-vector widths, the
-//! repository's 0/1/63/64/65 word boundaries and the carry-save block
-//! boundary, on random, all-zero and all-one data.
+//! Behavioural suite shared by every population-count and fused
+//! AND-population-count route: the scalar backend, the routes
+//! `kernels::ops::resolve_popcount` and `resolve_and_popcount` resolve, and
+//! each function pointer of the detected kernel bundle. The lengths bracket
+//! the empty buffer, the sub-vector widths, the 0/1/63/64/65 word boundaries
+//! and the carry-save block boundary, on random, all-zero and all-one data.
 
 use gf2_core::kernels::ops::{
     and_popcount, and_popcount_route, popcount, popcount_route, resolve_and_popcount,
@@ -68,7 +64,6 @@ fn patterns(len: usize, seed: u64) -> Vec<(&'static str, Vec<u64>)> {
     ]
 }
 
-/// Every population-count route this host can take for `len` words.
 fn popcount_routes(len: usize) -> Vec<(String, PopcountFn)> {
     let mut routes: Vec<(String, PopcountFn)> = vec![
         ("ops::popcount".to_owned(), popcount as PopcountFn),
@@ -82,7 +77,6 @@ fn popcount_routes(len: usize) -> Vec<(String, PopcountFn)> {
     routes
 }
 
-/// Every fused AND-population-count route this host can take for `len` words.
 fn and_routes(len: usize) -> Vec<(String, AndPopcountFn)> {
     let mut routes: Vec<(String, AndPopcountFn)> = vec![
         (

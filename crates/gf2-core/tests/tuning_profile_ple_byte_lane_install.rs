@@ -1,6 +1,5 @@
 //! Byte-lane PLE panel-width route observation under an installed tuning
 //! profile that narrows `ple.panel_byte_lane_max_cols`.
-//!
 //! The two lane widths are independent fields, so this binary installs the byte
 //! lane's and observes that the u16 lane keeps its conservative width. The
 //! u16-lane half lives in `tuning_profile_ple_u16_lane_install.rs`, because
@@ -43,8 +42,6 @@ support::fresh_tuning_test!(
             CoreTuning::CONSERVATIVE.ple().panel_base_max_cols()
         );
 
-        // ── Byte-lane width boundary ────────────────────────────────────────────
-        //
         // The installed width sits below the panel base width, so the lane's own
         // ceiling is the arm that binds at the boundary.
         let byte = ple.panel_byte_lane_max_cols();
@@ -66,7 +63,6 @@ support::fresh_tuning_test!(
             "the panel base width still opens the sub-panel walk above it"
         );
 
-        // ── The u16 lane keeps its own width ────────────────────────────────────
         let u16_width = ple.panel_u16_lane_max_cols();
         assert!(u16_width > byte);
         assert_eq!(
@@ -84,8 +80,6 @@ support::fresh_tuning_test!(
         assert_eq!(ple_panel_route(None, byte), PlePanelRoute::RecursiveSplit);
         assert_eq!(ple_panel_route(None, 1), PlePanelRoute::RecursiveSplit);
 
-        // ── The installed width reaches the dispatcher ──────────────────────────
-        //
         // `Fp<251>` registers the byte lane on a host with the `simd` feature and
         // AVX2, and no lane otherwise; the expectation follows that gate.
         let lane = <Fp<251> as FiniteField>::simd_ple_panel_lane();
@@ -104,8 +98,6 @@ support::fresh_tuning_test!(
             "above the installed width the halving split takes the window on every host"
         );
 
-        // ── The installed lane ceiling bounds EVERY panel dispatch ──────────────
-        //
         // 256 columns exceeds the conservative sub-panel split width (128), so the
         // recursive splitter runs; the recorder observes the widest window the
         // panel kernel actually received. Output equality cannot show this — a

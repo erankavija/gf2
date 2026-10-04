@@ -23,8 +23,8 @@ support::fresh_tuning_test!(install_does_not_govern_bit_backend_selection, {
         "{profile_words} words select Scalar under the conservative profile"
     );
     assert_eq!(tuning::install(profile), Ok(()));
-    // DEC-G makes the bit-backend threshold compile-time; installing a
-    // runtime profile with threshold 4 does not move the selected boundary.
+    // The bit-backend threshold is compile-time; installing a runtime profile
+    // with threshold 4 does not move the selected boundary.
     #[cfg(not(gf2_tuning_baked))]
     let compiled_threshold = conservative_threshold;
     #[cfg(gf2_tuning_baked)]

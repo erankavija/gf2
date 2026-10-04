@@ -1,13 +1,6 @@
-//! Toggle observation for the prime-field GEMM route reporter.
-//!
-//! `prime_gemm_route` mirrors the dispatchers' full gate chain, which includes
-//! the process-wide GF(251) debug switches: `fp_small_try_gemm_classical`
-//! consults `route_a_gf251_enabled` before its window predicate, so a reporter
-//! that ignored the switch would name Candidate C for a cell the dispatcher
-//! sends through route A.
-//!
-//! The switches are process-wide `AtomicBool`s, so this binary holds exactly
-//! one test and no other prime-route binary touches them.
+//! Toggle observation for the prime-field GEMM route reporter: the reported
+//! route follows the GF(251) route-A debug switch. The switch is a
+//! process-wide `AtomicBool`, so this binary holds exactly one test.
 #![cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 
 use gf2_core::gfp::simd_ops::{prime_gemm_route, set_route_a_gf251_enabled, PrimeGemmRoute};

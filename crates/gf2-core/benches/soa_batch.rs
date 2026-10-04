@@ -1,22 +1,11 @@
-//! Benchmarks for [`BatchExtField`] quadratic and cubic SoA multiplication.
-//!
-//! Compares SoA batched Karatsuba multiplication against AoS sequential
-//! baselines that call `QuadraticExt::mul` / `CubicExt::mul` once per
-//! element. The cubic group is the C5 criterion leaf for jit:33d3f5b7.
-//!
-//! Regenerate the numbers cited in `gf2_core::gfpn::batch` module docs
-//! with:
-//!
-//! ```text
-//! cargo bench -p gf2-core --bench soa_batch
-//! ```
+//! Benchmarks [`BatchExtField`] quadratic and cubic SoA multiplication against
+//! AoS baselines that call `QuadraticExt::mul` / `CubicExt::mul` once per
+//! element.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig, QuadraticExt};
 
-/// V10 multithread design point: large enough to amortise rayon scheduling
-/// while still fitting the hot coefficient lanes in LLC on commodity CPUs.
 const DESIGN_BATCH_LEN: usize = 1 << 20;
 
 struct QuadCfg;
@@ -34,8 +23,6 @@ impl ExtConfig for CubicCfg {
 type Fq3 = CubicExt<CubicCfg>;
 
 fn make_fq2_inputs(n: usize, seed: u64) -> Vec<Fq2> {
-    // Deterministic pseudo-random pattern: good enough for a throughput
-    // benchmark; no need for cryptographic randomness.
     (0..n)
         .map(|i| {
             let a = ((i as u64).wrapping_mul(2_654_435_761).wrapping_add(seed)) % 65537;
@@ -68,7 +55,6 @@ fn bench_quadratic_soa_vs_sequential(c: &mut Criterion) {
 
         group.throughput(Throughput::Elements(n as u64));
 
-        // AoS sequential baseline: scalar QuadraticExt::mul per pair.
         group.bench_with_input(
             BenchmarkId::new("sequential_aos", n),
             &(xs.clone(), ys.clone()),
@@ -80,9 +66,7 @@ fn bench_quadratic_soa_vs_sequential(c: &mut Criterion) {
             },
         );
 
-        // SoA batch multiplication (excludes AoS↔SoA conversion cost: we
-        // transpose once outside the timed loop, matching the target use
-        // case where data already lives in SoA form).
+        // The AoS-to-SoA conversion stays outside the timed loop.
         let bxs = BatchExtField::<Fp<65537>, 2>::from_quadratic::<QuadCfg>(&xs);
         let bys = BatchExtField::<Fp<65537>, 2>::from_quadratic::<QuadCfg>(&ys);
         group.bench_with_input(
@@ -93,8 +77,6 @@ fn bench_quadratic_soa_vs_sequential(c: &mut Criterion) {
             },
         );
 
-        // SoA batch multiplication including AoS↔SoA conversions — shows
-        // the end-to-end cost for data that originates in AoS form.
         group.bench_with_input(
             BenchmarkId::new("batch_soa_with_transpose", n),
             &(xs.clone(), ys.clone()),

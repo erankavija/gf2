@@ -4,10 +4,8 @@ use gf2_core::{BitMatrix, BitVec};
 fn main() {
     println!("=== Testing BitVec ↔ Gf2mPoly Conversions ===\n");
 
-    // Create a field
     let field = Gf2mField::new(4, 0b10011);
 
-    // Create a BitVec: 1 + x^2 (binary: 101)
     let mut bits = BitVec::new();
     bits.push_bit(true); // x^0
     bits.push_bit(false); // x^1
@@ -17,7 +15,6 @@ fn main() {
         (0..bits.len()).map(|i| bits.get(i)).collect::<Vec<_>>()
     );
 
-    // Convert to polynomial
     let poly = Gf2mPoly::from_bitvec(&bits, &field);
     println!("Polynomial degree: {:?}", poly.degree());
     println!(
@@ -27,7 +24,6 @@ fn main() {
         poly.coeff(2).value()
     );
 
-    // Convert back to BitVec
     let recovered = poly.to_bitvec(5);
     println!(
         "Recovered BitVec (len 5): {:?}",
@@ -47,7 +43,6 @@ fn main() {
 
     println!("=== Testing BitMatrix Row/Column Extraction ===\n");
 
-    // Create a 3x4 matrix with some pattern
     let mut m = BitMatrix::zeros(3, 4);
     m.set(0, 0, true);
     m.set(0, 2, true);
@@ -65,7 +60,6 @@ fn main() {
     }
     println!();
 
-    // Extract rows
     println!("Extracted rows:");
     for r in 0..3 {
         let row = m.row_as_bitvec(r);
@@ -77,7 +71,6 @@ fn main() {
     }
     println!();
 
-    // Extract columns
     println!("Extracted columns:");
     for c in 0..4 {
         let col = m.col_as_bitvec(c);

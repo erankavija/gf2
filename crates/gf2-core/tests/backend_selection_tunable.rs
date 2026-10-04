@@ -37,8 +37,8 @@ support::fresh_tuning_test!(
                 .bit_backend()
                 .simd_min_words();
         for words in 4..=7 {
-            // DEC-G keeps the bit-backend boundary compile-time, so these words
-            // follow it even after installing a section with a lower value.
+            // The bit-backend boundary is compile-time, so these words follow it
+            // after a section with a lower value is installed.
             assert!(
                 words < conservative_threshold,
                 "{words} words sits below the conservative threshold of {conservative_threshold}"

@@ -1,13 +1,5 @@
-//! SIMD vs Scalar backend performance comparison.
-//!
-//! This benchmark suite measures the actual performance characteristics of
-//! SIMD vs Scalar backends across different buffer sizes and operations.
-//!
-//! Key objectives:
-//! 1. Validate the 8-word threshold assumption
-//! 2. Measure actual speedup factors
-//! 3. Identify which operations benefit most from SIMD
-//! 4. Document performance characteristics for different sizes
+//! Benchmarks the scalar and SIMD kernel backends on word-slice XOR, AND, OR,
+//! NOT and popcount across buffer sizes.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::kernels::{scalar::ScalarBackend, Backend};
@@ -18,19 +10,11 @@ fn random_data(word_count: usize, seed: u64) -> Vec<u64> {
     (0..word_count).map(|_| rng.gen()).collect()
 }
 
-/// Test sizes covering the threshold region and beyond.
-///
-/// - 1, 2, 4: Very small (should favor scalar)
-/// - 7: Just below threshold
-/// - 8: At threshold (decision point)
-/// - 16, 32: Just above threshold
-/// - 64, 128, 256: Medium buffers
-/// - 1024, 4096: Large buffers (should favor SIMD)
+/// Word counts on both sides of the default 8-word SIMD dispatch threshold.
 fn sizes() -> Vec<usize> {
     vec![1, 2, 4, 7, 8, 16, 32, 64, 128, 256, 1024, 4096]
 }
 
-/// Benchmark XOR operation: dst[i] ^= src[i]
 fn bench_xor(c: &mut Criterion) {
     let mut group = c.benchmark_group("xor");
 
@@ -38,7 +22,6 @@ fn bench_xor(c: &mut Criterion) {
         let bytes = size * 8;
         group.throughput(Throughput::Bytes(bytes as u64));
 
-        // Benchmark scalar backend
         group.bench_with_input(BenchmarkId::new("scalar", size), &size, |bencher, &size| {
             let backend = &ScalarBackend;
             let mut dst = random_data(size, 0xDEADBEEF);
@@ -50,7 +33,6 @@ fn bench_xor(c: &mut Criterion) {
             });
         });
 
-        // Benchmark SIMD backend (if available)
         #[cfg(feature = "simd")]
         if let Some(backend) = gf2_core::kernels::simd::maybe_simd() {
             group.bench_with_input(BenchmarkId::new("simd", size), &size, |bencher, &size| {
@@ -68,7 +50,6 @@ fn bench_xor(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark AND operation: dst[i] &= src[i]
 fn bench_and(c: &mut Criterion) {
     let mut group = c.benchmark_group("and");
 
@@ -104,7 +85,6 @@ fn bench_and(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark OR operation: dst[i] |= src[i]
 fn bench_or(c: &mut Criterion) {
     let mut group = c.benchmark_group("or");
 
@@ -140,7 +120,6 @@ fn bench_or(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark NOT operation: buf[i] = !buf[i]
 fn bench_not(c: &mut Criterion) {
     let mut group = c.benchmark_group("not");
 
@@ -174,7 +153,6 @@ fn bench_not(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark popcount operation: count total set bits
 fn bench_popcount(c: &mut Criterion) {
     let mut group = c.benchmark_group("popcount");
 
@@ -208,15 +186,13 @@ fn bench_popcount(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark with different data patterns to check if performance varies.
 fn bench_patterns(c: &mut Criterion) {
-    let size = 256; // Medium size for pattern testing
+    let size = 256;
     let bytes = size * 8;
 
     let mut group = c.benchmark_group("patterns");
     group.throughput(Throughput::Bytes(bytes as u64));
 
-    // Pattern 1: All zeros
     group.bench_function("scalar/zeros", |bencher| {
         let backend = &ScalarBackend;
         let mut dst = vec![0u64; size];
@@ -239,7 +215,6 @@ fn bench_patterns(c: &mut Criterion) {
         });
     }
 
-    // Pattern 2: All ones
     group.bench_function("scalar/ones", |bencher| {
         let backend = &ScalarBackend;
         let mut dst = vec![0xFFFFFFFFFFFFFFFFu64; size];
@@ -262,7 +237,6 @@ fn bench_patterns(c: &mut Criterion) {
         });
     }
 
-    // Pattern 3: Alternating
     group.bench_function("scalar/alternating", |bencher| {
         let backend = &ScalarBackend;
         let mut dst = vec![0xAAAAAAAAAAAAAAAAu64; size];

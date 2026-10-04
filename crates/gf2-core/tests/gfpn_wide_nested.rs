@@ -1,14 +1,7 @@
-//! Integration tests for the `Wide` accumulator type on nested tower
-//! extensions (issue d11b769a).
-//!
-//! Verifies that `QuadraticExt<QuadraticExt<Fp<P>>>` (i.e., GF(p⁴)) propagates
-//! the wide type correctly — the outer `Wide` is
-//! `QuadraticExtWide<QuadraticExtWide<u128>>` — and that all field axioms hold
-//! including the wide roundtrip and `mul_to_wide` consistency.
-//!
-//! Tower configurations are imported from `common::` (see
-//! `tests/common/mod.rs`), the single source of truth for the chains used
-//! across the tower integration tests.
+//! `Wide` accumulator on nested tower extensions: GF(p⁴) as
+//! `QuadraticExt<QuadraticExt<Fp<P>>>` has
+//! `Wide = QuadraticExtWide<QuadraticExtWide<u128>>`, and the wide round trip
+//! and `mul_to_wide` agree with direct multiplication.
 
 use gf2_core::field::{ConstField, FiniteField};
 use gf2_core::gfp::Fp;
@@ -17,25 +10,19 @@ use gf2_core::gfpn::{ExtConfig, QuadraticExt, QuadraticExtWide};
 mod common;
 use common::{Fp65537Ext4, Fq2Large as Fq2, Fq4Large as Fq4};
 
-/// The outer `Wide` propagates through the tower:
-/// `QuadraticExt<QuadraticExt<Fp<P>>>::Wide == QuadraticExtWide<QuadraticExtWide<u128>>`.
-/// This test compiles only if the types match (enforced by the type checker).
+/// Compiles only if the types match.
 #[test]
 fn test_nested_wide_type_propagation() {
-    // Construct by type inference from a concrete element path.
     let a = Fq4::new(
         Fq2::new(Fp::new(1), Fp::new(2)),
         Fq2::new(Fp::new(3), Fp::new(4)),
     );
     let w: <Fq4 as FiniteField>::Wide = a.to_wide();
-    // Statically coerce to the fully-expanded nested type — this fails to
-    // compile if the propagation is wrong.
     let _: QuadraticExtWide<QuadraticExtWide<u128>> = w;
 }
 
 #[test]
 fn test_nested_wide_roundtrip() {
-    // Pick a few non-trivial elements and verify reduce_wide ∘ to_wide = id.
     for c00 in [0u64, 1, 42, 65535] {
         for c01 in [0u64, 7, 1000] {
             for c10 in [0u64, 3, 2023] {
@@ -55,8 +42,6 @@ fn test_nested_wide_roundtrip() {
 
 #[test]
 fn test_nested_mul_to_wide_consistency() {
-    // Pick several pairs and check mul_to_wide ∘ reduce_wide matches direct
-    // multiplication.
     let samples = [
         (0u64, 1, 0, 0),
         (1, 0, 0, 0),
@@ -84,8 +69,6 @@ fn test_nested_mul_to_wide_consistency() {
 
 #[test]
 fn test_nested_dot_product_accumulation() {
-    // Accumulate 16 random-looking products in the nested wide, reduce once,
-    // and compare to the element-wise multiply-and-add path.
     let coeffs: &[(u64, u64, u64, u64)] = &[
         (1, 2, 3, 4),
         (5, 6, 7, 8),
@@ -123,7 +106,6 @@ fn test_nested_dot_product_accumulation() {
     assert_eq!(got, expected);
 }
 
-/// The nested tower must still cap accumulation at the base prime's budget.
 #[test]
 fn test_nested_max_unreduced_additions_matches_base() {
     // For P=65537 the bound `u128::MAX / (P-1)²` exceeds `usize::MAX` and
@@ -136,12 +118,6 @@ fn test_nested_max_unreduced_additions_matches_base() {
     // referenced: force the compiler to record the use.
     let _ = Fp65537Ext4::NON_RESIDUE;
 }
-
-// ---------------------------------------------------------------------------
-// Larger-prime nested tower: GF(Mersenne61²) composed once more ⇒ GF(P⁴).
-// Mersenne61 makes `max_unreduced_additions` finite, proving the tower no
-// longer returns the `usize::MAX` sentinel at the top level.
-// ---------------------------------------------------------------------------
 
 const M61: u64 = 2305843009213693951;
 
@@ -161,13 +137,12 @@ type M61Fq4 = QuadraticExt<M61Ext4>;
 
 #[test]
 fn test_nested_max_unreduced_additions_finite_for_large_prime() {
-    // Mersenne61 gives `k = u128::MAX / (P-1)² ≈ 64` — far below usize::MAX.
+    // For Mersenne61, `u128::MAX / (P-1)²` is about 64.
     let k = <M61Fq4 as FiniteField>::max_unreduced_additions();
     let base = <Fp<M61> as FiniteField>::max_unreduced_additions();
     assert_eq!(k, base);
     assert_ne!(k, usize::MAX);
     assert!(k >= 1);
-    // Sanity: the Fq2 intermediate level also equals the base bound.
     let intermediate = <M61Fq2 as FiniteField>::max_unreduced_additions();
     assert_eq!(intermediate, base);
 }
@@ -179,11 +154,9 @@ fn test_nested_wide_type_propagates_through_two_levels() {
         M61Fq2::new(Fp::new(3), Fp::new(4)),
     );
     let w: <M61Fq4 as FiniteField>::Wide = a.to_wide();
-    // Type coercion: the wide must be exactly the doubly-nested shape.
     let _: QuadraticExtWide<QuadraticExtWide<u128>> = w;
 }
 
-/// Field axioms smoke test: one element and its inverse satisfy the identity.
 #[test]
 fn test_nested_axioms_smoke() {
     let a = Fq4::new(

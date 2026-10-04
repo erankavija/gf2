@@ -1,10 +1,8 @@
-//! Tests for matrix multiplication over GF(2).
+//! `BitMatrix` multiplication over GF(2).
 
 use gf2_core::alg::m4rm::multiply;
 use gf2_core::matrix::BitMatrix;
 
-/// Naive reference matrix multiplication for testing.
-/// Computes C = A × B over GF(2) using dot products.
 fn naive_multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     assert_eq!(
         a.cols(),
@@ -20,7 +18,6 @@ fn naive_multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
 
     for i in 0..m {
         for j in 0..n {
-            // Compute dot product of row i of A with column j of B
             let mut sum = false;
             for p in 0..k {
                 sum ^= a.get(i, p) & b.get(p, j);
@@ -34,7 +31,6 @@ fn naive_multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
 
 #[test]
 fn test_multiply_small_square() {
-    // 2x2 matrices
     let mut a = BitMatrix::zeros(2, 2);
     a.set(0, 0, true);
     a.set(0, 1, true);
@@ -66,7 +62,6 @@ fn test_multiply_small_square() {
 
 #[test]
 fn test_multiply_identity_left() {
-    // I × A = A
     let mut a = BitMatrix::zeros(3, 4);
     a.set(0, 1, true);
     a.set(1, 2, true);
@@ -84,7 +79,6 @@ fn test_multiply_identity_left() {
 
 #[test]
 fn test_multiply_identity_right() {
-    // A × I = A
     let mut a = BitMatrix::zeros(3, 4);
     a.set(0, 1, true);
     a.set(1, 2, true);
@@ -110,7 +104,6 @@ fn test_multiply_zero() {
     assert_eq!(c.rows(), 3);
     assert_eq!(c.cols(), 5);
 
-    // Result should be all zeros
     for r in 0..3 {
         for col in 0..5 {
             assert!(!c.get(r, col));
@@ -120,7 +113,6 @@ fn test_multiply_zero() {
 
 #[test]
 fn test_multiply_rectangular() {
-    // 2x3 × 3x2 = 2x2
     let mut a = BitMatrix::zeros(2, 3);
     a.set(0, 0, true);
     a.set(0, 1, true);
@@ -155,7 +147,6 @@ fn test_multiply_vs_naive_4x4() {
     let mut a = BitMatrix::zeros(4, 4);
     let mut b = BitMatrix::zeros(4, 4);
 
-    // Random fill
     for i in 0..4 {
         for j in 0..4 {
             a.set(i, j, rng.gen_bool(0.5));
@@ -277,13 +268,11 @@ fn test_multiply_large_64x64() {
 
 #[test]
 fn test_multiply_with_word_boundaries() {
-    // Test with dimensions that span word boundaries
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
 
     let mut rng = StdRng::seed_from_u64(2024);
 
-    // Dimensions crossing 64-bit word boundaries
     let mut a = BitMatrix::zeros(10, 65);
     let mut b = BitMatrix::zeros(65, 10);
 
