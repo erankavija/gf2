@@ -1,10 +1,7 @@
 //! gfx target detection and per-arch kernel-blob loading.
 //!
 //! [`GfxTarget::detect`] maps the device's `gcnArchName` (e.g. `"gfx1030"`,
-//! `"gfx942"`) to a target. The name is the discriminator because compute
-//! capability cannot distinguish the gfx940 and gfx942 CDNA3 steppings.
-//! `build.rs` produces one `*.co` blob per source under `kernels/<target>/`;
-//! gfx1030 is the only target exercised by tests.
+//! `"gfx942"`) to a target.
 
 use std::path::PathBuf;
 

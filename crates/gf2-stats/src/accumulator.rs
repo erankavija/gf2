@@ -1,9 +1,7 @@
 //! Checkpointable pooling of independently produced campaign shards.
 //!
-//! The accumulator owns only plain count data. It does not open, write, or
-//! rename checkpoint files; an orchestration layer can serialize the returned
-//! [`AccumulatorSnapshot`] using the persistence policy appropriate to its
-//! workload.
+//! The accumulator owns only plain count data and performs no file I/O; a
+//! caller serializes the returned [`AccumulatorSnapshot`].
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;

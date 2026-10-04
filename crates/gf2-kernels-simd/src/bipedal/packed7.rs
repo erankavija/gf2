@@ -1,11 +1,8 @@
 //! F_7 SIMD batch kernels (3-bit + 2^16 LUT encoding).
 //!
 //! Each `u64` packs 16 elements; slot `i` occupies bits `[4i .. 4i+4)` and
-//! holds a canonical value `0..=6`. Binary ops look up a 64 KiB table keyed by
-//! the byte pair `a_byte | (b_byte << 8)`. The AVX2 entry points in
-//! `crate::x86::bipedal_avx2_packed7` apply the same scalar lookups to the four
-//! words of a register. The encoding uses one stream per operand, so it does
-//! not go through [`super::framework::BipedalLikeConfig`].
+//! holds a canonical value `0..=6`. The AVX2 entry points are in
+//! `crate::x86::bipedal_avx2_packed7`.
 
 // The LUTs duplicate the construction in `gf2_algebra::packed::packed7`
 // because `gf2-algebra` is a dev-dependency only.

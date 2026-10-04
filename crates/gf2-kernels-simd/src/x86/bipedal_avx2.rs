@@ -2,10 +2,8 @@
 //! [`crate::bipedal::framework::BatchedBipedalLike`] framework.
 //!
 //! Each `run_*_batch::<C>` function is generic over a per-prime
-//! [`BipedalLikeConfig`] `C` whose two lane types are both `Avx2Lane`;
-//! [`run_permanent4`] keeps four F_3 matrices in those lanes for a whole
-//! Ryser/Gray walk. Every caller detects AVX2 at runtime before invoking a
-//! function here.
+//! [`BipedalLikeConfig`] `C` whose two lane types are both `Avx2Lane`. Every
+//! caller detects AVX2 at runtime before invoking a function here.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::_mm256_srli_epi64;

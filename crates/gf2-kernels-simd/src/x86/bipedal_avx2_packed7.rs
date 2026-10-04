@@ -2,8 +2,7 @@
 //!
 //! One `u64` holds 16 F_7 elements in 4-bit slots, mapped through the scalar
 //! LUTs of [`crate::bipedal::packed7`]. All slices of one call share a length
-//! `n` with `n % 4 == 0`; `n = 0` is a no-op. The private helpers carry no
-//! `#[target_feature]` and are called only from the AVX2 entry points.
+//! `n` with `n % 4 == 0`; `n = 0` is a no-op.
 
 use crate::bipedal::packed7::{binary7_op_word, neg7_word, ADD7_LUT, MUL7_LUT, SUB7_LUT};
 

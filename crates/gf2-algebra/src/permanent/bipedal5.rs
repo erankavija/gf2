@@ -1,10 +1,5 @@
 //! `permanent_bipedal5` — Gray-code Ryser permanent over `F_5`.
 //!
-//! Walks the Gray-code subset order, updates a single `Packed5` column-sum
-//! word (one `u64`-triple of bit-planes) by one [`Packed5::add`] or
-//! [`Packed5::sub`] per step, and folds the first `n` lanes via
-//! [`Packed5::fold_mul_first_n`]. `permanent_bipedal5` panics for `n > 63`.
-//!
 //! Compiled only when the `f5` Cargo feature is enabled.
 
 use gf2_core::gfp::Fp;

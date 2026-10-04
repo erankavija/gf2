@@ -1,14 +1,6 @@
-//! Rayon-parallel `permanent_bipedal3` over fixed Gray-code chunks.
-//!
-//! Each chunk of the `2^n - 1` subset walk rebuilds its starting column sum
-//! via [`gray_code_index_to_subset`] (`O(n)`) and then walks in Gray order;
-//! the partial Ryser sums are added in F_3. [`permanent_bipedal3_parallel`]
-//! reads its chunk length from [`permanent_chunk_len`].
-//!
-//! # Determinism
-//!
-//! F_3 addition is commutative and associative, so the result equals
-//! `permanent_bipedal3` for every rayon thread schedule and chunk length.
+//! Rayon-parallel `permanent_bipedal3` over fixed Gray-code chunks;
+//! [`permanent_bipedal3_parallel`] reads its chunk length from
+//! [`permanent_chunk_len`].
 
 use gf2_core::gfp::Fp;
 use rayon::prelude::*;

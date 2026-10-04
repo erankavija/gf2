@@ -1,13 +1,10 @@
 //! Multi-word streaming column-sum path for `permanent_bipedal3` at `n ≥ 64`.
 //!
-//! Evaluates Ryser's inclusion-exclusion formula in binary-reflected
-//! Gray-code order: each step adds or subtracts one column to a packed
-//! column-sum of `W = ceil(n / 64)` words per leg (`mag` + `sgn`) with the
+//! Evaluates Ryser's formula in Gray-code order over a packed column sum of
+//! `W = ceil(n / 64)` words per leg (`mag` + `sgn`), with the
 //! `@/citation/Scheinerman2024` Theorem 2.1 formulas. The step counter is a
 //! little-endian `[u64; 4]`, which bounds the dimension at
-//! [`N_MAX_MULTIWORD`]. Within that bound the matrix occupies at most
-//! [`MAX_MATRIX_BYTES_FOR_L1`] bytes (checked at compile time) and the loop
-//! is not cache-blocked.
+//! [`N_MAX_MULTIWORD`].
 
 use gf2_core::gfp::Fp;
 
