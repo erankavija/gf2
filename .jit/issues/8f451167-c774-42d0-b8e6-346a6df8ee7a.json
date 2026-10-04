@@ -8,6 +8,7 @@
   ],
   "description": "Bring the comments and Rustdoc in gf2-core field trait and vector modules to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-core/src/field/` files `traits.rs`, `vec.rs`, `axiom_tests.rs`, `batch_ops.rs`, `test_random_matrix.rs` and `mod.rs`, about 2,700 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
   "documents": [],
+  "done_at": "2026-10-04T08:14:13.313578943Z",
   "first_ready_at": "2026-10-03T16:21:57.841822760Z",
   "gates_required": [
     "cargo-ci",
@@ -17,18 +18,23 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-10-04T07:04:15.262026692Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T07:45:19.544783159Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T07:59:37.554716076Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T07:13:45.982050256Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T07:56:05.233357630Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T07:10:20.632089977Z",
+      "updated_at": "2026-10-04T07:53:42.893469824Z",
       "updated_by": "auto:executor"
     }
   },
@@ -45,7 +51,7 @@
     "satisfies:ffc35b8c/REQ-26"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Tersify comments in gf2-core field trait and vector modules",
-  "updated_at": "2026-10-04T07:13:45.982050256Z"
+  "updated_at": "2026-10-04T08:14:13.313578943Z"
 }

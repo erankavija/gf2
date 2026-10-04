@@ -15,7 +15,28 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T07:53:39.089311098Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T08:10:53.281029838Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T08:07:10.748670917Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-04T07:54:09.345869746Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "50201002-6af5-43d1-bd03-db6521b65852",
   "labels": [
     "epic:documentation-overhaul",
@@ -27,5 +48,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the dev/tools crates",
-  "updated_at": "2026-10-04T06:52:25.897263418Z"
+  "updated_at": "2026-10-04T08:10:53.281029838Z"
 }

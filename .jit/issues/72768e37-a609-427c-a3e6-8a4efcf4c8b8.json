@@ -17,18 +17,23 @@
   ],
   "gates_status": {
     "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T07:49:00.522227988Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-04T07:09:05.326994184Z",
+      "updated_at": "2026-10-04T08:03:40.899580864Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-04T07:12:19.937010004Z",
+      "updated_at": "2026-10-04T07:58:14.538628552Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T07:10:20.692772839Z",
+      "updated_at": "2026-10-04T07:53:54.362996774Z",
       "updated_by": "auto:executor"
     }
   },
@@ -47,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-sim tests, benches, binaries and examples",
-  "updated_at": "2026-10-04T07:12:19.937010004Z"
+  "updated_at": "2026-10-04T08:03:40.899580864Z"
 }
