@@ -17,7 +17,10 @@ import importlib.util
 import json
 import random
 import re
+import shutil
 import statistics
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -230,6 +233,41 @@ class RenderReceiptTest(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("**GAP**", text)
         self.assertIn(f"Dispatch-record IDs without Criterion output: `{cid}`", text)
+
+
+class InputLocationTest(unittest.TestCase):
+    def test_a_rearranged_repository_renders_from_its_own_inputs(self):
+        """The renderer, the lookup helper, and every committed input sit elsewhere."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        repo = Path(tmp.name) / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+        helper = subprocess.run(
+            ["git", "-C", str(REPO), "ls-files", "--", ":(glob)**/repository_files.py"],
+            capture_output=True, check=True, text=True).stdout.strip()
+        placed = {
+            HERE.parent / "render_receipt.py": "tools/renderer/render_receipt.py",
+            REPO / helper: "lib/repository_files.py",
+            REPO / "dev/active/d1b4f85e/smoke-run.md": "notes/workloads/smoke-run.md",
+            REPO / "dev/active/591a1c5e/smoke-run.md": "notes/migrated/smoke-run.md",
+        }
+        for source, target in placed.items():
+            (repo / target).parent.mkdir(parents=True)
+            shutil.copy(source, repo / target)
+        shutil.copytree(REPO / "dev/bench_results/88ca7d2f", repo / "evidence/baseline")
+        shutil.copytree(REPO / "dev/bench_results/4e732b56", repo / "evidence/nested/survey")
+        fx = Fixture(Path(tmp.name))
+        run = subprocess.run(
+            [sys.executable, "-B", str(repo / "tools/renderer/render_receipt.py"), str(fx.dir)],
+            capture_output=True, text=True, cwd="/")
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertIn("Rendered by `tools/renderer/render_receipt.py` under "
+                      "`tools/renderer/receipt-protocol.md`", run.stdout)
+        self.assertIn("Cell mapping: `notes/migrated/smoke-run.md`", run.stdout)
+        pinned = run.stdout.split("## Pinned inputs")[1]
+        self.assertIn("| `evidence/baseline/samples/", pinned)
+        self.assertIn("| `evidence/nested/survey/", pinned)
 
 
 if __name__ == "__main__":
