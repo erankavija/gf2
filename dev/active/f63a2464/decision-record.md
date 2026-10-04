@@ -265,9 +265,10 @@ under `f63a2464`.
    Rust 1.95 verification, runtime dispatch and the tested fallback.
 3. **Before/after evidence and selection rule.** A fresh pilot and confirmation
    of the production path against a pinned pre-change baseline under the
-   measurement contract, covering what this checkpoint leaves unmeasured: the
-   prototype's own memory footprint, lifting sizes below and at the vector
-   width with their dispatch overhead, and a rate-matched NR operating point.
+   measurement contract, covering what this checkpoint leaves unmeasured:
+   lifting sizes below and at the vector width with their dispatch overhead, a
+   rate-matched NR operating point, and the production path's memory by the
+   method of this checkpoint's peak-memory record.
    The selection rule for the dispatch domain is frozen from that evidence.
 
 Inter-frame batching (`ed3d490e`) remains a separate candidate; neither
