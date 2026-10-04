@@ -43,12 +43,12 @@ Dispositions:
     subject, with no clause, table or number attributed;
   - `method or object name`: an algorithm, inequality, generator, cipher, hash
     or mathematical object named without year, title, section or number
-    (Chan–Golub–LeVeque, Hoeffding, SplitMix64, ChaCha20, BLAKE3, Conway
-    polynomial), the eponym class of the scope rule, which a registry key
-    for the name's work leaves unchanged, as for Wilson;
+    (Chan–Golub–LeVeque, Hoeffding, SplitMix64, ChaCha20, BLAKE3), the
+    eponym class of the scope rule, which a registry key for the name's work
+    leaves unchanged, as for Wilson; a line that takes a constant, a format
+    or a number from the work is `keyed`;
   - `names software without attributing a method or number`: nalgebra,
-    Armadillo, the HIP runtime, and `sha256sum` of coreutils, whose check-file
-    format is a format and not a method, constant or measured number;
+    Armadillo and the HIP runtime;
   - `code identifier`: a preset, function or type name;
   - `no external work named`: "standard", "published", "oracle" or
     "reference" with no particular work;
@@ -58,14 +58,14 @@ Dispositions:
 
 | Disposition | Reported by a reader | Taken from the map | Total |
 | --- | ---: | ---: | ---: |
-| `keyed` | 311 | 165 | 476 |
-| `new work` | 6 | 3 | 9 |
-| `not a citation` | 139 | 0 | 139 |
+| `keyed` | 316 | 165 | 481 |
+| `new work` | 9 | 3 | 12 |
+| `not a citation` | 131 | 0 | 131 |
 | total | 456 | 168 | 624 |
 
 Section 4 of the listing counts `not a citation` by reason.
 
-The read registers four works, each verified against the URL its registry
+The read registers five works, each verified against the URL its registry
 entry records:
 
 | Key | Work | Citing lines |
@@ -74,8 +74,9 @@ entry records:
 | `Bryan2013` | RFC 6901, JSON Pointer | `dev/tools/tuning-campaign-support/src/schema.rs:5,8,10` |
 | `Wright2022` | JSON Schema draft 2020-12, Core | `dev/tools/tuning-campaign-support/src/schema.rs:18` |
 | `MacKay2006` | alist format | `crates/gf2-sim/src/bin/export_alist.rs:1,6` |
+| `Coreutils2026` | GNU Coreutils 9.12 manual, check-file line format | `crates/gf2-sim/src/permanent_campaign/provenance.rs:1059,1076,1078` |
 
-Fifteen lines carry an address that the commit read lacks. Each edit stays
+Twenty lines carry an address that the commit read lacks. Each edit stays
 within its line, so the line counts of the commit read hold for the listed
 tree.
 
@@ -94,6 +95,25 @@ tree.
 | `dev/tools/tuning-campaign-support/src/schema.rs:5` | `Bryan2013` |
 | `dev/tools/tuning-campaign-support/src/schema.rs:18` | `Wright2022` |
 | `crates/gf2-sim/src/bin/export_alist.rs:1` | `MacKay2006` |
+| `crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:12` | `Lubeck2024` |
+| `crates/gf2-core/src/field/charpoly.rs:1711` | `Lubeck2024` |
+| `crates/gf2-core/src/field/inverse.rs:420` | `Lubeck2024` |
+| `crates/gf2-core/src/field/ple.rs:1408` | `Lubeck2024` |
+| `crates/gf2-sim/src/permanent_campaign/provenance.rs:1059` | `Coreutils2026` |
+
+Three comments state what their source states; each matches the source
+text, and its edit keeps the line count.
+
+| Line | Statement | Source |
+| --- | --- | --- |
+| `crates/gf2-coding/tests/shortened_fast_path.rs:28,32,37` | $g_1(x) = x^{16} + x^5 + x^3 + x^2 + 1$ from Table 7(a); $t = 12$ and $K_{bch} = 32208$ from Table 6(a) | `@/citation/Etsi2015` |
+| `crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:690` | clause 6.1.3 title "Bit Interleaver (for 16-QAM, 64-QAM and 256-QAM)" | `@/citation/Etsi2015` |
+| `crates/gf2-coding/tests/nr5g_external_vectors.rs:5` | above a payload of 292 bits, clause 7.2.2 selects base graph 2 only for $R \le 0.67$ | `@/citation/ThreeGpp2017` |
+
+Clause 7.2.2 of TS 38.212 V15.0.0 selects base graph 2 for $A \le 292$, for
+$A \le 3824$ with $R \le 0.67$, and for $R \le 0.25$. The registry entry of
+`@/citation/DvbVerification2010` names the stream set, which holds every
+configuration the comments name.
 
 The channel parameters of `RicianConfig::fig8`, `fig9` and `fig10` in
 `fading.rs` are those of the block Rician fading figures of
@@ -103,27 +123,14 @@ Every other `keyed` line in a form the pattern list lacked has a row in the
 map script, under a path scope where the form is anaphoric. No work is
 unidentified, so the map's section 2 gains no class.
 
-## Attributions the sources contradict
+## Attribution the source contradicts
 
-The read compared three comments with their sources and found a difference.
-The comments are unchanged.
-
-- `crates/gf2-coding/tests/shortened_fast_path.rs:28` places the polynomial
-  $x^{16} + x^5 + x^3 + x^2 + 1$ in `@/citation/Etsi2015` Table 6b, and lines
-  32 and 37 take $t = 12$ and $K_{bch} = 32208$ from "the table". EN 302 755
-  V1.4.1 gives the polynomial as $g_1(x)$ in Table 7(a) and both parameters in
-  Table 6(a); Table 6(b) holds the short-frame coding parameters.
-- `crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:690` quotes the title
-  of §6.1.3 as "Bit Interleaving (for 16-QAM, 64-QAM and 256-QAM)". The clause
-  is titled "Bit Interleaver (for 16-QAM, 64-QAM and 256-QAM)".
-- `crates/gf2-kernels-hip/src/host/streams.rs:120` states that the HIP runtime
-  documents `hipStreamSynchronize` and `hipStreamQuery` as thread-safe. The
-  HIP 7.15.0 stream-management reference states it for `hipStreamQuery` only
-  (<https://rocm.docs.amd.com/projects/HIP/en/latest/doxygen/html/group___stream.html>).
-
-`crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs` names the stream
-configurations VV009-4KFFT, VV014-64QAM34 and VV020-FEF under
-`@/citation/DvbVerification2010`, whose entry names configuration VV001-CR35.
+`crates/gf2-kernels-hip/src/host/streams.rs:120` states that the HIP runtime
+documents `hipStreamSynchronize` and `hipStreamQuery` as thread-safe. The
+HIP 7.15.0 stream-management reference states it for `hipStreamQuery` only
+(<https://rocm.docs.amd.com/projects/HIP/en/latest/doxygen/html/group___stream.html>).
+The comment is unchanged: HipStream Sync contract -> 9c7e6369
+(jit issue show 9c7e6369).
 
 ## Command
 
@@ -149,5 +156,5 @@ is not a mechanical proof that no comment cites an unregistered work. A reader
 can pass over a line, and the classification of a reported line is a
 judgement against the scope rule. The script checks that the listing and the
 map agree line by line and that the line counts hold; it does not check the
-judgement. The three source comparisons above cover the lines whose source
-text was open during classification, not every attributed locator.
+judgement. The source comparisons above cover the lines whose source text
+was open during classification, not every attributed locator.

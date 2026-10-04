@@ -1,5 +1,5 @@
 commit read: 04c00d0ba3116652526ba51728390b427fdcad8f
-tree crates: read 04b0f86f09747a1c1bfcdfc971b493f6e51f6046 listed 4d6bd38f36d7037211ea900fb77f98664479e344
+tree crates: read 04b0f86f09747a1c1bfcdfc971b493f6e51f6046 listed 9ac1a8b552457f2b57eeb14d242054ba1c3fc1ae
 tree dev/tools: read 0009776d910dd68924a583327b649dcca488be70 listed 694a7ff2b2520ae45647b6dc54b856847963ae7f
 
 # 1. path | lines read | lines beginning with //
@@ -793,7 +793,7 @@ crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:243 | not a citation | re
 crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:721 | not a citation | repository document or harness | read | // GF(2^m) sparse-elim runs under `--full` only; `linbox_sparse_bench.cpp` emits no
 crates/gf2-coding/examples/dvb_t2_bch_demo.rs:1 | keyed | Etsi2015 | map | //! DVB-T2 BCH outer codes of `@/citation/Etsi2015`: parameters per frame size
 crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:1 | not a citation | repository document or harness | read | //! Emits the GF(2^32) matmul ground truth that `benchmarks/reference/ntl_gf2pow32_smoke.cpp` loads:
-crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:12 | not a citation | method or object name | read | //! conway  : u64                  (full Conway polynomial bits including bit 32)
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:12 | keyed | Lubeck2024 | read | //! conway  : u64                  (Conway polynomial bits of `@/citation/Lubeck2024`, bit 32 included)
 crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:19 | not a citation | repository document or harness | read | //! byte-level protocol of `gf2pow32_constants.h`.
 crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:112 | not a citation | repository document or harness | read | // Seed derivation mirrors `ntl_gf2pow32_smoke.cpp::main`.
 crates/gf2-coding/examples/ldpc_bler_check.rs:1 | not a citation | standard or code family named as a topic | read | //! Block error rate of the rate-matched 5G NR (256,121) code at 3 dB under normalized min-sum
@@ -893,7 +893,7 @@ crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:265 | keyed | Etsi2015 | re
 crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:393 | keyed | Knuth1997 | read | // LCG: a=6364136223846793005, c=1, m=2^64 (Knuth/MMIX).
 crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:586 | keyed | Etsi2015 | read | /// Nc values from Table 9 of `@/citation/Etsi2015`; Nc depends only on
 crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:614 | keyed | Etsi2015 | read | /// Twist offsets from Table 10 of `@/citation/Etsi2015`.
-crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:690 | keyed | Etsi2015 | read | /// `@/citation/Etsi2015` §6.1.3 is titled "Bit Interleaving
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:690 | keyed | Etsi2015 | read | /// `@/citation/Etsi2015` §6.1.3 is titled "Bit Interleaver
 crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:725 | keyed | Etsi2015 | read | /// Per `@/citation/Etsi2015` §6.1.3, for 64-QAM Normal (Nc=12, Nr=5400):
 crates/gf2-coding/src/ldpc/dvb_t2/builder.rs:1 | keyed | Etsi2015 | read | //! Sparse parity-check matrix edge lists from the `@/citation/Etsi2015` tables.
 crates/gf2-coding/src/ldpc/dvb_t2/builder.rs:41 | not a citation | standard or code family named as a topic | read | /// Build sparse parity-check matrix edges from DVB-T2 table format.
@@ -1051,12 +1051,12 @@ crates/gf2-coding/tests/ldpc_validation.rs:226 | keyed | Etsi2015 | map | /// Sh
 crates/gf2-coding/tests/modem_regression.rs:303 | not a citation | code identifier | read | // exact `frame_bits()` for fig8.
 crates/gf2-coding/tests/nr5g_external_vectors.rs:2 | keyed | ThreeGpp2017 | read | //! (`@/citation/ThreeGpp2017` Tables 5.3.2-2 and 5.3.2-3, lifting sets
 crates/gf2-coding/tests/nr5g_external_vectors.rs:3 | keyed | Sionna2026 | map | //! `i_LS` = 0..7) bit-exactly against the `@/citation/Sionna2026` CSV tables
-crates/gf2-coding/tests/nr5g_external_vectors.rs:5 | keyed | ThreeGpp2017 | read | //! BG2 rate coverage stops at 2/3: clause 7.2.2 selects BG2 only for
+crates/gf2-coding/tests/nr5g_external_vectors.rs:5 | keyed | ThreeGpp2017 | read | //! BG2 rate coverage stops at 2/3: above a payload of 292 bits, clause 7.2.2
 crates/gf2-coding/tests/nr5g_external_vectors.rs:16 | keyed | Sionna2026 | read | /// Parses a Sionna base-graph CSV (format in `data/ldpc/nr_5g/PROVENANCE.md`)
 crates/gf2-coding/tests/osd_reprocessing_engine.rs:431 | not a citation | no external work named | read | /// the reference implementation is exact.
-crates/gf2-coding/tests/shortened_fast_path.rs:28 | keyed | Etsi2015 | read | /// $x^{16} + x^5 + x^3 + x^2 + 1$, from `@/citation/Etsi2015` Table 6b.
-crates/gf2-coding/tests/shortened_fast_path.rs:32 | keyed | Etsi2015 | read | /// Designed distance of the normal-frame mother, $2t + 1$ for the table's
-crates/gf2-coding/tests/shortened_fast_path.rs:37 | keyed | Etsi2015 | read | /// mother dimension 65343 less the table's $K_{bch} = 32208$.
+crates/gf2-coding/tests/shortened_fast_path.rs:28 | keyed | Etsi2015 | read | /// $x^{16} + x^5 + x^3 + x^2 + 1$, $g_1(x)$ of `@/citation/Etsi2015` Table 7(a).
+crates/gf2-coding/tests/shortened_fast_path.rs:32 | keyed | Etsi2015 | read | /// Designed distance of the normal-frame mother, $2t + 1$ for the Table 6(a)
+crates/gf2-coding/tests/shortened_fast_path.rs:37 | keyed | Etsi2015 | read | /// mother dimension 65343 less the Table 6(a) $K_{bch} = 32208$.
 crates/gf2-coding/tests/support/fresh_tuning_process.rs:35 | not a citation | repository document or harness | read | /// two lengths every case encodes; it is a rung of the workload-selection
 crates/gf2-coding/tests/support/fresh_tuning_process.rs:183 | not a citation | repository document or harness | read | /// The corpus row B3 of the workload-selection contract: the smallest row
 crates/gf2-coding/tests/support/fresh_tuning_process.rs:306 | not a citation | repository document or harness | read | /// The worker counts every case encodes at, spanning the contract's
@@ -1131,7 +1131,7 @@ crates/gf2-core/src/field/charpoly.rs:898 | keyed | Massey1969 | read | /// Berl
 crates/gf2-core/src/field/charpoly.rs:1405 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012`, theorem 13.1): the product of the
 crates/gf2-core/src/field/charpoly.rs:1459 | keyed | DumasPernet2012 | read | /// squaring (`@/citation/DumasPernet2012`, theorem 13.4).
 crates/gf2-core/src/field/charpoly.rs:1702 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
-crates/gf2-core/src/field/charpoly.rs:1711 | not a citation | method or object name | read | /// Conway-irreducible Gf2mWide<16>.
+crates/gf2-core/src/field/charpoly.rs:1711 | keyed | Lubeck2024 | read | /// Conway-irreducible Gf2mWide<16> (`@/citation/Lubeck2024`).
 crates/gf2-core/src/field/expr.rs:1950 | keyed | Nist2001 | read | // GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
 crates/gf2-core/src/field/extension.rs:2749 | keyed | Seroussi1998 | read | /// `x^256 + x^10 + x^5 + x^2 + 1` (`@/citation/Seroussi1998`, Table 1 row
 crates/gf2-core/src/field/inverse.rs:3 | keyed | DumasPernet2012 | read | //! triangular kernels (`@/citation/DumasPernet2012` §2.3, Table 2).
@@ -1140,7 +1140,7 @@ crates/gf2-core/src/field/inverse.rs:157 | keyed | DumasPernet2012 | read | /// 
 crates/gf2-core/src/field/inverse.rs:262 | keyed | DumasPernet2012 | read | /// (`@/citation/DumasPernet2012` §2.3, Table 2), at full rank
 crates/gf2-core/src/field/inverse.rs:340 | keyed | Higham2002 | read | /// (`@/citation/Higham2002` §14.1): `L · Y = I`, `E · X = Y`, then `Pᵀ`
 crates/gf2-core/src/field/inverse.rs:411 | keyed | Nist2001 | read | /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
-crates/gf2-core/src/field/inverse.rs:420 | not a citation | method or object name | read | /// GF(2^16) with the Conway polynomial.
+crates/gf2-core/src/field/inverse.rs:420 | keyed | Lubeck2024 | read | /// GF(2^16) with the Conway polynomial (`@/citation/Lubeck2024`).
 crates/gf2-core/src/field/inverse.rs:898 | keyed | DumasPernet2012 | read | // Reference driver (`@/citation/DumasPernet2012` §2.3, Table 2): PLE,
 crates/gf2-core/src/field/irreducibility.rs:1 | keyed | Rabin1980 | read | //! Complete irreducibility validation for finite-field polynomials by Rabin's
 crates/gf2-core/src/field/irreducibility.rs:2 | keyed | Rabin1980 | map | //! criterion (`@/citation/Rabin1980`), with a certificate that lets a
@@ -1160,7 +1160,7 @@ crates/gf2-core/src/field/ple.rs:876 | keyed | DumasPernet2012 | read | /// (`@/
 crates/gf2-core/src/field/ple.rs:938 | keyed | DumasPernet2012 | read | /// `X · self = R` and `R` in RREF (`@/citation/DumasPernet2012` §2.2,
 crates/gf2-core/src/field/ple.rs:939 | keyed | DumasPernet2012 | read | /// alg. 2.7).
 crates/gf2-core/src/field/ple.rs:1399 | keyed | Nist2001 | read | /// GF(2^8) with the AES reduction polynomial (`@/citation/Nist2001`).
-crates/gf2-core/src/field/ple.rs:1408 | not a citation | method or object name | read | /// Gf2mWide<16>: Conway polynomial x^16 + x^5 + x^3 + x^2 + 1
+crates/gf2-core/src/field/ple.rs:1408 | keyed | Lubeck2024 | read | /// Gf2mWide<16>: Conway polynomial x^16 + x^5 + x^3 + x^2 + 1 (`@/citation/Lubeck2024`)
 crates/gf2-core/src/field/sparse_matrix.rs:741 | keyed | LinBox2025 | read | /// pivot priority of `GaussDomain::NoReordering` in
 crates/gf2-core/src/field/sparse_matrix.rs:742 | keyed | LinBox2025 | map | /// `@/citation/LinBox2025`.
 crates/gf2-core/src/field/sparse_matrix.rs:1163 | keyed | Nist2001 | read | // GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
@@ -1272,7 +1272,7 @@ crates/gf2-core/tests/common/mod.rs:43 | keyed | SageMath2026 | map | /// `@/cit
 crates/gf2-core/tests/common/mod.rs:54 | keyed | SageMath2026 | map | /// `@/citation/SageMath2026`.
 crates/gf2-core/tests/gf2pow32_constant_drift.rs:1 | keyed | Lubeck2024 | read | //! Drift check between the GF(2^32) Conway polynomial (`@/citation/Lubeck2024`)
 crates/gf2-core/tests/gf2pow32_matmul.rs:10 | keyed | Lubeck2024 | read | /// Low 32 bits of the GF(2^32) Conway polynomial (`@/citation/Lubeck2024`);
-crates/gf2-core/tests/gf2pow32_matmul.rs:14 | not a citation | method or object name | read | /// GF(2^32) under the Conway polynomial.
+crates/gf2-core/tests/gf2pow32_matmul.rs:14 | keyed | Lubeck2024 | read | /// GF(2^32) under the Conway polynomial.
 crates/gf2-core/tests/gf2pow32_matmul.rs:42 | not a citation | method or object name | read | /// An n×n row-major matrix of SplitMix64-derived elements, one step per
 crates/gf2-core/tests/gfpn_nested_towers.rs:4 | keyed | SageMath2025 | map | //! vectors from `@/citation/SageMath2025` generated by
 crates/gf2-core/tests/gfpn_nested_towers.rs:188 | keyed | SageMath2025 | read | // `set_random_seed(42)` under Sage 10.8 (`@/citation/SageMath2025`): flat
@@ -1336,9 +1336,9 @@ crates/gf2-sim/src/permanent_campaign/coordinator.rs:1767 | not a citation | rep
 crates/gf2-sim/src/permanent_campaign/coordinator.rs:1772 | not a citation | no external work named | read | /// Evidence class of one published q=3 source row.
 crates/gf2-sim/src/permanent_campaign/coordinator.rs:1778 | not a citation | no external work named | read | /// Published source Monte Carlo counts.
 crates/gf2-sim/src/permanent_campaign/coordinator.rs:1782 | not a citation | no external work named | read | /// Source table containing a q=3 target row.
-crates/gf2-sim/src/permanent_campaign/provenance.rs:1059 | not a citation | names software without attributing a method or number | read | /// Renders integrity entries in the `sha256sum` check-file format.
-crates/gf2-sim/src/permanent_campaign/provenance.rs:1076 | not a citation | names software without attributing a method or number | read | /// Parses an integrity file in the `sha256sum` check-file format.
-crates/gf2-sim/src/permanent_campaign/provenance.rs:1078 | not a citation | names software without attributing a method or number | read | /// Both coreutils separators are accepted: two spaces for text mode and a space
+crates/gf2-sim/src/permanent_campaign/provenance.rs:1059 | new work | Coreutils2026 | read | /// Renders integrity entries in the `sha256sum` check-file format (`@/citation/Coreutils2026`).
+crates/gf2-sim/src/permanent_campaign/provenance.rs:1076 | new work | Coreutils2026 | read | /// Parses an integrity file in the `sha256sum` check-file format.
+crates/gf2-sim/src/permanent_campaign/provenance.rs:1078 | new work | Coreutils2026 | read | /// Both coreutils separators are accepted: two spaces for text mode and a space
 crates/gf2-sim/src/permanent_campaign/schema.rs:39 | not a citation | repository document or harness | read | /// and the prior-art targets live beside the campaigns, not inside one.
 crates/gf2-sim/src/presets/mod.rs:2 | not a citation | no external work named | read | //! standard's BICM chain over [`Chain`](crate::graph::Chain) and emits a
 crates/gf2-sim/src/presets/mod.rs:4 | keyed | Etsi2015 | map | //! chain (`@/citation/Etsi2015`) and [`nr_5g`] the 5G NR LDPC chain
@@ -1381,13 +1381,13 @@ dev/tools/tuning-campaign-support/src/schema.rs:18 | new work | Wright2022 | rea
 
 # 4. hit counts: disposition | found by | key or reason
   165  keyed | map
-  311  keyed | read
+  316  keyed | read
     3  new work | map
-    6  new work | read
-  139  not a citation | read
+    9  new work | read
+  131  not a citation | read
     9  not a citation | code identifier
-   18  not a citation | method or object name
-   11  not a citation | names software without attributing a method or number
+   13  not a citation | method or object name
+    8  not a citation | names software without attributing a method or number
    19  not a citation | no external work named
     4  not a citation | part of a sentence whose citation is listed at an adjacent line
     1  not a citation | pen-and-paper computation
