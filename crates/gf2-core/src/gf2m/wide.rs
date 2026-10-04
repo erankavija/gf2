@@ -1,5 +1,4 @@
-//! Multi-word `GF(2^M)` elements backed by a fixed-size `[u64; N]` array.
-//!
+//! Multi-word `GF(2^M)` elements backed by a fixed-size `[u64; N]` array:
 //! [`Gf2mWide`] is the const-generic, stack-allocated analogue of
 //! [`crate::gf2m::Gf2mElement_`]. Elements are `Copy` and carry their
 //! configuration at the type level via a zero-sized [`Gf2mWideConfig`] marker.

@@ -1,6 +1,4 @@
-//! GF(p^n) — Extension Field Arithmetic
-//!
-//! Algebraic extensions of prime fields in two forms: compile-time tower
+//! GF(p^n) extension-field arithmetic in two forms: compile-time tower
 //! constructions ([`QuadraticExt`], [`CubicExt`]), each defined by an
 //! irreducible polynomial specified via [`ExtConfig`], and polynomial
 //! quotient fields of arbitrary degree in [`quotient`], whose modulus is

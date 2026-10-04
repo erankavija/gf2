@@ -1,8 +1,6 @@
-//! The BCH construction model: independent inputs, one validating pipeline.
-//!
-//! A [`BchSpec`] carries the independent inputs of a code, and
-//! [`BchCode::construct`] derives the generator, the dimension $k$, the
-//! defining set, the distance bound and the correction radius from them.
+//! The BCH construction model: a [`BchSpec`] carries the independent inputs of
+//! a code, and [`BchCode::construct`] derives the generator, the dimension $k$,
+//! the defining set, the distance bound and the correction radius from them.
 //!
 //! # Coordinate convention
 //!

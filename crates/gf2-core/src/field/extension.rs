@@ -1,10 +1,7 @@
-//! Relative field extensions, algebraic field identity, and validation
-//! certificates.
-//!
-//! [`FieldId`] names a field presentation, a [`FieldExtension`] value
-//! witnesses "the field $B$ sits inside the field $E$", and an
-//! [`ExtensionCertificate`] memoizes the validation of such a pair. Every
-//! fallible operation reports [`FieldError`].
+//! Relative field extensions: [`FieldId`] names a field presentation, a
+//! [`FieldExtension`] value witnesses "the field $B$ sits inside the field
+//! $E$", and an [`ExtensionCertificate`] memoizes the validation of such a
+//! pair. Every fallible operation reports [`FieldError`].
 //!
 //! # Canonical prime coordinates
 //!

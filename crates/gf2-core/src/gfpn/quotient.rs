@@ -1,8 +1,6 @@
-//! Polynomial quotient extension fields in runtime and compile-time form.
-//!
-//! [`QuotientField`] is the runtime descriptor of
-//! $E = B\lbrack x\rbrack/(f)$ with [`QuotientElement`] values, and
-//! [`ConstQuotient`] is the compile-time carrier.
+//! Polynomial quotient extension fields $E = B\lbrack x\rbrack/(f)$: the
+//! runtime descriptor [`QuotientField`] with its [`QuotientElement`]s, and the
+//! compile-time carrier [`ConstQuotient`].
 //!
 //! # Equivalence of the two forms
 //!

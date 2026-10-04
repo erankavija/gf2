@@ -1,8 +1,6 @@
-//! Mutable belief-propagation decoding with syndrome-domain OSD fallback.
-//!
-//! [`BpOsdDecoder`] runs LDPC belief propagation first.  A BP hard word whose
-//! syndrome is zero is the final decision; otherwise the decoder passes that
-//! word and BP's posterior LLRs to [`SyndromeOsdCorrector`].
+//! Belief-propagation decoding with syndrome-domain OSD fallback:
+//! [`BpOsdDecoder`] runs LDPC belief propagation and passes a hard word with a
+//! nonzero syndrome, with BP's posterior LLRs, to [`SyndromeOsdCorrector`].
 
 use std::fmt;
 
