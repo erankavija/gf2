@@ -41,7 +41,7 @@ line in this sketch is verified against that revision.
 
 The canonical prime-coordinate convention (base coordinate varying fastest) and
 the canonical index $\mathrm{idx}$ are the ones fixed by
-[extension-design.md](../ae03bcd0-general-bch/extension-design.md).
+[extension-design.md](../extension-design.md).
 
 ## The extraction surface decides every binding
 
@@ -61,7 +61,7 @@ No invocation names `gf2-coding`.
 | `gf2_coding::bch::spec`, `::encode` | in no Charon invocation | absent from the pipeline entirely |
 
 Every one of the five obligations therefore binds by **abstract model plus
-refinement**. Decision D-08 of the [epic plan](../ae03bcd0-general-bch/plan.md)
+refinement**. Decision D-08 of the [epic plan](../plan.md)
 rejects expanding the extraction pipeline inside this epic, so the sketch takes
 the surface as given rather than proposing new `--start-from` roots.
 
@@ -1279,7 +1279,7 @@ tracking status. Nothing outside this table is assumed by any section above.
 | Id | Assumption | Where it bites | Justification and tracking |
 |---|---|---|---|
 | A-01 | Model-to-production correspondence is by named refinement anchor, not by extraction | O-1 … O-5 | Forced by the extraction surface: `gf2_core::field` and `gf2_core::gfpn::quotient` are `--opaque` and `gf2-coding` is unextracted, and D-08 forbids expanding the pipeline in this epic. Discharged per lemma by the anchor tables, which name an executable Rust check for every lemma. Precedent: the Path-B axiom-plus-exhaustive-test pattern at `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean:162-186`. Each Lean lemma's doc comment cites its anchor. |
-| A-02 | `ExtConfig` non-residues are declared, not verified | O-1's extracted-carrier instance | Pre-existing gap recorded as `CertificateBasis::Declared` (`crates/gf2-core/src/field/extension.rs:1366`) and as risk R-01 of [extension-design.md](../ae03bcd0-general-bch/extension-design.md), a separate register from this sketch's. Carried in Lean as the explicit hypothesis `ValidExtConfig` (`proofs/Gf2Core/Proofs/ExtDefs.lean:65`), never as an axiom. Partly closed in production for the quotient form: every in-tree `ConstQuotientConfig` is decided through `ConstQuotient::extension` in the axiom harness (`crates/gf2-core/src/field/axiom_tests.rs:1816-1843`). |
+| A-02 | `ExtConfig` non-residues are declared, not verified | O-1's extracted-carrier instance | Pre-existing gap recorded as `CertificateBasis::Declared` (`crates/gf2-core/src/field/extension.rs:1366`) and as risk R-01 of [extension-design.md](../extension-design.md), a separate register from this sketch's. Carried in Lean as the explicit hypothesis `ValidExtConfig` (`proofs/Gf2Core/Proofs/ExtDefs.lean:65`), never as an axiom. Partly closed in production for the quotient form: every in-tree `ConstQuotientConfig` is decided through `ConstQuotient::extension` in the axiom harness (`crates/gf2-core/src/field/axiom_tests.rs:1816-1843`). |
 | A-03 | Caller-trusted constructors are outside every model | O-1, O-2 | `BinaryPrimeExt::from_certificate_unchecked` (`crates/gf2-core/src/field/extension.rs:2852`), `ConstExt::from_certificate_unchecked` (`:3050`), `QuotientField::from_certificate_unchecked` (`crates/gf2-core/src/gfpn/quotient.rs:357`), `ConstQuotient::extension_unchecked` (`:1511`). All are the named trust path under `@/inv/caller-trusted-fast-paths`, all document GIGO, and O-2's L2.6 converse states what "garbage out" means precisely. Lemmas are scoped to the deciding constructors. |
 | A-04 | Charon and Aeneas translate Rust to Lean faithfully | every obligation with an extracted anchor | The pipeline's foundational assumption, pre-existing and repository-wide; documented in `docs/lean4-verification-pipeline.md`. Not introduced by this sketch. |
 | A-05 | Extraction-artefact `sorry`s are tolerated; hand-written proof `sorry`s are not | every obligation | `scripts/fix-aeneas-dupes.py:276` injects `set_option warn.sorry false` into the generated `proofs/Gf2Core/Funs.lean`; `scripts/lake-build-strict.sh:47` fails the `lake-build` gate on `declaration uses 'sorry'` in `Gf2Core/Proofs/` and `Gf2Algebra/Proofs/`. All five modules of this sketch land under `Gf2Core/Proofs/`, so the filter covers each of them as landed. |
