@@ -9,31 +9,25 @@ use std::ops::Index;
 #[cfg(any(test, feature = "test-support"))]
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-/// Conservative default for the tuning profile's `field_vec.dot_chunk_len`
-/// field: the elements per chunk of the SIMD dot-product walk.
+/// Default for the tuning profile's `field_vec.dot_chunk_len` field: the
+/// elements per chunk of the SIMD dot-product walk.
 ///
-/// The chunk is the length of the three stack scratch buffers the walk fills,
-/// so it must stay a compile-time constant: 256 elements are
-/// `256 · 8` (a) + `256 · 8` (b) + `256 · 16` (products) = 8 KiB of stack, which
-/// keeps the scratch off the heap. `try_simd_dot_product` sizes its buffers
-/// with `DOT_CHUNK_LEN_SELECTED`.
+/// The chunk sizes three stack scratch buffers (`u64`, `u64`, `u128`), 8 KiB
+/// at 256 elements, so it is a compile-time constant.
 pub(crate) const DOT_CHUNK_LEN: usize = 256;
 
-/// The `field_vec.dot_chunk_len` value `try_simd_dot_product` uses as its
+/// The `field_vec.dot_chunk_len` value `simd_dot_product` uses as its
 /// stack-buffer length and walk step.
 ///
-/// The field is baked rather than resolved through `crate::tuning::active()`
-/// because only a compile-time constant can size a stack array; a runtime
-/// read would move the scratch to the heap, which is what the chunked walk
-/// exists to avoid (`dev/active/7d824b2f/design.md` §3.8). The default build
-/// resolves it to [`DOT_CHUNK_LEN`]; `RUSTFLAGS="--cfg gf2_tuning_baked"`
-/// resolves it to `crate::tuning::baked::DOT_CHUNK_LEN`, following the
-/// bit-backend wiring at `crates/gf2-core/src/kernels/backend.rs:83-89`
-/// (DEC-G). Installing a runtime profile does not move this length.
+/// Baked because only a compile-time constant can size a stack array. The
+/// default build resolves it to [`DOT_CHUNK_LEN`];
+/// `RUSTFLAGS="--cfg gf2_tuning_baked"` resolves it to
+/// `crate::tuning::baked::DOT_CHUNK_LEN`. Installing a runtime profile does
+/// not move this length.
 #[cfg(all(feature = "simd", gf2_tuning_baked))]
 const DOT_CHUNK_LEN_SELECTED: usize = crate::tuning::baked::DOT_CHUNK_LEN;
 
-/// The `field_vec.dot_chunk_len` value `try_simd_dot_product` uses as its
+/// The `field_vec.dot_chunk_len` value `simd_dot_product` uses as its
 /// stack-buffer length and walk step; see the baked arm for the mechanism.
 #[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 const DOT_CHUNK_LEN_SELECTED: usize = DOT_CHUNK_LEN;
@@ -77,31 +71,11 @@ pub fn max_effective_dot_chunk_len() -> usize {
     MAX_EFFECTIVE_DOT_CHUNK_LEN.load(Ordering::Relaxed)
 }
 
-// ── FieldVec ─────────────────────────────────────────────────────────────────
-
 /// A dense vector of finite field elements.
-///
-/// `FieldVec<F>` wraps `Vec<F>` and exposes arithmetic operations
-/// (dot product, scale, axpy, element-wise add/sub/mul) and functional
-/// combinators (map, fold, zip_with) over any type implementing [`FiniteField`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::FieldVec;
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let v = FieldVec::from(vec![field.element(3), field.element(5)]);
-/// assert_eq!(v.len(), 2);
-/// assert_eq!(v[0], field.element(3));
-/// ```
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct FieldVec<F: FiniteField> {
     data: Vec<F>,
 }
-
-// ── Constructors ─────────────────────────────────────────────────────────────
 
 impl<F: FiniteField> FieldVec<F> {
     /// Creates an empty `FieldVec`.
@@ -113,11 +87,6 @@ impl<F: FiniteField> FieldVec<F> {
     ///
     /// Use this for fields whose zero element is only known at runtime (e.g. `Gf2mElement`).
     /// For [`ConstField`] types, prefer [`FieldVec::zeros`] which requires no argument.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Number of elements.
-    /// * `zero` - Any field element; `zero_like()` supplies the additive identity.
     pub fn zeros_from(n: usize, zero: &F) -> Self {
         FieldVec {
             data: (0..n).map(|_| zero.zero_like()).collect(),
@@ -125,10 +94,6 @@ impl<F: FiniteField> FieldVec<F> {
     }
 
     /// Creates a `FieldVec` with capacity for `n` elements but length zero.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Initial capacity.
     pub fn with_capacity(n: usize) -> Self {
         FieldVec {
             data: Vec::with_capacity(n),
@@ -138,18 +103,6 @@ impl<F: FiniteField> FieldVec<F> {
 
 impl<F: ConstField> FieldVec<F> {
     /// Creates a `FieldVec` of length `n` filled with `F::zero()`.
-    ///
-    /// Only available for [`ConstField`] types (those implementing `Copy` with
-    /// zero-cost identity constructors). For runtime-configured fields use
-    /// [`FieldVec::zeros_from`].
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Number of elements.
-    ///
-    /// # Complexity
-    ///
-    /// O(n).
     pub fn zeros(n: usize) -> Self {
         FieldVec {
             data: vec![F::zero(); n],
@@ -157,22 +110,14 @@ impl<F: ConstField> FieldVec<F> {
     }
 }
 
-// ── Default ──────────────────────────────────────────────────────────────────
-
 impl<F: FiniteField> Default for FieldVec<F> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-// ── Element access ────────────────────────────────────────────────────────────
-
 impl<F: FiniteField> FieldVec<F> {
     /// Returns a reference to the element at index `i`.
-    ///
-    /// # Arguments
-    ///
-    /// * `i` - Zero-based index.
     ///
     /// # Panics
     ///
@@ -183,11 +128,6 @@ impl<F: FiniteField> FieldVec<F> {
 
     /// Replaces the element at index `i` with `val`.
     ///
-    /// # Arguments
-    ///
-    /// * `i` - Zero-based index.
-    /// * `val` - New value.
-    ///
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
@@ -196,10 +136,6 @@ impl<F: FiniteField> FieldVec<F> {
     }
 
     /// Appends `val` to the end of the vector.
-    ///
-    /// # Arguments
-    ///
-    /// * `val` - Element to append.
     pub fn push(&mut self, val: F) {
         self.data.push(val);
     }
@@ -225,8 +161,6 @@ impl<F: FiniteField> FieldVec<F> {
     }
 }
 
-// ── Index ─────────────────────────────────────────────────────────────────────
-
 impl<F: FiniteField> Index<usize> for FieldVec<F> {
     type Output = F;
 
@@ -234,8 +168,6 @@ impl<F: FiniteField> Index<usize> for FieldVec<F> {
         &self.data[i]
     }
 }
-
-// ── Iteration ─────────────────────────────────────────────────────────────────
 
 impl<F: FiniteField> FieldVec<F> {
     /// Returns an iterator over shared references to elements.
@@ -275,8 +207,6 @@ impl<F: FiniteField> FromIterator<F> for FieldVec<F> {
     }
 }
 
-// ── Conversion ────────────────────────────────────────────────────────────────
-
 impl<F: FiniteField> From<Vec<F>> for FieldVec<F> {
     fn from(v: Vec<F>) -> Self {
         FieldVec { data: v }
@@ -289,20 +219,8 @@ impl<F: FiniteField> From<FieldVec<F>> for Vec<F> {
     }
 }
 
-// ── Arithmetic ────────────────────────────────────────────────────────────────
-
 impl<F: FiniteField> FieldVec<F> {
     /// Computes `∑ self[i] * rhs[i]` with delayed reduction.
-    ///
-    /// Uses [`FiniteField::max_unreduced_additions`] to determine how many wide
-    /// multiply-add accumulations can be performed before reduction is needed to
-    /// avoid overflow. This is both a correctness requirement (prevents `u128`
-    /// overflow for large primes) and a performance optimisation (minimises
-    /// expensive Montgomery reductions).
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` - Right-hand vector; must have the same length as `self`.
     ///
     /// # Panics
     ///
@@ -312,30 +230,6 @@ impl<F: FiniteField> FieldVec<F> {
     ///
     /// O(n) multiplications and `⌈n / kmax⌉` reductions, where
     /// `kmax = F::max_unreduced_additions()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, FiniteField};
-    /// use gf2_core::gf2m::{Gf2mElement, Gf2mField};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = FieldVec::from(vec![field.element(3), field.element(5)]);
-    /// let b = FieldVec::from(vec![field.element(2), field.element(1)]);
-    /// let result = a.dot_product(&b);
-    /// // 3*2 XOR 5*1 = 6 XOR 5 = 3 in GF(16)
-    /// assert_eq!(result, field.element(3));
-    /// ```
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, ConstField};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = FieldVec::from(vec![Fp::<7>::new(3), Fp::<7>::new(5)]);
-    /// let b = FieldVec::from(vec![Fp::<7>::new(2), Fp::<7>::new(4)]);
-    /// // 3*2 + 5*4 = 6 + 20 = 26 ≡ 5 (mod 7)
-    /// assert_eq!(a.dot_product(&b), Fp::<7>::new(5));
-    /// ```
     pub fn dot_product(&self, rhs: &Self) -> F {
         assert_eq!(
             self.len(),
@@ -345,46 +239,22 @@ impl<F: FiniteField> FieldVec<F> {
             rhs.len()
         );
         assert!(!self.is_empty(), "dot_product: vectors must not be empty");
-        // SIMD fast path: dispatches through
-        // `FiniteField::try_simd_dot_product` (currently the small-prime
-        // AVX2 byte-lane kernel for `Fp<P>` with `P <= 251`); falls back
-        // to the chunked-Wide kernel when no specialised SIMD path
-        // applies.
         if let Some(value) = F::try_simd_dot_product(&self.data, &rhs.data) {
             return value;
         }
-        // Delegate to the slice-based kernel. Using the first element as the
-        // zero witness matches the previous behaviour exactly (`self.data[0]
-        // .zero_like()`).
         let zero = self.data[0].zero_like();
         dot_product_slices(&self.data, &rhs.data, &zero)
     }
 }
 
-/// Slice-level dot product with delayed reduction.
+/// Dot product of two equal-length slices with delayed reduction.
 ///
-/// This is the inner kernel shared by [`FieldVec::dot_product`] and the
-/// [`FieldMatrix`](crate::field::matrix::FieldMatrix) classical `gemm` /
-/// `matvec` / `matvec_transpose` paths. It exists so those callers can
-/// compute `∑ a[i] * b[i]` over arbitrary borrowed slices without first
-/// materialising a `FieldVec`.
-///
-/// Correctness contract (Dumas–Pernet §1.2, theorem 4 classical case):
-/// accumulates at most
+/// Accumulates at most
 /// [`FiniteField::max_unreduced_additions`](crate::field::FiniteField::max_unreduced_additions)
-/// wide products before reducing, so the `Wide` accumulator never overflows
-/// for any finite field this crate models. For `Fp<P>` this uses the
-/// storage-domain product-sum hook: Montgomery fields accumulate raw
-/// `(aR)·(bR)` products and do one modulo-`P` plus one REDC per chunk,
-/// rather than converting both operands out of Montgomery form on every
-/// multiply. The product bound is unchanged because every raw storage word
-/// is still `< P`.
-///
-/// # Arguments
-///
-/// * `a`, `b` — Slices of equal length `n >= 0`.
-/// * `zero` — Any field element; `zero.zero_like()` is used to seed the
-///   accumulator for the empty-input case and for chunked reductions.
+/// wide products before reducing (`@/citation/DumasPernet2012` §1.2,
+/// theorem 4 classical case), so the `Wide` accumulator does not overflow.
+/// `zero.zero_like()` is the result for empty input and seeds the chunked
+/// reductions.
 ///
 /// # Panics
 ///
@@ -402,15 +272,6 @@ pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> 
         return zero.zero_like();
     }
 
-    // Prime-field SIMD dot hook — overridden by `Fp<P>` for medium primes
-    // (`P ∈ (251, 65536)`) to route through the AVX2 16-lane u16 Barrett
-    // kernel in `gf2-kernels-simd::fp_medium`. For every other field the
-    // default returns `None` and we continue through the delayed-reduction
-    // path below.
-    //
-    // This entry point allocates scratch buffers locally; the GEMM kernel
-    // calls the hook directly with reused scratches to amortise the
-    // packing cost across many output cells.
     let mut scratch_a: Vec<u16> = Vec::new();
     let mut scratch_b: Vec<u16> = Vec::new();
     if let Some(value) = F::try_fp_simd_dot_product(a, b, &mut scratch_a, &mut scratch_b) {
@@ -434,9 +295,7 @@ pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> 
         }
         acc
     } else {
-        // General case: chunk by kmax, accumulate in Wide, reduce at boundaries.
-        // Each chunk contributes at most kmax wide products — this is the
-        // delayed-reduction bound theorem 4 / §1.2 of Dumas–Pernet.
+        // At most kmax wide products per chunk (`@/citation/DumasPernet2012` §1.2).
         let mut result = zero.zero_like();
         let mut offset = 0usize;
         while offset < a.len() {
@@ -460,14 +319,6 @@ pub(crate) fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> 
 
 impl<F: FiniteField> FieldVec<F> {
     /// Returns a new `FieldVec` with each element multiplied by scalar `a`.
-    ///
-    /// # Arguments
-    ///
-    /// * `a` - Scalar field element.
-    ///
-    /// # Complexity
-    ///
-    /// O(n) multiplications.
     pub fn scale(&self, a: &F) -> Self {
         FieldVec {
             data: self.data.iter().map(|e| e.clone() * a.clone()).collect(),
@@ -476,18 +327,9 @@ impl<F: FiniteField> FieldVec<F> {
 
     /// In-place fused multiply-add: `self[i] += a * rhs[i]` for all `i`.
     ///
-    /// # Arguments
-    ///
-    /// * `a` - Scalar field element.
-    /// * `rhs` - Right-hand vector; must have the same length as `self`.
-    ///
     /// # Panics
     ///
     /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(n) multiplications.
     pub fn axpy(&mut self, a: &F, rhs: &Self) {
         assert_eq!(
             self.len(),
@@ -496,10 +338,6 @@ impl<F: FiniteField> FieldVec<F> {
             self.len(),
             rhs.len()
         );
-        // Accelerated path: each field's `try_simd_axpy` override is the
-        // authoritative statement of when it runs (`Fp<P>`: issue d1dd266c;
-        // GF(2^8): `gf2m::byte_table::gf256_table_dispatch`, issue 77c21ecd).
-        // Falls through to the scalar zip-loop for every field that declines.
         if F::try_simd_axpy(self.data.as_mut_slice(), a, rhs.data.as_slice()) {
             return;
         }
@@ -509,16 +347,11 @@ impl<F: FiniteField> FieldVec<F> {
     }
 }
 
-// ── Element-wise ops ──────────────────────────────────────────────────────────
-
 impl<F: FiniteField + SimdVecOps> FieldVec<F> {
     /// Returns `self[i] + rhs[i]` element-wise.
     ///
-    /// For base fields with a SIMD kernel (including supported `Fp<P>` primes
-    /// on AVX2 hosts with the `simd` feature) this dispatches through
-    /// [`SimdVecOps::try_simd_add_vec`]; other base fields, unsupported
-    /// hardware, and `simd`-disabled builds fall back to the scalar
-    /// element-wise loop.
+    /// Dispatches through [`SimdVecOps::try_simd_add_vec`] and falls back to
+    /// the scalar loop when the hook declines.
     ///
     /// # Panics
     ///
@@ -546,29 +379,12 @@ impl<F: FiniteField + SimdVecOps> FieldVec<F> {
 
     /// Returns `self[i] - rhs[i]` element-wise.
     ///
-    /// For base fields with a SIMD kernel (including supported `Fp<P>` primes
-    /// on AVX2 hosts with the `simd` feature) this dispatches through
-    /// [`SimdVecOps::try_simd_sub_vec`]; other base fields, unsupported
-    /// hardware, and `simd`-disabled builds fall back to the scalar
-    /// element-wise loop.
+    /// Dispatches through [`SimdVecOps::try_simd_sub_vec`] and falls back to
+    /// the scalar loop when the hook declines.
     ///
     /// # Panics
     ///
     /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = FieldVec::from(vec![field.element(5), field.element(3)]);
-    /// let b = FieldVec::from(vec![field.element(1), field.element(2)]);
-    /// let c = a.sub_vec(&b);
-    /// // In GF(2^m), sub == add
-    /// assert_eq!(c[0], field.element(5 ^ 1));
-    /// ```
     pub fn sub_vec(&self, rhs: &Self) -> Self {
         assert_eq!(
             self.len(),
@@ -592,19 +408,12 @@ impl<F: FiniteField + SimdVecOps> FieldVec<F> {
 
     /// Returns the Hadamard product `self[i] * rhs[i]` element-wise.
     ///
-    /// For base fields with a SIMD kernel (including supported `Fp<P>` primes
-    /// on AVX2 hosts with the `simd` feature) this dispatches through
-    /// [`SimdVecOps::try_simd_mul_vec`]; other base fields, unsupported
-    /// hardware, and `simd`-disabled builds fall back to the scalar
-    /// element-wise loop.
+    /// Dispatches through [`SimdVecOps::try_simd_mul_vec`] and falls back to
+    /// the scalar loop when the hook declines.
     ///
     /// # Panics
     ///
     /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(n) multiplications.
     pub fn mul_vec(&self, rhs: &Self) -> Self {
         assert_eq!(
             self.len(),
@@ -627,18 +436,8 @@ impl<F: FiniteField + SimdVecOps> FieldVec<F> {
     }
 }
 
-// ── Functional ────────────────────────────────────────────────────────────────
-
 impl<F: FiniteField> FieldVec<F> {
     /// Applies `f` to each element, returning a new `FieldVec<G>`.
-    ///
-    /// # Arguments
-    ///
-    /// * `f` - Mapping function.
-    ///
-    /// # Complexity
-    ///
-    /// O(n) applications of `f`.
     pub fn map<G: FiniteField, Map: FnMut(&F) -> G>(&self, f: Map) -> FieldVec<G> {
         FieldVec {
             data: self.data.iter().map(f).collect(),
@@ -646,29 +445,15 @@ impl<F: FiniteField> FieldVec<F> {
     }
 
     /// Reduces the vector to a single value by applying `f` left-to-right.
-    ///
-    /// # Arguments
-    ///
-    /// * `init` - Initial accumulator value.
-    /// * `f` - Combining function: `(accumulator, element) → new_accumulator`.
     pub fn fold<B, Func: FnMut(B, &F) -> B>(&self, init: B, f: Func) -> B {
         self.data.iter().fold(init, f)
     }
 
     /// Combines two equal-length vectors element-wise using `f`, returning a new `FieldVec<G>`.
     ///
-    /// # Arguments
-    ///
-    /// * `other` - Right-hand vector; must have the same length as `self`.
-    /// * `f` - Combining function applied to corresponding pairs.
-    ///
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(n) applications of `f`.
     pub fn zip_with<G: FiniteField, Func: FnMut(&F, &F) -> G>(
         &self,
         other: &Self,
@@ -692,28 +477,9 @@ impl<F: FiniteField> FieldVec<F> {
     }
 }
 
-// ── StridedIter ───────────────────────────────────────────────────────────────
-
 /// Iterator that steps through a slice with a fixed stride.
 ///
 /// Useful for column access in row-major matrix layouts stored as flat slices.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::StridedIter;
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let data = vec![
-///     field.element(0), field.element(1),
-///     field.element(2), field.element(3),
-///     field.element(4), field.element(5),
-/// ];
-/// // Column 0 (stride 2): indices 0, 2, 4
-/// let col: Vec<_> = StridedIter::new(&data, 0, 2).collect();
-/// assert_eq!(col, vec![&field.element(0), &field.element(2), &field.element(4)]);
-/// ```
 pub struct StridedIter<'a, F> {
     slice: &'a [F],
     pos: usize,
@@ -723,15 +489,9 @@ pub struct StridedIter<'a, F> {
 impl<'a, F> StridedIter<'a, F> {
     /// Creates a `StridedIter` starting at index `start`, advancing by `stride` each step.
     ///
-    /// # Arguments
-    ///
-    /// * `slice` - The underlying data slice.
-    /// * `start` - Index of the first element to yield.
-    /// * `stride` - Number of positions to advance between consecutive yields. Must be ≥ 1.
-    ///
     /// # Panics
     ///
-    /// Panics if `stride == 0` (would cause non-terminating iteration).
+    /// Panics if `stride == 0`.
     pub fn new(slice: &'a [F], start: usize, stride: usize) -> Self {
         assert!(stride > 0, "StridedIter: stride must be at least 1");
         StridedIter {
@@ -756,59 +516,21 @@ impl<'a, F> Iterator for StridedIter<'a, F> {
     }
 }
 
-// ── SimdVecOps: element-wise SIMD dispatch hook for FieldVec ────────────────
-//
-// `FieldVec::mul_vec`/`add_vec`/`sub_vec` consult this trait's `try_simd_*`
-// hooks before falling back to scalar loops. Every base field may return
-// `None` (the default, giving scalar behaviour) or override the hook to
-// route through a kernel in `gf2-kernels-simd`.
-//
-// `Fp<65537>` and supported Montgomery `Fp<P>` primes route to AVX2 kernels
-// through the central helpers in [`crate::gfp::simd_ops`]. Unsupported fields
-// inherit the `None` default through the same blanket impl.
-
 pub use crate::gfp::SimdVecOps;
-
-// ── GF(2^m)-specific SIMD-accelerated dot product ───────────────────────────
 
 use crate::gf2m::Gf2mElement;
 
 impl FieldVec<Gf2mElement> {
-    /// SIMD-accelerated dot product for GF(2^m) using PCLMULQDQ batch kernel.
+    /// Dot product for GF(2^m) through the batched carry-less multiply
+    /// kernel: all 128-bit products are XORed into one accumulator, which is
+    /// Barrett-reduced once.
     ///
-    /// Performs all carry-less multiplications in one pass through the raw batch
-    /// kernel of the default GF(2^m) SIMD bundle (`gf2_kernels_simd::gf2m::detect`,
-    /// which selects sequential PCLMULQDQ), XORs all 128-bit products into one
-    /// accumulator, then Barrett-reduces once.
-    ///
-    /// Falls back to the generic [`dot_product`](FieldVec::dot_product) when
-    /// PCLMULQDQ is not available at runtime.
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` - Right-hand operand; must have the same length as `self`.
+    /// Falls back to [`dot_product`](FieldVec::dot_product) without the
+    /// `simd` feature or when the kernel is unavailable at runtime.
     ///
     /// # Panics
     ///
     /// Panics if the vectors have different lengths or are empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(8, 0x11B);
-    /// let a = FieldVec::from(vec![field.element(0x53), field.element(0xCA)]);
-    /// let b = FieldVec::from(vec![field.element(0x12), field.element(0x34)]);
-    /// let simd_result = a.simd_dot_product(&b);
-    /// assert_eq!(simd_result, a.dot_product(&b));
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(n) carry-less multiplications (batched) + O(n) XOR accumulation +
-    /// O(1) Barrett reduction.
     pub fn simd_dot_product(&self, rhs: &Self) -> Gf2mElement {
         self.simd_dot_product_chunked::<DOT_CHUNK_LEN_SELECTED>(rhs)
     }
@@ -830,22 +552,16 @@ impl FieldVec<Gf2mElement> {
             .unwrap_or_else(|| self.dot_product(rhs))
     }
 
-    /// Attempts the SIMD batch path. Returns `None` when hardware support is
-    /// unavailable, so the caller can fall back.
-    ///
-    /// Processes the vectors in fixed-size chunks to keep scratch buffers on the
-    /// stack and avoid per-call heap allocations.
+    /// Returns `None` when the batch kernel is unavailable. Chunks of `CHUNK`
+    /// elements keep the scratch buffers on the stack.
     #[cfg(feature = "simd")]
     fn try_simd_dot_product_chunked<const CHUNK: usize>(&self, rhs: &Self) -> Option<Gf2mElement> {
         debug_assert!(CHUNK > 0, "SIMD dot-product chunk must be non-zero");
-        // Grab SIMD function pointers from the first element's field params.
         let sample = &self.data[0];
         let batch_fn = sample.clmul_batch_fn()?;
         let clmul_fn = sample.clmul_fn()?;
         let reducer = sample.barrett_reducer()?;
 
-        // Process in chunks that fit comfortably on the stack; see
-        // `DOT_CHUNK_LEN_SELECTED`.
         let mut a_buf = [0u64; CHUNK];
         let mut b_buf = [0u64; CHUNK];
         let mut p_buf = [0u128; CHUNK];
@@ -860,7 +576,6 @@ impl FieldVec<Gf2mElement> {
             let chunk_len = end - offset;
             widest_executed_chunk = widest_executed_chunk.max(chunk_len);
 
-            // Extract raw u64 values into stack buffers.
             for (i, (a, b)) in self.data[offset..end]
                 .iter()
                 .zip(&rhs.data[offset..end])
@@ -870,14 +585,12 @@ impl FieldVec<Gf2mElement> {
                 b_buf[i] = b.value();
             }
 
-            // Batch carry-less multiply through the default bundle's kernel.
             batch_fn(
                 &a_buf[..chunk_len],
                 &b_buf[..chunk_len],
                 &mut p_buf[..chunk_len],
             );
 
-            // XOR-accumulate the 128-bit products.
             for &p in &p_buf[..chunk_len] {
                 acc ^= p;
             }
@@ -888,7 +601,6 @@ impl FieldVec<Gf2mElement> {
         #[cfg(any(test, feature = "test-support"))]
         MAX_EFFECTIVE_DOT_CHUNK_LEN.fetch_max(widest_executed_chunk, Ordering::Relaxed);
 
-        // Single Barrett reduction at the very end.
         let result = reducer.reduce_with_clmul(acc, clmul_fn);
 
         Some(sample.with_raw_value(result))
@@ -953,8 +665,6 @@ fn simd_dot_candidate<const CHUNK: usize>(
 ) -> Gf2mElement {
     lhs.simd_dot_product_chunked::<CHUNK>(rhs)
 }
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
@@ -1029,7 +739,6 @@ mod tests {
 
     #[test]
     fn test_dot_product_orthogonal() {
-        // [1, 0] · [0, 1] = 1*0 XOR 0*1 = 0
         let f = Gf2mField::new(4, 0b10011);
         let a = FieldVec::from(vec![f.one(), f.zero()]);
         let b = FieldVec::from(vec![f.zero(), f.one()]);
@@ -1069,7 +778,6 @@ mod tests {
         let mut y = FieldVec::from(vec![f.element(1), f.element(2)]);
         let x = FieldVec::from(vec![f.element(3), f.element(4)]);
         y.axpy(&f.element(2), &x);
-        // y[i] = old_y[i] + a * x[i]
         assert_eq!(y[0], f.element(1) + f.element(2) * f.element(3));
         assert_eq!(y[1], f.element(2) + f.element(2) * f.element(4));
     }
@@ -1156,7 +864,6 @@ mod tests {
         let v = FieldVec::from(vec![f.element(1), f.element(2), f.element(3)]);
         let collected: Vec<_> = (&v).into_iter().collect();
         assert_eq!(collected, vec![&f.element(1), &f.element(2), &f.element(3)]);
-        // v still valid
         assert_eq!(v.len(), 3);
     }
 
@@ -1182,11 +889,9 @@ mod tests {
             f.element(4),
             f.element(5),
         ];
-        // stride 2 from start 0 → indices 0, 2, 4
         let col: Vec<_> = StridedIter::new(&data, 0, 2).collect();
         assert_eq!(col, vec![&f.element(0), &f.element(2), &f.element(4)]);
 
-        // stride 2 from start 1 → indices 1, 3, 5
         let col2: Vec<_> = StridedIter::new(&data, 1, 2).collect();
         assert_eq!(col2, vec![&f.element(1), &f.element(3), &f.element(5)]);
     }
@@ -1202,8 +907,6 @@ mod tests {
         assert_ne!(v, x);
     }
 
-    // ── Fp dot product tests ──────────────────────────────────────────────────
-
     #[test]
     fn test_dot_product_fp7_matches_elementwise() {
         use crate::gfp::Fp;
@@ -1212,7 +915,6 @@ mod tests {
         let b = FieldVec::from(vec![Fp::<7>::new(2), Fp::<7>::new(4), Fp::<7>::new(1)]);
         let dot = a.dot_product(&b);
 
-        // Element-wise reference
         let manual = Fp::<7>::new(3) * Fp::<7>::new(2)
             + Fp::<7>::new(5) * Fp::<7>::new(4)
             + Fp::<7>::new(6) * Fp::<7>::new(1);
@@ -1229,9 +931,6 @@ mod tests {
         let b: FieldVec<Fp<65521>> = vals_b.iter().map(|&v| Fp::<65521>::new(v)).collect();
         let dot = a.dot_product(&b);
 
-        // Manual: 100*600 + 200*700 + 300*800 + 400*900 + 500*1000
-        //       = 60000 + 140000 + 240000 + 360000 + 500000 = 1300000
-        // 1300000 mod 65521 = 1300000 - 19*65521 = 1300000 - 1244899 = 55101
         let manual: Fp<65521> = vals_a
             .iter()
             .zip(vals_b.iter())
@@ -1266,16 +965,13 @@ mod tests {
     #[test]
     fn test_dot_product_large_prime_no_overflow() {
         use crate::gfp::Fp;
-        // P near 2^63: kmax = u128::MAX / (P-1)^2 ≈ 4, so chunking kicks in
-        // for vectors longer than ~5 elements. The old code would accumulate
-        // without chunking and could overflow u128 for long vectors.
+        // P near 2^63: kmax = u128::MAX / (P-1)^2 ≈ 4, so n = 100 spans many chunks.
         const P: u64 = 9_223_372_036_854_775_783; // largest prime <= 2^63
         let n = 100;
         let a: FieldVec<Fp<P>> = (0..n).map(|i| Fp::<P>::new(i + 1)).collect();
         let b: FieldVec<Fp<P>> = (0..n).map(|i| Fp::<P>::new(i + 100)).collect();
         let dot = a.dot_product(&b);
 
-        // Verify against element-wise computation (which reduces per multiply)
         let manual: Fp<P> = (0..n)
             .map(|i| Fp::<P>::new(i + 1) * Fp::<P>::new(i + 100))
             .fold(Fp::<P>::new(0), |acc, x| acc + x);
@@ -1308,7 +1004,6 @@ mod tests {
 
     #[test]
     fn test_dot_product_gf2m_unchanged() {
-        // GF(2^8) dot product should match element-wise XOR of products
         let f = Gf2mField::gf256();
         let a = FieldVec::from(vec![
             f.element(0x53),
@@ -1324,7 +1019,6 @@ mod tests {
         ]);
         let dot = a.dot_product(&b);
 
-        // Reference: element-wise multiply and XOR
         let manual = (f.element(0x53) * f.element(0x12))
             + (f.element(0xCA) * f.element(0x34))
             + (f.element(0x01) * f.element(0x56))
@@ -1335,8 +1029,6 @@ mod tests {
     #[test]
     fn test_dot_product_fp7_fast_path() {
         use crate::gfp::Fp;
-        // For Fp<7>, kmax = u128::MAX / 36 ≈ 9.4e36 — effectively no chunking needed
-        // for short vectors. This exercises the general-case path but with a huge kmax.
         let a = FieldVec::from(vec![Fp::<7>::new(6), Fp::<7>::new(6)]);
         let b = FieldVec::from(vec![Fp::<7>::new(6), Fp::<7>::new(6)]);
         // 6*6 + 6*6 = 36 + 36 = 72 ≡ 2 (mod 7)
@@ -1373,16 +1065,14 @@ mod tests {
     #[test]
     fn test_dot_product_large_prime_max_residues() {
         use crate::gfp::Fp;
-        // P near 2^63, use values close to P-1
         const P: u64 = 9_223_372_036_854_775_783;
         let p_minus_1 = Fp::<P>::new(P - 1);
-        // Create vectors where all elements are P-1 (worst case for overflow)
+        // P-1 everywhere maximises every wide product.
         let a = FieldVec::from(vec![p_minus_1; 100]);
         let b = FieldVec::from(vec![p_minus_1; 100]);
 
         let result = a.dot_product(&b);
 
-        // Verify against element-wise computation
         let expected: Fp<P> = (0..100).fold(Fp::<P>::zero(), |acc, _| acc + p_minus_1 * p_minus_1);
         assert_eq!(result, expected);
     }
@@ -1402,7 +1092,6 @@ mod tests {
                 .collect::<Vec<_>>(),
         );
         let result = a.dot_product(&b);
-        // Verify against element-wise
         let expected: Fp<65521> = a
             .iter()
             .zip(b.iter())
@@ -1426,7 +1115,6 @@ mod tests {
                 .collect::<Vec<_>>(),
         );
         let result = a.dot_product(&b);
-        // Verify against element-wise
         let expected: Fp<P> = a
             .iter()
             .zip(b.iter())
@@ -1456,32 +1144,25 @@ mod tests {
         assert_eq!(result, expected);
     }
 
-    // ── Property-based tests ──────────────────────────────────────────────────
-
     proptest::proptest! {
-        /// dot_product is bilinear: (a·x) · y = a * (x · y) for scalar a.
         #[test]
         fn prop_dot_product_scale_linear(
             raw_a in 1u32..15,
             xs in proptest::collection::vec(1u32..15, 2..500),
             ys in proptest::collection::vec(1u32..15, 2..500),
         ) {
-            // Restrict to equal lengths
             let len = xs.len().min(ys.len());
             let f = Gf2mField::new(4, 0b10011);
             let a = f.element(raw_a as u64);
             let x: FieldVec<Gf2mElement> = xs[..len].iter().map(|&v| f.element(v as u64)).collect();
             let y: FieldVec<Gf2mElement> = ys[..len].iter().map(|&v| f.element(v as u64)).collect();
 
-            // (a*x) · y == a * (x · y)  — bilinearity
             let ax = x.scale(&a);
             let lhs = ax.dot_product(&y);
             let rhs = a.clone() * x.dot_product(&y);
             proptest::prop_assert_eq!(lhs, rhs);
         }
 
-        /// dot_product distributes over addition for Fp<7>:
-        /// a · (b + c) == a · b + a · c.
         #[test]
         fn prop_dot_product_additive_linear_fp7(
             xs in proptest::collection::vec(0u64..7, 2..500),
@@ -1500,8 +1181,6 @@ mod tests {
             proptest::prop_assert_eq!(lhs, rhs);
         }
 
-        /// dot_product scalar linearity for Fp<7>:
-        /// (k * a) · b == k * (a · b).
         #[test]
         fn prop_dot_product_scale_linear_fp7(
             k_raw in 0u64..7,
@@ -1519,8 +1198,6 @@ mod tests {
             proptest::prop_assert_eq!(lhs, rhs);
         }
 
-        /// dot_product distributes over addition for Fp<65521>:
-        /// a · (b + c) == a · b + a · c.
         #[test]
         fn prop_dot_product_additive_linear_fp65521(
             xs in proptest::collection::vec(0u64..65521, 2..500),
@@ -1539,8 +1216,6 @@ mod tests {
             proptest::prop_assert_eq!(lhs, rhs);
         }
 
-        /// dot_product scalar linearity for Fp<65521>:
-        /// (k * a) · b == k * (a · b).
         #[test]
         fn prop_dot_product_scale_linear_fp65521(
             k_raw in 0u64..65521,
@@ -1558,7 +1233,6 @@ mod tests {
             proptest::prop_assert_eq!(lhs, rhs);
         }
 
-        /// dot_product commutativity for Fp<7>: a · b == b · a.
         #[test]
         fn prop_dot_product_commutative_fp7(
             xs in proptest::collection::vec(0u64..7, 2..500),
@@ -1571,7 +1245,6 @@ mod tests {
             proptest::prop_assert_eq!(a.dot_product(&b), b.dot_product(&a));
         }
 
-        /// dot_product commutativity for Fp<65521>: a · b == b · a.
         #[test]
         fn prop_dot_product_commutative_fp65521(
             xs in proptest::collection::vec(0u64..65521, 2..500),
@@ -1584,7 +1257,6 @@ mod tests {
             proptest::prop_assert_eq!(a.dot_product(&b), b.dot_product(&a));
         }
 
-        /// dot_product commutativity for a large prime near 2^63.
         #[test]
         fn prop_dot_product_commutative_large_prime(
             vals_a in proptest::collection::vec(0u64..9_223_372_036_854_775_783u64, 2..500),
@@ -1594,15 +1266,12 @@ mod tests {
             let a: FieldVec<Fp<P>> = FieldVec::from(
                 vals_a.iter().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>(),
             );
-            // Use reversed values for b to get different vectors
             let b: FieldVec<Fp<P>> = FieldVec::from(
                 vals_a.iter().rev().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>(),
             );
             proptest::prop_assert_eq!(a.dot_product(&b), b.dot_product(&a));
         }
 
-        /// dot_product additive bilinearity for a large prime near 2^63:
-        /// a · (b + c) == a · b + a · c.
         #[test]
         fn prop_dot_product_additive_linear_large_prime(
             vals_a in proptest::collection::vec(0u64..100u64, 2..500),
@@ -1615,7 +1284,6 @@ mod tests {
             let a: FieldVec<Fp<P>> = FieldVec::from(vals_a[..n].iter().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>());
             let b: FieldVec<Fp<P>> = FieldVec::from(vals_b[..n].iter().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>());
             let c: FieldVec<Fp<P>> = FieldVec::from(vals_c[..n].iter().map(|&v| Fp::<P>::new(v)).collect::<Vec<_>>());
-            // b + c element-wise
             let bc: FieldVec<Fp<P>> = FieldVec::from(
                 b.iter().zip(c.iter()).map(|(bi, ci)| *bi + *ci).collect::<Vec<_>>()
             );
@@ -1624,8 +1292,6 @@ mod tests {
             proptest::prop_assert_eq!(lhs, rhs);
         }
 
-        /// dot_product scalar bilinearity for a large prime near 2^63:
-        /// (k * a) · b == k * (a · b).
         #[test]
         fn prop_dot_product_scale_linear_large_prime(
             k_raw in 0u64..100u64,
@@ -1644,7 +1310,6 @@ mod tests {
             proptest::prop_assert_eq!(lhs, rhs);
         }
 
-        /// axpy correctness: y after axpy equals element-wise y[i] + a*x[i].
         #[test]
         fn prop_axpy_matches_manual(
             raw_a in 0u32..15,
@@ -1665,7 +1330,6 @@ mod tests {
             }
         }
 
-        /// add_vec associativity: (a + b) + c == a + (b + c).
         #[test]
         fn prop_add_vec_associative(
             elems in proptest::collection::vec(0u32..15, 3..500),
@@ -1685,7 +1349,6 @@ mod tests {
             proptest::prop_assert_eq!(lhs, rhs);
         }
 
-        /// simd_dot_product commutativity for random GF(2^8) vectors.
         #[test]
         fn prop_simd_dot_product_commutative_gf256(
             xs in proptest::collection::vec(0u64..256, 2..500),
@@ -1699,8 +1362,6 @@ mod tests {
             proptest::prop_assert_eq!(a.simd_dot_product(&b), a.dot_product(&b));
         }
     }
-
-    // ── SIMD dot product tests ──────────────────────────────────────────────
 
     #[test]
     fn test_simd_dot_product_matches_scalar_all_m() {
@@ -1766,16 +1427,9 @@ mod tests {
         empty.simd_dot_product(&empty);
     }
 
-    /// The GF(2^m) SIMD dot product agrees with the scalar reference at the
-    /// batch and chunk boundaries and on high-bit-bearing operands.
-    ///
-    /// This is the production consumer of the raw carry-less batch kernel:
-    /// it packs field elements into `u64` buffers, calls the batch kernel,
-    /// XOR-accumulates the 128-bit products and Barrett-reduces once. The
-    /// lengths cover 1, 2, the 63/64/65 word boundary, the odd lengths that
-    /// leave a non-vector batch tail, and the 255/256/257 chunk boundary of
-    /// `DOT_CHUNK_LEN_SELECTED`. GF(2^32) carries operand bits far above the
-    /// 16-bit fields the other cases use.
+    /// The lengths cover 1, 2, odd tails, the 63/64/65 word boundary and the
+    /// 255/256/257 boundary of the default `DOT_CHUNK_LEN`; GF(2^32) carries
+    /// operand bits above bit 15.
     #[test]
     fn simd_dot_product_matches_scalar_at_boundaries() {
         use crate::primitive_polys::PrimitivePolynomialDatabase;
@@ -1788,8 +1442,6 @@ mod tests {
                 .expect("standard primitive polynomial for this degree");
             let f = Gf2mField::new(m, poly);
             let mask = if m == 64 { u64::MAX } else { (1u64 << m) - 1 };
-            // Adversarial values inside the field: zero, one, the high bit,
-            // all ones, and the two alternating masks.
             let palette = [
                 0u64,
                 1,
@@ -1813,16 +1465,6 @@ mod tests {
             }
         }
     }
-
-    // ── FieldVec<Fp<65537>> SIMD-dispatch tests ────────────────────────────
-    //
-    // `mul_vec`/`add_vec`/`sub_vec` transparently route through the AVX2
-    // kernel via `SimdVecOps`. These tests verify the unified surface
-    // produces the same result as a hand-rolled scalar reference loop
-    // (exercising the boundary and overflow cases that distinguish the
-    // SIMD path). When the `simd` feature is off or AVX2 is unavailable,
-    // the fallback arm runs; the tests are written so either path yields
-    // the same answer.
 
     fn fp65537_scalar_mul_vec(a: &[u64], b: &[u64]) -> Vec<u64> {
         a.iter()
@@ -1966,15 +1608,8 @@ mod tests {
         }
     }
 
-    /// Verifies the `simd_dot_product` fallback path returns the correct scalar
-    /// result. When the `simd` feature is disabled, `try_simd_dot_product` always
-    /// returns `None` and `simd_dot_product` falls back to `dot_product`. When the
-    /// `simd` feature is enabled but PCLMULQDQ is unavailable at runtime, the same
-    /// fallback triggers because `clmul_batch_fn()` returns `None`.
-    ///
-    /// This test runs on both feature configurations: with `simd` it validates the
-    /// end-to-end result (SIMD or fallback, whichever the hardware picks), without
-    /// `simd` it exercises the fallback path directly.
+    /// Reaches the fallback only without the `simd` feature or without a
+    /// runtime batch kernel; otherwise the kernel path runs.
     #[test]
     fn test_simd_dot_product_fallback_correctness() {
         let f = Gf2mField::new(4, 0b10011); // GF(2^4), x^4 + x + 1
@@ -2000,8 +1635,6 @@ mod tests {
              scalar={scalar:?}, simd={simd:?}"
         );
 
-        // Also verify against a manually computed value to ensure the scalar
-        // path itself is correct: sum of pairwise GF(2^4) products.
         let expected = f.element(0x3) * f.element(0x5)
             + f.element(0x7) * f.element(0x2)
             + f.element(0xA) * f.element(0xC)
