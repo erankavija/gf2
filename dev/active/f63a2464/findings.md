@@ -301,7 +301,11 @@ candidate's per-frame iteration vector equals the canonical arm's on every NR
 cell (quality tables, "Bit-exactness of family QC"), so the two iteration
 distributions are one distribution rather than two comparable ones; the AFF3CT
 arm's distribution is its own prepared record under the same stopping contract.
-Memory is covered for the canonical and AFF3CT arms only, which Limits states.
+Memory is the untimed peak resident set of the canonical and QC arm processes on
+every cell of the two canonical-comparison families, observed by one method with
+its sample count and spread (timing tables, "Peak memory of the canonical and QC
+arms"), written by [record-memory.py](survey/record-memory.py); the QC arm's
+peak is the lower of the two on every cell.
 
 **Quality on the timed cells.** Every timed cell carries each arm's frame and
 bit error counts over the frozen frames with the protocol's Wilson and
@@ -359,7 +363,7 @@ evidence.
 | REQ-01 | MET for the evidence this issue produces | Contract, protocol, addendum and ledger identities are frozen and pinned by every receipt; arms are built at Rust 1.95 with recorded digests; all six campaigns verify from their own execution logs and each verdict recomputes from its committed receipt. Negative outcomes are preserved: the S2 stops of families Q and L and the comparator ledger's `fail` cells. No production change is made, so no before/after pair is owed here; the proposed scope carries it. |
 | REQ-02 | MET | The decision record names the three families and freezes the exploratory and confirmatory search and stop budget before any prototype exists; every externally sourced claim cites a registry key. |
 | REQ-03 | MET | The numerical-contract review states the canonical contract on all six axes, each family's declared contract against it, and the MSRV intrinsic feasibility record with its emitted assembly. DVB-T2's inapplicability to family QC is explained with source evidence rather than dropped. |
-| REQ-04 | Partly met — two gaps, both under Limits | Every family's prototype is evaluated on the measured DVB-T2 and NR cells on the quality axis, with iteration distributions and equivalent stopping. Family QC is confirmed on sustained throughput, single-frame latency and multicore throughput against the canonical decoder and, separately, against the matched external arm; the fastest quality-compatible comparison has no admitted arm. The gaps: families L and Q carry no timed cell because the frozen screen admits none of their configurations, and the QC prototype's own memory footprint is not observed. |
+| REQ-04 | Partly met — one gap, under Limits | Every family's prototype is evaluated on the measured DVB-T2 and NR cells on the quality axis, with iteration distributions and equivalent stopping. Family QC is confirmed on sustained throughput, single-frame latency and multicore throughput against the canonical decoder and, separately, against the matched external arm; the fastest quality-compatible comparison has no admitted arm. Memory is an untimed peak resident set of both arms by one method. The gap: families L and Q carry no timed cell because the frozen screen admits none of their configurations. |
 | REQ-05 | MET | Tolerances predeclared and committed before any quality result; BER and FER with counts and intervals over random and all-zero codewords, punctured and filler inputs, mixed convergence and the difficult subset, and again on every timed cell; external conformance under each declared contract, with the unavailable narrow-alphabet comparator preserved. No bit-exactness is claimed without evidence, and the one family that claims it is tested at the posterior level and projected at the cell level. |
 | REQ-06 | Partly met — design and scope proposed, review pending | Every family carries a published decision with the stop rule and evidence behind it and its limitations: no proceed for Q and L, proceed for QC. The production design and worker-sized scope for QC are written as proposals in the decision record; their review is a lead decision, and no prototype becomes the production decoder. |
 
@@ -375,12 +379,15 @@ canonical arm's, and family Q fails only the DVB-T2 recorded cell while passing
 every NR cell. Whether those two families deserve timed cells under a differently
 frozen screen is outside an instrument this issue may change.
 
-**The QC prototype's memory footprint is not observed.** A timed arm carries the
-prepared `c077a88b` quality record its plan names after checking its own
-per-frame errors against it, so the memory field of the candidate's rows is the
-canonical arm's prepared figure, as the timing tables' last column shows. The
-canonical and AFF3CT arms' figures are their own. REQ-04's memory axis is unmet
-for the candidate, and the proposed scope's evidence item names it.
+**The timed receipts carry no memory figure of the QC prototype.** A timed arm
+carries the prepared `c077a88b` quality record its plan names after checking its
+own per-frame errors against it, so the memory field of the candidate's receipt
+rows is the canonical arm's prepared figure, as the timing tables' carried-record
+column shows. The candidate's own footprint is the untimed
+[peak-memory record](../../bench_results/f63a2464/memory/peak-rss.json): peak
+resident set of the whole arm process over repeated launches on one host,
+descriptive, with a floor that bounds the launcher's and runner's share. It is
+no allocation census of the decoder state.
 
 **The timed evidence covers one workload point.** Every timed cell decodes the
 NR BG1 lifting-384 mother code at one recorded operating point on one host. The
@@ -455,7 +462,9 @@ committed pilot receipts, and
 three family ledgers rewrites the budget record from each chain's
 pre-confirmation prefix.
 [summarize-timing.py](survey/summarize-timing.py) over the results directory
-rewrites the timing tables, verifying each campaign's execution log on the way,
+rewrites the timing tables, verifying each campaign's execution log on the way;
+[record-memory.py](survey/record-memory.py) observes the untimed peak-memory
+record those tables cite,
 and `benchmark-acceptance` over a copy of a receipt directory rewrites its
 acceptance summary. The prototype and probe crates are standalone workspaces
 with their own target directories; `cargo +1.95 test --release` in each runs
