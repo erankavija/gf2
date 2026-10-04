@@ -1,0 +1,54 @@
+{
+  "schema": "ldpc-candidate-build-identity-v1",
+  "observed_utc": "2026-09-17T22:40:58Z",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
+  "cxx": "c++ (GCC) 16.2.1 20260810",
+  "rustflags": "-C target-cpu=native",
+  "cargo_profile": "release: opt-level 3, lto, codegen-units 1, debug line-tables-only",
+  "build_commands": {
+    "baseline": "CARGO_CI_NO_SCCACHE=1 GF2_AFF3CT_ROOT=<aff3ct root> CARGO_TARGET_DIR=\"$PWD/ldpc-qc-baseline\" RUSTFLAGS='-C target-cpu=native' ./scripts/cargo-budget.sh cargo +1.95 build --offline --release --features aff3ct --manifest-path dev/active/3be770d5/survey/harness/Cargo.toml",
+    "candidate": "CARGO_TARGET_DIR=\"$PWD/ldpc-qc-arms\" RUSTFLAGS='-C target-cpu=native' ./scripts/cargo-budget.sh cargo +1.95 build --offline --release --manifest-path dev/active/f63a2464/survey/arms/Cargo.toml"
+  },
+  "directories": {
+    "baseline": "target/ldpc-qc-baseline/release",
+    "candidate": "target/ldpc-qc-arms/release"
+  },
+  "executables": {
+    "gf2-throughput-arm": {
+      "generation": "baseline",
+      "sha256": "3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447"
+    },
+    "aff3ct-throughput-arm": {
+      "generation": "baseline",
+      "sha256": "5f8df6f3c9c0abfe23dee1b0589c7e45e867c0c1903366c3f54197dec48bc9b8"
+    },
+    "qc-decoder-arm": {
+      "generation": "candidate",
+      "sha256": "6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236"
+    }
+  },
+  "aff3ct": {
+    "root": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct",
+    "static_library": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a",
+    "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+  },
+  "inputs": {
+    "archive": "dev/bench_results/c077a88b/v3-preparation/source-inputs/recorded-inputs.tar.gz",
+    "archive_sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba",
+    "extracted_to": "target/ldpc-inputs"
+  },
+  "prepared_quality": {
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json": "8443cdfae4e6bfb7036c8dbb10142baecacd40f911c582bf18a369aefa15559a",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json": "330e6dd7c7c90c904128328084e4ceb678fbe3a38a2ed56e7155ec4e6a2f72d0",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-dvb-t2-r12.json": "ce3b3131cb445afad9240703ee381d314dc5606fdcc60825aa1893c078aec220",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-nr-bg1-z384.json": "1e26ac7ca28a997054fca90080d2736fe41e0439ad568e8f2a862e839d0008f2",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-dvb-t2-r12.json": "82a065128d3f1400ca1be37aab75f40e270b61307e7713a0f9f808c91c95273a",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json": "fc00b05ba8e05726b733e8e6c05d4ddaff3a2ae6f9b3b5f565fdd2a786cc6ef1",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json": "29248fdeeb0f408166190f9c0c5d72b7ce8b40f09a1eb3ddb7a7c9cd437fea4d",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-nr-bg1-z384.json": "c2af6d639fc07ad0d3871a4595b81328faeba999a5ac63471e100e4fc2ed6d77",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json": "68beaf11e9139cf3a12123016215747ede3ac796663a23c51bcd3c78c5e4e5ce",
+    "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json": "12d9c0994d23424fecbbf286d5c0250a2d599a172505c08c855805ca47575fad",
+    "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6",
+    "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
+  }
+}
