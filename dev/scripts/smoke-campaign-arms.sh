@@ -3,7 +3,7 @@
 #
 # Usage (from the worker worktree root), with every flag required except the
 # bracketed ones:
-#   dev/scripts/smoke-campaign-arms.sh --issue ID --addendum JSON
+#   smoke-campaign-arms.sh --issue ID --addendum JSON
 #       --arm-manifest Cargo.toml --arm-bin NAME --plan-tool PY
 #       --producing JSON --record PATH --campaign-id ID --seed N
 #       --max-cells N [--pilot-pairs N] [--smoke-bin NAME]
@@ -30,7 +30,7 @@
 # record line carries a clock reading.
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO=$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || {
     echo 'invoke from the worker worktree root' >&2
     exit 2
