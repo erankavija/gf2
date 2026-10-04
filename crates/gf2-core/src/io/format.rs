@@ -1,31 +1,30 @@
-//! Binary format constants and structures for GF(2) data serialization.
+//! Constants and header types of the GF2DATA binary format.
 
-/// Magic bytes that identify a GF(2) data file: "GF2DATA\0"
+/// Magic bytes at offset 0 of a GF2DATA file.
 pub const MAGIC_BYTES: &[u8; 8] = b"GF2DATA\0";
 
 /// Current format version
 pub const FORMAT_VERSION: u16 = 1;
 
-/// Fixed header size in bytes (32 bytes for natural alignment)
-/// Layout: 8 (magic) + 2 (version) + 1 (type) + 1 (flags) + 8 (reserved) + 4 (metadata_len) + 8 (data_len)
+/// Fixed header size in bytes.
 pub const HEADER_SIZE: usize = 32;
 
-/// Type tags for different data structures
+/// Header type byte naming the serialized data structure.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TypeTag {
-    /// BitVec type (tag = 1)
+    /// `BitVec` payload.
     BitVec = 1,
-    /// BitMatrix type (tag = 2)
+    /// `BitMatrix` payload.
     BitMatrix = 2,
-    /// SpBitMatrix type (tag = 3)
+    /// `SpBitMatrix` payload.
     SpBitMatrix = 3,
-    /// SpBitMatrixDual type (tag = 4)
+    /// `SpBitMatrixDual` payload.
     SpBitMatrixDual = 4,
 }
 
 impl TypeTag {
-    /// Convert a u8 to a TypeTag
+    /// Tag with wire value `value`; `None` for an unassigned value.
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {
             1 => Some(TypeTag::BitVec),
@@ -37,52 +36,52 @@ impl TypeTag {
     }
 }
 
-/// Flags for optional features
+/// Header flags byte: bit 0 compression, bit 1 checksum.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Flags {
     bits: u8,
 }
 
 impl Flags {
-    /// Create new flags with no bits set
+    /// Flags with no bit set.
     pub fn new() -> Self {
         Self { bits: 0 }
     }
 
-    /// Set compression flag
+    /// Sets the compression bit.
     pub fn with_compression(mut self) -> Self {
         self.bits |= 0x01;
         self
     }
 
-    /// Set checksum flag
+    /// Sets the checksum bit.
     pub fn with_checksum(mut self) -> Self {
         self.bits |= 0x02;
         self
     }
 
-    /// Check if compression is enabled
+    /// Whether the compression bit is set.
     pub fn has_compression(&self) -> bool {
         self.bits & 0x01 != 0
     }
 
-    /// Check if checksum is enabled
+    /// Whether the checksum bit is set.
     pub fn has_checksum(&self) -> bool {
         self.bits & 0x02 != 0
     }
 
-    /// Convert to u8
+    /// The flags byte as stored in the header.
     pub fn to_u8(&self) -> u8 {
         self.bits
     }
 
-    /// Create from u8
+    /// Flags from a stored header byte; unassigned bits are kept.
     pub fn from_u8(bits: u8) -> Self {
         Self { bits }
     }
 }
 
-/// File header structure (32 bytes)
+/// Decoded fields of the fixed header.
 #[derive(Debug, Clone)]
 pub struct Header {
     /// Format version
@@ -98,7 +97,7 @@ pub struct Header {
 }
 
 impl Header {
-    /// Create a new header with default flags
+    /// Header at [`FORMAT_VERSION`] with no flag set.
     pub fn new(type_tag: TypeTag, metadata_len: u32, data_len: u64) -> Self {
         Self {
             version: FORMAT_VERSION,
@@ -122,7 +121,6 @@ mod tests {
 
     #[test]
     fn test_header_size() {
-        // 8 (magic) + 2 (version) + 1 (type) + 1 (flags) + 8 (reserved) + 4 (metadata_len) + 8 (data_len) = 32
         assert_eq!(HEADER_SIZE, 32);
     }
 
