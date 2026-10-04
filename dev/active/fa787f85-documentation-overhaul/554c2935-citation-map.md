@@ -37,8 +37,10 @@ An entry of section 1 or 2 that matches no line prints `-`.
 
 Every work that a comment cites by address or by a detected prose form has a
 registry key exactly when the script exits with status 0, every section 2
-class prints `-` and section 3 holds no `UNEXPLAINED` line. The heuristic is a
-pattern list; a prose citation in a form it does not match appears in no
+class prints `-` and section 3 holds no `UNEXPLAINED` line. Coverage rests on
+the pattern list and on the read of every comment line recorded in
+[`fa4939c3-comment-read.md`](fa4939c3-comment-read.md): the table holds a row
+for each prose form that read lists, and a form outside both appears in no
 section.
 
 ## Scope rule
@@ -81,6 +83,11 @@ named here.
   `crates/gf2-coding/tests/data/bch_oracle/sage.json` and the headers of
   `crates/gf2-algebra/tests/data/cas_permanent_f3_batch.csv` and
   `cas_permanent_f5_f7.csv` record.
+- `GapGroup2026` is the version
+  `crates/gf2-coding/tests/data/bch_oracle/gap.json` records, and
+  `AeneasVerif2026` the pair `scripts/verify-lean.sh` pins.
+- `Wright2022` is the draft the comment names, 2020-12. `KlyneNewman2002` and
+  `Bryan2013` are RFCs, which have one edition each.
 - `Higham2002` and `Warren2012` are the editions whose section numbers the
   comments use: chapter 14 of the 2nd edition of the first is matrix inversion,
   and section 7-3 of the 2nd edition of the second transposes a bit matrix.
