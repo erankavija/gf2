@@ -212,7 +212,7 @@
           "text": "            b.iter(|| black_box(FieldPoly::batch_mul(black_box(ps))));"
         },
         {
-          "path": "crates/gf2-core/docs/GF2M.md",
+          "path": "dev/archive/legacy/crates/gf2-core/docs/GF2M.md",
           "line": 65,
           "text": "batch_mul(&field, &a, &b, &mut out);"
         },
