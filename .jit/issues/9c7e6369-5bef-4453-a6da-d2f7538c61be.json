@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T13:48:57.806178789Z",
+  "dependencies": [],
+  "description": "The `Sync` safety comment of `HipStream` in `crates/gf2-kernels-hip/src/host/streams.rs` rests on the statement that the HIP runtime documents `hipStreamSynchronize` and `hipStreamQuery` as thread-safe for concurrent calls. The HIP stream-management reference states thread safety for `hipStreamQuery`; it carries no such statement for `hipStreamSynchronize`. `@/inv/unsafe-kernel-isolation` requires an explicit, true safety contract at every unsafe boundary.\n\n## Background\n\nFound by the comment read of issue fa4939c3 (`fa4939c3-comment-read.md`, section \"Attributions the sources contradict\"), against the HIP 7.15.0 reference.\n\n## Success Criteria\n\n- [hard] REQ-01: The `unsafe impl Sync for HipStream` safety comment cites, for each HIP call that a `&self` method issues, the vendor statement or the tested property that makes concurrent calls on one stream sound; a call without such evidence is not reachable through `&HipStream` from two threads.\n- [hard] REQ-02: A test on a ROCm host calls `synchronize` and `is_idle` on one stream from several threads, or the type's API prevents that use and a compile-fail or unit test shows it.\n- [hard] REQ-03: The gf2-kernels-hip crate checks pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T13:48:57.806178789Z",
+  "gates_required": [
+    "gf2-kernels-hip-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "9c7e6369-5bef-4453-a6da-d2f7538c61be",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-hip",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Ground the HipStream Sync contract in documented HIP behavior",
+  "updated_at": "2026-10-04T13:48:57.806178789Z"
+}
