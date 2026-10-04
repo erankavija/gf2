@@ -8,7 +8,7 @@ use gf2_coding::modem::awgn_link::unit_energy_sigma_sq_from_eb_n0_db;
 
 /// BI-AWGN capacity and dispersion at Es/N0 points: (Es/N0 dB, C bits,
 /// V bits²). Computed independently of this crate by adaptive Gauss–Kronrod
-/// quadrature (`scipy.integrate.quad`, epsrel 1e-14) of the mean and variance
+/// quadrature (relative tolerance 1e-14) of the mean and variance
 /// of `i = 1 − log2(1 + exp(−2a(a + z)))`, `z ~ N(0, 1)`, `a = sqrt(2·Es/N0)`.
 const REFERENCE_CAPACITY_DISPERSION: &[(f64, f64, f64)] = &[
     (-10.0, 0.131416082353, 0.31641800871),
