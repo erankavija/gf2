@@ -27,9 +27,6 @@
 //! tuning::install(prepared).expect("tuning has not been resolved");
 //! assert_eq!(tuning::active().bit_backend().simd_min_words(), 16);
 //! ```
-//!
-//! Provenance descriptions remain plain strings and feature names remain
-//! `Vec<String>` because they are runtime-observed free text or opaque tokens.
 
 use std::fmt;
 

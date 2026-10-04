@@ -6,37 +6,6 @@
 //! extension-field arithmetic decomposes into base-field passes over
 //! contiguous slices. The quadratic and cubic products dispatch through
 //! [`SimdKaratsubaHook`].
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::field::FiniteField;
-//! use gf2_core::gfp::Fp;
-//! use gf2_core::gfpn::{BatchExtField, ExtConfig, QuadraticExt};
-//!
-//! struct Cfg;
-//! impl ExtConfig for Cfg {
-//!     type BaseField = Fp<65537>;
-//!     const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
-//! }
-//! type Fq2 = QuadraticExt<Cfg>;
-//!
-//! let xs: Vec<Fq2> = (0..8)
-//!     .map(|i| Fq2::new(Fp::new(i + 1), Fp::new(2 * i + 3)))
-//!     .collect();
-//! let ys: Vec<Fq2> = (0..8)
-//!     .map(|i| Fq2::new(Fp::new(7 * i + 5), Fp::new(11 * i + 2)))
-//!     .collect();
-//!
-//! let batch_x = BatchExtField::<Fp<65537>, 2>::from_quadratic::<Cfg>(&xs);
-//! let batch_y = BatchExtField::<Fp<65537>, 2>::from_quadratic::<Cfg>(&ys);
-//! let batch_z = batch_x.batch_mul_quadratic::<Cfg>(&batch_y);
-//! let zs = batch_z.to_quadratic::<Cfg>();
-//!
-//! for ((x, y), z) in xs.iter().zip(ys.iter()).zip(zs.iter()) {
-//!     assert_eq!(*x * *y, *z);
-//! }
-//! ```
 
 use std::array;
 

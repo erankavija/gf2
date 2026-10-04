@@ -1,31 +1,18 @@
 //! Polynomial quotient extension fields in runtime and compile-time form.
 //!
-//! [`QuotientField`] is the reference implementation of a polynomial quotient
-//! $E = B\lbrack x\rbrack/(f)$. A [`QuotientElement`] stores exactly `degree(f)` base-field
-//! coefficients in ascending order, so `[a0, a1, ...]` denotes
-//! $a_0 + a_1 x + \cdots$. The modulus is supplied in the same constant-first
-//! convention, must be monic, and is validated as irreducible by
-//! [`QuotientField::new`]. Multiplication uses schoolbook convolution followed
-//! by the rewrite
-//! $x^r = -\sum_{i=0}^{r-1} f_i x^i$. Inversion uses polynomial extended
-//! Euclid, and Frobenius iterates exponentiation by the prime characteristic.
-//!
-//! The presentation identity is exactly
-//! [`FieldId::quotient`](crate::field::extension::FieldId::quotient) with the
-//! base identity, the certificate's [`ModulusId`], and [`Basis::Polynomial`].
-//! Canonical prime coordinates concatenate the coordinates of each stored
-//! base coefficient, with the base coordinate varying fastest.
+//! [`QuotientField`] is the runtime descriptor of
+//! $E = B\lbrack x\rbrack/(f)$ with [`QuotientElement`] values, and
+//! [`ConstQuotient`] is the compile-time carrier.
 //!
 //! # Equivalence of the two forms
 //!
-//! [`QuotientField`] and the compile-time [`ConstQuotient`] of one
-//! presentation are the same field under three propositions,
-//! which the file's differential suite checks over
-//! $\mathrm{GF}(2^4)$, $\mathrm{GF}(5^3)$, and $\mathrm{GF}(3^4)$ over
-//! $\mathrm{GF}(9)$:
+//! [`QuotientField`] and [`ConstQuotient`] of one base and modulus are the
+//! same field under three propositions, which the
+//! `const_and_runtime_forms_agree_on_*` tests check over $\mathrm{GF}(2^4)$,
+//! $\mathrm{GF}(5^3)$, and $\mathrm{GF}(3^4)$ over $\mathrm{GF}(9)$:
 //!
 //! 1. **Identity agreement.** `<ConstQuotient<R, C> as FieldIdentity>::field_id_hint()`
-//!    equals `Some(runtime_witness.field_id())`.
+//!    is `Some` of the runtime descriptor's [`FieldExtension::ext_id`].
 //! 2. **Coordinate agreement.** [`FieldIdentity::write_prime_coords`] produces
 //!    equal vectors for corresponding elements.
 //! 3. **Observable equivalence.**
@@ -34,36 +21,6 @@
 //!    [`FieldExtension::relative_frobenius`],
 //!    [`minimal_polynomial`](crate::field::extension::minimal_polynomial), and
 //!    [`canonical_generator`](crate::field::extension::canonical_generator).
-//!
-//! Because the shared [`FieldId`] pins the basis, `convert_element` between the
-//! two carriers is the identity map on canonical coordinates.
-//!
-//! # Walkthrough
-//!
-//! ```
-//! use gf2_core::field::extension::{FieldExtension, FieldIdentity};
-//! use gf2_core::field::{ConstField, FieldPoly, FiniteField};
-//! use gf2_core::gfp::Fp;
-//! use gf2_core::gfpn::QuotientField;
-//!
-//! // GF(5^3) = GF(5)[x] / (x^3 + x + 1).
-//! let field = QuotientField::new(
-//!     Fp::<5>::zero(),
-//!     FieldPoly::new(vec![Fp::new(1), Fp::new(1), Fp::new(0), Fp::new(1)]),
-//! )?;
-//! let x = field.indeterminate();
-//! let a = field.element(vec![Fp::new(2), Fp::new(3)])?;
-//!
-//! assert_eq!(field.relative_degree(), 3);
-//! assert_eq!(a.coefficients(), &[Fp::new(2), Fp::new(3), Fp::new(0)]);
-//! assert!((a.clone() * a.inv().unwrap()).is_one());
-//! assert_eq!(field.relative_frobenius(&x, 3), x);
-//! assert_eq!(a.field_id(), field.ext_id().clone());
-//! # Ok::<(), gf2_core::field::FieldError>(())
-//! ```
-//!
-//! The same field declared at compile time, and the transport between the two
-//! carriers:
 //!
 //! ```
 //! use gf2_core::field::extension::{convert_element, FieldExtension, FieldIdentity};

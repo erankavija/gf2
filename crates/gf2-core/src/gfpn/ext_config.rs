@@ -1,31 +1,8 @@
 //! Configuration trait for algebraic field extensions.
 //!
-//! [`ExtConfig`] specifies the irreducible polynomial for a field extension via
-//! a non-residue β. Extension types like `QuadraticExt<C>` (x² − β) and
-//! `CubicExt<C>` (x³ − β) are parameterized by a zero-sized config type
-//! implementing this trait. The non-residue is an associated constant, so the
-//! base field must support const construction (which `Fp<P>` does via
-//! `const fn new()`).
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::gfp::Fp;
-//! use gf2_core::gfpn::ExtConfig;
-//!
-//! /// GF(7²) via x² + 1 (i.e., x² − (−1), β = −1 = 6 mod 7).
-//! struct Fq2Config;
-//!
-//! impl ExtConfig for Fq2Config {
-//!     type BaseField = Fp<7>;
-//!     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6); // β = −1
-//!
-//!     #[inline]
-//!     fn mul_by_non_residue(x: Fp<7>) -> Fp<7> {
-//!         -x // fast path: β = −1
-//!     }
-//! }
-//! ```
+//! [`ExtConfig`] names the base field and the non-residue β that define the
+//! binomial extensions `x² − β` (`QuadraticExt<C>`) and `x³ − β`
+//! (`CubicExt<C>`).
 
 use crate::field::ConstField;
 

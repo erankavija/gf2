@@ -1,11 +1,8 @@
 //! GF(p) — Prime Field Arithmetic
 //!
-//! [`Fp`] is a prime field over a const-generic modulus. Its API works on
-//! canonical values in `[0, P)`; the storage form (Montgomery, canonical, or
-//! bitwise for `P = 2`) is chosen at compile time from the algebraic shape
-//! of `P`. The Goldilocks prime `2^64 − 2^32 + 1` does not fit the
-//! `P ≤ 2^63` bound enforced by `Fp<P>` and is exposed via the dedicated
-//! [`specialized::GoldilocksFp`] type.
+//! [`Fp`] is a prime field over a const-generic modulus. The Goldilocks prime
+//! `2^64 − 2^32 + 1` does not fit the `P ≤ 2^63` bound enforced by `Fp<P>`
+//! and is exposed via the dedicated [`specialized::GoldilocksFp`] type.
 
 mod montgomery;
 pub mod simd_ops;

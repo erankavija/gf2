@@ -3,7 +3,6 @@
 //! [`Gf2mWide`] is the const-generic, stack-allocated analogue of
 //! [`crate::gf2m::Gf2mElement_`]. Elements are `Copy` and carry their
 //! configuration at the type level via a zero-sized [`Gf2mWideConfig`] marker.
-//! Every wide carry-less product selects its kernel in `clmul_wide_dispatch`.
 
 use std::any::{Any, TypeId};
 use std::collections::HashMap;

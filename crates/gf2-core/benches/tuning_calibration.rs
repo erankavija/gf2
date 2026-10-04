@@ -1,8 +1,7 @@
 //! Crate-owned calibration of retained core thresholds and execution extents for
 //! the neutral campaign driver: typed cases, fixtures, installed core-only
 //! envelopes, scalar witnesses and `tuning-calibration-v4` artifact decisions.
-//! Only fresh child operations install tuning. The experiment is declared in
-//! `dev/active/dbd8787d/premeasurement-protocol.md`.
+//! Only fresh child operations install tuning.
 use std::env;
 use std::fmt;
 use std::fs;
