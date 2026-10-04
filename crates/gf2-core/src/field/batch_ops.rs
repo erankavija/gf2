@@ -1,124 +1,26 @@
-//! Montgomery's batch inversion trick for [`FiniteField`] elements.
-//!
-//! Computing the multiplicative inverse in a finite field is typically one to
-//! three orders of magnitude more expensive than a multiplication (Fermat
-//! exponentiation is `O(log P)` multiplications for prime fields, Euclidean
-//! inversion is comparable for extension fields). When a caller needs to
-//! invert `N` independent elements it is wasteful to pay `N · cost(inv)`:
-//! Montgomery's classical trick collapses the work to **one** inversion plus
-//! `3(N − 1)` multiplications by exploiting the identity
-//!
-//! ```text
-//!     a⁻¹ = (b · c · … · z) · (a · b · c · … · z)⁻¹
-//! ```
-//!
-//! where the pair of products either side of the single inversion is built up
-//! in one forward and one backward pass over the slice.
-//!
-//! # Functions in this module
-//!
-//! - [`batch_inverse`] — returns `Some(Vec)` or `None` if any element is zero.
-//! - [`batch_inverse_in_place`] — same contract but writes back into the slice.
-//! - [`batch_inverse_with_scratch`] — caller-provided output and scratch buffers.
-//! - [`batch_inverse_skip_zeros`] — leaves zeros as zero and inverts the rest.
-//! - [`batch_inverse_skip_zeros_in_place`] — in-place version of the above.
-//!
-//! The *skip-zeros* variants are intended for projective-coordinate
-//! normalisation and similar workloads where zero values simply carry through
-//! (see [`batch_inverse_skip_zeros`]). Plain variants treat a zero as an
-//! arithmetic error and return `None`.
-//!
-//! # Algorithm (Montgomery 1987)
-//!
-//! Given `a[0], a[1], …, a[N-1]` we build a prefix-product scratch
-//! `p[i] = a[0] · a[1] · … · a[i]`, compute a single inverse
-//! `t = p[N-1]⁻¹`, and then sweep backwards to extract each inverse:
-//!
-//! ```text
-//!     for i in (1..N).rev():
-//!         out[i] = t · p[i-1]
-//!         t      = t · a[i]
-//!     out[0] = t
-//! ```
-//!
-//! Cost: one `inv`, `(N-1)` multiplications to build the prefix products, and
-//! `2(N-1)` multiplications on the backward pass — `3(N-1)` multiplications in
-//! total.
-//!
-//! # Benchmark results
-//!
-//! Measured on `Fp<65537>` (Montgomery-form GF(p) with `u64` canonical
-//! storage) using `cargo bench -p gf2-core --bench batch_inverse -- --quick`
-//! on the repo's reference machine:
-//!
-//! | N    | individual inv (total) | batch inv (total) | speedup |
-//! |-----:|-----------------------:|------------------:|--------:|
-//! |   16 |                 760 ns |            180 ns |   ~4.2× |
-//! |  100 |                4.49 µs |            851 ns |   ~5.3× |
-//! | 1000 |                45.5 µs |           7.88 µs |   ~5.8× |
-//!
-//! The `N = 100` data point clears the ≥5× target mandated by the issue
-//! specification, and the ratio keeps growing with `N` (an individual
-//! `inv()` is `O(log P)` multiplications while the batch amortises a single
-//! inversion over `N` elements). The `N = 16` cell stops short of 5× —
-//! that's expected: at small `N` the fixed cost of the one remaining
-//! inversion still dominates. See `crates/gf2-core/benches/batch_inverse.rs`
-//! for the measurement harness; regenerate the table with
-//! `cargo bench -p gf2-core --bench batch_inverse`.
+//! Montgomery's batch inversion trick (`@/citation/Montgomery1987`) for
+//! [`FiniteField`] elements: `N` inverses from one inversion and `3(N − 1)`
+//! multiplications, through one forward pass of prefix products and one
+//! backward pass.
 
 use crate::field::FiniteField;
 
-/// Batch-invert a slice of finite field elements using Montgomery's trick.
+/// Batch-inverts a slice of finite field elements using Montgomery's trick.
 ///
-/// Returns `Some(v)` where `v[i] = elements[i]⁻¹` on success, or `None` if
-/// any input element is zero. Consult the [module docs](self) for the
-/// cost model.
-///
-/// # Arguments
-///
-/// * `elements` — slice of field elements to invert. May be empty.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::batch_ops::batch_inverse;
-/// use gf2_core::field::{ConstField, FiniteField};
-/// use gf2_core::gfp::Fp;
-///
-/// let xs: Vec<Fp<65537>> = (1u64..=5).map(Fp::<65537>::new).collect();
-/// let invs = batch_inverse(&xs).unwrap();
-/// for (x, inv) in xs.iter().zip(invs.iter()) {
-///     assert!((*x * *inv).is_one());
-/// }
-/// ```
-///
-/// ```
-/// use gf2_core::field::batch_ops::batch_inverse;
-/// use gf2_core::gfp::Fp;
-///
-/// // A zero anywhere in the slice causes the whole batch to fail.
-/// let xs: Vec<Fp<7>> = vec![Fp::<7>::new(3), Fp::<7>::new(0), Fp::<7>::new(5)];
-/// assert!(batch_inverse(&xs).is_none());
-/// ```
+/// Returns `Some(v)` where `v[i] = elements[i]⁻¹`, or `None` if any input
+/// element is zero.
 ///
 /// # Complexity
 ///
-/// `O(N)` time with exactly **1 inversion** and **3(N − 1) multiplications**
-/// for `N ≥ 1`. `O(N)` additional memory is allocated for the output vector
-/// and an internal scratch buffer; use [`batch_inverse_with_scratch`] to
-/// reuse buffers across calls.
-///
-/// # See also
-///
-/// - [`batch_inverse_in_place`] — overwrites the input slice.
-/// - [`batch_inverse_skip_zeros`] — zero inputs pass through unchanged.
+/// One inversion and `3(N − 1)` multiplications for `N ≥ 1`, with `O(N)`
+/// memory for the output vector and a scratch buffer;
+/// [`batch_inverse_with_scratch`] reuses caller buffers.
 pub fn batch_inverse<F: FiniteField>(elements: &[F]) -> Option<Vec<F>> {
     if elements.is_empty() {
         return Some(Vec::new());
     }
 
-    // We pre-fill `output` with clones so we can use `with_scratch` which
-    // writes `output[i] = elements[i]⁻¹`. The initial values are never read.
+    // The initial contents of `output` and `scratch` are never read.
     let mut output: Vec<F> = elements.to_vec();
     let mut scratch: Vec<F> = elements.to_vec();
     batch_inverse_with_scratch(elements, &mut output, &mut scratch)?;
@@ -128,40 +30,14 @@ pub fn batch_inverse<F: FiniteField>(elements: &[F]) -> Option<Vec<F>> {
 /// In-place batch inversion; returns `None` if any element is zero
 /// (leaving the slice unchanged in that case).
 ///
-/// # Arguments
-///
-/// * `elements` — slice to be overwritten by its element-wise inverses.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::batch_ops::batch_inverse_in_place;
-/// use gf2_core::field::{ConstField, FiniteField};
-/// use gf2_core::gfp::Fp;
-///
-/// let mut xs: Vec<Fp<65537>> = (1u64..=4).map(Fp::<65537>::new).collect();
-/// let originals = xs.clone();
-/// batch_inverse_in_place(&mut xs).unwrap();
-/// for (o, inv) in originals.iter().zip(xs.iter()) {
-///     assert!((*o * *inv).is_one());
-/// }
-/// ```
-///
 /// # Complexity
 ///
-/// `O(N)` time; `O(N)` temporary scratch for the prefix products.
-///
-/// # See also
-///
-/// - [`batch_inverse`] — returns a new `Vec`.
+/// `O(N)` time; `O(N)` scratch for the prefix products.
 pub fn batch_inverse_in_place<F: FiniteField>(elements: &mut [F]) -> Option<()> {
     if elements.is_empty() {
         return Some(());
     }
 
-    // Early reject: any zero poisons the batch. Checking up-front means we
-    // don't mutate the slice at all on the failure path, which makes the
-    // in-place API easier to reason about.
     if elements.iter().any(F::is_zero) {
         return None;
     }
@@ -171,42 +47,15 @@ pub fn batch_inverse_in_place<F: FiniteField>(elements: &mut [F]) -> Option<()> 
     Some(())
 }
 
-/// Batch inversion into a caller-provided buffer with a caller-provided scratch.
+/// Batch inversion into caller-provided `output` and `scratch` buffers,
+/// allocating none of its own.
 ///
-/// This is the allocation-free entry point, intended for inner-loop callers
-/// that reuse buffers across batches.
-///
-/// # Arguments
-///
-/// * `elements` — input slice.
-/// * `output` — destination slice for the inverses. Must have `elements.len()` entries.
-///   On failure (any zero input) the contents are unspecified.
-/// * `scratch` — temporary workspace. Must have `elements.len()` entries.
-///   Its contents on return are unspecified and should not be relied on.
+/// Returns `None` if any input is zero, leaving the contents of `output`
+/// unspecified. The contents of `scratch` on return are unspecified.
 ///
 /// # Panics
 ///
 /// Panics if `output.len() != elements.len()` or `scratch.len() != elements.len()`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::batch_ops::batch_inverse_with_scratch;
-/// use gf2_core::field::{ConstField, FiniteField};
-/// use gf2_core::gfp::Fp;
-///
-/// let xs: Vec<Fp<65537>> = (1u64..=3).map(Fp::<65537>::new).collect();
-/// let mut out = vec![Fp::<65537>::zero(); xs.len()];
-/// let mut scratch = vec![Fp::<65537>::zero(); xs.len()];
-/// batch_inverse_with_scratch(&xs, &mut out, &mut scratch).unwrap();
-/// for (x, inv) in xs.iter().zip(out.iter()) {
-///     assert!((*x * *inv).is_one());
-/// }
-/// ```
-///
-/// # Complexity
-///
-/// `O(N)` time, no heap allocation.
 pub fn batch_inverse_with_scratch<F: FiniteField>(
     elements: &[F],
     output: &mut [F],
@@ -223,55 +72,18 @@ pub fn batch_inverse_with_scratch<F: FiniteField>(
         return None;
     }
 
-    // Copy into output so the core routine can treat it as the working slice.
     output.clone_from_slice(elements);
     batch_inverse_core(output, scratch, InPlaceMode::Yes)?;
     Some(())
 }
 
-/// Batch-invert, treating zeros as zero instead of as errors.
-///
-/// For each `i`, the output contains `elements[i]⁻¹` if `elements[i]` is
-/// non-zero and `F::zero()` otherwise. This is the convention needed for
-/// projective-coordinate normalisation, where a point's affine `x`
-/// coordinate is `X / Z` and the point-at-infinity has `Z = 0` and is
-/// reported as a zero placeholder.
-///
-/// The implementation still uses Montgomery's trick over the non-zero
-/// sub-sequence, so the cost is `1` inversion plus `3(K − 1)`
-/// multiplications where `K` is the number of non-zero inputs (plus `O(N)`
-/// bookkeeping).
-///
-/// # Arguments
-///
-/// * `elements` — slice of field elements.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::batch_ops::batch_inverse_skip_zeros;
-/// use gf2_core::field::{ConstField, FiniteField};
-/// use gf2_core::gfp::Fp;
-///
-/// let xs: Vec<Fp<65537>> = vec![
-///     Fp::<65537>::new(2),
-///     Fp::<65537>::zero(),
-///     Fp::<65537>::new(5),
-/// ];
-/// let invs = batch_inverse_skip_zeros(&xs);
-/// assert!((xs[0] * invs[0]).is_one());
-/// assert!(invs[1].is_zero());
-/// assert!((xs[2] * invs[2]).is_one());
-/// ```
+/// Batch-inverts, mapping each zero input to zero and each non-zero input to
+/// its inverse.
 ///
 /// # Complexity
 ///
 /// `O(N)` time, one inversion, `3(K − 1)` multiplications over `K` non-zero
 /// inputs.
-///
-/// # See also
-///
-/// - [`batch_inverse`] — fails fast on any zero.
 pub fn batch_inverse_skip_zeros<F: FiniteField>(elements: &[F]) -> Vec<F> {
     let mut out = elements.to_vec();
     batch_inverse_skip_zeros_in_place(&mut out);
@@ -279,29 +91,6 @@ pub fn batch_inverse_skip_zeros<F: FiniteField>(elements: &[F]) -> Vec<F> {
 }
 
 /// In-place version of [`batch_inverse_skip_zeros`].
-///
-/// # Arguments
-///
-/// * `elements` — slice to rewrite; zeros stay zero, non-zeros become their inverse.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::batch_ops::batch_inverse_skip_zeros_in_place;
-/// use gf2_core::field::{ConstField, FiniteField};
-/// use gf2_core::gfp::Fp;
-///
-/// let mut xs: Vec<Fp<65537>> = vec![
-///     Fp::<65537>::new(2),
-///     Fp::<65537>::zero(),
-///     Fp::<65537>::new(5),
-/// ];
-/// let originals = xs.clone();
-/// batch_inverse_skip_zeros_in_place(&mut xs);
-/// assert!((originals[0] * xs[0]).is_one());
-/// assert!(xs[1].is_zero());
-/// assert!((originals[2] * xs[2]).is_one());
-/// ```
 ///
 /// # Complexity
 ///
@@ -311,8 +100,7 @@ pub fn batch_inverse_skip_zeros_in_place<F: FiniteField>(elements: &mut [F]) {
         return;
     }
 
-    // Gather the positions of the non-zero entries. A dense gather/scatter
-    // is simpler than threading conditional reductions through the scan.
+    // Gather and scatter, to keep conditional reductions out of the scan.
     let nonzero_idx: Vec<usize> = elements
         .iter()
         .enumerate()
@@ -320,17 +108,12 @@ pub fn batch_inverse_skip_zeros_in_place<F: FiniteField>(elements: &mut [F]) {
         .collect();
 
     if nonzero_idx.is_empty() {
-        // All zeros — nothing to do.
         return;
     }
 
-    // Gather the non-zero elements into a compacted workspace, invert that
-    // in-place, then scatter back into `elements` at the recorded indices.
     let mut compact: Vec<F> = nonzero_idx.iter().map(|&i| elements[i].clone()).collect();
     let mut scratch: Vec<F> = compact.clone();
 
-    // `batch_inverse_core` never returns `None` here because we guaranteed
-    // non-zero inputs above — expect() documents that invariant.
     batch_inverse_core(&mut compact, &mut scratch, InPlaceMode::Yes)
         .expect("batch_inverse_core cannot fail on a slice with no zero entries");
 
@@ -339,27 +122,16 @@ pub fn batch_inverse_skip_zeros_in_place<F: FiniteField>(elements: &mut [F]) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Internal core routine
-// ---------------------------------------------------------------------------
-
-/// Whether the working slice already holds the input values (they will be
-/// overwritten with inverses).
-///
-/// The current implementation always uses `InPlaceMode::Yes` — the enum exists
-/// to document that the routine mutates `working`, and to leave room for a
-/// future in-place-preserving variant without touching the call sites.
+/// Marks that `batch_inverse_core` overwrites its working slice with the inverses.
 enum InPlaceMode {
     Yes,
 }
 
 /// Core of Montgomery's trick. `working` holds the input on entry and the
-/// inverses on return. `scratch` is used for the prefix products. Both must
-/// have the same length.
+/// inverses on return; `scratch`, of the same length, holds the prefix
+/// products.
 ///
-/// Preconditions: no element in `working` is zero, lengths agree. Violating
-/// these leads to an arithmetic panic (from `F::inv()` being called on zero)
-/// or a slice-bounds panic.
+/// Returns `None` with `working` unchanged if an element is zero.
 fn batch_inverse_core<F: FiniteField>(
     working: &mut [F],
     scratch: &mut [F],
@@ -373,7 +145,6 @@ fn batch_inverse_core<F: FiniteField>(
     }
 
     if n == 1 {
-        // Degenerate case: no multiplications, one inversion.
         let inv = working[0].inv()?;
         working[0] = inv;
         return Some(());
@@ -386,7 +157,6 @@ fn batch_inverse_core<F: FiniteField>(
         scratch[i] = scratch[i - 1].clone() * working[i].clone();
     }
 
-    // Single inversion of the full product.
     let mut running_inv = scratch[n - 1].inv()?;
 
     // Backward pass — reconstruct each inverse. 2(N-1) multiplications:
@@ -402,10 +172,6 @@ fn batch_inverse_core<F: FiniteField>(
     Some(())
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -415,8 +181,6 @@ mod tests {
     use std::cell::Cell;
 
     const MERSENNE_61: u64 = (1u64 << 61) - 1;
-
-    // --- Basic smoke tests ---------------------------------------------------
 
     #[test]
     fn test_batch_inverse_empty() {
@@ -505,8 +269,6 @@ mod tests {
         let _ = batch_inverse_with_scratch(&xs, &mut out, &mut scratch);
     }
 
-    // --- Skip-zeros variant --------------------------------------------------
-
     #[test]
     fn test_batch_inverse_skip_zeros_empty() {
         let xs: Vec<Fp<7>> = Vec::new();
@@ -552,12 +314,7 @@ mod tests {
         assert!((originals[2] * xs[2]).is_one());
     }
 
-    // --- Op-count verification (criterion 1) --------------------------------
-    //
-    // We wrap Fp<65537> in a newtype that forwards every FiniteField operation
-    // while incrementing thread-local counters on `mul` and `inv`. Using
-    // `Cell<u64>` instead of atomics keeps the counter read/write paths
-    // trivial; the tests are single-threaded so no synchronisation is needed.
+    // Thread-local `Cell` counters: each test runs on one thread.
 
     thread_local! {
         static MUL_COUNT: Cell<u64> = const { Cell::new(0) };
@@ -594,10 +351,8 @@ mod tests {
         }
     }
 
-    // Ops: forward to the inner Fp, counting mul but not add/sub/div — only
-    // the two operations relevant to the cost model are instrumented. Note
-    // that `Div` is implemented via `mul(inv)` so the batch routine must not
-    // invoke `/` internally, only `*` and `.inv()`.
+    // Only `mul` and `inv` are counted; a `/` in the routine would bypass both
+    // counters.
 
     impl std::ops::Add for OpCount {
         type Output = Self;
@@ -640,7 +395,6 @@ mod tests {
     impl std::ops::Div for OpCount {
         type Output = Self;
         fn div(self, rhs: Self) -> Self {
-            // Not used internally, but required by the FiniteField trait.
             Self(self.0 / rhs.0)
         }
     }
@@ -709,7 +463,6 @@ mod tests {
 
     #[test]
     fn test_op_count_n1() {
-        // N=1 degenerate case: 1 inversion, 0 multiplications.
         reset_counters();
         let xs = vec![OpCount::new(5)];
         let _ = batch_inverse(&xs).unwrap();
@@ -723,7 +476,6 @@ mod tests {
 
     #[test]
     fn test_op_count_matches_3n_minus_3() {
-        // The headline cost claim: 1 inv + 3(N-1) muls.
         for n in [2usize, 4, 8, 16, 100] {
             reset_counters();
             let xs: Vec<OpCount> = (1..=n as u64).map(OpCount::new).collect();
@@ -748,16 +500,13 @@ mod tests {
 
     #[test]
     fn test_op_count_in_place_matches() {
-        // In-place path should have the same op count (ignoring the zero-scan,
-        // which doesn't touch mul/inv).
+        // The zero scan touches neither counter.
         reset_counters();
         let mut xs: Vec<OpCount> = (1..=10u64).map(OpCount::new).collect();
         batch_inverse_in_place(&mut xs).unwrap();
         assert_eq!(inv_count(), 1);
         assert_eq!(mul_count(), 3 * 9);
     }
-
-    // --- Proptests (criteria 2, 3, 6) ---------------------------------------
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(500))]
@@ -816,7 +565,6 @@ mod tests {
             prop_assert!(batch_inverse(&elems).is_none());
             let mut clone = elems.clone();
             prop_assert!(batch_inverse_in_place(&mut clone).is_none());
-            // On-failure preservation of in-place input.
             prop_assert_eq!(clone, elems);
         }
 
