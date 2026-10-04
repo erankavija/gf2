@@ -487,7 +487,7 @@
      "short_id": "13dfe1a5",
      "title": "Tersify comments in gf2-coding tests, benches and examples",
      "classification": "documentation",
-     "status": "review_failed"
+     "status": "escalated"
     },
     {
      "id": "290b8716-2442-42af-9383-08f9d629219d",
@@ -550,7 +550,7 @@
      "short_id": "72768e37",
      "title": "Tersify comments in gf2-sim tests, benches, binaries and examples",
      "classification": "documentation",
-     "status": "review_failed"
+     "status": "done"
     },
     {
      "id": "7bfad039-1fd6-4738-a845-b9c738458968",
@@ -571,7 +571,7 @@
      "short_id": "8f451167",
      "title": "Tersify comments in gf2-core field trait and vector modules",
      "classification": "documentation",
-     "status": "review_failed"
+     "status": "done"
     },
     {
      "id": "93aed46a-441a-488e-8d25-651abc1897a0",
@@ -599,7 +599,7 @@
      "short_id": "aa0558c1",
      "title": "Tersify comments in the remaining gf2-coding source files",
      "classification": "documentation",
-     "status": "review_failed"
+     "status": "done"
     },
     {
      "id": "bfb37a21-1608-4ed9-a016-c60d0c87b4c9",
@@ -613,7 +613,7 @@
      "short_id": "c6aa0e84",
      "title": "Tersify comments in gf2-core runtime support modules",
      "classification": "documentation",
-     "status": "review_failed"
+     "status": "done"
     },
     {
      "id": "cafb463c-59ea-4dd5-8bc4-c7cc4521c00f",
@@ -627,7 +627,7 @@
      "short_id": "eba21481",
      "title": "Tersify comments in gf2-core tests, benches and examples",
      "classification": "documentation",
-     "status": "returned_unmerged"
+     "status": "done"
     },
     {
      "id": "ee2b0c0c-a88d-4ab7-aeb4-58cbd4ad0ca4",
@@ -641,7 +641,7 @@
      "short_id": "f2064e90",
      "title": "Tersify comments in gf2-core dense field matrix modules",
      "classification": "documentation",
-     "status": "review_failed"
+     "status": "done"
     },
     {
      "id": "f22ec590-b185-4444-903b-e9623a183213",
@@ -662,14 +662,14 @@
      "short_id": "554c2935",
      "title": "Register citation keys for external works cited in Rust sources",
      "classification": "implementation",
-     "status": "waiting_on_sweep"
+     "status": "done"
     },
     {
      "id": "50201002-6af5-43d1-bd03-db6521b65852",
      "short_id": "50201002",
      "title": "Tersify comments in the dev/tools crates",
      "classification": "documentation",
-     "status": "returned_unmerged"
+     "status": "done"
     }
    ]
   },
@@ -1346,6 +1346,16 @@
    "id": "e046803d",
    "epic": "b4b4b9ee",
    "reason": "planned work removed by eba21481"
+  },
+  {
+   "id": "17559b23",
+   "epic": "b4b4b9ee",
+   "reason": "binary sparse reader assert on malformed coordinates; FieldMatrix::zeros unchecked rows*cols (c6aa0e84 rework)"
+  },
+  {
+   "id": "ee3bf65e",
+   "epic": "b4b4b9ee",
+   "reason": "dead TP07a loader branch; dev/ paths in gf2-coding test string literals (13dfe1a5 rework)"
   }
  ],
  "escalations": [
@@ -1488,6 +1498,17 @@
    "issue": "13dfe1a5",
    "question": "clippy::collapsible_if fires after a comment deletion; fix is a code hunk outside REQ-05.",
    "resolution": "Owner: collapse the if; story-wide DEC-01 on ffc35b8c for tool-forced behavior-preserving hunks; workers run clippy and fmt (2026-10-04)."
+  },
+  {
+   "issue": "13dfe1a5",
+   "question": "Rework limit reached (2 of 2). code-review at 4293afd8d fails REQ-01 on four one-line docs of pub helpers in test and bench support modules (benches/bch_workloads.rs:91 bench_mode; tests/test_vectors/mod.rs:11,16; tests/test_vectors/parser.rs:157 num_frames): they paraphrase the body. The second rework restored them because doc-review of 72768e37 required purpose docs on pub test-support helpers. Approve a third rework, and which rule holds for pub items in tests/, benches/ and examples/: delete a doc that cannot say more than the code, or keep a purpose line?",
+   "options": [
+    "third rework deletes the four docs and every other body-paraphrasing doc on pub items of the unit's test, bench and example files",
+    "third rework keeps purpose lines and narrows the helpers' visibility (a code change outside REQ-05, needs a DEC)",
+    "reject the finding by owner decision recorded as a DEC"
+   ],
+   "recommendation": "first option: these crates' test targets set no missing_docs lint, and doc-review passed at the same commit",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -1525,7 +1546,7 @@
   "ee2b0c0c": 1,
   "67048b47": 2,
   "3da13f39": 2,
-  "554c2935": 1,
+  "554c2935": 2,
   "66858db0": 1,
   "bfb37a21": 1,
   "7bfad039": 1,
@@ -1534,7 +1555,14 @@
   "96cea1b9": 0,
   "f0dd63f1": 1,
   "4997a3ed": 1,
-  "93aed46a": 1
+  "93aed46a": 1,
+  "13dfe1a5": 2,
+  "c6aa0e84": 1,
+  "f2064e90": 2,
+  "72768e37": 1,
+  "aa0558c1": 1,
+  "eba21481": 1,
+  "50201002": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1661,7 +1689,8 @@
   "Session 5 after the pause (2026-10-04): wave C merged (merges tagged jit:fa787f85) and gated; done: 8a9db61a 9dda3958 cafb463c f22ec590, plus 96cea1b9 37099e5b f0dd63f1 290b8716 67b5d1d8 3da13f39. Lentmaier2010a registered under 554c2935 (d-commit feat(jit:554c2935)). Fix lane 4 (worktree agent-fixlane4) reworks 4997a3ed, 93aed46a, 3aef9e33. Wave D dispatched at 1b1f1c748: 8f451167 f2064e90 aa0558c1 72768e37 c6aa0e84 13dfe1a5; briefs come from the scratchpad generator with wave C review findings (a)-(g) appended to {DOC_NOTE}: test narration, no layout-holding comments, panic contracts on every public fn incl. inherited, single-source guarantees, accessor docs, emitted comment literals listed, unmatched planned work listed. Wave E (eba21481, 50201002) follows. Lead lessons: link every lane artifact with jit doc add before doc-review; remove executed relink scripts that name removed paths; a line-anchor link into a swept file breaks docs-mechanical for every issue (fixed one in dev/active/2037941f.../investigation.md:80).",
   "Wave D merged at 1f8254ea4 (merges tagged jit:fa787f85) and gating; wave E (eba21481, 50201002) dispatched at caa4b7929. Hinnant2021 registered under 554c2935. Lean line references into axiom_tests.rs were left untouched (already stale before the sweep; 8966d8da). Story ffc35b8c REQ-26 (comment-only change) has two owner-approved exceptions recorded as DEC-01 on 93aed46a (build.rs emitted text) and 3aef9e33 (rustfmt trailing commas); several units also carry rustfmt-driven trailing-comma or brace hunks named in their commit bodies: surface them in the 030496bd completion record before the story gate. Out-of-scope narration in string literals, test names and #[ignore] reasons listed by workers is not yet tracked by one issue: file it with the 030496bd record.",
   "Owner instruction 2026-10-04 (binding for every dispatch prompt): workers run clippy with -D warnings and cargo fmt --check on the crates they touch before the last commit, whether or not the issue carries the cargo-ci gate. Cause: 13dfe1a5 deleted a comment between two nested ifs (tests/ldpc_validation.rs:482) and clippy::collapsible_if failed cargo-ci for all six wave D units. Owner ruling the same day: collapse the if under 13dfe1a5, and story ffc35b8c DEC-01 admits behavior-preserving hunks that rustfmt or clippy force after a comment deletion when the commit body names them. The sweep brief template lacks the clippy step: add 'CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh cargo clippy -p <crate> --all-targets --all-features -- -D warnings' to its verification list before any further sweep dispatch.",
-  "Session 5 ended by owner request (2026-10-04) with handoff-4.md. Wave D is merged; cargo-ci last recorded as failed at caa4b7929 (clippy collapsible_if); the fix 445b6169c is on main and workspace clippy and fmt pass there; cargo-ci has not been re-run. The wave D review batch was stopped: all six doc-reviews failed on the cargo-ci evidence, with content findings on 13dfe1a5 (tests/nr5g_regression.rs:96), c6aa0e84 (bench_seed.rs:53 panic contracts, :167 density threshold statement) and f2064e90 (field/matrix.rs:19 tautological Rustdoc); code-reviews did not complete. Wave E branches worktree-agent-eba21481 (c48da77e6) and worktree-agent-50201002 (6769bb2d0) are complete, clippy-clean and unmerged. SageMath2025 (10.8), Hinnant2021 and Lentmaier2010a are registered."
+  "Session 5 ended by owner request (2026-10-04) with handoff-4.md. Wave D is merged; cargo-ci last recorded as failed at caa4b7929 (clippy collapsible_if); the fix 445b6169c is on main and workspace clippy and fmt pass there; cargo-ci has not been re-run. The wave D review batch was stopped: all six doc-reviews failed on the cargo-ci evidence, with content findings on 13dfe1a5 (tests/nr5g_regression.rs:96), c6aa0e84 (bench_seed.rs:53 panic contracts, :167 density threshold statement) and f2064e90 (field/matrix.rs:19 tautological Rustdoc); code-reviews did not complete. Wave E branches worktree-agent-eba21481 (c48da77e6) and worktree-agent-50201002 (6769bb2d0) are complete, clippy-clean and unmerged. SageMath2025 (10.8), Hinnant2021 and Lentmaier2010a are registered.",
+  "Session 6 (2026-10-04): wave E merged (70fea53e9, 4e6327377). Fix lane 5 (39a68b205) and fix lane 6 (merge 'second wave 8 review fix lane') reworked the wave D and E review findings; cargo-ci passed on each merged tree and was reused with evaluate-many. Done with all gates passed: 8f451167, c6aa0e84, f2064e90, aa0558c1, 72768e37, eba21481, 50201002, 554c2935. 13dfe1a5 is the only open sweep unit: doc-review passes, code-review fails on four pub-helper docs after rework 2 of 2 (open escalation). 030496bd, ffc35b8c and every later wave wait on it. The binding rule pair that passed five units: a doc on a private item that echoes its name is deleted; a pub item keeps one line that states something the name and signature do not. Each unit's planned-work audit (every deleted comment line of every tagged commit, matched to tracker ids named in a commit body) is in the fix-lane commit bodies 2d0ef6c17, 3925d9b08, eab90716f, 2b1d4dc55, 0f5e71c7f, 612d4e93e. 554c2935: record rewritten to the current state (2223efcc3); the generator gained section 5 (key to citing files for address-only works); three gf2-core bench headers lost a SageMath2026 key that did not match the script's recorded version (lead commit tagged jit:eba21481); scripts/sage_benchmarks.py:298 hard-codes sage_version 10.7 in its output. Lead commit a747d0fdc removed the scipy routine name from tests/channel_capacity.rs. For the 030496bd record: sweep-pattern comment hits in crates/ are five lines of gf2-sim/src/executor/topology.rs where 'wave' is scheduler vocabulary; narration in string literals is tracked by de0528d2. Worker-reported, unfiled: pub items that never had Rustdoc (BaselineCellResult fields, six pub fn run() in gf2-sim binaries, 15 items in gf2-coding tests); gfp/mod.rs:63 calls the const-assertion failure of Fp<P> a construction panic. Any later edit to Rust comments shifts the line numbers in 554c2935-citation-map.txt: rerun the record's command and commit the output before the ffc35b8c story gate."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
@@ -1686,6 +1715,11 @@
   "AI review gates can fail with 'Agent produced no output' (reviewer service timeout); that is infrastructure, not a verdict: re-run the gate.",
   "The first sweep brief forbade removing Rustdoc examples and let workers reformat banners; both failed review (teaching-rustdoc-examples, non-obvious-comments). Use the v2 standard in notes.",
   "Each SendMessage resume replays a worker's whole context (300-500k tokens for a sweep unit): batch all follow-ups for a worker into one message, and settle shared prerequisites (citation keys) before resuming.",
-  "Tag a multi-issue lane merge commit with the epic id (chore(jit:fa787f85): merge ...), never with one of the lane's issues: reviewers attribute every commit whose subject carries jit:<id> to that issue (290b8716 failed on a registry edit that belonged to 554c2935)."
+  "Tag a multi-issue lane merge commit with the epic id (chore(jit:fa787f85): merge ...), never with one of the lane's issues: reviewers attribute every commit whose subject carries jit:<id> to that issue (290b8716 failed on a registry edit that belonged to 554c2935).",
+  "Agent returns are truncated near 4,000 characters: have every worker also write the full return to target/<name>-return.md in its worktree and read that file.",
+  "A unit that deletes Rustdoc from pub items fails REQ-04 (72768e37, aa0558c1), and a unit that restores a doc paraphrasing the body fails REQ-01 (13dfe1a5 code-review at 4293afd8d). Brief both rules together; gf2-core, gf2-sim and gf2-algebra set #![warn(missing_docs)], so a pub item's doc cannot be deleted there.",
+  "Reviewers read every hunk of every tagged commit for removed planned-work statements; 'planned work: none' in a body failed four units. Run the deleted-line audit before the first gate and name each id as '<statement> (<file>) -> <id> (jit issue show <id>)'.",
+  "A dev/active path in a module doc fails no-dev-path-coupling in review (13dfe1a5) while an @/issue address is classed as planned work: state what the artifact is and name no path.",
+  "A commit subject measured with awk on '%h %s' includes the hash; count ${#s} of the subject string before committing (a 72-character subject needed an amend)."
  ]
 }
