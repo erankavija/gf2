@@ -2,7 +2,8 @@
 //! (`hip/bch_syndrome.hip`).
 //!
 //! [`GpuBchSyndrome`] evaluates `S_i = r(β_i)` over GF(2^m) at each of `2t`
-//! evaluation points.
+//! evaluation points by Horner's rule, using `exp` / `log` tables uploaded
+//! from the CPU field. Berlekamp-Massey and Chien search stay on the CPU.
 
 use std::ptr;
 

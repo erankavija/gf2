@@ -1,9 +1,11 @@
 //! AVX2 + VPCLMULQDQ batch element-wise GF(2^m) multiply/square kernels for
 //! `m ∈ {8, 16, 32}`.
 //!
-//! All entry points enable the `avx2`, `vpclmulqdq`, `pclmulqdq` and `sse4.1`
-//! target features; `crate::gf2m_batch::detect` publishes function pointers
-//! only when all four are present.
+//! Each outer iteration processes 4 elements with the Barrett reduction kept
+//! in YMM registers; tail elements take a scalar PCLMULQDQ path. All entry
+//! points carry `#[target_feature(enable = "avx2", enable = "vpclmulqdq",
+//! enable = "pclmulqdq", enable = "sse4.1")]`; `crate::gf2m_batch::detect`
+//! publishes function pointers only when all four features are present.
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]

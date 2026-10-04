@@ -2,7 +2,8 @@
 //! Algorithm 1 / Listing 1 (Julia naive Ryser).
 //!
 //! [`permanent_mod3_reference`] is a scalar `i32` implementation of Ryser's
-//! formula specialised to `F_3`.
+//! formula specialised to `F_3`, with explicit `% 3` reductions and a
+//! self-contained Gray walk.
 
 use gf2_core::gfp::Fp;
 

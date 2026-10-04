@@ -1,7 +1,8 @@
-//! Bit-matrix transpose kernels: the 64×64 bit-block transpose, as a scalar
-//! kernel that needs no processor feature, the AVX2 lanes in
-//! `crate::x86::transpose`, and the one dispatch that publishes a lane to
-//! callers.
+//! Bit-matrix transpose kernels.
+//!
+//! The 64×64 bit-block transpose: a scalar kernel that needs no processor
+//! feature, the AVX2 lanes in `crate::x86::transpose`, and the one dispatch
+//! that publishes a lane to callers. Every lane answers the same contract.
 //!
 //! # The block contract
 //!

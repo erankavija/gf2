@@ -1,9 +1,11 @@
 //! SIMD kernels for fixed-size multi-word carry-less multiplication.
 //!
-//! Dispatch for the 4×4 schoolbook multiply of GF(2^256) operands and the 9×9
-//! multiply of GF(2^571) operands. The kernels produce the unreduced
-//! carry-less product; the caller reduces. [`detect_wide`] returns `None`
-//! without PCLMULQDQ and SSE4.1.
+//! Dispatch for the 4×4 schoolbook multiply of GF(2^256) operands and the
+//! 9×9 multiply of GF(2^571) operands. The kernels produce the unreduced
+//! carry-less product; the caller reduces. [`detect_wide`] prefers the
+//! AVX2 + VPCLMULQDQ YMM lane (two products per instruction), then
+//! PCLMULQDQ + SSE4.1 (one product per instruction), and returns `None`
+//! otherwise. No ZMM lane exists.
 
 /// Kernel signature: computes the 8-limb carry-less product of two 4-limb
 /// GF(2)-polynomial operands.

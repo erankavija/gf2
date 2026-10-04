@@ -1,4 +1,10 @@
 //! Population-count and fused AND-population-count kernels for x86-64.
+//!
+//! [`popcnt_words`] and [`count_ones_words`] count word by word;
+//! [`avx2_popcnt_csa`] and [`avx2_and_popcnt_csa`] fold sixteen vectors
+//! through Harley-Seal carry-save adders before one nibble lookup
+//! (`@/citation/Mula2018`). A buffer shorter than one 512-byte block reaches
+//! only their per-vector remainder.
 
 use core::arch::x86_64::*;
 

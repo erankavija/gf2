@@ -3,7 +3,8 @@
 //! [`permanent_batch_bipedal3`], [`permanent_batch_bipedal5`], and
 //! [`permanent_batch_bipedal7`] send a batch to the F_3 / F_5 / F_7 HIP device
 //! kernels in `gf2-kernels-hip::permanent` in one kernel launch, one block per
-//! matrix.
+//! matrix. The module exists only under the `hip` Cargo feature; the processor
+//! equivalent is `permanent_bipedal{3,5,7}` per matrix.
 
 #[cfg(feature = "f7")]
 use std::sync::OnceLock;

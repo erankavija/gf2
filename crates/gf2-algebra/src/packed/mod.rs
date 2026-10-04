@@ -1,5 +1,7 @@
 //! Lane-parallel packed arithmetic over small prime fields: the
-//! [`PackedField`] and [`PackedFieldVec`] traits and the per-prime encodings.
+//! [`PackedField`] and [`PackedFieldVec`] traits, the `Bipedal3` (F_3),
+//! `packed5::Packed5` (F_5) and `packed7::Packed7` (F_7) encodings, and the
+//! [`scalar::ScalarPackedFp3`] reference oracle.
 
 use gf2_core::field::FiniteField;
 

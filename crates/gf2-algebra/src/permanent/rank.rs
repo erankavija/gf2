@@ -8,8 +8,10 @@
 //! per-rank(A) < k  <=>  every k × k row submatrix of A has zero permanent,
 //! ```
 //!
-//! a conjunction over the `C(n, k)` row subsets. The event is the one studied
-//! in `@/citation/GGK2025`.
+//! a conjunction over the `C(n, k)` row subsets. [`permanental_rank_status`]
+//! walks those subsets and stops at the first nonzero `k × k` permanent. The
+//! event is the one studied in `@/citation/GGK2025`, whose theorem
+//! hypothesises `k ≤ 0.1 · sqrt(n)`.
 
 use gf2_core::field::FiniteField;
 

@@ -1,8 +1,9 @@
 //! AVX2 batch multiply-reduce kernels for the Fermat prime
 //! `P = 65537 = 2^16 + 1`.
 //!
-//! All public functions are `unsafe`: callers must ensure AVX2 is available at
-//! runtime; `crate::fp65537::detect` returns the safe dispatched table.
+//! The reduction uses `2¹⁶ ≡ -1 (mod P)`: `a·b = hi · 2¹⁶ + lo ≡ lo - hi`.
+//! All public functions are `unsafe`: callers must ensure AVX2 is available
+//! at runtime; `crate::fp65537::detect` returns the safe dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 

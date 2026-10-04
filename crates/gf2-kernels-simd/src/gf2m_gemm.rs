@@ -1,5 +1,10 @@
-//! Panelized GF(2^m) GEMM dispatch for `m ∈ {8, 16, 32}`. [`detect`] returns
-//! `None` without AVX2 and VPCLMULQDQ.
+//! Panelized GF(2^m) GEMM dispatch for `m ∈ {8, 16, 32}`.
+//!
+//! The loop order is `(i, k, j)`: each scalar `a[i,k]` is broadcast and
+//! multiplied against row `k` of B with VPCLMULQDQ, and the Barrett-reduced
+//! products are XORed into output row `i`. `b_flat` is B itself in row-major
+//! layout (`b_flat[k * n + j] = B[k, j]`), and `out` must be zeroed before the
+//! call. [`detect`] returns `None` without AVX2 and VPCLMULQDQ.
 
 /// Kernel signature for the panelized GF(2^m) GEMM.
 ///

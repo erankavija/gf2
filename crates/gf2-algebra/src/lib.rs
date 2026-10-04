@@ -1,10 +1,14 @@
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
-//! Packed finite-field abstractions and permanent algorithms: the
-//! `PackedField<F>` trait, the per-prime packed types, and the `permanent_*`
-//! algorithm family. The crate builds on [`gf2_core`] and denies unsafe code;
-//! every SIMD or GPU path it dispatches through lives in `gf2-kernels-simd`
-//! and `gf2-kernels-hip`.
+//! Packed finite-field abstractions and permanent algorithms.
+//!
+//! `gf2-algebra` is the workspace home for the `PackedField<F>` trait, the
+//! per-prime packed types (`Bipedal3` for F_3, `Packed5` for F_5, `Packed7` for
+//! F_7), and the `permanent_*` algorithm family. It sits on top of [`gf2_core`]
+//! (for `FiniteField`, `Fp<P>`, `BitVec`) and stays `#![deny(unsafe_code)]` —
+//! every SIMD or GPU path it dispatches through lives in the dedicated
+//! `gf2-kernels-simd` and `gf2-kernels-hip` crates
+//! (`@/inv/unsafe-kernel-isolation`).
 
 pub mod gray;
 pub mod packed;
