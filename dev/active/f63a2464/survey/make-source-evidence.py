@@ -12,7 +12,24 @@ Usage: make-source-evidence.py > survey/source-evidence.json
 """
 
 import json
+import pathlib
 import subprocess
+import sys
+
+
+def output(command):
+    return subprocess.run(command, check=True, capture_output=True, text=True).stdout.strip()
+
+
+ROOT = pathlib.Path(output(["git", "-C", str(pathlib.Path(__file__).resolve().parent),
+                            "rev-parse", "--show-toplevel"]))
+
+
+def located(*query):
+    """Root-relative path the repository-file helper prints for `query`."""
+    helper = output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
+                     "--exclude-standard", "--", ":(glob)**/repository_files.py"])
+    return pathlib.Path(output([sys.executable, "-B", str(ROOT / helper), *query]))
 
 CORE = "crates/gf2-coding/src/ldpc/core.rs"
 LLR = "crates/gf2-coding/src/llr.rs"
@@ -20,9 +37,10 @@ MINSUM = "crates/gf2-coding/src/ldpc/min_sum.rs"
 LAYOUT = "crates/gf2-coding/src/ldpc/edge_layout.rs"
 NR = "crates/gf2-coding/src/ldpc/nr_5g/mod.rs"
 DVB = "crates/gf2-coding/src/ldpc/dvb_t2/builder.rs"
-LEDGER = "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
-RECEIPT = "dev/tools/tuning-campaign-support/src/receipt.rs"
-PROTOCOL = "dev/tools/tuning-campaign-support/src/protocol.rs"
+SUPPORT = located("package-directory", "tuning-campaign-support") / "src"
+LEDGER = str(SUPPORT / "trial_ledger.rs")
+RECEIPT = str(SUPPORT / "receipt.rs")
+PROTOCOL = str(SUPPORT / "protocol.rs")
 
 # (path, fragment, topic, why)
 CLAIMS = [
@@ -94,11 +112,11 @@ def main():
     claims = []
     for path, fragment, topic, why in CLAIMS:
         if path not in cache:
-            cache[path] = open(path, encoding="utf-8").read()
+            cache[path] = (ROOT / path).read_text(encoding="utf-8")
             # The commit that last changed the cited file, so the record is
             # stable until that file changes.
             revisions[path] = subprocess.run(
-                ["git", "log", "-1", "--format=%H", "--", path],
+                ["git", "-C", str(ROOT), "log", "-1", "--format=%H", "--", path],
                 capture_output=True, text=True, check=True,
             ).stdout.strip()
         line, text = locate(cache[path], path, fragment)

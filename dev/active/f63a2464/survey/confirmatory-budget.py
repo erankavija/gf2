@@ -18,10 +18,28 @@ Usage (from the worktree root):
 
 import json
 import pathlib
+import subprocess
 import sys
 
-PROTOCOL = pathlib.Path("dev/tools/tuning-campaign-support/src/protocol.rs")
-RECEIPT = pathlib.Path("dev/tools/tuning-campaign-support/src/receipt.rs")
+
+def output(command):
+    return subprocess.run(command, check=True, capture_output=True, text=True).stdout.strip()
+
+
+ROOT = pathlib.Path(output(["git", "-C", str(pathlib.Path(__file__).resolve().parent),
+                            "rev-parse", "--show-toplevel"]))
+
+
+def located(*query):
+    """Root-relative path the repository-file helper prints for `query`."""
+    helper = output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
+                     "--exclude-standard", "--", ":(glob)**/repository_files.py"])
+    return pathlib.Path(output([sys.executable, "-B", str(ROOT / helper), *query]))
+
+
+SUPPORT = ROOT / located("package-directory", "tuning-campaign-support") / "src"
+PROTOCOL = SUPPORT / "protocol.rs"
+RECEIPT = SUPPORT / "receipt.rs"
 TAIL_RULE = "|| f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;"
 MIN_TAIL_DRAWS = 20.0
 

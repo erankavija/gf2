@@ -443,8 +443,9 @@ MSRV feasibility record and its assembly,
 [run-quality.py](survey/run-quality.py) for the quality campaign and
 [summarize-quality.py](survey/summarize-quality.py) for its tables, which
 reproduce byte for byte on a re-run. Then
-[run-smoke.sh](../../bench_results/f63a2464/run-smoke.sh) proves the wire contract
-of every arm of both stages through the shared runner, and
+[run-smoke.sh](../../bench_results/f63a2464/run-smoke.sh), given the prepared
+quality directory, proves the wire contract of every arm of both stages through
+the shared runner, and
 [run-campaign.sh](../../bench_results/f63a2464/run-campaign.sh)
 `FAMILY MODE RUN_ID prepare` followed by `window` runs a campaign.
 [freeze-confirmations.sh](freeze-confirmations.sh) with a frozen timestamp
