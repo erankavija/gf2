@@ -1,11 +1,12 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-04T12:06:42.890153589Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
     "871b401d-59f7-4fa4-86b6-9c067795ff06"
   ],
-  "description": "The BCH receipt renderer and its test read smoke-run ID lists from literal `dev/active/d1b4f85e/` and `dev/active/591a1c5e/` paths. They locate those inputs through one runtime-resolved repository root or by content identity.\n\n## Background\n\nReaders: `dev/active/fd9d5416/tests/test_render_receipt.py:63-64` and the defaults in `dev/active/fd9d5416/render_receipt.py`.\n\n## Success Criteria\n\n- [hard] REQ-01: No edit lands while issue fd9d5416, which owns the renderer, is in progress; the worker checks this against the tracker and records it in the commit message.\n- [hard] REQ-02: The renderer's defaults and its test locate each smoke-run input without a literal `dev/active/` path.\n- [hard] REQ-03: Before the change, a linked baseline record holds the renderer test's output on its synthetic run, with the exact command and commit; after the change, the output is identical.\n- [hard] REQ-04: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n",
+  "description": "The BCH receipt renderer and its test read smoke-run ID lists from literal `dev/active/d1b4f85e/` and `dev/active/591a1c5e/` paths. They locate those inputs through one runtime-resolved repository root or by content identity.\n\n## Background\n\nReaders: `dev/active/fd9d5416/tests/test_render_receipt.py:63-64` and the defaults in `dev/active/fd9d5416/render_receipt.py`.\n\n## Success Criteria\n\n- [hard] REQ-01: The change lands on `main` while issue fd9d5416, which owns the renderer, is open; the commit message names fd9d5416 as the issue whose rework builds on the changed renderer.\n- [hard] REQ-02: The renderer's defaults and its test locate each smoke-run input without a literal `dev/active/` path.\n- [hard] REQ-03: Before the change, a linked baseline record holds the renderer test's output on its synthetic run, with the exact command and commit; after the change, the output is identical.\n- [hard] REQ-04: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n\n## Decisions\n\n- DEC-01: The owner ruled on 2026-10-04 that the documentation overhaul edits the renderer and its test while fd9d5416 is in progress, and performs the move of issue 7dbcde0c while fd9d5416 is open. Finding F2 of the fd9d5416 `doc-review` run of 2026-10-04 names the path literals this issue removes.\n",
   "documents": [],
   "first_ready_at": "2026-10-02T11:05:37.603542427Z",
   "gates_required": [
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Locate BCH receipt-renderer inputs through the configured repository root",
-  "updated_at": "2026-10-02T11:05:37.603542427Z"
+  "updated_at": "2026-10-04T12:06:42.890153589Z"
 }

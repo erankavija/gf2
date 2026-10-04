@@ -17847,3 +17847,10 @@
 {"gate_key":"doc-review","id":"5720a2dc-e9ff-4208-b3c3-43ffa4f8d3ce","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:49:32.285655468Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"ed581017-b3d3-4b49-bec3-2cb9585b383f","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:49:42.932919131Z","to":"done","type":"issue_state_changed"}
 {"id":"ac9dd106-bdac-42f7-a10a-ac99f15884b2","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:49:42.932919131Z","type":"issue_completed"}
+{"fields":["description"],"id":"067a831b-38eb-4f61-95bc-7fffcd342e6f","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:06:29.130424963Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["description"],"id":"810f84b6-f25a-43a8-877b-1b94b022bbb5","issue_id":"7dbcde0c-3a5c-472e-8c41-e5e1e8d71bfa","timestamp":"2026-10-04T12:06:29.195305916Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["description"],"id":"f8fc263d-e550-4b7e-b570-00a7642ba9d3","issue_id":"1a8f6acd-a299-4f4f-8ddd-28cc5a13e1a9","timestamp":"2026-10-04T12:06:29.261807448Z","type":"issue_updated","updated_by":"issue-update"}
+{"from":"ready","id":"9b23ab67-ca1b-4ec1-996a-0d93ca7ecbee","issue_id":"545b113f-1ce5-439b-b91e-4a8fefbc4d79","timestamp":"2026-10-04T12:06:42.765911244Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"e9781ebf-7018-4bfa-8322-40e5cc369fc0","issue_id":"545b113f-1ce5-439b-b91e-4a8fefbc4d79","timestamp":"2026-10-04T12:06:42.765911244Z","type":"issue_claimed"}
+{"from":"ready","id":"330f96d9-eed8-4516-8dd9-9820b1741b31","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:06:42.890153589Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"518dc44c-a044-4e34-8f34-96ac5252d67e","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:06:42.890153589Z","type":"issue_claimed"}
