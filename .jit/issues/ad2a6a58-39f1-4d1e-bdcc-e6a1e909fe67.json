@@ -108,7 +108,7 @@
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
-      "label": "Driver of the non-timed arm smoke over the shared campaign smoke script",
+      "label": "Driver of the non-timed arm smoke of both stages over the shared campaign smoke script",
       "path": "dev/active/ad2a6a58/survey/smoke-arms.sh"
     },
     {
@@ -130,13 +130,6 @@
       "format": "markdown",
       "label": "Lane-selecting A/B arm; one executable carries both arms of every pair",
       "path": "dev/active/ad2a6a58/survey/axpy-arm/src/bin/gf256-axpy-arm.rs"
-    },
-    {
-      "commit": null,
-      "doc_type": "implementation",
-      "format": "markdown",
-      "label": "Non-timed harness smoke over the runner's wire; pins the request mirror",
-      "path": "dev/active/ad2a6a58/survey/axpy-arm/src/bin/gf256-axpy-smoke.rs"
     },
     {
       "commit": null,
@@ -181,15 +174,8 @@
     },
     {
       "commit": null,
-      "doc_type": "validation",
-      "format": "markdown",
-      "label": "Non-timed smoke record of the pilot plan: every arm and cell, zero timing windows",
-      "path": "dev/active/ad2a6a58/survey/runner-smoke.txt"
-    },
-    {
-      "commit": null,
       "doc_type": "benchmark",
-      "label": "Append-only family ledger carrying the pilot reservation",
+      "label": "Append-only family ledger carrying the pilot and confirmation reservations",
       "path": "dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl"
     },
     {
@@ -282,6 +268,214 @@
       "format": "markdown",
       "label": "Cargo.lock",
       "path": "dev/active/ad2a6a58/survey/axpy-arm/Cargo.lock"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9f05ea628c34591fe0eefbf49af0a7bfc46d3feb756044869b8a373043806c22",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/confirmation-smoke.json",
+          "resolved_path": "dev/active/ad2a6a58/survey/confirmation-smoke.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6a5925f8fe545073cc87ced7c09f970eb5ce05fc68b2ac703e418a3d9849e7c0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "11f723e3ed85914c09228d8f3f53e0e8b8d8b286172893eb1597bd47b351e378",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/ad2a6a58/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9d44753649c9994278dbc1541c6237ea93cfa29cfb988b82ed2c2eff366bf84e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-confirmation/launcher.log",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2365f8468bc2c9bd8bf60e288d668fe7081bbff45d802a9ac8c7d1c6d281de5a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-confirmation/execution.log",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7066d88d8e698976c78fe5da08f9bcd7282e9d76fc236d9d44e65d1322976aee",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../scripts/verify-campaign-log.py",
+          "resolved_path": "dev/scripts/verify-campaign-log.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2a22a6ecefc65fe20d13467b3f23a2a2d05ad0c18647ea019e0435c5c9da31e8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-axpy-confirmation.json",
+          "resolved_path": "dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "60b5311ca7655d61be5bba58e6b28c99efb002b5791dfac8cf6322e1cdd1ce9c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f28aaf4fdee6c54015ec2b1087701212d40f9166dad7969e1e99472de6e04987",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/pilot-smoke.json",
+          "resolved_path": "dev/active/ad2a6a58/survey/pilot-smoke.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88ebc629f1583b0a20a7802a02ac154590e964af0a00fe1d695d1514f21c72a0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "32d1bfb05003fdf7276a8004d30c4837a36c2564739ef41bc7db2421c90614ad",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pinned-vector-confirmation.json",
+          "resolved_path": "dev/active/ad2a6a58/pinned-vector-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "77d312c365cb6a71ca370ed6f753172b499b04f953a3a92d1caee628f4792a26",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/ad2a6a58/axpy-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/ad2a6a58/axpy-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "48fb324f36b03344070589c9da155df37625d04f573d1081fe2439035ec0f635",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "188d7e10b10bf6233711490d438e48dc7f3ca9cdbb91beb51303f42d4ed7bf87",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "confirmation-derivation-axpy.txt",
+          "resolved_path": "dev/active/ad2a6a58/confirmation-derivation-axpy.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9e20f49108ad07d191a6304d9169ac78d2725eeb19ecfb95e941071f45c5a3f8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-pilot/execution.log",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d89979b0d07db0b6802067902eba1650a1968baa609637c98a372fa1c808f6b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/ad2a6a58/tables.md",
+          "resolved_path": "dev/bench_results/ad2a6a58/tables.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "analysis",
+      "format": "markdown",
+      "label": "Published outcome and retention decision of the axpy lane confirmation",
+      "path": "dev/active/ad2a6a58/outcome.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Confirmation campaign receipt of the gf256-shipped-axpy-lane family",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Recomputed acceptance summary of the confirmation campaign",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "analysis",
+      "format": "markdown",
+      "label": "Readable acceptance summary of the confirmation campaign",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Confirmation campaign journal the verification reads",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Runner plan the confirmation campaign measured",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Launcher record of the confirmation campaign's sessions",
+      "path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "Shared-runner smoke record of the pilot plan: every arm and cell, zero timing windows",
+      "path": "dev/active/ad2a6a58/survey/pilot-smoke.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "Shared-runner smoke record of the confirmation plan: every arm and cell, zero timing windows",
+      "path": "dev/active/ad2a6a58/survey/confirmation-smoke.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Shared non-timed campaign arm smoke; labels the plan after the stage it freezes",
+      "path": "dev/scripts/smoke-campaign-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test of the shared campaign arm smoke script",
+      "path": "dev/scripts/smoke-campaign-arms.test.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Shared result-table generator; Source rows carry acceptance finding counts",
+      "path": "dev/scripts/campaign_tables.py"
     }
   ],
   "first_ready_at": "2026-09-16T12:11:10.819218802Z",
@@ -304,5 +498,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-10-03T16:30:29.198402011Z"
+  "updated_at": "2026-10-04T23:30:29.733916009Z"
 }
