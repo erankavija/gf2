@@ -41,14 +41,14 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-04-26-uncompetitiveness-profile.md",
-      "path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-26-uncompetitiveness-profile.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-04-29-strassen-matmul-crossover.md",
-      "path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-strassen-matmul-crossover.md"
     }
   ],
   "done_at": "2026-04-29T13:03:24.413263251Z",
@@ -79,5 +79,5 @@
   "priority": "high",
   "state": "done",
   "title": "Add Strassen-Winograd layer for GF(2) BitMatrix multiply",
-  "updated_at": "2026-10-03T16:30:16.492228525Z"
+  "updated_at": "2026-10-04T19:51:23.054236140Z"
 }

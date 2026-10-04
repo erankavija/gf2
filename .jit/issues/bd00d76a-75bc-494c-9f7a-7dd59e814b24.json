@@ -18,7 +18,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-04-27-asm-audit.md",
-      "path": "dev/bench_results/2026-04-27-asm-audit.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-27-asm-audit.md"
     }
   ],
   "done_at": "2026-04-27T18:55:23.812818605Z",
@@ -54,5 +54,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Retrospective asm audit of all gf2-kernels-simd entry points",
-  "updated_at": "2026-10-03T16:30:33.387799576Z"
+  "updated_at": "2026-10-04T19:51:23.054236140Z"
 }

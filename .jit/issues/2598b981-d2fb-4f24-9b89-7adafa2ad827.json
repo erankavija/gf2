@@ -27,7 +27,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
-      "path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
     }
   ],
   "done_at": "2026-04-29T22:27:03.132116231Z",
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Run full GF(p) FieldMatrix fflas-comparable benchmark sweep",
-  "updated_at": "2026-10-03T16:28:42.267237588Z"
+  "updated_at": "2026-10-04T19:51:23.054236140Z"
 }
