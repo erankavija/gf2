@@ -1,29 +1,5 @@
-//! Understanding Block Codes
-//!
-//! **Difficulty**: 🟢 Beginner  
-//! **Estimated Time**: 8 minutes
-//!
-//! Block codes encode fixed-size chunks (blocks) of data by adding redundancy.
-//! This example explains the fundamental parameters and structure.
-//!
-//! ## Learning Objectives
-//!
-//! - Understand what a block code is (fixed-size data chunks)
-//! - Learn about code parameters (n, k, rate)
-//! - See how parity check matrix validates codewords
-//! - Grasp the concept of systematic encoding
-//! - Understand syndrome-based error detection
-//!
-//! ## Prerequisites
-//!
-//! If you haven't already, start with:
-//! - [`hamming_basic.rs`](hamming_basic.html) - Your first error-correcting code
-//!
-//! ## Next Steps
-//!
-//! After this example, explore:
-//! - [`hamming_7_4.rs`](hamming_7_4.html) - Deep dive into syndrome decoding
-//! - [`dvb_t2_ldpc_basic.rs`](dvb_t2_ldpc_basic.html) - Real-world LDPC codes
+//! Parameters, systematic encoding, parity-check validation and syndrome-based
+//! error detection on the Hamming(7,4) code.
 
 use gf2_coding::traits::{BlockEncoder, GeneratorMatrixAccess};
 use gf2_coding::LinearBlockCode;
@@ -32,10 +8,8 @@ use gf2_core::BitVec;
 fn main() {
     println!("=== Understanding Block Codes ===\n");
 
-    // Create Hamming(7,4) code
     let code = LinearBlockCode::hamming(3);
 
-    // === CODE PARAMETERS ===
     println!("📊 Code Parameters:");
     println!(
         "   n = {} (codeword length - what gets transmitted)",
@@ -53,7 +27,6 @@ fn main() {
     let g = code.generator_matrix();
     println!("   Generator matrix: {} × {} matrix", g.rows(), g.cols());
 
-    // === SYSTEMATIC ENCODING ===
     println!("\n🔧 Systematic Encoding:");
     println!("   Codeword format: [message | parity]");
     println!("   First {} bits = your data (unchanged)", code.k());
@@ -62,9 +35,8 @@ fn main() {
         code.n() - code.k()
     );
 
-    // Demonstrate with example
     let mut message = BitVec::zeros(4);
-    message.set(0, true); // Binary: 1000
+    message.set(0, true);
 
     let codeword = code.encode(&message);
     println!("\n   Example with message [1 0 0 0]:");
@@ -86,7 +58,6 @@ fn main() {
     }
     println!("] (added redundancy)");
 
-    // === VALIDATION ===
     println!("\n✅ Parity Check Validation:");
     println!("   Valid codewords satisfy: H × c = 0 (over GF(2))");
     println!("   where H is the parity-check matrix");
@@ -99,7 +70,6 @@ fn main() {
         println!("   ✗ Non-zero syndrome → errors detected");
     }
 
-    // === ERROR DETECTION ===
     println!("\n🔍 Error Detection:");
     let mut corrupted = codeword.clone();
     corrupted.set(0, !corrupted.get(0));
@@ -126,7 +96,6 @@ fn main() {
         println!("   ✓ Non-zero syndrome → error detected!");
     }
 
-    // === MULTIPLE CODEWORDS ===
     println!("\n📦 Block Processing:");
     println!("   Block codes process data in fixed-size chunks");
     println!("   For long messages, split into {}-bit blocks", code.k());
@@ -163,7 +132,6 @@ fn main() {
         println!("]");
     }
 
-    // === SUMMARY ===
     println!("\n💡 Key Concepts:");
     println!("   • Block codes operate on fixed-size chunks");
     println!("   • Rate k/n determines bandwidth efficiency");

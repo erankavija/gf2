@@ -1,9 +1,5 @@
-//! Benchmark LLR SIMD operations.
-//!
-//! Measures the speedup from gf2-kernels-simd AVX2 acceleration for:
-//! - boxplus_minsum_n (check node updates in LDPC BP)
-//! - saturate_batch
-//! - hard_decision_batch
+//! Benchmarks of the LLR batch operations `boxplus_minsum_n`,
+//! `saturate_batch` and `hard_decision_batch`.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_coding::llr::Llr;

@@ -1,4 +1,4 @@
-//! Phase 3 smoke tests: GLDPC and NR LDPC pipeline verification.
+//! Smoke tests for the GLDPC and NR LDPC pipelines.
 
 use gf2_coding::gldpc::{GldpcDecoder, QcGldpcCode};
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;

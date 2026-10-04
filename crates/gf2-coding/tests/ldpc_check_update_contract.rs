@@ -1,23 +1,7 @@
-//! Behavioural contract of the LDPC check-node update (jit:07ca8585).
-//!
-//! Two claims are asserted here, both by comparison against a reference rather
-//! than against recorded constants.
-//!
-//! The first is that the shared minimum, second-minimum and sign reduction
-//! [`min_sum_check_row`] reproduces the supported scalar reference's observable
-//! behaviour for every output of a check: ties, signed zero, finite extrema,
-//! clipping, non-finite inputs, the degree-one and degree-zero cases, and the
-//! input lengths on either side of a SIMD kernel's lane width. The scalar
-//! reference is restated here in the terms the module documents, and is
-//! cross-checked against the crate's own public reduction API on the inputs for
-//! which every backend of that API agrees.
-//!
-//! The second is that the decoder built on the canonical edge layout decodes
-//! bit for bit as the per-edge, neighbour-searching update it replaces, for
-//! every algorithm and both early-termination settings. The reference decoder
-//! below is that earlier structure, written out: jagged per-node message
-//! vectors, a linear search for each gathered input, and one reduction per
-//! outgoing edge through the crate's public LLR operations.
+//! Behavioural contract of the LDPC check-node update: [`min_sum_check_row`]
+//! matches a scalar reference restated here on every output of a check, and the
+//! decoder matches a per-edge reference decoder bit for bit for every algorithm
+//! and both early-termination settings.
 
 use gf2_coding::ldpc::{
     min_sum_check_row, DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, MinSumRule,
@@ -150,7 +134,7 @@ fn reduction_handles_degree_one_and_degree_zero() {
     }
 }
 
-/// The plain and normalized rules are the crate's public reduction API applied
+/// Each rule is the crate's public reduction API applied
 /// to the excluded input set, on inputs for which every backend of that API
 /// agrees: finite, non-zero magnitudes. This grounds the reference above in the
 /// shipped operation rather than only in its restatement.
@@ -199,12 +183,11 @@ fn reduction_matches_the_public_reduction_api_on_ordinary_inputs() {
     }
 }
 
-/// The per-edge, neighbour-searching flooding decoder this issue replaces.
-///
-/// Every step is the earlier structure: messages in jagged per-node vectors, a
-/// linear search of the variable's check list for each gathered input, one
-/// leave-one-out reduction per outgoing edge through the crate's public LLR
-/// operations, and a full hard-decision word and syndrome per iteration.
+/// A per-edge, neighbour-searching flooding decoder: messages in jagged per-node
+/// vectors, a linear search of the variable's check list for each gathered
+/// input, one leave-one-out reduction per outgoing edge through the crate's
+/// public LLR operations, and a full hard-decision word and syndrome per
+/// iteration.
 struct ReferenceDecoder {
     code: LdpcCode,
     beliefs: Vec<Llr>,
@@ -222,7 +205,7 @@ struct ReferenceDecoder {
 /// The two agree on every input a channel produces. They part on a negative
 /// zero or a NaN among nine or more inputs, which is where the public API's
 /// AVX2 kernel takes the IEEE sign bit and propagates a NaN through its vector
-/// lanes; JIT issue `39cbde20` owns that kernel's contract.
+/// lanes.
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Reduction {
     /// The crate's public LLR operations, which dispatch to a SIMD kernel under
@@ -232,7 +215,6 @@ enum Reduction {
     ScalarContract,
 }
 
-/// What a reference decode reports, for comparison with the decoder's result.
 #[derive(Debug, PartialEq)]
 struct ReferenceOutcome {
     codeword: BitVec,
@@ -523,15 +505,11 @@ fn decoder_matches_the_scalar_contract_on_saturating_and_extreme_llrs() {
     }
 }
 
-/// The disclosed behavioural change, measured rather than asserted.
-///
 /// On a code with checks of degree nine or more, an input set that reaches a
 /// NaN message decodes differently under the public reduction API, whose AVX2
 /// kernel propagates a NaN through its vector lanes, than under the supported
 /// scalar reference, whose `f32::min` fold skips it. The decoder follows the
-/// scalar reference; JIT issue `39cbde20` owns the kernel's contract. If a
-/// backend change ever makes the two agree, this test fails and says so, rather
-/// than leaving a stale claim in the documentation.
+/// scalar reference.
 #[test]
 fn the_public_reduction_api_and_the_scalar_contract_part_on_non_finite_messages() {
     let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(2, 8));
@@ -564,7 +542,6 @@ fn the_public_reduction_api_and_the_scalar_contract_part_on_non_finite_messages(
     );
 }
 
-/// The owning-buffer entry points report what the buffer-writing one reports.
 #[test]
 fn owning_entry_points_agree_with_the_prepared_buffer_entry_point() {
     let code = LdpcCode::dvb_t2_short(gf2_coding::CodeRate::Rate1_2);

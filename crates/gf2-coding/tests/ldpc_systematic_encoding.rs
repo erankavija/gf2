@@ -1,13 +1,4 @@
-//! TDD tests for LDPC systematic encoding.
-//!
-//! DVB-T2 LDPC codes use systematic encoding: codeword = [message | parity]
-//! where the first k bits are the message and the last m bits are parity.
-//!
-//! Test-driven development approach:
-//! 1. Write tests defining expected behavior
-//! 2. Tests initially fail
-//! 3. Implement minimal code to make tests pass
-//! 4. Refactor while keeping tests green
+//! Systematic encoding of DVB-T2 LDPC codes: codeword = [message | parity].
 
 use gf2_coding::ldpc::encoding::EncodingCache;
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
@@ -36,7 +27,6 @@ fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder 
 mod systematic_encoding_basic_tests {
     use super::*;
 
-    /// Test that LdpcEncoder exists and can be constructed
     #[test]
     fn test_ldpc_encoder_construction() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
@@ -46,13 +36,11 @@ mod systematic_encoding_basic_tests {
         assert_eq!(encoder.n(), 16200);
     }
 
-    /// Test systematic encoding: message appears in first k positions
     #[test]
     fn test_systematic_form() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
-        // Create a simple message
         let mut message = BitVec::zeros(encoder.k());
         message.set(0, true);
         message.set(10, true);
@@ -60,7 +48,6 @@ mod systematic_encoding_basic_tests {
 
         let codeword = encoder.encode(&message);
 
-        // First k bits should match message (systematic form)
         for i in 0..encoder.k() {
             assert_eq!(
                 codeword.get(i),
@@ -70,28 +57,23 @@ mod systematic_encoding_basic_tests {
             );
         }
 
-        // Codeword length should be n
         assert_eq!(codeword.len(), encoder.n());
     }
 
-    /// Test that encoded codeword is valid (syndrome is zero)
     #[test]
     fn test_encoded_codeword_is_valid() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
-        // Encode zero message
         let message = BitVec::zeros(encoder.k());
         let codeword = encoder.encode(&message);
 
-        // Should be a valid codeword
         assert!(
             code.is_valid_codeword(&codeword),
             "Encoded codeword must be valid (zero syndrome)"
         );
     }
 
-    /// Test encoding multiple messages
     #[test]
     fn test_encode_multiple_messages() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
@@ -116,12 +98,10 @@ mod systematic_encoding_basic_tests {
         for message in test_messages {
             let codeword = encoder.encode(&message);
 
-            // Check systematic form
             for i in 0..encoder.k() {
                 assert_eq!(codeword.get(i), message.get(i));
             }
 
-            // Check validity
             assert!(code.is_valid_codeword(&codeword));
         }
     }
@@ -131,13 +111,11 @@ mod systematic_encoding_basic_tests {
 mod systematic_encoding_linearity_tests {
     use super::*;
 
-    /// Test linearity: encode(m1 ⊕ m2) = encode(m1) ⊕ encode(m2)
     #[test]
     fn test_encoding_linearity() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());
 
-        // Two messages
         let mut m1 = BitVec::zeros(encoder.k());
         m1.set(5, true);
         m1.set(10, true);
@@ -146,26 +124,21 @@ mod systematic_encoding_linearity_tests {
         m2.set(10, true);
         m2.set(20, true);
 
-        // Encode separately
         let c1 = encoder.encode(&m1);
         let c2 = encoder.encode(&m2);
 
-        // XOR messages
         let mut m_xor = m1.clone();
         for i in 0..encoder.k() {
             m_xor.set(i, m1.get(i) ^ m2.get(i));
         }
 
-        // Encode XORed message
         let c_xor = encoder.encode(&m_xor);
 
-        // XOR codewords
         let mut c1_xor_c2 = c1.clone();
         for i in 0..encoder.n() {
             c1_xor_c2.set(i, c1.get(i) ^ c2.get(i));
         }
 
-        // Should be equal: encode(m1 ⊕ m2) = encode(m1) ⊕ encode(m2)
         assert_eq!(
             c_xor.to_bytes_le(),
             c1_xor_c2.to_bytes_le(),
@@ -173,7 +146,6 @@ mod systematic_encoding_linearity_tests {
         );
     }
 
-    /// Test that encoding zero message produces zero codeword
     #[test]
     fn test_zero_message_encodes_to_zero() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
@@ -194,7 +166,6 @@ mod systematic_encoding_linearity_tests {
 mod dvb_t2_encoding_tests {
     use super::*;
 
-    /// Test all DVB-T2 Normal frame configurations
     #[test]
     fn test_dvb_t2_normal_all_rates() {
         let rates = vec![
@@ -208,24 +179,17 @@ mod dvb_t2_encoding_tests {
 
         for rate in rates {
             let code = LdpcCode::dvb_t2_normal(rate);
-            // DVB-T2 is dual-diagonal IRA: `LdpcEncoder::new` builds the
-            // linear-time IRA staircase encoder directly (~ms). Avoid
-            // `try_load_cache()`, whose ~600 ms disk load per rate is pure
-            // overhead here (the IRA path never consults the cache) and pushed
-            // the all-rates sweep over the 5 s fast-tier budget on CI.
+            // DVB-T2 codes take the IRA path, which never consults the cache.
             let encoder = LdpcEncoder::new(code.clone());
 
-            // Encode a simple message
             let message = BitVec::zeros(encoder.k());
             let codeword = encoder.encode(&message);
 
-            // Verify systematic form and validity
             assert_eq!(codeword.len(), 64800);
             assert!(code.is_valid_codeword(&codeword));
         }
     }
 
-    /// Test all DVB-T2 Short frame configurations
     #[test]
     fn test_dvb_t2_short_all_rates() {
         let rates = vec![
@@ -239,15 +203,11 @@ mod dvb_t2_encoding_tests {
 
         for rate in rates {
             let code = LdpcCode::dvb_t2_short(rate);
-            // See `test_dvb_t2_normal_all_rates`: use the IRA fast path directly
-            // and skip the redundant per-rate cache load.
             let encoder = LdpcEncoder::new(code.clone());
 
-            // Encode a simple message
             let message = BitVec::zeros(encoder.k());
             let codeword = encoder.encode(&message);
 
-            // Verify systematic form and validity
             assert_eq!(codeword.len(), 16200);
             assert!(code.is_valid_codeword(&codeword));
         }
@@ -258,20 +218,17 @@ mod dvb_t2_encoding_tests {
 mod parity_computation_tests {
     use super::*;
 
-    /// Test that parity bits are actually computed (not all zero for non-zero message)
     #[test]
     fn test_parity_bits_computed() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());
 
-        // Non-zero message
         let mut message = BitVec::zeros(encoder.k());
         message.set(0, true);
         message.set(100, true);
 
         let codeword = encoder.encode(&message);
 
-        // Count ones in parity region [k, n)
         let mut parity_ones = 0;
         for i in encoder.k()..encoder.n() {
             if codeword.get(i) {
@@ -279,28 +236,22 @@ mod parity_computation_tests {
             }
         }
 
-        // Parity region should not be all zeros for non-zero message
-        // (this would indicate parity is not being computed)
         assert!(
             parity_ones > 0,
             "Parity bits should be computed for non-zero message"
         );
     }
 
-    /// Test parity structure for DVB-T2 (dual-diagonal property)
     #[test]
     fn test_dvb_t2_parity_structure() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
 
-        // Encode a message
         let mut message = BitVec::zeros(encoder.k());
         message.set(50, true);
 
         let codeword = encoder.encode(&message);
 
-        // DVB-T2 uses dual-diagonal parity structure
-        // Verify that parity satisfies: H · c = 0
         assert!(
             code.is_valid_codeword(&codeword),
             "Codeword must satisfy dual-diagonal parity constraints"
@@ -312,7 +263,6 @@ mod parity_computation_tests {
 mod edge_case_tests {
     use super::*;
 
-    /// Test encoding with message length exactly k
     #[test]
     fn test_encode_exact_length() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
@@ -324,13 +274,11 @@ mod edge_case_tests {
         assert_eq!(codeword.len(), encoder.n());
     }
 
-    /// Test encoding preserves all message bits
     #[test]
     fn test_all_message_bits_preserved() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());
 
-        // Pattern with bits set throughout message
         let mut message = BitVec::zeros(encoder.k());
         for i in (0..encoder.k()).step_by(100) {
             message.set(i, true);
@@ -338,7 +286,6 @@ mod edge_case_tests {
 
         let codeword = encoder.encode(&message);
 
-        // Verify every message bit is preserved
         for i in 0..encoder.k() {
             assert_eq!(
                 codeword.get(i),

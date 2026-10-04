@@ -1,13 +1,13 @@
 use gf2_coding::CodeRate;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)] // Test utility - may be used in future tests
+#[allow(dead_code)]
 pub enum FrameSize {
     Short,
     Normal,
 }
 
-#[allow(dead_code)] // Test utility - may be used in future tests
+#[allow(dead_code)]
 impl FrameSize {
     pub fn to_ldpc(self) -> gf2_coding::ldpc::dvb_t2::FrameSize {
         match self {
@@ -40,9 +40,9 @@ pub enum ConfigError {
 }
 
 impl DvbConfig {
-    /// Parse configuration from VV reference name (e.g., "VV001-CR35")
+    /// Parses a reference name of the form `VV001-CR35`; the frame size is
+    /// always `Normal`.
     pub fn from_reference(reference: &str) -> Result<Self, ConfigError> {
-        // Extract code rate from reference (e.g., "CR35" -> Rate3_5)
         let code_rate_str = reference
             .split('-')
             .nth(1)
@@ -63,7 +63,6 @@ impl DvbConfig {
             _ => return Err(ConfigError::UnknownCodeRate(rate_digits.to_string())),
         };
 
-        // For now, assume Normal frame size (can be extended later)
         let frame_size = FrameSize::Normal;
 
         Ok(DvbConfig {

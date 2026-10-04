@@ -1,101 +1,11 @@
 //! One shared behavioral suite for the canonical block-code interfaces, run
 //! over every implementation of them and over every base-field class the
-//! library supports.
-//!
-//! # What this suite covers
-//!
-//! Four invariant groups, each written once as generic case functions and
-//! applied to every code that carries the law:
-//!
-//! - **construction** — the derived dimension, generator, defining set,
-//!   witnessed distance bound and correction radius of a completed BCH
-//!   construction, and the typed errors an invalid request reports instead of
-//!   a panic or a silent coercion.
-//! - **encoding** — the systematic user layout, linearity, agreement of the
-//!   trait, layout-explicit, caller-workspace, allocating-batch and
-//!   caller-buffer-batch entry points, agreement of every registered encoding
-//!   family with the scalar reference, and the allocation-free property of the
-//!   repeated workspace path.
-//! - **matrices** — the identity block of $G = [\,I_k \mid P\,]$, the
-//!   parity-check layout $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$,
-//!   $G H^{\mathsf T} = 0$, the rank of $H$, the shape errors the caller-buffer
-//!   entry points report, and the equality of the opt-in cache wrapper with the
-//!   code it wraps.
-//! - **transformations** — the coordinate map's composition back to the mother
-//!   code, the derived dimension of a shortened or punctured code against a
-//!   direct rank computation, the derivation each shortening selects,
-//!   membership of the derived codewords in the mother code, and the zero
-//!   symbol sum of a one-symbol extension.
-//!
-//! # Rows and codes
-//!
-//! The rows are the predeclared conformance corpus of the `evidence-protocol`
-//! section of `dev/active/ae03bcd0-general-bch/plan.md`: B1 to B4 over
-//! $\mathrm{GF}(2)$, N1 over $\mathrm{GF}(3)$, N2 over $\mathrm{GF}(5)$, N3
-//! over $\mathrm{GF}(9)$ and N4 over $\mathrm{GF}(2^8)$, constructed by
-//! [`visit_bch_corpus`] and carrying the messages its seed `0xAE03BCD0` draws.
-//! Every binary row runs in both representations: the packed
-//! [`BinaryBchCode`] the corpus declares, and the field-generic
-//! [`DenseBchCode`] rebuild [`bch_corpus_dense_twin`] produces from the same
-//! construction. The mathematically valid boundary codes — full-space and
-//! zero-dimensional — are constructed here over $\mathrm{GF}(2)$,
-//! $\mathrm{GF}(3)$ and $\mathrm{GF}(9)$, and run the same cases.
-//!
-//! Beyond BCH, the cases run over every other implementor of the canonical
-//! interfaces in this crate: [`LinearBlockCode`], the repetition code, the
-//! three transformations, the cache wrapper, [`LayoutView`] over every matrix
-//! row, [`ExtendedBchComponent`] through its own encoder implementation, and
-//! the production DVB-T2 code ([`dvb_t2_bch_code`]'s shortened code and its
-//! [`DvbT2MotherCode`] under the standard's layout), which is what
-//! `@/invariant/shared-test-contracts` asks of a shared interface. The
-//! product component implements only the encoder capability, so it runs the
-//! encoder cases and no matrix case. The DVB-T2 code is too large for the
-//! cell-quadratic cases, so it runs the encoder cases, plus the scale-gated
-//! variant of the matrix cases (a seeded sample of basis rows, and
-//! orthogonality in the systematic-pair form); the short-frame rate-1/2 configuration runs its encoder cases in the
-//! fast tier, and every short-frame configuration runs its matrix cases in the
-//! slow tier. The
-//! version-1 binary compatibility boundary is checked against the canonical
-//! packed path wherever a packed code runs.
-//!
-//! # Tiers
-//!
-//! Everything runs in the fast tier except the DVB-T2 mother row's matrix
-//! work and the production DVB-T2 matrix cases. Its generator is $65343 \times 65535$, four orders of magnitude past
-//! every other row: half a gigabyte per materialization and $4.3 \times 10^9$
-//! cells in the identity-block walk, which leaves the case no margin against
-//! the fast tier's per-test kill and no room beside the test binaries the tier
-//! runs in parallel. It therefore carries a descriptive `#[ignore = "slow:
-//! ..."]`, well inside the nightly tier's budget. That row's construction and
-//! encoding, in both representations, stay in the fast tier.
-//!
-//! # Shortening derivations
-//!
-//! [`Shortened`] reports which of its two derivations a value holds through
-//! [`Shortened::derivation`], and the transformation group runs both against
-//! the same assertions. A set of message coordinates on a mother reporting a
-//! systematic layout and the canonical message-coordinate order selects
-//! [`ShortenedDerivation::SystematicRestriction`]; [`RankDerivedMother`] hides
-//! that layout, so the same mother and the same coordinate set select
-//! [`ShortenedDerivation::RankDerived`]; and a set reaching a parity
-//! coordinate selects it from any mother.
-//!
-//! The canonical `[message | parity]` matrix case is chosen the same way,
-//! from [`GeneratorMatrixAccess::is_systematic`] and
-//! [`GeneratorMatrixAccess::has_canonical_message_order`] together, so a code
-//! recording another message-coordinate order skips it through its own report.
-//!
-//! # Where implementation-specific tests remain
-//!
-//! This suite asserts only shared laws. Implementation-specific behavior stays
-//! with its own module: the encoding dispatch seam's own corpus and worker
-//! counts in `bch_encode_dispatch*.rs`, the matrix materialization's
-//! allocation counts in `bch_matrix_allocation.rs`, external oracle and
-//! standards-vector agreement in `bch_oracle_agreement.rs`, the primitive
-//! search in `bch_primitive_verification.rs`, the shortening derivations'
-//! selection rule, cost and DVB-T2 rows in `shortened_fast_path.rs`, and the
-//! decoding laws of the binary decoder in its own module. None of
-//! those assert a law this suite asserts, so none is folded in here.
+//! library supports. The rows are the predeclared conformance corpus of the
+//! `evidence-protocol` section of `dev/active/ae03bcd0-general-bch/plan.md`,
+//! constructed by [`visit_bch_corpus`]; every binary row runs both as the
+//! packed [`BinaryBchCode`] and as its field-generic
+//! [`bch_corpus_dense_twin`]. The DVB-T2 mother row's matrix work and the
+//! production DVB-T2 matrix cases run in the slow tier.
 
 use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2MotherCode, FrameSize};
 use gf2_coding::bch::error::BchError;
@@ -144,23 +54,16 @@ const SEED: u64 = 0xAE03_BCD0;
 /// threshold separates one row rather than tuning a budget.
 const FAST_TIER_MATRIX_CELLS: usize = 1 << 20;
 
-/// The word-boundary lengths every packed binary case runs at.
 const WORD_BOUNDARY_LENGTHS: [usize; 5] = [0, 1, 63, 64, 65];
 
 /// Generator rows the deferred row checks against their basis encodings.
 const SAMPLED_GENERATOR_ROWS: usize = 16;
 
-// ---------------------------------------------------------------------------
-// Shared drivers
-// ---------------------------------------------------------------------------
-
-/// Returns the order of a symbol field.
 fn field_order<F: FieldIdentity>(zero: &F) -> u128 {
     let id = zero.field_id();
     u128::from(id.characteristic()).pow(id.degree() as u32)
 }
 
-/// Draws `len` seeded symbols in the code's own representation.
 fn seeded_symbols<C: BlockCode>(code: &C, len: usize, rng: &mut StdRng) -> C::Symbols {
     let zero = code.symbol_zero();
     let order = field_order(&zero);
@@ -184,7 +87,6 @@ fn nontrivial_scalar<F: FieldIdentity>(zero: &F) -> F {
     }
 }
 
-/// Every case an implementor of the encoder and generator capabilities runs.
 fn encoder_and_generator_cases<C>(code: &C, messages: &[C::Symbols])
 where
     C: BlockEncoder + GeneratorMatrixAccess,
@@ -201,8 +103,6 @@ where
     }
 }
 
-/// Every case an implementor of all three capabilities runs.
-///
 /// The canonical `[message | parity]` layout case is selected from the code's
 /// own reports rather than from the call site: a code answers
 /// [`GeneratorMatrixAccess::is_systematic`] for whatever message-coordinate
@@ -230,7 +130,6 @@ where
     }
 }
 
-/// Returns whether `code` reports the canonical leading identity block.
 fn reports_canonical_layout<C>(code: &C) -> bool
 where
     C: GeneratorMatrixAccess,
@@ -242,8 +141,6 @@ where
             .expect("a code reports its message-coordinate order")
 }
 
-/// Asserts that the generator's $k$ rows are independent, so the code has the
-/// dimension it reports.
 fn generator_has_full_row_rank<C>(code: &C)
 where
     C: GeneratorMatrixAccess,
@@ -255,8 +152,6 @@ where
     );
 }
 
-/// Asserts that the parity check has the $n - k$ independent rows its contract
-/// declares.
 fn parity_check_has_full_row_rank<C>(code: &C)
 where
     C: ParityCheckMatrixAccess,
@@ -279,7 +174,6 @@ where
     );
 }
 
-/// Runs the transformation group over one mother code.
 fn transformation_cases<C>(mother: &C, messages: &[C::Symbols])
 where
     C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,
@@ -287,8 +181,6 @@ where
     let length = mother.n();
     extension_contract(mother, messages);
 
-    // Coordinate sets spanning both blocks of the systematic layout: a message
-    // coordinate, a parity coordinate, and the last coordinate.
     let removed = shared_coordinate_set(mother);
     shortening_contract(mother, &removed);
     puncturing_contract(mother, &removed);
@@ -453,12 +345,6 @@ fn basis_messages<C: BlockCode>(code: &C) -> Vec<C::Symbols> {
         .collect()
 }
 
-// ---------------------------------------------------------------------------
-// Corpus visitors
-// ---------------------------------------------------------------------------
-
-/// Runs the construction group on every corpus row, in both representations
-/// where the row admits both.
 struct ConstructionCases {
     visited: Vec<String>,
 }
@@ -478,7 +364,6 @@ impl BchCorpusVisitor for ConstructionCases {
     }
 }
 
-/// Runs the encoding group on every corpus row, in both representations.
 struct EncodingCases {
     visited: Vec<String>,
 }
@@ -504,7 +389,6 @@ impl BchCorpusVisitor for EncodingCases {
         let twin_messages = bch_corpus_message_sequences(&twin);
         bch_encoding_contract(&twin, &twin_messages);
 
-        // The two representations of one row encode the same symbols.
         for (packed, dense) in messages.iter().zip(&twin_messages) {
             let left = code.encode(packed).expect("a corpus message encodes");
             let right = twin.encode(dense).expect("a corpus message encodes");
@@ -520,8 +404,6 @@ impl BchCorpusVisitor for EncodingCases {
     }
 }
 
-/// Runs the matrix group on every corpus row whose generator fits the fast
-/// tier, in both representations.
 struct MatrixCases {
     visited: Vec<String>,
     deferred: Vec<String>,
@@ -594,8 +476,6 @@ impl BchCorpusVisitor for MatrixCases {
     }
 }
 
-/// Runs the transformation group on every corpus row whose generator fits the
-/// fast tier.
 struct TransformationCases {
     visited: Vec<String>,
     deferred: Vec<String>,
@@ -619,13 +499,11 @@ impl BchCorpusVisitor for TransformationCases {
     }
 }
 
-/// The corpus row identifiers, in corpus order.
 const CORPUS_ROWS: [&str; 8] = ["B1", "B2", "B3", "B4", "N1", "N2", "N3", "N4"];
 
-/// The rows whose matrix and transformation work is deferred to the slow tier.
+/// The rows whose matrix and transformation work runs in the slow tier.
 const DEFERRED_ROWS: [&str; 1] = ["B4"];
 
-/// The rows whose matrix and transformation work runs in the fast tier.
 fn fast_tier_rows() -> Vec<String> {
     CORPUS_ROWS
         .iter()
@@ -633,10 +511,6 @@ fn fast_tier_rows() -> Vec<String> {
         .map(|id| (*id).to_owned())
         .collect()
 }
-
-// ---------------------------------------------------------------------------
-// Corpus cases
-// ---------------------------------------------------------------------------
 
 #[test]
 fn construction_invariants_hold_on_every_corpus_row() {
@@ -678,17 +552,9 @@ fn transformation_invariants_hold_on_every_corpus_row() {
     assert_eq!(cases.deferred, DEFERRED_ROWS);
 }
 
-// ---------------------------------------------------------------------------
-// The DVB-T2 mother row's matrices
-// ---------------------------------------------------------------------------
-
-/// Runs the matrix group on the deferred corpus row.
-///
-/// The row's generator is $65343 \times 65535$ packed bits, half a gigabyte
-/// per materialization, so the identity-block walk alone reads $4.3 \times
-/// 10^9$ cells. Orthogonality runs in the systematic-pair form, whose
-/// $O(k(n-k))$ cost is what makes the statement reachable at this size at all;
-/// the direct triple loop over the same pair would be $O(k(n-k)n)$.
+/// The row's generator is $65343 \times 65535$ packed bits, so orthogonality
+/// runs in the systematic-pair form at $O(k(n-k))$ where the direct triple
+/// loop over the same pair is $O(k(n-k)n)$.
 struct DeferredMatrixCases {
     visited: Vec<String>,
 }
@@ -715,10 +581,6 @@ impl BchCorpusVisitor for DeferredMatrixCases {
             test_support::assert_is_codeword(code, &codeword);
         }
 
-        // Row $i$ of the generator is the encoding of message basis vector
-        // $i$. Walking all 65343 rows is 65343 encodes of a 65535-symbol
-        // codeword; a seeded sample carries the same statement at a size this
-        // row admits, and every other corpus row runs the full walk.
         sampled_generator_rows_encode_basis(code);
     }
 }
@@ -764,16 +626,10 @@ fn matrix_invariants_hold_on_the_dvb_t2_mother_row() {
     assert_eq!(cases.visited, DEFERRED_ROWS);
 }
 
-// ---------------------------------------------------------------------------
-// Boundary codes
-// ---------------------------------------------------------------------------
-
-/// Returns the binary splitting field the boundary codes are built in.
 fn binary_extension(degree: usize, modulus: u64) -> BinaryPrimeExt {
     BinaryPrimeExt::new(Gf2mField::new(degree, modulus)).expect("a primitive binary polynomial")
 }
 
-/// Builds a binary boundary code of length `length` requesting `distance`.
 fn binary_boundary(length: u64, distance: u64) -> BinaryBchCode {
     BinaryBchCode::construct(BchSpec::NonPrimitiveConsecutive {
         extension: binary_extension(4, 0b10011),
@@ -785,7 +641,6 @@ fn binary_boundary(length: u64, distance: u64) -> BinaryBchCode {
     .expect("a valid binary boundary spec")
 }
 
-/// Builds a prime-base boundary code over $\mathrm{GF}(3)$ at length 13.
 fn prime_boundary(distance: u64) -> DenseBchCode<QuotientField<Fp<3>>> {
     DenseBchCode::<QuotientField<Fp<3>>>::consecutive_roots_auto(
         Fp::<3>::zero(),
@@ -797,7 +652,6 @@ fn prime_boundary(distance: u64) -> DenseBchCode<QuotientField<Fp<3>>> {
     .expect("a valid GF(3) boundary spec")
 }
 
-/// Builds an extension-base boundary code over $\mathrm{GF}(9)$ at length 10.
 fn extension_boundary(distance: u64) -> DenseBchCode<QuotientField<QuotientElement<Fp<3>>>> {
     let modulus = select_modulus(&Fp::<3>::zero(), 2).expect("a GF(9) modulus");
     let gf9 = QuotientField::new(Fp::<3>::zero(), modulus).expect("GF(9)");
@@ -811,7 +665,6 @@ fn extension_boundary(distance: u64) -> DenseBchCode<QuotientField<QuotientEleme
     .expect("a valid GF(9) boundary spec")
 }
 
-/// Runs every applicable case on one boundary code.
 fn boundary_cases<X, S, M>(code: &BchCode<X, S, M>, designed_distance: u64, rng: &mut StdRng)
 where
     X: FieldExtension,
@@ -857,10 +710,6 @@ fn boundary_codes_run_the_shared_cases_over_every_field_class() {
     assert_eq!((zero_dimensional.n(), zero_dimensional.k()), (10, 0));
     boundary_cases(&zero_dimensional, 11, &mut rng);
 }
-
-// ---------------------------------------------------------------------------
-// Packed word boundaries
-// ---------------------------------------------------------------------------
 
 #[test]
 fn packed_representations_hold_the_contract_at_word_boundaries() {
@@ -933,10 +782,6 @@ where
     conformance::block_encoder_contract(code, &message);
     conformance::binary_v1_encoder_agrees(code, &message);
 }
-
-// ---------------------------------------------------------------------------
-// Production-scale implementors
-// ---------------------------------------------------------------------------
 
 /// The encoder cases a production-scale implementor runs in the fast tier:
 /// the encoder contract, linearity, and membership of every codeword in the
@@ -1023,10 +868,6 @@ fn dvb_t2_production_cases(
         production_matrix_cases(mother);
     }
 }
-
-// ---------------------------------------------------------------------------
-// The rest of the implementor roster
-// ---------------------------------------------------------------------------
 
 #[test]
 fn every_canonical_implementor_runs_the_capability_cases() {
@@ -1131,10 +972,6 @@ fn dvb_t2_production_codes_run_the_matrix_cases() {
         dvb_t2_production_cases(FrameSize::Short, rate, true, rate == CodeRate::Rate1_2);
     }
 }
-
-// ---------------------------------------------------------------------------
-// Typed construction errors
-// ---------------------------------------------------------------------------
 
 #[test]
 fn invalid_constructions_report_typed_errors_over_every_field_class() {
@@ -1282,10 +1119,6 @@ fn invalid_constructions_report_typed_errors_over_every_field_class() {
         })
     ));
 }
-
-// ---------------------------------------------------------------------------
-// Coordinate-map and error-surface details the transformations promise
-// ---------------------------------------------------------------------------
 
 #[test]
 fn transformations_reject_invalid_coordinate_sets_with_typed_errors() {

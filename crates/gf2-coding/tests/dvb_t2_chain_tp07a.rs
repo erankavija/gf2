@@ -1,6 +1,5 @@
 //! TP06 → TP07a validation of `DvbT2BitInterleaver` against the DVB-T2
 //! reference streams (`@/citation/DvbVerification2010`).
-//!
 //! TP07a is the output of `@/citation/Etsi2015` §6.1.3 (parity interleaving
 //! and column-twist interleaving). The tests assert
 //! `interleave(TP06) = TP07a` and `deinterleave(TP07a) = TP06` bit-exactly on
@@ -21,17 +20,10 @@ use gf2_coding::CodeRate;
 
 use gf2_coding::test_support::{parse_tp_blocks, tp_path_for};
 
-// ---------------------------------------------------------------------------
-// Test vector discovery helpers
-// ---------------------------------------------------------------------------
-
-/// Reason printed when the ETSI vector tree is absent.
 const NO_VECTORS: &str = "DVB-T2 ETSI test vectors absent; \
     set DVB_TEST_VECTORS_PATH to the stream tree to run this";
 
 /// Count data lines (lines that are neither comments nor blank) in a CSP file.
-///
-/// Used to infer sample counts for complex-data TP08 files.
 fn count_data_lines(path: &std::path::Path) -> std::io::Result<usize> {
     use std::io::{BufRead, BufReader};
     let file = std::fs::File::open(path)?;
@@ -48,8 +40,6 @@ fn count_data_lines(path: &std::path::Path) -> std::io::Result<usize> {
 }
 
 /// Count bits in the first block of a CSP bit-data file.
-///
-/// Returns `None` if the file cannot be read or contains no blocks.
 fn first_block_bits(path: &std::path::Path) -> Option<usize> {
     let text = std::fs::read_to_string(path).ok()?;
     let mut in_block = false;
@@ -89,9 +79,6 @@ fn count_blocks_in_file(path: &std::path::Path) -> Option<usize> {
 
 /// Discover all `VV*_CSP` directories under `base` that contain TP05, TP06,
 /// TP07a, and TP08 files and whose TP06 block size is 64800 (Normal FECFRAME).
-///
-/// Returns a list of `(config_dir, modulation, code_rate)` triples for
-/// every Normal FECFRAME configuration found in the in-scope set.
 fn discover_in_scope_vectors(base: &std::path::Path) -> Vec<(PathBuf, DvbT2Modulation, CodeRate)> {
     // In-scope Normal FECFRAME k values (TP05 bits per block).
     const K_RATE1_2: usize = 32400;
@@ -121,7 +108,6 @@ fn discover_in_scope_vectors(base: &std::path::Path) -> Vec<(PathBuf, DvbT2Modul
             continue;
         }
 
-        // Require TP05, TP06, TP07a, and TP08.
         let tp05_path = tp_path_for(&config_dir, "05");
         let tp06_path = tp_path_for(&config_dir, "06");
         let tp07a_path = tp_path_for(&config_dir, "07a");
@@ -131,13 +117,11 @@ fn discover_in_scope_vectors(base: &std::path::Path) -> Vec<(PathBuf, DvbT2Modul
             continue;
         }
 
-        // TP06 first block must be exactly 64800 bits (Normal FECFRAME).
         match first_block_bits(&tp06_path) {
             Some(n) if n == N_NORMAL => {}
             _ => continue,
         }
 
-        // Infer code rate from TP05 first-block bit count.
         let k = match first_block_bits(&tp05_path) {
             Some(k) => k,
             None => continue,
@@ -146,10 +130,9 @@ fn discover_in_scope_vectors(base: &std::path::Path) -> Vec<(PathBuf, DvbT2Modul
             K_RATE1_2 => CodeRate::Rate1_2,
             K_RATE2_3 => CodeRate::Rate2_3,
             K_RATE3_4 => CodeRate::Rate3_4,
-            _ => continue, // out-of-scope rate
+            _ => continue,
         };
 
-        // Infer modulation from TP08 samples-per-block.
         let tp08_files: Vec<_> = match std::fs::read_dir(&tp08_dir) {
             Ok(rd) => rd
                 .flatten()
@@ -173,7 +156,7 @@ fn discover_in_scope_vectors(base: &std::path::Path) -> Vec<(PathBuf, DvbT2Modul
         let modulation = match spb {
             SPB_16QAM => DvbT2Modulation::Qam16,
             SPB_64QAM => DvbT2Modulation::Qam64,
-            _ => continue, // QPSK, 256-QAM, or other — out of scope
+            _ => continue,
         };
 
         results.push((config_dir, modulation, code_rate));
@@ -182,10 +165,6 @@ fn discover_in_scope_vectors(base: &std::path::Path) -> Vec<(PathBuf, DvbT2Modul
     results.sort_by(|a, b| a.0.cmp(&b.0));
     results
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 /// Applies `DvbT2BitInterleaver::interleave` to TP06 block 0 of every
 /// discovered vector and compares it with TP07a block 0. A match also asserts
@@ -274,7 +253,6 @@ fn test_tp06_to_tp07a_forward_match_in_scope_normal() {
 
         let interleaved = interleaver.interleave(&tp06_blocks[0]);
 
-        // Compare bit-by-bit.
         let diffs: usize = (0..n_fec)
             .filter(|&i| interleaved.get(i) != tp07a_blocks[0].get(i))
             .count();
@@ -286,7 +264,6 @@ fn test_tp06_to_tp07a_forward_match_in_scope_normal() {
             );
             pass_count += 1;
 
-            // Also validate the inverse: deinterleave(tp07a) == tp06.
             let deinterleaved = interleaver.deinterleave(&tp07a_blocks[0]);
             assert_eq!(
                 deinterleaved, tp06_blocks[0],
@@ -309,8 +286,6 @@ fn test_tp06_to_tp07a_forward_match_in_scope_normal() {
     );
 }
 
-/// Structural sanity: TP06 and TP07a have matching block counts and each block
-/// is exactly 64800 bits for all in-scope Normal FECFRAME vectors.
 #[test]
 #[ignore = "slow: reads the DVB-T2 reference streams from $DVB_TEST_VECTORS_PATH"]
 fn test_tp06_tp07a_structural_sanity_in_scope_normal() {
@@ -376,25 +351,6 @@ fn test_tp06_tp07a_structural_sanity_in_scope_normal() {
     }
 }
 
-/// Bit-exact §6.1.3 forward match for VV020 (16-QAM Rate 1/2), VV009
-/// (64-QAM Rate 2/3), and VV014 (64-QAM Rate 3/4) against TP07a, verifying
-/// the parity interleaving + column-twist implementation.
-///
-/// # Success criterion
-///
-/// For each of the three in-scope ETSI vectors, `interleaver.interleave(tp06_block)`
-/// must equal `tp07a_block` bit-exactly for all tested blocks (≥ first 10).
-/// The inverse `deinterleaver.deinterleave(tp07a_block) == tp06_block` is
-/// also verified.
-///
-/// # Vectors under test
-///
-/// * **VV020-FEF_CSP** — Normal FECFRAME, 16-QAM, Rate 1/2.
-///   K_ldpc = 32400, Q_ldpc = 90, N_ldpc = 64800.
-/// * **VV009-4KFFT_CSP** — Normal FECFRAME, 64-QAM, Rate 2/3.
-///   K_ldpc = 43200, Q_ldpc = 60, N_ldpc = 64800.
-/// * **VV014-64QAM34_CSP** — Normal FECFRAME, 64-QAM, Rate 3/4.
-///   K_ldpc = 48600, Q_ldpc = 45, N_ldpc = 64800.
 #[test]
 #[ignore = "slow: reads the DVB-T2 reference streams from $DVB_TEST_VECTORS_PATH"]
 fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
@@ -409,7 +365,6 @@ fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
         return;
     };
 
-    // (dir_name, code_rate, modulation)
     let test_cases = [
         ("VV020-FEF_CSP", CodeRate::Rate1_2, DvbT2Modulation::Qam16),
         ("VV009-4KFFT_CSP", CodeRate::Rate2_3, DvbT2Modulation::Qam64),
@@ -482,7 +437,6 @@ fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
                 tp07a_block.len()
             );
 
-            // Forward: interleave(TP06) must equal TP07a bit-exact.
             let interleaved = interleaver.interleave(tp06_block);
             let diffs: usize = (0..N_FEC)
                 .filter(|&i| interleaved.get(i) != tp07a_block.get(i))
@@ -494,7 +448,6 @@ fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
                  reproduce TP07a bit-exact)"
             );
 
-            // Inverse: deinterleave(TP07a) must equal TP06.
             let deinterleaved = interleaver.deinterleave(tp07a_block);
             assert_eq!(
                 deinterleaved, *tp06_block,
@@ -510,10 +463,8 @@ fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
         );
     }
 
-    // The [hard] criterion requires bit-exact forward + reverse on all
-    // 3 in-scope configurations. Silent skips would let the test pass
-    // vacuously; once a vector tree is present, enforce that all 3 were
-    // exercised. (An absent tree skips the test outright, above.)
+    // A present vector tree must exercise every case, so a missing stream
+    // cannot pass vacuously.
     assert_eq!(
         tested_count,
         expected_tested,

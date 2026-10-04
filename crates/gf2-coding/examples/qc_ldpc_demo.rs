@@ -1,7 +1,4 @@
-//! Quasi-Cyclic LDPC Code Example
-//!
-//! Demonstrates constructing and using quasi-cyclic LDPC codes, which are
-//! the foundation for standards like DVB-T2 and 5G NR.
+//! Quasi-cyclic LDPC construction from a base matrix of circulant shifts.
 
 use gf2_coding::ldpc::{CirculantMatrix, LdpcCode, QuasiCyclicLdpc};
 use gf2_core::BitVec;
@@ -9,7 +6,6 @@ use gf2_core::BitVec;
 fn main() {
     println!("=== Quasi-Cyclic LDPC Code Example ===\n");
 
-    // Example 1: Manual QC-LDPC construction
     println!("1. Manual QC-LDPC Construction");
     println!("   Base matrix (3×4 with expansion factor Z=5):");
 
@@ -45,7 +41,6 @@ fn main() {
     println!("   - Code rate: {:.3}", code.rate());
     println!("   - Information bits: {}\n", code.k());
 
-    // Example 2: Circulant matrix structure
     println!("2. Circulant Matrix Structure");
     println!("   A circulant with shift=2, size=5:");
 
@@ -56,7 +51,6 @@ fn main() {
     println!("   Edges: {:?}", edges);
     println!("   Forms a right-shifted identity pattern\n");
 
-    // Example 3: DVB-T2 placeholder
     println!("3. DVB-T2 LDPC Code");
 
     use gf2_coding::CodeRate;
@@ -69,10 +63,8 @@ fn main() {
     println!("   Note: Built from ETSI EN 302 755 standard tables.");
     println!("         base matrices from ETSI EN 302 755.\n");
 
-    // Example 4: Code structure validation
     println!("4. Code Structure Validation");
 
-    // Use smaller code for demo
     let demo_base = vec![vec![0, 1, 2], vec![1, 2, 0]];
     let demo_qc = QuasiCyclicLdpc::new(demo_base, 3);
     let demo_code = LdpcCode::from_quasi_cyclic(&demo_qc);
@@ -84,14 +76,12 @@ fn main() {
         demo_code.rate()
     );
 
-    // Verify all-zeros is valid codeword
     let all_zeros = BitVec::zeros(demo_code.n());
     assert!(demo_code.is_valid_codeword(&all_zeros));
     println!("   - All-zeros is valid codeword: ✓");
 
-    // Check syndrome for random invalid codeword
     let mut invalid = BitVec::zeros(demo_code.n());
-    invalid.push_bit(true); // Has one bit set
+    invalid.push_bit(true);
     invalid.resize(demo_code.n(), false);
     let syndrome = demo_code.syndrome(&invalid);
     println!(

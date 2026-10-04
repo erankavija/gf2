@@ -67,10 +67,6 @@ fn cargo_target_dir() -> Result<PathBuf, Box<dyn Error>> {
         .ok_or_else(|| "no Cargo target directory above the executable; pass --output-dir".into())
 }
 
-// --------------------------------------------------------------------
-// Figure 1: BER curves.
-// --------------------------------------------------------------------
-
 struct BerCurve {
     label: &'static str,
     eb_n0_db: Vec<f64>,
@@ -82,10 +78,8 @@ fn simulate_ber_curves() -> Vec<BerCurve> {
 
     let mut curves = Vec::new();
 
-    // BPSK over AWGN.
     curves.push(ber_curve_bpsk(&eb_n0_points));
 
-    // Gray square-QAM over AWGN via ModemChannelAdapter at orders 4, 16, 64.
     for &order in &[4usize, 16, 64] {
         curves.push(ber_curve_gray_qam(order, &eb_n0_points));
     }
@@ -142,8 +136,7 @@ fn run_ber_sweep<C: ChannelModel>(channel: &C, eb_n0_db: &[f64], max_frames: usi
     results
         .iter()
         .map(|r| {
-            // Clip zero BERs for log-axis rendering: we only care about
-            // the sweep down to ~1e-4 given the sample budget here.
+            // Clip zero BERs for log-axis rendering.
             r.ber.max(0.5 / r.num_bits.max(1) as f64)
         })
         .collect()
@@ -212,10 +205,6 @@ fn plot_ber_curves(out: &std::path::Path, curves: &[BerCurve]) -> Result<(), Box
     root.present()?;
     Ok(())
 }
-
-// --------------------------------------------------------------------
-// Figure 2: per-bit MI vs Eb/N0 for 16-QAM.
-// --------------------------------------------------------------------
 
 struct PerBitMiSweep {
     eb_n0_db: Vec<f64>,
@@ -338,10 +327,6 @@ fn plot_per_bit_mi(out: &std::path::Path, sweep: &PerBitMiSweep) -> Result<(), B
     root.present()?;
     Ok(())
 }
-
-// --------------------------------------------------------------------
-// Figure 3: conditional LLR histograms at Eb/N0 = 8 dB for 16-QAM.
-// --------------------------------------------------------------------
 
 fn simulate_llr_histograms_16qam() -> Vec<PerBitChannelStats> {
     let spec = ModemSpec::<f32>::gray_square_qam(16);

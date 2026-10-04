@@ -1,13 +1,6 @@
-//! Regression tests for 5G NR LDPC rate-matched encoding and decoding.
-//!
-//! These test vectors are generated from our own encoder with the corrected
-//! per-i_LS shift tables (3GPP TS 38.212 Tables 5.3.2-2/3). They serve as
-//! regression fixtures: any future change that alters the encoder output
-//! will be caught immediately.
-//!
-//! Each test vector verifies:
-//! 1. Encoding the message produces the expected codeword (bit-exact)
-//! 2. Noiseless decoding of the codeword recovers the message (0 errors)
+//! Regression tests for 5G NR LDPC rate-matched encoding and decoding. The
+//! vectors are this crate's own encoder output and pin it against change;
+//! `nr5g_external_vectors.rs` holds the external conformance evidence.
 
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
 use gf2_coding::ldpc::QuasiCyclicLdpc;
@@ -15,7 +8,6 @@ use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 use gf2_core::BitVec;
 
-/// Deterministic message: bits set at positions that are multiples of `stride`.
 fn deterministic_message(k: usize, stride: usize) -> BitVec {
     let mut msg = BitVec::zeros(k);
     for i in (0..k).step_by(stride) {
@@ -24,25 +16,21 @@ fn deterministic_message(k: usize, stride: usize) -> BitVec {
     msg
 }
 
-/// Encode a message, return the codeword as a Vec<u8> of 0/1 values.
 fn encode_to_bytes(rm_code: &impl BlockEncoder, msg: &BitVec) -> Vec<u8> {
     let cw = rm_code.encode(msg);
     (0..cw.len()).map(|i| cw.get(i) as u8).collect()
 }
 
-/// Verify encode produces expected codeword and noiseless decode recovers message.
 fn verify_roundtrip(bg: u8, n: usize, k: usize, stride: usize, expected_cw: &[u8]) {
     let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(bg, n, k);
     let msg = deterministic_message(k, stride);
 
-    // 1. Encode must match expected codeword bit-exactly
     let our_cw = encode_to_bytes(&rm_code, &msg);
     assert_eq!(
         our_cw, expected_cw,
         "BG{bg} ({n},{k}) stride={stride}: encoder output changed"
     );
 
-    // 2. Noiseless decode must recover the message
     let cw = rm_code.encode(&msg);
     let llrs: Vec<Llr> = (0..n)
         .map(|i| {
@@ -68,12 +56,6 @@ fn verify_roundtrip(bg: u8, n: usize, k: usize, stride: usize, expected_cw: &[u8
         );
     }
 }
-
-// ============================================================================
-// Regression vectors — generated with per-i_LS shift tables
-// ============================================================================
-// To regenerate: run `cargo test -p gf2-coding --test nr5g_regression --
-//   generate_vectors -- --nocapture` and copy the output.
 
 #[test]
 fn test_bg2_256_121_regression() {
@@ -111,7 +93,7 @@ fn test_bg1_4096_3249_regression() {
     verify_roundtrip(1, 4096, 3249, 11, &VECTOR_4096_3249);
 }
 
-// Test vector generation helper — run with --nocapture to print vectors
+// Prints the regression vectors under `--nocapture`.
 #[test]
 #[ignore]
 fn generate_vectors() {
@@ -132,9 +114,5 @@ fn generate_vectors() {
         println!("const {name}: [u8; {n}] = {:?};", cw);
     }
 }
-
-// ============================================================================
-// Embedded test vectors
-// ============================================================================
 
 include!("data/nr5g_regression_vectors.rs");

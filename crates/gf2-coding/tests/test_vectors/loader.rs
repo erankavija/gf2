@@ -23,7 +23,8 @@ pub enum LoadError {
 }
 
 impl TestVectorSet {
-    /// Load all test points for a configuration
+    /// Loads the test points under `<base_path>/<reference>_CSP`; a missing
+    /// or unparsable file yields `None`.
     pub fn load(base_path: &Path, reference: &str) -> Result<Self, LoadError> {
         let config = DvbConfig::from_reference(reference)?;
         let config_dir = base_path.join(format!("{}_CSP", reference));
@@ -46,8 +47,7 @@ impl TestVectorSet {
         })
     }
 
-    /// Load single test point
-    #[allow(dead_code)] // Test utility - may be used in future tests
+    #[allow(dead_code)]
     pub fn load_test_point(
         base_path: &Path,
         reference: &str,
@@ -66,7 +66,7 @@ impl TestVectorSet {
         reference: &str,
         tp: &str,
     ) -> Option<TestVectorFile> {
-        // Extract base test point number (e.g., "07a" -> "07", "04" -> "04")
+        // The directory name drops the letter suffix: "07a" -> "TestPoint07".
         let tp_base = tp.trim_end_matches(|c: char| c.is_ascii_alphabetic());
         let test_point_dir = config_dir.join(format!("TestPoint{}", tp_base));
         let file_path = test_point_dir.join(format!("{}_TP{}_CSP.txt", reference, tp));
@@ -114,7 +114,6 @@ mod tests {
         let vectors = TestVectorSet::load(&base_path, "VV001-CR35").unwrap();
         let tp04 = vectors.tp04.expect("TP04 should be present");
 
-        // Check structure
         assert!(tp04.num_frames() > 0, "Should have at least one frame");
 
         let frame0 = tp04.frame(0);
@@ -151,11 +150,9 @@ mod tests {
         let tp05 = vectors.tp05.as_ref().expect("TP05 should be present");
         let tp06 = vectors.tp06.as_ref().expect("TP06 should be present");
 
-        // All test points should have same number of frames
         assert_eq!(tp04.num_frames(), tp05.num_frames());
         assert_eq!(tp04.num_frames(), tp06.num_frames());
 
-        // Check first frame consistency
         assert_eq!(tp04.frame(0).len(), tp05.frame(0).len());
         assert_eq!(tp04.frame(0).len(), tp06.frame(0).len());
     }
@@ -165,7 +162,6 @@ mod tests {
         let base_path = test_vectors::test_vectors_path();
         let result = TestVectorSet::load(&base_path, "VV999-CR99");
 
-        // Should fail either with config error or dir not found
         assert!(result.is_err());
     }
 }

@@ -1,13 +1,9 @@
-//! Integration tests for SIMD-accelerated LLR operations.
-//!
-//! Tests that gf2-coding::Llr properly integrates with gf2-kernels-simd
-//! and provides correct results with SIMD acceleration.
+//! `Llr` batch reductions, saturation and hard decisions against scalar expectations.
 
 use gf2_coding::llr::Llr;
 
 #[test]
 fn test_boxplus_minsum_n_scalar_matches_simd() {
-    // Test that SIMD and scalar implementations give same results
     let test_cases = vec![
         vec![Llr::new(1.0f32), Llr::new(2.0f32), Llr::new(3.0f32)],
         vec![Llr::new(-1.0f32), Llr::new(-2.0f32), Llr::new(-3.0f32)],
@@ -23,7 +19,6 @@ fn test_boxplus_minsum_n_scalar_matches_simd() {
     for llrs in test_cases {
         let result = Llr::boxplus_minsum_n(&llrs);
 
-        // Compute expected with scalar implementation
         let mut min_abs = f32::INFINITY;
         let mut sign_product = 1.0f32;
         for llr in &llrs {
@@ -66,11 +61,11 @@ fn test_saturate_batch() {
 #[test]
 fn test_hard_decision_batch() {
     let llrs = vec![
-        Llr::new(3.0f32),  // bit 0
-        Llr::new(-2.0f32), // bit 1
-        Llr::new(0.5f32),  // bit 0
-        Llr::new(-0.1f32), // bit 1
-        Llr::new(0.0f32),  // bit 0 (tie)
+        Llr::new(3.0f32),
+        Llr::new(-2.0f32),
+        Llr::new(0.5f32),
+        Llr::new(-0.1f32),
+        Llr::new(0.0f32), // bit 0 (tie)
     ];
 
     let bits = Llr::hard_decision_batch(&llrs);
@@ -80,7 +75,6 @@ fn test_hard_decision_batch() {
 
 #[test]
 fn test_large_batch_performance() {
-    // Create a large batch to test SIMD efficiency
     let llrs: Vec<Llr> = (0..1000)
         .map(|i| {
             let val = (i as f32) * 0.1;
@@ -92,7 +86,6 @@ fn test_large_batch_performance() {
         })
         .collect();
 
-    // Just verify it completes without panicking
     let result = Llr::boxplus_minsum_n(&llrs);
     assert!(result.value().is_finite());
 
@@ -106,8 +99,6 @@ fn test_large_batch_performance() {
 #[cfg(feature = "simd")]
 #[test]
 fn test_simd_detection() {
-    // Just verify that SIMD detection doesn't panic
-    // Actual detection happens internally in gf2-kernels-simd
     let llrs = vec![Llr::new(1.0f32), Llr::new(2.0f32)];
     let _ = Llr::boxplus_minsum_n(&llrs);
 }

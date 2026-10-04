@@ -1,25 +1,9 @@
-//! Heap-allocation census of LDPC decoding (jit:07ca8585, REQ-07).
-//!
-//! This test binary installs a counting global allocator that forwards every
-//! request to the system allocator and records it only while a flag is set, so
-//! a count covers exactly the section between the two stores. The counts are
-//! exact and deterministic for a fixed decoder and input; they are not a
-//! timing, and this file measures nothing that depends on the host's speed.
-//!
-//! Three phases are counted separately, because they answer different
-//! questions:
-//!
-//! - **Construction** builds the code's edge layout and every message array,
-//!   and allocates. The test records that it does rather than fixing a figure.
-//! - **Workspace growth** is the first decode into a caller's codeword buffer,
-//!   which grows that buffer to the codeword length once.
-//! - **Steady state** is every later decode through the same decoder and the
-//!   same prepared buffer at a fixed configuration. It allocates nothing:
-//!   no allocation, no reallocation and no deallocation.
-//!
-//! The counting flag and the counters are thread-local, so a section counts
-//! only what the thread running it requests and stays exact while other tests
-//! run in parallel in the same process.
+//! Heap-allocation census of LDPC decoding. A counting global allocator
+//! forwards to the system allocator and records requests only while a
+//! thread-local flag is set, so each count is exact for its section while other
+//! tests run in parallel. Construction and the first decode into a caller's
+//! buffer allocate; later decodes through the same decoder and prepared buffer
+//! allocate nothing.
 
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
 use gf2_coding::llr::Llr;
@@ -38,7 +22,7 @@ thread_local! {
 }
 
 /// Whether the calling thread is counting. False during thread-local teardown,
-/// when the flag is no longer reachable.
+/// when the flag is unreachable.
 fn counting() -> bool {
     COUNTING.try_with(Cell::get).unwrap_or(false)
 }
@@ -109,9 +93,8 @@ impl Counts {
     }
 }
 
-/// Reports one counted section as a JSON record on standard output, so a run
-/// captured with `--nocapture` is a machine-readable census beside the
-/// assertions. The record carries only what this run observed.
+/// Prints one counted section as a JSON record, so a `--nocapture` run yields a
+/// machine-readable census.
 fn report(phase: &str, case: &str, counts: Counts) {
     println!(
         "{{\"schema\":\"ldpc-decode-allocation-census-v1\",\"phase\":\"{phase}\",\"case\":\"{case}\",\
@@ -175,8 +158,6 @@ fn codes() -> Vec<(&'static str, LdpcCode)> {
     ]
 }
 
-/// REQ-07: repeated decoding with a prepared workspace and a fixed supported
-/// configuration performs no heap allocation at all.
 #[test]
 fn steady_state_decoding_allocates_nothing() {
     for (label, code) in codes() {
@@ -210,10 +191,8 @@ fn steady_state_decoding_allocates_nothing() {
     }
 }
 
-/// Construction and the first prepared decode are measured separately, and both
-/// allocate. The test records the fact, not a figure: the sizes follow from the
-/// code's dimensions and would be a recorded constant with no independent
-/// meaning.
+/// Asserts that construction and workspace growth allocate, without a figure:
+/// the sizes follow from the code's dimensions.
 #[test]
 fn construction_and_workspace_growth_are_counted_separately() {
     let code = LdpcCode::dvb_t2_short(gf2_coding::CodeRate::Rate1_2);
@@ -233,7 +212,6 @@ fn construction_and_workspace_growth_are_counted_separately() {
         "constructing a decoder allocates its layout and message arrays"
     );
 
-    // An empty buffer: the first decode grows it to the codeword length.
     let mut codeword = BitVec::new();
     let (_, growth) = count(|| decoder.decode_codeword_into(&llrs, 6, &mut codeword));
     report(
@@ -247,7 +225,6 @@ fn construction_and_workspace_growth_are_counted_separately() {
     );
     assert_eq!(codeword.len(), code.n());
 
-    // With the buffer prepared, the next decode allocates nothing.
     let (_, steady) = count(|| decoder.decode_codeword_into(&llrs, 6, &mut codeword));
     report(
         "steady-state",
@@ -257,7 +234,6 @@ fn construction_and_workspace_growth_are_counted_separately() {
     assert!(steady.is_zero(), "prepared decode requested {steady:?}");
 }
 
-/// A decoder that has been reset returns to the same steady state.
 #[test]
 fn decoding_after_reset_allocates_nothing() {
     let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(2, 8));

@@ -1,10 +1,5 @@
-//! Computing Generator Matrix from Parity-Check Matrix
-//!
-//! This example demonstrates the algorithm for computing a systematic generator
-//! matrix G from a parity-check matrix H such that H·G^T = 0 in GF(2).
-//!
-//! The algorithm uses Gaussian elimination with a critical row reordering step
-//! to correctly extract parity relationships.
+//! Computes a systematic generator matrix G from a parity-check matrix H with
+//! `RuEncodingMatrices::preprocess`, so that H·G^T = 0 over GF(2).
 
 use gf2_coding::ldpc::encoding::RuEncodingMatrices;
 use gf2_core::sparse::SpBitMatrixDual;
@@ -33,7 +28,6 @@ fn main() {
     println!("\nThe row reordering ensures proper alignment of the identity");
     println!("structure, enabling correct extraction of parity relationships.");
 
-    // Example 1: Custom Hamming [7,4]
     println!("\n{}", "=".repeat(70));
     println!("Example 1: Custom Hamming [7,4] Code");
     println!("{}", "=".repeat(70));
@@ -54,14 +48,12 @@ fn main() {
 
     print_matrix("Parity-check matrix H", &h1);
 
-    // Preprocess to compute generator matrix
     let matrices1 = RuEncodingMatrices::preprocess(&h1).unwrap();
     println!("\n✓ Successfully computed generator matrix G");
     println!("  - Message dimension k = {}", matrices1.k());
     println!("  - Codeword length n = {}", matrices1.n());
     println!("  - Parity bits r = {}", matrices1.r());
 
-    // Test encoding
     println!("\nTesting encoding for all 2^k = 16 messages:");
     let mut all_valid = true;
     for msg_val in 0u8..16 {
@@ -86,7 +78,6 @@ fn main() {
         println!("  ✗ Some codewords INVALID");
     }
 
-    // Example 2: Standard Hamming [7,4]
     println!("\n{}", "=".repeat(70));
     println!("Example 2: Standard Hamming [7,4] Code");
     println!("{}", "=".repeat(70));
@@ -112,7 +103,6 @@ fn main() {
     let matrices2 = RuEncodingMatrices::preprocess(&h2).unwrap();
     println!("\n✓ Successfully computed generator matrix G");
 
-    // Test a few specific messages
     println!("\nEncoding examples:");
     let test_messages = vec![
         (0b0000, "0000"),
@@ -141,7 +131,6 @@ fn main() {
         }
     }
 
-    // Summary
     println!("\n{}", "=".repeat(70));
     println!("Summary");
     println!("{}", "=".repeat(70));

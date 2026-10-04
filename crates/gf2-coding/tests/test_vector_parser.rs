@@ -1,7 +1,5 @@
-//! Test vector parser integration tests
-//!
-//! These tests verify the test vector parsing infrastructure works correctly.
-//! Tests marked with #[ignore] require external DVB test vectors.
+//! Integration tests for the DVB test-vector parser; the ignored tests read
+//! external DVB vectors.
 
 mod common;
 mod test_vectors;
@@ -15,10 +13,7 @@ fn both_helper_modules_resolve_the_same_vector_tree() {
 }
 
 #[test]
-fn test_parser_module_available() {
-    // Basic smoke test - module should compile and be accessible
-    // If this test runs, the module compiled successfully
-}
+fn test_parser_module_available() {}
 
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
@@ -54,7 +49,6 @@ fn test_tp04_structure() {
 
     let tp04 = vectors.tp04.expect("TP04 should be present");
 
-    // Verify structure
     assert!(tp04.num_frames() > 0, "Should have at least one frame");
     println!("TP04: {} frames", tp04.num_frames());
 
@@ -76,7 +70,6 @@ fn test_tp04_structure() {
         assert!(first_block.total_blocks > 0);
         assert!(!first_block.data.is_empty());
 
-        // Verify block count matches
         assert_eq!(
             frame0.len(),
             first_block.total_blocks,
@@ -109,7 +102,6 @@ fn test_all_test_points_consistent_structure() {
     println!("TP06:  {} frames", tp06.num_frames());
     println!("TP07a: {} frames", tp07a.num_frames());
 
-    // All test points should have same number of frames
     assert_eq!(
         tp04.num_frames(),
         tp05.num_frames(),
@@ -126,7 +118,6 @@ fn test_all_test_points_consistent_structure() {
         "TP04 and TP07a frame count mismatch"
     );
 
-    // Check first frame block counts
     let frame0_blocks_tp04 = tp04.frame(0).len();
     let frame0_blocks_tp05 = tp05.frame(0).len();
     let frame0_blocks_tp06 = tp06.frame(0).len();
@@ -178,13 +169,11 @@ fn test_bit_lengths_match_encoding_stages() {
     println!("  TP05 (BCH output): {} bits", block05.data.len());
     println!("  TP06 (LDPC output): {} bits", block06.data.len());
 
-    // TP05 should be longer than TP04 (BCH adds parity bits)
     assert!(
         block05.data.len() > block04.data.len(),
         "BCH encoding should increase bit length"
     );
 
-    // TP06 should be longer than TP05 (LDPC adds parity bits)
     assert!(
         block06.data.len() > block05.data.len(),
         "LDPC encoding should increase bit length"
