@@ -761,7 +761,7 @@
      "short_id": "103a792a",
      "title": "Move gf2-core crate guides into the legacy mirror",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "1adfe2e9-2e12-4851-a341-69c36d50d63f",
@@ -775,7 +775,7 @@
      "short_id": "1ca94ec2",
      "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "2596b143-9284-450b-bf60-8e6510c7032b",
@@ -789,14 +789,14 @@
      "short_id": "3759f995",
      "title": "Re-archive epics babcf05e, f9717e7e to collect their terminal stories",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "42037c91-71ad-431b-b27a-e9826e5354a9",
      "short_id": "42037c91",
      "title": "Re-archive epics bb85c68a, 6efb756b to collect their terminal stories",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "4f161183-869b-4369-83e9-46dc023720d5",
@@ -810,35 +810,35 @@
      "short_id": "616e1d7c",
      "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "rework"
     },
     {
      "id": "83f9ce69-6d18-4767-ac9c-6b2f00485581",
      "short_id": "83f9ce69",
      "title": "Re-archive epic 97bf0879 to collect its terminal stories",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "eace5009-d595-4a23-bd68-6034df5e5352",
      "short_id": "eace5009",
      "title": "Regroup the remaining flat dev/active entries under epic dirs",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "f29a9225-0cd6-4fb2-91a5-7ba56b1b706b",
      "short_id": "f29a9225",
      "title": "Re-archive epic 026fc832 to collect its terminal stories",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "f902240f-f550-47ea-84fa-326f3d3f96a1",
      "short_id": "f902240f",
      "title": "Bring the hand-archived OSD epic under container archival",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     }
    ]
   },
@@ -1694,6 +1694,17 @@
    "issue": "decoupling",
    "question": "Where is the decoupling work for entries left in place under REQ-04 filed?",
    "resolution": "Owner: tasks in this epic (2026-10-04)."
+  },
+  {
+   "issue": "616e1d7c",
+   "question": "OPEN: where does `dev/active/389aa4de/receipt-notes.md` go? The tracker resolves 389aa4de under the open epic 86b9c719; the plan row \"Active-layout ties\" assigns it to the archived 6dc81018; no archive plan includes it; code-review and doc-review of 616e1d7c fail on it (2026-10-05).",
+   "options": [
+    "move it under dev/active/86b9c719-quality-documentation-tech-debt/389aa4de/ and amend the tie row",
+    "add a reference so the 6dc81018 archive collects it",
+    "amend REQ-01 to leave it flat"
+   ],
+   "recommendation": "first option",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -1750,12 +1761,13 @@
   "50201002": 1,
   "545b113f": 1,
   "3fd3db5e": 1,
-  "103a792a": 1,
+  "103a792a": 2,
   "eace5009": 1,
   "83f9ce69": 1,
   "3759f995": 1,
-  "f902240f": 1,
-  "f29a9225": 1
+  "f902240f": 2,
+  "f29a9225": 2,
+  "616e1d7c": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1862,6 +1874,36 @@
    "issue": "fa4939c3",
    "finding": "crates/gf2-kernels-hip/src/host/streams.rs:120 safety comment claims documented thread safety for hipStreamSynchronize; the HIP reference states it for hipStreamQuery only.",
    "disposition": "filed 9c7e6369 (b4b4b9ee)"
+  },
+  {
+   "issue": "4f161183",
+   "finding": "Entries 00dd43c3, 19513245, a203a23c, bc091474, bdc507a3, c04dd4ac and f8dd4dde stay flat under REQ-04; consumers at file:line in 4f161183-regroup.md.",
+   "disposition": "decoupling tasks to file in this epic (owner ruling 2026-10-04)"
+  },
+  {
+   "issue": "eace5009",
+   "finding": "Entry 4e732b56 stays flat: six depth-dependent harness paths (eace5009-regroup.md).",
+   "disposition": "decoupling task to file in this epic"
+  },
+  {
+   "issue": "616e1d7c",
+   "finding": "96cea1b9-archive-rows.py --check exits on \"2 archive events for container 6dc81018\".",
+   "disposition": "task to file in this epic"
+  },
+  {
+   "issue": "1ca94ec2",
+   "finding": "docs/lean4-verification-pipeline.md (moved by 130d5fd7) is cited at dev/active/6dc81018-field-capability-dispatch/investigation.md:512,586 and dev/active/ae03bcd0-general-bch/investigation.md:130,140.",
+   "disposition": "task to file in this epic"
+  },
+  {
+   "issue": "83f9ce69",
+   "finding": "dev/plans/small_prime_kernel_strategy.md, sota_target_matrix.md, flint_promotion_evidence.md, ntl_promotion_evidence.md and dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md are retained by commit-pinned references; jit does not move them.",
+   "disposition": "ec655592 and b2bb1065 move them by git mv; brief the workers"
+  },
+  {
+   "issue": "4f161183",
+   "finding": "Descriptions of 77c21ecd and b64dc9c4 cite dev/active/613574db/.",
+   "disposition": "kept: owner ruling on terminal-issue descriptions (check their state before relying on it)"
   }
  ],
  "notes": [
@@ -1902,7 +1944,8 @@
   "Session 9 (2026-10-04): owner instruction for this session: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when waves 11 and 12 finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty; Fable is excluded. Reviews weigh net-negative line change and the documentation invariants.",
   "Session 9: six stale worktrees of other epics removed with owner approval (agent-8bd873f7, agent-c73ffa25, agent-dbd8787d-publish, agent-dbd8787d-run, two under .claude/worktrees); the unmerged branches worktree-agent-aa4df2631e461c6ae and worktree-agent-ab61dd5f4d07bfb81 remain.",
   "Session 9 wave 11 dispatch (base 98e238917): 83f9ce69, f29a9225, 3759f995, f902240f run in two phases (worker pre-flight, lead executes the archive on main in the order 97bf0879, 026fc832, babcf05e, f9717e7e, b7157be6, worker repoints after a SendMessage naming the commit); 4f161183, eace5009, 616e1d7c, 103a792a are single-phase worktree workers. 2596b143 runs after they merge. 1ca94ec2 and 42037c91 wait on the dev/docs policy question. Worktrees were created without cache seeding (LEAD_CACHE_POOL unset to a missing path); the workers build nothing.",
-  "Session 9: gf2-53 leads epic 1a379447 and commits on main from the same checkout. Both leads announce gate evaluations and cargo-ci runs to each other before starting; stage by explicit path; .jit/events.jsonl is shared and carries the other session's events."
+  "Session 9: gf2-53 leads epic 1a379447 and commits on main from the same checkout. Both leads announce gate evaluations and cargo-ci runs to each other before starting; stage by explicit path; .jit/events.jsonl is shared and carries the other session's events.",
+  "Session 9 close: owner asked for the handoff once running tasks finished. Wave 11 open items: 616e1d7c (rework, owner question), 2596b143 (not dispatched), 198aafa3 (wave 12, blocked). Benchmark window of gf2-53 armed for 02:00 on 2026-10-05; no build or gate from 01:55 until window.log shows window end."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
