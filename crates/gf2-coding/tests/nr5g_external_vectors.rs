@@ -2,8 +2,8 @@
 //! (`@/citation/ThreeGpp2017` Tables 5.3.2-2 and 5.3.2-3, lifting sets
 //! `i_LS` = 0..7) bit-exactly against the `@/citation/Sionna2026` CSV tables
 //! under `data/ldpc/nr_5g/` (provenance in `data/ldpc/nr_5g/PROVENANCE.md`).
-//! BG2 rate coverage stops at 2/3: clause 7.2.2 selects BG2 only for
-//! R <= 0.67.
+//! BG2 rate coverage stops at 2/3: above a payload of 292 bits, clause 7.2.2
+//! selects BG2 only for R <= 0.67.
 
 use gf2_coding::ldpc::nr_5g::lifting::LIFTING_SIZE_SETS;
 use gf2_coding::ldpc::nr_5g::{lifting_set_index, shift_table, Nr5gRateMatchedDecoder};

@@ -1056,7 +1056,7 @@ fn unexecuted_shard_paths(
         .collect())
 }
 
-/// Renders integrity entries in the `sha256sum` check-file format.
+/// Renders integrity entries in the `sha256sum` check-file format (`@/citation/Coreutils2026`).
 ///
 /// Each line is the lowercase hexadecimal digest, two spaces, and the path
 /// relative to the campaign directory, so `sha256sum -c` accepts the file

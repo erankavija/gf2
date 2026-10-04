@@ -1405,7 +1405,7 @@ mod tests {
     }
     type Gf2m8 = Gf2mWide<1, PleGf2m8Cfg>;
 
-    /// Gf2mWide<16>: Conway polynomial x^16 + x^5 + x^3 + x^2 + 1
+    /// Gf2mWide<16>: Conway polynomial x^16 + x^5 + x^3 + x^2 + 1 (`@/citation/Lubeck2024`)
     /// → low 16 bits 0x002D (with implicit leading one at bit 16).
     struct PleGf2m16Cfg;
     impl Gf2mWideConfig<1> for PleGf2m16Cfg {
