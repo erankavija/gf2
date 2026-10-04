@@ -1466,7 +1466,7 @@
     "c73ffa25": 1,
     "a0812b83": 2,
     "c04dd4ac": 2,
-    "50f0bd42": 1
+    "50f0bd42": 2
   },
   "surfaced_pitfalls": [
     {
@@ -2052,7 +2052,8 @@
     "Session 27: queue.tsv row dbd8787d (another epic, issue done) has no done marker after rc=1 on 2026-10-02; its worktree is gone, so run-window.sh logs it missing and skips it.",
     "Session 27: invoker lifted the wave-3 hold on the five out-of-wave confirmation rows; queue.tsv rows uncommented with their original keys; pinned trees verified clean at 706450eed, a00540a8f, 897ca69ab.",
     "Session 27: replay merged at 626be8850, merged-tree cargo-ci passed, 15 artifacts linked to 50f0bd42 at 39fbccb0e, window gf2-bench-window-20261005 armed for 02:00 Europe/Helsinki.",
-    "Session 27: post-window final rounds dispatched for 4c1e441f, ad2a6a58, f63a2464 and 50f0bd42 at 2026-10-05 02:20 EEST. Merge order: ad2a6a58 first (shared smoke-script fix), then the others one at a time with schema-index regeneration and merged-tree cargo-ci after each."
+    "Session 27: post-window final rounds dispatched for 4c1e441f, ad2a6a58, f63a2464 and 50f0bd42 at 2026-10-05 02:20 EEST. Merge order: ad2a6a58 first (shared smoke-script fix), then the others one at a time with schema-index regeneration and merged-tree cargo-ci after each.",
+    "Session 27: 50f0bd42 merged at 3bd366414 with confirmation and no-adoption decision; gates at e60732bef: asm-artefact-present PASS, cargo-ci PASS, research-review PASS (0 findings), code-review FAIL F1 (new M4RI render/freeze tools hard-code dev/ paths and a depth-dependent root traversal; @/invariant/no-dev-path-coupling). Rework 2 of 2 dispatched to the same worker."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
