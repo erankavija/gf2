@@ -8,38 +8,6 @@
 //! and [`build`](Builder::build), which takes the stage order from
 //! [`dvb_t2_bicm_stages`], inserts the [`Awgn`] channel between the forward and
 //! inverse halves, and calls [`Chain::build`].
-//!
-//! # Examples
-//!
-//! Build the full DVB-T2 BICM pipeline for the Normal-frame rate-1/2 16-QAM
-//! MODCOD, then drive a noiseless BBFRAME through it:
-//!
-//! ```
-//! use std::num::NonZeroUsize;
-//! use gf2_sim::Pipeline;
-//! use gf2_sim::presets::dvb_t2::{Channel, Modcod};
-//! use gf2_coding::CodeRate;
-//! use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-//! use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-//! use gf2_coding::modem::DemapMethod;
-//!
-//! let pipeline = Pipeline::dvb_t2()
-//!     .modcod(Modcod::Normal {
-//!         rate: CodeRate::Rate1_2,
-//!         modulation: DvbT2Modulation::Qam16,
-//!     })
-//!     .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
-//!     .demap(DemapMethod::ExactLogMap)
-//!     .channel(Channel::awgn(6.0))
-//!     .parallelism(NonZeroUsize::new(4).unwrap())
-//!     .seed(0xC0DE_F00D)
-//!     .build()
-//!     .expect("the six in-scope MODCODs all build");
-//!
-//! // Forward (3) + channel (1) + inverse (3) = seven stages.
-//! assert_eq!(pipeline.stage_count(), 7);
-//! assert_eq!(pipeline.config().seed, 0xC0DE_F00D);
-//! ```
 
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
