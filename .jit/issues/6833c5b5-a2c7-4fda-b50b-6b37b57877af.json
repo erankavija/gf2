@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T23:57:56.527749291Z",
+  "dependencies": [],
+  "description": "The dense-parity source-evidence ledger no longer matches what its generator writes on the current tree, so its citations cannot be re-derived.\n\n## Background\n\n`dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json` records each cited source line with its commit, path, line number and verbatim text, written by `survey/make-dense-parity-source-evidence.py`. Source edits made for other work moved or changed cited lines, and the generator's output now differs from the committed ledger in commit, line and digest fields. The ledger is a receipt-pinned producing input of the dense-parity campaigns and the frozen dense-parity addendum cites it, so regenerating it in place changes a pinned file's bytes for every later run while committed receipts keep their own snapshots.\n\n## Success Criteria\n\n- [hard] REQ-01: Each citation in the ledger resolves to the cited text: either at the commit the row records, verified against that commit's content, or at the current tree after regeneration.\n- [hard] REQ-02: A committed check distinguishes a ledger pinned to recorded commits from one that tracks the current tree, and passes on the committed ledger.\n- [hard] REQ-03: No committed receipt, receipt input snapshot, ledger of trials or frozen addendum changes, and the dense producing-input closure check passes.\n- [hard] REQ-04: Documents that cite the ledger state which tree their citations describe.\n\n## Notes\n\nFound during the M4RI comparison's tooling rework, where the regeneration was reverted because the file is receipt-pinned.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T23:57:56.527749291Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "6833c5b5-a2c7-4fda-b50b-6b37b57877af",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Make the dense-parity source-evidence ledger verifiable against its sources",
+  "updated_at": "2026-10-04T23:57:56.527749291Z"
+}

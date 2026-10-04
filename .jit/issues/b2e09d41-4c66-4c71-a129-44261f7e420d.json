@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T23:57:56.365338715Z",
+  "dependencies": [],
+  "description": "The LDPC survey harness carries a private plan checker, `ldpc-plan-check`, that duplicates the shared runner's `benchmark-ab-runner check`; one canonical plan check remains.\n\n## Background\n\n`dev/active/3be770d5/survey/harness/src/bin/ldpc-plan-check.rs`, with its `[[bin]]` entry in that harness's `Cargo.toml`, decodes a runner plan and validates it and its addendum the way the runner does before its first measurement. `benchmark-ab-runner check` performs the same validation for every campaign family. The quantized, layered and QC-aware LDPC evaluation uses the shared check only. The private binary is still named by the preparation scripts and producing-input manifests of the LDPC profile and the LDPC update-path campaigns, and `dev/bench_results/07ca8585/preparation/build-identity.json` records its digest. Committed receipts keep their own input snapshots, so the live harness can change without altering any receipt.\n\n## Success Criteria\n\n- [hard] REQ-01: No live source, manifest or preparation script builds or invokes `ldpc-plan-check`; every former caller validates its plans through `benchmark-ab-runner check`.\n- [hard] REQ-02: Every committed LDPC campaign plan that passed the private checker passes the shared check unchanged, shown by a committed regenerable record.\n- [hard] REQ-03: No committed receipt, receipt input snapshot, ledger or frozen addendum changes, and `dev/scripts/check-receipt-input-snapshots.py` passes.\n- [hard] REQ-04: Live records that name the removed binary's digest state the current build identity or are marked as superseded by structure, without rewriting evidence bytes.\n\n## Notes\n\nFound while converging the QC evaluation's smoke and plan checks on the shared runner. The campaign tooling is under the epic's provenance freeze: no protocol, schema or receipt version changes.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T23:57:56.365338715Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "b2e09d41-4c66-4c71-a129-44261f7e420d",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Remove the private LDPC plan checker in favour of the shared runner check",
+  "updated_at": "2026-10-04T23:57:56.365338715Z"
+}
