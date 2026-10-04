@@ -402,9 +402,10 @@ impl NrRateMatchParams {
     }
 }
 
-/// Filler-position prior; [`Nr5gRateMatchedCode::prepare_llrs`] documents the
-/// value and why it is finite.
-const FILLER_LLR: f32 = 15.0;
+/// Prior LLR that [`Nr5gRateMatchedCode::prepare_llrs`] writes at filler
+/// positions. It stands in for the exact $+\infty$ of a known zero so that
+/// filler posteriors stay finite; `tanh` of half of it is below 1 in `f32`.
+pub const FILLER_LLR: f32 = 15.0;
 
 /// Encoding data for the mother code with right-pivot column mapping.
 ///
@@ -644,7 +645,7 @@ fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> Mothe
 /// 1. Receive target_n channel LLRs.
 /// 2. Map to full_n LLR vector using `transmitted_cols`:
 ///    - Transmitted positions: channel LLR
-///    - Filler positions: the finite prior of [`Self::prepare_llrs`] (known zero)
+///    - Filler positions: [`FILLER_LLR`] (known zero)
 ///    - All other positions: LLR = 0 (no channel info)
 /// 3. BP decode on the full mother code H.
 /// 4. Extract target_k message bits.
@@ -751,12 +752,8 @@ impl Nr5gRateMatchedCode {
     /// natural-systematic columns as parity pivots (e.g., BG2 row 41).
     ///
     /// - Transmitted positions (from `transmitted_cols`): channel LLRs
-    /// - Filler positions: LLR = 15.0 (known to be zero)
+    /// - Filler positions: [`FILLER_LLR`] (known to be zero)
     /// - Punctured & untransmitted positions: LLR = 0 (no info)
-    ///
-    /// The filler prior is finite because `tanh(15.0 / 2)` stays below 1 in
-    /// `f32`, whereas the exact prior $+\infty$ gives `tanh` = 1, the argument
-    /// at which the sum-product check-node `atanh` diverges.
     ///
     /// # Panics
     ///
@@ -1351,6 +1348,16 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_prepare_llrs_writes_filler_llr_at_every_filler_position() {
+        let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+        let channel = Llr::new(-1.0);
+        let full_llrs = rm_code.prepare_llrs(&[channel; 256]);
+        let count = |value: Llr| full_llrs.iter().filter(|&&llr| llr == value).count();
+        assert_eq!(count(Llr::new(FILLER_LLR)), rm_code.params().num_shortened);
+        assert_eq!(count(channel), 256);
     }
 
     fn assert_bp_converges_rate_matched(bg: u8, target_n: usize, target_k: usize, label: &str) {
