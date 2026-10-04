@@ -150,6 +150,13 @@
       "format": "markdown",
       "label": "Session 6 handoff",
       "path": "dev/active/fa787f85-documentation-overhaul/handoff-5.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Session 8 handoff",
+      "path": "dev/active/fa787f85-documentation-overhaul/handoff-7.md"
     }
   ],
   "first_ready_at": "2026-07-14T20:40:18.243561271Z",
@@ -177,5 +184,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-04T10:59:38.192984451Z"
+  "updated_at": "2026-10-04T14:17:56.283762858Z"
 }

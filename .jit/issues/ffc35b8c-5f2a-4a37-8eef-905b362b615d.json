@@ -66,32 +66,32 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T13:15:16.885819297Z",
+      "updated_at": "2026-10-04T14:11:38.137733418Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T13:19:33.777334167Z",
+      "updated_at": "2026-10-04T14:14:50.847485290Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T13:17:15.714287369Z",
+      "updated_at": "2026-10-04T14:14:58.747693976Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T13:15:20.712062607Z",
+      "updated_at": "2026-10-04T14:11:42.065081498Z",
       "updated_by": "auto:executor"
     },
     "holistic-review": {
       "status": "failed",
-      "updated_at": "2026-10-04T13:23:56.268584496Z",
+      "updated_at": "2026-10-04T14:17:20.031700249Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
       "status": "passed",
-      "updated_at": "2026-10-04T13:15:35.688527559Z",
+      "updated_at": "2026-10-04T14:11:57.028925563Z",
       "updated_by": "auto:executor"
     }
   },
@@ -106,5 +106,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Workspace source-comment tersification sweep",
-  "updated_at": "2026-10-04T13:54:27.973984527Z"
+  "updated_at": "2026-10-04T14:17:20.031700249Z"
 }

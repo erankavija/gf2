@@ -17908,3 +17908,10 @@
 {"gate_key":"code-review","id":"ede691f5-0973-42b3-aa16-3e3735f57ccc","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T14:09:59.304532145Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"82896c9a-8f9f-44e9-b4fd-3a89bd678d8a","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T14:10:12.453802882Z","to":"done","type":"issue_state_changed"}
 {"id":"131a53e7-653b-44b7-b739-f0f1674579f9","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T14:10:12.453802882Z","type":"issue_completed"}
+{"gate_key":"cargo-ci","id":"769fad69-8875-49b3-bb20-454c7a8fd4df","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T14:11:38.137733418Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"36d603e9-267e-465d-8f75-33b4fbcc4f50","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T14:11:42.065081498Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"repo-validate","id":"17692b45-46ad-490a-8bd4-63b8cf6b08ba","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T14:11:57.028925563Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"f4acdf7e-58d7-4899-b225-ffb6227ef85f","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T14:14:50.847485290Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"7673b5b6-c7b7-47b4-b37d-2f8240e2cdd0","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T14:14:58.747693976Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"holistic-review","id":"2c6b25bf-412c-428e-98af-6386ebe61f01","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T14:17:20.031700249Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"aed57949-425e-487a-85ad-247442e23098","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-04T14:17:56.283762858Z","type":"issue_updated","updated_by":"doc-add"}
