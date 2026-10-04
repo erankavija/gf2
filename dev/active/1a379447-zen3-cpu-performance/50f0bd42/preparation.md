@@ -28,11 +28,10 @@ is committed and exploratory. The canonical
 [builder](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs)
 sets `pilot_pairs` to the protocol maximum, which the
 [protocol](../../f547c394/protocol.md#frozen-shared-settings) fixes at 24; the
-projected plan was checked to carry 24 for every qualified M4RI cell. A
-confirmation, if the pilot meets the frozen resolution ceiling, uses the
-[canonical freezer](../../c7113c5a/survey/freeze-confirmation.py), fresh pairs,
-and this family's own append-only ledger. A comparator gap never authorizes
-production adoption.
+projected plan carries 24 for every qualified M4RI cell. The confirmation
+uses the [canonical freezer](../../c7113c5a/survey/freeze-confirmation.py),
+fresh pairs, and this family's own append-only ledger. A comparator gap never
+authorizes production adoption.
 
 ## Untimed validation
 
@@ -54,22 +53,16 @@ resolves the frozen receipt wording against protocol-v4's unavailable mechanism.
 The [original v1 prose](../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md)
 remains byte-identical for earlier receipts. The comparator receipt's
 [producing-input snapshot](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json)
-includes both versions and the amendment. The benchmark queue remains under
-lead control. No timed M4RI samples or selection verdict are claimed here.
-
-The queue entry for the next authorized benchmark window is:
-
-```text
-50f0bd42	.agents/worktrees/agent-50f0bd42	25	dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh window --family 2037941f-dense-matvec-vs-m4ri --addendum dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json --run-id v4-r1 --m4ri
-```
+includes both versions and the amendment. This record covers untimed
+preparation only; the [outcome](outcome.md) holds the timed evidence and the
+decision.
 
 ## Criterion disposition
 
-- **REQ-01–03:** The qualified pilot receipt, statistical interpretation and
-  exact unavailable companion belong to the scheduled measurement stage.
+- **REQ-01–03:** The [outcome](outcome.md) cites the pilot and confirmation
+  receipts, their statistical interpretation and the unavailable companions.
 - **REQ-04–07:** The portfolio contains no qualifying fusion identity; no
   candidate implementation, candidate receipt, or new unsafe boundary exists.
-- **REQ-08–10:** The decision retains the established fused route because the
-  fusion portfolio has no candidate. The M4RI pilot is screened under its
-  frozen resolution rule; only eligible cells receive fresh confirmation.
-  Comparator outcomes and the prior carry-save no-win stay visible.
+- **REQ-08–10:** The [outcome](outcome.md) is the decision record. It retains
+  the established fused route, with comparator outcomes and the prior
+  carry-save no-win visible.
