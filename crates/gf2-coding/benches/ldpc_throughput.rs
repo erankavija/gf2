@@ -1,7 +1,4 @@
-// LDPC Throughput Benchmarks
-//
-// Measures encoding and decoding performance for DVB-T2 LDPC codes.
-// Run with: cargo bench --bench ldpc_throughput
+//! Encoding and decoding benchmarks for DVB-T2 LDPC codes.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::ldpc::encoding::EncodingCache;
@@ -12,7 +9,6 @@ use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 use std::path::PathBuf;
 
-/// Load LDPC cache from standard location
 fn load_cache() -> Option<EncodingCache> {
     let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/dvb_t2");
     if cache_dir.exists() {
@@ -22,7 +18,6 @@ fn load_cache() -> Option<EncodingCache> {
     }
 }
 
-/// Benchmark LDPC encoding for a single block
 fn bench_ldpc_encode_single(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let cache = load_cache();
@@ -43,7 +38,6 @@ fn bench_ldpc_encode_single(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark LDPC encoding for multiple blocks (sequential)
 fn bench_ldpc_encode_batch(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let cache = load_cache();
@@ -72,12 +66,10 @@ fn bench_ldpc_encode_batch(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark LDPC decoding for a single block (error-free)
 fn bench_ldpc_decode_single(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let mut decoder = LdpcDecoder::new(code.clone());
 
-    // Create high-confidence LLRs (error-free channel)
     let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
 
     let mut group = c.benchmark_group("ldpc_decode_single");
@@ -93,7 +85,6 @@ fn bench_ldpc_decode_single(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark LDPC decoding for multiple blocks (parallel with rayon)
 fn bench_ldpc_decode_batch(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
 
@@ -123,7 +114,6 @@ fn bench_ldpc_decode_batch(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark cache loading time
 fn bench_cache_load(c: &mut Criterion) {
     let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/dvb_t2");
 
@@ -144,7 +134,6 @@ fn bench_cache_load(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark encoder creation with and without cache
 fn bench_encoder_creation(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let cache = load_cache();
@@ -161,8 +150,6 @@ fn bench_encoder_creation(c: &mut Criterion) {
             });
         });
     }
-
-    // Skip without_cache - too slow for benchmarking (2-10 seconds)
 
     group.finish();
 }

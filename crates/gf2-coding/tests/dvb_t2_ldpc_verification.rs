@@ -42,7 +42,6 @@ fn test_ldpc_encoding_tp05_to_tp06() {
     let tp05 = vectors.tp05.as_ref().expect("TP05 not found");
     let tp06 = vectors.tp06.as_ref().expect("TP06 not found");
 
-    // DVB-T2 Normal, Rate 3/5
     let cache = try_load_cache();
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let encoder = create_encoder(code, cache.as_ref());

@@ -1,18 +1,14 @@
 //! Guarded fresh-process witnesses that selecting a family beyond the
 //! reference reaches no allocator on the workspace batch path, first call
-//! included.
-//!
-//! The conservative profile keeps every code on the scalar reference, so the
-//! in-crate allocation witnesses of `8f68699b` never exercise a family that
-//! reads precomputed state. These cases install profiles that select one and
-//! watch the same buffer shapes.
+//! included. The conservative profile keeps every code on the scalar
+//! reference, so these cases install profiles that select a family reading
+//! precomputed state.
 
 #[path = "support/fresh_tuning_process.rs"]
 mod fresh;
 
 use gf2_coding::bch::encode::EncodeFamily;
 
-/// Asserts the shape claims of one allocation case.
 fn assert_allocation_free(case: fresh::FreshProcessCase, family: EncodeFamily) {
     let result = fresh::fresh_tuning_process(case).unwrap();
     assert_eq!(result["family"], family.name());

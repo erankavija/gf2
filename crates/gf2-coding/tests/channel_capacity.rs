@@ -23,10 +23,10 @@ const REFERENCE_CAPACITY_DISPERSION: &[(f64, f64, f64)] = &[
 /// (0, 1): (rate, limit, tolerance). Each tolerance is half a unit of the
 /// printed precision plus 0.001 dB.
 ///
-/// - Rates 1/3, 1/2, 2/3, 3/4: [Lentmaier2010] Table II, column
+/// - Rates 1/3, 1/2, 2/3, 3/4: `@/citation/Lentmaier2010` Table II, column
 ///   `(Eb/N0)_sh`, printed to 0.001 dB.
-/// - Rates 1/6, 1/4: [Ccsds2020] §3.3 (vertical asymptotes of Figure 3-3),
-///   printed to 0.1 dB.
+/// - Rates 1/6, 1/4: `@/citation/Ccsds2020` §3.3 (vertical asymptotes of
+///   Figure 3-3), printed to 0.1 dB.
 const PUBLISHED_SHANNON_LIMITS: &[(f64, f64, f64)] = &[
     (1.0 / 6.0, -1.1, 0.051),
     (0.25, -0.8, 0.051),

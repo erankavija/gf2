@@ -1,13 +1,4 @@
-//! Comprehensive validation tests for LDPC codes.
-//!
-//! This test suite verifies mathematical properties and correctness of LDPC
-//! code construction, encoding, and decoding following TDD principles.
-//!
-//! Test categories:
-//! 1. Code construction validation (matrix properties)
-//! 2. Mathematical property tests (linearity, orthogonality)
-//! 3. DVB-T2 specific validation (parameter correctness, structure)
-//! 4. Systematic encoding validation (when applicable)
+//! LDPC construction, syndrome and decoder properties, and DVB-T2 parameters.
 
 mod common;
 mod test_vectors;
@@ -18,10 +9,7 @@ use gf2_coding::traits::{IterativeSoftDecoder, SoftDecoder};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 
-/// Helper to create a simple regular-like LDPC code for testing.
-/// Creates a small code from edges for property testing.
 fn create_test_ldpc() -> LdpcCode {
-    // Simple [7,4] Hamming-like code as LDPC
     let edges = vec![
         (0, 0),
         (0, 1),
@@ -40,10 +28,8 @@ fn create_test_ldpc() -> LdpcCode {
 mod code_construction_validation {
     use super::*;
 
-    /// Test that all-zero codeword is always valid (linearity requirement)
     #[test]
     fn test_zero_codeword_is_valid() {
-        // Simple test LDPC code
         let code = create_test_ldpc();
         let zero_cw = BitVec::zeros(code.n());
         assert!(
@@ -51,7 +37,6 @@ mod code_construction_validation {
             "All-zero codeword must be valid for any linear code"
         );
 
-        // DVB-T2 code
         let dvb_code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
         let dvb_zero = BitVec::zeros(dvb_code.n());
         assert!(
@@ -60,7 +45,6 @@ mod code_construction_validation {
         );
     }
 
-    /// Test syndrome computation produces correct dimensions
     #[test]
     fn test_syndrome_dimensions() {
         let code = create_test_ldpc();
@@ -74,7 +58,6 @@ mod code_construction_validation {
         );
     }
 
-    /// Test that code parameters satisfy basic relationships
     #[test]
     fn test_code_parameter_relationships() {
         let code = create_test_ldpc();
@@ -88,12 +71,10 @@ mod code_construction_validation {
         );
     }
 
-    /// Test parity-check matrix dimensions via syndrome computation
     #[test]
     fn test_parity_check_matrix_dimensions_via_syndrome() {
         let code = create_test_ldpc();
 
-        // Syndrome dimensions tell us H dimensions: syndrome = H × codeword
         let codeword = BitVec::zeros(code.n());
         let syndrome = code.syndrome(&codeword);
 
@@ -106,26 +87,22 @@ mod code_construction_validation {
 mod mathematical_property_validation {
     use super::*;
 
-    /// Test linearity property: H·(c₁ ⊕ c₂) = H·c₁ ⊕ H·c₂
     #[test]
     fn test_syndrome_linearity() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
 
-        // Create two valid codewords (all zeros for simplicity)
         let c1 = BitVec::zeros(code.n());
         let c2 = BitVec::zeros(code.n());
 
         let s1 = code.syndrome(&c1);
         let s2 = code.syndrome(&c2);
 
-        // XOR the codewords
         let mut c1_xor_c2 = c1.clone();
         for i in 0..code.n() {
             c1_xor_c2.set(i, c1.get(i) ^ c2.get(i));
         }
         let s_sum = code.syndrome(&c1_xor_c2);
 
-        // Compute s1 ⊕ s2
         let mut s1_xor_s2 = s1.clone();
         for i in 0..code.m() {
             s1_xor_s2.set(i, s1.get(i) ^ s2.get(i));
@@ -138,12 +115,10 @@ mod mathematical_property_validation {
         );
     }
 
-    /// Test that syndrome is zero for valid codewords
     #[test]
     fn test_valid_codeword_zero_syndrome() {
         let code = create_test_ldpc();
 
-        // All-zero is always a valid codeword
         let zero_cw = BitVec::zeros(code.n());
         let syndrome = code.syndrome(&zero_cw);
 
@@ -158,15 +133,12 @@ mod mathematical_property_validation {
         );
     }
 
-    /// Test syndrome detects errors (non-zero syndrome for corrupted codeword)
     #[test]
     fn test_syndrome_detects_errors() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
 
-        // Start with valid codeword
         let mut corrupted = BitVec::zeros(code.n());
 
-        // Introduce single bit error
         corrupted.set(100, true);
 
         let syndrome = code.syndrome(&corrupted);
@@ -180,19 +152,16 @@ mod mathematical_property_validation {
         );
     }
 
-    /// Test XOR of two valid codewords is also valid (closure property)
     #[test]
     fn test_codeword_closure_under_xor() {
         let code = create_test_ldpc();
 
-        // Two valid codewords
         let c1 = BitVec::zeros(code.n());
         let c2 = BitVec::zeros(code.n());
 
         assert!(code.is_valid_codeword(&c1));
         assert!(code.is_valid_codeword(&c2));
 
-        // XOR them
         let mut c3 = c1.clone();
         for i in 0..code.n() {
             c3.set(i, c1.get(i) ^ c2.get(i));
@@ -209,7 +178,7 @@ mod mathematical_property_validation {
 mod dvb_t2_parameter_validation {
     use super::*;
 
-    /// Verify DVB-T2 Normal frame parameters match ETSI EN 302 755
+    /// Normal-frame parameters of `@/citation/Etsi2015`.
     #[test]
     fn test_dvb_t2_normal_parameters() {
         let test_cases = vec![
@@ -228,7 +197,6 @@ mod dvb_t2_parameter_validation {
             assert_eq!(code.k(), expected_k, "Wrong k for {:?}", rate);
             assert_eq!(code.m(), expected_m, "Wrong m for {:?}", rate);
 
-            // Verify n = k + m
             assert_eq!(
                 code.n(),
                 code.k() + code.m(),
@@ -236,7 +204,6 @@ mod dvb_t2_parameter_validation {
                 rate
             );
 
-            // Verify rate calculation
             let calculated_rate = code.k() as f64 / code.n() as f64;
             let expected_rate = match rate {
                 CodeRate::Rate1_2 => 0.5,
@@ -256,7 +223,7 @@ mod dvb_t2_parameter_validation {
         }
     }
 
-    /// Verify DVB-T2 Short frame parameters match ETSI EN 302 755
+    /// Short-frame parameters of `@/citation/Etsi2015`.
     #[test]
     fn test_dvb_t2_short_parameters() {
         let test_cases = vec![
@@ -284,10 +251,8 @@ mod dvb_t2_parameter_validation {
         }
     }
 
-    /// Test that DVB-T2 codes have correct codeword length for standard
     #[test]
     fn test_dvb_t2_standard_codeword_lengths() {
-        // Normal frames: 64800 bits
         let normal = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
         assert_eq!(
             normal.n(),
@@ -295,7 +260,6 @@ mod dvb_t2_parameter_validation {
             "DVB-T2 Normal frames must have 64800 bits"
         );
 
-        // Short frames: 16200 bits
         let short = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         assert_eq!(short.n(), 16200, "DVB-T2 Short frames must have 16200 bits");
     }
@@ -305,7 +269,6 @@ mod dvb_t2_parameter_validation {
 mod from_edges_validation {
     use super::*;
 
-    /// Test that from_edges construction works correctly
     #[test]
     fn test_from_edges_construction() {
         let code = create_test_ldpc();
@@ -315,10 +278,8 @@ mod from_edges_validation {
         assert_eq!(code.k(), 4);
     }
 
-    /// Test various from_edges configurations
     #[test]
     fn test_from_edges_parameter_variations() {
-        // Different size codes
         let test_cases = vec![
             (2, 4, vec![(0, 0), (0, 1), (1, 2), (1, 3)]),
             (3, 6, vec![(0, 0), (0, 1), (1, 2), (1, 3), (2, 4), (2, 5)]),
@@ -330,7 +291,6 @@ mod from_edges_validation {
             assert_eq!(code.m(), m);
             assert_eq!(code.n(), n);
 
-            // Zero codeword should always be valid
             let zero = BitVec::zeros(n);
             assert!(
                 code.is_valid_codeword(&zero),
@@ -346,24 +306,20 @@ mod from_edges_validation {
 mod decoder_validation {
     use super::*;
 
-    /// Test decoder initialization and basic structure
     #[test]
     fn test_decoder_initialization() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
         let decoder = LdpcDecoder::new(code.clone());
 
-        // Decoder should be ready to use
-        let llrs = vec![Llr::infinity(); code.n()]; // All bits certain to be 0
+        let llrs = vec![Llr::infinity(); code.n()];
         let decoded = decoder.decode_soft(&llrs);
 
-        // Decoded output should be valid codeword
         assert!(
             code.is_valid_codeword(&decoded),
             "Decoded message should be valid"
         );
     }
 
-    /// Test decoder handles all-zero input correctly
     #[test]
     fn test_decoder_all_zero_channel() {
         let code = create_test_ldpc();
@@ -380,13 +336,11 @@ mod decoder_validation {
         );
     }
 
-    /// Test decoder convergence tracking with iterative decoder
     #[test]
     fn test_decoder_convergence_tracking() {
         let code = create_test_ldpc();
         let mut decoder = LdpcDecoder::new(code.clone());
 
-        // Use moderate LLR values (not infinite)
         let llrs = vec![Llr::new(2.0f32); code.n()];
         let result = decoder.decode_iterative(&llrs, 50);
 
@@ -400,13 +354,11 @@ mod decoder_validation {
         );
     }
 
-    /// Test decoder produces valid codewords
     #[test]
     fn test_decoder_produces_valid_codewords() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
         let decoder = LdpcDecoder::new(code.clone());
 
-        // Perfect channel (all bits certain to be 0)
         let llrs = vec![Llr::infinity(); code.n()];
         let decoded = decoder.decode_soft(&llrs);
 
@@ -421,13 +373,11 @@ mod decoder_validation {
 mod edge_case_validation {
     use super::*;
 
-    /// Test syndrome computation with different bit patterns
     #[test]
     fn test_syndrome_various_patterns() {
         let code = create_test_ldpc();
         let n = code.n();
 
-        // Test several patterns
         let patterns = vec![
             BitVec::zeros(n),
             {
@@ -454,7 +404,6 @@ mod edge_case_validation {
         }
     }
 
-    /// Test is_valid_codeword consistency with syndrome
     #[test]
     fn test_validity_check_consistency() {
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
@@ -503,7 +452,6 @@ fn test_tp06_parity_construction() {
     let tp05_block = &tp05.frame(0)[0];
     let tp06_block = &tp06.frame(0)[0];
 
-    // The first k bits should match (systematic)
     println!("Systematic check:");
     let mut sys_match = true;
     for i in 0..k {
@@ -522,20 +470,16 @@ fn test_tp06_parity_construction() {
         println!("  ✗ Systematic bits don't match!");
     }
 
-    // Now check if the parity bits in TP06 are what we'd compute
-    // Compute what p0 should be by XORing all info bits that connect to check 0
+    // p0 is the XOR of the info bits connected to check 0.
     let mut computed_p0 = false;
 
     println!("\nComputing what p0 should be:");
     for i in 0..k {
-        // Create unit vector
         let mut unit = BitVec::zeros(code.n());
         unit.set(i, true);
         let syndrome = code.syndrome(&unit);
 
-        // If this info bit connects to check 0
         if syndrome.get(0) {
-            // XOR with the actual bit value from TP05
             if tp05_block.data.get(i) {
                 computed_p0 ^= true;
             }
@@ -547,8 +491,7 @@ fn test_tp06_parity_construction() {
         if computed_p0 { "1" } else { "0" }
     );
 
-    // What does TP06 say p0 is?
-    let tp06_p0 = tp06_block.data.get(k); // First parity bit
+    let tp06_p0 = tp06_block.data.get(k);
     println!("  TP06 p0 value: {}", if tp06_p0 { "1" } else { "0" });
 
     if computed_p0 == tp06_p0 {

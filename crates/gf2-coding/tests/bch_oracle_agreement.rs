@@ -1,34 +1,10 @@
-//! Agreement of the predeclared BCH corpus with two external oracles.
-//!
-//! The evidence protocol in `dev/active/ae03bcd0-general-bch/plan.md` fixes
-//! eight conformance rows, one message seed, and two oracles: SageMath's
-//! `codes.BCHCode` and GAP's GUAVA `BCHCode`. The committed fixtures under
-//! `tests/data/bch_oracle/` carry what each oracle derived; the generation
-//! scripts, versions and provenance live in
+//! Agreement of the predeclared BCH corpus with two external oracles,
+//! `codes.BCHCode` of `@/citation/SageMath2026` and `BCHCode` of
+//! `@/citation/Joyner2026`, each run on gf2's primitive $n$-th root of unity
+//! $\alpha$. The evidence protocol is
+//! `dev/active/ae03bcd0-general-bch/plan.md`; the fixtures under
+//! `tests/data/bch_oracle/` carry what each oracle derived, with provenance in
 //! `dev/active/ae03bcd0-general-bch/oracle-provenance.md`.
-//!
-//! A BCH code is fixed by $(q, n, b, \delta)$ *and* the primitive $n$-th root
-//! of unity $\alpha$, so each oracle is run on gf2's $\alpha$, and GUAVA's
-//! unaided `BCHCode` — which picks `PrimitiveUnityRoot(q, n)` — is compared
-//! against the gf2 code carrying that root instead. The fixtures record which
-//! presentation each oracle used and both roots in gf2's coordinates.
-//!
-//! The GAP script calls `BCHCode` on every row as an attempt bounded by the
-//! run's heap and records what that attempt observed, so a row's code object
-//! is a fact of the run. Amendment 2 of the plan's `evidence-protocol`
-//! section names the rows whose GUAVA result is the `BCHCode` generator
-//! derivation and the cyclic-code polynomial map instead of a code object.
-//!
-//! Every comparison here is between the fixture and a code this suite
-//! constructs: the corpus rows from
-//! `gf2_coding::test_support::visit_bch_corpus`, which is the same
-//! construction the corpus emitter used, and, where GUAVA's root differs, the
-//! same construction with that root supplied explicitly.
-//!
-//! The authoritative DVB-T2 vectors enter through
-//! `the_etsi_dvb_t2_streams_encode_to_their_verified_codewords`, which encodes
-//! the ETSI verification stream's TP04 payloads through the canonical mother
-//! code and compares them with TP05 bit for bit.
 //!
 //! # Coordinates
 //!
@@ -65,27 +41,17 @@ use sha2::{Digest, Sha256};
 use test_vectors::{test_vectors_available, test_vectors_path, TestVectorSet};
 
 /// Length at or below which rows are compared symbol by symbol together; a
-/// longer row is compared in its own case. Amendment 1 of the plan's
-/// `evidence-protocol` section fixes this threshold.
+/// longer row is compared in its own case.
 const FAST_TIER_LENGTH: usize = 4096;
 
-/// The seed the shortened-payload check draws its DVB-T2 payloads from.
 const DVB_PAYLOAD_SEED: u64 = 0xAE03_BCD0;
 
-/// Payloads the shortened-parity check encodes, per Amendment 1 of the plan's
-/// `evidence-protocol` section.
 const DVB_PAYLOADS: usize = 3;
 
-// ---------------------------------------------------------------------------
-// Fixture access
-// ---------------------------------------------------------------------------
-
-/// Returns the committed fixture directory.
 fn data_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/bch_oracle")
 }
 
-/// Loads one committed fixture.
 fn fixture(name: &str) -> Value {
     let path = data_dir().join(name);
     let text = std::fs::read_to_string(&path)
@@ -94,7 +60,6 @@ fn fixture(name: &str) -> Value {
         .unwrap_or_else(|error| panic!("parsing {}: {error}", path.display()))
 }
 
-/// Indexes a fixture's rows by their row identifier.
 fn rows_by_id(fixture: &Value) -> BTreeMap<String, Value> {
     fixture["rows"]
         .as_array()
@@ -109,7 +74,6 @@ fn rows_by_id(fixture: &Value) -> BTreeMap<String, Value> {
         .collect()
 }
 
-/// Reads an unsigned member.
 fn number(row: &Value, key: &str) -> u128 {
     row[key]
         .as_u64()
@@ -117,7 +81,6 @@ fn number(row: &Value, key: &str) -> u128 {
         .unwrap_or_else(|| panic!("member {key} is an unsigned number"))
 }
 
-/// Reads an array of unsigned members.
 fn numbers(row: &Value, key: &str) -> Vec<u128> {
     row[key]
         .as_array()
@@ -133,7 +96,6 @@ fn numbers(row: &Value, key: &str) -> Vec<u128> {
         .collect()
 }
 
-/// Reads an array of string members.
 fn strings(row: &Value, key: &str) -> Vec<String> {
     row[key]
         .as_array()
@@ -148,16 +110,11 @@ fn strings(row: &Value, key: &str) -> Vec<String> {
         .collect()
 }
 
-/// Reads a boolean member.
 fn flag(row: &Value, key: &str) -> bool {
     row[key]
         .as_bool()
         .unwrap_or_else(|| panic!("member {key} is a boolean"))
 }
-
-// ---------------------------------------------------------------------------
-// Shared per-row derivations
-// ---------------------------------------------------------------------------
 
 /// Returns a code's generator coefficients as canonical base-field indices,
 /// ascending in degree.
@@ -170,7 +127,6 @@ where
     code.generator().iter().map(bch_corpus_index).collect()
 }
 
-/// Returns a code's defining set as plain exponents.
 fn defining_set<X, S, M>(code: &BchCode<X, S, M>) -> Vec<u128>
 where
     X: FieldExtension,
@@ -183,7 +139,6 @@ where
         .collect()
 }
 
-/// Returns the order of a code's base field.
 fn base_order<X, S, M>(code: &BchCode<X, S, M>) -> u64
 where
     X: FieldExtension,
@@ -231,9 +186,6 @@ where
     )
 }
 
-/// Asserts that one oracle's two encodings of every corpus message agree with
-/// `code`'s.
-///
 /// `native` holds the oracle's own cyclic encoding $c(x) = m(x)\,g(x)$ and
 /// `systematic` the oracle's systematic codeword, both in canonical
 /// coordinates under the corpus hex convention.
@@ -262,8 +214,6 @@ fn assert_codewords_agree<X, S, M>(
     for (position, message) in messages.iter().enumerate() {
         let indices: Vec<u128> = message.iter().map(|&symbol| u128::from(symbol)).collect();
 
-        // The oracle's own encoder produces a codeword of the gf2 code and
-        // reproduces the polynomial product against gf2's generator.
         let oracle_native = bch_corpus_decode_symbols(&native[position], code.n(), order);
         let native_poly = polynomial_from(
             code,
@@ -287,8 +237,6 @@ fn assert_codewords_agree<X, S, M>(
             );
         }
 
-        // The oracle's systematic codeword equals the default-layout encoding
-        // once the layout's coordinate map is applied.
         let oracle_systematic = bch_corpus_decode_symbols(&systematic[position], code.n(), order);
         let encoded = code
             .encode_systematic(
@@ -309,10 +257,6 @@ fn assert_codewords_agree<X, S, M>(
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Visitors
-// ---------------------------------------------------------------------------
 
 /// Checks that the corpus fixture records the code this suite constructs.
 struct ConstructionRecord {
@@ -487,7 +431,7 @@ impl BchCorpusVisitor for GeneratorAgreement {
 struct CodewordAgreement {
     oracle: &'static str,
     rows: BTreeMap<String, Value>,
-    /// Only rows whose length satisfies this predicate are compared.
+    /// Selects the rows longer than [`FAST_TIER_LENGTH`] when set, the others when clear.
     large: bool,
     visited: Vec<String>,
 }
@@ -538,8 +482,7 @@ impl BchCorpusVisitor for GuavaCodeObjectAgreement {
         if !flag(record, "bchcode_built") {
             // The run's heap did not admit this row's code object;
             // `a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt`
-            // asserts what the row carries instead and that it is a row
-            // Amendment 2 of the plan's `evidence-protocol` section names.
+            // asserts what the row carries instead.
             return;
         }
         self.visited.push(row.id.to_owned());
@@ -595,23 +538,17 @@ impl BchCorpusVisitor for GuavaCodeObjectAgreement {
     }
 }
 
-// ---------------------------------------------------------------------------
-// The corpus agreement tests
-// ---------------------------------------------------------------------------
-
 /// Every corpus row the protocol predeclares.
 const CORPUS_IDS: &[&str] = &["B1", "B2", "B3", "B4", "N1", "N2", "N3", "N4"];
 
-/// The rows on which Amendment 2 of the plan's `evidence-protocol` section
-/// admits a GUAVA result derived without a code object, because the generator
-/// matrix `BCHCode` materializes does not fit the run's heap at that length.
-/// Naming them here is what keeps the admission specific: a run that builds a
-/// code object on one of these rows, or fails to build one on any other row,
+/// The rows whose GUAVA result is derived without a code object, because the
+/// generator matrix `BCHCode` materializes does not fit the run's heap at that
+/// length. A run that builds a code object on one of these rows, or fails to
+/// build one on any other row,
 /// fails `a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt`
 /// and `guava_bchcode_objects_agree_at_their_own_root`.
 const ROWS_WITHOUT_A_GUAVA_CODE_OBJECT: &[&str] = &["B4"];
 
-/// The corpus rows that carry GUAVA's own `BCHCode` object, in corpus order.
 fn rows_with_a_guava_code_object() -> Vec<&'static str> {
     CORPUS_IDS
         .iter()
@@ -795,9 +732,7 @@ fn the_oracle_fixtures_record_their_identities_and_self_checks() {
             "GUAVA checked the defining set against the derived generator on row {id}"
         );
 
-        // Every row calls GUAVA's own `BCHCode` and records what that attempt
-        // observed, so whether a code object exists is a fact of the run. The
-        // two marks are samples of one process-wide high-water mark, the first
+        // The two marks are samples of one process-wide high-water mark, the first
         // taken after the `BCHCode` attempt and the second after the row's
         // `GeneratorPolCode` attempt, so the second covers both and neither
         // can fall below the other.
@@ -847,10 +782,8 @@ const GUAVA_POLYNOMIAL_ENCODER: &str = "GUAVA cyclic-code encoding map c(x) = m(
 
 /// A row whose `BCHCode` attempt exceeded the run's heap carries GUAVA's own
 /// generator derivation and its cyclic-code polynomial encoding map, together
-/// with what the attempt observed. This is the whole of the admitted shape:
-/// there is no state in which a row simply has no GUAVA result, and the rows
-/// that may take this shape are exactly the ones Amendment 2 of the plan's
-/// `evidence-protocol` section names.
+/// with what the attempt observed. The rows that take this shape are exactly
+/// [`ROWS_WITHOUT_A_GUAVA_CODE_OBJECT`].
 #[test]
 fn a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt() {
     let gap = fixture("gap.json");
@@ -899,17 +832,11 @@ fn a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// The DVB-T2 standards vectors
-// ---------------------------------------------------------------------------
-
-/// Returns the ETSI-pinned normal-frame parameters the corpus row B4 uses.
+/// The `@/citation/Etsi2015` normal-frame parameters the corpus row B4 uses.
 fn dvb_normal_params() -> DvbBchParams {
     DvbBchParams::for_code(FrameSize::Normal, CodeRate::Rate1_2)
 }
 
-/// Rebuilds the canonical mother code the shortened DVB-T2 code of `params`
-/// derives from.
 fn dvb_mother_code_for(params: DvbBchParams) -> BinaryBchCode {
     let extension = BinaryPrimeExt::new(gf2_core::gf2m::Gf2mField::new(
         params.field_m,
@@ -920,12 +847,11 @@ fn dvb_mother_code_for(params: DvbBchParams) -> BinaryBchCode {
         .expect("the DVB-T2 mother code")
 }
 
-/// Rebuilds the canonical DVB-T2 normal-frame mother code.
 fn dvb_mother_code() -> BinaryBchCode {
     dvb_mother_code_for(dvb_normal_params())
 }
 
-/// Returns the ETSI generator product $g_1 \cdots g_t$ as ascending bits.
+/// The `@/citation/Etsi2015` generator product $g_1 \cdots g_t$ as ascending bits.
 fn etsi_generator_bits() -> Vec<u128> {
     let params = dvb_normal_params();
     let field = gf2_core::gf2m::Gf2mField::new(params.field_m, params.primitive_poly);
@@ -1007,24 +933,18 @@ fn the_shortened_dvb_t2_parity_matches_the_mother_code() {
     }
 }
 
-/// The ETSI verification and validation reference stream set this suite
-/// consumes, whose configuration name fixes the frame size and code rate.
+/// The `@/citation/DvbVerification2010` stream set this suite consumes, whose
+/// configuration name fixes the frame size and code rate.
 const ETSI_STREAM_SET: &str = "VV001-CR35";
 
-/// Frames the VV001-CR35 streams carry.
 const ETSI_STREAM_FRAMES: usize = 4;
 
-/// Blocks each VV001-CR35 frame carries.
 const ETSI_STREAM_BLOCKS_PER_FRAME: usize = 202;
 
-/// Prefix of every line this case prints as an observed fact of its run.
-///
-/// `oracle/run.sh` copies these lines into the run receipt verbatim, so the
-/// receipt's standards-vector figures come from the run rather than from
-/// prose. See `@/inv/claims-trace-to-artifacts`.
+/// Prefix of every line this case prints as an observed fact of its run;
+/// `oracle/run.sh` copies these lines into the run receipt verbatim.
 const ETSI_FACT: &str = "dvb-vectors:";
 
-/// Returns the SHA-256 of `path` as lowercase hex.
 fn sha256_of(path: &Path) -> String {
     let mut file = File::open(path).expect("a stream file the loader read");
     let mut hasher = Sha256::new();

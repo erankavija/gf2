@@ -1,34 +1,9 @@
-//! External reference-vector validation for the 5G NR LDPC base graphs.
-//!
-//! Validates the compiled-in 3GPP TS 38.212 base-graph shift tables (BG1
-//! Table 5.3.2-2, BG2 Table 5.3.2-3, all 8 lifting sets `i_LS` = 0..7)
-//! bit-exactly against an EXTERNAL reference: the `@/citation/Sionna2026` base-graph
-//! CSV tables committed under `data/ldpc/nr_5g/` (Apache-2.0; provenance,
-//! upstream commit pin, and format description in
-//! `data/ldpc/nr_5g/PROVENANCE.md`). The CSV parser lives in this test —
-//! the compiled-in Rust constants remain the production SSOT.
-//!
-//! Coverage:
-//!
-//! - One regression per (BG, `i_LS`) pair (16 total) asserting
-//!   (a) the RAW shift table is bit-exact vs the parsed external reference,
-//!   and (b) the production constructor path `QuasiCyclicLdpc::nr_5g(bg, z)`
-//!   produces the external reference reduced `V mod Z` for EVERY valid Z in
-//!   the set (all 51 lifting sizes are swept — stronger than a single
-//!   representative Z per set, at negligible cost since `nr_5g` only builds
-//!   the base matrix).
-//! - The wrong-`i_LS` guard: at Z=208 (`i_LS`=6), substituting any of
-//!   the 7 wrong per-set tables yields a matrix that DIFFERS from the
-//!   external reference, and all 8 raw tables are pairwise distinct — so
-//!   collapsing the per-`i_LS` tables into one fails loudly.
-//! - Rate coverage {1/3, 1/2, 2/3, 5/6} through the public
-//!   `QuasiCyclicLdpc::nr_5g_rate_matched` constructor surface, pinning the
-//!   selected (Z, `i_LS`) per tuple, re-asserting the mother base matrix
-//!   against the external reference, and a bit-exact noiseless
-//!   encode/decode roundtrip. BG1 carries all four rates; BG2 carries
-//!   {1/3, 1/2, 2/3} only — TS 38.212 clause 7.2.2 selects BG2 only for
-//!   rates R <= 0.67 (5/6 on BG2 is outside the standard's operating
-//!   region), so the in-scope tuples are 4 (BG1) + 3 (BG2).
+//! Checks the compiled-in 5G NR LDPC base-graph shift tables
+//! (`@/citation/ThreeGpp2017` Tables 5.3.2-2 and 5.3.2-3, lifting sets
+//! `i_LS` = 0..7) bit-exactly against the `@/citation/Sionna2026` CSV tables
+//! under `data/ldpc/nr_5g/` (provenance in `data/ldpc/nr_5g/PROVENANCE.md`).
+//! BG2 rate coverage stops at 2/3: clause 7.2.2 selects BG2 only for
+//! R <= 0.67.
 
 use gf2_coding::ldpc::nr_5g::lifting::LIFTING_SIZE_SETS;
 use gf2_coding::ldpc::nr_5g::{lifting_set_index, shift_table, Nr5gRateMatchedDecoder};
@@ -38,12 +13,8 @@ use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 use gf2_core::BitVec;
 use std::path::PathBuf;
 
-/// Parses a Sionna base-graph CSV into 8 dense per-`i_LS` matrices.
-///
-/// Format (see `data/ldpc/nr_5g/PROVENANCE.md`): two header lines, then one
-/// semicolon-delimited line per base-graph edge carrying the row index
-/// (blank = same as previous line), the column index, and the 8 shift
-/// values for `i_LS` = 0..7. Entries absent from the file are -1.
+/// Parses a Sionna base-graph CSV (format in `data/ldpc/nr_5g/PROVENANCE.md`)
+/// into 8 dense per-`i_LS` matrices; entries absent from the file are -1.
 fn load_reference(bg: u8) -> [Vec<Vec<i16>>; 8] {
     let (rows, cols, file, expected_edges) = match bg {
         1 => (46, 68, "5G_bg1.csv", 316),
@@ -101,19 +72,15 @@ fn reduce_mod_z(table: &[Vec<i16>], z: usize) -> Vec<Vec<i32>> {
         .collect()
 }
 
-/// One regression per (BG, `i_LS`): raw table bit-exact vs the external
-/// reference, plus the production constructor path at every Z in the set.
 fn check_bg_ils_against_reference(bg: u8, i_ls: usize) {
     let reference = load_reference(bg);
 
-    // (a) Raw per-i_LS shift table, bit-exact (values AND -1 pattern).
     assert_eq!(
         shift_table(bg, i_ls),
         reference[i_ls],
         "BG{bg} i_LS={i_ls}: raw shift table differs from the Sionna reference"
     );
 
-    // (b) Production constructor path for every valid Z in this set.
     for &z in LIFTING_SIZE_SETS[i_ls] {
         let z = z as usize;
         let qc = QuasiCyclicLdpc::nr_5g(bg, z);
@@ -126,10 +93,6 @@ fn check_bg_ils_against_reference(bg: u8, i_ls: usize) {
         );
     }
 }
-
-// ===========================================================================
-// Per-(BG, i_LS) table regressions vs the external reference
-// ===========================================================================
 
 #[test]
 fn test_bg1_ils0_tables_match_external_reference() {
@@ -211,15 +174,6 @@ fn test_bg2_ils7_tables_match_external_reference() {
     check_bg_ils_against_reference(2, 7);
 }
 
-// ===========================================================================
-// Wrong-i_LS trap guard (feedback_ldpc_shift_tables: the ~2 dB BLER trap)
-// ===========================================================================
-
-/// At Z=208 (`i_LS`=6 for both BGs), substituting any WRONG per-set table
-/// yields a base matrix that differs from the external reference, while the
-/// correct table matches. If the 8 per-`i_LS` tables were ever collapsed
-/// into one, at least 7 of these inequality assertions would see identical
-/// matrices and fail loudly.
 fn check_wrong_ils_guard_z208(bg: u8) {
     let z = 208usize;
     assert_eq!(lifting_set_index(z as u16), Some(6), "Z=208 must be i_LS=6");
@@ -227,8 +181,6 @@ fn check_wrong_ils_guard_z208(bg: u8) {
     let reference = load_reference(bg);
     let correct = reduce_mod_z(&reference[6], z);
 
-    // The production constructor (which derives i_LS=6 from Z=208 itself)
-    // matches the external reference...
     let qc = QuasiCyclicLdpc::nr_5g(bg, z);
     assert_eq!(
         qc.base_matrix(),
@@ -236,7 +188,6 @@ fn check_wrong_ils_guard_z208(bg: u8) {
         "BG{bg} Z=208: correct i_LS=6 table must match the external reference"
     );
 
-    // ...and every wrong per-set table, reduced mod the same Z, differs.
     for wrong_ils in (0..8).filter(|&w| w != 6) {
         let wrong = reduce_mod_z(&shift_table(bg, wrong_ils), z);
         assert_ne!(
@@ -258,8 +209,6 @@ fn test_bg2_wrong_ils_table_for_z208_differs_from_reference() {
     check_wrong_ils_guard_z208(2);
 }
 
-/// All 8 raw per-`i_LS` tables are pairwise distinct for both BGs: direct
-/// collapse detection independent of any particular Z.
 #[test]
 fn test_per_ils_tables_pairwise_distinct() {
     for bg in [1u8, 2u8] {
@@ -276,11 +225,6 @@ fn test_per_ils_tables_pairwise_distinct() {
     }
 }
 
-// ===========================================================================
-// Rate coverage {1/3, 1/2, 2/3, 5/6} through the public constructor surface
-// ===========================================================================
-
-/// Deterministic message: bits set at positions that are multiples of 3.
 fn deterministic_message(k: usize) -> BitVec {
     let mut msg = BitVec::zeros(k);
     for i in (0..k).step_by(3) {
@@ -289,10 +233,6 @@ fn deterministic_message(k: usize) -> BitVec {
     msg
 }
 
-/// One regression per in-scope (BG, rate) tuple: pins the (Z, `i_LS`) the
-/// public `nr_5g_rate_matched` surface selects, re-asserts the mother base
-/// matrix against the external reference at that Z, and runs a bit-exact
-/// noiseless encode/decode roundtrip.
 fn check_rate_tuple(bg: u8, target_n: usize, target_k: usize, expect_z: usize, expect_ils: usize) {
     let rm = QuasiCyclicLdpc::nr_5g_rate_matched(bg, target_n, target_k);
     let params = rm.params().clone();
@@ -308,8 +248,6 @@ fn check_rate_tuple(bg: u8, target_n: usize, target_k: usize, expect_z: usize, e
     );
     assert_eq!(rm.mother_code().n(), params.nb * expect_z);
 
-    // The mother code's base matrix (the same `nr_5g` path the rate-matched
-    // constructor builds on) matches the external reference at this Z.
     let reference = load_reference(bg);
     let expected = reduce_mod_z(&reference[expect_ils], expect_z);
     let qc = QuasiCyclicLdpc::nr_5g(bg, expect_z);
@@ -320,7 +258,6 @@ fn check_rate_tuple(bg: u8, target_n: usize, target_k: usize, expect_z: usize, e
          from the Sionna reference reduced mod Z"
     );
 
-    // Bit-exact noiseless roundtrip through the rate-matched surface.
     let msg = deterministic_message(target_k);
     let codeword = rm.encode(&msg);
     assert_eq!(codeword.len(), target_n);

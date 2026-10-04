@@ -1,4 +1,4 @@
-//! Check if the MOTHER code (no rate matching) decodes properly
+//! Block error rate of the 5G NR BG2, Z=13 mother code (no rate matching) under min-sum decoding.
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc};
 use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
 use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
@@ -7,7 +7,6 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 
 fn main() {
-    // BG2, Z=13: mother code
     let qc = QuasiCyclicLdpc::nr_5g(2, 13);
     let code = LdpcCode::from_quasi_cyclic(&qc);
     println!(

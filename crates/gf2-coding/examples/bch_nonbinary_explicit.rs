@@ -1,5 +1,4 @@
 //! A nonbinary BCH code with every construction input explicit.
-//!
 //! The code-symbol field is GF(3), the splitting field is GF(3^5) under a
 //! caller-chosen modulus, the order-11 root is supplied by the caller, and
 //! the length, first root, and designed distance are named directly. The
@@ -8,15 +7,6 @@
 //! distance by exhaustive enumeration to contrast it with the witnessed
 //! bound, shows the typed construction errors, and saves `G` and `H` through
 //! the canonical checksummed `FieldMatrix` format before reloading them.
-//!
-//! The crate documentation's `bch` module states the conventions this example
-//! relies on.
-//!
-//! Run with:
-//!
-//! ```text
-//! ./scripts/cargo-budget.sh cargo run --release -p gf2-coding --example bch_nonbinary_explicit
-//! ```
 
 use gf2_coding::bch::error::BchError;
 use gf2_coding::bch::{
@@ -162,7 +152,6 @@ pub fn main() -> Result<()> {
         assert_eq!(view_generator.get(2, column), *basis_word.get(column));
     }
 
-    // Save atomically, reload against the expected base field, and compare.
     let directory = tempfile::Builder::new()
         .prefix("gf2-bch-nonbinary-")
         .tempdir()?;

@@ -1,25 +1,6 @@
-//! Property tests for the modem surface (JIT issue `dafb938a`).
-//!
-//! `proptest`-driven invariants over the public modem API. Focuses on
-//! behaviours that the regression tests in `modem_regression.rs` only
-//! pin at fixed seeds / fixed samples:
-//!
-//! 1. **Labeling bijection** — for every preset the full mapper output
-//!    over all `2^m` labels is a bijection in both directions (labels ↔
-//!    constellation points).
-//! 2. **Output shape / finiteness** — for random batch sizes in
-//!    `[0, 256]`, the demapper output length is exactly
-//!    `batch_size * m` and every entry is finite when the input is
-//!    finite and `noise_var > 0`.
-//! 3. **Noise / sign symmetry** — for Gray presets, flipping the sign
-//!    of every received sample must flip the sign of every output LLR.
-//! 4. **Hard-decision convergence as noise → 0** — the hard decisions
-//!    from the soft demapper converge to the labels of the
-//!    nearest-constellation-point map across a noise sweep.
-//!
-//! These share the SSOT [`Lcg`] + brute-force oracle in
-//! `gf2_coding::modem::test_oracle` with the reference-model and
-//! regression integration tests.
+//! `proptest` invariants over the public modem API for every Gray preset:
+//! labeling bijection, demap output shape and finiteness, sign symmetry, and
+//! hard-decision convergence as the noise variance tends to zero.
 
 use gf2_coding::llr::Llr;
 use gf2_coding::modem::test_oracle::Lcg;
@@ -30,22 +11,12 @@ use gf2_coding::modem::{
 
 use proptest::prelude::*;
 
-/// Constellation orders that the preset surface promises.
 const PRESET_ORDERS: [usize; 5] = [2, 4, 16, 64, 256];
 
-/// Strategy over the five supported preset orders.
 fn preset_order() -> impl Strategy<Value = usize> {
     prop::sample::select(PRESET_ORDERS.to_vec())
 }
 
-// ---------------------------------------------------------------------
-// 1. Labeling bijection
-// ---------------------------------------------------------------------
-
-/// Maps every label in `[0, 2^m)` through a [`BatchMapper`] and confirms:
-///   - the same label always produces the same point (determinism);
-///   - distinct labels produce distinct points (no collisions);
-///   - the total set of mapped points has cardinality `2^m` (no gaps).
 fn check_full_label_bijection<M: BatchMapper<f64>>(mapper: &M, m: u8) {
     let n = 1usize << m;
     let mut pts: Vec<(i64, i64)> = Vec::with_capacity(n);
@@ -54,15 +25,12 @@ fn check_full_label_bijection<M: BatchMapper<f64>>(mapper: &M, m: u8) {
         let mut oi = [0.0_f64; 1];
         let mut oq = [0.0_f64; 1];
         mapper.map_bits(&bits, &mut oi, &mut oq);
-        // Quantize to `i64` fixed-point at 1e-9 resolution: the presets
-        // we test against all produce rational coordinates scaled by
-        // a unit-energy factor, so a 1e-9 grid distinguishes every
-        // post-normalization point but tolerates float rounding.
+        // A 1e-9 fixed-point grid separates every normalized preset point
+        // and absorbs float rounding.
         let qi = (oi[0] * 1e9).round() as i64;
         let qq = (oq[0] * 1e9).round() as i64;
         pts.push((qi, qq));
     }
-    // No duplicates.
     let mut sorted = pts.clone();
     sorted.sort_unstable();
     sorted.dedup();
@@ -77,7 +45,6 @@ fn check_full_label_bijection<M: BatchMapper<f64>>(mapper: &M, m: u8) {
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(20))]
 
-    /// Every supported preset is a bijection under the reference mapper.
     #[test]
     fn prop_labeling_bijection_reference(order in preset_order()) {
         let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(order);
@@ -86,9 +53,6 @@ proptest! {
         check_full_label_bijection(&mapper, m);
     }
 
-    /// Every supported preset is a bijection under the Gray-QAM fast
-    /// mapper — this is the invariant the fast path's axis-separable
-    /// kernel relies on.
     #[test]
     fn prop_labeling_bijection_fast(order in preset_order()) {
         let mapper: GrayQamMapper<f64> =
@@ -98,13 +62,7 @@ proptest! {
     }
 }
 
-// ---------------------------------------------------------------------
-// 2. Output shape and finiteness
-// ---------------------------------------------------------------------
-
-/// Generates a `(rx_i, rx_q, noise_var)` triple of `batch` elements from
-/// the shared LCG. `noise_var` is strictly positive so the log-MAP
-/// reduction is well-defined.
+/// `noise_var` is strictly positive so the log-MAP reduction is well-defined.
 fn synthesize_demap_batch(seed: u64, batch: usize) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
     let mut rng = Lcg::new(seed);
     let mut rx_i = Vec::with_capacity(batch);
@@ -121,10 +79,7 @@ fn synthesize_demap_batch(seed: u64, batch: usize) -> (Vec<f64>, Vec<f64>, Vec<f
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(32))]
 
-    /// Output length is exactly `batch * m`, and every LLR is finite when
-    /// inputs are finite and `noise_var > 0`. Batch sizes include 0
-    /// (empty-batch contract) and up to 256 (plenty of coverage for the
-    /// size sweep without blowing up test runtime on debug builds).
+    /// Batch size 0 covers the empty-batch contract.
     #[test]
     fn prop_demap_output_shape_and_finiteness(
         order in preset_order(),
@@ -164,27 +119,12 @@ proptest! {
     }
 }
 
-// ---------------------------------------------------------------------
-// 3. Noise / sign symmetry on Gray presets
-// ---------------------------------------------------------------------
-
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(16))]
 
-    /// Gray-square-QAM and BPSK presets split their bit labels into two
-    /// groups by the Gray-code structure:
-    ///
-    /// - The **axis-sign bits** (MSB of the I-axis half-label and MSB of
-    ///   the Q-axis half-label) flip when the corresponding axis sample
-    ///   flips sign: `LLR(-y) == -LLR(+y)` for those bits under a
-    ///   symmetric constellation.
-    /// - The **inner/outer bits** (the remaining Gray-PAM bits on each
-    ///   axis) are *even* under a sign flip: the inner-vs-outer
-    ///   distinction only cares about `|y|`, so those LLRs satisfy
-    ///   `LLR(-y) == +LLR(+y)`.
-    ///
-    /// This property pins both invariants. Together they are the
-    /// symmetry fingerprint of a canonical Gray square-QAM mapping.
+    /// Under a sign flip of both axes the axis-sign bits (MSB of each axis
+    /// half-label) are odd, `LLR(-y) == -LLR(y)`, and the remaining Gray-PAM
+    /// bits are even, `LLR(-y) == LLR(y)`.
     #[test]
     fn prop_gray_sign_flip_symmetry(
         order in preset_order(),
@@ -216,15 +156,10 @@ proptest! {
         demapper.demap_llrs(in_pos, &mut out_pos);
         demapper.demap_llrs(in_neg, &mut out_neg);
 
-        // Bit-layout-aware check: the two axis-sign bits flip, the
-        // remaining Gray-PAM bits are even.
         for k in 0..batch {
             for b in 0..m {
                 let p = out_pos[k * m + b].value();
                 let n = out_neg[k * m + b].value();
-                // MSB of the I-axis half-label: bit index 0. MSB of the
-                // Q-axis half-label: bit index m_half. BPSK only has the
-                // I-axis sign bit at index 0.
                 let is_axis_sign = b == 0 || (m > 1 && b == m_half);
                 let tol = 1e-3_f32.max((p.abs() * 1e-3).max(n.abs() * 1e-3));
                 if is_axis_sign {
@@ -245,13 +180,6 @@ proptest! {
     }
 }
 
-// ---------------------------------------------------------------------
-// 4. Hard-decision convergence as noise → 0
-// ---------------------------------------------------------------------
-
-/// Returns the MSB-first label of the post-normalization constellation
-/// point in `spec` closest to `(y_i, y_q)`. Used as the ground-truth
-/// hard-decision target when `noise_var → 0`.
 fn nearest_point_label(spec: &ModemSpec<f64>, y_i: f64, y_q: f64) -> u16 {
     let view = spec.view();
     let mut best_d = f64::INFINITY;
@@ -270,11 +198,6 @@ fn nearest_point_label(spec: &ModemSpec<f64>, y_i: f64, y_q: f64) -> u16 {
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(16))]
 
-    /// As `noise_var → 0`, the soft demapper's hard decisions converge
-    /// to the labels of the nearest constellation point. Concretely, at
-    /// `noise_var = 1e-8` the bit decisions must match the brute-force
-    /// nearest-neighbour labels for every sample in a randomly-generated
-    /// batch.
     #[test]
     fn prop_hard_decision_converges_to_nearest_neighbour(
         order in preset_order(),
@@ -284,10 +207,7 @@ proptest! {
         let m = spec.bits_per_symbol();
         let batch = 32usize;
 
-        // Sample inside the convex hull of the constellation so there's
-        // no ambiguity about which point is closest: uniformly in
-        // [-1.2, 1.2] on each axis comfortably covers every preset's
-        // post-normalization layout.
+        // [-1.2, 1.2] per axis covers every preset's normalized layout.
         let mut rng = Lcg::new(seed);
         let mut rx_i = Vec::with_capacity(batch);
         let mut rx_q = Vec::with_capacity(batch);

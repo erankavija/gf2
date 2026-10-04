@@ -1,6 +1,5 @@
 //! Rows, fixtures, output digests, and the dispatch record shared by the BCH
-//! workload benches, included through `mod bch_workloads;`. The cells, their
-//! IDs, and the record format are the d1b4f85e amendment of
+//! workload benches, included through `mod bch_workloads;`. The contract is
 //! `dev/active/4e732b56/workload-selection.md`.
 
 #![allow(dead_code)]
@@ -89,12 +88,15 @@ pub const BINARY_ROWS: &[BinaryRow] = &[
     },
 ];
 
-/// Whether the repository's benchmark mode is on.
 pub fn bench_mode() -> bool {
     matches!(std::env::var("GF2_BENCH"), Ok(ref value) if value != "0")
 }
 
 /// Builds the primitive narrow-sense code of `row`.
+///
+/// # Panics
+///
+/// Panics if `row` describes no primitive narrow-sense BCH code.
 pub fn build(row: &BinaryRow) -> BinaryBchCode {
     let extension = BinaryPrimeExt::new(Gf2mField::new(row.degree, row.modulus))
         .expect("the contract's prim column is a primitive polynomial");
@@ -119,7 +121,6 @@ pub fn binary_messages(k: usize, count: usize) -> Vec<BitVec> {
         .collect()
 }
 
-/// FNV-1a over a sequence of 64-bit values.
 fn fnv1a(values: impl IntoIterator<Item = u64>) -> u64 {
     let mut hash = 0xcbf2_9ce4_8422_2325_u64;
     for value in values {

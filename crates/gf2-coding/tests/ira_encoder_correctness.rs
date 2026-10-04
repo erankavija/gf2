@@ -1,22 +1,7 @@
-//! Correctness tests for the IRA staircase accumulator encoder.
-//!
-//! Verifies three properties for all supported DVB-T2 configurations:
-//!
-//! 1. Syndrome zero: H · c = 0 for all produced codewords (fast tier; all
-//!    12 (frame, rate) configs).
-//! 2. Systematic: codeword[0..k] = info bits (fast tier; all 12 configs,
-//!    asserted alongside the syndrome check).
-//! 3. Bit-identity vs the RREF encoder. Together with (1) and (2) this
-//!    establishes the [hard] bit-identity criterion directly. RREF
-//!    preprocessing is ~2-3 s per Short rate (load-sensitive at the 5 s
-//!    per-test fast-tier hard kill) and several minutes per Normal rate, so
-//!    the six Short configs are `#[ignore = "slow:"]` (nightly tier) while
-//!    the six Normal configs are `#[ignore = "bench:"]` and additionally
-//!    gated behind `GF2_BENCH=1` — minutes per config puts them beyond any
-//!    CI per-test cap. Properties (1)+(2) algebraically imply bit-identity
-//!    (uniqueness of the systematic codeword for a full-rank LDPC code), so
-//!    the fast tier still has automated coverage of the criterion via the
-//!    syndrome+systematic tests below.
+//! IRA staircase encoder tests for every supported DVB-T2 (frame, rate):
+//! `H · c = 0`, systematic layout, and bit identity with the RREF encoder.
+//! The first two determine the systematic codeword of a full-rank code
+//! uniquely, so they imply the third.
 
 mod common;
 
@@ -45,11 +30,6 @@ fn make_message(seed: u8, length: usize) -> BitVec {
     bv
 }
 
-// ---------------------------------------------------------------------------
-// Short-frame syndrome tests (fast — IRA encoder, no RREF)
-// ---------------------------------------------------------------------------
-
-/// IRA encoder uses the fast path for all Short-frame DVB-T2 configs.
 #[test]
 fn test_ira_encoder_selected_for_all_short_rates() {
     for rate in ALL_RATES {
@@ -62,7 +42,6 @@ fn test_ira_encoder_selected_for_all_short_rates() {
     }
 }
 
-/// IRA encoder uses the fast path for all Normal-frame DVB-T2 configs.
 #[test]
 fn test_ira_encoder_selected_for_all_normal_rates() {
     for rate in ALL_RATES {
@@ -75,7 +54,6 @@ fn test_ira_encoder_selected_for_all_normal_rates() {
     }
 }
 
-/// H·c = 0 for 5 random messages per Short-frame rate.
 #[test]
 fn test_ira_short_syndrome_zero_all_rates() {
     for rate in ALL_RATES {
@@ -88,7 +66,6 @@ fn test_ira_short_syndrome_zero_all_rates() {
 
             assert_eq!(cw.len(), code.n(), "{rate:?} seed={seed}: codeword length");
 
-            // Systematic property: first k bits = message
             for i in 0..code.k() {
                 assert_eq!(
                     cw.get(i),
@@ -97,7 +74,6 @@ fn test_ira_short_syndrome_zero_all_rates() {
                 );
             }
 
-            // H·c = 0
             let syn = code.syndrome(&cw);
             assert_eq!(
                 syn.count_ones(),
@@ -108,11 +84,6 @@ fn test_ira_short_syndrome_zero_all_rates() {
     }
 }
 
-/// H·c = 0 and systematic property for 3 random messages per Normal-frame
-/// rate (fast tier). Together with the Short-frame version above this gives
-/// fast-tier automated coverage of the [hard] bit-identity criterion via
-/// the algebraic equivalence; the direct RREF comparisons for Normal frames
-/// (slow tier) appear later in this file.
 #[test]
 fn test_ira_normal_syndrome_zero_all_rates() {
     for rate in ALL_RATES {
@@ -125,7 +96,6 @@ fn test_ira_normal_syndrome_zero_all_rates() {
 
             assert_eq!(cw.len(), code.n(), "{rate:?} seed={seed}: codeword length");
 
-            // Systematic property
             for i in 0..code.k() {
                 assert_eq!(
                     cw.get(i),
@@ -134,7 +104,6 @@ fn test_ira_normal_syndrome_zero_all_rates() {
                 );
             }
 
-            // H·c = 0
             let syn = code.syndrome(&cw);
             assert_eq!(
                 syn.count_ones(),
@@ -145,13 +114,6 @@ fn test_ira_normal_syndrome_zero_all_rates() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Encode→decode roundtrip (Short frame, high-SNR, fast BP convergence)
-// ---------------------------------------------------------------------------
-
-/// Short Rate 1/2: encode with IRA then decode with BP (zero-error channel).
-///
-/// Verifies that BP decoding recovers the original message.
 #[test]
 fn test_ira_short_rate_1_2_encode_decode_roundtrip() {
     use gf2_coding::ldpc::LdpcDecoder;
@@ -165,7 +127,6 @@ fn test_ira_short_rate_1_2_encode_decode_roundtrip() {
     let msg = make_message(42, code.k());
     let cw = enc.encode(&msg);
 
-    // Perfect channel: convert bits to high-confidence LLRs.
     let llrs: Vec<Llr> = (0..cw.len())
         .map(|i| {
             if cw.get(i) {
@@ -183,7 +144,6 @@ fn test_ira_short_rate_1_2_encode_decode_roundtrip() {
         "Syndrome must pass after decoding"
     );
 
-    // Recovered message (first k bits of decoded codeword)
     let mut recovered = BitVec::with_capacity(code.k());
     for i in 0..code.k() {
         recovered.push_bit(result.decoded_bits.get(i));
@@ -194,26 +154,6 @@ fn test_ira_short_rate_1_2_encode_decode_roundtrip() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Bit-identity vs RREF. All twelve (Short and Normal) configs are covered
-// below; every test is `#[ignore]` because RREF preprocessing is load-sensitive
-// against the 5 s fast-tier hard kill. The six Short configs (~2-3 s) run in
-// the nightly slow tier; the six Normal configs (several minutes each) exceed
-// any CI per-test cap and additionally require `GF2_BENCH=1`. The fast-tier
-// syndrome + systematic tests above algebraically imply this bit-identity.
-// ---------------------------------------------------------------------------
-
-/// Short Rate 1/2: IRA output must be bit-identical to RREF output.
-///
-/// Marked slow because RREF preprocessing of a Short DVB-T2 code takes
-/// ~2-3 s on an idle host and substantially more under CPU contention,
-/// which makes a direct RREF comparison unreliable inside the fast tier's
-/// 5 s per-test hard kill. The [hard] bit-identity criterion is covered in
-/// the fast tier algebraically by [`test_ira_short_syndrome_zero_all_rates`]
-/// and [`test_ira_normal_syndrome_zero_all_rates`] above: those tests
-/// verify both `H · c^T = 0` and `c[0..k] == message`, which together
-/// uniquely identify the systematic codeword and therefore imply
-/// bit-identity with any other correct systematic encoder (RREF included).
 #[test]
 #[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate (load-sensitive at 5 s fast-tier budget)"]
 fn test_ira_vs_rref_short_rate_1_2() {
@@ -222,7 +162,6 @@ fn test_ira_vs_rref_short_rate_1_2() {
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let ira_enc = LdpcEncoder::new(code.clone());
 
-    // Build the RREF encoder explicitly for comparison.
     let ru = RuEncodingMatrices::preprocess(code.parity_check_matrix())
         .expect("RREF preprocessing failed");
 
@@ -239,7 +178,6 @@ fn test_ira_vs_rref_short_rate_1_2() {
     }
 }
 
-/// Short Rate 3/5: IRA output must be bit-identical to RREF output.
 #[test]
 #[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
 fn test_ira_vs_rref_short_rate_3_5() {
@@ -259,7 +197,6 @@ fn test_ira_vs_rref_short_rate_3_5() {
     }
 }
 
-/// Short Rate 2/3: IRA output must be bit-identical to RREF output.
 #[test]
 #[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
 fn test_ira_vs_rref_short_rate_2_3() {
@@ -279,7 +216,6 @@ fn test_ira_vs_rref_short_rate_2_3() {
     }
 }
 
-/// Short Rate 3/4: IRA output must be bit-identical to RREF output.
 #[test]
 #[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
 fn test_ira_vs_rref_short_rate_3_4() {
@@ -299,7 +235,6 @@ fn test_ira_vs_rref_short_rate_3_4() {
     }
 }
 
-/// Short Rate 4/5: IRA output must be bit-identical to RREF output.
 #[test]
 #[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
 fn test_ira_vs_rref_short_rate_4_5() {
@@ -319,7 +254,6 @@ fn test_ira_vs_rref_short_rate_4_5() {
     }
 }
 
-/// Short Rate 5/6: IRA output must be bit-identical to RREF output.
 #[test]
 #[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
 fn test_ira_vs_rref_short_rate_5_6() {
@@ -339,7 +273,6 @@ fn test_ira_vs_rref_short_rate_5_6() {
     }
 }
 
-/// Normal Rate 1/2: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
 #[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 1/2 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_1_2() {
@@ -364,7 +297,6 @@ fn test_ira_vs_rref_normal_rate_1_2() {
     }
 }
 
-/// Normal Rate 3/5: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
 #[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 3/5 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_3_5() {
@@ -389,7 +321,6 @@ fn test_ira_vs_rref_normal_rate_3_5() {
     }
 }
 
-/// Normal Rate 2/3: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
 #[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 2/3 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_2_3() {
@@ -414,7 +345,6 @@ fn test_ira_vs_rref_normal_rate_2_3() {
     }
 }
 
-/// Normal Rate 3/4: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
 #[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 3/4 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_3_4() {
@@ -439,7 +369,6 @@ fn test_ira_vs_rref_normal_rate_3_4() {
     }
 }
 
-/// Normal Rate 4/5: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
 #[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 4/5 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_4_5() {
@@ -464,7 +393,6 @@ fn test_ira_vs_rref_normal_rate_4_5() {
     }
 }
 
-/// Normal Rate 5/6: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
 #[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 5/6 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_5_6() {

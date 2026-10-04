@@ -1,6 +1,5 @@
-//! Benchmark LDPC preprocessing with sparse matrices.
-//!
-//! Measures preprocessing time and memory usage for DVB-T2 codes.
+//! Times `LdpcEncoder` construction and encoding for a DVB-T2 short-frame
+//! code and prints an estimated generator-matrix size.
 
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 use gf2_coding::traits::BlockEncoder;
@@ -10,7 +9,6 @@ use std::time::Instant;
 fn main() {
     println!("=== LDPC Sparse Matrix Preprocessing Benchmark ===\n");
 
-    // Test DVB-T2 Short Frame (smaller, faster)
     println!("Testing DVB-T2 Short Frame (16200 bits):");
     println!("Code rate 1/2: k=7200, n=16200");
 
@@ -29,12 +27,10 @@ fn main() {
     println!("✓ Encoder created in {:.2}s", elapsed.as_secs_f64());
     println!();
 
-    // Estimate generator matrix size
     let k = encoder.k();
     let n = encoder.n();
     let g_size = k * n;
 
-    // Assume ~50% density for LDPC generator (typical)
     let estimated_nnz = g_size / 2;
     let g_density = 50.0;
 
@@ -49,7 +45,6 @@ fn main() {
     println!("  Estimated compression: ~2×");
     println!();
 
-    // Benchmark encoding speed
     use gf2_core::BitVec;
     let message = BitVec::zeros(encoder.k());
 

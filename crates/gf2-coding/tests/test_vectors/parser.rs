@@ -12,7 +12,7 @@ pub struct TestVector {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)] // Test utility - fields may be used in future tests
+#[allow(dead_code)]
 pub struct TestVectorFile {
     pub test_point: String,
     pub config: String,
@@ -35,7 +35,8 @@ pub enum ParseError {
 }
 
 impl TestVectorFile {
-    /// Parse test vector file from path
+    /// Parses a reference-stream file; errors when a frame's block count
+    /// differs from its declared total.
     pub fn from_file(path: &Path) -> Result<Self, ParseError> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
@@ -45,7 +46,6 @@ impl TestVectorFile {
             .and_then(|n| n.to_str())
             .unwrap_or("unknown");
 
-        // Extract test point and config from filename: VV001-CR35_TP04_CSP.txt
         let (config, test_point) = parse_filename(filename);
 
         let mut frames: Vec<Vec<TestVector>> = Vec::new();
@@ -61,14 +61,11 @@ impl TestVectorFile {
             let line = line_result?;
             let trimmed = line.trim();
 
-            // Skip empty lines and comment lines starting with %
             if trimmed.is_empty() || trimmed.starts_with('%') {
                 continue;
             }
 
-            // Check for frame marker: # frame N
             if trimmed.starts_with("# frame ") {
-                // Save current block if exists
                 if !current_data_lines.is_empty() {
                     let data = parse_binary_lines(&current_data_lines)?;
                     current_frame.push(TestVector {
@@ -80,7 +77,6 @@ impl TestVectorFile {
                     current_data_lines.clear();
                 }
 
-                // Save previous frame if exists
                 if !current_frame.is_empty() {
                     frames.push(current_frame);
                     current_frame = Vec::new();
@@ -90,9 +86,7 @@ impl TestVectorFile {
                 continue;
             }
 
-            // Check for block marker: # block M of K
             if trimmed.starts_with("# block ") {
-                // Save previous block if exists
                 if !current_data_lines.is_empty() {
                     let data = parse_binary_lines(&current_data_lines)?;
                     current_frame.push(TestVector {
@@ -110,7 +104,6 @@ impl TestVectorFile {
                 continue;
             }
 
-            // Otherwise, treat as binary data line
             if !trimmed.chars().all(|c| c == '0' || c == '1') {
                 return Err(ParseError::InvalidBinary {
                     line: line_number,
@@ -121,7 +114,6 @@ impl TestVectorFile {
             current_data_lines.push(trimmed.to_string());
         }
 
-        // Save final block and frame
         if !current_data_lines.is_empty() {
             let data = parse_binary_lines(&current_data_lines)?;
             current_frame.push(TestVector {
@@ -136,7 +128,6 @@ impl TestVectorFile {
             frames.push(current_frame);
         }
 
-        // Validate block counts
         for frame in frames.iter() {
             if let Some(first) = frame.first() {
                 let expected = first.total_blocks;
@@ -155,7 +146,7 @@ impl TestVectorFile {
         })
     }
 
-    /// Get all blocks for a specific frame
+    /// Blocks of frame `frame_idx`; empty when the index is out of range.
     pub fn frame(&self, frame_idx: usize) -> &[TestVector] {
         self.frames
             .get(frame_idx)
@@ -163,7 +154,6 @@ impl TestVectorFile {
             .unwrap_or(&[])
     }
 
-    /// Get total number of frames
     pub fn num_frames(&self) -> usize {
         self.frames.len()
     }

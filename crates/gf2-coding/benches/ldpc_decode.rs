@@ -1,9 +1,5 @@
-// LDPC Decode Algorithm Benchmarks
-//
-// Measures decoding throughput for each DecoderAlgorithm variant on a DVB-T2
-// short-frame LDPC code. Reports throughput in bits/sec so Criterion computes Mbps.
-//
-// Run with: cargo bench --bench ldpc_decode
+//! Decoding benchmarks for each `DecoderAlgorithm` variant on a DVB-T2
+//! short-frame LDPC code.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder};
@@ -11,20 +7,13 @@ use gf2_coding::llr::Llr;
 use gf2_coding::traits::IterativeSoftDecoder;
 use gf2_coding::CodeRate;
 
-/// Build a DVB-T2 short-frame LDPC code and high-SNR LLRs (all-zero codeword).
-///
-/// Short frame (n=16200) keeps each iteration fast enough for reasonable
-/// benchmark wall-clock times while still being a realistic DVB-T2 code.
+/// DVB-T2 short-frame LDPC code and high-SNR LLRs of the all-zero codeword.
 fn setup_short_frame() -> (LdpcCode, Vec<Llr>) {
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
     (code, llrs)
 }
 
-/// Benchmark decoding throughput for each algorithm variant.
-///
-/// For each algorithm we decode one frame, measuring time. Criterion reports
-/// throughput as `k_bits / time`, giving Mbps when the throughput unit is bits.
 fn bench_decode_algorithms(c: &mut Criterion) {
     let (code, llrs) = setup_short_frame();
     let k_bits = code.k();
@@ -41,7 +30,6 @@ fn bench_decode_algorithms(c: &mut Criterion) {
     ];
 
     let mut group = c.benchmark_group("ldpc_decode_algorithm");
-    // Report throughput in bits so Criterion prints Mbps
     group.throughput(Throughput::Elements(k_bits as u64));
 
     for (name, algo) in &algorithms {
@@ -59,9 +47,6 @@ fn bench_decode_algorithms(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark multi-frame throughput to amortize per-frame overhead.
-///
-/// Decodes `frames` consecutive frames and reports aggregate throughput.
 fn bench_decode_multiframe(c: &mut Criterion) {
     let (code, llrs) = setup_short_frame();
     let k_bits = code.k();
@@ -101,10 +86,6 @@ fn bench_decode_multiframe(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark early termination benefit.
-///
-/// Compares decoding with and without early termination on an error-free channel
-/// to quantify the iteration savings.
 fn bench_early_termination(c: &mut Criterion) {
     let (code, llrs) = setup_short_frame();
     let k_bits = code.k();

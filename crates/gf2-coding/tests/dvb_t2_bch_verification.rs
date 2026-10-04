@@ -1,9 +1,6 @@
-//! DVB-T2 BCH Verification Tests
-//!
-//! These tests verify the production DVB-T2 outer BCH code and its decoder
-//! against the ETSI VV001-CR35 test-point streams (TP04 BBFRAMEs, TP05 BCH
-//! codewords). Each test returns early when the streams are absent at
-//! `$DVB_TEST_VECTORS_PATH` (default `~/dvb_test_vectors`).
+//! The DVB-T2 outer BCH code and its decoder against the VV001-CR35 TP04
+//! BBFRAMEs and TP05 BCH codewords (`@/citation/DvbVerification2010`). Each
+//! test returns early when the streams are absent at `$DVB_TEST_VECTORS_PATH`.
 
 mod test_vectors;
 
@@ -20,7 +17,6 @@ fn stream_code(vectors: &TestVectorSet) -> DvbT2BchCode {
         .expect("a standard DVB-T2 configuration")
 }
 
-/// Verify BCH encoding: TP04 → TP05
 #[test]
 fn test_bch_encoding_tp04_to_tp05() {
     if !test_vectors_available() {
@@ -39,16 +35,13 @@ fn test_bch_encoding_tp04_to_tp05() {
     let mut successes = 0;
     let mut failures = 0;
 
-    // Test all blocks in first frame
     for (block_idx, input_block) in tp04.frame(0).iter().enumerate() {
         let expected_output = &tp05.frame(0)[block_idx];
 
-        // Encode
         let encoded = bch
             .encode(&input_block.data)
             .expect("a K_bch-bit BBFRAME encodes");
 
-        // Compare
         if encoded == expected_output.data {
             successes += 1;
         } else {
@@ -60,7 +53,6 @@ fn test_bch_encoding_tp04_to_tp05() {
                 encoded.len()
             );
 
-            // Show first few bit differences
             let mut diff_count = 0;
             for i in 0..encoded.len().min(expected_output.data.len()) {
                 if encoded.get(i) != expected_output.data.get(i) {
@@ -92,7 +84,6 @@ fn test_bch_encoding_tp04_to_tp05() {
     );
 }
 
-/// Verify BCH decoding: TP05 → TP04 (error-free)
 #[test]
 fn test_bch_decoding_tp05_to_tp04_error_free() {
     if !test_vectors_available() {
@@ -112,16 +103,13 @@ fn test_bch_decoding_tp05_to_tp04_error_free() {
     let mut successes = 0;
     let mut failures = 0;
 
-    // Test all blocks in first frame
     for (block_idx, codeword) in tp05.frame(0).iter().enumerate() {
         let expected_message = &tp04.frame(0)[block_idx];
 
-        // Decode
         let (outcome, decoded) = decoder
             .decode(&codeword.data)
             .expect("an N_bch-bit word decodes");
 
-        // Compare
         if outcome == BchDecodeOutcome::NoErrors && decoded == expected_message.data {
             successes += 1;
         } else {
@@ -146,7 +134,6 @@ fn test_bch_decoding_tp05_to_tp04_error_free() {
     );
 }
 
-/// Verify BCH error correction capability with injected errors
 #[test]
 #[ignore = "slow: 600 seeded decodes of VV001-CR35 normal-frame words, 16 s on the reference host"]
 fn test_bch_error_correction() {
@@ -166,7 +153,6 @@ fn test_bch_error_correction() {
 
     let mut rng = StdRng::seed_from_u64(0xAE03_BCD0);
 
-    // Test correction capability (t=12 for DVB-T2)
     let max_errors = decoder.correction_radius();
     println!("Testing error correction up to t={} errors", max_errors);
 
@@ -182,7 +168,6 @@ fn test_bch_error_correction() {
             let expected_message = &tp04.frame(0)[block_idx];
 
             for _trial in 0..trials_per_block {
-                // Inject random errors
                 let mut corrupted = codeword.data.clone();
                 let mut error_positions = Vec::new();
 
@@ -194,12 +179,10 @@ fn test_bch_error_correction() {
                     }
                 }
 
-                // Decode
                 let (outcome, decoded) = decoder
                     .decode(&corrupted)
                     .expect("an N_bch-bit word decodes");
 
-                // Check if corrected
                 if outcome == (BchDecodeOutcome::Corrected { count: num_errors })
                     && decoded == expected_message.data
                 {
@@ -227,7 +210,6 @@ fn test_bch_error_correction() {
     }
 }
 
-/// Verify BCH codeword structure: systematic encoding
 #[test]
 fn test_bch_systematic_property() {
     if !test_vectors_available() {
@@ -252,7 +234,6 @@ fn test_bch_systematic_property() {
         k, n, parity_bits
     );
 
-    // Check first few blocks
     for block_idx in 0..5.min(tp04.frame(0).len()) {
         let message = &tp04.frame(0)[block_idx];
         let codeword = &tp05.frame(0)[block_idx];
@@ -260,7 +241,6 @@ fn test_bch_systematic_property() {
         assert_eq!(message.data.len(), k, "Message length mismatch");
         assert_eq!(codeword.data.len(), n, "Codeword length mismatch");
 
-        // Systematic property: first k bits of codeword should equal message
         for i in 0..k {
             assert_eq!(
                 codeword.data.get(i),
@@ -275,7 +255,6 @@ fn test_bch_systematic_property() {
     println!("✓ Systematic encoding property verified");
 }
 
-/// Test BCH encoding on a sample of blocks to verify consistency
 #[test]
 fn test_bch_encoding_sample() {
     if !test_vectors_available() {
@@ -297,7 +276,6 @@ fn test_bch_encoding_sample() {
         let frame_tp04 = tp04.frame(frame_idx);
         let frame_tp05 = tp05.frame(frame_idx);
 
-        // Test first, middle, and last block of each frame
         let test_indices = vec![0, frame_tp04.len() / 2, frame_tp04.len() - 1];
 
         for &block_idx in &test_indices {

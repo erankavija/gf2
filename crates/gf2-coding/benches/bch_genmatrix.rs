@@ -1,11 +1,9 @@
 //! Workload W2, generator- and parity-check-matrix materialization: the
 //! canonical path beside the basis-vector reference on every `BchCode` row,
-//! and the shipped DVB-T2 generator on the shortened rows. The cells, their
-//! IDs, and the dispatch record are the d1b4f85e amendment of
-//! `dev/active/4e732b56/workload-selection.md`; `T2N-mother` and `T2N`
-//! materialize the 512 MiB mother generator and run only under `GF2_BENCH=1`.
-//! Every path of a row is checked to write the same matrix before any cell of
-//! that row is timed.
+//! and the shipped DVB-T2 generator on the shortened rows. `T2N-mother` and
+//! `T2N` materialize the 512 MiB mother generator and run only under
+//! `GF2_BENCH=1`. Every path of a row is checked to write the same matrix
+//! before any cell of that row is timed.
 
 mod bch_workloads;
 
@@ -36,8 +34,6 @@ use serde_json::json;
 const GENERATOR_GROUP: &str = "bch_genmatrix_w2";
 const PARITY_CHECK_GROUP: &str = "bch_paritycheck";
 
-/// Criterion sample count of a row: ten for the rows whose reference cell
-/// costs seconds per iteration.
 fn samples(large: bool) -> usize {
     if large {
         10
@@ -104,7 +100,6 @@ fn register(facts: &RowFacts<'_>, function: &str, route: &str) -> BenchmarkId {
     BenchmarkId::new(function, row)
 }
 
-/// Registers the generator cells of one `BchCode` row.
 fn generator_cells<X, S, M>(
     group: &mut BenchmarkGroup<'_, WallTime>,
     row: &str,
@@ -187,7 +182,6 @@ fn generator_cells<X, S, M>(
     );
 }
 
-/// Registers the parity-check cells of one `BchCode` row.
 fn parity_check_cells<X, S, M>(
     group: &mut BenchmarkGroup<'_, WallTime>,
     row: &str,

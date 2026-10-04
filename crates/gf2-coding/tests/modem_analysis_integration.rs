@@ -1,21 +1,6 @@
-//! Integration tests for the opt-in per-bit analysis capture
-//! wired into `SimulationRunner` (JIT `80f218ca`).
-//!
-//! These exercise the public surface end-to-end over the two
-//! `ChannelModel` paths that matter in practice:
-//!
-//! 1. [`BpskAwgnChannel`] — the legacy BPSK path (`batch_alignment = 1`),
-//!    verifying that every transmitted bit is accounted for in the
-//!    capture.
-//! 2. [`ModemChannelAdapter`] over a Gray-coded 16-QAM preset — the
-//!    generic modem path (`batch_alignment = 4`), verifying that the
-//!    capture aggregates per-bit-position statistics for every bit of
-//!    every transmitted symbol.
-//!
-//! The third test locks the zero-overhead behavioural contract: running
-//! the sweep with `None` through `run_uncoded_ber_with_analysis` must
-//! produce an identical BER to the unaugmented
-//! `run_uncoded_ber_with_channel` runner at the same seed.
+//! Integration tests for the opt-in per-bit analysis capture of
+//! `SimulationRunner`, over [`BpskAwgnChannel`] (`batch_alignment = 1`) and
+//! [`ModemChannelAdapter`] with Gray 16-QAM (`batch_alignment = 4`).
 
 use gf2_coding::modem::analysis::PerBitLlrStats;
 use gf2_coding::modem::{
@@ -26,10 +11,8 @@ use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel, SimulationConfig, Si
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
-/// Locked SNR / frame budget for the integration tests. Small enough
-/// to keep the release-mode test suite well under the 60-second
-/// workspace limit but large enough that the capture has thousands of
-/// per-bit-position samples to report.
+/// The frame budget gives thousands of samples per bit position within the
+/// fast-tier time limit.
 fn bpsk_config() -> SimulationConfig {
     SimulationConfig {
         eb_n0_range_db: vec![6.0],
@@ -44,10 +27,8 @@ fn bpsk_config() -> SimulationConfig {
     }
 }
 
-/// 16-QAM-oriented config. `max_frames` is a multiple of 960 so the
-/// runner's internal batcher (rounded down to `bits_per_symbol = 4`)
-/// sees full batches and the capture gathers even mass across bit
-/// positions.
+/// `max_frames` is a multiple of the runner's 960-bit batch, so every batch
+/// is full and each bit position receives the same number of samples.
 fn qam16_config() -> SimulationConfig {
     SimulationConfig {
         eb_n0_range_db: vec![9.0],
@@ -134,25 +115,14 @@ fn test_analysis_capture_integrates_with_qam16_runner() {
 
 #[test]
 fn test_analysis_capture_preserves_msb_first_bit_position_mapping_qam16() {
-    // Correctness lock for bit-channel separation on Gray-QAM. We feed
-    // `PerBitLlrStats::accumulate` a symbol-major, MSB-first stream
-    // with a pattern whose per-position fingerprint is **asymmetric**
-    // across bit positions — so any column transpose, stride shift, or
-    // MSB↔LSB swap in the accumulator would scramble the counts.
-    //
-    // The asymmetry is encoded in two ways:
-    //   1. Per-position bit1 fraction is `p_k = (k + 1) / (m + 1)` —
-    //      strictly monotone in `k`, so positions {0, 1, 2, 3} have
-    //      distinct expected bit1 counts of N/5, 2N/5, 3N/5, 4N/5.
-    //      Transposing any two positions breaks the monotone sequence.
-    //   2. LLR magnitudes scale with position: `|L_k| = (k + 1)`. That
-    //      means bit0.mean()/bit1.mean() at position k = ±(k + 1), so a
-    //      column swap would also scramble the means.
+    // The stream has a distinct fingerprint per bit position, so a column
+    // transpose, stride shift or MSB/LSB swap in the accumulator changes the
+    // counts: position k has bit-1 fraction (k + 1) / (m + 1) and |LLR| = k + 1.
     use gf2_coding::llr::Llr;
 
     let bits_per_symbol = 4u8;
     let m = bits_per_symbol as usize;
-    // Choose a multiple of 5 so every p_k = (k+1)/5 gives an integer count.
+    // A multiple of 5, so every (k + 1) / 5 gives an integer count.
     let num_symbols: usize = 5 * 200;
     let mut stats = PerBitLlrStats::new(bits_per_symbol);
 
@@ -160,9 +130,7 @@ fn test_analysis_capture_preserves_msb_first_bit_position_mapping_qam16() {
     let mut truth: Vec<bool> = Vec::with_capacity(num_symbols * m);
     for s in 0..num_symbols {
         for k in 0..m {
-            // Position k is bit 1 iff (s mod 5) < (k + 1). Over
-            // num_symbols = 5*N this gives exactly (k+1)*N ones at
-            // position k, and (5 - (k+1))*N = (4-k)*N zeros.
+            // Exactly (k + 1) * num_symbols / 5 ones at position k.
             let bit = (s % 5) < (k + 1);
             truth.push(bit);
             let mag = (k + 1) as f32;
@@ -193,7 +161,6 @@ fn test_analysis_capture_preserves_msb_first_bit_position_mapping_qam16() {
             r.bit0.count()
         );
 
-        // All bit0 samples at position k are +(k+1); bit1 samples are -(k+1).
         let expected_mag = (k + 1) as f64;
         if r.bit0.count() > 0 {
             assert!(
@@ -212,9 +179,6 @@ fn test_analysis_capture_preserves_msb_first_bit_position_mapping_qam16() {
         }
     }
 
-    // Final asymmetry check: the per-position bit1-fractions must be
-    // strictly monotone in k. A transposition would shuffle this
-    // sequence and trip the assert.
     let fractions: Vec<f64> = report
         .iter()
         .map(|r| r.bit1.count() as f64 / samples_per_position as f64)
@@ -229,10 +193,6 @@ fn test_analysis_capture_preserves_msb_first_bit_position_mapping_qam16() {
 
 #[test]
 fn test_analysis_capture_disabled_matches_unaugmented_path() {
-    // Same seed, same config, same channel. The analysis-capable runner
-    // with `None` must return exactly the same BER as the unaugmented
-    // `run_uncoded_ber_with_channel` path. This is the behavioural
-    // lock behind the zero-overhead contract.
     let channel = BpskAwgnChannel;
     let config = bpsk_config();
     let seed = config.rng_seed.unwrap();
@@ -256,11 +216,7 @@ fn test_analysis_capture_disabled_matches_unaugmented_path() {
 #[test]
 #[should_panic(expected = "AnalysisCapture was tagged with")]
 fn test_analysis_capture_mismatched_demap_method_panics() {
-    // Criterion 2 of e2c0f65a: MI/GMI interpretation depends on the
-    // demapper method that produced the LLRs. The runner must reject
-    // a capture tagged with a different DemapMethod from the channel.
-    // Here: BpskAwgnChannel produces ExactLogMap LLRs, but we tag the
-    // capture with MaxLog — runner panics before the first batch.
+    // `BpskAwgnChannel` produces ExactLogMap LLRs; the capture is tagged MaxLog.
     let channel = BpskAwgnChannel;
     let mut stats = PerBitLlrStats::new(1);
     let mut capture = AnalysisCapture::with_method(&mut stats, DemapMethod::MaxLog);
@@ -276,11 +232,6 @@ fn test_analysis_capture_mismatched_demap_method_panics() {
 
 #[test]
 fn test_analysis_report_carries_demap_method_provenance() {
-    // Criterion 2 export-side coverage: the method stamp survives
-    // through the runner into every PerBitChannelStats record that
-    // the caller reads from `stats.report()`. Without this the
-    // exported summary would have no way to tell downstream consumers
-    // whether its MI/GMI values describe exact log-MAP or max-log.
     let channel = BpskAwgnChannel;
     let config = bpsk_config();
     let mut stats = PerBitLlrStats::new(1);
@@ -306,11 +257,6 @@ fn test_analysis_report_carries_demap_method_provenance() {
 #[test]
 #[should_panic(expected = "merge: demap_method mismatch")]
 fn test_analysis_stats_merge_rejects_mismatched_demap_methods() {
-    // Criterion 2 merge-side coverage: two accumulators stamped with
-    // different DemapMethods cannot be silently combined. Without
-    // this check, callers could fold an ExactLogMap run and a MaxLog
-    // run into one report() and read a GMI value with no coherent
-    // interpretation.
     use gf2_coding::llr::Llr;
     let mut a = PerBitLlrStats::new(1);
     let mut b = PerBitLlrStats::new(1);
@@ -324,15 +270,12 @@ fn test_analysis_stats_merge_rejects_mismatched_demap_methods() {
 
 #[test]
 fn test_analysis_capture_retains_demap_method_tag() {
-    // Criterion 2 basic coverage: the capture's tagged method is
-    // queryable post-construction and preserved across use.
     let mut stats_a = PerBitLlrStats::new(1);
     let cap_a = AnalysisCapture::with_method(&mut stats_a, DemapMethod::ExactLogMap);
     assert_eq!(cap_a.demap_method(), DemapMethod::ExactLogMap);
     let mut stats_b = PerBitLlrStats::new(4);
     let cap_b = AnalysisCapture::with_method(&mut stats_b, DemapMethod::MaxLog);
     assert_eq!(cap_b.demap_method(), DemapMethod::MaxLog);
-    // Legacy new() defaults to MaxLog.
     let mut stats_c = PerBitLlrStats::new(2);
     let cap_c = AnalysisCapture::new(&mut stats_c);
     assert_eq!(cap_c.demap_method(), DemapMethod::MaxLog);
@@ -341,11 +284,6 @@ fn test_analysis_capture_retains_demap_method_tag() {
 #[test]
 #[should_panic(expected = "AnalysisCapture bits_per_symbol")]
 fn test_analysis_capture_mismatched_bits_per_symbol_panics() {
-    // A 16-QAM modem channel advertises batch_alignment = 4, so an
-    // AnalysisCapture built from a BPSK-shaped (m = 1) accumulator must
-    // be rejected up front. Previously this silently accumulated
-    // nonsensical per-position statistics; the runner now panics with a
-    // descriptive error before the first batch.
     let spec = ModemSpec::<f32>::gray_square_qam(16);
     let mapper = GrayQamMapper::<f32>::from_preset_order(16);
     let demapper = ReferenceSoftDemapper::new(spec);
@@ -366,16 +304,6 @@ fn test_analysis_capture_mismatched_bits_per_symbol_panics() {
 
 #[test]
 fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweeps() {
-    // The documented behaviour is that the same AnalysisCapture is
-    // reused across every SNR point in the sweep and reports an
-    // aggregate. Lock that precisely:
-    //   1. Run a two-point sweep (Eb/N0 = 3 dB, 7 dB) into one capture.
-    //   2. Run the same config as two separate single-point sweeps
-    //      (3 dB, 7 dB) each into its own capture.
-    //   3. The aggregate count from (1) must exactly equal
-    //      single_point_3dB + single_point_7dB, because the runner
-    //      consumes the same per-point frame count driven by the same
-    //      seed stream.
     let channel = BpskAwgnChannel;
     let make_config = |points: Vec<f64>| SimulationConfig {
         eb_n0_range_db: points,
@@ -390,7 +318,6 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
     };
     const RNG_SEED: u64 = 0xAAAA_5555;
 
-    // (1) Two-point sweep into one capture.
     let mut swept_stats = PerBitLlrStats::new(1);
     {
         let mut cap = AnalysisCapture::with_method(&mut swept_stats, DemapMethod::ExactLogMap);
@@ -405,9 +332,6 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
     let swept_report = swept_stats.report();
     let swept_total = swept_report[0].bit0.count() + swept_report[0].bit1.count();
 
-    // (2a) Single-point sweep at 3 dB. Crucial: seed the runner's RNG
-    //      from the same config seed as the two-point run — that is
-    //      what the two-point run does for its first SNR point.
     let mut stats_3db = PerBitLlrStats::new(1);
     {
         let mut cap = AnalysisCapture::with_method(&mut stats_3db, DemapMethod::ExactLogMap);
@@ -424,17 +348,12 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
         r[0].bit0.count() + r[0].bit1.count()
     };
 
-    // (2b) Single-point sweep at 7 dB, run **after** the 3 dB run on
-    //      the same RNG stream. The two-point runner's 7 dB batches
-    //      draw from the same post-3dB stream state.
     let mut stats_7db = PerBitLlrStats::new(1);
     {
         let mut cap = AnalysisCapture::with_method(&mut stats_7db, DemapMethod::ExactLogMap);
-        // Re-seed and advance: the two-point runner uses a single
-        // StdRng across both SNR points. We emulate that by re-seeding
-        // here and running a 3 dB warmup to advance the stream.
+        // The two-point runner uses one StdRng across both SNR points: a 3 dB
+        // warmup on a re-seeded stream reproduces its state at the 7 dB point.
         let mut rng = StdRng::seed_from_u64(RNG_SEED);
-        // Warmup: same shape the two-point runner did at 3 dB.
         let mut warmup_stats = PerBitLlrStats::new(1);
         {
             let mut warmup =
@@ -446,7 +365,6 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
                 &mut rng,
             );
         }
-        // Now run the 7 dB point on the advanced stream.
         let _ = SimulationRunner::run_uncoded_ber_with_analysis(
             &channel,
             &make_config(vec![7.0]),

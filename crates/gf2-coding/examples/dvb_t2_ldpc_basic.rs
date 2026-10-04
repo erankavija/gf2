@@ -1,7 +1,4 @@
 //! Basic DVB-T2 LDPC code construction and validation.
-//!
-//! This example demonstrates creating DVB-T2 LDPC codes and verifying
-//! their basic properties.
 
 use gf2_coding::ldpc::LdpcCode;
 use gf2_coding::CodeRate;
@@ -11,7 +8,6 @@ fn main() {
     println!("DVB-T2 LDPC Code Examples\n");
     println!("=========================\n");
 
-    // Normal frame rate 1/2
     println!("Normal Frame Rate 1/2:");
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
     println!("  Codeword length n: {}", code.n());
@@ -19,12 +15,10 @@ fn main() {
     println!("  Parity bits m: {}", code.m());
     println!("  Code rate: {:.3}", code.rate());
 
-    // Verify zero codeword
     let zero_cw = BitVec::zeros(code.n());
     assert!(code.is_valid_codeword(&zero_cw));
     println!("  ✓ Zero codeword passes syndrome check\n");
 
-    // Show other configurations (placeholders)
     println!("Other DVB-T2 Configurations:");
     println!("  Normal Rate 3/5: n=64800, k=38880 (placeholder)");
     println!("  Normal Rate 2/3: n=64800, k=43200 (placeholder)");

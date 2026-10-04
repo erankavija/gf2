@@ -1,4 +1,4 @@
-//! Validation that SIMD LLR operations match scalar for LDPC decoding.
+//! LDPC decode convergence and run-to-run determinism on a DVB-T2 short code.
 
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
 use gf2_coding::llr::Llr;
@@ -8,7 +8,6 @@ use gf2_coding::traits::IterativeSoftDecoder;
 fn test_simd_enabled() {
     #[cfg(feature = "simd")]
     {
-        // Check if SIMD is actually available
         use std::arch::is_x86_feature_detected;
         if is_x86_feature_detected!("avx2") {
             println!("✅ AVX2 detected - SIMD should be active");
@@ -27,14 +26,11 @@ fn test_simd_enabled() {
 fn test_ldpc_decode_with_simd() {
     use gf2_coding::bch::CodeRate;
 
-    // Use DVB-T2 code
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let mut decoder = LdpcDecoder::new(code.clone());
 
-    // Create channel LLRs (all-ones codeword with high confidence)
     let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(5.0f32)).collect();
 
-    // Decode
     let result = decoder.decode_iterative(&llrs, 10);
 
     assert!(result.converged, "Should converge for clean signal");
@@ -47,17 +43,15 @@ fn test_ldpc_decode_with_simd() {
 fn test_simd_vs_scalar_consistency() {
     use gf2_coding::bch::CodeRate;
 
-    // Use DVB-T2 code
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
 
-    // Test with various LLR patterns (must match code length)
     let n = code.n();
     let test_cases: Vec<Vec<f64>> = vec![
-        vec![5.0; n],  // All high confidence
-        vec![-5.0; n], // All negative
+        vec![5.0; n],
+        vec![-5.0; n],
         (0..n)
             .map(|i| if i % 2 == 0 { 5.0 } else { -5.0 })
-            .collect(), // Alternating
+            .collect(),
     ];
 
     for llr_values in test_cases {
@@ -69,7 +63,6 @@ fn test_simd_vs_scalar_consistency() {
         let mut decoder2 = LdpcDecoder::new(code.clone());
         let result2 = decoder2.decode_iterative(&llrs, 5);
 
-        // Results should be deterministic
         assert_eq!(
             result1.decoded_bits, result2.decoded_bits,
             "Decoding should be deterministic"

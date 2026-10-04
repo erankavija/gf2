@@ -1,21 +1,6 @@
-//! Zero-overhead lock for the opt-in analysis capture in
-//! `SimulationRunner::run_uncoded_ber_with_analysis` (JIT `80f218ca`).
-//!
-//! The contract the integration must honour: passing
-//! `None` for the `AnalysisCapture` is bit-identical to calling the
-//! unaugmented `run_uncoded_ber_with_channel` runner in terms of
-//! behaviour, and matches it to within measurement noise in
-//! throughput. This bench makes both requirements machine-checkable.
-//!
-//! Three benchmarks live in the same group so they share warmup /
-//! sampling and are directly comparable inside Criterion's report:
-//!
-//! 1. `baseline_run_uncoded_ber_with_channel` — the original runner,
-//!    unchanged public API.
-//! 2. `analysis_none` — the new runner called with `None` as the
-//!    capture. Must be within 1-2% of (1).
-//! 3. `analysis_enabled` — the new runner with an active
-//!    `PerBitLlrStats`; reference point for the enabled cost.
+//! Compares `SimulationRunner::run_uncoded_ber_with_analysis`, with a `None`
+//! capture and with an active `PerBitLlrStats`, against
+//! `run_uncoded_ber_with_channel`.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
 use gf2_coding::modem::analysis::PerBitLlrStats;
@@ -27,20 +12,13 @@ use gf2_coding::simulation::{BpskAwgnChannel, SimulationConfig, SimulationRunner
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
-/// Fixed deterministic seed for every sample. Keeps the frame count
-/// (and therefore the work) identical across bench iterations so the
-/// comparison is apples-to-apples.
+/// Fixed seed, so every sample does the same work.
 const BENCH_SEED: u64 = 0xA71103B7;
 
-/// Number of bits per sample. Sized so the Monte Carlo loop runs for
-/// many batches (>> the 960-bit internal batch size) but each sample
-/// finishes well under Criterion's default measurement window.
 const BENCH_FRAMES: usize = 200_000;
 
-/// Builds a locked `SimulationConfig` that runs the full frame budget
-/// (no early termination) at a single SNR point. `min_errors` is set
-/// unreachably high so the loop exhausts `max_frames`, giving the
-/// bench a stable per-sample work quantum.
+/// One SNR point with `min_errors` unreachably high, so the loop exhausts
+/// `max_frames`.
 fn bench_config() -> SimulationConfig {
     SimulationConfig {
         eb_n0_range_db: vec![6.0],
@@ -107,16 +85,12 @@ fn bench_simulation_no_analysis_overhead(c: &mut Criterion) {
     group.finish();
 }
 
-/// Companion bench over a 16-QAM `ModemChannelAdapter` fast path so the
-/// zero-overhead claim is tested against the shared modem framework
-/// (Gray-QAM fast kernel dispatch, `c5cee991`-prerequisite path), not
-/// just the BPSK compatibility surface.
+/// The same comparison over a 16-QAM `ModemChannelAdapter`.
 fn bench_simulation_no_analysis_overhead_qam16(c: &mut Criterion) {
     let config = bench_config();
     let mut group = c.benchmark_group("simulation_no_analysis_overhead_qam16");
     group.throughput(Throughput::Elements(BENCH_FRAMES as u64));
 
-    // 16-QAM, m = 4, so the runner aligns to 4 bits per batch.
     let spec = ModemSpec::<f32>::gray_square_qam(16);
     let mapper = GrayQamMapper::<f32>::from_preset_order(16);
     let demapper = FastGrayQamDemapper::<f32>::new(spec);
@@ -151,8 +125,7 @@ fn bench_simulation_no_analysis_overhead_qam16(c: &mut Criterion) {
         b.iter(|| {
             let mut rng = StdRng::seed_from_u64(BENCH_SEED);
             let mut stats = PerBitLlrStats::new(4);
-            // QAM16 adapter was built with DemapMethod::MaxLog above
-            // (see the `channel` binding in this function's scope).
+            // Matches the adapter's `DemapMethod::MaxLog`.
             let mut capture = AnalysisCapture::with_method(&mut stats, DemapMethod::MaxLog);
             let r = SimulationRunner::run_uncoded_ber_with_analysis(
                 black_box(&channel),

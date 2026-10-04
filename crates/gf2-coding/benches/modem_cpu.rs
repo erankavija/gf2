@@ -1,24 +1,6 @@
-//! CPU-side criterion benchmarks for the modem mapper and demapper
-//! hot-path loops (JIT issue `52112411`).
-//!
-//! Coverage:
-//!
-//! 1. `GrayQamMapper::map_bits` across orders {4, 16, 64, 256} and batch
-//!    sizes {256, 4096, 16384}, including one sweep routed through the
-//!    shared-API factory `ModemSpec::preferred_mapper` so the factory
-//!    itself is exercised under criterion.
-//! 2. `FastGrayQamDemapper::demap_llrs` across the same orders and
-//!    batch sizes for both `DemapMethod::MaxLog` and
-//!    `DemapMethod::ExactLogMap`.
-//! 3. Reference-path baseline: `ReferenceMapper::map_bits` and
-//!    `ReferenceSoftDemapper::demap_llrs` at QPSK (order 4) and
-//!    16-QAM (order 16) so the reference-vs-fast performance gap is
-//!    visible.
-//!
-//! Throughput is reported in `Throughput::Elements(batch_size * m)`:
-//! one "element" is one coded bit, matching how downstream consumers
-//! of the modem framework (BER/FER simulators, LDPC front-ends) reason
-//! about throughput.
+//! Criterion benchmarks of the modem mapper and soft demapper: the Gray-QAM
+//! fast path, the `ModemSpec::preferred_*` factory path, and the reference
+//! path. One throughput element is one coded bit.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::llr::Llr;
@@ -63,10 +45,7 @@ fn bench_gray_qam_mapper(c: &mut Criterion) {
     group.finish();
 }
 
-/// Shared-API variant: exercise the boxed trait object returned by
-/// `ModemSpec::preferred_mapper` at one representative order so the
-/// factory-method path itself is bench-covered alongside the direct
-/// construction path above.
+/// The boxed mapper returned by `ModemSpec::preferred_mapper`.
 fn bench_preferred_mapper(c: &mut Criterion) {
     let mut group = c.benchmark_group("modem/preferred_mapper_map_bits");
     for &order in &[16usize, 64] {
@@ -135,8 +114,7 @@ fn bench_fast_gray_qam_demapper(c: &mut Criterion) {
     }
 }
 
-/// Shared-API variant for the soft demapper at one representative order
-/// so the factory-method construction path is bench-covered.
+/// The boxed soft demapper returned by `ModemSpec::preferred_soft_demapper`.
 fn bench_preferred_soft_demapper(c: &mut Criterion) {
     let mut group = c.benchmark_group("modem/preferred_soft_demapper_demap_llrs");
     for &order in &[16usize, 64] {
@@ -169,9 +147,7 @@ fn bench_preferred_soft_demapper(c: &mut Criterion) {
     group.finish();
 }
 
-/// Reference-path baseline at QPSK (4) and 16-QAM so the
-/// reference-vs-fast gap on the same input sizes is visible in the
-/// bench output.
+/// Reference path at orders 4 and 16.
 fn bench_reference_mapper_and_demapper(c: &mut Criterion) {
     let mut group = c.benchmark_group("modem/reference_baseline");
     let batch = 4096usize;

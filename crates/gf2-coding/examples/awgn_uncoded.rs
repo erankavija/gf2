@@ -1,13 +1,5 @@
-//! Example: Uncoded transmission over AWGN channel with soft-decision decoding.
-//!
-//! This example demonstrates:
-//! - BPSK modulation of random bits
-//! - AWGN channel simulation at various Eb/N0 values
-//! - Soft-decision (LLR) and hard-decision decoding
-//! - Bit error rate (BER) computation
-//! - BI-AWGN capacity at each point and the Shannon limits of coded rates
-//!
-//! This serves as a baseline for comparing coded vs. uncoded transmission.
+//! Uncoded BPSK over AWGN: the BER at each Eb/N0 point beside the BI-AWGN
+//! capacity, and the Shannon limits of several coded rates.
 
 use gf2_coding::info_theory::{bi_awgn_capacity, ebn0_to_esn0, shannon_limit};
 use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
@@ -53,7 +45,6 @@ fn main() {
 
     println!("└──────────┴─────────────┴────────────────┘\n");
 
-    // Export to CSV
     let csv = SimulationRunner::results_to_csv(&results, true);
     println!("CSV Output (copy to file for plotting):");
     println!("{}", csv);

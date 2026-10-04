@@ -1,5 +1,4 @@
 //! Conformance tests for the named eBCH(128,64,22) reference construction.
-//!
 //! The reference code is the one-symbol extension of the primitive
 //! narrow-sense BCH(127, 64) code over $\mathrm{GF}(2^7) =
 //! \mathrm{GF}(2)\[x\]/(x^7 + x + 1)$ with designed distance 21, presented in
@@ -74,7 +73,6 @@ fn fixture() -> ReferenceFixture {
     serde_json::from_str(FIXTURE_TEXT).expect("reference fixture must be valid JSON")
 }
 
-/// Builds the reference code from its fixture-recorded field and base radius.
 fn reference_code() -> ReferenceCode {
     let extension = BinaryPrimeExt::new(Gf2mField::new(7, 0b10000011).with_tables())
         .expect("x^7 + x + 1 presents GF(128)");
@@ -90,7 +88,6 @@ fn reference_code() -> ReferenceCode {
     .expect("the one-symbol extension of BCH(127, 64)")
 }
 
-/// Returns the base code's correction radius.
 fn base_radius(code: &ReferenceCode) -> usize {
     code.mother().code().correction_radius()
 }

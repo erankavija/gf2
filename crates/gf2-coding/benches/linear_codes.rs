@@ -1,7 +1,4 @@
-//! Benchmarks for linear block codes.
-//!
-//! These benchmarks measure the performance of encoding, syndrome computation,
-//! and decoding across different code parameters.
+//! Encoding, syndrome and decoding benchmarks for linear block codes.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
@@ -158,7 +155,6 @@ fn bench_decode_with_error(c: &mut Criterion) {
         let msg = create_message(k, 0);
         let mut corrupted = code.encode(&msg);
 
-        // Introduce error at middle position
         let error_pos = n / 2;
         corrupted.set(error_pos, !corrupted.get(error_pos));
 
@@ -192,7 +188,6 @@ fn bench_decode_batch(c: &mut Criterion) {
                 let msg = create_message(k, i);
                 let mut codeword = code.encode(&msg);
 
-                // Introduce error in half of them
                 if i % 2 == 0 {
                     let error_pos = (i * 7) % n;
                     codeword.set(error_pos, !codeword.get(error_pos));
