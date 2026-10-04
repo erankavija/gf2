@@ -9,12 +9,14 @@ repository containing the current directory (`git rev-parse
 non-blank characters are `//`, or the part of a code line after ` // `.
 
 Section 1 prints `key | regex | files:lines` for every ROWS entry. Section 2,
-"citations without a registry entry", prints the same for UNKEYED; a class
-with no remaining line prints `-`. Section 3 prints every comment line that matches HEURISTIC, holds no
-`@/citation/` address and matches no ROWS or UNKEYED entry, with the
-REASONS label that explains it or `UNEXPLAINED`. Section 4 prints the label
-counts. Every key in ROWS must exist in `.jit/references.toml`; the script
-exits non-zero otherwise.
+"citations without a registry entry", prints the same for UNKEYED. An entry
+that matches no line prints `-`. Section 3 prints every comment line that
+matches HEURISTIC, holds no `@/citation/` address and matches no ROWS or
+UNKEYED entry, with the REASONS label that explains it or `UNEXPLAINED`.
+Section 4 prints the label counts. Section 5 prints `key | files:lines` for
+every `@/citation/<key>` address in a comment line. Every key in ROWS and
+every address key must exist in `.jit/references.toml`; the script exits
+non-zero otherwise.
 """
 
 import re
@@ -27,7 +29,6 @@ from pathlib import Path
 # (key, phrase regex, path regex or None, veto regex or None). A row matches a
 # comment line when the phrase matches, the path matches and the veto does not.
 ROWS = [
-    # Keys present before this mapping.
     ("AlbrechtBard2026", r"\bM4RI\b", None, None),
     ("Cassagne2019", r"\b(?:aff3ct|AFF3CT)\b", None, None),
     ("Ccsds2020", r"\[Ccsds2020\]", None, None),
@@ -44,7 +45,7 @@ ROWS = [
     ("Scheinerman2024", r"Scheinerman", None, None),
     ("Scheinerman2024",
      r"\bpaper(?:'s)?\b|Theorem 2\.1|Table 2, Appendix B",
-     r"gf2-algebra/|bipedal", r"Scheinerman"),
+     r"gf2-algebra/|bipedal", r"Scheinerman|[Pp]en-and-paper|paper case"),
     ("Sionna2026", r"\bSionna\b", None, None),
     ("Steele2014", r"\[Steele2014\]|Steele, Lea and Flood", None, None),
     # 3GPP TS 38.212: clause 5.4.2.2 is validated against V16.4.0
@@ -54,9 +55,8 @@ ROWS = [
     ("ThreeGpp2017", r"TS 38\.212|\b3GPP\b|Table 5\.3\.2-[123]", None,
      r"5\.4\.2\.2|TS 38\.214"),
     ("ThreeGpp2017", r"§5\.4\.2\.1", r"presets/nr_5g\.rs", None),
-    # Keys added by this mapping.
     ("Ccsds2017", r"NASA/CCSDS K=7 standard", None, None),
-    ("Nist2001", r"\bAES\b", None, r"IEEE AES standard|AES/crypto"),
+    ("Nist2001", r"\bAES\b", None, r"IEEE AES standard|AES/crypto|AES extension"),
     ("ThreeGpp2017a", r"TS 38\.214", None, None),
     ("Amd2020", r"AMD Zen 3 Software Optimization Guide|Software Optimization Guide",
      None, None),
@@ -83,6 +83,7 @@ ROWS = [
     ("GentlemanSande1966", r"Gentleman & Sande|^\W*\(1966\)", r"field/ntt\.rs", None),
     ("GotoGeijn2008", r"Goto-vandeGeijn 2008|\bGoto/BLIS\b", None, None),
     ("HardyWright2008", r"Hardy & Wright", None, None),
+    ("Joyner2026", r"\bGUAVA\b", None, None),
     ("Knuth1997", r"\bKnuth\b|\bMMIX\b", None, None),
     ("Higham2002", r"Higham ?§ ?14\.1", None, None),
     ("LidlNiederreiter1996", r"Lidl & Niederreiter", None, None),
@@ -135,11 +136,11 @@ HEURISTIC = re.compile(
     r"|\[[A-Z][A-Za-z]+\d{4}[a-z]?\]|Hacker's Delight|Handbook|\bKnuth\b"
     r"|ptimization Guide|\bpaper\b|\bthesis\b|https?://"
     r"|\b(?:fflas|FFLAS|LinBox|NTL|FLINT|M4RI|OpenBLAS|BLIS|aff3ct|AFF3CT|Sionna"
-    r"|Plonky3|SageMath|Magma|rand_core)\b"
+    r"|Plonky3|SageMath|Magma|GAP|GUAVA|rand_core)\b"
 )
 
-# Citations without a registry entry: (why no entry exists, phrase regex, path
-# regex or None). The comment sweep removes these source pointers.
+# Classes of prose pointer with no registry entry: (why no entry exists,
+# phrase regex, path regex or None).
 UNKEYED = [
     ("no work with this title and venue exists",
      r"Condo, C\.|^\W*(?:\*IEEE Trans\. )?Commun\.\*$", r"grand/(?:mod|sogrand)\.rs"),
@@ -147,6 +148,8 @@ UNKEYED = [
     ("no such standard, and the file holds no AES polynomial", r"IEEE AES standard", None),
     ("paper not named", r"\bpaper\b", r"gf2-coding/src/fading\.rs|ldpc_bler_check\.rs"),
 ]
+
+ADDRESS = re.compile(r"@/citation/([A-Za-z0-9]+)")
 
 # Labels for heuristic matches that are not citations; first match wins.
 REASONS = [
@@ -156,7 +159,8 @@ REASONS = [
      r"(?:The|See|Design|Protocol|and) §"),
     ("the verb 'paper over'", r"\bpaper over\b"),
     ("names software without attributing a method or number", r"\bMagma\b"),
-    ("CPU feature name", r"AES/crypto"),
+    ("CPU feature name", r"AES/crypto|AES extension"),
+    ("pen-and-paper computation", r"[Pp]en-and-paper|paper case"),
 ]
 
 
@@ -183,7 +187,7 @@ def main() -> int:
     )
     registry = tomllib.loads((root / ".jit/references.toml").read_text(encoding="utf-8"))
     known = {r["key"] for r in registry["references"]}
-    missing = sorted({k for k, *_ in ROWS} - known)
+    addresses = defaultdict(lambda: defaultdict(list))
     rows = [
         (k, re.compile(p), re.compile(f) if f else None, re.compile(v) if v else None)
         for k, p, f, v in ROWS
@@ -203,6 +207,8 @@ def main() -> int:
             c = comment_of(line)
             if c is None:
                 continue
+            for key in dict.fromkeys(ADDRESS.findall(c)):
+                addresses[key][rel].append(n)
             matched = False
             for i, (_, pat, path, veto) in enumerate(rows):
                 if path and not path.search(rel):
@@ -235,6 +241,14 @@ def main() -> int:
     print("# 4. residual counts by label")
     for label, count in sorted(Counter(r[0] for r in residual).items()):
         print(f"{count:5d}  {label}")
+    print()
+    print("# 5. citation addresses: key | files:lines")
+    for key, found in sorted(addresses.items()):
+        where = " ".join(
+            f"{rel}:{','.join(map(str, ns))}" for rel, ns in sorted(found.items())
+        )
+        print(f"{key} | {where}")
+    missing = sorted(({k for k, *_ in ROWS} | set(addresses)) - known)
     for key in missing:
         print(f"error: key {key} is absent from .jit/references.toml", file=sys.stderr)
     return 1 if missing else 0
