@@ -1,11 +1,9 @@
-//! AVX2 / PCLMULQDQ kernels for fixed-size schoolbook carry-less
-//! multiplication used by `Gf2mWide`.
-//!
-//! `clmul_wide4_*` (GF(2^256)) and `clmul_wide9_*` (GF(2^571), 9 limbs)
-//! compute the full unreduced carry-less product in the little-endian limb
-//! layout of the scalar `clmul_wide_slice_portable::<N>` helper: partial
-//! product `a[i] · b[j]` contributes its low/high halves to `out[i + j]` /
-//! `out[i + j + 1]`.
+//! AVX2 / PCLMULQDQ kernels for fixed-size schoolbook carry-less multiplication
+//! used by `Gf2mWide`. `clmul_wide4_*` (GF(2^256)) and `clmul_wide9_*`
+//! (GF(2^571), 9 limbs) compute the full unreduced carry-less product in the
+//! little-endian limb layout of the scalar `clmul_wide_slice_portable::<N>`
+//! helper: partial product `a[i] · b[j]` contributes its low/high halves to
+//! `out[i + j]` / `out[i + j + 1]`.
 
 #![allow(clippy::missing_safety_doc)]
 

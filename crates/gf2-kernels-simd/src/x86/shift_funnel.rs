@@ -1,10 +1,9 @@
-//! BMI2-gated residual bit-shift funnel kernels.
-//!
-//! Both kernels answer the funnel contract [`crate::shift_funnel`] states and
-//! are reached only through [`crate::shift_funnel::detect`], which publishes a
-//! safe wrapper once `is_x86_feature_detected!("bmi2")` holds. Each word is
-//! written with the portable funnel's shift-and-complement expression, which
-//! the `bmi2` scope lowers to variable-count shifts.
+//! BMI2-gated residual bit-shift funnel kernels. Both kernels answer the funnel
+//! contract [`crate::shift_funnel`] states and are reached only through
+//! [`crate::shift_funnel::detect`], which publishes a safe wrapper once
+//! `is_x86_feature_detected!("bmi2")` holds. Each word is written with the
+//! portable funnel's shift-and-complement expression, which the `bmi2` scope
+//! lowers to variable-count shifts.
 
 /// Residual left funnel: writes `data[word_shift + 1 ..]` descending.
 ///

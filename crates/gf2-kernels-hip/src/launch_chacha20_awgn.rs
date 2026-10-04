@@ -1,14 +1,13 @@
 //! Safe host wrappers for the device ChaCha20 + Box-Muller AWGN kernel
-//! (`hip/chacha20_awgn.hip`).
-//!
-//! [`chacha20_key_from_seed`] derives the device ChaCha20 key from a `u64`
-//! seed. [`GpuChaChaAwgn::noise_samples`] runs on the default stream with
-//! synchronous transfers. [`GpuChaChaAwgn::noise_samples_into_on_stream`]
-//! orders the launch and the read-back on a caller-owned [`HipStream`], staging
-//! the read-back through pinned memory because a synchronous `hipMemcpy`
-//! executes on the NULL stream and serializes against every other blocking
-//! stream on the device. `test_noise_on_stream_matches_default_stream` checks
-//! that both paths return bit-identical samples.
+//! (`hip/chacha20_awgn.hip`). [`chacha20_key_from_seed`] derives the device
+//! ChaCha20 key from a `u64` seed. [`GpuChaChaAwgn::noise_samples`] runs on the
+//! default stream with synchronous transfers.
+//! [`GpuChaChaAwgn::noise_samples_into_on_stream`] orders the launch and the
+//! read-back on a caller-owned [`HipStream`], staging the read-back through
+//! pinned memory because a synchronous `hipMemcpy` executes on the NULL stream
+//! and serializes against every other blocking stream on the device.
+//! `test_noise_on_stream_matches_default_stream` checks that both paths return
+//! bit-identical samples.
 
 use std::ffi::c_void;
 

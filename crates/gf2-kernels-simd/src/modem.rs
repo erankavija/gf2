@@ -1,5 +1,4 @@
 //! Gray-PAM squared-distance kernels for Gray square-QAM batch demapping.
-//!
 //! Log-MAP and max-log demapping over a Gray-coded square-QAM constellation
 //! factorizes into two independent 1D Gray-PAM problems. This module exposes
 //! the per-symbol per-level squared-distance loop of that path as a
@@ -215,10 +214,9 @@ pub fn detect_f64() -> GrayPamDistanceFnsF64 {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2 {
-    //! AVX2 `f32` / `f64` implementations of the Gray-PAM distance kernel.
-    //!
-    //! The inner level loop runs in 8-wide (`f32`) / 4-wide (`f64`) chunks;
-    //! the outer symbol loop is scalar.
+    //! AVX2 `f32` / `f64` implementations of the Gray-PAM distance kernel:
+    //! the inner level loop runs in 8-wide (`f32`) / 4-wide (`f64`) chunks,
+    //! and the outer symbol loop is scalar.
 
     /// AVX2 `f32` kernel under the module-level kernel contract, with the
     /// slice lengths checked.

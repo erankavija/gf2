@@ -1,9 +1,7 @@
-//! AVX2 + FMA3 (`_mm256_fmadd_pd`) f64-cascade GEMM kernel for medium
-//! `Fp<P>` with `P ∈ (251, 65536)`.
-//!
-//! [`detect`] returns the safe function-pointer wrapper in
-//! [`FpMediumF64Fns`], or `None` without AVX2 and FMA3; callers then fall
-//! back to the u16-lane [`crate::fp_medium`] panel kernel or scalar code.
+//! AVX2 + FMA3 (`_mm256_fmadd_pd`) f64-cascade GEMM kernel for medium `Fp<P>`
+//! with `P ∈ (251, 65536)`. [`detect`] returns the safe function-pointer
+//! wrapper in [`FpMediumF64Fns`], or `None` without AVX2 and FMA3; callers then
+//! fall back to the u16-lane [`crate::fp_medium`] panel kernel or scalar code.
 
 /// Whole-gemm fast path for canonical-residue `Fp<P>` operands with
 /// `P ∈ (251, 65535]`, dispatched on AVX2 + FMA3 hosts.

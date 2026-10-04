@@ -1,10 +1,9 @@
-//! HIP timing events and stream-local event spans.
-//!
-//! [`HipEvent`] owns one timing-enabled `hipEvent_t`. [`HipEventSpan`] owns a
-//! start/stop pair and reports a device-clock [`std::time::Duration`] only
-//! after its stop event is complete. This module deliberately does not call
-//! `hipDeviceSynchronize`: callers choose when to synchronize their own
-//! [`HipStream`] or poll the stop event.
+//! HIP timing events and stream-local event spans: [`HipEvent`] owns one
+//! timing-enabled `hipEvent_t`, and [`HipEventSpan`] owns a start/stop pair and
+//! reports a device-clock [`std::time::Duration`] only after its stop event is
+//! complete. This module deliberately does not call `hipDeviceSynchronize`:
+//! callers choose when to synchronize their own [`HipStream`] or poll the stop
+//! event.
 
 use std::ffi::c_void;
 use std::ptr;

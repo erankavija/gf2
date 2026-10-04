@@ -4,6 +4,8 @@
 //! F_3/F_5/F_7 bipedal operations. This crate isolates unsafe and
 //! architecture-specific code.
 //!
+//! # Runtime dispatch
+//!
 //! Runtime detection entry points are safe and return function-pointer
 //! bundles, or `None` when the host lacks the required features, in which
 //! case callers fall back to scalar code. The [`bipedal`] modules also expose

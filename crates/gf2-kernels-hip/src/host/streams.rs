@@ -1,8 +1,7 @@
-//! HIP stream RAII wrapper and a fixed-size stream pool.
-//!
-//! A [`HipStream`] owns one `hipStream_t` and destroys it on drop. A
-//! [`HipStreamPool`] owns `n` streams bound to a device and hands them out by
-//! fixed index, round-robin, or oldest-idle acquisition.
+//! HIP stream RAII wrapper and a fixed-size stream pool: a [`HipStream`] owns
+//! one `hipStream_t` and destroys it on drop, and a [`HipStreamPool`] owns `n`
+//! streams bound to a device and hands them out by fixed index, round-robin, or
+//! oldest-idle acquisition.
 
 use std::ffi::c_void;
 use std::ptr;

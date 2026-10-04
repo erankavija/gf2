@@ -1,8 +1,7 @@
-//! SIMD batch kernels for small `Fp<P>` with `P <= 251`.
-//!
-//! Operates on canonical byte slices (each element in `[0, P)`) with 16-bit
-//! lane Barrett reduction. [`detect`] returns safe function-pointer wrappers
-//! in [`SmallPrimeFns`], or `None` without AVX2.
+//! SIMD batch kernels for small `Fp<P>` with `P <= 251`, operating on canonical
+//! byte slices (each element in `[0, P)`) with 16-bit lane Barrett reduction.
+//! [`detect`] returns safe function-pointer wrappers in [`SmallPrimeFns`], or
+//! `None` without AVX2.
 
 /// Lane-wise batch multiply for a small prime `Fp<P>` with `P <= 251`.
 ///
