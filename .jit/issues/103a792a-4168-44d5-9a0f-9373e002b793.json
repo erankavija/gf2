@@ -44,22 +44,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T19:42:41.933568143Z",
+      "updated_at": "2026-10-04T21:01:47.615018695Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T19:46:32.233587807Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T21:13:13.869634118Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-04T19:50:03.220979595Z",
+      "updated_at": "2026-10-04T21:16:08.529866788Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T19:42:46.289495038Z",
+      "updated_at": "2026-10-04T21:10:26.043726833Z",
       "updated_by": "auto:executor"
     }
   },
@@ -73,5 +73,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Move gf2-core crate guides into the legacy mirror",
-  "updated_at": "2026-10-04T20:52:59.741159227Z"
+  "updated_at": "2026-10-04T21:16:08.529866788Z"
 }

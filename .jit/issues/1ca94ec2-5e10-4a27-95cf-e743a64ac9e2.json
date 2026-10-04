@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-04T20:59:37.722521542Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -31,7 +32,7 @@
     "satisfies:fa787f85/REQ-19"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
-  "updated_at": "2026-10-04T20:55:48.545073465Z"
+  "updated_at": "2026-10-04T20:59:37.722521542Z"
 }

@@ -8,6 +8,7 @@
   ],
   "description": "The flat `dev/active/02b8137c/` entry holds the frozen pre-draw validation journal, receipts and preregistrations that gf2-sim validation pins. Once its owning task is complete and validation no longer hard-codes its paths, it moves under the permanent-statistics epic's directory.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until issue 02b8137c is done or rejected, verified against the tracker when the move starts and recorded in the commit message.\n- [hard] REQ-02: The entry's files live under the canonical directory of epic b8206228, and each tracker document reference names the new path.\n- [hard] REQ-03: The move commit changes no consumer code: campaign validation and its tests locate the frozen evidence by content identity or through the configured repository root.\n- [hard] REQ-04: The validation run recorded in the campaign-validation verdict baseline, repeated after the move, yields identical verdicts; the repeat run is appended to that record.\n- [hard] REQ-05: Digest-pinned inputs (preregistrations, continuation JSON, receipts and journal entries) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-06: The manifest records each moved row as complete, and the Rust CI gate passes.\n- [hard] REQ-07: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T21:23:08.203932Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Move the 02b8137c validation journal under its epic dir",
-  "updated_at": "2026-10-02T09:38:23.880676237Z"
+  "updated_at": "2026-10-04T21:23:08.203932Z"
 }

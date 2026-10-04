@@ -17,6 +17,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/eace5009-regroup.md"
     }
   ],
+  "done_at": "2026-10-04T21:23:08.083795722Z",
   "first_ready_at": "2026-10-04T19:25:40.984051554Z",
   "gates_required": [
     "cargo-ci",
@@ -27,22 +28,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T20:03:34.147938592Z",
+      "updated_at": "2026-10-04T21:00:32.975054841Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T20:15:54.543073575Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T21:06:59.024881394Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T20:19:53.838018918Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T21:10:22.060112313Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T20:11:08.475793959Z",
+      "updated_at": "2026-10-04T21:03:08.109554899Z",
       "updated_by": "auto:executor"
     }
   },
@@ -54,7 +55,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Regroup the remaining flat dev/active entries under epic dirs",
-  "updated_at": "2026-10-04T20:52:59.913527714Z"
+  "updated_at": "2026-10-04T21:23:08.083795722Z"
 }
