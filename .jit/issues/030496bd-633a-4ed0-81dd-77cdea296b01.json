@@ -5,6 +5,7 @@
   "dependencies": [
     "13dfe1a5-a770-4910-b6b3-36e4b2a91cca",
     "290b8716-2442-42af-9383-08f9d629219d",
+    "3783c4c8-6116-4467-b8cf-a7d6d2877906",
     "3aef9e33-d0e5-4de7-b73b-d0a99839829b",
     "3da13f39-225c-4615-9f68-f1daa76af90b",
     "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
@@ -56,5 +57,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Close the sweep with the after census and justification list",
-  "updated_at": "2026-10-02T11:28:21.348862930Z"
+  "updated_at": "2026-10-04T11:02:51.528254774Z"
 }

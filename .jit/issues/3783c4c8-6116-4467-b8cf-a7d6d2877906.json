@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T11:02:51.187186483Z",
+  "dependencies": [],
+  "description": "The module doc of the DVB-T2 LDPC table module spans several sections and cites the standard by prose title. It is reduced to the workspace comment contract so the source-comment sweep holds for every file under `crates/`.\n\n## Background\n\n`crates/gf2-coding/src/ldpc/dvb_t2/dvb_t2_matrices.rs` opens with a `//!` block of sections \"Table Format\", \"Structure\", \"Code Rates\" and \"References\" that restates constants and names ETSI EN 302 755 by title and version. The root `AGENTS.md` limits a module-level doc to one short orientation paragraph plus the contract statements its public API needs, and `external-claims-cited` requires a registry key for an external work. The generated-data exception of the sweep preserves provenance headers of the tables, which stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: The module doc is one short orientation paragraph plus the contract statements no single item of the module owns, and each statement is true of the code.\n- [hard] REQ-02: The standard is cited through its registry key, and no prose title or version of it remains in the module doc.\n- [hard] REQ-03: The remaining comments of the file meet the same comment rule; provenance headers of the generated tables keep their bytes.\n- [hard] REQ-04: The diff contains only comment, Rustdoc and whitespace edits and deletes more lines than it adds; Rustdoc builds without new warnings and the Rust CI gate passes.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T11:02:51.187186483Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "docs-mechanical"
+  ],
+  "gates_status": {},
+  "id": "3783c4c8-6116-4467-b8cf-a7d6d2877906",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:docs",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Reduce the DVB-T2 LDPC table module doc to the comment contract",
+  "updated_at": "2026-10-04T11:02:51.187186483Z"
+}
