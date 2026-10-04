@@ -11,10 +11,12 @@ use std::path::PathBuf;
 /// assertions, RREF preprocessing). Set to any value except `0`.
 pub const GF2_BENCH_ENV: &str = "GF2_BENCH";
 
+/// Gate of `skip_unless_bench!`; reads [`GF2_BENCH_ENV`] on every call.
 pub fn bench_enabled() -> bool {
     matches!(std::env::var(GF2_BENCH_ENV), Ok(v) if v != "0")
 }
 
+/// Emits the skip notice only; the calling test returns by itself.
 pub fn skip(test: &str, reason: &str) {
     eprintln!("SKIP {test}: {reason}");
 }

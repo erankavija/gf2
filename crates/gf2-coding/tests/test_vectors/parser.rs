@@ -154,6 +154,7 @@ impl TestVectorFile {
             .unwrap_or(&[])
     }
 
+    /// Frame count; [`Self::frame`] returns blocks for indices `0..num_frames()`.
     pub fn num_frames(&self) -> usize {
         self.frames.len()
     }
