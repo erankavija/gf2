@@ -1635,8 +1635,7 @@ fn chrono_like_timestamp() -> String {
             let minutes = (time_of_day % 3600) / 60;
             let seconds = time_of_day % 60;
 
-            // Convert days since epoch to (year, month, day) using a civil calendar algorithm.
-            // Based on Howard Hinnant's `civil_from_days` (public domain).
+            // `civil_from_days` of `@/citation/Hinnant2021`.
             let z = days as i64 + 719468;
             let era = if z >= 0 { z } else { z - 146096 } / 146097;
             let doe = (z - era * 146097) as u64; // day of era [0, 146096]
