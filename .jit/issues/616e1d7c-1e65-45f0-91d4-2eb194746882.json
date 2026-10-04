@@ -8,7 +8,90 @@
     "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
   ],
   "description": "About 18 flat `dev/active/` entries belong to the field capability dispatch epic (6dc81018), several shared with epic 86b9c719. They move under the owning epic's canonical directory.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic includes 6dc81018). Code-pinned entries a83583e0 and dbd8787d are excluded.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it; an entry whose owning epic is archived is collected into that epic's archive through container archival.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for decoupling under the `no-dev-path-coupling` invariant before it moves. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n- [hard] REQ-06: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n\n## Decisions\n\n- DEC-01: The owner ruled on 2026-10-04 that the entries owned by the archived epic 6dc81018 are collected by a re-archive of 6dc81018 through container archival, after the document references of the code-pinned entry a83583e0 are pinned to their last-change commit so the plan retains that entry in place. REQ-01 carries the amendment.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-preexec.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "48e234759ab7983d0e041b4098cef9ab2231df2280183626257d40cbf59542e1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "593a330e8268292fb20ca82cce5b99f8f5e8afc3bb65bab988e83c08666fa97b",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "616e1d7c-verify.txt",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-verify.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "affb3904a4e7294b74e9c8a3de2273bcc696744556d93baea70c356086fbc4bb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "616e1d7c-preexec.json",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-preexec.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "82638c1194e200ade8e3c82fe0fdf62eb60b4faa53dab3e822c7089f6d5962a9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "616e1d7c-rows.py",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-rows.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "987a0ff1089d605a4b70452baa75e8bcad33c1a1e202aa85db5acbc68abb8197",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "616e1d7c-verify.py",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-verify.py"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-regroup.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-rows.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-verify.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/616e1d7c-verify.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Archive rerun results",
+      "path": "dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md"
+    }
+  ],
   "first_ready_at": "2026-10-04T19:25:40.888624634Z",
   "gates_required": [
     "cargo-ci",
@@ -33,5 +116,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
-  "updated_at": "2026-10-04T20:52:59.386744619Z"
+  "updated_at": "2026-10-04T21:55:47.080246278Z"
 }

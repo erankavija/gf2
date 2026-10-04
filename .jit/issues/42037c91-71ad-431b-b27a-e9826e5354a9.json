@@ -8,7 +8,51 @@
     "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
   ],
   "description": "Terminal stories under the archived epics bb85c68a, 6efb756b still hold 26 artifacts outside `dev/archive/`. Re-running container archival on an archived epic collects its terminal stories' documents into the epic's existing marker-backed archive.\n\n## Background\n\nPer-epic story and artifact counts come from the 2026-10-01 preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`, which also showed a re-run on an archived epic previewing eligible into its existing directory.\n\n## Success Criteria\n\n- [hard] REQ-01: Before execution, the archive preview of each listed epic reports it eligible with its existing marker-backed destination and no blocker.\n- [hard] REQ-02: Each listed epic is re-archived through container archival, and its archive directory keeps a marker naming the epic's full identifier.\n- [hard] REQ-03: Byte verification passes for every moved artifact, and each tracker document reference names the artifact's archive path.\n- [hard] REQ-04: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change, because archival rewrites only document references; receipt directories and digest-pinned inputs keep their bytes.\n- [hard] REQ-05: A rerun of each archive reports no change, a link scan of each archive directory and each repointed file reports no unresolved local link, and the manifest records each row as complete.\n\n## Notes\n\nTerminal stories under open epics are out of scope; they archive with their epic when it becomes terminal.\n\n## Decisions\n\n- DEC-01: The owner ruled on 2026-10-04 that `dev/docs` is a temporary entry of `managed_paths`, recorded in the policy notes of the migration manifest with d6ebc4ec as its removal: the planner derives `dev/docs/<path>` as the source of a file relocated from `docs/` into `dev/archive/<epic>/docs/<path>`, and the entry makes that root managed.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/42037c91-preexec.json"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/42037c91-rearchive.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "[^\"']+",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/[^\"']+"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/42037c91-verify.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/42037c91-verify.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Archive rerun results",
+      "path": "dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md"
+    }
+  ],
   "first_ready_at": "2026-10-04T19:25:40.795118796Z",
   "gates_required": [
     "cargo-ci",
@@ -34,5 +78,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Re-archive epics bb85c68a, 6efb756b to collect their terminal stories",
-  "updated_at": "2026-10-04T20:59:44.090241094Z"
+  "updated_at": "2026-10-04T21:55:46.756184534Z"
 }

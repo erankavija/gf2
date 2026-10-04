@@ -11,6 +11,7 @@
     {
       "commit": null,
       "doc_type": "implementation",
+      "format": "markdown",
       "label": "Route B BLAS cascade harness (out-of-tree, non-workspace; FieldMatrix + canonical-byte entrypoints)",
       "path": "dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/src/lib.rs"
     },
@@ -112,5 +113,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Prototype optional BLAS-backed GF(251) cascade (615db3b9 Phase 1 route B)",
-  "updated_at": "2026-10-04T20:21:26.563572480Z"
+  "updated_at": "2026-10-04T21:53:06.126417819Z"
 }

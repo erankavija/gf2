@@ -19,7 +19,15 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "040804e02239715c8464f5055e1634ef974681cab32b8f7b48767796319a314f",
+          "content_hash": "00fe4194e1a2fc6e8bbcd3dee46584f1f56b7d2610b6424ca2d7f3d0eaf7fbc5",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "f29a9225-verify.txt",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/f29a9225-verify.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c3117fce19d0be75cb319297bc09724da5509bf176b5d75d12a306d94eb30c2a",
           "is_shared": false,
           "mime_type": null,
           "original_path": "f29a9225-identities.tsv",
@@ -27,11 +35,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "5000395f44d87190337fb8b5cf533f27bdc9d534c057c16272e3113d4b746682",
+          "content_hash": "44f85e6be06d6e7d7224c2c27665504c4a29e85fb764f48901af8c2441e4bd9d",
           "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "f29a9225-verify.txt",
-          "resolved_path": "dev/active/fa787f85-documentation-overhaul/f29a9225-verify.txt"
+          "mime_type": "text/markdown",
+          "original_path": "archive-rerun-results.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md"
         }
       ],
       "commit": null,
@@ -100,5 +108,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Re-archive epic 026fc832 to collect its terminal stories",
-  "updated_at": "2026-10-04T21:22:46.234064093Z"
+  "updated_at": "2026-10-04T21:55:47.172092796Z"
 }
