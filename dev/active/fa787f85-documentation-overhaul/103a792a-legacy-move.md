@@ -35,18 +35,26 @@ the cited artifact, so each is M. Line numbers are those of the committed files.
 | `dev/active/fa787f85-documentation-overhaul/perf-evidence-catalog.md:38,164,177,195-197,221` | M | `.../docs/`, `.../benches/` notes |
 | `dev/active/fa787f85-documentation-overhaul/roadmap-premap.md:48,120,128` | M | `.../docs/` files |
 
+Also repointed: `dev/active/eaae1b56/premeasurement-protocol.md:472`,
+`dev/active/53c5a8c0/survey/source-evidence.json:215`,
+`dev/active/ae03bcd0-general-bch/breakdown.json:1804` and
+`dev/active/fa787f85-documentation-overhaul/52fb615b-inventory-notes.md:12`
+(M). A search for the SHA-256 and the git blob id of each of the first three
+over the tracked tree finds no occurrence, and no script or tool reads them.
+
 Rust sources, crate READMEs and `docs/` hold no citation of a moved path.
 
-Files that keep their bytes:
+Remaining hits of a moved path, outside the mirror and receipt `inputs/`
+trees:
 
-| File | Reason |
+| File:line | Reason |
 | --- | --- |
-| `dev/active/a83583e0/premeasurement-protocol.md`, `dev/active/eaae1b56/premeasurement-protocol.md` | preregistrations |
-| `dev/active/53c5a8c0/survey/source-evidence.json`, `dev/active/ae03bcd0-general-bch/breakdown.json`, `dev/active/fa787f85-documentation-overhaul/breakdown.json` | recorded data |
-| `dev/active/fa787f85-documentation-overhaul/migration/manifest.toml` | rows key on the `crates/gf2-core/` paths |
+| `dev/active/a83583e0/premeasurement-protocol.md:1031` | the campaign driver hashes the file (`dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:84-89`) and rejects a changed digest (`:682-684`); `dev/active/a83583e0/campaign-declaration.json:4` names the file |
+| `dev/active/fa787f85-documentation-overhaul/breakdown.json:4396,4484,5089,5133` | lines 4396, 4484 and 5089 copy the descriptions of tracker issues, and 5133 is the footprint of issue 103a792a, whose contract names the pre-move location |
+| `dev/active/fa787f85-documentation-overhaul/migration/manifest.toml` (rows 23-51 and `inbound` fields) | rows key on the `crates/gf2-core/` paths |
+| `dev/active/fa787f85-documentation-overhaul/103a792a-legacy-move.md` | this record names the moved paths |
 
-No tracker document reference names a moved file; `target/103a792a-relink.sh`
-holds only the link check.
+No tracker document reference names a moved file.
 
 ## Links inside moved files
 
