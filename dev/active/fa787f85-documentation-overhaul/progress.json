@@ -1416,6 +1416,11 @@
    "id": "fa4939c3",
    "epic": "fa787f85",
    "reason": "holistic-review F2 of ffc35b8c: the citation map's pattern list cannot establish exhaustive citation coverage (554c2935 REQ-01)"
+  },
+  {
+   "id": "9c7e6369",
+   "epic": "b4b4b9ee",
+   "reason": "fa4939c3 read: HipStream Sync safety comment attributes thread safety of hipStreamSynchronize to HIP documentation that states it for hipStreamQuery only"
   }
  ],
  "escalations": [
@@ -1789,6 +1794,11 @@
    "issue": "ffc35b8c",
    "finding": "42 module docs under crates/ exceed twelve lines; bch/encode.rs (189 lines, eight sections), gfpn/quotient.rs, bch/spec.rs, kernels-simd bch_encode.rs, bch/mod.rs and io/field_matrix.rs hold walk-throughs and surveys. Story REQ-21 names module docs.",
    "disposition": "resolved: 545b113f done; every module doc is one orientation paragraph plus headed sections"
+  },
+  {
+   "issue": "fa4939c3",
+   "finding": "crates/gf2-kernels-hip/src/host/streams.rs:120 safety comment claims documented thread safety for hipStreamSynchronize; the HIP reference states it for hipStreamQuery only.",
+   "disposition": "filed 9c7e6369 (b4b4b9ee)"
   }
  ],
  "notes": [
