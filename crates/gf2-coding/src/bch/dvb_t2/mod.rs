@@ -5,35 +5,6 @@
 //! frame size selects. [`dvb_t2_bch_code`] builds that code from the
 //! standard's tables as a [`Shortened<DvbT2MotherCode>`](Shortened) in the
 //! standard's transmission order, [`DVB_T2_LAYOUT`].
-//!
-//! # Decoding through the mother
-//!
-//! [`DvbT2BchDecoder`] decodes a shortened word through the canonical
-//! [`BinaryBchDecoder`] of the mother code.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchDecoder, FrameSize};
-//! use gf2_coding::bch::BchDecodeOutcome;
-//! use gf2_coding::traits::block::{BlockCode, BlockEncoder};
-//! use gf2_coding::CodeRate;
-//! use gf2_core::BitVec;
-//!
-//! let code = dvb_t2_bch_code(FrameSize::Short, CodeRate::Rate1_2)?;
-//! assert_eq!(code.n(), 7200); // N_bch, the LDPC information length
-//! assert_eq!(code.k(), 7032); // K_bch, the BBFRAME length
-//!
-//! let bbframe = BitVec::random_seeded(code.k(), 0xAE03_BCD0);
-//! let mut received = code.encode(&bbframe)?;
-//! received.set(11, !received.get(11));
-//!
-//! let decoder = DvbT2BchDecoder::new(&code);
-//! let (outcome, decoded) = decoder.decode(&received)?;
-//! assert_eq!(outcome, BchDecodeOutcome::Corrected { count: 1 });
-//! assert_eq!(decoded, bbframe);
-//! # Ok::<(), gf2_coding::bch::error::BchError>(())
-//! ```
 
 pub mod generators;
 pub mod params;

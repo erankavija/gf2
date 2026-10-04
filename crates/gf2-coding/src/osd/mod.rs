@@ -3,9 +3,7 @@
 //! [`MostReliableBasis`] and [`reprocess`] are the shared engine: they turn a
 //! canonical reliability order plus an ordered GF(2) elimination into a
 //! bounded, soft-ranked search over Hamming-weight patterns.  What a candidate
-//! means stays with an [`OsdSemantics`] adapter.  [`GeneratorMatrixOsdDecoder`]
-//! searches a generator row space, [`SyndromeOsdCorrector`] a parity-check
-//! coset, and [`BpOsdDecoder`] runs BP first and falls back to the corrector.
+//! means stays with an [`OsdSemantics`] adapter.
 
 mod bp_osd;
 mod engine;

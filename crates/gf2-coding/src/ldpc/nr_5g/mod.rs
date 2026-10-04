@@ -1,11 +1,7 @@
 //! 5G NR LDPC code construction from `@/citation/ThreeGpp2017` Section 5.3.2.
 //!
-//! [`QuasiCyclicLdpc::nr_5g`] expands base graph BG1 (46x68, K_b = 22) or BG2
-//! (42x52, K_b = 10) by a lifting size Z from Table 5.3.2-1: each base entry V
-//! becomes a Z x Z circulant with shift `V mod Z`, and -1 a zero block.
-//! [`QuasiCyclicLdpc::nr_5g_rate_matched`] adds rate matching, which
-//! [`Nr5gRateMatchedCode`] applies through LLR initialization on the full
-//! mother code, keeping every column of H.
+//! [`QuasiCyclicLdpc::nr_5g`] expands base graph BG1 or BG2 by a lifting size Z
+//! from Table 5.3.2-1, and [`Nr5gRateMatchedCode`] adds rate matching.
 
 pub(crate) mod bg1;
 pub(crate) mod bg2;

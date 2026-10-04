@@ -2,25 +2,7 @@
 //!
 //! [`CoordinateMap`] always points from a derived code to its mother code: an
 //! input position is a derived-code position and the returned value is the
-//! corresponding mother-code position.  Composition follows the usual
-//! function convention.  For `outer.compose(&inner)`, `inner` is applied
-//! first and `outer` second, so the result is `outer \u{2218} inner`.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::transform::CoordinateMap;
-//!
-//! // Four derived positions address mother positions 2, 3, 4, and 5.
-//! let selected = CoordinateMap::range(8, 2, 4).unwrap();
-//! // This map reorders those four positions before the selection is applied.
-//! let reversed = CoordinateMap::from_permutation(4, [3, 2, 1, 0]).unwrap();
-//! let composed = selected.compose(&reversed).unwrap();
-//!
-//! assert_eq!(composed.derived_len(), 4);
-//! assert_eq!(composed.mother_position(0).unwrap(), 5);
-//! assert_eq!(composed.mother_position(3).unwrap(), 2);
-//! ```
+//! corresponding mother-code position.
 
 use crate::error::CodeError;
 use std::collections::HashSet;

@@ -1,11 +1,5 @@
 //! Canonical Tanner-graph edge indexing for LDPC message passing.
 //!
-//! [`EdgeLayout`] is the one precomputed edge indexing the LDPC decoders in
-//! this crate use. It numbers every edge of a parity-check matrix once, in
-//! check-major scan order, and records both directions of the map between a
-//! check's view of an edge and the variable's view, so neither node update has
-//! to search a neighbour list for the other side of an edge.
-//!
 //! # Orders
 //!
 //! Check `c` owns the canonical edge ids `check_range(c)`, in the parity-check

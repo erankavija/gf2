@@ -1,8 +1,4 @@
 //! Binary BCH hard-decision decoding and the DVB-T2 code-rate vocabulary.
-//!
-//! [`BinaryBchDecoder`] decodes a canonical
-//! [`BinaryBchCode`](crate::bch::spec::BinaryBchCode) up to its witnessed
-//! correction radius. Coordinate `i` carries the coefficient of `x^i`.
 
 use crate::bch::error::BchError;
 use crate::bch::spec::BinaryBchCode;
