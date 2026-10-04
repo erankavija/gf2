@@ -1,9 +1,7 @@
 //! Raw timing harness for the permanent campaign's determinant companion.
 //!
-//! The harness deliberately does not use Criterion: its receipt contract needs
-//! every raw repetition, multiple fresh-process execution identifiers, and
-//! pooled totals computed downstream. Matrix generation and conversion into
-//! `FieldMatrix` happen before timed windows.
+//! Matrix generation and conversion into `FieldMatrix` happen before timed
+//! windows.
 
 use std::env;
 use std::fs::{self, File, OpenOptions};

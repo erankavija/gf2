@@ -1,11 +1,9 @@
 //! SIMD batch element-wise multiply/square kernel for GF(2^m) at m ∈ {8, 16, 32}.
 //!
-//! The YMM lane runs two 64×64 carry-less multiplies per VPCLMULQDQ, for the
-//! multiply and for each Barrett reduce step (`q = c_high * mu`,
-//! `r = product XOR q * P`). Inputs and outputs are `u64` slices of canonical
-//! field elements (each `< 2^m`). [`detect`] returns `None` without AVX2 and
-//! VPCLMULQDQ, and callers fall back to per-element
-//! [`crate::gf2m::Gf2mFns::clmul_barrett_fn`] dispatch.
+//! Inputs and outputs are `u64` slices of canonical field elements (each
+//! `< 2^m`). [`detect`] returns `None` without AVX2 and VPCLMULQDQ, and
+//! callers fall back to per-element [`crate::gf2m::Gf2mFns::clmul_barrett_fn`]
+//! dispatch.
 
 /// Kernel signature: in-place batch element-wise multiply.
 ///

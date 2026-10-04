@@ -1,15 +1,10 @@
 //! Batch-encoding kernels for binary BCH codes.
 //!
-//! One dispatch bundle carries two independent reductions of $x^r m(x)$
-//! modulo the generator $g$. The carry-less-multiply fold reduces one frame 64
-//! message coefficients at a time ([`BchFoldBlockFn`]). The bit-sliced
-//! reduction holds the shift register of $r$ binary coefficients one word per
-//! coefficient, bit $l$ carrying lane $l$'s value, and advances
-//! [`BITSLICE_LANES`] frames per step: with $s_j$ the slice of register
-//! coefficient $j$, $\mu_j$ the all-ones-or-zero broadcast of the generator's
-//! coefficient of $x^j$, $m$ the slice of the entering message coefficient
-//! and $s_{-1}$ read as zero, $f = s_{r-1} \oplus m$ and
-//! $s'_j = s_{j-1} \oplus (\mu_j \wedge f)$.
+//! One dispatch bundle carries two independent reductions of $x^r m(x)$ modulo
+//! the generator $g$: a carry-less-multiply fold that reduces one frame 64
+//! message coefficients at a time ([`BchFoldBlockFn`]), and a bit-sliced
+//! reduction that advances [`BITSLICE_LANES`] frames per step
+//! ([`BchBitsliceReduceFn`]).
 //!
 //! # Required processor features
 //!
@@ -19,21 +14,6 @@
 //! entry: the bit-sliced reduction and the AVX2 transpose lane need `avx2`,
 //! and the fold needs `pclmulqdq` and `sse4.1`. [`scalar`] computes the same
 //! words with no processor feature.
-//!
-//! # Complexity
-//!
-//! One lane group of [`BITSLICE_LANES`] frames costs $r$ word operations per
-//! message degree in [`bitslice_reduce_scalar`] and $\lceil r/4 \rceil$
-//! 256-bit operations in the AVX2 kernel, so $O(k r / 64)$ and
-//! $O(k r / 256)$ word-equivalents per frame respectively, against the
-//! $O(k \lceil r/64 \rceil)$ of a packed per-frame recurrence. A batch below
-//! the lane width pays a whole lane group, which is what makes that
-//! reduction's admission a batch-length question.
-//!
-//! The fold costs $1 + \lceil r/64 \rceil$ carry-less multiplies and
-//! $O(\lceil r/64 \rceil)$ word operations per 64 message coefficients of
-//! one frame, so $O(k (1 + \lceil r/64 \rceil) / 64)$ multiplies per
-//! message, whatever the batch length is.
 //!
 //! # Examples
 //!

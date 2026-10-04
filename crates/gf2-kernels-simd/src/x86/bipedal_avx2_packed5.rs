@@ -2,8 +2,7 @@
 //!
 //! Each operand is three parallel `&[u64]` planes, one per bit of the 3-bit
 //! canonical encoding. All slices of one call share a length `n` with
-//! `n % 4 == 0`; `n = 0` is a no-op. The private helpers carry no
-//! `#[target_feature]` and are called only from the AVX2 entry points.
+//! `n % 4 == 0`; `n = 0` is a no-op.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;

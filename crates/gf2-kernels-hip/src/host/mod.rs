@@ -1,17 +1,7 @@
-//! Host-side HIP infrastructure: [`HipStream`] and [`HipStreamPool`]
-//! ([`streams`]), [`HipEvent`] and [`HipEventSpan`] timing resources
-//! ([`events`]), [`DeviceBuffer<T>`] and [`PinnedHostBuffer<T>`] ([`alloc`]),
-//! fixed launch geometry ([`launch`]), and [`GfxTarget`] detection ([`arch`]).
-//! Every `unsafe` FFI call sits behind a safe wrapper with a `// SAFETY:`
-//! comment.
-//!
-//! [`HipStream`]: streams::HipStream
-//! [`HipStreamPool`]: streams::HipStreamPool
-//! [`HipEvent`]: events::HipEvent
-//! [`HipEventSpan`]: events::HipEventSpan
-//! [`DeviceBuffer<T>`]: alloc::DeviceBuffer
-//! [`PinnedHostBuffer<T>`]: alloc::PinnedHostBuffer
-//! [`GfxTarget`]: arch::GfxTarget
+//! Host-side HIP infrastructure: streams ([`streams`]), timing events
+//! ([`events`]), device and pinned buffers ([`alloc`]), fixed launch geometry
+//! ([`launch`]), and gfx target detection ([`arch`]). Every `unsafe` FFI call
+//! sits behind a safe wrapper with a `// SAFETY:` comment.
 
 pub mod alloc;
 pub mod arch;

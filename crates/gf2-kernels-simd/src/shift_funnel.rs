@@ -1,16 +1,11 @@
-//! Residual bit-shift funnel kernels.
-//!
-//! The funnel a bit shift by a non-multiple of 64 needs. The bundle is
-//! detected on its own processor feature, so a host that has that feature
-//! without AVX2 still reaches the kernels.
+//! Residual bit-shift funnel kernels: the sub-word part of a bit shift of a
+//! little-endian `u64` buffer.
 //!
 //! # The funnel contract
 //!
-//! A residual shift of a little-endian `u64` buffer by `64 * word_shift +
-//! bit_shift` bits rewrites each word from a pair of source words. Both kernels
-//! take `(data, word_shift, bit_shift)` with `word_shift < data.len()` and
-//! `bit_shift` in `1..64`, and write, in the order that makes the rewrite
-//! correct in place:
+//! Both kernels take `(data, word_shift, bit_shift)` with
+//! `word_shift < data.len()` and `bit_shift` in `1..64`, and panic otherwise.
+//! They write, in the order that makes the rewrite correct in place:
 //!
 //! - [`ShiftFunnelFns::shift_left_funnel`] writes `data[word_shift + 1 ..]`,
 //!   word `i` becoming
@@ -21,10 +16,7 @@
 //!
 //! Neither kernel touches the one word at the far end of its range that has no
 //! neighbour to funnel in, and neither zeroes the words the shift vacates: the
-//! caller owns both, as `gf2_core::BitVec`'s residual branch does. The buffer
-//! carries no alignment requirement. A call outside either argument range
-//! panics: the ranges are the kernels' safety conditions on their indices, so
-//! the published wrappers check them rather than trust them.
+//! caller owns both. The buffer carries no alignment requirement.
 
 /// Safe residual-funnel function pointer, taking `(data, word_shift, bit_shift)`.
 pub type ShiftFunnelFn = fn(&mut [u64], usize, u32);
