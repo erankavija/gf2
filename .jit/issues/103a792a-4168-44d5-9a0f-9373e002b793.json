@@ -34,6 +34,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/103a792a-link-scan.txt"
     }
   ],
+  "done_at": "2026-10-04T21:52:50.540515484Z",
   "first_ready_at": "2026-10-04T19:25:40.604382907Z",
   "gates_required": [
     "cargo-ci",
@@ -44,22 +45,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:01:47.615018695Z",
+      "updated_at": "2026-10-04T21:36:45.098036925Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:13:13.869634118Z",
+      "updated_at": "2026-10-04T21:48:39.017842265Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T21:16:08.529866788Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T21:52:26.809870188Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T21:10:26.043726833Z",
+      "updated_at": "2026-10-04T21:37:00.843362202Z",
       "updated_by": "auto:executor"
     }
   },
@@ -71,7 +72,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Move gf2-core crate guides into the legacy mirror",
-  "updated_at": "2026-10-04T21:16:08.529866788Z"
+  "updated_at": "2026-10-04T21:52:50.540515484Z"
 }
