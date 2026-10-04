@@ -45,7 +45,7 @@ Method: scan of `.jit/issues/*.json` `documents[].path`, owners resolved to top 
 
 - **b7157be6 (`done`)**
   - `dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md`, also linked by non-terminal epics aed96ef9, 55087229, c7cfd37e, cce5da8c: a `document-non-terminal-owner` copy case, not a move.
-  - `dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md` (bug 258be082).
+  - `dev/archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md` (bug 258be082).
   - `dev/simulation_results/osd-ebch-128-64/` (8 files, simulation cef1ae5f). Permanent path, so copy-only; consumed by `crates/gf2-sim/tests/osd_campaign_protocol.rs:807`.
 - **97bf0879 / 026fc832 (`archived`), copied not moved by `195f8254f`:** `dev/plans/{flint_promotion_evidence,ntl_promotion_evidence,small_prime_kernel_strategy,sota_target_matrix}.md`, `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`.
 - **Archived epics, code and tooling links (stay in place):** `benchmarks/{Containerfile,README.md,image.lock,run.sh,reference/*}`, `crates/gf2-algebra/{README.md,examples/permanent_demo.rs,tests/data/cas_permanent_f5_f7.csv}`, `crates/gf2-coding/examples/bench_sparse_csv_emitter.rs`, `crates/gf2-core/{examples/m4rm_multiply_perfstat.rs,src/sparse.asm.txt,tests/gf2pow32_constant_drift.rs}`, `proofs/Gf2Algebra/Proofs/RyserBounded.lean`, `scripts/{generate-cas-permanent-vectors.sage,plot_permanent_benchmarks.py}`.

@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "target": {
+    "kind": "container",
+    "id": "b7157be6-16d8-4050-834c-e996d4fa27c3"
+  },
+  "destination_root": "dev/archive/b7157be6-osd",
+  "publications": [
+    {
+      "source": "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md",
+      "destination": "dev/archive/b7157be6-osd/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md",
+      "content_identity": {
+        "sha256": "5e40581dd6a4150f6b178a7383f8848cb21c553f93c544f5a7ad9f64f91d5f56",
+        "byte_size": 3915
+      },
+      "adopted": false
+    },
+    {
+      "source": "dev/active/b7157be6-completion-report.md",
+      "destination": "dev/archive/b7157be6-osd/active/b7157be6-completion-report.md",
+      "content_identity": {
+        "sha256": "ec6af32a623a8210121d5da452ee03cc8c839efdbea2b7fbaf79b01321fa6115",
+        "byte_size": 10715
+      },
+      "adopted": true
+    },
+    {
+      "source": "dev/active/breakdown.json",
+      "destination": "dev/archive/b7157be6-osd/active/breakdown.json",
+      "content_identity": {
+        "sha256": "3c01220704b4f1b519ece006ede5e4fe2a0f451dbdcb3282d8cdebf916ea0d93",
+        "byte_size": 44724
+      },
+      "adopted": true
+    },
+    {
+      "source": "dev/active/handoff-2.md",
+      "destination": "dev/archive/b7157be6-osd/active/handoff-2.md",
+      "content_identity": {
+        "sha256": "1fd0ff226984eb1ca90de4a042e7a860aea8307c12f8e834cd52b490dde38541",
+        "byte_size": 9942
+      },
+      "adopted": true
+    },
+    {
+      "source": "dev/active/handoff-3.md",
+      "destination": "dev/archive/b7157be6-osd/active/handoff-3.md",
+      "content_identity": {
+        "sha256": "bee52ae6b23055eba400a6f7089cb0f6d815a466c8ef1b11747a0c1af1a75f6f",
+        "byte_size": 11669
+      },
+      "adopted": true
+    },
+    {
+      "source": "dev/active/handoff.md",
+      "destination": "dev/archive/b7157be6-osd/active/handoff.md",
+      "content_identity": {
+        "sha256": "fde5b7c4eac4586f39df660b35f66c3933efb89c04b1c33873a2e5eb7099211c",
+        "byte_size": 8067
+      },
+      "adopted": true
+    },
+    {
+      "source": "dev/active/investigation.md",
+      "destination": "dev/archive/b7157be6-osd/active/investigation.md",
+      "content_identity": {
+        "sha256": "1f33f0cd04f2045d1ba3a613007867a599ca9d51b0f9a842f001428fa63e1f37",
+        "byte_size": 26834
+      },
+      "adopted": true
+    },
+    {
+      "source": "dev/active/plan.md",
+      "destination": "dev/archive/b7157be6-osd/active/plan.md",
+      "content_identity": {
+        "sha256": "6657f688de679d1c6d0ece78b5813f3ac41f27817bc313d8c165b800a90ce519",
+        "byte_size": 25234
+      },
+      "adopted": true
+    },
+    {
+      "source": "dev/active/progress.json",
+      "destination": "dev/archive/b7157be6-osd/active/progress.json",
+      "content_identity": {
+        "sha256": "597a5cda107bba9d9e7114fb26f4adb3da1a5604b7d6bed2f8df026444c82fc6",
+        "byte_size": 22463
+      },
+      "adopted": true
+    },
+    {
+      "source": "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md",
+      "destination": "dev/archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md",
+      "content_identity": {
+        "sha256": "18ae1a66b56d39845e54e1c4b1ef16aaaa0081927af38c75503f32c91b8f7f1b",
+        "byte_size": 5678
+      },
+      "adopted": false
+    },
+    {
+      "source": null,
+      "destination": "dev/archive/b7157be6-osd/.jit-container",
+      "content_identity": {
+        "sha256": "2e885fbfbbaa58986db08e891e44b089cd0d8daf1a66d43da6f3a80fc0c9000c",
+        "byte_size": 37
+      },
+      "adopted": false
+    }
+  ],
+  "reference_changes": [
+    {
+      "issue": "258be082-94e5-4505-adbf-652601e6c127",
+      "document_index": 0,
+      "from_path": "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md",
+      "to_path": "dev/archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md"
+    },
+    {
+      "issue": "312200e4-dce9-44d3-8b55-c20c610e1c03",
+      "document_index": 0,
+      "from_path": "dev/active/investigation.md",
+      "to_path": "dev/archive/b7157be6-osd/active/investigation.md"
+    },
+    {
+      "issue": "312200e4-dce9-44d3-8b55-c20c610e1c03",
+      "document_index": 1,
+      "from_path": "dev/active/breakdown.json",
+      "to_path": "dev/archive/b7157be6-osd/active/breakdown.json"
+    },
+    {
+      "issue": "312200e4-dce9-44d3-8b55-c20c610e1c03",
+      "document_index": 2,
+      "from_path": "dev/active/plan.md",
+      "to_path": "dev/archive/b7157be6-osd/active/plan.md"
+    },
+    {
+      "issue": "b7157be6-16d8-4050-834c-e996d4fa27c3",
+      "document_index": 0,
+      "from_path": "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md",
+      "to_path": "dev/archive/b7157be6-osd/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
+    },
+    {
+      "issue": "b7157be6-16d8-4050-834c-e996d4fa27c3",
+      "document_index": 1,
+      "from_path": "dev/active/handoff.md",
+      "to_path": "dev/archive/b7157be6-osd/active/handoff.md"
+    },
+    {
+      "issue": "b7157be6-16d8-4050-834c-e996d4fa27c3",
+      "document_index": 2,
+      "from_path": "dev/active/handoff-2.md",
+      "to_path": "dev/archive/b7157be6-osd/active/handoff-2.md"
+    },
+    {
+      "issue": "b7157be6-16d8-4050-834c-e996d4fa27c3",
+      "document_index": 3,
+      "from_path": "dev/active/handoff-3.md",
+      "to_path": "dev/archive/b7157be6-osd/active/handoff-3.md"
+    },
+    {
+      "issue": "b7157be6-16d8-4050-834c-e996d4fa27c3",
+      "document_index": 4,
+      "from_path": "dev/active/b7157be6-completion-report.md",
+      "to_path": "dev/archive/b7157be6-osd/active/b7157be6-completion-report.md"
+    },
+    {
+      "issue": "b7157be6-16d8-4050-834c-e996d4fa27c3",
+      "document_index": 5,
+      "from_path": "dev/active/progress.json",
+      "to_path": "dev/archive/b7157be6-osd/active/progress.json"
+    }
+  ],
+  "planned_deletions": [
+    {
+      "source": "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md",
+      "content_identity": {
+        "sha256": "18ae1a66b56d39845e54e1c4b1ef16aaaa0081927af38c75503f32c91b8f7f1b",
+        "byte_size": 5678
+      }
+    }
+  ],
+  "deleted_sources": [
+    "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md"
+  ],
+  "warnings": [
+    {
+      "code": "moving-path-citation",
+      "path": "dev/active/ae03bcd0-general-bch/investigation.md:276:2"
+    },
+    {
+      "code": "moving-path-citation",
+      "path": "dev/active/fa787f85-documentation-overhaul/investigation.md:48:6"
+    },
+    {
+      "code": "moving-path-citation",
+      "path": "dev/active/fa787f85-documentation-overhaul/migration/manifest.toml:2208:11"
+    },
+    {
+      "code": "moving-path-citation",
+      "path": "dev/active/fa787f85-documentation-overhaul/perf-evidence-catalog.md:132:16"
+    },
+    {
+      "code": "moving-path-citation",
+      "path": "dev/archive/b7157be6-osd/active/progress.json:208:166"
+    }
+  ],
+  "event_appended": true,
+  "reconciling": true
+}
