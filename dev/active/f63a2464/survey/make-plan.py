@@ -37,7 +37,8 @@ def main():
                  "--quality-dir", "--campaign-id", "--output"):
         parser.add_argument(name, required=True)
     parser.add_argument(
-        "--producing-manifest", default="dev/active/f63a2464/survey/producing-inputs.json"
+        "--producing-manifest",
+        default=os.path.relpath(pathlib.Path(__file__).resolve().parent / "producing-inputs.json"),
     )
     parser.add_argument("--pilot-pairs", type=int, default=6)
     parser.add_argument("--max-cells-per-session", type=int, default=1)

@@ -6,13 +6,11 @@
 # so the plan resolves the same arms as the campaign, and redirects the ledger
 # into `target/` so the family's own append-only ledger stays untouched.
 #
-# Two checks run over each throwaway plan. `ldpc-plan-check` decodes the plan
-# strictly, validates the addendum against `addendum.schema.json` and the
-# protocol's semantic rules, and validates the plan against the addendum: the
-# checks the runner applies before opening a campaign. `qc-arm-smoke` then
-# drives every arm of every cell with the runner's own case encoder, request
-# sentinel and child environment in the `validation` role, so each arm performs
-# one untimed dispatch, applies its placement and decision checks and returns no
+# Two shared checks run over each throwaway plan. `benchmark-ab-runner check`
+# applies the decode and validation the runner applies before its first
+# measurement. `benchmark-ab-runner smoke`, whose contract
+# `tuning_campaign_support::arm::smoke` states, then drives every arm of every
+# cell once in the untimed validation position and fails an arm that reports a
 # timing window. A campaign is queued only after both pass, because reading the
 # arm sources does not establish the wire contract between the runner and a
 # child.
@@ -32,7 +30,10 @@ SCRATCH=target/ldpc-qc-smoke  # repo-relative: the plan names the addendum by a 
 BASELINE=$repo/target/ldpc-qc-baseline/release
 CANDIDATE=$repo/target/ldpc-qc-arms/release
 QUALITY=$repo/dev/bench_results/c077a88b/v3-preparation/quality
+RUNNER=$repo/target/release/benchmark-ab-runner
 
+./scripts/cargo-budget.sh cargo +1.95 build --offline --release -p tuning-campaign-support \
+  --bin benchmark-ab-runner >/dev/null
 rm -rf "$SCRATCH"
 mkdir -p "$SCRATCH"
 
@@ -61,8 +62,8 @@ PY
     --bundles-dir "$repo/target/ldpc-inputs" --quality-dir "$QUALITY" \
     --campaign-id "f63a2464-smoke-$family-$mode" --pilot-pairs 6 \
     --max-cells-per-session 1 --output "$SCRATCH/$family-$mode.plan.json"
-  "$BASELINE/ldpc-plan-check" "$SCRATCH/$family-$mode.plan.json"
-  "$CANDIDATE/qc-arm-smoke" "$SCRATCH/$family-$mode.plan.json"
+  "$RUNNER" check "$SCRATCH/$family-$mode.plan.json"
+  "$RUNNER" smoke "$SCRATCH/$family-$mode.plan.json" --record "$SCRATCH/$family-$mode.smoke.json"
  done
 done
 echo "smoke complete: $SCRATCH"
