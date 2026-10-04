@@ -2050,7 +2050,8 @@
     "Session 27 (2026-10-04/05): resumed from handoff-22. Collected the M4RI pilot (50f0bd42): worker commits 8593574b8..e6e32756f on worktree-agent-50f0bd42, replayed onto main through replay-50f0bd42 (outcome.md and confirmation-smoke.json land under dev/active/1a379447-zen3-cpu-performance/50f0bd42/ because jit:4f161183 moved that directory; outcome links repointed at replay).",
     "Session 27 decision (lead, routine): the frozen dense-parity addendum states the resolution is rounded upward to the next 0.001 over the confirmatory cells, so the confirmation freezes that value; the canonical freezer gained --resolution-decimals (default 2, existing records reproduce) under the worker brief rule to extend the freezer at its source.",
     "Session 27: queue.tsv row dbd8787d (another epic, issue done) has no done marker after rc=1 on 2026-10-02; its worktree is gone, so run-window.sh logs it missing and skips it.",
-    "Session 27: invoker lifted the wave-3 hold on the five out-of-wave confirmation rows; queue.tsv rows uncommented with their original keys; pinned trees verified clean at 706450eed, a00540a8f, 897ca69ab."
+    "Session 27: invoker lifted the wave-3 hold on the five out-of-wave confirmation rows; queue.tsv rows uncommented with their original keys; pinned trees verified clean at 706450eed, a00540a8f, 897ca69ab.",
+    "Session 27: replay merged at 626be8850, merged-tree cargo-ci passed, 15 artifacts linked to 50f0bd42 at 39fbccb0e, window gf2-bench-window-20261005 armed for 02:00 Europe/Helsinki."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2081,12 +2082,27 @@
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
   },
   "benchmark_window": {
-    "unit": "gf2-bench-window-20260928",
-    "armed_for": "2026-09-28T02:00:00+03:00",
+    "unit": "gf2-bench-window-20261005",
+    "armed_for": "2026-10-05T02:00:00+03:00",
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
-    "note": "User authorizes 02:00 Europe/Helsinki on subsequent nights as needed for current wave 3. Arm each next window after reviewing prior results and queue readiness.",
-    "current_observation": "September28 window completed23:04:29Z. Dense profile key479f388792038140 and residual confirmation keyd01d0731883044f8 both complete, own logs verified. No pending current-wave queue job; downstream M4RI preparation awaits dense task closure. Standing authorization covers later02:00 Helsinki windows as required."
+    "pending_jobs": {
+      "f63a2464": [
+        "f26bf08004856789",
+        "3b9fddf9c17b7d52",
+        "9a8f7f9e061c698a"
+      ],
+      "ad2a6a58": [
+        "96d45180caf48cc4"
+      ],
+      "4c1e441f": [
+        "cb10e50421248b16"
+      ],
+      "50f0bd42": [
+        "8d3d23db4fa69e06"
+      ]
+    },
+    "note": "Six jobs, estimated 78 minutes. Verify each campaign from its own execution log, never the job rc. Row dbd8787d (key 65317586c6eb36d1) has no worktree and is skipped as missing."
   },
   "session_scope": {
     "session": 27,
@@ -2109,6 +2125,6 @@
       "est_minutes": 10,
       "status": "frozen, smoked untimed, queued; window not yet run"
     },
-    "peer_session": "gf2-b2 leads epic fa787f85 on the same main checkout; explicit-path staging and mutual notice before gate or CI runs; it waits for done/rejected notices on 4c1e441f, ad2a6a58, f63a2464 (its 198aafa3 REQ-01)"
+    "peer_session": "gf2-b2 (epic fa787f85) closed its session 2026-10-05 01:13 EEST. Its 198aafa3 REQ-01 waits on 4c1e441f, ad2a6a58 and f63a2464 reaching done or rejected; when each closes, notify the fa787f85 lead or the repository owner (that epic resumes from dev/active/fa787f85-documentation-overhaul/handoff-8.md)."
   }
 }
