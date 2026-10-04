@@ -1048,7 +1048,7 @@ impl FamilyAddendum {
         current.max(1) + self.family_wise.prior_confirmatory_trials
     }
 
-    /// The declared cell with this identifier.
+    /// `None` when no declared cell carries `cell_id`.
     pub fn cell(&self, cell_id: &str) -> Option<&CellDeclaration> {
         self.cells.iter().find(|cell| cell.cell_id == cell_id)
     }
