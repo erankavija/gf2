@@ -3,8 +3,7 @@
 //! type-checked edges, [`Chain::build`], and drive one batch with
 //! [`TopologyExecutor::run`]. The custom stage is a periodic puncture
 //! (`BitPackedBatch` → `BitPackedBatch`) between two `Tag` passthrough stages.
-//!
-//! Run with: `cargo run -p gf2-sim --example novel_chain_via_graph --release`
+//! Run with `cargo run -p gf2-sim --example novel_chain_via_graph --release`.
 
 use std::num::NonZeroUsize;
 

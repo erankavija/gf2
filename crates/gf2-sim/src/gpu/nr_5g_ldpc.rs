@@ -1,11 +1,13 @@
 //! 5G NR rate-matched decoding on the GPU LDPC BP kernel (`feature = "hip"`).
-//!
 //! The mother code is the `gf2-coding` expansion
 //! ([`QuasiCyclicLdpc::nr_5g_rate_matched`](gf2_coding::ldpc::QuasiCyclicLdpc::nr_5g_rate_matched))
 //! of the base graph and per-`i_LS` shift table, flattened by `GpuLdpcBp` as
-//! for any [`LdpcCode`](gf2_coding::ldpc::LdpcCode). Rate matching
-//! (`@/citation/ThreeGpp2017` Section 5.3.2) is a host-side map: the `target_n`
-//! channel LLRs become the `full_n` mother-code LLR vector
+//! for any [`LdpcCode`](gf2_coding::ldpc::LdpcCode).
+//!
+//! # Rate matching
+//!
+//! Rate matching (`@/citation/ThreeGpp2017` Section 5.3.2) is a host-side map:
+//! the `target_n` channel LLRs become the `full_n` mother-code LLR vector
 //! ([`Nr5gRateMatchedCode::prepare_llrs`](gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode::prepare_llrs)),
 //! the device decodes the full mother codeword, and the `target_k` message bits
 //! are extracted in natural column order.

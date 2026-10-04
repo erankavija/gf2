@@ -1,9 +1,8 @@
-//! Runtime observation collected from the operating system.
-//!
-//! Every value in this module is read from the kernel at the moment the
-//! observation is taken and is stamped with the UTC instant of that read. No
-//! constructor accepts a caller-authored process identity, occupant, or
-//! observation time, so a liveness proof cannot be asserted from outside.
+//! Runtime observation collected from the operating system. Every value in this
+//! module is read from the kernel at the moment the observation is taken and is
+//! stamped with the UTC instant of that read. No constructor accepts a
+//! caller-authored process identity, occupant, or observation time, so a
+//! liveness proof cannot be asserted from outside.
 
 use std::fs;
 use std::path::Path;

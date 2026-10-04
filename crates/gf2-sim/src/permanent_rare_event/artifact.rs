@@ -1,9 +1,8 @@
-//! Closed rare-event artifact schemas and immutable publication.
-//!
-//! The reader accepts one envelope version and a closed set of payload
-//! versions. It checks canonical JSON bytes, sidecars, embedded identities,
-//! recomputed dataset/run/attempt IDs, closed address sets, and
-//! attempt/checkpoint lineage. Publication synchronizes both files and their directory before a
+//! Closed rare-event artifact schemas and immutable publication. The reader
+//! accepts one envelope version and a closed set of payload versions. It checks
+//! canonical JSON bytes, sidecars, embedded identities, recomputed
+//! dataset/run/attempt IDs, closed address sets, and attempt/checkpoint
+//! lineage. Publication synchronizes both files and their directory before a
 //! safe `RENAME_NOREPLACE`; an unsupported platform or filesystem refuses.
 
 use gf2_stats::weighted::ScaledStudentInterval;

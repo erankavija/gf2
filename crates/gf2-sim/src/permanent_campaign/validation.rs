@@ -1,10 +1,9 @@
-//! Durable pre-draw validation for permanent campaigns.
-//!
-//! The reusable layer accepts a typed preregistration and journals each
-//! address before opening a sampler. [`evaluate_validation_anchor`] exposes
-//! the field-generic computation, while [`run_validation`] adds runtime
-//! provenance and no-redraw persistence. [`run_frozen_campaign_validation`]
-//! enforces the repository-specific frozen plan.
+//! Durable pre-draw validation for permanent campaigns. The reusable layer
+//! accepts a typed preregistration and journals each address before opening a
+//! sampler. [`evaluate_validation_anchor`] exposes the field-generic
+//! computation, while [`run_validation`] adds runtime provenance and no-redraw
+//! persistence. [`run_frozen_campaign_validation`] enforces the
+//! repository-specific frozen plan.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;

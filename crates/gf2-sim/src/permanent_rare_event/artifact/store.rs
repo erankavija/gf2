@@ -1,11 +1,10 @@
-//! Descriptor-relative artifact directory boundary.
-//!
-//! Every lookup, check, creation, read, rename, and removal below a pinned
-//! dataset root travels through a held directory descriptor and a validated
-//! single path component, with `O_NOFOLLOW` on every open, so a concurrent
-//! rename or symlink swap cannot change which inode a check and its dependent
-//! operation use. Only [`DirHandle::open_root`] resolves a multi-component
-//! path; everything beneath that root is descriptor-relative.
+//! Descriptor-relative artifact directory boundary. Every lookup, check,
+//! creation, read, rename, and removal below a pinned dataset root travels
+//! through a held directory descriptor and a validated single path component,
+//! with `O_NOFOLLOW` on every open, so a concurrent rename or symlink swap
+//! cannot change which inode a check and its dependent operation use. Only
+//! [`DirHandle::open_root`] resolves a multi-component path; everything beneath
+//! that root is descriptor-relative.
 
 use std::fs::File;
 use std::io::{Read, Write};

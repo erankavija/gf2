@@ -1,14 +1,8 @@
-//! Generic crash-safe checkpoint persistence.
-//!
-//! [`CheckpointWriter`] and [`CheckpointReader`] persist any
-//! [`CheckpointPayload`] behind a caller-supplied [`ConfigHashProvider`]. The
-//! on-disk envelope records the payload's identity and schema version
-//! alongside the configuration hash. A reader accepts a file only when all
-//! three values match its live caller contract; absence means fresh work,
-//! while a present invalid or mismatched file is a hard [`CheckpointLoadError`].
-//!
-//! Writers of one file are coordinated by the caller: the PID-tagged temporary
-//! file separates processes, not several writers in one process.
+//! Generic crash-safe checkpoint persistence: [`CheckpointWriter`] and
+//! [`CheckpointReader`] persist any [`CheckpointPayload`] behind a
+//! caller-supplied [`ConfigHashProvider`]. Writers of one file are coordinated
+//! by the caller: the PID-tagged temporary file separates processes, not
+//! several writers in one process.
 
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};

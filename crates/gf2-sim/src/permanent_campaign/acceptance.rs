@@ -1,6 +1,5 @@
-//! Preregistered exact acceptance decisions for permanent campaign cells.
-//!
-//! One [`AcceptancePlan`] fixes the shared global error allocation before any
+//! Preregistered exact acceptance decisions for permanent campaign cells. One
+//! [`AcceptancePlan`] fixes the shared global error allocation before any
 //! campaign cell is assessed. [`assess_completed_cell`] is the single path for
 //! point estimates, Wilson intervals, exact log-scale tests, and verdicts.
 

@@ -2,9 +2,8 @@
 //! Normal r1/2 16-QAM at the waterfall Es/N0 (6.0 dB), where the summary shows
 //! a mixed verdict. The builder enforces the call order at compile time
 //! (`.decoder()` before `.modcod()` does not compile). Graph-API version:
-//! `examples/dvb_t2_graph_api.rs`.
-//!
-//! Run with: `cargo run -p gf2-sim --example dvb_t2_typestate --release`
+//! `examples/dvb_t2_graph_api.rs`. Run with
+//! `cargo run -p gf2-sim --example dvb_t2_typestate --release`.
 
 use std::num::NonZeroUsize;
 

@@ -1,9 +1,5 @@
-//! SNR-point checkpoint payload and resumable sweep execution.
-//!
-//! [`CheckpointV2`] is the [`CheckpointPayload`] of one SNR point.
-//! [`CheckpointWriter`] and [`CheckpointReader`] adapt the persistence
-//! mechanism of [`crate::checkpoint`] to the `snr_<NNNN>.json` naming and
-//! translate its load failures into [`FatalError`].
+//! SNR-point checkpoint payload and resumable sweep execution over the
+//! persistence mechanism of [`crate::checkpoint`]:
 //! [`run_snr_point_checkpointed`] and [`run_sweep_checkpointed`] run frames in
 //! heartbeat-sized chunks over [`run_snr_point_range`] and flush a checkpoint
 //! after each chunk.

@@ -1,9 +1,8 @@
-//! Versioned permanent-zero-fraction dataset schema.
-//!
-//! JSON documents use strict serde schemas: required fields cannot be omitted,
-//! unknown fields are rejected, and every document carries the version it was
-//! written with. This module writes [`SCHEMA_VERSION`] and reads every version
-//! in [`READABLE_SCHEMA_VERSIONS`].
+//! Versioned permanent-zero-fraction dataset schema. JSON documents use strict
+//! serde schemas: required fields cannot be omitted, unknown fields are
+//! rejected, and every document carries the version it was written with. This
+//! module writes [`SCHEMA_VERSION`] and reads every version in
+//! [`READABLE_SCHEMA_VERSIONS`].
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
