@@ -8,6 +8,7 @@
   ],
   "description": "About 34 flat `dev/active/` entries belong to the Zen 3 CPU performance epic (1a379447), some shared with the competitive-benchmarking epic (d77176e5). They move under that epic's canonical directory so the epic archives as one container.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic is 1a379447). Code-pinned entries are excluded: f547c394, the addendum fixture entries 26465e6c, eda07788 and 5cbb6545, and the survey-harness entries 04b85d10, 07ca8585, 12fdeb5b, 1c602857, 1d0da41f, 1d4fd63d, 2037941f-profile-and-optimize-mid-range-buffer-operations, 3be770d5, 4c1e441f, 53c5a8c0, 6c6b09b1, 6fb89a3c, ad2a6a58, c077a88b, c7113c5a and f63a2464. Rustdoc in several crates and `dev/scripts/receipt-input-omissions.json` cite these paths. Receipts quote them as provenance strings; the strings stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for decoupling under the `no-dev-path-coupling` invariant before it moves. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n- [hard] REQ-06: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T19:25:40.843007956Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Regroup flat zen3 dev/active entries under their epic dir",
-  "updated_at": "2026-10-02T09:38:22.883089921Z"
+  "updated_at": "2026-10-04T19:25:40.843007956Z"
 }

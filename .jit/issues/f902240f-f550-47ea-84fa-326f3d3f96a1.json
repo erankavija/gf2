@@ -8,6 +8,7 @@
   ],
   "description": "Epic b7157be6 was moved into `dev/archive/b7157be6-osd/` by plain git: the directory has no container marker, the epic's state is done rather than archived, and it still links a review file shared with four open epics. Its archive preview is blocked by a destination conflict on that unmarked directory, with 31 artifacts in scope.\n\n## Background\n\nArchival adopts only a markerless bare `<short8>/` directory, so the slugged markerless directory may raise a destination conflict that needs resolution first. Evidence: `dev/active/fa787f85-documentation-overhaul/investigation.md` §0 finding 7 and §1.1, and the archive preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`.\n\n## Success Criteria\n\n- [hard] REQ-01: The unmarked hand archive is resolved first (adopted into, or reconciled with, the planner's destination with no file lost), after which the archive preview reports the epic eligible with no destination conflict.\n- [hard] REQ-02: The epic's archive directory carries a container marker with the epic's full identifier, and the epic's state is archived.\n- [hard] REQ-03: The shared external-review file stays at its live path for the open epics, and the archived epic holds a byte-verified copy.\n- [hard] REQ-04: The linked dataset under `dev/simulation_results/osd-ebch-128-64/` stays in place and its consuming test passes.\n- [hard] REQ-05: A rerun of the container archival reports no change.\n- [hard] REQ-06: In-file citations to moved paths are repointed, and a link scan of the touched files reports no unresolved local link.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T19:25:41.074669876Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-10"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Bring the hand-archived OSD epic under container archival",
-  "updated_at": "2026-10-02T09:38:33.164663831Z"
+  "updated_at": "2026-10-04T19:25:41.074669876Z"
 }

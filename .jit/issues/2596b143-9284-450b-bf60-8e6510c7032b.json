@@ -7,6 +7,7 @@
   ],
   "description": "Rustdoc examples change through tautological-example removal, example-policy decisions and the source-comment sweep. The final corpus is measured once those edits land, by the same method as the pre-removal baseline.\n\n## Background\n\nThe pre-removal audit and its census script are linked to the epic in `dev/active/fa787f85-documentation-overhaul/`.\n\n## Success Criteria\n\n- [hard] REQ-01: A census by the same method as the pre-removal baseline (`dev/active/fa787f85-documentation-overhaul/fa787f85-example-census.py`) records example-heading count, per-crate example counts, doctest count and doctest execution time on the final corpus.\n- [hard] REQ-02: The record compares these figures with the pre-removal baseline and states the measurement protocol (toolchain, features, build-cache state and host load).\n- [hard] REQ-03: No example in the final corpus demonstrates only an accessor, constant, simple constructor or direct mapping, verified by classifying every example added or changed since the baseline.\n- [hard] REQ-04: Retained examples compile and pass in the Rust CI gate's Rustdoc and doctest steps.\n\n\n## Decisions\n\n- DEC-01: The owner ruled on 2026-10-04 that the doctest execution time of REQ-01 is an informational wall-clock figure of the census, taken in a working session with host load stated per REQ-02. It supports no performance claim and is outside the overnight benchmark window.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T19:25:40.703677088Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -28,7 +29,7 @@
     "satisfies:fa787f85/REQ-07"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Record the final Rustdoc example census and doctest timing",
-  "updated_at": "2026-10-04T19:13:42.247261684Z"
+  "updated_at": "2026-10-04T19:25:40.703677088Z"
 }
