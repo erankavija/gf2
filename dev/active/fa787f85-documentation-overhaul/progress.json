@@ -775,7 +775,7 @@
      "short_id": "1ca94ec2",
      "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "pending"
     },
     {
      "id": "2596b143-9284-450b-bf60-8e6510c7032b",
@@ -796,21 +796,21 @@
      "short_id": "42037c91",
      "title": "Re-archive epics bb85c68a, 6efb756b to collect their terminal stories",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "pending"
     },
     {
      "id": "4f161183-869b-4369-83e9-46dc023720d5",
      "short_id": "4f161183",
      "title": "Regroup flat zen3 dev/active entries under their epic dir",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "616e1d7c-1e65-45f0-91d4-2eb194746882",
      "short_id": "616e1d7c",
      "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "pending"
     },
     {
      "id": "83f9ce69-6d18-4767-ac9c-6b2f00485581",
@@ -864,7 +864,7 @@
      "short_id": "198aafa3",
      "title": "Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "5ec5dcc1-5344-4754-ad35-3e6ce3a327e7",
@@ -1645,25 +1645,55 @@
   },
   {
    "issue": "1ca94ec2, 42037c91",
-   "question": "OPEN: the archive previews of bb85c68a, 6efb756b, d4851c3d and e095a100 report `unmanaged-selected-root` for the files that 130d5fd7 and the deck moves placed under `dev/archive/<epic>/docs/`: the planner maps `dev/archive/<epic>/docs/x` back to the source `dev/docs/x`, and `dev/docs` is outside `managed_paths`. A scratch-worktree probe with `dev/docs` added to `managed_paths` reports all four eligible with no blocker; moving the files to `dev/archive/<epic>/presentations/` reports `missing-source`. May `dev/docs` join `managed_paths` in .jit/config.toml and packages/jit-default as a temporary entry (ec7d2aec REQ-03 removes entries naming absent paths; d6ebc4ec narrows the policy afterwards)?",
+   "question": "the archive previews of bb85c68a, 6efb756b, d4851c3d and e095a100 report `unmanaged-selected-root` for the files that 130d5fd7 and the deck moves placed under `dev/archive/<epic>/docs/`: the planner maps `dev/archive/<epic>/docs/x` back to the source `dev/docs/x`, and `dev/docs` is outside `managed_paths`. A scratch-worktree probe with `dev/docs` added to `managed_paths` reports all four eligible with no blocker; moving the files to `dev/archive/<epic>/presentations/` reports `missing-source`. May `dev/docs` join `managed_paths` in .jit/config.toml and packages/jit-default as a temporary entry (ec7d2aec REQ-03 removes entries naming absent paths; d6ebc4ec narrows the policy afterwards)?",
    "options": [
     "add `dev/docs` to managed_paths as a temporary entry recorded in the manifest policy notes, re-mint jit-default",
     "amend REQ-01 of 1ca94ec2 and 42037c91 to accept the four previews with these retained files as blockers",
     "another placement of the relocated docs/ files chosen by the owner"
    ],
    "recommendation": "first option: one policy entry, same class as the owner-approved temporary `dev/archive` entry (ec7d2aec DEC-01)",
-   "resolution": ""
+   "resolution": "Owner: `dev/docs` joins managed_paths as a temporary entry; DEC-01 on both issues; config and manifest policy notes changed (2026-10-04)."
   },
   {
    "issue": "616e1d7c",
-   "question": "OPEN: every remaining flat entry of this unit is owned by epic 6dc81018, which is archived; none resolves to the open co-owner 86b9c719. 220cab0b, 3fa7c9d0, 7d824b2f, 9162956b, 972e2b88, eaae1b56 and fc976a80 are byte-identical copies of archived files; 34d85cb9, 389aa4de, 50b47eae, 7d7c647c, e6ea0dde and eb9b324c (402 files) have no archive copy. `jit doc dir 6dc81018 dev/active` still resolves `dev/active/6dc81018-field-capability-dispatch/`. A re-archive preview of 6dc81018 is eligible with 402 real moves, 7 of them under `dev/active/a83583e0`, the code-pinned entry the issue excludes. Where do the 13 entries go?",
+   "question": "every remaining flat entry of this unit is owned by epic 6dc81018, which is archived; none resolves to the open co-owner 86b9c719. 220cab0b, 3fa7c9d0, 7d824b2f, 9162956b, 972e2b88, eaae1b56 and fc976a80 are byte-identical copies of archived files; 34d85cb9, 389aa4de, 50b47eae, 7d7c647c, e6ea0dde and eb9b324c (402 files) have no archive copy. `jit doc dir 6dc81018 dev/active` still resolves `dev/active/6dc81018-field-capability-dispatch/`. A re-archive preview of 6dc81018 is eligible with 402 real moves, 7 of them under `dev/active/a83583e0`, the code-pinned entry the issue excludes. Where do the 13 entries go?",
    "options": [
     "re-archive 6dc81018 through container archival after the a83583e0 references are pinned or the entry is decoupled (f694f59a)",
     "move them under dev/active/6dc81018-field-capability-dispatch/ as the manifest rows name (material under an archived epic's active directory)",
     "amend REQ-01 so entries of an archived epic are collected by a re-archive unit"
    ],
    "recommendation": "first option, sequenced after f694f59a; worker record: branch worktree-agent-616e1d7c commit 1c56283ea (unmerged)",
+   "resolution": "Owner: pin the a83583e0 references, then re-archive 6dc81018 through container archival; REQ-01 amended, DEC-01 (2026-10-04)."
+  },
+  {
+   "issue": "103a792a",
+   "question": "REQ-02 has no exemption for the digest-pinned `dev/active/a83583e0/premeasurement-protocol.md`, which the campaign driver hashes; reviewers also flag descriptions of terminal issues that cite moved paths.",
+   "resolution": "Owner: digest-pinned machine inputs keep their bytes (REQ-02 amended); descriptions of terminal issues keep their text; DEC-01 (2026-10-04)."
+  },
+  {
+   "issue": "eace5009",
+   "question": "code-review flags the descriptions of done issues 1b113b9d and 0de41c82, which name `dev/active/0de41c82/...`.",
+   "resolution": "Owner: descriptions of terminal issues are historical records and keep their text; DEC-01 (2026-10-04)."
+  },
+  {
+   "issue": "f79bcba3",
+   "question": "REQ-01 forbids any move while owner 2037941f is open (backlog).",
+   "resolution": "Owner: the entry of an open owner stays in place and is reported; REQ-01 and REQ-02 amended, DEC-01 (2026-10-04)."
+  },
+  {
+   "issue": "198aafa3",
+   "question": "OPEN: REQ-01 forbids any move until 4c1e441f, ad2a6a58 and f63a2464 are done or rejected. Session gf2-53, which leads epic 1a379447, states on 2026-10-04 that all three are live: each waits for one overnight benchmark-window confirmation held outside that epic's wave 3, then outcome prose, replay onto main and gates; it expects more than a week and will message this epic's lead at each closure. The worktrees agent-c04dd4ac, agent-0a357f94 and agent-9fb40c83 are the pinned timing trees of the held queue rows and stay. Entry `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/` and `dev/bench_results/2037941f/` stay in place while 2037941f is open (request of gf2-53).",
+   "options": [
+    "wait for the three closures",
+    "amend REQ-01 as for f79bcba3 so the five entries with done owners move"
+   ],
+   "recommendation": "second option, so 198aafa3 does not hold the epic open for the wait",
    "resolution": ""
+  },
+  {
+   "issue": "decoupling",
+   "question": "Where is the decoupling work for entries left in place under REQ-04 filed?",
+   "resolution": "Owner: tasks in this epic (2026-10-04)."
   }
  ],
  "rework_counts": {
@@ -1720,7 +1750,12 @@
   "50201002": 1,
   "545b113f": 1,
   "3fd3db5e": 1,
-  "103a792a": 1
+  "103a792a": 1,
+  "eace5009": 1,
+  "83f9ce69": 1,
+  "3759f995": 1,
+  "f902240f": 1,
+  "f29a9225": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1866,7 +1901,8 @@
   "Session 8 end: wave 10 tasks done (545b113f, 3fd3db5e, fa4939c3). ffc35b8c story gates: all pass except holistic-review, which fails twice on one finding (DEC-nn decision identifiers do not match the configured D-[0-9]+ pattern); open escalation, owner input needed. Wave 11 waits on the story. Six re-archive previews report blockers from tracker references to absent paths (see handoff-7.md).",
   "Session 9 (2026-10-04): owner instruction for this session: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when waves 11 and 12 finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty; Fable is excluded. Reviews weigh net-negative line change and the documentation invariants.",
   "Session 9: six stale worktrees of other epics removed with owner approval (agent-8bd873f7, agent-c73ffa25, agent-dbd8787d-publish, agent-dbd8787d-run, two under .claude/worktrees); the unmerged branches worktree-agent-aa4df2631e461c6ae and worktree-agent-ab61dd5f4d07bfb81 remain.",
-  "Session 9 wave 11 dispatch (base 98e238917): 83f9ce69, f29a9225, 3759f995, f902240f run in two phases (worker pre-flight, lead executes the archive on main in the order 97bf0879, 026fc832, babcf05e, f9717e7e, b7157be6, worker repoints after a SendMessage naming the commit); 4f161183, eace5009, 616e1d7c, 103a792a are single-phase worktree workers. 2596b143 runs after they merge. 1ca94ec2 and 42037c91 wait on the dev/docs policy question. Worktrees were created without cache seeding (LEAD_CACHE_POOL unset to a missing path); the workers build nothing."
+  "Session 9 wave 11 dispatch (base 98e238917): 83f9ce69, f29a9225, 3759f995, f902240f run in two phases (worker pre-flight, lead executes the archive on main in the order 97bf0879, 026fc832, babcf05e, f9717e7e, b7157be6, worker repoints after a SendMessage naming the commit); 4f161183, eace5009, 616e1d7c, 103a792a are single-phase worktree workers. 2596b143 runs after they merge. 1ca94ec2 and 42037c91 wait on the dev/docs policy question. Worktrees were created without cache seeding (LEAD_CACHE_POOL unset to a missing path); the workers build nothing.",
+  "Session 9: gf2-53 leads epic 1a379447 and commits on main from the same checkout. Both leads announce gate evaluations and cargo-ci runs to each other before starting; stage by explicit path; .jit/events.jsonl is shared and carries the other session's events."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
