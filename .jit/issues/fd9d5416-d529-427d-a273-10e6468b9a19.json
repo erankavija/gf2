@@ -111,6 +111,13 @@
       "format": "markdown",
       "label": "test_render_receipt.py",
       "path": "dev/active/fd9d5416/tests/test_render_receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "BCH performance receipt",
+      "path": "dev/bench_results/fd9d5416/2026-10-02-fd9d5416-bch-performance-receipt.md"
     }
   ],
   "first_ready_at": "2026-10-01T11:01:00.699226534Z",
@@ -130,5 +137,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
-  "updated_at": "2026-10-03T16:31:20.001878476Z"
+  "updated_at": "2026-10-04T11:14:34.871952276Z"
 }

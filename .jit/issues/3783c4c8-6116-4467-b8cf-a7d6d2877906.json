@@ -13,7 +13,18 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:15:49.902996113Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:16:01.327255756Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "3783c4c8-6116-4467-b8cf-a7d6d2877906",
   "labels": [
     "epic:documentation-overhaul",
@@ -23,5 +34,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reduce the DVB-T2 LDPC table module doc to the comment contract",
-  "updated_at": "2026-10-04T11:05:55.243212680Z"
+  "updated_at": "2026-10-04T11:16:01.327255756Z"
 }

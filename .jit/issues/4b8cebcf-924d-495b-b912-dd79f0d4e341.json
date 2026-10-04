@@ -53,7 +53,13 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:16:05.163355Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "4b8cebcf-924d-495b-b912-dd79f0d4e341",
   "labels": [
     "epic:documentation-overhaul",
@@ -63,5 +69,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Supersede the sub-diagonal wrap statement of the DVB-T2 table note",
-  "updated_at": "2026-10-04T11:05:55.102124263Z"
+  "updated_at": "2026-10-04T11:16:05.163355Z"
 }

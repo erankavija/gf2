@@ -17795,3 +17795,11 @@
 {"fields":["documents"],"id":"ea4cdab6-aafa-4d83-a139-e66c753666ea","issue_id":"4b8cebcf-924d-495b-b912-dd79f0d4e341","timestamp":"2026-10-04T11:05:55.102124263Z","type":"issue_updated","updated_by":"doc-add"}
 {"from":"ready","id":"f4a1ea7e-2287-4e14-8880-71b0a4120022","issue_id":"3783c4c8-6116-4467-b8cf-a7d6d2877906","timestamp":"2026-10-04T11:05:55.243212680Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"5f7c719c-951e-4765-b656-46038e918159","issue_id":"3783c4c8-6116-4467-b8cf-a7d6d2877906","timestamp":"2026-10-04T11:05:55.243212680Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"9b812835-867f-4d55-b987-3c6f82ec63f4","issue_id":"13dfe1a5-a770-4910-b6b3-36e4b2a91cca","timestamp":"2026-10-04T11:13:29.606746977Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"ce9db36d-6a7b-45e3-b4b0-b0c289a50d69","issue_id":"fd9d5416-d529-427d-a273-10e6468b9a19","timestamp":"2026-10-04T11:14:34.871952276Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"cargo-ci","id":"f931e0d6-b3d6-43ad-970e-27c05df2bcdf","issue_id":"157c305c-925a-4f5d-89e5-299c05c5a0f5","timestamp":"2026-10-04T11:14:39.265063997Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"34aac728-2ff7-4693-be8f-9c0ae84a34c5","issue_id":"3783c4c8-6116-4467-b8cf-a7d6d2877906","timestamp":"2026-10-04T11:15:49.902996113Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"39cad1a5-f94f-4377-8ed5-0be712fb300d","issue_id":"13dfe1a5-a770-4910-b6b3-36e4b2a91cca","timestamp":"2026-10-04T11:15:53.862036723Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"18a7bbbc-74d8-4002-9de0-b77dfadb2787","issue_id":"157c305c-925a-4f5d-89e5-299c05c5a0f5","timestamp":"2026-10-04T11:15:57.595361163Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"adadd1d4-1478-4e6a-9794-20f42885268c","issue_id":"3783c4c8-6116-4467-b8cf-a7d6d2877906","timestamp":"2026-10-04T11:16:01.327255756Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"22fd4c21-2ad6-491e-a022-04e7124435ae","issue_id":"4b8cebcf-924d-495b-b912-dd79f0d4e341","timestamp":"2026-10-04T11:16:05.163355Z","type":"gate_passed","updated_by":"auto:executor"}

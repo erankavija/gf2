@@ -16,10 +16,15 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:14:39.265063997Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-04T10:59:32.012429685Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T11:15:57.595361163Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "157c305c-925a-4f5d-89e5-299c05c5a0f5",
@@ -31,5 +36,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Document the finite NR filler LLR that de-rate-matching writes",
-  "updated_at": "2026-10-04T11:00:19.123096774Z"
+  "updated_at": "2026-10-04T11:15:57.595361163Z"
 }
