@@ -16,7 +16,7 @@ pub use crate::field::ple::Permutation;
 /// in a field-specific packed form. A field without one returns `None` from
 /// `try_make_basis_reducer`.
 pub trait BasisReducer<F: FiniteField>: Send {
-    /// Appends a column to the basis.
+    /// Appends `col`, which has a non-zero entry, as basis column `self.len()`.
     fn push_col(&mut self, col: &[F]);
 
     /// [`push_col`](Self::push_col) for a column whose pivot row is known.
@@ -34,7 +34,8 @@ pub trait BasisReducer<F: FiniteField>: Send {
     /// column, in append order).
     fn reduce(&self, v: &[F], pivot_row_of_col: &[usize]) -> (Vec<F>, Vec<F>);
 
-    /// Number of columns stored.
+    /// Columns appended so far: the length [`reduce`](Self::reduce) expects of
+    /// `pivot_row_of_col`.
     fn len(&self) -> usize;
 
     /// Returns `true` when no columns have been appended yet.
@@ -108,7 +109,6 @@ pub(crate) fn fieldmatrix_new_count() -> u64 {
     FIELDMATRIX_NEW_COUNT.with(|c| c.get())
 }
 
-/// Test-only: resets [`fieldmatrix_new_count`].
 #[cfg(test)]
 pub(crate) fn reset_fieldmatrix_new_count() {
     FIELDMATRIX_NEW_COUNT.with(|c| c.set(0));
@@ -176,7 +176,6 @@ impl<F: FiniteField> FieldMatrix<F> {
         self.data.as_slice()
     }
 
-    /// Mutable counterpart of [`Self::as_data_slice`].
     #[doc(hidden)]
     pub(crate) fn as_data_mut_slice(&mut self) -> &mut [F] {
         self.data.as_mut_slice()
@@ -2437,7 +2436,6 @@ impl GemmTilePair {
     }
 }
 
-/// Constructor for [`UnitDiagView`].
 #[allow(dead_code)]
 pub(crate) fn unit_diag_view<F: FiniteField, M: MatrixLike<F> + ?Sized>(
     inner: &M,

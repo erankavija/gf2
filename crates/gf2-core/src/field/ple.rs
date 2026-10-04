@@ -25,7 +25,7 @@ pub struct Permutation {
 }
 
 impl Permutation {
-    /// The identity permutation on `n` rows.
+    /// The identity on `n` rows, stored as the index vector `0..n`.
     pub fn identity(n: usize) -> Self {
         Self {
             perm: (0..n).collect(),
@@ -56,7 +56,7 @@ impl Permutation {
         Self { perm }
     }
 
-    /// The destination → source index vector.
+    /// `indices()[i]` is the source row that lands at destination row `i`.
     pub fn indices(&self) -> &[usize] {
         &self.perm
     }
@@ -71,7 +71,7 @@ impl Permutation {
         self.perm.is_empty()
     }
 
-    /// Returns the inverse permutation `P⁻¹`.
+    /// The permutation `Q` with `Q.indices()[self.indices()[i]] == i`.
     pub fn inverse(&self) -> Permutation {
         let n = self.perm.len();
         let mut inv = vec![0usize; n];
@@ -1128,7 +1128,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     }
 }
 
-/// Returns the inverse of a destination-source permutation.
 fn invert_perm(perm: &[usize]) -> Vec<usize> {
     let n = perm.len();
     let mut inv = vec![0usize; n];
