@@ -1,6 +1,5 @@
 //! Benchmarks GF(2^m) polynomial arithmetic. Benchmarks marked `[SAGE_CMP]`
-//! have counterparts in `scripts/sage_benchmarks.py`
-//! (`@/citation/SageMath2026`).
+//! have counterparts in `scripts/sage_benchmarks.py`.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
