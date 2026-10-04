@@ -479,10 +479,8 @@ fn test_tp06_parity_construction() {
         unit.set(i, true);
         let syndrome = code.syndrome(&unit);
 
-        if syndrome.get(0) {
-            if tp05_block.data.get(i) {
-                computed_p0 ^= true;
-            }
+        if syndrome.get(0) && tp05_block.data.get(i) {
+            computed_p0 ^= true;
         }
     }
 
