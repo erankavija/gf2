@@ -1,0 +1,17 @@
+# 6dc81018 archived; 86b9c719 backlog
+1ac74567	1ac74567	epic:field-capability-dispatch	0	0	0	5	0	5	5	0	-
+220cab0b	220cab0b,2a85f728,676f55a2,f35daec0	epic:field-capability-dispatch	1	1	0	1	0	4	0	1	dev/active/6dc81018-field-capability-dispatch/220cab0b
+2a85f728	2a85f728	epic:field-capability-dispatch	0	0	0	1	0	1	1	0	-
+34d85cb9	34d85cb9	epic:field-capability-dispatch	180	0	180	1	180	1	1	180	dev/active/6dc81018-field-capability-dispatch/34d85cb9
+389aa4de	389aa4de	epic:field-capability-dispatch,epic:quality-documentation-tech-debt	1	0	1	0	1	0	0	1	dev/active/6dc81018-field-capability-dispatch/389aa4de
+3fa7c9d0	3fa7c9d0	epic:field-capability-dispatch	1	1	0	1	1	0	0	1	dev/active/6dc81018-field-capability-dispatch/3fa7c9d0
+50b47eae	50b47eae	epic:field-capability-dispatch	63	0	63	0	63	0	0	63	dev/active/6dc81018-field-capability-dispatch/50b47eae
+6dc81018-field-capability-dispatch	265997f9,663965f6,6dc81018	epic:field-capability-dispatch	6	4	2	21	2	23	15	6	(in place)
+7d7c647c	7d7c647c	epic:field-capability-dispatch	88	1	87	1	87	1	0	88	dev/active/6dc81018-field-capability-dispatch/7d7c647c
+7d824b2f	7d824b2f,a83583e0,eaae1b56	epic:field-capability-dispatch	1	1	0	1	0	3	0	1	dev/active/6dc81018-field-capability-dispatch/7d824b2f
+9162956b	9162956b	epic:field-capability-dispatch	14	14	0	14	0	14	0	14	dev/active/6dc81018-field-capability-dispatch/9162956b
+972e2b88	972e2b88	epic:field-capability-dispatch	1	1	0	1	0	1	0	1	dev/active/6dc81018-field-capability-dispatch/972e2b88
+e6ea0dde	e6ea0dde	epic:field-capability-dispatch	66	0	66	1	66	1	1	66	dev/active/6dc81018-field-capability-dispatch/e6ea0dde
+eaae1b56	eaae1b56	epic:field-capability-dispatch	1	1	0	1	0	1	0	1	dev/active/6dc81018-field-capability-dispatch/eaae1b56
+eb9b324c	eb9b324c	epic:field-capability-dispatch	5	0	5	13	5	13	13	5	dev/active/6dc81018-field-capability-dispatch/eb9b324c
+fc976a80	fc976a80	epic:field-capability-dispatch	1	1	0	1	0	1	0	1	dev/active/6dc81018-field-capability-dispatch/fc976a80
