@@ -59,7 +59,7 @@ reduction in the same operation.
 > `FieldVec::axpy` offers its operands to one hook before running its scalar
 > element loop, and no GF(2^8) representation overrides that hook, so the loop
 > reaches a per-element function pointer for one representation and a
-> per-element allocation for the other. `dev/active/613574db/design.md` fixes
+> per-element allocation for the other. `dev/active/1a379447-zen3-cpu-performance/613574db/design.md` fixes
 > the table layout, the cache key, the lifetime, the guard conditions, the
 > field-handle pre-check, the in-place write-back and the conformance surface;
 > it is the contract this work implements.
@@ -125,7 +125,7 @@ reduction in the same operation.
 > path restores it. A companion availability probe also selects the algorithm in
 > the matrix-vector fold, the blocked triangular solve and the blocked inverse,
 > none of which has measured evidence, so it keeps its declining answer.
-> `dev/active/613574db/design.md` fixes the traversal, the scratch buffers, the
+> `dev/active/1a379447-zen3-cpu-performance/613574db/design.md` fixes the traversal, the scratch buffers, the
 > probe exception and the conformance surface; it is the contract this work
 > implements.
 >
