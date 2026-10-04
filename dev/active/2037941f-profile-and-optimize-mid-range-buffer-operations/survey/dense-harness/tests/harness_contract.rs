@@ -1281,6 +1281,8 @@ fn a_source_added_to_a_measured_crate_fails_the_closure_freshness_check() {
     // Every path the generator enumerates is a build input, so copying the
     // build inputs alone yields a tree whose closure is the committed one.
     let scratch = scratch_tree("closure-freshness");
+    // The generator takes its root from git, so the copy is its own checkout.
+    git(&scratch, &["init", "--quiet"]);
     for path in &inputs.build_inputs {
         let target = scratch.join(path);
         std::fs::create_dir_all(target.parent().expect("parent")).expect("parent");

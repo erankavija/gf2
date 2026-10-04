@@ -19,8 +19,8 @@
 # benchmark-window unit has no login shell.
 set -euo pipefail
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || {
     echo 'invoke from the worker worktree root' >&2
     exit 2
@@ -35,8 +35,9 @@ format_invocation() {
     done
 }
 
-STORY=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
-SURVEY="${STORY}/survey"
+# This script's own directory and its parent, relative to the root.
+SURVEY="${HERE#"${REPO}/"}"
+STORY="$(dirname "${SURVEY}")"
 MANIFEST="${REPO}/${SURVEY}/dense-harness/Cargo.toml"
 PRODUCING="${SURVEY}/dense-producing-inputs.json"
 VALIDATION="${SURVEY}/dense-harness-validation.txt"
@@ -323,7 +324,8 @@ cmd_window() {
     [[ "${phase}" == confirmation ]] && campaign="${run_id}-confirmation-${family}"
     stage="${REPO}/target/e1f9a78f-campaigns/${campaign}"
     plan="${stage}.plan.json"
-    out="${REPO}/dev/bench_results/2037941f/${family}/${run_id}-${phase}"
+    # Receipts sit beside the family ledger the frozen addendum names.
+    out="${REPO}/$(dirname "${ledger}")/${family}/${run_id}-${phase}"
     lock="${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}"
     mkdir -p "$(dirname "${stage}")" "$(dirname "${out}")"
     touch "${lock}"
@@ -378,11 +380,12 @@ raise SystemExit(0 if terminal and terminal[-1] == "complete" else 1)
 PY
     }
 
-    local session=0 rc
+    local session=0 rc wrapper
+    wrapper="$(python3 -B "${HERE}/repo_artifacts.py" tracked ccx1-bench-flock.sh)"
     while ! stage_complete; do
         session=$((session + 1))
         set +e
-        GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host \
+        GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "${wrapper}" --full-host \
             "${runner}" run "${stage}" "${plan}" | tee -a "${launch}"
         rc=${PIPESTATUS[0]}
         set -e

@@ -8,11 +8,10 @@ to the next 0.001 and compared with the ceiling its prose addendum fixes.
 import hashlib
 import json
 import math
-import pathlib
 import re
 import subprocess
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
+from repo_artifacts import ROOT
 
 
 def accepted_pilot(pilot):

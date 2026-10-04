@@ -1,33 +1,33 @@
 #!/usr/bin/env bash
 # Freeze the M4RI comparator confirmation addendum (jit:50f0bd42).
 #
-# Usage: dev/active/2037941f-.../survey/freeze-m4ri-confirmation.sh <frozen-utc>
+# Usage: freeze-m4ri-confirmation.sh <frozen-utc>, from the repository root
 #
-# The freezer is the canonical one,
-# `dev/active/c7113c5a/survey/freeze-confirmation.py`: it pins the pilot
-# receipt by path and SHA-256 and writes the derivation record beside the
-# addendum. The resolution and the confirmatory cells are read from the
+# The freezer is the canonical `freeze-confirmation.py`, the one that takes a
+# rounding step: it pins the pilot receipt by path and SHA-256 and writes the
+# derivation record beside the addendum. `repo_artifacts.py` locates it, the
+# pilot receipt and the pilot addendum at run time. The resolution and the confirmatory cells are read from the
 # generated resolution record, which applies the frozen family rule, and
 # `dense-campaign verify-confirmation` holds the result to the frozen addendum.
 # This script holds the remaining arguments and writes no number of its own.
 set -euo pipefail
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || {
     echo 'invoke from the worker worktree root' >&2
     exit 2
 }
 FROZEN="${1:?usage: freeze-m4ri-confirmation.sh <YYYY-MM-DDTHH:MM:SSZ>}"
 
-STORY=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
-SURVEY="${STORY}/survey"
+locate() { python3 -B "${HERE}/repo_artifacts.py" "$@"; }
 FAMILY=2037941f-dense-matvec-vs-m4ri
-RESULTS=dev/bench_results/2037941f
-RECORD="${RESULTS}/m4ri-gap-resolution.md"
-OUTPUT="${STORY}/campaigns/dense-matvec-vs-m4ri-confirmation.json"
+PILOT="v4-r1-${FAMILY}"
+PILOT_ADDENDUM="$(locate addendum "${PILOT}")"
+RECORD="$(dirname "$(locate ledger "${PILOT}")")/m4ri-gap-resolution.md"
+OUTPUT="${PILOT_ADDENDUM%.json}-confirmation.json"
 
-"${SURVEY}/render-m4ri-gap.sh"
+"${HERE}/render-m4ri-gap.sh"
 mapfile -t rule < <(python3 - "${RECORD}" <<'PY'
 import re, sys
 text = open(sys.argv[1]).read()
@@ -43,9 +43,9 @@ PY
 cells=()
 for cell in "${rule[@]:2}"; do cells+=(--cell "${cell}"); done
 
-python3 -B dev/active/c7113c5a/survey/freeze-confirmation.py \
-    --pilot-addendum "${STORY}/campaigns/dense-matvec-vs-m4ri.json" \
-    --pilot "${RESULTS}/${FAMILY}/v4-r1-pilot" \
+python3 -B "$(locate containing freeze-confirmation.py --resolution-decimals)" \
+    --pilot-addendum "${PILOT_ADDENDUM}" \
+    --pilot "$(locate receipt "${PILOT}")" \
     --frozen-utc "${FROZEN}" \
     --output "${OUTPUT}" \
     --record "${OUTPUT%.json}-derivation.txt" \
