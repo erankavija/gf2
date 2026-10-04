@@ -2,9 +2,11 @@ scanned dev/active/6dc81018-field-capability-dispatch/investigation.md: 0 local 
 scanned dev/active/7d7c647c/design.md: 5 local links
 scanned dev/active/ae03bcd0-general-bch/bch-api-design.md: 8 local links
 scanned dev/active/ae03bcd0-general-bch/investigation.md: 0 local links
+scanned dev/active/eaae1b56/premeasurement-protocol.md: 2 local links
 scanned dev/active/fa787f85-documentation-overhaul/103a792a-legacy-move.md: 0 local links
 scanned dev/active/fa787f85-documentation-overhaul/12907582-drift-preaudit.md: 0 local links
 scanned dev/active/fa787f85-documentation-overhaul/12907582-drift-record.md: 0 local links
+scanned dev/active/fa787f85-documentation-overhaul/52fb615b-inventory-notes.md: 0 local links
 scanned dev/active/fa787f85-documentation-overhaul/60652fe4-roadmap-map.md: 0 local links
 scanned dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md: 0 local links
 scanned dev/active/fa787f85-documentation-overhaul/e85b8edf-roadmap-map.md: 0 local links
