@@ -6,10 +6,9 @@ this file.
 
 ## Mission
 
-Build a research-grade, high-performance finite-field and coding-theory toolkit
-with composable APIs, standards-backed correctness, reproducible research, and
-production-safe acceleration. Optimization never relaxes mathematical or
-standards conformance.
+Build a research-grade finite-field and coding-theory toolkit with composable
+APIs, standards-backed correctness, reproducible research, and production-safe
+acceleration. Optimization never relaxes mathematical or standards conformance.
 
 ## Supported toolchain and commands
 
@@ -25,8 +24,7 @@ execution with `./scripts/cargo-budget.sh --test`.
 - For focused work, keep the `ci-test` profile and select a package or test
   expression, for example
   `cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci`.
-- Build benchmarks and receipts under `--release`; `ci-test` drops LTO and
-  understates the permanent kernels by roughly 30%.
+- Build benchmarks and receipts under `--release`; `ci-test` drops LTO.
 - Check formatting with `cargo fmt --all -- --check` and lint with
   `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
 - Build API documentation with `cargo doc --workspace --all-features --no-deps`.
@@ -117,7 +115,8 @@ checkout reproduces its acceptance verdict; CI enforces it through
 
 Keep permanent documentation under `README.md`, crate-level rustdoc, or
 `docs/`. Prefer citations or generated projections over copied facts. See
-`@/inv/single-source-prose`.
+`@/inv/single-source-prose`. Prose and Rustdoc reference a JIT issue as
+`@/issue/<short-id>`, the form the mechanical documentation check resolves.
 
 ## Planning, proof, and change discipline
 
