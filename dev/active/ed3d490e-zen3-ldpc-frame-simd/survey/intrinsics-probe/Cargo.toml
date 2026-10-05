@@ -1,0 +1,26 @@
+# AVX2 intrinsic feasibility probe for inter-frame LDPC lanes (jit:ed3d490e).
+#
+# A standalone workspace with no dependency and its own target directory. It
+# establishes, at the repository MSRV, that each register-width form of the
+# lane kernel compiles, lowers to the instruction the design assumes and agrees
+# with the canonical scalar rule on the same lane.
+#
+# The library name is the one the canonical feasibility recorder globs for.
+
+[workspace]
+
+[package]
+name = "ldpc-frame-lanes-intrinsics-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = "line-tables-only"
+
+[lib]
+name = "ldpc_intrinsics_probe"
+path = "src/lib.rs"
