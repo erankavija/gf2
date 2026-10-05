@@ -7,7 +7,383 @@
     "50f0bd42-56d8-4905-a0d5-409b7aa32ba7"
   ],
   "description": "Implement the selected dense-parity outcome and confirm it in production under the frozen confirmation addendum.\n\n## Background\n\n**1956017f — Implement the selected dense-parity outcome.** Apply the dense-parity adoption decision through the existing `BitMatrix::matvec` and isolated SIMD kernel boundary. When no candidate qualifies, this issue verifies that the fused AND-popcount production path remains unchanged and records that disposition. A qualifying change is limited to its declared route, retains scalar fallback, and cannot relabel the already selected fusion as new work.\n\n**49b1611b — Confirm the dense-parity production outcome.** Run holdout confirmation for the selected dense-parity outcome against the pinned current baseline, or publish the final no-change verdict. A production change requires allocated whole-`matvec` before/after evidence on the exact declared domain plus neighboring non-regression cells. A no-adoption decision preserves the complete fusion and M4RI record and explains why the current fused AND-popcount route remains selected.\n\n## Success Criteria\n\n- [hard] REQ-01: (1956017f REQ-01) The selected outcome is reflected exactly in production code, or the no-adoption decision leaves `matvec` behavior and selection unchanged.\n- [hard] REQ-02: (1956017f REQ-02) Shared scalar/SIMD suites prove exact outputs for empty, aligned, offset, and 0/1/63/64/65 boundary cases with canonical indexing and zero tails.\n- [hard] REQ-03: (1956017f REQ-03) Any unsafe intrinsic code stays in `gf2-kernels-simd` with an explicit safety contract, annotated release assembly is committed for modified SIMD symbols, and Rust 1.95 builds the affected path.\n\n- [hard] REQ-04: (49b1611b REQ-01) Any production change has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results for primary and neighboring cells.\n- [hard] REQ-05: (49b1611b REQ-02) Allocated whole-`matvec` cells demonstrate the predeclared worthwhile benefit without regression outside the selected domain; otherwise the change is not accepted and contradictory evidence remains committed.\n- [hard] REQ-06: (49b1611b REQ-03) The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, assembly, profiles, and exact commands by content identity.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 1956017f, 49b1611b; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n1956017f: Before/after performance confirmation is intentionally separate from this code change.\n\n49b1611b: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\nThe merge keeps the code change and its confirmation as separate stages and separate commits: the confirmation measures the merged code against the pinned pre-change baseline, so the source note that they are separate still holds inside this one task.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "4492e5914d8231f501e58be0b16b522380c5bf836258348fc749912b1b9db8e2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2f71d2fab2c3bb03d35f63654a1d9be63b9f4c0446b1758f1a446f29ba716e0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../5cbb6545/findings.md",
+          "resolved_path": "dev/active/5cbb6545/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cd15a11c338d203e2c527793c395983e6c68c839ec30712c92050e027711ae78",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "13dca64fe3b1cdec02be932eea05b48867acc7226d8f03ce90ade1a5ee423a91",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../50f0bd42/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/50f0bd42/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7bb612d45531e30d685081bd201df4e56179d9f3b3a0017b2a3848972d333c60",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c73ffa25/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/c73ffa25/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6c132b3ec0166f7d6a4d23cd20adacd6a680e2513a04e4767852356667391b16",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "acefa5e7f453de1a22492b18f687d02b350a14af82f9c213cf6d8bf13e8686f7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6c67e0d66a51ebc1120fc6958e7cfeacc285174fc6bf2605bfbc97dbf439082b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/production-drift.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/production-drift.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1c09547231741666ffedd191926cd5391051cf60b68eb5ae380b6371faa37729",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6e1765e2b32e79bebba2b21d76948861f3a3f1fbf7dd511420c47091006dc3fa",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/simd-matvec.asm.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/simd-matvec.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7c77f90fb8d345102150ee7ca154b322a2245c9ac73bc70365dffa93da8ee21c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9edb9ed2283c7e612a81e32320fa99b9a81c48839bbdcf39aed5813a8591bd49",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bc3c5fa640f1857576ea7f8bbc80b4e82fedc5374cf491931f2826e5439cc838",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3e36fdf488bb0f5c94903915b2dcf6d87947780e4a9464cb95d8049754f234af",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/m4ri-gap-tables.md",
+          "resolved_path": "dev/bench_results/2037941f/m4ri-gap-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "87dc770c4a20e49ac66f54b031ea436190d09953be71dcc6a53c360cf3a7ac04",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/index.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/index.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "863f4c4b430f6a7f5295993953ed74a8d22355ff9f44b0885cabf0147404a47f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/asm-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/asm-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4cc248b9ef2d6ce093794082a3420290a077681225b6a3a2bc05fef07e4198aa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "714223d50a6774a7a793db6848c162e45b29958672fc12d807e94ad7d61ba9ab",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/unavailable-rows.tsv",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/unavailable-rows.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b54470f1399bbdc7e3fe61096c869cf5eea1dc64955ce72a04f493a7b8c54053",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../../crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+          "resolved_path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "524a51f096cc9da3f0b667d0d5734de1da8e4c18a04b7f1949a0f0396b5aa7ff",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/dense-baseline-profile-r2/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/dense-baseline-profile-r2/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "763eac94b4eb8f3e13c3a4a686423c2e0c0653580dc9fcf0290331a8b0a98c4e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3eb71678cb30609f35368779dddf8c1c13113ba090e0e175df931b9623a0baeb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e9b539402b63ca31e4a562a2baaf5e8124eb2917b924ec522ac0b34f92b30305",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/avx2-fused.asm.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/avx2-fused.asm.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Dense-parity production no-change verdict and criterion map",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "22e7b3290b0dd964f424f528afaafd8038eea5ba91f390b39bee75e69bf4d8fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-smoke/dense-allocated-matvec.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-allocated-matvec.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2c7b71e46db34cf8663cfd3cfd393a0d2547f384ebf7fd2978479e954dbfebf0",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/baked-route.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/test-logs/baked-route.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6c67e0d66a51ebc1120fc6958e7cfeacc285174fc6bf2605bfbc97dbf439082b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/production-drift.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/production-drift.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e1034fedfbc741b67692ffc79c1140ff3a17dc807a2b9c4ebbe3fec301198bc6",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/simd-build.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/test-logs/simd-build.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1c09547231741666ffedd191926cd5391051cf60b68eb5ae380b6371faa37729",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4cc248b9ef2d6ce093794082a3420290a077681225b6a3a2bc05fef07e4198aa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "863f4c4b430f6a7f5295993953ed74a8d22355ff9f44b0885cabf0147404a47f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/asm-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/asm-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3020eaadf401490a4f023594ea1698524142ed7ebb42c2f5ec16225b91bce7ba",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/scalar-build.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/test-logs/scalar-build.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bb091010e6dfe1f49bad97c7544c6d83b63ad065612d150fb5d405d9aabd160e",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/packed-bits.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/test-logs/packed-bits.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Rust 1.95 semantic suites, route selection and production drift commands",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/verification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Measured-versus-current production source classification and task diff",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/production-drift.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Measured and currently selected path per dense cell arm",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-comparison.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Pinned source claims for matvec selection, kernel boundary and suites",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Untimed arm smoke of the isolated fused-parity family on the current tree",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-isolated-fused-parity.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Untimed arm smoke of the allocated matvec family on the current tree",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-allocated-matvec.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Untimed arm smoke of the M4RI pilot cells on the current tree",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-matvec-vs-m4ri.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Untimed arm smoke of the M4RI confirmation cells on the current tree",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-matvec-vs-m4ri-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Shared matvec and fused-count suites, simd feature build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/test-logs/simd-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Shared matvec and fused-count suites, scalar build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/test-logs/scalar-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Packed-bit boundary, from_words and tail-mask tests",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/test-logs/packed-bits.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Baked-build matvec route witness",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/test-logs/baked-route.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Per-symbol instruction text of the AVX2 module listing, anchor versus current",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/asm-comparison.json"
+    }
+  ],
   "first_ready_at": "2026-09-16T22:38:43.315534285Z",
   "gates_required": [
     "cargo-ci",
@@ -33,5 +409,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement and confirm the dense-parity outcome",
-  "updated_at": "2026-10-05T00:25:20.115997779Z"
+  "updated_at": "2026-10-05T01:07:44.492395774Z"
 }
