@@ -1,0 +1,103 @@
+{
+ "schema": "63bad95d-holdout-declaration-v1",
+ "family": "63bad95d-profile-holdout-matvec",
+ "rationale": "The 12-, 24- and 40-word strides, and the 16- and 48-word strides of this family's piloted cells, are reserved for this family: the threshold confirmation of 4337c02e declares no cell at them, so no sample at a held-out stride takes part in selecting the threshold. Each cell is a non-regression cell of the profile build against the conservative build.",
+ "reserved_stride_words": [
+  12,
+  16,
+  24,
+  40,
+  48
+ ],
+ "held_out_stride_words": [
+  12,
+  24,
+  40
+ ],
+ "addendum_cells": [
+  {
+   "cell_id": "matvec-r1024-12w-warm",
+   "objective": "non-regression",
+   "role": "holdout",
+   "workload": {
+    "identity": "allocated-matvec-matvec-r1024-12w-warm",
+    "size": {
+     "rows": 1024,
+     "columns": 768,
+     "words": 12
+    },
+    "seed": 631201
+   },
+   "metric_kind": "whole-consumer",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "warm",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": true,
+   "decoder": null
+  },
+  {
+   "cell_id": "matvec-r1024-24w-tail1-warm",
+   "objective": "non-regression",
+   "role": "holdout",
+   "workload": {
+    "identity": "allocated-matvec-matvec-r1024-24w-tail1-warm",
+    "size": {
+     "rows": 1024,
+     "columns": 1535,
+     "words": 24
+    },
+    "seed": 632401
+   },
+   "metric_kind": "whole-consumer",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "warm",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": true,
+   "decoder": null
+  },
+  {
+   "cell_id": "matvec-r1024-40w-streaming",
+   "objective": "non-regression",
+   "role": "holdout",
+   "workload": {
+    "identity": "allocated-matvec-matvec-r1024-40w-streaming",
+    "size": {
+     "rows": 1024,
+     "columns": 2560,
+     "words": 40
+    },
+    "seed": 634001
+   },
+   "metric_kind": "whole-consumer",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "streaming",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": true,
+   "decoder": null
+  }
+ ]
+}
