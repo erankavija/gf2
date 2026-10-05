@@ -18393,3 +18393,5 @@
 {"id":"e0ac1f01-2f01-48fa-8d88-51983a3f3390","issue_id":"4337c02e-4e36-46c0-8d22-8adcd9cade9b","priority":"normal","timestamp":"2026-10-05T02:13:55.346617747Z","title":"Calibrate the BitMatrix::matvec SIMD threshold against the scalar lane","type":"issue_created"}
 {"id":"50eb8c04-62dd-4b50-ae4b-a62f9d6ca08d","issue_id":"fa1d8733-f970-4677-8971-1b9bada40ae4","priority":"normal","timestamp":"2026-10-05T02:13:55.518842609Z","title":"Remove the unselected XOR unroll bodies from the AVX2 kernel","type":"issue_created"}
 {"fields":["dependencies"],"id":"1d1f8674-75fb-482d-be95-2b2967318ae4","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-10-05T02:13:55.733799754Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["documents"],"id":"365cc578-aefa-410f-b749-0e07c5c96d24","issue_id":"2ad3a3e0-0143-4ebb-98fb-07eda92b7ca0","timestamp":"2026-10-05T02:14:31.612558489Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"6079454f-bfd3-444d-b9b3-650055849849","issue_id":"2ad3a3e0-0143-4ebb-98fb-07eda92b7ca0","timestamp":"2026-10-05T02:14:31.670260618Z","type":"issue_updated","updated_by":"doc-add"}

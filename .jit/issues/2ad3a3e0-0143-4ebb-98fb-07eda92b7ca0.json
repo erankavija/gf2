@@ -8,7 +8,1138 @@
     "a1ad6d4e-c682-4af6-ada5-36ccfd9101e4"
   ],
   "description": "Publish the final story-level evidence index and criterion interpretation without duplicating the raw receipts.\n\n## Background\n\nThe synthesis links the frozen protocols, baseline and candidate receipts, external comparisons, adoption decisions, holdout confirmations, annotated assembly, and profiles. It preserves negative, unavailable, inconclusive, and contradictory outcomes and states which production routes remain selected.\n\n## Success Criteria\n\n- [hard] REQ-01: A concise findings document maps each story criterion to content-pinned artifacts and distinguishes isolated throughput from measured consumer benefit.\n- [hard] REQ-02: Every empirical claim names its sample count, confidence interval or equivalence result, producing identity, host, and toolchain; raw data remain linked rather than copied.\n- [hard] REQ-03: Residual gaps have a measured limit, preserved experiment, or tracked falsifiable follow-up within the frozen search budget, and no finite search is described as an absolute optimum.\n- [hard] REQ-04: The selected or retained production routes and all no-win outcomes are stated consistently with the canonical buffer boundary and external-comparison rules.\n\n## Notes\n\nPermanent documentation changes are required only when the final selected production behavior changes a user-facing contract.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a108d5cc39a349d652b0e2ef069cf7274afae3c9770aa0fd92593bdcc20eaff9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/dense-harness-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcabe66f6c713a62d8ce8e9d07ab403e775650e5e1faa5eb8a17767f61997c58",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-comparator.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c86285b5e0365a80988dca17b04ad8e6a09d294773c0662ef9d91d948ded56ba",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-sampling-discrepancy.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-sampling-discrepancy.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "837f46074442b44a368cc89c56cfe3e34294701dbc048090d19703f2ac969b7f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/pilot-outcome.md",
+          "resolved_path": "dev/active/bc091474/pilot-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8b87c3a6d6ff5ac75a51a5b9e675dc7832baf4fd23d7eade09c9dbc7a477b885",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "24d3b03cedb1a0d2e58243bdde3006ab1ba1cae32e005ed8768ac69258bec465",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/survey/asm-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/asm-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "938c5fd558be4b040700bcca03dd51a0a2fa8b17755af8a6bdddd06d0362e71c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "80cf500ef5b39c1e8c32b2b6062a0dd89886446eb6a448169fb2a6d3c8b32a71",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "86ea6b97e4655091c42e78e9fa85a52863bcc3d3d341c4000fad1c9e891582db",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3e36fdf488bb0f5c94903915b2dcf6d87947780e4a9464cb95d8049754f234af",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/m4ri-gap-tables.md",
+          "resolved_path": "dev/bench_results/2037941f/m4ri-gap-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec5f9f64960ab567d7a58808104110fd457381f94448ef988034e0dcb5d17839",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-tables.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2950114e17c507f61865c383a7bba7fe01a51b9e2a27a5f611ee36ba61b6641d",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "isal-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "909480be82af8d3ee8640eb432620e0a140fba938f70a4b1bcbb074a907d6a4e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-outcome.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "13dca64fe3b1cdec02be932eea05b48867acc7226d8f03ce90ade1a5ee423a91",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/50f0bd42/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/50f0bd42/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "60417d992490f032b6e26539f0e94cd5eccfb9e90a6ff95bb4ff66d00da5729d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "mid-range-tables.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8f46b64b309b330a444a57dedf8ecbeb3b63db5b6f0089b33bdf39875d24017c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-base-gap-results.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-base-gap-results.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a7923f094e14275b6e07c1c6814251a181e05e0529cf8de8183d3ae02385c81e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ceff41bf216c6b872bb4045780bd98c64c29f93736fb8dea66e7a16c2cfb3d02",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-baseline-results.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-baseline-results.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c29eff5fc2696ef9d471fead473f7428a5eff445655b902acc91837f765078b2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/logical-profile/profile-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/logical-profile/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d90564ea8a47bf41469d7bce011ccdc33b7b1f23ad31aa9eed1dd8d8a42fa01b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/fcb04d66/verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b6988b03518989717f6ffda99d4df261e4169d67dad1dd1608356e5ba01c2757",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/survey/production-drift.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/production-drift.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cdc7a06d8320ef768196ceab64d079e864c20643e66f621c31b353454d43bfb0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/dense-baseline-profile/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/dense-baseline-profile/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c1151810674882a119421973c43a995f17f0f72df153de8cc1ec5ab351d4ddf9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/a1ad6d4e/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/a1ad6d4e/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "39a5679d3c9eb9cf83241ba6dfd7b9177b4cef5728f8f803aee074b73e5c966f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/logical-harness-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-harness-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "71e87bf3e2fb9f677eba2d6cd1641b34a03e14ab0c6e0b3e65da10290d5d61a5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/dense-baseline-profile-r2/profile-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/dense-baseline-profile-r2/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "33e1a3f3a4f22faa2a4c9eb74b5e4189515bb950c729a9ff9d3b6227573ddf82",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/portfolio.md",
+          "resolved_path": "dev/active/bc091474/portfolio.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8ded5a3c62702c10184dcda6326066473334c9b74865ccaa1d20ffa166c2c101",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-baselines.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7bb612d45531e30d685081bd201df4e56179d9f3b3a0017b2a3848972d333c60",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/c73ffa25/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/c73ffa25/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "61458b953c3938827f7bf7591759aa55fd4e3eecad7b5f97cf4ca203f85cb6ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/candidate-tables.md",
+          "resolved_path": "dev/active/bc091474/candidate-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "744f5a1083d6df6de29083c9b4473dd2103501527b756b94b552bce9a6d7a63d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "review.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/review.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "703ed1e84d8a8b55d6757f1675566683b6655bc4943ceff0c104e3793d69e338",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "64004e045aad1122061373f23226d15863845b60168eb14954db6a9572895a0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "m4ri-operation-match.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Mid-range evidence synthesis: criterion map, selected routes, preserved outcomes and residual gaps",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "53f3fa7404ee8aa8fd165cd5518b47e257e46b051e9793043d7cdfe159853470",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/logical-isolated-xor-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec5f9f64960ab567d7a58808104110fd457381f94448ef988034e0dcb5d17839",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-tables.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1994686cbee1c972e4e573dd7bd57228218672dd8c4b973ed6e89256bc11015c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2184e36e333fddbab54de4ed8eae659aaa14f4a746c010182a4524afa0fcab5d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa61d7da1809a672b48d21c74066f8071cc3cc7909eddc3dd9b45476f7293631",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../bc091474/asm/unroll2-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll2-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8ded5a3c62702c10184dcda6326066473334c9b74865ccaa1d20ffa166c2c101",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-baselines.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "68629ee5ff0a534cb577ce874244c159ec2d058909f4fe481e95d0530e902fdc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/bc091474/profile-unroll2/profile-summary.md",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "84499bbc818aca63fe8edafc0efa879eb0c4aa8af6ad983785c601c2d4ec79fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c9d51b2e1e03d1a65d859e9f0e90de28ed3e3a1afee72c32ecda9755c5a77725",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/logical-profile/index.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/index.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5e3130047a3b93cacf67db18cb33d134c1bc99e7395a4409db4de721795cdc1a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/a1ad6d4e/survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/a1ad6d4e/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "af725e2c173f67baf205f464e0592bd63a08d3320424aab133f3065e224554a0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/invocations.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/invocations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0dd758191818d5ecc366b28d237adcdf69adac91cee1e30714883743c1a38a4a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "909480be82af8d3ee8640eb432620e0a140fba938f70a4b1bcbb074a907d6a4e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-outcome.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "39a5679d3c9eb9cf83241ba6dfd7b9177b4cef5728f8f803aee074b73e5c966f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/logical-harness-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-harness-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "488bfff72b7432c0c8dc9a9e0116ac41ed216d14ca5978b921256aff38422865",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "837f46074442b44a368cc89c56cfe3e34294701dbc048090d19703f2ac969b7f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/pilot-outcome.md",
+          "resolved_path": "dev/active/bc091474/pilot-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "55bf91ecaeb39cc5d8e24e4842a152ea0e949ad678005e0cef402e2852addded",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/invocations.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "51458db17b754a73a524612fb4266040d6403b8674302111b3fe2d6880903548",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-dispatch-availability.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-dispatch-availability.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cdc7a06d8320ef768196ceab64d079e864c20643e66f621c31b353454d43bfb0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/dense-baseline-profile/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/dense-baseline-profile/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c0fa7ae5326a21cd0362922b08460b73a0ebab259be3e066d5d7c1c44e09030e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-baseline-preparation.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-baseline-preparation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "938c5fd558be4b040700bcca03dd51a0a2fa8b17755af8a6bdddd06d0362e71c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c6a9259da965e4d1abd928fa23c252db7144e1acaa542adb93150445865bb51e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/fcb04d66/profile-provenance.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/profile-provenance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "22fca7c1faafd70ece77582a720c160f1ec2f7de23cee71d617dc94fa10216d7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/logical-nr-construction-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "763eac94b4eb8f3e13c3a4a686423c2e0c0653580dc9fcf0290331a8b0a98c4e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "87dc770c4a20e49ac66f54b031ea436190d09953be71dcc6a53c360cf3a7ac04",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/simd/index.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/index.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum-v1.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "30bf7fb7278d08ee1c374f2579e270c62d0706071403e14597b0e1ca9ae38278",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/bc091474/profile-unroll4/profile-summary.md",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "13dca64fe3b1cdec02be932eea05b48867acc7226d8f03ce90ade1a5ee423a91",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/50f0bd42/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/50f0bd42/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "af90cf9487e40da7adf2b187cf055d547892a73e389cc542065883f335b5b3a4",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2f8b8192abf056b65a948a14aadd1c6d14589bb0b516888d8ea8332a45b1ed67",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/invocations.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a7923f094e14275b6e07c1c6814251a181e05e0529cf8de8183d3ae02385c81e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "84886e43b935004ea5f352a12a5937081c476a39a94ab5125a3af227621114f0",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/logical-arm/index.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/index.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b44e866fea4629e1f7882ab6eef06a1c2c94b78bb8c220b94c0cd727eda27dbc",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "isal-arm-build-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-arm-build-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bc3c5fa640f1857576ea7f8bbc80b4e82fedc5374cf491931f2826e5439cc838",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8f46b64b309b330a444a57dedf8ecbeb3b63db5b6f0089b33bdf39875d24017c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-base-gap-results.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-base-gap-results.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a108d5cc39a349d652b0e2ef069cf7274afae3c9770aa0fd92593bdcc20eaff9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/dense-harness-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d90564ea8a47bf41469d7bce011ccdc33b7b1f23ad31aa9eed1dd8d8a42fa01b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/fcb04d66/verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "839378637eaa0948417080e5d793645a5b2705c540810c330676ea9752e82e0f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-harness.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-harness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ac01ff6637935b087ab782d361ee59f2d8e97b13b6890487f6573f90580ca4f1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8b87c3a6d6ff5ac75a51a5b9e675dc7832baf4fd23d7eade09c9dbc7a477b885",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "83fb8b4229ac788f4787f25ef5d40621ee16ed11eede1042c6d85e98597a730d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/invocations.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/invocations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca95649a34d86fc362b2e538836f03968a2d85968d3dfaeb733854df9a950df0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/dense-allocated-matvec-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "24d3b03cedb1a0d2e58243bdde3006ab1ba1cae32e005ed8768ac69258bec465",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/survey/asm-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/asm-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "41978afcc7fca5dc06e06d6dec9612c7de8af7d59708c7c174d81a0875fd0f29",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/logical-source-evidence.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "80cf500ef5b39c1e8c32b2b6062a0dd89886446eb6a448169fb2a6d3c8b32a71",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1ef391aea6246d98a1872150d593986a3db6853d1355929fc342e1d67410ce2b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/invocations.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4a34c9c52dbaecdbe3b3e2fa9978c431fecdca62f192f975249ccf4adff465a8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/invocations.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot/invocations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dcb74116cdc35f5d7509a21283cfcf032aaa053aaad4b9b12a2c1cf1c5ce78cf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "95b36d17203c0bcfb4d6d4a06e2631bbd9a8dbee7c9ed1c1c64bdbfb8cfd3c36",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/logical-producing-inputs.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "703ed1e84d8a8b55d6757f1675566683b6655bc4943ceff0c104e3793d69e338",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a43736c7db45038bc91fbcaed559b31c3b235254b571822b257266d3ece0de7b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1825736bc4fdfbb49ed2cc19938173d0f170c5c12b89b03c05fe7c9deb08fbb0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "acefa5e7f453de1a22492b18f687d02b350a14af82f9c213cf6d8bf13e8686f7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0f5f42682bc9ec0b7594749dfca6121710898055787eeda177df6b9feb7452cf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b3eada0aa27fd7eda86ff348fb8fa7bd5fe3932e616d04e8f5b44ab87e4ee2c1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/logical-tables.md",
+          "resolved_path": "dev/bench_results/2037941f/logical-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f1f93cfec3fe7a661de8d1fe0db87c265e1b749b2df4b0523cfe51c450acd6ae",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/m4ri-gap-resolution.md",
+          "resolved_path": "dev/bench_results/2037941f/m4ri-gap-resolution.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2cbb67820673a4451d815e05fe034b3e36114824eed4982851084a08c0e18632",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../bc091474/asm/unroll4-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll4-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcabe66f6c713a62d8ce8e9d07ab403e775650e5e1faa5eb8a17767f61997c58",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-comparator.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "992f49835d4f558c4381fce54f3d24144e8f296a950e8486d61089eac0d16158",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "04a230ae926a63a3da93386544c32d1cf11a6da0bb2bfb2f840fb572d0943572",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-conformance.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-conformance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "64004e045aad1122061373f23226d15863845b60168eb14954db6a9572895a0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "m4ri-operation-match.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c6102b172360d051ba219ad59299a3af21748ee0a9bee5dac70736d095365720",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "86ea6b97e4655091c42e78e9fa85a52863bcc3d3d341c4000fad1c9e891582db",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c1151810674882a119421973c43a995f17f0f72df153de8cc1ec5ab351d4ddf9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/a1ad6d4e/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/a1ad6d4e/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4cc248b9ef2d6ce093794082a3420290a077681225b6a3a2bc05fef07e4198aa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "52dfc143033fc983ebe0573ac8e9120c5779f39123b2d38ca5e53ba7c2f1ad64",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "27b465967d1a24a2f48f9f3ad277e961b4528d846eb117c6759487bf68af3f4e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "61352e85d02f53befea429ed77ec806418847168d462698f1e38c09cab9fea17",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "210928aee3bf56336ab6b9733bb69f27a247a339d3de73f4b33e4b0b18b1b293",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/asm/dense-baseline/scalar/index.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/index.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0b413c01fc045b6017a1bcee71784e9ca4f3f158ff7593a01f8f598b7bb99d77",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-amendment-v2.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "aaee7b11b6d003f1dadd478a9b33d0257257c8cfa945609da88d78994be99e42",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7c77f90fb8d345102150ee7ca154b322a2245c9ac73bc70365dffa93da8ee21c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "33e1a3f3a4f22faa2a4c9eb74b5e4189515bb950c729a9ff9d3b6227573ddf82",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/portfolio.md",
+          "resolved_path": "dev/active/bc091474/portfolio.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "47f9b31cae0a9403a0658ab82ef44df91121202ef62139a2537731c078ca693e",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "campaigns/dense-matvec-vs-m4ri-confirmation-derivation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation-derivation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f546e37a089cd7f918a0c50a745ab49acb799a9d9aa73ae308c55b29eee92207",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/logical-public-row-xor-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "498d6e3f695e847f52c5c57e5a1d4551bba6c8935c558e2679b6cdce0d1344ca",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/dense-baseline-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-baseline-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c29eff5fc2696ef9d471fead473f7428a5eff445655b902acc91837f765078b2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/logical-profile/profile-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/logical-profile/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "714223d50a6774a7a793db6848c162e45b29958672fc12d807e94ad7d61ba9ab",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ab4fd181e01146eec4bc08ee2fbce56a8fcea919dab2cd3634da2d5f6cd43c20",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/invocations.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "61458b953c3938827f7bf7591759aa55fd4e3eecad7b5f97cf4ca203f85cb6ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/candidate-tables.md",
+          "resolved_path": "dev/active/bc091474/candidate-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ceff41bf216c6b872bb4045780bd98c64c29f93736fb8dea66e7a16c2cfb3d02",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-baseline-results.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-baseline-results.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b53d9fce4d5cc8d835c17b111b942285978fe9ecb32491bac318eaf6bfdf629e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3e36fdf488bb0f5c94903915b2dcf6d87947780e4a9464cb95d8049754f234af",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/m4ri-gap-tables.md",
+          "resolved_path": "dev/bench_results/2037941f/m4ri-gap-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b479513125bf558cfe4bb70d31697e089a60d86ba1f8b17dd5bcdfbbfc05d009",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b6988b03518989717f6ffda99d4df261e4169d67dad1dd1608356e5ba01c2757",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/survey/production-drift.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/production-drift.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "40a52fc9233bf9b5111794cd13220c91ab4f94292ed4f7f06ae72fdbc97eaf22",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../bc091474/asm/baseline-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/baseline-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7b12efcf55daf47a3344d9ab6f3b0f81c730b539a898b6a1ba050dac5c9d8a4f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/invocations.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1c09547231741666ffedd191926cd5391051cf60b68eb5ae380b6371faa37729",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/6e87c436/survey/route-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "71e87bf3e2fb9f677eba2d6cd1641b34a03e14ab0c6e0b3e65da10290d5d61a5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/dense-baseline-profile-r2/profile-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/dense-baseline-profile-r2/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef15b3932b9b72b350ab2ed9fcfc9634bd86ecafd4f38d12a50ebf0cbad2b256",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b31177eedd39c970fbca36bac1fce7663a0bab85bf80ee49dbfda828a9b9e92b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e18f4c795cdca7fcfc70e319c786b5a3a3f177605ecb226b9c01132eb96cb3f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/readiness.md",
+          "resolved_path": "dev/active/bc091474/readiness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7bb612d45531e30d685081bd201df4e56179d9f3b3a0017b2a3848972d333c60",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/c73ffa25/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/c73ffa25/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c86285b5e0365a80988dca17b04ad8e6a09d294773c0662ef9d91d948ded56ba",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "isal-sampling-discrepancy.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-sampling-discrepancy.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d73c4fc8ab318f7e0c513b2dff9861ed05766a4e855188095863557d0cca47d3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-harness.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-harness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "33f7f671735213edf4af5f013f01333e501af6280659f646a2b3645af371eb4a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/dense-producing-inputs.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/unavailable-rows.tsv",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/unavailable-rows.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "744f5a1083d6df6de29083c9b4473dd2103501527b756b94b552bce9a6d7a63d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "review.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/review.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e81f0465617fec34cac0eb53822861c31a157005503d9acec0cce2d6e1744d9d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/logical-isal-base-gap-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2950114e17c507f61865c383a7bba7fe01a51b9e2a27a5f611ee36ba61b6641d",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "isal-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-probe-record.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Mid-range publication tables (generated): receipt authority, cells, frozen-rule checks and content pins",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md"
+    }
+  ],
   "first_ready_at": "2026-09-16T22:43:16.553004431Z",
   "gates_required": [
     "doc-review",
@@ -35,5 +1166,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Publish the mid-range evidence synthesis",
-  "updated_at": "2026-10-05T01:49:14.210589391Z"
+  "updated_at": "2026-10-05T02:14:31.670260618Z"
 }
