@@ -3,7 +3,10 @@
 //! `kernels::ops::resolve_popcount` and `resolve_and_popcount` resolve, and
 //! each function pointer of the detected kernel bundle. The lengths bracket
 //! the empty buffer, the sub-vector widths, the 0/1/63/64/65 word boundaries
-//! and the carry-save block boundary, on random, all-zero and all-one data.
+//! and the carry-save block boundary, on random, all-zero and all-one data;
+//! the fused routes also run on slices at each word offset of their buffers.
+
+mod simd_equiv;
 
 use gf2_core::kernels::ops::{
     and_popcount, and_popcount_route, popcount, popcount_route, resolve_and_popcount,
@@ -11,6 +14,8 @@ use gf2_core::kernels::ops::{
 };
 use gf2_core::kernels::Backend;
 use gf2_core::BitVec;
+
+use simd_equiv::unaligned_slice;
 
 /// Words one carry-save block folds on hosts that have the kernel; the suite
 /// uses the same figure on every host so the lengths do not vary.
@@ -126,6 +131,32 @@ fn every_fused_route_counts_the_intersection() {
 }
 
 #[test]
+fn every_fused_route_counts_slices_at_each_word_offset() {
+    for len in lengths() {
+        let mut lhs_buf = seeded(len + 3, 0xe5 ^ len as u64);
+        let mut rhs_buf = seeded(len + 3, 0xf6 ^ len as u64);
+        for lhs_offset in 0..4 {
+            for rhs_offset in 0..4 {
+                let lhs = &*unaligned_slice(&mut lhs_buf, lhs_offset, len);
+                let rhs = &*unaligned_slice(&mut rhs_buf, rhs_offset, len);
+                let expected: u64 = lhs
+                    .iter()
+                    .zip(rhs)
+                    .map(|(left, right)| u64::from((left & right).count_ones()))
+                    .sum();
+                for (route, and_count) in and_routes(len) {
+                    assert_eq!(
+                        and_count(lhs, rhs),
+                        expected,
+                        "{route}, length {len}, offsets {lhs_offset} and {rhs_offset}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn every_fused_route_covers_the_shorter_operand() {
     let long = vec![u64::MAX; 2 * CSA_BLOCK_WORDS + 3];
     for short_len in [0, 1, 5, CSA_BLOCK_WORDS + 1] {
@@ -153,7 +184,8 @@ fn automatic_routes_retain_the_established_implementations() {
         assert_eq!(and_popcount_route(words), PopcountRoute::Scalar);
     }
 
-    let expected = if gf2_kernels_simd::detect().is_some() {
+    // A build without the `simd` feature resolves every width to scalar.
+    let expected = if cfg!(feature = "simd") && gf2_kernels_simd::detect().is_some() {
         PopcountRoute::SimdNibbleLut
     } else {
         PopcountRoute::Scalar

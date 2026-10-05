@@ -93,6 +93,59 @@ fn matvec_word_boundary_lengths_match_scalar_reference() {
     }
 }
 
+/// Column counts at the word boundaries of the scalar lane and around the
+/// eight- and nine-word strides of the SIMD lane; a nine-word stride starts
+/// successive rows at every 32-byte phase.
+const BOUNDARY_COLS: [usize; 12] = [0, 1, 63, 64, 65, 449, 511, 512, 513, 575, 576, 577];
+
+fn assert_zero_tail(vector: &BitVec, context: &str) {
+    let words = vector.words();
+    assert_eq!(words.len(), vector.len().div_ceil(64), "{context}");
+    if !vector.len().is_multiple_of(64) {
+        assert_eq!(
+            words[words.len() - 1] >> (vector.len() % 64),
+            0,
+            "nonzero tail padding, {context}"
+        );
+    }
+}
+
+#[test]
+fn matvec_boundary_shapes_index_canonically_and_keep_zero_tails() {
+    for rows in [0, 1, 63, 64, 65] {
+        for cols in BOUNDARY_COLS {
+            let context = format!("rows={rows} cols={cols}");
+            let mut matrix = BitMatrix::zeros(rows, cols);
+            for row in 0..rows {
+                for col in 0..cols {
+                    matrix.set(row, col, ((row * 17 + col * 31 + cols) & 3) == 1);
+                }
+            }
+
+            let mut pushed = BitVec::with_capacity(cols);
+            for col in 0..cols {
+                pushed.push_bit(((col * 13 + rows) & 1) == 0);
+            }
+            // Dirty padding and a surplus word: `from_words` owns the masking.
+            let all_set = BitVec::from_words(vec![u64::MAX; cols.div_ceil(64) + 1], cols);
+
+            for vector in [&pushed, &all_set] {
+                let product = matrix.matvec(vector);
+                assert_eq!(product.len(), rows, "{context}");
+                assert_zero_tail(&product, &context);
+                for row in 0..rows {
+                    let parity = (0..cols)
+                        .filter(|&col| matrix.get(row, col) && vector.get(col))
+                        .count()
+                        % 2
+                        == 1;
+                    assert_eq!(product.get(row), parity, "row {row}, {context}");
+                }
+            }
+        }
+    }
+}
+
 #[test]
 fn matvec_matches_scalar_reference_proptest_sizes_0_to_1024() {
     assert_simd_matches_scalar::<MatvecFixture, BitVec, _, _, _>(
