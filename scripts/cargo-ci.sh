@@ -244,8 +244,12 @@ run_step tuning-campaign-validator python3 dev/scripts/validate-tuning-extent-ca
 run_step repository-files-self-test python3 dev/scripts/repository_files_test.py
 run_step campaign-producing-closure-self-test python3 dev/scripts/check-campaign-producing-closure.py --self-test
 run_step campaign-producing-closure python3 dev/scripts/check-campaign-producing-closure.py
-run_step family-producing-closures-self-test python3 dev/scripts/check-family-producing-closures.py --self-test
-run_step family-producing-closures python3 dev/scripts/check-family-producing-closures.py
+# The checker is located through the shared file locator, which git finds by
+# name; -B keeps the steps from writing bytecode into the repository.
+repository_files=$(git ls-files -- ':(glob)**/repository_files.py')
+family_closures=$(python3 -B "$repository_files" file check-family-producing-closures.py)
+run_step family-producing-closures-self-test python3 -B "$family_closures" --self-test
+run_step family-producing-closures python3 -B "$family_closures"
 run_step receipt-input-snapshots-self-test python3 dev/scripts/check-receipt-input-snapshots.py --self-test
 run_step receipt-input-snapshots python3 dev/scripts/check-receipt-input-snapshots.py
 run_step addendum-schema-versions-self-test python3 dev/scripts/check-addendum-schema-versions.py --self-test
