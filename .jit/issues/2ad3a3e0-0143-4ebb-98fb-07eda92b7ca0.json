@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-05T01:49:14.210589391Z",
   "context": {},
   "created_at": "2026-09-15T00:55:29.092843264Z",
@@ -1147,7 +1147,28 @@
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T02:16:58.061470461Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T02:20:39.931000126Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-05T02:23:53.915904739Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T02:27:15.456500135Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "2ad3a3e0-0143-4ebb-98fb-07eda92b7ca0",
   "labels": [
     "type:task",
@@ -1166,5 +1187,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Publish the mid-range evidence synthesis",
-  "updated_at": "2026-10-05T02:14:31.670260618Z"
+  "updated_at": "2026-10-05T02:27:15.456500135Z"
 }
