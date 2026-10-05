@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-05T03:11:50.535862985Z",
   "context": {},
   "created_at": "2026-10-04T23:57:56.365338715Z",
@@ -68,14 +68,33 @@
       "doc_type": "evidence",
       "label": "07ca8585 build identity supersession",
       "path": "dev/bench_results/07ca8585/preparation/build-identity-supersession.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/b2e09d41-r1.md"
     }
   ],
+  "done_at": "2026-10-05T20:22:37.125149523Z",
   "first_ready_at": "2026-10-04T23:57:56.365338715Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T20:14:16.192042194Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T20:22:19.457686098Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "b2e09d41-4c66-4c71-a129-44261f7e420d",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -83,7 +102,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Remove the private LDPC plan checker in favour of the shared runner check",
-  "updated_at": "2026-10-05T19:58:25.116786216Z"
+  "updated_at": "2026-10-05T20:22:37.243900866Z"
 }
