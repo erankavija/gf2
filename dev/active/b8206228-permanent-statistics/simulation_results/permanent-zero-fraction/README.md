@@ -6,7 +6,7 @@ is one immutable, versioned dataset:
 
 `dev/simulation_results/permanent-zero-fraction/<campaign-id>/`
 
-The campaign's controlling [scientific preregistration](protocol.md) is stored
+The campaign's controlling [scientific preregistration](../../../../simulation_results/permanent-zero-fraction/protocol.md) is stored
 beside those datasets; it is not part of any dataset's raw or derived file set.
 
 A campaign id uses lowercase ASCII letters, digits, and interior hyphens.
@@ -305,10 +305,10 @@ An accelerator-backed field also supplies
 `--accelerator-cost-table dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv`.
 That versioned production table contains one positive integer launch cost for
 each and only each accelerator cell in the frozen manifest. Its
-[receipt](../../benchmarks/permanent_campaign/accelerator-launch-costs-v1.md)
+[receipt](../../../../benchmarks/permanent_campaign/accelerator-launch-costs-v1.md)
 binds and recomputes every value from committed same-cell measurement evidence;
 the fail-closed
-[validator](../../benchmarks/permanent_campaign/accelerator_launch_costs_v1.py)
+[validator](../../../../benchmarks/permanent_campaign/accelerator_launch_costs_v1.py)
 checks the bound inputs, arithmetic, rounding, and exact receipt/table
 agreement. Live writer approval and acquisition of the execution lock precede
 accelerator table resolution. In a nonterminal sampling transaction, the
@@ -367,7 +367,7 @@ verdict; halted cells retain only counts and their mechanical reason.
 The Wilson computation is a Python transliteration of the campaign's fixed
 interval convention, using $z=1.959963984540054$, rather than a second
 statistical policy. Its $q=3$ comparison columns read the versioned
-[`scheinerman2024-q3-targets-v1.csv`](scheinerman2024-q3-targets-v1.csv)
+[`scheinerman2024-q3-targets-v1.csv`](../../../../simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv)
 source-count table beside this README; they recompute source points and source
 intervals from those counts. For a completed row with a source comparison,
 `precision_classification` is `prior_exact` when the source evidence is exact
