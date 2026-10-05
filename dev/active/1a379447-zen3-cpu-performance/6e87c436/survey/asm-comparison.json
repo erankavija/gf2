@@ -1,13 +1,14 @@
 {
   "schema": "dense-asm-comparison-v1",
   "issue": "6e87c436",
-  "anchor": "61e1a8e5af844dc787e04e3ba994a2ef00b14623",
+  "anchor": {
+    "baseline": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/anchor-baseline.json",
+    "baseline_sha256": "8bf7e5ffb564637e55a6ddae5797cc4822c99a588c40915d7698041bb2dc41ff"
+  },
   "comparison_rule": "Per symbol, the lines between its `; symbol:` divider and the next divider, without blank lines, divider rules and cargo's `Compiling` and `Finished` status lines. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
   "modules": [
     {
       "source": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "source_lines_added": 10,
-      "source_lines_removed": 0,
       "artefact": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
       "symbols": [
         {
