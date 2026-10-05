@@ -172,8 +172,10 @@ targets, against the canonical decoder;
 same pair at six and twelve physical cores and at twenty-four logical CPUs; and
 [comparator](addendum-ldpc-qc-comparator-single-worker-pilot.json), which measures
 the candidate against the matched external arm, AFF3CT's scalar f32 flooding
-normalized-min-sum decoder [Cassagne2019]. Each family has an exploratory pilot
-and one confirmation frozen from it. Every row of every stage is in the
+normalized-min-sum decoder [Cassagne2019]. Each of the three has an exploratory
+pilot and one confirmation campaign frozen from it, which is three campaigns of
+each stage for one candidate family against the frozen cap of one; the section
+"What the confirmation campaigns record" states the consequence. Every row of every stage is in the
 [timing tables](../../bench_results/f63a2464/timing-tables.md), written by
 [summarize-timing.py](survey/summarize-timing.py) from the committed receipts,
 plans, execution logs, acceptance summaries and ledgers.
@@ -256,35 +258,44 @@ is retained with the confirmatory role and none is dropped, because the budget
 record recomputes from each ledger the largest first-attempt cell count P-20
 admits and no family declares more.
 
-### What the confirmations establish
+### What the confirmation campaigns record
 
-Each confirmation measures every cell at the protocol's confirmatory pair count
-on fresh samples, and each ledger carries exactly one confirmatory reservation
-(timing tables, each ledger's table and "Stop rule S4 per ledger").
+**No campaign is a valid confirmatory verdict on family QC.** The frozen budget
+of the decision record caps a candidate family at one confirmatory campaign.
+Family QC ran three, one per ledger, under a per-ledger reading of the cap that
+is no versioned amendment of the frozen budget and is followed by no fresh
+confirmation ([corrections.md](corrections.md), C-09). Under the frozen budget
+the family therefore has no valid confirmatory verdict (repository owner's
+ruling, 2026-10-05). The receipts, ledger lines and frozen addenda stay
+committed as run, and the paragraphs below report what the evaluator records
+for each campaign, which decides nothing.
+
+Each campaign measures every cell at the protocol's confirmatory pair count on
+fresh samples, and each ledger carries exactly one confirmatory reservation
+(timing tables, each ledger's table and "Confirmation campaigns per ledger").
 
 **Against the canonical decoder, single worker.** Both cells, sustained
 throughput and single-frame latency, record the decision `improved` under the
-frozen worthwhile-speedup margin and the outcome `pass`, and the receipt
-qualifies
+frozen worthwhile-speedup margin and the outcome `pass`, and the receipt's
+recorded `qualifies` is true
 ([acceptance summary](../../bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-confirmation/acceptance-summary.md)).
 
 **Against the canonical decoder, several workers.** The six-physical-core,
 twelve-physical-core and twenty-four-logical-CPU cells each record `improved`
-and `pass`, and the receipt qualifies
+and `pass`, and the receipt's recorded `qualifies` is true
 ([acceptance summary](../../bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-confirmation/acceptance-summary.md)).
 The estimate is smallest on the twenty-four-logical-CPU cell, where two workers
 share each physical core.
 
 **Against the matched external arm.** Both cells record the decision `regressed`
-and the outcome `fail`, and the receipt does not qualify
+and the outcome `fail`, and the receipt's recorded `qualifies` is false
 ([acceptance summary](../../bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-confirmation/acceptance-summary.md)).
 The outcome is reported as recorded. Its direction is read from the plan, whose
 arm positions the timing tables print beside every cell: the QC prototype holds
 the baseline position and the AFF3CT arm [Cassagne2019] the candidate position,
 so the recorded ratio and its whole interval below the reciprocal of the
 equivalence margin state that the external arm is the slower of the two on both
-cells. The family asks whether a material gap in the external arm's favour
-remains, and the confirmation establishes none.
+cells.
 
 **The fastest quality-compatible external comparison has no admitted arm.**
 `c077a88b` times six AFF3CT [Cassagne2019] horizontal-layered candidates, the
@@ -329,7 +340,7 @@ rule, and the matched external arm's settings equal the declaration.
 The [decision record](decision-record.md) freezes four stop rules before any
 prototype exists. Each family's outcome is the first rule that fires, and no
 rule is reinterpreted after the evidence. The record's section "Decisions after
-the confirmations" carries the decisions as a table.
+the confirmations" carries the decisions as a table. No family proceeds.
 
 **Family Q does not proceed, under S2.** No configuration meets the predeclared
 quality tolerance on the measured DVB-T2 recorded cell, so the family publishes
@@ -346,48 +357,61 @@ on that cell are lower than the canonical arm's, so the family loses frames the
 canonical arm decodes while gaining more elsewhere; the frozen condition is
 per-frame dominance and is applied as written.
 
-**Family QC proceeds to a proposed production design.** S1 does not fire: the
+**Family QC does not proceed: it has no valid confirmatory verdict under the
+frozen budget.** S1 does not fire: the
 [numerical-contract review](numerical-contract-review.md) and the feasibility
 record rule nothing out. S2 does not fire: the screen admits every cell the
 family declares. S3 does not fire: the family passes both screens inside its
-configuration budget. S4 is applied to each ledger's confirmation (timing
-tables, "Stop rule S4 per ledger"). The single-worker and multicore ledgers
-return no ending outcome and both receipts qualify. The comparator ledger
-returns `fail` on both cells, so S4 ends that family under this issue: no
-further attempt is made on it and no margin is revised. The proceed decision
-rests on the two ledgers that compare the candidate with the canonical decoder
-under an unchanged, tested numerical contract; the comparator ledger's ended
-question is whether the external arm keeps a material lead, and its recorded
-direction is that it keeps none.
+configuration budget. S4 needs the outcome of the family's one confirmatory
+campaign, and the family ran three against that cap, so none of the three is
+the confirmation the frozen budget allows (corrections.md, C-09). The budget
+allows no further confirmatory attempt, so the family ends under this issue
+without a qualifying verdict. The limitation is that the three campaigns'
+recorded outcomes, which the timing tables carry in full, are measurements
+without deciding force: they are neither a selection nor a refutation of the
+candidate.
 
-No prototype becomes the production decoder. The decision record carries the
-proposed production design and its worker-sized implementation scope, both as
-proposals for review; no issue exists for them and the canonical `LdpcDecoder`
-stays the production decoder until that scope delivers its own before/after
-evidence.
+No candidate is selected, so no production design and no implementation scope
+exists, and the canonical `LdpcDecoder` stays the production decoder. "No
+qualifying candidate" is an outcome the decision record declares valid.
 
 ## Criterion status
 
 | Criterion | Status | Evidence or remaining work |
 |---|---|---|
-| REQ-01 | MET for the evidence this issue produces | Contract, protocol, addendum and ledger identities are frozen and pinned by every receipt; arms are built at Rust 1.95 with recorded digests; all six campaigns verify from their own execution logs and each verdict recomputes from its committed receipt. Negative outcomes are preserved: the S2 stops of families Q and L and the comparator ledger's `fail` cells. No production change is made, so no before/after pair is owed here; the proposed scope carries it. |
-| REQ-02 | MET | The decision record names the three families and freezes the exploratory and confirmatory search and stop budget before any prototype exists. Its statements the evidence contradicts or does not support are preserved and corrected in corrections.md; none changes a budget or a stop rule. |
+| REQ-01 | MET for the evidence this issue produces | Contract, protocol, addendum and ledger identities are frozen and pinned by every receipt; arms are built at Rust 1.95 with recorded digests; all six campaigns verify from their own execution logs and each recorded verdict recomputes from its committed receipt. Negative outcomes are preserved: the S2 stops of families Q and L, the comparator cells' `fail`, and the contradiction between family QC's three confirmation campaigns and the frozen cap of one, which leaves the family without a valid confirmatory verdict (corrections.md, C-09). No production change is made, so no before/after pair is owed. |
+| REQ-02 | MET as a record; its confirmatory cap is exceeded in execution | The decision record names the three families and freezes the exploratory and confirmatory search and stop budget before any prototype exists. Family QC's campaigns exceed that budget's per-family caps, which corrections.md C-09 records and which is why the family has no valid verdict. The record's statements the evidence contradicts or does not support are preserved and corrected in corrections.md. |
 | REQ-03 | MET | The numerical-contract review states the canonical contract on all six axes, each family's declared contract against it, and the MSRV intrinsic feasibility record with its emitted assembly. DVB-T2's inapplicability to family QC is explained with source evidence rather than dropped. |
-| REQ-04 | Partly met — one gap, under Limits | Every family's prototype is evaluated on the measured DVB-T2 and NR cells on the quality axis, with iteration distributions and equivalent stopping. Family QC is confirmed on sustained throughput, single-frame latency and multicore throughput against the canonical decoder and, separately, against the matched external arm; the fastest quality-compatible comparison has no admitted arm. Memory is an untimed peak resident set of both arms by one method. The gap: families L and Q carry no timed cell because the frozen screen admits none of their configurations. |
+| REQ-04 | MET in the criterion's terms | Every family's prototype is evaluated on the measured DVB-T2 and NR cells on the quality axis, with iteration distributions and equivalent stopping. The frozen exploratory screen excludes families Q and L from timed cells, which places them outside this criterion; the excluding evidence is the quality tables' "The exploratory screen". Family QC's timed cells cover sustained throughput, single-frame latency, multicore throughput, batch fill, memory (an untimed peak resident set of both arms by one method) and, separately, the matched external arm. The comparator survey `c077a88b` admits no quality-compatible external arm, so the fastest quality-compatible comparison is absent, a recorded limit. Family QC's campaigns are measurements without a valid confirmatory verdict. |
 | REQ-05 | MET | Tolerances predeclared and committed before any quality result; BER and FER with counts and intervals over random and all-zero codewords, punctured and filler inputs, mixed convergence and the difficult subset, and again on every timed cell; external conformance under each declared contract, with the unavailable narrow-alphabet comparator preserved. No bit-exactness is claimed without evidence, and the one family that claims it is tested at the posterior level and projected at the cell level. |
-| REQ-06 | Partly met — design and scope proposed, review pending | Every family carries a published decision with the stop rule and evidence behind it and its limitations: no proceed for Q and L, proceed for QC. The production design and worker-sized scope for QC are written as proposals in the decision record; their review is a lead decision, and no prototype becomes the production decoder. |
+| REQ-06 | MET | Every considered family carries a published measured decision with what closes it and its limitations: no proceed for Q and L under S2, no proceed for QC for want of a valid confirmatory verdict under the frozen budget. No candidate is selected, so the criterion's design and scope clause has no subject, and no prototype becomes the production decoder. |
 
 ## Limits and problems
 
-**The frozen screen excludes families L and Q from timed evaluation, and REQ-04's
-timing axis is therefore unmet for them under this issue.** The screen was
-committed before any quality result and is applied literally; revising it after
-reading the evidence would be a falsification defect. The exclusions are narrow
-and are recorded above with the exact cell that causes each: family L fails only
-the punctured stress cell, where its own frame error count is lower than the
-canonical arm's, and family Q fails only the DVB-T2 recorded cell while passing
-every NR cell. Whether those two families deserve timed cells under a differently
-frozen screen is outside an instrument this issue may change.
+**The frozen screen excludes families L and Q from timed cells, which places
+them outside REQ-04's timed evaluation.** The excluding evidence is the quality
+tables' "The exploratory screen". The screen was committed before any quality
+result and is applied literally; revising it after reading the evidence would
+be a falsification defect. The exclusions are narrow and are recorded above
+with the exact cell that causes each: family L fails only the punctured stress
+cell, where its own frame error count is lower than the canonical arm's, and
+family Q fails only the DVB-T2 recorded cell while passing every NR cell. No
+throughput, latency or memory figure exists for either family.
+
+**No quality-compatible external arm is admitted, so the fastest
+quality-compatible comparison is absent.** The excluding evidence is
+`c077a88b`'s admission record: every candidate of its quality-compatible pilot
+carries "quality admission unestablished (P-19)" and its eligible shortlist is
+empty (its tables, "Quality-compatible timing"). The absence is a limit of the
+corpus, which cannot certify non-inferiority, and no statement here ranks the
+QC prototype against a quality-compatible external arm.
+
+**Family QC's three confirmation campaigns exceed the frozen cap of one, so the
+family has no valid confirmatory verdict.** corrections.md C-09 records the
+contradiction and preserves the frozen wording on both sides of it. The
+receipts are committed as run and their figures are in the timing tables as
+measurements. They support no adoption, and a fresh confirmatory question about
+this candidate needs a newly frozen budget outside this issue's instrument.
 
 **The timed receipts carry no memory figure of the QC prototype.** A timed arm
 carries the prepared `c077a88b` quality record its plan names after checking its
@@ -403,9 +427,7 @@ no allocation census of the decoder state.
 NR BG1 lifting-384 mother code at one recorded operating point on one host. The
 behavioural suite covers three lifting sizes and kernel inputs that do and do
 not fill the vector body, but no timed cell measures a small lifting size, the
-dispatch overhead there or a rate-matched code. The proceed decision is a
-decision to build and measure the production path, not a claim about those
-cells.
+dispatch overhead there or a rate-matched code.
 
 **No citation registry key resolves the standard works on layered decoding or on
 min-sum quantization.** The registry supplies the implementations this survey
@@ -427,14 +449,12 @@ recorded with its evidence, so family QC's timed evidence covers one of the two
 measured workloads.
 
 **The decision record's budget uses "family" in two senses.** Its prose names
-three candidate families, Q, L and QC, while its budget tables ground their
-arithmetic in the protocol, where the family is the canonical question named by
-the ledger. The cap on confirmatory campaigns applies per ledger (repository
-owner's ruling, 2026-10-05; decision record, "Decisions after the
-confirmations"). Family QC's three ledgers therefore each carry one pilot
-campaign and one confirmatory attempt, and no ledger carries a second. The
-ambiguity stays recorded as a defect of the frozen instrument's wording; the
-instrument's frozen sections are unchanged.
+three candidate families, Q, L and QC, while its budget arithmetic rests on the
+protocol, where the family is the canonical question named by the ledger. The
+caps bind the candidate family, which is the reading the record's own list of
+families gives; the per-ledger reading under which family QC's campaigns were
+frozen and run contradicts it (corrections.md, C-09). The frozen sections are
+unchanged.
 
 **The comparator family's ratio reads against the plan's arm positions.** The
 comparator plan puts the QC prototype in the baseline position and the external
@@ -446,8 +466,8 @@ committed plan and is withdrawn by this record; the pilot's bytes are unchanged.
 The frozen comparator addendum's equivalence rationale says "the candidate" is
 at most the margin slower without naming a position; under the protocol's
 decision rule the margin bounds the candidate-position arm, here the external
-one. The rationale is frozen and stays as written, the margins it fixes are the
-ones applied, and the `fail` outcomes stand as `fail`.
+one. The rationale is frozen and stays as written, and the `fail` outcomes stand
+as the evaluator's record.
 
 ## Reproduction
 
