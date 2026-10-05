@@ -2146,7 +2146,8 @@
     "Session 27: dispatched fa1d8733 and 54e70918 at 856c78b38. Held for the invoker: f63a2464 (three code-review rulings), b2e09d41 (shared checker under the freeze), a87ae828 (generator edit denied to a worker by the permission system), bfc2ceab (per-interface design choice), 316150fd and dd359005 (their criteria add steps to scripts/cargo-ci.sh, shared infrastructure), 4337c02e and the timed part of 63bad95d (benchmark windows and five plan decisions).",
     "Session 27: bug 66698c3c filed (6e87c436 drift and assembly generators fail on main after the 1b034786 change to m4rm.rs).",
     "Session 27: 54e70918 partial merged (gf2_core::kernels::backend::contract; search record simd-early-returns.json: 258 before, 225 after). The lead wrote REQ-03 broader than the finding supported; narrowing it is an invoker decision.",
-    "Session 27: main cargo-ci passes with the 54e70918 partial merge (838a91963) and with fa1d8733 merged (8a1f7f3fd); both 2037941f closure checks pass. fa1d8733 gates: asm-artefact-present and cargo-ci PASS; code-review FAIL F1, a reading of REQ-03 that the lead's loose wording invites. No rework dispatched: the fix is an invoker amendment of the criterion text. The family closures are not covered by cargo-ci's campaign-producing-closure step; a CI step for them is an invoker decision (shared infrastructure)."
+    "Session 27: main cargo-ci passes with the 54e70918 partial merge (838a91963) and with fa1d8733 merged (8a1f7f3fd); both 2037941f closure checks pass. fa1d8733 gates: asm-artefact-present and cargo-ci PASS; code-review FAIL F1, a reading of REQ-03 that the lead's loose wording invites. No rework dispatched: the fix is an invoker amendment of the criterion text. The family closures are not covered by cargo-ci's campaign-producing-closure step; a CI step for them is an invoker decision (shared infrastructure).",
+    "Session 27: handoff-24.md written; wave 4 holds entirely on invoker decisions."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2172,7 +2173,8 @@
     "handoff-20.md",
     "handoff-21.md",
     "handoff-22.md",
-    "handoff-23.md"
+    "handoff-23.md",
+    "handoff-24.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
