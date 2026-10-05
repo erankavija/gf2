@@ -18506,3 +18506,5 @@
 {"gate_key":"asm-artefact-present","id":"c85d7761-88a3-4cb7-9009-a9e4e4222fb8","issue_id":"7d44b71f-8764-4438-9f4a-4e6b8360667d","timestamp":"2026-10-05T05:03:06.925131780Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"cargo-ci","id":"f775dbb2-ce00-4f39-adec-97c8a73b2596","issue_id":"7d44b71f-8764-4438-9f4a-4e6b8360667d","timestamp":"2026-10-05T05:04:18.244685246Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"1f179a70-53ae-421c-8f51-04763d41dde5","issue_id":"7d44b71f-8764-4438-9f4a-4e6b8360667d","timestamp":"2026-10-05T05:09:34.182898079Z","type":"gate_passed","updated_by":"auto:executor"}
+{"id":"acec6dfe-7859-4c29-87c2-d8034269edb0","issue_id":"54e70918-23cb-48e1-aa5b-815a7be48e8e","priority":"normal","timestamp":"2026-10-05T05:37:09.672929457Z","title":"Stop SIMD equivalence tests passing without running on hosts without SIMD","type":"issue_created"}
+{"fields":["dependencies"],"id":"ad350203-9f20-44ee-aa2b-b3fd5323b526","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-10-05T05:37:09.888506395Z","type":"issue_updated","updated_by":"dependency-add"}

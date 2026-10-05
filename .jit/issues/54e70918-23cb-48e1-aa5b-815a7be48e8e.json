@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T05:37:09.672929457Z",
+  "dependencies": [],
+  "description": "Two SIMD equivalence test files return early when the host publishes no SIMD bundle, so they pass without comparing anything; a shared equivalence test always exercises at least one implementation and says which.\n\n## Background\n\n`crates/gf2-core/tests/simd_equiv_demo.rs` and `crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs` compare SIMD kernels with their scalar references. Each test returns at once when feature detection finds no bundle, and the test is then reported as passed. On a host without AVX2, or in a build where detection is disabled, the suite reports equivalence that it did not check.\n\n## Success Criteria\n\n- [hard] REQ-01: Each test in the two files either runs its scalar reference assertions on every host or is reported as skipped, never as passed, when no SIMD implementation is available.\n- [hard] REQ-02: Each test asserts that it exercised a non-zero number of implementations and names them in its output.\n- [hard] REQ-03: A committed search record lists every test in the workspace that returns early on a missing SIMD bundle, and none remains outside this rule.\n\n## Notes\n\nFound while making the M4RM Gray-table contract test non-vacuous.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T05:37:09.672929457Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "54e70918-23cb-48e1-aa5b-815a7be48e8e",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Stop SIMD equivalence tests passing without running on hosts without SIMD",
+  "updated_at": "2026-10-05T05:37:09.672929457Z"
+}

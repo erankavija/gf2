@@ -967,7 +967,8 @@
     "bfc2ceab",
     "316150fd",
     "dd359005",
-    "a87ae828"
+    "a87ae828",
+    "54e70918"
   ],
   "escalations": [
     {
@@ -2120,7 +2121,8 @@
     "Session 27: 6833c5b5 DONE (ledger verified at its recorded commits, bytes unchanged; shared verifier dev/scripts/verify-source-evidence.py; gates pass first round; review reviews/6833c5b5-r1.md). Bug a87ae828 filed for the generator that overwrites the pinned ledger; the worker's attempt to edit that generator was denied by the permission system, so the edit waits for the invoker.",
     "Session 27: filed from the 7d44b71f worker's findings: bfc2ceab (caller-trusted safe kernel entry points reach UB on violated length conditions; design choice per interface), 316150fd (gf2-core tests do not compile with default features; AVX2 kernel tests run without feature detection), dd359005 (no scalar-lane test builds of gf2-algebra and gf2-coding). All wired under the epic; the invoker may re-parent them, since they reach beyond Zen 3 performance.",
     "Session 27: 63bad95d untimed stage merged (route inventory, dispatch_contract fallback suite, calibration plan and budget; merged-tree cargo-ci passes). Nothing frozen. 4337c02e runs before 63bad95d freezes; the threshold edit happens in 63bad95d.",
-    "Session 27: merged-tree cargo-ci for the 63bad95d stage passes at f194490d1 on a quiet host (two earlier runs lost one test each to the 15 s cap at load 10 and 29). Kernel branch merged at eae9c455b; CI passes. 7d44b71f: asm-artefact-present, cargo-ci, code-review PASS. 1b034786: asm-artefact-present, cargo-ci PASS; code-review FAIL F1 (the shared contract test omits the scalar reference in avx2.rs and tests zero implementations on a host without AVX2). Rework 1 dispatched."
+    "Session 27: merged-tree cargo-ci for the 63bad95d stage passes at f194490d1 on a quiet host (two earlier runs lost one test each to the 15 s cap at load 10 and 29). Kernel branch merged at eae9c455b; CI passes. 7d44b71f: asm-artefact-present, cargo-ci, code-review PASS. 1b034786: asm-artefact-present, cargo-ci PASS; code-review FAIL F1 (the shared contract test omits the scalar reference in avx2.rs and tests zero implementations on a host without AVX2). Rework 1 dispatched.",
+    "Session 27: bug 54e70918 filed (two gf2-core SIMD equivalence test files pass vacuously without a SIMD bundle)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
