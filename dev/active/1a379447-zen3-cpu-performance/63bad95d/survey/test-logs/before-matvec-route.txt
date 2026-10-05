@@ -1,0 +1,28 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --test simd_equiv_matvec --cargo-profile ci-test --profile ci
+    Blocking waiting for file lock on artifact directory
+   Compiling gf2-kernels-simd v0.1.0 (./crates/gf2-kernels-simd)
+   Compiling tuning-campaign-support v0.1.0 (./dev/tools/tuning-campaign-support)
+   Compiling gf2-core v0.1.0 (./crates/gf2-core)
+error[E0599]: no method named `matvec_with_route` found for struct `gf2_core::BitMatrix` in the current scope
+   --> crates/gf2-core/tests/simd_equiv_matvec.rs:172:38
+    |
+172 |                 let product = matrix.matvec_with_route(&vector, route);
+    |                                      ^^^^^^^^^^^^^^^^^ method not found in `gf2_core::BitMatrix`
+
+error[E0599]: no method named `matvec_with_route` found for struct `gf2_core::BitMatrix` in the current scope
+   --> crates/gf2-core/tests/simd_equiv_matvec.rs:178:24
+    |
+178 |                 matrix.matvec_with_route(&vector, matvec_route(cols.div_ceil(64))),
+    |                        ^^^^^^^^^^^^^^^^^ method not found in `gf2_core::BitMatrix`
+
+error[E0599]: no method named `matvec_with_route` found for struct `gf2_core::BitMatrix` in the current scope
+   --> crates/gf2-core/tests/simd_equiv_matvec.rs:189:20
+    |
+189 |     let _ = matrix.matvec_with_route(&BitVec::zeros(64), MatvecRoute::Scalar);
+    |                    ^^^^^^^^^^^^^^^^^ method not found in `gf2_core::BitMatrix`
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `gf2-core` (test "simd_equiv_matvec") due to 3 previous errors
+error: command `~/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/cargo test --no-run --message-format json-render-diagnostics --package gf2-core --test simd_equiv_matvec --profile ci-test` exited with code 101
+# exit: 101
