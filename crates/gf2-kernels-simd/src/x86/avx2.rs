@@ -851,12 +851,22 @@ mod tests {
     use crate::m4rm::contract::kernel_builders;
     use gf2_core::kernels::backend::contract::{assert_each, Implementation};
 
-    /// The bundle the host's AVX2 detection publishes; empty without AVX2.
+    /// The bundle the host's AVX2 detection publishes.
+    ///
+    /// # Panics
+    ///
+    /// Panics without AVX2: the wrapper argument checks have no portable
+    /// reference to assert against.
     fn detected() -> Vec<Implementation<LogicalFns>> {
-        crate::detect()
+        let found: Vec<_> = crate::detect()
             .map(|bundle| Implementation::new("avx2", bundle))
             .into_iter()
-            .collect()
+            .collect();
+        assert!(
+            !found.is_empty(),
+            "precondition: the host reports AVX2; the AVX2 wrapper checks have no portable reference to run instead"
+        );
+        found
     }
 
     /// The Gray-table builders of `stride`: the portable reference and, with
