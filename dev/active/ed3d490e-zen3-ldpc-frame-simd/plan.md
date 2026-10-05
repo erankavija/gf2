@@ -31,11 +31,11 @@ from the probe crate [survey/intrinsics-probe](survey/intrinsics-probe/src/lib.r
 
 | Criterion | Approach | Covered by | Evidence / open gap |
 |---|---|---|---|
-| REQ-01 | Every production change has a before/after family; each family holds at most the cell count its ledger's first attempt admits; preparation is untimed and each timed run is a queue line; negative outcomes are recorded as evaluated. | `measurement-arms`, the `*-preparation` and `*-collection` entries, `outcome-publication` | Contract `measurement-authority` |
+| REQ-01 | Every production change has a before/after family; each family holds at most the cell count its ledger's first attempt admits; preparation is untimed and each timed run is a queue line; negative outcomes are recorded as evaluated. | the three `*-benchmark-arms*` entries, `campaign-tooling`, the `*-preparation` and `*-collection` entries, `outcome-publication` | Contract `measurement-authority` |
 | REQ-07 | This plan is the design; the contracts below fix LLR precision, lane layout, scalar reference, workspace ownership, termination, partial batches, integration points and the numerical contract. A permanent contract page precedes every implementation entry. | `decoder-numerical-contract-page` | Profile and feasibility evidence above |
-| REQ-08 | `gf2-coding` owns a batch soft-decoder trait with default paths for every soft decoder and one shared contract function; the LDPC lane decoder, the rate-matched NR decoder and the DVB-T2 concatenated decoder are its specialised implementers; `gf2-kernels-simd` owns the lane kernels; one generic `gf2-sim` stage consumes the trait; the inherent LDPC batch functions are removed. | `batch-soft-decoder-trait`, `lane-kernel-portable`, `ldpc-lane-batch-decoder`, `batch-conformance-suite`, `lane-kernel-avx2`, `batch-decoder-avx2-route`, `batch-worker-pool`, `ldpc-decode-batch-cutover`, `nr-rate-matched-batch-decode`, `dvb-t2-concat-batch-decode`, the `sim-*` entries, `batch-decoding-reference-pages` | Contracts `batch-soft-decoder-trait`, `ldpc-lane-decoder`, `lane-kernel-interface`; ledger topics `decoder-traits`, `implementers`, `stage-boundary` |
+| REQ-08 | `gf2-coding` owns a batch soft-decoder trait with default paths for every soft decoder and one shared contract function; the LDPC lane decoder, the rate-matched NR decoder and the DVB-T2 concatenated decoder are its specialised implementers; `gf2-kernels-simd` owns the lane kernels; one generic `gf2-sim` stage consumes the trait; the inherent LDPC batch functions are removed. | `batch-soft-decoder-trait`, `lane-kernel-portable`, `ldpc-lane-batch-decoder`, `batch-conformance-suite`, `lane-kernel-avx2`, `batch-decoder-avx2-route`, `batch-worker-pool`, the four `decode-batch-*` entries, `nr-rate-matched-batch-decode`, `dvb-t2-concat-batch-decode`, the `sim-*` entries, `batch-decoding-reference-pages` | Contracts `batch-soft-decoder-trait`, `ldpc-lane-decoder`, `lane-kernel-interface`; ledger topics `decoder-traits`, `implementers`, `stage-boundary` |
 | REQ-09 | A lane is a frame, so a frame's result is a function of its own LLRs; one shared suite holds every route to the single-frame decoder, and worker count, scheduling, resume and fallback are asserted. | `batch-soft-decoder-trait`, `batch-conformance-suite`, `lane-kernel-avx2`, `batch-decoder-avx2-route`, `batch-worker-pool`, `sim-batch-determinism` | Contract `float-numerical-contract` |
-| REQ-10 | Latency, batch fill, throughput and workspace memory are cells or recorded diagnostics of the before/after and AFF3CT families; batch sizes and core arms are swept; matched and fastest-compatible results stay in separate families and tables. | `measurement-arms`, the before-after and comparator entries, `outcome-publication` | Contract `comparison-arms` |
+| REQ-10 | Latency, batch fill, throughput and workspace memory are cells or recorded diagnostics of the before/after and AFF3CT families; batch sizes and core arms are swept; matched and fastest-compatible results stay in separate families and tables. | the three `*-benchmark-arms*` entries, the five `*-family-preparation` entries, the before-after and comparator collection entries, `outcome-publication` | Contract `comparison-arms` |
 | REQ-11 | No quantization and no schedule change is introduced; the contract page states their exclusion. | `decoder-numerical-contract-page`, `outcome-publication` | Decision record; DEC-02 |
 | REQ-12 | The bounded record is committed and closed; the outcome record sets inter-frame and QC-aware intra-frame cells against their common baseline. | `outcome-publication` | Decision record; DEC-10 |
 | REQ-13 | Decode selectors join the coding tuning section; a coding owner producer calibrates them through the offline tuning campaign; a `selector-calibration` family reconfirms the profile on holdout inputs with fill, transposition and workspace costs inside the call. | `decode-selector-family`, `coding-tuning-producer`, the two `campaign-*-coding-owner` entries, the `decoder-calibration-*` and `selector-holdout-*` entries, `decoder-dispatch-verification` | Contract `tuning-owner-mechanism`; DEC-09 |
@@ -136,8 +136,8 @@ conservative values select the scalar reference.
 ### `measured-arms` [implementation-produced] — benchmark arms with build identity
 
 The gf2 single-frame and lane arms and the AFF3CT arms of `comparison-arms`,
-built once in a workspace of their own, validated against the prepared
-per-frame quality record and smoked through the shared runner. Every family
+built once in a workspace of their own, with one committed build identity,
+validation record and runner smoke record. Every family
 measures these executables by digest.
 
 ### `calibrated-decode-profile` [implementation-produced] — committed coding owner envelope
@@ -200,7 +200,10 @@ core and algebra envelopes, so it depends on no core calibration.
 | lane-kernel-avx2 | Vectorize the lane kernels with AVX2 | task | AVX2 lane backend bit-identical to the portable backend behind safety contracts | float-numerical-contract, lane-layout, lane-termination, lane-kernel-interface | REQ-08, REQ-09, MSRV-FEASIBILITY, SOURCE-EVIDENCE | creates 2, touches 2 | — | batch-conformance-suite |
 | batch-decoder-avx2-route | Route LDPC batch decoding to the AVX2 lanes by capability | task | LDPC batch decoder selects the AVX2 lane backend by feature with tested fallbacks | ldpc-lane-decoder, lane-kernel-interface, decode-selectors, float-numerical-contract | REQ-08, REQ-09, SOURCE-EVIDENCE | creates 1, touches 4 | — | lane-kernel-avx2 |
 | batch-worker-pool | Decode batches across workers through one pooled batch decoder | task | One pooled batch decoder over the trait with worker-count invariant results | batch-soft-decoder-trait, decode-selectors | REQ-08, REQ-09, SOURCE-EVIDENCE | creates 2, touches 1 | — | batch-soft-decoder-trait, decode-selector-family |
-| ldpc-decode-batch-cutover | Move callers of the inherent LDPC batch functions to the batch trait | task | Inherent LDPC batch functions removed with each caller on the batch trait | batch-soft-decoder-trait, ldpc-lane-decoder | REQ-08, SOURCE-EVIDENCE | touches 6 | — | batch-decoder-avx2-route, batch-worker-pool |
+| decode-batch-test-callers | Move the tests of the inherent LDPC batch functions to the batch trait | task | Tests of LDPC batch decoding run through the batch trait | batch-soft-decoder-trait, ldpc-lane-decoder | REQ-08, SOURCE-EVIDENCE | touches 2 | — | batch-decoder-avx2-route, batch-worker-pool |
+| decode-batch-bench-callers | Move the benchmarks of the inherent LDPC batch functions to the batch trait | task | Benchmarks of LDPC batch decoding run through the batch trait | batch-soft-decoder-trait, ldpc-lane-decoder | REQ-08, SOURCE-EVIDENCE | touches 3 | — | batch-decoder-avx2-route, batch-worker-pool |
+| decode-batch-howto-page | Show parallel LDPC decoding through the batch trait in the how-to page | task | How-to page shows parallel LDPC decoding through the batch trait | batch-soft-decoder-trait, ldpc-lane-decoder | REQ-08, SOURCE-EVIDENCE | touches 1 | — | batch-decoder-avx2-route, batch-worker-pool |
+| decode-batch-removal | Remove the inherent LDPC batch functions | task | Inherent LDPC batch functions are gone with one batch decoding path left | batch-soft-decoder-trait | REQ-08, SOURCE-EVIDENCE | touches 1 | — | decode-batch-test-callers, decode-batch-bench-callers, decode-batch-howto-page |
 | nr-rate-matched-batch-decode | Decode rate-matched 5G NR frame batches in lanes | task | Rate-matched NR batch decoder implements the trait with single-frame-equal results | batch-soft-decoder-trait, ldpc-lane-decoder, float-numerical-contract | REQ-08, REQ-14, CONSUMERS-EDA07788, SOURCE-EVIDENCE | touches 2 | — | batch-conformance-suite |
 | dvb-t2-concat-batch-decode | Decode DVB-T2 concatenated frame batches in lanes | task | DVB-T2 concatenated batch decoder implements the trait with single-frame-equal results | batch-soft-decoder-trait, ldpc-lane-decoder | REQ-08, SOURCE-EVIDENCE | touches 2 | — | batch-conformance-suite |
 | sim-batch-decode-stage | Provide a simulation decode stage over the batch decoder trait | task | Generic gf2-sim decode stage consumes the batch soft-decoder trait | batch-soft-decoder-trait | REQ-08, SOURCE-EVIDENCE | creates 1, touches 1 | — | batch-soft-decoder-trait |
@@ -208,12 +211,18 @@ core and algebra envelopes, so it depends on no core calibration.
 | sim-nr-decode-stage-batch | Decode NR stage batches through the batch decode stage | task | NR decode stage is a thin consumer of the batch decode stage | batch-soft-decoder-trait | REQ-08, SOURCE-EVIDENCE, CONSUMERS-12FDEB5B | touches 1 | — | sim-batch-decode-stage, nr-rate-matched-batch-decode, batch-decoder-avx2-route |
 | sim-dvb-t2-stage-batch | Decode DVB-T2 stage batches through the batch decode stage | task | DVB-T2 decode stage is a thin consumer of the batch decode stage | batch-soft-decoder-trait | REQ-08, SOURCE-EVIDENCE | touches 1 | — | sim-batch-decode-stage, dvb-t2-concat-batch-decode, batch-decoder-avx2-route |
 | sim-bler-sweep-batch | Decode BLER sweep slices through the batch decoder trait | task | BLER sweep is a thin consumer of the batch decoder trait | batch-soft-decoder-trait, ldpc-lane-decoder | REQ-08, SOURCE-EVIDENCE, PROFILE-3BE770D5 | touches 1 | — | batch-decoder-avx2-route |
-| sim-batch-determinism | Show seeded simulation determinism with batch decoding | task | Batch-decoding pipelines are deterministic across workers, resume and fallbacks | batch-soft-decoder-trait, float-numerical-contract | REQ-09, MEASUREMENT-CONTRACT | touches 3, uncertain | — | sim-cpu-ldpc-stage-batch, sim-nr-decode-stage-batch, sim-dvb-t2-stage-batch |
-| measurement-arms | Build the batch decoder benchmark arms | simulation | Validated benchmark arms for the batch decoder with pinned AFF3CT comparators | measurement-authority, comparison-arms, ldpc-lane-decoder | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF, COMPARATOR-C077A88B, PROFILE-3BE770D5 | creates 3 | — | batch-decoder-avx2-route |
-| before-after-families-preparation | Freeze the before and after decoder families | simulation | Before and after pilot families frozen with ledgers, launcher, smoke record and queue lines | measurement-authority, measured-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF, UPDATE-07CA8585 | creates 6, touches 1 | — | measurement-arms |
-| comparator-families-preparation | Freeze the AFF3CT comparison families | simulation | AFF3CT matched and fastest-compatible pilot families frozen with queue lines | measurement-authority, comparison-arms, measured-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF, COMPARATOR-C077A88B | creates 2, touches 4 | — | before-after-families-preparation |
-| before-after-pilot-collection | Collect the before and after pilots | simulation | Accepted before and after pilot receipts with frozen confirmation addenda | measurement-authority | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 3, touches 1 | — | before-after-families-preparation |
-| comparator-pilot-collection | Collect the AFF3CT comparison pilots | simulation | Accepted comparison pilot receipts with the matched confirmation addendum frozen | measurement-authority, comparison-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF, COMPARATOR-C077A88B | creates 1, touches 2 | — | comparator-families-preparation |
+| sim-batch-determinism | Show seeded simulation determinism with batch decoding | task | Batch-decoding pipelines are deterministic across workers, resume and fallbacks | batch-soft-decoder-trait, float-numerical-contract | REQ-09, MEASUREMENT-CONTRACT | touches 3 | — | sim-cpu-ldpc-stage-batch, sim-nr-decode-stage-batch, sim-dvb-t2-stage-batch |
+| gf2-benchmark-arms | Build the gf2 batch decoder benchmark arms | simulation | Two gf2 benchmark arms of the LDPC batch decoder with per-frame quality checks | measurement-authority, ldpc-lane-decoder | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF, PROFILE-3BE770D5 | creates 1 | — | batch-decoder-avx2-route |
+| aff3ct-benchmark-arms | Provide the AFF3CT benchmark arms of the batch decoder comparison | simulation | AFF3CT arms catalogued by digest with one INTRA arm and its quality record | measurement-authority, comparison-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF, COMPARATOR-C077A88B | creates 2, touches 1 | — | gf2-benchmark-arms |
+| benchmark-arms-validation | Record the identity of the benchmark arms with their smoke | simulation | Build identity, validation, memory and smoke records of the benchmark arms | measurement-authority, comparison-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 5 | — | aff3ct-benchmark-arms |
+| campaign-tooling | Provide the campaign tooling of the batch decoder families | simulation | One generator, launcher and smoke runner serve the protocol families of the story | measurement-authority, measured-arms | REQ-01, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF, UPDATE-07CA8585 | creates 3 | — | benchmark-arms-validation |
+| single-worker-family-preparation | Freeze the single-worker before-after family | simulation | Single-worker before-after pilot family frozen with its queue line | measurement-authority, measured-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 2, touches 1 | — | campaign-tooling |
+| multicore-family-preparation | Freeze the multicore before-after family | simulation | Multicore before-after pilot family frozen with its queue line | measurement-authority, measured-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 2, touches 1 | — | campaign-tooling |
+| batch-sweep-family-preparation | Freeze the batch-size sweep family | simulation | Exploratory batch-size sweep family frozen with its queue line | measurement-authority, measured-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 2, touches 1 | — | campaign-tooling |
+| matched-family-preparation | Freeze the matched AFF3CT family | simulation | Matched AFF3CT pilot family frozen with its queue line | measurement-authority, measured-arms, comparison-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 2, touches 1 | — | campaign-tooling |
+| fastest-compatible-family-preparation | Freeze the fastest-compatible AFF3CT family | simulation | Exploratory fastest-compatible AFF3CT family frozen with its queue line | measurement-authority, measured-arms, comparison-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 2, touches 1 | — | campaign-tooling |
+| before-after-pilot-collection | Collect the before and after pilots | simulation | Accepted before and after pilot receipts with frozen confirmation addenda | measurement-authority | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 2, touches 2 | — | single-worker-family-preparation, multicore-family-preparation, batch-sweep-family-preparation |
+| comparator-pilot-collection | Collect the AFF3CT comparison pilots | simulation | Accepted comparison pilot receipts with the matched confirmation addendum frozen | measurement-authority, comparison-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF, COMPARATOR-C077A88B | creates 1, touches 2 | — | matched-family-preparation, fastest-compatible-family-preparation |
 | before-after-confirmation-collection | Collect the before and after confirmations | simulation | Before and after confirmation receipts accepted with outcomes recorded as evaluated | measurement-authority | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | touches 1 | — | before-after-pilot-collection |
 | comparator-confirmation-collection | Collect the matched AFF3CT confirmation | simulation | Matched AFF3CT confirmation receipt accepted with its gap recorded as evaluated | measurement-authority, comparison-arms | REQ-01, REQ-10, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | touches 1 | — | comparator-pilot-collection |
 | coding-tuning-producer | Produce decode selector measurements from a coding owner harness | task | Coding owner producer measures the decode selector fields under the offline tuning protocol | tuning-owner-mechanism, decode-selectors, ldpc-lane-decoder, batch-soft-decoder-trait | REQ-13, CALIBRATION-PLAN-63BAD95D, SOURCE-EVIDENCE | creates 2, touches 1 | — | batch-decoder-avx2-route, batch-worker-pool |
@@ -221,14 +230,14 @@ core and algebra envelopes, so it depends on no core calibration.
 | campaign-validator-coding-owner | Accept a coding owner campaign in the tuning campaign validator | task | Independent validator accepts a coding owner campaign stage | tuning-owner-mechanism | REQ-13, CALIBRATION-PLAN-63BAD95D, SOURCE-EVIDENCE | touches 1 | — | campaign-driver-coding-owner |
 | decoder-calibration-preparation | Declare the decoder calibration campaign | simulation | Decoder calibration campaign declared with protocol amendment, manifest and queue line | tuning-owner-mechanism, measurement-authority | REQ-01, REQ-13, CALIBRATION-PLAN-63BAD95D, MEASUREMENT-CONTRACT, WORKER-BRIEF | creates 3, touches 1 | — | campaign-validator-coding-owner |
 | decoder-calibration-collection | Commit the calibrated decode profile | simulation | Coding owner envelope with calibrated decode selectors committed with its receipt | tuning-owner-mechanism, measurement-authority, decode-selectors | REQ-01, REQ-13, CALIBRATION-PLAN-63BAD95D, MEASUREMENT-CONTRACT, WORKER-BRIEF | creates 2, touches 1 | — | decoder-calibration-preparation |
-| selector-holdout-preparation | Freeze the decode selector holdout family | simulation | Selector holdout family frozen with holdout declaration, smoke record and queue line | measurement-authority, calibrated-decode-profile, measured-arms, tuning-owner-mechanism | REQ-01, REQ-13, CALIBRATION-PLAN-63BAD95D, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 2, touches 4 | — | decoder-calibration-collection, comparator-families-preparation |
+| selector-holdout-preparation | Freeze the decode selector holdout family | simulation | Selector holdout family frozen with holdout declaration, smoke record and queue line | measurement-authority, calibrated-decode-profile, measured-arms, tuning-owner-mechanism | REQ-01, REQ-13, CALIBRATION-PLAN-63BAD95D, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 3, touches 2 | — | decoder-calibration-collection, campaign-tooling |
 | selector-holdout-pilot-collection | Collect the decode selector holdout pilot | simulation | Accepted holdout pilot receipt with the confirmation addendum frozen | measurement-authority, calibrated-decode-profile | REQ-01, REQ-13, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | creates 1, touches 2 | — | selector-holdout-preparation |
 | selector-holdout-confirmation-collection | Collect the decode selector holdout confirmation | simulation | Holdout confirmation receipt accepted with the profile's outcome recorded as evaluated | measurement-authority, calibrated-decode-profile | REQ-01, REQ-13, MEASUREMENT-CONTRACT, PROTOCOL-V4, WORKER-BRIEF | touches 1 | — | selector-holdout-pilot-collection |
 | decoder-dispatch-verification | Verify decoder dispatch under the committed profile | task | Production decode routes observed under the committed, conservative and fallback configurations | calibrated-decode-profile, decode-selectors, ldpc-lane-decoder | REQ-13, CALIBRATION-PLAN-63BAD95D | creates 1, touches 1 | — | decoder-calibration-collection |
-| batch-decoding-reference-pages | Describe batch LDPC decoding in the permanent pages | task | Permanent pages state batch decoding routes, selectors and supported configurations | batch-soft-decoder-trait, ldpc-lane-decoder, decode-selectors | REQ-08, REQ-13, SOURCE-EVIDENCE | touches 3 | — | decoder-dispatch-verification, ldpc-decode-batch-cutover |
-| lane-profile-preparation | Prepare the profile series of the batch decoder | simulation | Profile series of the batch decoder arms prepared with its queue line | measurement-authority, measured-arms | REQ-01, PROFILE-3BE770D5, MEASUREMENT-CONTRACT, WORKER-BRIEF | creates 1, touches 2, uncertain | — | measurement-arms |
+| batch-decoding-reference-pages | Describe batch LDPC decoding in the permanent pages | task | Permanent pages state batch decoding routes, selectors and supported configurations | batch-soft-decoder-trait, ldpc-lane-decoder, decode-selectors | REQ-08, REQ-13, SOURCE-EVIDENCE | touches 3 | — | decoder-dispatch-verification, decode-batch-howto-page |
+| lane-profile-preparation | Prepare the profile series of the batch decoder | simulation | Profile series of the batch decoder arms prepared with its queue line | measurement-authority, measured-arms | REQ-01, PROFILE-3BE770D5, MEASUREMENT-CONTRACT, WORKER-BRIEF | creates 2, touches 2 | — | benchmark-arms-validation |
 | lane-profile-collection | Summarize the profile series of the batch decoder | simulation | Generated profile summary of the batch decoder arms from the measured series | measurement-authority | REQ-01, PROFILE-3BE770D5, MEASUREMENT-CONTRACT, WORKER-BRIEF | creates 1 | — | lane-profile-preparation |
-| outcome-publication | Report the inter-frame decoder outcomes with their limits | task | Outcome record with generated tables, criterion status and residual limits | measurement-authority, comparison-arms, float-numerical-contract | REQ-01, REQ-10, REQ-11, REQ-12, MEASUREMENT-CONTRACT, WORKER-BRIEF, DECISION-RECORD-F63A2464, COMPARATOR-C077A88B, PROFILE-3BE770D5 | creates 3 | — | before-after-confirmation-collection, comparator-confirmation-collection, selector-holdout-confirmation-collection, lane-profile-collection, batch-decoding-reference-pages, sim-batch-determinism, sim-bler-sweep-batch |
+| outcome-publication | Report the inter-frame decoder outcomes with their limits | task | Outcome record with generated tables, criterion status and residual limits | measurement-authority, comparison-arms, float-numerical-contract | REQ-01, REQ-10, REQ-11, REQ-12, MEASUREMENT-CONTRACT, WORKER-BRIEF, DECISION-RECORD-F63A2464, COMPARATOR-C077A88B, PROFILE-3BE770D5 | creates 3 | — | before-after-confirmation-collection, comparator-confirmation-collection, selector-holdout-confirmation-collection, lane-profile-collection, batch-decoding-reference-pages, sim-batch-determinism, sim-bler-sweep-batch, decode-batch-removal |
 
 ```mermaid
 flowchart LR
@@ -241,35 +250,44 @@ flowchart LR
     N6["lane-kernel-avx2: Vectorize the lane kernels with AVX2"]
     N7["batch-decoder-avx2-route: Route LDPC batch decoding to the AVX2 lanes by capability"]
     N8["batch-worker-pool: Decode batches across workers through one pooled batch decoder"]
-    N9["ldpc-decode-batch-cutover: Move callers of the inherent LDPC batch functions to the batch trait"]
-    N10["nr-rate-matched-batch-decode: Decode rate-matched 5G NR frame batches in lanes"]
-    N11["dvb-t2-concat-batch-decode: Decode DVB-T2 concatenated frame batches in lanes"]
-    N12["sim-batch-decode-stage: Provide a simulation decode stage over the batch decoder trait"]
-    N13["sim-cpu-ldpc-stage-batch: Decode CPU LDPC stage batches through the batch decode stage"]
-    N14["sim-nr-decode-stage-batch: Decode NR stage batches through the batch decode stage"]
-    N15["sim-dvb-t2-stage-batch: Decode DVB-T2 stage batches through the batch decode stage"]
-    N16["sim-bler-sweep-batch: Decode BLER sweep slices through the batch decoder trait"]
-    N17["sim-batch-determinism: Show seeded simulation determinism with batch decoding"]
-    N18["measurement-arms: Build the batch decoder benchmark arms"]
-    N19["before-after-families-preparation: Freeze the before and after decoder families"]
-    N20["comparator-families-preparation: Freeze the AFF3CT comparison families"]
-    N21["before-after-pilot-collection: Collect the before and after pilots"]
-    N22["comparator-pilot-collection: Collect the AFF3CT comparison pilots"]
-    N23["before-after-confirmation-collection: Collect the before and after confirmations"]
-    N24["comparator-confirmation-collection: Collect the matched AFF3CT confirmation"]
-    N25["coding-tuning-producer: Produce decode selector measurements from a coding owner harness"]
-    N26["campaign-driver-coding-owner: Admit gf2-coding as an owner in the tuning campaign driver"]
-    N27["campaign-validator-coding-owner: Accept a coding owner campaign in the tuning campaign validator"]
-    N28["decoder-calibration-preparation: Declare the decoder calibration campaign"]
-    N29["decoder-calibration-collection: Commit the calibrated decode profile"]
-    N30["selector-holdout-preparation: Freeze the decode selector holdout family"]
-    N31["selector-holdout-pilot-collection: Collect the decode selector holdout pilot"]
-    N32["selector-holdout-confirmation-collection: Collect the decode selector holdout confirmation"]
-    N33["decoder-dispatch-verification: Verify decoder dispatch under the committed profile"]
-    N34["batch-decoding-reference-pages: Describe batch LDPC decoding in the permanent pages"]
-    N35["lane-profile-preparation: Prepare the profile series of the batch decoder"]
-    N36["lane-profile-collection: Summarize the profile series of the batch decoder"]
-    N37["outcome-publication: Report the inter-frame decoder outcomes with their limits"]
+    N9["decode-batch-test-callers: Move the tests of the inherent LDPC batch functions to the batch trait"]
+    N10["decode-batch-bench-callers: Move the benchmarks of the inherent LDPC batch functions to the batch trait"]
+    N11["decode-batch-howto-page: Show parallel LDPC decoding through the batch trait in the how-to page"]
+    N12["decode-batch-removal: Remove the inherent LDPC batch functions"]
+    N13["nr-rate-matched-batch-decode: Decode rate-matched 5G NR frame batches in lanes"]
+    N14["dvb-t2-concat-batch-decode: Decode DVB-T2 concatenated frame batches in lanes"]
+    N15["sim-batch-decode-stage: Provide a simulation decode stage over the batch decoder trait"]
+    N16["sim-cpu-ldpc-stage-batch: Decode CPU LDPC stage batches through the batch decode stage"]
+    N17["sim-nr-decode-stage-batch: Decode NR stage batches through the batch decode stage"]
+    N18["sim-dvb-t2-stage-batch: Decode DVB-T2 stage batches through the batch decode stage"]
+    N19["sim-bler-sweep-batch: Decode BLER sweep slices through the batch decoder trait"]
+    N20["sim-batch-determinism: Show seeded simulation determinism with batch decoding"]
+    N21["gf2-benchmark-arms: Build the gf2 batch decoder benchmark arms"]
+    N22["aff3ct-benchmark-arms: Provide the AFF3CT benchmark arms of the batch decoder comparison"]
+    N23["benchmark-arms-validation: Record the identity of the benchmark arms with their smoke"]
+    N24["campaign-tooling: Provide the campaign tooling of the batch decoder families"]
+    N25["single-worker-family-preparation: Freeze the single-worker before-after family"]
+    N26["multicore-family-preparation: Freeze the multicore before-after family"]
+    N27["batch-sweep-family-preparation: Freeze the batch-size sweep family"]
+    N28["matched-family-preparation: Freeze the matched AFF3CT family"]
+    N29["fastest-compatible-family-preparation: Freeze the fastest-compatible AFF3CT family"]
+    N30["before-after-pilot-collection: Collect the before and after pilots"]
+    N31["comparator-pilot-collection: Collect the AFF3CT comparison pilots"]
+    N32["before-after-confirmation-collection: Collect the before and after confirmations"]
+    N33["comparator-confirmation-collection: Collect the matched AFF3CT confirmation"]
+    N34["coding-tuning-producer: Produce decode selector measurements from a coding owner harness"]
+    N35["campaign-driver-coding-owner: Admit gf2-coding as an owner in the tuning campaign driver"]
+    N36["campaign-validator-coding-owner: Accept a coding owner campaign in the tuning campaign validator"]
+    N37["decoder-calibration-preparation: Declare the decoder calibration campaign"]
+    N38["decoder-calibration-collection: Commit the calibrated decode profile"]
+    N39["selector-holdout-preparation: Freeze the decode selector holdout family"]
+    N40["selector-holdout-pilot-collection: Collect the decode selector holdout pilot"]
+    N41["selector-holdout-confirmation-collection: Collect the decode selector holdout confirmation"]
+    N42["decoder-dispatch-verification: Verify decoder dispatch under the committed profile"]
+    N43["batch-decoding-reference-pages: Describe batch LDPC decoding in the permanent pages"]
+    N44["lane-profile-preparation: Prepare the profile series of the batch decoder"]
+    N45["lane-profile-collection: Summarize the profile series of the batch decoder"]
+    N46["outcome-publication: Report the inter-frame decoder outcomes with their limits"]
     N0 --> N1
     N1 --> N4
     N2 --> N4
@@ -281,50 +299,67 @@ flowchart LR
     N2 --> N8
     N7 --> N9
     N8 --> N9
-    N5 --> N10
-    N5 --> N11
-    N3 --> N12
-    N12 --> N13
-    N7 --> N13
-    N12 --> N14
-    N10 --> N14
-    N7 --> N14
-    N12 --> N15
-    N11 --> N15
-    N7 --> N15
+    N7 --> N10
+    N8 --> N10
+    N7 --> N11
+    N8 --> N11
+    N9 --> N12
+    N10 --> N12
+    N11 --> N12
+    N5 --> N13
+    N5 --> N14
+    N3 --> N15
+    N15 --> N16
     N7 --> N16
-    N13 --> N17
-    N14 --> N17
     N15 --> N17
+    N13 --> N17
+    N7 --> N17
+    N15 --> N18
+    N14 --> N18
     N7 --> N18
-    N18 --> N19
-    N19 --> N20
-    N19 --> N21
-    N20 --> N22
-    N21 --> N23
-    N22 --> N24
-    N7 --> N25
-    N8 --> N25
-    N25 --> N26
-    N26 --> N27
-    N27 --> N28
-    N28 --> N29
-    N29 --> N30
-    N20 --> N30
-    N30 --> N31
-    N31 --> N32
-    N29 --> N33
-    N33 --> N34
-    N9 --> N34
-    N18 --> N35
+    N7 --> N19
+    N16 --> N20
+    N17 --> N20
+    N18 --> N20
+    N7 --> N21
+    N21 --> N22
+    N22 --> N23
+    N23 --> N24
+    N24 --> N25
+    N24 --> N26
+    N24 --> N27
+    N24 --> N28
+    N24 --> N29
+    N25 --> N30
+    N26 --> N30
+    N27 --> N30
+    N28 --> N31
+    N29 --> N31
+    N30 --> N32
+    N31 --> N33
+    N7 --> N34
+    N8 --> N34
+    N34 --> N35
     N35 --> N36
-    N23 --> N37
-    N24 --> N37
-    N32 --> N37
     N36 --> N37
-    N34 --> N37
-    N17 --> N37
-    N16 --> N37
+    N37 --> N38
+    N38 --> N39
+    N24 --> N39
+    N39 --> N40
+    N40 --> N41
+    N38 --> N42
+    N42 --> N43
+    N11 --> N43
+    N23 --> N44
+    N44 --> N45
+    N32 --> N46
+    N33 --> N46
+    N41 --> N46
+    N45 --> N46
+    N43 --> N46
+    N20 --> N46
+    N19 --> N46
+    N12 --> N46
 ```
 <!-- jit:breakdown-overview:end -->
 
