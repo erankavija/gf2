@@ -1,0 +1,16 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1 nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --test dispatch_fallback --cargo-profile ci-test --profile ci
+    Blocking waiting for file lock on artifact directory
+   Compiling gf2-kernels-simd v0.1.0 (./crates/gf2-kernels-simd)
+   Compiling tuning-campaign-support v0.1.0 (./dev/tools/tuning-campaign-support)
+   Compiling gf2-core v0.1.0 (./crates/gf2-core)
+error[E0432]: unresolved import `gf2_core::dispatch_contract`
+ --> crates/gf2-core/tests/dispatch_fallback.rs:5:15
+  |
+5 | use gf2_core::dispatch_contract::{assert_fallback_contract, BUILD};
+  |               ^^^^^^^^^^^^^^^^^ could not find `dispatch_contract` in `gf2_core`
+
+For more information about this error, try `rustc --explain E0432`.
+error: could not compile `gf2-core` (test "dispatch_fallback") due to 1 previous error
+error: command `~/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/cargo test --no-run --message-format json-render-diagnostics --package gf2-core --test dispatch_fallback --profile ci-test` exited with code 101
+# exit: 101
