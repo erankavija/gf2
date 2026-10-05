@@ -2123,7 +2123,8 @@
     "Session 27: 63bad95d untimed stage merged (route inventory, dispatch_contract fallback suite, calibration plan and budget; merged-tree cargo-ci passes). Nothing frozen. 4337c02e runs before 63bad95d freezes; the threshold edit happens in 63bad95d.",
     "Session 27: merged-tree cargo-ci for the 63bad95d stage passes at f194490d1 on a quiet host (two earlier runs lost one test each to the 15 s cap at load 10 and 29). Kernel branch merged at eae9c455b; CI passes. 7d44b71f: asm-artefact-present, cargo-ci, code-review PASS. 1b034786: asm-artefact-present, cargo-ci PASS; code-review FAIL F1 (the shared contract test omits the scalar reference in avx2.rs and tests zero implementations on a host without AVX2). Rework 1 dispatched.",
     "Session 27: bug 54e70918 filed (two gf2-core SIMD equivalence test files pass vacuously without a SIMD bundle).",
-    "Session 27: 1b034786 DONE (gates pass at aa743ddca after rework 1; review reviews/1b034786-r1.md) and 7d44b71f DONE (gates pass; review reviews/7d44b71f-r1.md). fa1d8733 is unblocked."
+    "Session 27: 1b034786 DONE (gates pass at aa743ddca after rework 1; review reviews/1b034786-r1.md) and 7d44b71f DONE (gates pass; review reviews/7d44b71f-r1.md). fa1d8733 is unblocked.",
+    "Session 27: dispatched fa1d8733 and 54e70918 at 856c78b38. Held for the invoker: f63a2464 (three code-review rulings), b2e09d41 (shared checker under the freeze), a87ae828 (generator edit denied to a worker by the permission system), bfc2ceab (per-interface design choice), 316150fd and dd359005 (their criteria add steps to scripts/cargo-ci.sh, shared infrastructure), 4337c02e and the timed part of 63bad95d (benchmark windows and five plan decisions)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2186,7 +2187,9 @@
     "remaining_descendants": [],
     "active_workers": {
       "w-b2e09d41": "held, no commits; awaits invoker ruling",
-      "w-63bad95d": "untimed stage merged; holds for the invoker's plan decisions"
+      "w-63bad95d": "untimed stage merged; holds for the invoker's plan decisions",
+      "w-fa1d8733": "agent-fa1d8733",
+      "w-54e70918": "agent-54e70918"
     },
     "m4ri_pilot": "v4-r1-pilot ran 2026-09-28T23:00Z, key 53a5bb9b75c30e58; verified from its execution log; resolution record dev/bench_results/2037941f/m4ri-gap-resolution.md records eligible",
     "m4ri_confirmation": {
