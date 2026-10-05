@@ -1612,7 +1612,8 @@
   "2ad3a3e0": 1,
   "1b034786": 1,
   "3a8ec493": 1,
-  "66698c3c": 1
+  "66698c3c": 1,
+  "2133d15f": 2
  },
  "surfaced_pitfalls": [
   {
@@ -2226,7 +2227,8 @@
   "Invoker rule 2026-10-05 (session 28): resume an agent only while it is recently active (the one-hour agent cache window); an agent idle longer starts as a new session with a self-contained brief.",
   "Invoker constraint 2026-10-05: the ed3d490e breakdown is 38 tasks and does not grow; a review asking for more coverage is answered by consolidation, otherwise escalate.",
   "Invoker decisions on the ed3d490e plan (2026-10-05): general batch soft-decoder trait in gf2-coding (DEC-07), fixed waves, gf2-coding as third owner of the offline tuning system, descriptive QC comparison, two default paths, decoded words of implementer-reported length (DEC-08 to DEC-12).",
-  "Session 28: worker worktrees no longer run the full cargo-ci.sh at delivery (30 to 47 minutes under load with sccache off, split job budget, exclusive test lock and nice 19); they run focused suites and the lead gates the merged tree with BUSY_HOST_OVERRIDE=1."
+  "Session 28: worker worktrees no longer run the full cargo-ci.sh at delivery (30 to 47 minutes under load with sccache off, split job budget, exclusive test lock and nice 19); they run focused suites and the lead gates the merged tree with BUSY_HOST_OVERRIDE=1.",
+  "Invoker 2026-10-06: the ed3d490e plan stays one story; the 38-task cap is lifted for the plan-review splits and one full terminal-invariant audit (66 tasks, 104 edges at 21b646407; audit record terminal-audit.md beside the plan)."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
