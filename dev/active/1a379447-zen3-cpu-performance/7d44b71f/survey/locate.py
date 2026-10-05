@@ -32,6 +32,7 @@ def _shared_scripts():
 sys.path.insert(0, str(ROOT / _shared_scripts()))
 import asm_listing  # noqa: E402
 import content_anchor  # noqa: E402
+import crate_functions  # noqa: E402
 import repository_files  # noqa: E402
 import rust_code_text  # noqa: E402
 
@@ -74,12 +75,6 @@ STEPS = [
     (f"anchor to before-{FIX}", "anchor", f"before-{FIX}"),
     (f"after-{FIX} to contracts-complete", f"after-{FIX}", "contracts-complete"),
 ]
-
-
-def digest_changes(before, after):
-    """Sorted paths whose digests differ between two baselines, or exist in one only."""
-    old, new = before.digests(), after.digests()
-    return sorted(path for path in set(old) | set(new) if old.get(path) != new.get(path))
 
 
 def tracked(suffix):
