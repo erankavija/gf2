@@ -19,8 +19,8 @@ those commits; `unverified` otherwise. The exit status is zero when every row
 holds in the frame `--frame` names.
 
 `--record` writes, for a ledger inside the repository and each row that
-differs from the `--tree` revision, where its text lies there and the commits
-that changed its file and displaced its line.
+differs from the `--tree` revision, the file digest and the lines of its text
+there and the commits that changed its file and displaced its line.
 
 Usage: verify-source-evidence.py LEDGER --project NAME --frame FRAME
                                  [--tree REVISION] [--record PATH]
@@ -113,6 +113,7 @@ def drift(repository: Repository, row: dict, tree: str) -> dict:
         "verbatim": row["verbatim"],
         "recorded_commit": row["commit"],
         "recorded_line": row["line"],
+        "tree_sha256": hashlib.sha256(content).hexdigest() if content is not None else None,
         "tree_lines": positions(row, content) if content is not None else [],
         "first_file_change": changes[0] if changes else None,
         "first_line_displacement": displaced,
