@@ -2078,7 +2078,8 @@
     "Session 27: 6e87c436 DONE (no-change verdict; gates pass at 6ed11e791 after rework 1; review reviews/6e87c436-r1.md). Next: 2ad3a3e0, then story 2037941f.",
     "Session 27: 2ad3a3e0 merged; gates at b44fdfc17: cargo-ci, code-review, research-review PASS; doc-review FAIL F1 (mid-range-findings.md says no production code changes while the same document names two production edits). Rework 1 dispatched. Issues 4337c02e (matvec SIMD threshold versus scalar lane) and fa1d8733 (unselected XOR unroll bodies) filed under the epic.",
     "Session 27: 2ad3a3e0 DONE (gates pass at e6e82bc09 after rework 1; review reviews/2ad3a3e0-r1.md). Story 2037941f has no open descendant; its seven gates run next, holistic-review last.",
-    "Session 27: story 2037941f DONE (all seven gates pass; review reviews/2037941f-r1.md). Wave 3 is complete: both stories c04dd4ac and 2037941f are done. current_wave advanced to 4."
+    "Session 27: story 2037941f DONE (all seven gates pass; review reviews/2037941f-r1.md). Wave 3 is complete: both stories c04dd4ac and 2037941f are done. current_wave advanced to 4.",
+    "Session 27: five finished worktrees reclaimed without cache harvest; handoff-23.md written."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2103,7 +2104,8 @@
     "handoff-19.md",
     "handoff-20.md",
     "handoff-21.md",
-    "handoff-22.md"
+    "handoff-22.md",
+    "handoff-23.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
