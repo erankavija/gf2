@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-05T19:41:32.593189864Z",
   "context": {},
   "created_at": "2026-10-05T19:41:15.835289918Z",
@@ -19,7 +19,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T19:50:18.878261607Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-05T19:55:47.636458788Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "81afdf8e-8585-4048-aa5c-40737343d3ff",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -29,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Give the external and shift producing-closure generators a check mode",
-  "updated_at": "2026-10-05T19:46:59.401413345Z"
+  "updated_at": "2026-10-05T19:55:47.636458788Z"
 }
