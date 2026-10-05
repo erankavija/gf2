@@ -958,7 +958,8 @@
       "reason": "Track the pre-existing breakdown satisfies:REQ-06 addressability advisory from DVB code review; c04dd4ac depends on resolution."
     },
     "b2e09d41",
-    "6833c5b5"
+    "6833c5b5",
+    "7d44b71f"
   ],
   "escalations": [
     {
@@ -1478,7 +1479,8 @@
     "a0812b83": 2,
     "c04dd4ac": 2,
     "50f0bd42": 2,
-    "f63a2464": 1
+    "f63a2464": 1,
+    "6e87c436": 1
   },
   "surfaced_pitfalls": [
     {
@@ -2068,7 +2070,8 @@
     "Session 27: 50f0bd42 merged at 3bd366414 with confirmation and no-adoption decision; gates at e60732bef: asm-artefact-present PASS, cargo-ci PASS, research-review PASS (0 findings), code-review FAIL F1 (new M4RI render/freeze tools hard-code dev/ paths and a depth-dependent root traversal; @/invariant/no-dev-path-coupling). Rework 2 of 2 dispatched to the same worker.",
     "Session 27: 50f0bd42 DONE (no adoption; gates pass at 5ebb75b6e after rework 2; review reviews/50f0bd42-r2.md). ad2a6a58 DONE (lane retained; gates pass first round; review reviews/ad2a6a58-r1.md). Notify the fa787f85 lead or the repository owner that ad2a6a58 is done (198aafa3 REQ-01).",
     "Session 27: 4c1e441f DONE (accelerated path retained; gates pass first round; review reviews/4c1e441f-r1.md). f63a2464 merged; gates at 1ba3981ca: cargo-ci PASS, code-review FAIL (3 findings, all invoker decisions), research-review FAIL (F1 fastest-arm claim contradicts c077a88b; F2 unsupported 0.1 dB tolerance rationale; F3 uncited layered-convergence claim). Bugs b2e09d41 and 6833c5b5 filed under the epic. Notify the fa787f85 lead or the repository owner that 4c1e441f and ad2a6a58 are done.",
-    "Session 27: f63a2464 rework 1 merged (dev/active/f63a2464/corrections.md, frozen bytes preserved); at 9fd2812bc cargo-ci PASS and research-review PASS with no unresolved findings. Only code-review remains failed, on three invoker rulings; it is not re-run until they are given. corrections C-01 also reports the REQ-04 fastest quality-compatible external comparison as absent."
+    "Session 27: f63a2464 rework 1 merged (dev/active/f63a2464/corrections.md, frozen bytes preserved); at 9fd2812bc cargo-ci PASS and research-review PASS with no unresolved findings. Only code-review remains failed, on three invoker rulings; it is not re-run until they are given. corrections C-01 also reports the REQ-04 fastest quality-compatible external comparison as absent.",
+    "Session 27: 6e87c436 merged; gates at 9491c8b07: asm-artefact-present, cargo-ci, doc-review, research-review PASS; code-review FAIL F1 (verification.md prescribes an anchor expression that resolves to HEAD on main, so the drift and assembly records do not reproduce; pin the recorded anchor by content identity). Rework 1 dispatched. Bug 7d44b71f filed for the remaining AVX2 safety contracts."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2134,7 +2137,7 @@
       "2ad3a3e0"
     ],
     "active_workers": {
-      "w-f63a2464-final": "rework 1: research-review F1-F3; code-review F1-F3 await invoker rulings"
+      "w-6e87c436": "rework 1: code-review F1 (reproduction anchor)"
     },
     "m4ri_pilot": "v4-r1-pilot ran 2026-09-28T23:00Z, key 53a5bb9b75c30e58; verified from its execution log; resolution record dev/bench_results/2037941f/m4ri-gap-resolution.md records eligible",
     "m4ri_confirmation": {
