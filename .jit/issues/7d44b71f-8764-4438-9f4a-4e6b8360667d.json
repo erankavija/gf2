@@ -7,7 +7,187 @@
     "1b034786-d9d1-4e3d-aa47-2dff6658bb3f"
   ],
   "description": "Several AVX2 kernel wrappers in `gf2-kernels-simd` call `unsafe` functions without a stated safety contract; every unsafe boundary in the kernel crate carries one.\n\n## Background\n\n`crates/gf2-kernels-simd/src/x86/avx2.rs` exposes safe wrapper functions that call `#[target_feature]` kernels inside `unsafe` blocks. The fused AND-popcount route and its carry-save sibling state their contract with a `# Safety` rustdoc section on the kernel and a `// SAFETY:` comment at the call. The population-count, complement, find-first, shift and M4RM wrappers of the same module call their kernels without a `// SAFETY:` comment, and most `unsafe fn` items there have no `# Safety` section. The repository isolates production `unsafe` to the kernel crates on the condition that every unsafe boundary has an explicit safety contract.\n\n## Success Criteria\n\n- [hard] REQ-01: Every `unsafe fn` in `crates/gf2-kernels-simd` has a `# Safety` rustdoc section covering pointer validity, slice lengths, aliasing and required target features.\n- [hard] REQ-02: Every `unsafe` block in the crate has a `// SAFETY:` comment naming the runtime gate or invariant that discharges the callee's contract.\n- [hard] REQ-03: The instruction text of every affected symbol is unchanged, shown by a committed comparison of the regenerated assembly listings, and the shared behavioural suites pass with and without the `simd` feature on Rust 1.95.\n\n## Notes\n\nFound while verifying the dense-parity no-adoption outcome, which closed the gap for the fused AND-popcount route only. Comments and rustdoc carry the contract in the shortest form that states it.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "f6ad9bb0eab5f57932bd0b1509ab92276b683f8e14b25cff2d8c1d992783a5de",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/feature-hierarchy.rs",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/feature-hierarchy.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a4cabfd4b97906a070305531ea3721a6bf7738cc109e8d28b03f1394f1d730f6",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/scalar-build.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/test-logs/scalar-build.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9cbe588006ac072f8d0bc9f31fdab6a799d184d6d0189bd665ac0d6aecfc2732",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/crate-function-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-function-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5fb82b74fc81ada8514c8121a52c524bb26a1cc81c42912a3e3d0d5092a11e2a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/after-1b034786-baseline.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/after-1b034786-baseline.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7efd8c687da0dea5f2ec9cf4abeb2e374949b6857786ae2113b05f5641dd6c24",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/simd-build.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/test-logs/simd-build.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef71917fd2a39c57977d97d65b09db20c9c485318eff2b97119213f70838f990",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/anchor-baseline.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/anchor-baseline.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "35140db2e63c23a4b2e1e5616ab80b4b6d0117a11e18fb5731fe197c9645d091",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1b034786/verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c7ac8791458d1043344facaca7ca7f3613d53f1c4d5ab4a1095aef0d5fae6b03",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/unsafe-inventory.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/unsafe-inventory.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "14ff937e67ae9218a83e0e42ca23227298f5e3832fcf63c416f2ab9251910e58",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/before-1b034786-baseline.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/before-1b034786-baseline.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4c051281a16f34d2dddc7a2840584807da155c259ff43417ac0464c139c92a95",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/feature-hierarchy.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/feature-hierarchy.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "33e7de4a2d9869210c4e4f4b31781e56c9fd72d2f10587959be3434beac2a9e7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/asm-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/asm-comparison.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Safety-contract inventory, assembly comparison and Rust 1.95 suite commands",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/verification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Every unsafe fn and unsafe block of gf2-kernels-simd with contract presence, anchor and current",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/unsafe-inventory.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Source classes and per-symbol instruction text of every kernel listing, anchor versus current",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/asm-comparison.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Per-function instruction text of the emitted crate, anchor versus current",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-function-comparison.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Rust 1.95 target-feature hierarchy probe result",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/feature-hierarchy.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Fast-tier suites of the kernel crate and its consumers, simd build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/test-logs/simd-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core fast-tier suites without the simd feature",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/test-logs/scalar-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Anchor tree by per-path content digest",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/anchor-baseline.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Tree before the jit:1b034786 code change, by per-path content digest",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/before-1b034786-baseline.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Tree after the jit:1b034786 code change, by per-path content digest",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/after-1b034786-baseline.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Function digests of the anchor build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-functions-anchor.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Function digests of the build before jit:1b034786",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-functions-before-1b034786.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Function digests of the build after jit:1b034786",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-functions-after-1b034786.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Function digests of the current build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-functions-current.json"
+    }
+  ],
   "first_ready_at": "2026-10-05T01:07:43.262477011Z",
   "gates_required": [
     "cargo-ci",
@@ -24,5 +204,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "State the safety contract at every AVX2 kernel unsafe boundary",
-  "updated_at": "2026-10-05T03:29:12.168813710Z"
+  "updated_at": "2026-10-05T04:48:33.219822704Z"
 }

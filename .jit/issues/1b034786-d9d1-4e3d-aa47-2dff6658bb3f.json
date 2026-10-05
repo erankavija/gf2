@@ -5,7 +5,77 @@
   "created_at": "2026-10-05T03:28:58.602274285Z",
   "dependencies": [],
   "description": "The safe AVX2 M4RM Gray-table wrappers accept arguments for which their kernels write outside the caller's buffer; a safe function never does.\n\n## Background\n\n`m4rm_gray_build4_fn` and `m4rm_gray_build8_fn` in `crates/gf2-kernels-simd/src/x86/avx2.rs` are safe functions published through the `LogicalFns` function-pointer table. Each calls an `unsafe` kernel that stores table entry 0 unconditionally and then stores at the Gray-code index `i ^ (i >> 1)` for every `i` below `table_size`. That index stays below `table_size` only when `table_size` is a power of two. The wrappers assert the stride, `buffer.len() >= table_size * stride_words` and `panel.len() >= valid_rows * stride_words`, with unchecked multiplications, and do not assert a power-of-two table size. A caller passing `table_size = 0` with an empty buffer, or `table_size = 3` with a buffer of three entries, reaches an out-of-bounds store from safe code. The one production caller, `build_gray_table_flat` in `crates/gf2-core/src/alg/m4rm.rs`, passes `1 << k_block`, so shipped behaviour stays in bounds. The `M4rmGrayBuildFn` type documents panics and states no such precondition.\n\n## Success Criteria\n\n- [hard] REQ-01: Each wrapper panics, before any store, for a `table_size` that is zero or not a power of two and for argument combinations whose required lengths overflow `usize`; tests written before the change show the present behaviour and pass after it.\n- [hard] REQ-02: The scalar reference and every other implementation behind `M4rmGrayBuildFn` enforce the same preconditions, shown by one shared test over all implementations, and the type's rustdoc states them under Panics.\n- [hard] REQ-03: For every valid argument set the table contents are unchanged, shown by the shared M4RM suites with and without the `simd` feature on Rust 1.95.\n- [hard] REQ-04: The regenerated assembly listing of each changed SIMD source is committed with the source change.\n\n## Notes\n\nFound while stating the kernel crate's safety contracts. Validation here catches caller mistakes at a safe boundary; it adds no unchecked fast path.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "dbc70b3ad4336df6ab78ed316a18f8f1df603ee2b2617012b206be01004137c7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/after-fix.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/after-fix.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f0b9f3a560c744e09c9f0767760cc259e3e396b78bb77b8859558801ff71ebc2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/before-fix.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/before-fix.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a8f28ed3ae769ff254900847f30b59249a21f581eedd69f61583f635fffda3bf",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/simd-build.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/simd-build.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2442d65c6fe26aa514e8aa29d7c5e1db9dc5ed996a56c427e6bce30cdc7e145a",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/scalar-build.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/scalar-build.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "M4RM Gray-table wrapper argument checks, contract test and suite commands",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/verification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Shared builder contract test before the assertions",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/before-fix.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Shared builder contract test with the assertions",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/after-fix.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Fast-tier suites reaching the kernel crate, simd build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/simd-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core fast-tier suites without the simd feature",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/scalar-build.txt"
+    }
+  ],
   "first_ready_at": "2026-10-05T03:28:58.602274285Z",
   "gates_required": [
     "cargo-ci",
@@ -22,5 +92,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reject invalid table sizes in the safe M4RM Gray-table wrappers",
-  "updated_at": "2026-10-05T03:28:59.086805086Z"
+  "updated_at": "2026-10-05T04:48:33.429014753Z"
 }
