@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-"""Freeze the source claims the dense-parity addendum makes (jit:96c94b81).
+"""Reproduce the source claims the dense-parity addendum makes (jit:96c94b81).
 
 Every claim names a project, a repository-relative path, the line, the verbatim
 line at that position and why the addendum relies on it. Each claim also states
 how many times its fragment occurs in that file, so a fragment that gains or
-loses an occurrence fails this script instead of silently repinning. The file is
-regenerated rather than edited, so a claim that disappears or changes its
-occurrence count fails here instead of going stale in prose, and a claim whose
-fragment moves is re-pinned to the line it currently occupies.
+loses an occurrence fails this script.
+
+The committed ledger is a record pinned to the commits its rows name, and
+receipts pin its digest. Each claim is resolved in the file as it is at the
+commit its ledger row records (`git show`; an unavailable object is an error),
+never in the working tree, so the output is the committed ledger byte for byte
+on any tree. The script refuses to write a ledger that differs from the
+committed one; `--check` reports the difference and writes nothing.
 """
 
+import argparse
 import hashlib
 import json
 import pathlib
@@ -148,42 +153,49 @@ CLAIMS = [
 ]
 
 
-def last_change(path):
-    """The commit that last changed this file.
-
-    HEAD would move with every unrelated commit and make this ledger churn;
-    content identities decide validity, and the commit that last touched the
-    file is the one a reader follows to see the claim in context.
-    """
-    return subprocess.run(
-        ["git", "-C", str(ROOT), "log", "-1", "--format=%H", "--", str(path)],
-        capture_output=True,
-        check=True,
-        text=True,
-    ).stdout.strip()
+def recorded_commits():
+    """The commit each claim's ledger row records, in claim order."""
+    try:
+        rows = json.loads((ROOT / OUTPUT).read_text())["claims"]
+    except (OSError, ValueError, KeyError) as error:
+        raise SystemExit(f"{OUTPUT}: no ledger records the claims' commits: {error}") from error
+    if [row["path"] for row in rows] != [claim[0] for claim in CLAIMS]:
+        raise SystemExit(f"{OUTPUT}: the ledger rows are not the claims' paths in order")
+    return [row["commit"] for row in rows]
 
 
-def main():
+def file_at(commit, path):
+    done = subprocess.run(
+        ["git", "-C", str(ROOT), "show", f"{commit}:{path}"], capture_output=True
+    )
+    if done.returncode != 0:
+        raise SystemExit(f"{path} is unavailable at {commit}: {done.stderr.decode().strip()}")
+    return done.stdout
+
+
+def reproduce():
+    """The ledger text the recorded commits yield."""
     records = []
-    for path, fragment, occurrences, why in CLAIMS:
-        text = (ROOT / path).read_text()
-        lines = text.splitlines()
+    for (path, fragment, occurrences, why), commit in zip(CLAIMS, recorded_commits()):
+        content = file_at(commit, path)
+        lines = content.decode().splitlines()
         positions = [index + 1 for index, line in enumerate(lines) if fragment in line]
         if not positions:
-            raise SystemExit(f"{path}: the claimed line is absent: {fragment}")
+            raise SystemExit(f"{path}: the claimed line is absent at {commit}: {fragment}")
         if len(positions) != occurrences:
             raise SystemExit(
-                f"{path}: expected {occurrences} occurrences of {fragment!r}, found {len(positions)}"
+                f"{path}: expected {occurrences} occurrences of {fragment!r} at {commit}, "
+                f"found {len(positions)}"
             )
         records.append(
             {
                 "project": "gf2",
-                "commit": last_change(path),
+                "commit": commit,
                 "path": path,
                 "line": positions[0],
                 "occurrences": len(positions),
                 "verbatim": lines[positions[0] - 1],
-                "sha256": hashlib.sha256(text.encode()).hexdigest(),
+                "sha256": hashlib.sha256(content).hexdigest(),
                 "why": why,
             }
         )
@@ -193,8 +205,23 @@ def main():
         "addendum_identity": "2037941f-dense-parity-v2",
         "claims": records,
     }
-    (ROOT / OUTPUT).write_text(json.dumps(document, indent=2) + "\n")
-    print(f"{OUTPUT}: {len(records)} source claims")
+    return json.dumps(document, indent=2) + "\n"
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="compare the reproduction with the committed ledger and write nothing",
+    )
+    arguments = parser.parse_args(argv)
+    text = reproduce()
+    if (ROOT / OUTPUT).read_text() != text:
+        raise SystemExit(f"{OUTPUT} differs from its reproduction at the recorded commits; not written")
+    if not arguments.check:
+        (ROOT / OUTPUT).write_text(text)
+    print(f"{OUTPUT}: {len(CLAIMS)} source claims reproduce the committed ledger")
 
 
 if __name__ == "__main__":
