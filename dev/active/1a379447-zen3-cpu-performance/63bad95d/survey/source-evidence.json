@@ -610,24 +610,24 @@
     {
       "id": "calibration-fields",
       "project": "gf2",
-      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
-      "line": 377,
+      "line": 382,
       "occurrences": 1,
-      "verbatim": "    const ALL: [Self; 19] = [",
+      "verbatim": "    const ALL: [Self; 20] = [",
       "why": "The core producer sweeps a closed list of retained threshold fields.",
-      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
     },
     {
       "id": "calibration-bit-arm",
       "project": "gf2",
-      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
-      "line": 2323,
+      "line": 2404,
       "occurrences": 1,
       "verbatim": "                Arm::Conservative => &ScalarBackend,",
       "why": "The producer calibrates `bit_backend.simd_min_words` on the XOR of the two backends called directly.",
-      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
     },
     {
       "id": "calibration-launcher-declaration",
@@ -652,26 +652,59 @@
       "sha256": "ce331dcde91a0e496874a0ea66a9ddb448e83a132dfbde4f4ddfb32e1b4c186e"
     },
     {
+      "id": "calibration-matvec-field",
+      "project": "gf2",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "path": "crates/gf2-core/benches/tuning_calibration.rs",
+      "line": 667,
+      "occurrences": 1,
+      "verbatim": "            Self::MatvecSimdMinWords => vec![4, 7, 8, 9, 32, 63, 64, 65, 128],",
+      "why": "The producer sweeps the matvec threshold over nine strides.",
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+    },
+    {
+      "id": "calibration-matvec-arms",
+      "project": "gf2",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "path": "crates/gf2-core/benches/tuning_calibration.rs",
+      "line": 2680,
+      "occurrences": 1,
+      "verbatim": "            let result = matrix.matvec_with_route(vector, matvec_lane(spec.arm));",
+      "why": "Each arm of the matvec sweep pins its lane through the public entry.",
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+    },
+    {
+      "id": "validator-matvec-grid",
+      "project": "gf2",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "path": "dev/scripts/validate-tuning-extent-campaign.py",
+      "line": 212,
+      "occurrences": 1,
+      "verbatim": "    \"bit_matrix.matvec_simd_min_words\": [4, 7, 8, 9, 32, 63, 64, 65, 128],",
+      "why": "The independent validator carries the same grid.",
+      "sha256": "93c3c7eea6b80c6364dda5acf08ea6e3deba4ce9d24900236c64276ad4556bd0"
+    },
+    {
       "id": "calibration-inventory-closed",
       "project": "gf2",
-      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 217,
       "occurrences": 1,
       "verbatim": "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;",
       "why": "The producer publishes only when its measured and omitted fields partition a fixed codec inventory.",
-      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
     },
     {
       "id": "calibration-validator-behavior",
       "project": "gf2",
-      "commit": "fb8620a819fb34d85d2e8dd73a3b99549296c351",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
       "path": "dev/scripts/validate-tuning-extent-campaign.py",
       "line": 72,
       "occurrences": 1,
       "verbatim": "CORE_BEHAVIOR = \"tuning-calibration-v4\"",
       "why": "The independent validator pins the producer's behavior token.",
-      "sha256": "34521bdd1d136442d47d9294198408675d18da7a95be5d9d3fa2c4224af87d1d"
+      "sha256": "93c3c7eea6b80c6364dda5acf08ea6e3deba4ce9d24900236c64276ad4556bd0"
     },
     {
       "id": "matvec-lane-entry",
