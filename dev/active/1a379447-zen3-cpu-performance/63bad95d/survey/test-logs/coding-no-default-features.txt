@@ -1,0 +1,58 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding --no-default-features --test core_dispatch_fallback --cargo-profile ci-test --profile ci --no-capture
+    Finished `ci-test` profile [optimized] target(s) in 0.05s
+────────────
+ Nextest run ID cc9a4208-e5eb-4760-a33d-6d9139fe2f70 with nextest profile: ci
+    Starting 1 test across 1 binary
+       START [         ] (1/1) gf2-coding::core_dispatch_fallback the_dependency_build_keeps_the_fallback_contract
+
+running 1 test
+GF2_ROUTE_WITNESS	build.simd-feature		true	kernel
+GF2_ROUTE_WITNESS	build.baked-selectors		false	portable
+GF2_ROUTE_WITNESS	tuning.active	gf2-core/selectors	frozen-before-install	portable
+GF2_ROUTE_WITNESS	kernels::select_backend_for_size	words=0	scalar	portable
+GF2_ROUTE_WITNESS	kernels::ops::popcount	words=0	scalar	portable
+GF2_ROUTE_WITNESS	kernels::ops::and_popcount	words=0	scalar	portable
+GF2_ROUTE_WITNESS	BitMatrix::matvec	words=0	scalar	portable
+GF2_ROUTE_WITNESS	kernels::select_backend_for_size	words=1	scalar	portable
+GF2_ROUTE_WITNESS	kernels::ops::popcount	words=1	scalar	portable
+GF2_ROUTE_WITNESS	kernels::ops::and_popcount	words=1	scalar	portable
+GF2_ROUTE_WITNESS	BitMatrix::matvec	words=1	scalar	portable
+GF2_ROUTE_WITNESS	kernels::select_backend_for_size	words=7	scalar	portable
+GF2_ROUTE_WITNESS	kernels::ops::popcount	words=7	scalar	portable
+GF2_ROUTE_WITNESS	kernels::ops::and_popcount	words=7	scalar	portable
+GF2_ROUTE_WITNESS	BitMatrix::matvec	words=7	scalar	portable
+GF2_ROUTE_WITNESS	kernels::select_backend_for_size	words=8	simd	kernel
+GF2_ROUTE_WITNESS	kernels::ops::popcount	words=8	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	kernels::ops::and_popcount	words=8	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	BitMatrix::matvec	words=8	simd	kernel
+GF2_ROUTE_WITNESS	kernels::select_backend_for_size	words=9	simd	kernel
+GF2_ROUTE_WITNESS	kernels::ops::popcount	words=9	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	kernels::ops::and_popcount	words=9	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	BitMatrix::matvec	words=9	simd	kernel
+GF2_ROUTE_WITNESS	kernels::select_backend_for_size	words=63	simd	kernel
+GF2_ROUTE_WITNESS	kernels::ops::popcount	words=63	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	kernels::ops::and_popcount	words=63	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	BitMatrix::matvec	words=63	simd	kernel
+GF2_ROUTE_WITNESS	kernels::select_backend_for_size	words=64	simd	kernel
+GF2_ROUTE_WITNESS	kernels::ops::popcount	words=64	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	kernels::ops::and_popcount	words=64	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	BitMatrix::matvec	words=64	simd	kernel
+GF2_ROUTE_WITNESS	kernels::select_backend_for_size	words=65	simd	kernel
+GF2_ROUTE_WITNESS	kernels::ops::popcount	words=65	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	kernels::ops::and_popcount	words=65	simd-nibble-lut	kernel
+GF2_ROUTE_WITNESS	BitMatrix::matvec	words=65	simd	kernel
+GF2_ROUTE_WITNESS	BitMatrix::transpose	block=64x64	avx2-bit-twiddle	kernel
+GF2_ROUTE_WITNESS	BitVec::shift_left	residual	residual-bmi2-funnel	kernel
+GF2_ROUTE_WITNESS	gf2m::wide::clmul_wide	words=1	portable-scalar	portable
+GF2_ROUTE_WITNESS	gf2m::wide::clmul_wide	words=4	avx2+vpclmulqdq-ymm	kernel
+GF2_ROUTE_WITNESS	gf2m::wide::clmul_wide	words=9	avx2+vpclmulqdq-ymm	kernel
+GF2_ROUTE_WITNESS	gf2m::wide::clmul_wide	words=16	portable-scalar	portable
+test the_dependency_build_keeps_the_fallback_contract ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+        PASS [   0.003s] (1/1) gf2-coding::core_dispatch_fallback the_dependency_build_keeps_the_fallback_contract
+────────────
+     Summary [   0.004s] 1 test run: 1 passed, 0 skipped
+# exit: 0

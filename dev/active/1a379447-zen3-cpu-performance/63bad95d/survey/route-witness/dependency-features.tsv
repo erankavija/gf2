@@ -1,0 +1,14 @@
+gf2-core	gf2-core	default,io,rand
+gf2-core	gf2-kernels-simd	default
+gf2-core --all-features	gf2-core	default,image,io,parallel,rand,simd,test-support,tuning-profile,visualization
+gf2-core --all-features	gf2-kernels-simd	default
+gf2-coding	gf2-core	default,io,rand,simd
+gf2-coding	gf2-kernels-simd	default
+gf2-coding --no-default-features	gf2-core	default,io,rand
+gf2-coding --no-default-features	gf2-kernels-simd	default
+gf2-algebra	gf2-core	default,io,parallel,rand,simd
+gf2-algebra	gf2-kernels-simd	default
+gf2-sim	gf2-core	default,io,parallel,rand,simd
+gf2-sim	gf2-kernels-simd	default
+gf2-sim --all-features	gf2-core	default,io,parallel,rand,simd
+gf2-sim --all-features	gf2-kernels-simd	default
