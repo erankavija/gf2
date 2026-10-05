@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 """Compare a kernel module's annotated release assembly across this task (jit:6e87c436).
 
-For each SIMD source of `gf2-kernels-simd` this branch changes against
-`--anchor`, the script reads the module's `asm/<module>.asm.txt` artefact at the
-anchor and in the working tree, splits both at their `; symbol:` dividers and
+For each SIMD source of `gf2-kernels-simd` whose bytes differ from the task
+anchor, which `anchor-baseline.json` identifies by per-path digest, the script
+reads the module's `asm/<module>.asm.txt` artefact from the anchor snapshot and
+from the working tree, splits both at their `; symbol:` dividers and
 writes `asm-comparison.json` beside itself with each symbol's instruction text
 digests. Any symbol whose text differs under RULE fails the script after the
 record is written.
 
-Usage: make-asm-comparison.py --anchor COMMIT
+Usage: make-asm-comparison.py
 """
 
-import argparse
 import hashlib
 import json
 import pathlib
 import re
-import subprocess
 
-from locate import HERE, ROOT, repository_files
+from locate import HERE, ROOT, anchor_bytes, anchor_identity, changed_since_anchor, repository_files
 
 RULE = (
     "Per symbol, the lines between its `; symbol:` divider and the next divider, "
@@ -35,12 +34,6 @@ LOCAL = [
     (re.compile(r"\.Lanon\.[0-9a-f]+\.\d+"), ".Lanon"),
 ]
 STATUS = re.compile(r"^\s*(Compiling|Finished) |^;=+$")
-
-
-def git(*arguments):
-    return subprocess.run(
-        ["git", "-C", str(ROOT), *arguments], capture_output=True, check=True, text=True
-    ).stdout
 
 
 def symbols(artefact):
@@ -61,20 +54,16 @@ def digest(text):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--anchor", required=True)
-    anchor = git("rev-parse", parser.parse_args().anchor).strip()
-
     package = pathlib.Path(repository_files.package_directory(ROOT, "gf2-kernels-simd"))
     changed = [
         pathlib.Path(path)
-        for path in git("diff", "--name-only", anchor, "--", f"{package}/src").splitlines()
-        if path.endswith(".rs")
+        for path in changed_since_anchor()
+        if path.startswith(f"{package}/src/") and path.endswith(".rs")
     ]
     modules, differing = [], 0
     for source in changed:
         artefact = source.parent / "asm" / f"{source.stem}.asm.txt"
-        before = symbols(git("show", f"{anchor}:{artefact}"))
+        before = symbols(anchor_bytes(str(artefact)).decode())
         after = symbols((ROOT / artefact).read_text())
         rows = []
         for name in sorted(set(before) | set(after)):
@@ -91,12 +80,9 @@ def main():
                     "instruction_text": "same" if same else "differs",
                 }
             )
-        source_diff = git("diff", "--numstat", anchor, "--", str(source)).split()
         modules.append(
             {
                 "source": str(source),
-                "source_lines_added": int(source_diff[0]),
-                "source_lines_removed": int(source_diff[1]),
                 "artefact": str(artefact),
                 "symbols": rows,
             }
@@ -107,7 +93,7 @@ def main():
             {
                 "schema": "dense-asm-comparison-v1",
                 "issue": "6e87c436",
-                "anchor": anchor,
+                "anchor": anchor_identity(),
                 "comparison_rule": RULE,
                 "modules": modules,
             },
