@@ -85,10 +85,10 @@ frame-error count reached `min_errors` and simulates the remaining points from
 their start; a point that ended at `max_frames` is simulated again. Product-code
 curves run with `--parallel` reuse no rows and recompute every point.
 
-- On LDPC, GLDPC and sequential product-code curves, SIGINT and SIGTERM do
-  not interrupt an in-flight point. With `--parallel` the run exits with
+- On LDPC, GLDPC and sequential product-code curves, SIGINT does not
+  interrupt an in-flight point. With `--parallel` the run exits with
   status 1 once its in-flight points finish; a sequential run continues.
-  Ending the process otherwise, for example with `kill -KILL <pid>`, flushes
+  Ending the process otherwise, for example with SIGTERM, flushes
   nothing and discards in-flight points as described above.
 - Reused rows are keyed by Eb/N0 alone. After changing a curve's parameters,
   delete its CSV or change `output_dir`.
@@ -109,9 +109,9 @@ curves run with `--parallel` reuse no rows and recompute every point.
 ```
 
 It writes `checkpoints/snr_<index>.json` under `--output-dir` at each SNR
-boundary and every `--heartbeat-frames` frames within a point. SIGINT or
-SIGTERM flushes the in-progress checkpoint and ends the run. Repeat the same
-command with `--resume` to continue. The checkpoints carry a BLAKE3 hash of
+boundary and every `--heartbeat-frames` frames within a point. SIGINT flushes
+the in-progress checkpoint and ends the run. Repeat the same command with
+`--resume` to continue. The checkpoints carry a BLAKE3 hash of
 `--seed`, `--esn0-range`, `--target-errors`, `--max-frames`,
 `--heartbeat-frames`, `--gpu`, `--strict-gpu` and the host's worker count, and a
 resume that changes any of them fails with a configuration-hash mismatch. The

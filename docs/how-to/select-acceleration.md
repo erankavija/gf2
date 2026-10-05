@@ -48,7 +48,9 @@ baseline `x86-64` build measure the same
 
 The bundle accessors in `gf2_core::kernels::simd` return `None` when the host
 lacks an extension the bundle requires, and the route reporters return the
-arm a dispatcher takes for an operand size:
+arm a selector picks for an operand size. `matvec_route` reports the
+word-count comparison alone; the dispatcher runs scalar code when the bundle
+is absent:
 
 ```rust
 use gf2_core::kernels::simd::{maybe_gf2m_batch, maybe_simd};
@@ -95,9 +97,8 @@ scalar reference recurrence for every code. The table, bit-sliced and
 carry-less-multiply fold families, the last two through the
 `gf2_kernels_simd::bch_encode` kernels, run only from the bounds an installed
 `CodingTuning` sets. Every family writes the same codeword bits
-([algorithm families](../../crates/gf2-coding/src/bch/encode.rs)). No committed
-receipt measures their crossovers, so take the bounds from a measurement on
-the target host:
+([algorithm families](../../crates/gf2-coding/src/bch/encode.rs)). Take the
+bounds from a measurement on the target host:
 
 ```rust
 use gf2_coding::tuning::{CodingTuning, EncodeSelectors};

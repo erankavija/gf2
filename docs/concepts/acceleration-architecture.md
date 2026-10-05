@@ -10,7 +10,7 @@ in [Supported configurations](../reference/supported-configurations.md).
 
 ## Crate layering
 
-All `unsafe` code lives in `gf2-kernels-simd` and `gf2-kernels-hip`
+All production `unsafe` code lives in `gf2-kernels-simd` and `gf2-kernels-hip`
 (`@/inv/unsafe-kernel-isolation`). Both expose safe entry points, and the
 library crates decide when to call them:
 
@@ -18,25 +18,25 @@ library crates decide when to call them:
 |---|---|---|
 | Kernels | `gf2-kernels-simd`: `#[target_feature]` kernels behind safe detection | `gf2-kernels-hip`: device code, FFI, and the `host` resource layer |
 | Selection | `gf2-core`, `gf2-coding`, `gf2-algebra` | `gf2-coding`, `gf2-algebra`, `gf2-sim` |
-| Fallback policy | per bundle, at detection | per consumer, through `HipError::is_recoverable` |
+| Fallback policy | per bundle, at detection | per consumer |
 
 `gf2-core` links `gf2-kernels-simd` in every build; its `simd` feature gates
 only detection and dispatch.
 
 ## SIMD dispatch
 
-Each kernel family in `gf2-kernels-simd` exports a `detect` function that
-returns a bundle of function pointers, such as `LogicalFns` for bitwise and
+The kernel families of `gf2-kernels-simd` export `detect` functions that
+return bundles of function pointers, such as `LogicalFns` for bitwise and
 population-count operations or `gf2m_batch::Gf2mBatchFns` for batched
-$\mathrm{GF}(2^m)$ multiplication. Every family except `modem` wraps the bundle in
-`Option`: `None` means the host lacks an instruction set extension the bundle
-requires, and the caller runs its scalar code. The `modem` detectors always
-return a bundle of scalar or AVX2 entries. The
-consuming crate caches each bundle in a process-wide `OnceLock` or `LazyLock`,
-so CPU feature probing runs once per bundle per process. In `gf2-core` these
-caches sit behind one accessor per bundle (`maybe_simd`, `maybe_gf2m_batch`,
-`maybe_fp_small` and their siblings); `gf2-coding` and `gf2-algebra` hold
-their own caches for LLR, modem, BCH-encode and bipedal bundles.
+$\mathrm{GF}(2^m)$ multiplication. Most return `Option`, where `None` means
+the host lacks an instruction set extension the bundle requires, and the
+caller runs its scalar code. The `modem` and `transpose` detectors return a
+bundle on every host, with scalar entries where no vector kernel applies.
+Each detection result is cached in a process-wide static, so a cache probes
+the CPU once per process. In `gf2-core` the caches sit behind `maybe_*`
+accessors (`maybe_simd`, `maybe_gf2m_batch`, `maybe_fp_small` and their
+siblings); `gf2-coding` holds its own for the LLR, modem and BCH-encode
+bundles, and the bipedal detectors cache inside the kernel crate.
 
 Bundles are detected independently. A host can bind the logical bundle and
 lack the extensions of the $\mathrm{GF}(2^m)$ batch bundle, in which case bit
@@ -44,7 +44,8 @@ operations run vectorized and $\mathrm{GF}(2^m)$ batches run scalar.
 
 ### Route selection
 
-A detected bundle is used only when the operand shape crosses a selector:
+Where a route depends on operand shape, a selector decides whether the
+detected bundle is used:
 
 - **Compile-time word thresholds.**
   `gf2_core::kernels::select_backend_for_size` and
@@ -90,7 +91,7 @@ compiled.
 A GPU path runs only when the caller or the pipeline configuration selects it.
 `HipError::is_recoverable` divides the failure vocabulary into recoverable
 cases (device memory exhaustion, an architecture without a code object) and
-fatal ones, and each consumer applies that split:
+fatal ones, and the consumers differ in how they act on it:
 
 - `gf2_sim::gpu::map_hip_error` maps recoverable errors to
   `RecoverableError` and fatal ones to `FatalError`.
@@ -138,5 +139,6 @@ Results do not depend on worker count or scheduling
 The `gf2-sim` [crate documentation](../../crates/gf2-sim/src/lib.rs) states
 which result columns are byte-identical across worker counts, across
 checkpoint resume and between CPU and GPU runs.
+[`determinism.rs`](../../crates/gf2-sim/tests/determinism.rs),
 [`parallel_determinism.rs`](../../crates/gf2-sim/tests/parallel_determinism.rs)
 and the `gpu_*_byte_identity.rs` tests in the same directory check them.

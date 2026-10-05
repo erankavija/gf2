@@ -84,8 +84,8 @@ es_n0_db,fer,ber,frames,errors,mean_iters,wall_seconds
 
 `wall_seconds` is the host's sweep wall-clock time divided by the number of
 points, an unbenchmarked observation; performance claims follow
-`@/inv/benchmark-backed-performance`. `ber` is a floating-point reduction and,
-with `wall_seconds`, lies outside the determinism contract.
+`@/inv/benchmark-backed-performance`. `ber` and `wall_seconds` lie outside the
+determinism contract.
 
 ## Interpret the result
 

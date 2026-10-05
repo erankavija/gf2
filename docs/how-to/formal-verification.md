@@ -48,8 +48,8 @@ git add proofs/Gf2Core/ proofs/Gf2Algebra/
 The script runs Charon into `target/charon/`, Aeneas into `proofs/Gf2Core/` and
 `proofs/Gf2Algebra/`, the post-processing passes `scripts/fix-aeneas-dupes.py`,
 `scripts/fix-aeneas-sorrys.py` and `scripts/fix-aeneas-gf2algebra.py`, and
-`lake build`. [`proofs/WORKAROUNDS.md`](../../proofs/WORKAROUNDS.md) states why
-each pass exists. Charon compiles with `--cfg verify_lean`, so items under
+`lake build`. [`proofs/WORKAROUNDS.md`](../../proofs/WORKAROUNDS.md) and the
+scripts' docstrings state why each pass exists. Charon compiles with `--cfg verify_lean`, so items under
 `#[cfg(not(verify_lean))]` are absent from the extraction.
 
 | File in `proofs/Gf2Core/`, `proofs/Gf2Algebra/` | Owner |

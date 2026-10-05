@@ -2,7 +2,8 @@
 
 Each claim below names its measurement method and states its workload,
 baseline, host, build and measurement date, and links the evidence that
-produced it at a fixed commit; that commit is the claim's source identity.
+produced it at a fixed commit; that commit is the claim's source identity
+unless its Build line names a measured source revision.
 Ratios hold for the stated host and build. A claim appears only where a
 receipt measures the code path the library ships. Other pages cite these
 anchors instead of restating figures.
@@ -17,6 +18,9 @@ Claims whose method line cites this section come from confirmatory cells of
 the
 [Zen 3 benchmark protocol](https://github.com/erankavija/gf2/blob/6776fe30ea9af85ad509ddca95926f051421676d/dev/active/f547c394/protocol.md).
 Each such receipt carries a snapshot of the protocol version that evaluates it.
+Beside the linked `acceptance-summary.md`, its `receipt.json` and
+`inputs/family-addendum.json` record the host, build, workload, baseline and
+date.
 
 - **Comparison basis.** A cell times two arms on one frozen workload with the
   same inputs and output contract, checked for equivalence before timing.
@@ -107,7 +111,7 @@ Each such receipt carries a snapshot of the protocol version that evaluates it.
 
 - **Method:** [paired comparison protocol](#paired-protocol), version 3.
 - **Result:** gf2 is faster at every measured configuration,
-  $0.32 \le r \le 0.35$, each interval within $[0.319, 0.350]$. A build for
+  $0.32 \le r \le 0.35$, each interval within $[0.318, 0.351]$. A build for
   baseline x86-64 matches the native build, $r = 0.999\ [0.990, 1.003]$.
 - **Workload:** de-rate-matching of one received LLR frame to the mother-code
   length per `@/citation/ThreeGpp2017`, for BG2 $n \in \{256, 1024, 1440\}$

@@ -1,8 +1,8 @@
 # Reproduce a performance claim
 
 Each claim on the [performance evidence](../reference/performance-evidence.md)
-page states its build and links its receipt at the commit that is its source
-identity. Reproducing a claim means building that source with the recorded
+page states its build and links its receipt at a fixed commit. Reproducing a
+claim means building the source revision it records with the recorded
 toolchain, rerunning the receipt's measurement on your host, and recomputing
 the claim's statistic from both raw data sets. A claim whose baseline is an
 external library also needs that library built as its Baseline line states.
@@ -114,8 +114,7 @@ of the job starts from an absent file.
 each queue line's state from the same log, markers and output files until
 interrupted. Its status word is the `systemctl --user is-active` result for
 the unit that `GF2_WINDOW_UNIT` names and is independent of a runner started
-from a shell. The receipt's protocol requires the window runner and the
-wrapper's lock on every host.
+from a shell.
 
 Before timing each size, the harness asserts that the three backends return
 equal permanents on one fixture. Each row records `git_revision`,
