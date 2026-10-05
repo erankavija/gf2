@@ -1,0 +1,18 @@
+
+running 4 tests
+test tests::a_negative_zero_belief_decides_bit_zero ... ok
+test tests::a_tie_keeps_the_first_position_and_negative_zero_counts_positive ... ok
+test tests::belief_steps_match_scalar_addition_and_a_masked_lane_is_not_written ... ok
+test tests::check_row_lanes_match_the_canonical_scalar_row_bit_for_bit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling ldpc-frame-lanes-intrinsics-probe v0.0.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-2133d15f/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/intrinsics-probe)
+    Finished `release` profile [optimized + debuginfo] target(s) in 4.81s
+     Running unittests src/lib.rs (target/ldpc-frame-lanes-intrinsics-probe/release/deps/ldpc_intrinsics_probe-3beecd8e93ce7420)
+   Doc-tests ldpc_intrinsics_probe
