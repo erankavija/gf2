@@ -18704,3 +18704,4 @@
 {"fields":["documents"],"id":"0bfb5e83-bda7-4095-9f57-2b01b0bbe3be","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:09:23.382024580Z","type":"issue_updated","updated_by":"doc-remove"}
 {"fields":["documents"],"id":"d86cd7af-4b08-408a-b5c8-fe89f257cf04","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:09:23.447627130Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"340c133a-9ad8-469f-a819-0fddc36c37a1","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:09:23.511897222Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"plan-review","id":"c207e5c9-a501-40e8-9904-3603e48a44c4","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:14:31.810409304Z","type":"gate_failed","updated_by":"auto:executor"}
