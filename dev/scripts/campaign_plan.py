@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 """Shared projection of a `benchmark-ab-runner` plan from a frozen addendum.
 
-A lane-comparison family supplies its lanes, its element representations, the
-entry point they name and the case its cells decode; the argument surface, the
-per-cell arm pairing, the build-identity check against the declaration and the
-plan envelope are the same for every such family and live here. A family's own
-generator puts this file's directory on `sys.path`, imports `campaign_plan` and
-calls `campaign_plan.main(...)`.
+The argument surface, the per-cell arm pairing, the build-identity check
+against the declaration and the plan envelope are the same for every family
+and live here. A family's own generator puts this file's directory on
+`sys.path`, imports `campaign_plan` and calls one of two entry points.
 
-Both arms of a pair are the one executable the projection names; the environment
+`project` is the general form: the family supplies the two arms of each cell,
+which may be one executable under two environments or two executables built
+with different flags, and the case the cell's arms decode.
+
+`main` is the lane-comparison form over `project`: the family supplies its
+lanes, its element representations and the entry point they name. Both arms of
+a pair are then the one executable the projection names; the environment
 selects the lane and the element representation, and the runner records that
-environment beside the executable digest, so the two arms share a build identity
-and differ only in the lane. Each case is built from the frozen addendum's own
-workload identity, size, seed and metric kind, so the plan cannot disagree with
-the declaration about what a cell measures.
+environment beside the executable digest, so the two arms share a build
+identity and differ only in the lane.
+
+Each case is built from the frozen addendum's own workload identity, size, seed
+and metric kind, so the plan cannot disagree with the declaration about what a
+cell measures.
 """
 
 import argparse
@@ -55,61 +61,73 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def arm_catalogue(executable, lanes, representations, entry_point):
+def arm(build, description, executable, environment, rustflags=RUSTFLAGS):
+    """One plan arm: an executable, its environment and the flags it was built with."""
+    return {
+        "build": build,
+        "description": description,
+        "executable": executable,
+        "arguments": [],
+        "environment": environment,
+        "rustflags": rustflags,
+        "tuning_profile": None,
+    }
+
+
+def sibling_executable(executable, suffix):
+    """The same binary under the target directory whose name carries `suffix`.
+
+    A family whose candidate is a second build of the baseline's package keeps
+    the two builds in sibling target directories, `<target>` and
+    `<target><suffix>`.
+    """
+    release = os.path.dirname(executable)
+    target = os.path.dirname(release)
+    return os.path.join(target + suffix, os.path.basename(release),
+                        os.path.basename(executable))
+
+
+def arm_catalogue(executable, lanes, representations, entry_point, lane_var=LANE_VAR,
+                  representation_var=REPR_VAR):
     """One arm per lane and representation, all the one executable."""
     catalogue = {}
     for lane, lane_text in lanes.items():
         for representation, representation_text in representations.items():
-            catalogue[f"{lane}-{representation}"] = {
-                "build": BUILD,
-                "description": (
-                    f"{representation_text}: {entry_point}, which {lane_text}; "
-                    f"{BUILD} build"
-                ),
-                "executable": executable,
-                "arguments": [],
-                "environment": {
-                    LANE_VAR: lane,
-                    REPR_VAR: representation,
-                },
-                "rustflags": RUSTFLAGS,
-                "tuning_profile": None,
-            }
+            catalogue[f"{lane}-{representation}"] = arm(
+                BUILD,
+                f"{representation_text}: {entry_point}, which {lane_text}; "
+                f"{BUILD} build",
+                executable,
+                {lane_var: lane, representation_var: representation},
+            )
     return catalogue
 
 
-def main(lanes, representations, entry_point, case_for):
+def project(arms_for, case_for):
     """Writes the plan the arguments name.
 
-    `lanes` maps a lane key to the sentence the arm description gives it, the
-    baseline lane first and the candidate lane second. `representations` maps a
-    representation key, which is a cell identifier's last dash-separated segment,
-    to the type the consumer holds. `case_for` receives one cell declaration and
-    returns the case both arms of that cell decode.
+    `arms_for` receives one cell declaration and the `--executable` argument and
+    returns the cell's baseline and candidate arms, each as a plan name and an
+    `arm` record. `case_for` receives one cell declaration and returns the
+    case both arms of that cell decode.
     """
     args = parse_arguments()
     with open(args.addendum) as handle:
         addendum = json.load(handle)
-    catalogue = arm_catalogue(args.executable, lanes, representations, entry_point)
-    baseline_lane, candidate_lane = list(lanes)
     plan_arms = {}
     cells = []
     for declared in addendum["cells"]:
         cell_id = declared["cell_id"]
-        representation = cell_id.rsplit("-", 1)[-1]
-        if representation not in representations:
-            raise SystemExit(f"cell {cell_id} names no known representation")
         if (declared["metric_kind"] == "whole-consumer") != declared["conversion_costs_included"]:
             raise SystemExit(f"cell {cell_id}: conversion flag disagrees with metric")
         pair = []
-        for role, lane in (("baseline", baseline_lane), ("candidate", candidate_lane)):
-            name = f"{lane}-{representation}"
-            arm = catalogue[name]
-            if arm["build"] != declared["builds"][role]:
+        for role, (name, record) in zip(("baseline", "candidate"),
+                                        arms_for(declared, args.executable)):
+            if record["build"] != declared["builds"][role]:
                 raise SystemExit(
-                    f"cell {cell_id}: {role} arm {name} is {arm['build']}, "
+                    f"cell {cell_id}: {role} arm {name} is {record['build']}, "
                     f"addendum declares {declared['builds'][role]}")
-            plan_arms.setdefault(name, arm)
+            plan_arms.setdefault(name, record)
             pair.append(name)
         cells.append({
             "cell_id": cell_id,
@@ -138,3 +156,28 @@ def main(lanes, representations, entry_point, case_for):
         json.dump(plan, output, indent=2)
         output.write("\n")
     print(f"plan: {len(cells)} cells, {len(plan_arms)} arms -> {args.output}")
+
+
+def main(lanes, representations, entry_point, case_for, lane_var=LANE_VAR,
+         representation_var=REPR_VAR):
+    """Writes the plan of a lane-comparison family.
+
+    `lanes` maps a lane key to the sentence the arm description gives it, the
+    baseline lane first and the candidate lane second. `representations` maps a
+    representation key, which is a cell identifier's last dash-separated segment,
+    to the type the consumer holds. `lane_var` and `representation_var` name the
+    environment variables the family's arm reads them from. `case_for` receives
+    one cell declaration and returns the case both arms of that cell decode.
+    """
+    baseline_lane, candidate_lane = list(lanes)
+
+    def arms_for(declared, executable):
+        catalogue = arm_catalogue(executable, lanes, representations, entry_point, lane_var,
+                                  representation_var)
+        representation = declared["cell_id"].rsplit("-", 1)[-1]
+        if representation not in representations:
+            raise SystemExit(f"cell {declared['cell_id']} names no known representation")
+        return [(f"{lane}-{representation}", catalogue[f"{lane}-{representation}"])
+                for lane in (baseline_lane, candidate_lane)]
+
+    project(arms_for, case_for)

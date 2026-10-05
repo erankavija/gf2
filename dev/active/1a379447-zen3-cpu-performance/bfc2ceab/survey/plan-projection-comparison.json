@@ -1,0 +1,62 @@
+{
+  "schema": "plan-projection-comparison-v1",
+  "issue": "bfc2ceab",
+  "anchor_projector": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/inputs/plan-anchor/campaign_plan.py",
+    "sha256": "da6a43444ae2da9929dafd12c2d8274823a95f32896303b505121dcc3ee58e64"
+  },
+  "current_projector": {
+    "path": "dev/scripts/campaign_plan.py",
+    "sha256": "d4317859512146844f718b5f1e30fcf19e9d1ebd682aae44e998fa7411cd4bb8"
+  },
+  "arguments": [
+    "--label",
+    "pilot",
+    "--campaign-id",
+    "plan-projection-comparison",
+    "--campaign-seed",
+    "1",
+    "--lock",
+    "/nonexistent/host.lock",
+    "--executable",
+    "/nonexistent/target/release/arm",
+    "--producing-manifest",
+    "producing-inputs.json",
+    "--max-cells-per-session",
+    "3",
+    "--pilot-pairs",
+    "12"
+  ],
+  "plan_count": 4,
+  "differing_plan_count": 0,
+  "plans": [
+    {
+      "caller": "dev/active/4c1e441f/survey/make-plan.py",
+      "addendum": "dev/active/4c1e441f/addendum-v4-dense-product-confirmation.json",
+      "anchor_plan_sha256": "c3022414cabca4259201262f7d702a7b709a599eac015f7a89d43cf7332955cc",
+      "current_plan_sha256": "c3022414cabca4259201262f7d702a7b709a599eac015f7a89d43cf7332955cc",
+      "plan_bytes": "same"
+    },
+    {
+      "caller": "dev/active/4c1e441f/survey/make-plan.py",
+      "addendum": "dev/active/4c1e441f/addendum-v4-dense-product-pilot.json",
+      "anchor_plan_sha256": "76b415e8381a755e03cbfb56bcca8aecbfad845e67a9fd8c9906aee0f7e0c9ae",
+      "current_plan_sha256": "76b415e8381a755e03cbfb56bcca8aecbfad845e67a9fd8c9906aee0f7e0c9ae",
+      "plan_bytes": "same"
+    },
+    {
+      "caller": "dev/active/ad2a6a58/survey/make-plan.py",
+      "addendum": "dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json",
+      "anchor_plan_sha256": "d95e4644c5beed7c92d283f92b67bbe19dafe422d0358b6093eccde26bf5b4e6",
+      "current_plan_sha256": "d95e4644c5beed7c92d283f92b67bbe19dafe422d0358b6093eccde26bf5b4e6",
+      "plan_bytes": "same"
+    },
+    {
+      "caller": "dev/active/ad2a6a58/survey/make-plan.py",
+      "addendum": "dev/active/ad2a6a58/addendum-v4-axpy-pilot.json",
+      "anchor_plan_sha256": "683c6e229f89128507078c6928b767c0186c1bc72c5291eff647a0b32205f0f2",
+      "current_plan_sha256": "683c6e229f89128507078c6928b767c0186c1bc72c5291eff647a0b32205f0f2",
+      "plan_bytes": "same"
+    }
+  ]
+}
