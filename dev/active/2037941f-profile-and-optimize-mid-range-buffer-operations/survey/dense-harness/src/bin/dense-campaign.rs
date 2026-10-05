@@ -107,7 +107,7 @@ fn question(arguments: &Arguments) -> Result<Question, String> {
     let family = arguments.required("family")?;
     Question::from_family_id(family).ok_or_else(|| {
         format!(
-            "{family:?} is not a frozen family; the three are {}",
+            "{family:?} is not a frozen family; the families are {}",
             Question::ALL
                 .iter()
                 .map(|question| question.family_id())
@@ -147,14 +147,17 @@ fn run() -> Result<(), String> {
         "pins" => pins(),
         "list" => {
             for cell in family_cells(question(&arguments)?) {
+                let (baseline, candidate) = campaign::cell_arms(&cell);
                 println!(
-                    "{:3} {} cache={} objective={} reference={} seed={:#018x}",
+                    "{:3} {} cache={} objective={} reference={} seed={:#018x} \
+                     confirmatory={} arms={baseline},{candidate}",
                     cell.ordinal,
                     cell.cell_id,
                     cell.cache.id(),
                     cell.objective(),
                     cell.scalar_reference,
-                    cell.seed
+                    cell.seed,
+                    cell.anchor
                 );
             }
             Ok(())
@@ -185,16 +188,17 @@ fn run() -> Result<(), String> {
     }
 }
 
-/// Verifies the frozen prose bytes both projections cite.
-fn pinned_addendum_digest() -> Result<String, String> {
-    let path = dense_parity_harness::cells::ADDENDUM_PATH;
+/// Verifies the frozen prose bytes a question's projections cite.
+fn pinned_addendum_digest(question: Question) -> Result<String, String> {
+    let pin = question.addendum();
+    let path = pin.path;
     let bytes = std::fs::read(path)
         .map_err(|error| format!("cannot read {path} from the repository root: {error}"))?;
     let observed = tuning_campaign_support::protocol::sha256_hex(&bytes);
-    if observed != dense_parity_harness::cells::ADDENDUM_SHA256 {
+    if observed != pin.sha256 {
         return Err(format!(
             "{path} sha256 {observed} differs from the pinned {}",
-            dense_parity_harness::cells::ADDENDUM_SHA256
+            pin.sha256
         ));
     }
     Ok(observed)
@@ -203,7 +207,7 @@ fn pinned_addendum_digest() -> Result<String, String> {
 /// Prints the frozen input identities a timed run refuses to start without.
 fn pins() -> Result<(), String> {
     let path = dense_parity_harness::cells::ADDENDUM_PATH;
-    let observed = pinned_addendum_digest()?;
+    let observed = pinned_addendum_digest(Question::AllocatedMatvec)?;
     println!("addendum={path}");
     println!("addendum_sha256={observed}");
     println!(
@@ -232,6 +236,16 @@ fn pins() -> Result<(), String> {
             row.row_id, row.stride_words, row.reason
         );
     }
+    let lane = Question::MatvecLaneThreshold;
+    let pin = lane.addendum();
+    println!(
+        "family_addendum={} path={} sha256={} identity={} frozen_utc={}",
+        lane.family_id(),
+        pin.path,
+        pinned_addendum_digest(lane)?,
+        pin.identity,
+        pin.frozen_utc
+    );
     Ok(())
 }
 
@@ -246,7 +260,7 @@ fn unavailable(arguments: &Arguments) -> Result<(), String> {
             return Err(format!("{} is also a measured cell", row.row_id));
         }
     }
-    let digest = pinned_addendum_digest()?;
+    let digest = pinned_addendum_digest(question)?;
     let mut table = format!(
         "# addendum={} sha256={}\n# family={}\ncell_id\tstride_words\tstatus\tsamples\tcomparisons\treason\n",
         dense_parity_harness::cells::ADDENDUM_PATH,
@@ -312,23 +326,25 @@ fn verified_addendum(arguments: &Arguments) -> Result<(Question, FamilyAddendum)
 fn verify(arguments: &Arguments) -> Result<(), String> {
     let (question, candidate) = verified_addendum(arguments)?;
     let path = arguments.required("addendum")?;
+    pinned_addendum_digest(question)?;
     println!(
         "{path}: transcribes {} with {} cells from {} ({})",
         question.family_id(),
         candidate.cells.len(),
-        dense_parity_harness::cells::ADDENDUM_PATH,
-        dense_parity_harness::cells::ADDENDUM_IDENTITY
+        question.addendum().path,
+        question.addendum().identity
     );
     Ok(())
 }
 
-/// Largest pilot-derived resolution the frozen addendum lets a family confirm
-/// at (§ Effect, resolution, and complexity rules).
+/// Largest pilot-derived resolution a family's frozen addendum lets it confirm
+/// at.
 fn resolution_ceiling(question: Question) -> f64 {
     match question {
         Question::IsolatedFusedParity => 0.020,
         Question::AllocatedMatvec => 0.035,
         Question::MatvecVsM4ri => 0.040,
+        Question::MatvecLaneThreshold => 0.035,
     }
 }
 
@@ -390,12 +406,13 @@ fn verify_confirmation(arguments: &Arguments) -> Result<(), String> {
     let (question, candidate) = family_addendum(arguments)?;
     let path = arguments.required("addendum")?;
     check_confirmation(question, &candidate).map_err(|error| format!("{path}: {error}"))?;
+    pinned_addendum_digest(question)?;
     println!(
         "{path}: confirms {} cells of {} from {} ({})",
         candidate.cells.len(),
         question.family_id(),
-        dense_parity_harness::cells::ADDENDUM_PATH,
-        dense_parity_harness::cells::ADDENDUM_IDENTITY
+        question.addendum().path,
+        question.addendum().identity
     );
     Ok(())
 }
@@ -468,7 +485,7 @@ fn repository_root() -> Result<std::path::PathBuf, String> {
 /// window settings, so the arm follows its measured cost boundary.
 fn profile_request(arguments: &Arguments) -> Result<(), String> {
     let (question, addendum) = verified_addendum(arguments)?;
-    if question == Question::MatvecVsM4ri {
+    if question.boundary() == Question::MatvecVsM4ri {
         return Err("the M4RI comparison is a separate family".into());
     }
     let cell_id = arguments.required("cell")?;

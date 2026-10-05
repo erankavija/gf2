@@ -49,8 +49,13 @@ current surface.
 
 ## Cell identity and generation
 
-`Question` has three ledger-owning variants in the order the addendum lists
-them: `isolated-fused-parity`, `allocated-matvec`, `matvec-vs-m4ri`.
+`Question` has one ledger-owning variant per question of the addendum, in the
+order the addendum lists them: `isolated-fused-parity`, `allocated-matvec`,
+`matvec-vs-m4ri`. A further variant, `matvec-lane-threshold`, belongs to the
+[lane-threshold addendum](../1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md)
+of issue `4337c02e`, identity `4337c02e-matvec-lane-threshold-v1`: it is
+measured at the `allocated-matvec` boundary by the same arms and cases, and
+`Question::addendum` names the frozen document each variant transcribes.
 `dense_parity_harness::cells()` returns the complete cell table in that order,
 then in each question's listed axis order: the normative primary product first,
 then the exact exploratory additions in document order.
@@ -60,6 +65,11 @@ then the exact exploratory additions in document order.
 | `isolated-fused-parity` | 12 | `and-popcnt-{W}w-{warm,streaming}` |
 | `allocated-matvec` | 24 | `matvec-r1024-{W}w[-tail1][-scalar-reference]-{warm,cold,streaming}` |
 | `matvec-vs-m4ri` | 8 | `m4ri-gap-{R}x{C}[-retained]-warm` |
+| `matvec-lane-threshold` | 17 | `lane-r1024-{W}w[-control]-{warm,cold,streaming}` |
+
+A lane-threshold cell's baseline arm is `matvec-a` in the ordinary build and
+its compared arm is `matvec-scalar-reference`, so a speedup above one favours
+the scalar lane.
 
 The addendum's fourth question, `scalar-reference`, owns no ledger. Its cells
 are the five `matvec-r1024-{W}w-scalar-reference-warm` rows of the allocated
@@ -107,8 +117,8 @@ the ceiling, refuses the run.
 
 `tuning_campaign_support::trial_ledger::reserve` runs for every protocol
 version at or above 2 and fails when the family ledger file is absent, so each
-of the three ledger paths named by the frozen addendum is a committed file
-under `dev/bench_results/2037941f/`. An empty ledger is the explicit genesis
+ledger path a frozen addendum names is a committed file under its owning
+issue's `dev/bench_results/` directory. An empty ledger is the explicit genesis
 state; it reserves nothing, and each timed campaign appends its own
 reservation. A family's confirmatory count is whatever that ledger and the
 campaign addendum's non-exploratory cells admit; the harness carries no
@@ -225,6 +235,7 @@ matrix and the vector, so the oracle shares no code with the measured route.
 | `matvec-cols-{C}-rows-{R}` | every pairing of the logical boundaries 0, 1, 63, 64, 65 on both the column count and the output length: every output bit against the parity oracle, the output length, `get` against the output words, zero tail padding, and immutability of the matrix and the vector against a rebuild at the same seed |
 | `matvec-{W}w-{full,tail1}` | all seven word counts in both column shapes: the same product checks plus the zero padding bit of every `tail1` row and of the vector |
 | `matvec-anchor-{W}w` | the five anchors at the frozen 1024-row geometry: observed rows, columns, stride, the lane the build resolves, and every output bit |
+| `matvec-lane-{W}w` | every lane-threshold stride at the same geometry, with the same checks |
 | `and-popcnt-{W}w` | all seven word counts: the bundle entry's count against an independent per-word count, its low bit against the row parity, and purity across two calls |
 | `m4ri-{R}x{C}` | in `dense-m4ri-arm --oracle`: every unpacked output bit against the gf2 peer, zero tail padding, the retained arm against the fresh arm, and input immutability |
 
@@ -361,8 +372,9 @@ window, lock, ledger reservation, or receipt.
 
 The launcher drives one Rust tool, `dense-campaign`, which a leaf may also call
 directly: `pins` prints the frozen addendum's path, pinned digest, identity,
-freeze time, the three family ledgers and the declared unavailable rows, and
-fails when the document's bytes differ from the pin; `list` prints one family's
+freeze time, every family ledger, the declared unavailable rows and the
+lane-threshold addendum's pin, and fails when either document's bytes differ
+from its pin; `list` prints one family's
 cells with their ordinals, arms and seeds; `cells`, `verify`,
 `verify-confirmation` and `plan` are the transcription, the two comparisons and
 the plan projection; `inputs` is the
@@ -377,7 +389,7 @@ runs the crate's own contract tests and both builds' semantic oracle, and writes
 
 `cells` writes one family's campaign JSON addendum. `--family` is one of
 `2037941f-dense-isolated-fused-parity`, `2037941f-dense-allocated-matvec`,
-`2037941f-dense-matvec-vs-m4ri`.
+`2037941f-dense-matvec-vs-m4ri`, `4337c02e-matvec-simd-threshold`.
 
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
 SHA-256 equals the pin the harness carries, and the campaign JSON matches
@@ -394,7 +406,7 @@ them, so no executable can carry bytes they never saw. It then projects the
 plan, prints the execution log path, runs the
 runner under `dev/scripts/ccx1-bench-flock.sh --full-host` until the log's
 terminal record is `complete`, finalizes the receipt under
-`dev/bench_results/2037941f/<family>/<run-id>-pilot` or, with `--confirmation`,
+`<family>/<run-id>-pilot` beside the family ledger or, with `--confirmation`,
 `<run-id>-confirmation`, and evaluates it with
 `benchmark-acceptance`. A resumed invocation reuses the stored plan and refuses
 when the current projection differs.

@@ -1,10 +1,12 @@
-//! The frozen cell table of addendum `2037941f-dense-parity-v2`.
+//! The frozen cell tables of addendum `2037941f-dense-parity-v2` and of the
+//! lane-threshold addendum `4337c02e-matvec-lane-threshold-v1`.
 //!
-//! [`cells`] returns every cell the addendum declares, in the addendum's own
-//! order: the cell-matrix sections in document order, and within each section
-//! the normative primary Cartesian product followed by the exact exploratory
-//! additions in listed order. Ordinal zero carries the campaign seed; ordinal
-//! `i` carries the `i`-th subsequent output of one canonical SplitMix64 stream
+//! [`cells`] returns every cell the dense-parity addendum declares, in that
+//! addendum's own order: the cell-matrix sections in document order, and within
+//! each section the normative primary Cartesian product followed by the exact
+//! exploratory additions in listed order. The lane-threshold cells follow in
+//! their addendum's order. Ordinal zero carries the campaign seed; ordinal `i`
+//! carries the `i`-th subsequent output of one canonical SplitMix64 stream
 //! started at the campaign seed.
 //!
 //! The addendum's `scalar-reference` question owns no ledger: its cells are the
@@ -31,6 +33,35 @@ pub const COMPARATOR_PATH: &str =
 /// pinned library digest the comparator arm verifies against what it loads.
 pub const QUALIFICATION_RECORD: &str =
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt";
+/// Content identity of one frozen prose addendum.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FrozenAddendum {
+    /// Repository-relative path of the document.
+    pub path: &'static str,
+    /// SHA-256 of its bytes, verified before a timed run.
+    pub sha256: &'static str,
+    /// Identity string the document declares.
+    pub identity: &'static str,
+    /// Freeze time the document declares.
+    pub frozen_utc: &'static str,
+}
+
+/// The dense-parity addendum, which freezes the first three questions.
+pub const DENSE_PARITY_ADDENDUM: FrozenAddendum = FrozenAddendum {
+    path: ADDENDUM_PATH,
+    sha256: ADDENDUM_SHA256,
+    identity: ADDENDUM_IDENTITY,
+    frozen_utc: ADDENDUM_FROZEN_UTC,
+};
+
+/// The lane-threshold addendum, which freezes [`Question::MatvecLaneThreshold`].
+pub const LANE_THRESHOLD_ADDENDUM: FrozenAddendum = FrozenAddendum {
+    path: "dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md",
+    sha256: "b67084174f5ec86729492cc31e10e3dceddd2dea93956a1f1c42f6380294e482",
+    identity: "4337c02e-matvec-lane-threshold-v1",
+    frozen_utc: "2026-10-05T00:00:00Z",
+};
+
 /// Name stem of the external shared object a comparator arm loads.
 pub const COMPARATOR_LIBRARY_STEM: &str = "m4ri";
 
@@ -44,6 +75,13 @@ pub const NEIGHBOR_WORDS: [usize; 2] = [7, 66];
 pub const ALL_WORDS: [usize; 7] = [7, 8, 9, 63, 64, 65, 66];
 /// Logical column counts the oracle exercises at the word boundary.
 pub const BOUNDARY_BITS: [usize; 5] = [0, 1, 63, 64, 65];
+/// Lane-threshold strides the SIMD build sends to the SIMD lane; with the
+/// control they form that question's confirmatory family.
+pub const LANE_WORDS: [usize; 5] = [8, 9, 63, 64, 65];
+/// Lane-threshold control stride, on the scalar lane in both builds.
+pub const LANE_CONTROL_WORDS: usize = 7;
+/// Exploratory lane-threshold strides.
+pub const LANE_NEIGHBOR_WORDS: [usize; 4] = [10, 32, 62, 66];
 /// Rows in every gf2-only allocated cell.
 pub const MATVEC_ROWS: usize = 1024;
 /// Word count at and above which the production selector takes the SIMD lane.
@@ -53,7 +91,7 @@ pub const STREAMING_BANK_BYTES: usize = 8 << 20;
 /// Fixture banks in a streaming working set; the canonical timing rotation.
 pub const STREAMING_BANKS: usize = tuning_campaign_support::timing::FIXTURE_BANKS;
 
-/// One of the addendum's canonical ledger-owning questions.
+/// One of the addenda's canonical ledger-owning questions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Question {
     /// Isolated call to the bundle's fused AND-population-count entry.
@@ -62,15 +100,35 @@ pub enum Question {
     AllocatedMatvec,
     /// Whole-consumer gap against the qualified external M4RI product.
     MatvecVsM4ri,
+    /// Public `BitMatrix::matvec` on the scalar lane against the SIMD lane.
+    MatvecLaneThreshold,
 }
 
 impl Question {
-    /// Every question in the addendum's document order.
-    pub const ALL: [Self; 3] = [
+    /// Every question: the dense-parity addendum's in document order, then the
+    /// lane-threshold addendum's.
+    pub const ALL: [Self; 4] = [
         Self::IsolatedFusedParity,
         Self::AllocatedMatvec,
         Self::MatvecVsM4ri,
+        Self::MatvecLaneThreshold,
     ];
+
+    /// The frozen prose addendum that declares this question.
+    pub fn addendum(self) -> &'static FrozenAddendum {
+        match self {
+            Self::MatvecLaneThreshold => &LANE_THRESHOLD_ADDENDUM,
+            _ => &DENSE_PARITY_ADDENDUM,
+        }
+    }
+
+    /// The question whose cost boundary, cases and arms serve this one's cells.
+    pub fn boundary(self) -> Self {
+        match self {
+            Self::MatvecLaneThreshold => Self::AllocatedMatvec,
+            other => other,
+        }
+    }
 
     /// The addendum's name for this question.
     pub fn id(self) -> &'static str {
@@ -78,6 +136,7 @@ impl Question {
             Self::IsolatedFusedParity => "isolated-fused-parity",
             Self::AllocatedMatvec => "allocated-matvec",
             Self::MatvecVsM4ri => "matvec-vs-m4ri",
+            Self::MatvecLaneThreshold => "matvec-lane-threshold",
         }
     }
 
@@ -87,6 +146,7 @@ impl Question {
             Self::IsolatedFusedParity => "2037941f-dense-isolated-fused-parity",
             Self::AllocatedMatvec => "2037941f-dense-allocated-matvec",
             Self::MatvecVsM4ri => "2037941f-dense-matvec-vs-m4ri",
+            Self::MatvecLaneThreshold => "4337c02e-matvec-simd-threshold",
         }
     }
 
@@ -100,6 +160,9 @@ impl Question {
                 "dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl"
             }
             Self::MatvecVsM4ri => "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl",
+            Self::MatvecLaneThreshold => {
+                "dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl"
+            }
         }
     }
 
@@ -281,7 +344,8 @@ pub enum Workload {
 }
 
 impl Workload {
-    /// The canonical question whose cells carry this workload.
+    /// The question whose cost boundary this workload is measured at; see
+    /// [`Question::boundary`].
     pub fn question(self) -> Question {
         match self {
             Self::AndPopcnt { .. } => Question::IsolatedFusedParity,
@@ -326,10 +390,18 @@ impl Cell {
         !matches!(self.workload, Workload::AndPopcnt { .. })
     }
 
+    /// True for the lane-threshold control, whose stride both builds send to
+    /// the scalar lane.
+    pub fn lane_control(&self) -> bool {
+        self.question == Question::MatvecLaneThreshold
+            && self.workload.stride_words() < SIMD_LANE_MIN_WORDS
+    }
+
     /// The addendum's objective for this cell.
     pub fn objective(&self) -> &'static str {
         match self.workload {
             Workload::M4riGap { .. } => "comparator-gap",
+            _ if self.lane_control() => "non-regression",
             _ => "improvement",
         }
     }
@@ -361,7 +433,7 @@ fn spec(
 
 /// The complete frozen cell table, ordinal-ordered and seeded.
 ///
-/// The table is a pure function of the frozen addendum: it reads no file, no
+/// The table is a pure function of the frozen addenda: it reads no file, no
 /// environment and no clock, so two invocations in any process produce equal
 /// vectors.
 pub fn cells() -> Vec<Cell> {
@@ -426,6 +498,24 @@ pub fn cells() -> Vec<Cell> {
             .filter(|shape| shape.confirmatory)
             .map(|shape| comparator(shape, true)),
     );
+
+    // Lane threshold: the five lane strides and the control, then the
+    // exploratory strides, the streaming lane strides and the two cold cells.
+    let lane = |words: usize, cache: Cache, anchor: bool| {
+        let control = if words < SIMD_LANE_MIN_WORDS { "-control" } else { "" };
+        spec(
+            Question::MatvecLaneThreshold,
+            format!("lane-r{MATVEC_ROWS}-{words}w{control}-{}", cache.id()),
+            Workload::Matvec { words, shape: MatvecShape::Full },
+            cache,
+            anchor,
+        )
+    };
+    table.extend(LANE_WORDS.map(|w| lane(w, Cache::Warm, true)));
+    table.push(lane(LANE_CONTROL_WORDS, Cache::Warm, true));
+    table.extend(LANE_NEIGHBOR_WORDS.map(|w| lane(w, Cache::Warm, false)));
+    table.extend(LANE_WORDS.map(|w| lane(w, Cache::Streaming, false)));
+    table.extend([8, 64].map(|w| lane(w, Cache::Cold, false)));
 
     // Ordinal zero uses the campaign seed; ordinal i the i-th subsequent
     // output of one canonical SplitMix64 stream started at that seed.
