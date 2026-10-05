@@ -52,9 +52,10 @@ and the first whose content displaces the cited line.
 ## Limits
 
 [`make-dense-parity-source-evidence.py`](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py)
-reads the working tree and writes the ledger in place. On a tree whose cited
-sources differ from the recorded commits it writes a different ledger, so the
-committed ledger is verified by the check above and not by regeneration.
+reads each cited file at the commit its ledger row records and reproduces the
+committed ledger byte for byte. It refuses to write a ledger that differs, and
+`--check` compares without writing. The recorded-commits check above verifies
+the ledger independently of the generator.
 
 The documents that cite the ledger and keep their bytes carry their tree
 statement in the
