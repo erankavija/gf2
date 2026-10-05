@@ -1138,8 +1138,34 @@
       "format": "markdown",
       "label": "Mid-range publication tables (generated): receipt authority, cells, frozen-rule checks and content pins",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2f50deee48413af4dd539a2f0f13c5a0d23b670010f2e4ee91e2ed41cc9f45b1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "60417d992490f032b6e26539f0e94cd5eccfb9e90a6ff95bb4ff66d00da5729d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/2ad3a3e0-r1.md"
     }
   ],
+  "done_at": "2026-10-05T02:44:47.667637214Z",
   "first_ready_at": "2026-09-16T22:43:16.553004431Z",
   "gates_required": [
     "doc-review",
@@ -1150,22 +1176,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T02:16:58.061470461Z",
+      "updated_at": "2026-10-05T02:31:19.013049510Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-10-05T02:20:39.931000126Z",
+      "updated_at": "2026-10-05T02:39:24.253780243Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T02:23:53.915904739Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T02:35:27.541889818Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-10-05T02:27:15.456500135Z",
+      "updated_at": "2026-10-05T02:44:29.371596321Z",
       "updated_by": "auto:executor"
     }
   },
@@ -1185,7 +1211,7 @@
     "satisfies:2037941f/REQ-06"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Publish the mid-range evidence synthesis",
-  "updated_at": "2026-10-05T02:28:52.292540949Z"
+  "updated_at": "2026-10-05T02:44:47.667637214Z"
 }

@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-10-05T02:44:47.982293676Z",
   "context": {},
   "created_at": "2026-02-21T19:35:51.678433895Z",
   "dependencies": [
@@ -482,7 +483,7 @@
     "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "in_progress",
   "title": "Profile and optimize mid-range buffer operations (8-64 words)",
-  "updated_at": "2026-10-03T16:28:42.099436750Z"
+  "updated_at": "2026-10-05T02:44:47.982293676Z"
 }
