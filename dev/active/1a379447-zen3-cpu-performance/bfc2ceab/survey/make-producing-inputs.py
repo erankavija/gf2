@@ -42,6 +42,7 @@ LIFECYCLE = [
 BEHAVIOR_EXTRA = [
     LOCK_WRAPPER,
     LAUNCHER,
+    f"{SHARED}/campaign_plan.py",
     f"{SHARED}/verify-campaign-log.py",
     f"{SHARED}/repository_files.py",
     f"{SURVEY}/locate.py",

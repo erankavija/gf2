@@ -1033,18 +1033,36 @@ DECISIONS = {
 # The pilot cells of the entry-check cost family, by the interface whose
 # checked form each measures; the frozen pilot addendum holds the cells.
 PILOT_ADDENDUM = "addendum-v4-entry-check-pilot.json"
+# cell: (interface, grain of the check, the checked form the cell measures)
 PILOT_CELLS = {
-    "spmm-small-n16": "small-prime-spmm-row",
-    "spmm-small-n1024": "small-prime-spmm-row",
-    "spmm-medium-n16": "medium-prime-spmm-row",
-    "spmm-medium-n1024": "medium-prime-spmm-row",
-    "permanent-f3-n14": "bipedal-binary",
-    "ple-small-n128": "small-prime-ple-panel",
-    "ple-medium-n128": "medium-prime-ple-panel",
-    "gemm-small-n32": "small-prime-gemm-row-panel",
+    "spmm-small-n16": ("small-prime-spmm-row", "per row",
+                       "one column scan per sparse row, against one 16-column block per "
+                       "non-zero"),
+    "spmm-small-n1024": ("small-prime-spmm-row", "per row",
+                         "one column scan per sparse row, amortized over 64 blocks per "
+                         "non-zero"),
+    "spmm-medium-n16": ("medium-prime-spmm-row", "per row", "the same scan on the u16 lane"),
+    "spmm-medium-n1024": ("medium-prime-spmm-row", "per row",
+                          "the same scan on the u16 lane, amortized"),
+    "permanent-f3-n14": ("bipedal-binary", "per kernel call",
+                         "one length check per kernel call, and the consumer makes one call "
+                         "per Gray step"),
+    "ple-small-n128": ("small-prime-ple-panel", "per panel",
+                       "one shape check and one scan of the window entries per panel"),
+    "ple-medium-n128": ("medium-prime-ple-panel", "per panel",
+                        "the same panel check on the u16 lane"),
+    "gemm-small-n32": ("small-prime-gemm-row-panel", "per row",
+                       "one checked shape product per row of the product, which the "
+                       "byte-lane route sends through the row kernel"),
+    "gemm-medium-n32": ("medium-prime-gemm-panel", "per whole product",
+                        "three checked shape products per product call, which the u16 "
+                        "panel route makes once"),
 }
+# The cells the confirmation retains: one per check grain of each cost class.
+RETAINED_CELLS = ["spmm-small-n16", "spmm-medium-n16", "permanent-f3-n14", "ple-small-n128",
+                  "gemm-small-n32", "gemm-medium-n32"]
 # Estimate of the pilot's window minutes, builds included.
-PILOT_MINUTES = 12
+PILOT_MINUTES = 14
 QUEUE_COMMAND = "dev/bench_results/bfc2ceab/run-entry-check.sh window pilot"
 
 # Text that would name one of the inventory's consumers in a measurement

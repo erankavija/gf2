@@ -12,40 +12,33 @@ receipt with the repository's canonical freezer.
 import json
 import sys
 
+import review
 from locate import HERE, ISSUE, ROOT
 
-FROZEN_UTC = "2026-10-05T19:43:00Z"
+FROZEN_UTC = "2026-10-05T21:29:00Z"
 FAMILY = "caller-trusted-entry-check-cost"
 OUTPUT = HERE.parent / "addendum-v4-entry-check-pilot.json"
 LEDGER = f"dev/bench_results/{ISSUE}/entry-check-family-ledger.jsonl"
 CFG = "--cfg gf2_entry_checked"
 
-# (cell, consumer, size, seed, the checked form the cell measures)
+# (cell, consumer, size, seed); `review.PILOT_CELLS` states the checked form
+# each cell measures.
 CELLS = [
     ("spmm-small-n16", "sparse-matmat",
-     {"prime": 7, "rows": 1024, "nonzeros_per_row": 8, "dense_cols": 16}, 5101,
-     "one column scan per sparse row, against one 16-column block per non-zero"),
+     {"prime": 7, "rows": 1024, "nonzeros_per_row": 8, "dense_cols": 16}, 5101),
     ("spmm-small-n1024", "sparse-matmat",
-     {"prime": 7, "rows": 1024, "nonzeros_per_row": 8, "dense_cols": 1024}, 5102,
-     "one column scan per sparse row, amortized over 64 blocks per non-zero"),
+     {"prime": 7, "rows": 1024, "nonzeros_per_row": 8, "dense_cols": 1024}, 5102),
     ("spmm-medium-n16", "sparse-matmat",
-     {"prime": 65521, "rows": 1024, "nonzeros_per_row": 8, "dense_cols": 16}, 5103,
-     "the same scan on the u16 lane"),
+     {"prime": 65521, "rows": 1024, "nonzeros_per_row": 8, "dense_cols": 16}, 5103),
     ("spmm-medium-n1024", "sparse-matmat",
-     {"prime": 65521, "rows": 1024, "nonzeros_per_row": 8, "dense_cols": 1024}, 5104,
-     "the same scan on the u16 lane, amortized"),
-    ("permanent-f3-n14", "permanent-f3", {"n": 14}, 5105,
-     "one length check per kernel call, and the consumer makes one call per Gray step"),
-    ("ple-small-n128", "ple", {"prime": 7, "n": 128}, 5106,
-     "one shape check and one scan of the window entries per panel"),
-    ("ple-medium-n128", "ple", {"prime": 65521, "n": 128}, 5107,
-     "the same panel check on the u16 lane"),
-    ("gemm-small-n32", "gemm", {"prime": 7, "n": 32}, 5108,
-     "one checked shape product per row of the product, which the byte-lane route "
-     "sends through the row kernel"),
+     {"prime": 65521, "rows": 1024, "nonzeros_per_row": 8, "dense_cols": 1024}, 5104),
+    ("permanent-f3-n14", "permanent-f3", {"n": 14}, 5105),
+    ("ple-small-n128", "ple", {"prime": 7, "n": 128}, 5106),
+    ("ple-medium-n128", "ple", {"prime": 65521, "n": 128}, 5107),
+    ("gemm-small-n32", "gemm", {"prime": 7, "n": 32}, 5108),
+    ("gemm-medium-n32", "gemm", {"prime": 65521, "n": 32}, 5109),
 ]
-RETAINED = ["spmm-small-n16", "spmm-small-n1024", "spmm-medium-n16", "permanent-f3-n14",
-            "ple-small-n128", "gemm-small-n32"]
+RETAINED = review.RETAINED_CELLS
 
 FAMILY_DESCRIPTION = (
     f"Exploratory pilot of issue {ISSUE}, protocol version 4: this addendum is the pilot and "
@@ -63,16 +56,20 @@ FAMILY_DESCRIPTION = (
     "whole-consumer: the timed call is the public consumer on operands in the representation a "
     "caller holds, so packing, dispatch, the kernel and the output are inside it and no "
     "conversion stands outside. What each cell's check is: "
-    + "; ".join(f"{cell}: {form}" for cell, _, _, _, form in CELLS)
+    + "; ".join(f"{cell} ({review.PILOT_CELLS[cell][1]}): {review.PILOT_CELLS[cell][2]}"
+                for cell, _, _, _ in CELLS)
     + ". Every cell is single-core and warm: the consumers run on the calling thread in this "
     "build, and the check's cost is a per-call or per-row instruction cost that a cache-resident "
     "operand exposes most. Frozen confirmation selection: a first confirmatory attempt spends "
     "alpha/2 = 0.025, and P-20's tail-support bound, 10000 * (0.025 / m) / 2 >= 20, admits m = 6 "
     "confirmatory comparisons, so the confirmation retains "
     + ", ".join(RETAINED)
-    + " and drops spmm-medium-n1024, whose amortized regime spmm-small-n1024 carries, and "
-    "ple-medium-n128, whose panel check has the form of ple-small-n128; the dropped cells keep "
-    "their pilot evidence. Frozen decision rule: the checked form of a cost class is recorded "
+    + ", one cell per check grain of each cost class, and drops spmm-small-n1024 and "
+    "spmm-medium-n1024, whose amortized regime is the favourable end of the row scan that the "
+    "16-column cells carry at its least favourable, and ple-medium-n128, whose panel check has "
+    "the form of ple-small-n128; the dropped cells keep their pilot evidence. The dense class is "
+    "measured at both of its grains: gemm-small-n32 per row and gemm-medium-n32 per whole "
+    "product. Frozen decision rule: the checked form of a cost class is recorded "
     "as an accepted measured cost when every confirmatory cell of the class records pass; a "
     "class with a cell that records fail or inconclusive goes back to the invoker with the "
     "measured ratio, as the choice between the check and an unchecked form of that interface. "
@@ -166,7 +163,7 @@ def main():
         },
         "holdout": {"required": False, "cells": []},
         "cells": [cell(cell_id, consumer, size, seed)
-                  for cell_id, consumer, size, seed, _ in CELLS],
+                  for cell_id, consumer, size, seed in CELLS],
     }
     OUTPUT.write_text(json.dumps(addendum, indent=2) + "\n")
     print(f"{OUTPUT.relative_to(ROOT)}: {len(addendum['cells'])} exploratory cells")

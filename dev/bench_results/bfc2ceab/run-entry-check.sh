@@ -62,8 +62,13 @@ CHECKED_TARGET="${ARM_TARGET}-checked"
 CHECKED_FLAGS='--cfg gf2_entry_checked'
 ARM="${ARM_TARGET}/release/entry-check-arm"
 STAGES="${REPO}/target/${ISSUE}-campaigns"
-RUNNER="${REPO}/target/release/benchmark-ab-runner"
-ACCEPTANCE="${REPO}/target/release/benchmark-acceptance"
+# The campaign tools are built by this script into a target directory of its
+# own, so the runner that measures and the acceptance tool that evaluates are
+# the ones `build_binaries` compiled from this tree, never a binary a seeded
+# `target/release` happens to hold.
+TOOLS_TARGET="${REPO}/target/${ISSUE}-tools"
+RUNNER="${TOOLS_TARGET}/release/benchmark-ab-runner"
+ACCEPTANCE="${TOOLS_TARGET}/release/benchmark-acceptance"
 LOCK="${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}"
 
 # The benchmark window starts this script with the login environment only.
@@ -84,8 +89,8 @@ arm_cargo() {
 build_binaries() {
     arm_cargo "${ARM_TARGET}" '' cargo build --release
     arm_cargo "${CHECKED_TARGET}" "${CHECKED_FLAGS}" cargo build --release
-    ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
-        --bin benchmark-ab-runner --bin benchmark-acceptance
+    CARGO_TARGET_DIR="${TOOLS_TARGET}" ./scripts/cargo-budget.sh cargo build --release --locked \
+        -p tuning-campaign-support --bin benchmark-ab-runner --bin benchmark-acceptance
 }
 
 ACTION=${1:?build, window or freeze}
@@ -119,13 +124,14 @@ if [[ "${ACTION}" == freeze ]]; then
         --frozen-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         --output "${CONFIRMATION_ADDENDUM}" \
         --record "${DERIVATION}" \
-        --cell spmm-small-n16 --cell spmm-small-n1024 --cell spmm-medium-n16 \
-        --cell permanent-f3-n14 --cell ple-small-n128 --cell gemm-small-n32 \
+        --cell spmm-small-n16 --cell spmm-medium-n16 --cell permanent-f3-n14 \
+        --cell ple-small-n128 --cell gemm-small-n32 --cell gemm-medium-n32 \
         --selection-rationale \
         "The pilot addendum freezes this selection: P-20's tail-support bound admits six \
-confirmatory comparisons on the family's first attempt; spmm-medium-n1024 is dropped because \
-spmm-small-n1024 carries its amortized regime, and ple-medium-n128 because its panel check has \
-the form of ple-small-n128. The dropped cells keep their pilot evidence." \
+confirmatory comparisons on the family's first attempt, one cell per check grain of each cost \
+class; spmm-small-n1024 and spmm-medium-n1024 are dropped because the 16-column cells carry the \
+row scan at its least favourable, and ple-medium-n128 because its panel check has the form of \
+ple-small-n128. The dropped cells keep their pilot evidence." \
         --family-description \
         "Confirmatory stage of issue ${ISSUE}, protocol version 4: every cell below is \
 confirmatory and decides, on fresh samples, whether the checked form of a caller-trusted kernel \
@@ -157,7 +163,7 @@ CAMPAIGN_NAME=${2:?pilot or confirmation}
 case "${CAMPAIGN_NAME}" in
     pilot)
         ADDENDUM=${PILOT_ADDENDUM}
-        LABEL=pilot SEED=2026100501 MAX_CELLS=4 PILOT_PAIRS=12 ;;
+        LABEL=pilot SEED=2026100501 MAX_CELLS=3 PILOT_PAIRS=12 ;;
     confirmation)
         ADDENDUM=${CONFIRMATION_ADDENDUM}
         LABEL=confirmation SEED=2026100511 MAX_CELLS=3 PILOT_PAIRS= ;;

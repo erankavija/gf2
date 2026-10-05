@@ -40,7 +40,7 @@ CARGO_TARGET_DIR="${CHECKED_TARGET}" RUSTFLAGS='--cfg gf2_entry_checked' \
 [[ $# -gt 0 ]] || set -- pilot
 for STAGE in "$@"; do
     case "${STAGE}" in
-        pilot) SEED=20261005 MAX_CELLS=4 PILOT_PAIRS=(--pilot-pairs 12) ;;
+        pilot) SEED=20261005 MAX_CELLS=3 PILOT_PAIRS=(--pilot-pairs 12) ;;
         confirmation) SEED=20261006 MAX_CELLS=3 PILOT_PAIRS=() ;;
         *) echo "stage must be pilot or confirmation" >&2; exit 2 ;;
     esac

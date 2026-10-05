@@ -2380,6 +2380,9 @@
     {
       "cell": "spmm-small-n16",
       "interface": "small-prime-spmm-row",
+      "check_grain": "per row",
+      "check_form": "one column scan per sparse row, against one 16-column block per non-zero",
+      "retained_for_confirmation": true,
       "workload": "sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols16",
       "objective": "non-regression",
       "metric_kind": "whole-consumer"
@@ -2387,6 +2390,9 @@
     {
       "cell": "spmm-small-n1024",
       "interface": "small-prime-spmm-row",
+      "check_grain": "per row",
+      "check_form": "one column scan per sparse row, amortized over 64 blocks per non-zero",
+      "retained_for_confirmation": false,
       "workload": "sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols1024",
       "objective": "non-regression",
       "metric_kind": "whole-consumer"
@@ -2394,6 +2400,9 @@
     {
       "cell": "spmm-medium-n16",
       "interface": "medium-prime-spmm-row",
+      "check_grain": "per row",
+      "check_form": "the same scan on the u16 lane",
+      "retained_for_confirmation": true,
       "workload": "sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols16",
       "objective": "non-regression",
       "metric_kind": "whole-consumer"
@@ -2401,6 +2410,9 @@
     {
       "cell": "spmm-medium-n1024",
       "interface": "medium-prime-spmm-row",
+      "check_grain": "per row",
+      "check_form": "the same scan on the u16 lane, amortized",
+      "retained_for_confirmation": false,
       "workload": "sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols1024",
       "objective": "non-regression",
       "metric_kind": "whole-consumer"
@@ -2408,6 +2420,9 @@
     {
       "cell": "permanent-f3-n14",
       "interface": "bipedal-binary",
+      "check_grain": "per kernel call",
+      "check_form": "one length check per kernel call, and the consumer makes one call per Gray step",
+      "retained_for_confirmation": true,
       "workload": "permanent-f3-n14",
       "objective": "non-regression",
       "metric_kind": "whole-consumer"
@@ -2415,6 +2430,9 @@
     {
       "cell": "ple-small-n128",
       "interface": "small-prime-ple-panel",
+      "check_grain": "per panel",
+      "check_form": "one shape check and one scan of the window entries per panel",
+      "retained_for_confirmation": true,
       "workload": "ple-prime7-n128",
       "objective": "non-regression",
       "metric_kind": "whole-consumer"
@@ -2422,6 +2440,9 @@
     {
       "cell": "ple-medium-n128",
       "interface": "medium-prime-ple-panel",
+      "check_grain": "per panel",
+      "check_form": "the same panel check on the u16 lane",
+      "retained_for_confirmation": false,
       "workload": "ple-prime65521-n128",
       "objective": "non-regression",
       "metric_kind": "whole-consumer"
@@ -2429,7 +2450,20 @@
     {
       "cell": "gemm-small-n32",
       "interface": "small-prime-gemm-row-panel",
+      "check_grain": "per row",
+      "check_form": "one checked shape product per row of the product, which the byte-lane route sends through the row kernel",
+      "retained_for_confirmation": true,
       "workload": "gemm-prime7-n32",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "gemm-medium-n32",
+      "interface": "medium-prime-gemm-panel",
+      "check_grain": "per whole product",
+      "check_form": "three checked shape products per product call, which the u16 panel route makes once",
+      "retained_for_confirmation": true,
+      "workload": "gemm-prime65521-n32",
       "objective": "non-regression",
       "metric_kind": "whole-consumer"
     }

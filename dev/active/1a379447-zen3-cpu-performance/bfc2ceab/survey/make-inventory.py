@@ -357,7 +357,10 @@ def pilot_cells():
     return [
         {
             "cell": cell["cell_id"],
-            "interface": review.PILOT_CELLS[cell["cell_id"]],
+            "interface": review.PILOT_CELLS[cell["cell_id"]][0],
+            "check_grain": review.PILOT_CELLS[cell["cell_id"]][1],
+            "check_form": review.PILOT_CELLS[cell["cell_id"]][2],
+            "retained_for_confirmation": cell["cell_id"] in review.RETAINED_CELLS,
             "workload": cell["workload"]["identity"],
             "objective": cell["objective"],
             "metric_kind": cell["metric_kind"],
@@ -611,6 +614,8 @@ def decision_page(record):
 
 def plan_page(record):
     cells, scan = record["measurement_cells"], record["family_scan"]
+    measured = {row["interface"] for row in cells}
+    unmeasured = [row["id"] for row in record["interfaces"] if row["id"] not in measured]
     addendum = json.loads((OUT / review.PILOT_ADDENDUM).read_text())
     out = [
         "# Measurement plan for the cost of the entry checks",
@@ -645,14 +650,22 @@ def plan_page(record):
         "margins and their rationale.",
         "",
         table(
-            ["Cell", "Interface", "Workload", "Objective", "Metric"],
+            ["Cell", "Interface", "Workload", "Check grain", "Checked form the cell measures",
+             "Retained for confirmation"],
             [[f"`{row['cell']}`", f"`{row['interface']}`", f"`{row['workload']}`",
-              row["objective"], row["metric_kind"]] for row in cells],
+              row["check_grain"], row["check_form"],
+              "yes" if row["retained_for_confirmation"] else "no"] for row in cells],
         ),
         "",
-        "The interfaces without a cell run their check once per matrix product or per "
-        "demapped axis, or are called from no tracked Rust file; "
-        "[`decision-table.md`](decision-table.md) lists each.",
+        "Every cell is a non-regression, whole-consumer cell. The retained cells cover "
+        "each grain at which a check runs: per sparse row, per kernel call of the F_3 "
+        "permanent, per PLE panel, per row of a dense product and per whole dense "
+        "product. Interfaces without a cell: "
+        + ", ".join(f"`{name}`" for name in unmeasured)
+        + ". The three whole-product kernels among them hold the check form "
+        "`gemm-medium-n32` measures; the Gray-PAM kernels check one product per "
+        "demapped axis and the remaining packed pointers are called from no tracked Rust "
+        "file, so the family prices neither.",
         "",
         "## Stages",
         "",

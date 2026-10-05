@@ -12,18 +12,19 @@ The dispatch route inventory (jit:63bad95d, `dev/active/1a379447-zen3-cpu-perfor
 
 Both arms are the arm package `survey/entry-check-arm` built twice from one tree: the baseline with no flag and the candidate with RUSTFLAGS `--cfg gf2_entry_checked`, under which the kernel crate's detection functions publish the checked wrappers. The plan records each arm's RUSTFLAGS and executable digest, and each execution reports the entry-point form its build publishes, observed from the linked kernel crate. The addendum's family description states the check each cell measures, the selection of the confirmation's cells and the decision rule; its `effect` object states the margins and their rationale.
 
-| Cell | Interface | Workload | Objective | Metric |
-|---|---|---|---|---|
-| `spmm-small-n16` | `small-prime-spmm-row` | `sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols16` | non-regression | whole-consumer |
-| `spmm-small-n1024` | `small-prime-spmm-row` | `sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols1024` | non-regression | whole-consumer |
-| `spmm-medium-n16` | `medium-prime-spmm-row` | `sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols16` | non-regression | whole-consumer |
-| `spmm-medium-n1024` | `medium-prime-spmm-row` | `sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols1024` | non-regression | whole-consumer |
-| `permanent-f3-n14` | `bipedal-binary` | `permanent-f3-n14` | non-regression | whole-consumer |
-| `ple-small-n128` | `small-prime-ple-panel` | `ple-prime7-n128` | non-regression | whole-consumer |
-| `ple-medium-n128` | `medium-prime-ple-panel` | `ple-prime65521-n128` | non-regression | whole-consumer |
-| `gemm-small-n32` | `small-prime-gemm-row-panel` | `gemm-prime7-n32` | non-regression | whole-consumer |
+| Cell | Interface | Workload | Check grain | Checked form the cell measures | Retained for confirmation |
+|---|---|---|---|---|---|
+| `spmm-small-n16` | `small-prime-spmm-row` | `sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols16` | per row | one column scan per sparse row, against one 16-column block per non-zero | yes |
+| `spmm-small-n1024` | `small-prime-spmm-row` | `sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols1024` | per row | one column scan per sparse row, amortized over 64 blocks per non-zero | no |
+| `spmm-medium-n16` | `medium-prime-spmm-row` | `sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols16` | per row | the same scan on the u16 lane | yes |
+| `spmm-medium-n1024` | `medium-prime-spmm-row` | `sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols1024` | per row | the same scan on the u16 lane, amortized | no |
+| `permanent-f3-n14` | `bipedal-binary` | `permanent-f3-n14` | per kernel call | one length check per kernel call, and the consumer makes one call per Gray step | yes |
+| `ple-small-n128` | `small-prime-ple-panel` | `ple-prime7-n128` | per panel | one shape check and one scan of the window entries per panel | yes |
+| `ple-medium-n128` | `medium-prime-ple-panel` | `ple-prime65521-n128` | per panel | the same panel check on the u16 lane | no |
+| `gemm-small-n32` | `small-prime-gemm-row-panel` | `gemm-prime7-n32` | per row | one checked shape product per row of the product, which the byte-lane route sends through the row kernel | yes |
+| `gemm-medium-n32` | `medium-prime-gemm-panel` | `gemm-prime65521-n32` | per whole product | three checked shape products per product call, which the u16 panel route makes once | yes |
 
-The interfaces without a cell run their check once per matrix product or per demapped axis, or are called from no tracked Rust file; [`decision-table.md`](decision-table.md) lists each.
+Every cell is a non-regression, whole-consumer cell. The retained cells cover each grain at which a check runs: per sparse row, per kernel call of the F_3 permanent, per PLE panel, per row of a dense product and per whole dense product. Interfaces without a cell: `bipedal-unary`, `f5-binary`, `f5-unary`, `f7-binary`, `f7-unary`, `small-prime-panel-gemm`, `small-prime-f32-gemm`, `medium-prime-f64-gemm`, `pam-distances-f32`, `pam-distances-f64`. The three whole-product kernels among them hold the check form `gemm-medium-n32` measures; the Gray-PAM kernels check one product per demapped axis and the remaining packed pointers are called from no tracked Rust file, so the family prices neither.
 
 ## Stages
 
@@ -33,4 +34,4 @@ The interfaces without a cell run their check once per matrix product or per dem
 
 ## Window estimate
 
-Estimate: 12 minutes for the pilot, the builds of both arms and of the campaign tools included, by analogy with two committed queue lines of warm campaigns (`queue-dense-product`, `queue-axpy`).
+Estimate: 14 minutes for the pilot, the builds of both arms and of the campaign tools included, by analogy with two committed queue lines of warm campaigns (`queue-dense-product`, `queue-axpy`).
