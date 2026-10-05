@@ -1,0 +1,432 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch -E binary(simd_equiv_demo) | binary(simd_equiv_dispatch_hoist) | binary(simd_equiv_gf2m_batch) | test(/^kernels::backend::tests::every_backend_/) | test(/^gfp::simd_ops::tests::/) --status-level none --final-status-level none --success-output final --cargo-profile ci-test --profile ci
+warning: constant `SIMD_MIN_WORDS` is never used
+  --> crates/gf2-core/src/tuning/baked.rs:12:18
+   |
+12 | pub(crate) const SIMD_MIN_WORDS: usize = 8;
+   |                  ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `GEMM_ROW_TILE` is never used
+  --> crates/gf2-core/src/tuning/baked.rs:22:18
+   |
+22 | pub(crate) const GEMM_ROW_TILE: usize = 32;
+   |                  ^^^^^^^^^^^^^
+
+warning: constant `GEMM_COL_TILE` is never used
+  --> crates/gf2-core/src/tuning/baked.rs:26:18
+   |
+26 | pub(crate) const GEMM_COL_TILE: usize = 64;
+   |                  ^^^^^^^^^^^^^
+
+warning: constant `DOT_CHUNK_LEN` is never used
+  --> crates/gf2-core/src/tuning/baked.rs:30:18
+   |
+30 | pub(crate) const DOT_CHUNK_LEN: usize = 256;
+   |                  ^^^^^^^^^^^^^
+
+warning: `gf2-core` (lib test) generated 4 warnings
+    Finished `ci-test` profile [optimized] target(s) in 0.05s
+────────────
+ Nextest run ID fc5d940d-2c3c-4a5e-ba24-8614b211217e with nextest profile: ci
+    Starting 29 tests across 4 binaries (2001 tests skipped)
+────────────
+     Summary [   0.026s] 29 tests run: 29 passed, 2001 skipped
+        PASS [   0.006s] ( 1/29) gf2-core::simd_equiv_demo demo_xor_word_boundary_lengths
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test demo_xor_word_boundary_lengths ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+
+        PASS [   0.006s] ( 2/29) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_unaligned_slices
+  stdout ───
+
+    running 1 test
+    implementation: resolve_xor_inplace over scalar
+    test hoisted_xor_dispatch_unaligned_slices ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+
+        PASS [   0.006s] ( 3/29) gf2-core::simd_equiv_demo demo_xor_unaligned_slice_offsets
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test demo_xor_unaligned_slice_offsets ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+
+        PASS [   0.006s] ( 4/29) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_matches_the_word_loop_proptest
+  stdout ───
+
+    running 1 test
+    implementation: resolve_xor_inplace over scalar
+    test hoisted_xor_dispatch_matches_the_word_loop_proptest ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+  stderr ───
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+
+        PASS [   0.006s] ( 5/29) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_word_boundaries
+  stdout ───
+
+    running 1 test
+    implementation: resolve_xor_inplace over scalar
+    test hoisted_xor_dispatch_word_boundaries ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+
+        PASS [   0.006s] ( 6/29) gf2-core kernels::backend::tests::every_backend_ands_word_by_word
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test kernels::backend::tests::every_backend_ands_word_by_word ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.006s] ( 7/29) gf2-core kernels::backend::tests::every_backend_ors_word_by_word
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test kernels::backend::tests::every_backend_ors_word_by_word ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] ( 8/29) gf2-core kernels::backend::tests::every_backend_xor_is_an_involution
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test kernels::backend::tests::every_backend_xor_is_an_involution ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] ( 9/29) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_8
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the scalar loop
+    test boundary_lengths_gf2_8 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] (10/29) gf2-core gfp::simd_ops::tests::generic_simd_matches_scalar_for_proof_suite_primes
+  stdout ───
+
+    running 1 test
+    implementation: Fp<3> element operations
+    implementation: Fp<5> element operations
+    implementation: Fp<7> element operations
+    implementation: Fp<11> element operations
+    implementation: Fp<13> element operations
+    implementation: Fp<17> element operations
+    implementation: Fp<2147483629> element operations
+    implementation: Fp<2305843009213693907> element operations
+    implementation: Fp<9223372036854775783> element operations
+    implementation: Fp<7> element operations
+    implementation: Fp<31> element operations
+    implementation: Fp<251> element operations
+    test gfp::simd_ops::tests::generic_simd_matches_scalar_for_proof_suite_primes ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] (11/29) gf2-core::simd_equiv_demo demo_xor_matches_the_word_loop_proptest
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test demo_xor_matches_the_word_loop_proptest ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+  stderr ───
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+
+        PASS [   0.007s] (12/29) gf2-core kernels::backend::tests::every_backend_complements_word_by_word
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test kernels::backend::tests::every_backend_complements_word_by_word ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] (13/29) gf2-core gfp::simd_ops::tests::proptest_small_prime_prepack_matvec_boundary_fp251
+  stdout ───
+
+    running 1 test
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    test gfp::simd_ops::tests::proptest_small_prime_prepack_matvec_boundary_fp251 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] (14/29) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_32
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the scalar loop
+    test boundary_lengths_gf2_32 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] (15/29) gf2-core::simd_equiv_demo helper_rejects_a_mutated_reference
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test helper_rejects_a_mutated_reference ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+  stderr ───
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+    proptest: Aborting shrinking after the PROPTEST_MAX_SHRINK_ITERS environment variable or ProptestConfig.max_shrink_iters iterations (set 256 to a large(r) value to shrink more; current configuration: 256 iterations)
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+
+    thread 'helper_rejects_a_mutated_reference' (3392913) panicked at crates/gf2-core/tests/simd_equiv/mod.rs:76:10:
+    scalar and SIMD implementations diverged on a proptest input: Fail(Reason("post-state mismatch: scalar=([13875537721755455724, 18261298413215269990, 159953642451192947, 13974535041769266122], [13875537721755455725, 18261298413215269991, 159953642451192946, 13974535041769266123]) simd=([13875537721755455725, 18261298413215269991, 159953642451192946, 13974535041769266123], [13875537721755455725, 18261298413215269991, 159953642451192946, 13974535041769266123]) input=([0, 0, 0, 0], [13875537721755455725, 18261298413215269991, 159953642451192946, 13974535041769266123])"), ([0, 0, 0, 0], [13875537721755455725, 18261298413215269991, 159953642451192946, 13974535041769266123]))
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        PASS [   0.008s] (16/29) gf2-core gfp::simd_ops::tests::test_small_prime_gemm_dispatch_boundary_lengths
+  stdout ───
+
+    running 1 test
+    implementation: Fp<7> element operations
+    implementation: Fp<31> element operations
+    implementation: Fp<251> element operations
+    test gfp::simd_ops::tests::test_small_prime_gemm_dispatch_boundary_lengths ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] (17/29) gf2-core kernels::backend::tests::every_backend_counts_set_bits
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test kernels::backend::tests::every_backend_counts_set_bits ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.008s] (18/29) gf2-core gfp::simd_ops::tests::medium_simd_matches_scalar_word_boundaries
+  stdout ───
+
+    running 1 test
+    implementation: Fp<65521> element operations
+    implementation: Fp<257> element operations
+    implementation: Fp<509> element operations
+    implementation: Fp<1009> element operations
+    implementation: Fp<8191> element operations
+    implementation: Fp<32749> element operations
+    test gfp::simd_ops::tests::medium_simd_matches_scalar_word_boundaries ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.008s] (19/29) gf2-core gfp::simd_ops::tests::test_small_prime_prepack_matvec_boundary_lengths
+  stdout ───
+
+    running 1 test
+    implementation: Fp<251> element operations
+    implementation: Fp<7> element operations
+    test gfp::simd_ops::tests::test_small_prime_prepack_matvec_boundary_lengths ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.008s] (20/29) gf2-core kernels::backend::tests::every_backend_xors_word_by_word
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test kernels::backend::tests::every_backend_xors_word_by_word ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.008s] (21/29) gf2-core gfp::simd_ops::tests::m31_simd_mul_matches_scalar_across_boundary_lens
+  stdout ───
+
+    running 1 test
+    implementation: Fp<2147483647> element operations
+    test gfp::simd_ops::tests::m31_simd_mul_matches_scalar_across_boundary_lens ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.009s] (22/29) gf2-core kernels::backend::tests::every_backend_answers_the_fixed_vectors
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    test kernels::backend::tests::every_backend_answers_the_fixed_vectors ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.00s
+
+
+        PASS [   0.009s] (23/29) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_16
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the scalar loop
+    test boundary_lengths_gf2_16 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+
+        PASS [   0.004s] (24/29) gf2-core::simd_equiv_gf2m_batch square_matches_mul_self_gf2_8
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the scalar loop
+    test square_matches_mul_self_gf2_8 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+
+        PASS [   0.004s] (25/29) gf2-core::simd_equiv_gf2m_batch square_matches_mul_self_gf2_16_word_boundary_lengths
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the scalar loop
+    test square_matches_mul_self_gf2_16_word_boundary_lengths ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+
+        PASS [   0.005s] (26/29) gf2-core::simd_equiv_gf2m_batch proptest_gf2_8_batch_mul_matches_field_single_shot
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the scalar loop
+    test proptest_gf2_8_batch_mul_matches_field_single_shot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+  stderr ───
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+
+        PASS [   0.005s] (27/29) gf2-core::simd_equiv_gf2m_batch proptest_gf2_16_batch_mul_matches_field_single_shot
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the scalar loop
+    test proptest_gf2_16_batch_mul_matches_field_single_shot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+  stderr ───
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+
+        PASS [   0.005s] (28/29) gf2-core::simd_equiv_gf2m_batch proptest_gf2_32_batch_mul_matches_field_single_shot
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the scalar loop
+    test proptest_gf2_32_batch_mul_matches_field_single_shot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+  stderr ───
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+
+        PASS [   0.020s] (29/29) gf2-core gfp::simd_ops::tests::proptest_small_prime_gemm_boundary_fp251
+  stdout ───
+
+    running 1 test
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    implementation: Fp<251> dot-product loop
+    test gfp::simd_ops::tests::proptest_small_prime_gemm_boundary_fp251 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2014 filtered out; finished in 0.01s
+
+
+# exit: 0

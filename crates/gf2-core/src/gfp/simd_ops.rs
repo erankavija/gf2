@@ -2708,6 +2708,9 @@ mod tests {
         assert_each(&implementations, |run| run());
     }
 
+    /// Fills an output buffer of `Fp<251>` elements.
+    type Fill<'a> = &'a dyn Fn(&mut [Fp<251>]);
+
     /// `sum_t lhs[t] * rhs[t]` in integer arithmetic modulo `P`.
     fn integer_dot<const P: u64>(lhs: &[Fp<P>], rhs: &[Fp<P>]) -> u128 {
         let products = lhs
@@ -2927,7 +2930,7 @@ mod tests {
             let accelerated = |out: &mut [Fp<251>]| {
                 assert!(fp_small_try_gemm_classical::<251>(&a, &bt, m, k, n, out));
             };
-            let mut implementations: Vec<Implementation<&dyn Fn(&mut [Fp<251>])>> =
+            let mut implementations: Vec<Implementation<Fill<'_>>> =
                 vec![Implementation::new("Fp<251> dot-product loop", &reference)];
             if crate::simd::maybe_fp_small().is_some() {
                 implementations.push(Implementation::new(
@@ -2987,7 +2990,7 @@ mod tests {
                 Some(packed) => packed.matvec(&x, y),
                 None => assert!(m == 0 || k == 0, "declined a {m} x {k} matrix"),
             };
-            let mut implementations: Vec<Implementation<&dyn Fn(&mut [Fp<251>])>> =
+            let mut implementations: Vec<Implementation<Fill<'_>>> =
                 vec![Implementation::new("Fp<251> dot-product loop", &reference)];
             if crate::simd::maybe_fp_small().is_some() {
                 implementations.push(Implementation::new(

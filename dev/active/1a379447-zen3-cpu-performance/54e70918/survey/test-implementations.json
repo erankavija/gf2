@@ -1,0 +1,684 @@
+{
+ "issue": "54e70918",
+ "commands": {
+  "default": "nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch -E binary(simd_equiv_demo) | binary(simd_equiv_dispatch_hoist) | binary(simd_equiv_gf2m_batch) | test(/^kernels::backend::tests::every_backend_/) | test(/^gfp::simd_ops::tests::/) --status-level none --final-status-level none --success-output final --cargo-profile ci-test --profile ci",
+  "simd": "nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --features simd --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch -E binary(simd_equiv_demo) | binary(simd_equiv_dispatch_hoist) | binary(simd_equiv_gf2m_batch) | test(/^kernels::backend::tests::every_backend_/) | test(/^gfp::simd_ops::tests::/) --status-level none --final-status-level none --success-output final --cargo-profile ci-test --profile ci",
+  "all-features": "nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch -E binary(simd_equiv_demo) | binary(simd_equiv_dispatch_hoist) | binary(simd_equiv_gf2m_batch) | test(/^kernels::backend::tests::every_backend_/) | test(/^gfp::simd_ops::tests::/) --status-level none --final-status-level none --success-output final --cargo-profile ci-test --profile ci",
+  "no-simd": "nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --no-default-features --features rand,io,parallel,visualization,tuning-profile,test-support --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch -E binary(simd_equiv_demo) | binary(simd_equiv_dispatch_hoist) | binary(simd_equiv_gf2m_batch) | test(/^kernels::backend::tests::every_backend_/) | test(/^gfp::simd_ops::tests::/) --status-level none --final-status-level none --success-output final --cargo-profile ci-test --profile ci"
+ },
+ "named_targets": [
+  "gf2-core::simd_equiv_demo",
+  "gf2-core::simd_equiv_dispatch_hoist"
+ ],
+ "tests": [
+  {
+   "binary": "gf2-core",
+   "test": "gfp::simd_ops::tests::generic_simd_matches_scalar_for_proof_suite_primes",
+   "implementations": {
+    "default": [
+     "Fp<3> element operations",
+     "Fp<5> element operations",
+     "Fp<7> element operations",
+     "Fp<11> element operations",
+     "Fp<13> element operations",
+     "Fp<17> element operations",
+     "Fp<2147483629> element operations",
+     "Fp<2305843009213693907> element operations",
+     "Fp<9223372036854775783> element operations",
+     "Fp<31> element operations",
+     "Fp<251> element operations"
+    ],
+    "simd": [
+     "Fp<3> element operations",
+     "generic Montgomery vector operations, P = 3",
+     "Fp<5> element operations",
+     "generic Montgomery vector operations, P = 5",
+     "Fp<7> element operations",
+     "generic Montgomery vector operations, P = 7",
+     "Fp<11> element operations",
+     "generic Montgomery vector operations, P = 11",
+     "Fp<13> element operations",
+     "generic Montgomery vector operations, P = 13",
+     "Fp<17> element operations",
+     "generic Montgomery vector operations, P = 17",
+     "Fp<2147483629> element operations",
+     "generic Montgomery vector operations, P = 2147483629",
+     "Fp<2305843009213693907> element operations",
+     "generic Montgomery vector operations, P = 2305843009213693907",
+     "Fp<9223372036854775783> element operations",
+     "generic Montgomery vector operations, P = 9223372036854775783",
+     "small-prime vector operations, P = 7",
+     "Fp<31> element operations",
+     "small-prime vector operations, P = 31",
+     "Fp<251> element operations",
+     "small-prime vector operations, P = 251"
+    ],
+    "all-features": [
+     "Fp<3> element operations",
+     "generic Montgomery vector operations, P = 3",
+     "Fp<5> element operations",
+     "generic Montgomery vector operations, P = 5",
+     "Fp<7> element operations",
+     "generic Montgomery vector operations, P = 7",
+     "Fp<11> element operations",
+     "generic Montgomery vector operations, P = 11",
+     "Fp<13> element operations",
+     "generic Montgomery vector operations, P = 13",
+     "Fp<17> element operations",
+     "generic Montgomery vector operations, P = 17",
+     "Fp<2147483629> element operations",
+     "generic Montgomery vector operations, P = 2147483629",
+     "Fp<2305843009213693907> element operations",
+     "generic Montgomery vector operations, P = 2305843009213693907",
+     "Fp<9223372036854775783> element operations",
+     "generic Montgomery vector operations, P = 9223372036854775783",
+     "small-prime vector operations, P = 7",
+     "Fp<31> element operations",
+     "small-prime vector operations, P = 31",
+     "Fp<251> element operations",
+     "small-prime vector operations, P = 251"
+    ],
+    "no-simd": [
+     "Fp<3> element operations",
+     "Fp<5> element operations",
+     "Fp<7> element operations",
+     "Fp<11> element operations",
+     "Fp<13> element operations",
+     "Fp<17> element operations",
+     "Fp<2147483629> element operations",
+     "Fp<2305843009213693907> element operations",
+     "Fp<9223372036854775783> element operations",
+     "Fp<31> element operations",
+     "Fp<251> element operations"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "gfp::simd_ops::tests::m31_simd_mul_matches_scalar_across_boundary_lens",
+   "implementations": {
+    "default": [
+     "Fp<2147483647> element operations"
+    ],
+    "simd": [
+     "Fp<2147483647> element operations",
+     "Mersenne-31 try_simd_mul_vec, P = 2147483647"
+    ],
+    "all-features": [
+     "Fp<2147483647> element operations",
+     "Mersenne-31 try_simd_mul_vec, P = 2147483647"
+    ],
+    "no-simd": [
+     "Fp<2147483647> element operations"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "gfp::simd_ops::tests::medium_simd_matches_scalar_word_boundaries",
+   "implementations": {
+    "default": [
+     "Fp<65521> element operations",
+     "Fp<257> element operations",
+     "Fp<509> element operations",
+     "Fp<1009> element operations",
+     "Fp<8191> element operations",
+     "Fp<32749> element operations"
+    ],
+    "simd": [
+     "Fp<65521> element operations",
+     "medium-prime vector operations, P = 65521",
+     "Fp<257> element operations",
+     "medium-prime vector operations, P = 257",
+     "Fp<509> element operations",
+     "medium-prime vector operations, P = 509",
+     "Fp<1009> element operations",
+     "medium-prime vector operations, P = 1009",
+     "Fp<8191> element operations",
+     "medium-prime vector operations, P = 8191",
+     "Fp<32749> element operations",
+     "medium-prime vector operations, P = 32749"
+    ],
+    "all-features": [
+     "Fp<65521> element operations",
+     "medium-prime vector operations, P = 65521",
+     "Fp<257> element operations",
+     "medium-prime vector operations, P = 257",
+     "Fp<509> element operations",
+     "medium-prime vector operations, P = 509",
+     "Fp<1009> element operations",
+     "medium-prime vector operations, P = 1009",
+     "Fp<8191> element operations",
+     "medium-prime vector operations, P = 8191",
+     "Fp<32749> element operations",
+     "medium-prime vector operations, P = 32749"
+    ],
+    "no-simd": [
+     "Fp<65521> element operations",
+     "Fp<257> element operations",
+     "Fp<509> element operations",
+     "Fp<1009> element operations",
+     "Fp<8191> element operations",
+     "Fp<32749> element operations"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "gfp::simd_ops::tests::proptest_small_prime_gemm_boundary_fp251",
+   "implementations": {
+    "default": [
+     "Fp<251> dot-product loop"
+    ],
+    "simd": [
+     "Fp<251> dot-product loop",
+     "fp_small_try_gemm_classical, P = 251"
+    ],
+    "all-features": [
+     "Fp<251> dot-product loop",
+     "fp_small_try_gemm_classical, P = 251"
+    ],
+    "no-simd": [
+     "Fp<251> dot-product loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "gfp::simd_ops::tests::proptest_small_prime_prepack_matvec_boundary_fp251",
+   "implementations": {
+    "default": [
+     "Fp<251> dot-product loop"
+    ],
+    "simd": [
+     "Fp<251> dot-product loop",
+     "fp_try_prepack_matvec, P = 251"
+    ],
+    "all-features": [
+     "Fp<251> dot-product loop",
+     "fp_try_prepack_matvec, P = 251"
+    ],
+    "no-simd": [
+     "Fp<251> dot-product loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "gfp::simd_ops::tests::test_small_prime_gemm_dispatch_boundary_lengths",
+   "implementations": {
+    "default": [
+     "Fp<7> element operations",
+     "Fp<31> element operations",
+     "Fp<251> element operations"
+    ],
+    "simd": [
+     "Fp<7> element operations",
+     "fp_small_try_gemm_classical, P = 7",
+     "Fp<31> element operations",
+     "fp_small_try_gemm_classical, P = 31",
+     "Fp<251> element operations",
+     "fp_small_try_gemm_classical, P = 251"
+    ],
+    "all-features": [
+     "Fp<7> element operations",
+     "fp_small_try_gemm_classical, P = 7",
+     "Fp<31> element operations",
+     "fp_small_try_gemm_classical, P = 31",
+     "Fp<251> element operations",
+     "fp_small_try_gemm_classical, P = 251"
+    ],
+    "no-simd": [
+     "Fp<7> element operations",
+     "Fp<31> element operations",
+     "Fp<251> element operations"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "gfp::simd_ops::tests::test_small_prime_prepack_matvec_boundary_lengths",
+   "implementations": {
+    "default": [
+     "Fp<251> element operations",
+     "Fp<7> element operations"
+    ],
+    "simd": [
+     "Fp<251> element operations",
+     "fp_try_prepack_matvec, P = 251",
+     "Fp<7> element operations",
+     "fp_try_prepack_matvec, P = 7"
+    ],
+    "all-features": [
+     "Fp<251> element operations",
+     "fp_try_prepack_matvec, P = 251",
+     "Fp<7> element operations",
+     "fp_try_prepack_matvec, P = 7"
+    ],
+    "no-simd": [
+     "Fp<251> element operations",
+     "Fp<7> element operations"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "kernels::backend::tests::every_backend_ands_word_by_word",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "kernels::backend::tests::every_backend_answers_the_fixed_vectors",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "kernels::backend::tests::every_backend_complements_word_by_word",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "kernels::backend::tests::every_backend_counts_set_bits",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "kernels::backend::tests::every_backend_ors_word_by_word",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "kernels::backend::tests::every_backend_xor_is_an_involution",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core",
+   "test": "kernels::backend::tests::every_backend_xors_word_by_word",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_demo",
+   "test": "demo_xor_matches_the_word_loop_proptest",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_demo",
+   "test": "demo_xor_unaligned_slice_offsets",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_demo",
+   "test": "demo_xor_word_boundary_lengths",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_demo",
+   "test": "helper_rejects_a_mutated_reference",
+   "implementations": {
+    "default": [
+     "scalar"
+    ],
+    "simd": [
+     "scalar",
+     "avx2"
+    ],
+    "all-features": [
+     "scalar",
+     "avx2"
+    ],
+    "no-simd": [
+     "scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_dispatch_hoist",
+   "test": "hoisted_xor_dispatch_matches_the_word_loop_proptest",
+   "implementations": {
+    "default": [
+     "resolve_xor_inplace over scalar"
+    ],
+    "simd": [
+     "resolve_xor_inplace over scalar, avx2"
+    ],
+    "all-features": [
+     "resolve_xor_inplace over scalar, avx2"
+    ],
+    "no-simd": [
+     "resolve_xor_inplace over scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_dispatch_hoist",
+   "test": "hoisted_xor_dispatch_unaligned_slices",
+   "implementations": {
+    "default": [
+     "resolve_xor_inplace over scalar"
+    ],
+    "simd": [
+     "resolve_xor_inplace over scalar, avx2"
+    ],
+    "all-features": [
+     "resolve_xor_inplace over scalar, avx2"
+    ],
+    "no-simd": [
+     "resolve_xor_inplace over scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_dispatch_hoist",
+   "test": "hoisted_xor_dispatch_word_boundaries",
+   "implementations": {
+    "default": [
+     "resolve_xor_inplace over scalar"
+    ],
+    "simd": [
+     "resolve_xor_inplace over scalar, avx2"
+    ],
+    "all-features": [
+     "resolve_xor_inplace over scalar, avx2"
+    ],
+    "no-simd": [
+     "resolve_xor_inplace over scalar"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_gf2m_batch",
+   "test": "boundary_lengths_gf2_16",
+   "implementations": {
+    "default": [
+     "batch_mul and batch_square over the scalar loop"
+    ],
+    "simd": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "all-features": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "no-simd": [
+     "batch_mul and batch_square over the scalar loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_gf2m_batch",
+   "test": "boundary_lengths_gf2_32",
+   "implementations": {
+    "default": [
+     "batch_mul and batch_square over the scalar loop"
+    ],
+    "simd": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "all-features": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "no-simd": [
+     "batch_mul and batch_square over the scalar loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_gf2m_batch",
+   "test": "boundary_lengths_gf2_8",
+   "implementations": {
+    "default": [
+     "batch_mul and batch_square over the scalar loop"
+    ],
+    "simd": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "all-features": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "no-simd": [
+     "batch_mul and batch_square over the scalar loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_gf2m_batch",
+   "test": "proptest_gf2_16_batch_mul_matches_field_single_shot",
+   "implementations": {
+    "default": [
+     "batch_mul and batch_square over the scalar loop"
+    ],
+    "simd": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "all-features": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "no-simd": [
+     "batch_mul and batch_square over the scalar loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_gf2m_batch",
+   "test": "proptest_gf2_32_batch_mul_matches_field_single_shot",
+   "implementations": {
+    "default": [
+     "batch_mul and batch_square over the scalar loop"
+    ],
+    "simd": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "all-features": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "no-simd": [
+     "batch_mul and batch_square over the scalar loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_gf2m_batch",
+   "test": "proptest_gf2_8_batch_mul_matches_field_single_shot",
+   "implementations": {
+    "default": [
+     "batch_mul and batch_square over the scalar loop"
+    ],
+    "simd": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "all-features": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "no-simd": [
+     "batch_mul and batch_square over the scalar loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_gf2m_batch",
+   "test": "square_matches_mul_self_gf2_16_word_boundary_lengths",
+   "implementations": {
+    "default": [
+     "batch_mul and batch_square over the scalar loop"
+    ],
+    "simd": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "all-features": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "no-simd": [
+     "batch_mul and batch_square over the scalar loop"
+    ]
+   }
+  },
+  {
+   "binary": "gf2-core::simd_equiv_gf2m_batch",
+   "test": "square_matches_mul_self_gf2_8",
+   "implementations": {
+    "default": [
+     "batch_mul and batch_square over the scalar loop"
+    ],
+    "simd": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "all-features": [
+     "batch_mul and batch_square over the GF(2^m) batch SIMD kernel"
+    ],
+    "no-simd": [
+     "batch_mul and batch_square over the scalar loop"
+    ]
+   }
+  }
+ ],
+ "problems": []
+}
