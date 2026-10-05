@@ -1,7 +1,7 @@
 # Loose Markdown in simulation_results and studies (0c5aa3b7)
 
 Scope: every tracked `*.md` under `dev/simulation_results/` and `dev/studies/`
-at the base commit. Owner epic b8206228 is open, so moved files sit under its
+at `412b3cd49`. Owner epic b8206228 is open, so moved files sit under its
 `dev/active/` directory.
 
 ## Classification
@@ -53,8 +53,6 @@ Files that keep their bytes and cite a moved note by its earlier path.
 | `python3 contrib/gates/docs-mechanical.py` | gate passes |
 | `python3 dev/active/fa787f85-documentation-overhaul/migration/check.py` | rows of this unit report no finding |
 | `./scripts/cargo-budget.sh cargo fmt --all -- --check` | formatting of the two Rust edits |
-| inline scan of every `](target)` in the touched Markdown files for a missing local target | no unresolved local link; covers only inline links |
+| `git diff 412b3cd49 --name-only --diff-filter=AMR -- '*.md' \| python3 -c "import sys,re,os;[print('BROKEN',f,u) for f in sys.stdin.read().split() for u in re.findall(r'\]\(([^)\s#]+)',open(f,encoding='utf-8').read()) if not re.match(r'\w+:',u) and not os.path.exists(os.path.normpath(u[1:] if u[0]=='/' else os.path.join(os.path.dirname(f),u)))]"` | no output means no unresolved local inline link in the touched Markdown files |
 
-Tracker references are relinked by `target/0c5aa3b7-relink.sh`.
-Rows `047b62ed`, `6c7fcb38`, `91605d4d` and `b488f02c/feasibility-study.md`
-carry `digest_pinned = false` while the inventory lines above pin them.
+Tracker references are relinked by `target/0c5aa3b7-relink.sh`. The `5758790d` reference to the dataset README stays pinned at `20a3fb30` under its earlier path.
