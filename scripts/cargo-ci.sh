@@ -230,11 +230,11 @@ run_step tuning-coding-codec-only "$BUDGET" cargo check -p gf2-coding --no-defau
 
 # One package configuration without --all-features: default features, no
 # `simd`, the build a bare `cargo nextest run -p <package>` selects. The check
-# compiles every test target, so a target that needs a feature it does not
+# compiles every target, so a test or bench that needs a feature it does not
 # name fails here. The execution step runs the target of the kernel-dispatch
 # fallback contract (`gf2_core::dispatch_contract`) in the build that has no
 # kernel route to select.
-run_step default-features-core-check "$BUDGET" cargo check -p gf2-core --tests --profile ci-test
+run_step default-features-core-check "$BUDGET" cargo check -p gf2-core --all-targets --profile ci-test
 run_step default-features-core-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback --no-run
 run_step default-features-core-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback
 

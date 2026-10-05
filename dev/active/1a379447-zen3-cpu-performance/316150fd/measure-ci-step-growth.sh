@@ -4,9 +4,9 @@
 # this script: the bytes before and after, the difference, and the step
 # commands as `scripts/cargo-ci.sh` states them.
 #
-# Run it from the worktree root on a tree where the other steps have run, for
+# Run it from the worktree root on a tree where the workspace `test-build` step has run, for
 # example after
-#   CARGO_CI_STEPS='^(?!default-features-core-)' ./scripts/cargo-ci.sh
+#   CARGO_CI_STEPS='^test-build$' ./scripts/cargo-ci.sh
 # `du -sb` counts the bytes of every file under the directory, so the growth is
 # the sum of the files the steps add.
 #
@@ -30,6 +30,7 @@ after=$(du -sb "$target" | cut -f1)
     echo "bytes before: $before"
     echo "bytes after: $after"
     echo "growth in bytes: $((after - before))"
+    echo "# baseline: target/ci-test after the test-build step of scripts/cargo-ci.sh"
     echo "# steps (scripts/cargo-ci.sh):"
     grep -E "^run_step ${pattern#^}" scripts/cargo-ci.sh
 } > "$here/ci-step-growth.txt"
