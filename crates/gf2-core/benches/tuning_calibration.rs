@@ -54,7 +54,7 @@ use gf2_core::field::{FiniteField, PlePanelLane};
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{BatchExtField, ExtConfig};
 use gf2_core::kernels::{Backend, ScalarBackend};
-use gf2_core::matrix::{transpose_route, TransposeRoute};
+use gf2_core::matrix::{transpose_route, MatvecRoute, TransposeRoute};
 use gf2_core::rng::Lcg;
 use gf2_core::test_scratch::scratch;
 use gf2_core::tuning;
@@ -67,7 +67,7 @@ use gf2_core::tuning::{
     RepoRelPath, Rfc3339Utc, SectionCodec, Sha256, SoaBatchSelectors, TriangularSelectors,
     TuningSection, PROFILE_FORMAT_VERSION,
 };
-use gf2_core::BitMatrix;
+use gf2_core::{BitMatrix, BitVec};
 use sha2::{Digest, Sha256 as Sha256Hasher};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -213,26 +213,26 @@ const DEFAULT_REPETITIONS: u64 = tuning_campaign_support::timing::WINDOWS;
 const DEFAULT_TARGET_MS: u64 = tuning_campaign_support::timing::TARGET.as_millis() as u64;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_MEASURED_FIELDS: usize = 19;
+const EXPECTED_MEASURED_FIELDS: usize = 20;
 const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_OMITTED_FIELDS: usize = 18;
+const EXPECTED_OMITTED_FIELDS: usize = 17;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_GRID_ARM_CELLS: usize = 360;
+const EXPECTED_GRID_ARM_CELLS: usize = 378;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_PROBE_CHILDREN: usize = 360;
+const EXPECTED_PROBE_CHILDREN: usize = 378;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_TIMED_CHILDREN: usize = 1_800;
+const EXPECTED_TIMED_CHILDREN: usize = 1_890;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_FRESH_CHILDREN: usize = 2_160;
+const EXPECTED_FRESH_CHILDREN: usize = 2_268;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_RAW_WINDOWS: usize = 9_000;
+const EXPECTED_RAW_WINDOWS: usize = 9_450;
 /// Upper bound on the calibrated call count of one timed window.
 const MAX_CALLS: u64 = tuning_campaign_support::timing::MAX_CALLS;
 /// Fixture bank depth for the bit-backend arms, matching the sibling harness.
@@ -297,6 +297,10 @@ const FOLLOW_ON_ROLES: &[(CalibratedField, &[(&str, u64)])] = &[
     (
         CalibratedField::GemmAxpyFastPathMinVolume,
         &[("lhs", 0x900), ("rhs", 0x901)],
+    ),
+    (
+        CalibratedField::MatvecSimdMinWords,
+        &[("matrix", 0x1000), ("vector", 0x1001)],
     ),
     (
         CalibratedField::InterpolateFastMinPoints,
@@ -371,10 +375,11 @@ enum CalibratedField {
     WinogradMinDim,
     TriangularBaseCaseMaxDim,
     PleScalarBaseMaxCols,
+    MatvecSimdMinWords,
 }
 
 impl CalibratedField {
-    const ALL: [Self; 19] = [
+    const ALL: [Self; 20] = [
         Self::SimdMinWords,
         Self::KaratsubaMinDegree,
         Self::KaratsubaMaxOutLen,
@@ -394,6 +399,7 @@ impl CalibratedField {
         Self::WinogradMinDim,
         Self::TriangularBaseCaseMaxDim,
         Self::PleScalarBaseMaxCols,
+        Self::MatvecSimdMinWords,
     ];
 
     /// Stable input to [`seed_for`], independent of enum declaration order, so adding
@@ -419,6 +425,7 @@ impl CalibratedField {
             Self::WinogradMinDim => 28,
             Self::TriangularBaseCaseMaxDim => 29,
             Self::PleScalarBaseMaxCols => 30,
+            Self::MatvecSimdMinWords => 31,
         }
     }
 
@@ -430,7 +437,7 @@ impl CalibratedField {
             | Self::DivRemFastMinLen
             | Self::SubproductMinLen
             | Self::InterpolateFastMinPoints => "polynomial",
-            Self::TransposeSimpleMaxBlocks => "bit_matrix",
+            Self::TransposeSimpleMaxBlocks | Self::MatvecSimdMinWords => "bit_matrix",
             Self::SoaParallelMinLen => "soa_batch",
             Self::M4rmWideTierMinStrideWords | Self::M4rmTiledMinStrideWords => "m4rm",
             Self::DenseInverseM4riMinDim | Self::DenseInverseBlockedMinDim => "dense_inverse",
@@ -503,6 +510,7 @@ impl CalibratedField {
             Self::WinogradMinDim => profile.gemm().winograd_min_dim(),
             Self::TriangularBaseCaseMaxDim => profile.triangular().base_case_max_dim(),
             Self::PleScalarBaseMaxCols => profile.ple().scalar_base_max_cols(),
+            Self::MatvecSimdMinWords => profile.bit_matrix().matvec_simd_min_words(),
         }
     }
 
@@ -527,6 +535,7 @@ impl CalibratedField {
             Self::WinogradMinDim => "classical",
             Self::TriangularBaseCaseMaxDim => "base_case",
             Self::PleScalarBaseMaxCols => "scalar_base",
+            Self::MatvecSimdMinWords => "scalar",
         }
     }
 
@@ -551,6 +560,7 @@ impl CalibratedField {
             Self::WinogradMinDim => "winograd",
             Self::TriangularBaseCaseMaxDim => "recursive",
             Self::PleScalarBaseMaxCols => "block_recursive",
+            Self::MatvecSimdMinWords => "simd",
         }
     }
 
@@ -585,7 +595,9 @@ impl CalibratedField {
             Self::SubproductMinLen => "coefficients = points",
             Self::TransposeSimpleMaxBlocks => "64-row blocks",
             Self::SoaParallelMinLen => "batch elements",
-            Self::M4rmWideTierMinStrideWords | Self::M4rmTiledMinStrideWords => "stride words",
+            Self::M4rmWideTierMinStrideWords
+            | Self::M4rmTiledMinStrideWords
+            | Self::MatvecSimdMinWords => "stride words",
             Self::DenseInverseM4riMinDim
             | Self::DenseInverseBlockedMinDim
             | Self::TrsmBlockedMinDim
@@ -652,6 +664,7 @@ impl CalibratedField {
             Self::WinogradMinDim => vec![32, 64, 96, 127, 128, 129, 192, 256, 512],
             Self::TriangularBaseCaseMaxDim => vec![2, 4, 6, 7, 8, 9, 12, 16, 32],
             Self::PleScalarBaseMaxCols => vec![2, 3, 4, 6, 8, 12, 16, 24, 32],
+            Self::MatvecSimdMinWords => vec![4, 7, 8, 9, 32, 63, 64, 65, 128],
         }
     }
 
@@ -689,6 +702,7 @@ impl fmt::Display for CalibratedField {
             Self::WinogradMinDim => "winograd_min_dim",
             Self::TriangularBaseCaseMaxDim => "base_case_max_dim",
             Self::PleScalarBaseMaxCols => "scalar_base_max_cols",
+            Self::MatvecSimdMinWords => "matvec_simd_min_words",
         })
     }
 }
@@ -1516,15 +1530,37 @@ enum FollowOnFixture {
     TriangularBase(Vec<(FieldMatrix<M31>, FieldMatrix<M31>)>),
     /// A full-rank Mersenne-31 matrix `L * U`.
     PleScalarBase(Vec<FieldMatrix<M31>>),
+    /// A `MATVEC_ROWS`-row bit matrix and a vector of its column count.
+    Matvec(Vec<(BitMatrix, BitVec)>),
 }
 
 fn bank_seed(field: CalibratedField, size: usize, role: u64, bank: usize) -> u64 {
     seed_for(field, size, role.wrapping_add((bank as u64) << 16))
 }
 
+/// The lane a matvec arm pins; the field is selected at compile time, so no
+/// installed value steers it.
+fn matvec_lane(arm: Arm) -> MatvecRoute {
+    match arm {
+        Arm::Conservative => MatvecRoute::Scalar,
+        Arm::Asymptotic => MatvecRoute::Simd,
+    }
+}
+
 /// Partner bank for every binary fixture, predeclared as `b + 3 (mod 8)`.
 fn paired_bank(bank: usize) -> usize {
     (bank + 3) & (BIT_FIXTURES - 1)
+}
+
+/// Row count of every matvec fixture; the grid point is the row stride.
+const MATVEC_ROWS: usize = 1024;
+
+fn bit_vec_from_words(len_words: usize, seed: u64) -> BitVec {
+    let mut rng = Lcg::new(seed);
+    BitVec::from_words(
+        (0..len_words).map(|_| rng.next_u64()).collect(),
+        64 * len_words,
+    )
 }
 
 fn bit_matrix_from_words(rows: usize, cols: usize, seed: u64) -> BitMatrix {
@@ -1932,6 +1968,20 @@ fn build_follow_on_fixture(field: CalibratedField, size: usize) -> Result<Follow
                 .map(|bank| m31_lu_product(size, field, (0xf00, 0xf01), bank))
                 .collect(),
         ),
+        CalibratedField::MatvecSimdMinWords => FollowOnFixture::Matvec(
+            banks
+                .map(|bank| {
+                    (
+                        bit_matrix_from_words(
+                            MATVEC_ROWS,
+                            64 * size,
+                            bank_seed(field, size, 0x1000, bank),
+                        ),
+                        bit_vec_from_words(size, bank_seed(field, size, 0x1001, bank)),
+                    )
+                })
+                .collect(),
+        ),
         _ => return Err(format!("{field} is a direct fixture, not a follow-on")),
     })
 }
@@ -1965,6 +2015,16 @@ fn digest_bit_matrix(matrix: &BitMatrix) -> String {
         for word in matrix.row_words(row) {
             digest.update(word.to_le_bytes());
         }
+    }
+    format!("{:x}", digest.finalize())
+}
+
+fn digest_bit_vec(vector: &BitVec) -> String {
+    let mut digest = Sha256Hasher::new();
+    digest.update(b"gf2-calibration-bit-vector-v1");
+    digest.update(vector.len().to_le_bytes());
+    for word in vector.words() {
+        digest.update(word.to_le_bytes());
     }
     format!("{:x}", digest.finalize())
 }
@@ -2099,6 +2159,12 @@ fn follow_on_operand_digest(fixture: &FollowOnFixture) -> String {
             b"gf2-calibration-ple-m31-banks-v1",
             banks.iter().map(digest_m31_matrix),
         ),
+        FollowOnFixture::Matvec(banks) => digest_tuple(
+            b"gf2-calibration-matvec-banks-v1",
+            banks
+                .iter()
+                .flat_map(|(matrix, vector)| [digest_bit_matrix(matrix), digest_bit_vec(vector)]),
+        ),
     }
 }
 
@@ -2122,6 +2188,9 @@ fn follow_on_shape(field: CalibratedField, size: usize) -> Result<String, String
             format!("{d}x{d} * {d}x{d}")
         }
         CalibratedField::InterpolateFastMinPoints => format!("{size} distinct points"),
+        CalibratedField::MatvecSimdMinWords => {
+            format!("{MATVEC_ROWS}x{} * {}", 64 * size, 64 * size)
+        }
         _ => return Err(format!("{field} is not a follow-on")),
     })
 }
@@ -2145,6 +2214,18 @@ fn expected_observation_contract(spec: ChildSpec) -> Result<(String, String), St
             "baked_selector_direct_backend".to_owned(),
             match spec.arm {
                 Arm::Conservative => "scalar_backend".to_owned(),
+                Arm::Asymptotic => format!(
+                    "simd_backend={}",
+                    simd_backend()
+                        .ok_or("no concrete SIMD backend is available")?
+                        .name()
+                ),
+            },
+        ),
+        CalibratedField::MatvecSimdMinWords => (
+            "baked_selector_direct_lane".to_owned(),
+            match spec.arm {
+                Arm::Conservative => "scalar_lane".to_owned(),
                 Arm::Asymptotic => format!(
                     "simd_backend={}",
                     simd_backend()
@@ -2580,6 +2661,37 @@ fn execute_follow_on(
             }
             digest_bit_matrix(&result)
         }
+        (CalibratedField::MatvecSimdMinWords, FollowOnFixture::Matvec(banks)) => {
+            observation.effective_observation = "baked_selector_direct_lane".to_owned();
+            observation.capability_observation = match (spec.arm, simd_backend()) {
+                (Arm::Conservative, _) => "scalar_lane".to_owned(),
+                (Arm::Asymptotic, Some(backend)) => format!("simd_backend={}", backend.name()),
+                (Arm::Asymptotic, None) => {
+                    observation.observed_route = "unavailable_before_dispatch".to_owned();
+                    observation.effective_observation = "unavailable".to_owned();
+                    observation.capability_observation = "simd_backend=none".to_owned();
+                    observation.availability = ChildAvailability::Unavailable {
+                        omission: CapabilityOmission::SimdBackendUnavailable,
+                    };
+                    return Ok(observation);
+                }
+            };
+            let (matrix, vector) = (&banks[bank].0, &banks[paired_bank(bank)].1);
+            let result = matrix.matvec_with_route(vector, matvec_lane(spec.arm));
+            for row in 0..matrix.rows() {
+                let parity = matrix
+                    .row_words(row)
+                    .iter()
+                    .zip(vector.words())
+                    .fold(0_u32, |sum, (left, right)| {
+                        sum ^ (left & right).count_ones()
+                    });
+                if result.get(row) != (parity & 1 == 1) {
+                    return Err("matvec failed row-parity scalar semantics".to_owned());
+                }
+            }
+            digest_bit_vec(&result)
+        }
         (CalibratedField::DenseInverseM4riMinDim, FollowOnFixture::BitInverse(banks)) => {
             observation.observed_route = match invert_route(spec.size) {
                 InvertRoute::Scalar => "scalar",
@@ -3014,6 +3126,13 @@ fn execute_follow_on_timed(spec: ChildSpec, fixture: &FollowOnFixture, logical_i
         ) => {
             black_box(m4rm_multiply(&banks[bank].0, &banks[paired_bank(bank)].1));
         }
+        (CalibratedField::MatvecSimdMinWords, FollowOnFixture::Matvec(banks)) => {
+            black_box(
+                banks[bank]
+                    .0
+                    .matvec_with_route(&banks[paired_bank(bank)].1, matvec_lane(spec.arm)),
+            );
+        }
         (CalibratedField::DenseInverseM4riMinDim, FollowOnFixture::BitInverse(banks)) => {
             black_box(invert(&banks[bank]).expect("preflight proved GF(2) fixture invertible"));
         }
@@ -3419,6 +3538,20 @@ fn forced_profile_for(spec: ChildSpec) -> Result<(PreparedEnvelope, Vec<ForcedVa
                 "polynomial",
                 &spec.field.to_string(),
                 value,
+            ));
+        }
+        CalibratedField::MatvecSimdMinWords => {
+            let p = &selectors.bit_matrix;
+            selectors.bit_matrix = BitMatrixSelectors::try_new(
+                spec.size,
+                p.transpose_simple_max_blocks(),
+                p.transpose_macro_tile_blocks(),
+            )
+            .map_err(|error| error.to_string())?;
+            values.push(ForcedValue::new(
+                "bit_matrix",
+                "matvec_simd_min_words",
+                spec.size,
             ));
         }
         CalibratedField::TransposeSimpleMaxBlocks => {
@@ -4323,8 +4456,10 @@ fn verify_capability_omission(
 ) -> Result<(), String> {
     let valid = match omission {
         CapabilityOmission::SimdBackendUnavailable => {
-            spec.field == CalibratedField::SimdMinWords
-                && spec.arm == Arm::Asymptotic
+            matches!(
+                spec.field,
+                CalibratedField::SimdMinWords | CalibratedField::MatvecSimdMinWords
+            ) && spec.arm == Arm::Asymptotic
                 && capability == "simd_backend=none"
         }
         CapabilityOmission::SoaPoolWidth { observed } => {
@@ -4478,6 +4613,7 @@ fn run_capability_report(protocol: &Protocol) -> Result<(), String> {
         .map_err(|error| format!("controller has no executable path: {error}"))?;
     let capability_fields = [
         CalibratedField::SimdMinWords,
+        CalibratedField::MatvecSimdMinWords,
         CalibratedField::SoaParallelMinLen,
         CalibratedField::M4rmTiledMinStrideWords,
         CalibratedField::TrsmBlockedMinDim,
@@ -4781,6 +4917,7 @@ struct SelectedValues {
     winograd_min_dim: usize,
     triangular_base_case_max_dim: usize,
     ple_scalar_base_max_cols: usize,
+    matvec_simd_min_words: usize,
 }
 
 impl SelectedValues {
@@ -4814,6 +4951,7 @@ impl SelectedValues {
             winograd_min_dim: value_of(CalibratedField::WinogradMinDim),
             triangular_base_case_max_dim: value_of(CalibratedField::TriangularBaseCaseMaxDim),
             ple_scalar_base_max_cols: value_of(CalibratedField::PleScalarBaseMaxCols),
+            matvec_simd_min_words: value_of(CalibratedField::MatvecSimdMinWords),
         }
     }
 }
@@ -4850,7 +4988,7 @@ fn build_profile(
     .map_err(|error| error.to_string())?;
     let conservative = &CoreTuning::CONSERVATIVE;
     let bit_matrix = BitMatrixSelectors::try_new(
-        conservative.bit_matrix().matvec_simd_min_words(),
+        selected.matvec_simd_min_words,
         selected.transpose_simple_max_blocks,
         conservative.bit_matrix().transpose_macro_tile_blocks(),
     )
@@ -5527,6 +5665,7 @@ mod tests {
         winograd_min_dim: 96,
         triangular_base_case_max_dim: 6,
         ple_scalar_base_max_cols: 3,
+        matvec_simd_min_words: 9,
     };
 
     #[allow(dead_code)]
@@ -5599,6 +5738,68 @@ mod tests {
             "2026-08-20T01:00:00Z"
         );
         assert_ne!(profile.assembly.assembled_at, *measured_at);
+    }
+
+    #[test]
+    fn the_matvec_threshold_is_a_swept_field_of_the_bit_matrix_family() {
+        let field = CalibratedField::MatvecSimdMinWords;
+        assert!(CalibratedField::ALL.contains(&field));
+        assert_eq!(
+            field.schema_field(),
+            SchemaField {
+                family: "bit_matrix".to_owned(),
+                name: "matvec_simd_min_words".to_owned(),
+            }
+        );
+        assert_eq!(field.grid(), [4, 7, 8, 9, 32, 63, 64, 65, 128]);
+        assert!(field.grid().contains(&field.conservative_default()));
+        assert_eq!(
+            profile_from(&DISTINCT).bit_matrix().matvec_simd_min_words(),
+            DISTINCT.matvec_simd_min_words
+        );
+    }
+
+    #[test]
+    fn both_matvec_arms_run_their_lane_and_agree_on_every_bank() {
+        let field = CalibratedField::MatvecSimdMinWords;
+        for size in field.grid() {
+            let fixture = build_follow_on_fixture(field, size).unwrap();
+            let mut digests = Vec::new();
+            for arm in Arm::BOTH {
+                let spec = ChildSpec {
+                    field,
+                    variant: SweepVariant::Standard,
+                    size,
+                    arm,
+                    task: ChildTask::Probe,
+                };
+                if arm == Arm::Asymptotic && simd_backend().is_none() {
+                    let observation = execute_follow_on(spec, &fixture, 0).unwrap();
+                    assert_eq!(
+                        observation.availability,
+                        ChildAvailability::Unavailable {
+                            omission: CapabilityOmission::SimdBackendUnavailable,
+                        }
+                    );
+                    continue;
+                }
+                for bank in 0..BIT_FIXTURES {
+                    let observation = execute_follow_on(spec, &fixture, bank).unwrap();
+                    assert_eq!(observation.observed_route, field.arm_name(arm));
+                    verify_probe_observations(
+                        spec,
+                        &observation.effective_observation,
+                        &observation.capability_observation,
+                    )
+                    .unwrap();
+                    digests.push((bank, observation.result_digest));
+                }
+            }
+            for (bank, digest) in &digests {
+                let first = digests.iter().find(|(other, _)| other == bank).unwrap();
+                assert_eq!(digest, &first.1, "the lanes disagree at stride {size}");
+            }
+        }
     }
 
     #[test]
@@ -5916,22 +6117,22 @@ mod tests {
     }
 
     #[test]
-    fn campaign_publication_requires_19_measured_and_18_of_37_omitted() {
+    fn campaign_publication_requires_the_measured_and_omitted_partition() {
         let document = profile_from(&DISTINCT).to_json();
         let sweeps = measured_sweeps();
         let omitted = omitted_fields(&document, &sweeps).unwrap();
         assert_eq!(
             validate_campaign_coverage(&document, &sweeps, &omitted),
             Ok(CampaignCoverage {
-                measured: 19,
-                omitted: 18,
-                total: 37,
+                measured: EXPECTED_MEASURED_FIELDS,
+                omitted: EXPECTED_OMITTED_FIELDS,
+                total: EXPECTED_CORE_SCHEMA_FIELDS,
             })
         );
     }
 
     #[test]
-    fn an_eighteen_field_run_cannot_publish_a_19_field_omission_set() {
+    fn a_run_short_of_one_field_cannot_publish_the_larger_omission_set() {
         let document = profile_from(&DISTINCT).to_json();
         let mut sweeps = measured_sweeps();
         sweeps.retain(|sweep| sweep.field != CalibratedField::SimdMinWords);
@@ -5940,8 +6141,8 @@ mod tests {
             Fallback::NoComparableGridPoint,
         ));
         let omitted = omitted_fields(&document, &sweeps).unwrap();
-        assert_eq!(measured_fields(&sweeps).len(), 18);
-        assert_eq!(omitted.len(), 19);
+        assert_eq!(measured_fields(&sweeps).len(), EXPECTED_MEASURED_FIELDS - 1);
+        assert_eq!(omitted.len(), EXPECTED_OMITTED_FIELDS + 1);
         assert!(validate_campaign_coverage(&document, &sweeps, &omitted).is_err());
     }
 
@@ -6191,11 +6392,22 @@ mod tests {
             SweepVariant::Standard,
             &[2, 3, 4, 6, 8, 12, 16, 24, 32],
         ),
+        (
+            CalibratedField::MatvecSimdMinWords,
+            SweepVariant::Standard,
+            &[4, 7, 8, 9, 32, 63, 64, 65, 128],
+        ),
     ];
 
     #[test]
-    fn canonical_manifest_pins_all_19_fields_20_sweeps_and_360_cells() {
-        assert_eq!(SWEEP_MANIFEST.len(), 20);
+    fn canonical_manifest_pins_every_field_sweep_and_cell() {
+        assert_eq!(
+            SWEEP_MANIFEST.len(),
+            CalibratedField::ALL
+                .iter()
+                .map(|field| field.variants().len())
+                .sum::<usize>()
+        );
         for field in CalibratedField::ALL {
             let rows: Vec<_> = SWEEP_MANIFEST
                 .iter()
@@ -6212,9 +6424,9 @@ mod tests {
             .map(|(_, _, grid)| grid.len() * Arm::BOTH.len())
             .sum();
         let grid_points: usize = SWEEP_MANIFEST.iter().map(|(_, _, grid)| grid.len()).sum();
-        assert_eq!(CalibratedField::ALL.len(), 19);
-        assert_eq!(grid_points, 180);
-        assert_eq!(arm_cells, 360);
+        assert_eq!(CalibratedField::ALL.len(), EXPECTED_MEASURED_FIELDS);
+        assert_eq!(grid_points * Arm::BOTH.len(), EXPECTED_GRID_ARM_CELLS);
+        assert_eq!(arm_cells, EXPECTED_GRID_ARM_CELLS);
         let protocol = Protocol {
             executions: 5,
             repetitions: 5,
@@ -6223,11 +6435,11 @@ mod tests {
         assert_eq!(
             planned_campaign_accounting(&protocol),
             CampaignAccounting {
-                cells: 360,
-                probes: 360,
-                timed: 1800,
-                launches: 2160,
-                windows: 9000,
+                cells: EXPECTED_GRID_ARM_CELLS,
+                probes: EXPECTED_PROBE_CHILDREN,
+                timed: EXPECTED_TIMED_CHILDREN,
+                launches: EXPECTED_FRESH_CHILDREN,
+                windows: EXPECTED_RAW_WINDOWS,
             }
         );
         assert_eq!(9000_u64 * protocol.target_ms, 2_250_000);
@@ -6246,6 +6458,13 @@ mod tests {
         match spec.field {
             CalibratedField::SimdMinWords => {
                 vec![ForcedValue::new("bit_backend", "simd_min_words", spec.size)]
+            }
+            CalibratedField::MatvecSimdMinWords => {
+                vec![ForcedValue::new(
+                    "bit_matrix",
+                    "matvec_simd_min_words",
+                    spec.size,
+                )]
             }
             CalibratedField::KaratsubaMinDegree => vec![ForcedValue::new(
                 "polynomial",
@@ -6800,6 +7019,7 @@ mod tests {
                     .conservative_default(),
                 ple_scalar_base_max_cols: CalibratedField::PleScalarBaseMaxCols
                     .conservative_default(),
+                matvec_simd_min_words: CalibratedField::MatvecSimdMinWords.conservative_default(),
             }
         );
     }
@@ -6892,7 +7112,7 @@ mod tests {
     fn seed_tags_and_streams_are_stable_and_explicit() {
         assert_eq!(
             CalibratedField::ALL.map(CalibratedField::seed_tag),
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 28, 29, 30]
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 28, 29, 30, 31]
         );
         for (field, size, role, expected) in [
             (
@@ -6987,6 +7207,7 @@ mod tests {
             CalibratedField::PleScalarBaseMaxCols => {
                 &[("unit_lower", 0xf00), ("unit_upper", 0xf01)]
             }
+            CalibratedField::MatvecSimdMinWords => &[("matrix", 0x1000), ("vector", 0x1001)],
             _ => unreachable!("direct fields have separate seed roles"),
         }
     }
@@ -7018,17 +7239,18 @@ mod tests {
         }
     }
 
-    /// The independent validator reconstructs each seam field's operand
+    /// The independent validator reconstructs each listed field's operand
     /// digest from the declared seeds; a drift on either side would fail a
     /// complete campaign's validation after its measurement.
     #[test]
-    fn validator_reconstructs_the_seam_threshold_operands() {
+    fn validator_reconstructs_the_follow_on_threshold_operands() {
         let mut rows = Vec::new();
         for field in [
             CalibratedField::WinogradMinDim,
             CalibratedField::TriangularBaseCaseMaxDim,
             CalibratedField::PleScalarBaseMaxCols,
             CalibratedField::TrsmBlockedMinDim,
+            CalibratedField::MatvecSimdMinWords,
         ] {
             for size in field.grid().into_iter().take(2) {
                 rows.push(serde_json::json!({
@@ -7957,11 +8179,11 @@ mod campaign_owner {
     const OWNER_PROTOCOL: &str = "core-tuning-campaign-v4";
     const EXTENT_SEEDS: &str = "fixture-seeds-v3";
     const RAW_WINDOWS: &str = "raw-timing-samples-v3";
-    const CORE_CELLS: usize = 756;
-    const CORE_FIELDS: usize = 30;
+    const CORE_CELLS: usize = 774;
+    const CORE_FIELDS: usize = 31;
     /// Core codec leaves outside the measured set; derived from the codec
     /// complement and asserted, not a second schema registry.
-    const CORE_OMITTED_FIELDS: usize = 7;
+    const CORE_OMITTED_FIELDS: usize = 6;
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(rename_all = "snake_case")]
@@ -11407,7 +11629,7 @@ mod campaign_owner {
         }
 
         #[test]
-        fn accepted_complete_experiment_measures_defaults_and_reopens_only_its_30_leaves() {
+        fn accepted_complete_experiment_measures_defaults_and_reopens_only_its_measured_leaves() {
             require_simd_arm(simd_backend());
             let request = request();
             let manifest = manifest(&request).unwrap();
@@ -11530,7 +11752,7 @@ mod campaign_owner {
             assert_eq!(OwnerManifest::decode(&encoded).unwrap(), manifest);
             assert_eq!(
                 manifest.counts,
-                neutral::DeclaredCounts::for_cells(756).unwrap()
+                neutral::DeclaredCounts::for_cells(CORE_CELLS as u64).unwrap()
             );
             let cases: Vec<OwnerCase> = manifest
                 .ordered_units
@@ -11568,7 +11790,7 @@ mod campaign_owner {
                 })
                 .collect();
             assert_eq!(retained, expected);
-            assert_eq!(retained.len(), 360 * 6);
+            assert_eq!(retained.len(), EXPECTED_GRID_ARM_CELLS * 6);
             let transpose:Vec<_>=cases.iter().filter(|case|matches!(&case.kind,OwnerCaseKind::Extent{cell} if cell.field==ExtentField::Transpose&&cell.shape_index==0)).collect();
             let values: Vec<_> = transpose
                 .iter()

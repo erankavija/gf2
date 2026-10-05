@@ -1,0 +1,11 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --features parallel,visualization,io,rand,tuning-profile,test-support --cargo-profile ci-test --profile ci --status-level fail --final-status-level fail
+    Blocking waiting for file lock on artifact directory
+   Compiling gf2-core v0.1.0 (./crates/gf2-core)
+    Finished `ci-test` profile [optimized] target(s) in 5m 49s
+────────────
+ Nextest run ID 6048acab-c78a-4b8a-beef-377176f4a9f6 with nextest profile: ci
+    Starting 2506 tests across 90 binaries (16 tests skipped)
+────────────
+     Summary [   1.417s] 2506 tests run: 2506 passed, 16 skipped
+# exit: 0
