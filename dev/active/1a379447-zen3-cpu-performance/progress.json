@@ -1445,6 +1445,16 @@
       "status": "open",
       "raised_at": "2026-10-05T00:30Z",
       "resolution": null
+    },
+    {
+      "category": "shared infrastructure under the provenance freeze (b2e09d41)",
+      "issue": "b2e09d41",
+      "question": "ldpc-plan-check is not a pure duplicate: it validates the addendum against the addendum schema, which benchmark-ab-runner check does not (six single-field mutations pass the shared check and fail the private one; all 19 v4 plans pass both; no script invokes the private binary). Options: (A) add schema validation to the shared check, then remove the private binary; (B) accept the narrower shared check, remove, track the gap; (C) reject the bug.",
+      "recommendation": "A, as an explicit freeze exception",
+      "status": "open",
+      "raised_at": "2026-10-05T03:20Z",
+      "resolution": null,
+      "evidence": "session scratchpad b2e09d41-fuzz/fuzz.py and plan-comparison.txt (ephemeral); worktree agent-b2e09d41 clean at fcb972da3"
     }
   ],
   "rework_counts": {
@@ -2143,7 +2153,7 @@
     "remaining_descendants": [],
     "active_workers": {
       "w-7d44b71f": "agent-7d44b71f",
-      "w-b2e09d41": "agent-b2e09d41",
+      "w-b2e09d41": "held, no commits; awaits invoker ruling",
       "w-6833c5b5": "agent-6833c5b5",
       "w-63bad95d": "agent-63bad95d, untimed first stage only (inventory, fallback tests, calibration plan)"
     },
