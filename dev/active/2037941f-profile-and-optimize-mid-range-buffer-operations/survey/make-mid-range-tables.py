@@ -300,6 +300,37 @@ def authority(campaigns):
             f"| {code(item.campaign_id)} | {'; '.join(item.hosts())} | {code(item.record['toolchain'])} | "
             f"{code(item.record['source']['producing']['manifest_sha256'])} |"
         )
+    generator = str(tracked("abtest.rs"))
+    lines += [
+        "",
+        "### Seeds, generator and invocation",
+        "",
+        "The receipt records the campaign seed, the addendum snapshot each cell's workload "
+        "seed and the acceptance summary each interval's bootstrap seed. The generator "
+        f"source {code(generator)} defines SplitMix64 [Vigna2015] and xoshiro256** "
+        "[BlackmanVigna2021]; its digest is the one each receipt pins and snapshots. The "
+        "launcher log opens with the executed command; a companion holds the runner "
+        "invocations where the campaign kept one.",
+        "",
+        "| Campaign | Campaign seed | Pinned generator source SHA-256 | Launcher log | Launcher log SHA-256 | Invocation companion |",
+        "|---|---:|---|---|---|---|",
+    ]
+    for item in campaigns:
+        producing = item.record["source"]["producing"]
+        pinned = producing["behavior_sha256"][generator]
+        if digest(item.directory / "inputs" / "producing" / generator) != pinned:
+            raise ValueError(f"{item.campaign_id}: the generator source snapshot differs from its pin")
+        launcher = item.directory / "launcher.log"
+        companions = [
+            item.directory / name
+            for name in ("invocations.log", "invocations.md")
+            if (ROOT / item.directory / name).is_file()
+        ]
+        lines.append(
+            f"| {code(item.campaign_id)} | {item.record['campaign_seed']} | {code(pinned)} | "
+            f"{link(launcher)} | {code(digest(launcher))} | "
+            f"{', '.join(link(companion) for companion in companions) or 'none'} |"
+        )
     lines += [
         "",
         "### Arm executables",
