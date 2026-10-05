@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-18T13:56:29.133118460Z",
   "context": {},
   "created_at": "2026-09-16T12:11:34.507392176Z",
@@ -466,15 +466,49 @@
       "format": "markdown",
       "label": "Request-mirror test against the runner request declaration",
       "path": "dev/active/4c1e441f/survey/gemm-arm/tests/request_mirror.rs"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "8c849f1251d62cdaf6ec7fe6c5ff4337371dc918122710a8e9db19c78661535a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../4c1e441f/outcome.md",
+          "resolved_path": "dev/active/4c1e441f/outcome.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/4c1e441f-r1.md"
     }
   ],
+  "done_at": "2026-10-05T00:25:01.758371956Z",
   "first_ready_at": "2026-09-16T12:11:34.507392176Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T00:00:39.151068132Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T00:06:49.729898974Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T00:19:48.350744648Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "4c1e441f-2bb4-43dd-bd73-256c3721800a",
   "labels": [
     "type:task",
@@ -486,7 +520,7 @@
     "satisfies:1a379447/REQ-04"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Confirm the GF(2^8) dense product against the current matrix route",
-  "updated_at": "2026-10-04T23:55:55.743208546Z"
+  "updated_at": "2026-10-05T00:25:01.758371956Z"
 }

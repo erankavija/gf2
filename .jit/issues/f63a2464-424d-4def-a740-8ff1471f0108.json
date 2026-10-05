@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-17T21:54:39.851401202Z",
   "context": {},
   "created_at": "2026-09-06T19:59:26.709153676Z",
@@ -1049,7 +1049,23 @@
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T00:01:49.249857515Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-05T00:11:16.256758331Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-10-05T00:24:31.337145547Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "f63a2464-424d-4def-a740-8ff1471f0108",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -1068,5 +1084,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Evaluate quantized layered and QC-aware LDPC candidates",
-  "updated_at": "2026-10-04T23:57:30.018678858Z"
+  "updated_at": "2026-10-05T00:24:31.337145547Z"
 }
