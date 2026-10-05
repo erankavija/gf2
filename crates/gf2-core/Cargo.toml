@@ -258,7 +258,7 @@ required-features = ["rand"]
 [[bench]]
 name = "fieldmatrix_gemm"
 harness = false
-required-features = ["rand"]
+required-features = ["rand", "simd"]
 
 # Issue `3d06224c` (story `cc5de315`) — Mersenne31 GEMM regression guard.
 # Single 256³ cell carved out from `fieldmatrix_gemm` so future bench-day
@@ -337,6 +337,10 @@ required-features = ["rand"]
 [[test]]
 name = "selector_non_regression_harness"
 required-features = ["simd"]
+
+[[test]]
+name = "tuning_conservative_cfg"
+required-features = ["tuning-profile"]
 
 [[test]]
 name = "tuning_profile_install"

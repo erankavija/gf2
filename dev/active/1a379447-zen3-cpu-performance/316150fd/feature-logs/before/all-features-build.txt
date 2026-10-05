@@ -1,0 +1,6 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh cargo build -p gf2-core --tests --all-features --profile ci-test --keep-going
+    Blocking waiting for file lock on artifact directory
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
+    Finished `ci-test` profile [optimized] target(s) in 5m 52s
+# exit: 0

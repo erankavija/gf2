@@ -44,9 +44,9 @@ release mode.
 - The host is never locked during a working session. Every timed measurement
   is a queue line for the overnight benchmark window (`GF2_BENCH_WINDOW=1`,
   exported by the window runner); outside it `dev/scripts/ccx1-bench-flock.sh`
-  refuses to run and `scripts/cargo-budget.sh` applies no budget and takes no
-  lock.
+  refuses to run and `scripts/cargo-budget.sh` applies no budget or lock.
 - `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
+  `CARGO_CI_STEPS=<pcre>` runs matching steps only, no CI verdict; `^$` lists them.
 - A `dev/scripts/ccx1-bench-flock.sh --full-host` run sets `CARGO_CI_NO_LOCK=1`
   for its own cargo work; the script's header states the lock protocol.
 - `RAYON_NUM_THREADS` in `.cargo/config.toml` pairs with `threads-required` in

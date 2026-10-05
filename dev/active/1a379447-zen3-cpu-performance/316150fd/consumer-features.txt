@@ -1,0 +1,7 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+gf2-kernels-simd: 0 test-support feature nodes
+gf2-core: 0 test-support feature nodes
+gf2-algebra: 0 test-support feature nodes
+gf2-coding: 0 test-support feature nodes
+gf2-sim: 0 test-support feature nodes
+control, gf2-core with dev edges: 2 test-support feature nodes
