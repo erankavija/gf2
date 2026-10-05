@@ -8,9 +8,9 @@
 
 - Epic: `1a379447` — state: backlog (claimed by `agent:jit-execution-lead`).
 - Wave in progress: 4 of 7.
-- Done this session: `fa1d8733`, `a87ae828`, `f63a2464`, `3a8ec493`, `66698c3c`, `b2e09d41`, `81afdf8e`, `54e70918`, `316150fd`, and the planning node `2133d15f` of story `ed3d490e`.
+- Done this session: `fa1d8733`, `a87ae828`, `f63a2464`, `3a8ec493`, `66698c3c`, `b2e09d41`, `81afdf8e`, `54e70918`, `316150fd`, and the whole planning bracket of story `ed3d490e`: planning node `2133d15f` and breakdown node `e28795c1`.
 - In progress, each assigned `agent:worker`: `63bad95d` (producer sweep merged, no gate run), `4337c02e` (pilot queued), `bfc2ceab` (stage 1b, pilot queued, branch unmerged).
-- Ready and not started: `dd359005`, `6605cac2`, `dcfe8386`, and the breakdown node `e28795c1` of `ed3d490e`. Backlog: `1362381c`, story `ed3d490e`.
+- Ready and not started: `dd359005`, `6605cac2`, `dcfe8386`, and the three source tasks of `ed3d490e` (`c79d60f9` numerical contract page, `6818f1b6` decode selector family, `8840b0ff` batch soft-decoder trait). Backlog: `1362381c`, story `ed3d490e` and the other 63 of its 66 tasks.
 - Open escalations: `bfc2ceab` (per-interface choice, waits for measured cost). The nine of handoff-24 are resolved in `progress.json` `escalations`.
 - Benchmark window: unit `gf2-bench-window-20261006` armed for 02:00 Europe/Helsinki with two jobs, the `4337c02e` and `bfc2ceab` pilots. Nightly windows are authorized.
 - Worktrees: `agent-4337c02e` pinned at `2eeccb430`, `agent-bfc2ceab` pinned at `0670ff5ff`, `agent-63bad95d` merged through `e2b80d2e7`. The others in `git worktree list` belong to other epics.
@@ -30,6 +30,7 @@
 - `4337c02e`: family `4337c02e-matvec-simd-threshold`, pilot frozen on in-build arms (public `matvec` against `matvec_with_route(Scalar)`), smoked, queued.
 - `bfc2ceab`: 24 caller-trusted entry points inventoried; checked wrappers under `--cfg gf2_entry_checked` with the default build unchanged; family `caller-trusted-entry-check-cost` frozen, smoked, queued; `dev/scripts/campaign_plan.py` generalised at its source.
 - Story `ed3d490e`: bracket scaffolded (`2133d15f`, `e28795c1`); plan and manifest of 66 tasks merged; plan-review passed on the third run after a full terminal-invariant audit (`terminal-audit.md` beside the plan). Invoker decisions DEC-07 to DEC-12 are in the plan.
+- Breakdown of `ed3d490e`: 66 issues and 104 edges created from the manifest in one batch, spine wired, every issue compared with its manifest entry without a mismatch; coverage-preview and breakdown-review passed on the first run. Review `reviews/ed3d490e-breakdown-r1.md`.
 - Filed: `6605cac2`, `dcfe8386`, `3a8ec493`, `81afdf8e`.
 - Nine worktrees reclaimed.
 
@@ -38,7 +39,7 @@
 - [ ] Verify both pilots from their own execution logs, never the job exit code: `.agents/bench-window/window.log`, then each campaign's log (cell-start = cell-complete = the addendum's cell count, every cell `measured`, a terminal `complete`, the acceptance verdict).
 - [ ] `4337c02e`: dispatch its stage 2 in `agent-4337c02e`: resolution record, confirmation frozen with the canonical freezer, queue line for the next window; main is merged into the branch only after the confirmation. The issue stays open until `63bad95d` installs or declines the value (REQ-03 to REQ-05).
 - [ ] `bfc2ceab`: freeze the confirmation with `run-entry-check.sh freeze`; if the pilot's resolution reaches the 1.05 equivalence margin, bring the numbers to the invoker instead of choosing a margin. After the confirmation, put the per-interface decision table (`bfc2ceab/decision-table.md`) with the measured cost to the invoker, then stage 2. Merge the branch after its timed runs and rerun its generators, both `2037941f` closure generators and its smoke.
-- [ ] `ed3d490e`: run the breakdown on `e28795c1` from `dev/active/ed3d490e-zen3-ldpc-frame-simd/breakdown.json` (jit-breakdown bracket path), pass coverage-preview and breakdown-review, then plan waves over the 66 tasks.
+- [ ] `ed3d490e`: plan waves over its 66 tasks (`jit graph tree ed3d490e`; the manifest `dev/active/ed3d490e-zen3-ldpc-frame-simd/breakdown.json` holds each task's footprint and the overlap advisories) and dispatch the three ready source tasks first. Its measurement tasks need the decoder to exist; its timed tasks are window queue lines.
 - [ ] `63bad95d`: settle the two open questions below, queue the producer campaign from a clean run worktree at the merged commit, freeze the protocol families after `4337c02e`'s outcome, then gates cargo-ci, code-review, research-review.
 - [ ] Dispatch `dd359005` (it extends the `default-features-<crate>-*` step pattern; the 1 GB disk guard applies), then `6605cac2`, then `dcfe8386` (its `simd`-off suites need `dd359005`).
 - [ ] Tell the lead of epic fa787f85 or the repository owner: `f63a2464` is done, so `198aafa3` REQ-01 is unblocked; its `migration/check.py` also lists the removed `ldpc-plan-check.rs`.
@@ -84,7 +85,7 @@
 ## Reference artefacts
 
 - Epic: `jit issue show 1a379447`; progress: `progress.json`; worker brief `worker-brief.md`; measurement contract `measurement-contract.md`.
-- Reviews of this session: `reviews/fa1d8733-r1.md`, `reviews/a87ae828-r1.md`, `reviews/f63a2464-r2.md`, `reviews/3a8ec493-r1.md`, `reviews/66698c3c-r1.md`, `reviews/b2e09d41-r1.md`, `reviews/81afdf8e-r1.md`, `reviews/54e70918-r1.md`, `reviews/316150fd-r1.md`.
+- Reviews of this session: `reviews/fa1d8733-r1.md`, `reviews/a87ae828-r1.md`, `reviews/f63a2464-r2.md`, `reviews/3a8ec493-r1.md`, `reviews/66698c3c-r1.md`, `reviews/b2e09d41-r1.md`, `reviews/81afdf8e-r1.md`, `reviews/54e70918-r1.md`, `reviews/316150fd-r1.md`, `reviews/ed3d490e-breakdown-r1.md`.
 - Story `ed3d490e`: `dev/active/ed3d490e-zen3-ldpc-frame-simd/plan.md`, `breakdown.json`, `terminal-audit.md`.
 - Calibration: `63bad95d/calibration-plan.md`, `63bad95d/matvec-sweep-design.md`, `63bad95d/premeasurement-protocol.md`, `63bad95d/campaign-declaration.json`.
 - Matvec threshold: `4337c02e/matvec-lane-threshold-addendum.md`, `4337c02e/cell-table.md` (on branch `worktree-agent-4337c02e`).

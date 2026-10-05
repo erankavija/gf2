@@ -7,7 +7,16 @@
     "2133d15f-688e-442c-bb20-48debba72307"
   ],
   "description": "After the plan-review checkpoint passes, decompose the plan for Vectorize LDPC decoding across frames (ed3d490e) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review of the breakdown",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/ed3d490e-breakdown-r1.md"
+    }
+  ],
+  "done_at": "2026-10-05T21:53:47.396646833Z",
   "first_ready_at": "2026-10-05T21:41:50.525924411Z",
   "gates_required": [
     "coverage-preview",
@@ -15,14 +24,14 @@
   ],
   "gates_status": {
     "breakdown-review": {
-      "status": "pending",
-      "updated_at": "2026-10-05T19:28:49.112013653Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-05T21:53:25.701180865Z",
+      "updated_by": "auto:executor"
     },
     "coverage-preview": {
-      "status": "pending",
-      "updated_at": "2026-10-05T19:28:49.112013653Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-05T21:46:18.034349823Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "e28795c1-8d70-4ea0-a563-0e469904c52c",
@@ -41,7 +50,7 @@
     "brackets:ed3d490e"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "breakdown: Vectorize LDPC decoding across frames",
-  "updated_at": "2026-10-05T21:45:14.726656708Z"
+  "updated_at": "2026-10-05T21:53:47.783005957Z"
 }

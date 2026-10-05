@@ -704,7 +704,7 @@
      "short_id": "ed3d490e",
      "title": "Vectorize LDPC decoding across frames",
      "classification": "implementation",
-     "status": "bracket: planning node 2133d15f done (plan-review pass, 66 tasks); breakdown node e28795c1 ready, not started",
+     "status": "bracket complete: planning node 2133d15f and breakdown node e28795c1 done; 66 tasks created (104 edges), coverage-preview and breakdown-review pass; source tasks c79d60f9, 6818f1b6, 8840b0ff ready; no wave planned yet",
      "tracker_state": "backlog"
     },
     {
@@ -2276,7 +2276,8 @@
   "Invoker decisions on the ed3d490e plan (2026-10-05): general batch soft-decoder trait in gf2-coding (DEC-07), fixed waves, gf2-coding as third owner of the offline tuning system, descriptive QC comparison, two default paths, decoded words of implementer-reported length (DEC-08 to DEC-12).",
   "Session 28: worker worktrees no longer run the full cargo-ci.sh at delivery (30 to 47 minutes under load with sccache off, split job budget, exclusive test lock and nice 19); they run focused suites and the lead gates the merged tree with BUSY_HOST_OVERRIDE=1.",
   "Invoker 2026-10-06: the ed3d490e plan stays one story; the 38-task cap is lifted for the plan-review splits and one full terminal-invariant audit (66 tasks, 104 edges at 21b646407; audit record terminal-audit.md beside the plan).",
-  "Session 28: handoff-25.md written. Nine issues and the ed3d490e planning node closed; two pilots queued for the 2026-10-06 window."
+  "Session 28: handoff-25.md written. Nine issues and the ed3d490e planning node closed; two pilots queued for the 2026-10-06 window.",
+  "Session 28: ed3d490e breakdown created and gated after the handoff was first written; handoff-25.md amended."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [

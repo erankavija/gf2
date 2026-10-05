@@ -23,7 +23,7 @@
     "satisfies:ed3d490e/REQ-13"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Carry decoder selectors in the coding tuning section",
-  "updated_at": "2026-10-05T21:45:30.578806983Z"
+  "updated_at": "2026-10-05T21:53:47.632166220Z"
 }

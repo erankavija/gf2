@@ -25,7 +25,7 @@
     "satisfies:ed3d490e/REQ-14"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "State the LDPC decoder numerical contract with its batch clauses",
-  "updated_at": "2026-10-05T21:45:30.453792089Z"
+  "updated_at": "2026-10-05T21:53:47.747085828Z"
 }

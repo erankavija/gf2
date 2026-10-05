@@ -23,7 +23,7 @@
     "satisfies:ed3d490e/REQ-08"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Define the batch soft-decoder trait with its default paths",
-  "updated_at": "2026-10-05T21:45:30.699085210Z"
+  "updated_at": "2026-10-05T21:53:47.689685989Z"
 }

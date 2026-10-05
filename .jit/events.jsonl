@@ -18872,3 +18872,11 @@
 {"from":"ready","id":"35500f8c-6098-4d2d-a684-a7a049cfae28","issue_id":"8840b0ff-d956-4032-907d-72b55e4e22ac","timestamp":"2026-10-05T21:45:30.699085210Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"d2ce2620-61cd-4d27-bff2-af90f5251357","issue_id":"8840b0ff-d956-4032-907d-72b55e4e22ac","timestamp":"2026-10-05T21:45:30.699085210Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["dependencies"],"id":"842bb649-8946-407d-a43e-b552df88626b","issue_id":"ed3d490e-8cd9-4564-a763-72a2fa641425","timestamp":"2026-10-05T21:45:30.802709995Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"coverage-preview","id":"4181b71a-66cd-403e-9558-128a7a7d1da0","issue_id":"e28795c1-8d70-4ea0-a563-0e469904c52c","timestamp":"2026-10-05T21:46:18.034349823Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"breakdown-review","id":"7d62056f-2c4c-4366-b247-479c51e404fe","issue_id":"e28795c1-8d70-4ea0-a563-0e469904c52c","timestamp":"2026-10-05T21:53:25.701180865Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"bdbaa66f-8468-4cf5-95b1-d357ed2d6eac","issue_id":"e28795c1-8d70-4ea0-a563-0e469904c52c","timestamp":"2026-10-05T21:53:47.396646833Z","to":"done","type":"issue_state_changed"}
+{"id":"3d909455-acc5-4719-ac11-6276c8e23a3d","issue_id":"e28795c1-8d70-4ea0-a563-0e469904c52c","timestamp":"2026-10-05T21:53:47.396646833Z","type":"issue_completed"}
+{"from":"backlog","id":"bcfc9e8c-322e-4e20-ad63-3ba0d330d9c4","issue_id":"6818f1b6-5eb5-4ce6-8180-2b223b92510d","timestamp":"2026-10-05T21:53:47.632166220Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"7f269cd7-7665-44ab-8371-36a83fda393e","issue_id":"8840b0ff-d956-4032-907d-72b55e4e22ac","timestamp":"2026-10-05T21:53:47.689685989Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"3db107ac-2812-487a-b6c6-31d0d5069f28","issue_id":"c79d60f9-b183-43c7-a181-cc023de26624","timestamp":"2026-10-05T21:53:47.747085828Z","to":"ready","type":"issue_state_changed"}
+{"fields":["documents"],"id":"cb2eac84-bc19-43ac-9a48-00e01a29ff9d","issue_id":"e28795c1-8d70-4ea0-a563-0e469904c52c","timestamp":"2026-10-05T21:53:47.783005957Z","type":"issue_updated","updated_by":"doc-add"}
