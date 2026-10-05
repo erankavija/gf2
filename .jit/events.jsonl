@@ -18377,3 +18377,5 @@
 {"gate_key":"code-review","id":"16e5dd84-437f-4bd9-b49f-f5f8fb51cad7","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:21:33.727184208Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"3a5b5129-e3da-4a67-b251-4f88d6f13ad9","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:24:15.102627754Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"b17afa87-25b1-4330-a4b1-517d22c64dbe","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:29:37.353503187Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"222a4d65-9afe-4a6d-84d5-820704ed7f77","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:33:19.885449669Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"d818ede3-c12c-4da5-80b1-8ec329a4ecdd","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:33:19.957776841Z","type":"issue_updated","updated_by":"doc-update"}
