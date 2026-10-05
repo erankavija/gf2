@@ -180,10 +180,22 @@ fn detect_avx2_uncached() -> Option<BipedalAvx2Fns> {
     use std::arch::is_x86_feature_detected;
     if is_x86_feature_detected!("avx2") {
         Some(BipedalAvx2Fns {
+            #[cfg(not(gf2_entry_checked))]
             add_fn: add_safe,
+            #[cfg(gf2_entry_checked)]
+            add_fn: add_checked,
+            #[cfg(not(gf2_entry_checked))]
             sub_fn: sub_safe,
+            #[cfg(gf2_entry_checked)]
+            sub_fn: sub_checked,
+            #[cfg(not(gf2_entry_checked))]
             mul_fn: mul_safe,
+            #[cfg(gf2_entry_checked)]
+            mul_fn: mul_checked,
+            #[cfg(not(gf2_entry_checked))]
             neg_fn: neg_safe,
+            #[cfg(gf2_entry_checked)]
+            neg_fn: neg_checked,
             permanent4_fn: permanent4_safe,
         })
     } else {
@@ -192,6 +204,7 @@ fn detect_avx2_uncached() -> Option<BipedalAvx2Fns> {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn add_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
     // The slice shape is the caller's, as `BipedalBinaryKernelFn` documents.
@@ -199,6 +212,19 @@ fn add_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: 
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn add_checked(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
+    crate::entry_check::assert_packed_lengths(
+        "bipedal add kernel",
+        [m1.len(), s1.len(), m2.len(), s2.len(), om.len(), os.len()],
+    );
+    // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
+    // The assertion above gives the slice shape.
+    unsafe { crate::x86::bipedal_avx2::run_add_batch::<Config3>(m1, s1, m2, s2, om, os) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn sub_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
     // The slice shape is the caller's, as `BipedalBinaryKernelFn` documents.
@@ -206,6 +232,19 @@ fn sub_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: 
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn sub_checked(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
+    crate::entry_check::assert_packed_lengths(
+        "bipedal sub kernel",
+        [m1.len(), s1.len(), m2.len(), s2.len(), om.len(), os.len()],
+    );
+    // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
+    // The assertion above gives the slice shape.
+    unsafe { crate::x86::bipedal_avx2::run_sub_batch::<Config3>(m1, s1, m2, s2, om, os) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn mul_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
     // The slice shape is the caller's, as `BipedalBinaryKernelFn` documents.
@@ -213,9 +252,34 @@ fn mul_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: 
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn mul_checked(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
+    crate::entry_check::assert_packed_lengths(
+        "bipedal mul kernel",
+        [m1.len(), s1.len(), m2.len(), s2.len(), om.len(), os.len()],
+    );
+    // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
+    // The assertion above gives the slice shape.
+    unsafe { crate::x86::bipedal_avx2::run_mul_batch::<Config3>(m1, s1, m2, s2, om, os) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn neg_safe(m: &[u64], s: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
     // The slice shape is the caller's, as `BipedalUnaryKernelFn` documents.
+    unsafe { crate::x86::bipedal_avx2::run_neg_batch::<Config3>(m, s, om, os) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn neg_checked(m: &[u64], s: &[u64], om: &mut [u64], os: &mut [u64]) {
+    crate::entry_check::assert_packed_lengths(
+        "bipedal neg kernel",
+        [m.len(), s.len(), om.len(), os.len()],
+    );
+    // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
+    // The assertion above gives the slice shape.
     unsafe { crate::x86::bipedal_avx2::run_neg_batch::<Config3>(m, s, om, os) }
 }
 

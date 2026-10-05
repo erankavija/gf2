@@ -108,7 +108,10 @@ fn detect_x86() -> Option<MediumPrimePlePanelFns> {
     use std::arch::is_x86_feature_detected;
     if is_x86_feature_detected!("avx2") {
         Some(MediumPrimePlePanelFns {
+            #[cfg(not(gf2_entry_checked))]
             ple_panel_base_fn: ple_panel_base_safe,
+            #[cfg(gf2_entry_checked)]
+            ple_panel_base_fn: ple_panel_base_checked,
         })
     } else {
         None
@@ -116,6 +119,7 @@ fn detect_x86() -> Option<MediumPrimePlePanelFns> {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn ple_panel_base_safe(
     window: &mut [u16],
     m: usize,
@@ -130,6 +134,42 @@ fn ple_panel_base_safe(
     // lanes, prime in (251, 65536), slice lengths) are documented on
     // `MediumPrimePlePanelBaseFn`, established by the gf2-core dispatch
     // site and debug-asserted by the kernel.
+    unsafe {
+        crate::x86::fp_medium_ple::ple_panel_base_canonical_u16(
+            window,
+            m,
+            win,
+            p,
+            inv_table,
+            row_perm,
+            pivot_cols_local,
+        )
+    }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn ple_panel_base_checked(
+    window: &mut [u16],
+    m: usize,
+    win: usize,
+    p: u16,
+    inv_table: &[u16],
+    row_perm: &mut [usize],
+    pivot_cols_local: &mut Vec<usize>,
+) -> usize {
+    crate::entry_check::assert_ple_panel(
+        "ple_panel_base_canonical_u16",
+        window,
+        m,
+        win,
+        p,
+        inv_table.len(),
+    );
+    // SAFETY: `detect_x86` only published this pointer when AVX2 is
+    // available at runtime. The assertion above gives the window shape and
+    // keeps every pivot inside `inv_table`; the kernel reaches `row_perm`
+    // and its scratch row through bounds-checked accesses.
     unsafe {
         crate::x86::fp_medium_ple::ple_panel_base_canonical_u16(
             window,

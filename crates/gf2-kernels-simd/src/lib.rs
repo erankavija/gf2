@@ -21,6 +21,8 @@ mod x86;
 pub mod bch_encode;
 pub mod bipedal;
 pub mod clmul_scalar;
+#[cfg(gf2_entry_checked)]
+mod entry_check;
 pub mod fp65537;
 pub mod fp_generic;
 pub mod fp_medium;

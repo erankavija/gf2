@@ -90,8 +90,14 @@ fn detect_x86() -> Option<MediumPrimeFns> {
             batch_add_fn: batch_add_safe,
             batch_sub_fn: batch_sub_safe,
             batch_dot_fn: batch_dot_safe,
+            #[cfg(not(gf2_entry_checked))]
             spmm_row_fn: spmm_row_safe,
+            #[cfg(gf2_entry_checked)]
+            spmm_row_fn: spmm_row_checked,
+            #[cfg(not(gf2_entry_checked))]
             gemm_panel_fn: gemm_panel_safe,
+            #[cfg(gf2_entry_checked)]
+            gemm_panel_fn: gemm_panel_checked,
         })
     } else {
         None
@@ -123,6 +129,7 @@ fn batch_dot_safe(a: &[u16], b: &[u16], p: u16) -> u32 {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn spmm_row_safe(
     a_vals: &[u16],
     a_cols: &[usize],
@@ -139,8 +146,39 @@ fn spmm_row_safe(
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn spmm_row_checked(
+    a_vals: &[u16],
+    a_cols: &[usize],
+    b: &[u16],
+    b_stride: usize,
+    n: usize,
+    p: u16,
+    out: &mut [u16],
+) {
+    crate::entry_check::assert_spmm_row_columns("fp_medium_spmm_row", a_cols, b.len(), b_stride, n);
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
+    // The assertion above bounds every column, and the kernel asserts the
+    // other lengths.
+    unsafe { crate::x86::fp_medium::fp_medium_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn gemm_panel_safe(a: &[u16], bt: &[u16], m: usize, k: usize, n: usize, p: u16, c: &mut [u16]) {
     // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
+    unsafe { crate::x86::fp_medium::fp_medium_gemm_panel(a, bt, m, k, n, p, c) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn gemm_panel_checked(a: &[u16], bt: &[u16], m: usize, k: usize, n: usize, p: u16, c: &mut [u16]) {
+    crate::entry_check::assert_shape("fp_medium_gemm_panel", "a", a.len(), m, k);
+    crate::entry_check::assert_shape("fp_medium_gemm_panel", "bt", bt.len(), n, k);
+    crate::entry_check::assert_shape("fp_medium_gemm_panel", "c", c.len(), m, n);
+    // SAFETY: `detect_x86` only returns this pointer when AVX2 is available
+    // at runtime. The assertions above keep the shape products from wrapping
+    // in the kernel's own length assertions.
     unsafe { crate::x86::fp_medium::fp_medium_gemm_panel(a, bt, m, k, n, p, c) }
 }
 

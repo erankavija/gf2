@@ -32,6 +32,8 @@ def _shared_scripts():
 
 sys.path.insert(0, str(ROOT / _shared_scripts()))
 import asm_listing  # noqa: E402
+import content_anchor  # noqa: E402
+import crate_functions  # noqa: E402
 import repository_files  # noqa: E402
 import rust_code_text  # noqa: E402
 

@@ -126,8 +126,14 @@ fn detect_x86() -> Option<SmallPrimeFns> {
             batch_add_fn: batch_add_safe,
             batch_sub_fn: batch_sub_safe,
             batch_dot_fn: batch_dot_safe,
+            #[cfg(not(gf2_entry_checked))]
             gemm_row_panel_fn: gemm_row_panel_safe,
+            #[cfg(gf2_entry_checked)]
+            gemm_row_panel_fn: gemm_row_panel_checked,
+            #[cfg(not(gf2_entry_checked))]
             spmm_row_fn: spmm_row_safe,
+            #[cfg(gf2_entry_checked)]
+            spmm_row_fn: spmm_row_checked,
             sub_scaled_fn: sub_scaled_safe,
         })
     } else {
@@ -160,12 +166,24 @@ fn batch_dot_safe(a: &[u8], b: &[u8], p: u8) -> u8 {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn gemm_row_panel_safe(a: &[u8], bt: &[u8], k: usize, n: usize, p: u8, out: &mut [u8]) {
     // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_gemm_row_panel(a, bt, k, n, p, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn gemm_row_panel_checked(a: &[u8], bt: &[u8], k: usize, n: usize, p: u8, out: &mut [u8]) {
+    crate::entry_check::assert_shape("fp_small_gemm_row_panel", "bt", bt.len(), n, k);
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
+    // The assertion above keeps `n * k` from wrapping in the kernel's own
+    // length assertions.
+    unsafe { crate::x86::fp_small::fp_small_gemm_row_panel(a, bt, k, n, p, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(not(gf2_entry_checked))]
 fn spmm_row_safe(
     a_vals: &[u8],
     a_cols: &[usize],
@@ -178,6 +196,24 @@ fn spmm_row_safe(
     // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     // The column bound is the caller's, as `SmallPrimeSpmmRowFn` documents; the
     // kernel asserts the other lengths.
+    unsafe { crate::x86::fp_small::fp_small_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(gf2_entry_checked)]
+fn spmm_row_checked(
+    a_vals: &[u8],
+    a_cols: &[usize],
+    b: &[u8],
+    b_stride: usize,
+    n: usize,
+    p: u8,
+    out: &mut [u8],
+) {
+    crate::entry_check::assert_spmm_row_columns("fp_small_spmm_row", a_cols, b.len(), b_stride, n);
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
+    // The assertion above bounds every column, and the kernel asserts the
+    // other lengths.
     unsafe { crate::x86::fp_small::fp_small_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
 }
 
