@@ -231,8 +231,16 @@
       "format": "markdown",
       "label": "Corrections to the frozen candidate portfolio and launcher",
       "path": "dev/active/bc091474/unroll-variant-corrections.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/fa1d8733-r1.md"
     }
   ],
+  "done_at": "2026-10-05T18:50:46.129586162Z",
   "first_ready_at": "2026-10-05T02:13:55.518842609Z",
   "gates_required": [
     "cargo-ci",
@@ -251,8 +259,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T09:11:34.819633312Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T18:50:03.427525500Z",
       "updated_by": "auto:executor"
     }
   },
@@ -263,7 +271,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Remove the unselected XOR unroll bodies from the AVX2 kernel",
-  "updated_at": "2026-10-05T18:38:21.626375618Z"
+  "updated_at": "2026-10-05T18:50:46.211902029Z"
 }

@@ -1,0 +1,79 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --test tuning_calibration_harness -E test(/simd_arm|::accepted_owner_|::owner_emission_publishes|::accepted_complete_experiment/) --status-level none --final-status-level none --success-output final --cargo-profile ci-test --profile ci
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on artifact directory
+    Finished `ci-test` profile [optimized] target(s) in 16.96s
+────────────
+ Nextest run ID 586fe915-c52e-42b4-a904-af4fc923e66a with nextest profile: ci
+    Starting 7 tests across 1 binary (138 tests skipped)
+────────────
+     Summary [   9.392s] 7 tests run: 7 passed, 138 skipped
+        PASS [   0.023s] (1/7) gf2-core::tuning_calibration_harness tuning_calibration::campaign_owner::tests::a_missing_simd_arm_fails_on_the_stated_precondition
+  stdout ───
+
+    running 1 test
+    test tuning_calibration::campaign_owner::tests::a_missing_simd_arm_fails_on_the_stated_precondition - should panic ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 144 filtered out; finished in 0.00s
+
+  stderr ───
+
+    thread 'tuning_calibration::campaign_owner::tests::a_missing_simd_arm_fails_on_the_stated_precondition' (992382) panicked at crates/gf2-core/tests/../benches/tuning_calibration.rs:11083:17:
+    precondition: the owner contract tests need a SIMD backend as the second arm of the bit-backend family, and this host publishes none
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        PASS [   6.764s] (2/7) gf2-core::tuning_calibration_harness tuning_calibration::campaign_owner::tests::accepted_owner_rejects_a_joint_vector_inconsistent_with_one_factor_evidence
+  stdout ───
+
+    running 1 test
+    test tuning_calibration::campaign_owner::tests::accepted_owner_rejects_a_joint_vector_inconsistent_with_one_factor_evidence ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 144 filtered out; finished in 6.75s
+
+
+        PASS [   6.942s] (3/7) gf2-core::tuning_calibration_harness tuning_calibration::campaign_owner::tests::accepted_owner_selects_nondefault_gemm_coordinate_and_extent
+  stdout ───
+
+    running 1 test
+    test tuning_calibration::campaign_owner::tests::accepted_owner_selects_nondefault_gemm_coordinate_and_extent ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 144 filtered out; finished in 6.92s
+
+
+        PASS [   7.042s] (4/7) gf2-core::tuning_calibration_harness tuning_calibration::campaign_owner::tests::accepted_owner_keeps_the_proposed_m4rm_vector_after_joint_validation
+  stdout ───
+
+    running 1 test
+    test tuning_calibration::campaign_owner::tests::accepted_owner_keeps_the_proposed_m4rm_vector_after_joint_validation ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 144 filtered out; finished in 7.03s
+
+
+        PASS [   7.527s] (5/7) gf2-core::tuning_calibration_harness tuning_calibration::campaign_owner::tests::accepted_owner_falls_back_as_a_whole_after_one_joint_shape_fails
+  stdout ───
+
+    running 1 test
+    test tuning_calibration::campaign_owner::tests::accepted_owner_falls_back_as_a_whole_after_one_joint_shape_fails ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 144 filtered out; finished in 7.51s
+
+
+        PASS [   7.666s] (6/7) gf2-core::tuning_calibration_harness tuning_calibration::campaign_owner::tests::owner_emission_publishes_the_launcher_named_profile_and_strictly_reopens_it
+  stdout ───
+
+    running 1 test
+    test tuning_calibration::campaign_owner::tests::owner_emission_publishes_the_launcher_named_profile_and_strictly_reopens_it ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 144 filtered out; finished in 7.65s
+
+
+        PASS [   9.390s] (7/7) gf2-core::tuning_calibration_harness tuning_calibration::campaign_owner::tests::accepted_complete_experiment_measures_defaults_and_reopens_only_its_30_leaves
+  stdout ───
+
+    running 1 test
+    test tuning_calibration::campaign_owner::tests::accepted_complete_experiment_measures_defaults_and_reopens_only_its_30_leaves ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 144 filtered out; finished in 9.37s
+
+
+# exit: 0

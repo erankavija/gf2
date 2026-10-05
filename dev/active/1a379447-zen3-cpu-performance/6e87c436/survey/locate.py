@@ -52,3 +52,21 @@ PACKAGES = ["gf2-core", "gf2-kernels-simd"]
 # The task anchor by content: per-path digests, and byte snapshots of the
 # paths this task changes. An `inputs` directory is outside every live lookup.
 ANCHOR = content_anchor.Anchor(ROOT, HERE / "anchor-baseline.json", HERE / "inputs" / "anchor")
+
+# The tree the verdict's records describe, by per-path digest. The file is
+# located by name once it exists; the freezer writes it beside the records.
+END_STATE_FILE = "dense-verdict-end-state.json"
+END_STATE_SCHEMA = "dense-verdict-end-state-v1"
+
+
+def end_state():
+    """The pinned end state of the packages the records describe."""
+    return content_anchor.Anchor(ROOT, ROOT / repository_files.live_file(ROOT, END_STATE_FILE))
+
+
+def byte_class(path, before, after):
+    """`comment-or-blank-only` for a Rust source whose code text agrees, else `code-differs`."""
+    same = path.endswith(".rs") and rust_code_text.code_text(
+        before.decode()
+    ) == rust_code_text.code_text(after.decode())
+    return "comment-or-blank-only" if same else "code-differs"

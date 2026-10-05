@@ -622,8 +622,28 @@
      "short_id": "3a8ec493",
      "title": "Check the mid-range family producing closures in the CI contract",
      "classification": "implementation",
-     "status": "pending",
-     "tracker_state": "ready"
+     "status": "done",
+     "tracker_state": "done"
+    },
+    {
+     "id": "fa1d8733",
+     "short_id": "fa1d8733",
+     "classification": "implementation",
+     "status": "done"
+    },
+    {
+     "id": "a87ae828",
+     "short_id": "a87ae828",
+     "classification": "implementation",
+     "status": "done",
+     "tracker_state": "done"
+    },
+    {
+     "id": "66698c3c",
+     "short_id": "66698c3c",
+     "classification": "implementation",
+     "status": "done",
+     "tracker_state": "done"
     }
    ]
   },
@@ -635,8 +655,8 @@
      "short_id": "f63a2464",
      "title": "Evaluate quantized layered and QC-aware LDPC candidates",
      "classification": "research",
-     "status": "in_progress: three QC pilots collected from the 2026-09-19 window and merged at 3c6c8274c; frozen stop rules applied: Q no-proceed (S2), L no-proceed (S2), QC proceeds to its confirmatory attempt on each of its three ledgers (single-worker, multicore, comparator; the decision record's 'family' read as the ledger's question, recorded in findings.md Limits); confirmations frozen by the canonical freezer via freeze-confirmations.sh, every pilot cell retained (budget six per ledger), smoked untimed, three lines queued for the 2026-09-20 window from the pinned worktree agent-9fb40c83. Comparator pilot ratio below one on both cells (candidate slower than the matched AFF3CT arm), preserved. Final round after the confirmations: outcomes, S4, converge qc-arm-smoke and ldpc-plan-check on the runner subcommands, rebase, gates cargo-ci, code-review, research-review.",
-     "tracker_state": "in_progress"
+     "status": "done",
+     "tracker_state": "done"
     },
     {
      "id": "4c1e441f",
@@ -656,7 +676,7 @@
      "short_id": "ed3d490e",
      "title": "Vectorize LDPC decoding across frames",
      "classification": "implementation",
-     "status": "pending",
+     "status": "bracket scaffolded (P 2133d15f, B e28795c1); plan and manifest merged, 38 tasks; plan-review running",
      "tracker_state": "backlog"
     },
     {
@@ -1587,10 +1607,12 @@
   "a0812b83": 2,
   "c04dd4ac": 2,
   "50f0bd42": 2,
-  "f63a2464": 1,
+  "f63a2464": 2,
   "6e87c436": 1,
   "2ad3a3e0": 1,
-  "1b034786": 1
+  "1b034786": 1,
+  "3a8ec493": 1,
+  "66698c3c": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2200,7 +2222,11 @@
   "Session 27: 54e70918 partial merged (gf2_core::kernels::backend::contract; search record simd-early-returns.json: 258 before, 225 after). The lead wrote REQ-03 broader than the finding supported; narrowing it is an invoker decision.",
   "Session 27: main cargo-ci passes with the 54e70918 partial merge (838a91963) and with fa1d8733 merged (8a1f7f3fd); both 2037941f closure checks pass. fa1d8733 gates: asm-artefact-present and cargo-ci PASS; code-review FAIL F1, a reading of REQ-03 that the lead's loose wording invites. No rework dispatched: the fix is an invoker amendment of the criterion text. The family closures are not covered by cargo-ci's campaign-producing-closure step; a CI step for them is an invoker decision (shared infrastructure).",
   "Session 27: handoff-24.md written; wave 4 holds entirely on invoker decisions.",
-  "Session 28: all nine handoff-24 escalations ruled by the invoker; four issue texts amended as approved (fa1d8733 REQ-03, 54e70918 REQ-03, f63a2464 REQ-04, b2e09d41 Notes)."
+  "Session 28: all nine handoff-24 escalations ruled by the invoker; four issue texts amended as approved (fa1d8733 REQ-03, 54e70918 REQ-03, f63a2464 REQ-04, b2e09d41 Notes).",
+  "Invoker rule 2026-10-05 (session 28): resume an agent only while it is recently active (the one-hour agent cache window); an agent idle longer starts as a new session with a self-contained brief.",
+  "Invoker constraint 2026-10-05: the ed3d490e breakdown is 38 tasks and does not grow; a review asking for more coverage is answered by consolidation, otherwise escalate.",
+  "Invoker decisions on the ed3d490e plan (2026-10-05): general batch soft-decoder trait in gf2-coding (DEC-07), fixed waves, gf2-coding as third owner of the offline tuning system, descriptive QC comparison, two default paths, decoded words of implementer-reported length (DEC-08 to DEC-12).",
+  "Session 28: worker worktrees no longer run the full cargo-ci.sh at delivery (30 to 47 minutes under load with sccache off, split job budget, exclusive test lock and nice 19); they run focused suites and the lead gates the merged tree with BUSY_HOST_OVERRIDE=1."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -2233,28 +2259,16 @@
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
  },
  "benchmark_window": {
-  "unit": "gf2-bench-window-20261005",
-  "armed_for": "2026-10-05T02:00:00+03:00",
+  "unit": "gf2-bench-window-20261006",
+  "armed_for": "2026-10-06T02:00:00+03:00",
   "state_dir": ".agents/bench-window",
   "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
   "pending_jobs": {
-   "f63a2464": [
-    "f26bf08004856789",
-    "3b9fddf9c17b7d52",
-    "9a8f7f9e061c698a"
-   ],
-   "ad2a6a58": [
-    "96d45180caf48cc4"
-   ],
-   "4c1e441f": [
-    "cb10e50421248b16"
-   ],
-   "50f0bd42": [
-    "8d3d23db4fa69e06"
+   "4337c02e": [
+    "pilot v4-r1, family 4337c02e-matvec-simd-threshold, worktree agent-4337c02e pinned at 2eeccb430"
    ]
   },
-  "note": "Six jobs, estimated 78 minutes. Verify each campaign from its own execution log, never the job rc. Row dbd8787d (key 65317586c6eb36d1) has no worktree and is skipped as missing.",
-  "current_observation": "Window 2026-10-04T23:00:04Z to 23:13:51Z: all six jobs rc 0 with done markers; launchers report Accepted for every receipt (qualifies=false for the f63a2464 comparator and the 50f0bd42 M4RI confirmation). Verification from each execution log is the workers' first step. No timer is armed."
+  "note": "Verify the campaign from its own execution log, never the job rc."
  },
  "session_scope": {
   "session": 28,

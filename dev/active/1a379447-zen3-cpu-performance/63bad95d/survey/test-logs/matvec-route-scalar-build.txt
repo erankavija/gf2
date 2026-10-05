@@ -1,0 +1,48 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --test simd_equiv_matvec --test popcount_routes --test matrix_vector --test dispatch_fallback --cargo-profile ci-test --profile ci
+    Blocking waiting for file lock on artifact directory
+   Compiling gf2-core v0.1.0 (./crates/gf2-core)
+    Finished `ci-test` profile [optimized] target(s) in 4m 46s
+────────────
+ Nextest run ID 23826d40-5ef8-4421-8d2b-3680eaa82906 with nextest profile: ci
+    Starting 37 tests across 4 binaries
+        PASS [   0.005s] ( 1/37) gf2-core::matrix_vector matvec_tests::test_matvec_matches_sparse
+        PASS [   0.005s] ( 2/37) gf2-core::matrix_vector matvec_tests::test_matvec_empty
+        PASS [   0.005s] ( 3/37) gf2-core::matrix_vector matvec_tests::test_matvec_word_boundary_64
+        PASS [   0.006s] ( 4/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_xor
+        PASS [   0.006s] ( 5/37) gf2-core::dispatch_fallback every_route_keeps_the_fallback_contract
+        PASS [   0.006s] ( 6/37) gf2-core::matrix_vector matvec_tests::test_matvec_wrong_size
+        PASS [   0.006s] ( 7/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_zero_matrix
+        PASS [   0.006s] ( 8/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_matches_sparse
+        PASS [   0.006s] ( 9/37) gf2-core::matrix_vector matvec_tests::test_matvec_xor_cancellation
+        PASS [   0.006s] (10/37) gf2-core::matrix_vector matvec_tests::test_matvec_word_boundary_65
+        PASS [   0.006s] (11/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_word_boundary_65
+        PASS [   0.006s] (12/37) gf2-core::matrix_vector matvec_tests::test_matvec_identity
+        PASS [   0.007s] (13/37) gf2-core::matrix_vector matvec_tests::test_matvec_zero_matrix
+        PASS [   0.007s] (14/37) gf2-core::matrix_vector property_tests::matvec_transpose_identity_preserves_vector
+        PASS [   0.007s] (15/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_simple
+        PASS [   0.007s] (16/37) gf2-core::matrix_vector matvec_tests::test_matvec_simple
+        PASS [   0.007s] (17/37) gf2-core::matrix_vector property_tests::matvec_identity_preserves_vector
+        PASS [   0.007s] (18/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_empty
+        PASS [   0.007s] (19/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_word_boundary_64
+        PASS [   0.007s] (20/37) gf2-core::matrix_vector property_tests::matvec_matches_sparse_random
+        PASS [   0.008s] (21/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_relationship
+        PASS [   0.008s] (22/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_wrong_size
+        PASS [   0.008s] (23/37) gf2-core::matrix_vector property_tests::matvec_transpose_matches_sparse_random
+        PASS [   0.008s] (24/37) gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_identity
+        PASS [   0.005s] (25/37) gf2-core::matrix_vector property_tests::matvec_zero_produces_zero
+        PASS [   0.004s] (26/37) gf2-core::popcount_routes every_fused_route_counts_the_intersection
+        PASS [   0.004s] (27/37) gf2-core::popcount_routes automatic_routes_retain_the_established_implementations
+        PASS [   0.004s] (28/37) gf2-core::simd_equiv_matvec a_pinned_route_rejects_a_vector_of_another_length
+        PASS [   0.005s] (29/37) gf2-core::popcount_routes every_population_count_route_reproduces_the_reference
+        PASS [   0.005s] (30/37) gf2-core::popcount_routes bit_vector_counts_honour_canonical_indexing_and_zero_tail_padding
+        PASS [   0.005s] (31/37) gf2-core::popcount_routes every_fused_route_covers_the_shorter_operand
+        PASS [   0.005s] (32/37) gf2-core::popcount_routes every_fused_route_counts_slices_at_each_word_offset
+        PASS [   0.005s] (33/37) gf2-core::simd_equiv_matvec matvec_word_boundary_lengths_match_scalar_reference
+        PASS [   0.005s] (34/37) gf2-core::popcount_routes matrix_vector_parity_agrees_across_strides_that_change_the_route
+        PASS [   0.007s] (35/37) gf2-core::simd_equiv_matvec matvec_boundary_shapes_index_canonically_and_keep_zero_tails
+        PASS [   0.008s] (36/37) gf2-core::simd_equiv_matvec each_route_matches_the_reference_at_stride_and_word_boundaries
+        PASS [   0.014s] (37/37) gf2-core::simd_equiv_matvec matvec_matches_scalar_reference_proptest_sizes_0_to_1024
+────────────
+     Summary [   0.021s] 37 tests run: 37 passed, 0 skipped
+# exit: 0

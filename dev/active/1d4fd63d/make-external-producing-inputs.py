@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Write the producing-input manifest of the 1d4fd63d comparator family.
 
-Usage: make-external-producing-inputs.py [output]
-       (default external-producing-inputs.json)
+Usage: make-external-producing-inputs.py [--check] [output]
+       (default external-producing-inputs.json beside this script)
+
+`--check` writes nothing and exits non-zero when the closure at `output` differs
+from the tree.
 
 The comparator family measures gf2 lanes against M4RI and Bitshuffle, so its
 closure differs from the lane-selection family's: it carries the kernel crate
@@ -13,16 +16,51 @@ are derived from the tree, so an added source file enters the closure without
 an edit here.
 """
 
-import json
-import os
+import argparse
 import subprocess
 import sys
+from pathlib import Path
 
-ISSUE = "dev/active/1d4fd63d"
-SURVEY = "dev/active/6fb89a3c/survey"
-TOOL = "dev/tools/tuning-campaign-support"
-LAUNCHER = "dev/bench_results/1d4fd63d/run-transpose-lane.sh"
-LOCK_WRAPPER = "dev/scripts/ccx1-bench-flock.sh"
+HERE = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
+
+
+def _scripts():
+    """Directory of the one live `producing_closure.py`, outside receipt snapshots."""
+    listing = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+         "--", ":(glob)**/producing_closure.py"],
+        check=True, capture_output=True, text=True,
+    ).stdout.split("\0")
+    live = [path for path in listing if path and "inputs" not in Path(path).parts[:-1]]
+    if len(live) != 1:
+        raise SystemExit(f"{len(live)} live producing_closure.py files; exactly one must exist")
+    return ROOT / Path(live[0]).parent
+
+
+sys.dont_write_bytecode = True  # `--check` writes nothing, however invoked
+sys.path.insert(0, str(_scripts()))
+import producing_closure  # noqa: E402
+
+files = producing_closure.repository_files
+
+
+def located(name):
+    return files.live_file(ROOT, name)
+
+
+ISSUE = HERE.relative_to(ROOT).as_posix()
+OUTPUT = f"{ISSUE}/external-producing-inputs.json"
+SURVEY = Path(located("bitshuffle_transpose_arm.c")).parent.as_posix()
+TOOL = files.package_directory(ROOT, "tuning-campaign-support")
+LAUNCHER = located("run-transpose-lane.sh")
+LOCK_WRAPPER = located("ccx1-bench-flock.sh")
+SHARED = [located(name) for name in ("producing_closure.py", "repository_files.py")]
 
 LIFECYCLE = [
     LAUNCHER,
@@ -53,7 +91,7 @@ EXTERNAL = [
     f"{SURVEY}/Makefile",
 ]
 
-EXTRA_BUILD = EXTERNAL + [
+EXTRA_BUILD = EXTERNAL + SHARED + [
     ".cargo/config.toml",
     "Cargo.lock",
     "Cargo.toml",
@@ -67,7 +105,7 @@ EXTRA_BUILD = EXTERNAL + [
     f"{ISSUE}/survey/external-arm-check.json",
     f"{ISSUE}/survey/verify-bit-mapping.py",
     f"{TOOL}/Cargo.toml",
-    "scripts/cargo-budget.sh",
+    located("cargo-budget.sh"),
 ]
 
 SOURCE_DIRECTORIES = (
@@ -77,53 +115,30 @@ SOURCE_DIRECTORIES = (
 )
 
 
-def rust_sources(root, directory):
-    found = []
-    for base, _, files in os.walk(os.path.join(root, directory)):
-        for name in files:
-            if name.endswith(".rs"):
-                found.append(os.path.relpath(os.path.join(base, name), root))
-    return found
-
-
 def main():
-    root = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    output = (
-        sys.argv[1]
-        if len(sys.argv) > 1
-        else os.path.join(root, ISSUE, "external-producing-inputs.json")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("output", nargs="?", type=Path, default=ROOT / OUTPUT)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="compare the closure at output with this tree's instead of writing it",
     )
+    arguments = parser.parse_args()
     behavior = set()
     for directory in SOURCE_DIRECTORIES:
-        behavior.update(rust_sources(root, directory))
+        behavior.update(producing_closure.rust_sources(ROOT, directory))
     behavior.update([LAUNCHER, LOCK_WRAPPER])
     behavior.update(EXTERNAL)
     missing = [
-        path
-        for path in sorted(behavior | set(EXTRA_BUILD))
-        if not os.path.isfile(os.path.join(root, path))
+        path for path in sorted(behavior | set(EXTRA_BUILD)) if not (ROOT / path).is_file()
     ]
     if missing:
         raise SystemExit(f"producing inputs missing from the tree: {missing}")
-    manifest = {
-        "schema": "tuning-campaign-producing-inputs-v1",
-        "behavior_sources": sorted(behavior),
-        "lifecycle_sources": sorted(LIFECYCLE),
-        "build_inputs": sorted(behavior | set(EXTRA_BUILD)),
-    }
-    with open(output, "w") as handle:
-        json.dump(manifest, handle, indent=2)
-        handle.write("\n")
-    print(
-        f"{len(manifest['behavior_sources'])} behavior, "
-        f"{len(manifest['lifecycle_sources'])} lifecycle, "
-        f"{len(manifest['build_inputs'])} build inputs -> {output}",
-        file=sys.stderr,
+    producing_closure.emit(
+        arguments.output,
+        producing_closure.document(behavior, LIFECYCLE, behavior | set(EXTRA_BUILD)),
+        arguments.check,
+        f"{ISSUE}/make-external-producing-inputs.py",
     )
 
 

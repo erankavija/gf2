@@ -11,9 +11,10 @@ contradicts or does not support, quotes it, states what the evidence
 establishes, and gives the reading the other documents of this issue use.
 
 No correction changes a budget, a stop rule, the exploratory screen, the
-bit-exactness rule or the value `fer_ratio_max`. Each entry states why the
-decisions of [findings.md](findings.md) do not depend on the corrected
-statement.
+bit-exactness rule or the value `fer_ratio_max`. Entries C-01 to C-08 state why
+the decisions of [findings.md](findings.md) do not depend on the corrected
+statement; C-09 records an execution that contradicts the frozen budget and the
+decision that follows from it.
 
 ## C-01: the fastest quality-compatible external arms
 
@@ -39,7 +40,7 @@ has no admitted arm on this corpus; this issue makes no such comparison and
 reports its absence rather than a result.
 
 **Decisions.** Unaffected: family L stops at S2 on the exploratory screen before
-any timed cell, and family QC's matched comparison uses the flooding f32 arm.
+any timed cell, and family QC's matched cells use the flooding f32 arm.
 
 ## C-02: what `c077a88b` measures of the layered scalar arm
 
@@ -177,3 +178,57 @@ measures. Nothing here states what inter-frame batching achieves on it.
 
 **Decisions.** Unaffected: the latency cells compare the candidate with the
 canonical decoder.
+
+## C-09: three confirmatory campaigns against a cap of one
+
+Decision record, "Confirmatory stage, per family":
+
+> | Timed pilot campaigns | at most 1 |
+
+> | Confirmatory campaigns | at most 1, the protocol's per-candidate cap |
+
+> | Attempts after a non-passing outcome | none |
+
+The frozen confirmation addenda of family QC, in each family description:
+
+> Confirmatory stage: every cell is confirmatory and decides this family on
+> fresh samples
+
+**Contradicted by the execution.** The decision record names three candidate
+families, Q, L and QC, and caps each at one confirmatory campaign. Family QC ran
+three confirmatory campaigns, one on each of its ledgers (single-worker,
+multicore and comparator), each frozen and described as deciding "this family".
+The reading that takes the cap per ledger is written after the budget is frozen.
+It is no explicit amended version of the budget and is followed by no fresh
+confirmation, which the measurement contract requires of a change to
+experimental rules. The three campaigns therefore exceed the frozen cap. The
+family's three pilot campaigns, one per ledger, exceed the exploratory cap of
+one timed pilot campaign in the same way.
+
+**Reading used.** Family QC has no valid confirmatory verdict under the frozen
+budget (repository owner's ruling, 2026-10-05). The three receipts, their ledger
+reservations and their frozen addenda keep their bytes and stay committed as
+run. Their recorded outcomes, including each receipt's `qualifies` field and
+the comparator cells' `fail`, are reported exactly as the evaluator records
+them and decide nothing.
+
+**Decisions.** Family QC does not proceed, and with families Q and L stopped at
+S2 no family proceeds. The frozen record allows no further confirmatory attempt
+for family QC under this issue.
+
+## C-10: "proceeds" in the numerical-contract review
+
+Review, "Rulings":
+
+> **Q proceeds, in both widths, without a matched external `i8` arm.**
+
+> **L proceeds.**
+
+> **QC proceeds on the NR workload and is unavailable on DVB-T2, with the
+> reason.**
+
+**Scoped.** These rulings are REQ-03's: each family passes the contract and
+feasibility review and goes on to a prototype. They are written before any
+prototype and are no proceed decision under REQ-06. The measured decisions are
+the decision record's table "Decisions after the confirmations": no family
+proceeds.

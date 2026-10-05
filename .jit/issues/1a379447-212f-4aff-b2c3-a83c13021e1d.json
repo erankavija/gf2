@@ -14,6 +14,7 @@
     "66698c3c-b1c4-496a-a205-e0307b61eb24",
     "6833c5b5-a2c7-4fda-b50b-6b37b57877af",
     "7d44b71f-8764-4438-9f4a-4e6b8360667d",
+    "81afdf8e-8585-4048-aa5c-40737343d3ff",
     "a87ae828-3a6f-4d7c-89fb-517d5ffd5df9",
     "ad2a6a58-39f1-4d1e-bdcc-e6a1e909fe67",
     "b2e09d41-4c66-4c71-a129-44261f7e420d",
@@ -1560,5 +1561,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-10-05T18:38:43.361542695Z"
+  "updated_at": "2026-10-05T19:41:16.081841680Z"
 }
