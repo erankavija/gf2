@@ -61,7 +61,7 @@ loses completed cells.
   `8e4e19a0` schema; does **not** overwrite the committed CPU
   `results-2026-05-15.csv`).
 - Plot: `dev/benchmarks/perm_uniformity/tvd_vs_n_gpu.png`.
-- Writeup: `dev/plans/r4_gpu_uniformity_resample.md`.
+- Writeup: `dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`.
 - Repro: `scripts/perm-uniformity-gpu-repro.sh`.
 
 ## Smoke tests

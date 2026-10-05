@@ -4,7 +4,7 @@
 
   This file implements the bounded-n (n ≤ 63) Ryser permanent formula
   correctness proof per the user-approved D3 sketch
-  (`dev/plans/d3_lean_ryser_sketch.md`) for JIT issue 0606186a.
+  (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/d3_lean_ryser_sketch.md`) for JIT issue 0606186a.
 
   ## Scope of session 1 (already landed in commit `762ce0ac`)
 
@@ -105,8 +105,8 @@
 
   ## Reference
 
-  * Abstract sketch: `dev/plans/d3_lean_ryser_sketch.md`
-  * Path-1 sketch + Option-3 addendum: `dev/plans/0606186a/d3_v2_path1_sketch.md` §9
+  * Abstract sketch: `dev/archive/ae82bd73-gf2-algebra-permanent/plans/d3_lean_ryser_sketch.md`
+  * Path-1 sketch + Option-3 addendum: `dev/archive/ae82bd73-gf2-algebra-permanent/plans/0606186a/d3_v2_path1_sketch.md` §9
   * Extraction-falsification evidence: `dev/active/0606186a/0606186a-impl-handoff.md`
   * Issue: `0606186a` (epic `ae82bd73`), Amendments §2
 -/

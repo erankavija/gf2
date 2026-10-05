@@ -12,7 +12,7 @@
 The original promotion (commit `b8ed382`) covered both `matmul` and
 `echelon`. The round-3 code-review rejected the echelon scope on the
 grounds that the echelon contract in
-`dev/plans/sota_reference_acceptance_protocol.md` § 6 / table § 4 is
+`dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6 / table § 4 is
 *bitwise canonical RREF equality* against an independent RREF
 implementation, and that the structural-RREF-invariants oracle added
 in `b8ed382` (`smoke_echelon_one_cell()`) certifies only the structure
@@ -28,7 +28,7 @@ independent scalar GF(2^m) RREF reference is filed as future work
 
 M4RIE is the de-facto open-source reference for dense linear algebra over
 the small extensions GF(2^m), m ∈ [2, 16]. This evidence walks the
-five-criterion checklist in `dev/plans/sota_reference_acceptance_protocol.md`
+five-criterion checklist in `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md`
 § 9 against M4RIE's `20250128` upstream release, in the pinned
 `debian:bookworm-20260421-slim` container, and concludes:
 
@@ -325,7 +325,7 @@ historical record of the cross-cutting flag and its disposition.
 | `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv`       | created  | 18 timing rows (lib=m4rie, op=matmul, field ∈ {GF(2^4), GF(2^8), GF(2^16)}, n ∈ {64, 256, 1024}, regime ∈ {uniform, deficient}). The R2 rework removed the prior 18 echelon rows. |
 | `dev/bench_results/2026-05-04-507b0036-m4rie-host.txt`            | created  | Host capture per protocol § 5. |
 | `dev/bench_results/2026-05-04-507b0036-m4rie-perf-stat.txt`       | created  | `perf stat -r 10` capture for matmul GF(2^16) n=1024 uniform. |
-| `dev/plans/m4rie_promotion_evidence.md`                           | created  | This document. |
+| `dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md`           | created  | This document. |
 
 ## Re-evaluation triggers
 
