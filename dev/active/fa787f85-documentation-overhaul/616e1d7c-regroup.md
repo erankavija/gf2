@@ -118,9 +118,6 @@ receipt `inputs/` trees. `scripts/cargo-ci.sh:268` and
 `7d824b2f/design.md` and `eaae1b56/premeasurement-protocol.md` in comments;
 both files stay.
 
-`96cea1b9-archive-rows.py` requires exactly one archive event for the
-container and exits on the two the event log holds.
-
 ## Commands
 
 ```sh
