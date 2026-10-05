@@ -126,14 +126,12 @@ ARTIFACTS = (
     ("REQ-05", lambda: STORY / "review.md", "adversarial plan review"),
     ("REQ-05", "profile-provenance.md", "candidate profile invocation and fixture identity"),
     ("REQ-05", ("execution.log", FAILED_PROFILE_REQUEST), "preserved failed dense profile launch"),
-    ("REQ-06", "measurement-contract.md", "live measurement contract"),
     ("REQ-06", "logical-harness.md", "logical harness interface"),
     ("REQ-06", "dense-parity-harness.md", "dense-parity harness interface"),
     ("REQ-06", "dense-parity-conformance.md", "dense harness clause conformance"),
     ("REQ-06", "logical-producing-inputs.json", "logical producing-input closure"),
     ("REQ-06", "dense-producing-inputs.json", "dense producing-input closure"),
     ("REQ-06", "logical-source-evidence.json", "logical harness source ledger"),
-    ("REQ-06", "dense-parity-source-evidence.json", "dense-parity source ledger"),
 )
 
 
