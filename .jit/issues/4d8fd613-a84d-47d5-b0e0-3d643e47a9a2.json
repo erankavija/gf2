@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "a4476c6a-c33e-43ee-87bb-0d4e39609d25"
+  ],
+  "description": "Adds the generator that writes a protocol family's pilot addendum and runner plan from one family declaration, so no family writes an addendum by hand.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story measures several protocol families over those arms; each needs a schema-valid addendum, a runner plan, a launcher for the benchmark window and a smoke of its plan. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A generator writes a family's pilot addendum and runner plan from one family declaration file under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and the addendum is valid under the protocol's addendum schema.\n- [hard] REQ-02: The generator holds no numeric setting: each setting comes from the family declaration or the protocol's shared settings, and arm identities come from the build identity record.\n- [hard] REQ-03: A sample family declaration passes the generator, two runs give identical bytes, and the sample's outputs are not committed as a family.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "4d8fd613-a84d-47d5-b0e0-3d643e47a9a2",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Generate family addenda with their plans from family declarations",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

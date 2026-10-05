@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "e28795c1-8d70-4ea0-a563-0e469904c52c"
+  ],
+  "description": "Adds to `gf2-coding` a batch soft-decoder trait beside `SoftDecoder` and `IterativeSoftDecoder`, with default batch decoding for the existing soft decoders.\n\n## Background\n\n`gf2-coding` has two single-frame soft-decoding entry points: `SoftDecoder::decode_soft_with_result`, by shared reference, and `IterativeSoftDecoder::decode_iterative`, by mutable reference with an iteration cap. Its implementers are the OSD, ORBGRAND, GLDPC, LDPC and rate-matched 5G NR decoders. No trait decodes several frames in one call: the LDPC decoder has inherent batch functions, and each `gf2-sim` decode stage loops over frames itself. The modem layer has batch traits, `BatchMapper` and `BatchSoftDemapper`, that write into caller-provided storage and are usable boxed. A `gf2-sim` stage processes by shared reference with a default-constructed mutable scratch, so a batch decoder with a workspace is a value a stage builds once per scratch and calls mutably. The per-frame outcome type `DecodeOutcome` is LDPC-local. Code claims are in `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/source-evidence.json`, topics `decoder-traits`, `implementers`, `batch-trait-style` and `stage-boundary`.\n\n## Success Criteria\n\n- [hard] REQ-01: A public trait in `crates/gf2-coding/src/traits.rs` decodes a slice of LLR frames, each viewable as `[Llr]`, into caller-provided decoded words and per-frame outcomes in input order, by mutable reference, and reports the frame length, the decoded word length and the implementer's preferred batch granularity.\n- [hard] REQ-02: The per-frame outcome type lives in the traits module, carries iteration count, convergence flag, syndrome flag and the optional query count of `DecoderResult`, and is the one outcome type of the crate; the LDPC module re-exports it.\n- [hard] REQ-03: Each `SoftDecoder` is a batch decoder of granularity one through a default per-frame loop over `decode_soft_with_result`, and an adapter holding an iteration cap makes each `IterativeSoftDecoder` a batch decoder through `decode_iterative`.\n- [hard] REQ-04: The trait's contract requires no steady-state allocation of an implementer; the default paths allocate only what the single-frame decode they call allocates, and the rustdoc says so.\n- [hard] REQ-05: Unit tests over a mock decoder cover both default paths: input order, decoded words, outcomes and an empty batch.\n- [hard] REQ-06: Rustdoc states the trait's scope in the present tense: soft-decision block decoding of whole frames; hard-decision decoders, streaming decoders and batch encoding have their own entry points. It states that the default per-frame path of the LDPC and GLDPC decoders is their hard-decision `decode_soft`, the panics on a wrong frame length and on mismatched output slices, and whether the trait is usable as a trait object.",
+  "documents": [],
+  "first_ready_at": "2026-10-05T21:45:14.951609697Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "8840b0ff-d956-4032-907d-72b55e4e22ac",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Define the batch soft-decoder trait with its default paths",
+  "updated_at": "2026-10-05T21:45:30.699085210Z"
+}

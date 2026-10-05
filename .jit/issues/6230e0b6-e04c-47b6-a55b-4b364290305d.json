@@ -1,0 +1,40 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "395fe4e2-506c-4b4f-8415-e7268189a2ea",
+    "4de9d983-b265-442f-a139-9cc7f75b6218",
+    "5afa8d76-44fd-4ad9-a2dc-8b4aa3e6ee4a",
+    "7211ae53-433f-438f-9d1b-ac40be032453",
+    "a96a4cd6-0c84-4352-a024-7754d3fa4f58",
+    "e4e2ba52-dd02-4ee4-b6e9-555cf3a591e0"
+  ],
+  "description": "Writes the outcome record of the inter-frame LDPC decoder: the status of each story criterion and each residual gap with its limit, over the generated tables.\n\n## Background\n\nThe LDPC batch decoder of `gf2-coding` keeps the float flooding contract of `docs/reference/ldpc-decoder-numerical-contract.md`. Its evidence is committed under `dev/bench_results/ed3d490e/`: before-after confirmations at one worker and several, the batch-size sweep, the matched confirmation against AFF3CT [Cassagne2019], the exploratory fastest-compatible pilot, the decoder calibration campaign with its holdout confirmation, the peak-memory record and the profile series. The generated outcome tables are `dev/bench_results/ed3d490e/tables.md`. The candidate evaluation of `dev/active/f63a2464` closes the quantized, layered and QC-aware families with no candidate proceeding; its timing tables hold the QC-aware intra-frame prototype's cells against the same canonical baseline on the 5G NR code [ThreeGpp2017], as measurements without deciding force. srsRAN [Srsran2026] and xdsopl [Xdsopl2026] supply no measurable matched arm, as the comparator survey `dev/active/c077a88b` records.\n\n## Success Criteria\n\n- [hard] REQ-01: `dev/active/ed3d490e-zen3-ldpc-frame-simd/findings.md` states each conclusion with a pointer to the table section or receipt that carries it and copies no measured figure.\n- [hard] REQ-02: A criterion table gives the status of each story criterion with its evidence, and negative, inconclusive, unavailable and not-confirmatory outcomes appear as their evaluators record them.\n- [hard] REQ-03: Each material residual gap has a measured limit from the profile series or the committed assembly, a preserved experiment, or a named tracked follow-up; no optimum is claimed.\n- [hard] REQ-04: The record states that no quantized, layered or QC-aware candidate entered the decoder, cites the decision record's rulings, and sets the inter-frame cells beside the QC-aware intra-frame cells against their common canonical baseline as a descriptive comparison with its limits, forcing neither to win.\n- [hard] REQ-05: The record states which decode selectors are committed.\n\n## Notes\n\nLimits to state include: the timed evidence covers two codes at one recorded operating point each; no arrival process is modelled, so batch queueing delay is unmeasured; the corpus certifies no quality admission for a fastest-compatible arm.\n\nSource references: [Cassagne2019], [ThreeGpp2017], [Srsran2026], [Xdsopl2026].",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "6230e0b6-e04c-47b6-a55b-4b364290305d",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "cites:@/citation/Cassagne2019",
+    "cites:@/citation/ThreeGpp2017",
+    "cites:@/citation/Srsran2026",
+    "cites:@/citation/Xdsopl2026",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10",
+    "satisfies:ed3d490e/REQ-11",
+    "satisfies:ed3d490e/REQ-12"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Report the inter-frame decoder outcomes with their limits",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

@@ -1,0 +1,31 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "5cb74f81-3d74-4b33-a1b4-0958a17f48b3"
+  ],
+  "description": "Adds the LDPC behavioural suite that holds each route of the LDPC batch decoder to the single-frame decoder at the posterior level, over standard codes, difficult inputs and each batch-size boundary.\n\n## Background\n\nThe canonical decoder is `LdpcDecoder` in `gf2-coding`: an f32 flooding decoder of the min-sum family over the canonical `EdgeLayout`, whose check update is the shared reduction `min_sum_check_row` and which stops a frame at the first iteration whose syndrome passes. The batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The shared contract function of the trait asserts decoded words and outcomes; the LDPC claim is stronger, equal posterior bit patterns, and lane masking is where it can fail: a lane that terminates early, an idle lane or a frame that never converges must leave the other frames of its wave untouched. The suite covers codes of the DVB-T2 [Etsi2015] and 5G NR [ThreeGpp2017] standards.\n\n## Success Criteria\n\n- [hard] REQ-01: One suite function takes the route under test and asserts, per frame, equal posterior LLR bit patterns, hard decisions, iteration counts and convergence flags against the single-frame decoder, for the three min-sum rules and both early-termination settings.\n- [hard] REQ-02: The suite covers a DVB-T2 short code, 5G NR mother codes of both base graphs at three lifting sizes, and hand-built codes with checks of degree one, two and at least nine.\n- [hard] REQ-03: Inputs include random codewords and the all-zero codeword through seeded noise at operating points where frames of one wave converge early, converge late and reach the iteration cap, frames holding signed zeros, saturated and extreme finite LLRs, NaN and infinite LLRs, and 5G NR frames with punctured and filler positions prepared by the rate-matching layer.\n- [hard] REQ-04: Batch sizes 0, 1, 7, 8, 9, 15, 16 and 17 pass, a permutation of the input frames permutes the results identically, and replacing the other frames of a wave with non-converging frames leaves a frame's result unchanged.\n- [hard] REQ-05: Each test meets the fast-tier budget; a case that cannot carries a descriptive slow-tier ignore reason.\n\n## Notes\n\nThe suite asserts observable results only and does not read the lane workspace.\n\nSource references: [Etsi2015], [ThreeGpp2017].",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "941ac609-8e9a-4923-99e4-d93f09c816e7",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "cites:@/citation/Etsi2015",
+    "cites:@/citation/ThreeGpp2017",
+    "satisfies:ed3d490e/REQ-08",
+    "satisfies:ed3d490e/REQ-09",
+    "satisfies:ed3d490e/REQ-14"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Assert LDPC batch decoding at the posterior level across codes",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

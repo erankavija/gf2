@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "a91e7cef-15d4-4e53-9941-390eeea1afa0"
+  ],
+  "description": "Verifies the measured pilot of the single-worker before-after family and freezes its confirmation addendum from the committed pilot receipt.\n\n## Background\n\nThe pilot addendum, ledger and queue line of the single-worker before-after family are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/` and `dev/bench_results/ed3d490e/`; the benchmark window runs the queued pilot. A confirmation addendum is derived from its family's committed pilot receipt by the canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py`. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: The pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: The receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: The confirmation addendum is derived by the canonical freezer from the committed pilot receipt, pinned by path and digest, with a stage-specific family description and its derivation record beside it.\n- [hard] REQ-04: Each margin lies strictly above one plus the pilot-derived resolution, and its rationale rests on consumer benefit and maintenance cost, never on a pilot ratio.\n- [hard] REQ-05: One line for the confirmation campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` after its addendum.\n- [hard] REQ-06: The report states whether the campaign is measured or waits for a window.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "d0d2c1bd-92bd-41ba-abd1-bee4c375c2fc",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Collect the single-worker before-after pilot",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

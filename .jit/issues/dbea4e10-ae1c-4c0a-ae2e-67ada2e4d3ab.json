@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "a4476c6a-c33e-43ee-87bb-0d4e39609d25"
+  ],
+  "description": "Adds the launcher that runs any protocol family of the story in the benchmark window and resumes it under its own identity.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story measures several protocol families over those arms; each needs a schema-valid addendum, a runner plan, a launcher for the benchmark window and a smoke of its plan. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A launcher prints the authoritative execution log path before the first session, checks each arm digest against the build identity, creates a family's ledger genesis once, and exports the toolchain path itself.\n- [hard] REQ-02: It resumes an interrupted campaign under its own identity without repeating completed cells.\n- [hard] REQ-03: It refuses a confirmation whose addendum is uncommitted or modified, and refuses to run outside the benchmark window; both refusals are exercised untimed.\n\n## Notes\n\nThe launcher holds no numeric setting.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "dbea4e10-ae1c-4c0a-ae2e-67ada2e4d3ab",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Launch the batch decoder campaigns resumably",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

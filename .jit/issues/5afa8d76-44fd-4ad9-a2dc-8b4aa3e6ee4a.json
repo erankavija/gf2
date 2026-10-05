@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "4976531f-ce0e-4e79-961a-cd5e7fe55fef",
+    "f5ae4c49-3399-4323-a6eb-b3a045a23692"
+  ],
+  "description": "States the batch soft-decoder trait, the LDPC batch decoder's routes and the decode selectors in the permanent adoption and configuration pages.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The decode selectors `lane_min_frames`, `lane_max_edges` and `granules_per_task` live in the coding tuning section, and the route a batch takes is observable through a reporter. The permanent pages describe acceleration selection and supported configurations for researchers adopting the library.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/how-to/select-acceleration.md` shows batch decoding through the trait and how an LDPC batch decode takes its route: the cargo feature, the runtime capability, the decode selectors and the route reporter.\n- [hard] REQ-02: `docs/reference/supported-configurations.md` states the supported batch decoding configurations: the decoders that implement the trait with their path, the trait's scope of soft-decision whole-frame block decoding, f32 LLRs, the min-sum family on the lane route, sum-product on the single-frame route, and the fallback on a host without AVX2.\n- [hard] REQ-03: `docs/concepts/acceleration-architecture.md` places the lane kernels and the decode selectors in the route selection it describes.\n- [hard] REQ-04: Where the pages show how a coding tuning section is built, they describe its encode and decode families.\n- [hard] REQ-05: The pages are in the present tense, state no measured figure and cite evidence by its generated location.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "5afa8d76-44fd-4ad9-a2dc-8b4aa3e6ee4a",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:docs",
+    "satisfies:ed3d490e/REQ-08",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Describe batch LDPC decoding in the permanent pages",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

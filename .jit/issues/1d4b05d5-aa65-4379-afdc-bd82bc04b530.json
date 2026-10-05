@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "2438c16f-c881-414c-a27b-56988c2a9d2f",
+    "6818f1b6-5eb5-4ce6-8180-2b223b92510d"
+  ],
+  "description": "Adds to `gf2-coding` one parallel batch decoder over the batch soft-decoder trait: a pool that owns one inner decoder per worker and is itself a batch decoder.\n\n## Background\n\n`gf2-coding` has a batch soft-decoder trait whose implementers decode by mutable reference and may own a workspace, so parallel decoding needs one decoder per worker. The crate's `parallel` cargo feature provides rayon. A frame's result depends on its own LLRs alone, so a partition of a batch changes no result. The decode selector `granules_per_task` of the coding tuning section gives the number of preferred-granularity groups one parallel task decodes.\n\n## Success Criteria\n\n- [hard] REQ-01: A public pooled batch decoder, generic over the batch soft-decoder trait, builds one inner decoder per worker of the caller's rayon pool from a factory, once, and implements the trait; it creates no nested pool.\n- [hard] REQ-02: It partitions a batch into tasks of `granules_per_task` groups of the inner decoder's preferred granularity, and each task decodes on one worker's inner decoder.\n- [hard] REQ-03: It passes the shared batch contract function, and its results equal the inner decoder's single-worker results bit for bit for one worker, two workers and the pool default, for several `granules_per_task` values, and for a batch size that is no multiple of the task size.\n- [hard] REQ-04: Without the `parallel` feature the pooled decoder decodes sequentially on one inner decoder with identical results.\n- [hard] REQ-05: Rustdoc states the worker model, the bounds it puts on the inner decoder, the workspace cost per worker and the panics.\n\n## Notes\n\nThe pool is the one parallel batch entry of the crate; no decoder type carries a parallel entry of its own.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "1d4b05d5-aa65-4379-afdc-bd82bc04b530",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-08",
+    "satisfies:ed3d490e/REQ-09"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Decode batches across workers through one pooled batch decoder",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

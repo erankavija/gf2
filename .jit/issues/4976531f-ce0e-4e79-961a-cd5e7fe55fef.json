@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "20af7e6e-fa65-4ce3-8d98-c81d28a6a767"
+  ],
+  "description": "Adds the tests that observe the route the batch decoder takes under the committed coding envelope, under conservative selectors and without the lane capability.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A coding owner envelope with calibrated decode selectors is committed under `crates/gf2-coding/data/tuning-profiles/`. The LDPC batch decoder has a route reporter that returns the route a batch size takes without decoding, and tuning is installed once per process, so observation of an installed profile runs in a fresh process.\n\n## Success Criteria\n\n- [hard] REQ-01: A fresh-process test installs the committed envelope and observes, through the route reporter, the route on each side of each selector value the envelope states.\n- [hard] REQ-02: Without installation the reporter gives the single-frame route for each batch size, and with the lane capability absent the lane route reports the portable backend.\n- [hard] REQ-03: A decode under the installed envelope equals the single-frame decoder's results on the shared suite's inputs.\n- [hard] REQ-04: A test fails if a decode route threshold exists outside the selector family and its conservative definitions.\n- [hard] REQ-05: A repository test decodes each committed coding envelope through the owner codec and checks its measurement provenance against the codec's harness schema.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "4976531f-ce0e-4e79-961a-cd5e7fe55fef",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Verify decoder dispatch under the committed profile",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

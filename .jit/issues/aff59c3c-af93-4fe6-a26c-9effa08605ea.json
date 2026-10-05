@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "1d4b05d5-aa65-4379-afdc-bd82bc04b530",
+    "c317f5ac-8b08-408c-896e-f807dfc0e50b"
+  ],
+  "description": "Adds the `gf2-coding` owner producer of the offline tuning system, which measures the decode selector fields of the coding tuning section.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The decode selectors are `lane_min_frames`, `lane_max_edges` and `granules_per_task`; their conservative values route each frame to the single-frame decoder.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-coding/benches/tuning_calibration.rs` implements the owner operations of the offline tuning campaign, capability report, grid listing, self-check, guarded fresh-child measurement and owner emission, for the decode selector fields, with a behaviour token equal to the harness schema the coding owner codec accepts.\n- [hard] REQ-02: A case times whole batch decode calls with lane transposition in and out and workspace reuse inside the call, over a declared grid of occupied-lane counts, codes of different edge counts and waves per task.\n- [hard] REQ-03: Case inputs derive from the campaign seed derivation, and the grid listing states the calibration inventory of codes, seeds and batch sizes so a later holdout can avoid it.\n- [hard] REQ-04: A field whose candidates do not win under the campaign's extent decision is omitted from the emitted section, so its conservative value stands, and an emitted section round-trips through the owner codec.\n- [hard] REQ-05: A harness test runs the self-check and the grid listing untimed; only a guarded fresh child installs tuning.\n- [hard] REQ-06: The harness holds its declared protocol constants and no typed timing figure or host condition.\n\n## Notes\n\nThe producer follows the structure of the `gf2-algebra` producer and uses the shared campaign-support library; it adds no private campaign framework.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "aff59c3c-af93-4fe6-a26c-9effa08605ea",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Produce decode selector measurements from a coding owner harness",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

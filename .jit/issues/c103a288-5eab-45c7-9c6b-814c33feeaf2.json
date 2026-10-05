@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "20af7e6e-fa65-4ce3-8d98-c81d28a6a767",
+    "3f3efdcf-5699-4b9d-8ce7-0dc4cf388288"
+  ],
+  "description": "Builds the gf2 benchmark arm that installs the committed coding envelope before decoding, the tuned-portable side of the selector holdout.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The arm executables of the earlier LDPC campaigns are pinned by digest and stay byte-identical, so the story's arms live in a workspace of their own, `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/`. A coding owner envelope with calibrated decode selectors is committed under `crates/gf2-coding/data/tuning-profiles/`. The story's gf2 arms set selectors explicitly; a holdout of the profile needs an arm that takes its selectors from the installed envelope, as a production consumer does.\n\n## Success Criteria\n\n- [hard] REQ-01: A gf2 arm in the story's arms workspace installs the committed coding envelope once at start, decodes through the batch soft-decoder trait with default construction, and answers the shared runner's wire contract.\n- [hard] REQ-02: The arm reports the envelope's identity and the route it observes for the cell's batch size as untimed diagnostics, and checks its per-frame bit errors against the prepared quality record.\n- [hard] REQ-03: The arm is named in `arms.json`, its digest is added to the build identity record by the committed recorder, and the existing arms keep their recorded digests.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "c103a288-5eab-45c7-9c6b-814c33feeaf2",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Build the tuned-profile benchmark arm of the batch decoder",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

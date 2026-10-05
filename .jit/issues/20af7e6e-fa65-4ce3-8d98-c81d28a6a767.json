@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "0a77ecfc-872a-4629-bdf4-4cf6f85a5b56"
+  ],
+  "description": "Verifies the measured decoder calibration campaign and commits the coding owner envelope it produced with its receipt.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The decoder calibration campaign is declared under `dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/` and queued; the benchmark window runs it, and a complete campaign ends by writing its stage into the checkout. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: The campaign is verified from its own execution log, and the independent validator accepts the stage.\n- [hard] REQ-02: The coding owner envelope is committed under `crates/gf2-coding/data/tuning-profiles/` with a measurement block naming the harness path, the behaviour token and the producer executable digest, beside the complete envelope and the campaign receipt.\n- [hard] REQ-03: A selector field the campaign omits keeps its conservative value, and the omission is recorded as the outcome.\n- [hard] REQ-04: The report states whether the campaign is measured or waits for a window.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "20af7e6e-fa65-4ce3-8d98-c81d28a6a767",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Commit the calibrated decode profile",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

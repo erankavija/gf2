@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "441fbd5c-9178-4721-9c73-0e4fdf55adbe",
+    "c317f5ac-8b08-408c-896e-f807dfc0e50b"
+  ],
+  "description": "Makes the CPU LDPC stage of `gf2-sim` decode through the generic batch decode stage with the LDPC batch decoder, in place of a per-frame loop over a mutex-guarded single-frame decoder.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A `gf2-sim` stage processes a batch by shared reference with a default-constructed mutable scratch. The generic batch decode stage of `gf2-sim` holds a factory of a `gf2-coding` batch soft decoder, builds the decoder once in its scratch, and decodes an `LlrBatch` into a `HardDecisionBatch` with the per-frame iteration counts recorded in the scratch. The stage `CpuLdpcBp` is the CPU fallback of the GPU LDPC stage; its `process` locks one `LdpcDecoder` and decodes the frames of an `LlrBatch` one at a time into codewords.\n\n## Success Criteria\n\n- [hard] REQ-01: `CpuLdpcBp` decodes its batch through the generic batch decode stage with an LDPC batch decoder that returns full codewords, and holds no per-frame loop and no decoder mutex.\n- [hard] REQ-02: Its output equals the per-frame `decode_to_codeword` output for an empty batch, one frame and batches with an incomplete final wave.\n- [hard] REQ-03: The GPU byte-identity and CPU-fallback suites that use the stage pass unchanged.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "86d9260e-011c-40e8-9424-a6cd51a81888",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-sim",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Decode CPU LDPC stage batches through the batch decode stage",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

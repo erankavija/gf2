@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "c317f5ac-8b08-408c-896e-f807dfc0e50b"
+  ],
+  "description": "Builds the two gf2 benchmark arms that time the LDPC batch decoder: one on the single-frame route and one on the lane route.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The arm executables of the earlier LDPC campaigns are pinned by digest and stay byte-identical, so the story's arms live in a workspace of their own, `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/`. The single-frame route is the production decoder before the change and the lane route the candidate after it.\n\n## Success Criteria\n\n- [hard] REQ-01: A standalone arms workspace under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` with its own target directory builds at Rust 1.95 a gf2 arm on the single-frame route and a gf2 arm on the lane route with explicit selectors, both answering the shared runner's wire contract.\n- [hard] REQ-02: On each worker, an arm checks its per-frame bit errors against the frozen prepared quality record and fails on a difference.\n- [hard] REQ-03: Each arm reports, as untimed diagnostics, setup, dispatch and batch-fill cost with lane transposition in and out, and the decoder-owned workspace bytes it observes at run time.\n- [hard] REQ-04: Each arm writes a placement report and fails when a worker leaves its CPU or a thread beyond the declared workers exists.\n- [hard] REQ-05: The pinned executables of the earlier LDPC campaigns keep their recorded digests.\n\n## Notes\n\nAn arm emits what it observes at run time and no typed prior figure.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "feb60d0d-825b-453b-8d16-d6731862766b",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Build the gf2 batch decoder benchmark arms",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

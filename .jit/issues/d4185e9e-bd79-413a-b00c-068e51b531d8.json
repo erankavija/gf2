@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "bad1aea8-8d66-4f05-be2d-030666f979fd"
+  ],
+  "description": "Commits the build identity record of the story's benchmark arms, the digests every campaign checks before it starts.\n\n## Background\n\nThe gf2 arms of the LDPC batch decoder and the AFF3CT arms [Cassagne2019] are built or catalogued under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` and `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json`. A campaign refuses an arm whose digest differs from the recorded build identity.\n\n## Success Criteria\n\n- [hard] REQ-01: `dev/bench_results/ed3d490e/preparation/build-identity.json` gives each arm's executable digest, toolchain, flags and input identities, written by a committed recorder from the commands the recording run executes.\n- [hard] REQ-02: The recorder refuses an arm that `arms.json` names and the build does not produce, and a second run over an unchanged build reproduces the record.\n\n## Notes\n\nSource references: [Cassagne2019].",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "d4185e9e-bd79-413a-b00c-068e51b531d8",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "cites:@/citation/Cassagne2019",
+    "satisfies:ed3d490e/REQ-01"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Record the build identity of the benchmark arms",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

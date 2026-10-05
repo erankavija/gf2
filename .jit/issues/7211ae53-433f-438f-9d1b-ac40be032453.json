@@ -1,0 +1,37 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "05c9065e-2fec-4106-a4f5-1cbbea207494",
+    "32bfe9f8-3229-4120-8ab6-a230938b0b58",
+    "3bb47302-3330-4220-acc9-8cfdc297ac11",
+    "7695aaee-bc77-493b-8708-0939411bc366",
+    "7eddc5e2-7536-40ce-b07c-4957328195d9",
+    "a03daf3f-2904-4f5c-8066-e4259431ece2",
+    "a80062a1-9863-4735-b0ea-3ac6b734ae94",
+    "fb65bb3f-bd79-4cf2-99ec-1e85cf658ef5"
+  ],
+  "description": "Adds the generator that writes the outcome tables of the inter-frame LDPC decoder from the committed evidence.\n\n## Background\n\nThe LDPC batch decoder of `gf2-coding` keeps the float flooding contract of `docs/reference/ldpc-decoder-numerical-contract.md`. Its evidence is committed under `dev/bench_results/ed3d490e/`: before-after confirmations at one worker and several, the batch-size sweep, the matched confirmation against AFF3CT [Cassagne2019], the exploratory fastest-compatible pilot, the decoder calibration campaign with its holdout confirmation, the peak-memory record and the profile series.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed generator writes `dev/bench_results/ed3d490e/tables.md` from the committed receipts, plans, execution logs and records, and the file reproduces byte for byte on a second run.\n- [hard] REQ-02: The tables present matched-algorithm results apart from fastest-compatible results, and carry single-frame latency, batch-fill cost, sustained throughput, decoder workspace bytes and peak memory, the batch-size sweep, and the physical-core and SMT cells.\n- [hard] REQ-03: Conservative-portable, tuned-portable and native results appear in separate rows, each stochastic figure has its sample count and interval, and each outcome appears as its evaluator records it.\n- [hard] REQ-04: The generator verifies each campaign's execution log on the way and stops on a campaign that does not verify.\n\n## Notes\n\nSource references: [Cassagne2019].",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "7211ae53-433f-438f-9d1b-ac40be032453",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "cites:@/citation/Cassagne2019",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Generate the outcome tables of the inter-frame decoder",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

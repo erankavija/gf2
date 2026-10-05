@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "c317f5ac-8b08-408c-896e-f807dfc0e50b"
+  ],
+  "description": "Makes the `ldpc_bler_sweep` binary of `gf2-sim` decode the frames of each slice through the batch soft-decoder trait.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The binary `ldpc_bler_sweep` estimates block error rates: each parallel slice owns a seeded LLR source and a single-frame decoder and decodes its frames one at a time.\n\n## Success Criteria\n\n- [hard] REQ-01: Each slice generates its LLR frames in the unchanged seeded order and decodes them through one batch decoder per slice, held through the trait.\n- [hard] REQ-02: For a fixed seed the frame error count of each SNR point equals the single-frame path's, for one worker and for the pool default, in a test over a short code.\n- [hard] REQ-03: The binary holds no decoding logic beyond handing frames to the library.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "4de9d983-b265-442f-a139-9cc7f75b6218",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-sim",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Decode BLER sweep slices through the batch decoder trait",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "3f3efdcf-5699-4b9d-8ce7-0dc4cf388288"
+  ],
+  "description": "Adds the launcher of the batch decoder's profile series, which runs the committed session script over the story's profiling executable.\n\n## Background\n\nThe profile of `dev/active/3be770d5` attributes the single-frame decoder's time to categories by source span and records counter groups at one, six, twelve and twenty-four workers. Its series runs a profiling executable under a session script, each session under its own host acquisition, and its summarizer resolves each sample to a category. The lane route widens the decoder workspace eightfold per worker, so cache traffic is the limit the counters test. The committed series launcher pins the executables of its own build identity and refuses a differing digest, so a series over another executable has a launcher of its own, as the re-sampled series of `dev/bench_results/07ca8585` has. The story's profiling executable has its digest in the build identity record under `dev/bench_results/ed3d490e/preparation/`. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A launcher runs the committed session script unchanged over the story's profiling executable, each session under its own full-host acquisition, and refuses an executable whose digest differs from the build identity record.\n- [hard] REQ-02: It appends each session's start, completion and discard to the series' execution log, prints the log path first, resumes after the last completed session, and refuses to resume when an executable or the case file differs from the first session's record.\n- [hard] REQ-03: Its refusals are exercised untimed.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "2a3b479d-cee8-419a-907b-752751b37d65",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Launch the profile series of the batch decoder",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

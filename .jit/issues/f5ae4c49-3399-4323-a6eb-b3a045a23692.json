@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "1d4b05d5-aa65-4379-afdc-bd82bc04b530",
+    "c317f5ac-8b08-408c-896e-f807dfc0e50b"
+  ],
+  "description": "Rewrites the parallel LDPC decoding passage of the acceleration how-to page to use the batch soft-decoder trait.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A pooled batch decoder over the trait gives parallel decoding with one inner decoder per worker. `LdpcDecoder::decode_batch` and `decode_batch_with_config` predate the trait: they build one single-frame decoder per frame, on rayon under the `parallel` feature, and return message bits with iteration counts and flags. The page `docs/how-to/select-acceleration.md` shows parallel LDPC decoding with `LdpcDecoder::decode_batch_with_config`.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/how-to/select-acceleration.md` shows parallel LDPC decoding through the batch soft-decoder trait with the pooled batch decoder, and names neither inherent batch function.\n- [hard] REQ-02: The passage is in the present tense, states no measured figure, and its code sample compiles as a documentation test or matches a compiled example.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "f5ae4c49-3399-4323-a6eb-b3a045a23692",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:docs",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Show parallel LDPC decoding through the batch trait in the how-to page",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

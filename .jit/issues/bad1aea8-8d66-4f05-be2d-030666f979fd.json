@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "feb60d0d-825b-453b-8d16-d6731862766b"
+  ],
+  "description": "Provides the AFF3CT arms the batch decoder is compared with: the pinned arms catalogued by digest and one arm for the sum-product INTRA mode.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The arm executables of the earlier LDPC campaigns are pinned by digest and stay byte-identical, so the story's arms live in a workspace of their own, `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/`. AFF3CT [Cassagne2019] supplies the external arms: the pinned build of `dev/active/c077a88b` supports flooding f32 normalized min-sum as the matched arm, horizontal-layered normalized min-sum INTER in f32 and i16, and float sum-product INTRA; flooding INTER and normalized min-sum INTRA are unavailable in that build. The first three have committed arm executables; the INTRA mode has none.\n\n## Success Criteria\n\n- [hard] REQ-01: `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json` names each arm of the story; the pinned AFF3CT arms for flooding f32, layered f32 INTER and layered i16 INTER are named by executable digest, and those executables keep their recorded digests.\n- [hard] REQ-02: One arm for float sum-product INTRA is built in the story's arms workspace from the same pinned AFF3CT revision and answers the shared runner's wire contract.\n- [hard] REQ-03: The INTRA arm checks its per-frame bit errors against a prepared quality record it is given, and fails on a difference or on a missing record.\n- [hard] REQ-04: Each AFF3CT arm records its observed decoder class, backend and native wave size at run time.\n\n## Notes\n\nSource references: [Cassagne2019].",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "bad1aea8-8d66-4f05-be2d-030666f979fd",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "cites:@/citation/Cassagne2019",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Provide the AFF3CT benchmark arms of the batch decoder comparison",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

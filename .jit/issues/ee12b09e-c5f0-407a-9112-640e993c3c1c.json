@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "6818f1b6-5eb5-4ce6-8180-2b223b92510d"
+  ],
+  "description": "Adds the typed route decision of LDPC batch decoding, the one place that turns the decode selectors into a route.\n\n## Background\n\nThe coding tuning section of `gf2-coding` holds a decode selector family: `lane_min_frames`, `lane_max_edges` and `granules_per_task`, with conservative values that close the lane route. An LDPC batch decoder decodes a wave of frames either one frame at a time on the single-frame decoder or in eight lanes; the lane route exists for the min-sum family only and needs a lane kernel backend.\n\n## Success Criteria\n\n- [hard] REQ-01: A typed route decision in the LDPC module maps the occupied lanes of a wave, the edge count, the decoder algorithm and the lane capability to the single-frame route or the lane route.\n- [hard] REQ-02: It reads no value outside the decode selector family, and no second threshold for the route exists in the crate.\n- [hard] REQ-03: Tests cover both sides of `lane_min_frames` and of `lane_max_edges`, the sum-product algorithm, and an absent lane capability.\n- [hard] REQ-04: The route is a closed semantic type, and its rustdoc states the decision rule.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "ee12b09e-c5f0-407a-9112-640e993c3c1c",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Decide the LDPC batch route from the decode selectors",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

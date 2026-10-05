@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "c79d60f9-b183-43c7-a181-cc023de26624"
+  ],
+  "description": "Adds to `gf2-kernels-simd` the eight-lane f32 type, the kernel function bundle of the inter-frame check and variable steps, a safe portable implementation of the bundle, and the behavioural suite each backend of the bundle runs.\n\n## Background\n\nThe canonical decoder is `LdpcDecoder` in `gf2-coding`: an f32 flooding decoder of the min-sum family over the canonical `EdgeLayout`, whose check update is the shared reduction `min_sum_check_row` and which stops a frame at the first iteration whose syndrome passes. An inter-frame decoder places the same message position of eight independent frames in the eight f32 lanes of one AVX2 register. A lane is a frame, so no reduction inside a check and no accumulation inside a variable is reassociated, and each frame's result equals the single-frame decoder's bit for bit. The lane arrays are indexed by canonical edge id and then by lane for the two message directions, and by variable and then by lane for channel LLRs and beliefs; hard decisions are one byte per variable whose bit $l$ is the decision of lane $l$. `gf2-kernels-simd` holds the scalar reference of a kernel beside its vector form and does not depend on `gf2-coding`, so the kernels take plain slices: lane arrays, the check and variable prefix offsets and the slot-to-edge map of the canonical layout. The numerical rules are those of `docs/reference/ldpc-decoder-numerical-contract.md`.\n\n## Success Criteria\n\n- [hard] REQ-01: A public module of `gf2-kernels-simd` defines an eight-lane f32 type aligned to 32 bytes and a function bundle holding a check step for the plain, normalized and offset min-sum rules and a variable step that takes an active-lane mask, both over the lane arrays and canonical layout slices.\n- [hard] REQ-02: A safe portable implementation of the bundle reproduces, in each lane, the bit patterns of `min_sum_check_row` and of the canonical variable step, including on signed zeros, NaN of either sign, infinities, finite extrema, equal smallest magnitudes, and checks of degree zero, one, two and at least nineteen.\n- [hard] REQ-03: The variable step leaves the belief, the outgoing messages and the hard-decision bit of each inactive lane unchanged, and writes each active lane as the canonical step does.\n- [hard] REQ-04: The behavioural assertions are one function of a bundle, so a later backend runs the identical assertions; they run on the portable bundle on any host.\n- [hard] REQ-05: The module contains no `unsafe`, and its rustdoc states purpose, the panics on inconsistent slice lengths and the linear complexity in the edge count.\n\n## Notes\n\nThe existing horizontal kernel `minsum_fn` reduces one slice and takes the IEEE sign bit in its vector lanes; the lane kernels do not call it.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "53b74fc2-6412-465c-b1c6-37d38cf9fa21",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-kernels-simd",
+    "satisfies:ed3d490e/REQ-08",
+    "satisfies:ed3d490e/REQ-09",
+    "satisfies:ed3d490e/REQ-14"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Provide the portable lane kernels of the min-sum decoder",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

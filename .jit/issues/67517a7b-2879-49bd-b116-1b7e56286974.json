@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "37aa7254-1e04-490b-9847-8b53d7725eaf"
+  ],
+  "description": "Verifies the measured pilot of the decode selector holdout family and freezes its confirmation addendum with the holdout cells attached.\n\n## Background\n\nThe pilot addendum and the holdout record of the decode selector holdout family are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued pilot of its non-holdout cells. The canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py` derives the confirmation addendum from the committed pilot receipt and attaches the declared holdout cells, of which no sample exists before the confirmation. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: The confirmation addendum is derived by the canonical freezer from the committed pilot receipt with the holdout cells attached, a stage-specific family description and its derivation record; margins lie strictly above one plus the pilot-derived resolution.\n- [hard] REQ-04: One line for the confirmation is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` after its addendum.\n- [hard] REQ-05: The report states whether the pilot is measured or waits for a window.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "67517a7b-2879-49bd-b116-1b7e56286974",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Collect the decode selector holdout pilot",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

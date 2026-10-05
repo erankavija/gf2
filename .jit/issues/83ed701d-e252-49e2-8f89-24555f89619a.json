@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "1d4b05d5-aa65-4379-afdc-bd82bc04b530",
+    "c317f5ac-8b08-408c-896e-f807dfc0e50b"
+  ],
+  "description": "Moves the benchmarks that call `LdpcDecoder::decode_batch` to the batch soft-decoder trait with unchanged workloads.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A pooled batch decoder over the trait gives parallel decoding with one inner decoder per worker. `LdpcDecoder::decode_batch` and `decode_batch_with_config` predate the trait: they build one single-frame decoder per frame, on rayon under the `parallel` feature, and return message bits with iteration counts and flags. Their benchmark callers are `quick_parallel`, `allocation_optimization` and `ldpc_throughput` under `crates/gf2-coding/benches/`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the three benchmarks decodes through the batch soft-decoder trait with the LDPC batch decoder, pooled where the benchmark measured parallel decoding.\n- [hard] REQ-02: Each benchmark keeps its codes, frame counts, iteration caps and group names.\n- [hard] REQ-03: The benchmarks build, and no benchmark in `gf2-coding` calls the inherent batch functions.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "83ed701d-e252-49e2-8f89-24555f89619a",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Move the benchmarks of the inherent LDPC batch functions to the batch trait",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "3f3efdcf-5699-4b9d-8ce7-0dc4cf388288"
+  ],
+  "description": "Adds the category rules of the lane kernel and the lane transposition to the committed profile summarizer.\n\n## Background\n\nThe profile of `dev/active/3be770d5` attributes the single-frame decoder's time to categories by source span and records counter groups at one, six, twelve and twenty-four workers. Its series runs a profiling executable under a session script, each session under its own host acquisition, and its summarizer resolves each sample to a category. The lane route widens the decoder workspace eightfold per worker, so cache traffic is the limit the counters test. The summarizer `dev/active/3be770d5/survey/summarize-profile.py` assigns a sample to a category by the source span of its inline chain, through its `LOCATION_RULES` table; a span no rule covers falls into an uncategorized remainder. The lane kernels and the batch decoder's transposition are source spans the table does not name.\n\n## Success Criteria\n\n- [hard] REQ-01: The `LOCATION_RULES` table names categories for the lane check step, the lane variable step, the lane transposition in and out and the lane syndrome, by source span of the pinned files.\n- [hard] REQ-02: The committed profile summaries of the earlier series regenerate byte for byte.\n- [hard] REQ-03: The summarizer's self-test passes and covers a sample in each added category.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "859bc8cb-732e-440a-be46-3237c8d2f488",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Categorize lane kernel samples in the profile summarizer",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

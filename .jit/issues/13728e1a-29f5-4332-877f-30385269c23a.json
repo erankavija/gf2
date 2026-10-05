@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "941ac609-8e9a-4923-99e4-d93f09c816e7"
+  ],
+  "description": "Adds the AVX2 backend of the lane kernel bundle in `gf2-kernels-simd`, bit-identical to the portable backend, behind runtime detection and explicit safety contracts.\n\n## Background\n\nAn inter-frame decoder places the same message position of eight independent frames in the eight f32 lanes of one AVX2 register. A lane is a frame, so no reduction inside a check and no accumulation inside a variable is reassociated, and each frame's result equals the single-frame decoder's bit for bit. `gf2-kernels-simd` holds the lane kernel bundle, its portable implementation and the behavioural suite a backend runs; it is one of the two crates that may contain `unsafe`. The register-width forms of the kernel compile at Rust 1.95 and agree with the canonical scalar statements, including on signed zeros and NaN: the record is `dev/bench_results/ed3d490e/intrinsic-feasibility/feasibility.json`, written from the probe crate under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/intrinsics-probe/`. The canonical sign is a comparison against zero and the two-minimum fold is a strict comparison, which the vector forms keep by comparing and blending; `docs/reference/ldpc-decoder-numerical-contract.md` states the rules.\n\n## Success Criteria\n\n- [hard] REQ-01: An AVX2 implementation of the lane kernel bundle is published only through a safe detection entry point that returns no bundle on a host without AVX2.\n- [hard] REQ-02: The AVX2 bundle passes the kernel behavioural suite with bit patterns identical to the portable bundle, and a test fails if a lane takes the IEEE sign bit of a negative-zero message or lets a NaN magnitude enter a minimum.\n- [hard] REQ-03: Each `unsafe` function and block states its safety contract: the target-feature precondition and the slice-length relations its safe entry point checks; an entry point that skips a check is named unchecked and documents its precondition.\n- [hard] REQ-04: On a host without AVX2 the AVX2 assertions are reported as not run; they cannot be reported as passed without executing the kernel.\n- [hard] REQ-05: The emitted-assembly artefact of the kernel source is regenerated at Rust 1.95 and committed beside it, and shows the check and variable inner loops as packed single-precision instructions without a call or a per-lane scalar path.\n- [hard] REQ-06: The crate builds and its tests pass at Rust 1.95.\n\n## Notes\n\nAlignment of the lane type makes each edge one aligned 32-byte load; the kernel takes no dependency on the horizontal `minsum_fn` kernel.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "13728e1a-29f5-4332-877f-30385269c23a",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-kernels-simd",
+    "satisfies:ed3d490e/REQ-08",
+    "satisfies:ed3d490e/REQ-09"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Vectorize the lane kernels with AVX2",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

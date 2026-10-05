@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "8840b0ff-d956-4032-907d-72b55e4e22ac"
+  ],
+  "description": "Adds the shared behavioural contract function of the batch soft-decoder trait and runs it over each existing soft decoder.\n\n## Background\n\n`gf2-coding` has two single-frame soft-decoding entry points: `SoftDecoder::decode_soft_with_result`, by shared reference, and `IterativeSoftDecoder::decode_iterative`, by mutable reference with an iteration cap. Its implementers are the OSD, ORBGRAND, GLDPC, LDPC and rate-matched 5G NR decoders. `gf2-coding` has a batch soft-decoder trait: frames in, caller-provided decoded words and per-frame outcomes out, with a default per-frame path for each `SoftDecoder` and an adapter with an iteration cap for each `IterativeSoftDecoder`. The traits module carries shared contract functions such as `block_encoder_contract` that an implementer's tests call. The non-iterative `decode_soft` of the LDPC and GLDPC decoders is a hard decision, so their default batch path is one too.\n\n## Success Criteria\n\n- [hard] REQ-01: One public contract function takes a batch decoder, its single-frame reference and a frame set, and asserts input order, per-frame decoded words and outcomes equal to the reference, an empty batch, batch sizes below, at and above the implementer's granularity, an incomplete final group, and a frame set mixing early, late and non-converging frames.\n- [hard] REQ-02: The contract function passes for the OSD, ORBGRAND, GLDPC, LDPC and rate-matched 5G NR decoders through the default per-frame path, and for the GLDPC, LDPC and rate-matched 5G NR decoders through the adapter.\n- [hard] REQ-03: A test asserts that the default per-frame path of the LDPC and GLDPC decoders returns the hard decisions of the input LLRs with no iteration, and differs from the adapter's iterative result on a frame that needs decoding.\n- [hard] REQ-04: Each test meets the fast-tier budget.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "2438c16f-c881-414c-a27b-56988c2a9d2f",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-08",
+    "satisfies:ed3d490e/REQ-09"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Assert the batch decoder contract over the existing soft decoders",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

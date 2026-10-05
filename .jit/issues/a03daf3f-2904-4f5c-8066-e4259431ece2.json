@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "093ae4d0-3042-4f48-8c73-77e632f06c80"
+  ],
+  "description": "Verifies the measured confirmation of the multicore before-after family and records its outcome as evaluated.\n\n## Background\n\nThe confirmation addendum of the multicore before-after family is frozen from its accepted pilot and committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued confirmation. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: The confirmation campaign is verified from its own append-only execution log with the shared campaign-log verifier, at the protocol's confirmatory pair count on fresh samples.\n- [hard] REQ-02: The receipt is committed with its input snapshots, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Each cell's decision and outcome are recorded as the evaluator records them, including fail, not-material, regressed, inconclusive and not-confirmatory; no margin is revised and no further attempt is queued after a non-passing outcome.\n- [hard] REQ-04: The outcome states, per cell, whether the lane route qualifies at six and twelve physical cores and at twenty-four logical CPUs.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "a03daf3f-2904-4f5c-8066-e4259431ece2",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Collect the multicore before-after confirmation",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

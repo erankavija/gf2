@@ -1,0 +1,31 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "2a69b276-ae6e-4f63-9ae3-834174b4b363",
+    "dbea4e10-ae1c-4c0a-ae2e-67ada2e4d3ab"
+  ],
+  "description": "Freezes the pilot addendum, ledger and queue line of the family that compares the lane route with AFF3CT's matched decoder, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story's campaign tooling writes a family's addendum and plan from a family declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and one launcher runs any family. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell. AFF3CT [Cassagne2019] is the measured comparator, at the pin of `dev/active/c077a88b`.\n\n## Success Criteria\n\n- [hard] REQ-01: A matched-algorithm pilot addendum is committed with, per code, a sustained-throughput cell, a single-frame latency cell and a twelve-physical-core throughput cell, the gf2 lane route against AFF3CT flooding f32 normalized min-sum.\n- [hard] REQ-02: Each cell declares objective, exploratory role, workload identity and seed, whole-consumer metric with conversion and batch fill included, scaling, core arm, declared workers without nested pools, cache state, arm builds and the decoder settings.\n- [hard] REQ-03: The two arms share matrix, recorded LLRs, precision, schedule, normalization, iteration cap and stopping rule, and the addendum declares them as matched-algorithm settings.\n- [hard] REQ-04: The addendum states the unavailable matched SIMD arms, flooding INTER and normalized min-sum INTRA, with the recorded reason and no sample.\n- [hard] REQ-05: The family's ledger genesis and an arithmetic record give the largest confirmatory cell count the protocol admits on that ledger's first attempt, recomputed from the tooling; the family declares no more cells.\n- [hard] REQ-06: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-07: One line for the pilot campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes, and no timed run executes outside the benchmark window.\n\n## Notes\n\nSource references: [Cassagne2019].",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "493dba5a-a51f-4705-8a6b-a192baf9283a",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "cites:@/citation/Cassagne2019",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Freeze the matched AFF3CT family",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

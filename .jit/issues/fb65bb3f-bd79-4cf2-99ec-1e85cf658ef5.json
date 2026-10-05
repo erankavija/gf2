@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "9bcc7e73-1844-4bcb-8599-0db97395201b"
+  ],
+  "description": "Verifies the measured pilot of the exploratory batch-size sweep family and records its outcome.\n\n## Background\n\nThe pilot addendum, ledger and queue line of the exploratory batch-size sweep family are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/` and `dev/bench_results/ed3d490e/`; the benchmark window runs the queued pilot. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: The pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: The receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: The family stays exploratory: its outcome is recorded as a pilot, it queues no confirmation, and the reason is stated.\n- [hard] REQ-04: The report states whether the campaign is measured or waits for a window.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "fb65bb3f-bd79-4cf2-99ec-1e85cf658ef5",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Collect the batch-size sweep pilot",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

@@ -1,0 +1,31 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "e28795c1-8d70-4ea0-a563-0e469904c52c"
+  ],
+  "description": "Publishes the floating-point numerical contract of the LDPC min-sum decoder as one permanent reference page, with the clauses a multi-frame decoder adds, so each later kernel and entry point is reviewed against a single statement.\n\n## Background\n\nThe canonical decoder is `LdpcDecoder` in `gf2-coding`: an f32 flooding decoder of the min-sum family over the canonical `EdgeLayout`, whose check update is the shared reduction `min_sum_check_row` and which stops a frame at the first iteration whose syndrome passes. Its numerical rules are stated in the rustdoc of `min_sum_check_row` and in the development record `dev/active/f63a2464/numerical-contract-review.md`; no permanent page owns them. An inter-frame decoder places the same message position of eight independent frames in the eight f32 lanes of one AVX2 register. A lane is a frame, so no reduction inside a check and no accumulation inside a variable is reassociated, and each frame's result equals the single-frame decoder's bit for bit. The bounded evaluation recorded in `dev/active/f63a2464/decision-record.md` selects no quantized, layered or QC-aware candidate, so the float flooding contract is the only decoder contract. Code claims the page rests on are in `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/source-evidence.json`.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/reference/ldpc-decoder-numerical-contract.md` states, for the f32 flooding min-sum family, the sign rule on signed zero and NaN, the tie rule of the two smallest magnitudes, the scaling of each min-sum rule, the absence of channel scaling and of saturation inside the decoder, the hard-decision rule, the variable-node accumulation order and the per-frame termination rule, each in agreement with the canonical decoder's source.\n- [hard] REQ-02: The page states that punctured, truncated and filler positions reach the decoder as ordinary mother-code LLRs prepared by the rate-matching layer: the zero LLR for an untransmitted position and the finite filler magnitude for a filler position.\n- [hard] REQ-03: The page states the batch clauses: a lane carries one frame; a frame's posterior LLR bit patterns, hard decisions, iteration count and convergence flags equal the single-frame decoder's on the same input for each batch size and lane position; a terminated or idle lane is not written again and changes no other lane; an idle lane holds zero LLRs.\n- [hard] REQ-04: The page states that the supported LLR precision is f32, that sum-product frames take the single-frame decoder, and that quantized alphabets and layered schedules are outside the contract.\n- [hard] REQ-05: The page is linked from the documentation index.\n\n## Notes\n\nThe page addresses researchers: present tense, no measured figure, no account of how the contract was reached.",
+  "documents": [],
+  "first_ready_at": "2026-10-05T21:45:14.951609697Z",
+  "gates_required": [
+    "cargo-ci",
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "c79d60f9-b183-43c7-a181-cc023de26624",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:docs",
+    "satisfies:ed3d490e/REQ-07",
+    "satisfies:ed3d490e/REQ-11",
+    "satisfies:ed3d490e/REQ-14"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "State the LDPC decoder numerical contract with its batch clauses",
+  "updated_at": "2026-10-05T21:45:30.453792089Z"
+}

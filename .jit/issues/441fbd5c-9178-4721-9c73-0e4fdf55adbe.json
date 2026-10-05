@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "8840b0ff-d956-4032-907d-72b55e4e22ac"
+  ],
+  "description": "Adds to `gf2-sim` one generic decode stage that consumes the `gf2-coding` batch soft-decoder trait, so decode stages hold no per-frame loop and name no decoder type.\n\n## Background\n\n`gf2-coding` has a batch soft-decoder trait: frames in, caller-provided decoded words and per-frame outcomes out, by mutable reference, with default batch decoding for each soft decoder. A `gf2-sim` stage processes a batch by shared reference, and its scratch is default-constructed, mutable and shared-safe. The decode stages `CpuLdpcBp`, `Nr5gDecode` and `DvbT2Decode` each loop over frames and call one decoder type.\n\n## Success Criteria\n\n- [hard] REQ-01: A public generic stage maps an `LlrBatch` to a `HardDecisionBatch` through a batch soft decoder built once per scratch from a factory the stage holds, and holds no decoding logic beyond handing frames over and collecting results.\n- [hard] REQ-02: Its scratch records the per-frame iteration counts of the most recent call in input-frame order.\n- [hard] REQ-03: A frame that does not converge yields the decoder's estimate and no stage error.\n- [hard] REQ-04: Stage tests over a default-path decoder assert outputs equal to per-frame decoding for an empty batch, one frame and a batch above the decoder's granularity.\n- [hard] REQ-05: The stage's bounds on the decoder and the factory are stated in its rustdoc.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "441fbd5c-9178-4721-9c73-0e4fdf55adbe",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-sim",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Provide a simulation decode stage over the batch decoder trait",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

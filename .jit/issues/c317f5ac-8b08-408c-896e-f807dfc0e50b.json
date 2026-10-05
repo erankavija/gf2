@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "13728e1a-29f5-4332-877f-30385269c23a"
+  ],
+  "description": "Makes the LDPC batch decoder take the AVX2 lane backend when the build and the host provide it, with the portable backend and the single-frame route as tested fallbacks.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. `gf2-kernels-simd` publishes an AVX2 backend of the lane kernel bundle through runtime detection, bit-identical to the portable backend. The suite `ldpc_batch_contract` holds a route to the single-frame decoder at the posterior level.\n\n## Success Criteria\n\n- [hard] REQ-01: With the `simd` cargo feature of `gf2-coding` and AVX2 detected at run time, the lane route runs the AVX2 backend; without either it runs the portable backend; the route reporter names the backend.\n- [hard] REQ-02: The posterior-level suite and the shared batch contract function pass on the AVX2 backend, on the portable backend and on the single-frame route in one test binary, and a test binary built without `simd` pins the portable backend.\n- [hard] REQ-03: A test-only process-global backend override, if one exists, is held under a mutex for the whole toggle-execute-observe-restore section.\n- [hard] REQ-04: The steady-state decode on the AVX2 backend performs no allocation, reallocation or deallocation.\n- [hard] REQ-05: Rustdoc of the LDPC batch decoder names the cargo feature and the runtime capability that select the AVX2 backend.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "c317f5ac-8b08-408c-896e-f807dfc0e50b",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-08",
+    "satisfies:ed3d490e/REQ-09"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Route LDPC batch decoding to the AVX2 lanes by capability",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

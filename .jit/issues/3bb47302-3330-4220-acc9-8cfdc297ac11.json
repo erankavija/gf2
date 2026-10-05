@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "859bc8cb-732e-440a-be46-3237c8d2f488",
+    "f434ddd3-be98-4103-9a6d-b46770afa61c"
+  ],
+  "description": "Summarizes the measured profile and counter series of the batch decoder into generated tables.\n\n## Background\n\nThe profile of `dev/active/3be770d5` attributes the single-frame decoder's time to categories by source span and records counter groups at one, six, twelve and twenty-four workers. Its series runs a profiling executable under a session script, each session under its own host acquisition, and its summarizer resolves each sample to a category. The lane route widens the decoder workspace eightfold per worker, so cache traffic is the limit the counters test. The profile series of the batch decoder is prepared under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/` and queued; the benchmark window runs its sessions. The summarizer categorizes lane kernel and transposition samples and reports shares with Wilson intervals and counters with median intervals. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each session is verified from the series' own execution log, and a case whose address listing and recorded sample total disagree stops the summary.\n- [hard] REQ-02: The generated profile summary gives, for the lane route and the single-frame route, sampled shares by category with intervals at one and twenty-four workers and the counter groups at each worker count.\n- [hard] REQ-03: The summary reproduces byte for byte on a second run over the committed session directories.\n- [hard] REQ-04: The report states whether the series is measured or waits for a window.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "3bb47302-3330-4220-acc9-8cfdc297ac11",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Summarize the profile series of the batch decoder",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

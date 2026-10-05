@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "391f5419-0022-40b0-8a01-a3a45817fd6a",
+    "86d9260e-011c-40e8-9424-a6cd51a81888",
+    "9e0cd346-4e17-4e9d-86eb-b949d398ece1"
+  ],
+  "description": "Adds the `gf2-sim` tests that a checkpointed campaign with a batch-decoding stage resumes to the results of an uninterrupted run.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The CPU LDPC, 5G NR and DVB-T2 decode stages of `gf2-sim` decode their batches through it. A frame's result depends on its own LLRs alone, so no grouping of frames into waves changes it; the simulation layer adds worker scheduling and checkpointed campaigns on top, and determinism there is asserted, not inferred. The suite `checkpoint_compat` interrupts a checkpointed SNR point and compares the resumed counters with an uninterrupted reference.\n\n## Success Criteria\n\n- [hard] REQ-01: A campaign with a batch-decoding stage, interrupted at a checkpoint and resumed, produces counters byte-identical to an uninterrupted run, at one, two and four workers.\n- [hard] REQ-02: The batch size puts a checkpoint boundary inside a decode wave.\n- [hard] REQ-03: Each test meets the fast-tier budget or carries a descriptive simulation-tier ignore reason.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "395fe4e2-506c-4b4f-8415-e7268189a2ea",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-sim",
+    "satisfies:ed3d490e/REQ-09"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Show checkpoint resume identity of batch-decoding campaigns",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "dd50ea11-1d2d-42c1-b7d5-5add07eee9c6"
+  ],
+  "description": "Commits the declaration, protocol amendment, producing manifest and queue line of the offline tuning campaign that calibrates the decode selectors, without running it.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The coding producer measures the decode selector fields, and the driver, composer and validator handle a campaign that measures the coding owner and imports the committed core and algebra envelopes. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A campaign declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/` names the owning issue, the coding owner as measured with its cell count, and the core and algebra owners as imported by envelope path and digest.\n- [hard] REQ-02: A premeasurement protocol document amends the executed campaign protocol by reference and states the decode fields, the grid, the extent decision, the seed derivation and the declared counts before any measurement.\n- [hard] REQ-03: A producing manifest pins the producing inputs by digest.\n- [hard] REQ-04: The producer's capability report, grid listing and self-check run untimed and are committed.\n- [hard] REQ-05: One line for the campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "0a77ecfc-872a-4629-bdf4-4cf6f85a5b56",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Declare the decoder calibration campaign",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

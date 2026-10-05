@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "e28795c1-8d70-4ea0-a563-0e469904c52c"
+  ],
+  "description": "Extends the coding-owned tuning section with a decode selector family, so batch decoding takes its routing values from one calibrated source.\n\n## Background\n\nSelector values of `gf2-coding` live in its tuning section, resolved through the process-wide authority of `gf2_core::tuning`; the section holds the batch-encoding family, whose conservative values select the scalar reference. A batch decoder chooses between decoding frames one at a time and decoding a wave of eight frames in lanes, and a parallel batch decoder partitions frame groups across workers; those choices are selectors. The section keeps one wire identity and one owner codec.\n\n## Success Criteria\n\n- [hard] REQ-01: The coding tuning section exposes a validated decode selector family: `lane_min_frames`, the smallest number of occupied lanes at which a wave takes the lane route; `lane_max_edges`, the largest Tanner-graph edge count that takes the lane route; and `granules_per_task`, the number of preferred-granularity frame groups one parallel task decodes.\n- [hard] REQ-02: The conservative family closes the lane route for every batch and gives one group per task; each conservative value has one definition, in the tuning module.\n- [hard] REQ-03: The owner codec encodes and decodes the family with per-field presence, reads a body without the family as the conservative family, rejects a null or unknown field and a zero `granules_per_task`, and decodes a committed profile that holds the encode family alone to the section it decoded to before.\n- [hard] REQ-04: The section's wire identity is unchanged, the process-wide accessor resolves both families through one lookup, and the fresh-process tests observe the conservative family before installation and an installed family after it.\n\n## Notes\n\nThe decode selectors are independent of the core section.",
+  "documents": [],
+  "first_ready_at": "2026-10-05T21:45:14.951609697Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "6818f1b6-5eb5-4ce6-8180-2b223b92510d",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Carry decoder selectors in the coding tuning section",
+  "updated_at": "2026-10-05T21:45:30.578806983Z"
+}

@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "aff59c3c-af93-4fe6-a26c-9effa08605ea"
+  ],
+  "description": "Extends the profile composer so it writes a coding owner envelope and a complete envelope that holds three owners' sections.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The composer `tuning-profile-compose` has an owner mode for each of the two owners and a complete mode that joins their envelopes. Decoder calibration measures the coding owner and imports the committed core and algebra envelopes.\n\n## Success Criteria\n\n- [hard] REQ-01: The composer emits a coding owner envelope from a calibrated coding section and verifies it by reopening it through the coding owner codec.\n- [hard] REQ-02: Its complete mode writes an envelope holding the core, algebra and coding sections and verifies it by reopening.\n- [hard] REQ-03: The composer's existing modes give byte-identical outputs for their existing inputs, and its tests cover the coding owner mode with the three-section complete envelope.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "958639ec-87e8-4d8f-b4d3-1a967070cd76",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:tooling",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Emit a coding owner envelope from the profile composer",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

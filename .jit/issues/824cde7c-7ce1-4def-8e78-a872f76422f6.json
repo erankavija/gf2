@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "958639ec-87e8-4d8f-b4d3-1a967070cd76"
+  ],
+  "description": "Extends the offline tuning campaign driver so a campaign measures the `gf2-coding` owner while importing the other owners' committed envelopes.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The driver `tuning-extent-campaign-driver` names the two owners in a closed list, and a campaign declaration lists measured owners and imported owners. Decoder calibration proceeds independently of core calibration, so its campaign measures the coding owner alone and imports the committed core and algebra envelopes. The profile composer writes a coding owner envelope and a three-section complete envelope.\n\n## Success Criteria\n\n- [hard] REQ-01: The driver stages, launches, journals and publishes a campaign whose declaration names `gf2-coding` as its measured owner and `gf2-core` and `gf2-algebra` as imported owners.\n- [hard] REQ-02: A coding owner envelope is published under `crates/gf2-coding/data/tuning-profiles/`.\n- [hard] REQ-03: The driver's existing tests for declarations with the two earlier owners pass unchanged, and fixture tests cover the three-owner layout.\n- [hard] REQ-04: `dev/scripts/tuning-extent-campaign.sh` gains no owner-specific branch.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "824cde7c-7ce1-4def-8e78-a872f76422f6",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:tooling",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Admit gf2-coding as an owner in the tuning campaign driver",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

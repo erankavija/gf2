@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "824cde7c-7ce1-4def-8e78-a872f76422f6"
+  ],
+  "description": "Extends the independent validator of the offline tuning campaign so it accepts a published stage whose measured owner is `gf2-coding`.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The validator `dev/scripts/validate-tuning-extent-campaign.py` re-derives a published campaign stage independently of the driver and names the two owners, their protocols, behaviour tokens and section identities in closed tables. The driver and the composer handle a campaign that measures the coding owner and imports the core and algebra envelopes.\n\n## Success Criteria\n\n- [hard] REQ-01: The validator accepts a published stage that measures `gf2-coding` and imports `gf2-core` and `gf2-algebra`: owner manifest, declared counts, raw result index, owner decisions, composition and publication paths.\n- [hard] REQ-02: It rejects a coding stage whose behaviour token, section identity or declared counts differ from the declaration.\n- [hard] REQ-03: Each committed campaign publication of the two earlier owners validates with the verdict it had before.\n- [hard] REQ-04: The validator's self-tests cover the coding owner.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "dd50ea11-1d2d-42c1-b7d5-5add07eee9c6",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:tooling",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Accept a coding owner campaign in the tuning campaign validator",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

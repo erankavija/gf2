@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "441fbd5c-9178-4721-9c73-0e4fdf55adbe",
+    "4767d936-5623-4aed-9c87-d585a94738fe",
+    "c317f5ac-8b08-408c-896e-f807dfc0e50b"
+  ],
+  "description": "Makes the 5G NR decode stage of `gf2-sim` decode through the generic batch decode stage with the rate-matched batch decoder.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A `gf2-sim` stage processes a batch by shared reference with a default-constructed mutable scratch. The generic batch decode stage of `gf2-sim` holds a factory of a `gf2-coding` batch soft decoder, builds the decoder once in its scratch, and decodes an `LlrBatch` into a `HardDecisionBatch` with the per-frame iteration counts recorded in the scratch. `gf2-coding` has a rate-matched 5G NR implementer of the trait. The stage `Nr5gDecode` builds a rate-matched decoder from a clone of the shared code for each frame; its scratch records the per-frame iteration counts.\n\n## Success Criteria\n\n- [hard] REQ-01: `Nr5gDecode` decodes its batch through the generic batch decode stage with the rate-matched batch decoder, and constructs no decoder per frame.\n- [hard] REQ-02: The message bits of each frame and the recorded per-frame iteration counts equal those of the per-frame `decode_iterative` path.\n- [hard] REQ-03: The preset and graph pipelines that contain the stage produce byte-identical outputs in the existing byte-identity suites.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "9e0cd346-4e17-4e9d-86eb-b949d398ece1",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-sim",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Decode NR stage batches through the batch decode stage",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

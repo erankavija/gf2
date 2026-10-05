@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "4d8fd613-a84d-47d5-b0e0-3d643e47a9a2"
+  ],
+  "description": "Adds the smoke runner that projects a throwaway plan of a protocol family and proves its wire contract through the shared runner.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story measures several protocol families over those arms; each needs a schema-valid addendum, a runner plan, a launcher for the benchmark window and a smoke of its plan. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell. A generator writes a family's addendum and plan from a family declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`.\n\n## Success Criteria\n\n- [hard] REQ-01: A smoke runner projects a throwaway plan of a family and drives `benchmark-ab-runner check` and `benchmark-ab-runner smoke` over it, with one untimed dispatch per arm, no host lock, no ledger and no receipt.\n- [hard] REQ-02: It fails when an arm reports a timing window, and writes a smoke record for the family.\n- [hard] REQ-03: A sample family declaration passes the smoke runner.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "2a69b276-ae6e-4f63-9ae3-834174b4b363",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Smoke a family plan through the shared runner",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

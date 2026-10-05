@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "2438c16f-c881-414c-a27b-56988c2a9d2f",
+    "53b74fc2-6412-465c-b1c6-37d38cf9fa21",
+    "ee12b09e-c5f0-407a-9112-640e993c3c1c"
+  ],
+  "description": "Adds to `gf2-coding` the LDPC implementer of the batch soft-decoder trait: a decoder that owns a lane workspace, decodes frames in fixed waves of eight with per-frame termination, and returns each frame's result in input order.\n\n## Background\n\nThe canonical decoder is `LdpcDecoder` in `gf2-coding`: an f32 flooding decoder of the min-sum family over the canonical `EdgeLayout`, whose check update is the shared reduction `min_sum_check_row` and which stops a frame at the first iteration whose syndrome passes. An inter-frame decoder places the same message position of eight independent frames in the eight f32 lanes of one AVX2 register. A lane is a frame, so no reduction inside a check and no accumulation inside a variable is reassociated, and each frame's result equals the single-frame decoder's bit for bit. `gf2-coding` has a batch soft-decoder trait with a shared contract function, `gf2-kernels-simd` provides the lane kernel bundle with a portable implementation, and the coding tuning section provides the decode selectors and the typed route decision. A wave is fixed: it runs until each of its lanes has terminated or the iteration cap is reached; a frame terminates as the single-frame decoder does, and a terminated lane is frozen by the kernel's active-lane mask. A final wave with fewer than eight frames leaves its remaining lanes idle at zero LLRs. Rules are those of `docs/reference/ldpc-decoder-numerical-contract.md`.\n\n## Success Criteria\n\n- [hard] REQ-01: A public LDPC batch decoder type, built from an `LdpcCode`, a `DecoderConfig`, an iteration cap and the choice of full codewords or message bits as decoded words, implements the batch soft-decoder trait with a preferred granularity of eight frames.\n- [hard] REQ-02: It passes the shared batch contract function against `LdpcDecoder::decode_to_codeword` and against `decode_iterative`, for an empty batch, one frame, and batch sizes below, equal to and above eight.\n- [hard] REQ-03: The decoder owns its message, channel, belief and hard-decision lane storage, sized at construction from the edge layout; after the first decode, a decode into prepared outputs performs no allocation, reallocation or deallocation, asserted with the counting allocator of the existing decode allocation test.\n- [hard] REQ-04: For each min-sum rule and both early-termination settings, each frame's hard decisions, iteration count, flags and posterior LLR bit patterns equal the single-frame decoder's, on the lane route with the portable bundle and on the single-frame route; the posterior of a terminated frame is readable after the wave ends.\n- [hard] REQ-05: A sum-product configuration decodes each frame through the single-frame route, and a route reporter returns the route a given batch size takes without decoding.\n- [hard] REQ-06: A decoder built with explicit selectors takes the route those selectors give, and the default constructor reads the process-wide coding section once at construction.\n- [hard] REQ-07: Rustdoc states purpose and panics, reports the workspace size in bytes through an accessor, and carries one example of the batch workflow through the trait; the rustdoc of `min_sum_check_row` cites the numerical contract page for the clauses the page owns in place of a second copy.\n\n## Notes\n\nThe lane workspace and the kernels are LDPC-specific; callers hold the decoder through the trait.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "5cb74f81-3d74-4b33-a1b4-0958a17f48b3",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Decode LDPC frame batches in lanes behind the batch decoder trait",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

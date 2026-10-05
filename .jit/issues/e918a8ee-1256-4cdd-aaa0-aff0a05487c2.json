@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "1d4b05d5-aa65-4379-afdc-bd82bc04b530",
+    "c317f5ac-8b08-408c-896e-f807dfc0e50b"
+  ],
+  "description": "Moves the tests that call `LdpcDecoder::decode_batch` to the batch soft-decoder trait, keeping what they assert.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A pooled batch decoder over the trait gives parallel decoding with one inner decoder per worker. `LdpcDecoder::decode_batch` and `decode_batch_with_config` predate the trait: they build one single-frame decoder per frame, on rayon under the `parallel` feature, and return message bits with iteration counts and flags. Their test callers are the unit tests beside them in `crates/gf2-coding/src/ldpc/core.rs` and the integration test `crates/gf2-coding/tests/backend_integration.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each test that called `LdpcDecoder::decode_batch` or `decode_batch_with_config` decodes through the batch soft-decoder trait with the LDPC batch decoder, pooled where the test covered parallel decoding.\n- [hard] REQ-02: The moved tests assert message bits, iteration counts and flags equal to per-frame `decode_iterative`, and an empty result for an empty batch.\n- [hard] REQ-03: No test in `gf2-coding` calls the inherent batch functions.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "e918a8ee-1256-4cdd-aaa0-aff0a05487c2",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-08"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Move the tests of the inherent LDPC batch functions to the batch trait",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "a4476c6a-c33e-43ee-87bb-0d4e39609d25"
+  ],
+  "description": "Builds the profiling executable that runs the LDPC batch decoder cases a sampled-profile series records.\n\n## Background\n\nThe profile of `dev/active/3be770d5` attributes the single-frame decoder's time to categories by source span and records counter groups at one, six, twelve and twenty-four workers. Its series runs a profiling executable under a session script, each session under its own host acquisition, and its summarizer resolves each sample to a category. The lane route widens the decoder workspace eightfold per worker, so cache traffic is the limit the counters test. The batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The story's benchmark arms live in the workspace `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` with a build identity record under `dev/bench_results/ed3d490e/preparation/`. The committed profiling executable is pinned to the single-frame decoder of the earlier harness.\n\n## Success Criteria\n\n- [hard] REQ-01: A profiling executable in the story's arms workspace runs a named case, a route, a code and a worker count, of the LDPC batch decoder under the control channel of the committed session script, on the lane route and on the single-frame route.\n- [hard] REQ-02: It pins each worker and checks per-frame bit errors against the prepared quality record as the benchmark arms do.\n- [hard] REQ-03: Its digest is added to the build identity record by the committed recorder, and the existing arms keep their recorded digests.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "3f3efdcf-5699-4b9d-8ce7-0dc4cf388288",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "component:gf2-coding",
+    "satisfies:ed3d490e/REQ-01"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Build the profiling executable of the batch decoder",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

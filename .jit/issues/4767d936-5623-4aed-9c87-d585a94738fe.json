@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "941ac609-8e9a-4923-99e4-d93f09c816e7"
+  ],
+  "description": "Adds the rate-matched 5G NR implementer of the batch soft-decoder trait, which prepares each frame onto the mother code and decodes the batch through the LDPC batch decoder.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. `Nr5gRateMatchedDecoder` wraps a single-frame decoder of the mother code: it prepares a rate-matched LLR frame into mother-code LLRs, with the zero LLR at punctured and truncated positions and the filler magnitude at filler positions, decodes, and extracts the message bits in natural column order [ThreeGpp2017]. To the decoder the prepared LLRs are ordinary channel LLRs. Through the trait's default path it decodes one frame per call.\n\n## Success Criteria\n\n- [hard] REQ-01: A rate-matched batch decoder implements the batch soft-decoder trait over the LDPC batch decoder, with the message bits of each frame as decoded words and the LDPC decoder's preferred granularity.\n- [hard] REQ-02: It passes the shared batch contract function against `Nr5gRateMatchedDecoder::decode_iterative`, for configurations with punctured systematic columns, truncated parity and filler bits.\n- [hard] REQ-03: Preparation reuses decoder-owned buffers: a steady-state batch decode into prepared outputs performs no allocation.\n- [hard] REQ-04: The external 5G NR conformance vectors of the crate decode to their expected messages through the batch decoder.\n\n## Notes\n\nSource references: [ThreeGpp2017].",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "4767d936-5623-4aed-9c87-d585a94738fe",
+  "labels": [
+    "type:task",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:gf2-coding",
+    "cites:@/citation/ThreeGpp2017",
+    "satisfies:ed3d490e/REQ-08",
+    "satisfies:ed3d490e/REQ-14"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Decode rate-matched 5G NR frame batches in lanes",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

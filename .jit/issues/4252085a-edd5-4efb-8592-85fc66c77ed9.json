@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "bad1aea8-8d66-4f05-be2d-030666f979fd"
+  ],
+  "description": "Prepares, untimed, the per-frame quality record of the AFF3CT sum-product INTRA arm over the recorded bundles.\n\n## Background\n\nThe gf2 arms of the LDPC batch decoder and the AFF3CT arms [Cassagne2019] are built or catalogued under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` and `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json`. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The INTRA arm has no prepared quality record in that corpus, and an arm checks its per-frame bit errors against a prepared record on each execution.\n\n## Success Criteria\n\n- [hard] REQ-01: A quality record of the INTRA arm over both recorded bundles is committed under `dev/bench_results/ed3d490e/preparation/quality-intra/` with the ordered per-frame error vector, frame and bit error counts, their intervals and the iteration distribution.\n- [hard] REQ-02: The record is a single deterministic replay of each full bundle, untimed, and states the arm's observed decoder class and settings.\n- [hard] REQ-03: The INTRA arm reproduces the record in a second replay.\n\n## Notes\n\nSource references: [Cassagne2019].",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "4252085a-edd5-4efb-8592-85fc66c77ed9",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "cites:@/citation/Cassagne2019",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-10"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Prepare the quality record of the sum-product INTRA arm",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}

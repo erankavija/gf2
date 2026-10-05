@@ -1,0 +1,31 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T21:45:14.951609697Z",
+  "dependencies": [
+    "2a69b276-ae6e-4f63-9ae3-834174b4b363",
+    "c103a288-5eab-45c7-9c6b-814c33feeaf2",
+    "dbea4e10-ae1c-4c0a-ae2e-67ada2e4d3ab"
+  ],
+  "description": "Freezes the pilot addendum, holdout declaration and queue line of the family that reconfirms the calibrated decode profile on inputs the calibration did not use, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A coding owner envelope with calibrated decode selectors is committed under `crates/gf2-coding/data/tuning-profiles/`, and a tuned-profile benchmark arm installs it. The protocol's `selector-calibration` purpose requires holdout cells on fresh inputs that took no part in selection. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The story's campaign tooling writes a family's addendum and plan from a family declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and one launcher runs any family. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A pilot addendum with purpose `selector-calibration` is committed: its arms are a conservative-portable arm and the tuned-portable arm, pinned with the envelope as its tuning profile, plus native-build cells against the tuned-portable arm.\n- [hard] REQ-02: A holdout record, committed before the pilot runs, declares holdout cells on codes, seeds and batch sizes absent from the calibration inventory, including a small batch and an incomplete wave as non-regression cells.\n- [hard] REQ-03: Each cell is a whole-consumer cell with batch fill, LLR transposition and workspace costs inside the timed call, and the family declares no more confirmatory and holdout cells than its ledger's first attempt admits.\n- [hard] REQ-04: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-05: One line for the pilot is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, and no timed run executes outside the benchmark window.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "37aa7254-1e04-490b-9847-8b53d7725eaf",
+  "labels": [
+    "type:simulation",
+    "epic:zen3-cpu-performance",
+    "story:zen3-ldpc-frame-simd",
+    "component:benchmarks",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:ed3d490e/REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Freeze the decode selector holdout family",
+  "updated_at": "2026-10-05T21:45:14.951609697Z"
+}
