@@ -14,7 +14,10 @@ committed before the evidence it governs: the
 [decision record](decision-record.md) with the families and the search and stop
 budget, the [numerical-contract review](numerical-contract-review.md) with each
 family's declared contract and its MSRV intrinsic feasibility, and the
-[predeclared quality tolerances](quality-tolerances.md).
+[predeclared quality tolerances](quality-tolerances.md). They keep their
+original bytes; [corrections.md](corrections.md) records each statement in them
+that the evidence contradicts or does not support, with the reading this report
+uses.
 
 Every figure lives in the
 [generated quality tables](../../bench_results/f63a2464/quality/tables.md), in the
@@ -149,11 +152,12 @@ screen"):
 
 Two observations the screen does not act on are preserved because they bear on
 any successor work. The `i8` and `i16` arms at the same channel scale produce
-identical per-frame evidence on both workloads, so at that scale the narrow
-alphabet never saturates and the quantization loss lies in the scale rather than
-the width. And the layered arm reaches its decisions in materially fewer units of
-its own schedule than the flooding arms use of theirs, which the tables report as
-sweeps against iterations and do not compare.
+identical per-frame evidence on both workloads, so on these frames the width
+changes nothing at that scale and the difference between configurations follows
+the scale. And on each recorded cell the layered arm's median sweep count is
+below the flooding arms' median iteration count (tables, "Quality on the
+measured cells", iteration column), which the tables report as sweeps against
+iterations and do not compare.
 
 ## Timed evaluation
 
@@ -162,8 +166,8 @@ with timed cells under this issue. It asks three canonical questions, each a
 protocol family with its own genesis append-only ledger and its own campaign
 seed:
 [single-worker](addendum-ldpc-qc-intra-frame-single-worker-pilot.json), which
-measures sustained throughput and single-frame latency — the axis inter-frame
-batching cannot improve — against the canonical decoder;
+measures sustained throughput and single-frame latency, the axis this family
+targets, against the canonical decoder;
 [multicore](addendum-ldpc-qc-intra-frame-multicore-pilot.json), which measures the
 same pair at six and twelve physical cores and at twenty-four logical CPUs; and
 [comparator](addendum-ldpc-qc-comparator-single-worker-pilot.json), which measures
@@ -282,13 +286,19 @@ equivalence margin state that the external arm is the slower of the two on both
 cells. The family asks whether a material gap in the external arm's favour
 remains, and the confirmation establishes none.
 
-**The fastest quality-compatible external arm is a separate comparison with no
-admitted arm.** `c077a88b`'s paired quality-admission rule admits no surveyed
-external candidate on this corpus (its tables, "Quality-compatible timing"), so
-no fastest quality-compatible measured arm exists to time the candidate against.
-That outcome is preserved as it stands and the matched arm does not stand in for
-it. srsRAN [Srsran2026] fails to build on this host and xdsopl [Xdsopl2026]
-exposes no normalized rule, so neither supplies a matched or an admitted arm.
+**The fastest quality-compatible external comparison has no admitted arm.**
+`c077a88b` times six AFF3CT [Cassagne2019] horizontal-layered candidates, the
+f32 scalar, f32 INTER and `i16` INTER modes on each code, in one exploratory
+pilot against the gf2 decoder of that issue. Each carries the outcome "quality
+admission unestablished (P-19)" (its tables, "Quality-compatible timing"), its
+eligible shortlist is empty, and it selects no fastest arm. Its matched
+confirmation covers the flooding f32 arm only. So no external arm is established
+as quality-compatible on this corpus, this issue times the QC candidate against
+none, and REQ-04's fastest quality-compatible comparison is reported as absent
+rather than as a result; the matched arm does not stand in for it. `c077a88b`
+also preserves srsRAN's [Srsran2026] failed configuration on this host and
+records that xdsopl [Xdsopl2026] exposes no normalized rule, so neither supplies
+a matched or an admitted arm.
 
 **The axes REQ-04 names, on the timed cells.** Sustained throughput is the
 single-worker throughput cell and the three multicore cells; single-frame
@@ -361,7 +371,7 @@ evidence.
 | Criterion | Status | Evidence or remaining work |
 |---|---|---|
 | REQ-01 | MET for the evidence this issue produces | Contract, protocol, addendum and ledger identities are frozen and pinned by every receipt; arms are built at Rust 1.95 with recorded digests; all six campaigns verify from their own execution logs and each verdict recomputes from its committed receipt. Negative outcomes are preserved: the S2 stops of families Q and L and the comparator ledger's `fail` cells. No production change is made, so no before/after pair is owed here; the proposed scope carries it. |
-| REQ-02 | MET | The decision record names the three families and freezes the exploratory and confirmatory search and stop budget before any prototype exists; every externally sourced claim cites a registry key. |
+| REQ-02 | MET | The decision record names the three families and freezes the exploratory and confirmatory search and stop budget before any prototype exists. Its statements the evidence contradicts or does not support are preserved and corrected in corrections.md; none changes a budget or a stop rule. |
 | REQ-03 | MET | The numerical-contract review states the canonical contract on all six axes, each family's declared contract against it, and the MSRV intrinsic feasibility record with its emitted assembly. DVB-T2's inapplicability to family QC is explained with source evidence rather than dropped. |
 | REQ-04 | Partly met — one gap, under Limits | Every family's prototype is evaluated on the measured DVB-T2 and NR cells on the quality axis, with iteration distributions and equivalent stopping. Family QC is confirmed on sustained throughput, single-frame latency and multicore throughput against the canonical decoder and, separately, against the matched external arm; the fastest quality-compatible comparison has no admitted arm. Memory is an untimed peak resident set of both arms by one method. The gap: families L and Q carry no timed cell because the frozen screen admits none of their configurations. |
 | REQ-05 | MET | Tolerances predeclared and committed before any quality result; BER and FER with counts and intervals over random and all-zero codewords, punctured and filler inputs, mixed convergence and the difficult subset, and again on every timed cell; external conformance under each declared contract, with the unavailable narrow-alphabet comparator preserved. No bit-exactness is claimed without evidence, and the one family that claims it is tested at the posterior level and projected at the cell level. |
@@ -403,7 +413,9 @@ measures against — [Cassagne2019], [Srsran2026], [Xdsopl2026],
 [OpenAirInterface2026] — and the standards the codes come from [Etsi2015]
 [ThreeGpp2017], but nothing for the schedule and quantization literature the two
 changed-contract families rest on. Those families' design claims are therefore
-made from measured evidence alone and cite no prose title.
+made from measured evidence alone and cite no prose title, and the decision
+record's premise about the layered schedule's iteration count is read as a
+hypothesis (corrections.md, C-04).
 
 **The recorded corpus cannot certify quality non-inferiority.** At its frame
 count the paired bound stays above zero wherever the canonical arm decodes nearly
