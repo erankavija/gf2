@@ -388,8 +388,50 @@
       "doc_type": "evidence",
       "label": "Content digests of the anchor's kernel crates",
       "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/anchor-baseline.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "b6988b03518989717f6ffda99d4df261e4169d67dad1dd1608356e5ba01c2757",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../6e87c436/survey/production-drift.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/production-drift.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1c09547231741666ffedd191926cd5391051cf60b68eb5ae380b6371faa37729",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../6e87c436/survey/route-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "24d3b03cedb1a0d2e58243bdde3006ab1ba1cae32e005ed8768ac69258bec465",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../6e87c436/survey/asm-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/asm-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a7923f094e14275b6e07c1c6814251a181e05e0529cf8de8183d3ae02385c81e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6e87c436/no-change-outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/6e87c436-r1.md"
     }
   ],
+  "done_at": "2026-10-05T01:49:07.697644802Z",
   "first_ready_at": "2026-09-16T22:38:43.315534285Z",
   "gates_required": [
     "cargo-ci",
@@ -401,27 +443,27 @@
   "gates_status": {
     "asm-artefact-present": {
       "status": "passed",
-      "updated_at": "2026-10-05T01:16:47.207309653Z",
+      "updated_at": "2026-10-05T01:34:37.573776002Z",
       "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T01:17:56.899242055Z",
+      "updated_at": "2026-10-05T01:35:47.461715225Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T01:21:33.727184208Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T01:41:50.393593732Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-05T01:24:15.102627754Z",
+      "updated_at": "2026-10-05T01:45:32.288604002Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-10-05T01:29:37.353503187Z",
+      "updated_at": "2026-10-05T01:48:47.929866770Z",
       "updated_by": "auto:executor"
     }
   },
@@ -439,7 +481,7 @@
     "satisfies:2037941f/REQ-06"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Implement and confirm the dense-parity outcome",
-  "updated_at": "2026-10-05T01:33:19.957776841Z"
+  "updated_at": "2026-10-05T01:49:07.697644802Z"
 }
