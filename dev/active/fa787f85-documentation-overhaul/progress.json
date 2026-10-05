@@ -956,6 +956,13 @@
      "title": "Repoint Lean pipeline guide citations in active investigations",
      "classification": "documentation",
      "status": "done"
+    },
+    {
+     "id": "b23c364a-b92a-4824-8377-1965244cf80b",
+     "short_id": "b23c364a",
+     "title": "Decouple and move the 4e732b56 baseline survey under the BCH epic dir",
+     "classification": "implementation",
+     "status": "pending"
     }
    ]
   },
@@ -974,7 +981,7 @@
      "short_id": "b959ffe8",
      "title": "Rewrite dev/index.md for the final dev layout",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "fca578b1-2593-4bc4-8f08-8a425f3b237f",
@@ -1443,6 +1450,10 @@
   {
    "id": "0b8f09f3",
    "reason": "active investigations cite the moved Lean pipeline guide (found by 1ca94ec2)"
+  },
+  {
+   "id": "b23c364a",
+   "reason": "decoupling task T1 of decoupling-findings.md (owner ruling 2026-10-04: decoupling tasks in this epic)"
   }
  ],
  "escalations": [
