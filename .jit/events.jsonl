@@ -18432,3 +18432,7 @@
 {"assignee":"agent:worker","id":"d2f3c74c-8f5a-4b32-8712-fd6c279b8363","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:11:50.665794490Z","type":"issue_claimed"}
 {"from":"ready","id":"7d4ebd4d-1633-4d0b-97e4-8fd3f3557008","issue_id":"63bad95d-0e69-459b-840b-c37521036f52","timestamp":"2026-10-05T03:11:50.800000359Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"dfa9433a-bdfb-41e1-8584-dbbc933d4ef0","issue_id":"63bad95d-0e69-459b-840b-c37521036f52","timestamp":"2026-10-05T03:11:50.800000359Z","type":"issue_claimed"}
+{"id":"c9e41904-22d9-4c8a-9c80-1a5d9f7029af","issue_id":"1b034786-d9d1-4e3d-aa47-2dff6658bb3f","priority":"high","timestamp":"2026-10-05T03:28:58.602274285Z","title":"Reject invalid table sizes in the safe M4RM Gray-table wrappers","type":"issue_created"}
+{"fields":["dependencies"],"id":"f2736a67-d2d3-4f24-a0bb-e19f8c3dbe20","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-10-05T03:28:58.847750658Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"81f4a3ef-d80c-4ba8-8280-eb092defe0e6","issue_id":"1b034786-d9d1-4e3d-aa47-2dff6658bb3f","timestamp":"2026-10-05T03:28:59.086805086Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"312b9cc0-947e-475d-a45b-ee4dc3d0e374","issue_id":"1b034786-d9d1-4e3d-aa47-2dff6658bb3f","timestamp":"2026-10-05T03:28:59.086805086Z","type":"issue_claimed"}
