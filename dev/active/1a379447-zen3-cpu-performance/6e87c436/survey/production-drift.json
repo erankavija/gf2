@@ -7,7 +7,10 @@
   ],
   "classifier_rule": "Rust sources only. Line comments (`//` to the end of the line, doc comments included) and block comments (`/* */`, nested) outside string, raw-string, byte-string and character literals are removed; trailing whitespace is removed from every line; lines left empty are removed. Two files whose remaining text is equal are comment-or-blank-only. Leading whitespace, line breaks inside code and `#[doc]` attributes count as code.",
   "task_change": {
-    "anchor": "61e1a8e5af844dc787e04e3ba994a2ef00b14623",
+    "anchor": {
+      "baseline": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/anchor-baseline.json",
+      "baseline_sha256": "8bf7e5ffb564637e55a6ddae5797cc4822c99a588c40915d7698041bb2dc41ff"
+    },
     "changed_package_paths": [
       "crates/gf2-core/tests/popcount_routes.rs",
       "crates/gf2-core/tests/simd_equiv_matvec.rs",
