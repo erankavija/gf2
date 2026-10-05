@@ -39,9 +39,34 @@ ISSUE = "7d44b71f"
 PACKAGE_NAME = "gf2-kernels-simd"
 PACKAGE = repository_files.package_directory(ROOT, PACKAGE_NAME)
 
-# The task anchor by content: per-path digests, and byte snapshots of the
-# paths this task changes. An `inputs` directory is outside every live lookup.
-ANCHOR = content_anchor.Anchor(ROOT, HERE / "anchor-baseline.json", HERE / "inputs" / "anchor")
+# The baselines this task compares, each by content: per-path digests, and
+# byte snapshots of the paths the working tree changes. An `inputs` directory
+# is outside every live lookup.
+#
+#   anchor            the unedited sources with listings regenerated from them
+#   before-1b034786   the tree holding this task's contracts, before the code
+#                     change of jit:1b034786
+#   after-1b034786    the tree that change leaves
+#
+# The task's own change is `anchor` to `before-1b034786` and `after-1b034786`
+# to the working tree; the step between belongs to jit:1b034786.
+FIX = "1b034786"
+
+
+def _baseline(stage):
+    return content_anchor.Anchor(ROOT, HERE / f"{stage}-baseline.json", HERE / "inputs" / stage)
+
+
+ANCHOR = _baseline("anchor")
+BEFORE_FIX = _baseline(f"before-{FIX}")
+AFTER_FIX = _baseline(f"after-{FIX}")
+BASELINES = {"anchor": ANCHOR, f"before-{FIX}": BEFORE_FIX, f"after-{FIX}": AFTER_FIX}
+
+
+def digest_changes(before, after):
+    """Sorted paths whose digests differ between two baselines, or exist in one only."""
+    old, new = before.digests(), after.digests()
+    return sorted(path for path in set(old) | set(new) if old.get(path) != new.get(path))
 
 
 def tracked(suffix):

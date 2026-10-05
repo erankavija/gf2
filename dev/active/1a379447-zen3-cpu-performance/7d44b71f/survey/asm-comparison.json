@@ -1,1082 +1,1094 @@
 {
-  "schema": "safety-contract-asm-comparison-v1",
+  "schema": "safety-contract-asm-comparison-v2",
   "issue": "7d44b71f",
-  "anchor": {
-    "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/anchor-baseline.json",
-    "baseline_sha256": "ef71917fd2a39c57977d97d65b09db20c9c485318eff2b97119213f70838f990"
+  "baselines": {
+    "anchor": {
+      "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/anchor-baseline.json",
+      "baseline_sha256": "ef71917fd2a39c57977d97d65b09db20c9c485318eff2b97119213f70838f990"
+    },
+    "before-1b034786": {
+      "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/before-1b034786-baseline.json",
+      "baseline_sha256": "14ff937e67ae9218a83e0e42ca23227298f5e3832fcf63c416f2ab9251910e58"
+    }
   },
+  "excluded_step": "before-1b034786 to after-1b034786, the code change of jit:1b034786",
   "classifier_rule": "Rust sources only. Line comments (`//` to the end of the line, doc comments included) and block comments (`/* */`, nested) outside string, raw-string, byte-string and character literals are removed; trailing whitespace is removed from every line; lines left empty are removed. Two files whose remaining text is equal are comment-or-blank-only. Leading whitespace, line breaks inside code and `#[doc]` attributes count as code.",
   "comparison_rule": "Per symbol, the lines between its `; symbol:` divider and the next divider, without blank lines, divider rules and cargo's `Compiling` and `Finished` status lines. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
-  "source_class_counts": {
-    "comment-or-blank-only": 40,
-    "assembly-listing": 23
-  },
-  "symbol_count": 83,
-  "differing_symbol_count": 0,
-  "sources": [
-    {
-      "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp65537.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp_small.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/gf2m.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/llr.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/mersenne.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/modem.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/bch_encode.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp65537.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_generic.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_f64.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_f32.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_panel.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_ple.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_batch.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_common.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_gemm.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_wide.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/mersenne.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt",
-      "class": "assembly-listing"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/gf2m_common.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
-      "class": "comment-or-blank-only"
-    },
-    {
-      "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
-      "class": "comment-or-blank-only"
-    }
-  ],
-  "listings": [
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/_lto_opacity_callsites.asm.txt",
-      "regenerated": false,
-      "symbols": [
+  "steps": [
+    {
+      "step": "anchor to before-1b034786",
+      "source_class_counts": {
+        "comment-or-blank-only": 40,
+        "assembly-listing": 23
+      },
+      "symbol_count": 83,
+      "differing_symbol_count": 0,
+      "sources": [
         {
-          "symbol": "lto_opacity_callsite_fp65537",
-          "anchor_lines": 353,
-          "current_lines": 353,
-          "anchor_sha256": "95d88513c3bfb34555e4fd6dd6176dfa6aa8c904872ca58b58c4b286434a65a1",
-          "current_sha256": "95d88513c3bfb34555e4fd6dd6176dfa6aa8c904872ca58b58c4b286434a65a1",
-          "instruction_text": "same"
+          "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+          "class": "comment-or-blank-only"
         },
         {
-          "symbol": "lto_opacity_callsite_gf2m_wide256",
-          "anchor_lines": 844,
-          "current_lines": 844,
-          "anchor_sha256": "e39ce99c62901a8536bb384d0bda7459a15b412ef6bd4c84fd22cca28cd26009",
-          "current_sha256": "e39ce99c62901a8536bb384d0bda7459a15b412ef6bd4c84fd22cca28cd26009",
-          "instruction_text": "same"
+          "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/llr.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/mersenne.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/modem.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bch_encode.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp65537.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_generic.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_f64.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_f32.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_panel.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_ple.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_batch.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_common.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_gemm.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_wide.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/mersenne.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt",
+          "class": "assembly-listing"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_common.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+          "class": "comment-or-blank-only"
         }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
-      "regenerated": true,
-      "symbols": [
+      ],
+      "listings": [
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_and_into",
-          "anchor_lines": 29,
-          "current_lines": 29,
-          "anchor_sha256": "4d735c7e4319b15e355f4308d1868febb6a17fc69b3828a4e55ae427961b2f11",
-          "current_sha256": "4d735c7e4319b15e355f4308d1868febb6a17fc69b3828a4e55ae427961b2f11",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/_lto_opacity_callsites.asm.txt",
+          "regenerated": false,
+          "symbols": [
+            {
+              "symbol": "lto_opacity_callsite_fp65537",
+              "anchor_lines": 353,
+              "current_lines": 353,
+              "anchor_sha256": "95d88513c3bfb34555e4fd6dd6176dfa6aa8c904872ca58b58c4b286434a65a1",
+              "current_sha256": "95d88513c3bfb34555e4fd6dd6176dfa6aa8c904872ca58b58c4b286434a65a1",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "lto_opacity_callsite_gf2m_wide256",
+              "anchor_lines": 844,
+              "current_lines": 844,
+              "anchor_sha256": "e39ce99c62901a8536bb384d0bda7459a15b412ef6bd4c84fd22cca28cd26009",
+              "current_sha256": "e39ce99c62901a8536bb384d0bda7459a15b412ef6bd4c84fd22cca28cd26009",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_and_popcnt",
-          "anchor_lines": 79,
-          "current_lines": 79,
-          "anchor_sha256": "9d8b87dfbc11d2fc6a7fabd1a684969e1382255120b1ce9434d91202fc13b8e7",
-          "current_sha256": "9d8b87dfbc11d2fc6a7fabd1a684969e1382255120b1ce9434d91202fc13b8e7",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_and_into",
+              "anchor_lines": 29,
+              "current_lines": 29,
+              "anchor_sha256": "4d735c7e4319b15e355f4308d1868febb6a17fc69b3828a4e55ae427961b2f11",
+              "current_sha256": "4d735c7e4319b15e355f4308d1868febb6a17fc69b3828a4e55ae427961b2f11",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_and_popcnt",
+              "anchor_lines": 79,
+              "current_lines": 79,
+              "anchor_sha256": "9d8b87dfbc11d2fc6a7fabd1a684969e1382255120b1ce9434d91202fc13b8e7",
+              "current_sha256": "9d8b87dfbc11d2fc6a7fabd1a684969e1382255120b1ce9434d91202fc13b8e7",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_find_first_one",
+              "anchor_lines": 88,
+              "current_lines": 88,
+              "anchor_sha256": "bdc5cf55b810a4c396754ca8c9b1ab1449fedf32cfbce1d7ea41880a70c7f152",
+              "current_sha256": "bdc5cf55b810a4c396754ca8c9b1ab1449fedf32cfbce1d7ea41880a70c7f152",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_find_first_zero",
+              "anchor_lines": 91,
+              "current_lines": 91,
+              "anchor_sha256": "b888eda341870f2162611cfa0bafa192c9a3efba61776aede5e92ba11c26fbbe",
+              "current_sha256": "b888eda341870f2162611cfa0bafa192c9a3efba61776aede5e92ba11c26fbbe",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build4",
+              "anchor_lines": 31,
+              "current_lines": 31,
+              "anchor_sha256": "d1bdaac1470762240a07b25d3dd47c4ea4030ab8886d34642ae3b5d8c4aecbaa",
+              "current_sha256": "d1bdaac1470762240a07b25d3dd47c4ea4030ab8886d34642ae3b5d8c4aecbaa",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8",
+              "anchor_lines": 35,
+              "current_lines": 35,
+              "anchor_sha256": "f8a1e5cb35ac6f9180f9fd72c3188a35bbd5cbd60e0954073b7767220f60d04f",
+              "current_sha256": "f8a1e5cb35ac6f9180f9fd72c3188a35bbd5cbd60e0954073b7767220f60d04f",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4",
+              "anchor_lines": 67,
+              "current_lines": 67,
+              "anchor_sha256": "8cc76a6972f49bd3db7e54f99e444a0cd5468f369891de9af8eedb34bb1ea2e8",
+              "current_sha256": "8cc76a6972f49bd3db7e54f99e444a0cd5468f369891de9af8eedb34bb1ea2e8",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8xn",
+              "anchor_lines": 95,
+              "current_lines": 95,
+              "anchor_sha256": "f64979f82153957dfe0c6bbc3f09f1ffb9721a6339235388cc44b88005cacb66",
+              "current_sha256": "f64979f82153957dfe0c6bbc3f09f1ffb9721a6339235388cc44b88005cacb66",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_not_into",
+              "anchor_lines": 26,
+              "current_lines": 26,
+              "anchor_sha256": "e83ee13fa6de2597835ed0ab62dc2118aa14de2e9a19c982a8fbcc17171a982a",
+              "current_sha256": "e83ee13fa6de2597835ed0ab62dc2118aa14de2e9a19c982a8fbcc17171a982a",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_or_into",
+              "anchor_lines": 29,
+              "current_lines": 29,
+              "anchor_sha256": "815ee2850df26f4035e021bb673988d96f0c584e399bf5eecfe5c8216a3f9228",
+              "current_sha256": "815ee2850df26f4035e021bb673988d96f0c584e399bf5eecfe5c8216a3f9228",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_popcnt",
+              "anchor_lines": 57,
+              "current_lines": 57,
+              "anchor_sha256": "c41760188736ac5a773d3ddbb32c060974050bf48e40b89e5d4f4aaf2d3ebb55",
+              "current_sha256": "c41760188736ac5a773d3ddbb32c060974050bf48e40b89e5d4f4aaf2d3ebb55",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_shift_left_words",
+              "anchor_lines": 105,
+              "current_lines": 105,
+              "anchor_sha256": "4b01fe59a5cc7a6be888720616dbb45e0b41b32cceefedee66e46b3bf728fac2",
+              "current_sha256": "4b01fe59a5cc7a6be888720616dbb45e0b41b32cceefedee66e46b3bf728fac2",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_shift_right_words",
+              "anchor_lines": 89,
+              "current_lines": 89,
+              "anchor_sha256": "fba60ca5f1d28259f3bc2bd8e1ef1cce6f7a21345dbd7c3638ed83632d5a5ca1",
+              "current_sha256": "fba60ca5f1d28259f3bc2bd8e1ef1cce6f7a21345dbd7c3638ed83632d5a5ca1",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::avx2::avx2_xor_into",
+              "anchor_lines": 29,
+              "current_lines": 29,
+              "anchor_sha256": "997e1907d75a56801ca87c77c8166b2bd5dbba085c15f48e3f845913723ec3eb",
+              "current_sha256": "997e1907d75a56801ca87c77c8166b2bd5dbba085c15f48e3f845913723ec3eb",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_find_first_one",
-          "anchor_lines": 88,
-          "current_lines": 88,
-          "anchor_sha256": "bdc5cf55b810a4c396754ca8c9b1ab1449fedf32cfbce1d7ea41880a70c7f152",
-          "current_sha256": "bdc5cf55b810a4c396754ca8c9b1ab1449fedf32cfbce1d7ea41880a70c7f152",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/bch_encode.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::bch_encode::bitslice_reduce_scalar",
+              "anchor_lines": 42,
+              "current_lines": 42,
+              "anchor_sha256": "49f5c04913b86da81c2678bcb31187cce16d5b34f087bb377231430426f4bf48",
+              "current_sha256": "49f5c04913b86da81c2678bcb31187cce16d5b34f087bb377231430426f4bf48",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::bch_encode::fold_block_scalar",
+              "anchor_lines": 202,
+              "current_lines": 202,
+              "anchor_sha256": "49ab2d6fbb51baa460322a5d47603b5dbdf435fa7df09175a7eb7502861151f3",
+              "current_sha256": "49ab2d6fbb51baa460322a5d47603b5dbdf435fa7df09175a7eb7502861151f3",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2",
+              "anchor_lines": 72,
+              "current_lines": 72,
+              "anchor_sha256": "028a7f0f601f8fa7817a8b228c11172f730edf3ffc6a20477660dc2b2f6f5cf3",
+              "current_sha256": "028a7f0f601f8fa7817a8b228c11172f730edf3ffc6a20477660dc2b2f6f5cf3",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bch_encode::fold_block_pclmul",
+              "anchor_lines": 162,
+              "current_lines": 162,
+              "anchor_sha256": "d69055482cea8cba659c3d94d3e917549d636d83650bcddbe562d572bec47858",
+              "current_sha256": "d69055482cea8cba659c3d94d3e917549d636d83650bcddbe562d572bec47858",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_find_first_zero",
-          "anchor_lines": 91,
-          "current_lines": 91,
-          "anchor_sha256": "b888eda341870f2162611cfa0bafa192c9a3efba61776aede5e92ba11c26fbbe",
-          "current_sha256": "b888eda341870f2162611cfa0bafa192c9a3efba61776aede5e92ba11c26fbbe",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_add_batch",
+              "anchor_lines": 23,
+              "current_lines": 23,
+              "anchor_sha256": "34e2e933a74276748d8d0ce52b4bb5dd29abd8041b012e6cbf902e5ac872b1af",
+              "current_sha256": "34e2e933a74276748d8d0ce52b4bb5dd29abd8041b012e6cbf902e5ac872b1af",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch",
+              "anchor_lines": 18,
+              "current_lines": 18,
+              "anchor_sha256": "f14e1158ccdf7ddb609cbc640a18e2919372dd1745595c9ef0248614b4ca76e3",
+              "current_sha256": "f14e1158ccdf7ddb609cbc640a18e2919372dd1745595c9ef0248614b4ca76e3",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch",
+              "anchor_lines": 34,
+              "current_lines": 34,
+              "anchor_sha256": "21c0eedcb691aaf5e885dab21f6a82d69064fbc0ce9242d04c64dfea5acad4dd",
+              "current_sha256": "21c0eedcb691aaf5e885dab21f6a82d69064fbc0ce9242d04c64dfea5acad4dd",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_permanent4",
+              "anchor_lines": 171,
+              "current_lines": 171,
+              "anchor_sha256": "9f9ab7b2b74391b6fe5bf241c0ed3ada48c913102e9c24c6f960f86a9d2b4016",
+              "current_sha256": "9f9ab7b2b74391b6fe5bf241c0ed3ada48c913102e9c24c6f960f86a9d2b4016",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch",
+              "anchor_lines": 23,
+              "current_lines": 23,
+              "anchor_sha256": "833c6fbdc5e8e2f0a187511de32d6d507e947ec3ece8faee11ff17453dd2eecd",
+              "current_sha256": "833c6fbdc5e8e2f0a187511de32d6d507e947ec3ece8faee11ff17453dd2eecd",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build4",
-          "anchor_lines": 31,
-          "current_lines": 31,
-          "anchor_sha256": "d1bdaac1470762240a07b25d3dd47c4ea4030ab8886d34642ae3b5d8c4aecbaa",
-          "current_sha256": "d1bdaac1470762240a07b25d3dd47c4ea4030ab8886d34642ae3b5d8c4aecbaa",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_add5_batch",
+              "anchor_lines": 85,
+              "current_lines": 85,
+              "anchor_sha256": "d9d24ffa7a2a8c62fe67183ddaf33b5ed1ee689c0bf1ca0d4573b7fc712c087b",
+              "current_sha256": "d9d24ffa7a2a8c62fe67183ddaf33b5ed1ee689c0bf1ca0d4573b7fc712c087b",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_mul5_batch",
+              "anchor_lines": 72,
+              "current_lines": 72,
+              "anchor_sha256": "41401727fb5841aec66f53e98f2477100cdc9aad0c34f86eedd0c7caaa32df0a",
+              "current_sha256": "41401727fb5841aec66f53e98f2477100cdc9aad0c34f86eedd0c7caaa32df0a",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_neg5_batch",
+              "anchor_lines": 25,
+              "current_lines": 25,
+              "anchor_sha256": "50e78405e43553a187c5db80ef349d36374efa4ada5566707d9b400d88d86fb8",
+              "current_sha256": "50e78405e43553a187c5db80ef349d36374efa4ada5566707d9b400d88d86fb8",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_sub5_batch",
+              "anchor_lines": 85,
+              "current_lines": 85,
+              "anchor_sha256": "fdd8130b48b0c583cbd6b045dc230cf68b52a2a55c3ff23bb994719169a16d9a",
+              "current_sha256": "fdd8130b48b0c583cbd6b045dc230cf68b52a2a55c3ff23bb994719169a16d9a",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8",
-          "anchor_lines": 35,
-          "current_lines": 35,
-          "anchor_sha256": "f8a1e5cb35ac6f9180f9fd72c3188a35bbd5cbd60e0954073b7767220f60d04f",
-          "current_sha256": "f8a1e5cb35ac6f9180f9fd72c3188a35bbd5cbd60e0954073b7767220f60d04f",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch",
+              "anchor_lines": 417,
+              "current_lines": 417,
+              "anchor_sha256": "3fe2aebd628b68c97c5fa977780679d62266dc19c07e83c544aa77f26e32e098",
+              "current_sha256": "3fe2aebd628b68c97c5fa977780679d62266dc19c07e83c544aa77f26e32e098",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch",
+              "anchor_lines": 417,
+              "current_lines": 417,
+              "anchor_sha256": "d74a9585e893c473003e9984a7d43063f9297ce4b4f6d34a2b9082b7daee15bb",
+              "current_sha256": "d74a9585e893c473003e9984a7d43063f9297ce4b4f6d34a2b9082b7daee15bb",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch",
+              "anchor_lines": 205,
+              "current_lines": 205,
+              "anchor_sha256": "d0f82f72d1c274141989f3ecbcd5d1cbacd1a0880cf03b415fce1044a24eff00",
+              "current_sha256": "d0f82f72d1c274141989f3ecbcd5d1cbacd1a0880cf03b415fce1044a24eff00",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch",
+              "anchor_lines": 417,
+              "current_lines": 417,
+              "anchor_sha256": "0f741a4744d41e63540c226a0963d70cc9da70af5c797da22087e8129de2eebb",
+              "current_sha256": "0f741a4744d41e63540c226a0963d70cc9da70af5c797da22087e8129de2eebb",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4",
-          "anchor_lines": 67,
-          "current_lines": 67,
-          "anchor_sha256": "8cc76a6972f49bd3db7e54f99e444a0cd5468f369891de9af8eedb34bb1ea2e8",
-          "current_sha256": "8cc76a6972f49bd3db7e54f99e444a0cd5468f369891de9af8eedb34bb1ea2e8",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx512.asm.txt",
+          "regenerated": false,
+          "symbols": []
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8xn",
-          "anchor_lines": 95,
-          "current_lines": 95,
-          "anchor_sha256": "f64979f82153957dfe0c6bbc3f09f1ffb9721a6339235388cc44b88005cacb66",
-          "current_sha256": "f64979f82153957dfe0c6bbc3f09f1ffb9721a6339235388cc44b88005cacb66",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::clmul_scalar::clmul_u64_scalar",
+              "anchor_lines": 26,
+              "current_lines": 26,
+              "anchor_sha256": "77337c50a4bfadd6e576b917d7c5d855d97df26b29c91ac913316d9268509353",
+              "current_sha256": "77337c50a4bfadd6e576b917d7c5d855d97df26b29c91ac913316d9268509353",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::gf2m::detect_with_clmul_batch_preference",
+              "anchor_lines": 2,
+              "current_lines": 2,
+              "anchor_sha256": "7388ca87eeb77fb4bae19d8751ce7934a20ee41170fc0cc92735228c145acb4f",
+              "current_sha256": "7388ca87eeb77fb4bae19d8751ce7934a20ee41170fc0cc92735228c145acb4f",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::clmul::clmul_barrett_reduce",
+              "anchor_lines": 67,
+              "current_lines": 67,
+              "anchor_sha256": "a8aea5e327e0e7e813f8ba73436ac651f83fa249c5984e200c7e411083ebb599",
+              "current_sha256": "a8aea5e327e0e7e813f8ba73436ac651f83fa249c5984e200c7e411083ebb599",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::clmul::clmul_batch#0",
+              "anchor_lines": 47,
+              "current_lines": 47,
+              "anchor_sha256": "30c4f4e1ca6fd918fffd20d366a81de6f4a9e04d75f9552324a556a5bfc96123",
+              "current_sha256": "30c4f4e1ca6fd918fffd20d366a81de6f4a9e04d75f9552324a556a5bfc96123",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul",
+              "anchor_lines": 99,
+              "current_lines": 99,
+              "anchor_sha256": "e4af6922482419df0c3a54daf154a65d40c7ceba732664e9a0374b18ff287795",
+              "current_sha256": "e4af6922482419df0c3a54daf154a65d40c7ceba732664e9a0374b18ff287795",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::clmul::clmul_u64",
+              "anchor_lines": 7,
+              "current_lines": 7,
+              "anchor_sha256": "a72371752df0494743d9cb58bde28ae383ca4e03de272079bffb3741a2a2abd3",
+              "current_sha256": "a72371752df0494743d9cb58bde28ae383ca4e03de272079bffb3741a2a2abd3",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_not_into",
-          "anchor_lines": 26,
-          "current_lines": 26,
-          "anchor_sha256": "e83ee13fa6de2597835ed0ab62dc2118aa14de2e9a19c982a8fbcc17171a982a",
-          "current_sha256": "e83ee13fa6de2597835ed0ab62dc2118aa14de2e9a19c982a8fbcc17171a982a",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp65537.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_add",
+              "anchor_lines": 60,
+              "current_lines": 60,
+              "anchor_sha256": "4354088fb6e9932f05fced088d0a5fe0838abd1389c653b1970b41e4a1814ab2",
+              "current_sha256": "4354088fb6e9932f05fced088d0a5fe0838abd1389c653b1970b41e4a1814ab2",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba",
+              "anchor_lines": 602,
+              "current_lines": 602,
+              "anchor_sha256": "1f8343454c7caded3639ca69d90d98c64c0d8db0639028228f01ddaf8b153c85",
+              "current_sha256": "1f8343454c7caded3639ca69d90d98c64c0d8db0639028228f01ddaf8b153c85",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba",
+              "anchor_lines": 316,
+              "current_lines": 316,
+              "anchor_sha256": "0e09043acf845cc9bb1ef8c68bcb9eae533c150729a294761a38ab9ba7fe38f8",
+              "current_sha256": "0e09043acf845cc9bb1ef8c68bcb9eae533c150729a294761a38ab9ba7fe38f8",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_mul",
+              "anchor_lines": 90,
+              "current_lines": 90,
+              "anchor_sha256": "8b2bbad4a7ec493a87170f8336aec6c7d528b008e11ba94bf823dd8c5ff25c6d",
+              "current_sha256": "8b2bbad4a7ec493a87170f8336aec6c7d528b008e11ba94bf823dd8c5ff25c6d",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_sub",
+              "anchor_lines": 60,
+              "current_lines": 60,
+              "anchor_sha256": "63197aae4a7e7879527e7d417b606e9c9f97bf1d5405264b0e3a170e7a69093f",
+              "current_sha256": "63197aae4a7e7879527e7d417b606e9c9f97bf1d5405264b0e3a170e7a69093f",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_or_into",
-          "anchor_lines": 29,
-          "current_lines": 29,
-          "anchor_sha256": "815ee2850df26f4035e021bb673988d96f0c584e399bf5eecfe5c8216a3f9228",
-          "current_sha256": "815ee2850df26f4035e021bb673988d96f0c584e399bf5eecfe5c8216a3f9228",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_generic.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_add",
+              "anchor_lines": 78,
+              "current_lines": 78,
+              "anchor_sha256": "68cb3aeba6297682e5953aa9cdc3c7dda46fb676f310aae57fec8cb3f3a934dc",
+              "current_sha256": "68cb3aeba6297682e5953aa9cdc3c7dda46fb676f310aae57fec8cb3f3a934dc",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_mul",
+              "anchor_lines": 772,
+              "current_lines": 772,
+              "anchor_sha256": "2ad92a4bf47e2a78a01fc88d14c70939a3d56b85ab3de5db9c5eab2bc967e6c3",
+              "current_sha256": "2ad92a4bf47e2a78a01fc88d14c70939a3d56b85ab3de5db9c5eab2bc967e6c3",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_sub",
+              "anchor_lines": 67,
+              "current_lines": 67,
+              "anchor_sha256": "7a4254b74aa5f17f9caf5f93fdab9c80dbb4fb0d0fad4d9f4f2fe1bd630380c0",
+              "current_sha256": "7a4254b74aa5f17f9caf5f93fdab9c80dbb4fb0d0fad4d9f4f2fe1bd630380c0",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_popcnt",
-          "anchor_lines": 57,
-          "current_lines": 57,
-          "anchor_sha256": "c41760188736ac5a773d3ddbb32c060974050bf48e40b89e5d4f4aaf2d3ebb55",
-          "current_sha256": "c41760188736ac5a773d3ddbb32c060974050bf48e40b89e5d4f4aaf2d3ebb55",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_medium.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_medium::fp_medium_batch_add",
+              "anchor_lines": 76,
+              "current_lines": 76,
+              "anchor_sha256": "3945e737f732f50fc0d97071361f2f7288dca4b6ab298bb0e30617c932a76838",
+              "current_sha256": "3945e737f732f50fc0d97071361f2f7288dca4b6ab298bb0e30617c932a76838",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_medium::fp_medium_batch_dot",
+              "anchor_lines": 183,
+              "current_lines": 183,
+              "anchor_sha256": "05ec0c9fd363c07071b17b9b8ec1cffb2354c720cdb8aa763acf2d750287735f",
+              "current_sha256": "05ec0c9fd363c07071b17b9b8ec1cffb2354c720cdb8aa763acf2d750287735f",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_medium::fp_medium_batch_mul",
+              "anchor_lines": 97,
+              "current_lines": 97,
+              "anchor_sha256": "23bae95b834ae58ec5e820bffc0c0bbce7609602303ad05b26e9a7fd7cdf2b29",
+              "current_sha256": "23bae95b834ae58ec5e820bffc0c0bbce7609602303ad05b26e9a7fd7cdf2b29",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_medium::fp_medium_batch_sub",
+              "anchor_lines": 79,
+              "current_lines": 79,
+              "anchor_sha256": "3cd331c24c6b50419cca02874e9cd832930fd80f5d32ba7d8bf8f4bae1547e74",
+              "current_sha256": "3cd331c24c6b50419cca02874e9cd832930fd80f5d32ba7d8bf8f4bae1547e74",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_shift_left_words",
-          "anchor_lines": 105,
-          "current_lines": 105,
-          "anchor_sha256": "4b01fe59a5cc7a6be888720616dbb45e0b41b32cceefedee66e46b3bf728fac2",
-          "current_sha256": "4b01fe59a5cc7a6be888720616dbb45e0b41b32cceefedee66e46b3bf728fac2",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_f64.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm",
+              "anchor_lines": 2318,
+              "current_lines": 2318,
+              "anchor_sha256": "94d8b1ae6c0a4dbb42f548dea3985a82561552185365546d44a471da61aae348",
+              "current_sha256": "94d8b1ae6c0a4dbb42f548dea3985a82561552185365546d44a471da61aae348",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_shift_right_words",
-          "anchor_lines": 89,
-          "current_lines": 89,
-          "anchor_sha256": "fba60ca5f1d28259f3bc2bd8e1ef1cce6f7a21345dbd7c3638ed83632d5a5ca1",
-          "current_sha256": "fba60ca5f1d28259f3bc2bd8e1ef1cce6f7a21345dbd7c3638ed83632d5a5ca1",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_medium_ple::ple_panel_base_canonical_u16",
+              "anchor_lines": 407,
+              "current_lines": 407,
+              "anchor_sha256": "d9aaf8e720bd4e71519a5c221df4e09a34914e257275d283801aacd05b6e8e95",
+              "current_sha256": "d9aaf8e720bd4e71519a5c221df4e09a34914e257275d283801aacd05b6e8e95",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::avx2::avx2_xor_into",
-          "anchor_lines": 29,
-          "current_lines": 29,
-          "anchor_sha256": "997e1907d75a56801ca87c77c8166b2bd5dbba085c15f48e3f845913723ec3eb",
-          "current_sha256": "997e1907d75a56801ca87c77c8166b2bd5dbba085c15f48e3f845913723ec3eb",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/bch_encode.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::bch_encode::bitslice_reduce_scalar",
-          "anchor_lines": 42,
-          "current_lines": 42,
-          "anchor_sha256": "49f5c04913b86da81c2678bcb31187cce16d5b34f087bb377231430426f4bf48",
-          "current_sha256": "49f5c04913b86da81c2678bcb31187cce16d5b34f087bb377231430426f4bf48",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_batch_add",
+              "anchor_lines": 71,
+              "current_lines": 71,
+              "anchor_sha256": "5d09acf1cf3d60dc1340b8bb6c91b5d8b63960e94d88d1c27c7eb2839eebbc33",
+              "current_sha256": "5d09acf1cf3d60dc1340b8bb6c91b5d8b63960e94d88d1c27c7eb2839eebbc33",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_batch_dot",
+              "anchor_lines": 117,
+              "current_lines": 117,
+              "anchor_sha256": "8f3518597c51663d5cfdd8e3b77aa7ca4710a518fc97ed3f0349a4b91d6fc8e5",
+              "current_sha256": "8f3518597c51663d5cfdd8e3b77aa7ca4710a518fc97ed3f0349a4b91d6fc8e5",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_batch_mul",
+              "anchor_lines": 95,
+              "current_lines": 95,
+              "anchor_sha256": "cc9013f44caad6b38ae460b78034ad70560a50e3724e2840bc4cadc65c5da36d",
+              "current_sha256": "cc9013f44caad6b38ae460b78034ad70560a50e3724e2840bc4cadc65c5da36d",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_batch_sub",
+              "anchor_lines": 66,
+              "current_lines": 66,
+              "anchor_sha256": "a8d723c95bfb37cbf7aa5a7df0c154ebdf8579d983c3e8b781b2d2bd54cdebd1",
+              "current_sha256": "a8d723c95bfb37cbf7aa5a7df0c154ebdf8579d983c3e8b781b2d2bd54cdebd1",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_gemm_row_panel",
+              "anchor_lines": 402,
+              "current_lines": 402,
+              "anchor_sha256": "9b1935c8df06e86c410da16535319d16da3249c2cf18cbbbe69a9c5e09b137e4",
+              "current_sha256": "9b1935c8df06e86c410da16535319d16da3249c2cf18cbbbe69a9c5e09b137e4",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_spmm_row",
+              "anchor_lines": 160,
+              "current_lines": 160,
+              "anchor_sha256": "bf9c59737b047d20f043c1221b6809b7d4f4f2c9b07b5d176a501a0e8b4e41c8",
+              "current_sha256": "bf9c59737b047d20f043c1221b6809b7d4f4f2c9b07b5d176a501a0e8b4e41c8",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_sub_scaled",
+              "anchor_lines": 87,
+              "current_lines": 87,
+              "anchor_sha256": "039f4a846947e407570d6c6d1a4a6dc423b68d4c73876b853b79e59a6782292c",
+              "current_sha256": "039f4a846947e407570d6c6d1a4a6dc423b68d4c73876b853b79e59a6782292c",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::bch_encode::fold_block_scalar",
-          "anchor_lines": 202,
-          "current_lines": 202,
-          "anchor_sha256": "49ab2d6fbb51baa460322a5d47603b5dbdf435fa7df09175a7eb7502861151f3",
-          "current_sha256": "49ab2d6fbb51baa460322a5d47603b5dbdf435fa7df09175a7eb7502861151f3",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_small_f32.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small_f32::fp_small_f32_gemm#0",
+              "anchor_lines": 1447,
+              "current_lines": 1447,
+              "anchor_sha256": "6083bda9bc4663f16bc803352f6659c075e518785308177a4d96d7c3f0c11479",
+              "current_sha256": "6083bda9bc4663f16bc803352f6659c075e518785308177a4d96d7c3f0c11479",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small_f32::fp_small_f32_gemm_route_a",
+              "anchor_lines": 1650,
+              "current_lines": 1650,
+              "anchor_sha256": "6724703b7dc280552531196bcfd5ac6d3d8b478cd8cafe7f51232538d3847c6b",
+              "current_sha256": "6724703b7dc280552531196bcfd5ac6d3d8b478cd8cafe7f51232538d3847c6b",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bch_encode::bitslice_reduce_avx2",
-          "anchor_lines": 72,
-          "current_lines": 72,
-          "anchor_sha256": "028a7f0f601f8fa7817a8b228c11172f730edf3ffc6a20477660dc2b2f6f5cf3",
-          "current_sha256": "028a7f0f601f8fa7817a8b228c11172f730edf3ffc6a20477660dc2b2f6f5cf3",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_small_panel.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small_panel::fp_small_panel_gemm",
+              "anchor_lines": 2201,
+              "current_lines": 2201,
+              "anchor_sha256": "b2172704ed036e0289a7fbe3d4b960f22581a9ce35f4a1332a5d5291d1d725c0",
+              "current_sha256": "b2172704ed036e0289a7fbe3d4b960f22581a9ce35f4a1332a5d5291d1d725c0",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bch_encode::fold_block_pclmul",
-          "anchor_lines": 162,
-          "current_lines": 162,
-          "anchor_sha256": "d69055482cea8cba659c3d94d3e917549d636d83650bcddbe562d572bec47858",
-          "current_sha256": "d69055482cea8cba659c3d94d3e917549d636d83650bcddbe562d572bec47858",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_add_batch",
-          "anchor_lines": 23,
-          "current_lines": 23,
-          "anchor_sha256": "34e2e933a74276748d8d0ce52b4bb5dd29abd8041b012e6cbf902e5ac872b1af",
-          "current_sha256": "34e2e933a74276748d8d0ce52b4bb5dd29abd8041b012e6cbf902e5ac872b1af",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_small_ple.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::fp_small_ple::ple_panel_base_canonical",
+              "anchor_lines": 390,
+              "current_lines": 390,
+              "anchor_sha256": "721c118e35ed0f427753db189d052d36681d31c0bb33f93e37b0fbe27f447f2c",
+              "current_sha256": "721c118e35ed0f427753db189d052d36681d31c0bb33f93e37b0fbe27f447f2c",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch",
-          "anchor_lines": 18,
-          "current_lines": 18,
-          "anchor_sha256": "f14e1158ccdf7ddb609cbc640a18e2919372dd1745595c9ef0248614b4ca76e3",
-          "current_sha256": "f14e1158ccdf7ddb609cbc640a18e2919372dd1745595c9ef0248614b4ca76e3",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/gf2m_batch.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4",
+              "anchor_lines": 473,
+              "current_lines": 473,
+              "anchor_sha256": "c488c3886a761ec08af10b1d0714dc9baea7db48b9060cebf2af2d734ede5300",
+              "current_sha256": "c488c3886a761ec08af10b1d0714dc9baea7db48b9060cebf2af2d734ede5300",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_square_ymm_unroll4",
+              "anchor_lines": 28,
+              "current_lines": 28,
+              "anchor_sha256": "71a7451361ca28e89428af00cbe7bd6551e9b566c65d3e13525cff79aaea5385",
+              "current_sha256": "71a7451361ca28e89428af00cbe7bd6551e9b566c65d3e13525cff79aaea5385",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch",
-          "anchor_lines": 34,
-          "current_lines": 34,
-          "anchor_sha256": "21c0eedcb691aaf5e885dab21f6a82d69064fbc0ce9242d04c64dfea5acad4dd",
-          "current_sha256": "21c0eedcb691aaf5e885dab21f6a82d69064fbc0ce9242d04c64dfea5acad4dd",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/gf2m_common.asm.txt",
+          "regenerated": true,
+          "symbols": []
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_permanent4",
-          "anchor_lines": 171,
-          "current_lines": 171,
-          "anchor_sha256": "9f9ab7b2b74391b6fe5bf241c0ed3ada48c913102e9c24c6f960f86a9d2b4016",
-          "current_sha256": "9f9ab7b2b74391b6fe5bf241c0ed3ada48c913102e9c24c6f960f86a9d2b4016",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/gf2m_gemm.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::gf2m_gemm::gf2m_gemm_panelized",
+              "anchor_lines": 3229,
+              "current_lines": 3229,
+              "anchor_sha256": "5e7716882a54f5c64c687e3f1e935719bad19fb7e4de20a7dc69d4f368a46f1e",
+              "current_sha256": "5e7716882a54f5c64c687e3f1e935719bad19fb7e4de20a7dc69d4f368a46f1e",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch",
-          "anchor_lines": 23,
-          "current_lines": 23,
-          "anchor_sha256": "833c6fbdc5e8e2f0a187511de32d6d507e947ec3ece8faee11ff17453dd2eecd",
-          "current_sha256": "833c6fbdc5e8e2f0a187511de32d6d507e947ec3ece8faee11ff17453dd2eecd",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_add5_batch",
-          "anchor_lines": 85,
-          "current_lines": 85,
-          "anchor_sha256": "d9d24ffa7a2a8c62fe67183ddaf33b5ed1ee689c0bf1ca0d4573b7fc712c087b",
-          "current_sha256": "d9d24ffa7a2a8c62fe67183ddaf33b5ed1ee689c0bf1ca0d4573b7fc712c087b",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/gf2m_wide.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_xmm",
+              "anchor_lines": 102,
+              "current_lines": 102,
+              "anchor_sha256": "8933c7f8dcf8d7eec70221b8487e0d9f604db8d78e5a03e4120e1a191e472e15",
+              "current_sha256": "8933c7f8dcf8d7eec70221b8487e0d9f604db8d78e5a03e4120e1a191e472e15",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_ymm",
+              "anchor_lines": 93,
+              "current_lines": 93,
+              "anchor_sha256": "ebd92fbe8ff09964d8d0e222db463cc3b1cd12e32e068687afb24be1d413e5d9",
+              "current_sha256": "ebd92fbe8ff09964d8d0e222db463cc3b1cd12e32e068687afb24be1d413e5d9",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_xmm",
+              "anchor_lines": 119,
+              "current_lines": 119,
+              "anchor_sha256": "e1be5c9e92e397c25bf41be36234401015f44823882f63be478e46b6fbb287ed",
+              "current_sha256": "e1be5c9e92e397c25bf41be36234401015f44823882f63be478e46b6fbb287ed",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_ymm",
+              "anchor_lines": 251,
+              "current_lines": 251,
+              "anchor_sha256": "b4295fb95e9f1cdbf7eb452f82652eeb7397cfd503d9c1485e37c18d95cd4e01",
+              "current_sha256": "b4295fb95e9f1cdbf7eb452f82652eeb7397cfd503d9c1485e37c18d95cd4e01",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_mul5_batch",
-          "anchor_lines": 72,
-          "current_lines": 72,
-          "anchor_sha256": "41401727fb5841aec66f53e98f2477100cdc9aad0c34f86eedd0c7caaa32df0a",
-          "current_sha256": "41401727fb5841aec66f53e98f2477100cdc9aad0c34f86eedd0c7caaa32df0a",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/mersenne.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::mersenne::mersenne31_batch_dot",
+              "anchor_lines": 113,
+              "current_lines": 113,
+              "anchor_sha256": "ca16dd08b2b7e68ba6c10821bafc8c41dafc41b161b3c4c5faa108ed29f2a0da",
+              "current_sha256": "ca16dd08b2b7e68ba6c10821bafc8c41dafc41b161b3c4c5faa108ed29f2a0da",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::mersenne::mersenne31_batch_mul#0",
+              "anchor_lines": 94,
+              "current_lines": 94,
+              "anchor_sha256": "3d21a9804694142e4c474a08fc314277a42531115e3366ae06e63534c10ba963",
+              "current_sha256": "3d21a9804694142e4c474a08fc314277a42531115e3366ae06e63534c10ba963",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::mersenne::mersenne31_batch_mul_add",
+              "anchor_lines": 102,
+              "current_lines": 102,
+              "anchor_sha256": "b8c381ab239d1723112c365fcbc607339712ce3d589fec5d9e055d1f8c7f1a90",
+              "current_sha256": "b8c381ab239d1723112c365fcbc607339712ce3d589fec5d9e055d1f8c7f1a90",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_neg5_batch",
-          "anchor_lines": 25,
-          "current_lines": 25,
-          "anchor_sha256": "50e78405e43553a187c5db80ef349d36374efa4ada5566707d9b400d88d86fb8",
-          "current_sha256": "50e78405e43553a187c5db80ef349d36374efa4ada5566707d9b400d88d86fb8",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa",
+              "anchor_lines": 275,
+              "current_lines": 275,
+              "anchor_sha256": "0b4ad8783a55fe16f2ab763c3f99a6c99581e993b358f72e833a1710d6967132",
+              "current_sha256": "0b4ad8783a55fe16f2ab763c3f99a6c99581e993b358f72e833a1710d6967132",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::popcount::avx2_popcnt_csa",
+              "anchor_lines": 264,
+              "current_lines": 264,
+              "anchor_sha256": "91884ff2ba1d0e158abfe21acdcc06c140f3b422dea5774908fe12652241b40c",
+              "current_sha256": "91884ff2ba1d0e158abfe21acdcc06c140f3b422dea5774908fe12652241b40c",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::popcount::popcnt_words",
+              "anchor_lines": 16,
+              "current_lines": 16,
+              "anchor_sha256": "c80b5d0db395d0fb1796c16dd1439b5f38aa1c1c724d4c77a0c881456d6d609b",
+              "current_sha256": "c80b5d0db395d0fb1796c16dd1439b5f38aa1c1c724d4c77a0c881456d6d609b",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_sub5_batch",
-          "anchor_lines": 85,
-          "current_lines": 85,
-          "anchor_sha256": "fdd8130b48b0c583cbd6b045dc230cf68b52a2a55c3ff23bb994719169a16d9a",
-          "current_sha256": "fdd8130b48b0c583cbd6b045dc230cf68b52a2a55c3ff23bb994719169a16d9a",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch",
-          "anchor_lines": 417,
-          "current_lines": 417,
-          "anchor_sha256": "3fe2aebd628b68c97c5fa977780679d62266dc19c07e83c544aa77f26e32e098",
-          "current_sha256": "3fe2aebd628b68c97c5fa977780679d62266dc19c07e83c544aa77f26e32e098",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::shift_funnel::shift_left_funnel_bmi2",
+              "anchor_lines": 50,
+              "current_lines": 50,
+              "anchor_sha256": "c94b10756de06f35489709d42e31269adf1c802d62a3c0cf1284f68a2e90aec2",
+              "current_sha256": "c94b10756de06f35489709d42e31269adf1c802d62a3c0cf1284f68a2e90aec2",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::shift_funnel::shift_right_funnel_bmi2",
+              "anchor_lines": 53,
+              "current_lines": 53,
+              "anchor_sha256": "6434c1317755f0e6dcb03e015b9a0f1cef6787912e421f2a85a657f2fddb2560",
+              "current_sha256": "6434c1317755f0e6dcb03e015b9a0f1cef6787912e421f2a85a657f2fddb2560",
+              "instruction_text": "same"
+            }
+          ]
         },
         {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch",
-          "anchor_lines": 417,
-          "current_lines": 417,
-          "anchor_sha256": "d74a9585e893c473003e9984a7d43063f9297ce4b4f6d34a2b9082b7daee15bb",
-          "current_sha256": "d74a9585e893c473003e9984a7d43063f9297ce4b4f6d34a2b9082b7daee15bb",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch",
-          "anchor_lines": 205,
-          "current_lines": 205,
-          "anchor_sha256": "d0f82f72d1c274141989f3ecbcd5d1cbacd1a0880cf03b415fce1044a24eff00",
-          "current_sha256": "d0f82f72d1c274141989f3ecbcd5d1cbacd1a0880cf03b415fce1044a24eff00",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch",
-          "anchor_lines": 417,
-          "current_lines": 417,
-          "anchor_sha256": "0f741a4744d41e63540c226a0963d70cc9da70af5c797da22087e8129de2eebb",
-          "current_sha256": "0f741a4744d41e63540c226a0963d70cc9da70af5c797da22087e8129de2eebb",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx512.asm.txt",
-      "regenerated": false,
-      "symbols": []
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::clmul_scalar::clmul_u64_scalar",
-          "anchor_lines": 26,
-          "current_lines": 26,
-          "anchor_sha256": "77337c50a4bfadd6e576b917d7c5d855d97df26b29c91ac913316d9268509353",
-          "current_sha256": "77337c50a4bfadd6e576b917d7c5d855d97df26b29c91ac913316d9268509353",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::gf2m::detect_with_clmul_batch_preference",
-          "anchor_lines": 2,
-          "current_lines": 2,
-          "anchor_sha256": "7388ca87eeb77fb4bae19d8751ce7934a20ee41170fc0cc92735228c145acb4f",
-          "current_sha256": "7388ca87eeb77fb4bae19d8751ce7934a20ee41170fc0cc92735228c145acb4f",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::clmul::clmul_barrett_reduce",
-          "anchor_lines": 67,
-          "current_lines": 67,
-          "anchor_sha256": "a8aea5e327e0e7e813f8ba73436ac651f83fa249c5984e200c7e411083ebb599",
-          "current_sha256": "a8aea5e327e0e7e813f8ba73436ac651f83fa249c5984e200c7e411083ebb599",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::clmul::clmul_batch#0",
-          "anchor_lines": 47,
-          "current_lines": 47,
-          "anchor_sha256": "30c4f4e1ca6fd918fffd20d366a81de6f4a9e04d75f9552324a556a5bfc96123",
-          "current_sha256": "30c4f4e1ca6fd918fffd20d366a81de6f4a9e04d75f9552324a556a5bfc96123",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul",
-          "anchor_lines": 99,
-          "current_lines": 99,
-          "anchor_sha256": "e4af6922482419df0c3a54daf154a65d40c7ceba732664e9a0374b18ff287795",
-          "current_sha256": "e4af6922482419df0c3a54daf154a65d40c7ceba732664e9a0374b18ff287795",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::clmul::clmul_u64",
-          "anchor_lines": 7,
-          "current_lines": 7,
-          "anchor_sha256": "a72371752df0494743d9cb58bde28ae383ca4e03de272079bffb3741a2a2abd3",
-          "current_sha256": "a72371752df0494743d9cb58bde28ae383ca4e03de272079bffb3741a2a2abd3",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp65537.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_add",
-          "anchor_lines": 60,
-          "current_lines": 60,
-          "anchor_sha256": "4354088fb6e9932f05fced088d0a5fe0838abd1389c653b1970b41e4a1814ab2",
-          "current_sha256": "4354088fb6e9932f05fced088d0a5fe0838abd1389c653b1970b41e4a1814ab2",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba",
-          "anchor_lines": 602,
-          "current_lines": 602,
-          "anchor_sha256": "1f8343454c7caded3639ca69d90d98c64c0d8db0639028228f01ddaf8b153c85",
-          "current_sha256": "1f8343454c7caded3639ca69d90d98c64c0d8db0639028228f01ddaf8b153c85",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba",
-          "anchor_lines": 316,
-          "current_lines": 316,
-          "anchor_sha256": "0e09043acf845cc9bb1ef8c68bcb9eae533c150729a294761a38ab9ba7fe38f8",
-          "current_sha256": "0e09043acf845cc9bb1ef8c68bcb9eae533c150729a294761a38ab9ba7fe38f8",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_mul",
-          "anchor_lines": 90,
-          "current_lines": 90,
-          "anchor_sha256": "8b2bbad4a7ec493a87170f8336aec6c7d528b008e11ba94bf823dd8c5ff25c6d",
-          "current_sha256": "8b2bbad4a7ec493a87170f8336aec6c7d528b008e11ba94bf823dd8c5ff25c6d",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp65537::fp65537_batch_sub",
-          "anchor_lines": 60,
-          "current_lines": 60,
-          "anchor_sha256": "63197aae4a7e7879527e7d417b606e9c9f97bf1d5405264b0e3a170e7a69093f",
-          "current_sha256": "63197aae4a7e7879527e7d417b606e9c9f97bf1d5405264b0e3a170e7a69093f",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_generic.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_add",
-          "anchor_lines": 78,
-          "current_lines": 78,
-          "anchor_sha256": "68cb3aeba6297682e5953aa9cdc3c7dda46fb676f310aae57fec8cb3f3a934dc",
-          "current_sha256": "68cb3aeba6297682e5953aa9cdc3c7dda46fb676f310aae57fec8cb3f3a934dc",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_mul",
-          "anchor_lines": 772,
-          "current_lines": 772,
-          "anchor_sha256": "2ad92a4bf47e2a78a01fc88d14c70939a3d56b85ab3de5db9c5eab2bc967e6c3",
-          "current_sha256": "2ad92a4bf47e2a78a01fc88d14c70939a3d56b85ab3de5db9c5eab2bc967e6c3",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_generic::fp_montgomery_batch_sub",
-          "anchor_lines": 67,
-          "current_lines": 67,
-          "anchor_sha256": "7a4254b74aa5f17f9caf5f93fdab9c80dbb4fb0d0fad4d9f4f2fe1bd630380c0",
-          "current_sha256": "7a4254b74aa5f17f9caf5f93fdab9c80dbb4fb0d0fad4d9f4f2fe1bd630380c0",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_medium.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_medium::fp_medium_batch_add",
-          "anchor_lines": 76,
-          "current_lines": 76,
-          "anchor_sha256": "3945e737f732f50fc0d97071361f2f7288dca4b6ab298bb0e30617c932a76838",
-          "current_sha256": "3945e737f732f50fc0d97071361f2f7288dca4b6ab298bb0e30617c932a76838",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_medium::fp_medium_batch_dot",
-          "anchor_lines": 183,
-          "current_lines": 183,
-          "anchor_sha256": "05ec0c9fd363c07071b17b9b8ec1cffb2354c720cdb8aa763acf2d750287735f",
-          "current_sha256": "05ec0c9fd363c07071b17b9b8ec1cffb2354c720cdb8aa763acf2d750287735f",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_medium::fp_medium_batch_mul",
-          "anchor_lines": 97,
-          "current_lines": 97,
-          "anchor_sha256": "23bae95b834ae58ec5e820bffc0c0bbce7609602303ad05b26e9a7fd7cdf2b29",
-          "current_sha256": "23bae95b834ae58ec5e820bffc0c0bbce7609602303ad05b26e9a7fd7cdf2b29",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_medium::fp_medium_batch_sub",
-          "anchor_lines": 79,
-          "current_lines": 79,
-          "anchor_sha256": "3cd331c24c6b50419cca02874e9cd832930fd80f5d32ba7d8bf8f4bae1547e74",
-          "current_sha256": "3cd331c24c6b50419cca02874e9cd832930fd80f5d32ba7d8bf8f4bae1547e74",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_f64.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm",
-          "anchor_lines": 2318,
-          "current_lines": 2318,
-          "anchor_sha256": "94d8b1ae6c0a4dbb42f548dea3985a82561552185365546d44a471da61aae348",
-          "current_sha256": "94d8b1ae6c0a4dbb42f548dea3985a82561552185365546d44a471da61aae348",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_medium_ple::ple_panel_base_canonical_u16",
-          "anchor_lines": 407,
-          "current_lines": 407,
-          "anchor_sha256": "d9aaf8e720bd4e71519a5c221df4e09a34914e257275d283801aacd05b6e8e95",
-          "current_sha256": "d9aaf8e720bd4e71519a5c221df4e09a34914e257275d283801aacd05b6e8e95",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_batch_add",
-          "anchor_lines": 71,
-          "current_lines": 71,
-          "anchor_sha256": "5d09acf1cf3d60dc1340b8bb6c91b5d8b63960e94d88d1c27c7eb2839eebbc33",
-          "current_sha256": "5d09acf1cf3d60dc1340b8bb6c91b5d8b63960e94d88d1c27c7eb2839eebbc33",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_batch_dot",
-          "anchor_lines": 117,
-          "current_lines": 117,
-          "anchor_sha256": "8f3518597c51663d5cfdd8e3b77aa7ca4710a518fc97ed3f0349a4b91d6fc8e5",
-          "current_sha256": "8f3518597c51663d5cfdd8e3b77aa7ca4710a518fc97ed3f0349a4b91d6fc8e5",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_batch_mul",
-          "anchor_lines": 95,
-          "current_lines": 95,
-          "anchor_sha256": "cc9013f44caad6b38ae460b78034ad70560a50e3724e2840bc4cadc65c5da36d",
-          "current_sha256": "cc9013f44caad6b38ae460b78034ad70560a50e3724e2840bc4cadc65c5da36d",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_batch_sub",
-          "anchor_lines": 66,
-          "current_lines": 66,
-          "anchor_sha256": "a8d723c95bfb37cbf7aa5a7df0c154ebdf8579d983c3e8b781b2d2bd54cdebd1",
-          "current_sha256": "a8d723c95bfb37cbf7aa5a7df0c154ebdf8579d983c3e8b781b2d2bd54cdebd1",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_gemm_row_panel",
-          "anchor_lines": 402,
-          "current_lines": 402,
-          "anchor_sha256": "9b1935c8df06e86c410da16535319d16da3249c2cf18cbbbe69a9c5e09b137e4",
-          "current_sha256": "9b1935c8df06e86c410da16535319d16da3249c2cf18cbbbe69a9c5e09b137e4",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_spmm_row",
-          "anchor_lines": 160,
-          "current_lines": 160,
-          "anchor_sha256": "bf9c59737b047d20f043c1221b6809b7d4f4f2c9b07b5d176a501a0e8b4e41c8",
-          "current_sha256": "bf9c59737b047d20f043c1221b6809b7d4f4f2c9b07b5d176a501a0e8b4e41c8",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_sub_scaled",
-          "anchor_lines": 87,
-          "current_lines": 87,
-          "anchor_sha256": "039f4a846947e407570d6c6d1a4a6dc423b68d4c73876b853b79e59a6782292c",
-          "current_sha256": "039f4a846947e407570d6c6d1a4a6dc423b68d4c73876b853b79e59a6782292c",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_small_f32.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small_f32::fp_small_f32_gemm#0",
-          "anchor_lines": 1447,
-          "current_lines": 1447,
-          "anchor_sha256": "6083bda9bc4663f16bc803352f6659c075e518785308177a4d96d7c3f0c11479",
-          "current_sha256": "6083bda9bc4663f16bc803352f6659c075e518785308177a4d96d7c3f0c11479",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small_f32::fp_small_f32_gemm_route_a",
-          "anchor_lines": 1650,
-          "current_lines": 1650,
-          "anchor_sha256": "6724703b7dc280552531196bcfd5ac6d3d8b478cd8cafe7f51232538d3847c6b",
-          "current_sha256": "6724703b7dc280552531196bcfd5ac6d3d8b478cd8cafe7f51232538d3847c6b",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_small_panel.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small_panel::fp_small_panel_gemm",
-          "anchor_lines": 2201,
-          "current_lines": 2201,
-          "anchor_sha256": "b2172704ed036e0289a7fbe3d4b960f22581a9ce35f4a1332a5d5291d1d725c0",
-          "current_sha256": "b2172704ed036e0289a7fbe3d4b960f22581a9ce35f4a1332a5d5291d1d725c0",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/fp_small_ple.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::fp_small_ple::ple_panel_base_canonical",
-          "anchor_lines": 390,
-          "current_lines": 390,
-          "anchor_sha256": "721c118e35ed0f427753db189d052d36681d31c0bb33f93e37b0fbe27f447f2c",
-          "current_sha256": "721c118e35ed0f427753db189d052d36681d31c0bb33f93e37b0fbe27f447f2c",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/gf2m_batch.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4",
-          "anchor_lines": 473,
-          "current_lines": 473,
-          "anchor_sha256": "c488c3886a761ec08af10b1d0714dc9baea7db48b9060cebf2af2d734ede5300",
-          "current_sha256": "c488c3886a761ec08af10b1d0714dc9baea7db48b9060cebf2af2d734ede5300",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_square_ymm_unroll4",
-          "anchor_lines": 28,
-          "current_lines": 28,
-          "anchor_sha256": "71a7451361ca28e89428af00cbe7bd6551e9b566c65d3e13525cff79aaea5385",
-          "current_sha256": "71a7451361ca28e89428af00cbe7bd6551e9b566c65d3e13525cff79aaea5385",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/gf2m_common.asm.txt",
-      "regenerated": true,
-      "symbols": []
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/gf2m_gemm.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::gf2m_gemm::gf2m_gemm_panelized",
-          "anchor_lines": 3229,
-          "current_lines": 3229,
-          "anchor_sha256": "5e7716882a54f5c64c687e3f1e935719bad19fb7e4de20a7dc69d4f368a46f1e",
-          "current_sha256": "5e7716882a54f5c64c687e3f1e935719bad19fb7e4de20a7dc69d4f368a46f1e",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/gf2m_wide.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_xmm",
-          "anchor_lines": 102,
-          "current_lines": 102,
-          "anchor_sha256": "8933c7f8dcf8d7eec70221b8487e0d9f604db8d78e5a03e4120e1a191e472e15",
-          "current_sha256": "8933c7f8dcf8d7eec70221b8487e0d9f604db8d78e5a03e4120e1a191e472e15",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::gf2m_wide::clmul_wide4_ymm",
-          "anchor_lines": 93,
-          "current_lines": 93,
-          "anchor_sha256": "ebd92fbe8ff09964d8d0e222db463cc3b1cd12e32e068687afb24be1d413e5d9",
-          "current_sha256": "ebd92fbe8ff09964d8d0e222db463cc3b1cd12e32e068687afb24be1d413e5d9",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_xmm",
-          "anchor_lines": 119,
-          "current_lines": 119,
-          "anchor_sha256": "e1be5c9e92e397c25bf41be36234401015f44823882f63be478e46b6fbb287ed",
-          "current_sha256": "e1be5c9e92e397c25bf41be36234401015f44823882f63be478e46b6fbb287ed",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::gf2m_wide::clmul_wide9_ymm",
-          "anchor_lines": 251,
-          "current_lines": 251,
-          "anchor_sha256": "b4295fb95e9f1cdbf7eb452f82652eeb7397cfd503d9c1485e37c18d95cd4e01",
-          "current_sha256": "b4295fb95e9f1cdbf7eb452f82652eeb7397cfd503d9c1485e37c18d95cd4e01",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/mersenne.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::mersenne::mersenne31_batch_dot",
-          "anchor_lines": 113,
-          "current_lines": 113,
-          "anchor_sha256": "ca16dd08b2b7e68ba6c10821bafc8c41dafc41b161b3c4c5faa108ed29f2a0da",
-          "current_sha256": "ca16dd08b2b7e68ba6c10821bafc8c41dafc41b161b3c4c5faa108ed29f2a0da",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::mersenne::mersenne31_batch_mul#0",
-          "anchor_lines": 94,
-          "current_lines": 94,
-          "anchor_sha256": "3d21a9804694142e4c474a08fc314277a42531115e3366ae06e63534c10ba963",
-          "current_sha256": "3d21a9804694142e4c474a08fc314277a42531115e3366ae06e63534c10ba963",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::mersenne::mersenne31_batch_mul_add",
-          "anchor_lines": 102,
-          "current_lines": 102,
-          "anchor_sha256": "b8c381ab239d1723112c365fcbc607339712ce3d589fec5d9e055d1f8c7f1a90",
-          "current_sha256": "b8c381ab239d1723112c365fcbc607339712ce3d589fec5d9e055d1f8c7f1a90",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa",
-          "anchor_lines": 275,
-          "current_lines": 275,
-          "anchor_sha256": "0b4ad8783a55fe16f2ab763c3f99a6c99581e993b358f72e833a1710d6967132",
-          "current_sha256": "0b4ad8783a55fe16f2ab763c3f99a6c99581e993b358f72e833a1710d6967132",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::popcount::avx2_popcnt_csa",
-          "anchor_lines": 264,
-          "current_lines": 264,
-          "anchor_sha256": "91884ff2ba1d0e158abfe21acdcc06c140f3b422dea5774908fe12652241b40c",
-          "current_sha256": "91884ff2ba1d0e158abfe21acdcc06c140f3b422dea5774908fe12652241b40c",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::popcount::popcnt_words",
-          "anchor_lines": 16,
-          "current_lines": 16,
-          "anchor_sha256": "c80b5d0db395d0fb1796c16dd1439b5f38aa1c1c724d4c77a0c881456d6d609b",
-          "current_sha256": "c80b5d0db395d0fb1796c16dd1439b5f38aa1c1c724d4c77a0c881456d6d609b",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::shift_funnel::shift_left_funnel_bmi2",
-          "anchor_lines": 50,
-          "current_lines": 50,
-          "anchor_sha256": "c94b10756de06f35489709d42e31269adf1c802d62a3c0cf1284f68a2e90aec2",
-          "current_sha256": "c94b10756de06f35489709d42e31269adf1c802d62a3c0cf1284f68a2e90aec2",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::shift_funnel::shift_right_funnel_bmi2",
-          "anchor_lines": 53,
-          "current_lines": 53,
-          "anchor_sha256": "6434c1317755f0e6dcb03e015b9a0f1cef6787912e421f2a85a657f2fddb2560",
-          "current_sha256": "6434c1317755f0e6dcb03e015b9a0f1cef6787912e421f2a85a657f2fddb2560",
-          "instruction_text": "same"
-        }
-      ]
-    },
-    {
-      "artefact": "crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt",
-      "regenerated": true,
-      "symbols": [
-        {
-          "symbol": "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2#0",
-          "anchor_lines": 332,
-          "current_lines": 332,
-          "anchor_sha256": "47ed757453b3bfc61fdd200c49def0963ca09d54c17ec3c3a948bb24b8e82251",
-          "current_sha256": "47ed757453b3bfc61fdd200c49def0963ca09d54c17ec3c3a948bb24b8e82251",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_movemask",
-          "anchor_lines": 116,
-          "current_lines": 116,
-          "anchor_sha256": "21a4648b0268bd7990f7775f7bfb7878c97ef4166455a1882bf404220706787a",
-          "current_sha256": "21a4648b0268bd7990f7775f7bfb7878c97ef4166455a1882bf404220706787a",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_pshufb",
-          "anchor_lines": 304,
-          "current_lines": 304,
-          "anchor_sha256": "d6119339da6cca90a4b71e22f2b0010b09b367f4d919ae46882b31134909ef4e",
-          "current_sha256": "d6119339da6cca90a4b71e22f2b0010b09b367f4d919ae46882b31134909ef4e",
-          "instruction_text": "same"
-        },
-        {
-          "symbol": "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6",
-          "anchor_lines": 603,
-          "current_lines": 603,
-          "anchor_sha256": "dda73b08a938a10ab40ca6034bff7b8e6d6d697a75c2b0899c4542f3d201351c",
-          "current_sha256": "dda73b08a938a10ab40ca6034bff7b8e6d6d697a75c2b0899c4542f3d201351c",
-          "instruction_text": "same"
+          "artefact": "crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt",
+          "regenerated": true,
+          "symbols": [
+            {
+              "symbol": "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2#0",
+              "anchor_lines": 332,
+              "current_lines": 332,
+              "anchor_sha256": "47ed757453b3bfc61fdd200c49def0963ca09d54c17ec3c3a948bb24b8e82251",
+              "current_sha256": "47ed757453b3bfc61fdd200c49def0963ca09d54c17ec3c3a948bb24b8e82251",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_movemask",
+              "anchor_lines": 116,
+              "current_lines": 116,
+              "anchor_sha256": "21a4648b0268bd7990f7775f7bfb7878c97ef4166455a1882bf404220706787a",
+              "current_sha256": "21a4648b0268bd7990f7775f7bfb7878c97ef4166455a1882bf404220706787a",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_pshufb",
+              "anchor_lines": 304,
+              "current_lines": 304,
+              "anchor_sha256": "d6119339da6cca90a4b71e22f2b0010b09b367f4d919ae46882b31134909ef4e",
+              "current_sha256": "d6119339da6cca90a4b71e22f2b0010b09b367f4d919ae46882b31134909ef4e",
+              "instruction_text": "same"
+            },
+            {
+              "symbol": "gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6",
+              "anchor_lines": 603,
+              "current_lines": 603,
+              "anchor_sha256": "dda73b08a938a10ab40ca6034bff7b8e6d6d697a75c2b0899c4542f3d201351c",
+              "current_sha256": "dda73b08a938a10ab40ca6034bff7b8e6d6d697a75c2b0899c4542f3d201351c",
+              "instruction_text": "same"
+            }
+          ]
         }
       ]
     }
