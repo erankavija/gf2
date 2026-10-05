@@ -35,6 +35,7 @@ def _scripts():
     return ROOT / Path(live[0]).parent
 
 
+sys.dont_write_bytecode = True  # `--check` writes nothing, however invoked
 sys.path.insert(0, str(_scripts()))
 import producing_closure  # noqa: E402
 
