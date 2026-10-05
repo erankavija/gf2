@@ -409,22 +409,6 @@
    "estimated_confirmation_minutes": 2.789948136
   },
   {
-   "family": "63bad95d-profile-holdout-transpose",
-   "purpose": "selector-calibration",
-   "non_exploratory_cells": 6,
-   "holdout_cells": 3,
-   "small_input_cells": 1,
-   "attempt": 1,
-   "attempt_alpha": 0.025,
-   "corrected_alpha": 0.004166666666666667,
-   "expected_draws_per_tail": 20.833333333333332,
-   "pilot_cells": 3,
-   "pilot_children": 72,
-   "confirmation_children": 288,
-   "estimated_pilot_minutes": 0.6983639598,
-   "estimated_confirmation_minutes": 2.789948136
-  },
-  {
    "family": "63bad95d-profile-dispatch-overhead",
    "purpose": "selector-calibration",
    "non_exploratory_cells": 6,
@@ -457,22 +441,6 @@
    "estimated_confirmation_minutes": 2.789948136
   },
   {
-   "family": "63bad95d-transpose-external-ladder",
-   "purpose": "kernel-family",
-   "non_exploratory_cells": 4,
-   "holdout_cells": 0,
-   "small_input_cells": 0,
-   "attempt": 1,
-   "attempt_alpha": 0.025,
-   "corrected_alpha": 0.00625,
-   "expected_draws_per_tail": 31.25,
-   "pilot_cells": 4,
-   "pilot_children": 96,
-   "confirmation_children": 192,
-   "estimated_pilot_minutes": 0.9311519464,
-   "estimated_confirmation_minutes": 1.8599654239999999
-  },
-  {
    "family": "63bad95d-matvec-external-ladder",
    "purpose": "consumer-family",
    "non_exploratory_cells": 4,
@@ -490,9 +458,9 @@
   }
  ],
  "planned_totals": {
-  "non_exploratory_cells": 32,
-  "estimated_pilot_minutes": 5.3541236918,
-  "estimated_confirmation_minutes": 14.879723391999999
+  "non_exploratory_cells": 22,
+  "estimated_pilot_minutes": 3.7246077856,
+  "estimated_confirmation_minutes": 10.229809832
  },
  "offline_tuning_campaign": {
   "protocol": "dev/active/dbd8787d/premeasurement-protocol.md",
