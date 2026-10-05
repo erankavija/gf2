@@ -610,24 +610,24 @@
     {
       "id": "calibration-fields",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 377,
       "occurrences": 1,
       "verbatim": "    const ALL: [Self; 19] = [",
       "why": "The core producer sweeps a closed list of retained threshold fields.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
     },
     {
       "id": "calibration-bit-arm",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 2323,
       "occurrences": 1,
       "verbatim": "                Arm::Conservative => &ScalarBackend,",
       "why": "The producer calibrates `bit_backend.simd_min_words` on the XOR of the two backends called directly.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
     },
     {
       "id": "calibration-launcher-declaration",
@@ -654,13 +654,13 @@
     {
       "id": "calibration-inventory-closed",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 217,
       "occurrences": 1,
       "verbatim": "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;",
       "why": "The producer publishes only when its measured and omitted fields partition a fixed codec inventory.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
     },
     {
       "id": "calibration-validator-behavior",
