@@ -5527,6 +5527,7 @@ mod tests {
         winograd_min_dim: 96,
         triangular_base_case_max_dim: 6,
         ple_scalar_base_max_cols: 3,
+        matvec_simd_min_words: 9,
     };
 
     #[allow(dead_code)]
@@ -5599,6 +5600,68 @@ mod tests {
             "2026-08-20T01:00:00Z"
         );
         assert_ne!(profile.assembly.assembled_at, *measured_at);
+    }
+
+    #[test]
+    fn the_matvec_threshold_is_a_swept_field_of_the_bit_matrix_family() {
+        let field = CalibratedField::MatvecSimdMinWords;
+        assert!(CalibratedField::ALL.contains(&field));
+        assert_eq!(
+            field.schema_field(),
+            SchemaField {
+                family: "bit_matrix".to_owned(),
+                name: "matvec_simd_min_words".to_owned(),
+            }
+        );
+        assert_eq!(field.grid(), [4, 7, 8, 9, 32, 63, 64, 65, 128]);
+        assert!(field.grid().contains(&field.conservative_default()));
+        assert_eq!(
+            profile_from(&DISTINCT).bit_matrix().matvec_simd_min_words(),
+            DISTINCT.matvec_simd_min_words
+        );
+    }
+
+    #[test]
+    fn both_matvec_arms_run_their_lane_and_agree_on_every_bank() {
+        let field = CalibratedField::MatvecSimdMinWords;
+        for size in field.grid() {
+            let fixture = build_follow_on_fixture(field, size).unwrap();
+            let mut digests = Vec::new();
+            for arm in Arm::BOTH {
+                let spec = ChildSpec {
+                    field,
+                    variant: SweepVariant::Standard,
+                    size,
+                    arm,
+                    task: ChildTask::Probe,
+                };
+                if arm == Arm::Asymptotic && simd_backend().is_none() {
+                    let observation = execute_follow_on(spec, &fixture, 0).unwrap();
+                    assert_eq!(
+                        observation.availability,
+                        ChildAvailability::Unavailable {
+                            omission: CapabilityOmission::SimdBackendUnavailable,
+                        }
+                    );
+                    continue;
+                }
+                for bank in 0..BIT_FIXTURES {
+                    let observation = execute_follow_on(spec, &fixture, bank).unwrap();
+                    assert_eq!(observation.observed_route, field.arm_name(arm));
+                    verify_probe_observations(
+                        spec,
+                        &observation.effective_observation,
+                        &observation.capability_observation,
+                    )
+                    .unwrap();
+                    digests.push((bank, observation.result_digest));
+                }
+            }
+            for (bank, digest) in &digests {
+                let first = digests.iter().find(|(other, _)| other == bank).unwrap();
+                assert_eq!(digest, &first.1, "the lanes disagree at stride {size}");
+            }
+        }
     }
 
     #[test]
