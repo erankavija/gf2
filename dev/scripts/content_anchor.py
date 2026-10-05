@@ -38,6 +38,10 @@ class Anchor:
             "baseline_sha256": hashlib.sha256(self.baseline.read_bytes()).hexdigest(),
         }
 
+    def bytes_or_none(self, path: str) -> bytes | None:
+        """The anchor bytes of `path`, or `None` when the anchor has no such file."""
+        return self.bytes(path) if path in self.digests() else None
+
     def bytes(self, path: str) -> bytes:
         """The anchor bytes of `path`, checked against the baseline digest.
 
@@ -91,3 +95,9 @@ class Anchor:
             + "\n"
         )
         return len(digests)
+
+
+def digest_changes(before: Anchor, after: Anchor) -> list[str]:
+    """Sorted paths whose digests differ between two baselines, or exist in one only."""
+    old, new = before.digests(), after.digests()
+    return sorted(path for path in set(old) | set(new) if old.get(path) != new.get(path))

@@ -2,13 +2,16 @@
 
 A listing is a banner followed by one `; symbol:` divider and body per symbol.
 `compare` reports, per symbol, whether two listings hold the same instruction
-text under RULE.
+text under RULE; `step` does so for every listing of two trees and classes the
+paths whose bytes differ between them.
 """
 
 from __future__ import annotations
 
 import hashlib
 import re
+
+import rust_code_text
 
 RULE = (
     "Per symbol, the lines between its `; symbol:` divider and the next divider, "
@@ -30,6 +33,7 @@ PACKAGE = re.compile(r"^; crate         : (\S+)$", re.M)
 TARGET_CPU = re.compile(r"^; target-cpu    : (\S+)$", re.M)
 FEATURES = re.compile(r"^; features      : (\S+)$", re.M)
 UNSET = "<empty>"
+LISTING = ".asm.txt"
 
 
 def symbols(artefact: str) -> dict[str, str]:
@@ -103,3 +107,44 @@ def compare(before: str, after: str) -> list[dict]:
             }
         )
     return rows
+
+
+def source_class(path: str, before: bytes | None, after: bytes | None) -> str:
+    """The class of a path whose bytes differ; `None` stands for an absent side.
+
+    `assembly-listing` for a listing; `comment-or-blank-only` or `code-differs`
+    for a Rust source under `rust_code_text.RULE`; `other` otherwise.
+    """
+    if path.endswith(LISTING):
+        return "assembly-listing"
+    if path.endswith(".rs") and before is not None and after is not None:
+        same = rust_code_text.code_text(before.decode()) == rust_code_text.code_text(after.decode())
+        return "comment-or-blank-only" if same else "code-differs"
+    return "other"
+
+
+def step(name: str, changed: list[str], paths: set[str], before, after) -> dict:
+    """The record of one step between two trees.
+
+    `changed` are the paths whose bytes differ and `paths` those of either
+    tree; `before` and `after` map a path to its bytes or `None`.
+    """
+    sources = [{"path": path, "class": source_class(path, before(path), after(path))} for path in changed]
+    counts = {}
+    for entry in sources:
+        counts[entry["class"]] = counts.get(entry["class"], 0) + 1
+    listings, total, differing = [], 0, 0
+    for artefact in sorted(path for path in paths if path.endswith(LISTING)):
+        old, new = before(artefact), after(artefact)
+        rows = compare((old or b"").decode(), (new or b"").decode())
+        total += len(rows)
+        differing += sum(row["instruction_text"] != "same" for row in rows)
+        listings.append({"artefact": artefact, "regenerated": artefact in changed, "symbols": rows})
+    return {
+        "step": name,
+        "source_class_counts": counts,
+        "symbol_count": total,
+        "differing_symbol_count": differing,
+        "sources": sources,
+        "listings": listings,
+    }
