@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-05T00:25:20.115997779Z",
   "context": {},
   "created_at": "2026-09-16T22:38:43.315534285Z",
@@ -392,7 +392,33 @@
     "doc-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-10-05T01:16:47.207309653Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T01:17:56.899242055Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-05T01:21:33.727184208Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T01:24:15.102627754Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T01:29:37.353503187Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6e87c436-53d2-4fd4-bf58-aee2c7ed97fb",
   "labels": [
     "component:benchmarks",
@@ -409,5 +435,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement and confirm the dense-parity outcome",
-  "updated_at": "2026-10-05T01:07:44.492395774Z"
+  "updated_at": "2026-10-05T01:29:37.353503187Z"
 }

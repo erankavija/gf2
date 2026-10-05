@@ -18371,3 +18371,9 @@
 {"fields":["documents"],"id":"2f0fd72c-5c7a-48d0-bde5-b0d251f330a3","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:07:44.430988592Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"a5e4e449-fde3-4691-98f0-20aec52fb1eb","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:07:44.462133106Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"1967f22e-adc2-41c9-945b-a66dc4f819a8","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:07:44.492395774Z","type":"issue_updated","updated_by":"doc-add"}
+{"assignee":"agent:jit-execution-lead","id":"333f1725-eab4-4ee7-8964-2b5715090a54","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:16:46.978164604Z","type":"issue_claimed"}
+{"gate_key":"asm-artefact-present","id":"6f68303b-7306-4f07-9c6f-c0a53ef68d01","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:16:47.207309653Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"683d5834-58fa-427f-85b5-8f1d73386650","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:17:56.899242055Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"16e5dd84-437f-4bd9-b49f-f5f8fb51cad7","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:21:33.727184208Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"3a5b5129-e3da-4a67-b251-4f88d6f13ad9","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:24:15.102627754Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"b17afa87-25b1-4330-a4b1-517d22c64dbe","issue_id":"6e87c436-53d2-4fd4-bf58-aee2c7ed97fb","timestamp":"2026-10-05T01:29:37.353503187Z","type":"gate_passed","updated_by":"auto:executor"}
