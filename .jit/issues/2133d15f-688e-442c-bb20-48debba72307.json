@@ -227,14 +227,15 @@
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/breakdown.json"
     }
   ],
+  "done_at": "2026-10-05T21:41:50.427872227Z",
   "first_ready_at": "2026-10-05T19:28:49.112013653Z",
   "gates_required": [
     "plan-review"
   ],
   "gates_status": {
     "plan-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T21:14:31.810409304Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T21:41:16.561236774Z",
       "updated_by": "auto:executor"
     }
   },
@@ -253,7 +254,7 @@
     "type:planning"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "planning: Vectorize LDPC decoding across frames",
-  "updated_at": "2026-10-05T21:37:31.713139345Z"
+  "updated_at": "2026-10-05T21:41:50.427872227Z"
 }
