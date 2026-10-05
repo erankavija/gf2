@@ -15,7 +15,7 @@ path = "src/lib.rs"
 # against. Default features are disabled to keep the dependency surface
 # small for a research stub; only what the trait demonstration needs.
 [dependencies]
-gf2-core = { path = "../../../crates/gf2-core", default-features = false }
+gf2-core = { path = "../../../../../../crates/gf2-core", default-features = false }
 
 [dev-dependencies]
 proptest = "1"

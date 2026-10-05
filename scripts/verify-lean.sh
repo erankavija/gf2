@@ -25,7 +25,7 @@
 #     upstream Charon handles those cases, and gfpn extraction is clean without
 #     them (2 residual `FiniteField::Wide` warnings on the opaque `field`
 #     trait are benign). Patch preserved at
-#     `dev/active/charon-patch-backup-2026-05-15/implied-clause-rebased-487f0320.patch`.
+#     `dev/archive/legacy/dev/active/charon-patch-backup-2026-05-15/implied-clause-rebased-487f0320.patch`.
 #   * Aeneas: upstream HEAD `5220259c`, unmodified. Links charon-ml from the
 #     nested charon submodule, so that submodule must be at the same 487f0320
 #     pin before `dune build` (else `TTraitType` arity mismatch).

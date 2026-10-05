@@ -281,7 +281,7 @@ Documentation, campaign, data, presentation, and development references:
 
 Historical JIT/development references are also present in
 `.jit/events.jsonl`, the BCH-related `.jit/issues/*.json` records, and these
-tracked development documents: `dev/active/DOCUMENTATION_AUDIT.md`,
+tracked development documents: `dev/archive/legacy/dev/active/DOCUMENTATION_AUDIT.md`,
 `dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md`,
 `dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv`,
 the `dev/archive/6efb756b-grand/active/` handoffs/completions, the

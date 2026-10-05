@@ -13,7 +13,7 @@ Do NOT advance Charon to its own `main` HEAD (`1a639c02`); it is 23 commits beyo
 
 ## Project-local Charon patches (carry forward)
 
-All backed up at `dev/active/charon-patch-backup-2026-05-15/`:
+All backed up at `dev/archive/legacy/dev/active/charon-patch-backup-2026-05-15/`:
 
 1. HRTB-erase (3 sites) — `expand_associated_types.rs`
 2. SelfClause / Local(0,0) fallback in `lookup_type_replacement` — `expand_associated_types.rs`
@@ -42,7 +42,7 @@ Aeneas Lean backend churn (+1829 / −475, 25 files) between `5fc8fdf2` and `0f9
 ## Migration result (2026-05-31, completed)
 
 - **Final pair:** Aeneas `0f99a049` (tag nightly-2026.05.30) + Charon `e069223a`. `charon-pin` reads `e069223a` and matches the installed Charon. rustc `nightly-2026-02-22` installed with `rustc-dev, llvm-tools-preview, rust-src, miri`. Lean/Mathlib unchanged at `v4.30.0-rc2`.
-- **Patches surviving:** all 4 Charon patches still required and applied cleanly at `e069223a` (none made redundant by upstream). 3 untracked UI test files restored. Rebased diff saved at `dev/active/charon-patch-backup-2026-05-15/expand_and_fmt-rebased-150d7d79.patch`.
+- **Patches surviving:** all 4 Charon patches still required and applied cleanly at `e069223a` (none made redundant by upstream). 3 untracked UI test files restored. Rebased diff saved at `dev/archive/legacy/dev/active/charon-patch-backup-2026-05-15/expand_and_fmt-rebased-150d7d79.patch`.
 - **Extraction-pipeline fixes (3):**
   1. `verify-lean.sh`: opaqued the three `gfp::specialized::batch_*_mersenne31` functions (Aeneas dropped the slice `.zip` iterator instances). Non-proof-target batch helpers; minor coverage delta noted.
   2. `fix-aeneas-dupes.py`: added `PLE_PANEL_COLS` (new trait const, default `Self::PLE_BASE_COLS` = 1) to the const-default inline table.
