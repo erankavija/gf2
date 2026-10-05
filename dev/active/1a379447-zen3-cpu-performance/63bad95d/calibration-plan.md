@@ -100,9 +100,9 @@ What requires a change to that system:
   (`baked-matvec-conservative-test`). Installing a host-specific threshold
   therefore needs a new retained-threshold sweep in the producer. The field is
   selected at compile time, so its arms call the two lanes directly, as the
-  bit-backend sweep calls the two backends (`calibration-bit-arm`); the scalar
-  lane has no public entry today (`matvec-scalar-lane-private`). The change
-  touches the producer's behavior token and counts, the independent validator
+  bit-backend sweep calls the two backends (`calibration-bit-arm`), through
+  `BitMatrix::matvec_with_route` (`matvec-lane-entry`). The change
+  touches the producer's counts, the independent validator
   (`calibration-validator-behavior`), a protocol amendment and the campaign
   declaration.
 - **A transpose lane in the profile.** No codec field exists. The kernel crate
