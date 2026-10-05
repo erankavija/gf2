@@ -1,0 +1,11 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: env RUSTFLAGS="--cfg gf2_tuning_baked" nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --features simd,test-support,tuning-profile --test matrix_selection_baked --cargo-profile ci-test --profile ci
+    Finished `ci-test` profile [optimized] target(s) in 0.05s
+────────────
+ Nextest run ID fcf2a44c-6e32-4c97-b0dc-4e295591280a with nextest profile: ci
+    Starting 2 tests across 1 binary
+        PASS [   0.004s] (1/2) gf2-core::matrix_selection_baked fresh_tuning_process_child
+        PASS [   0.005s] (2/2) gf2-core::matrix_selection_baked baked_matvec_route_ignores_runtime_profile_install
+────────────
+     Summary [   0.005s] 2 tests run: 2 passed, 0 skipped
+# exit: 0

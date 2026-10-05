@@ -1,0 +1,1062 @@
+{
+  "schema": "dense-route-comparison-v1",
+  "issue": "6e87c436",
+  "campaigns": [
+    {
+      "campaign_id": "v4-r1-2037941f-dense-isolated-fused-parity",
+      "receipt": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/receipt.json",
+      "addendum_sha256": "28685a0913aed107090c0c489de6a68fe47c534314854551b2d015e2a8ac31fb",
+      "smoke_record": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-isolated-fused-parity.json",
+      "smoke_record_sha256": "5787f0326f4a25cee52f0703c352a97391f1cdb4e85879955c39deab498aeea9",
+      "cell_arms": 24,
+      "differing_cell_arms": 0,
+      "rows": [
+        {
+          "cell_id": "and-popcnt-63w-streaming",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=8x8389584B/working-set=67116672B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=8x8389584B/working-set=67116672B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-63w-streaming",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=8x8389584B/working-set=67116672B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=8x8389584B/working-set=67116672B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-63w-warm",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=1x1008B/working-set=1008B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=1x1008B/working-set=1008B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-63w-warm",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=1x1008B/working-set=1008B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=1x1008B/working-set=1008B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-64w-streaming",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-64w-streaming",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-64w-warm",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=1x1024B/working-set=1024B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=1x1024B/working-set=1024B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-64w-warm",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=1x1024B/working-set=1024B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=1x1024B/working-set=1024B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-65w-streaming",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=8x8388640B/working-set=67109120B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=8x8388640B/working-set=67109120B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-65w-streaming",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=8x8388640B/working-set=67109120B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=8x8388640B/working-set=67109120B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-65w-warm",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=1x1040B/working-set=1040B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=1x1040B/working-set=1040B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-65w-warm",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=1x1040B/working-set=1040B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=1x1040B/working-set=1040B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-66w-warm",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=66/row%64=0/x%64=0/banks=1x1056B/working-set=1056B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=66/row%64=0/x%64=0/banks=1x1056B/working-set=1056B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-66w-warm",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=66/row%64=0/x%64=0/banks=1x1056B/working-set=1056B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=66/row%64=0/x%64=0/banks=1x1056B/working-set=1056B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-7w-warm",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=7/row%64=0/x%64=0/banks=1x112B/working-set=112B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=7/row%64=0/x%64=0/banks=1x112B/working-set=112B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-7w-warm",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=7/row%64=0/x%64=0/banks=1x112B/working-set=112B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=7/row%64=0/x%64=0/banks=1x112B/working-set=112B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-8w-streaming",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-8w-streaming",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-8w-warm",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-8w-warm",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-9w-streaming",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=8x8388720B/working-set=67109760B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=8x8388720B/working-set=67109760B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-9w-streaming",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=8x8388720B/working-set=67109760B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=8x8388720B/working-set=67109760B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-9w-warm",
+          "arm": "and-popcnt-a",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=1x144B/working-set=144B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=1x144B/working-set=144B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "and-popcnt-9w-warm",
+          "arm": "and-popcnt-b",
+          "measured_paths": [
+            "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=1x144B/working-set=144B"
+          ],
+          "current_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=1x144B/working-set=144B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        }
+      ]
+    },
+    {
+      "campaign_id": "v4-r1-2037941f-dense-allocated-matvec",
+      "receipt": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json",
+      "addendum_sha256": "19950912eb0ba79797f4041e1daa6ad288b7bb14834459cc7b04dee08db3ad35",
+      "smoke_record": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-allocated-matvec.json",
+      "smoke_record_sha256": "42ab2e20ebd5bd5372aac47a60541f138a23952f995183a5b906e7462f2ac583",
+      "cell_arms": 48,
+      "differing_cell_arms": 0,
+      "rows": [
+        {
+          "cell_id": "matvec-r1024-63w-scalar-reference-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-63w-scalar-reference-warm",
+          "arm": "matvec-scalar-reference",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/scalar-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/scalar-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+          "measured_executable_sha256": "2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e",
+          "current_executable_sha256": "35a92699d4c01f01a2c3350e668213f104aff7220f94815e61c141ef53c94bc4",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-63w-streaming",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=8x8782200B/working-set=70257600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=8x8782200B/working-set=70257600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-63w-streaming",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=8x8782200B/working-set=70257600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=8x8782200B/working-set=70257600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-63w-tail1-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=tail1/rows=1024/cols=4031/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=tail1/rows=1024/cols=4031/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-63w-tail1-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=tail1/rows=1024/cols=4031/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=tail1/rows=1024/cols=4031/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-63w-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-63w-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-cold",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-cold",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-scalar-reference-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-scalar-reference-warm",
+          "arm": "matvec-scalar-reference",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/scalar-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/scalar-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "measured_executable_sha256": "2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e",
+          "current_executable_sha256": "35a92699d4c01f01a2c3350e668213f104aff7220f94815e61c141ef53c94bc4",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-streaming",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-streaming",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-tail1-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=tail1/rows=1024/cols=4095/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=tail1/rows=1024/cols=4095/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-tail1-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=tail1/rows=1024/cols=4095/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=tail1/rows=1024/cols=4095/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-64w-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-65w-scalar-reference-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-65w-scalar-reference-warm",
+          "arm": "matvec-scalar-reference",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/scalar-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/scalar-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+          "measured_executable_sha256": "2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e",
+          "current_executable_sha256": "35a92699d4c01f01a2c3350e668213f104aff7220f94815e61c141ef53c94bc4",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-65w-streaming",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=8x8528000B/working-set=68224000B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=8x8528000B/working-set=68224000B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-65w-streaming",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=8x8528000B/working-set=68224000B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=8x8528000B/working-set=68224000B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-65w-tail1-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=tail1/rows=1024/cols=4159/base%64=16/retain=289262/banks=1x533000B/working-set=533000B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=tail1/rows=1024/cols=4159/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-65w-tail1-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=tail1/rows=1024/cols=4159/base%64=16/retain=289262/banks=1x533000B/working-set=533000B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=tail1/rows=1024/cols=4159/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-65w-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-65w-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-66w-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-66w-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-7w-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/scalar-lane/stride=7w/shape=full/rows=1024/cols=448/base%64=0/retain=289262/banks=1x57400B/working-set=57400B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/scalar-lane/stride=7w/shape=full/rows=1024/cols=448/base%64=0/retain=289262/banks=1x57400B/working-set=57400B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-7w-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/scalar-lane/stride=7w/shape=full/rows=1024/cols=448/base%64=0/retain=289262/banks=1x57400B/working-set=57400B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/scalar-lane/stride=7w/shape=full/rows=1024/cols=448/base%64=0/retain=289262/banks=1x57400B/working-set=57400B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-cold",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-cold",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-scalar-reference-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-scalar-reference-warm",
+          "arm": "matvec-scalar-reference",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/scalar-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/scalar-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "measured_executable_sha256": "2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e",
+          "current_executable_sha256": "35a92699d4c01f01a2c3350e668213f104aff7220f94815e61c141ef53c94bc4",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-streaming",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-streaming",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-tail1-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=tail1/rows=1024/cols=511/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=tail1/rows=1024/cols=511/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-tail1-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=tail1/rows=1024/cols=511/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=tail1/rows=1024/cols=511/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-8w-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-9w-scalar-reference-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-9w-scalar-reference-warm",
+          "arm": "matvec-scalar-reference",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/scalar-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/scalar-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+          "measured_executable_sha256": "2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e",
+          "current_executable_sha256": "35a92699d4c01f01a2c3350e668213f104aff7220f94815e61c141ef53c94bc4",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-9w-streaming",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=32/retain=289262/banks=8x8413200B/working-set=67305600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=32/retain=289262/banks=8x8413200B/working-set=67305600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-9w-streaming",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=32/retain=289262/banks=8x8413200B/working-set=67305600B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=32/retain=289262/banks=8x8413200B/working-set=67305600B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-9w-tail1-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=tail1/rows=1024/cols=575/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=tail1/rows=1024/cols=575/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-9w-tail1-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=tail1/rows=1024/cols=575/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=tail1/rows=1024/cols=575/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-9w-warm",
+          "arm": "matvec-a",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "matvec-r1024-9w-warm",
+          "arm": "matvec-b",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+          "measured_executable_sha256": "588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        }
+      ]
+    },
+    {
+      "campaign_id": "v4-r1-2037941f-dense-matvec-vs-m4ri",
+      "receipt": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json",
+      "addendum_sha256": "10cc1516edf6044d902e3cf29fbdf7bc3c6bd5c25fa3903915aa6a97ce35f880",
+      "smoke_record": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-matvec-vs-m4ri.json",
+      "smoke_record_sha256": "3e68d608b6326e9f327cbf0ea884b618632c253ca8b882004340a6cadcc6ddb5",
+      "cell_arms": 16,
+      "differing_cell_arms": 0,
+      "rows": [
+        {
+          "cell_id": "m4ri-gap-1x1-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=1/cols=1/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=1/cols=1/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-1x1-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=1/cols=1/base%64=0/banks=1x16B/working-set=16B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=1/cols=1/base%64=0/banks=1x16B/working-set=16B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-63x63-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=63/cols=63/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=63/cols=63/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-63x63-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=63/cols=63/base%64=0/banks=1x512B/working-set=512B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=63/cols=63/base%64=0/banks=1x512B/working-set=512B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-64x64-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=64/cols=64/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=64/cols=64/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-64x64-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=64/cols=64/base%64=0/banks=1x520B/working-set=520B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=64/cols=64/base%64=0/banks=1x520B/working-set=520B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x4096-retained-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x4096-retained-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x4096-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x4096-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x512-retained-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x512-retained-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x512-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x512-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x65-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=65/words=2/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=65/words=2/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x65-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=2w/rows=65/cols=65/base%64=0/banks=1x1056B/working-set=1056B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=2w/rows=65/cols=65/base%64=0/banks=1x1056B/working-set=1056B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        }
+      ]
+    },
+    {
+      "campaign_id": "v4-r1-confirmation-2037941f-dense-matvec-vs-m4ri",
+      "receipt": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json",
+      "addendum_sha256": "25d81872e07c01b19e70850cd5db019c42474567ae719b7fe072232c33ebc184",
+      "smoke_record": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke/dense-matvec-vs-m4ri-confirmation.json",
+      "smoke_record_sha256": "7c148e77995b7bc9df92246671eb8b7362ebd9227c18b1d54fffcab05bab7fc6",
+      "cell_arms": 4,
+      "differing_cell_arms": 0,
+      "rows": [
+        {
+          "cell_id": "m4ri-gap-65x4096-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x4096-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x512-warm",
+          "arm": "m4ri-mzd-mul",
+          "measured_paths": [
+            "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"
+          ],
+          "current_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "measured_executable_sha256": "40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e",
+          "current_executable_sha256": "73b89cb3267f9abeafbef9f1c901e8892b264c5f6c1468b22edf2fa216864039",
+          "selection": "same"
+        },
+        {
+          "cell_id": "m4ri-gap-65x512-warm",
+          "arm": "m4ri-peer-gf2",
+          "measured_paths": [
+            "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B"
+          ],
+          "current_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B",
+          "measured_executable_sha256": "d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695",
+          "current_executable_sha256": "fef7ec0cd834585cdc4db9fd2adb67472b9a99ad55b03b292f6a49f194413cb0",
+          "selection": "same"
+        }
+      ]
+    }
+  ]
+}
