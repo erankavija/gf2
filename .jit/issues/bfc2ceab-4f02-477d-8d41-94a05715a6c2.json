@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T03:50:56.070944168Z",
+  "dependencies": [],
+  "description": "Several safe kernel function-pointer types in `gf2-kernels-simd` reach undefined behaviour when a safe caller violates a length or shape condition that the kernel only debug-asserts; a safe boundary validates, and a caller-trusted path is a distinct `_unchecked` item.\n\n## Background\n\nThe kernel crate publishes safe `fn` pointer types whose AVX2 implementations index or load without a release-mode check: `SmallPrimeSpmmRowFn` and `MediumPrimeSpmmRowFn` (the column bound `a_cols[h] * b_stride + n <= b.len()`), `SmallPrimePlePanelBaseFn` and `MediumPrimePlePanelBaseFn` (window shape, inverse-table length, canonical entries indexing the inverse table), `BipedalBinaryKernelFn`, `BipedalUnaryKernelFn` and the F_5 and F_7 kernel types (equal lengths that are a multiple of four). Each type's rustdoc and each call's `// SAFETY:` comment name the caller condition, so shipped callers stay in bounds, but the types are safe, and the repository's convention for a path that skips validation is a separate method under the `_unchecked` name with its precondition documented.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed inventory lists every safe kernel entry point of the crate whose soundness depends on a caller condition that release builds do not check.\n- [hard] REQ-02: For each listed entry point, either the safe item checks its conditions and panics on violation, or the unchecked path is an `unsafe` or `_unchecked` item with the precondition under Safety and every caller discharging it with a `// SAFETY:` comment; no safe item reaches undefined behaviour for any argument values.\n- [hard] REQ-03: One shared test per kernel interface exercises the violated conditions over every implementation and observes a panic or a compile-time-enforced contract, and the shared behavioural suites pass with and without the `simd` feature on Rust 1.95.\n- [hard] REQ-04: A choice that adds a release-mode check on a measured hot path carries before/after evidence under the measurement contract, or records the measured cost as accepted.\n\n## Notes\n\nFound while stating the kernel crate's safety contracts. The choice between checking and an unsafe signature per interface is a design decision with performance consequences; the affected kernels serve the prime-field and bipedal paths as well as GF(2).\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T03:50:56.070944168Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "bfc2ceab-4f02-477d-8d41-94a05715a6c2",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-kernels-simd",
+    "type:bug"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Make caller-trusted safe kernel entry points checked or unchecked by name",
+  "updated_at": "2026-10-05T03:50:56.070944168Z"
+}

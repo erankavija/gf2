@@ -963,6 +963,10 @@
     "4337c02e",
     "fa1d8733",
     "1b034786",
+    "a87ae828",
+    "bfc2ceab",
+    "316150fd",
+    "dd359005",
     "a87ae828"
   ],
   "escalations": [
@@ -2094,7 +2098,8 @@
     "Session 27: five finished worktrees reclaimed without cache harvest; handoff-23.md written.",
     "Session 27: wave 4 started at fcb972da3 with 7d44b71f, b2e09d41, 6833c5b5 and the untimed first stage of 63bad95d. fa1d8733 follows 7d44b71f (same file). 4337c02e and the timed part of 63bad95d wait for the invoker to authorize benchmark windows for wave 4. Common worker rules for the wave are in the session scratchpad (ephemeral); their content is the Traps list of handoff-23 plus worker-brief.md.",
     "Session 27: bug 1b034786 filed (safe M4RM Gray-table wrappers reach an out-of-bounds store for a non-power-of-two table size); 7d44b71f depends on it; same worker, same worktree, commits scoped to the bug first.",
-    "Session 27: 6833c5b5 DONE (ledger verified at its recorded commits, bytes unchanged; shared verifier dev/scripts/verify-source-evidence.py; gates pass first round; review reviews/6833c5b5-r1.md). Bug a87ae828 filed for the generator that overwrites the pinned ledger; the worker's attempt to edit that generator was denied by the permission system, so the edit waits for the invoker."
+    "Session 27: 6833c5b5 DONE (ledger verified at its recorded commits, bytes unchanged; shared verifier dev/scripts/verify-source-evidence.py; gates pass first round; review reviews/6833c5b5-r1.md). Bug a87ae828 filed for the generator that overwrites the pinned ledger; the worker's attempt to edit that generator was denied by the permission system, so the edit waits for the invoker.",
+    "Session 27: filed from the 7d44b71f worker's findings: bfc2ceab (caller-trusted safe kernel entry points reach UB on violated length conditions; design choice per interface), 316150fd (gf2-core tests do not compile with default features; AVX2 kernel tests run without feature detection), dd359005 (no scalar-lane test builds of gf2-algebra and gf2-coding). All wired under the epic; the invoker may re-parent them, since they reach beyond Zen 3 performance."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [

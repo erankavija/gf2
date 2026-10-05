@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T03:50:56.479893295Z",
+  "dependencies": [],
+  "description": "The test builds of `gf2-algebra` and `gf2-coding` always enable the `simd` feature, so no scalar-lane test build of either crate exists; scalar and SIMD implementations share behavioural suites in both configurations.\n\n## Background\n\nBoth crates depend on their own test-support dev-dependency in a way that turns the `simd` feature on for every test build through feature unification. Running their suites \"without simd\" therefore still exercises the SIMD lanes, and the scalar fallbacks of these crates are tested only where a suite forces a lane explicitly.\n\n## Success Criteria\n\n- [hard] REQ-01: A documented, committed command builds and runs the `gf2-algebra` and `gf2-coding` test suites with the scalar lane selected and no `simd` feature in the resolved feature set, shown by the resolved feature list in the run record.\n- [hard] REQ-02: The shared behavioural suites of both crates pass in that configuration on Rust 1.95, and the CI contract runs it.\n- [hard] REQ-03: A suite that needs a SIMD lane states the requirement through a feature gate.\n\n## Notes\n\nFound while running the kernel crate's suites with and without the `simd` feature.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T03:50:56.479893295Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "dd359005-8d9b-45b5-ac9a-cd6e446eedb6",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Provide scalar-lane test builds of gf2-algebra and gf2-coding",
+  "updated_at": "2026-10-05T03:50:56.479893295Z"
+}
