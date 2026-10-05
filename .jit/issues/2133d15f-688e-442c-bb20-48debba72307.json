@@ -7,7 +7,226 @@
     "f63a2464-424d-4def-a740-8ff1471f0108"
   ],
   "description": "Plan Vectorize LDPC decoding across frames (ed3d490e) against every hard success criterion, write the concise design at dev/active/ed3d490e-zen3-ldpc-frame-simd/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The concise plan at dev/active/ed3d490e-zen3-ldpc-frame-simd/plan.md and its authoritative sibling breakdown manifest exist, are linked to this issue, and pass the manifest validation, render check, and batch-create dry run.\n- [hard] REQ-02: The plan-review gate passes on this issue.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "6a165de79f5e3a31665878dbf406ee6148f1ad25c1806b02aba7d1c49373d9c6",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../eda07788/findings.md",
+          "resolved_path": "dev/active/eda07788/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4ecbdc8218373d6c74eed6c16d46deba4ad0b57b8c09bc25008bc1f0547deb6a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../3be770d5/findings.md",
+          "resolved_path": "dev/active/3be770d5/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2b23a25bb06091ba2fd33a6dfc2b2f9c2dd9b556d4e05ca73d8b65319537db96",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/intrinsics-probe/src/lib.rs",
+          "resolved_path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/intrinsics-probe/src/lib.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c0c3498193e662dc72dca700e53a83636c1cb5b11f6123b6705f5e2c559a955f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/07ca8585/v4-r1-resampled-profile/profile.md",
+          "resolved_path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ed959f8b4030070cf98c2724df2945e8c46b370b7a6770d723064f2fd8102cc7",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f63a2464/corrections.md",
+          "resolved_path": "dev/active/f63a2464/corrections.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b61e3083af9f67cb52088d66847f502e68ebd1fbccb49998dccd5f6ecfce2577",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../07ca8585/findings.md",
+          "resolved_path": "dev/active/07ca8585/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "97a4cbfebe12154db719b06155197e952c79ff4444b71669a5ca02b75c0f55c0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f63a2464/findings.md",
+          "resolved_path": "dev/active/f63a2464/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bd04f71ba13a959efdf66baea0cc13106d4495c61f6004f32b77edf7fef3eddb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/worker-brief.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/worker-brief.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "deb71afa52e3d865de51a802c3c19bf155879030d74c900fbf5585ffb6c3ad40",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f63a2464/numerical-contract-review.md",
+          "resolved_path": "dev/active/f63a2464/numerical-contract-review.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dde77e78076d97ff4f017019b9581f886d1f2a3cffa6f85ed591c0dc3d56b8ea",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/63bad95d/calibration-plan.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/calibration-plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f44cd82290b23138c184ed0c81604ad8de8ea9f80251d009973456a000e073c2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f63a2464/decision-record.md",
+          "resolved_path": "dev/active/f63a2464/decision-record.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "be4709e5d154f92c14dfa414bfe4317a0192117bff415a0ad7858047fcd88ed1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../12fdeb5b/findings.md",
+          "resolved_path": "dev/active/12fdeb5b/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5f466a05513feb81775ce75da9c819922985ec58c203ce38b1da8378fa00f248",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/ed3d490e/intrinsic-feasibility/feasibility.json",
+          "resolved_path": "dev/bench_results/ed3d490e/intrinsic-feasibility/feasibility.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c7393b98148e1c6a431753fb567e446a10ccc309b0c4368edf8da9a836288a14",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a18cf1bed742d65e4b398a204a0af177188f3c3059bfc5fff2a9ded207e18c0d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c077a88b/findings.md",
+          "resolved_path": "dev/active/c077a88b/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "160ce92cd0eaa40f2f70d8506b1691654058cd60a6c91aeb638aba6959618c18",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/record-intrinsic-feasibility.py",
+          "resolved_path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/record-intrinsic-feasibility.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "211f91942e631874f7b663d40586b5693f50b2da6c5bbbfb4ebfd9c3ff9cb0fb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7c29b22f123a91f213063e8be4c1f5d205029d9c88ae84295acfcfbbb620bf25",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/3be770d5/tables.md",
+          "resolved_path": "dev/bench_results/3be770d5/tables.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Plan",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/plan.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dev/active/f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dev/active/f547c394/protocol.md",
+          "resolved_path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dev/active/1a379447-zen3-cpu-performance/worker-brief.md",
+          "resolved_path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/dev/active/1a379447-zen3-cpu-performance/worker-brief.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Breakdown manifest",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/breakdown.json"
+    }
+  ],
   "first_ready_at": "2026-10-05T19:28:49.112013653Z",
   "gates_required": [
     "plan-review"
@@ -36,5 +255,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Vectorize LDPC decoding across frames",
-  "updated_at": "2026-10-05T19:28:54.354744014Z"
+  "updated_at": "2026-10-05T20:24:38.295294274Z"
 }
