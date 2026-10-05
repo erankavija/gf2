@@ -1,0 +1,9 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# directory: target/ci-test
+bytes before: 13404722499
+bytes after: 13428598703
+growth in bytes: 23876204
+# steps (scripts/cargo-ci.sh):
+run_step default-features-core-check "$BUDGET" cargo check -p gf2-core --tests --profile ci-test
+run_step default-features-core-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback --no-run
+run_step default-features-core-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback
