@@ -546,8 +546,8 @@
      "short_id": "63bad95d",
      "title": "Calibrate production dispatch for the 5900X",
      "classification": "implementation",
-     "status": "pending",
-     "tracker_state": "backlog"
+     "status": "in_progress: plan decisions applied, matvec_with_route and the producer sweep merged at 4cf3ee4d5; producer campaign (est. 205 min) not queued; protocol families wait for 4337c02e; no gate run",
+     "tracker_state": "in_progress"
     },
     {
      "id": "b64dc9c4",
@@ -614,7 +614,7 @@
      "short_id": "dcfe8386",
      "title": "Stop gf2-algebra SIMD cross-checks passing without running on hosts without SIMD",
      "classification": "implementation",
-     "status": "pending",
+     "status": "pending; after dd359005",
      "tracker_state": "ready"
     },
     {
@@ -641,6 +641,34 @@
     {
      "id": "66698c3c",
      "short_id": "66698c3c",
+     "classification": "implementation",
+     "status": "done",
+     "tracker_state": "done"
+    },
+    {
+     "id": "4337c02e",
+     "short_id": "4337c02e",
+     "classification": "implementation",
+     "status": "in_progress: pilot frozen on in-build arms and queued for the 2026-10-06 window; worktree agent-4337c02e pinned at 2eeccb430; stays open until 63bad95d installs or declines the value",
+     "tracker_state": "in_progress"
+    },
+    {
+     "id": "bfc2ceab",
+     "short_id": "bfc2ceab",
+     "classification": "implementation",
+     "status": "in_progress: stage 1 inventory and stage 1b measurement family on branch worktree-agent-bfc2ceab (unmerged, pinned at 0670ff5ff); pilot queued for the 2026-10-06 window; per-interface choice returns to the invoker with measured cost",
+     "tracker_state": "in_progress"
+    },
+    {
+     "id": "dd359005",
+     "short_id": "dd359005",
+     "classification": "implementation",
+     "status": "pending; after 316150fd (done)",
+     "tracker_state": "ready"
+    },
+    {
+     "id": "81afdf8e",
+     "short_id": "81afdf8e",
      "classification": "implementation",
      "status": "done",
      "tracker_state": "done"
@@ -676,7 +704,7 @@
      "short_id": "ed3d490e",
      "title": "Vectorize LDPC decoding across frames",
      "classification": "implementation",
-     "status": "bracket scaffolded (P 2133d15f, B e28795c1); plan and manifest merged, 38 tasks; plan-review running",
+     "status": "bracket: planning node 2133d15f done (plan-review pass, 66 tasks); breakdown node e28795c1 ready, not started",
      "tracker_state": "backlog"
     },
     {
@@ -1016,7 +1044,8 @@
   "66698c3c",
   "6605cac2",
   "dcfe8386",
-  "3a8ec493"
+  "3a8ec493",
+  "81afdf8e"
  ],
  "escalations": [
   {
@@ -1571,6 +1600,24 @@
    "status": "resolved",
    "raised_at": "2026-10-05T09:20Z",
    "resolution": "Invoker 2026-10-05: approved with a disk guard. The Rust steps share one non-simd configuration where possible and select the narrowest test set that meets the criterion; each worker records the measured target-directory growth; return to the invoker if a step adds more than 1 GB. bfc2ceab, 316150fd and dd359005 stay under the epic."
+  },
+  {
+   "category": "benchmark window use (63bad95d producer campaign)",
+   "issue": "63bad95d",
+   "question": "queue the 205-minute producer calibration campaign from a clean run worktree",
+   "recommendation": "queue the issue form, resume by run identifier if it pauses",
+   "status": "open",
+   "raised_at": "2026-10-05T21:50Z",
+   "resolution": null
+  },
+  {
+   "category": "shared tooling behaviour (63bad95d validator)",
+   "issue": "63bad95d",
+   "question": "the validator has one global field table and rejects stages of a83583e0 and dbd8787d on re-validation",
+   "recommendation": "select the field table from the stage inventory",
+   "status": "open",
+   "raised_at": "2026-10-05T21:50Z",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -2228,7 +2275,8 @@
   "Invoker constraint 2026-10-05: the ed3d490e breakdown is 38 tasks and does not grow; a review asking for more coverage is answered by consolidation, otherwise escalate.",
   "Invoker decisions on the ed3d490e plan (2026-10-05): general batch soft-decoder trait in gf2-coding (DEC-07), fixed waves, gf2-coding as third owner of the offline tuning system, descriptive QC comparison, two default paths, decoded words of implementer-reported length (DEC-08 to DEC-12).",
   "Session 28: worker worktrees no longer run the full cargo-ci.sh at delivery (30 to 47 minutes under load with sccache off, split job budget, exclusive test lock and nice 19); they run focused suites and the lead gates the merged tree with BUSY_HOST_OVERRIDE=1.",
-  "Invoker 2026-10-06: the ed3d490e plan stays one story; the 38-task cap is lifted for the plan-review splits and one full terminal-invariant audit (66 tasks, 104 edges at 21b646407; audit record terminal-audit.md beside the plan)."
+  "Invoker 2026-10-06: the ed3d490e plan stays one story; the 38-task cap is lifted for the plan-review splits and one full terminal-invariant audit (66 tasks, 104 edges at 21b646407; audit record terminal-audit.md beside the plan).",
+  "Session 28: handoff-25.md written. Nine issues and the ed3d490e planning node closed; two pilots queued for the 2026-10-06 window."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -2255,7 +2303,8 @@
   "handoff-21.md",
   "handoff-22.md",
   "handoff-23.md",
-  "handoff-24.md"
+  "handoff-24.md",
+  "handoff-25.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -2268,6 +2317,9 @@
   "pending_jobs": {
    "4337c02e": [
     "pilot v4-r1, family 4337c02e-matvec-simd-threshold, worktree agent-4337c02e pinned at 2eeccb430"
+   ],
+   "bfc2ceab": [
+    "pilot, family caller-trusted-entry-check-cost, worktree agent-bfc2ceab pinned at 0670ff5ff"
    ]
   },
   "note": "Verify the campaign from its own execution log, never the job rc."
@@ -2278,6 +2330,7 @@
   "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction).",
   "disk": "Workers of Python-only issues run no cargo build in their worktree; the lead gates the merged tree on main.",
-  "peer_session": "gf2-b2 (epic fa787f85) closed its session 2026-10-05 01:13 EEST. Its 198aafa3 REQ-01 waits on 4c1e441f, ad2a6a58 and f63a2464 reaching done or rejected; when each closes, notify the fa787f85 lead or the repository owner (that epic resumes from dev/active/fa787f85-documentation-overhaul/handoff-8.md)."
+  "peer_session": "gf2-b2 (epic fa787f85) closed its session 2026-10-05 01:13 EEST. Its 198aafa3 REQ-01 waits on 4c1e441f, ad2a6a58 and f63a2464 reaching done or rejected; when each closes, notify the fa787f85 lead or the repository owner (that epic resumes from dev/active/fa787f85-documentation-overhaul/handoff-8.md).",
+  "active_workers": {}
  }
 }
