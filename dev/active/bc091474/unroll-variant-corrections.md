@@ -2,12 +2,12 @@
 
 > **Diátaxis Type:** Reference
 
-The [candidate portfolio](portfolio.md) and the
-[candidate launcher](run-candidate.sh) are producing inputs the unroll pilot
-receipts pin by digest, and keep their bytes. This record quotes each statement
-in them about the tree that holds the candidate bodies, states what the
-committed evidence establishes, and gives the reading the other documents of
-the study use.
+The [candidate portfolio](portfolio.md) is a producing input the unroll pilot
+receipts pin by digest, and keeps its bytes; the receipts hold their own
+snapshot of the candidate launcher. This record quotes each statement in them
+about the tree that holds the candidate bodies, states what the committed
+evidence establishes, and gives the reading the other documents of the study
+use.
 
 No correction changes a cell, a margin, a limit, a decision rule or a recorded
 outcome.
@@ -41,26 +41,26 @@ established body.
 its arm executables by digest, so no cell or verdict reads the current kernel
 source.
 
-## C-02: the launcher's candidate build
+## C-02: the launcher the receipts snapshot
 
-Launcher, `build_arms`:
+Each pilot receipt snapshots the [candidate launcher](run-candidate.sh) it ran
+under, `build_arms`:
 
 > ```
-> RUSTFLAGS="${flags}" CARGO_TARGET_DIR="${candidate_target}" \
->     ./scripts/cargo-budget.sh cargo build --release --manifest-path "${MANIFEST}" \
+> RUSTFLAGS="${flags}" CARGO_TARGET_DIR="${candidate_target}" \\
+>     ./scripts/cargo-budget.sh cargo build --release --manifest-path "${MANIFEST}" \\
 >     --bin logical-arm --bin logical-oracle
 > ```
 
-**Narrowed.** `flags` is `--cfg gf2_xor_unroll<factor>`. On the current tree
-that build compiles the established body, so the executable the launcher's
-`build` and `smoke` actions call the candidate arm is the baseline arm built
-a second time. The `window` and `profile-window` actions measure only when
-their receipt or profile summary is absent; each is committed, and the actions
-verify the committed one.
+**Narrowed.** `flags` is `--cfg gf2_xor_unroll<factor>`, which selects a body
+only in the kernel source of the same snapshot. The live launcher holds no
+build: its `build` and `smoke` actions refuse, and its `window` and
+`profile-window` actions refuse when their receipt or profile summary is
+absent and otherwise check the committed one.
 
-**Reading used.** The launcher is the record of how the committed pilots and
-candidate profiles were launched. The candidate evidence is the pilot receipts
-with their snapshots, the candidate disassemblies and the candidate profiles;
-the current tree builds no candidate executable.
+**Reading used.** The snapshotted launcher is the record of how the committed
+pilots and candidate profiles were launched. The candidate evidence is the
+pilot receipts with their snapshots, the candidate disassemblies and the
+candidate profiles; the current tree builds no candidate executable.
 
 **Decisions.** Unaffected, for the reason C-01 gives.
