@@ -27,7 +27,7 @@ The cell counts are the protocol's exact values: q=3 uses 20,000,000 for n=4..20
 
 The draft uses the implemented integrity contract: `manifest.json` carries no self-hash field; `provenance::manifest_content_hash` recomputes SHA-256 from the manifest bytes, and `recorded_manifest_hash` reads the `manifest.json` entry from `checksums.sha256`. The draft sidecar records that digest. A final freeze generates the complete raw-data integrity file through `permanent_dataset checksums`, and verification compares the recomputed manifest hash with the sidecar entry. No new hash mechanism is introduced.
 
-The manifest records `rng_algorithm` as the schema token `cha_cha20` (ChaCha20), `rng_version` as `rand_chacha 0.9.0`, and an argument-token invocation. The exact patch-version derivation is `dev/studies/0dffa759/rng-provenance-addendum.md` §4 and `@/citation/RustRandom2025`.
+The manifest records `rng_algorithm` as the schema token `cha_cha20` (ChaCha20), `rng_version` as `rand_chacha 0.9.0`, and an argument-token invocation. The exact patch-version derivation is `dev/active/b8206228-permanent-statistics/studies/0dffa759/rng-provenance-addendum.md` §4 and `@/citation/RustRandom2025`.
 
 REQ-07 is a freeze rule: adding a cell after this draft requires a new campaign id and a restated multiplicity adjustment; the added cell does not reuse this campaign identity or its 63-cell correction.
 
