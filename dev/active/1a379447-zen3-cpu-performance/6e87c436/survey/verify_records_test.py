@@ -18,14 +18,8 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 
 SURVEY = Path(__file__).resolve().parent
-ROOT = Path(
-    subprocess.run(
-        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
-        capture_output=True, check=True, text=True,
-    ).stdout.strip()
-)
-sys.path.insert(0, str(ROOT / "dev" / "scripts"))
-import repository_files  # noqa: E402
+sys.path.insert(0, str(SURVEY))
+from locate import ROOT, repository_files  # noqa: E402
 
 SHARED = ("content_anchor", "repository_files", "rust_code_text", "asm_listing")
 SCRIPTS = (
@@ -105,7 +99,7 @@ class RegenerationRefusal(unittest.TestCase):
         self.survey.mkdir()
         (self.root / "scripts").mkdir()
         for module in SHARED:
-            shutil.copy(ROOT / "dev" / "scripts" / f"{module}.py", self.root / "scripts")
+            shutil.copy(ROOT / repository_files.live_file(ROOT, f"{module}.py"), self.root / "scripts")
         shutil.copy(
             ROOT / repository_files.live_file(ROOT, "repo_artifacts.py"), self.survey
         )
