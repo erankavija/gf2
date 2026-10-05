@@ -1,0 +1,31 @@
+{
+ "issue": "63bad95d",
+ "producer": "crates/gf2-core/benches/tuning_calibration.rs",
+ "features": "parallel,simd,test-support,tuning-profile",
+ "behavior_token": "tuning-calibration-v4",
+ "behavior_token_equal": true,
+ "before": {
+  "record": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/producer-identity.json",
+  "source_sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b",
+  "binary_sha256": "ce1e17c8671b049922e8f57397de5b3a1caae582ea96d560786cf801685943e0"
+ },
+ "working_tree": {
+  "source_sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337",
+  "binary_sha256": "75720ba3edaea76bf388fc05c8a2bdf00f3d5c99a9e666286d4046a4f220880c"
+ },
+ "source_equal": false,
+ "binary_equal": false,
+ "baked_owner_pin": {
+  "owner": "crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json",
+  "pinned_sha256": "8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa",
+  "owner_sha256": "8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa",
+  "pin_holds": true
+ },
+ "committed_core_owners": {
+  "crates/gf2-core/data/tuning-profiles/conservative.json": "b51bea8706d5b7132ad1613d432a6f978a1ca5b061f47f5dc78f2df34425ebe8",
+  "crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json": "e1cc82ab17db7d0226d5c55ad4c029fad072edd66ac3c18b2ea74e97f2f39045",
+  "crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json": "c81c372b0cbd51e0433f2dcaed180cc7c82d6858d019bdfc17deac2f6724bbf2",
+  "crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json": "8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa",
+  "crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json": "0296a498b2dcaf303af0dc88afba2feb708deda60c24fd94236b4533cfdc138a"
+ }
+}
