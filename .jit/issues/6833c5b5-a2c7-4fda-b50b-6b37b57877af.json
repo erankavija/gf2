@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-05T03:11:50.665794490Z",
   "context": {},
   "created_at": "2026-10-04T23:57:56.527749291Z",
@@ -117,14 +117,51 @@
       "format": "markdown",
       "label": "Corrections to the frozen dense-parity instruments",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "8500c816d667da58cda7ed75b47a034b37e79707017a0756bc0de8d1ef76dd96",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c30b4b9c94a4224a7b1b84f2fc114b47c87b8ed873fb84ca6c5db724adda219b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../6833c5b5/dense-parity-source-evidence-verification.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6833c5b5/dense-parity-source-evidence-verification.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/6833c5b5-r1.md"
     }
   ],
+  "done_at": "2026-10-05T03:39:15.348162935Z",
   "first_ready_at": "2026-10-04T23:57:56.527749291Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T03:35:19.606614535Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T03:38:51.726154057Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6833c5b5-a2c7-4fda-b50b-6b37b57877af",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -132,7 +169,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Make the dense-parity source-evidence ledger verifiable against its sources",
-  "updated_at": "2026-10-05T03:32:49.245731308Z"
+  "updated_at": "2026-10-05T03:39:15.348162935Z"
 }

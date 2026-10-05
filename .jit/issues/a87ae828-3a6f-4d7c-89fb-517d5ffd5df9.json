@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T03:39:14.959300842Z",
+  "dependencies": [],
+  "description": "The generator of the dense-parity source-evidence ledger reads the working tree and overwrites a receipt-pinned ledger when run; a pinned record is not rewritten by its own tool.\n\n## Background\n\n`dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py` writes `survey/dense-parity-source-evidence.json` from whatever tree it runs in. The ledger is a producing input pinned by the dense-parity receipts and cited by the frozen dense-parity addendum, and it is verified as a record of its recorded commits by `dev/scripts/verify-source-evidence.py`. Running the generator on a later tree replaces the pinned bytes with rows for that tree. The revision the ledger records reproduces every row's commit and digest fields.\n\n## Success Criteria\n\n- [hard] REQ-01: Running the generator on any tree leaves the committed ledger byte-identical or refuses to write, shown by a test that runs it on a tree where cited lines have moved.\n- [hard] REQ-02: The generator reproduces the committed ledger from the content of the revision the ledger records, and a check mode reports a mismatch without writing.\n- [hard] REQ-03: No committed receipt, receipt input snapshot, trial ledger or frozen addendum changes, and the dense producing-input closure check passes.\n\n## Notes\n\nFound while making the ledger verifiable. The generator is itself an enumerated producing input of the dense campaigns; committed receipts keep their own snapshot of it.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T03:39:14.959300842Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "a87ae828-3a6f-4d7c-89fb-517d5ffd5df9",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Stop the dense-parity source-evidence generator rewriting its pinned ledger",
+  "updated_at": "2026-10-05T03:39:14.959300842Z"
+}

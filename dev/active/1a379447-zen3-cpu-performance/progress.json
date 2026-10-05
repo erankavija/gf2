@@ -962,7 +962,8 @@
     "7d44b71f",
     "4337c02e",
     "fa1d8733",
-    "1b034786"
+    "1b034786",
+    "a87ae828"
   ],
   "escalations": [
     {
@@ -2092,7 +2093,8 @@
     "Session 27: story 2037941f DONE (all seven gates pass; review reviews/2037941f-r1.md). Wave 3 is complete: both stories c04dd4ac and 2037941f are done. current_wave advanced to 4.",
     "Session 27: five finished worktrees reclaimed without cache harvest; handoff-23.md written.",
     "Session 27: wave 4 started at fcb972da3 with 7d44b71f, b2e09d41, 6833c5b5 and the untimed first stage of 63bad95d. fa1d8733 follows 7d44b71f (same file). 4337c02e and the timed part of 63bad95d wait for the invoker to authorize benchmark windows for wave 4. Common worker rules for the wave are in the session scratchpad (ephemeral); their content is the Traps list of handoff-23 plus worker-brief.md.",
-    "Session 27: bug 1b034786 filed (safe M4RM Gray-table wrappers reach an out-of-bounds store for a non-power-of-two table size); 7d44b71f depends on it; same worker, same worktree, commits scoped to the bug first."
+    "Session 27: bug 1b034786 filed (safe M4RM Gray-table wrappers reach an out-of-bounds store for a non-power-of-two table size); 7d44b71f depends on it; same worker, same worktree, commits scoped to the bug first.",
+    "Session 27: 6833c5b5 DONE (ledger verified at its recorded commits, bytes unchanged; shared verifier dev/scripts/verify-source-evidence.py; gates pass first round; review reviews/6833c5b5-r1.md). Bug a87ae828 filed for the generator that overwrites the pinned ledger; the worker's attempt to edit that generator was denied by the permission system, so the edit waits for the invoker."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2156,7 +2158,6 @@
     "active_workers": {
       "w-7d44b71f": "agent-7d44b71f",
       "w-b2e09d41": "held, no commits; awaits invoker ruling",
-      "w-6833c5b5": "agent-6833c5b5",
       "w-63bad95d": "agent-63bad95d, untimed first stage only (inventory, fallback tests, calibration plan)"
     },
     "m4ri_pilot": "v4-r1-pilot ran 2026-09-28T23:00Z, key 53a5bb9b75c30e58; verified from its execution log; resolution record dev/bench_results/2037941f/m4ri-gap-resolution.md records eligible",

@@ -18441,3 +18441,11 @@
 {"fields":["documents"],"id":"6e864a86-c275-4af1-b080-cd77739ed6f5","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:32:49.014845077Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"4d34c568-8ee4-4dcc-87f9-d5d17f8cfa7f","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:32:49.189900598Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"0319bfeb-37b6-4575-884d-86fdbf425673","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:32:49.245731308Z","type":"issue_updated","updated_by":"doc-add"}
+{"assignee":"agent:jit-execution-lead","id":"ded3c004-e467-46f1-a9b4-80885b4b27e6","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:34:08.977038996Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"f722e888-457e-4018-a692-9548e8a6eb20","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:35:19.606614535Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"0c634d8c-e5df-4c34-ad5a-d81d157557fd","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:38:51.726154057Z","type":"gate_passed","updated_by":"auto:executor"}
+{"id":"65ab5f5d-c975-40bb-a439-74b928768321","issue_id":"a87ae828-3a6f-4d7c-89fb-517d5ffd5df9","priority":"normal","timestamp":"2026-10-05T03:39:14.959300842Z","title":"Stop the dense-parity source-evidence generator rewriting its pinned ledger","type":"issue_created"}
+{"fields":["dependencies"],"id":"0f54b51c-1b26-4ed4-bf18-0ff9a9c3c0e2","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-10-05T03:39:15.199365294Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["documents"],"id":"46876df1-88a0-45d9-a2ac-afc0210d7074","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:39:15.262749306Z","type":"issue_updated","updated_by":"doc-add"}
+{"from":"in_progress","id":"2e3a2a14-567d-4d01-8a4e-774c6826e6a3","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:39:15.348162935Z","to":"done","type":"issue_state_changed"}
+{"id":"5d3c945f-156c-467c-aef8-b5ddbad53e4b","issue_id":"6833c5b5-a2c7-4fda-b50b-6b37b57877af","timestamp":"2026-10-05T03:39:15.348162935Z","type":"issue_completed"}
