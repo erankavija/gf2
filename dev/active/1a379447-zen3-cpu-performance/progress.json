@@ -968,7 +968,8 @@
     "316150fd",
     "dd359005",
     "a87ae828",
-    "54e70918"
+    "54e70918",
+    "66698c3c"
   ],
   "escalations": [
     {
@@ -2124,7 +2125,8 @@
     "Session 27: merged-tree cargo-ci for the 63bad95d stage passes at f194490d1 on a quiet host (two earlier runs lost one test each to the 15 s cap at load 10 and 29). Kernel branch merged at eae9c455b; CI passes. 7d44b71f: asm-artefact-present, cargo-ci, code-review PASS. 1b034786: asm-artefact-present, cargo-ci PASS; code-review FAIL F1 (the shared contract test omits the scalar reference in avx2.rs and tests zero implementations on a host without AVX2). Rework 1 dispatched.",
     "Session 27: bug 54e70918 filed (two gf2-core SIMD equivalence test files pass vacuously without a SIMD bundle).",
     "Session 27: 1b034786 DONE (gates pass at aa743ddca after rework 1; review reviews/1b034786-r1.md) and 7d44b71f DONE (gates pass; review reviews/7d44b71f-r1.md). fa1d8733 is unblocked.",
-    "Session 27: dispatched fa1d8733 and 54e70918 at 856c78b38. Held for the invoker: f63a2464 (three code-review rulings), b2e09d41 (shared checker under the freeze), a87ae828 (generator edit denied to a worker by the permission system), bfc2ceab (per-interface design choice), 316150fd and dd359005 (their criteria add steps to scripts/cargo-ci.sh, shared infrastructure), 4337c02e and the timed part of 63bad95d (benchmark windows and five plan decisions)."
+    "Session 27: dispatched fa1d8733 and 54e70918 at 856c78b38. Held for the invoker: f63a2464 (three code-review rulings), b2e09d41 (shared checker under the freeze), a87ae828 (generator edit denied to a worker by the permission system), bfc2ceab (per-interface design choice), 316150fd and dd359005 (their criteria add steps to scripts/cargo-ci.sh, shared infrastructure), 4337c02e and the timed part of 63bad95d (benchmark windows and five plan decisions).",
+    "Session 27: bug 66698c3c filed (6e87c436 drift and assembly generators fail on main after the 1b034786 change to m4rm.rs)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [

@@ -18534,3 +18534,5 @@
 {"assignee":"agent:worker","id":"645b8c23-91bc-4969-a9ce-a4d1834e48b0","issue_id":"fa1d8733-f970-4677-8971-1b9bada40ae4","timestamp":"2026-10-05T06:36:53.126447922Z","type":"issue_claimed"}
 {"from":"ready","id":"c2ddd2a7-e48b-4c29-bae9-37ec60a87753","issue_id":"54e70918-23cb-48e1-aa5b-815a7be48e8e","timestamp":"2026-10-05T06:36:53.255718358Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"1ce769b3-1f2b-416b-a4b2-ffa420b31428","issue_id":"54e70918-23cb-48e1-aa5b-815a7be48e8e","timestamp":"2026-10-05T06:36:53.255718358Z","type":"issue_claimed"}
+{"id":"6761fa16-f680-4ec7-a2e9-19f95218ab2f","issue_id":"66698c3c-b1c4-496a-a205-e0307b61eb24","priority":"normal","timestamp":"2026-10-05T07:16:39.465043307Z","title":"Keep the dense-parity verdict's drift records verifiable on later trees","type":"issue_created"}
+{"fields":["dependencies"],"id":"040b3882-c15d-49fa-9a53-5f188f6084a3","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-10-05T07:16:39.927614166Z","type":"issue_updated","updated_by":"dependency-add"}
