@@ -1,0 +1,39 @@
+{
+  "schema": "m4rm-listing-comparison-v1",
+  "issue": "1b034786",
+  "before": {
+    "listing": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/inputs/before-checks/m4rm.asm.txt",
+    "sha256": "e504f5010f9d6b4788c2268f81ce59ee8fa45f112c0b4054388aa927c477173f"
+  },
+  "current": {
+    "listing": "crates/gf2-core/src/alg/m4rm.asm.txt",
+    "sha256": "762466424b8453e3c469454de17f001e28c505f44df9706b9b6ccf0ec0bb5856"
+  },
+  "comparison_rule": "Per symbol, the lines between its `; symbol:` divider and the next divider, without blank lines, divider rules and cargo's `Compiling` and `Finished` status lines. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
+  "symbols": [
+    {
+      "symbol": "gf2_core::alg::m4rm::build_gray_table_flat",
+      "anchor_lines": 804,
+      "current_lines": 820,
+      "anchor_sha256": "9467c186fc28a4444a9e55b7697d6e9e09946b196322f1c1b6b72a1272c61731",
+      "current_sha256": "1bb16c505abd8b147dace7b87430fb5ce70c25caf1673e2d666104167324fcff",
+      "instruction_text": "differs"
+    },
+    {
+      "symbol": "gf2_core::alg::m4rm::multiply",
+      "anchor_lines": 785,
+      "current_lines": 785,
+      "anchor_sha256": "ab101c3c493fad3750cad8566b9ecee7416d73de4f71eeb53862585273bee5a4",
+      "current_sha256": "ab101c3c493fad3750cad8566b9ecee7416d73de4f71eeb53862585273bee5a4",
+      "instruction_text": "same"
+    },
+    {
+      "symbol": "gf2_core::alg::m4rm::update_panel_register_tiled",
+      "anchor_lines": 1168,
+      "current_lines": 1168,
+      "anchor_sha256": "7592ec5b94a5817e172af221f330906ea02cb35b35b8b8d8bbef11a4bd91a4b1",
+      "current_sha256": "7592ec5b94a5817e172af221f330906ea02cb35b35b8b8d8bbef11a4bd91a4b1",
+      "instruction_text": "same"
+    }
+  ]
+}
