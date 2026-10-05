@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T02:13:55.346617747Z",
+  "dependencies": [],
+  "description": "Confirm or refute the exploratory lead of the scalar lane over the selected SIMD lane of `BitMatrix::matvec` at mid-range strides, and set the SIMD threshold from confirmatory evidence.\n\n## Background\n\nThe dense-parity baseline campaigns under `dev/bench_results/2037941f/` include allocated whole-`matvec` cells that compare the scalar-reference build with the build that selects the fused AND-popcount SIMD lane. Their exploratory rows record the SIMD lane as `regressed` against the scalar reference at the 8-, 9- and 63-word strides, `inconclusive` at 65 words and `not-worse` at 64 words, at the pilot pair count; the generated mid-range tables under `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/` carry each row with its interval. The selector admits the SIMD lane from `MATVEC_SIMD_MIN_WORDS` upward, which the measured strides all satisfy. Exploratory rows cannot select a production route, and no confirmatory campaign has asked this question.\n\n## Success Criteria\n\n- [hard] REQ-01: A frozen addendum under the shared measurement protocol declares confirmatory allocated whole-`matvec` cells at the strides whose exploratory rows favour the scalar lane and at their neighbours, with margins and a resolution rule fixed before any confirmatory trial.\n- [hard] REQ-02: The confirmation receipt reports each cell's sample count, corrected confidence interval and outcome, and every losing, inconclusive or unavailable cell stays committed as recorded.\n- [hard] REQ-03: The threshold changes only for strides where the confirmation records a whole-consumer benefit beyond the frozen worthwhile-effect margin, the changed selection has before/after cells on the exact declared domain and its neighbours, and it stays unchanged otherwise with the outcome recorded.\n- [hard] REQ-04: Shared scalar and SIMD suites prove exact outputs at the 0, 1, 63, 64 and 65 boundaries on both sides of any changed threshold, and Rust 1.95 builds the path.\n- [hard] REQ-05: The outcome reaches the canonical offline tuning system as the single source of the threshold; no private constant duplicates it.\n\n## Notes\n\nFound by the mid-range evidence synthesis. Timed work runs only in the benchmark window on the prepared host.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T02:13:55.346617747Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "4337c02e-4e36-46c0-8d22-8adcd9cade9b",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-core",
+    "component:benchmarks",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Calibrate the BitMatrix::matvec SIMD threshold against the scalar lane",
+  "updated_at": "2026-10-05T02:13:55.346617747Z"
+}
