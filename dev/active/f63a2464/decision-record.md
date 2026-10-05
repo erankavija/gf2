@@ -198,6 +198,9 @@ as the intra-frame alternative to it, and neither is forced to win here.
 ## Decisions after the confirmations
 
 The sections above are the frozen instrument and are applied here as written.
+[corrections.md](corrections.md) preserves and corrects the statements in them
+that the evidence contradicts or does not support; none is a budget or a stop
+rule.
 Every figure behind a decision is in the
 [quality tables](../../bench_results/f63a2464/quality/tables.md) or the
 [timing tables](../../bench_results/f63a2464/timing-tables.md);
