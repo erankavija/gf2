@@ -1,0 +1,20 @@
+{
+  "schema": "build-identity-supersession-v1",
+  "record": "build-identity.json",
+  "record_sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696",
+  "superseded": "the record's executable set: no live Cargo package declares a binary target for the executables listed; the record's bytes and its other fields stand",
+  "executables_without_binary_target": [
+    {
+      "location": "executables",
+      "executable": "ldpc-plan-check",
+      "recorded": "b7f58d61e418f0e1f7b8fff9d00812859de0409017372d48117bbeb10f643707"
+    }
+  ],
+  "recorded_executables_with_binary_target": [
+    "aff3ct-throughput-arm",
+    "gf2-throughput-arm",
+    "ldpc-alloc-census",
+    "ldpc-profile",
+    "ldpc-throughput-validate"
+  ]
+}

@@ -1147,11 +1147,19 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
 /// nothing and writing nothing.
 ///
 /// The check a launcher runs in a working session so a malformed frozen input
-/// fails there rather than inside a benchmark window. It applies exactly the
-/// decode and validation `run` applies before its first measurement.
+/// fails there rather than inside a benchmark window. It applies the decode
+/// and validation `run` applies before its first measurement, and the
+/// validation against the addendum schema that acceptance applies to the
+/// receipt (P-03).
 fn check(plan_path: &Path) -> io::Result<i32> {
+    let root = invocation_root()?;
     let (plan, _) = read_plan(plan_path)?;
-    let addendum = load_addendum(&fs::read(&plan.addendum)?, &plan)?;
+    let addendum_bytes = fs::read(&plan.addendum)?;
+    let addendum = load_addendum(&addendum_bytes, &plan)?;
+    let violations = FamilyAddendum::schema_violations(&root, &addendum_bytes)?;
+    if !violations.is_empty() {
+        return Err(invalid(violations.join("; ")));
+    }
     println!(
         "plan {} for family {}: {} cells, {} arms, addendum {}",
         plan.campaign_id,

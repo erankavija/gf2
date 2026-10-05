@@ -26,12 +26,10 @@ Minutes are estimates: the child count times the median child duration the commi
 | Family | Purpose | Cells | Holdout | Small input | Corrected alpha | Draws per tail | Pilot cells | Pilot minutes (est.) | Confirmation minutes (est.) |
 |---|---|---|---|---|---|---|---|---|---|
 | `63bad95d-profile-holdout-matvec` | selector-calibration | 6 | 3 | 0 | 0.004167 | 20.8 | 3 | 0.7 | 2.8 |
-| `63bad95d-profile-holdout-transpose` | selector-calibration | 6 | 3 | 1 | 0.004167 | 20.8 | 3 | 0.7 | 2.8 |
 | `63bad95d-profile-dispatch-overhead` | selector-calibration | 6 | 3 | 6 | 0.004167 | 20.8 | 3 | 0.7 | 2.8 |
 | `63bad95d-native-ladder` | consumer-family | 6 | 0 | 1 | 0.004167 | 20.8 | 6 | 1.4 | 2.8 |
-| `63bad95d-transpose-external-ladder` | kernel-family | 4 | 0 | 0 | 0.006250 | 31.2 | 4 | 0.9 | 1.9 |
 | `63bad95d-matvec-external-ladder` | consumer-family | 4 | 0 | 0 | 0.006250 | 31.2 | 4 | 0.9 | 1.9 |
-| total |  | 32 |  |  |  |  |  | 5.4 | 14.9 |
+| total |  | 22 |  |  |  |  |  | 3.7 | 10.2 |
 
 | Stage | Children observed | Median child seconds |
 |---|---|---|
@@ -41,22 +39,32 @@ Minutes are estimates: the child count times the median child duration the commi
 
 One session of the offline tuning campaign has a budget of 180 minutes (`dev/active/dbd8787d/premeasurement-protocol.md`, budget section).
 
+## Build levels
+
+| Arm identity | RUSTFLAGS | Selectors | Competitor | Definition |
+|---|---|---|---|---|
+| `conservative-portable` | none | conservative table, no profile installed | portable build of the comparator, its own runtime dispatch if it has one |  |
+| `tuned-portable` | `--cfg gf2_tuning_baked` | candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile | the same portable comparator build as the conservative level | Defined by the profile's selectors at the portable instruction-set level. The polynomial host-targeting campaigns of c7113c5a define the same arm identity by the instruction-set flag -C target-cpu=x86-64-v3 with no profile; the two are different levels. |
+| `native` | `-C target-cpu=native --cfg gf2_tuning_baked` | candidate profile | comparator built with -march=native |  |
+
+## Excluded from the plan
+
+| Subject | Reason |
+|---|---|
+| transpose lane selection | PRODUCTION_PREFERENCE is retained and is no candidate; the non-qualifying confirmations of 1d4fd63d and 04b85d10 are the recorded outcome. |
+| transpose external ladder | The profile selects nothing on the transpose route, so its tuned arm is the conservative arm the committed comparator confirmations measure, and REQ-09 asks for the three build levels of what this issue calibrates. The native build of the transpose entry point is covered by the native ladder's non-regression cells. |
+| carry-save count crossover | No selector exists and none is added; the exploratory crossover of 5cbb6545 is a recorded limit. |
+
 ## Planned cells
 
 | Family | Cell | Role | Objective | Metric | Core arm | Cache | Builds | Workload | Small input |
 |---|---|---|---|---|---|---|---|---|---|
-| `63bad95d-profile-holdout-matvec` | `matvec-r1024-16w-warm` | confirmatory | by-rule | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 16-word stride |  |
-| `63bad95d-profile-holdout-matvec` | `matvec-r1024-48w-warm` | confirmatory | by-rule | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 48-word stride |  |
-| `63bad95d-profile-holdout-matvec` | `matvec-r1024-16w-streaming` | confirmatory | by-rule | whole-consumer | single-core | streaming | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 16-word stride, rotating banks |  |
-| `63bad95d-profile-holdout-matvec` | `matvec-r1024-12w-warm` | holdout | by-rule | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 12-word stride |  |
-| `63bad95d-profile-holdout-matvec` | `matvec-r1024-24w-tail1-warm` | holdout | by-rule | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 24-word stride, one bit short of the word boundary |  |
-| `63bad95d-profile-holdout-matvec` | `matvec-r1024-40w-cold` | holdout | by-rule | whole-consumer | single-core | cold | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 40-word stride, first use |  |
-| `63bad95d-profile-holdout-transpose` | `transpose-block-1024-1core` | confirmatory | improvement | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | 64x64 block transpose, 1024 blocks |  |
-| `63bad95d-profile-holdout-transpose` | `bitslice-unpack-m16-1core` | confirmatory | improvement | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | BCH bit-slice parity unpack, degree 16 |  |
-| `63bad95d-profile-holdout-transpose` | `bitmatrix-transpose-8192x2048-1core` | confirmatory | non-regression | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::transpose, 8192 x 2048 |  |
-| `63bad95d-profile-holdout-transpose` | `bitmatrix-transpose-63x4097-1core` | holdout | non-regression | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::transpose, 63 x 4097, partial tiles in both dimensions |  |
-| `63bad95d-profile-holdout-transpose` | `bitmatrix-transpose-1x1-1core` | holdout | non-regression | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::transpose, 1 x 1, one partial tile | yes |
-| `63bad95d-profile-holdout-transpose` | `transpose-bulk-16384-6core` | holdout | non-regression | kernel-isolated | physical-cores-6 | streaming | conservative-portable → tuned-portable | 64x64 block transpose, 16384 blocks per worker |  |
+| `63bad95d-profile-holdout-matvec` | `matvec-r1024-16w-warm` | confirmatory | non-regression | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 16-word stride |  |
+| `63bad95d-profile-holdout-matvec` | `matvec-r1024-48w-warm` | confirmatory | non-regression | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 48-word stride |  |
+| `63bad95d-profile-holdout-matvec` | `matvec-r1024-16w-streaming` | confirmatory | non-regression | whole-consumer | single-core | streaming | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 16-word stride, rotating banks |  |
+| `63bad95d-profile-holdout-matvec` | `matvec-r1024-12w-warm` | holdout | non-regression | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 12-word stride |  |
+| `63bad95d-profile-holdout-matvec` | `matvec-r1024-24w-tail1-warm` | holdout | non-regression | whole-consumer | single-core | warm | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 24-word stride, one bit short of the word boundary |  |
+| `63bad95d-profile-holdout-matvec` | `matvec-r1024-40w-streaming` | holdout | non-regression | whole-consumer | single-core | streaming | conservative-portable → tuned-portable | BitMatrix::matvec, 1024 rows, 40-word stride, rotating banks |  |
 | `63bad95d-profile-dispatch-overhead` | `xor-inplace-8w` | confirmatory | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | kernels::ops::xor_inplace, 8 words | yes |
 | `63bad95d-profile-dispatch-overhead` | `popcount-8w` | confirmatory | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | kernels::ops::popcount, 8 words | yes |
 | `63bad95d-profile-dispatch-overhead` | `clmul-wide-4w-owned` | confirmatory | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | gf2m::wide::clmul_wide, 4 words | yes |
@@ -69,10 +77,6 @@ One session of the offline tuning campaign has a budget of 180 minutes (`dev/act
 | `63bad95d-native-ladder` | `popcount-1024w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | kernels::ops::popcount, 1024 words |  |
 | `63bad95d-native-ladder` | `xor-inplace-8w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | kernels::ops::xor_inplace, 8 words | yes |
 | `63bad95d-native-ladder` | `clmul-wide-9w-owned-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | gf2m::wide::clmul_wide, 9 words |  |
-| `63bad95d-transpose-external-ladder` | `transpose-kernel-64-vs-m4ri-tuned` | confirmatory | comparator-gap | kernel-isolated | single-core | warm | tuned-portable → external | 64-word transpose kernel against M4RI |  |
-| `63bad95d-transpose-external-ladder` | `transpose-kernel-64-vs-bitshuffle-tuned` | confirmatory | comparator-gap | kernel-isolated | single-core | warm | tuned-portable → external | 64-word transpose kernel against Bitshuffle |  |
-| `63bad95d-transpose-external-ladder` | `transpose-kernel-64-vs-m4ri-native` | confirmatory | comparator-gap | kernel-isolated | single-core | warm | native → external | 64-word transpose kernel against M4RI |  |
-| `63bad95d-transpose-external-ladder` | `transpose-kernel-64-vs-bitshuffle-native` | confirmatory | comparator-gap | kernel-isolated | single-core | warm | native → external | 64-word transpose kernel against Bitshuffle |  |
 | `63bad95d-matvec-external-ladder` | `matvec-qualified-shape-a-vs-m4ri-tuned` | confirmatory | comparator-gap | whole-consumer | single-core | warm | tuned-portable → external | matched M4RI product, first qualified shape |  |
 | `63bad95d-matvec-external-ladder` | `matvec-qualified-shape-b-vs-m4ri-tuned` | confirmatory | comparator-gap | whole-consumer | single-core | warm | tuned-portable → external | matched M4RI product, second qualified shape |  |
 | `63bad95d-matvec-external-ladder` | `matvec-qualified-shape-a-vs-m4ri-native` | confirmatory | comparator-gap | whole-consumer | single-core | warm | native → external | matched M4RI product, first qualified shape |  |

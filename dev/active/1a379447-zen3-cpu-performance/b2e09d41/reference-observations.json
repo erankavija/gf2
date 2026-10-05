@@ -1,0 +1,1779 @@
+{
+  "schema": "plan-check-reference-observations-v1",
+  "references": {
+    "ldpc-plan-check": {
+      "role": "superseded",
+      "executable_sha256": "261d1c22a1702296107dcc1846c618c36fd1d9c327a92c191a5679734db5d286",
+      "source_name": "ldpc-plan-check.rs",
+      "source_sha256": "9b75ef0b20547588d22c4c4cf3e9082924904418ebf024d6cbc9215ae3f0a66d"
+    },
+    "runner-without-schema-validation": {
+      "role": "runner-edition",
+      "executable_sha256": "9c79ac6a615ab000c915251ff2de9d70db00cdb16dcaf0ea8aaed4dab444282b",
+      "source_name": "benchmark-ab-runner.rs",
+      "source_sha256": "6f7ee485dda36eba751340eaceadbaaa2e5d84866057bd5e977830e0f1d409e3"
+    }
+  },
+  "plans": {
+    "dd6c1ca4c909cfd8db17545ccba4a1573c172af3b0703b1affabbc46c29d691b": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/1d0da41f/addendum-ymm-clmul-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "fda3c73fe98ab005c32f57709c59ff721a407581a0bffde654d374fe7dffdd49": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/1d0da41f/addendum-ymm-clmul-v3-pilot-r2.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "834fea098a0fae94ef69a0325492823dce9f57c3666bc165151e55dbc9ffef19": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/1d0da41f/addendum-ymm-clmul-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "43f58cec4cdeb5649698b862172d77b7e7923694c632c5f4f76a2201209f98b4": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "abb61e5f8296bb90fec898113baa0162f79eab596e7063216a6039c298321cee": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "97ca526f40a296cce86a7589a2a79158d768224634155c54b8e0f3c46a4cff01": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "c2d404f71232c890c385dcb6332cef48e631d9089b0a720090209294d0197e35": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "21e111336162e153f696722f42aa6a80b5b3478ecfc7f25399dc070ec475b188": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "d7940cb72c877040953cce8cf1ac0abfb7274ebeb2012a98a9be4e00c42f8057": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-smoke-v2-confirmation-r1.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "71e1367eba1b85d08cd60df271609ceb167468b2d26a604690a3c95f2b06e634": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-smoke-v2-pilot-r1.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "6f1151a69b1675702f8ab0898550ac6b27c42a7ba47bed0d47a98f9d1a88449d": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-smoke-v2-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "reject",
+        "message": "benchmark-ab-runner: addendum invalid: decoder-family cell cold-first-use lacks decoder fields"
+      }
+    },
+    "876e63c37dfd29c932e04409d34d289b2d4a6b0842e472bad76fcec2edb9c55d": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-smoke-v3-confirmation-r1.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "41078cfe5aa507321dea3964b79aeedfa18b6e891cb87a765504b27c30146ad4": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-smoke-v3-confirmation-r2.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "d8a5e66ed9f90a10be1945b3787d83b1e7ef9a4247816c2fd2a09b4b3fb1d84e": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-smoke-v3-pilot-r1.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "df61658428f3d18ebee317ea7f310d2fa11839c4796a31a34642ac48cbec8b01": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-smoke-v3-pilot-r2.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "bc95dd29da0ec4cafe8b5f40500a9c6f1b283c5d465314a3c8eb53b2cbff6fac": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "dba2051bd6a250f03e194d6a412c82de4c0f3c7edc7e1a60e71b0ff1dbb7a794": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "5f1877b6b36b8124193270bf3461cb3edeedd5320d919c48ae389c0f39c77ade": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/04b85d10/addendum-bit-storage-consumers-pilot.json: No such file or directory (os error 2)"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "reject",
+        "message": "benchmark-ab-runner: No such file or directory (os error 2)"
+      }
+    },
+    "23e7d44a91b5b6fa7ef02fd70d2d9c05518aff79707d5692f6fa0c041d323653": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/04b85d10/addendum-bit-storage-count-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "748cae8659caf55f788c18d23a0ba07a03ef4cf7a154b26f57f6c6efc9dd56e5": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/04b85d10/addendum-bit-storage-count-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "70057abc633e174b94ac296809e186c854bd64842e7d3305773517c2a186d19a": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/04b85d10/addendum-bit-storage-layout-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "870f653498c482f55ac5876b707b6f44903af2547eefc8b2f403220091284d00": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/04b85d10/addendum-bit-storage-layout-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "614f1d45ac16495b9c873745e87aded80177d8674ab5ac90d23bedca9efccbb7": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/04b85d10/addendum-bit-storage-logical-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "c8d0754b7fe9c22be84d50f8b6d8c6c71b67fe8fe62c8beb100b7880e8121bba": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/04b85d10/addendum-bit-storage-logical-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "dc999d6c21bca2dc147d655b23acb70c6e60262315c657abd3fb5ec20b774c1e": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "922e8f3e2d5e60701b0514736979394d2ca67ee641b839781e7eb736b513ba69": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "bc73b4a57ac4f72531f20e783019c371c3d7e71de6edb7a2cd53e4c12345280a": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "6f543e992c96444feab53370b2a61f7265d2f8d08085ac054dc1fce227ddc217": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "0c1fcdbadb56bbf964170cf481c181aceb388ca02ec8e2b572437584cbc8a516": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "83851a89a7f919b426f3dbc35b07862db227f5e31a410c7b483036363f091d4e": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "7babdf8a85bb6062e89d6c72b81e1aacc4c4399a74d857f46159f8194aa679a6": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "c24bdb636d229430a7152cb532a134fa6bd953706d590eab66d8fc8967484c81": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "e5464cde83eb292f68a03a2064a2ec64d7bdf0d9895cf0bc2ff590363ff8caaa": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "ab888fc47088a163edce7c933afec29dd1f7f8d66dd3cf2a5a6e115411cc4e9e": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "42eafe3c47936a991afcf584adfce01f67366e2632f73d91d65682855d1873c0": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "2c6e50e9744f28aa486b72ff51dddefbcb93b3aac496099751f0e80229b25287": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "86c4c378b48b83d3b54c60b666fe70c0f64e043387a07c85a6821c932d7153d0": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "a2df10632bd9432501fbec494725e9ef1811f71bd878c43db4304731d33d6cca": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "9ae964d86b5fa34e1fb58344809632b3dcacba338190d559fc335facb19dc602": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "f60451d3a76a30ca86a6e700cc8462827b2662313c09d2a079b02b4d4add5a97": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "93b4817887a1e18202eb25672b206fabf7953ebfec945b541b23370247260ede": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "c71113fe11744266252050a051b658f0f84406204dd562c5a2aee9497ff76903": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "55891f14e7267c79d8d35d8968476bcc225142c7eb884dd8c5bda01aa8f082cb": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "43c710fd81c1833b61467479c4dc4e49c63594f451017cb756e007b4a6198b3c": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "15ceaedfab6a5fa8f8d8cbaa7309fb09c8f04dd3f48a4c83e2ace1d1074d15c9": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "a6a53f9ff219a6bd4e74023076ef906f79d28d747b309c358e011b0be84ec233": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "718953bdcb59f75c1f53d83a2fc82e302a4cfa021dcf371ea730cacf86ab341f": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "dda0e546571a4113f9919fa84d6d81debfbe55a64d2886725a4b275f31be7030": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "8e0b22c6fe1d751c05fd8df3b31f7b5f208a659086b7e79b81fc1742097774ff": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "bca4b77864058f460bd17d16346f8522baf1508b247575a103104892d98b3607": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "f8b4d3f9835a0a1087a4da9a6b0c9093e26a2e7f45eb567d0b227dfab6f30209": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "32da9591b943e05e64257f9ab71fabfda78c22e5f5c8ef1baf1b82d0a8d00c93": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "fe9f53555c57748bc34820103023ca86e6b170d7c9a74a379db4ebaebbe59328": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/1d0da41f/addendum-ymm-clmul-dispatch-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "ece43576070ff75ed4aca8947543e5831cb86dafc0accbc826d301076309e824": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "ce18e86709b8592021525c84756c8712ecca88410c7c1b38de01eda5303643a0": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "74e18d18197a705b7e2ac398d7eebde256e8be778e1b327be37de76aa9581352": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "467ff9f98554aabd7de547e2729eae2fb0c54c819eab30e66e5a26207a996774": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "e00ccffcdc8a940516e2c06b91e8c6045683019ef204a76ad619939411b8a6fa": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "bb8dd89a5a3b6cb1498f234d5653c407246f9a48959240d031ef4600e2df0636": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "4c889b97dd495b26931f69c8fef1b8fe9e1a13201f3beb5ef749d3b4f3b9fbb8": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "333e66cd6be0ba105418bdba29003c2cf4015c333b4a06576a8d6ace86004705": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "a57cb99dfee8cdb63350a3770607254d67dd776b5d68b3b158b8c05296d810d6": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "2d005e9765b8e7a4c66d9919e3dd07b8011e7580a1af96c82fdfff29378bb8f2": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "0cac9bc398fe804d12ebe1859ccd48e11345b66518f45448e261a8db1cfc0597": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "82138aad788eee189015a4e41ccc7161d144aedb2ec917cfc7e225c5b6535309": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "73ed12db6b1c6f1da601d3fb7ac7bde72d2d2264efdbded87a9f62f5be588f63": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "cea8d7d3f36a51a083b647dcf70a75376b6a117fcc40028527635fe31e518b19": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "921083aecdea06210725a5fd7996ab5fc70b9665e585b80b25476d5b3956736a": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "d5b4a45a2a9d616fca76350c4187aca8c13fc3b60d2a384cb688494127377897": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "0328230ffaaf123721f73dfb3283e1e2fe4882971ba43ff8b81d34c681065c8a": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "567848d8a38ea5cff090741da2328c903a2b7bcee96cd30f40b1e6e6f6e23635": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "2cc7cb57c3c4f81f4bca567c986057fabb317e6598580fa07f6f158a59702f5b": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "d6e2978e4b90b9204bde47f6b8d9abe7ff016cc2fdc5249310992cab7365f060": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-popcount-pilot.json: No such file or directory (os error 2)"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "reject",
+        "message": "benchmark-ab-runner: No such file or directory (os error 2)"
+      }
+    },
+    "5a8c73d50fb9d33deb49ffe3a35fd65f01a14689432577fe8cf8c6eecf833e04": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-and-popcnt-pilot.json: No such file or directory (os error 2)"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "reject",
+        "message": "benchmark-ab-runner: No such file or directory (os error 2)"
+      }
+    },
+    "a8ff978df403cf7711e085e8aa88726a9093567787a2455dc294aca021942f36": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-popcount-pilot.json: No such file or directory (os error 2)"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "reject",
+        "message": "benchmark-ab-runner: No such file or directory (os error 2)"
+      }
+    },
+    "651567b9da6931edd136cd08f7349c008fd10490d9a7bc62b5cbc46781992559": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-popcount.json: No such file or directory (os error 2)"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "reject",
+        "message": "benchmark-ab-runner: No such file or directory (os error 2)"
+      }
+    },
+    "d9c6074314badfbd284be048f07f3b4c9e5730a91cce7dc1eee4d9f508751c2b": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-and-popcnt-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "6c3e514ace1b9533ae1966ab1f3d6470d41682c88576853b63e4f74f8ed5f76c": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-and-popcnt-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "6b50af76aabcb8a471219d5be9c63224e631dd912ece0eba7f162e2392610b3a": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-and-popcnt-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "18341ff61adf974575311ccea12964f8d1ffd8fa4719ccb0085a3d9249b8649d": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-popcount-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "bf55b584a5b8103a702ee7818dcaa3a721b005d79293ef4f4ceeb5da677a26e8": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/26465e6c/addendum-popcount-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "7e74664670ee7345b55b468ea699468392dd069ca1f1c69aa15e548e4d2938e0": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/3be770d5/addendum-ldpc-steady-fastest-compatible-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "63a85f3065b21238a6c2595273c26b271f5cf0b50c56aaabf32c34bda6ee9ff0": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/3be770d5/addendum-ldpc-steady-matched-multicore-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "5621910d9e7e92e37f0e2409ef43789a8b869a7540ea5689a5c8006c6c515302": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/3be770d5/addendum-ldpc-steady-matched-single-worker-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "f12f25462e018c1ba9a49a034be3efe9c2e9d88791d120b66ac7b1b21be84a0c": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "a27e34c18b7b9ee59c97c0e7c4ed1ad570574e0d02f55850f5d91910f884efe0": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "e75534e5ac24b2e6f7db6ddcb9557a33b132be8a333ea6ec51af6b67c0137ae6": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "aafb912277386bbee51def2cdda84b93df6b12fd2878e9ed47a33a552d666540": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "e04b741b3fecf8d13591a04c506d7f62bb5ee81a8028f8d97e235c5571a46264": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "9f2a7381c7ed84267ae5183e58933939f28b22c81ef18016771d4381c56b8ab4": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "a890c96aaa92bf7f4bbed671ab3a55e4dababfed69b8b70cead3d550a63b6d62": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "48976327dd7432f57da6d15aead5a0eb97a53dea2a65a7e7471066e1c54f57cc": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "eb0523802e14c6360eb0427468aae750aa68bddf06f1ea8fe296b1844de5412c": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "11065b7fce1a6bd5b9f0e0bec31c66cd0f9c6c7671d4ab5dd0b9cfe874093644": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "5078f2d1b197f40bc0641092906e63b6f4b42a4614382ab673cc7bf903312fb5": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "d13fd3e70368dbf3a093a58a05d7902751cdd9cb7cb0c31d730bf4c16617f3e2": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "a7cadd870e48beabfd5f0a5868c5ec5cc8d56f77c232d6f841b251fdfa4bff9f": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "11301795484396b3e47f82c84ba9cca44bea26d758c5a46455507f2fc4045d71": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "dfc2660939e8071aad73c584b729b68c0e6af6527ca23a520d17bee1c86c0892": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "03ab22844c851f30582a3a5a22e285cf5da38670f3684870f9168686bb0da57f": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "ca57ad3339fba0c2039dd96d0dcbfaa56c6bc3dfbde03a5bb3c9d04528e521ad": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "5310091065e26d12784146fffc3d8124cfcca4a3e8f725fd0196c037d2c50b1e": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "2686d7051849f0afc64fe23f7b8b40f7a2053871c7ddc2accd9b40794ea4cfe8": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "876610c30eebe641cf3f4dc61cc7cf72399af43df9ebba7c129921e0e35e36c2": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "6d37305a6350688e09466838f60b010cc70f868c01f8d6fa7cd85021ec22a58b": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6c6b09b1/addendum-byte-field-arms-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "3d268102077ace9a8fe0231e7855848766c74b0adabd26015a25171c80650f64": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6c6b09b1/addendum-byte-field-arms-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "9968bc6bbac5768c83657188a6270f71cb67403176de0d29cc1b94c761c4559e": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6c6b09b1/addendum-byte-field-arms-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "374ddf01d0e19ce324358f1c2caedb94f1c9f5e45988108724751a729deeea3c": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "9b350c4d1d23413443d7122fcba4e55c390dd0933b8cc5717655f89ede2caf35": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "aff7f95fcf40124e398899c6a6fe05a551e8203b63396e78ed2d43618be54aae": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "09bb5c6afb1e0b5c3b6f28d5df959aaa2da0f478040a0bfbe3f6d7cdb118d43b": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "1ad19cf57550b68ea595296d04ad5ec7ae8c47db6c1bfe5bdfcd2ed5b2498ad9": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "605c340ac1a355e983f6d478ad710fbdfe34ed8d25b932f0f3acf9874fd24ad0": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "745c0ccca19d2d3bcd4f9a3578787d583d30a5ea63c2a086a771c1e141fcbc56": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-bch-genmatrix-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "2169c1c152ed74d25974bb41a493ed899b2a95378e76c3718a7c0bd9547f34d1": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-logical-buffer-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "d4abc817e711a8ec17e7fb44081588a1cd9747f07d3eff36eb64acfc9bd35b6e": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-transpose-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "76d14ecda3689b2f788ded6701238717c8132338b782a85b53e9e97a6efa5bcc": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-transpose-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "901a3037b097a2976c05d6665aab3151bb5d13173bae0abd3d80f5a466e08915": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-transpose-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "feea432d7c0a246b5ee58a4db850c8a97c1419703a18ea333fc0f66d3134a9a8": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-bch-genmatrix-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "f84777dd36506f9d71da343ef2e889743a81fa517392e71c6f778251e33c04d7": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-bch-genmatrix-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "c71d41f7fe71f6149ad143b86974c2e40621a00638ca89fef80ddf73e8a83f59": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-bch-genmatrix-v3-remeasure.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "b96c9bc87358d5bda21c408e6aabba58d6d09391d8f6360397a014f73a161542": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-logical-buffer-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "9ff0efa915c37ea3443fe0d71bbbd39dd59be4a46235eb2d1a7b2f2f6a9fe15f": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-logical-buffer-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "67e771ecb1114a1ac68710821371cade1ad79c1bd1b23f35bbc3e9817ccc5976": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-logical-buffer-v3-remeasure.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "1016b3d1091f2f82846eccd18710280d91f1f24bb2763bfa2c6fc44e1a81b23a": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-transpose-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "3daed6ce66143522df2b5736b2b0af9d681607378a997c7a4e7369fa01aa0555": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-transpose-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "2fb49f2c52a56d74050c01a13c998d9b8980aa50459d2ab417644ca1f19e3178": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-transpose-v3-remeasure.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "b3e6b7c45392e4abc1014f987eea49a850de4a67b45f0170210c7abc9ff1fe33": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/6fb89a3c/addendum-transpose-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "965957d3ef678506178dbb9f23d1c067ed05fa16966c9f13bcb1b891815bf045": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "96e4b0a7553f101fe97a39db6744600dcf8e343ecb15e23892c8e0ac1375da4c": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "74012eca224b77045839e74c47de32a6d6f3c28cd857ecaac939b92b2ec7b893": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "c5ce288d103e173e396d94ee754eb63aa1b302542b9811d6d42a9e412ff311d4": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "53cf5b3e23cb6a89c7981afab37f208ab9f0852afb1fbd78307b3b7eb8edff6a": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "ff22eec5a16c4179e89e9ce2816bec25514abdcb99bc5eb0a1c42a2ef25bea72": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "1c2428c3affe28827ae72c3ee851ecf8a72a6fd7140f635aad3399a8c4f1cf03": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-matched-algorithm-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "a720af10bb8a34821160d4512af96fbfc6c56890eb89efc38e7acd34a6557372": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-matched-algorithm-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "fb6c8477a941aacc4f03c9374f28877fee36607f9551fdc7c230e30c5e3b0aa1": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-matched-algorithm-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "1c1a7a95e8511a3e60987f7ee35541c62d7291782ea41f1538de59466141fc02": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-quality-compatible-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "93814ee422fa1349c1ecbd85552aa3c9510db88efce62d8e4761defca0a8c7a8": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-matched-algorithm-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "28d57c988ac4856725e77f037ad10110e5494342108e16cbec5dbda73fbd76eb": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-quality-compatible-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "34cd519f6eb55c3633ab9ef4ba742c89e9c6c3edb1c63b4eb1b3c8c88b46b999": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-matched-algorithm.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "2d2f897f722f0fca9f578031abe0b9636a7926b01579d82dab53221f8371cc34": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-matched-algorithm-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "b25b2ca887bcf1baae572af1145deb2f0f248abfa1ea44344bb4674db5585046": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c077a88b/addendum-ldpc-quality-compatible-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "fa0cda737b9320cdb891518a3d6f914a66767d58a89edc70ee7efbd7663027ed": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c7113c5a/addendum-polynomial-baselines.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "7eea50e0b9e4609a8f9518259e06a0ad1e7c497e51c83d42f2a37f220bd2a11c": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c7113c5a/addendum-polynomial-baselines-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "d743b12b62c67344dab462688140df458cb7dbb375228c19c17ef00243c3bbdb": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c7113c5a/addendum-polynomial-baselines.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "af447a92fe1676df49025d1afcfd5e6c28c8b4f91f4a64928cbb971c945e79d7": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c7113c5a/addendum-polynomial-baselines-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "b3171623b03064c42317cb92cb09d5bd4f663b3305397760ee931adf4903142d": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c7113c5a/addendum-v3-baselines-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "42362979731a21c2cb4d1faa7e94a2f911861aa60986d327e55a7e8f47a15900": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c7113c5a/addendum-v3-baselines-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "96c0544015a02c471be8d2b28033f02f5915ee21d44dd0f7657aa7bbdbcdb633": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c7113c5a/addendum-v3-host-targeting-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "aaa916f62d63f080f838eb23e9f5e49934caf9e88bf94fe0ba95351478e9d4e8": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/c7113c5a/addendum-v3-host-targeting-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "88c66a3fcf37ed547116be71594a82b75c2094a5522cf8d641d95682185b410f": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/eda07788/addendum-dvb-t2-bit-interleave-baselines.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "27c369bc3e5fa10eeb58d5deadf259a1a556135a0edc5b43c1ba71b387078cbc": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/eda07788/addendum-dvb-t2-bit-interleave-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "f45a7237542653c806f4dfe63d6881ca1f4cd0580267e29aef8913ece2d8f854": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "e635138388a29bee2969816fe871cbc35910a08bc8e3c31ba2050c15ef081f82": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-pilot-r2.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "fe7a2c07fc4a69cb0ac3fbb65b298cd11c2a3a1d14d132a20d29d11105905b16": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "f7a70568ac502f16da3d7b8cf7698ffc47d7505571054663d5f132325f46cbaf": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/eda07788/addendum-nr-llr-derate-confirmation.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "9c198aced9de9a9055c599719cf196240c295f3eb00c322fee4943de3b52c3d7": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/eda07788/addendum-nr-llr-derate-pilot.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "9ea50c827370a7f1c2a7363257bd6b77693b074d1689faeb63d60f3dd8751ae1": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-remeasure.json: schema violations [SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "5c2b1f5a2b8ff0384a5cd0d5baf00cd19659d53df3fc6606edcfe6f166eb899d": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-protocol-smoke.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "53a0f2d66709dc7764735ed743acf036977d0275c14d0e40da800e035bc130d9": {
+      "ldpc-plan-check": {
+        "verdict": "reject",
+        "message": "ldpc-plan-check: dev/active/f547c394/addendum-protocol-smoke-pilot.json: schema violations [SchemaViolation { instance_path: \"/family_wise\", schema_path: \"/properties/family_wise/required\", message: \"missing required property \\\"ledger_path\\\"\" }, SchemaViolation { instance_path: \"/protocol/version\", schema_path: \"/properties/protocol/properties/version/const\", message: \"value does not equal const\" }, SchemaViolation { instance_path: \"/schema\", schema_path: \"/properties/schema/const\", message: \"value does not equal const\" }]"
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "5b1f76ef3caf3b515c49d9848debca8476844fbb441bf7a26de98d9db6363715": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "d8e9eb61c6c3c47915a3d86fdffa01733181d72c789172353688d5ed22c0f7db": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "53d50ad4e7a5c2264ca5c33ab579f940a79e52d91841cb10694df2ae94abff79": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "98f4289a9e06b1e69f34060b3fae2bff1bd3d5c569d69cea486c80f185970d70": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "e5762071242c648fa0a1e9ae77ac15394b8f6698cef9c6fef891123242a38bdf": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    },
+    "de0ed291fc40eee114b176585838621ad92af551e86cea3339876cd34fbfae0f": {
+      "ldpc-plan-check": {
+        "verdict": "accept",
+        "message": ""
+      },
+      "runner-without-schema-validation": {
+        "verdict": "accept",
+        "message": ""
+      }
+    }
+  },
+  "mutation_base": {
+    "campaign_id": "07ca8585-v4-r1-update-single-worker-pilot",
+    "addendum_sha256": "2d2b15a6adc753b90c06953abefe8d8e129e10930a1f9497de8987819837ba53"
+  },
+  "mutations": [
+    {
+      "pointer": "/family/description",
+      "replacement": "",
+      "observed": {
+        "ldpc-plan-check": {
+          "verdict": "reject",
+          "message": "ldpc-plan-check: target/b2e09d41-mutations/addendum.json: schema violations [SchemaViolation { instance_path: \"/family/description\", schema_path: \"/properties/family/properties/description/minLength\", message: \"string has 0 characters, shorter than minLength 1\" }]"
+        },
+        "runner-without-schema-validation": {
+          "verdict": "accept",
+          "message": ""
+        }
+      }
+    },
+    {
+      "pointer": "/cells/0/decoder/code/identity",
+      "replacement": "",
+      "observed": {
+        "ldpc-plan-check": {
+          "verdict": "reject",
+          "message": "ldpc-plan-check: target/b2e09d41-mutations/addendum.json: schema violations [SchemaViolation { instance_path: \"/cells/0/decoder\", schema_path: \"/$defs/cell/properties/decoder/anyOf\", message: \"anyOf matched no schemas\" }]"
+        },
+        "runner-without-schema-validation": {
+          "verdict": "accept",
+          "message": ""
+        }
+      }
+    },
+    {
+      "pointer": "/cells/0/decoder/input/llr_source",
+      "replacement": "",
+      "observed": {
+        "ldpc-plan-check": {
+          "verdict": "reject",
+          "message": "ldpc-plan-check: target/b2e09d41-mutations/addendum.json: schema violations [SchemaViolation { instance_path: \"/cells/0/decoder\", schema_path: \"/$defs/cell/properties/decoder/anyOf\", message: \"anyOf matched no schemas\" }]"
+        },
+        "runner-without-schema-validation": {
+          "verdict": "accept",
+          "message": ""
+        }
+      }
+    },
+    {
+      "pointer": "/cells/0/decoder/input/llr_sha256",
+      "replacement": "",
+      "observed": {
+        "ldpc-plan-check": {
+          "verdict": "reject",
+          "message": "ldpc-plan-check: target/b2e09d41-mutations/addendum.json: schema violations [SchemaViolation { instance_path: \"/cells/0/decoder\", schema_path: \"/$defs/cell/properties/decoder/anyOf\", message: \"anyOf matched no schemas\" }]"
+        },
+        "runner-without-schema-validation": {
+          "verdict": "accept",
+          "message": ""
+        }
+      }
+    },
+    {
+      "pointer": "/cells/0/decoder/input/llr_sha256",
+      "replacement": " ",
+      "observed": {
+        "ldpc-plan-check": {
+          "verdict": "reject",
+          "message": "ldpc-plan-check: target/b2e09d41-mutations/addendum.json: schema violations [SchemaViolation { instance_path: \"/cells/0/decoder\", schema_path: \"/$defs/cell/properties/decoder/anyOf\", message: \"anyOf matched no schemas\" }]"
+        },
+        "runner-without-schema-validation": {
+          "verdict": "accept",
+          "message": ""
+        }
+      }
+    },
+    {
+      "pointer": "/cells/0/decoder/input/llr_sha256",
+      "replacement": "x",
+      "observed": {
+        "ldpc-plan-check": {
+          "verdict": "reject",
+          "message": "ldpc-plan-check: target/b2e09d41-mutations/addendum.json: schema violations [SchemaViolation { instance_path: \"/cells/0/decoder\", schema_path: \"/$defs/cell/properties/decoder/anyOf\", message: \"anyOf matched no schemas\" }]"
+        },
+        "runner-without-schema-validation": {
+          "verdict": "accept",
+          "message": ""
+        }
+      }
+    }
+  ]
+}

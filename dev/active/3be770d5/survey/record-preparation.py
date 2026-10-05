@@ -29,7 +29,7 @@ import sys
 ISSUE = "3be770d5"
 PREPARATION = pathlib.Path("dev/bench_results") / ISSUE / "preparation"
 C077 = pathlib.Path("dev/bench_results/c077a88b/v3-preparation")
-EXECUTABLES = ["gf2-throughput-arm", "aff3ct-throughput-arm", "ldpc-profile", "ldpc-plan-check",
+EXECUTABLES = ["gf2-throughput-arm", "aff3ct-throughput-arm", "ldpc-profile",
                "ldpc-alloc-census", "ldpc-throughput-validate"]
 NOT_BEHAVIOR = {"make-addenda.py", "record-preparation.py", "summarize-profile.py",
                 "summarize.py", "edge-costs.py", "executable-identity.py",

@@ -1,0 +1,73 @@
+{
+ "schema": "matvec-asm-comparison-v1",
+ "issue": "63bad95d",
+ "comparison_rule": "Per symbol, the lines between its `; symbol:` divider and the next divider, without blank lines, divider rules and cargo's `Compiling` and `Finished` status lines. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
+ "builds": [
+  {
+   "build": "default",
+   "features": "",
+   "listings": {
+    "before": {
+     "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/asm/matvec-default-before.asm.txt",
+     "sha256": "9aa6332cbad8fec713faa9306f990e2d7f9be571cc7700648f15a1ba16fe4e2e"
+    },
+    "after": {
+     "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/asm/matvec-default-after.asm.txt",
+     "sha256": "13d18c9fa211fcf829d7b17f8b33ee5480d808c5d82014002dd0a77e82d3726c"
+    }
+   },
+   "symbols": [
+    {
+     "selector": "gf2_core::matrix::BitMatrix::matvec#0",
+     "function": "gf2_core::matrix::BitMatrix::matvec",
+     "instruction_lines": 272,
+     "sha256": "2397688191bfe07b0578260e2ca7a997d0769d611226f5d02c1f53c50e9500a7",
+     "instruction_text": "same"
+    }
+   ],
+   "added": [
+    "gf2_core::matrix::BitMatrix::matvec_with_route"
+   ]
+  },
+  {
+   "build": "simd",
+   "features": "simd",
+   "listings": {
+    "before": {
+     "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/asm/matvec-simd-before.asm.txt",
+     "sha256": "14d6d0def725fa718055329c8399972fd53c8efa20a073d9b05ae0162229720f"
+    },
+    "after": {
+     "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/asm/matvec-simd-after.asm.txt",
+     "sha256": "800a68035013d77c02290702c694b49b1c0026a3c2f1ea954787939e61b5d80b"
+    }
+   },
+   "symbols": [
+    {
+     "selector": "gf2_core::matrix::BitMatrix::matvec#0",
+     "function": "gf2_core::matrix::BitMatrix::matvec",
+     "instruction_lines": 55,
+     "sha256": "72218281421b3e416d00ededb8e0adc56f3cb3b58be69fbee580ef2cea359075",
+     "instruction_text": "same"
+    },
+    {
+     "selector": "gf2_core::matrix::BitMatrix::matvec#1",
+     "function": "gf2_core::matrix::BitMatrix::matvec_scalar",
+     "instruction_lines": 259,
+     "sha256": "8bb4c623f9a167a5fef1b861fc355dbbb0f4f1c6da42409b4fdc287f6d9f765e",
+     "instruction_text": "same"
+    },
+    {
+     "selector": "gf2_core::matrix::BitMatrix::matvec#2",
+     "function": "gf2_core::matrix::BitMatrix::matvec_simd",
+     "instruction_lines": 171,
+     "sha256": "5aed223eac6d07ad0c3e7800a1e9774390234406f012bfabbdfe9f09ae032e2a",
+     "instruction_text": "same"
+    }
+   ],
+   "added": [
+    "gf2_core::matrix::BitMatrix::matvec_with_route"
+   ]
+  }
+ ]
+}
