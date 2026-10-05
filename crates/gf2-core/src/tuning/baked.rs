@@ -5,7 +5,10 @@
 //! conservative constant.
 
 // Outside a baked build only the `tuning-profile` unit tests read these.
-#![cfg_attr(not(any(gf2_tuning_baked, feature = "tuning-profile")), allow(dead_code))]
+#![cfg_attr(
+    not(any(gf2_tuning_baked, feature = "tuning-profile")),
+    allow(dead_code)
+)]
 
 /// `bit_backend.simd_min_words`, from the calibration receipt
 /// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
