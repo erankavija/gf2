@@ -108,14 +108,13 @@
   {
     "key": "decode-selector-family",
     "title": "Carry decoder selectors in the coding tuning section",
-    "description": "Extends the coding-owned tuning section with a decode selector family and the typed route decision that reads it, so batch decoding takes each route from one calibrated source.\n\n## Background\n\nSelector values of `gf2-coding` live in its tuning section, resolved through the process-wide authority of `gf2_core::tuning`; the section holds the batch-encoding family, whose conservative values select the scalar reference. A batch decoder chooses between decoding frames one at a time and decoding a wave of eight frames in lanes, and partitions waves across workers; those three choices are selectors. The section keeps one wire identity and one owner codec.\n\n## Success Criteria\n\n- [hard] REQ-01: The coding tuning section exposes a validated decode selector family: `lane_min_frames`, the smallest number of occupied lanes at which a wave takes the lane route; `lane_max_edges`, the largest Tanner-graph edge count that takes the lane route; and `granules_per_task`, the number of preferred-granularity frame groups one parallel task decodes.\n- [hard] REQ-02: The conservative family routes each frame to the single-frame decoder and gives one group per task; each conservative value has one definition beside the route decision, re-exported by the tuning module.\n- [hard] REQ-03: A typed route decision maps the occupied lanes of a wave, the edge count, the decoder algorithm and the lane capability to the single-frame route or the lane route, reads no value outside the selector family, and is tested on both sides of each selector.\n- [hard] REQ-04: The owner codec encodes and decodes the family with per-field presence, reads a body without the family as the conservative family, rejects a null or unknown field and a zero `granules_per_task`, and decodes a committed profile that holds the encode family alone to the section it decoded to before.\n- [hard] REQ-05: The section's wire identity is unchanged, the process-wide accessor resolves both families through one lookup, and the fresh-process tests observe the conservative family before installation and an installed family after it.\n- [hard] REQ-06: The permanent pages that show how a coding section is built describe the two families in the present tense.\n\n## Notes\n\nThe decode selectors are independent of the core section: the route decision reads no core selector.",
+    "description": "Extends the coding-owned tuning section with a decode selector family and the typed route decision that reads it, so batch decoding takes each route from one calibrated source.\n\n## Background\n\nSelector values of `gf2-coding` live in its tuning section, resolved through the process-wide authority of `gf2_core::tuning`; the section holds the batch-encoding family, whose conservative values select the scalar reference. A batch decoder chooses between decoding frames one at a time and decoding a wave of eight frames in lanes, and partitions waves across workers; those three choices are selectors. The section keeps one wire identity and one owner codec.\n\n## Success Criteria\n\n- [hard] REQ-01: The coding tuning section exposes a validated decode selector family: `lane_min_frames`, the smallest number of occupied lanes at which a wave takes the lane route; `lane_max_edges`, the largest Tanner-graph edge count that takes the lane route; and `granules_per_task`, the number of preferred-granularity frame groups one parallel task decodes.\n- [hard] REQ-02: The conservative family routes each frame to the single-frame decoder and gives one group per task; each conservative value has one definition beside the route decision, re-exported by the tuning module.\n- [hard] REQ-03: A typed route decision maps the occupied lanes of a wave, the edge count, the decoder algorithm and the lane capability to the single-frame route or the lane route, reads no value outside the selector family, and is tested on both sides of each selector.\n- [hard] REQ-04: The owner codec encodes and decodes the family with per-field presence, reads a body without the family as the conservative family, rejects a null or unknown field and a zero `granules_per_task`, and decodes a committed profile that holds the encode family alone to the section it decoded to before.\n- [hard] REQ-05: The section's wire identity is unchanged, the process-wide accessor resolves both families through one lookup, and the fresh-process tests observe the conservative family before installation and an installed family after it.\n\n## Notes\n\nThe decode selectors are independent of the core section: the route decision reads no core selector.",
     "type": "task",
     "priority": "normal",
     "labels": [
       "epic:zen3-cpu-performance",
       "story:zen3-ldpc-frame-simd",
       "component:gf2-coding",
-      "component:docs",
       "satisfies:ed3d490e/REQ-13"
     ],
     "gates": [
@@ -146,9 +145,7 @@
             "crates/gf2-coding/src/tuning.rs",
             "crates/gf2-coding/src/ldpc/mod.rs",
             "crates/gf2-coding/tests/support/fresh_tuning_process.rs",
-            "crates/gf2-coding/tests/bch_encode_dispatch_profile.rs",
-            "docs/how-to/select-acceleration.md",
-            "docs/concepts/acceleration-architecture.md"
+            "crates/gf2-coding/tests/bch_encode_dispatch_profile.rs"
           ]
         }
       },
@@ -464,29 +461,27 @@
     }
   },
   {
-    "key": "ldpc-decode-batch-cutover",
-    "title": "Move callers of the inherent LDPC batch functions to the batch trait",
-    "description": "Removes `LdpcDecoder::decode_batch` and `decode_batch_with_config` and moves their callers to the batch soft-decoder trait, so the crate holds one batch decoding path.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A pooled batch decoder over the trait gives parallel decoding with one inner decoder per worker. `LdpcDecoder::decode_batch` and `decode_batch_with_config` predate the trait: they build one single-frame decoder per frame, on rayon under the `parallel` feature. Their callers are the unit tests beside them, the integration test `backend_integration`, the benchmarks `quick_parallel`, `allocation_optimization` and `ldpc_throughput`, and the how-to page `docs/how-to/select-acceleration.md`; `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/source-evidence.json`, topic `decode-batch-callers`, locates representative call sites. No `gf2-sim` source calls them.\n\n## Success Criteria\n\n- [hard] REQ-01: `LdpcDecoder::decode_batch` and `decode_batch_with_config` no longer exist, and no alias or wrapper of them remains.\n- [hard] REQ-02: Each former caller decodes through the batch soft-decoder trait with the LDPC batch decoder, pooled where the caller measured or tested parallel decoding.\n- [hard] REQ-03: The moved tests assert the results the removed functions returned: message bits, iteration counts and flags equal to per-frame `decode_iterative`, and an empty result for an empty batch.\n- [hard] REQ-04: The moved benchmarks build and their workloads are unchanged.\n- [hard] REQ-05: `docs/how-to/select-acceleration.md` shows parallel LDPC decoding through the trait in the present tense.",
+    "key": "decode-batch-test-callers",
+    "title": "Move the tests of the inherent LDPC batch functions to the batch trait",
+    "description": "Moves the tests that call `LdpcDecoder::decode_batch` to the batch soft-decoder trait, keeping what they assert.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A pooled batch decoder over the trait gives parallel decoding with one inner decoder per worker. `LdpcDecoder::decode_batch` and `decode_batch_with_config` predate the trait: they build one single-frame decoder per frame, on rayon under the `parallel` feature, and return message bits with iteration counts and flags. Their test callers are the unit tests beside them in `crates/gf2-coding/src/ldpc/core.rs` and the integration test `crates/gf2-coding/tests/backend_integration.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each test that called `LdpcDecoder::decode_batch` or `decode_batch_with_config` decodes through the batch soft-decoder trait with the LDPC batch decoder, pooled where the test covered parallel decoding.\n- [hard] REQ-02: The moved tests assert message bits, iteration counts and flags equal to per-frame `decode_iterative`, and an empty result for an empty batch.\n- [hard] REQ-03: No test in `gf2-coding` calls the inherent batch functions.",
     "type": "task",
     "priority": "normal",
     "labels": [
       "epic:zen3-cpu-performance",
       "story:zen3-ldpc-frame-simd",
       "component:gf2-coding",
-      "component:docs",
       "satisfies:ed3d490e/REQ-08"
     ],
     "gates": [
       "cargo-ci",
-      "code-review",
-      "doc-review"
+      "code-review"
     ],
     "depends_on": [
       "batch-decoder-avx2-route",
       "batch-worker-pool"
     ],
     "planning": {
-      "outcome": "Inherent LDPC batch functions removed with each caller on the batch trait",
+      "outcome": "Tests of LDPC batch decoding run through the batch trait",
       "contract_refs": [
         "batch-soft-decoder-trait",
         "ldpc-lane-decoder"
@@ -496,17 +491,142 @@
         "SOURCE-EVIDENCE"
       ],
       "terminal": {
-        "consumer_family": "callers of the inherent LDPC batch functions",
-        "test_boundary": "gf2-coding build of tests with benches after the removal",
-        "worker_sized_reason": "A bounded set of call sites named by the ledger moves to one existing entry point",
+        "consumer_family": "test callers of the inherent LDPC batch functions",
+        "test_boundary": "gf2-coding tests of batch LDPC decoding",
+        "worker_sized_reason": "Two test locations change one call each to an existing entry point",
         "footprint": {
           "touches": [
             "crates/gf2-coding/src/ldpc/core.rs",
-            "crates/gf2-coding/tests/backend_integration.rs",
+            "crates/gf2-coding/tests/backend_integration.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "decode-batch-bench-callers",
+    "title": "Move the benchmarks of the inherent LDPC batch functions to the batch trait",
+    "description": "Moves the benchmarks that call `LdpcDecoder::decode_batch` to the batch soft-decoder trait with unchanged workloads.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A pooled batch decoder over the trait gives parallel decoding with one inner decoder per worker. `LdpcDecoder::decode_batch` and `decode_batch_with_config` predate the trait: they build one single-frame decoder per frame, on rayon under the `parallel` feature, and return message bits with iteration counts and flags. Their benchmark callers are `quick_parallel`, `allocation_optimization` and `ldpc_throughput` under `crates/gf2-coding/benches/`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the three benchmarks decodes through the batch soft-decoder trait with the LDPC batch decoder, pooled where the benchmark measured parallel decoding.\n- [hard] REQ-02: Each benchmark keeps its codes, frame counts, iteration caps and group names.\n- [hard] REQ-03: The benchmarks build, and no benchmark in `gf2-coding` calls the inherent batch functions.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:gf2-coding",
+      "component:benchmarks",
+      "satisfies:ed3d490e/REQ-08"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "batch-decoder-avx2-route",
+      "batch-worker-pool"
+    ],
+    "planning": {
+      "outcome": "Benchmarks of LDPC batch decoding run through the batch trait",
+      "contract_refs": [
+        "batch-soft-decoder-trait",
+        "ldpc-lane-decoder"
+      ],
+      "source_refs": [
+        "REQ-08",
+        "SOURCE-EVIDENCE"
+      ],
+      "terminal": {
+        "consumer_family": "benchmark callers of the inherent LDPC batch functions",
+        "test_boundary": "gf2-coding benchmark build",
+        "worker_sized_reason": "Three benchmark files change one call each to an existing entry point",
+        "footprint": {
+          "touches": [
             "crates/gf2-coding/benches/quick_parallel.rs",
             "crates/gf2-coding/benches/allocation_optimization.rs",
-            "crates/gf2-coding/benches/ldpc_throughput.rs",
+            "crates/gf2-coding/benches/ldpc_throughput.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "decode-batch-howto-page",
+    "title": "Show parallel LDPC decoding through the batch trait in the how-to page",
+    "description": "Rewrites the parallel LDPC decoding passage of the acceleration how-to page to use the batch soft-decoder trait.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A pooled batch decoder over the trait gives parallel decoding with one inner decoder per worker. `LdpcDecoder::decode_batch` and `decode_batch_with_config` predate the trait: they build one single-frame decoder per frame, on rayon under the `parallel` feature, and return message bits with iteration counts and flags. The page `docs/how-to/select-acceleration.md` shows parallel LDPC decoding with `LdpcDecoder::decode_batch_with_config`.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/how-to/select-acceleration.md` shows parallel LDPC decoding through the batch soft-decoder trait with the pooled batch decoder, and names neither inherent batch function.\n- [hard] REQ-02: The passage is in the present tense, states no measured figure, and its code sample compiles as a documentation test or matches a compiled example.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:docs",
+      "satisfies:ed3d490e/REQ-08"
+    ],
+    "gates": [
+      "cargo-ci",
+      "doc-review"
+    ],
+    "depends_on": [
+      "batch-decoder-avx2-route",
+      "batch-worker-pool"
+    ],
+    "planning": {
+      "outcome": "How-to page shows parallel LDPC decoding through the batch trait",
+      "contract_refs": [
+        "batch-soft-decoder-trait",
+        "ldpc-lane-decoder"
+      ],
+      "source_refs": [
+        "REQ-08",
+        "SOURCE-EVIDENCE"
+      ],
+      "terminal": {
+        "consumer_family": "readers of the acceleration how-to page",
+        "test_boundary": "documentation mechanical checks on the how-to page",
+        "worker_sized_reason": "One passage of one page changes",
+        "footprint": {
+          "touches": [
             "docs/how-to/select-acceleration.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "decode-batch-removal",
+    "title": "Remove the inherent LDPC batch functions",
+    "description": "Removes `LdpcDecoder::decode_batch` and `decode_batch_with_config`, so `gf2-coding` holds one batch decoding path.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A pooled batch decoder over the trait gives parallel decoding with one inner decoder per worker. `LdpcDecoder::decode_batch` and `decode_batch_with_config` predate the trait: they build one single-frame decoder per frame, on rayon under the `parallel` feature, and return message bits with iteration counts and flags. Their tests, their benchmarks and the how-to page that showed them use the batch soft-decoder trait, so the functions have no caller in the workspace.\n\n## Success Criteria\n\n- [hard] REQ-01: `LdpcDecoder::decode_batch` and `decode_batch_with_config` do not exist, and no alias or wrapper of them remains.\n- [hard] REQ-02: The workspace builds with every feature, and no source, test, benchmark, example or permanent page names either function.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:gf2-coding",
+      "satisfies:ed3d490e/REQ-08"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "decode-batch-test-callers",
+      "decode-batch-bench-callers",
+      "decode-batch-howto-page"
+    ],
+    "planning": {
+      "outcome": "Inherent LDPC batch functions are gone with one batch decoding path left",
+      "contract_refs": [
+        "batch-soft-decoder-trait"
+      ],
+      "source_refs": [
+        "REQ-08",
+        "SOURCE-EVIDENCE"
+      ],
+      "terminal": {
+        "consumer_family": "LDPC decoder public surface",
+        "test_boundary": "workspace build after the removal",
+        "worker_sized_reason": "Two functions without callers leave one file",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/src/ldpc/core.rs"
           ]
         }
       }
@@ -857,17 +977,16 @@
           "touches": [
             "crates/gf2-sim/tests/parallel_determinism.rs",
             "crates/gf2-sim/tests/determinism.rs",
-            "crates/gf2-sim/tests/campaign_byte_identity.rs"
-          ],
-          "uncertainty": "The checkpoint and resume case lands in whichever existing gf2-sim resume suite drives a CPU decode pipeline; the worker names it."
+            "crates/gf2-sim/tests/checkpoint_compat.rs"
+          ]
         }
       }
     }
   },
   {
-    "key": "measurement-arms",
-    "title": "Build the batch decoder benchmark arms",
-    "description": "Builds, validates and smokes the benchmark arms that time the batch decoder against the single-frame decoder and against AFF3CT, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The arm executables of the earlier LDPC campaigns are pinned by digest and stay byte-identical, so new arms live in a workspace of their own. AFF3CT [Cassagne2019] supplies the external arms: the pinned build of `dev/active/c077a88b` supports flooding f32 normalized min-sum as the matched arm, horizontal-layered normalized min-sum INTER in f32 and i16, and float sum-product INTRA; flooding INTER and normalized min-sum INTRA are unavailable in that build. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A standalone arms workspace under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` with its own target directory builds at Rust 1.95 a gf2 arm on the single-frame route and a gf2 arm on the lane route with explicit selectors, both answering the shared runner's wire contract, and the pinned executables of the earlier LDPC campaigns keep their recorded digests.\n- [hard] REQ-02: The pinned AFF3CT arms for flooding f32, layered f32 INTER and layered i16 INTER are reused by digest, and one arm for float sum-product INTRA is built from the same pinned AFF3CT revision; each records its observed decoder class, backend and native wave size at run time.\n- [hard] REQ-03: On each worker, an arm checks its per-frame bit errors against the frozen prepared quality record and fails on a difference; the INTRA arm, which has no prepared record, prepares one untimed over the recorded bundles with error counts and intervals.\n- [hard] REQ-04: Each arm reports, as untimed diagnostics, setup, dispatch and batch-fill cost with lane transposition in and out, and the decoder-owned workspace bytes it observes at run time; an untimed recorder observes peak resident memory of each arm process by one method with its sample count and spread.\n- [hard] REQ-05: Each arm writes a placement report and fails when a worker leaves its CPU or a thread beyond the declared workers exists.\n- [hard] REQ-06: `benchmark-ab-runner smoke` over a throwaway plan passes each arm with one untimed dispatch, and the smoke record, the build identity and the validation record are committed under `dev/bench_results/ed3d490e/preparation/`.\n\n## Notes\n\nAn arm emits what it observes at run time and no typed prior figure.\n\nSource references: [Cassagne2019].",
+    "key": "gf2-benchmark-arms",
+    "title": "Build the gf2 batch decoder benchmark arms",
+    "description": "Builds the two gf2 benchmark arms that time the LDPC batch decoder: one on the single-frame route and one on the lane route.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The arm executables of the earlier LDPC campaigns are pinned by digest and stay byte-identical, so the story's arms live in a workspace of their own, `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/`. The single-frame route is the production decoder before the change and the lane route the candidate after it.\n\n## Success Criteria\n\n- [hard] REQ-01: A standalone arms workspace under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` with its own target directory builds at Rust 1.95 a gf2 arm on the single-frame route and a gf2 arm on the lane route with explicit selectors, both answering the shared runner's wire contract.\n- [hard] REQ-02: On each worker, an arm checks its per-frame bit errors against the frozen prepared quality record and fails on a difference.\n- [hard] REQ-03: Each arm reports, as untimed diagnostics, setup, dispatch and batch-fill cost with lane transposition in and out, and the decoder-owned workspace bytes it observes at run time.\n- [hard] REQ-04: Each arm writes a placement report and fails when a worker leaves its CPU or a thread beyond the declared workers exists.\n- [hard] REQ-05: The pinned executables of the earlier LDPC campaigns keep their recorded digests.\n\n## Notes\n\nAn arm emits what it observes at run time and no typed prior figure.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -875,6 +994,53 @@
       "story:zen3-ldpc-frame-simd",
       "component:benchmarks",
       "component:gf2-coding",
+      "satisfies:ed3d490e/REQ-01",
+      "satisfies:ed3d490e/REQ-10"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "batch-decoder-avx2-route"
+    ],
+    "planning": {
+      "outcome": "Two gf2 benchmark arms of the LDPC batch decoder with per-frame quality checks",
+      "contract_refs": [
+        "measurement-authority",
+        "ldpc-lane-decoder"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-10",
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4",
+        "WORKER-BRIEF",
+        "PROFILE-3BE770D5"
+      ],
+      "terminal": {
+        "consumer_family": "gf2 LDPC steady-state benchmark arms",
+        "test_boundary": "arm validation run against the prepared quality record",
+        "worker_sized_reason": "Two arms follow the committed harness of the earlier LDPC campaigns with one decoder call changed",
+        "footprint": {
+          "creates": [
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "aff3ct-benchmark-arms",
+    "title": "Provide the AFF3CT benchmark arms of the batch decoder comparison",
+    "description": "Provides the AFF3CT arms the batch decoder is compared with: the pinned arms reused by digest and one arm for the sum-product INTRA mode.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The arm executables of the earlier LDPC campaigns are pinned by digest and stay byte-identical, so the story's arms live in a workspace of their own, `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/`. AFF3CT [Cassagne2019] supplies the external arms: the pinned build of `dev/active/c077a88b` supports flooding f32 normalized min-sum as the matched arm, horizontal-layered normalized min-sum INTER in f32 and i16, and float sum-product INTRA; flooding INTER and normalized min-sum INTRA are unavailable in that build. The first three have committed arm executables and prepared quality records; the INTRA mode has neither.\n\n## Success Criteria\n\n- [hard] REQ-01: `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json` names the pinned AFF3CT arms for flooding f32, layered f32 INTER and layered i16 INTER by executable digest, and those executables keep their recorded digests.\n- [hard] REQ-02: One arm for float sum-product INTRA is built in the story's arms workspace from the same pinned AFF3CT revision and answers the shared runner's wire contract.\n- [hard] REQ-03: The INTRA arm prepares, untimed, a quality record over the recorded bundles with error counts and intervals, and checks its per-frame bit errors against it on each worker.\n- [hard] REQ-04: Each AFF3CT arm records its observed decoder class, backend and native wave size at run time.\n\n## Notes\n\nSource references: [Cassagne2019].",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:benchmarks",
       "cites:@/citation/Cassagne2019",
       "satisfies:ed3d490e/REQ-01",
       "satisfies:ed3d490e/REQ-10"
@@ -885,14 +1051,13 @@
       "research-review"
     ],
     "depends_on": [
-      "batch-decoder-avx2-route"
+      "gf2-benchmark-arms"
     ],
     "planning": {
-      "outcome": "Validated benchmark arms for the batch decoder with pinned AFF3CT comparators",
+      "outcome": "AFF3CT arms catalogued by digest with one INTRA arm and its quality record",
       "contract_refs": [
         "measurement-authority",
-        "comparison-arms",
-        "ldpc-lane-decoder"
+        "comparison-arms"
       ],
       "source_refs": [
         "REQ-01",
@@ -900,37 +1065,35 @@
         "MEASUREMENT-CONTRACT",
         "PROTOCOL-V4",
         "WORKER-BRIEF",
-        "COMPARATOR-C077A88B",
-        "PROFILE-3BE770D5"
+        "COMPARATOR-C077A88B"
       ],
       "terminal": {
-        "consumer_family": "LDPC steady-state benchmark arms",
-        "test_boundary": "runner smoke with per-frame quality validation of each arm",
-        "worker_sized_reason": "Arms follow the committed harness of the earlier LDPC campaigns with one decoder call changed",
+        "consumer_family": "AFF3CT benchmark arms",
+        "test_boundary": "arm validation run of the INTRA arm against its prepared record",
+        "worker_sized_reason": "One new arm beside three reused executables under a committed shim",
         "footprint": {
           "creates": [
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/",
             "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json",
-            "dev/bench_results/ed3d490e/preparation/"
+            "dev/bench_results/ed3d490e/preparation/quality-intra/"
+          ],
+          "touches": [
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/"
           ]
         }
-      },
-      "produces_contracts": [
-        "measured-arms"
-      ]
+      }
     }
   },
   {
-    "key": "before-after-families-preparation",
-    "title": "Freeze the before and after decoder families",
-    "description": "Freezes the pilot addenda, ledgers, launcher and queue lines of the families that compare the lane route of the batch decoder with the single-frame route, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The benchmark arms, their build identity and their smoke record are under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` and `dev/bench_results/ed3d490e/preparation/`. The single-frame route is the production decoder before the change and the lane route the candidate after it. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Pilot addenda are committed for three families: a single-worker family with, per code, a sustained-throughput cell on full waves, a single-frame latency cell and an incomplete-wave cell; a multicore family with, per code, cells at six physical cores, twelve physical cores and twenty-four logical CPUs; and an exploratory batch-size sweep with batch sizes below, at and above the wave width on both codes.\n- [hard] REQ-02: Each cell declares objective, exploratory role, workload identity and seed, whole-consumer metric with conversion and batch fill included, scaling, core arm, declared workers without nested pools, cache state, arm builds and the matched decoder settings; latency and incomplete-wave cells are non-regression cells.\n- [hard] REQ-03: Each family's ledger genesis and an arithmetic record give the largest confirmatory cell count the protocol admits on that ledger's first attempt, recomputed from the tooling; a confirmable family declares no more cells.\n- [hard] REQ-04: A launcher prints the authoritative execution log path before the first session, checks each arm digest against the build identity, resumes an interrupted campaign under its own identity, refuses a confirmation whose addendum is uncommitted or modified, and exports the toolchain path itself.\n- [hard] REQ-05: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of each pilot plan, and the smoke record is committed.\n- [hard] REQ-06: One line per pilot campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes, and no timed run executes outside the benchmark window.\n\n## Notes\n\nThe sweep family is exploratory and has no confirmation; its addendum says so with the reason.",
+    "key": "benchmark-arms-validation",
+    "title": "Record the identity of the benchmark arms with their smoke",
+    "description": "Commits the build identity, the validation record, the peak-memory record and the runner smoke record of the story's benchmark arms, the evidence every campaign pins.\n\n## Background\n\nThe gf2 arms of the LDPC batch decoder and the AFF3CT arms [Cassagne2019] are built or catalogued under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` and `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json`. A campaign refuses an arm whose digest differs from the recorded build identity, and the shared runner's smoke establishes each arm's wire contract with one untimed dispatch. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A build identity record under `dev/bench_results/ed3d490e/preparation/` gives each arm's executable digest, toolchain, flags and input identities, written from the commands the recording run executes.\n- [hard] REQ-02: A validation record shows each arm, in the validation role, reproducing its prepared per-frame quality record with every placement check passing.\n- [hard] REQ-03: An untimed recorder observes peak resident memory of each arm process by one method, with its sample count and spread.\n- [hard] REQ-04: `benchmark-ab-runner smoke` over a throwaway plan passes each arm with one untimed dispatch, and the smoke record is committed.\n\n## Notes\n\nSource references: [Cassagne2019].",
     "type": "simulation",
     "priority": "normal",
     "labels": [
       "epic:zen3-cpu-performance",
       "story:zen3-ldpc-frame-simd",
       "component:benchmarks",
-      "component:gf2-coding",
+      "cites:@/citation/Cassagne2019",
       "satisfies:ed3d490e/REQ-01",
       "satisfies:ed3d490e/REQ-10"
     ],
@@ -940,10 +1103,110 @@
       "research-review"
     ],
     "depends_on": [
-      "measurement-arms"
+      "aff3ct-benchmark-arms"
     ],
     "planning": {
-      "outcome": "Before and after pilot families frozen with ledgers, launcher, smoke record and queue lines",
+      "outcome": "Build identity, validation, memory and smoke records of the benchmark arms",
+      "contract_refs": [
+        "measurement-authority",
+        "comparison-arms"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-10",
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4",
+        "WORKER-BRIEF"
+      ],
+      "terminal": {
+        "consumer_family": "benchmark arms of the batch decoder story",
+        "test_boundary": "runner smoke over a throwaway plan",
+        "worker_sized_reason": "Four records produced by committed recorders over arms that already exist",
+        "footprint": {
+          "creates": [
+            "dev/bench_results/ed3d490e/preparation/build-identity.json",
+            "dev/bench_results/ed3d490e/preparation/validation.jsonl",
+            "dev/bench_results/ed3d490e/preparation/peak-memory.json",
+            "dev/bench_results/ed3d490e/preparation/smoke.json",
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/record-preparation.py"
+          ]
+        }
+      },
+      "produces_contracts": [
+        "measured-arms"
+      ]
+    }
+  },
+  {
+    "key": "campaign-tooling",
+    "title": "Provide the campaign tooling of the batch decoder families",
+    "description": "Adds the addendum and plan generator, the launcher and the smoke runner that every protocol family of the story uses, so no family carries tooling of its own.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story measures several protocol families over those arms; each needs a schema-valid addendum, a runner plan, a launcher for the benchmark window and a smoke of its plan. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A generator writes a family's pilot addendum and runner plan from one family declaration file under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and the addendum is valid under the protocol's addendum schema.\n- [hard] REQ-02: A launcher prints the authoritative execution log path before the first session, checks each arm digest against the build identity, creates a family's ledger genesis once, resumes an interrupted campaign under its own identity, refuses a confirmation whose addendum is uncommitted or modified, and exports the toolchain path itself.\n- [hard] REQ-03: A smoke runner projects a throwaway plan of a family and drives `benchmark-ab-runner check` and `benchmark-ab-runner smoke` over it.\n- [hard] REQ-04: A sample family declaration passes the generator and the smoke runner, and the sample's outputs are not committed as a family.\n\n## Notes\n\nThe tooling holds no numeric setting: every setting comes from a family declaration and the protocol's shared settings.",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:benchmarks",
+      "satisfies:ed3d490e/REQ-01"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "benchmark-arms-validation"
+    ],
+    "planning": {
+      "outcome": "One generator, launcher and smoke runner serve the protocol families of the story",
+      "contract_refs": [
+        "measurement-authority",
+        "measured-arms"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4",
+        "WORKER-BRIEF",
+        "UPDATE-07CA8585"
+      ],
+      "terminal": {
+        "consumer_family": "protocol family tooling of the story",
+        "test_boundary": "smoke runner over a sample family declaration",
+        "worker_sized_reason": "Three scripts follow the committed launchers of the earlier LDPC campaigns",
+        "footprint": {
+          "creates": [
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/make-addenda.py",
+            "dev/bench_results/ed3d490e/run-campaign.sh",
+            "dev/bench_results/ed3d490e/run-smoke.sh"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "single-worker-family-preparation",
+    "title": "Freeze the single-worker before-after family",
+    "description": "Freezes the pilot addendum, ledger and queue line of the family that compares the lane route with the single-frame route on one worker, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story's campaign tooling writes a family's addendum and plan from a family declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and one launcher runs any family. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell. The single-frame route is the production decoder before the change and the lane route the candidate after it.\n\n## Success Criteria\n\n- [hard] REQ-01: A pilot addendum is committed for the single-worker family with, per code, a sustained-throughput cell on full waves, a single-frame latency cell and an incomplete-wave cell.\n- [hard] REQ-02: Each cell declares objective, exploratory role, workload identity and seed, whole-consumer metric with conversion and batch fill included, scaling, core arm, declared workers without nested pools, cache state, arm builds and the decoder settings.\n- [hard] REQ-03: The latency and incomplete-wave cells are non-regression cells.\n- [hard] REQ-04: The family's ledger genesis and an arithmetic record give the largest confirmatory cell count the protocol admits on that ledger's first attempt, recomputed from the tooling; the family declares no more cells.\n- [hard] REQ-05: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-06: One line for the pilot campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes, and no timed run executes outside the benchmark window.",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:benchmarks",
+      "satisfies:ed3d490e/REQ-01",
+      "satisfies:ed3d490e/REQ-10"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "campaign-tooling"
+    ],
+    "planning": {
+      "outcome": "Single-worker before-after pilot family frozen with its queue line",
       "contract_refs": [
         "measurement-authority",
         "measured-arms"
@@ -953,21 +1216,16 @@
         "REQ-10",
         "MEASUREMENT-CONTRACT",
         "PROTOCOL-V4",
-        "WORKER-BRIEF",
-        "UPDATE-07CA8585"
+        "WORKER-BRIEF"
       ],
       "terminal": {
-        "consumer_family": "before-after decoder protocol families",
-        "test_boundary": "runner plan check with smoke over each pilot plan",
-        "worker_sized_reason": "Three addenda share one arm pair, one launcher and one generator",
+        "consumer_family": "single-worker before-after protocol family",
+        "test_boundary": "runner plan check with smoke over the pilot plan",
+        "worker_sized_reason": "One family declaration with its addendum over committed arms and tooling",
         "footprint": {
           "creates": [
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-single-worker-pilot.json",
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-multicore-pilot.json",
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-batch-sweep-pilot.json",
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/make-addenda.py",
-            "dev/bench_results/ed3d490e/run-campaign.sh",
-            "dev/bench_results/ed3d490e/run-smoke.sh"
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/ldpc-frame-simd-single-worker.json",
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-single-worker-pilot.json"
           ],
           "touches": [
             "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
@@ -977,16 +1235,167 @@
     }
   },
   {
-    "key": "comparator-families-preparation",
-    "title": "Freeze the AFF3CT comparison families",
-    "description": "Freezes the pilot addenda, ledgers and queue lines of the families that compare the batch decoder with AFF3CT, matched-algorithm and fastest-compatible apart, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The benchmark arms, their build identity and their smoke record are under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` and `dev/bench_results/ed3d490e/preparation/`. AFF3CT [Cassagne2019] is the measured comparator. Its flooding f32 normalized min-sum decoder matches the gf2 decoder in matrix, LLRs, precision, schedule, normalization, iteration cap and stopping rule. Its layered INTER modes in f32 and i16 and its float sum-product INTRA mode differ in schedule, precision or update rule; the comparator survey `dev/active/c077a88b` admits none of them as quality-compatible on the recorded corpus, so their cells are exploratory and select nothing. srsRAN [Srsran2026] and OpenAirInterface [OpenAirInterface2026] do not build on the host and xdsopl [Xdsopl2026] exposes no normalized rule, as that survey records. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A matched-algorithm pilot addendum is committed with, per code, a sustained-throughput cell, a single-frame latency cell and a twelve-physical-core throughput cell, the gf2 lane route against AFF3CT flooding f32.\n- [hard] REQ-02: A fastest-compatible pilot addendum is committed with, per code, one exploratory cell for each of layered f32 INTER, layered i16 INTER and sum-product INTRA, each labelled with its precision, schedule, update rule and native wave size, and each stating that quality admission is unestablished.\n- [hard] REQ-03: Each cell declares workload identity and seed, whole-consumer metric with conversion and batch fill included, scaling, core arm, declared workers, cache state, arm builds and decoder settings; no cell compares iteration counts under different stopping contracts.\n- [hard] REQ-04: The addenda state the unavailable arms, flooding INTER and normalized min-sum INTRA, with the recorded reason and no sample.\n- [hard] REQ-05: Each family's ledger genesis and an arithmetic record give the largest confirmatory cell count the protocol admits on that ledger's first attempt, recomputed from the tooling; a confirmable family declares no more cells.\n- [hard] REQ-06: A launcher prints the authoritative execution log path before the first session, checks each arm digest against the build identity, resumes an interrupted campaign under its own identity, refuses a confirmation whose addendum is uncommitted or modified, and exports the toolchain path itself.\n- [hard] REQ-07: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of each pilot plan, and the smoke record is committed.\n- [hard] REQ-08: One line per pilot campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes, and no timed run executes outside the benchmark window.\n\n## Notes\n\nThe launcher is the one the before and after families use; this issue adds families to it, not a second launcher.\n\nSource references: [Cassagne2019], [Srsran2026], [OpenAirInterface2026], [Xdsopl2026].",
+    "key": "multicore-family-preparation",
+    "title": "Freeze the multicore before-after family",
+    "description": "Freezes the pilot addendum, ledger and queue line of the family that compares the lane route with the single-frame route at several worker counts, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story's campaign tooling writes a family's addendum and plan from a family declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and one launcher runs any family. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell. The single-frame route is the production decoder before the change and the lane route the candidate after it.\n\n## Success Criteria\n\n- [hard] REQ-01: A pilot addendum is committed for the multicore family with, per code, sustained-throughput cells at six physical cores, twelve physical cores and twenty-four logical CPUs.\n- [hard] REQ-02: Each cell declares objective, exploratory role, workload identity and seed, whole-consumer metric with conversion and batch fill included, scaling, core arm, declared workers without nested pools, cache state, arm builds and the decoder settings.\n- [hard] REQ-03: Each cell resolves its CPU identities at run time through the protocol resolver.\n- [hard] REQ-04: The family's ledger genesis and an arithmetic record give the largest confirmatory cell count the protocol admits on that ledger's first attempt, recomputed from the tooling; the family declares no more cells.\n- [hard] REQ-05: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-06: One line for the pilot campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes, and no timed run executes outside the benchmark window.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
       "epic:zen3-cpu-performance",
       "story:zen3-ldpc-frame-simd",
       "component:benchmarks",
-      "component:gf2-coding",
+      "satisfies:ed3d490e/REQ-01",
+      "satisfies:ed3d490e/REQ-10"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "campaign-tooling"
+    ],
+    "planning": {
+      "outcome": "Multicore before-after pilot family frozen with its queue line",
+      "contract_refs": [
+        "measurement-authority",
+        "measured-arms"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-10",
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4",
+        "WORKER-BRIEF"
+      ],
+      "terminal": {
+        "consumer_family": "multicore before-after protocol family",
+        "test_boundary": "runner plan check with smoke over the pilot plan",
+        "worker_sized_reason": "One family declaration with its addendum over committed arms and tooling",
+        "footprint": {
+          "creates": [
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/ldpc-frame-simd-multicore.json",
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-multicore-pilot.json"
+          ],
+          "touches": [
+            "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "batch-sweep-family-preparation",
+    "title": "Freeze the batch-size sweep family",
+    "description": "Freezes the pilot addendum, ledger and queue line of the exploratory family that sweeps the batch size of the lane route, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story's campaign tooling writes a family's addendum and plan from a family declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and one launcher runs any family. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell. The single-frame route is the production decoder before the change and the lane route the candidate after it.\n\n## Success Criteria\n\n- [hard] REQ-01: A pilot addendum is committed for the batch-size sweep with, on both codes, single-worker cells at batch sizes below, at and above the wave width.\n- [hard] REQ-02: Each cell declares objective, exploratory role, workload identity and seed, whole-consumer metric with conversion and batch fill included, scaling, core arm, declared workers without nested pools, cache state, arm builds and the decoder settings.\n- [hard] REQ-03: The family is exploratory and has no confirmation; its addendum says so with the reason.\n- [hard] REQ-04: The family's ledger genesis and an arithmetic record give the largest confirmatory cell count the protocol admits on that ledger's first attempt, recomputed from the tooling; the family declares no more cells.\n- [hard] REQ-05: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-06: One line for the pilot campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes, and no timed run executes outside the benchmark window.",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:benchmarks",
+      "satisfies:ed3d490e/REQ-01",
+      "satisfies:ed3d490e/REQ-10"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "campaign-tooling"
+    ],
+    "planning": {
+      "outcome": "Exploratory batch-size sweep family frozen with its queue line",
+      "contract_refs": [
+        "measurement-authority",
+        "measured-arms"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-10",
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4",
+        "WORKER-BRIEF"
+      ],
+      "terminal": {
+        "consumer_family": "batch-size sweep protocol family",
+        "test_boundary": "runner plan check with smoke over the pilot plan",
+        "worker_sized_reason": "One family declaration with its addendum over committed arms and tooling",
+        "footprint": {
+          "creates": [
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/ldpc-frame-simd-batch-sweep.json",
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-batch-sweep-pilot.json"
+          ],
+          "touches": [
+            "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "matched-family-preparation",
+    "title": "Freeze the matched AFF3CT family",
+    "description": "Freezes the pilot addendum, ledger and queue line of the family that compares the lane route with AFF3CT's matched decoder, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story's campaign tooling writes a family's addendum and plan from a family declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and one launcher runs any family. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell. AFF3CT [Cassagne2019] is the measured comparator, at the pin of `dev/active/c077a88b`.\n\n## Success Criteria\n\n- [hard] REQ-01: A matched-algorithm pilot addendum is committed with, per code, a sustained-throughput cell, a single-frame latency cell and a twelve-physical-core throughput cell, the gf2 lane route against AFF3CT flooding f32 normalized min-sum.\n- [hard] REQ-02: Each cell declares objective, exploratory role, workload identity and seed, whole-consumer metric with conversion and batch fill included, scaling, core arm, declared workers without nested pools, cache state, arm builds and the decoder settings.\n- [hard] REQ-03: The two arms share matrix, recorded LLRs, precision, schedule, normalization, iteration cap and stopping rule, and the addendum declares them as matched-algorithm settings.\n- [hard] REQ-04: The addendum states the unavailable matched SIMD arms, flooding INTER and normalized min-sum INTRA, with the recorded reason and no sample.\n- [hard] REQ-05: The family's ledger genesis and an arithmetic record give the largest confirmatory cell count the protocol admits on that ledger's first attempt, recomputed from the tooling; the family declares no more cells.\n- [hard] REQ-06: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-07: One line for the pilot campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes, and no timed run executes outside the benchmark window.\n\n## Notes\n\nSource references: [Cassagne2019].",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:benchmarks",
+      "cites:@/citation/Cassagne2019",
+      "satisfies:ed3d490e/REQ-01",
+      "satisfies:ed3d490e/REQ-10"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "campaign-tooling"
+    ],
+    "planning": {
+      "outcome": "Matched AFF3CT pilot family frozen with its queue line",
+      "contract_refs": [
+        "measurement-authority",
+        "measured-arms",
+        "comparison-arms"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-10",
+        "MEASUREMENT-CONTRACT",
+        "PROTOCOL-V4",
+        "WORKER-BRIEF"
+      ],
+      "terminal": {
+        "consumer_family": "matched AFF3CT protocol family",
+        "test_boundary": "runner plan check with smoke over the pilot plan",
+        "worker_sized_reason": "One family declaration with its addendum over committed arms and tooling",
+        "footprint": {
+          "creates": [
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/ldpc-frame-simd-matched.json",
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-matched-pilot.json"
+          ],
+          "touches": [
+            "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "fastest-compatible-family-preparation",
+    "title": "Freeze the fastest-compatible AFF3CT family",
+    "description": "Freezes the pilot addendum, ledger and queue line of the exploratory family that compares the lane route with AFF3CT's layered INTER and sum-product INTRA modes, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The workloads are the recorded DVB-T2 normal rate-1/2 and 5G NR base-graph-1 lifting-384 mother-code bundles of `dev/active/c077a88b`, pinned by digest, with random and all-zero codewords and a prepared per-frame quality record. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. The story's campaign tooling writes a family's addendum and plan from a family declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/`, and one launcher runs any family. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell. AFF3CT [Cassagne2019] is the measured comparator, at the pin of `dev/active/c077a88b`. The comparator survey admits none of those modes as quality-compatible on the recorded corpus, so their cells select nothing. srsRAN [Srsran2026] and OpenAirInterface [OpenAirInterface2026] do not build on the host and xdsopl [Xdsopl2026] exposes no normalized rule, as that survey records.\n\n## Success Criteria\n\n- [hard] REQ-01: A fastest-compatible pilot addendum is committed with, per code, one exploratory cell for each of layered f32 INTER, layered i16 INTER and sum-product INTRA.\n- [hard] REQ-02: Each cell declares objective, exploratory role, workload identity and seed, whole-consumer metric with conversion and batch fill included, scaling, core arm, declared workers without nested pools, cache state, arm builds and the decoder settings.\n- [hard] REQ-03: Each cell is labelled with its precision, schedule, update rule and native wave size and states that quality admission is unestablished; no cell compares iteration counts under different stopping contracts.\n- [hard] REQ-04: The family is exploratory and has no confirmation; its addendum says so with the reason.\n- [hard] REQ-05: The family's ledger genesis and an arithmetic record give the largest confirmatory cell count the protocol admits on that ledger's first attempt, recomputed from the tooling; the family declares no more cells.\n- [hard] REQ-06: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-07: One line for the pilot campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes, and no timed run executes outside the benchmark window.\n\n## Notes\n\nSource references: [Cassagne2019], [Srsran2026], [OpenAirInterface2026], [Xdsopl2026].",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:zen3-cpu-performance",
+      "story:zen3-ldpc-frame-simd",
+      "component:benchmarks",
       "cites:@/citation/Cassagne2019",
       "cites:@/citation/Srsran2026",
       "cites:@/citation/OpenAirInterface2026",
@@ -1000,36 +1409,32 @@
       "research-review"
     ],
     "depends_on": [
-      "before-after-families-preparation"
+      "campaign-tooling"
     ],
     "planning": {
-      "outcome": "AFF3CT matched and fastest-compatible pilot families frozen with queue lines",
+      "outcome": "Exploratory fastest-compatible AFF3CT family frozen with its queue line",
       "contract_refs": [
         "measurement-authority",
-        "comparison-arms",
-        "measured-arms"
+        "measured-arms",
+        "comparison-arms"
       ],
       "source_refs": [
         "REQ-01",
         "REQ-10",
         "MEASUREMENT-CONTRACT",
         "PROTOCOL-V4",
-        "WORKER-BRIEF",
-        "COMPARATOR-C077A88B"
+        "WORKER-BRIEF"
       ],
       "terminal": {
-        "consumer_family": "AFF3CT comparison protocol families",
-        "test_boundary": "runner plan check with smoke over each pilot plan",
-        "worker_sized_reason": "Two addenda reuse the arms, the generator and the launcher already committed",
+        "consumer_family": "fastest-compatible AFF3CT protocol family",
+        "test_boundary": "runner plan check with smoke over the pilot plan",
+        "worker_sized_reason": "One family declaration with its addendum over committed arms and tooling",
         "footprint": {
           "creates": [
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-matched-pilot.json",
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/ldpc-frame-simd-fastest-compatible.json",
             "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-fastest-compatible-pilot.json"
           ],
           "touches": [
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/make-addenda.py",
-            "dev/bench_results/ed3d490e/run-campaign.sh",
-            "dev/bench_results/ed3d490e/run-smoke.sh",
             "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
           ]
         }
@@ -1039,7 +1444,7 @@
   {
     "key": "before-after-pilot-collection",
     "title": "Collect the before and after pilots",
-    "description": "Verifies the measured pilots of the before and after decoder families and freezes their confirmation addenda from the committed pilot receipts.\n\n## Background\n\nThe pilot addenda, ledgers, launcher and queue lines of the single-worker, multicore and batch-size-sweep families are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/` and `dev/bench_results/ed3d490e/`; the benchmark window runs the queued pilots. A confirmation addendum is derived from its family's committed pilot receipt by the canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py`. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Confirmation addenda for the single-worker and multicore families are derived by the canonical freezer from the committed pilot receipts, pinned by path and digest, with a stage-specific family description and the derivation record beside each addendum.\n- [hard] REQ-04: Each margin lies strictly above one plus the pilot-derived resolution, and its rationale rests on consumer benefit and maintenance cost, never on a pilot ratio.\n- [hard] REQ-05: One line per confirmation campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` after its addendum; the sweep family stays exploratory and queues nothing further.\n- [hard] REQ-06: The report states which campaigns are measured and which wait for a window.",
+    "description": "Verifies the measured pilots of the before and after decoder families and freezes their confirmation addenda from the committed pilot receipts.\n\n## Background\n\nThe pilot addenda, ledgers, launcher and queue lines of the single-worker, multicore and batch-size-sweep families are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/` and `dev/bench_results/ed3d490e/`; the benchmark window runs the queued pilots. A confirmation addendum is derived from its family's committed pilot receipt by the canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py`. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Confirmation addenda for the single-worker and multicore families are derived by the canonical freezer from the committed pilot receipts, pinned by path and digest, with a stage-specific family description and the derivation record beside each addendum.\n- [hard] REQ-04: Each margin lies strictly above one plus the pilot-derived resolution, and its rationale rests on consumer benefit and maintenance cost, never on a pilot ratio.\n- [hard] REQ-05: One line per confirmation campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` after its addendum; the sweep family stays exploratory and queues nothing further.\n- [hard] REQ-06: The report states which campaigns are measured and which wait for a window.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1055,7 +1460,9 @@
       "research-review"
     ],
     "depends_on": [
-      "before-after-families-preparation"
+      "single-worker-family-preparation",
+      "multicore-family-preparation",
+      "batch-sweep-family-preparation"
     ],
     "planning": {
       "outcome": "Accepted before and after pilot receipts with frozen confirmation addenda",
@@ -1076,10 +1483,10 @@
         "footprint": {
           "creates": [
             "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-single-worker.json",
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-multicore.json",
-            "dev/bench_results/ed3d490e/"
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-frame-simd-multicore.json"
           ],
           "touches": [
+            "dev/bench_results/ed3d490e/",
             "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
           ]
         }
@@ -1089,7 +1496,7 @@
   {
     "key": "comparator-pilot-collection",
     "title": "Collect the AFF3CT comparison pilots",
-    "description": "Verifies the measured pilots of the AFF3CT comparison families and freezes the matched-algorithm confirmation addendum from its committed pilot receipt.\n\n## Background\n\nThe pilot addenda, ledgers and queue lines of the matched-algorithm and fastest-compatible families are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/` and `dev/bench_results/ed3d490e/`; the benchmark window runs the queued pilots against AFF3CT [Cassagne2019]. A confirmation addendum is derived from its family's committed pilot receipt by the canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py`. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: The matched-algorithm confirmation addendum is derived by the canonical freezer from the committed pilot receipt, pinned by path and digest, with a stage-specific family description, its derivation record, and a material-gap threshold and equivalence margin strictly above one plus the pilot-derived resolution.\n- [hard] REQ-04: The fastest-compatible family stays exploratory: its receipt keeps each cell's quality-admission note and it queues no confirmation, which is recorded with the reason.\n- [hard] REQ-05: One line for the matched confirmation is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` after its addendum.\n- [hard] REQ-06: The report states which campaigns are measured and which wait for a window.\n\n## Notes\n\nSource references: [Cassagne2019].",
+    "description": "Verifies the measured pilots of the AFF3CT comparison families and freezes the matched-algorithm confirmation addendum from its committed pilot receipt.\n\n## Background\n\nThe pilot addenda, ledgers and queue lines of the matched-algorithm and fastest-compatible families are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/` and `dev/bench_results/ed3d490e/`; the benchmark window runs the queued pilots against AFF3CT [Cassagne2019]. A confirmation addendum is derived from its family's committed pilot receipt by the canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py`. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: The matched-algorithm confirmation addendum is derived by the canonical freezer from the committed pilot receipt, pinned by path and digest, with a stage-specific family description, its derivation record, and a material-gap threshold and equivalence margin strictly above one plus the pilot-derived resolution.\n- [hard] REQ-04: The fastest-compatible family stays exploratory: its receipt keeps each cell's quality-admission note and it queues no confirmation, which is recorded with the reason.\n- [hard] REQ-05: One line for the matched confirmation is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` after its addendum.\n- [hard] REQ-06: The report states which campaigns are measured and which wait for a window.\n\n## Notes\n\nSource references: [Cassagne2019].",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1106,7 +1513,8 @@
       "research-review"
     ],
     "depends_on": [
-      "comparator-families-preparation"
+      "matched-family-preparation",
+      "fastest-compatible-family-preparation"
     ],
     "planning": {
       "outcome": "Accepted comparison pilot receipts with the matched confirmation addendum frozen",
@@ -1141,7 +1549,7 @@
   {
     "key": "before-after-confirmation-collection",
     "title": "Collect the before and after confirmations",
-    "description": "Verifies the measured confirmations of the single-worker and multicore before and after families and records their outcomes as evaluated.\n\n## Background\n\nThe confirmation addenda of the two families are frozen from their accepted pilots and committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued confirmations. Their outcome decides whether the lane route qualifies on its declared domain, the two recorded workloads at the measured worker counts. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each confirmation campaign is verified from its own append-only execution log with the shared campaign-log verifier, at the protocol's confirmatory pair count on fresh samples.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Each cell's decision and outcome are recorded as the evaluator records them, including fail, not-material, regressed, inconclusive and not-confirmatory; no margin is revised and no further attempt is queued after a non-passing outcome.\n- [hard] REQ-04: The single-worker and multicore outcomes state, per cell, whether the lane route qualifies, and the non-regression outcome of the single-frame latency and incomplete-wave cells.",
+    "description": "Verifies the measured confirmations of the single-worker and multicore before and after families and records their outcomes as evaluated.\n\n## Background\n\nThe confirmation addenda of the two families are frozen from their accepted pilots and committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued confirmations. Their outcome decides whether the lane route qualifies on its declared domain, the two recorded workloads at the measured worker counts. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each confirmation campaign is verified from its own append-only execution log with the shared campaign-log verifier, at the protocol's confirmatory pair count on fresh samples.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Each cell's decision and outcome are recorded as the evaluator records them, including fail, not-material, regressed, inconclusive and not-confirmatory; no margin is revised and no further attempt is queued after a non-passing outcome.\n- [hard] REQ-04: The single-worker and multicore outcomes state, per cell, whether the lane route qualifies, and the non-regression outcome of the single-frame latency and incomplete-wave cells.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1186,7 +1594,7 @@
   {
     "key": "comparator-confirmation-collection",
     "title": "Collect the matched AFF3CT confirmation",
-    "description": "Verifies the measured matched-algorithm confirmation against AFF3CT and records its outcome as evaluated.\n\n## Background\n\nThe matched-algorithm confirmation addendum is frozen from its accepted pilot and committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued confirmation of the gf2 lane route against AFF3CT flooding f32 normalized min-sum [Cassagne2019]. The comparison publishes a gap and selects nothing. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each confirmation campaign is verified from its own append-only execution log with the shared campaign-log verifier, at the protocol's confirmatory pair count on fresh samples.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Each cell's decision and outcome are recorded as the evaluator records them, including fail, not-material, regressed, inconclusive and not-confirmatory; no margin is revised and no further attempt is queued after a non-passing outcome.\n- [hard] REQ-04: The outcome is read against the plan's arm positions, which are stated beside each cell, so the direction of each gap is unambiguous.\n\n## Notes\n\nSource references: [Cassagne2019].",
+    "description": "Verifies the measured matched-algorithm confirmation against AFF3CT and records its outcome as evaluated.\n\n## Background\n\nThe matched-algorithm confirmation addendum is frozen from its accepted pilot and committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued confirmation of the gf2 lane route against AFF3CT flooding f32 normalized min-sum [Cassagne2019]. The comparison publishes a gap and selects nothing. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each confirmation campaign is verified from its own append-only execution log with the shared campaign-log verifier, at the protocol's confirmatory pair count on fresh samples.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Each cell's decision and outcome are recorded as the evaluator records them, including fail, not-material, regressed, inconclusive and not-confirmatory; no margin is revised and no further attempt is queued after a non-passing outcome.\n- [hard] REQ-04: The outcome is read against the plan's arm positions, which are stated beside each cell, so the direction of each gap is unambiguous.\n\n## Notes\n\nSource references: [Cassagne2019].",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1368,7 +1776,7 @@
   {
     "key": "decoder-calibration-preparation",
     "title": "Declare the decoder calibration campaign",
-    "description": "Commits the declaration, protocol amendment, producing manifest and queue line of the offline tuning campaign that calibrates the decode selectors, without running it.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The coding producer measures the decode selector fields, and the driver, composer and validator handle a campaign that measures the coding owner and imports the committed core and algebra envelopes. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A campaign declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/` names the owning issue, the coding owner as measured with its cell count, and the core and algebra owners as imported by envelope path and digest.\n- [hard] REQ-02: A premeasurement protocol document amends the executed campaign protocol by reference and states the decode fields, the grid, the extent decision, the seed derivation and the declared counts before any measurement.\n- [hard] REQ-03: A producing manifest pins the producing inputs by digest.\n- [hard] REQ-04: The producer's capability report, grid listing and self-check run untimed and are committed.\n- [hard] REQ-05: One line for the campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes.",
+    "description": "Commits the declaration, protocol amendment, producing manifest and queue line of the offline tuning campaign that calibrates the decode selectors, without running it.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The coding producer measures the decode selector fields, and the driver, composer and validator handle a campaign that measures the coding owner and imports the committed core and algebra envelopes. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A campaign declaration under `dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/` names the owning issue, the coding owner as measured with its cell count, and the core and algebra owners as imported by envelope path and digest.\n- [hard] REQ-02: A premeasurement protocol document amends the executed campaign protocol by reference and states the decode fields, the grid, the extent decision, the seed derivation and the declared counts before any measurement.\n- [hard] REQ-03: A producing manifest pins the producing inputs by digest.\n- [hard] REQ-04: The producer's capability report, grid listing and self-check run untimed and are committed.\n- [hard] REQ-05: One line for the campaign is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1420,7 +1828,7 @@
   {
     "key": "decoder-calibration-collection",
     "title": "Commit the calibrated decode profile",
-    "description": "Verifies the measured decoder calibration campaign and commits the coding owner envelope it produced with its receipt.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The decoder calibration campaign is declared under `dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/` and queued; the benchmark window runs it, and a complete campaign ends by writing its stage into the checkout. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: The campaign is verified from its own execution log, and the independent validator accepts the stage.\n- [hard] REQ-02: The coding owner envelope is committed under `crates/gf2-coding/data/tuning-profiles/` with a measurement block naming the harness path, the behaviour token and the producer executable digest, beside the complete envelope and the campaign receipt.\n- [hard] REQ-03: A selector field the campaign omits keeps its conservative value, and the omission is recorded as the outcome.\n- [hard] REQ-04: A repository test decodes each committed coding envelope through the owner codec and checks its measurement provenance against the codec's harness schema.\n- [hard] REQ-05: The report states whether the campaign is measured or waits for a window.",
+    "description": "Verifies the measured decoder calibration campaign and commits the coding owner envelope it produced with its receipt.\n\n## Background\n\nThe offline tuning system calibrates selectors through an owner producer, `crates/<owner>/benches/tuning_calibration.rs`, run by `dev/scripts/tuning-extent-campaign.sh` from a committed campaign declaration: the neutral driver stages and journals the campaign, the composer writes a versioned owner envelope whose measurement block carries the producer's behaviour token and executable digest, and an independent validator accepts the published stage. `gf2-core` and `gf2-algebra` are owners; `gf2-coding` has an owner codec and no producer. The decoder calibration campaign is declared under `dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/` and queued; the benchmark window runs it, and a complete campaign ends by writing its stage into the checkout. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: The campaign is verified from its own execution log, and the independent validator accepts the stage.\n- [hard] REQ-02: The coding owner envelope is committed under `crates/gf2-coding/data/tuning-profiles/` with a measurement block naming the harness path, the behaviour token and the producer executable digest, beside the complete envelope and the campaign receipt.\n- [hard] REQ-03: A selector field the campaign omits keeps its conservative value, and the omission is recorded as the outcome.\n- [hard] REQ-04: A repository test decodes each committed coding envelope through the owner codec and checks its measurement provenance against the codec's harness schema.\n- [hard] REQ-05: The report states whether the campaign is measured or waits for a window.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1475,7 +1883,7 @@
   {
     "key": "selector-holdout-preparation",
     "title": "Freeze the decode selector holdout family",
-    "description": "Freezes the pilot addendum, holdout declaration and queue line of the family that reconfirms the calibrated decode profile on inputs the calibration did not use, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A coding owner envelope with calibrated decode selectors is committed under `crates/gf2-coding/data/tuning-profiles/`. The protocol's `selector-calibration` purpose requires holdout cells on fresh inputs that took no part in selection. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The benchmark arms, their build identity and their smoke record are under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` and `dev/bench_results/ed3d490e/preparation/`. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A pilot addendum with purpose `selector-calibration` is committed: its arms are a conservative-portable arm and a tuned-portable arm that installs the committed envelope, pinned as the arm's tuning profile, plus native-build cells against the tuned-portable arm.\n- [hard] REQ-02: A holdout record, committed before the pilot runs, declares holdout cells on codes, seeds and batch sizes absent from the calibration inventory, including a small batch and an incomplete wave as non-regression cells.\n- [hard] REQ-03: Each cell is a whole-consumer cell with batch fill, LLR transposition and workspace costs inside the timed call, and the family declares no more confirmatory and holdout cells than its ledger's first attempt admits.\n- [hard] REQ-04: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-05: One line for the pilot is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, and no timed run executes outside the benchmark window.",
+    "description": "Freezes the pilot addendum, holdout declaration and queue line of the family that reconfirms the calibrated decode profile on inputs the calibration did not use, without running a timed campaign.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. A coding owner envelope with calibrated decode selectors is committed under `crates/gf2-coding/data/tuning-profiles/`. The protocol's `selector-calibration` purpose requires holdout cells on fresh inputs that took no part in selection. The measured operation is the steady-state decode of `dev/active/3be770d5`: each pinned worker builds its decoder once, and a timed call decodes the declared per-worker batch of recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. A first confirmatory attempt on a new family ledger admits a bounded number of cells under the protocol's tail-support rule; the bound is recomputed from `dev/tools/tuning-campaign-support/src/receipt.rs` and `trial_ledger.rs` for the family's own ledger. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A pilot addendum with purpose `selector-calibration` is committed: its arms are a conservative-portable arm and a tuned-portable arm that installs the committed envelope, pinned as the arm's tuning profile, plus native-build cells against the tuned-portable arm.\n- [hard] REQ-02: A holdout record, committed before the pilot runs, declares holdout cells on codes, seeds and batch sizes absent from the calibration inventory, including a small batch and an incomplete wave as non-regression cells.\n- [hard] REQ-03: Each cell is a whole-consumer cell with batch fill, LLR transposition and workspace costs inside the timed call, and the family declares no more confirmatory and holdout cells than its ledger's first attempt admits.\n- [hard] REQ-04: `benchmark-ab-runner check` and `benchmark-ab-runner smoke` pass over a throwaway projection of the pilot plan, and the smoke record is committed.\n- [hard] REQ-05: One line for the pilot is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, and no timed run executes outside the benchmark window.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1493,7 +1901,7 @@
     ],
     "depends_on": [
       "decoder-calibration-collection",
-      "comparator-families-preparation"
+      "campaign-tooling"
     ],
     "planning": {
       "outcome": "Selector holdout family frozen with holdout declaration, smoke record and queue line",
@@ -1518,12 +1926,11 @@
         "footprint": {
           "creates": [
             "dev/active/ed3d490e-zen3-ldpc-frame-simd/addendum-ldpc-decode-selector-holdout-pilot.json",
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/holdout-cells.json"
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/holdout-cells.json",
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/ldpc-decode-selector-holdout.json"
           ],
           "touches": [
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/make-addenda.py",
             "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/",
-            "dev/bench_results/ed3d490e/run-campaign.sh",
             "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
           ]
         }
@@ -1533,7 +1940,7 @@
   {
     "key": "selector-holdout-pilot-collection",
     "title": "Collect the decode selector holdout pilot",
-    "description": "Verifies the measured pilot of the decode selector holdout family and freezes its confirmation addendum with the holdout cells attached.\n\n## Background\n\nThe pilot addendum and the holdout record of the decode selector holdout family are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued pilot of its non-holdout cells. The canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py` derives the confirmation addendum from the committed pilot receipt and attaches the declared holdout cells, of which no sample exists before the confirmation. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: The confirmation addendum is derived by the canonical freezer from the committed pilot receipt with the holdout cells attached, a stage-specific family description and its derivation record; margins lie strictly above one plus the pilot-derived resolution.\n- [hard] REQ-04: One line for the confirmation is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` after its addendum.\n- [hard] REQ-05: The report states whether the pilot is measured or waits for a window.",
+    "description": "Verifies the measured pilot of the decode selector holdout family and freezes its confirmation addendum with the holdout cells attached.\n\n## Background\n\nThe pilot addendum and the holdout record of the decode selector holdout family are committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued pilot of its non-holdout cells. The canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py` derives the confirmation addendum from the committed pilot receipt and attaches the declared holdout cells, of which no sample exists before the confirmation. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each pilot campaign is verified from its own append-only execution log with the shared campaign-log verifier: cell starts and completions equal the addendum's cell count, each cell is measured at its declared pairs, and a terminal complete record closes the log.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, the receipt-input snapshot check passes, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: The confirmation addendum is derived by the canonical freezer from the committed pilot receipt with the holdout cells attached, a stage-specific family description and its derivation record; margins lie strictly above one plus the pilot-derived resolution.\n- [hard] REQ-04: One line for the confirmation is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` after its addendum.\n- [hard] REQ-05: The report states whether the pilot is measured or waits for a window.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1583,7 +1990,7 @@
   {
     "key": "selector-holdout-confirmation-collection",
     "title": "Collect the decode selector holdout confirmation",
-    "description": "Verifies the measured holdout confirmation of the calibrated decode profile and records its outcome as evaluated.\n\n## Background\n\nThe confirmation addendum of the decode selector holdout family is frozen with its holdout cells and committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued confirmation of the tuned-portable arm, which installs the committed coding envelope, against the conservative-portable arm. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each confirmation campaign is verified from its own append-only execution log with the shared campaign-log verifier, at the protocol's confirmatory pair count on fresh samples.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Each cell's decision and outcome are recorded as the evaluator records them, including fail, not-material, regressed, inconclusive and not-confirmatory; no margin is revised and no further attempt is queued after a non-passing outcome.\n- [hard] REQ-04: The outcome states, per holdout cell, whether the calibrated profile holds on inputs the calibration did not use, and the conservative-portable, tuned-portable and native results stay separate.\n- [hard] REQ-05: If the profile does not qualify, the committed envelope is recorded as not adopted and the conservative selectors remain the production values.",
+    "description": "Verifies the measured holdout confirmation of the calibrated decode profile and records its outcome as evaluated.\n\n## Background\n\nThe confirmation addendum of the decode selector holdout family is frozen with its holdout cells and committed under `dev/active/ed3d490e-zen3-ldpc-frame-simd/`; the benchmark window runs the queued confirmation of the tuned-portable arm, which installs the committed coding envelope, against the conservative-portable arm. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each confirmation campaign is verified from its own append-only execution log with the shared campaign-log verifier, at the protocol's confirmatory pair count on fresh samples.\n- [hard] REQ-02: Each receipt is committed with its input snapshots, and the `benchmark-acceptance` verdict recomputed from the committed receipt reproduces the committed acceptance summary byte for byte.\n- [hard] REQ-03: Each cell's decision and outcome are recorded as the evaluator records them, including fail, not-material, regressed, inconclusive and not-confirmatory; no margin is revised and no further attempt is queued after a non-passing outcome.\n- [hard] REQ-04: The outcome states, per holdout cell, whether the calibrated profile holds on inputs the calibration did not use, and the conservative-portable, tuned-portable and native results stay separate.\n- [hard] REQ-05: If the profile does not qualify, the committed envelope is recorded as not adopted and the conservative selectors remain the production values.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1674,7 +2081,7 @@
   {
     "key": "batch-decoding-reference-pages",
     "title": "Describe batch LDPC decoding in the permanent pages",
-    "description": "States the batch soft-decoder trait, the LDPC batch decoder's routes and the decode selectors in the permanent adoption and configuration pages.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The decode selectors `lane_min_frames`, `lane_max_edges` and `granules_per_task` live in the coding tuning section, and the route a batch takes is observable through a reporter. The permanent pages describe acceleration selection and supported configurations for researchers adopting the library.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/how-to/select-acceleration.md` shows batch decoding through the trait and how an LDPC batch decode takes its route: the cargo feature, the runtime capability, the decode selectors and the route reporter.\n- [hard] REQ-02: `docs/reference/supported-configurations.md` states the supported batch decoding configurations: the decoders that implement the trait with their path, the trait's scope of soft-decision whole-frame block decoding, f32 LLRs, the min-sum family on the lane route, sum-product on the single-frame route, and the fallback on a host without AVX2.\n- [hard] REQ-03: `docs/concepts/acceleration-architecture.md` places the lane kernels and the decode selectors in the route selection it describes.\n- [hard] REQ-04: The pages are in the present tense, state no measured figure and cite evidence by its generated location.",
+    "description": "States the batch soft-decoder trait, the LDPC batch decoder's routes and the decode selectors in the permanent adoption and configuration pages.\n\n## Background\n\nThe batch soft-decoder trait of `gf2-coding` decodes a batch of LLR frames into caller-provided decoded words and per-frame outcomes in input order. Its LDPC implementer, the LDPC batch decoder, decodes fixed waves of eight lanes with per-frame termination, routes a wave to the lane kernels or to the single-frame decoder by the decode selectors of the coding tuning section, and returns each frame's result equal to the single-frame decoder's bit for bit as `docs/reference/ldpc-decoder-numerical-contract.md` states. The decode selectors `lane_min_frames`, `lane_max_edges` and `granules_per_task` live in the coding tuning section, and the route a batch takes is observable through a reporter. The permanent pages describe acceleration selection and supported configurations for researchers adopting the library.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/how-to/select-acceleration.md` shows batch decoding through the trait and how an LDPC batch decode takes its route: the cargo feature, the runtime capability, the decode selectors and the route reporter.\n- [hard] REQ-02: `docs/reference/supported-configurations.md` states the supported batch decoding configurations: the decoders that implement the trait with their path, the trait's scope of soft-decision whole-frame block decoding, f32 LLRs, the min-sum family on the lane route, sum-product on the single-frame route, and the fallback on a host without AVX2.\n- [hard] REQ-03: `docs/concepts/acceleration-architecture.md` places the lane kernels and the decode selectors in the route selection it describes.\n- [hard] REQ-04: Where the pages show how a coding tuning section is built, they describe its encode and decode families.\n- [hard] REQ-05: The pages are in the present tense, state no measured figure and cite evidence by its generated location.",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -1690,7 +2097,7 @@
     ],
     "depends_on": [
       "decoder-dispatch-verification",
-      "ldpc-decode-batch-cutover"
+      "decode-batch-howto-page"
     ],
     "planning": {
       "outcome": "Permanent pages state batch decoding routes, selectors and supported configurations",
@@ -1721,7 +2128,7 @@
   {
     "key": "lane-profile-preparation",
     "title": "Prepare the profile series of the batch decoder",
-    "description": "Prepares the sampled-profile and counter series of the batch decoder arms for the benchmark window, without running it.\n\n## Background\n\nThe profile of `dev/active/3be770d5` attributes the single-frame decoder's time to categories by source span and records counter groups at one, six, twelve and twenty-four workers; its session script and summarizer are committed. The lane route widens the decoder workspace eightfold per worker, so cache traffic is the limit the counters test. The benchmark arms, their build identity and their smoke record are under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/` and `dev/bench_results/ed3d490e/preparation/`. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A case file names record cases of the gf2 lane arm and the gf2 single-frame arm at one and twenty-four workers, and stat cases of both at one, six, twelve and twenty-four workers, on both recorded codes.\n- [hard] REQ-02: The committed session script and summarizer are used unchanged; category rules for the lane kernel and the lane transposition are added at the summarizer's rule source.\n- [hard] REQ-03: An untimed dry session over one case shows the control channel and the record path work.\n- [hard] REQ-04: One line for the series is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes.",
+    "description": "Prepares the sampled-profile and counter series of the batch decoder arms for the benchmark window, without running it.\n\n## Background\n\nThe profile of `dev/active/3be770d5` attributes the single-frame decoder's time to categories by source span and records counter groups at one, six, twelve and twenty-four workers; its session script and summarizer are committed. The lane route widens the decoder workspace eightfold per worker, so cache traffic is the limit the counters test. The benchmark arms have a committed build identity and smoke record under `dev/bench_results/ed3d490e/preparation/`. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: A case file names record cases of the gf2 lane arm and the gf2 single-frame arm at one and twenty-four workers, and stat cases of both at one, six, twelve and twenty-four workers, on both recorded codes.\n- [hard] REQ-02: The committed session script is used unchanged; category rules for the lane kernel and the lane transposition are added to the `LOCATION_RULES` table of `dev/active/3be770d5/survey/summarize-profile.py`, and the committed profile summaries of the earlier series regenerate byte for byte.\n- [hard] REQ-03: An untimed dry session over one case shows the control channel and the record path work.\n- [hard] REQ-04: One line for the series is committed in `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` with its estimated minutes.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1736,7 +2143,7 @@
       "research-review"
     ],
     "depends_on": [
-      "measurement-arms"
+      "benchmark-arms-validation"
     ],
     "planning": {
       "outcome": "Profile series of the batch decoder arms prepared with its queue line",
@@ -1756,13 +2163,13 @@
         "worker_sized_reason": "A case file with category rules reuses a committed session script",
         "footprint": {
           "creates": [
-            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/profile-cases.tsv"
+            "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/profile-cases.tsv",
+            "dev/bench_results/ed3d490e/run-profile.sh"
           ],
           "touches": [
             "dev/active/3be770d5/survey/summarize-profile.py",
             "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
-          ],
-          "uncertainty": "Whether the category rules live in the summarizer or in a rules file it reads is settled by reading the summarizer; the behavioural identity of committed profile summaries is preserved either way."
+          ]
         }
       }
     }
@@ -1770,7 +2177,7 @@
   {
     "key": "lane-profile-collection",
     "title": "Summarize the profile series of the batch decoder",
-    "description": "Summarizes the measured profile and counter series of the batch decoder arms into generated tables.\n\n## Background\n\nThe profile series of the batch decoder arms is prepared under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/` and queued; the benchmark window runs its sessions, each under its own host acquisition. The summarizer of `dev/active/3be770d5` resolves each sample to a category and reports shares with Wilson intervals and counters with median intervals. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](dev/active/f547c394/protocol.md) with its [version-4 amendment](dev/active/f547c394/amendment-v4.md) and the [worker brief](dev/active/1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each session is verified from the series' own execution log, and a case whose address listing and recorded sample total disagree stops the summary.\n- [hard] REQ-02: The generated profile summary gives, for the lane arm and the single-frame arm, sampled shares by category with intervals at one and twenty-four workers and the counter groups at each worker count.\n- [hard] REQ-03: The summary reproduces byte for byte on a second run over the committed session directories.\n- [hard] REQ-04: The report states whether the series is measured or waits for a window.",
+    "description": "Summarizes the measured profile and counter series of the batch decoder arms into generated tables.\n\n## Background\n\nThe profile series of the batch decoder arms is prepared under `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/` and queued; the benchmark window runs its sessions, each under its own host acquisition. The summarizer of `dev/active/3be770d5` resolves each sample to a category and reports shares with Wilson intervals and counters with median intervals. Every timed run is one line of `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`, executed in the overnight benchmark window; nothing timed runs in a working session. The [Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md), the [frozen protocol](../f547c394/protocol.md) with its [version-4 amendment](../f547c394/amendment-v4.md) and the [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Each session is verified from the series' own execution log, and a case whose address listing and recorded sample total disagree stops the summary.\n- [hard] REQ-02: The generated profile summary gives, for the lane arm and the single-frame arm, sampled shares by category with intervals at one and twenty-four workers and the counter groups at each worker count.\n- [hard] REQ-03: The summary reproduces byte for byte on a second run over the committed session directories.\n- [hard] REQ-04: The report states whether the series is measured or waits for a window.",
     "type": "simulation",
     "priority": "normal",
     "labels": [
@@ -1843,7 +2250,8 @@
       "lane-profile-collection",
       "batch-decoding-reference-pages",
       "sim-batch-determinism",
-      "sim-bler-sweep-batch"
+      "sim-bler-sweep-batch",
+      "decode-batch-removal"
     ],
     "planning": {
       "outcome": "Outcome record with generated tables, criterion status and residual limits",
