@@ -7,7 +7,7 @@
   ],
   "classifier_rule": "Rust sources only. Line comments (`//` to the end of the line, doc comments included) and block comments (`/* */`, nested) outside string, raw-string, byte-string and character literals are removed; trailing whitespace is removed from every line; lines left empty are removed. Two files whose remaining text is equal are comment-or-blank-only. Leading whitespace, line breaks inside code and `#[doc]` attributes count as code.",
   "task_change": {
-    "anchor": "2b09efee98a4b0592bd4badf263b84cb6139c2ba",
+    "anchor": "61e1a8e5af844dc787e04e3ba994a2ef00b14623",
     "changed_package_paths": [
       "crates/gf2-core/tests/popcount_routes.rs",
       "crates/gf2-core/tests/simd_equiv_matvec.rs",
@@ -1082,7 +1082,7 @@
           "class": "code-differs",
           "changed_by": [
             {
-              "commit": "d6ebf3dc83f8157e26ce5857fb667977e764b891",
+              "commit": "16e5c4b6b4fca98f4278a76ffe3be9b971fef50e",
               "issue": "6e87c436",
               "subject": "docs(jit:6e87c436): state the fused AVX2 count safety contract"
             }

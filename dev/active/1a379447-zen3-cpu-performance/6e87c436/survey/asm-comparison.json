@@ -1,7 +1,7 @@
 {
   "schema": "dense-asm-comparison-v1",
   "issue": "6e87c436",
-  "anchor": "2b09efee98a4b0592bd4badf263b84cb6139c2ba",
+  "anchor": "61e1a8e5af844dc787e04e3ba994a2ef00b14623",
   "comparison_rule": "Per symbol, the lines between its `; symbol:` divider and the next divider, without blank lines, divider rules and cargo's `Compiling` and `Finished` status lines. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
   "modules": [
     {
