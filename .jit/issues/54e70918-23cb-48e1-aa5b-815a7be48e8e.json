@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-05T06:36:53.255718358Z",
   "context": {},
   "created_at": "2026-10-05T05:37:09.672929457Z",
   "dependencies": [],
@@ -18,7 +19,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Stop SIMD equivalence tests passing without running on hosts without SIMD",
-  "updated_at": "2026-10-05T05:37:09.672929457Z"
+  "updated_at": "2026-10-05T06:36:53.255718358Z"
 }
