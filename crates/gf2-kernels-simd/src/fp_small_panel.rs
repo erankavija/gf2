@@ -65,7 +65,7 @@ fn detect_x86() -> Option<SmallPrimePanelFns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_gemm_safe(a: &[u8], bt: &[u8], m: usize, k: usize, n: usize, p: u8, c: &mut [u8]) {
-    // Safety: `detect_x86` only returns this pointer when AVX2 is
+    // SAFETY: `detect_x86` only returns this pointer when AVX2 is
     // available at runtime.
     unsafe { crate::x86::fp_small_panel::fp_small_panel_gemm(a, bt, m, k, n, p, c) }
 }

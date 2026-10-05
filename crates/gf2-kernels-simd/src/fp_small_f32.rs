@@ -65,7 +65,7 @@ fn detect_x86() -> Option<SmallPrimeF32Fns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_gemm_safe(a: &[f32], bt: &[f32], m: usize, k: usize, n: usize, p: u8, c: &mut [u8]) {
-    // Safety: `detect_x86` only returns this pointer when AVX2 + FMA3
+    // SAFETY: `detect_x86` only returns this pointer when AVX2 + FMA3
     // are both available at runtime.
     unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm(a, bt, m, k, n, p, c) }
 }
@@ -80,7 +80,7 @@ fn batch_gemm_route_a_safe(
     p: u8,
     c: &mut [u8],
 ) {
-    // Safety: `detect_x86` only returns this pointer when AVX2 + FMA3
+    // SAFETY: `detect_x86` only returns this pointer when AVX2 + FMA3
     // are both available at runtime.
     unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm_route_a(a, bt, m, k, n, p, c) }
 }

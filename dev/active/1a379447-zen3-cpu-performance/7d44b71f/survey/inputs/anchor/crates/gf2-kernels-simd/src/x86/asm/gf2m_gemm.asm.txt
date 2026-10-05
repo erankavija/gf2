@@ -1,0 +1,3250 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::gf2m_gemm::gf2m_gemm_panelized
+; output        : crates/gf2-kernels-simd/src/x86/asm/gf2m_gemm.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : b85adc0a1
+; regenerated   : 2026-10-05T03:26:17Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::gf2m_gemm::gf2m_gemm_panelized
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.06s
+
+gf2_kernels_simd::x86::gf2m_gemm::gf2m_gemm_panelized:
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 184
+	mov qword ptr [rsp + 24], r9
+	mov r15, rcx
+	mov qword ptr [rsp + 32], rdx
+	mov qword ptr [rsp + 40], rsi
+	mov qword ptr [rsp + 80], rdi
+	mov ecx, dword ptr [rsp + 280]
+	mov rdi, qword ptr [rsp + 264]
+	mov rax, qword ptr [rsp + 256]
+	mov rsi, qword ptr [rsp + 240]
+	cmp ecx, 8
+	mov qword ptr [rsp + 8], r15
+	je .LBB136_177
+	cmp ecx, 16
+	je .LBB136_105
+	cmp ecx, 32
+	jne .LBB136_249
+	cmp rsi, 4
+	mov qword ptr [rsp + 96], r8
+	jae .LBB136_5
+	xor r14d, r14d
+	jmp .LBB136_93
+.LBB136_105:
+	cmp rsi, 4
+	mov qword ptr [rsp + 96], r8
+	jae .LBB136_107
+	xor r14d, r14d
+	jmp .LBB136_175
+.LBB136_177:
+	cmp rsi, 4
+	mov qword ptr [rsp + 96], r8
+	jae .LBB136_179
+	xor r14d, r14d
+	jmp .LBB136_247
+.LBB136_249:
+	test rsi, rsi
+	je .LBB136_361
+	mov r11d, ecx
+	and r11d, 127
+	mov rax, -1
+	mov rdx, -1
+	shl rdx, cl
+	cmp ecx, 64
+	not rdx
+	cmove rdx, rax
+	vmovq xmm0, rdi
+	vmovq xmm1, qword ptr [rsp + 272]
+	mov rax, qword ptr [rsp + 256]
+	lea rax, [8*rax]
+	mov qword ptr [rsp], rax
+	xor r15d, r15d
+	jmp .LBB136_376
+.LBB136_375:
+	add r8, qword ptr [rsp]
+	mov r15, qword ptr [rsp + 16]
+	cmp r15, qword ptr [rsp + 240]
+	je .LBB136_361
+.LBB136_376:
+	lea rcx, [r15 + 1]
+	mov r14, r15
+	mov rax, qword ptr [rsp + 256]
+	imul r14, rax
+	mov rbx, rcx
+	imul rbx, rax
+	cmp rbx, r14
+	jb .LBB136_402
+	cmp rbx, qword ptr [rsp + 24]
+	ja .LBB136_402
+	mov qword ptr [rsp + 16], rcx
+	cmp qword ptr [rsp + 248], 0
+	je .LBB136_375
+	imul r15, qword ptr [rsp + 248]
+	mov r9, qword ptr [rsp + 32]
+	xor r10d, r10d
+	jmp .LBB136_380
+.LBB136_382:
+	add r9, qword ptr [rsp]
+	cmp r10, qword ptr [rsp + 248]
+	je .LBB136_375
+.LBB136_380:
+	lea rbx, [r10 + r15]
+	mov rsi, qword ptr [rsp + 40]
+	cmp rbx, rsi
+	jae .LBB136_383
+	mov r14, r10
+	inc r10
+	mov rax, qword ptr [rsp + 80]
+	mov rax, qword ptr [rax + 8*rbx]
+	test rax, rax
+	je .LBB136_382
+	mov rcx, qword ptr [rsp + 256]
+	imul r14, rcx
+	mov rbx, r10
+	imul rbx, rcx
+	cmp rbx, r14
+	jb .LBB136_386
+	cmp rbx, qword ptr [rsp + 8]
+	ja .LBB136_386
+	cmp qword ptr [rsp + 256], 0
+	je .LBB136_382
+	vmovq xmm2, rax
+	mov rbx, qword ptr [rsp]
+	xor r14d, r14d
+.LBB136_389:
+	mov rax, qword ptr [r9 + 8*r14]
+	test rax, rax
+	je .LBB136_390
+	vmovq xmm3, rax
+	vpclmulqdq xmm3, xmm2, xmm3, 0
+	vmovq r12, xmm3
+	vpextrq rsi, xmm3, 1
+	mov rax, r12
+	mov ecx, r11d
+	shrd rax, rsi, cl
+	shr rsi, cl
+	test r11b, 64
+	cmovne rax, rsi
+	mov ecx, 0
+	cmove rcx, rsi
+	or rcx, rax
+	je .LBB136_397
+	vmovq xmm4, rax
+	vpclmulqdq xmm4, xmm4, xmm0, 0
+	vpextrq rax, xmm4, 1
+	vmovq rsi, xmm4
+	mov ecx, r11d
+	shrd rsi, rax, cl
+	shr rax, cl
+	test r11b, 64
+	cmove rax, rsi
+	vmovq xmm4, rax
+	vpclmulqdq xmm4, xmm4, xmm1, 0
+	vpxor xmm3, xmm4, xmm3
+	vpextrq r13, xmm3, 1
+	mov rax, r13
+	shr rax, cl
+	test r11b, 64
+	vmovq rdi, xmm3
+	mov r12d, 0
+	mov rbp, rax
+	cmovne rbp, r12
+	mov rsi, rdi
+	shrd rsi, r13, cl
+	test r11b, 64
+	cmovne rsi, rax
+	or rsi, rbp
+	mov esi, 0
+	je .LBB136_394
+	mov rsi, qword ptr [rsp + 272]
+.LBB136_394:
+	xor rsi, rdi
+	mov rdi, rsi
+	mov ecx, r11d
+	shrd rdi, r13, cl
+	test r11b, 64
+	cmovne rdi, rax
+	or rdi, rbp
+	je .LBB136_396
+	mov r12, qword ptr [rsp + 272]
+.LBB136_396:
+	xor r12, rsi
+	and r12, rdx
+.LBB136_397:
+	cmp qword ptr [rsp + 256], r14
+	jne .LBB136_398
+	jmp .LBB136_399
+.LBB136_390:
+	xor r12d, r12d
+	cmp qword ptr [rsp + 256], r14
+	je .LBB136_399
+.LBB136_398:
+	xor qword ptr [r8 + 8*r14], r12
+	inc r14
+	add rbx, -8
+	jne .LBB136_389
+	jmp .LBB136_382
+.LBB136_107:
+	cmp qword ptr [rsp + 248], 0
+	je .LBB136_298
+	vmovq xmm0, rdi
+	vinserti128 ymm1, ymm0, xmm0, 1
+	vmovq xmm2, qword ptr [rsp + 272]
+	vinserti128 ymm3, ymm2, xmm2, 1
+	lea rcx, [r8 + 24]
+	mov qword ptr [rsp], rcx
+	mov rcx, rax
+	shl rcx, 5
+	mov qword ptr [rsp + 176], rcx
+	mov rcx, qword ptr [rsp + 32]
+	add rcx, 24
+	mov qword ptr [rsp + 168], rcx
+	lea rcx, [8*rax]
+	lea rdx, [r8 + 8*rax + 24]
+	mov qword ptr [rsp + 16], rdx
+	lea rdx, [r8 + 8*rax]
+	mov qword ptr [rsp + 64], rdx
+	mov rdx, rax
+	shl rdx, 4
+	mov rax, r8
+	lea r13, [r8 + rdx]
+	add r13, 24
+	add rdx, r8
+	mov qword ptr [rsp + 56], rdx
+	mov qword ptr [rsp + 104], rcx
+	lea rcx, [rcx + 2*rcx]
+	lea rbp, [r8 + rcx]
+	add rbp, 24
+	add rcx, r8
+	mov qword ptr [rsp + 88], rcx
+	mov ecx, 4
+	xor r9d, r9d
+	vmovdqa xmm4, xmmword ptr [rip + .LCPI136_0]
+	mov r8d, 65536
+	mov qword ptr [rsp + 48], rax
+	xor edi, edi
+	jmp .LBB136_109
+.LBB136_174:
+	mov r14, qword ptr [rsp + 72]
+	lea rcx, [r14 + 4]
+	mov rax, qword ptr [rsp + 176]
+	add qword ptr [rsp], rax
+	add qword ptr [rsp + 48], rax
+	add qword ptr [rsp + 16], rax
+	add qword ptr [rsp + 64], rax
+	add r13, rax
+	add qword ptr [rsp + 56], rax
+	add rbp, rax
+	add qword ptr [rsp + 88], rax
+	mov rdi, r14
+	mov rsi, qword ptr [rsp + 240]
+	cmp rcx, rsi
+	ja .LBB136_175
+.LBB136_109:
+	mov rdx, rcx
+	mov r11, rdi
+	mov rbx, qword ptr [rsp + 256]
+	imul r11, rbx
+	mov rcx, qword ptr [rsp + 24]
+	mov rax, rcx
+	sub rax, r11
+	sub rcx, r11
+	jb .LBB136_300
+	cmp rbx, rcx
+	ja .LBB136_304
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_304
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_304
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_304
+	mov qword ptr [rsp + 72], rdx
+	mov rcx, rdi
+	mov rax, qword ptr [rsp + 248]
+	imul rcx, rax
+	mov qword ptr [rsp + 136], rcx
+	mov rcx, rdi
+	or rcx, 1
+	imul rcx, rax
+	mov qword ptr [rsp + 128], rcx
+	mov rcx, rdi
+	or rcx, 2
+	imul rcx, rax
+	mov qword ptr [rsp + 120], rcx
+	or rdi, 3
+	imul rdi, rax
+	mov qword ptr [rsp + 112], rdi
+	mov r10, qword ptr [rsp + 32]
+	mov r12, qword ptr [rsp + 168]
+	xor r11d, r11d
+	jmp .LBB136_115
+.LBB136_173:
+	mov rax, qword ptr [rsp + 104]
+	add r12, rax
+	add r10, rax
+	mov r11, qword ptr [rsp + 144]
+	cmp r11, qword ptr [rsp + 248]
+	je .LBB136_174
+.LBB136_115:
+	lea rdx, [r11 + 1]
+	mov r14, r11
+	mov rax, qword ptr [rsp + 256]
+	imul r14, rax
+	mov rbx, rdx
+	imul rbx, rax
+	cmp rbx, r14
+	jb .LBB136_302
+	cmp rbx, r15
+	ja .LBB136_302
+	mov rax, qword ptr [rsp + 136]
+	lea rcx, [r11 + rax]
+	mov rsi, qword ptr [rsp + 40]
+	cmp rcx, rsi
+	jae .LBB136_331
+	mov rax, qword ptr [rsp + 128]
+	lea rbx, [r11 + rax]
+	cmp rbx, rsi
+	jae .LBB136_332
+	mov rax, qword ptr [rsp + 120]
+	lea r14, [r11 + rax]
+	cmp r14, rsi
+	jae .LBB136_333
+	mov qword ptr [rsp + 144], rdx
+	add r11, qword ptr [rsp + 112]
+	cmp r11, rsi
+	jae .LBB136_335
+	mov rdx, qword ptr [rsp + 80]
+	mov rax, qword ptr [rdx + 8*rcx]
+	mov rbx, qword ptr [rdx + 8*rbx]
+	mov rcx, qword ptr [rdx + 8*r14]
+	mov qword ptr [rsp + 160], rcx
+	mov rcx, qword ptr [rdx + 8*r11]
+	mov qword ptr [rsp + 152], rcx
+	test rax, rax
+	je .LBB136_134
+	vmovq xmm5, rax
+	cmp qword ptr [rsp + 256], 4
+	jae .LBB136_124
+	xor edi, edi
+	mov r11, qword ptr [rsp + 256]
+	jmp .LBB136_127
+.LBB136_124:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor ecx, ecx
+	mov r11, qword ptr [rsp + 256]
+.LBB136_125:
+	lea rdi, [rcx + 1]
+	cmp rdi, r11
+	jae .LBB136_334
+	vmovq xmm7, qword ptr [r12 + 8*rcx - 16]
+	vmovq xmm8, qword ptr [r12 + 8*rcx - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r12 + 8*rcx]
+	vmovq xmm9, qword ptr [r12 + 8*rcx - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 2
+	vpsrldq ymm10, ymm8, 2
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 2
+	vpsrldq ymm10, ymm10, 2
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 65536
+	mov r14, qword ptr [rsp + 272]
+	mov rdi, r14
+	cmovb rdi, r9
+	xor rdi, rax
+	cmp rdi, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	vpxor ymm8, ymm10, ymm8
+	xor edi, eax
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov r15, r14
+	cmovb r15, r9
+	xor r15, rax
+	cmp r15, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor r15d, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov rdx, r14
+	cmovb rdx, r9
+	xor rdx, rax
+	cmp rdx, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor edx, eax
+	vmovq rax, xmm7
+	cmp rax, 65536
+	mov rsi, r14
+	cmovb rsi, r9
+	xor rsi, rax
+	cmp rsi, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor esi, eax
+	movzx eax, si
+	mov rsi, qword ptr [rsp]
+	xor qword ptr [rsi + 8*rcx - 24], rax
+	movzx eax, di
+	xor qword ptr [rsi + 8*rcx - 16], rax
+	movzx eax, r15w
+	xor qword ptr [rsi + 8*rcx - 8], rax
+	movzx eax, dx
+	xor qword ptr [rsi + 8*rcx], rax
+	lea rdi, [rcx + 4]
+	add rcx, 8
+	cmp rcx, r11
+	mov rcx, rdi
+	jbe .LBB136_125
+.LBB136_127:
+	cmp rdi, r11
+	mov r15, qword ptr [rsp + 8]
+	mov r11, qword ptr [rsp + 48]
+	jae .LBB136_134
+.LBB136_128:
+	mov rax, qword ptr [r10 + 8*rdi]
+	test rax, rax
+	je .LBB136_129
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq rdx, xmm6, 1
+	mov rcx, rdx
+	shld rcx, rax, 48
+	shr rdx, 16
+	or rdx, rcx
+	je .LBB136_132
+	vmovq xmm7, rcx
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq rcx, xmm6
+	cmp rcx, 65536
+	mov rdx, rax
+	sbb rdx, 0
+	mov rsi, qword ptr [rsp + 272]
+	mov rdx, rsi
+	cmovb rdx, r9
+	xor rdx, rcx
+	cmp rdx, 65536
+	sbb rax, 0
+	mov eax, esi
+	cmovb eax, r9d
+	xor edx, eax
+	movzx eax, dx
+.LBB136_132:
+	mov rsi, qword ptr [rsp + 256]
+	cmp rdi, rsi
+	jb .LBB136_133
+	jmp .LBB136_371
+.LBB136_129:
+	xor eax, eax
+	mov rsi, qword ptr [rsp + 256]
+	cmp rdi, rsi
+	jae .LBB136_371
+.LBB136_133:
+	xor qword ptr [r11 + 8*rdi], rax
+	inc rdi
+	cmp rsi, rdi
+	jne .LBB136_128
+.LBB136_134:
+	test rbx, rbx
+	je .LBB136_147
+	vmovq xmm5, rbx
+	cmp qword ptr [rsp + 256], 4
+	jae .LBB136_137
+	xor ecx, ecx
+	mov rsi, qword ptr [rsp + 256]
+	jmp .LBB136_140
+.LBB136_137:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor edi, edi
+	mov rsi, qword ptr [rsp + 256]
+.LBB136_138:
+	lea rcx, [rdi + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm7, qword ptr [r12 + 8*rdi - 16]
+	vmovq xmm8, qword ptr [r12 + 8*rdi - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r12 + 8*rdi]
+	vmovq xmm9, qword ptr [r12 + 8*rdi - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 2
+	vpsrldq ymm10, ymm8, 2
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 2
+	vpsrldq ymm10, ymm10, 2
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 65536
+	mov r14, qword ptr [rsp + 272]
+	mov rcx, r14
+	cmovb rcx, r9
+	xor rcx, rax
+	cmp rcx, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	vpxor ymm8, ymm10, ymm8
+	xor ecx, eax
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov rbx, r14
+	cmovb rbx, r9
+	xor rbx, rax
+	cmp rbx, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor ebx, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov rdx, r14
+	cmovb rdx, r9
+	xor rdx, rax
+	cmp rdx, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor edx, eax
+	vmovq rax, xmm7
+	cmp rax, 65536
+	mov r11, r14
+	cmovb r11, r9
+	xor r11, rax
+	cmp r11, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor r11d, eax
+	movzx eax, r11w
+	mov r11, qword ptr [rsp + 16]
+	xor qword ptr [r11 + 8*rdi - 24], rax
+	movzx eax, cx
+	xor qword ptr [r11 + 8*rdi - 16], rax
+	movzx eax, bx
+	xor qword ptr [r11 + 8*rdi - 8], rax
+	movzx eax, dx
+	xor qword ptr [r11 + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, rsi
+	mov rdi, rcx
+	jbe .LBB136_138
+.LBB136_140:
+	cmp rcx, rsi
+	jae .LBB136_147
+.LBB136_141:
+	mov rax, qword ptr [r10 + 8*rcx]
+	test rax, rax
+	je .LBB136_142
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq rsi, xmm6, 1
+	mov rdx, rsi
+	shld rdx, rax, 48
+	shr rsi, 16
+	or rsi, rdx
+	je .LBB136_145
+	vmovq xmm7, rdx
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq rdx, xmm6
+	cmp rdx, 65536
+	mov rsi, rax
+	sbb rsi, 0
+	mov rdi, qword ptr [rsp + 272]
+	mov rsi, rdi
+	cmovb rsi, r9
+	xor rsi, rdx
+	cmp rsi, 65536
+	sbb rax, 0
+	mov eax, edi
+	cmovb eax, r9d
+	xor esi, eax
+	movzx eax, si
+.LBB136_145:
+	mov rsi, qword ptr [rsp + 256]
+	cmp rcx, rsi
+	jb .LBB136_146
+	jmp .LBB136_373
+.LBB136_142:
+	xor eax, eax
+	mov rsi, qword ptr [rsp + 256]
+	cmp rcx, rsi
+	jae .LBB136_373
+.LBB136_146:
+	mov rdx, qword ptr [rsp + 64]
+	xor qword ptr [rdx + 8*rcx], rax
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_141
+.LBB136_147:
+	mov rax, qword ptr [rsp + 160]
+	test rax, rax
+	je .LBB136_160
+	vmovq xmm5, rax
+	cmp qword ptr [rsp + 256], 4
+	jae .LBB136_150
+	xor ecx, ecx
+	mov rsi, qword ptr [rsp + 256]
+	jmp .LBB136_153
+.LBB136_150:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor edi, edi
+	mov rsi, qword ptr [rsp + 256]
+.LBB136_151:
+	lea rcx, [rdi + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm7, qword ptr [r12 + 8*rdi - 16]
+	vmovq xmm8, qword ptr [r12 + 8*rdi - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r12 + 8*rdi]
+	vmovq xmm9, qword ptr [r12 + 8*rdi - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 2
+	vpsrldq ymm10, ymm8, 2
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 2
+	vpsrldq ymm10, ymm10, 2
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 65536
+	mov r14, qword ptr [rsp + 272]
+	mov rcx, r14
+	cmovb rcx, r9
+	xor rcx, rax
+	cmp rcx, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	vpxor ymm8, ymm10, ymm8
+	xor ecx, eax
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov rbx, r14
+	cmovb rbx, r9
+	xor rbx, rax
+	cmp rbx, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor ebx, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov rdx, r14
+	cmovb rdx, r9
+	xor rdx, rax
+	cmp rdx, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor edx, eax
+	vmovq rax, xmm7
+	cmp rax, 65536
+	mov r11, r14
+	cmovb r11, r9
+	xor r11, rax
+	cmp r11, 65536
+	mov eax, r14d
+	cmovb eax, r8d
+	xor r11d, eax
+	movzx eax, r11w
+	xor qword ptr [r13 + 8*rdi - 24], rax
+	movzx eax, cx
+	xor qword ptr [r13 + 8*rdi - 16], rax
+	movzx eax, bx
+	xor qword ptr [r13 + 8*rdi - 8], rax
+	movzx eax, dx
+	xor qword ptr [r13 + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, rsi
+	mov rdi, rcx
+	jbe .LBB136_151
+.LBB136_153:
+	cmp rcx, rsi
+	jae .LBB136_160
+.LBB136_154:
+	mov rax, qword ptr [r10 + 8*rcx]
+	test rax, rax
+	je .LBB136_155
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq rsi, xmm6, 1
+	mov rdx, rsi
+	shld rdx, rax, 48
+	shr rsi, 16
+	or rsi, rdx
+	je .LBB136_158
+	vmovq xmm7, rdx
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq rdx, xmm6
+	cmp rdx, 65536
+	mov rsi, rax
+	sbb rsi, 0
+	mov rdi, qword ptr [rsp + 272]
+	mov rsi, rdi
+	cmovb rsi, r9
+	xor rsi, rdx
+	cmp rsi, 65536
+	sbb rax, 0
+	mov eax, edi
+	cmovb eax, r9d
+	xor esi, eax
+	movzx eax, si
+.LBB136_158:
+	mov rsi, qword ptr [rsp + 256]
+	cmp rcx, rsi
+	jb .LBB136_159
+	jmp .LBB136_373
+.LBB136_155:
+	xor eax, eax
+	mov rsi, qword ptr [rsp + 256]
+	cmp rcx, rsi
+	jae .LBB136_373
+.LBB136_159:
+	mov rdx, qword ptr [rsp + 56]
+	xor qword ptr [rdx + 8*rcx], rax
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_154
+.LBB136_160:
+	mov rax, qword ptr [rsp + 152]
+	test rax, rax
+	je .LBB136_173
+	vmovq xmm5, rax
+	mov rsi, qword ptr [rsp + 256]
+	cmp rsi, 4
+	jae .LBB136_163
+	xor ecx, ecx
+	jmp .LBB136_166
+.LBB136_163:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor edi, edi
+.LBB136_164:
+	lea rcx, [rdi + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm7, qword ptr [r12 + 8*rdi - 16]
+	vmovq xmm8, qword ptr [r12 + 8*rdi - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r12 + 8*rdi]
+	vmovq xmm9, qword ptr [r12 + 8*rdi - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 2
+	vpsrldq ymm10, ymm8, 2
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 2
+	vpsrldq ymm10, ymm10, 2
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 65536
+	mov rbx, qword ptr [rsp + 272]
+	mov rcx, rbx
+	cmovb rcx, r9
+	xor rcx, rax
+	cmp rcx, 65536
+	mov eax, ebx
+	cmovb eax, r8d
+	vpxor ymm8, ymm10, ymm8
+	xor ecx, eax
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov r11, rbx
+	cmovb r11, r9
+	xor r11, rax
+	cmp r11, 65536
+	mov eax, ebx
+	cmovb eax, r8d
+	xor r11d, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov rdx, rbx
+	cmovb rdx, r9
+	xor rdx, rax
+	cmp rdx, 65536
+	mov eax, ebx
+	cmovb eax, r8d
+	xor edx, eax
+	vmovq rax, xmm7
+	cmp rax, 65536
+	mov rsi, rbx
+	cmovb rsi, r9
+	xor rsi, rax
+	cmp rsi, 65536
+	mov eax, ebx
+	cmovb eax, r8d
+	xor esi, eax
+	movzx eax, si
+	xor qword ptr [rbp + 8*rdi - 24], rax
+	movzx eax, cx
+	xor qword ptr [rbp + 8*rdi - 16], rax
+	movzx eax, r11w
+	mov rsi, qword ptr [rsp + 256]
+	xor qword ptr [rbp + 8*rdi - 8], rax
+	movzx eax, dx
+	xor qword ptr [rbp + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, rsi
+	mov rdi, rcx
+	jbe .LBB136_164
+.LBB136_166:
+	cmp rcx, rsi
+	jae .LBB136_173
+.LBB136_167:
+	mov rax, qword ptr [r10 + 8*rcx]
+	test rax, rax
+	je .LBB136_168
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq rsi, xmm6, 1
+	mov rdx, rsi
+	shld rdx, rax, 48
+	shr rsi, 16
+	or rsi, rdx
+	mov rsi, qword ptr [rsp + 256]
+	je .LBB136_171
+	vmovq xmm7, rdx
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq rdx, xmm6
+	cmp rdx, 65536
+	mov rdi, rax
+	sbb rdi, 0
+	mov r11, qword ptr [rsp + 272]
+	mov rdi, r11
+	cmovb rdi, r9
+	xor rdi, rdx
+	cmp rdi, 65536
+	sbb rax, 0
+	mov eax, r11d
+	cmovb eax, r9d
+	xor edi, eax
+	movzx eax, di
+.LBB136_171:
+	cmp rcx, rsi
+	jb .LBB136_172
+	jmp .LBB136_373
+.LBB136_168:
+	xor eax, eax
+	mov rsi, qword ptr [rsp + 256]
+	cmp rcx, rsi
+	jae .LBB136_373
+.LBB136_172:
+	mov rdx, qword ptr [rsp + 88]
+	xor qword ptr [rdx + 8*rcx], rax
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_167
+	jmp .LBB136_173
+.LBB136_179:
+	cmp qword ptr [rsp + 248], 0
+	je .LBB136_251
+	vmovq xmm0, rdi
+	vinserti128 ymm1, ymm0, xmm0, 1
+	vmovq xmm2, qword ptr [rsp + 272]
+	vinserti128 ymm3, ymm2, xmm2, 1
+	lea rcx, [r8 + 24]
+	mov qword ptr [rsp], rcx
+	mov rcx, rax
+	shl rcx, 5
+	mov qword ptr [rsp + 168], rcx
+	mov rcx, qword ptr [rsp + 32]
+	add rcx, 24
+	mov qword ptr [rsp + 72], rcx
+	lea rcx, [8*rax]
+	lea r9, [r8 + 8*rax + 24]
+	lea rdx, [r8 + 8*rax]
+	mov qword ptr [rsp + 64], rdx
+	mov rdx, rax
+	shl rdx, 4
+	mov rax, r8
+	lea r13, [r8 + rdx]
+	add r13, 24
+	add rdx, r8
+	mov qword ptr [rsp + 56], rdx
+	mov qword ptr [rsp + 104], rcx
+	lea rcx, [rcx + 2*rcx]
+	lea rdx, [r8 + rcx]
+	add rdx, 24
+	add rcx, r8
+	mov qword ptr [rsp + 88], rcx
+	mov ecx, 4
+	xor r15d, r15d
+	vmovdqa xmm4, xmmword ptr [rip + .LCPI136_1]
+	mov r8d, 256
+	mov qword ptr [rsp + 16], rax
+	xor edi, edi
+	jmp .LBB136_181
+.LBB136_246:
+	mov r14, qword ptr [rsp + 48]
+	lea rcx, [r14 + 4]
+	mov rax, qword ptr [rsp + 168]
+	add qword ptr [rsp], rax
+	add qword ptr [rsp + 16], rax
+	add r9, rax
+	add qword ptr [rsp + 64], rax
+	add r13, rax
+	add qword ptr [rsp + 56], rax
+	add rdx, rax
+	add qword ptr [rsp + 88], rax
+	mov rdi, r14
+	mov rsi, qword ptr [rsp + 240]
+	cmp rcx, rsi
+	ja .LBB136_247
+.LBB136_181:
+	mov rsi, rcx
+	mov r11, rdi
+	mov rbx, qword ptr [rsp + 256]
+	imul r11, rbx
+	mov rcx, qword ptr [rsp + 24]
+	mov rax, rcx
+	sub rax, r11
+	sub rcx, r11
+	jb .LBB136_253
+	cmp rbx, rcx
+	ja .LBB136_259
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_259
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_259
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_259
+	mov qword ptr [rsp + 48], rsi
+	mov rcx, rdi
+	mov rax, qword ptr [rsp + 248]
+	imul rcx, rax
+	mov qword ptr [rsp + 136], rcx
+	mov rcx, rdi
+	or rcx, 1
+	imul rcx, rax
+	mov qword ptr [rsp + 128], rcx
+	mov rcx, rdi
+	or rcx, 2
+	imul rcx, rax
+	mov qword ptr [rsp + 120], rcx
+	or rdi, 3
+	imul rdi, rax
+	mov r10, qword ptr [rsp + 32]
+	mov r12, qword ptr [rsp + 72]
+	xor r11d, r11d
+	mov qword ptr [rsp + 112], rdi
+	jmp .LBB136_187
+.LBB136_245:
+	mov rax, qword ptr [rsp + 104]
+	add r12, rax
+	add r10, rax
+	mov r11, qword ptr [rsp + 152]
+	cmp r11, qword ptr [rsp + 248]
+	mov rdi, qword ptr [rsp + 112]
+	je .LBB136_246
+.LBB136_187:
+	lea rcx, [r11 + 1]
+	mov r14, r11
+	mov rax, qword ptr [rsp + 256]
+	imul r14, rax
+	mov rbx, rcx
+	imul rbx, rax
+	cmp rbx, r14
+	jb .LBB136_255
+	cmp rbx, qword ptr [rsp + 8]
+	ja .LBB136_255
+	mov qword ptr [rsp + 152], rcx
+	mov rax, qword ptr [rsp + 136]
+	lea rcx, [r11 + rax]
+	mov rsi, qword ptr [rsp + 40]
+	cmp rcx, rsi
+	jae .LBB136_289
+	mov rax, qword ptr [rsp + 128]
+	lea rbx, [r11 + rax]
+	cmp rbx, rsi
+	jae .LBB136_290
+	mov rax, qword ptr [rsp + 120]
+	lea r14, [r11 + rax]
+	cmp r14, rsi
+	jae .LBB136_291
+	add r11, rdi
+	cmp r11, rsi
+	jae .LBB136_296
+	mov rsi, qword ptr [rsp + 80]
+	mov rax, qword ptr [rsi + 8*rcx]
+	mov rbx, qword ptr [rsi + 8*rbx]
+	mov rbp, qword ptr [rsi + 8*r14]
+	mov rcx, qword ptr [rsi + 8*r11]
+	mov qword ptr [rsp + 160], rcx
+	test rax, rax
+	mov r11, qword ptr [rsp + 256]
+	je .LBB136_206
+	mov qword ptr [rsp + 144], rbp
+	vmovq xmm5, rax
+	cmp r11, 4
+	jae .LBB136_196
+	xor edi, edi
+	jmp .LBB136_199
+.LBB136_196:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor ecx, ecx
+.LBB136_197:
+	lea rdi, [rcx + 1]
+	cmp rdi, r11
+	jae .LBB136_334
+	vmovq xmm7, qword ptr [r12 + 8*rcx - 16]
+	vmovq xmm8, qword ptr [r12 + 8*rcx - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r12 + 8*rcx]
+	vmovq xmm9, qword ptr [r12 + 8*rcx - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 1
+	vpsrldq ymm10, ymm8, 1
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 1
+	vpsrldq ymm10, ymm10, 1
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 256
+	mov r14, qword ptr [rsp + 272]
+	mov rdi, r14
+	cmovb rdi, r15
+	xor rdi, rax
+	cmp rdi, 256
+	mov eax, r14d
+	cmovb eax, r8d
+	vpxor ymm8, ymm10, ymm8
+	xor edi, eax
+	vmovq rax, xmm8
+	cmp rax, 256
+	mov rbp, r14
+	cmovb rbp, r15
+	xor rbp, rax
+	cmp rbp, 256
+	mov eax, r14d
+	cmovb eax, r8d
+	xor ebp, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rsi, xmm8
+	cmp rsi, 256
+	mov rax, r14
+	cmovb rax, r15
+	xor rax, rsi
+	cmp rax, 256
+	mov esi, r14d
+	cmovb esi, r8d
+	xor eax, esi
+	vmovq rsi, xmm7
+	cmp rsi, 256
+	mov r11, r14
+	cmovb r11, r15
+	xor r11, rsi
+	cmp r11, 256
+	mov esi, r14d
+	cmovb esi, r8d
+	xor r11d, esi
+	movzx esi, r11b
+	mov r11, qword ptr [rsp + 256]
+	mov r14, qword ptr [rsp]
+	xor qword ptr [r14 + 8*rcx - 24], rsi
+	movzx esi, dil
+	xor qword ptr [r14 + 8*rcx - 16], rsi
+	movzx esi, bpl
+	xor qword ptr [r14 + 8*rcx - 8], rsi
+	movzx eax, al
+	xor qword ptr [r14 + 8*rcx], rax
+	lea rdi, [rcx + 4]
+	add rcx, 8
+	cmp rcx, r11
+	mov rcx, rdi
+	jbe .LBB136_197
+.LBB136_199:
+	cmp rdi, r11
+	mov rbp, qword ptr [rsp + 144]
+	jae .LBB136_206
+.LBB136_200:
+	mov rax, qword ptr [r10 + 8*rdi]
+	test rax, rax
+	je .LBB136_201
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq rsi, xmm6, 1
+	mov rcx, rsi
+	shld rcx, rax, 56
+	shr rsi, 8
+	or rsi, rcx
+	je .LBB136_204
+	vmovq xmm7, rcx
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq rcx, xmm6
+	cmp rcx, 256
+	mov rsi, rax
+	sbb rsi, 0
+	mov r14, qword ptr [rsp + 272]
+	mov rsi, r14
+	cmovb rsi, r15
+	xor rsi, rcx
+	cmp rsi, 256
+	sbb rax, 0
+	mov eax, r14d
+	cmovb eax, r15d
+	xor esi, eax
+	movzx eax, sil
+.LBB136_204:
+	cmp rdi, r11
+	jb .LBB136_205
+	jmp .LBB136_292
+.LBB136_201:
+	xor eax, eax
+	cmp rdi, r11
+	jae .LBB136_292
+.LBB136_205:
+	mov rcx, qword ptr [rsp + 16]
+	xor qword ptr [rcx + 8*rdi], rax
+	inc rdi
+	cmp r11, rdi
+	jne .LBB136_200
+.LBB136_206:
+	test rbx, rbx
+	je .LBB136_219
+	vmovq xmm5, rbx
+	cmp r11, 4
+	jae .LBB136_209
+	xor ecx, ecx
+	jmp .LBB136_212
+.LBB136_209:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor edi, edi
+.LBB136_210:
+	lea rcx, [rdi + 1]
+	cmp rcx, r11
+	jae .LBB136_295
+	vmovq xmm7, qword ptr [r12 + 8*rdi - 16]
+	vmovq xmm8, qword ptr [r12 + 8*rdi - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r12 + 8*rdi]
+	vmovq xmm9, qword ptr [r12 + 8*rdi - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 1
+	vpsrldq ymm10, ymm8, 1
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 1
+	vpsrldq ymm10, ymm10, 1
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 256
+	mov r14, qword ptr [rsp + 272]
+	mov rcx, r14
+	cmovb rcx, r15
+	xor rcx, rax
+	cmp rcx, 256
+	mov eax, r14d
+	cmovb eax, r8d
+	vpxor ymm8, ymm10, ymm8
+	xor ecx, eax
+	vmovq rax, xmm8
+	cmp rax, 256
+	mov rbx, r14
+	cmovb rbx, r15
+	xor rbx, rax
+	cmp rbx, 256
+	mov eax, r14d
+	cmovb eax, r8d
+	xor ebx, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rsi, xmm8
+	cmp rsi, 256
+	mov rax, r14
+	cmovb rax, r15
+	xor rax, rsi
+	cmp rax, 256
+	mov esi, r14d
+	cmovb esi, r8d
+	xor eax, esi
+	vmovq rsi, xmm7
+	cmp rsi, 256
+	mov r11, r14
+	cmovb r11, r15
+	xor r11, rsi
+	cmp r11, 256
+	mov esi, r14d
+	cmovb esi, r8d
+	xor r11d, esi
+	movzx esi, r11b
+	mov r11, qword ptr [rsp + 256]
+	xor qword ptr [r9 + 8*rdi - 24], rsi
+	movzx ecx, cl
+	xor qword ptr [r9 + 8*rdi - 16], rcx
+	movzx ecx, bl
+	xor qword ptr [r9 + 8*rdi - 8], rcx
+	movzx eax, al
+	xor qword ptr [r9 + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, r11
+	mov rdi, rcx
+	jbe .LBB136_210
+.LBB136_212:
+	cmp rcx, r11
+	jae .LBB136_219
+.LBB136_213:
+	mov rax, qword ptr [r10 + 8*rcx]
+	test rax, rax
+	je .LBB136_214
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq rdi, xmm6, 1
+	mov rsi, rdi
+	shld rsi, rax, 56
+	shr rdi, 8
+	or rdi, rsi
+	je .LBB136_217
+	vmovq xmm7, rsi
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq rsi, xmm6
+	cmp rsi, 256
+	mov rdi, rax
+	sbb rdi, 0
+	mov rbx, qword ptr [rsp + 272]
+	mov rdi, rbx
+	cmovb rdi, r15
+	xor rdi, rsi
+	cmp rdi, 256
+	sbb rax, 0
+	mov eax, ebx
+	cmovb eax, r15d
+	xor edi, eax
+	movzx eax, dil
+.LBB136_217:
+	cmp rcx, r11
+	jb .LBB136_218
+	jmp .LBB136_293
+.LBB136_214:
+	xor eax, eax
+	cmp rcx, r11
+	jae .LBB136_293
+.LBB136_218:
+	mov rsi, qword ptr [rsp + 64]
+	xor qword ptr [rsi + 8*rcx], rax
+	inc rcx
+	cmp r11, rcx
+	jne .LBB136_213
+.LBB136_219:
+	test rbp, rbp
+	je .LBB136_232
+	vmovq xmm5, rbp
+	cmp r11, 4
+	jae .LBB136_222
+	xor ecx, ecx
+	jmp .LBB136_225
+.LBB136_222:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor edi, edi
+.LBB136_223:
+	lea rcx, [rdi + 1]
+	cmp rcx, r11
+	jae .LBB136_295
+	vmovq xmm7, qword ptr [r12 + 8*rdi - 16]
+	vmovq xmm8, qword ptr [r12 + 8*rdi - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r12 + 8*rdi]
+	vmovq xmm9, qword ptr [r12 + 8*rdi - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 1
+	vpsrldq ymm10, ymm8, 1
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 1
+	vpsrldq ymm10, ymm10, 1
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 256
+	mov r14, qword ptr [rsp + 272]
+	mov rcx, r14
+	cmovb rcx, r15
+	xor rcx, rax
+	cmp rcx, 256
+	mov eax, r14d
+	cmovb eax, r8d
+	vpxor ymm8, ymm10, ymm8
+	xor ecx, eax
+	vmovq rax, xmm8
+	cmp rax, 256
+	mov rbx, r14
+	cmovb rbx, r15
+	xor rbx, rax
+	cmp rbx, 256
+	mov eax, r14d
+	cmovb eax, r8d
+	xor ebx, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rsi, xmm8
+	cmp rsi, 256
+	mov rax, r14
+	cmovb rax, r15
+	xor rax, rsi
+	cmp rax, 256
+	mov esi, r14d
+	cmovb esi, r8d
+	xor eax, esi
+	vmovq rsi, xmm7
+	cmp rsi, 256
+	mov r11, r14
+	cmovb r11, r15
+	xor r11, rsi
+	cmp r11, 256
+	mov esi, r14d
+	cmovb esi, r8d
+	xor r11d, esi
+	movzx esi, r11b
+	mov r11, qword ptr [rsp + 256]
+	xor qword ptr [r13 + 8*rdi - 24], rsi
+	movzx ecx, cl
+	xor qword ptr [r13 + 8*rdi - 16], rcx
+	movzx ecx, bl
+	xor qword ptr [r13 + 8*rdi - 8], rcx
+	movzx eax, al
+	xor qword ptr [r13 + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, r11
+	mov rdi, rcx
+	jbe .LBB136_223
+.LBB136_225:
+	cmp rcx, r11
+	jae .LBB136_232
+.LBB136_226:
+	mov rax, qword ptr [r10 + 8*rcx]
+	test rax, rax
+	je .LBB136_227
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq rdi, xmm6, 1
+	mov rsi, rdi
+	shld rsi, rax, 56
+	shr rdi, 8
+	or rdi, rsi
+	je .LBB136_230
+	vmovq xmm7, rsi
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq rsi, xmm6
+	cmp rsi, 256
+	mov rdi, rax
+	sbb rdi, 0
+	mov rbx, qword ptr [rsp + 272]
+	mov rdi, rbx
+	cmovb rdi, r15
+	xor rdi, rsi
+	cmp rdi, 256
+	sbb rax, 0
+	mov eax, ebx
+	cmovb eax, r15d
+	xor edi, eax
+	movzx eax, dil
+.LBB136_230:
+	cmp rcx, r11
+	jb .LBB136_231
+	jmp .LBB136_293
+.LBB136_227:
+	xor eax, eax
+	cmp rcx, r11
+	jae .LBB136_293
+.LBB136_231:
+	mov rsi, qword ptr [rsp + 56]
+	xor qword ptr [rsi + 8*rcx], rax
+	inc rcx
+	cmp r11, rcx
+	jne .LBB136_226
+.LBB136_232:
+	mov rax, qword ptr [rsp + 160]
+	test rax, rax
+	je .LBB136_245
+	vmovq xmm5, rax
+	cmp r11, 4
+	jae .LBB136_235
+	xor ecx, ecx
+	jmp .LBB136_238
+.LBB136_235:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor edi, edi
+.LBB136_236:
+	lea rcx, [rdi + 1]
+	cmp rcx, r11
+	jae .LBB136_295
+	vmovq xmm7, qword ptr [r12 + 8*rdi - 16]
+	vmovq xmm8, qword ptr [r12 + 8*rdi - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r12 + 8*rdi]
+	vmovq xmm9, qword ptr [r12 + 8*rdi - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 1
+	vpsrldq ymm10, ymm8, 1
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 1
+	vpsrldq ymm10, ymm10, 1
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 256
+	mov r14, qword ptr [rsp + 272]
+	mov rcx, r14
+	cmovb rcx, r15
+	xor rcx, rax
+	cmp rcx, 256
+	mov eax, r14d
+	cmovb eax, r8d
+	vpxor ymm8, ymm10, ymm8
+	xor ecx, eax
+	vmovq rax, xmm8
+	cmp rax, 256
+	mov r11, r14
+	cmovb r11, r15
+	xor r11, rax
+	cmp r11, 256
+	mov eax, r14d
+	cmovb eax, r8d
+	xor r11d, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rsi, xmm8
+	cmp rsi, 256
+	mov rax, r14
+	cmovb rax, r15
+	xor rax, rsi
+	cmp rax, 256
+	mov esi, r14d
+	cmovb esi, r8d
+	xor eax, esi
+	vmovq rsi, xmm7
+	cmp rsi, 256
+	mov rbx, r14
+	cmovb rbx, r15
+	xor rbx, rsi
+	cmp rbx, 256
+	mov esi, r14d
+	cmovb esi, r8d
+	xor ebx, esi
+	movzx esi, bl
+	xor qword ptr [rdx + 8*rdi - 24], rsi
+	movzx ecx, cl
+	xor qword ptr [rdx + 8*rdi - 16], rcx
+	movzx ecx, r11b
+	mov r11, qword ptr [rsp + 256]
+	xor qword ptr [rdx + 8*rdi - 8], rcx
+	movzx eax, al
+	xor qword ptr [rdx + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, r11
+	mov rdi, rcx
+	jbe .LBB136_236
+.LBB136_238:
+	cmp rcx, r11
+	jae .LBB136_245
+.LBB136_239:
+	mov rax, qword ptr [r10 + 8*rcx]
+	test rax, rax
+	je .LBB136_240
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq rdi, xmm6, 1
+	mov rsi, rdi
+	shld rsi, rax, 56
+	shr rdi, 8
+	or rdi, rsi
+	je .LBB136_243
+	vmovq xmm7, rsi
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq rsi, xmm6
+	cmp rsi, 256
+	mov rdi, rax
+	sbb rdi, 0
+	mov rbx, qword ptr [rsp + 272]
+	mov rdi, rbx
+	cmovb rdi, r15
+	xor rdi, rsi
+	cmp rdi, 256
+	sbb rax, 0
+	mov eax, ebx
+	cmovb eax, r15d
+	xor edi, eax
+	movzx eax, dil
+.LBB136_243:
+	cmp rcx, r11
+	jb .LBB136_244
+	jmp .LBB136_293
+.LBB136_240:
+	xor eax, eax
+	cmp rcx, r11
+	jae .LBB136_293
+.LBB136_244:
+	mov rsi, qword ptr [rsp + 88]
+	xor qword ptr [rsi + 8*rcx], rax
+	inc rcx
+	cmp r11, rcx
+	jne .LBB136_239
+	jmp .LBB136_245
+.LBB136_5:
+	cmp qword ptr [rsp + 248], 0
+	je .LBB136_336
+	vmovq xmm0, rdi
+	vinserti128 ymm1, ymm0, xmm0, 1
+	vmovq xmm2, qword ptr [rsp + 272]
+	vinserti128 ymm3, ymm2, xmm2, 1
+	movabs r13, 4294967296
+	mov rsi, qword ptr [rsp + 96]
+	lea r12, [rsi + 24]
+	mov rcx, rax
+	shl rcx, 5
+	mov qword ptr [rsp + 72], rcx
+	mov rcx, qword ptr [rsp + 32]
+	add rcx, 24
+	mov qword ptr [rsp + 48], rcx
+	lea rcx, [8*rax]
+	lea r9, [rsi + 8*rax]
+	add r9, 24
+	lea rdx, [rsi + 8*rax]
+	mov qword ptr [rsp + 16], rdx
+	shl rax, 4
+	lea rdx, [rsi + rax]
+	add rdx, 24
+	add rax, rsi
+	mov qword ptr [rsp + 64], rax
+	mov qword ptr [rsp + 112], rcx
+	lea rax, [rcx + 2*rcx]
+	lea rbp, [rsi + rax]
+	add rbp, 24
+	add rax, rsi
+	mov qword ptr [rsp + 56], rax
+	mov ecx, 4
+	xor r8d, r8d
+	mov qword ptr [rsp], rsi
+	jmp .LBB136_7
+.LBB136_92:
+	mov r14, qword ptr [rsp + 104]
+	lea rcx, [r14 + 4]
+	mov rax, qword ptr [rsp + 72]
+	add r12, rax
+	add qword ptr [rsp], rax
+	add r9, rax
+	add qword ptr [rsp + 16], rax
+	add rdx, rax
+	add qword ptr [rsp + 64], rax
+	add rbp, rax
+	add qword ptr [rsp + 56], rax
+	mov r8, r14
+	mov rsi, qword ptr [rsp + 240]
+	cmp rcx, rsi
+	mov r15, qword ptr [rsp + 8]
+	ja .LBB136_93
+.LBB136_7:
+	mov qword ptr [rsp + 104], rcx
+	mov r11, r8
+	mov rbx, qword ptr [rsp + 256]
+	imul r11, rbx
+	mov rcx, qword ptr [rsp + 24]
+	mov rax, rcx
+	sub rax, r11
+	sub rcx, r11
+	jb .LBB136_338
+	cmp rbx, rcx
+	ja .LBB136_342
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_342
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_342
+	sub rax, rbx
+	cmp rbx, rax
+	ja .LBB136_342
+	mov rcx, r8
+	mov rax, qword ptr [rsp + 248]
+	imul rcx, rax
+	mov qword ptr [rsp + 144], rcx
+	mov rcx, r8
+	or rcx, 1
+	imul rcx, rax
+	mov qword ptr [rsp + 136], rcx
+	mov rcx, r8
+	or rcx, 2
+	imul rcx, rax
+	mov qword ptr [rsp + 128], rcx
+	or r8, 3
+	imul r8, rax
+	mov qword ptr [rsp + 120], r8
+	mov r15, qword ptr [rsp + 32]
+	mov r10, qword ptr [rsp + 48]
+	xor r11d, r11d
+	jmp .LBB136_13
+.LBB136_91:
+	mov rax, qword ptr [rsp + 112]
+	add r10, rax
+	add r15, rax
+	mov r11, qword ptr [rsp + 152]
+	cmp r11, qword ptr [rsp + 248]
+	je .LBB136_92
+.LBB136_13:
+	lea rdi, [r11 + 1]
+	mov r14, r11
+	mov rax, qword ptr [rsp + 256]
+	imul r14, rax
+	mov rbx, rdi
+	imul rbx, rax
+	cmp rbx, r14
+	jb .LBB136_340
+	cmp rbx, qword ptr [rsp + 8]
+	ja .LBB136_340
+	mov rax, qword ptr [rsp + 144]
+	lea rcx, [r11 + rax]
+	mov rsi, qword ptr [rsp + 40]
+	cmp rcx, rsi
+	jae .LBB136_368
+	mov rax, qword ptr [rsp + 136]
+	lea rbx, [r11 + rax]
+	cmp rbx, rsi
+	jae .LBB136_369
+	mov rax, qword ptr [rsp + 128]
+	lea r14, [r11 + rax]
+	cmp r14, rsi
+	jae .LBB136_370
+	mov qword ptr [rsp + 152], rdi
+	add r11, qword ptr [rsp + 120]
+	cmp r11, rsi
+	jae .LBB136_374
+	mov rsi, qword ptr [rsp + 80]
+	mov rax, qword ptr [rsi + 8*rcx]
+	mov rbx, qword ptr [rsi + 8*rbx]
+	mov rcx, qword ptr [rsi + 8*r14]
+	mov qword ptr [rsp + 88], rcx
+	mov rcx, qword ptr [rsi + 8*r11]
+	mov qword ptr [rsp + 160], rcx
+	test rax, rax
+	mov rsi, qword ptr [rsp + 256]
+	je .LBB136_37
+	vmovq xmm4, rax
+	cmp rsi, 4
+	jae .LBB136_22
+	xor edi, edi
+	jmp .LBB136_25
+.LBB136_22:
+	vinserti128 ymm5, ymm4, xmm4, 1
+	xor ecx, ecx
+.LBB136_23:
+	lea rdi, [rcx + 1]
+	cmp rdi, rsi
+	jae .LBB136_372
+	vmovq xmm6, qword ptr [r10 + 8*rcx - 16]
+	vmovq xmm7, qword ptr [r10 + 8*rcx - 24]
+	vinserti128 ymm6, ymm7, xmm6, 1
+	vmovq xmm7, qword ptr [r10 + 8*rcx]
+	vmovq xmm8, qword ptr [r10 + 8*rcx - 8]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vpclmulqdq ymm6, ymm5, ymm6, 0
+	vpclmulqdq ymm7, ymm5, ymm7, 0
+	vpshufd ymm8, ymm6, 233
+	vpshufd ymm9, ymm7, 233
+	vpclmulqdq ymm8, ymm8, ymm1, 0
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpshufd ymm8, ymm8, 233
+	vpshufd ymm9, ymm9, 233
+	vpclmulqdq ymm8, ymm8, ymm3, 0
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpxor ymm6, ymm8, ymm6
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm8, ymm6, 1
+	vmovq rax, xmm8
+	mov rdi, rax
+	shr rdi, 32
+	mov r8, qword ptr [rsp + 272]
+	cmovne rdi, r8
+	xor rdi, rax
+	mov rax, rdi
+	shr rax, 32
+	mov eax, r8d
+	cmove eax, r13d
+	xor edi, eax
+	vmovq rax, xmm7
+	mov r11, rax
+	shr r11, 32
+	cmovne r11, r8
+	xor r11, rax
+	mov rax, r11
+	shr rax, 32
+	mov eax, r8d
+	cmove eax, r13d
+	xor r11d, eax
+	vextracti128 xmm7, ymm7, 1
+	vmovq rsi, xmm7
+	mov rax, rsi
+	shr rax, 32
+	cmovne rax, r8
+	xor rax, rsi
+	mov rsi, rax
+	shr rsi, 32
+	mov esi, r8d
+	cmove esi, r13d
+	xor eax, esi
+	vmovq rsi, xmm6
+	mov r14, rsi
+	shr r14, 32
+	cmovne r14, r8
+	xor r14, rsi
+	mov rsi, r14
+	shr rsi, 32
+	mov esi, r8d
+	cmove esi, r13d
+	xor r14d, esi
+	xor qword ptr [r12 + 8*rcx - 24], r14
+	xor qword ptr [r12 + 8*rcx - 16], rdi
+	xor qword ptr [r12 + 8*rcx - 8], r11
+	mov rsi, qword ptr [rsp + 256]
+	xor qword ptr [r12 + 8*rcx], rax
+	lea rdi, [rcx + 4]
+	add rcx, 8
+	cmp rcx, rsi
+	mov rcx, rdi
+	jbe .LBB136_23
+.LBB136_25:
+	cmp rdi, rsi
+	jae .LBB136_37
+.LBB136_26:
+	mov rax, qword ptr [r15 + 8*rdi]
+	test rax, rax
+	je .LBB136_27
+	vmovq xmm5, rax
+	vpclmulqdq xmm5, xmm4, xmm5, 0
+	vmovq rcx, xmm5
+	vpextrq r11, xmm5, 1
+	mov rax, r11
+	shld rax, rcx, 32
+	shr r11, 32
+	or r11, rax
+	je .LBB136_35
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm6, xmm0, 0
+	vpshufd xmm6, xmm6, 185
+	vpclmulqdq xmm6, xmm6, xmm2, 0
+	vpxor xmm5, xmm6, xmm5
+	vpextrq r11, xmm5, 1
+	vmovq r14, xmm5
+	mov rcx, r11
+	shld rcx, r14, 32
+	mov rsi, r11
+	shr rsi, 32
+	xor eax, eax
+	or rcx, rsi
+	je .LBB136_30
+	mov rcx, qword ptr [rsp + 272]
+	xor rcx, r14
+	shld r11, rcx, 32
+	or r11, rsi
+	jne .LBB136_33
+	jmp .LBB136_34
+.LBB136_27:
+	xor ecx, ecx
+	jmp .LBB136_35
+.LBB136_30:
+	xor ecx, ecx
+	xor rcx, r14
+	shld r11, rcx, 32
+	or r11, rsi
+	je .LBB136_34
+.LBB136_33:
+	mov rax, qword ptr [rsp + 272]
+.LBB136_34:
+	xor ecx, eax
+	mov rsi, qword ptr [rsp + 256]
+.LBB136_35:
+	cmp rdi, rsi
+	jae .LBB136_371
+	mov rax, qword ptr [rsp]
+	xor qword ptr [rax + 8*rdi], rcx
+	inc rdi
+	cmp rsi, rdi
+	jne .LBB136_26
+.LBB136_37:
+	test rbx, rbx
+	je .LBB136_55
+	vmovq xmm4, rbx
+	cmp rsi, 4
+	jae .LBB136_40
+	xor ecx, ecx
+	jmp .LBB136_43
+.LBB136_40:
+	vinserti128 ymm5, ymm4, xmm4, 1
+	xor edi, edi
+.LBB136_41:
+	lea rcx, [rdi + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm6, qword ptr [r10 + 8*rdi - 16]
+	vmovq xmm7, qword ptr [r10 + 8*rdi - 24]
+	vinserti128 ymm6, ymm7, xmm6, 1
+	vmovq xmm7, qword ptr [r10 + 8*rdi]
+	vmovq xmm8, qword ptr [r10 + 8*rdi - 8]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vpclmulqdq ymm6, ymm5, ymm6, 0
+	vpclmulqdq ymm7, ymm5, ymm7, 0
+	vpshufd ymm8, ymm6, 233
+	vpshufd ymm9, ymm7, 233
+	vpclmulqdq ymm8, ymm8, ymm1, 0
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpshufd ymm8, ymm8, 233
+	vpshufd ymm9, ymm9, 233
+	vpclmulqdq ymm8, ymm8, ymm3, 0
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpxor ymm6, ymm8, ymm6
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm8, ymm6, 1
+	vmovq rax, xmm8
+	mov rcx, rax
+	shr rcx, 32
+	mov r8, qword ptr [rsp + 272]
+	cmovne rcx, r8
+	xor rcx, rax
+	mov rax, rcx
+	shr rax, 32
+	mov eax, r8d
+	cmove eax, r13d
+	xor ecx, eax
+	vmovq rax, xmm7
+	mov r11, rax
+	shr r11, 32
+	cmovne r11, r8
+	xor r11, rax
+	mov rax, r11
+	shr rax, 32
+	mov eax, r8d
+	cmove eax, r13d
+	xor r11d, eax
+	vextracti128 xmm7, ymm7, 1
+	vmovq rsi, xmm7
+	mov rax, rsi
+	shr rax, 32
+	cmovne rax, r8
+	xor rax, rsi
+	mov rsi, rax
+	shr rsi, 32
+	mov esi, r8d
+	cmove esi, r13d
+	xor eax, esi
+	vmovq rsi, xmm6
+	mov rbx, rsi
+	shr rbx, 32
+	cmovne rbx, r8
+	xor rbx, rsi
+	mov rsi, rbx
+	shr rsi, 32
+	mov esi, r8d
+	cmove esi, r13d
+	xor ebx, esi
+	xor qword ptr [r9 + 8*rdi - 24], rbx
+	xor qword ptr [r9 + 8*rdi - 16], rcx
+	xor qword ptr [r9 + 8*rdi - 8], r11
+	mov rsi, qword ptr [rsp + 256]
+	xor qword ptr [r9 + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, rsi
+	mov rdi, rcx
+	jbe .LBB136_41
+.LBB136_43:
+	cmp rcx, rsi
+	jae .LBB136_55
+.LBB136_44:
+	mov rax, qword ptr [r15 + 8*rcx]
+	test rax, rax
+	je .LBB136_45
+	vmovq xmm5, rax
+	vpclmulqdq xmm5, xmm4, xmm5, 0
+	vmovq rdi, xmm5
+	vpextrq r11, xmm5, 1
+	mov rax, r11
+	shld rax, rdi, 32
+	shr r11, 32
+	or r11, rax
+	je .LBB136_53
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm6, xmm0, 0
+	vpshufd xmm6, xmm6, 185
+	vpclmulqdq xmm6, xmm6, xmm2, 0
+	vpxor xmm5, xmm6, xmm5
+	vpextrq r11, xmm5, 1
+	vmovq rbx, xmm5
+	mov rdi, r11
+	shld rdi, rbx, 32
+	mov rsi, r11
+	shr rsi, 32
+	xor eax, eax
+	or rdi, rsi
+	je .LBB136_48
+	mov rdi, qword ptr [rsp + 272]
+	xor rdi, rbx
+	shld r11, rdi, 32
+	or r11, rsi
+	jne .LBB136_51
+	jmp .LBB136_52
+.LBB136_45:
+	xor edi, edi
+	jmp .LBB136_53
+.LBB136_48:
+	xor edi, edi
+	xor rdi, rbx
+	shld r11, rdi, 32
+	or r11, rsi
+	je .LBB136_52
+.LBB136_51:
+	mov rax, qword ptr [rsp + 272]
+.LBB136_52:
+	xor edi, eax
+	mov rsi, qword ptr [rsp + 256]
+.LBB136_53:
+	cmp rcx, rsi
+	jae .LBB136_373
+	mov rax, qword ptr [rsp + 16]
+	xor qword ptr [rax + 8*rcx], rdi
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_44
+.LBB136_55:
+	mov rax, qword ptr [rsp + 88]
+	test rax, rax
+	je .LBB136_73
+	vmovq xmm4, rax
+	cmp rsi, 4
+	jae .LBB136_58
+	xor ecx, ecx
+	jmp .LBB136_61
+.LBB136_58:
+	vinserti128 ymm5, ymm4, xmm4, 1
+	xor edi, edi
+.LBB136_59:
+	lea rcx, [rdi + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm6, qword ptr [r10 + 8*rdi - 16]
+	vmovq xmm7, qword ptr [r10 + 8*rdi - 24]
+	vinserti128 ymm6, ymm7, xmm6, 1
+	vmovq xmm7, qword ptr [r10 + 8*rdi]
+	vmovq xmm8, qword ptr [r10 + 8*rdi - 8]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vpclmulqdq ymm6, ymm5, ymm6, 0
+	vpclmulqdq ymm7, ymm5, ymm7, 0
+	vpshufd ymm8, ymm6, 233
+	vpshufd ymm9, ymm7, 233
+	vpclmulqdq ymm8, ymm8, ymm1, 0
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpshufd ymm8, ymm8, 233
+	vpshufd ymm9, ymm9, 233
+	vpclmulqdq ymm8, ymm8, ymm3, 0
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpxor ymm6, ymm8, ymm6
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm8, ymm6, 1
+	vmovq rax, xmm8
+	mov rcx, rax
+	shr rcx, 32
+	mov r8, qword ptr [rsp + 272]
+	cmovne rcx, r8
+	xor rcx, rax
+	mov rax, rcx
+	shr rax, 32
+	mov eax, r8d
+	cmove eax, r13d
+	xor ecx, eax
+	vmovq rax, xmm7
+	mov r11, rax
+	shr r11, 32
+	cmovne r11, r8
+	xor r11, rax
+	mov rax, r11
+	shr rax, 32
+	mov eax, r8d
+	cmove eax, r13d
+	xor r11d, eax
+	vextracti128 xmm7, ymm7, 1
+	vmovq rsi, xmm7
+	mov rax, rsi
+	shr rax, 32
+	cmovne rax, r8
+	xor rax, rsi
+	mov rsi, rax
+	shr rsi, 32
+	mov esi, r8d
+	cmove esi, r13d
+	xor eax, esi
+	vmovq rsi, xmm6
+	mov rbx, rsi
+	shr rbx, 32
+	cmovne rbx, r8
+	xor rbx, rsi
+	mov rsi, rbx
+	shr rsi, 32
+	mov esi, r8d
+	cmove esi, r13d
+	xor ebx, esi
+	xor qword ptr [rdx + 8*rdi - 24], rbx
+	xor qword ptr [rdx + 8*rdi - 16], rcx
+	xor qword ptr [rdx + 8*rdi - 8], r11
+	mov rsi, qword ptr [rsp + 256]
+	xor qword ptr [rdx + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, rsi
+	mov rdi, rcx
+	jbe .LBB136_59
+.LBB136_61:
+	cmp rcx, rsi
+	jae .LBB136_73
+.LBB136_62:
+	mov rax, qword ptr [r15 + 8*rcx]
+	test rax, rax
+	je .LBB136_63
+	vmovq xmm5, rax
+	vpclmulqdq xmm5, xmm4, xmm5, 0
+	vmovq rdi, xmm5
+	vpextrq r11, xmm5, 1
+	mov rax, r11
+	shld rax, rdi, 32
+	shr r11, 32
+	or r11, rax
+	je .LBB136_71
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm6, xmm0, 0
+	vpshufd xmm6, xmm6, 185
+	vpclmulqdq xmm6, xmm6, xmm2, 0
+	vpxor xmm5, xmm6, xmm5
+	vpextrq r11, xmm5, 1
+	vmovq rbx, xmm5
+	mov rdi, r11
+	shld rdi, rbx, 32
+	mov rsi, r11
+	shr rsi, 32
+	xor eax, eax
+	or rdi, rsi
+	je .LBB136_66
+	mov rdi, qword ptr [rsp + 272]
+	xor rdi, rbx
+	shld r11, rdi, 32
+	or r11, rsi
+	jne .LBB136_69
+	jmp .LBB136_70
+.LBB136_63:
+	xor edi, edi
+	jmp .LBB136_71
+.LBB136_66:
+	xor edi, edi
+	xor rdi, rbx
+	shld r11, rdi, 32
+	or r11, rsi
+	je .LBB136_70
+.LBB136_69:
+	mov rax, qword ptr [rsp + 272]
+.LBB136_70:
+	xor edi, eax
+	mov rsi, qword ptr [rsp + 256]
+.LBB136_71:
+	cmp rcx, rsi
+	jae .LBB136_373
+	mov rax, qword ptr [rsp + 64]
+	xor qword ptr [rax + 8*rcx], rdi
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_62
+.LBB136_73:
+	mov rax, qword ptr [rsp + 160]
+	test rax, rax
+	je .LBB136_91
+	vmovq xmm4, rax
+	cmp rsi, 4
+	jae .LBB136_76
+	xor ecx, ecx
+	jmp .LBB136_79
+.LBB136_76:
+	vinserti128 ymm5, ymm4, xmm4, 1
+	xor edi, edi
+.LBB136_77:
+	lea rcx, [rdi + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm6, qword ptr [r10 + 8*rdi - 16]
+	vmovq xmm7, qword ptr [r10 + 8*rdi - 24]
+	vinserti128 ymm6, ymm7, xmm6, 1
+	vmovq xmm7, qword ptr [r10 + 8*rdi]
+	vmovq xmm8, qword ptr [r10 + 8*rdi - 8]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vpclmulqdq ymm6, ymm5, ymm6, 0
+	vpclmulqdq ymm7, ymm5, ymm7, 0
+	vpshufd ymm8, ymm6, 233
+	vpshufd ymm9, ymm7, 233
+	vpclmulqdq ymm8, ymm8, ymm1, 0
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpshufd ymm8, ymm8, 233
+	vpshufd ymm9, ymm9, 233
+	vpclmulqdq ymm8, ymm8, ymm3, 0
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpxor ymm6, ymm8, ymm6
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm8, ymm6, 1
+	vmovq rax, xmm8
+	mov rcx, rax
+	shr rcx, 32
+	mov r8, qword ptr [rsp + 272]
+	cmovne rcx, r8
+	xor rcx, rax
+	mov rax, rcx
+	shr rax, 32
+	mov eax, r8d
+	cmove eax, r13d
+	xor ecx, eax
+	vmovq rax, xmm7
+	mov r11, rax
+	shr r11, 32
+	cmovne r11, r8
+	xor r11, rax
+	mov rax, r11
+	shr rax, 32
+	mov eax, r8d
+	cmove eax, r13d
+	xor r11d, eax
+	vextracti128 xmm7, ymm7, 1
+	vmovq rsi, xmm7
+	mov rax, rsi
+	shr rax, 32
+	cmovne rax, r8
+	xor rax, rsi
+	mov rsi, rax
+	shr rsi, 32
+	mov esi, r8d
+	cmove esi, r13d
+	xor eax, esi
+	vmovq rsi, xmm6
+	mov rbx, rsi
+	shr rbx, 32
+	cmovne rbx, r8
+	xor rbx, rsi
+	mov rsi, rbx
+	shr rsi, 32
+	mov esi, r8d
+	cmove esi, r13d
+	xor ebx, esi
+	xor qword ptr [rbp + 8*rdi - 24], rbx
+	xor qword ptr [rbp + 8*rdi - 16], rcx
+	xor qword ptr [rbp + 8*rdi - 8], r11
+	mov rsi, qword ptr [rsp + 256]
+	xor qword ptr [rbp + 8*rdi], rax
+	lea rcx, [rdi + 4]
+	add rdi, 8
+	cmp rdi, rsi
+	mov rdi, rcx
+	jbe .LBB136_77
+.LBB136_79:
+	cmp rcx, rsi
+	jae .LBB136_91
+.LBB136_80:
+	mov rax, qword ptr [r15 + 8*rcx]
+	test rax, rax
+	je .LBB136_81
+	vmovq xmm5, rax
+	vpclmulqdq xmm5, xmm4, xmm5, 0
+	vmovq rdi, xmm5
+	vpextrq r11, xmm5, 1
+	mov rax, r11
+	shld rax, rdi, 32
+	shr r11, 32
+	or r11, rax
+	je .LBB136_89
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm6, xmm0, 0
+	vpshufd xmm6, xmm6, 185
+	vpclmulqdq xmm6, xmm6, xmm2, 0
+	vpxor xmm5, xmm6, xmm5
+	vpextrq r11, xmm5, 1
+	vmovq rbx, xmm5
+	mov rdi, r11
+	shld rdi, rbx, 32
+	mov rsi, r11
+	shr rsi, 32
+	xor eax, eax
+	or rdi, rsi
+	je .LBB136_84
+	mov rdi, qword ptr [rsp + 272]
+	xor rdi, rbx
+	shld r11, rdi, 32
+	or r11, rsi
+	jne .LBB136_87
+	jmp .LBB136_88
+.LBB136_81:
+	xor edi, edi
+	jmp .LBB136_89
+.LBB136_84:
+	xor edi, edi
+	xor rdi, rbx
+	shld r11, rdi, 32
+	or r11, rsi
+	je .LBB136_88
+.LBB136_87:
+	mov rax, qword ptr [rsp + 272]
+.LBB136_88:
+	xor edi, eax
+	mov rsi, qword ptr [rsp + 256]
+.LBB136_89:
+	cmp rcx, rsi
+	jae .LBB136_373
+	mov rax, qword ptr [rsp + 56]
+	xor qword ptr [rax + 8*rcx], rdi
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_80
+	jmp .LBB136_91
+.LBB136_298:
+	xor eax, eax
+.LBB136_299:
+	lea r14, [rax + 4]
+	add rax, 8
+	cmp rax, rsi
+	mov rax, r14
+	jbe .LBB136_299
+.LBB136_175:
+	cmp r14, rsi
+	mov rsi, qword ptr [rsp + 96]
+	mov rax, qword ptr [rsp + 264]
+	jae .LBB136_361
+	vmovq xmm0, rax
+	vinserti128 ymm1, ymm0, xmm0, 1
+	vmovq xmm2, qword ptr [rsp + 272]
+	vinserti128 ymm3, ymm2, xmm2, 1
+	mov rax, r14
+	mov rcx, qword ptr [rsp + 256]
+	imul rax, rcx
+	lea rdx, [rsi + 8*rax]
+	add rdx, 24
+	lea rcx, [8*rcx]
+	mov qword ptr [rsp], rcx
+	mov rcx, qword ptr [rsp + 32]
+	add rcx, 24
+	mov qword ptr [rsp + 16], rcx
+	lea r9, [rsi + 8*rax]
+	xor r10d, r10d
+	vmovdqa xmm4, xmmword ptr [rip + .LCPI136_0]
+	mov r15d, 65536
+	jmp .LBB136_307
+.LBB136_306:
+	mov rax, qword ptr [rsp]
+	add rdx, rax
+	add r9, rax
+	mov r14, qword ptr [rsp + 72]
+	cmp r14, qword ptr [rsp + 240]
+	je .LBB136_361
+.LBB136_307:
+	mov r11, r14
+	mov rax, qword ptr [rsp + 256]
+	imul r11, rax
+	lea rcx, [r14 + 1]
+	mov r8, rcx
+	imul r8, rax
+	cmp r8, r11
+	jb .LBB136_309
+	cmp r8, qword ptr [rsp + 24]
+	ja .LBB136_309
+	mov qword ptr [rsp + 72], rcx
+	cmp qword ptr [rsp + 248], 0
+	mov rsi, qword ptr [rsp + 256]
+	je .LBB136_306
+	imul r14, qword ptr [rsp + 248]
+	mov r12, qword ptr [rsp + 32]
+	mov r13, qword ptr [rsp + 16]
+	xor edi, edi
+	jmp .LBB136_312
+.LBB136_329:
+	mov rax, qword ptr [rsp]
+	add r13, rax
+	add r12, rax
+	cmp rdi, qword ptr [rsp + 248]
+	je .LBB136_306
+.LBB136_312:
+	lea r8, [rdi + r14]
+	mov rax, qword ptr [rsp + 40]
+	cmp r8, rax
+	jae .LBB136_330
+	mov rbx, rdi
+	inc rdi
+	imul rbx, rsi
+	mov r11, rdi
+	imul r11, rsi
+	cmp r11, rbx
+	jb .LBB136_315
+	cmp r11, qword ptr [rsp + 8]
+	ja .LBB136_315
+	mov rax, qword ptr [rsp + 80]
+	mov rax, qword ptr [rax + 8*r8]
+	test rax, rax
+	mov rsi, qword ptr [rsp + 256]
+	je .LBB136_329
+	vmovq xmm5, rax
+	cmp rsi, 4
+	jae .LBB136_322
+	xor ecx, ecx
+	jmp .LBB136_319
+.LBB136_322:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor r8d, r8d
+.LBB136_323:
+	lea rcx, [r8 + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm7, qword ptr [r13 + 8*r8 - 16]
+	vmovq xmm8, qword ptr [r13 + 8*r8 - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r13 + 8*r8]
+	vmovq xmm9, qword ptr [r13 + 8*r8 - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 2
+	vpsrldq ymm10, ymm8, 2
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 2
+	vpsrldq ymm10, ymm10, 2
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 65536
+	mov rbp, qword ptr [rsp + 272]
+	mov rcx, rbp
+	cmovb rcx, r10
+	xor rcx, rax
+	cmp rcx, 65536
+	mov eax, ebp
+	cmovb eax, r15d
+	vpxor ymm8, ymm10, ymm8
+	xor ecx, eax
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov r11, rbp
+	cmovb r11, r10
+	xor r11, rax
+	cmp r11, 65536
+	mov eax, ebp
+	cmovb eax, r15d
+	xor r11d, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rax, xmm8
+	cmp rax, 65536
+	mov rbx, rbp
+	cmovb rbx, r10
+	xor rbx, rax
+	cmp rbx, 65536
+	mov eax, ebp
+	cmovb eax, r15d
+	xor ebx, eax
+	vmovq rax, xmm7
+	cmp rax, 65536
+	mov rsi, rbp
+	cmovb rsi, r10
+	xor rsi, rax
+	cmp rsi, 65536
+	mov eax, ebp
+	cmovb eax, r15d
+	xor esi, eax
+	movzx eax, si
+	xor qword ptr [rdx + 8*r8 - 24], rax
+	movzx eax, cx
+	xor qword ptr [rdx + 8*r8 - 16], rax
+	movzx eax, r11w
+	mov rsi, qword ptr [rsp + 256]
+	xor qword ptr [rdx + 8*r8 - 8], rax
+	movzx eax, bx
+	xor qword ptr [rdx + 8*r8], rax
+	lea rcx, [r8 + 4]
+	add r8, 8
+	cmp r8, rsi
+	mov r8, rcx
+	jbe .LBB136_323
+.LBB136_319:
+	cmp rcx, rsi
+	jae .LBB136_329
+.LBB136_320:
+	mov rax, qword ptr [r12 + 8*rcx]
+	test rax, rax
+	je .LBB136_321
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq r8, xmm6, 1
+	mov r11, r8
+	shld r11, rax, 48
+	shr r8, 16
+	or r8, r11
+	je .LBB136_327
+	vmovq xmm7, r11
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq r11, xmm6
+	cmp r11, 65536
+	mov r8, rax
+	sbb r8, 0
+	mov rbx, qword ptr [rsp + 272]
+	mov r8, rbx
+	cmovb r8, r10
+	xor r8, r11
+	cmp r8, 65536
+	sbb rax, 0
+	mov eax, ebx
+	cmovb eax, r10d
+	xor r8d, eax
+	movzx eax, r8w
+.LBB136_327:
+	cmp rcx, rsi
+	jb .LBB136_328
+	jmp .LBB136_373
+.LBB136_321:
+	xor eax, eax
+	cmp rcx, rsi
+	jae .LBB136_373
+.LBB136_328:
+	xor qword ptr [r9 + 8*rcx], rax
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_320
+	jmp .LBB136_329
+.LBB136_251:
+	xor eax, eax
+.LBB136_252:
+	lea r14, [rax + 4]
+	add rax, 8
+	cmp rax, rsi
+	mov rax, r14
+	jbe .LBB136_252
+.LBB136_247:
+	cmp r14, rsi
+	mov rsi, qword ptr [rsp + 96]
+	mov rax, qword ptr [rsp + 264]
+	jae .LBB136_361
+	vmovq xmm0, rax
+	vinserti128 ymm1, ymm0, xmm0, 1
+	vmovq xmm2, qword ptr [rsp + 272]
+	vinserti128 ymm3, ymm2, xmm2, 1
+	mov rax, r14
+	mov rcx, qword ptr [rsp + 256]
+	imul rax, rcx
+	lea rdx, [rsi + 8*rax]
+	add rdx, 24
+	lea rcx, [8*rcx]
+	mov qword ptr [rsp], rcx
+	mov rcx, qword ptr [rsp + 32]
+	add rcx, 24
+	mov qword ptr [rsp + 16], rcx
+	lea r9, [rsi + 8*rax]
+	xor r10d, r10d
+	vmovdqa xmm4, xmmword ptr [rip + .LCPI136_1]
+	mov r15d, 256
+	jmp .LBB136_262
+.LBB136_261:
+	mov rax, qword ptr [rsp]
+	add rdx, rax
+	add r9, rax
+	mov r14, qword ptr [rsp + 48]
+	cmp r14, qword ptr [rsp + 240]
+	je .LBB136_361
+.LBB136_262:
+	mov r11, r14
+	mov rax, qword ptr [rsp + 256]
+	imul r11, rax
+	lea rcx, [r14 + 1]
+	mov r8, rcx
+	imul r8, rax
+	cmp r8, r11
+	jb .LBB136_264
+	cmp r8, qword ptr [rsp + 24]
+	ja .LBB136_264
+	mov qword ptr [rsp + 48], rcx
+	cmp qword ptr [rsp + 248], 0
+	mov rsi, qword ptr [rsp + 256]
+	je .LBB136_261
+	imul r14, qword ptr [rsp + 248]
+	mov r12, qword ptr [rsp + 32]
+	mov r13, qword ptr [rsp + 16]
+	xor edi, edi
+	jmp .LBB136_268
+.LBB136_286:
+	mov rax, qword ptr [rsp]
+	add r13, rax
+	add r12, rax
+	cmp rdi, qword ptr [rsp + 248]
+	je .LBB136_261
+.LBB136_268:
+	lea r8, [rdi + r14]
+	mov rax, qword ptr [rsp + 40]
+	cmp r8, rax
+	jae .LBB136_287
+	mov rbx, rdi
+	inc rdi
+	imul rbx, rsi
+	mov r11, rdi
+	imul r11, rsi
+	cmp r11, rbx
+	jb .LBB136_271
+	cmp r11, qword ptr [rsp + 8]
+	ja .LBB136_271
+	mov rax, qword ptr [rsp + 80]
+	mov rax, qword ptr [rax + 8*r8]
+	test rax, rax
+	mov rsi, qword ptr [rsp + 256]
+	je .LBB136_286
+	vmovq xmm5, rax
+	cmp rsi, 4
+	jae .LBB136_279
+	xor ecx, ecx
+	jmp .LBB136_276
+.LBB136_279:
+	vinserti128 ymm6, ymm5, xmm5, 1
+	xor r8d, r8d
+.LBB136_280:
+	lea rcx, [r8 + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm7, qword ptr [r13 + 8*r8 - 16]
+	vmovq xmm8, qword ptr [r13 + 8*r8 - 24]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vmovq xmm8, qword ptr [r13 + 8*r8]
+	vmovq xmm9, qword ptr [r13 + 8*r8 - 8]
+	vinserti128 ymm8, ymm9, xmm8, 1
+	vpclmulqdq ymm7, ymm6, ymm7, 0
+	vpclmulqdq ymm8, ymm6, ymm8, 0
+	vpsrldq ymm9, ymm7, 1
+	vpsrldq ymm10, ymm8, 1
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpclmulqdq ymm10, ymm10, ymm1, 0
+	vpsrldq ymm9, ymm9, 1
+	vpsrldq ymm10, ymm10, 1
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpclmulqdq ymm10, ymm10, ymm3, 0
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm9, ymm7, 1
+	vmovq rax, xmm9
+	cmp rax, 256
+	mov rbp, qword ptr [rsp + 272]
+	mov rcx, rbp
+	cmovb rcx, r10
+	xor rcx, rax
+	cmp rcx, 256
+	mov eax, ebp
+	cmovb eax, r15d
+	vpxor ymm8, ymm10, ymm8
+	xor ecx, eax
+	vmovq rax, xmm8
+	cmp rax, 256
+	mov r11, rbp
+	cmovb r11, r10
+	xor r11, rax
+	cmp r11, 256
+	mov eax, ebp
+	cmovb eax, r15d
+	xor r11d, eax
+	vextracti128 xmm8, ymm8, 1
+	vmovq rsi, xmm8
+	cmp rsi, 256
+	mov rax, rbp
+	cmovb rax, r10
+	xor rax, rsi
+	cmp rax, 256
+	mov esi, ebp
+	cmovb esi, r15d
+	xor eax, esi
+	vmovq rsi, xmm7
+	cmp rsi, 256
+	mov rbx, rbp
+	cmovb rbx, r10
+	xor rbx, rsi
+	cmp rbx, 256
+	mov esi, ebp
+	cmovb esi, r15d
+	xor ebx, esi
+	movzx esi, bl
+	xor qword ptr [rdx + 8*r8 - 24], rsi
+	movzx ecx, cl
+	xor qword ptr [rdx + 8*r8 - 16], rcx
+	movzx ecx, r11b
+	mov rsi, qword ptr [rsp + 256]
+	xor qword ptr [rdx + 8*r8 - 8], rcx
+	movzx eax, al
+	xor qword ptr [rdx + 8*r8], rax
+	lea rcx, [r8 + 4]
+	add r8, 8
+	cmp r8, rsi
+	mov r8, rcx
+	jbe .LBB136_280
+.LBB136_276:
+	cmp rcx, rsi
+	jae .LBB136_286
+.LBB136_277:
+	mov rax, qword ptr [r12 + 8*rcx]
+	test rax, rax
+	je .LBB136_278
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm5, xmm6, 0
+	vmovq rax, xmm6
+	vpextrq r8, xmm6, 1
+	mov r11, r8
+	shld r11, rax, 56
+	shr r8, 8
+	or r8, r11
+	je .LBB136_284
+	vmovq xmm7, r11
+	vpclmulqdq xmm7, xmm7, xmm0, 0
+	vpshufb xmm7, xmm7, xmm4
+	vpclmulqdq xmm7, xmm7, xmm2, 0
+	vpxor xmm6, xmm7, xmm6
+	vpextrq rax, xmm6, 1
+	vmovq r11, xmm6
+	cmp r11, 256
+	mov r8, rax
+	sbb r8, 0
+	mov rbx, qword ptr [rsp + 272]
+	mov r8, rbx
+	cmovb r8, r10
+	xor r8, r11
+	cmp r8, 256
+	sbb rax, 0
+	mov eax, ebx
+	cmovb eax, r10d
+	xor r8d, eax
+	movzx eax, r8b
+.LBB136_284:
+	cmp rcx, rsi
+	jb .LBB136_285
+	jmp .LBB136_373
+.LBB136_278:
+	xor eax, eax
+	cmp rcx, rsi
+	jae .LBB136_373
+.LBB136_285:
+	xor qword ptr [r9 + 8*rcx], rax
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_277
+	jmp .LBB136_286
+.LBB136_336:
+	xor eax, eax
+.LBB136_337:
+	lea r14, [rax + 4]
+	add rax, 8
+	cmp rax, rsi
+	mov rax, r14
+	jbe .LBB136_337
+.LBB136_93:
+	mov rcx, rsi
+	sub rcx, r14
+	mov rsi, qword ptr [rsp + 96]
+	mov rax, qword ptr [rsp + 264]
+	jbe .LBB136_361
+	cmp qword ptr [rsp + 248], 0
+	je .LBB136_362
+	vmovq xmm0, rax
+	vinserti128 ymm1, ymm0, xmm0, 1
+	vmovq xmm2, qword ptr [rsp + 272]
+	vinserti128 ymm3, ymm2, xmm2, 1
+	movabs rdx, 4294967296
+	mov rax, r14
+	mov rcx, qword ptr [rsp + 256]
+	imul rax, rcx
+	lea rbp, [rsi + 8*rax]
+	add rbp, 24
+	lea rdi, [8*rcx]
+	mov rcx, qword ptr [rsp + 32]
+	add rcx, 24
+	mov qword ptr [rsp + 16], rcx
+	lea r10, [rsi + 8*rax]
+	jmp .LBB136_96
+.LBB136_360:
+	add rbp, rdi
+	add r10, rdi
+	mov rax, qword ptr [rsp]
+	mov r14, rax
+	cmp rax, qword ptr [rsp + 240]
+	je .LBB136_361
+.LBB136_96:
+	mov r8, r14
+	mov rax, qword ptr [rsp + 256]
+	imul r8, rax
+	lea rcx, [r14 + 1]
+	mov r11, rcx
+	imul r11, rax
+	cmp r11, r8
+	jb .LBB136_401
+	cmp r11, qword ptr [rsp + 24]
+	mov rax, qword ptr [rsp + 40]
+	ja .LBB136_401
+	mov qword ptr [rsp], rcx
+	imul r14, qword ptr [rsp + 248]
+	mov r12, qword ptr [rsp + 32]
+	mov r13, qword ptr [rsp + 16]
+	xor r15d, r15d
+	mov rsi, qword ptr [rsp + 256]
+	jmp .LBB136_99
+.LBB136_359:
+	add r13, rdi
+	add r12, rdi
+	cmp r15, qword ptr [rsp + 248]
+	mov rax, qword ptr [rsp + 40]
+	je .LBB136_360
+.LBB136_99:
+	lea r8, [r15 + r14]
+	cmp r8, rax
+	jae .LBB136_367
+	mov rbx, r15
+	inc r15
+	imul rbx, rsi
+	mov r11, r15
+	imul r11, rsi
+	cmp r11, rbx
+	jb .LBB136_366
+	cmp r11, qword ptr [rsp + 8]
+	ja .LBB136_366
+	mov rax, qword ptr [rsp + 80]
+	mov rax, qword ptr [rax + 8*r8]
+	test rax, rax
+	mov rsi, qword ptr [rsp + 256]
+	je .LBB136_359
+	vmovq xmm4, rax
+	cmp rsi, 4
+	jae .LBB136_344
+	xor ecx, ecx
+	jmp .LBB136_347
+.LBB136_344:
+	vinserti128 ymm5, ymm4, xmm4, 1
+	xor r8d, r8d
+.LBB136_345:
+	lea rcx, [r8 + 1]
+	cmp rcx, rsi
+	jae .LBB136_281
+	vmovq xmm6, qword ptr [r13 + 8*r8 - 16]
+	vmovq xmm7, qword ptr [r13 + 8*r8 - 24]
+	vinserti128 ymm6, ymm7, xmm6, 1
+	vmovq xmm7, qword ptr [r13 + 8*r8]
+	vmovq xmm8, qword ptr [r13 + 8*r8 - 8]
+	vinserti128 ymm7, ymm8, xmm7, 1
+	vpclmulqdq ymm6, ymm5, ymm6, 0
+	vpclmulqdq ymm7, ymm5, ymm7, 0
+	vpshufd ymm8, ymm6, 233
+	vpshufd ymm9, ymm7, 233
+	vpclmulqdq ymm8, ymm8, ymm1, 0
+	vpclmulqdq ymm9, ymm9, ymm1, 0
+	vpshufd ymm8, ymm8, 233
+	vpshufd ymm9, ymm9, 233
+	vpclmulqdq ymm8, ymm8, ymm3, 0
+	vpclmulqdq ymm9, ymm9, ymm3, 0
+	vpxor ymm6, ymm8, ymm6
+	vpxor ymm7, ymm9, ymm7
+	vextracti128 xmm8, ymm6, 1
+	vmovq rax, xmm8
+	mov rcx, rax
+	shr rcx, 32
+	mov r9, qword ptr [rsp + 272]
+	cmovne rcx, r9
+	xor rcx, rax
+	mov rax, rcx
+	shr rax, 32
+	mov eax, r9d
+	cmove eax, edx
+	xor ecx, eax
+	vmovq rax, xmm7
+	mov r11, rax
+	shr r11, 32
+	cmovne r11, r9
+	xor r11, rax
+	mov rax, r11
+	shr rax, 32
+	mov eax, r9d
+	cmove eax, edx
+	xor r11d, eax
+	vextracti128 xmm7, ymm7, 1
+	vmovq rsi, xmm7
+	mov rax, rsi
+	shr rax, 32
+	cmovne rax, r9
+	xor rax, rsi
+	mov rsi, rax
+	shr rsi, 32
+	mov esi, r9d
+	cmove esi, edx
+	xor eax, esi
+	vmovq rsi, xmm6
+	mov rbx, rsi
+	shr rbx, 32
+	cmovne rbx, r9
+	xor rbx, rsi
+	mov rsi, rbx
+	shr rsi, 32
+	mov esi, r9d
+	cmove esi, edx
+	xor ebx, esi
+	xor qword ptr [rbp + 8*r8 - 24], rbx
+	xor qword ptr [rbp + 8*r8 - 16], rcx
+	xor qword ptr [rbp + 8*r8 - 8], r11
+	mov rsi, qword ptr [rsp + 256]
+	xor qword ptr [rbp + 8*r8], rax
+	lea rcx, [r8 + 4]
+	add r8, 8
+	cmp r8, rsi
+	mov r8, rcx
+	jbe .LBB136_345
+.LBB136_347:
+	cmp rcx, rsi
+	jae .LBB136_359
+.LBB136_348:
+	mov rax, qword ptr [r12 + 8*rcx]
+	test rax, rax
+	je .LBB136_349
+	vmovq xmm5, rax
+	vpclmulqdq xmm5, xmm4, xmm5, 0
+	vmovq r8, xmm5
+	vpextrq r11, xmm5, 1
+	mov rax, r11
+	shld rax, r8, 32
+	shr r11, 32
+	or r11, rax
+	je .LBB136_357
+	vmovq xmm6, rax
+	vpclmulqdq xmm6, xmm6, xmm0, 0
+	vpshufd xmm6, xmm6, 185
+	vpclmulqdq xmm6, xmm6, xmm2, 0
+	vpxor xmm5, xmm6, xmm5
+	vpextrq r11, xmm5, 1
+	vmovq rbx, xmm5
+	mov r8, r11
+	shld r8, rbx, 32
+	mov rsi, r11
+	shr rsi, 32
+	xor eax, eax
+	or r8, rsi
+	je .LBB136_352
+	mov r8, qword ptr [rsp + 272]
+	xor r8, rbx
+	shld r11, r8, 32
+	or r11, rsi
+	jne .LBB136_355
+	jmp .LBB136_356
+.LBB136_349:
+	xor r8d, r8d
+	jmp .LBB136_357
+.LBB136_352:
+	xor r8d, r8d
+	xor r8, rbx
+	shld r11, r8, 32
+	or r11, rsi
+	je .LBB136_356
+.LBB136_355:
+	mov rax, qword ptr [rsp + 272]
+.LBB136_356:
+	xor r8d, eax
+	mov rsi, qword ptr [rsp + 256]
+.LBB136_357:
+	cmp rcx, rsi
+	jae .LBB136_373
+	xor qword ptr [r10 + 8*rcx], r8
+	inc rcx
+	cmp rsi, rcx
+	jne .LBB136_348
+	jmp .LBB136_359
+.LBB136_386:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.320]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rdx, qword ptr [rsp + 8]
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_315:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, rbx
+	mov rsi, r11
+	mov rdx, qword ptr [rsp + 8]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_271:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, rbx
+	mov rsi, r11
+	mov rdx, qword ptr [rsp + 8]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_362:
+	lea r11, [r14 + 1]
+	mov rax, qword ptr [rsp + 256]
+	imul r11, rax
+	imul r14, rax
+	mov r8, r14
+.LBB136_363:
+	cmp r11, r8
+	jb .LBB136_401
+	cmp r11, qword ptr [rsp + 24]
+	ja .LBB136_401
+	mov rax, qword ptr [rsp + 256]
+	add r11, rax
+	add r8, rax
+	dec rcx
+	jne .LBB136_363
+.LBB136_361:
+	add rsp, 184
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	vzeroupper
+	ret
+.LBB136_366:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, rbx
+	mov rsi, r11
+	mov rdx, qword ptr [rsp + 8]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_402:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.318]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rdx, qword ptr [rsp + 24]
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_281:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.323]
+	mov rdi, rcx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_373:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.322]
+	mov rdi, rcx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_304:
+	cmp rbx, r15
+	ja .LBB136_301
+	lea rdi, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.396]
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov esi, 19
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB136_259:
+	cmp rbx, qword ptr [rsp + 8]
+	ja .LBB136_254
+	lea rdi, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.396]
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov esi, 19
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB136_342:
+	cmp rbx, r15
+	ja .LBB136_339
+	lea rdi, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.396]
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov esi, 19
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB136_401:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, r8
+	mov rsi, r11
+	mov rdx, qword ptr [rsp + 24]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_309:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, r11
+	mov rsi, r8
+	mov rdx, qword ptr [rsp + 24]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_264:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, r11
+	mov rsi, r8
+	mov rdx, qword ptr [rsp + 24]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_295:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.323]
+	mov rdi, rcx
+	mov rsi, r11
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_293:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.322]
+	mov rdi, rcx
+	mov rsi, r11
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_399:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.321]
+	mov rdi, qword ptr [rsp + 256]
+	mov rsi, rdi
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_334:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.323]
+	mov rsi, r11
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_371:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.322]
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_300:
+	cmp rbx, r15
+	ja .LBB136_301
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, r11
+	mov rdx, qword ptr [rsp + 24]
+	mov rsi, rdx
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_338:
+	cmp rbx, r15
+	ja .LBB136_339
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, r11
+	mov rdx, qword ptr [rsp + 24]
+	mov rsi, rdx
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_253:
+	cmp rbx, qword ptr [rsp + 8]
+	ja .LBB136_254
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, r11
+	mov rdx, qword ptr [rsp + 24]
+	mov rsi, rdx
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_372:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.323]
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_292:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.322]
+	mov rsi, r11
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_383:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.319]
+	mov rdi, rbx
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_330:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, r8
+	mov rsi, rax
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_287:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, r8
+	mov rsi, rax
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_335:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, r11
+	mov rsi, qword ptr [rsp + 40]
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_296:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, r11
+	mov rsi, qword ptr [rsp + 40]
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_374:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, r11
+	mov rsi, qword ptr [rsp + 40]
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_333:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, r14
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_291:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, r14
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_370:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, r14
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_332:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, rbx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_290:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, rbx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_369:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, rbx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_331:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, rcx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_289:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, rcx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_368:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, rcx
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_367:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, r8
+	mov rsi, rax
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+.LBB136_301:
+	xor r14d, r14d
+.LBB136_302:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.316]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rdx, r15
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_339:
+	xor r14d, r14d
+.LBB136_340:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.317]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rdx, qword ptr [rsp + 8]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB136_254:
+	xor r14d, r14d
+.LBB136_255:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.315]
+	mov rdi, r14
+	mov rsi, rbx
+	mov rdx, qword ptr [rsp + 8]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]

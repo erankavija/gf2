@@ -5,11 +5,19 @@ use core::arch::x86_64::*;
 const M4RM_TILE_ROWS: usize = 8;
 const M4RM_TILE_WORDS: usize = 4;
 
+/// # Safety
+///
+/// `ptr` is valid for a 32-byte read at any alignment, nothing writes those
+/// bytes during the call, and the host supports AVX.
 #[inline(always)]
 unsafe fn loadu(ptr: *const u8) -> __m256i {
     _mm256_loadu_si256(ptr as *const __m256i)
 }
 
+/// # Safety
+///
+/// `ptr` is valid for a 32-byte write at any alignment into a buffer the
+/// caller holds exclusively, and the host supports AVX.
 #[inline(always)]
 unsafe fn storeu(ptr: *mut u8, v: __m256i) {
     _mm256_storeu_si256(ptr as *mut __m256i, v)
@@ -62,13 +70,14 @@ unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2 and `src` holds at least 16 words. The references
+/// carry pointer validity and exclusive access to `acc`; the four 32-byte
+/// loads and stores stay inside those 16 words.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_m4rm_gray_xor16(acc: &mut [[u64; 8]; 2], src: &[u64]) {
     debug_assert!(src.len() >= 16);
-
-    // SAFETY: callers pass a fixed 16-word accumulator and at least 16 source
-    // words. The loop performs four unaligned 32-byte loads/stores inside those
-    // bounds and never aliases `src` mutably.
     let acc_ptr = acc.as_mut_ptr() as *mut u8;
     let src_ptr = src.as_ptr() as *const u8;
     let mut i = 0usize;
@@ -86,6 +95,15 @@ unsafe fn avx2_m4rm_gray_xor16(acc: &mut [[u64; 8]; 2], src: &[u64]) {
 /// One YMM register holds the running accumulator; each Gray step is a single
 /// load + XOR + store. The Gray-walk control (curr_gray, flipped bit) is scalar
 /// and matrix-data-independent, so it stays out of the SIMD critical path.
+///
+/// # Safety
+///
+/// The host supports AVX2. `stride_words` is 4, `table_size` is a power of
+/// two, `buffer` holds at least `table_size * stride_words` words and `panel`
+/// at least `valid_rows * stride_words`, neither product overflowing. Every
+/// store then targets a Gray index below `table_size` and every load a panel
+/// row below `valid_rows`. The references carry pointer validity and exclusive
+/// access to `buffer`.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_m4rm_gray_build4(
     buffer: &mut [u64],
@@ -97,13 +115,6 @@ unsafe fn avx2_m4rm_gray_build4(
     debug_assert_eq!(stride_words, 4);
     debug_assert!(buffer.len() >= table_size * stride_words);
     debug_assert!(panel.len() >= valid_rows * stride_words);
-
-    // SAFETY: the wrapper asserts `buffer.len() >= table_size * stride_words`
-    // and `panel.len() >= valid_rows * stride_words` with `stride_words == 4`
-    // (32 bytes/row). Every store targets `curr_gray * 32` bytes with
-    // `curr_gray < table_size`, and every panel load reads `bit_pos * 32` bytes
-    // guarded by `bit_pos < valid_rows`; all unaligned 32-byte accesses stay
-    // within those bounds and never alias `panel` mutably.
     let buf = buffer.as_mut_ptr() as *mut u8;
     let pan = panel.as_ptr() as *const u8;
 
@@ -131,6 +142,10 @@ unsafe fn avx2_m4rm_gray_build4(
 ///
 /// Two YMM accumulators cover the 8-word row; identical Gray-walk control flow
 /// to the stride-4 builder.
+///
+/// # Safety
+///
+/// As [`avx2_m4rm_gray_build4`], with `stride_words` equal to 8.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_m4rm_gray_build8(
     buffer: &mut [u64],
@@ -142,13 +157,6 @@ unsafe fn avx2_m4rm_gray_build8(
     debug_assert_eq!(stride_words, 8);
     debug_assert!(buffer.len() >= table_size * stride_words);
     debug_assert!(panel.len() >= valid_rows * stride_words);
-
-    // SAFETY: the wrapper asserts `buffer.len() >= table_size * stride_words`
-    // and `panel.len() >= valid_rows * stride_words` with `stride_words == 8`
-    // (64 bytes/row). Each store pair targets `curr_gray * 64` and `+ 32` bytes
-    // with `curr_gray < table_size`, and each panel load pair reads `bit_pos *
-    // 64` and `+ 32` bytes guarded by `bit_pos < valid_rows`; all unaligned
-    // 32-byte accesses stay within those bounds and never alias `panel` mutably.
     let buf = buffer.as_mut_ptr() as *mut u8;
     let pan = panel.as_ptr() as *const u8;
 
@@ -176,6 +184,12 @@ unsafe fn avx2_m4rm_gray_build8(
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. `c_block` holds at least `8 * stride_words` words,
+/// `word_start + 4 <= stride_words`, and `table_buffer` holds the four words
+/// from `idx[r] * stride_words + word_start` for every row `r`. The references
+/// carry pointer validity and exclusive access to `c_block`.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_m4rm_tile8x4(
     c_block: &mut [u64],
@@ -211,6 +225,10 @@ unsafe fn avx2_m4rm_tile8x4(
     storeu(c.add(7 * stride_words + word_start).cast::<u8>(), acc7);
 }
 
+/// # Safety
+///
+/// As [`avx2_m4rm_tile8x4`] for every `word_start` that is a multiple of four
+/// with `word_start + 4 <= stride_words`.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_m4rm_tile8xn(
     c_block: &mut [u64],
@@ -225,6 +243,10 @@ unsafe fn avx2_m4rm_tile8xn(
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. The slice references carry pointer validity and
+/// exclusive access to `dst`, and every access lies inside the common prefix.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_and_into(dst: &mut [u64], src: &[u64]) {
     let len = dst.len().min(src.len());
@@ -245,6 +267,10 @@ unsafe fn avx2_and_into(dst: &mut [u64], src: &[u64]) {
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. The slice references carry pointer validity and
+/// exclusive access to `dst`, and every access lies inside the common prefix.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_or_into(dst: &mut [u64], src: &[u64]) {
     let len = dst.len().min(src.len());
@@ -265,6 +291,10 @@ unsafe fn avx2_or_into(dst: &mut [u64], src: &[u64]) {
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. The exclusive reference to `buf` carries pointer
+/// validity, and every access lies inside it.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_not_into(buf: &mut [u64]) {
     let len = buf.len();
@@ -287,6 +317,10 @@ unsafe fn avx2_not_into(buf: &mut [u64]) {
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. `buf` is only read, through a reference that
+/// carries pointer validity, and every load lies inside it.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {
     if buf.is_empty() {
@@ -395,6 +429,11 @@ unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {
 }
 
 /// Finds the index of the first set bit using AVX2.
+///
+/// # Safety
+///
+/// The host supports AVX2. `buf` is only read, through a reference that
+/// carries pointer validity, and every load lies inside it.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {
     if buf.is_empty() {
@@ -434,6 +473,11 @@ unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {
 }
 
 /// Finds the index of the first clear bit using AVX2.
+///
+/// # Safety
+///
+/// The host supports AVX2. `buf` is only read, through a reference that
+/// carries pointer validity, and every load lies inside it.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
     if buf.is_empty() {
@@ -474,6 +518,11 @@ unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {
 
 /// Word-aligned left shift: shifts entire u64 words left by `word_shift` positions.
 /// Words shifted out on the left are lost; zeros fill from the right.
+///
+/// # Safety
+///
+/// The host supports AVX2. The exclusive reference to `buf` carries pointer
+/// validity; every load and store lies inside it for any `word_shift`.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
     if word_shift == 0 || buf.is_empty() {
@@ -522,6 +571,11 @@ unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {
 
 /// Word-aligned right shift: shifts entire u64 words right by `word_shift` positions.
 /// Words shifted out on the right are lost; zeros fill from the left.
+///
+/// # Safety
+///
+/// The host supports AVX2. The exclusive reference to `buf` carries pointer
+/// validity; every load and store lies inside it for any `word_shift`.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {
     if word_shift == 0 || buf.is_empty() {
@@ -576,18 +630,21 @@ pub(crate) fn fns() -> LogicalFns {
         if dst.is_empty() {
             return;
         }
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_and_into(dst, src) }
     }
     fn or_fn(dst: &mut [u64], src: &[u64]) {
         if dst.is_empty() {
             return;
         }
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_or_into(dst, src) }
     }
     fn xor_fn(dst: &mut [u64], src: &[u64]) {
         if dst.is_empty() {
             return;
         }
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_xor_into(dst, src) }
     }
     fn m4rm_gray_xor16_fn(acc: &mut [[u64; 8]; 2], src: &[u64]) {
@@ -595,6 +652,8 @@ pub(crate) fn fns() -> LogicalFns {
             src.len() >= 16,
             "m4rm_gray_xor16: src must contain at least 16 words"
         );
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
+        // The assertion above gives the 16 source words.
         unsafe { avx2_m4rm_gray_xor16(acc, src) }
     }
     fn m4rm_gray_build4_fn(
@@ -660,6 +719,8 @@ pub(crate) fn fns() -> LogicalFns {
             ),
             "m4rm_tile8x4: table_buffer must cover all indexed 8x4 table rows"
         );
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
+        // The three assertions above are the kernel's length conditions.
         unsafe { avx2_m4rm_tile8x4(c_block, stride_words, word_start, table_buffer, idx) }
     }
     fn m4rm_tile8xn_fn(
@@ -681,15 +742,20 @@ pub(crate) fn fns() -> LogicalFns {
             m4rm_table_rows_cover(table_buffer.len(), stride_words, 0, full_words, idx),
             "m4rm_tile8xn: table_buffer must cover all indexed 8xN table rows"
         );
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
+        // The assertions above cover `c_block` and every table row up to
+        // `full_words`, which bounds each tile the kernel visits.
         unsafe { avx2_m4rm_tile8xn(c_block, stride_words, table_buffer, idx) }
     }
     fn not_fn(dst: &mut [u64]) {
         if dst.is_empty() {
             return;
         }
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_not_into(dst) }
     }
     fn popcnt_fn(src: &[u64]) -> u64 {
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_popcnt(src) }
     }
     fn and_popcnt_fn(lhs: &[u64], rhs: &[u64]) -> u64 {
@@ -709,21 +775,25 @@ pub(crate) fn fns() -> LogicalFns {
         unsafe { super::popcount::popcnt_words(src) }
     }
     fn find_first_one_fn(src: &[u64]) -> Option<usize> {
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_find_first_one(src) }
     }
     fn find_first_zero_fn(src: &[u64]) -> Option<usize> {
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_find_first_zero(src) }
     }
     fn shift_left_words_fn(buf: &mut [u64], word_shift: usize) {
         if buf.is_empty() {
             return;
         }
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_shift_left_words(buf, word_shift) }
     }
     fn shift_right_words_fn(buf: &mut [u64], word_shift: usize) {
         if buf.is_empty() {
             return;
         }
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_shift_right_words(buf, word_shift) }
     }
     LogicalFns {

@@ -7,8 +7,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : b85adc0a1
-; regenerated   : 2026-10-05T03:26:17Z
+; commit        : 8ff1644cb
+; regenerated   : 2026-10-05T03:38:05Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -17,7 +17,7 @@
 ; symbol: gf2_kernels_simd::x86::gf2m_gemm::gf2m_gemm_panelized
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.06s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::gf2m_gemm::gf2m_gemm_panelized:
 	push rbp

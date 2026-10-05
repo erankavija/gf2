@@ -27,6 +27,9 @@ use super::gf2m_common::{clmul_barrett_scalar, correct, ymm_barrett_reduce};
 ///
 /// Requires avx2, vpclmulqdq, pclmulqdq, sse4.1. `b_row.len()` must equal
 /// `acc_row.len()`.
+///
+/// Every slice access is bounds-checked; the references carry pointer validity
+/// and exclusive access to `acc_row`.
 #[target_feature(
     enable = "avx2",
     enable = "vpclmulqdq",
@@ -104,6 +107,9 @@ pub unsafe fn gf2m_broadcast_mul_xor<const SHIFT: i32>(
 /// # Safety
 ///
 /// Requires avx2, vpclmulqdq, pclmulqdq, sse4.1. `degree ∈ {8, 16, 32}`.
+///
+/// Every slice access is bounds-checked; the references carry pointer validity
+/// and exclusive access to `out`.
 #[target_feature(
     enable = "avx2",
     enable = "vpclmulqdq",
@@ -231,6 +237,9 @@ mod tests {
             for j in 0..n {
                 let mut acc = 0u64;
                 for ki in 0..k {
+                    // SAFETY: `run_test` calls this helper only after
+                    // `avx2_vpclmul_available` holds; AVX2 enables SSE4.1 in
+                    // rustc's target-feature hierarchy.
                     let p = unsafe {
                         clmul_barrett_scalar(a[i * k + ki], b[ki * n + j], mu, modulus, degree)
                     };
@@ -256,6 +265,8 @@ mod tests {
             .collect();
 
         let mut got = vec![0u64; m * n];
+        // SAFETY: `avx2_vpclmul_available` held above; AVX2 enables SSE4.1 in
+        // rustc's target-feature hierarchy.
         unsafe {
             gf2m_gemm_panelized(&a, &b, &mut got, m, k, n, mu, modulus, degree);
         }
@@ -321,11 +332,15 @@ mod tests {
         let b_row: Vec<u64> = (0..16u64).map(|j| (j * 0x1B + 1) & mask).collect();
         let mut acc = vec![0u64; 16];
 
+        // SAFETY: `avx2_vpclmul_available` held above; AVX2 enables SSE4.1 in
+        // rustc's target-feature hierarchy.
         unsafe {
             gf2m_broadcast_mul_xor::<1>(a_ik, &b_row, &mut acc, mu, poly);
         }
 
         for (j, &got) in acc.iter().enumerate() {
+            // SAFETY: `avx2_vpclmul_available` held above; AVX2 enables SSE4.1
+            // in rustc's target-feature hierarchy.
             let expected = unsafe { clmul_barrett_scalar(a_ik, b_row[j], mu, poly, 8) };
             assert_eq!(got, expected, "j={j}");
         }

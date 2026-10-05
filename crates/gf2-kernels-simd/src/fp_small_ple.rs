@@ -108,7 +108,7 @@ fn ple_panel_base_safe(
     row_perm: &mut [usize],
     pivot_cols_local: &mut Vec<usize>,
 ) -> usize {
-    // Safety: `detect_x86` only published this pointer when AVX2 is
+    // SAFETY: `detect_x86` only published this pointer when AVX2 is
     // available at runtime. The other preconditions (canonical bytes,
     // prime in [3, 251], slice lengths) are documented on
     // `SmallPrimePlePanelBaseFn`, established by the gf2-core dispatch

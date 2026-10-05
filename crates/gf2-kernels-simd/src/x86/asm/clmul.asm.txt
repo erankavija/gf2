@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : -C link-dead-code
-; commit        : b85adc0a1
-; regenerated   : 2026-10-05T03:26:09Z
+; commit        : 8ff1644cb
+; regenerated   : 2026-10-05T03:37:57Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,8 +18,9 @@
 ; symbol: gf2_kernels_simd::x86::clmul::clmul_u64
 ;==========================================================
 
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-7d44b71f/crates/gf2-kernels-simd)
 
-    Finished `release` profile [optimized] target(s) in 0.08s
+    Finished `release` profile [optimized] target(s) in 2.90s
 gf2_kernels_simd::x86::clmul::clmul_u64:
 	movq xmm0, rdi
 	movq xmm1, rsi
@@ -32,7 +33,7 @@ gf2_kernels_simd::x86::clmul::clmul_u64:
 ; symbol: gf2_kernels_simd::x86::clmul::clmul_batch (index 0)
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.06s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::clmul::clmul_batch:
 	sub rsp, 40
@@ -86,8 +87,8 @@ gf2_kernels_simd::x86::clmul::clmul_batch:
 ; symbol: gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 0.06s
 gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul:
 	push rbx
 	cmp rsi, 2
@@ -192,8 +193,8 @@ gf2_kernels_simd::x86::clmul::clmul_batch_vpclmul:
 ; symbol: gf2_kernels_simd::x86::clmul::clmul_barrett_reduce
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 0.06s
 gf2_kernels_simd::x86::clmul::clmul_barrett_reduce:
 	xor eax, eax
 	test rdi, rdi
@@ -266,8 +267,8 @@ gf2_kernels_simd::x86::clmul::clmul_barrett_reduce:
 ; symbol: gf2_kernels_simd::gf2m::detect_with_clmul_batch_preference
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 0.05s
 gf2_kernels_simd::gf2m::detect_with_clmul_batch_preference:
 	jmp gf2_kernels_simd::gf2m::detect_x86
 
@@ -275,8 +276,8 @@ gf2_kernels_simd::gf2m::detect_with_clmul_batch_preference:
 ; symbol: gf2_kernels_simd::clmul_scalar::clmul_u64_scalar
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 0.07s
 gf2_kernels_simd::clmul_scalar::clmul_u64_scalar:
 	test rsi, rsi
 	je .LBB79_1

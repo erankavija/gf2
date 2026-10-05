@@ -11,6 +11,9 @@
 ///
 /// Requires the PCLMULQDQ and SSE4.1 CPU features. Caller must verify
 /// availability before calling.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
@@ -43,6 +46,9 @@ pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
 ///
 /// Requires the PCLMULQDQ and SSE4.1 CPU features. Caller must verify
 /// availability before calling.
+///
+/// Every slice access is bounds-checked; the references carry pointer validity
+/// and exclusive access to `out`.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_batch(a: &[u64], b: &[u64], out: &mut [u128]) {
@@ -89,6 +95,12 @@ pub(crate) fn ymm_batch_lane_supported() -> bool {
 }
 
 /// Sequential PCLMULQDQ fallback for batch carry-less multiplication.
+///
+/// # Safety
+///
+/// The host supports PCLMULQDQ and SSE4.1. Every slice access is
+/// bounds-checked; the references carry pointer validity and exclusive access
+/// to `out`.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 unsafe fn clmul_batch_sequential(a: &[u64], b: &[u64], out: &mut [u128]) {
@@ -109,6 +121,9 @@ unsafe fn clmul_batch_sequential(a: &[u64], b: &[u64], out: &mut [u128]) {
 /// two-lane carry-less multiply, and PCLMULQDQ with SSE4.1 for the
 /// odd-length tail. [`ymm_batch_lane_supported`] is the runtime predicate
 /// that establishes them.
+///
+/// Every slice access is bounds-checked; the references carry pointer validity
+/// and exclusive access to `out`.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(
     enable = "avx2",
@@ -167,6 +182,9 @@ pub(crate) unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128])
 /// # Safety
 ///
 /// Requires the PCLMULQDQ and SSE4.1 CPU features.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_barrett_reduce(a: u64, b: u64, mu: u64, modulus: u64, degree: u32) -> u64 {
@@ -261,6 +279,7 @@ mod tests {
 
         for (a, b) in test_cases {
             let expected = scalar_clmul(a, b);
+            // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
             let result = unsafe { clmul_u64(a, b) };
             assert_eq!(
                 result, expected,
@@ -284,7 +303,9 @@ mod tests {
         ];
 
         for (a, b) in pairs {
+            // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
             let ab = unsafe { clmul_u64(a, b) };
+            // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
             let ba = unsafe { clmul_u64(b, a) };
             assert_eq!(ab, ba, "commutativity failed for ({a:#x}, {b:#x})");
         }
@@ -301,6 +322,7 @@ mod tests {
         for a in 0u64..=255 {
             for b in 0u64..=255 {
                 let expected = scalar_clmul(a, b);
+                // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
                 let result = unsafe { clmul_u64(a, b) };
                 assert_eq!(
                     result, expected,
@@ -403,6 +425,7 @@ mod tests {
             eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
             return;
         }
+        // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
         assert_lane_matches_scalar(CLMUL_BATCH_PATH_XMM, |a, b, out| unsafe {
             clmul_batch_sequential(a, b, out);
         });
@@ -430,6 +453,8 @@ mod tests {
         for (a, b) in lane_conformance_cases() {
             let mut ymm = vec![0u128; a.len()];
             let mut xmm = vec![0u128; a.len()];
+            // SAFETY: `ymm_batch_lane_supported` held above; it detects the
+            // features of both lanes.
             unsafe {
                 clmul_batch_vpclmul(&a, &b, &mut ymm);
                 clmul_batch_sequential(&a, &b, &mut xmm);
@@ -498,6 +523,7 @@ mod tests {
                         j.wrapping_mul(0x6C62_272E) & field_mask | 1
                     };
 
+                    // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
                     let simd_result = unsafe { clmul_barrett_reduce(a, b, mu, poly, m) };
 
                     let product = scalar_clmul(a, b);

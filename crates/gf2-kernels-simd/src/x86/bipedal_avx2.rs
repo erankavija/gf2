@@ -179,6 +179,10 @@ where
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline(always)]
 unsafe fn fold_step<const SHIFT: i32>(mag: Avx2Lane, sgn: Avx2Lane) -> (Avx2Lane, Avx2Lane) {
     // SAFETY: the enclosing permanent kernel establishes AVX2. The const

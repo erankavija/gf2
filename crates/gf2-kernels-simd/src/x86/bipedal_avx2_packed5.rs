@@ -16,6 +16,9 @@ use core::arch::x86_64::*;
 /// # Safety
 ///
 /// Caller must be executing within an AVX2 `#[target_feature]` function.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline(always)]
 unsafe fn decode5_avx2(b0: __m256i, b1: __m256i, b2: __m256i) -> [__m256i; 5] {
     // SAFETY: called only from #[target_feature(enable = "avx2")] paths.
@@ -41,6 +44,9 @@ unsafe fn decode5_avx2(b0: __m256i, b1: __m256i, b2: __m256i) -> [__m256i; 5] {
 /// # Safety
 ///
 /// Caller must be executing within an AVX2 `#[target_feature]` function.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline(always)]
 unsafe fn encode5_avx2(r: [__m256i; 5]) -> (__m256i, __m256i, __m256i) {
     // SAFETY: called only from #[target_feature(enable = "avx2")] paths.
@@ -55,6 +61,9 @@ unsafe fn encode5_avx2(r: [__m256i; 5]) -> (__m256i, __m256i, __m256i) {
 /// # Safety
 ///
 /// Caller must be executing within an AVX2 `#[target_feature]` function.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline(always)]
 unsafe fn add5_avx2(
     b0a: __m256i,
@@ -128,6 +137,9 @@ unsafe fn add5_avx2(
 /// # Safety
 ///
 /// Caller must be executing within an AVX2 `#[target_feature]` function.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline(always)]
 unsafe fn sub5_avx2(
     b0a: __m256i,
@@ -201,6 +213,9 @@ unsafe fn sub5_avx2(
 /// # Safety
 ///
 /// Caller must be executing within an AVX2 `#[target_feature]` function.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline(always)]
 unsafe fn mul5_avx2(
     b0a: __m256i,
@@ -262,6 +277,9 @@ unsafe fn mul5_avx2(
 /// # Safety
 ///
 /// Caller must be executing within an AVX2 `#[target_feature]` function.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline(always)]
 unsafe fn neg5_avx2(b0: __m256i, b1: __m256i, b2: __m256i) -> (__m256i, __m256i, __m256i) {
     // SAFETY: called only from #[target_feature(enable = "avx2")] paths.
@@ -269,15 +287,21 @@ unsafe fn neg5_avx2(b0: __m256i, b1: __m256i, b2: __m256i) -> (__m256i, __m256i,
     encode5_avx2([e[0], e[4], e[3], e[2], e[1]])
 }
 
+/// # Safety
+///
+/// `offset + 4 <= src.len()` and the host supports AVX2. `src` is read through
+/// a reference that carries pointer validity.
 #[inline(always)]
 unsafe fn load256(src: &[u64], offset: usize) -> __m256i {
-    // SAFETY: caller ensures offset + 4 <= src.len() and AVX2 available.
     _mm256_loadu_si256(src.as_ptr().add(offset) as *const __m256i)
 }
 
+/// # Safety
+///
+/// `offset + 4 <= dst.len()` and the host supports AVX2. The exclusive
+/// reference to `dst` carries pointer validity.
 #[inline(always)]
 unsafe fn store256(dst: &mut [u64], offset: usize, v: __m256i) {
-    // SAFETY: caller ensures offset + 4 <= dst.len() and AVX2 available.
     _mm256_storeu_si256(dst.as_mut_ptr().add(offset) as *mut __m256i, v);
 }
 

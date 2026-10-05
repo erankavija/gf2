@@ -194,24 +194,28 @@ fn detect_avx2_uncached() -> Option<BipedalAvx2Fns> {
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn add_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
+    // The slice shape is the caller's, as `BipedalBinaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2::run_add_batch::<Config3>(m1, s1, m2, s2, om, os) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn sub_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
+    // The slice shape is the caller's, as `BipedalBinaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2::run_sub_batch::<Config3>(m1, s1, m2, s2, om, os) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn mul_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
+    // The slice shape is the caller's, as `BipedalBinaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2::run_mul_batch::<Config3>(m1, s1, m2, s2, om, os) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn neg_safe(m: &[u64], s: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
+    // The slice shape is the caller's, as `BipedalUnaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2::run_neg_batch::<Config3>(m, s, om, os) }
 }
 

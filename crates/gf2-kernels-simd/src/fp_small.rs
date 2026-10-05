@@ -137,31 +137,31 @@ fn detect_x86() -> Option<SmallPrimeFns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_mul_safe(a: &[u8], b: &[u8], p: u8, out: &mut [u8]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_batch_mul(a, b, p, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_add_safe(a: &[u8], b: &[u8], p: u8, out: &mut [u8]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_batch_add(a, b, p, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_sub_safe(a: &[u8], b: &[u8], p: u8, out: &mut [u8]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_batch_sub(a, b, p, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_dot_safe(a: &[u8], b: &[u8], p: u8) -> u8 {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_batch_dot(a, b, p) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn gemm_row_panel_safe(a: &[u8], bt: &[u8], k: usize, n: usize, p: u8, out: &mut [u8]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_gemm_row_panel(a, bt, k, n, p, out) }
 }
 
@@ -175,13 +175,15 @@ fn spmm_row_safe(
     p: u8,
     out: &mut [u8],
 ) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
+    // The column bound is the caller's, as `SmallPrimeSpmmRowFn` documents; the
+    // kernel asserts the other lengths.
     unsafe { crate::x86::fp_small::fp_small_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn sub_scaled_safe(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8, mu: u16) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_sub_scaled(buf, chain_j, alpha, p, mu) }
 }
 

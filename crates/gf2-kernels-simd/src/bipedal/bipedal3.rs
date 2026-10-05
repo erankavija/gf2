@@ -34,6 +34,9 @@ impl BipedalLikeConfig for Config3 {
     const PRIME: u64 = 3;
     const U64_PER_LANE_PAIR: usize = 4;
 
+    /// # Safety
+    ///
+    /// As [`BipedalLikeConfig::add_lane`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn add_lane(
         m1: Self::MagLane,
@@ -51,6 +54,9 @@ impl BipedalLikeConfig for Config3 {
         }
     }
 
+    /// # Safety
+    ///
+    /// As [`BipedalLikeConfig::sub_lane`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn sub_lane(
         m1: Self::MagLane,
@@ -71,6 +77,9 @@ impl BipedalLikeConfig for Config3 {
         }
     }
 
+    /// # Safety
+    ///
+    /// As [`BipedalLikeConfig::mul_lane`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn mul_lane(
         m1: Self::MagLane,
@@ -86,6 +95,9 @@ impl BipedalLikeConfig for Config3 {
         }
     }
 
+    /// # Safety
+    ///
+    /// As [`BipedalLikeConfig::neg_lane`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn neg_lane(m: Self::MagLane, s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
@@ -554,6 +566,9 @@ mod tests {
         const PRIME: u64 = 5;
         const U64_PER_LANE_PAIR: usize = 4;
 
+        /// # Safety
+        ///
+        /// As [`BipedalLikeConfig::add_lane`]; this mock calls no intrinsic.
         #[inline(always)]
         unsafe fn add_lane(
             m1: Self::MagLane,
@@ -564,6 +579,9 @@ mod tests {
             (m1, s1)
         }
 
+        /// # Safety
+        ///
+        /// As [`BipedalLikeConfig::sub_lane`]; this mock calls no intrinsic.
         #[inline(always)]
         unsafe fn sub_lane(
             m1: Self::MagLane,
@@ -574,6 +592,9 @@ mod tests {
             (m1, s1)
         }
 
+        /// # Safety
+        ///
+        /// As [`BipedalLikeConfig::mul_lane`]; this mock calls no intrinsic.
         #[inline(always)]
         unsafe fn mul_lane(
             m1: Self::MagLane,
@@ -584,6 +605,9 @@ mod tests {
             (m1, s1)
         }
 
+        /// # Safety
+        ///
+        /// As [`BipedalLikeConfig::neg_lane`]; this mock calls no intrinsic.
         #[inline(always)]
         unsafe fn neg_lane(m: Self::MagLane, s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane) {
             (m, s)
