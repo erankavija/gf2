@@ -94,15 +94,26 @@ CLAIMS = [
     ),
     (
         "gf2-kernels-simd", "src/x86/avx2.rs",
-        "        unsafe { avx2_and_popcnt(lhs, rhs) }", 1,
-        "The safe bundle entry is the unsafe boundary of the fused kernel; this call "
-        "site carries no `SAFETY` comment of its own.",
+        "/// The host supports AVX2; `super::detect_x86` establishes that before", 1,
+        "The fused kernel's `# Safety` section opens with the required target feature "
+        "and the runtime gate that guards the call.",
     ),
     (
         "gf2-kernels-simd", "src/x86/avx2.rs",
-        "        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.", 2,
-        "The neighbouring carry-save entries state the detection contract the fused "
-        "entry shares.",
+        "/// unaligned 32-byte load and every tail byte lies inside the common prefix.", 1,
+        "The same section bounds every read by the shorter slice and admits aliasing "
+        "of the two read-only operands.",
+    ),
+    (
+        "gf2-kernels-simd", "src/x86/avx2.rs",
+        "        unsafe { avx2_and_popcnt(lhs, rhs) }", 1,
+        "The safe bundle entry is the unsafe boundary of the fused kernel.",
+    ),
+    (
+        "gf2-kernels-simd", "src/x86/avx2.rs",
+        "        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.", 3,
+        "The fused entry and both carry-save entries state the detection contract at "
+        "their unsafe calls.",
     ),
     (
         "gf2-kernels-simd", "src/x86/mod.rs",

@@ -10,9 +10,20 @@
     "anchor": "2b09efee98a4b0592bd4badf263b84cb6139c2ba",
     "changed_package_paths": [
       "crates/gf2-core/tests/popcount_routes.rs",
-      "crates/gf2-core/tests/simd_equiv_matvec.rs"
+      "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+      "crates/gf2-kernels-simd/src/x86/avx2.rs"
     ],
-    "changed_production_paths": []
+    "changed_production_paths": [
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+        "class": "assembly-listing"
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "comment-or-blank-only"
+      }
+    ]
   },
   "baselines": [
     {
@@ -39,9 +50,9 @@
         }
       ],
       "class_counts": {
-        "identical": 25,
+        "identical": 24,
         "comment-or-blank-only": 134,
-        "code-differs": 12
+        "code-differs": 13
       },
       "files": [
         {
@@ -1067,8 +1078,15 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
           "measured_sha256": "041b5cbb17f142942d50c2c74d7e722df9469a51709589644849e89c1bd3f5dd",
-          "current_sha256": "041b5cbb17f142942d50c2c74d7e722df9469a51709589644849e89c1bd3f5dd",
-          "class": "identical"
+          "current_sha256": "b54470f1399bbdc7e3fe61096c869cf5eea1dc64955ce72a04f493a7b8c54053",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "d6ebf3dc83f8157e26ce5857fb667977e764b891",
+              "issue": "6e87c436",
+              "subject": "docs(jit:6e87c436): state the fused AVX2 count safety contract"
+            }
+          ]
         },
         {
           "path": "crates/gf2-kernels-simd/src/x86/asm/bch_encode.asm.txt",
@@ -1207,7 +1225,7 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
           "measured_sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12",
-          "current_sha256": "d8767262a1dfd8401e801f93559c525f0b8d398e2a4b39ef3b1d869098eadf77",
+          "current_sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462",
           "class": "comment-or-blank-only"
         },
         {

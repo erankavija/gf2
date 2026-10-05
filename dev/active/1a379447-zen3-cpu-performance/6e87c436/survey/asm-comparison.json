@@ -1,0 +1,128 @@
+{
+  "schema": "dense-asm-comparison-v1",
+  "issue": "6e87c436",
+  "anchor": "2b09efee98a4b0592bd4badf263b84cb6139c2ba",
+  "comparison_rule": "Per symbol, the lines between its `; symbol:` divider and the next divider, without blank lines, divider rules and cargo's `Compiling` and `Finished` status lines. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
+  "modules": [
+    {
+      "source": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "source_lines_added": 10,
+      "source_lines_removed": 0,
+      "artefact": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+      "symbols": [
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_and_into",
+          "anchor_lines": 29,
+          "current_lines": 29,
+          "anchor_sha256": "4d735c7e4319b15e355f4308d1868febb6a17fc69b3828a4e55ae427961b2f11",
+          "current_sha256": "4d735c7e4319b15e355f4308d1868febb6a17fc69b3828a4e55ae427961b2f11",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_and_popcnt",
+          "anchor_lines": 79,
+          "current_lines": 79,
+          "anchor_sha256": "9d8b87dfbc11d2fc6a7fabd1a684969e1382255120b1ce9434d91202fc13b8e7",
+          "current_sha256": "9d8b87dfbc11d2fc6a7fabd1a684969e1382255120b1ce9434d91202fc13b8e7",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_find_first_one",
+          "anchor_lines": 88,
+          "current_lines": 88,
+          "anchor_sha256": "bdc5cf55b810a4c396754ca8c9b1ab1449fedf32cfbce1d7ea41880a70c7f152",
+          "current_sha256": "bdc5cf55b810a4c396754ca8c9b1ab1449fedf32cfbce1d7ea41880a70c7f152",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_find_first_zero",
+          "anchor_lines": 91,
+          "current_lines": 91,
+          "anchor_sha256": "b888eda341870f2162611cfa0bafa192c9a3efba61776aede5e92ba11c26fbbe",
+          "current_sha256": "b888eda341870f2162611cfa0bafa192c9a3efba61776aede5e92ba11c26fbbe",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build4",
+          "anchor_lines": 31,
+          "current_lines": 31,
+          "anchor_sha256": "d1bdaac1470762240a07b25d3dd47c4ea4030ab8886d34642ae3b5d8c4aecbaa",
+          "current_sha256": "d1bdaac1470762240a07b25d3dd47c4ea4030ab8886d34642ae3b5d8c4aecbaa",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8",
+          "anchor_lines": 35,
+          "current_lines": 35,
+          "anchor_sha256": "f8a1e5cb35ac6f9180f9fd72c3188a35bbd5cbd60e0954073b7767220f60d04f",
+          "current_sha256": "f8a1e5cb35ac6f9180f9fd72c3188a35bbd5cbd60e0954073b7767220f60d04f",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4",
+          "anchor_lines": 67,
+          "current_lines": 67,
+          "anchor_sha256": "8cc76a6972f49bd3db7e54f99e444a0cd5468f369891de9af8eedb34bb1ea2e8",
+          "current_sha256": "8cc76a6972f49bd3db7e54f99e444a0cd5468f369891de9af8eedb34bb1ea2e8",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8xn",
+          "anchor_lines": 95,
+          "current_lines": 95,
+          "anchor_sha256": "f64979f82153957dfe0c6bbc3f09f1ffb9721a6339235388cc44b88005cacb66",
+          "current_sha256": "f64979f82153957dfe0c6bbc3f09f1ffb9721a6339235388cc44b88005cacb66",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_not_into",
+          "anchor_lines": 26,
+          "current_lines": 26,
+          "anchor_sha256": "e83ee13fa6de2597835ed0ab62dc2118aa14de2e9a19c982a8fbcc17171a982a",
+          "current_sha256": "e83ee13fa6de2597835ed0ab62dc2118aa14de2e9a19c982a8fbcc17171a982a",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_or_into",
+          "anchor_lines": 29,
+          "current_lines": 29,
+          "anchor_sha256": "815ee2850df26f4035e021bb673988d96f0c584e399bf5eecfe5c8216a3f9228",
+          "current_sha256": "815ee2850df26f4035e021bb673988d96f0c584e399bf5eecfe5c8216a3f9228",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_popcnt",
+          "anchor_lines": 57,
+          "current_lines": 57,
+          "anchor_sha256": "c41760188736ac5a773d3ddbb32c060974050bf48e40b89e5d4f4aaf2d3ebb55",
+          "current_sha256": "c41760188736ac5a773d3ddbb32c060974050bf48e40b89e5d4f4aaf2d3ebb55",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_shift_left_words",
+          "anchor_lines": 105,
+          "current_lines": 105,
+          "anchor_sha256": "4b01fe59a5cc7a6be888720616dbb45e0b41b32cceefedee66e46b3bf728fac2",
+          "current_sha256": "4b01fe59a5cc7a6be888720616dbb45e0b41b32cceefedee66e46b3bf728fac2",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_shift_right_words",
+          "anchor_lines": 89,
+          "current_lines": 89,
+          "anchor_sha256": "fba60ca5f1d28259f3bc2bd8e1ef1cce6f7a21345dbd7c3638ed83632d5a5ca1",
+          "current_sha256": "fba60ca5f1d28259f3bc2bd8e1ef1cce6f7a21345dbd7c3638ed83632d5a5ca1",
+          "instruction_text": "same"
+        },
+        {
+          "symbol": "gf2_kernels_simd::x86::avx2::avx2_xor_into",
+          "anchor_lines": 29,
+          "current_lines": 29,
+          "anchor_sha256": "997e1907d75a56801ca87c77c8166b2bd5dbba085c15f48e3f845913723ec3eb",
+          "current_sha256": "997e1907d75a56801ca87c77c8166b2bd5dbba085c15f48e3f845913723ec3eb",
+          "instruction_text": "same"
+        }
+      ]
+    }
+  ]
+}
