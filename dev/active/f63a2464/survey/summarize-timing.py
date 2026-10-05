@@ -23,7 +23,6 @@ import subprocess
 import sys
 
 SURVEY = pathlib.Path(__file__).resolve().parent
-DECISION_RECORD = SURVEY.parent / "decision-record.md"
 VERIFIER = "verify-campaign-log.py"
 VERIFIER_OPENING = '#!/usr/bin/env python3\n"""Verify a finished campaign from its own execution log.'
 FAMILIES = ["intra-frame-single-worker", "intra-frame-multicore", "comparator-single-worker"]
@@ -52,15 +51,6 @@ def log_verifier():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module.verify
-
-
-def ending_outcomes():
-    """The cell outcomes stop rule S4 of the decision record names."""
-    for line in DECISION_RECORD.read_text(encoding="utf-8").split("- **S4")[1].split("\n- **")[0:1]:
-        text = " ".join(line.split())
-        clause = text.split(" cell ends the family")[0].split("outcome. A ")[1]
-        return [word.strip("`,") for word in clause.replace(" or ", " ").split()]
-    sys.exit(f"{DECISION_RECORD} states no S4 rule")
 
 
 def stage_dir(results, family, stage):
@@ -194,7 +184,6 @@ def main():
         sys.exit("usage: summarize-timing.py RESULTS_DIR")
     results = pathlib.Path(sys.argv[1])
     verify = log_verifier()
-    ending = ending_outcomes()
     lines = [
         "# QC-aware intra-frame candidate: timed campaigns",
         "",
@@ -202,7 +191,9 @@ def main():
         "",
         "Source: each family's append-only ledger and every finalized stage's receipt, saved "
         "plan, pinned addendum snapshot, execution log and acceptance summary, listed with "
-        "their digests under Source digests.",
+        "their digests under Source digests. Outcomes and `qualifies` values are the "
+        "evaluator's record of each receipt; \"Confirmation campaigns per ledger\" states "
+        "their standing for the candidate family.",
         "",
     ]
     confirmations = {}
@@ -236,27 +227,28 @@ def main():
                 confirmations[family] = (ledger, entries, summary)
 
     lines += [
-        "## Stop rule S4 per ledger",
+        "## Confirmation campaigns per ledger",
         "",
-        "The decision record's rule S4 names the cell outcomes that end a family: "
-        + ", ".join(f"`{outcome}`" for outcome in ending)
-        + ". One row per ledger, from its confirmation's acceptance summary and its own chain.",
+        "One row per ledger, from its confirmation's acceptance summary and its own chain. The "
+        "rows report what the evaluator records. The decision record caps a candidate family "
+        "at one confirmatory campaign and these ledgers belong to one family, so no row is a "
+        "confirmatory verdict on the family; the issue's corrections record carries that "
+        "contradiction.",
         "",
         "| Ledger | Confirmatory reservations in the chain | Confirmatory cells | "
-        "Cell outcomes | Cells with an S4 ending outcome | Qualifies |",
-        "|---|---:|---:|---|---:|---|",
+        "Recorded cell outcomes | Recorded `qualifies` |",
+        "|---|---:|---:|---|---|",
     ]
     for family in FAMILIES:
         if family not in confirmations:
-            lines.append(f"| `v4-qc-{family}-family-ledger.jsonl` | — | — | no confirmation | — | — |")
+            lines.append(f"| `v4-qc-{family}-family-ledger.jsonl` | — | — | no confirmation | — |")
             continue
         ledger, entries, summary = confirmations[family]
         outcomes = [cell["outcome"] for cell in summary["cells"]]
         tally = ", ".join(f"{outcomes.count(o)} `{o}`" for o in sorted(set(outcomes)))
         lines.append(
             f"| `{ledger.name}` | {sum(1 for e in entries if e['comparisons'] > 0)} | "
-            f"{len(outcomes)} | {tally} | {sum(1 for o in outcomes if o in ending)} | "
-            f"`{str(summary['qualifies']).lower()}` |"
+            f"{len(outcomes)} | {tally} | `{str(summary['qualifies']).lower()}` |"
         )
     memory = results / "memory" / "peak-rss.json"
     lines += ["", "## Peak memory of the canonical and QC arms (untimed)", ""]
