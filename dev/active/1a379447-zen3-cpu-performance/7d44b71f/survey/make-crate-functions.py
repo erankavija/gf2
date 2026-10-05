@@ -4,15 +4,20 @@
 Builds `gf2-kernels-simd` with `--emit=asm` under the toolchain the environment
 selects and digests each function's instruction text under RULE.
 
-  anchor   writes `crate-functions-anchor.json`; refuses unless every package
-           file other than an assembly listing holds its `anchor-baseline.json`
-           digest, so the record describes the anchor sources.
-  current  writes `crate-functions-current.json` and
-           `crate-function-comparison.json`, which joins the two records per
-           function; exits nonzero after writing when a function differs or
-           exists on one side only.
+  freeze STAGE  writes `crate-functions-<stage>.json` for one of the baselines
+                `locate.py` names; refuses unless every package file other than
+                an assembly listing holds that baseline's digest, so the record
+                describes that tree. Its `anchor` object identifies the
+                baseline.
+  current       writes `crate-functions-current.json` and
+                `crate-function-comparison.json`, which joins the records per
+                function across this task's two steps: `anchor` to
+                `before-1b034786`, and `after-1b034786` to the working tree.
+                The second step is present once its baseline record exists.
+                Exits nonzero after writing when a function differs across a
+                step or exists on one side only.
 
-Usage: make-crate-functions.py anchor|current
+Usage: make-crate-functions.py freeze STAGE | current
 """
 
 import hashlib
@@ -21,7 +26,7 @@ import re
 import subprocess
 import sys
 
-from locate import ANCHOR, HERE, ISSUE, PACKAGE, PACKAGE_NAME, ROOT, repository_files, tracked
+from locate import BASELINES, HERE, ISSUE, PACKAGE_NAME, ROOT, repository_files, tracked
 
 RULE = (
     "Per `@function` symbol of the emitted assembly, the lines from its label "
@@ -75,7 +80,7 @@ def functions(assembly):
     return dict(sorted(digests.items()))
 
 
-def record(mode):
+def record(tree, baseline):
     sources = {
         path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
         for path in tracked("") if not path.endswith(".asm.txt")
@@ -84,11 +89,11 @@ def record(mode):
     return {
         "schema": "crate-function-digests-v1",
         "issue": ISSUE,
-        "tree": mode,
+        "tree": tree,
         "command": " ".join(BUILD + EMIT),
         "rustc": rustc.stdout.strip(),
         "rule": RULE,
-        "anchor": ANCHOR.identity(),
+        "anchor": baseline.identity(),
         "sources_sha256": hashlib.sha256(json.dumps(sources, sort_keys=True).encode()).hexdigest(),
         "functions": functions(emitted()),
     }
@@ -100,47 +105,68 @@ def write(name, value):
     return output.relative_to(ROOT)
 
 
+def join(name, before, after):
+    """One step's rows; fails on a toolchain mismatch between its two records."""
+    if before["rustc"] != after["rustc"]:
+        raise SystemExit(f"{name}: built with {before['rustc']} and with {after['rustc']}")
+    old, new = before["functions"], after["functions"]
+    rows = [
+        {
+            "function": function,
+            "before_sha256": old.get(function),
+            "after_sha256": new.get(function),
+            "instruction_text": (
+                "same" if function in old and old[function] == new.get(function) else "differs"
+            ),
+        }
+        for function in sorted(set(old) | set(new))
+    ]
+    return {
+        "step": name,
+        "rustc": after["rustc"],
+        "before_sources_sha256": before["sources_sha256"],
+        "after_sources_sha256": after["sources_sha256"],
+        "function_count": len(rows),
+        "differing_function_count": sum(row["instruction_text"] != "same" for row in rows),
+        "functions": rows,
+    }
+
+
+def held(stage):
+    return json.loads((HERE / f"crate-functions-{stage}.json").read_bytes())
+
+
 def main():
-    if sys.argv[1:] == ["anchor"]:
-        moved = [path for path in ANCHOR.changed() if not path.endswith(".asm.txt")]
+    if len(sys.argv) == 3 and sys.argv[1] == "freeze" and sys.argv[2] in BASELINES:
+        stage = sys.argv[2]
+        moved = [path for path in BASELINES[stage].changed() if not path.endswith(".asm.txt")]
         if moved:
-            raise SystemExit(f"the working tree is not the anchor: {moved}")
-        made = record("anchor")
-        print(f"{write('crate-functions-anchor.json', made)}: {len(made['functions'])} functions")
+            raise SystemExit(f"the working tree is not the {stage} tree: {moved}")
+        made = record(stage, BASELINES[stage])
+        name = f"crate-functions-{stage}.json"
+        print(f"{write(name, made)}: {len(made['functions'])} functions")
         return
     if sys.argv[1:] != ["current"]:
         raise SystemExit(__doc__)
-    anchor = json.loads((HERE / "crate-functions-anchor.json").read_bytes())
-    current = record("current")
+    later = "after-1b034786" if (HERE / "crate-functions-after-1b034786.json").is_file() else None
+    current = record("current", BASELINES[later or "before-1b034786"])
     write("crate-functions-current.json", current)
-    if anchor["rustc"] != current["rustc"]:
-        raise SystemExit(f"anchor built with {anchor['rustc']}, this run with {current['rustc']}")
-    old, new = anchor["functions"], current["functions"]
-    rows = [
-        {
-            "function": name,
-            "anchor_sha256": old.get(name),
-            "current_sha256": new.get(name),
-            "instruction_text": "same" if name in old and old[name] == new.get(name) else "differs",
-        }
-        for name in sorted(set(old) | set(new))
-    ]
-    differing = sum(row["instruction_text"] != "same" for row in rows)
+    steps = [join("anchor to before-1b034786", held("anchor"), held("before-1b034786"))]
+    if later:
+        steps.append(join("after-1b034786 to working tree", held(later), current))
     comparison = {
-        "schema": "crate-function-comparison-v1",
+        "schema": "crate-function-comparison-v2",
         "issue": ISSUE,
-        "rustc": current["rustc"],
         "comparison_rule": RULE,
-        "anchor_sources_sha256": anchor["sources_sha256"],
-        "current_sources_sha256": current["sources_sha256"],
-        "function_count": len(rows),
-        "differing_function_count": differing,
-        "functions": rows,
+        "excluded_step": "before-1b034786 to after-1b034786, the code change of jit:1b034786",
+        "steps": steps,
     }
-    print(f"{write('crate-function-comparison.json', comparison)}: "
-          f"{len(rows)} functions, {differing} differing")
-    if differing:
-        raise SystemExit("a function's instruction text differs from the anchor build")
+    output = write("crate-function-comparison.json", comparison)
+    for entry in steps:
+        print(f"{output}: {entry['step']}: {entry['function_count']} functions, "
+              f"{entry['differing_function_count']} differing")
+    if any(entry["differing_function_count"] for entry in steps):
+        raise SystemExit("a function's instruction text differs across a step")
 
 
 if __name__ == "__main__":

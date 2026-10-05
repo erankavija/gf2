@@ -6,8 +6,8 @@
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
   "rule": "Per `@function` symbol of the emitted assembly, the lines from its label to its `.Lfunc_end` label, without assembler directives. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_`, `.LJTI<n>_`, `.Ltmp<n>`, `.Lfunc_begin<n>`, `.Lexception<n>` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
   "anchor": {
-    "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/anchor-baseline.json",
-    "baseline_sha256": "ef71917fd2a39c57977d97d65b09db20c9c485318eff2b97119213f70838f990"
+    "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/before-1b034786-baseline.json",
+    "baseline_sha256": "14ff937e67ae9218a83e0e42ca23227298f5e3832fcf63c416f2ab9251910e58"
   },
   "sources_sha256": "c6c64ad701accb55911f5477c6a06cc0f8cf2327dba21cefbca10113c9f5b18d",
   "functions": {
