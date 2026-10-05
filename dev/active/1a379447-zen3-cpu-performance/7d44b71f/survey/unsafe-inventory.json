@@ -1,0 +1,6350 @@
+{
+  "schema": "unsafe-boundary-inventory-v1",
+  "issue": "7d44b71f",
+  "package": "crates/gf2-kernels-simd",
+  "rule": "Every `unsafe` keyword outside comments and literals is one boundary. `unsafe fn <name>` is an unsafe function; its contract is a `/// # Safety` line in the doc comment attached to it, which is the unbroken run of doc comment, comment and attribute lines above its first line. `unsafe {` is an unsafe block; its contract is a `// SAFETY:` comment in the unbroken run of comment lines directly above the line holding the keyword or above the first line of the statement that holds it. `unsafe fn(` is a function pointer type and carries no contract of its own. Any other use fails the script.",
+  "current": {
+    "counts": {
+      "unsafe block": {
+        "total": 236,
+        "with_contract": 93,
+        "without_contract": 143
+      },
+      "unsafe fn": {
+        "total": 213,
+        "with_contract": 105,
+        "without_contract": 108
+      },
+      "unsafe fn pointer type": {
+        "total": 1,
+        "with_contract": 0,
+        "without_contract": 0
+      }
+    },
+    "boundaries": [
+      {
+        "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+        "line": 356,
+        "kind": "unsafe block",
+        "item": "bitslice_reduce_avx2_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+        "line": 372,
+        "kind": "unsafe block",
+        "item": "fold_block_pclmul_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 38,
+        "kind": "unsafe fn",
+        "item": "add_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 45,
+        "kind": "unsafe block",
+        "item": "add_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 55,
+        "kind": "unsafe fn",
+        "item": "sub_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 64,
+        "kind": "unsafe block",
+        "item": "sub_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 75,
+        "kind": "unsafe fn",
+        "item": "mul_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 82,
+        "kind": "unsafe block",
+        "item": "mul_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 90,
+        "kind": "unsafe fn",
+        "item": "neg_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 94,
+        "kind": "unsafe block",
+        "item": "neg_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 191,
+        "kind": "unsafe block",
+        "item": "run_parity_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 221,
+        "kind": "unsafe block",
+        "item": "run_parity_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 251,
+        "kind": "unsafe block",
+        "item": "run_parity_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 279,
+        "kind": "unsafe block",
+        "item": "run_parity_neg",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 558,
+        "kind": "unsafe fn",
+        "item": "add_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 568,
+        "kind": "unsafe fn",
+        "item": "sub_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 578,
+        "kind": "unsafe fn",
+        "item": "mul_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 588,
+        "kind": "unsafe fn",
+        "item": "neg_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 599,
+        "kind": "unsafe fn pointer type",
+        "item": "test_framework_is_generic_over_config",
+        "contract": null
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 45,
+        "kind": "unsafe fn",
+        "item": "add_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 58,
+        "kind": "unsafe fn",
+        "item": "sub_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 73,
+        "kind": "unsafe fn",
+        "item": "mul_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 89,
+        "kind": "unsafe fn",
+        "item": "neg_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 116,
+        "kind": "unsafe fn",
+        "item": "add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 123,
+        "kind": "unsafe block",
+        "item": "add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 133,
+        "kind": "unsafe fn",
+        "item": "sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 140,
+        "kind": "unsafe block",
+        "item": "sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 150,
+        "kind": "unsafe fn",
+        "item": "mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 157,
+        "kind": "unsafe block",
+        "item": "mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 167,
+        "kind": "unsafe fn",
+        "item": "neg",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 169,
+        "kind": "unsafe block",
+        "item": "neg",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 28,
+        "kind": "unsafe fn",
+        "item": "loadu",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 36,
+        "kind": "unsafe fn",
+        "item": "storeu",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 43,
+        "kind": "unsafe fn",
+        "item": "and",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 50,
+        "kind": "unsafe fn",
+        "item": "xor",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 57,
+        "kind": "unsafe fn",
+        "item": "or",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 64,
+        "kind": "unsafe fn",
+        "item": "andn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 77,
+        "kind": "unsafe fn",
+        "item": "loadu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 79,
+        "kind": "unsafe block",
+        "item": "loadu",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 87,
+        "kind": "unsafe fn",
+        "item": "storeu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 89,
+        "kind": "unsafe block",
+        "item": "storeu",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 95,
+        "kind": "unsafe fn",
+        "item": "and",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 97,
+        "kind": "unsafe block",
+        "item": "and",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 101,
+        "kind": "unsafe fn",
+        "item": "xor",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 103,
+        "kind": "unsafe block",
+        "item": "xor",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 107,
+        "kind": "unsafe fn",
+        "item": "or",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 109,
+        "kind": "unsafe block",
+        "item": "or",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 113,
+        "kind": "unsafe fn",
+        "item": "andn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 117,
+        "kind": "unsafe block",
+        "item": "andn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 40,
+        "kind": "unsafe fn",
+        "item": "run_add_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 49,
+        "kind": "unsafe block",
+        "item": "run_add_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 64,
+        "kind": "unsafe fn",
+        "item": "run_sub_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 73,
+        "kind": "unsafe block",
+        "item": "run_sub_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 88,
+        "kind": "unsafe fn",
+        "item": "run_mul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 97,
+        "kind": "unsafe block",
+        "item": "run_mul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 112,
+        "kind": "unsafe fn",
+        "item": "run_neg_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 119,
+        "kind": "unsafe block",
+        "item": "run_neg_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 197,
+        "kind": "unsafe block",
+        "item": "add_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 203,
+        "kind": "unsafe block",
+        "item": "sub_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 209,
+        "kind": "unsafe block",
+        "item": "mul_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 215,
+        "kind": "unsafe block",
+        "item": "neg_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 222,
+        "kind": "unsafe block",
+        "item": "permanent4_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 324,
+        "kind": "unsafe block",
+        "item": "add5_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 345,
+        "kind": "unsafe block",
+        "item": "sub5_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 366,
+        "kind": "unsafe block",
+        "item": "mul5_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 383,
+        "kind": "unsafe block",
+        "item": "neg5_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 602,
+        "kind": "unsafe block",
+        "item": "check_avx2_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 654,
+        "kind": "unsafe block",
+        "item": "check_avx2_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 694,
+        "kind": "unsafe block",
+        "item": "check_avx2_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 733,
+        "kind": "unsafe block",
+        "item": "check_avx2_neg",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 898,
+        "kind": "unsafe block",
+        "item": "test_avx2_add5_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 927,
+        "kind": "unsafe block",
+        "item": "test_avx2_sub5_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 956,
+        "kind": "unsafe block",
+        "item": "test_avx2_mul5_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 984,
+        "kind": "unsafe block",
+        "item": "test_avx2_neg5_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 240,
+        "kind": "unsafe block",
+        "item": "add7_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 246,
+        "kind": "unsafe block",
+        "item": "sub7_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 252,
+        "kind": "unsafe block",
+        "item": "mul7_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 258,
+        "kind": "unsafe block",
+        "item": "neg7_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 442,
+        "kind": "unsafe block",
+        "item": "check_avx2_add7",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 460,
+        "kind": "unsafe block",
+        "item": "check_avx2_sub7",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 474,
+        "kind": "unsafe block",
+        "item": "check_avx2_mul7",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 487,
+        "kind": "unsafe block",
+        "item": "check_avx2_neg7",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 643,
+        "kind": "unsafe block",
+        "item": "test_avx2_add7_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 658,
+        "kind": "unsafe block",
+        "item": "test_avx2_sub7_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 673,
+        "kind": "unsafe block",
+        "item": "test_avx2_mul7_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 687,
+        "kind": "unsafe block",
+        "item": "test_avx2_neg7_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 118,
+        "kind": "unsafe block",
+        "item": "batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 124,
+        "kind": "unsafe block",
+        "item": "batch_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 130,
+        "kind": "unsafe block",
+        "item": "batch_sub_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 144,
+        "kind": "unsafe block",
+        "item": "batch_karatsuba_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 162,
+        "kind": "unsafe block",
+        "item": "batch_cubic_karatsuba_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
+        "line": 56,
+        "kind": "unsafe block",
+        "item": "batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
+        "line": 62,
+        "kind": "unsafe block",
+        "item": "batch_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
+        "line": 68,
+        "kind": "unsafe block",
+        "item": "batch_sub_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 98,
+        "kind": "unsafe block",
+        "item": "batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 104,
+        "kind": "unsafe block",
+        "item": "batch_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 110,
+        "kind": "unsafe block",
+        "item": "batch_sub_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 116,
+        "kind": "unsafe block",
+        "item": "batch_dot_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 130,
+        "kind": "unsafe block",
+        "item": "spmm_row_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 136,
+        "kind": "unsafe block",
+        "item": "gemm_panel_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
+        "line": 61,
+        "kind": "unsafe block",
+        "item": "batch_gemm_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
+        "line": 133,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 141,
+        "kind": "unsafe block",
+        "item": "batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 147,
+        "kind": "unsafe block",
+        "item": "batch_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 153,
+        "kind": "unsafe block",
+        "item": "batch_sub_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 159,
+        "kind": "unsafe block",
+        "item": "batch_dot_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 165,
+        "kind": "unsafe block",
+        "item": "gemm_row_panel_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 179,
+        "kind": "unsafe block",
+        "item": "spmm_row_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 185,
+        "kind": "unsafe block",
+        "item": "sub_scaled_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+        "line": 70,
+        "kind": "unsafe block",
+        "item": "batch_gemm_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+        "line": 85,
+        "kind": "unsafe block",
+        "item": "batch_gemm_route_a_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
+        "line": 70,
+        "kind": "unsafe block",
+        "item": "batch_gemm_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
+        "line": 116,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 111,
+        "kind": "unsafe block",
+        "item": "clmul_u64_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 117,
+        "kind": "unsafe block",
+        "item": "clmul_batch_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 124,
+        "kind": "unsafe block",
+        "item": "clmul_batch_ymm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 130,
+        "kind": "unsafe block",
+        "item": "clmul_barrett_reduce_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 136,
+        "kind": "unsafe block",
+        "item": "gf2m_mul_pclmul_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 145,
+        "kind": "unsafe fn",
+        "item": "gf2m_mul_pclmul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 171,
+        "kind": "unsafe fn",
+        "item": "reduce_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 195,
+        "kind": "unsafe fn",
+        "item": "reduce_gf65536",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 218,
+        "kind": "unsafe fn",
+        "item": "reduce_generic",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+        "line": 79,
+        "kind": "unsafe block",
+        "item": "gf2m_batch_mul_ymm_unroll4_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+        "line": 91,
+        "kind": "unsafe block",
+        "item": "gf2m_batch_square_ymm_unroll4_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_gemm.rs",
+        "line": 78,
+        "kind": "unsafe block",
+        "item": "gf2m_gemm_panelized_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+        "line": 120,
+        "kind": "unsafe block",
+        "item": "clmul_wide4_xmm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+        "line": 127,
+        "kind": "unsafe block",
+        "item": "clmul_wide4_ymm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+        "line": 134,
+        "kind": "unsafe block",
+        "item": "clmul_wide9_xmm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+        "line": 141,
+        "kind": "unsafe block",
+        "item": "clmul_wide9_ymm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 79,
+        "kind": "unsafe block",
+        "item": "minsum_avx2_f32_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 85,
+        "kind": "unsafe block",
+        "item": "maxabs_avx2_f32_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 91,
+        "kind": "unsafe block",
+        "item": "minsum_avx2_f64_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 97,
+        "kind": "unsafe block",
+        "item": "maxabs_avx2_f64_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 108,
+        "kind": "unsafe fn",
+        "item": "minsum_avx2_f32",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 169,
+        "kind": "unsafe fn",
+        "item": "maxabs_avx2_f32",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 213,
+        "kind": "unsafe fn",
+        "item": "minsum_avx2_f64",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 269,
+        "kind": "unsafe fn",
+        "item": "maxabs_avx2_f64",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/mersenne.rs",
+        "line": 75,
+        "kind": "unsafe block",
+        "item": "m31_batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/mersenne.rs",
+        "line": 81,
+        "kind": "unsafe block",
+        "item": "m31_batch_mul_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/mersenne.rs",
+        "line": 87,
+        "kind": "unsafe block",
+        "item": "m31_batch_dot_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/modem.rs",
+        "line": 252,
+        "kind": "unsafe block",
+        "item": "pam_sq_distances_f32_avx2_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/modem.rs",
+        "line": 283,
+        "kind": "unsafe block",
+        "item": "pam_sq_distances_f64_avx2_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/modem.rs",
+        "line": 294,
+        "kind": "unsafe fn",
+        "item": "pam_sq_distances_f32_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/modem.rs",
+        "line": 353,
+        "kind": "unsafe fn",
+        "item": "pam_sq_distances_f64_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/prefetch.rs",
+        "line": 20,
+        "kind": "unsafe block",
+        "item": "prefetch_read_l1",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/shift_funnel.rs",
+        "line": 84,
+        "kind": "unsafe block",
+        "item": "shift_left_funnel_bmi2_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/shift_funnel.rs",
+        "line": 94,
+        "kind": "unsafe block",
+        "item": "shift_right_funnel_bmi2_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/transpose.rs",
+        "line": 163,
+        "kind": "unsafe block",
+        "item": "transpose_64x64_avx2_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/transpose.rs",
+        "line": 169,
+        "kind": "unsafe block",
+        "item": "transpose_64x64_avx2_ymm6_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/transpose.rs",
+        "line": 175,
+        "kind": "unsafe block",
+        "item": "transpose_64x64_avx2_pshufb_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/transpose.rs",
+        "line": 181,
+        "kind": "unsafe block",
+        "item": "transpose_64x64_avx2_movemask_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 9,
+        "kind": "unsafe fn",
+        "item": "loadu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 14,
+        "kind": "unsafe fn",
+        "item": "storeu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 36,
+        "kind": "unsafe fn",
+        "item": "avx2_xor_into",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 66,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_gray_xor16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 90,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_gray_build4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 135,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_gray_build8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 180,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_tile8x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 215,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_tile8xn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 229,
+        "kind": "unsafe fn",
+        "item": "avx2_and_into",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 249,
+        "kind": "unsafe fn",
+        "item": "avx2_or_into",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 269,
+        "kind": "unsafe fn",
+        "item": "avx2_not_into",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 291,
+        "kind": "unsafe fn",
+        "item": "avx2_popcnt",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 349,
+        "kind": "unsafe fn",
+        "item": "avx2_and_popcnt",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 399,
+        "kind": "unsafe fn",
+        "item": "avx2_find_first_one",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 438,
+        "kind": "unsafe fn",
+        "item": "avx2_find_first_zero",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 478,
+        "kind": "unsafe fn",
+        "item": "avx2_shift_left_words",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 526,
+        "kind": "unsafe fn",
+        "item": "avx2_shift_right_words",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 579,
+        "kind": "unsafe block",
+        "item": "and_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 585,
+        "kind": "unsafe block",
+        "item": "or_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 591,
+        "kind": "unsafe block",
+        "item": "xor_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 598,
+        "kind": "unsafe block",
+        "item": "m4rm_gray_xor16_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 616,
+        "kind": "unsafe block",
+        "item": "m4rm_gray_build4_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 634,
+        "kind": "unsafe block",
+        "item": "m4rm_gray_build8_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 663,
+        "kind": "unsafe block",
+        "item": "m4rm_tile8x4_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 684,
+        "kind": "unsafe block",
+        "item": "m4rm_tile8xn_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 690,
+        "kind": "unsafe block",
+        "item": "not_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 693,
+        "kind": "unsafe block",
+        "item": "popcnt_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 697,
+        "kind": "unsafe block",
+        "item": "and_popcnt_fn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 701,
+        "kind": "unsafe block",
+        "item": "popcnt_csa_fn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 705,
+        "kind": "unsafe block",
+        "item": "and_popcnt_csa_fn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 709,
+        "kind": "unsafe block",
+        "item": "popcnt_instruction_fn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 712,
+        "kind": "unsafe block",
+        "item": "find_first_one_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 715,
+        "kind": "unsafe block",
+        "item": "find_first_zero_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 721,
+        "kind": "unsafe block",
+        "item": "shift_left_words_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 727,
+        "kind": "unsafe block",
+        "item": "shift_right_words_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+        "line": 40,
+        "kind": "unsafe fn",
+        "item": "bitslice_reduce_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+        "line": 110,
+        "kind": "unsafe fn",
+        "item": "fold_block_pclmul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+        "line": 121,
+        "kind": "unsafe block",
+        "item": "fold_block_pclmul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 30,
+        "kind": "unsafe fn",
+        "item": "run_add_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 48,
+        "kind": "unsafe block",
+        "item": "run_add_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 74,
+        "kind": "unsafe fn",
+        "item": "run_sub_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 92,
+        "kind": "unsafe block",
+        "item": "run_sub_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 118,
+        "kind": "unsafe fn",
+        "item": "run_mul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 136,
+        "kind": "unsafe block",
+        "item": "run_mul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 159,
+        "kind": "unsafe fn",
+        "item": "run_neg_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 169,
+        "kind": "unsafe block",
+        "item": "run_neg_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 183,
+        "kind": "unsafe fn",
+        "item": "fold_step",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 187,
+        "kind": "unsafe block",
+        "item": "fold_step",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 224,
+        "kind": "unsafe fn",
+        "item": "run_permanent4",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 239,
+        "kind": "unsafe block",
+        "item": "run_permanent4",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 20,
+        "kind": "unsafe fn",
+        "item": "decode5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 45,
+        "kind": "unsafe fn",
+        "item": "encode5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 59,
+        "kind": "unsafe fn",
+        "item": "add5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 132,
+        "kind": "unsafe fn",
+        "item": "sub5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 205,
+        "kind": "unsafe fn",
+        "item": "mul5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 266,
+        "kind": "unsafe fn",
+        "item": "neg5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 273,
+        "kind": "unsafe fn",
+        "item": "load256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 279,
+        "kind": "unsafe fn",
+        "item": "store256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 296,
+        "kind": "unsafe fn",
+        "item": "run_add5_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 345,
+        "kind": "unsafe fn",
+        "item": "run_sub5_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 394,
+        "kind": "unsafe fn",
+        "item": "run_mul5_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 440,
+        "kind": "unsafe fn",
+        "item": "run_neg5_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 21,
+        "kind": "unsafe fn",
+        "item": "binary7_avx2_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 44,
+        "kind": "unsafe fn",
+        "item": "neg7_avx2_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 57,
+        "kind": "unsafe fn",
+        "item": "load256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 63,
+        "kind": "unsafe fn",
+        "item": "store256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 80,
+        "kind": "unsafe fn",
+        "item": "run_add7_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 106,
+        "kind": "unsafe fn",
+        "item": "run_sub7_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 132,
+        "kind": "unsafe fn",
+        "item": "run_mul7_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 156,
+        "kind": "unsafe fn",
+        "item": "run_neg7_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+        "line": 20,
+        "kind": "unsafe fn",
+        "item": "run_add_batch_avx512",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+        "line": 46,
+        "kind": "unsafe fn",
+        "item": "run_sub_batch_avx512",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+        "line": 72,
+        "kind": "unsafe fn",
+        "item": "run_mul_batch_avx512",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+        "line": 99,
+        "kind": "unsafe fn",
+        "item": "run_neg_batch_avx512",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 16,
+        "kind": "unsafe fn",
+        "item": "clmul_u64",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 48,
+        "kind": "unsafe fn",
+        "item": "clmul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 94,
+        "kind": "unsafe fn",
+        "item": "clmul_batch_sequential",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 119,
+        "kind": "unsafe fn",
+        "item": "clmul_batch_vpclmul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 172,
+        "kind": "unsafe fn",
+        "item": "clmul_barrett_reduce",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 264,
+        "kind": "unsafe block",
+        "item": "test_clmul_u64_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 287,
+        "kind": "unsafe block",
+        "item": "test_clmul_u64_commutative",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 288,
+        "kind": "unsafe block",
+        "item": "test_clmul_u64_commutative",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 304,
+        "kind": "unsafe block",
+        "item": "test_clmul_u64_exhaustive_small",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 406,
+        "kind": "unsafe block",
+        "item": "sequential_lane_matches_portable_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 433,
+        "kind": "unsafe block",
+        "item": "dispatched_batch_agrees_with_both_lanes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 501,
+        "kind": "unsafe block",
+        "item": "test_clmul_barrett_reduce_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 22,
+        "kind": "unsafe fn",
+        "item": "reduce_fp65537_64",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 53,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_mul8",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 86,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 127,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 187,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_karatsuba",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 327,
+        "kind": "unsafe fn",
+        "item": "fp65537_add8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 334,
+        "kind": "unsafe fn",
+        "item": "fp65537_sub8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 342,
+        "kind": "unsafe fn",
+        "item": "fp65537_mul_beta8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 369,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_cubic_karatsuba",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 525,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 583,
+        "kind": "unsafe block",
+        "item": "batch_mul_exact_multiple_of_8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 597,
+        "kind": "unsafe block",
+        "item": "batch_mul_with_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 613,
+        "kind": "unsafe block",
+        "item": "batch_mul_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 629,
+        "kind": "unsafe block",
+        "item": "batch_mul_saturation_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 644,
+        "kind": "unsafe block",
+        "item": "batch_add_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 658,
+        "kind": "unsafe block",
+        "item": "batch_add_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 672,
+        "kind": "unsafe block",
+        "item": "batch_sub_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 692,
+        "kind": "unsafe block",
+        "item": "batch_karatsuba_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 729,
+        "kind": "unsafe block",
+        "item": "batch_cubic_karatsuba_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 795,
+        "kind": "unsafe block",
+        "item": "batch_karatsuba_beta_0_and_1",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 823,
+        "kind": "unsafe block",
+        "item": "batch_sub_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 13,
+        "kind": "unsafe fn",
+        "item": "unsigned_lt_epi64",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 20,
+        "kind": "unsafe fn",
+        "item": "select_epi64",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 29,
+        "kind": "unsafe fn",
+        "item": "add_mod_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 39,
+        "kind": "unsafe fn",
+        "item": "sub_mod_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 47,
+        "kind": "unsafe fn",
+        "item": "mul_lo_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 62,
+        "kind": "unsafe fn",
+        "item": "mul_wide_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 90,
+        "kind": "unsafe fn",
+        "item": "mul_hi_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 115,
+        "kind": "unsafe fn",
+        "item": "montgomery_redc_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 135,
+        "kind": "unsafe fn",
+        "item": "montgomery_redc_u64x4_signed_final",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 154,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_mul4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 161,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_mul4_signed_final",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 173,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_mul4_select",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 188,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_batch_mul_vecs",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 228,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_batch_mul",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 265,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_batch_add",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 295,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_batch_sub",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 365,
+        "kind": "unsafe block",
+        "item": "batch_mul_matches_scalar_word_boundaries",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 24,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_mul16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 51,
+        "kind": "unsafe fn",
+        "item": "fp_medium_add16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 70,
+        "kind": "unsafe fn",
+        "item": "fp_medium_sub16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 110,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 148,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 185,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 242,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_dot",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 256,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_dot_madd",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 318,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_dot_mulhi",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 397,
+        "kind": "unsafe fn",
+        "item": "fp_medium_spmm_row",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 542,
+        "kind": "unsafe fn",
+        "item": "fp_medium_gemm_panel",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 652,
+        "kind": "unsafe fn",
+        "item": "fp_medium_pack_a_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 695,
+        "kind": "unsafe fn",
+        "item": "fp_medium_panel_run",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 951,
+        "kind": "unsafe block",
+        "item": "batch_mul_matches_scalar_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 970,
+        "kind": "unsafe block",
+        "item": "batch_mul_boundary_values_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 989,
+        "kind": "unsafe block",
+        "item": "batch_mul_with_tail_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1009,
+        "kind": "unsafe block",
+        "item": "batch_add_matches_scalar_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1029,
+        "kind": "unsafe block",
+        "item": "batch_sub_matches_scalar_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1048,
+        "kind": "unsafe block",
+        "item": "batch_dot_matches_scalar_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1065,
+        "kind": "unsafe block",
+        "item": "batch_dot_boundary_values_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1084,
+        "kind": "unsafe block",
+        "item": "smaller_medium_primes_match_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1088,
+        "kind": "unsafe block",
+        "item": "smaller_medium_primes_match_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1123,
+        "kind": "unsafe block",
+        "item": "spmm_row_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1151,
+        "kind": "unsafe block",
+        "item": "spmm_row_empty_nnz",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1202,
+        "kind": "unsafe block",
+        "item": "gemm_panel_matches_scalar_at_boundary_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1222,
+        "kind": "unsafe block",
+        "item": "gemm_panel_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1238,
+        "kind": "unsafe block",
+        "item": "gemm_panel_zero_outer_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1240,
+        "kind": "unsafe block",
+        "item": "gemm_panel_zero_outer_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1242,
+        "kind": "unsafe block",
+        "item": "gemm_panel_zero_outer_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1244,
+        "kind": "unsafe block",
+        "item": "gemm_panel_zero_outer_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 61,
+        "kind": "unsafe fn",
+        "item": "fp_medium_f64_gemm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 193,
+        "kind": "unsafe fn",
+        "item": "pack_a_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 227,
+        "kind": "unsafe fn",
+        "item": "run_one_panel",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 365,
+        "kind": "unsafe fn",
+        "item": "barrett_reduce_pd",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 383,
+        "kind": "unsafe fn",
+        "item": "store_and_reduce_tile",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 544,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_small_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 570,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_k_chunk_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 593,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_n_panel_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 616,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_m_partial",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 631,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_zero_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 663,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_boundary_lengths",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 703,
+        "kind": "unsafe block",
+        "item": "barrett_reduce_pd_matches_scalar_mod",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 704,
+        "kind": "unsafe block",
+        "item": "barrett_reduce_pd_matches_scalar_mod",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 706,
+        "kind": "unsafe block",
+        "item": "barrett_reduce_pd_matches_scalar_mod",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 43,
+        "kind": "unsafe fn",
+        "item": "ple_panel_base_canonical_u16",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 121,
+        "kind": "unsafe fn",
+        "item": "swap_panel_rows_u16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 156,
+        "kind": "unsafe fn",
+        "item": "fused_scale_and_schur_u16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 378,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_u16_matches_scalar_oracle_full_rank",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 423,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_u16_rank_deficient_zero_matrix",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 457,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_u16_rank_deficient_scattered_pivots",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 36,
+        "kind": "unsafe fn",
+        "item": "reduce_mod_p_u16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 63,
+        "kind": "unsafe fn",
+        "item": "canon_after_sub",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 75,
+        "kind": "unsafe fn",
+        "item": "load_u8_to_u16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 84,
+        "kind": "unsafe fn",
+        "item": "store_u16_to_u8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 133,
+        "kind": "unsafe fn",
+        "item": "fp_small_batch_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 175,
+        "kind": "unsafe fn",
+        "item": "fp_small_batch_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 219,
+        "kind": "unsafe fn",
+        "item": "fp_small_batch_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 267,
+        "kind": "unsafe fn",
+        "item": "fp_small_batch_dot",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 335,
+        "kind": "unsafe fn",
+        "item": "fp_small_gemm_row_panel",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 460,
+        "kind": "unsafe fn",
+        "item": "fp_small_sub_scaled",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 565,
+        "kind": "unsafe fn",
+        "item": "fp_small_spmm_row",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 674,
+        "kind": "unsafe fn",
+        "item": "barrett_reduce_lane32",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 701,
+        "kind": "unsafe fn",
+        "item": "horizontal_sum_u32",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 735,
+        "kind": "unsafe block",
+        "item": "batch_mul_exact_multiple_of_16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 752,
+        "kind": "unsafe block",
+        "item": "batch_mul_with_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 769,
+        "kind": "unsafe block",
+        "item": "batch_mul_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 786,
+        "kind": "unsafe block",
+        "item": "batch_add_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 803,
+        "kind": "unsafe block",
+        "item": "batch_sub_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 819,
+        "kind": "unsafe block",
+        "item": "batch_dot_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 841,
+        "kind": "unsafe block",
+        "item": "gemm_row_panel_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 878,
+        "kind": "unsafe block",
+        "item": "spmm_row_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 903,
+        "kind": "unsafe block",
+        "item": "spmm_row_empty_nnz",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 967,
+        "kind": "unsafe block",
+        "item": "proptest_sub_scaled_matches_scalar_boundary_lengths_jit_52cce970",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 990,
+        "kind": "unsafe block",
+        "item": "sub_scaled_matches_scalar_boundary_lengths_jit_52cce970",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 1014,
+        "kind": "unsafe block",
+        "item": "sub_scaled_preserves_buf_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 1045,
+        "kind": "unsafe block",
+        "item": "sub_scaled_matches_scalar_random_lengths",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 1064,
+        "kind": "unsafe block",
+        "item": "sub_scaled_zero_alpha_is_noop",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 59,
+        "kind": "unsafe fn",
+        "item": "fp_small_f32_gemm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 209,
+        "kind": "unsafe fn",
+        "item": "fp_small_f32_gemm_route_a",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 321,
+        "kind": "unsafe fn",
+        "item": "run_one_panel_route_a",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 448,
+        "kind": "unsafe fn",
+        "item": "pack_a_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 482,
+        "kind": "unsafe fn",
+        "item": "run_one_panel",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 635,
+        "kind": "unsafe fn",
+        "item": "round_ps_to_epi32",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 646,
+        "kind": "unsafe fn",
+        "item": "pack_i32x8_to_u8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 683,
+        "kind": "unsafe fn",
+        "item": "store_and_reduce_tile_route_a",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 710,
+        "kind": "unsafe fn",
+        "item": "write_row",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 793,
+        "kind": "unsafe fn",
+        "item": "store_and_reduce_tile",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 901,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_small_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 927,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_k_chunk_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 950,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_n_panel_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 973,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_m_partial",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 988,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_zero_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1017,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_small_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1042,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_k_chunk_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1064,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_n_panel_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1086,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_m_partial",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1101,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_zero_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1130,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_existing_candidate_f",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 42,
+        "kind": "unsafe fn",
+        "item": "fp_small_panel_gemm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 180,
+        "kind": "unsafe fn",
+        "item": "pack_a_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 239,
+        "kind": "unsafe fn",
+        "item": "run_one_m_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 277,
+        "kind": "unsafe fn",
+        "item": "run_one_panel",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 416,
+        "kind": "unsafe fn",
+        "item": "pack_i32x8_to_u8_local",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 487,
+        "kind": "unsafe block",
+        "item": "panel_gemm_matches_scalar_at_boundary_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 510,
+        "kind": "unsafe block",
+        "item": "panel_gemm_n_boundary_sweep",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 525,
+        "kind": "unsafe block",
+        "item": "panel_gemm_handles_zero_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 43,
+        "kind": "unsafe fn",
+        "item": "ple_panel_base_canonical",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 118,
+        "kind": "unsafe fn",
+        "item": "swap_panel_rows",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 152,
+        "kind": "unsafe fn",
+        "item": "fused_scale_and_schur",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 370,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_matches_scalar_oracle_full_rank",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 415,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_rank_deficient_zero_matrix",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 449,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_rank_deficient_scattered_pivots",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 26,
+        "kind": "unsafe fn",
+        "item": "pack_pair",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 33,
+        "kind": "unsafe fn",
+        "item": "pack_quad",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 39,
+        "kind": "unsafe fn",
+        "item": "extract_quad_lo",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 55,
+        "kind": "unsafe fn",
+        "item": "extract_quad_hi",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 72,
+        "kind": "unsafe fn",
+        "item": "process_quad_mul",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 106,
+        "kind": "unsafe fn",
+        "item": "modulus_from_ymm",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 128,
+        "kind": "unsafe fn",
+        "item": "gf2m_batch_mul_ymm_unroll4",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 238,
+        "kind": "unsafe fn",
+        "item": "gf2m_batch_square_ymm_unroll4",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 292,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 296,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 315,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf2_16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 318,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf2_16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 341,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf2_32",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 344,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf2_32",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_common.rs",
+        "line": 31,
+        "kind": "unsafe fn",
+        "item": "clmul_barrett_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_common.rs",
+        "line": 98,
+        "kind": "unsafe fn",
+        "item": "ymm_barrett_reduce",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 36,
+        "kind": "unsafe fn",
+        "item": "gf2m_broadcast_mul_xor",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 113,
+        "kind": "unsafe fn",
+        "item": "gf2m_gemm_panelized",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 234,
+        "kind": "unsafe block",
+        "item": "scalar_gemm",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 259,
+        "kind": "unsafe block",
+        "item": "run_test",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 324,
+        "kind": "unsafe block",
+        "item": "broadcast_mul_xor_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 329,
+        "kind": "unsafe block",
+        "item": "broadcast_mul_xor_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 26,
+        "kind": "unsafe fn",
+        "item": "clmul_wide4_xmm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 60,
+        "kind": "unsafe fn",
+        "item": "clmul_wide4_ymm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 105,
+        "kind": "unsafe fn",
+        "item": "clmul_wide9_xmm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 135,
+        "kind": "unsafe fn",
+        "item": "clmul_wide9_ymm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 227,
+        "kind": "unsafe fn",
+        "item": "fold_diagonals_9x9",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 310,
+        "kind": "unsafe block",
+        "item": "xmm_matches_scalar_reference",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 328,
+        "kind": "unsafe block",
+        "item": "ymm_matches_scalar_reference",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 346,
+        "kind": "unsafe block",
+        "item": "xmm_wide9_matches_scalar_reference",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 364,
+        "kind": "unsafe block",
+        "item": "ymm_wide9_matches_scalar_reference",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 21,
+        "kind": "unsafe fn",
+        "item": "reduce_m31_64",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 55,
+        "kind": "unsafe fn",
+        "item": "mersenne31_batch_mul8",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 88,
+        "kind": "unsafe fn",
+        "item": "mersenne31_batch_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 132,
+        "kind": "unsafe fn",
+        "item": "mersenne31_batch_mul_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 191,
+        "kind": "unsafe fn",
+        "item": "mersenne31_batch_dot",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 270,
+        "kind": "unsafe block",
+        "item": "batch_mul_exact_multiple_of_8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 284,
+        "kind": "unsafe block",
+        "item": "batch_mul_with_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 298,
+        "kind": "unsafe block",
+        "item": "batch_mul_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 316,
+        "kind": "unsafe block",
+        "item": "batch_dot_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 334,
+        "kind": "unsafe block",
+        "item": "batch_mul_add_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 24,
+        "kind": "unsafe fn",
+        "item": "loadu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 30,
+        "kind": "unsafe fn",
+        "item": "nibble_lut",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 42,
+        "kind": "unsafe fn",
+        "item": "lane_sums",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 54,
+        "kind": "unsafe fn",
+        "item": "horizontal_sum",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 70,
+        "kind": "unsafe fn",
+        "item": "csa",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 87,
+        "kind": "unsafe fn",
+        "item": "fold_eight",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 112,
+        "kind": "unsafe fn",
+        "item": "fold_carries",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 144,
+        "kind": "unsafe fn",
+        "item": "popcnt_words",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 158,
+        "kind": "unsafe fn",
+        "item": "word_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 181,
+        "kind": "unsafe fn",
+        "item": "avx2_popcnt_csa",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 252,
+        "kind": "unsafe fn",
+        "item": "avx2_and_popcnt_csa",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 369,
+        "kind": "unsafe block",
+        "item": "csa_matches_the_reference_across_block_boundaries",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 389,
+        "kind": "unsafe block",
+        "item": "fused_csa_matches_the_reference_across_block_boundaries",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 402,
+        "kind": "unsafe block",
+        "item": "fused_csa_counts_the_shorter_operand",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 404,
+        "kind": "unsafe block",
+        "item": "fused_csa_counts_the_shorter_operand",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 415,
+        "kind": "unsafe block",
+        "item": "scalar_popcnt_matches_the_reference",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/shift_funnel.rs",
+        "line": 29,
+        "kind": "unsafe fn",
+        "item": "shift_left_funnel_bmi2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/shift_funnel.rs",
+        "line": 62,
+        "kind": "unsafe fn",
+        "item": "shift_right_funnel_bmi2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+        "line": 21,
+        "kind": "unsafe fn",
+        "item": "transpose_64x64_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+        "line": 103,
+        "kind": "unsafe fn",
+        "item": "transpose_64x64_avx2_pshufb",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+        "line": 167,
+        "kind": "unsafe fn",
+        "item": "transpose_64x64_avx2_ymm6",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+        "line": 286,
+        "kind": "unsafe fn",
+        "item": "transpose_64x64_avx2_movemask",
+        "contract": true
+      }
+    ]
+  },
+  "anchor": {
+    "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/anchor-baseline.json",
+    "baseline_sha256": "ef71917fd2a39c57977d97d65b09db20c9c485318eff2b97119213f70838f990",
+    "counts": {
+      "unsafe block": {
+        "total": 236,
+        "with_contract": 93,
+        "without_contract": 143
+      },
+      "unsafe fn": {
+        "total": 213,
+        "with_contract": 105,
+        "without_contract": 108
+      },
+      "unsafe fn pointer type": {
+        "total": 1,
+        "with_contract": 0,
+        "without_contract": 0
+      }
+    },
+    "boundaries": [
+      {
+        "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+        "line": 356,
+        "kind": "unsafe block",
+        "item": "bitslice_reduce_avx2_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+        "line": 372,
+        "kind": "unsafe block",
+        "item": "fold_block_pclmul_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 38,
+        "kind": "unsafe fn",
+        "item": "add_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 45,
+        "kind": "unsafe block",
+        "item": "add_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 55,
+        "kind": "unsafe fn",
+        "item": "sub_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 64,
+        "kind": "unsafe block",
+        "item": "sub_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 75,
+        "kind": "unsafe fn",
+        "item": "mul_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 82,
+        "kind": "unsafe block",
+        "item": "mul_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 90,
+        "kind": "unsafe fn",
+        "item": "neg_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 94,
+        "kind": "unsafe block",
+        "item": "neg_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 191,
+        "kind": "unsafe block",
+        "item": "run_parity_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 221,
+        "kind": "unsafe block",
+        "item": "run_parity_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 251,
+        "kind": "unsafe block",
+        "item": "run_parity_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 279,
+        "kind": "unsafe block",
+        "item": "run_parity_neg",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 558,
+        "kind": "unsafe fn",
+        "item": "add_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 568,
+        "kind": "unsafe fn",
+        "item": "sub_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 578,
+        "kind": "unsafe fn",
+        "item": "mul_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 588,
+        "kind": "unsafe fn",
+        "item": "neg_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+        "line": 599,
+        "kind": "unsafe fn pointer type",
+        "item": "test_framework_is_generic_over_config",
+        "contract": null
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 45,
+        "kind": "unsafe fn",
+        "item": "add_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 58,
+        "kind": "unsafe fn",
+        "item": "sub_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 73,
+        "kind": "unsafe fn",
+        "item": "mul_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 89,
+        "kind": "unsafe fn",
+        "item": "neg_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 116,
+        "kind": "unsafe fn",
+        "item": "add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 123,
+        "kind": "unsafe block",
+        "item": "add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 133,
+        "kind": "unsafe fn",
+        "item": "sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 140,
+        "kind": "unsafe block",
+        "item": "sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 150,
+        "kind": "unsafe fn",
+        "item": "mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 157,
+        "kind": "unsafe block",
+        "item": "mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 167,
+        "kind": "unsafe fn",
+        "item": "neg",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+        "line": 169,
+        "kind": "unsafe block",
+        "item": "neg",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 28,
+        "kind": "unsafe fn",
+        "item": "loadu",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 36,
+        "kind": "unsafe fn",
+        "item": "storeu",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 43,
+        "kind": "unsafe fn",
+        "item": "and",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 50,
+        "kind": "unsafe fn",
+        "item": "xor",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 57,
+        "kind": "unsafe fn",
+        "item": "or",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 64,
+        "kind": "unsafe fn",
+        "item": "andn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 77,
+        "kind": "unsafe fn",
+        "item": "loadu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 79,
+        "kind": "unsafe block",
+        "item": "loadu",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 87,
+        "kind": "unsafe fn",
+        "item": "storeu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 89,
+        "kind": "unsafe block",
+        "item": "storeu",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 95,
+        "kind": "unsafe fn",
+        "item": "and",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 97,
+        "kind": "unsafe block",
+        "item": "and",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 101,
+        "kind": "unsafe fn",
+        "item": "xor",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 103,
+        "kind": "unsafe block",
+        "item": "xor",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 107,
+        "kind": "unsafe fn",
+        "item": "or",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 109,
+        "kind": "unsafe block",
+        "item": "or",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 113,
+        "kind": "unsafe fn",
+        "item": "andn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+        "line": 117,
+        "kind": "unsafe block",
+        "item": "andn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 40,
+        "kind": "unsafe fn",
+        "item": "run_add_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 49,
+        "kind": "unsafe block",
+        "item": "run_add_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 64,
+        "kind": "unsafe fn",
+        "item": "run_sub_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 73,
+        "kind": "unsafe block",
+        "item": "run_sub_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 88,
+        "kind": "unsafe fn",
+        "item": "run_mul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 97,
+        "kind": "unsafe block",
+        "item": "run_mul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 112,
+        "kind": "unsafe fn",
+        "item": "run_neg_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 119,
+        "kind": "unsafe block",
+        "item": "run_neg_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 197,
+        "kind": "unsafe block",
+        "item": "add_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 203,
+        "kind": "unsafe block",
+        "item": "sub_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 209,
+        "kind": "unsafe block",
+        "item": "mul_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 215,
+        "kind": "unsafe block",
+        "item": "neg_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+        "line": 222,
+        "kind": "unsafe block",
+        "item": "permanent4_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 324,
+        "kind": "unsafe block",
+        "item": "add5_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 345,
+        "kind": "unsafe block",
+        "item": "sub5_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 366,
+        "kind": "unsafe block",
+        "item": "mul5_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 383,
+        "kind": "unsafe block",
+        "item": "neg5_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 602,
+        "kind": "unsafe block",
+        "item": "check_avx2_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 654,
+        "kind": "unsafe block",
+        "item": "check_avx2_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 694,
+        "kind": "unsafe block",
+        "item": "check_avx2_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 733,
+        "kind": "unsafe block",
+        "item": "check_avx2_neg",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 898,
+        "kind": "unsafe block",
+        "item": "test_avx2_add5_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 927,
+        "kind": "unsafe block",
+        "item": "test_avx2_sub5_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 956,
+        "kind": "unsafe block",
+        "item": "test_avx2_mul5_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+        "line": 984,
+        "kind": "unsafe block",
+        "item": "test_avx2_neg5_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 240,
+        "kind": "unsafe block",
+        "item": "add7_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 246,
+        "kind": "unsafe block",
+        "item": "sub7_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 252,
+        "kind": "unsafe block",
+        "item": "mul7_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 258,
+        "kind": "unsafe block",
+        "item": "neg7_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 442,
+        "kind": "unsafe block",
+        "item": "check_avx2_add7",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 460,
+        "kind": "unsafe block",
+        "item": "check_avx2_sub7",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 474,
+        "kind": "unsafe block",
+        "item": "check_avx2_mul7",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 487,
+        "kind": "unsafe block",
+        "item": "check_avx2_neg7",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 643,
+        "kind": "unsafe block",
+        "item": "test_avx2_add7_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 658,
+        "kind": "unsafe block",
+        "item": "test_avx2_sub7_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 673,
+        "kind": "unsafe block",
+        "item": "test_avx2_mul7_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+        "line": 687,
+        "kind": "unsafe block",
+        "item": "test_avx2_neg7_proptest",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 118,
+        "kind": "unsafe block",
+        "item": "batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 124,
+        "kind": "unsafe block",
+        "item": "batch_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 130,
+        "kind": "unsafe block",
+        "item": "batch_sub_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 144,
+        "kind": "unsafe block",
+        "item": "batch_karatsuba_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+        "line": 162,
+        "kind": "unsafe block",
+        "item": "batch_cubic_karatsuba_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
+        "line": 56,
+        "kind": "unsafe block",
+        "item": "batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
+        "line": 62,
+        "kind": "unsafe block",
+        "item": "batch_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
+        "line": 68,
+        "kind": "unsafe block",
+        "item": "batch_sub_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 98,
+        "kind": "unsafe block",
+        "item": "batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 104,
+        "kind": "unsafe block",
+        "item": "batch_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 110,
+        "kind": "unsafe block",
+        "item": "batch_sub_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 116,
+        "kind": "unsafe block",
+        "item": "batch_dot_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 130,
+        "kind": "unsafe block",
+        "item": "spmm_row_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+        "line": 136,
+        "kind": "unsafe block",
+        "item": "gemm_panel_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
+        "line": 61,
+        "kind": "unsafe block",
+        "item": "batch_gemm_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
+        "line": 133,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 141,
+        "kind": "unsafe block",
+        "item": "batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 147,
+        "kind": "unsafe block",
+        "item": "batch_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 153,
+        "kind": "unsafe block",
+        "item": "batch_sub_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 159,
+        "kind": "unsafe block",
+        "item": "batch_dot_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 165,
+        "kind": "unsafe block",
+        "item": "gemm_row_panel_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 179,
+        "kind": "unsafe block",
+        "item": "spmm_row_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+        "line": 185,
+        "kind": "unsafe block",
+        "item": "sub_scaled_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+        "line": 70,
+        "kind": "unsafe block",
+        "item": "batch_gemm_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+        "line": 85,
+        "kind": "unsafe block",
+        "item": "batch_gemm_route_a_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
+        "line": 70,
+        "kind": "unsafe block",
+        "item": "batch_gemm_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
+        "line": 116,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 111,
+        "kind": "unsafe block",
+        "item": "clmul_u64_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 117,
+        "kind": "unsafe block",
+        "item": "clmul_batch_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 124,
+        "kind": "unsafe block",
+        "item": "clmul_batch_ymm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 130,
+        "kind": "unsafe block",
+        "item": "clmul_barrett_reduce_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 136,
+        "kind": "unsafe block",
+        "item": "gf2m_mul_pclmul_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 145,
+        "kind": "unsafe fn",
+        "item": "gf2m_mul_pclmul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 171,
+        "kind": "unsafe fn",
+        "item": "reduce_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 195,
+        "kind": "unsafe fn",
+        "item": "reduce_gf65536",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+        "line": 218,
+        "kind": "unsafe fn",
+        "item": "reduce_generic",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+        "line": 79,
+        "kind": "unsafe block",
+        "item": "gf2m_batch_mul_ymm_unroll4_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+        "line": 91,
+        "kind": "unsafe block",
+        "item": "gf2m_batch_square_ymm_unroll4_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_gemm.rs",
+        "line": 78,
+        "kind": "unsafe block",
+        "item": "gf2m_gemm_panelized_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+        "line": 120,
+        "kind": "unsafe block",
+        "item": "clmul_wide4_xmm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+        "line": 127,
+        "kind": "unsafe block",
+        "item": "clmul_wide4_ymm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+        "line": 134,
+        "kind": "unsafe block",
+        "item": "clmul_wide9_xmm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+        "line": 141,
+        "kind": "unsafe block",
+        "item": "clmul_wide9_ymm_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 79,
+        "kind": "unsafe block",
+        "item": "minsum_avx2_f32_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 85,
+        "kind": "unsafe block",
+        "item": "maxabs_avx2_f32_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 91,
+        "kind": "unsafe block",
+        "item": "minsum_avx2_f64_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 97,
+        "kind": "unsafe block",
+        "item": "maxabs_avx2_f64_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 108,
+        "kind": "unsafe fn",
+        "item": "minsum_avx2_f32",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 169,
+        "kind": "unsafe fn",
+        "item": "maxabs_avx2_f32",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 213,
+        "kind": "unsafe fn",
+        "item": "minsum_avx2_f64",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/llr.rs",
+        "line": 269,
+        "kind": "unsafe fn",
+        "item": "maxabs_avx2_f64",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/mersenne.rs",
+        "line": 75,
+        "kind": "unsafe block",
+        "item": "m31_batch_mul_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/mersenne.rs",
+        "line": 81,
+        "kind": "unsafe block",
+        "item": "m31_batch_mul_add_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/mersenne.rs",
+        "line": 87,
+        "kind": "unsafe block",
+        "item": "m31_batch_dot_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/modem.rs",
+        "line": 252,
+        "kind": "unsafe block",
+        "item": "pam_sq_distances_f32_avx2_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/modem.rs",
+        "line": 283,
+        "kind": "unsafe block",
+        "item": "pam_sq_distances_f64_avx2_safe",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/modem.rs",
+        "line": 294,
+        "kind": "unsafe fn",
+        "item": "pam_sq_distances_f32_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/modem.rs",
+        "line": 353,
+        "kind": "unsafe fn",
+        "item": "pam_sq_distances_f64_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/prefetch.rs",
+        "line": 20,
+        "kind": "unsafe block",
+        "item": "prefetch_read_l1",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/shift_funnel.rs",
+        "line": 84,
+        "kind": "unsafe block",
+        "item": "shift_left_funnel_bmi2_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/shift_funnel.rs",
+        "line": 94,
+        "kind": "unsafe block",
+        "item": "shift_right_funnel_bmi2_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/transpose.rs",
+        "line": 163,
+        "kind": "unsafe block",
+        "item": "transpose_64x64_avx2_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/transpose.rs",
+        "line": 169,
+        "kind": "unsafe block",
+        "item": "transpose_64x64_avx2_ymm6_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/transpose.rs",
+        "line": 175,
+        "kind": "unsafe block",
+        "item": "transpose_64x64_avx2_pshufb_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/transpose.rs",
+        "line": 181,
+        "kind": "unsafe block",
+        "item": "transpose_64x64_avx2_movemask_safe",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 9,
+        "kind": "unsafe fn",
+        "item": "loadu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 14,
+        "kind": "unsafe fn",
+        "item": "storeu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 36,
+        "kind": "unsafe fn",
+        "item": "avx2_xor_into",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 66,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_gray_xor16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 90,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_gray_build4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 135,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_gray_build8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 180,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_tile8x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 215,
+        "kind": "unsafe fn",
+        "item": "avx2_m4rm_tile8xn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 229,
+        "kind": "unsafe fn",
+        "item": "avx2_and_into",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 249,
+        "kind": "unsafe fn",
+        "item": "avx2_or_into",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 269,
+        "kind": "unsafe fn",
+        "item": "avx2_not_into",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 291,
+        "kind": "unsafe fn",
+        "item": "avx2_popcnt",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 349,
+        "kind": "unsafe fn",
+        "item": "avx2_and_popcnt",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 399,
+        "kind": "unsafe fn",
+        "item": "avx2_find_first_one",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 438,
+        "kind": "unsafe fn",
+        "item": "avx2_find_first_zero",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 478,
+        "kind": "unsafe fn",
+        "item": "avx2_shift_left_words",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 526,
+        "kind": "unsafe fn",
+        "item": "avx2_shift_right_words",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 579,
+        "kind": "unsafe block",
+        "item": "and_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 585,
+        "kind": "unsafe block",
+        "item": "or_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 591,
+        "kind": "unsafe block",
+        "item": "xor_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 598,
+        "kind": "unsafe block",
+        "item": "m4rm_gray_xor16_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 616,
+        "kind": "unsafe block",
+        "item": "m4rm_gray_build4_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 634,
+        "kind": "unsafe block",
+        "item": "m4rm_gray_build8_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 663,
+        "kind": "unsafe block",
+        "item": "m4rm_tile8x4_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 684,
+        "kind": "unsafe block",
+        "item": "m4rm_tile8xn_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 690,
+        "kind": "unsafe block",
+        "item": "not_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 693,
+        "kind": "unsafe block",
+        "item": "popcnt_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 697,
+        "kind": "unsafe block",
+        "item": "and_popcnt_fn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 701,
+        "kind": "unsafe block",
+        "item": "popcnt_csa_fn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 705,
+        "kind": "unsafe block",
+        "item": "and_popcnt_csa_fn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 709,
+        "kind": "unsafe block",
+        "item": "popcnt_instruction_fn",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 712,
+        "kind": "unsafe block",
+        "item": "find_first_one_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 715,
+        "kind": "unsafe block",
+        "item": "find_first_zero_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 721,
+        "kind": "unsafe block",
+        "item": "shift_left_words_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "line": 727,
+        "kind": "unsafe block",
+        "item": "shift_right_words_fn",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+        "line": 40,
+        "kind": "unsafe fn",
+        "item": "bitslice_reduce_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+        "line": 110,
+        "kind": "unsafe fn",
+        "item": "fold_block_pclmul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+        "line": 121,
+        "kind": "unsafe block",
+        "item": "fold_block_pclmul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 30,
+        "kind": "unsafe fn",
+        "item": "run_add_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 48,
+        "kind": "unsafe block",
+        "item": "run_add_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 74,
+        "kind": "unsafe fn",
+        "item": "run_sub_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 92,
+        "kind": "unsafe block",
+        "item": "run_sub_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 118,
+        "kind": "unsafe fn",
+        "item": "run_mul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 136,
+        "kind": "unsafe block",
+        "item": "run_mul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 159,
+        "kind": "unsafe fn",
+        "item": "run_neg_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 169,
+        "kind": "unsafe block",
+        "item": "run_neg_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 183,
+        "kind": "unsafe fn",
+        "item": "fold_step",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 187,
+        "kind": "unsafe block",
+        "item": "fold_step",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 224,
+        "kind": "unsafe fn",
+        "item": "run_permanent4",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+        "line": 239,
+        "kind": "unsafe block",
+        "item": "run_permanent4",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 20,
+        "kind": "unsafe fn",
+        "item": "decode5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 45,
+        "kind": "unsafe fn",
+        "item": "encode5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 59,
+        "kind": "unsafe fn",
+        "item": "add5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 132,
+        "kind": "unsafe fn",
+        "item": "sub5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 205,
+        "kind": "unsafe fn",
+        "item": "mul5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 266,
+        "kind": "unsafe fn",
+        "item": "neg5_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 273,
+        "kind": "unsafe fn",
+        "item": "load256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 279,
+        "kind": "unsafe fn",
+        "item": "store256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 296,
+        "kind": "unsafe fn",
+        "item": "run_add5_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 345,
+        "kind": "unsafe fn",
+        "item": "run_sub5_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 394,
+        "kind": "unsafe fn",
+        "item": "run_mul5_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+        "line": 440,
+        "kind": "unsafe fn",
+        "item": "run_neg5_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 21,
+        "kind": "unsafe fn",
+        "item": "binary7_avx2_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 44,
+        "kind": "unsafe fn",
+        "item": "neg7_avx2_lane",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 57,
+        "kind": "unsafe fn",
+        "item": "load256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 63,
+        "kind": "unsafe fn",
+        "item": "store256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 80,
+        "kind": "unsafe fn",
+        "item": "run_add7_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 106,
+        "kind": "unsafe fn",
+        "item": "run_sub7_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 132,
+        "kind": "unsafe fn",
+        "item": "run_mul7_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+        "line": 156,
+        "kind": "unsafe fn",
+        "item": "run_neg7_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+        "line": 20,
+        "kind": "unsafe fn",
+        "item": "run_add_batch_avx512",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+        "line": 46,
+        "kind": "unsafe fn",
+        "item": "run_sub_batch_avx512",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+        "line": 72,
+        "kind": "unsafe fn",
+        "item": "run_mul_batch_avx512",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+        "line": 99,
+        "kind": "unsafe fn",
+        "item": "run_neg_batch_avx512",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 16,
+        "kind": "unsafe fn",
+        "item": "clmul_u64",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 48,
+        "kind": "unsafe fn",
+        "item": "clmul_batch",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 94,
+        "kind": "unsafe fn",
+        "item": "clmul_batch_sequential",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 119,
+        "kind": "unsafe fn",
+        "item": "clmul_batch_vpclmul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 172,
+        "kind": "unsafe fn",
+        "item": "clmul_barrett_reduce",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 264,
+        "kind": "unsafe block",
+        "item": "test_clmul_u64_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 287,
+        "kind": "unsafe block",
+        "item": "test_clmul_u64_commutative",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 288,
+        "kind": "unsafe block",
+        "item": "test_clmul_u64_commutative",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 304,
+        "kind": "unsafe block",
+        "item": "test_clmul_u64_exhaustive_small",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 406,
+        "kind": "unsafe block",
+        "item": "sequential_lane_matches_portable_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 433,
+        "kind": "unsafe block",
+        "item": "dispatched_batch_agrees_with_both_lanes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+        "line": 501,
+        "kind": "unsafe block",
+        "item": "test_clmul_barrett_reduce_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 22,
+        "kind": "unsafe fn",
+        "item": "reduce_fp65537_64",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 53,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_mul8",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 86,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 127,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 187,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_karatsuba",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 327,
+        "kind": "unsafe fn",
+        "item": "fp65537_add8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 334,
+        "kind": "unsafe fn",
+        "item": "fp65537_sub8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 342,
+        "kind": "unsafe fn",
+        "item": "fp65537_mul_beta8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 369,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_cubic_karatsuba",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 525,
+        "kind": "unsafe fn",
+        "item": "fp65537_batch_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 583,
+        "kind": "unsafe block",
+        "item": "batch_mul_exact_multiple_of_8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 597,
+        "kind": "unsafe block",
+        "item": "batch_mul_with_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 613,
+        "kind": "unsafe block",
+        "item": "batch_mul_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 629,
+        "kind": "unsafe block",
+        "item": "batch_mul_saturation_lane",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 644,
+        "kind": "unsafe block",
+        "item": "batch_add_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 658,
+        "kind": "unsafe block",
+        "item": "batch_add_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 672,
+        "kind": "unsafe block",
+        "item": "batch_sub_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 692,
+        "kind": "unsafe block",
+        "item": "batch_karatsuba_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 729,
+        "kind": "unsafe block",
+        "item": "batch_cubic_karatsuba_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 795,
+        "kind": "unsafe block",
+        "item": "batch_karatsuba_beta_0_and_1",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+        "line": 823,
+        "kind": "unsafe block",
+        "item": "batch_sub_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 13,
+        "kind": "unsafe fn",
+        "item": "unsigned_lt_epi64",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 20,
+        "kind": "unsafe fn",
+        "item": "select_epi64",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 29,
+        "kind": "unsafe fn",
+        "item": "add_mod_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 39,
+        "kind": "unsafe fn",
+        "item": "sub_mod_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 47,
+        "kind": "unsafe fn",
+        "item": "mul_lo_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 62,
+        "kind": "unsafe fn",
+        "item": "mul_wide_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 90,
+        "kind": "unsafe fn",
+        "item": "mul_hi_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 115,
+        "kind": "unsafe fn",
+        "item": "montgomery_redc_u64x4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 135,
+        "kind": "unsafe fn",
+        "item": "montgomery_redc_u64x4_signed_final",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 154,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_mul4",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 161,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_mul4_signed_final",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 173,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_mul4_select",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 188,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_batch_mul_vecs",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 228,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_batch_mul",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 265,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_batch_add",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 295,
+        "kind": "unsafe fn",
+        "item": "fp_montgomery_batch_sub",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+        "line": 365,
+        "kind": "unsafe block",
+        "item": "batch_mul_matches_scalar_word_boundaries",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 24,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_mul16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 51,
+        "kind": "unsafe fn",
+        "item": "fp_medium_add16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 70,
+        "kind": "unsafe fn",
+        "item": "fp_medium_sub16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 110,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 148,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 185,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 242,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_dot",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 256,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_dot_madd",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 318,
+        "kind": "unsafe fn",
+        "item": "fp_medium_batch_dot_mulhi",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 397,
+        "kind": "unsafe fn",
+        "item": "fp_medium_spmm_row",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 542,
+        "kind": "unsafe fn",
+        "item": "fp_medium_gemm_panel",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 652,
+        "kind": "unsafe fn",
+        "item": "fp_medium_pack_a_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 695,
+        "kind": "unsafe fn",
+        "item": "fp_medium_panel_run",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 951,
+        "kind": "unsafe block",
+        "item": "batch_mul_matches_scalar_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 970,
+        "kind": "unsafe block",
+        "item": "batch_mul_boundary_values_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 989,
+        "kind": "unsafe block",
+        "item": "batch_mul_with_tail_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1009,
+        "kind": "unsafe block",
+        "item": "batch_add_matches_scalar_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1029,
+        "kind": "unsafe block",
+        "item": "batch_sub_matches_scalar_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1048,
+        "kind": "unsafe block",
+        "item": "batch_dot_matches_scalar_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1065,
+        "kind": "unsafe block",
+        "item": "batch_dot_boundary_values_65521",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1084,
+        "kind": "unsafe block",
+        "item": "smaller_medium_primes_match_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1088,
+        "kind": "unsafe block",
+        "item": "smaller_medium_primes_match_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1123,
+        "kind": "unsafe block",
+        "item": "spmm_row_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1151,
+        "kind": "unsafe block",
+        "item": "spmm_row_empty_nnz",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1202,
+        "kind": "unsafe block",
+        "item": "gemm_panel_matches_scalar_at_boundary_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1222,
+        "kind": "unsafe block",
+        "item": "gemm_panel_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1238,
+        "kind": "unsafe block",
+        "item": "gemm_panel_zero_outer_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1240,
+        "kind": "unsafe block",
+        "item": "gemm_panel_zero_outer_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1242,
+        "kind": "unsafe block",
+        "item": "gemm_panel_zero_outer_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+        "line": 1244,
+        "kind": "unsafe block",
+        "item": "gemm_panel_zero_outer_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 61,
+        "kind": "unsafe fn",
+        "item": "fp_medium_f64_gemm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 193,
+        "kind": "unsafe fn",
+        "item": "pack_a_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 227,
+        "kind": "unsafe fn",
+        "item": "run_one_panel",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 365,
+        "kind": "unsafe fn",
+        "item": "barrett_reduce_pd",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 383,
+        "kind": "unsafe fn",
+        "item": "store_and_reduce_tile",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 544,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_small_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 570,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_k_chunk_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 593,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_n_panel_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 616,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_m_partial",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 631,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_zero_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 663,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_boundary_lengths",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 703,
+        "kind": "unsafe block",
+        "item": "barrett_reduce_pd_matches_scalar_mod",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 704,
+        "kind": "unsafe block",
+        "item": "barrett_reduce_pd_matches_scalar_mod",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+        "line": 706,
+        "kind": "unsafe block",
+        "item": "barrett_reduce_pd_matches_scalar_mod",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 43,
+        "kind": "unsafe fn",
+        "item": "ple_panel_base_canonical_u16",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 121,
+        "kind": "unsafe fn",
+        "item": "swap_panel_rows_u16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 156,
+        "kind": "unsafe fn",
+        "item": "fused_scale_and_schur_u16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 378,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_u16_matches_scalar_oracle_full_rank",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 423,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_u16_rank_deficient_zero_matrix",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+        "line": 457,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_u16_rank_deficient_scattered_pivots",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 36,
+        "kind": "unsafe fn",
+        "item": "reduce_mod_p_u16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 63,
+        "kind": "unsafe fn",
+        "item": "canon_after_sub",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 75,
+        "kind": "unsafe fn",
+        "item": "load_u8_to_u16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 84,
+        "kind": "unsafe fn",
+        "item": "store_u16_to_u8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 133,
+        "kind": "unsafe fn",
+        "item": "fp_small_batch_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 175,
+        "kind": "unsafe fn",
+        "item": "fp_small_batch_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 219,
+        "kind": "unsafe fn",
+        "item": "fp_small_batch_sub",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 267,
+        "kind": "unsafe fn",
+        "item": "fp_small_batch_dot",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 335,
+        "kind": "unsafe fn",
+        "item": "fp_small_gemm_row_panel",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 460,
+        "kind": "unsafe fn",
+        "item": "fp_small_sub_scaled",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 565,
+        "kind": "unsafe fn",
+        "item": "fp_small_spmm_row",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 674,
+        "kind": "unsafe fn",
+        "item": "barrett_reduce_lane32",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 701,
+        "kind": "unsafe fn",
+        "item": "horizontal_sum_u32",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 735,
+        "kind": "unsafe block",
+        "item": "batch_mul_exact_multiple_of_16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 752,
+        "kind": "unsafe block",
+        "item": "batch_mul_with_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 769,
+        "kind": "unsafe block",
+        "item": "batch_mul_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 786,
+        "kind": "unsafe block",
+        "item": "batch_add_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 803,
+        "kind": "unsafe block",
+        "item": "batch_sub_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 819,
+        "kind": "unsafe block",
+        "item": "batch_dot_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 841,
+        "kind": "unsafe block",
+        "item": "gemm_row_panel_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 878,
+        "kind": "unsafe block",
+        "item": "spmm_row_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 903,
+        "kind": "unsafe block",
+        "item": "spmm_row_empty_nnz",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 967,
+        "kind": "unsafe block",
+        "item": "proptest_sub_scaled_matches_scalar_boundary_lengths_jit_52cce970",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 990,
+        "kind": "unsafe block",
+        "item": "sub_scaled_matches_scalar_boundary_lengths_jit_52cce970",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 1014,
+        "kind": "unsafe block",
+        "item": "sub_scaled_preserves_buf_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 1045,
+        "kind": "unsafe block",
+        "item": "sub_scaled_matches_scalar_random_lengths",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+        "line": 1064,
+        "kind": "unsafe block",
+        "item": "sub_scaled_zero_alpha_is_noop",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 59,
+        "kind": "unsafe fn",
+        "item": "fp_small_f32_gemm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 209,
+        "kind": "unsafe fn",
+        "item": "fp_small_f32_gemm_route_a",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 321,
+        "kind": "unsafe fn",
+        "item": "run_one_panel_route_a",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 448,
+        "kind": "unsafe fn",
+        "item": "pack_a_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 482,
+        "kind": "unsafe fn",
+        "item": "run_one_panel",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 635,
+        "kind": "unsafe fn",
+        "item": "round_ps_to_epi32",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 646,
+        "kind": "unsafe fn",
+        "item": "pack_i32x8_to_u8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 683,
+        "kind": "unsafe fn",
+        "item": "store_and_reduce_tile_route_a",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 710,
+        "kind": "unsafe fn",
+        "item": "write_row",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 793,
+        "kind": "unsafe fn",
+        "item": "store_and_reduce_tile",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 901,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_small_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 927,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_k_chunk_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 950,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_n_panel_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 973,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_m_partial",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 988,
+        "kind": "unsafe block",
+        "item": "gemm_matches_scalar_zero_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1017,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_small_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1042,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_k_chunk_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1064,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_n_panel_boundary",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1086,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_m_partial",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1101,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_scalar_zero_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+        "line": 1130,
+        "kind": "unsafe block",
+        "item": "route_a_gemm_matches_existing_candidate_f",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 42,
+        "kind": "unsafe fn",
+        "item": "fp_small_panel_gemm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 180,
+        "kind": "unsafe fn",
+        "item": "pack_a_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 239,
+        "kind": "unsafe fn",
+        "item": "run_one_m_block",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 277,
+        "kind": "unsafe fn",
+        "item": "run_one_panel",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 416,
+        "kind": "unsafe fn",
+        "item": "pack_i32x8_to_u8_local",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 487,
+        "kind": "unsafe block",
+        "item": "panel_gemm_matches_scalar_at_boundary_shapes",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 510,
+        "kind": "unsafe block",
+        "item": "panel_gemm_n_boundary_sweep",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+        "line": 525,
+        "kind": "unsafe block",
+        "item": "panel_gemm_handles_zero_dims",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 43,
+        "kind": "unsafe fn",
+        "item": "ple_panel_base_canonical",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 118,
+        "kind": "unsafe fn",
+        "item": "swap_panel_rows",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 152,
+        "kind": "unsafe fn",
+        "item": "fused_scale_and_schur",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 370,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_matches_scalar_oracle_full_rank",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 415,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_rank_deficient_zero_matrix",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+        "line": 449,
+        "kind": "unsafe block",
+        "item": "ple_panel_base_rank_deficient_scattered_pivots",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 26,
+        "kind": "unsafe fn",
+        "item": "pack_pair",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 33,
+        "kind": "unsafe fn",
+        "item": "pack_quad",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 39,
+        "kind": "unsafe fn",
+        "item": "extract_quad_lo",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 55,
+        "kind": "unsafe fn",
+        "item": "extract_quad_hi",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 72,
+        "kind": "unsafe fn",
+        "item": "process_quad_mul",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 106,
+        "kind": "unsafe fn",
+        "item": "modulus_from_ymm",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 128,
+        "kind": "unsafe fn",
+        "item": "gf2m_batch_mul_ymm_unroll4",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 238,
+        "kind": "unsafe fn",
+        "item": "gf2m_batch_square_ymm_unroll4",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 292,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 296,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 315,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf2_16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 318,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf2_16",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 341,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf2_32",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+        "line": 344,
+        "kind": "unsafe block",
+        "item": "unroll4_mul_matches_singleshot_gf2_32",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_common.rs",
+        "line": 31,
+        "kind": "unsafe fn",
+        "item": "clmul_barrett_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_common.rs",
+        "line": 98,
+        "kind": "unsafe fn",
+        "item": "ymm_barrett_reduce",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 36,
+        "kind": "unsafe fn",
+        "item": "gf2m_broadcast_mul_xor",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 113,
+        "kind": "unsafe fn",
+        "item": "gf2m_gemm_panelized",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 234,
+        "kind": "unsafe block",
+        "item": "scalar_gemm",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 259,
+        "kind": "unsafe block",
+        "item": "run_test",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 324,
+        "kind": "unsafe block",
+        "item": "broadcast_mul_xor_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+        "line": 329,
+        "kind": "unsafe block",
+        "item": "broadcast_mul_xor_gf256",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 26,
+        "kind": "unsafe fn",
+        "item": "clmul_wide4_xmm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 60,
+        "kind": "unsafe fn",
+        "item": "clmul_wide4_ymm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 105,
+        "kind": "unsafe fn",
+        "item": "clmul_wide9_xmm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 135,
+        "kind": "unsafe fn",
+        "item": "clmul_wide9_ymm",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 227,
+        "kind": "unsafe fn",
+        "item": "fold_diagonals_9x9",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 310,
+        "kind": "unsafe block",
+        "item": "xmm_matches_scalar_reference",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 328,
+        "kind": "unsafe block",
+        "item": "ymm_matches_scalar_reference",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 346,
+        "kind": "unsafe block",
+        "item": "xmm_wide9_matches_scalar_reference",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+        "line": 364,
+        "kind": "unsafe block",
+        "item": "ymm_wide9_matches_scalar_reference",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 21,
+        "kind": "unsafe fn",
+        "item": "reduce_m31_64",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 55,
+        "kind": "unsafe fn",
+        "item": "mersenne31_batch_mul8",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 88,
+        "kind": "unsafe fn",
+        "item": "mersenne31_batch_mul",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 132,
+        "kind": "unsafe fn",
+        "item": "mersenne31_batch_mul_add",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 191,
+        "kind": "unsafe fn",
+        "item": "mersenne31_batch_dot",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 270,
+        "kind": "unsafe block",
+        "item": "batch_mul_exact_multiple_of_8",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 284,
+        "kind": "unsafe block",
+        "item": "batch_mul_with_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 298,
+        "kind": "unsafe block",
+        "item": "batch_mul_boundary_values",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 316,
+        "kind": "unsafe block",
+        "item": "batch_dot_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+        "line": 334,
+        "kind": "unsafe block",
+        "item": "batch_mul_add_matches_scalar",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 24,
+        "kind": "unsafe fn",
+        "item": "loadu",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 30,
+        "kind": "unsafe fn",
+        "item": "nibble_lut",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 42,
+        "kind": "unsafe fn",
+        "item": "lane_sums",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 54,
+        "kind": "unsafe fn",
+        "item": "horizontal_sum",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 70,
+        "kind": "unsafe fn",
+        "item": "csa",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 87,
+        "kind": "unsafe fn",
+        "item": "fold_eight",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 112,
+        "kind": "unsafe fn",
+        "item": "fold_carries",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 144,
+        "kind": "unsafe fn",
+        "item": "popcnt_words",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 158,
+        "kind": "unsafe fn",
+        "item": "word_tail",
+        "contract": false
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 181,
+        "kind": "unsafe fn",
+        "item": "avx2_popcnt_csa",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 252,
+        "kind": "unsafe fn",
+        "item": "avx2_and_popcnt_csa",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 369,
+        "kind": "unsafe block",
+        "item": "csa_matches_the_reference_across_block_boundaries",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 389,
+        "kind": "unsafe block",
+        "item": "fused_csa_matches_the_reference_across_block_boundaries",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 402,
+        "kind": "unsafe block",
+        "item": "fused_csa_counts_the_shorter_operand",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 404,
+        "kind": "unsafe block",
+        "item": "fused_csa_counts_the_shorter_operand",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+        "line": 415,
+        "kind": "unsafe block",
+        "item": "scalar_popcnt_matches_the_reference",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/shift_funnel.rs",
+        "line": 29,
+        "kind": "unsafe fn",
+        "item": "shift_left_funnel_bmi2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/shift_funnel.rs",
+        "line": 62,
+        "kind": "unsafe fn",
+        "item": "shift_right_funnel_bmi2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+        "line": 21,
+        "kind": "unsafe fn",
+        "item": "transpose_64x64_avx2",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+        "line": 103,
+        "kind": "unsafe fn",
+        "item": "transpose_64x64_avx2_pshufb",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+        "line": 167,
+        "kind": "unsafe fn",
+        "item": "transpose_64x64_avx2_ymm6",
+        "contract": true
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+        "line": 286,
+        "kind": "unsafe fn",
+        "item": "transpose_64x64_avx2_movemask",
+        "contract": true
+      }
+    ]
+  }
+}
