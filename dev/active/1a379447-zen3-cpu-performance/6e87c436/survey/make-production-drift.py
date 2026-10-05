@@ -16,8 +16,11 @@ itself:
   added                  a tracked `src/` file of a package the receipt does
                          not list
 
-The record also lists the package paths this branch changes against `--anchor`
-and fails when one of them is a producing input or lies under `src/`.
+The record also lists the package paths this branch changes against `--anchor`.
+Each one that is a producing input or lies under `src/` is classified against
+its anchor bytes by the same rule; an annotated assembly listing is classed
+`assembly-listing`, since `make-asm-comparison.py` compares it per symbol. The
+script fails when a changed production path is `code-differs`.
 
 Usage: make-production-drift.py --anchor COMMIT
 """
@@ -121,6 +124,23 @@ def classify(path, measured, snapshot):
     return entry | {"class": "code-differs", "changed_by": changing_commits(path, measured)}
 
 
+def task_class(path, anchor):
+    """The class of a production path this branch changes, against its anchor bytes."""
+    if path.endswith(".asm.txt"):
+        return {"path": path, "class": "assembly-listing"}
+    held = subprocess.run(
+        ["git", "-C", str(ROOT), "show", f"{anchor}:{path}"], capture_output=True
+    )
+    current = ROOT / path
+    comment_only = (
+        path.endswith(".rs")
+        and held.returncode == 0
+        and current.is_file()
+        and code_text(held.stdout.decode()) == code_text(current.read_text())
+    )
+    return {"path": path, "class": "comment-or-blank-only" if comment_only else "code-differs"}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--anchor", required=True)
@@ -178,7 +198,8 @@ def main():
             producing_inputs.update(value)
     changed = git("diff", "--name-only", anchor, "--", *directories).splitlines()
     production = [
-        path for path in changed
+        task_class(path, anchor)
+        for path in changed
         if path in producing_inputs
         or any(path.startswith(f"{package}/src/") for package in directories)
     ]
@@ -200,8 +221,9 @@ def main():
     for baseline in baselines:
         print([r["campaign_id"] for r in baseline["receipts"]], baseline["class_counts"])
     print(f"{output.relative_to(ROOT)}: task changes {len(production)} production paths")
-    if production:
-        raise SystemExit(f"this branch changes production sources: {production}")
+    code = [entry["path"] for entry in production if entry["class"] == "code-differs"]
+    if code:
+        raise SystemExit(f"this branch changes production code: {code}")
 
 
 if __name__ == "__main__":
