@@ -16,23 +16,34 @@ itself:
   added                  a tracked `src/` file of a package the receipt does
                          not list
 
-The record also lists the package paths this branch changes against `--anchor`.
-Each one that is a producing input or lies under `src/` is classified against
-its anchor bytes by the same rule; an annotated assembly listing is classed
+The record also lists the package paths whose bytes differ from the task
+anchor, which `anchor-baseline.json` identifies by per-path digest. Each one
+that is a producing input or lies under `src/` is classified against its
+snapshotted anchor bytes by the same rule; an annotated assembly listing is classed
 `assembly-listing`, since `make-asm-comparison.py` compares it per symbol. The
 script fails when a changed production path is `code-differs`.
 
-Usage: make-production-drift.py --anchor COMMIT
+Usage: make-production-drift.py
 """
 
-import argparse
 import hashlib
 import json
 import pathlib
 import re
 import subprocess
 
-from locate import CAMPAIGNS, HERE, ROOT, repo_artifacts, repository_files
+from locate import (
+    CAMPAIGNS,
+    HERE,
+    PACKAGES,
+    ROOT,
+    anchor_bytes,
+    anchor_digests,
+    anchor_identity,
+    changed_since_anchor,
+    repo_artifacts,
+    repository_files,
+)
 
 
 def git(*arguments):
@@ -41,7 +52,6 @@ def git(*arguments):
     ).stdout
 
 
-PACKAGES = ["gf2-core", "gf2-kernels-simd"]
 SNAPSHOT = pathlib.Path("inputs") / "producing"
 DIGEST_MAPS = ("behavior_sha256", "build_inputs_sha256")
 
@@ -124,28 +134,21 @@ def classify(path, measured, snapshot):
     return entry | {"class": "code-differs", "changed_by": changing_commits(path, measured)}
 
 
-def task_class(path, anchor):
-    """The class of a production path this branch changes, against its anchor bytes."""
+def task_class(path):
+    """The class of a production path this task changes, against its anchor bytes."""
     if path.endswith(".asm.txt"):
         return {"path": path, "class": "assembly-listing"}
-    held = subprocess.run(
-        ["git", "-C", str(ROOT), "show", f"{anchor}:{path}"], capture_output=True
-    )
     current = ROOT / path
     comment_only = (
         path.endswith(".rs")
-        and held.returncode == 0
+        and path in anchor_digests()
         and current.is_file()
-        and code_text(held.stdout.decode()) == code_text(current.read_text())
+        and code_text(anchor_bytes(path).decode()) == code_text(current.read_text())
     )
     return {"path": path, "class": "comment-or-blank-only" if comment_only else "code-differs"}
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--anchor", required=True)
-    anchor = parser.parse_args().anchor
-
     directories = [repository_files.package_directory(ROOT, name) for name in PACKAGES]
     measured_sets = {}
     for campaign in CAMPAIGNS:
@@ -196,9 +199,9 @@ def main():
     for value in manifest.values():
         if isinstance(value, list):
             producing_inputs.update(value)
-    changed = git("diff", "--name-only", anchor, "--", *directories).splitlines()
+    changed = changed_since_anchor()
     production = [
-        task_class(path, anchor)
+        task_class(path)
         for path in changed
         if path in producing_inputs
         or any(path.startswith(f"{package}/src/") for package in directories)
@@ -210,7 +213,7 @@ def main():
         "packages": directories,
         "classifier_rule": RULE,
         "task_change": {
-            "anchor": git("rev-parse", anchor).strip(),
+            "anchor": anchor_identity(),
             "changed_package_paths": changed,
             "changed_production_paths": production,
         },
@@ -223,7 +226,7 @@ def main():
     print(f"{output.relative_to(ROOT)}: task changes {len(production)} production paths")
     code = [entry["path"] for entry in production if entry["class"] == "code-differs"]
     if code:
-        raise SystemExit(f"this branch changes production code: {code}")
+        raise SystemExit(f"production code differs from the task anchor: {code}")
 
 
 if __name__ == "__main__":
