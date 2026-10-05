@@ -2,7 +2,7 @@
 
 | Fact | Value |
 |---|---|
-| Measured commit | `71a1eb545`: every committed output below is the script's output at this commit |
+| Measured commit | `a12757f45`: every committed output below is the script's output at this commit |
 | Line numbers in the findings | commit `6a38cc8b6`, the state the audit read |
 | Prior-source base | `791beb2b0`, the parent of `61c3f0a6a`, the first commit of the overhaul that removes a documentation file |
 
@@ -50,6 +50,7 @@ Every row is fixed in the named commit.
 | `AGENTS.md:59` | `@/inv/current-state-scope` | `gf2-core` is stated to have no workspace dependency; `crates/gf2-core/Cargo.toml` depends on `gf2-kernels-simd` | `1ebd1248d` |
 | `AGENTS.md:63` | `@/inv/convention-convergence` | Plain-text field notation in Markdown | `1ebd1248d` |
 | `AGENTS.md:97` | `@/inv/current-state-scope` | The per-test kill is stated without the overrides `.config/nextest.toml` declares | `1ebd1248d` |
+| `AGENTS.md:50` | `@/inv/current-state-scope` | The lock wrapper is stated to set `CARGO_CI_NO_LOCK=1`; its header makes that the caller's obligation | `a12757f45` |
 | `AGENTS.md:100` | `@/inv/current-state-scope` | The command is attributed to the nightly run; `.github/workflows/ci-slow.yml` passes an explicit feature list | `1ebd1248d` |
 | `README.md:28` | `@/inv/current-state-scope` | Kernels are stated as AVX2-only and feature-gated; `gf2m.rs` binds on PCLMULQDQ and SSE4.1, and `gf2-coding` detects BCH encode and demapper kernels in every build | `71a1eb545` |
 | `docs/index.md:10`, `:39` | `@/inv/external-claims-cited` | Standards named without a registry key | `124392903` |
@@ -75,7 +76,8 @@ Every row is fixed in the named commit.
 | `docs/how-to/select-acceleration.md:137` | `@/inv/single-source-prose` | A copied value of `RAYON_NUM_THREADS` | `124392903` |
 | `docs/how-to/select-acceleration.md:157` | `@/inv/external-claims-cited` | Standard named without a registry key | `124392903` |
 | `docs/reference/performance-evidence.md:4` | `@/inv/claims-trace-to-artifacts` | The evidence commit is stated as the source identity of a claim whose Build line names another revision | `71e933b84` |
-| `docs/reference/performance-evidence.md:19` | `@/inv/benchmark-backed-performance` | The linked summaries omit host, build, workload, baseline and date; sibling receipt files hold them | `71e933b84` |
+| `docs/reference/performance-evidence.md:76`, `:101`, `:122`, `:145` | `@/inv/benchmark-backed-performance` | The linked summaries omit host, build, workload, baseline and date; each receipt's `receipt.json` holds them | `a12757f45` |
+| `docs/reference/performance-evidence.md:170` | `@/inv/benchmark-backed-performance` | "no RUSTFLAGS" without its source, the receipt's command | `a12757f45` |
 | `docs/reference/performance-evidence.md:110` | `@/inv/claims-trace-to-artifacts` | The stated interval hull excludes two receipt bounds | `71e933b84` |
 | `docs/reference/standards-conformance.md:20` | `@/inv/external-claims-cited` | Two section numbers without a source in the tree | `71e933b84` |
 | `docs/reference/standards-conformance.md:51`, `:95` | `@/inv/current-state-scope` | Two test-tier universals with a counterexample each | `71e933b84` |
@@ -99,12 +101,8 @@ Every row is fixed in the named commit.
 | Page:line | Question | Disposition |
 |---|---|---|
 | `README.md:6` | "aims to pair" | A purpose statement, which the landing page carries; the sentence makes no behavioral claim |
-| `AGENTS.md:21`, `:24`, `:31` | `--all-features` requires ROCm | The commands are the ROCm-host form; `docs/reference/supported-configurations.md#workspace-exclusion` states the requirement |
-| `AGENTS.md:42`, `:50`, `:98`, `:69`, `:19` | Rules that some code does not follow | Normative statements; the deviating code is listed under [Code observations](#code-observations) |
-| `AGENTS.md:98` | "sixty-second suite budget" | A policy budget; `.config/nextest.toml` enforces per-test limits only |
-| Crate READMEs, last line | Link into `target/doc/` | Build output of the command above the link; Git ignores the path and the mechanical gate accepts it |
+| Crate READMEs, last line | Link into `target/doc/` | The owner-approved form, `@/issue/b16d013a/decision/DEC-01` |
 | `docs/reference/performance-evidence.md:17` | The linked protocol text differs in digest from the receipts' snapshots | The page states that each receipt carries its own snapshot |
-| `docs/reference/performance-evidence.md:169` | "no RUSTFLAGS" for the $\mathbb{F}_3$ claim | The receipt's command sets none |
 | `docs/reference/standards-conformance.md` | Standard symbols in code spans | They name the standard's parameters as the code does |
 | Eponymous terms (Montgomery form, Rabin's criterion, Clopper–Pearson and the like) | No registry key cited | Vocabulary assumed under `@/inv/researcher-audience`; standards, libraries and data sets carry keys |
 
@@ -115,6 +113,20 @@ build and sweep) and the Monte Carlo table of the link tutorial
 (`@/inv/uncertainty-reported`: frame counts and intervals present, run record
 linked at a fixed commit) carry no finding. `wc -l AGENTS.md` prints the
 limit `@/inv/agents-md-scope` sets.
+
+### Policy statements awaiting the owner
+
+`AGENTS.md` is the owner's contract. Each row is a policy sentence the tree
+does not meet or enforce; the sentence and the tree are unchanged.
+
+| `AGENTS.md` line | Invariant | Policy | Tree | Smallest fix: page / tree |
+|---|---|---|---|---|
+| `:21`, `:24`, `:31`, `:32` | `@/inv/current-state-scope` | Commands pass `--all-features` | `hip` pulls in `gf2-kernels-hip`, whose `build.rs` needs `hipcc`; `scripts/cargo-ci.sh:222` passes a feature list without ROCm | Name the ROCm requirement beside the commands / none |
+| `:19` | `@/inv/single-source-prose` | MSRV 1.95 | `crates/gf2-kernels-simd/Cargo.toml` declares no `rust-version` | None / add `rust-version = "1.95"` |
+| `:42` | `@/inv/convention-convergence` | Test execution passes `--test` | `scripts/cargo-ci.sh:283`, `:304`, `:309`–`:312` run `cargo test` through the wrapper without it | Exempt `cargo-ci.sh` steps / add `--test` |
+| `:69` | `@/inv/current-state-scope` | Other production crates deny unsafe code | The binary roots under `crates/gf2-coding/src/bin/` and `crates/gf2-sim/src/bin/` carry no `deny(unsafe_code)`; none contains `unsafe` | Say "library crates" / a workspace lint |
+| `:98` | `@/inv/current-state-scope` | A sixty-second suite budget | `.config/nextest.toml` enforces per-test limits only | Call it a target / add a suite limit |
+| `:98` | `@/inv/convention-convergence` | Ignored tests carry a `slow:` or `sim:` reason | Bare `#[ignore]` at `crates/gf2-coding/src/bcjr/mod.rs:743`, `crates/gf2-coding/src/ldpc/core.rs:2013`, `crates/gf2-core/src/field/axiom_tests.rs:762`, `crates/gf2-coding/tests/nr5g_regression.rs:91`; `bench:` and `external:` reasons also occur | List the four prefixes / add reasons |
 
 ### Not established
 
@@ -282,11 +294,7 @@ Found while verifying claims; outside the audited surface and unchanged here.
 | Location | Observation |
 |---|---|
 | `crates/gf2-sim/src/snr_checkpoint.rs:300`, `crates/gf2-coding/src/simulation.rs:45`, `crates/gf2-coding/Cargo.toml:68` | `ctrlc` is built without its `termination` feature, so SIGTERM ends the process without a checkpoint flush; the manifest comment states a SIGTERM flush |
-| `crates/gf2-core/src/primitive_polys.rs:108` | `trinomials(8)` returns $x^8 + x^4 + 1 = (x^4 + x^2 + 1)^2$, which is reducible; the Rustdoc calls the entries primitive |
-| `crates/gf2-coding/src/bcjr/mod.rs:743`, `crates/gf2-coding/src/ldpc/core.rs:2013`, `crates/gf2-core/src/field/axiom_tests.rs:762`, `crates/gf2-coding/tests/nr5g_regression.rs:91` | `#[ignore]` without a reason string |
-| `scripts/cargo-ci.sh` | `cargo test` steps run through the budget wrapper without `--test` |
-| `crates/gf2-coding/src/bin/`, `crates/gf2-sim/src/bin/` | Binary crate roots without `deny(unsafe_code)`; none contains `unsafe` |
-| `crates/gf2-kernels-simd/Cargo.toml` | No `rust-version` |
+| `crates/gf2-core/src/primitive_polys.rs:108` | `trinomials(8)` returns a reducible polynomial; tracked by `@/issue/0657c9fa` |
 | `crates/gf2-coding/src/bch/dvb_t2/params.rs:40`, `:50` | Comments assign Table 6a to short frames and 6b to normal frames; unverified against the standard |
 | `crates/gf2-kernels-hip` | No file states the ROCm version the crate is tested with |
 | `dev/scripts/ccx1-bench-flock.sh:85` | A `dev/active/` path literal in an error message (`@/inv/no-dev-path-coupling`) |
