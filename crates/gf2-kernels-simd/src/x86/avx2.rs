@@ -664,7 +664,7 @@ pub(crate) fn fns() -> LogicalFns {
         valid_rows: usize,
     ) {
         assert_eq!(stride_words, 4, "m4rm_gray_build4: stride_words must be 4");
-        assert_m4rm_gray_build_lengths(
+        crate::m4rm::assert_gray_build_lengths(
             "m4rm_gray_build4",
             buffer.len(),
             panel.len(),
@@ -685,7 +685,7 @@ pub(crate) fn fns() -> LogicalFns {
         valid_rows: usize,
     ) {
         assert_eq!(stride_words, 8, "m4rm_gray_build8: stride_words must be 8");
-        assert_m4rm_gray_build_lengths(
+        crate::m4rm::assert_gray_build_lengths(
             "m4rm_gray_build8",
             buffer.len(),
             panel.len(),
@@ -831,33 +831,6 @@ pub(crate) fn fns() -> LogicalFns {
     }
 }
 
-/// Panics unless `table_size` is a nonzero power of two and the buffers hold
-/// `table_size` entries and `valid_rows` panel rows of `stride_words` words.
-///
-/// The Gray index of `i < table_size` stays below `table_size` only for a
-/// power of two, and the builders store entry 0 unconditionally.
-fn assert_m4rm_gray_build_lengths(
-    builder: &str,
-    buffer_len: usize,
-    panel_len: usize,
-    stride_words: usize,
-    table_size: usize,
-    valid_rows: usize,
-) {
-    assert!(
-        table_size.is_power_of_two(),
-        "{builder}: table_size must be a nonzero power of two"
-    );
-    let Some(table_words) = table_size.checked_mul(stride_words) else {
-        panic!("{builder}: table_size * stride_words overflows usize");
-    };
-    assert!(buffer_len >= table_words, "{builder}: buffer too small");
-    let Some(panel_words) = valid_rows.checked_mul(stride_words) else {
-        panic!("{builder}: valid_rows * stride_words overflows usize");
-    };
-    assert!(panel_len >= panel_words, "{builder}: panel too small");
-}
-
 #[inline]
 fn m4rm_c_block_covers_rows(c_block_len: usize, stride_words: usize) -> bool {
     stride_words
@@ -932,28 +905,6 @@ mod tests {
         (fns.m4rm_gray_xor16_fn)(&mut acc, &src);
     }
 
-    /// Scalar reference Gray-code table build: entry `g` = XOR of panel rows
-    /// whose bit is set in the binary index `g` (only `valid_rows` rows count).
-    fn scalar_gray_build(
-        panel: &[u64],
-        stride: usize,
-        table_size: usize,
-        valid_rows: usize,
-    ) -> Vec<u64> {
-        let mut buf = vec![0u64; table_size * stride];
-        for g in 0..table_size {
-            let off = g * stride;
-            for bit in 0..valid_rows {
-                if (g & (1 << bit)) != 0 {
-                    for w in 0..stride {
-                        buf[off + w] ^= panel[bit * stride + w];
-                    }
-                }
-            }
-        }
-        buf
-    }
-
     fn pseudo_panel(rows: usize, stride: usize, seed: u64) -> Vec<u64> {
         let mut s = seed | 1;
         let mut out = vec![0u64; rows * stride];
@@ -973,7 +924,8 @@ mod tests {
         for valid_rows in 1..=8usize {
             let table_size = 1usize << valid_rows;
             let panel = pseudo_panel(valid_rows, stride, 0xA53C_9E11 ^ valid_rows as u64);
-            let expected = scalar_gray_build(&panel, stride, table_size, valid_rows);
+            let mut expected = vec![0u64; table_size * stride];
+            crate::m4rm_gray_build_scalar(&mut expected, &panel, stride, table_size, valid_rows);
             let mut got = vec![0u64; table_size * stride];
             (fns.m4rm_gray_build4_fn)(&mut got, &panel, stride, table_size, valid_rows);
             assert_eq!(got, expected, "stride4 build mismatch at k={valid_rows}");
@@ -987,7 +939,8 @@ mod tests {
         for valid_rows in 1..=8usize {
             let table_size = 1usize << valid_rows;
             let panel = pseudo_panel(valid_rows, stride, 0x71B2_44DD ^ valid_rows as u64);
-            let expected = scalar_gray_build(&panel, stride, table_size, valid_rows);
+            let mut expected = vec![0u64; table_size * stride];
+            crate::m4rm_gray_build_scalar(&mut expected, &panel, stride, table_size, valid_rows);
             let mut got = vec![0u64; table_size * stride];
             (fns.m4rm_gray_build8_fn)(&mut got, &panel, stride, table_size, valid_rows);
             assert_eq!(got, expected, "stride8 build mismatch at k={valid_rows}");

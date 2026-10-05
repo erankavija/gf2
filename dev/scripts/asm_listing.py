@@ -26,6 +26,9 @@ LOCAL = [
 ]
 STATUS = re.compile(r"^\s*(Compiling|Finished) |^;=+$")
 RUSTFLAGS = re.compile(r"^; RUSTFLAGS     : (.*)$", re.M)
+PACKAGE = re.compile(r"^; crate         : (\S+)$", re.M)
+TARGET_CPU = re.compile(r"^; target-cpu    : (\S+)$", re.M)
+FEATURES = re.compile(r"^; features      : (\S+)$", re.M)
 UNSET = "<empty>"
 
 
@@ -49,10 +52,34 @@ def selectors(artefact: str) -> list[str]:
     ]
 
 
+def package(artefact: str) -> str:
+    """The cargo package the banner records."""
+    return PACKAGE.search(artefact)[1]
+
+
+def target_cpu(artefact: str) -> str:
+    """The `TARGET_CPU` the banner records; empty when it records none."""
+    found = TARGET_CPU.search(artefact)
+    return "" if found is None or found[1].startswith("<") else found[1]
+
+
+def features(artefact: str) -> str:
+    """The `CARGO_FEATURES` the banner records; empty when it records none."""
+    found = FEATURES.search(artefact)
+    return "" if found is None else found[1]
+
+
 def rustflags(artefact: str) -> str:
-    """The `EXTRA_RUSTFLAGS` the banner records; empty when it records none."""
+    """The `EXTRA_RUSTFLAGS` the banner records; empty when it records none.
+
+    `regen-asm.sh` writes the target-cpu flag first on the banner's line and
+    derives it from `TARGET_CPU`, so it is not part of the extra flags.
+    """
     found = RUSTFLAGS.search(artefact)
-    return "" if found is None or found[1] == UNSET else found[1]
+    if found is None or found[1] == UNSET:
+        return ""
+    cpu = target_cpu(artefact)
+    return found[1].removeprefix(f"-C target-cpu={cpu}").strip() if cpu else found[1]
 
 
 def digest(text: str) -> str:

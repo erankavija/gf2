@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : f86313232
-; regenerated   : 2026-10-05T04:30:39Z
+; commit        : 6d03804a2
+; regenerated   : 2026-10-05T05:20:00Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -19,8 +19,8 @@
 ;==========================================================
 
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-7d44b71f/crates/gf2-kernels-simd)
-    Finished `release` profile [optimized] target(s) in 2.40s
 
+    Finished `release` profile [optimized] target(s) in 2.39s
 gf2_kernels_simd::x86::avx2::avx2_xor_into:
 	cmp rcx, rsi
 	cmovb rsi, rcx
@@ -55,7 +55,7 @@ gf2_kernels_simd::x86::avx2::avx2_xor_into:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_and_into
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::avx2::avx2_and_into:
 	cmp rcx, rsi
@@ -91,7 +91,7 @@ gf2_kernels_simd::x86::avx2::avx2_and_into:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_or_into
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::avx2::avx2_or_into:
 	cmp rcx, rsi
@@ -394,7 +394,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 	mov r8d, 4
 	sub r8, rax
 	neg rax
-	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.151]
+	lea rcx, [rip + .Lanon.3f02b0db4b7d8a5d462b47c780c6b244.154]
 	mov rdi, rax
 	mov rdx, rsi
 	mov rsi, r8
@@ -492,7 +492,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 	mov r8d, 4
 	sub r8, rax
 	neg rax
-	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.152]
+	lea rcx, [rip + .Lanon.3f02b0db4b7d8a5d462b47c780c6b244.155]
 	mov rdi, rax
 	mov rdx, rsi
 	mov rsi, r8
@@ -598,14 +598,14 @@ gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 	pop r15
 	jmp qword ptr [rip + memset@GOTPCREL]
 .LBB84_16:
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.154]
+	lea rdx, [rip + .Lanon.3f02b0db4b7d8a5d462b47c780c6b244.157]
 	mov rdi, rax
 	mov rsi, rbx
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
 .LBB84_15:
 	not rdx
 	add rdx, r10
-	lea rax, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.153]
+	lea rax, [rip + .Lanon.3f02b0db4b7d8a5d462b47c780c6b244.156]
 	mov rdi, rdx
 	mov rsi, rbx
 	mov rdx, rax
@@ -702,7 +702,7 @@ gf2_kernels_simd::x86::avx2::avx2_shift_right_words:
 	vzeroupper
 	ret
 .LBB86_20:
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.155]
+	lea rdx, [rip + .Lanon.3f02b0db4b7d8a5d462b47c780c6b244.158]
 	mov rdi, rax
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]

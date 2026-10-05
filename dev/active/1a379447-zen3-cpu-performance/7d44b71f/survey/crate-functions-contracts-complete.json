@@ -1,13 +1,13 @@
 {
   "schema": "crate-function-digests-v1",
   "issue": "7d44b71f",
-  "tree": "current",
+  "tree": "contracts-complete",
   "command": "cargo rustc --release -p gf2-kernels-simd --lib -- --emit=asm",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
   "rule": "Per `@function` symbol of the emitted assembly, the lines from its label to its `.Lfunc_end` label, without assembler directives. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_`, `.LJTI<n>_`, `.Ltmp<n>`, `.Lfunc_begin<n>`, `.Lexception<n>` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
   "anchor": {
-    "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/after-1b034786-baseline.json",
-    "baseline_sha256": "5fb82b74fc81ada8514c8121a52c524bb26a1cc81c42912a3e3d0d5092a11e2a"
+    "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/contracts-complete-baseline.json",
+    "baseline_sha256": "a109f4fdc3bc07be2a8e270f4a3949ac0ee8f9e5aa4db9402b762783fcc73f8a"
   },
   "sources_sha256": "8d6e8975bc5840158d11c61738bd38e775ad4b919d369727e75884948386fe81",
   "functions": {
