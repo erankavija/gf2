@@ -47,9 +47,11 @@ PACKAGE = repository_files.package_directory(ROOT, PACKAGE_NAME)
 #   before-1b034786   the tree holding this task's contracts, before the code
 #                     change of jit:1b034786
 #   after-1b034786    the tree that change leaves
+#   contracts-complete  the tree holding the contracts of the two calls that
+#                     change makes dischargeable
 #
 # The task's own change is `anchor` to `before-1b034786` and `after-1b034786`
-# to the working tree; the step between belongs to jit:1b034786.
+# to `contracts-complete`; the step between belongs to jit:1b034786.
 FIX = "1b034786"
 
 
@@ -60,7 +62,18 @@ def _baseline(stage):
 ANCHOR = _baseline("anchor")
 BEFORE_FIX = _baseline(f"before-{FIX}")
 AFTER_FIX = _baseline(f"after-{FIX}")
-BASELINES = {"anchor": ANCHOR, f"before-{FIX}": BEFORE_FIX, f"after-{FIX}": AFTER_FIX}
+COMPLETE = _baseline("contracts-complete")
+BASELINES = {
+    "anchor": ANCHOR,
+    f"before-{FIX}": BEFORE_FIX,
+    f"after-{FIX}": AFTER_FIX,
+    "contracts-complete": COMPLETE,
+}
+# The task's two steps, as (name, first tree, last tree).
+STEPS = [
+    (f"anchor to before-{FIX}", "anchor", f"before-{FIX}"),
+    (f"after-{FIX} to contracts-complete", f"after-{FIX}", "contracts-complete"),
+]
 
 
 def digest_changes(before, after):

@@ -13,6 +13,10 @@
     "after-1b034786": {
       "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/after-1b034786-baseline.json",
       "baseline_sha256": "5fb82b74fc81ada8514c8121a52c524bb26a1cc81c42912a3e3d0d5092a11e2a"
+    },
+    "contracts-complete": {
+      "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/contracts-complete-baseline.json",
+      "baseline_sha256": "a109f4fdc3bc07be2a8e270f4a3949ac0ee8f9e5aa4db9402b762783fcc73f8a"
     }
   },
   "excluded_step": "before-1b034786 to after-1b034786, the code change of jit:1b034786",
@@ -1097,7 +1101,7 @@
       ]
     },
     {
-      "step": "after-1b034786 to working tree",
+      "step": "after-1b034786 to contracts-complete",
       "source_class_counts": {
         "assembly-listing": 1,
         "comment-or-blank-only": 1

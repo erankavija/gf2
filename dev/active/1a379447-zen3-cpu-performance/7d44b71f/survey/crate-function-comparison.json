@@ -1545,7 +1545,7 @@
       ]
     },
     {
-      "step": "after-1b034786 to working tree",
+      "step": "after-1b034786 to contracts-complete",
       "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
       "before_sources_sha256": "5dbfc0acd58bdb7eb98cee1500a06a9d3666301bd72b2ee8e90d9b56777a8067",
       "after_sources_sha256": "8d6e8975bc5840158d11c61738bd38e775ad4b919d369727e75884948386fe81",

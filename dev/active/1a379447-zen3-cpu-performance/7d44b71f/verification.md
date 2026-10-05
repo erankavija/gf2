@@ -8,7 +8,7 @@ command takes a timing window, the host lock, or an ignored test.
 
 ## Baselines
 
-Three trees are identified by content; `survey/locate.py` names them. Each
+Four trees are identified by content; `survey/locate.py` names them. Each
 `survey/<stage>-baseline.json` holds the SHA-256 of every file of
 `gf2-kernels-simd` in that tree, and `survey/inputs/<stage>/` holds the bytes
 of each path the working tree changes, checked against its baseline digest on
@@ -26,12 +26,16 @@ reads.
 - [`after-1b034786`](survey/after-1b034786-baseline.json): the tree the code
   change of jit:1b034786 leaves, in which those two wrappers assert the
   conditions their kernels need.
+- [`contracts-complete`](survey/contracts-complete-baseline.json): that tree
+  with the contracts of the two wrapper calls.
 
 This task's change is two steps: `anchor` to `before-1b034786`, and
-`after-1b034786` to the working tree. The step between them is the code change
+`after-1b034786` to `contracts-complete`. The step between them is the code change
 of jit:1b034786, which its own
 [record](../1b034786/verification.md) covers; the comparisons below leave it
-out and state so in their `excluded_step` field.
+out and state so in their `excluded_step` field. Changes after
+`contracts-complete` are outside them as well; the inventory alone reads the
+working tree.
 
 ## Unsafe-boundary inventory (REQ-01, REQ-02)
 
@@ -105,15 +109,14 @@ predecessor in its banner, which carries the commit and time of regeneration, an
 compiler-numbered local names.
 
 The listings cover the symbols they name. For every other function the crate
-emits, `python3 -B survey/make-crate-functions.py current` builds the package
-with `--emit=asm`, digests each function's instruction text under the record's
-`rule`, and joins the per-tree digest records across the same two steps in the
-[function comparison](survey/crate-function-comparison.json); each step's
-`function_count` and `differing_function_count` total it. Every row of both
-steps carries `instruction_text: same`.
-`make-crate-functions.py freeze <stage>` writes the record of one baseline
-tree and refuses to run unless every package file other than a listing holds
-that baseline's digest.
+emits, `python3 -B survey/make-crate-functions.py freeze <stage>` builds the
+package with `--emit=asm` on a tree that holds that baseline's digests and
+writes the digest of each function's instruction text under the record's
+`rule`. `make-crate-functions.py compare` checks each of the four records
+against its baseline's source digests and joins them across the same two steps
+in the [function comparison](survey/crate-function-comparison.json); each
+step's `function_count` and `differing_function_count` total it. Every row of
+both steps carries `instruction_text: same`.
 
 ## Shared suites (REQ-03)
 
