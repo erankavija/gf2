@@ -1,0 +1,27 @@
+{
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-05T22:03:54.970696292Z",
+  "context": {},
+  "created_at": "2026-10-05T22:03:07.663518632Z",
+  "dependencies": [],
+  "description": "`dev/active/fa787f85-documentation-overhaul/96cea1b9-archive-rows.py` reconciles migration manifest rows with the executed archive of container 6dc81018. It stops when the tracker holds more than one `artifact_archive_executed` event for that container, which is the state after the container's re-archive.\n\n## Success Criteria\n\n- [hard] REQ-01: `96cea1b9-archive-rows.py --check` exits zero on the committed tree and decides each manifest row from the publications of every `artifact_archive_executed` event of container 6dc81018, the latest event deciding a source that several events name.\n- [hard] REQ-02: `96cea1b9-archive-rows.txt` equals the script's `--check` output at the commit that the reconciliation record names, shown by a `diff` with empty output.\n- [hard] REQ-03: The change adds no path literal under `dev/` and no file list to the script.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T22:03:07.663518632Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "docs-mechanical"
+  ],
+  "gates_status": {},
+  "id": "8466f5ae-a90f-45b8-a322-3e702c31cfbd",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "in_progress",
+  "title": "Accept repeated archive events in the 6dc81018 row reconciliation",
+  "updated_at": "2026-10-05T22:03:54.970696292Z"
+}

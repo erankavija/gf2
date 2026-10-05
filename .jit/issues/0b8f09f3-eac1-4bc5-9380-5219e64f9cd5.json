@@ -1,0 +1,25 @@
+{
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-05T22:03:55.234479646Z",
+  "context": {},
+  "created_at": "2026-10-05T22:03:07.782697674Z",
+  "dependencies": [],
+  "description": "Two investigation records under `dev/active/` cite `docs/lean4-verification-pipeline.md`, which lives in the archive of epic e095a100 as `dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md`.\n\n## Background\n\nCiting lines: `dev/active/6dc81018-field-capability-dispatch/investigation.md:512,586` and `dev/active/ae03bcd0-general-bch/investigation.md:130,140`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each citation of `docs/lean4-verification-pipeline.md` in a file under `dev/active/` that no digest pins names the archived file's path; only the path text changes.\n- [hard] REQ-02: A citing file that a digest or a commit-pinned tracker reference pins keeps its bytes and is listed with its pin at file:line in the commit message.\n- [hard] REQ-03: `git grep -nF 'docs/lean4-verification-pipeline.md'` outside `dev/archive/`, `.jit/` and the migration manifest prints only archived-path citations and the files listed under REQ-02.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T22:03:07.782697674Z",
+  "gates_required": [
+    "doc-review",
+    "docs-mechanical"
+  ],
+  "gates_status": {},
+  "id": "0b8f09f3-eac1-4bc5-9380-5219e64f9cd5",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:docs",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "in_progress",
+  "title": "Repoint Lean pipeline guide citations in active investigations",
+  "updated_at": "2026-10-05T22:03:55.234479646Z"
+}

@@ -4,6 +4,7 @@
   "context": {},
   "created_at": "2026-07-14T20:40:18.243554691Z",
   "dependencies": [
+    "0b8f09f3-eac1-4bc5-9380-5219e64f9cd5",
     "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
     "157c305c-925a-4f5d-89e5-299c05c5a0f5",
     "41e1d47d-046e-4808-a424-83898cf9b1ee",
@@ -12,6 +13,7 @@
     "60652fe4-d6dd-49e9-97f1-db99b4c73111",
     "629e0ff0-29ce-4450-83a0-f56bb1fda15b",
     "62ce5927-c37e-439f-80e0-d5ce05349f5a",
+    "8466f5ae-a90f-45b8-a322-3e702c31cfbd",
     "84db2984-3373-43a3-bd0c-8f55700652cb",
     "875914b3-38c8-4ec2-a13f-009fc620f7d4",
     "96cea1b9-d496-461e-bde0-50be7af91805",
@@ -198,5 +200,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-04T22:15:13.910366540Z"
+  "updated_at": "2026-10-05T22:03:11.750677345Z"
 }

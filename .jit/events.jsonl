@@ -18893,3 +18893,10 @@
 {"assignee":"agent:worker","id":"43f8c6f5-8f0e-4a59-a850-7c4b8672dfec","issue_id":"0c5aa3b7-4846-4ec8-a578-14e6b35e78dd","timestamp":"2026-10-05T21:56:41.602266112Z","type":"issue_claimed"}
 {"from":"ready","id":"f9bf96cb-6562-4465-b3d0-04c38b61f413","issue_id":"fdb998ec-6042-4112-8bf9-1f179128d62b","timestamp":"2026-10-05T21:56:41.740819370Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"66cc9876-4734-4c74-8d03-a31721663819","issue_id":"fdb998ec-6042-4112-8bf9-1f179128d62b","timestamp":"2026-10-05T21:56:41.740819370Z","type":"issue_claimed"}
+{"id":"6819ac68-3b6a-49db-a4d8-7296596d18dc","issue_id":"8466f5ae-a90f-45b8-a322-3e702c31cfbd","priority":"normal","timestamp":"2026-10-05T22:03:07.663518632Z","title":"Accept repeated archive events in the 6dc81018 row reconciliation","type":"issue_created"}
+{"id":"45f04a30-535e-4320-b3a5-bc1c55368a3a","issue_id":"0b8f09f3-eac1-4bc5-9380-5219e64f9cd5","priority":"normal","timestamp":"2026-10-05T22:03:07.782697674Z","title":"Repoint Lean pipeline guide citations in active investigations","type":"issue_created"}
+{"fields":["dependencies"],"id":"41062c63-11c9-4581-a027-2f6673c5c045","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-05T22:03:11.750677345Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"b29551b8-0cc8-4f09-9f53-48292a94cf16","issue_id":"8466f5ae-a90f-45b8-a322-3e702c31cfbd","timestamp":"2026-10-05T22:03:54.970696292Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"cdf7bdce-3159-41b2-8c5f-853f9c82b600","issue_id":"8466f5ae-a90f-45b8-a322-3e702c31cfbd","timestamp":"2026-10-05T22:03:54.970696292Z","type":"issue_claimed"}
+{"from":"ready","id":"d67583d6-096b-4c7e-950e-ab39d3fe1710","issue_id":"0b8f09f3-eac1-4bc5-9380-5219e64f9cd5","timestamp":"2026-10-05T22:03:55.234479646Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"0eed480e-1e29-4c98-b390-132d4abb8a97","issue_id":"0b8f09f3-eac1-4bc5-9380-5219e64f9cd5","timestamp":"2026-10-05T22:03:55.234479646Z","type":"issue_claimed"}
