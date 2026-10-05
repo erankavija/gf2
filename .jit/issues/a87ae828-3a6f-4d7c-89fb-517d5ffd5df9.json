@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-05T18:43:44.450174204Z",
   "context": {},
   "created_at": "2026-10-05T03:39:14.959300842Z",
@@ -118,7 +118,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-05T18:56:55.390246353Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T19:07:21.945439710Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "a87ae828-3a6f-4d7c-89fb-517d5ffd5df9",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -128,5 +139,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Stop the dense-parity source-evidence generator rewriting its pinned ledger",
-  "updated_at": "2026-10-05T18:53:21.758891954Z"
+  "updated_at": "2026-10-05T19:07:21.945439710Z"
 }
