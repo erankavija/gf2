@@ -75,12 +75,11 @@
  ],
  "tests_by_package": {
   "gf2-algebra": 5,
-  "gf2-core": 6,
   "gf2-kernels-simd": 214,
   "ldpc-intrinsics-probe": 10,
   "simd_batching_bench": 6
  },
- "tests_in_workspace_members": 225,
+ "tests_in_workspace_members": 219,
  "tests": [
   {
    "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
@@ -130,66 +129,6 @@
    "return_line": 707,
    "header": "let fns = match super::maybe_bipedal_avx2()",
    "package": "gf2-algebra",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-core/benches/tuning_calibration.rs",
-   "test": "accepted_owner_selects_nondefault_gemm_coordinate_and_extent",
-   "test_line": 11079,
-   "guard_function": null,
-   "return_line": 11081,
-   "header": "if simd_backend().is_none()",
-   "package": "gf2-core",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-core/benches/tuning_calibration.rs",
-   "test": "accepted_owner_keeps_the_proposed_m4rm_vector_after_joint_validation",
-   "test_line": 11121,
-   "guard_function": null,
-   "return_line": 11123,
-   "header": "if simd_backend().is_none()",
-   "package": "gf2-core",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-core/benches/tuning_calibration.rs",
-   "test": "accepted_owner_falls_back_as_a_whole_after_one_joint_shape_fails",
-   "test_line": 11142,
-   "guard_function": null,
-   "return_line": 11144,
-   "header": "if simd_backend().is_none()",
-   "package": "gf2-core",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-core/benches/tuning_calibration.rs",
-   "test": "accepted_owner_rejects_a_joint_vector_inconsistent_with_one_factor_evidence",
-   "test_line": 11162,
-   "guard_function": null,
-   "return_line": 11164,
-   "header": "if simd_backend().is_none()",
-   "package": "gf2-core",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-core/benches/tuning_calibration.rs",
-   "test": "owner_emission_publishes_the_launcher_named_profile_and_strictly_reopens_it",
-   "test_line": 11208,
-   "guard_function": null,
-   "return_line": 11210,
-   "header": "if simd_backend().is_none()",
-   "package": "gf2-core",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-core/benches/tuning_calibration.rs",
-   "test": "accepted_complete_experiment_measures_defaults_and_reopens_only_its_30_leaves",
-   "test_line": 11405,
-   "guard_function": null,
-   "return_line": 11407,
-   "header": "if simd_backend().is_none()",
-   "package": "gf2-core",
    "workspace_member": true
   },
   {
