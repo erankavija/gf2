@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T18:38:42.553395118Z",
+  "dependencies": [],
+  "description": "Kernel tests of `gf2-kernels-simd` return early when feature detection finds no SIMD bundle and are then reported as passed; a kernel test asserts on every host or is not reported as passed.\n\n## Background\n\nThe search record `dev/active/1a379447-zen3-cpu-performance/54e70918/survey/simd-early-returns.json`, written by `find-simd-early-returns.py` beside it, states its search rule and lists each test that returns early when a SIMD probe finds nothing, with its package, file and guard. Its `gf2-kernels-simd` rows are tests of the kernels themselves, in the portable front modules and under `src/x86/`. Each compares a kernel with a scalar definition and returns at once when the probe reports nothing, so a host without the instruction set reports equivalence that it did not check. libtest has no run-time skip that the test runner reports as skipped. The list-form contract `gf2_kernels_simd::m4rm::contract` always includes the portable reference, refuses an empty implementation list and prints which implementations ran.\n\n## Success Criteria\n\n- [hard] REQ-01: Each test the search record lists for `gf2-kernels-simd` either runs reference assertions against an independent definition on every host or is not reported as passed when no SIMD implementation is available.\n- [hard] REQ-02: Each such test asserts that it exercised a non-zero number of implementations and names them in its output.\n- [hard] REQ-03: The regenerated search record lists no `gf2-kernels-simd` test, and the crate's suites pass with and without the `simd` feature on Rust 1.95.\n\n## Notes\n\nFound by the workspace search for SIMD equivalence tests that pass without running. Where a test has nothing to assert without a SIMD implementation, the `gf2-core` tests fail on a stated precondition.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T18:38:42.553395118Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "6605cac2-bf0d-4805-a0d7-cc6e012af716",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-kernels-simd",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Stop gf2-kernels-simd kernel tests passing without running on hosts without SIMD",
+  "updated_at": "2026-10-05T18:38:42.553395118Z"
+}

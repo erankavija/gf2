@@ -4,7 +4,7 @@
   "context": {},
   "created_at": "2026-10-05T02:13:55.518842609Z",
   "dependencies": [],
-  "description": "The AVX2 kernel keeps XOR unroll variants that the logical-buffer study measured and did not select; the production kernel carries only selected routes.\n\n## Background\n\n`crates/gf2-kernels-simd/src/x86/avx2.rs` contains alternative XOR loop bodies compiled under `cfg(gf2_xor_unroll2)` and `cfg(gf2_xor_unroll4)`, with a matching `check-cfg` entry in the crate's `Cargo.toml`. The logical-buffer candidate campaign measured both factors and its outcome selects neither; the default build never compiles them. The committed receipts keep byte snapshots of the sources they measured, so the experiment stays reproducible from its own evidence after the live bodies are removed.\n\n## Success Criteria\n\n- [hard] REQ-01: No source or manifest in the workspace defines or reads `gf2_xor_unroll2` or `gf2_xor_unroll4`.\n- [hard] REQ-02: The instruction text of every default-build symbol of the module is unchanged, shown by a committed comparison of the regenerated assembly listing.\n- [hard] REQ-03: The shared XOR behavioural suites pass with and without the `simd` feature on Rust 1.95, and no committed receipt, input snapshot or ledger changes.\n- [hard] REQ-04: Live documents that describe the unroll candidates state that the variants exist in the receipts' snapshots only.\n\n## Notes\n\nFound by the mid-range evidence synthesis.\n",
+  "description": "The AVX2 kernel keeps XOR unroll variants that the logical-buffer study measured and did not select; the production kernel carries only selected routes.\n\n## Background\n\n`crates/gf2-kernels-simd/src/x86/avx2.rs` contains alternative XOR loop bodies compiled under `cfg(gf2_xor_unroll2)` and `cfg(gf2_xor_unroll4)`, with a matching `check-cfg` entry in the crate's `Cargo.toml`. The logical-buffer candidate campaign measured both factors and its outcome selects neither; the default build never compiles them. The committed receipts keep byte snapshots of the sources they measured, so the experiment stays reproducible from its own evidence after the live bodies are removed.\n\n## Success Criteria\n\n- [hard] REQ-01: No source or manifest in the workspace defines or reads `gf2_xor_unroll2` or `gf2_xor_unroll4`.\n- [hard] REQ-02: The instruction text of every default-build symbol of the module is unchanged, shown by a committed comparison of the regenerated assembly listing.\n- [hard] REQ-03: The shared XOR behavioural suites pass with and without the `simd` feature on Rust 1.95, and no committed receipt, receipt input snapshot or trial ledger changes.\n- [hard] REQ-04: Live documents that describe the unroll candidates state that the variants exist in the receipts' snapshots only.\n\n## Notes\n\nFound by the mid-range evidence synthesis.\n",
   "documents": [
     {
       "assets": [
@@ -265,5 +265,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Remove the unselected XOR unroll bodies from the AVX2 kernel",
-  "updated_at": "2026-10-05T09:11:34.819633312Z"
+  "updated_at": "2026-10-05T18:38:21.626375618Z"
 }

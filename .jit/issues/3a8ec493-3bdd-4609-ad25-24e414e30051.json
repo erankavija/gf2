@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T18:38:42.922102507Z",
+  "dependencies": [],
+  "description": "The two family producing-input closures of the mid-range buffer study enumerate the source tree, and a merge that adds or removes an enumerated source file invalidates them without any CI step noticing; the CI contract checks them.\n\n## Background\n\n`make-dense-producing-inputs.py` and `make-logical-producing-inputs.py`, under `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/`, write `dense-producing-inputs.json` and `logical-producing-inputs.json` beside them. Each has a `--check` mode that writes nothing and exits non-zero when the committed closure differs from the tree. `scripts/cargo-ci.sh` runs `dev/scripts/check-campaign-producing-closure.py`, which checks the shared closure only and leaves a family closure to its generator's `--check`. No CI step runs either generator's check.\n\n## Success Criteria\n\n- [hard] REQ-01: `./scripts/cargo-ci.sh` fails when either family closure differs from the tree, shown by a test that adds a source file to an enumerated directory.\n- [hard] REQ-02: Both checks pass on the committed tree; the added CI work compiles nothing and writes nothing inside the repository.\n- [hard] REQ-03: The CI script reaches the closures through the repository's shared file locator, with no literal development-artifact path.\n\n## Notes\n\nFound when merges that added source files left both closures stale.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-05T18:38:42.922102507Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "3a8ec493-3bdd-4609-ad25-24e414e30051",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Check the mid-range family producing closures in the CI contract",
+  "updated_at": "2026-10-05T18:38:42.922102507Z"
+}

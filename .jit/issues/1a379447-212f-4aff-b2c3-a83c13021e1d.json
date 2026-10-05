@@ -6,9 +6,11 @@
   "dependencies": [
     "1362381c-78c0-42eb-bdc9-4327f20bc343",
     "316150fd-0a09-45db-8b0e-2a89ce4d64db",
+    "3a8ec493-3bdd-4609-ad25-24e414e30051",
     "4337c02e-4e36-46c0-8d22-8adcd9cade9b",
     "4c1e441f-2bb4-43dd-bd73-256c3721800a",
     "54e70918-23cb-48e1-aa5b-815a7be48e8e",
+    "6605cac2-bf0d-4805-a0d7-cc6e012af716",
     "66698c3c-b1c4-496a-a205-e0307b61eb24",
     "6833c5b5-a2c7-4fda-b50b-6b37b57877af",
     "7d44b71f-8764-4438-9f4a-4e6b8360667d",
@@ -17,6 +19,7 @@
     "b2e09d41-4c66-4c71-a129-44261f7e420d",
     "bfc2ceab-4f02-477d-8d41-94a05715a6c2",
     "c5e01de3-c6ae-4a0a-80c5-646d744aff80",
+    "dcfe8386-cd61-48ba-bb31-e1d010b21bf9",
     "dd359005-8d9b-45b5-ac9a-cd6e446eedb6",
     "fa1d8733-f970-4677-8971-1b9bada40ae4"
   ],
@@ -1557,5 +1560,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-10-05T09:12:49.558648581Z"
+  "updated_at": "2026-10-05T18:38:43.361542695Z"
 }
