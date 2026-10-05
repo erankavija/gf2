@@ -66,7 +66,8 @@ warm, and streaming work. The raw reports do not isolate an allocator, spill,
 or bandwidth gain assignable to a new full-count fusion. The
 [pinned source ledger](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json)
 identifies the public matvec route, its per-row bundle call, and the existing
-kernel body.
+kernel body in the cited files at the commits its rows record
+([verification](../6833c5b5/verification.md)).
 
 ## Portfolio decision
 
