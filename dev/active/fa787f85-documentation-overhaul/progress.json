@@ -850,14 +850,14 @@
      "short_id": "0a0ece44",
      "title": "Resolve stray and ownerless dev entries",
      "classification": "implementation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "0c5aa3b7-4846-4ec8-a578-14e6b35e78dd",
      "short_id": "0c5aa3b7",
      "title": "Relocate loose narrative Markdown out of simulation_results and studies",
      "classification": "implementation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "198aafa3-0553-4a93-8dab-6e971fe3048b",
@@ -913,7 +913,7 @@
      "short_id": "ec655592",
      "title": "Empty dev/plans through archival or legacy moves",
      "classification": "implementation",
-     "status": "review"
+     "status": "done"
     },
     {
      "id": "f6148d1e-d151-4c21-8507-7efd39044548",
@@ -1830,7 +1830,7 @@
   "f902240f": 2,
   "f29a9225": 2,
   "616e1d7c": 2,
-  "0c5aa3b7": 1,
+  "0c5aa3b7": 2,
   "0a0ece44": 1
  },
  "surfaced_pitfalls": [
@@ -2036,7 +2036,8 @@
   "Session 9: gf2-53 leads epic 1a379447 and commits on main from the same checkout. Both leads announce gate evaluations and cargo-ci runs to each other before starting; stage by explicit path; .jit/events.jsonl is shared and carries the other session's events.",
   "Session 9 close: owner asked for the handoff once running tasks finished. Wave 11 open items: 616e1d7c (rework, owner question), 2596b143 (not dispatched), 198aafa3 (wave 12, blocked). Benchmark window of gf2-53 armed for 02:00 on 2026-10-05; no build or gate from 01:55 until window.log shows window end.",
   "Session 10 (2026-10-06): owner instruction: subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Batch 1 dispatched 00:58 EEST at 412b3cd49 in worktrees created by `git worktree add` (no cache seeding, no builds): 616e1d7c rework 2, 7dbcde0c, 0a0ece44, b2bb1065, ec655592, 0c5aa3b7 (sonnet), fdb998ec; fix lane agent-fixlane7 (sonnet) for 8466f5ae and 0b8f09f3 at b68598fc6. Read-only explorer writes decoupling facts for the eight flat entries to the session scratchpad. Bench window timer gf2-bench-window-20261006 armed for 02:00 EEST: no build or gate from 01:55 until window.log shows window end. Build units for after the window: e1f262a7, 7039d680, 602652bf, f79bcba3 (2037941f is done, its entry moves), 198aafa3, then 2596b143.",
-  "Session 10 gate batch 1 at 6a38cc8b6 (cargo-ci 4 min warm): fdb998ec, 0b8f09f3, 8466f5ae, b2bb1065 done. 0c5aa3b7 doc-review F1 and 0a0ece44 code-review F1 fail on one class: citations of a moved path left in non-pinned active documents under a \"historical\" or \"copy of descriptions\" ground. Accepted grounds for a remaining old path: digest pin at file:line, marker-backed archive, receipts and inputs/ snapshots, tool output at a named commit, manifest schema fields, tracker state. Brief every move unit with this. Pinned tracker references stay untouched (old path at pinned commit). 0a0ece44 cargo-ci failed once on gf2-sim GPU AWGN tests (SIGABRT, 15 s timeout) in the evaluate-many rerun: infrastructure, rerun."
+  "Session 10 gate batch 1 at 6a38cc8b6 (cargo-ci 4 min warm): fdb998ec, 0b8f09f3, 8466f5ae, b2bb1065 done. 0c5aa3b7 doc-review F1 and 0a0ece44 code-review F1 fail on one class: citations of a moved path left in non-pinned active documents under a \"historical\" or \"copy of descriptions\" ground. Accepted grounds for a remaining old path: digest pin at file:line, marker-backed archive, receipts and inputs/ snapshots, tool output at a named commit, manifest schema fields, tracker state. Brief every move unit with this. Pinned tracker references stay untouched (old path at pinned commit). 0a0ece44 cargo-ci failed once on gf2-sim GPU AWGN tests (SIGABRT, 15 s timeout) in the evaluate-many rerun: infrastructure, rerun.",
+  "Session 10 gate batch 2 at c1dd3218c: 0c5aa3b7 (two reworks), 0a0ece44 (one rework), ec655592 (first run, after a pre-gate fix of the retained-citation class) done. Lessons: a move unit scopes Markdown by `git ls-files -- <dir> | grep` at any depth and leaves no manifest row of its directories pending; a dataset README that Rustdoc cites stays beside its dataset (0c5aa3b7, as the OSD READMEs); after repointing links inside a tracker-referenced document, rescan the reference with `jit doc add` (asset metadata), pinned references excepted."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
