@@ -126,24 +126,24 @@
     {
       "id": "ci-baked-step",
       "project": "gf2",
-      "commit": "18d31dec9769b78625393130c08b698a79c32af2",
+      "commit": "70aff745c582a90cda3b4d3d028b9de7a2c21958",
       "path": "scripts/cargo-ci.sh",
-      "line": 274,
+      "line": 280,
       "occurrences": 1,
       "verbatim": "run_step baked-core env RUSTFLAGS=\"--cfg gf2_tuning_baked\" \"$BUDGET\" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable",
       "why": "CI builds the baked configuration in one scoped step; every other step keeps the conservative constants.",
-      "sha256": "7cb646b32f291f8c6b838f3fa01f5b3d0558791e16df1e7cae62dafbd4f6124a"
+      "sha256": "6e084c6121cd65823b384b4c5760b1d89b28c208213082c5c3464d2b92245a0d"
     },
     {
       "id": "ci-feature-flags",
       "project": "gf2",
-      "commit": "18d31dec9769b78625393130c08b698a79c32af2",
+      "commit": "70aff745c582a90cda3b4d3d028b9de7a2c21958",
       "path": "scripts/cargo-ci.sh",
       "line": 208,
       "occurrences": 1,
       "verbatim": "  FEAT_FLAGS=\"--features simd,parallel,visualization,llr-f64\"",
       "why": "The workspace test step of CI enables `simd`, so it runs the shared fallback contract on the kernel build only.",
-      "sha256": "7cb646b32f291f8c6b838f3fa01f5b3d0558791e16df1e7cae62dafbd4f6124a"
+      "sha256": "6e084c6121cd65823b384b4c5760b1d89b28c208213082c5c3464d2b92245a0d"
     },
     {
       "id": "logical-bundle-detect",
@@ -616,7 +616,7 @@
       "occurrences": 1,
       "verbatim": "    const ALL: [Self; 19] = [",
       "why": "The core producer sweeps a closed list of retained threshold fields.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
     },
     {
       "id": "calibration-bit-arm",
@@ -627,7 +627,7 @@
       "occurrences": 1,
       "verbatim": "                Arm::Conservative => &ScalarBackend,",
       "why": "The producer calibrates `bit_backend.simd_min_words` on the XOR of the two backends called directly.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
     },
     {
       "id": "calibration-launcher-declaration",
@@ -660,7 +660,7 @@
       "occurrences": 1,
       "verbatim": "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;",
       "why": "The producer publishes only when its measured and omitted fields partition a fixed codec inventory.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b"
     },
     {
       "id": "calibration-validator-behavior",
@@ -764,79 +764,79 @@
     {
       "id": "protocol-family-alpha",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 75,
       "occurrences": 1,
       "verbatim": "    family_alpha: 0.05,",
       "why": "The frozen family-wise alpha.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-bootstrap-resamples",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 76,
       "occurrences": 1,
       "verbatim": "    bootstrap_resamples: 10_000,",
       "why": "The frozen bootstrap resample count.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-confirmatory-pairs",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 77,
       "occurrences": 1,
       "verbatim": "    confirmatory_pairs: 24,",
       "why": "The frozen pair count of a confirmatory or holdout cell.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-pilot-min-pairs",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 78,
       "occurrences": 1,
       "verbatim": "    pilot_min_pairs: 6,",
       "why": "The frozen minimum pair count of an exploratory cell.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-windows-per-execution",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 80,
       "occurrences": 1,
       "verbatim": "    windows_per_execution: 5,",
       "why": "The frozen window count of one execution.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-window-target",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 81,
       "occurrences": 1,
       "verbatim": "    window_target_ms: 100,",
       "why": "The frozen window target length.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-holdout-required",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
-      "line": 973,
+      "line": 1003,
       "occurrences": 1,
       "verbatim": "                \"selector-calibration and final-integration families require holdout cells\".into(),",
       "why": "A selector-calibration addendum without holdout cells is rejected.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "ledger-attempt-alpha",

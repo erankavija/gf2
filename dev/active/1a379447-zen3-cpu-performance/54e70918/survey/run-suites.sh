@@ -9,6 +9,8 @@
 #   <config>-implementations  the tests that run through
 #                             `kernels::backend::contract::assert_each`, with
 #                             the output of each passing test
+#   all-features-precondition  the calibration-harness tests that need a SIMD
+#                             arm, with the output of each passing test
 #
 # Usage: run-suites.sh
 set -uo pipefail
@@ -53,3 +55,6 @@ configuration all-features --all-features
 # Every `gf2-core` feature except `simd`.
 configuration no-simd --no-default-features \
     --features rand,io,parallel,visualization,tuning-profile,test-support
+run all-features-precondition --all-features --test tuning_calibration_harness \
+    -E 'test(/simd_arm|::accepted_owner_|::owner_emission_publishes|::accepted_complete_experiment/)' \
+    --status-level none --final-status-level none --success-output final
