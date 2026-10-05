@@ -2,10 +2,9 @@
 """Compare the kernel crate's sources and listings across this task's change (jit:7d44b71f).
 
 The change has two steps, which `locate.py` pins by content: from `anchor` to
-`before-1b034786`, and from `after-1b034786` to the working tree. The step
-between the two is the code change of jit:1b034786 and is outside this record.
-While `after-1b034786-baseline.json` is absent, the record holds the first step
-only.
+`before-1b034786`, and from `after-1b034786` to `contracts-complete`. The step
+between the two is the code change of jit:1b034786 and is outside this record,
+as is every change after `contracts-complete`.
 
 Writes `asm-comparison.json` beside itself. Per step:
 
@@ -26,16 +25,14 @@ Usage: make-asm-comparison.py
 import json
 
 from locate import (
-    AFTER_FIX,
-    ANCHOR,
-    BEFORE_FIX,
+    BASELINES,
     HERE,
     ISSUE,
     ROOT,
+    STEPS,
     asm_listing,
     digest_changes,
     rust_code_text,
-    tracked,
 )
 
 LISTING = ".asm.txt"
@@ -79,33 +76,18 @@ def baseline_bytes(baseline):
     return lambda path: baseline.bytes(path) if path in digests else None
 
 
-def working_bytes(path):
-    current = ROOT / path
-    return current.read_bytes() if current.is_file() else None
-
-
 def main():
     steps = [
         step(
-            "anchor to before-1b034786",
-            digest_changes(ANCHOR, BEFORE_FIX),
-            set(ANCHOR.digests()) | set(BEFORE_FIX.digests()),
-            baseline_bytes(ANCHOR),
-            baseline_bytes(BEFORE_FIX),
+            name,
+            digest_changes(BASELINES[first], BASELINES[last]),
+            set(BASELINES[first].digests()) | set(BASELINES[last].digests()),
+            baseline_bytes(BASELINES[first]),
+            baseline_bytes(BASELINES[last]),
         )
+        for name, first, last in STEPS
     ]
-    baselines = {"anchor": ANCHOR.identity(), "before-1b034786": BEFORE_FIX.identity()}
-    if AFTER_FIX.baseline.is_file():
-        baselines["after-1b034786"] = AFTER_FIX.identity()
-        steps.append(
-            step(
-                "after-1b034786 to working tree",
-                AFTER_FIX.changed(),
-                set(AFTER_FIX.digests()) | set(tracked("")),
-                baseline_bytes(AFTER_FIX),
-                working_bytes,
-            )
-        )
+    baselines = {stage: baseline.identity() for stage, baseline in BASELINES.items()}
     output = HERE / "asm-comparison.json"
     output.write_text(
         json.dumps(
