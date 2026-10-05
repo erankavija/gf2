@@ -1,6 +1,6 @@
 # toolchain: rustc 1.95.0 (59807616e 2026-04-14)
 # command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --status-level fail --final-status-level fail --cargo-profile ci-test --profile ci
-   Compiling tuning-campaign-support v0.1.0 (dev/tools/tuning-campaign-support)
+    Blocking waiting for file lock on artifact directory
    Compiling gf2-core v0.1.0 (crates/gf2-core)
 error[E0425]: cannot find function `prepared_core_json` in module `support`
   --> crates/gf2-core/tests/tuning_conservative_cfg.rs:28:28

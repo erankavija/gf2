@@ -25,6 +25,17 @@
    "why": "Each occurrence opens a block that returns from its test before any comparison, although the resolver under test answers without a backend."
   },
   {
+   "claim": "calibration-contract-returns-without-a-backend",
+   "project": "gf2",
+   "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+   "path": "crates/gf2-core/benches/tuning_calibration.rs",
+   "line": 11080,
+   "verbatim": "            if simd_backend().is_none() {",
+   "occurrences": 6,
+   "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4",
+   "why": "Each occurrence opens a block that returns from an owner contract test before any assertion."
+  },
+  {
    "claim": "backend-is-detected-once",
    "project": "gf2",
    "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",

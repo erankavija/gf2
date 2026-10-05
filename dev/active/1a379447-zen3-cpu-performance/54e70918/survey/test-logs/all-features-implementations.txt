@@ -1,12 +1,24 @@
 # toolchain: rustc 1.95.0 (59807616e 2026-04-14)
 # command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch -E binary(simd_equiv_demo) | binary(simd_equiv_dispatch_hoist) | binary(simd_equiv_gf2m_batch) | test(/^kernels::backend::tests::every_backend_/) | test(/^gfp::simd_ops::tests::/) --status-level none --final-status-level none --success-output final --cargo-profile ci-test --profile ci
-    Finished `ci-test` profile [optimized] target(s) in 0.09s
+    Blocking waiting for file lock on artifact directory
+    Finished `ci-test` profile [optimized] target(s) in 2m 59s
 ────────────
- Nextest run ID 2f6dad7a-3f57-46c8-9625-622a331766f3 with nextest profile: ci
+ Nextest run ID ce2d31c6-70a8-4db6-9ae5-17edd7793645 with nextest profile: ci
     Starting 31 tests across 4 binaries (2024 tests skipped)
 ────────────
-     Summary [   1.205s] 31 tests run: 31 passed, 2024 skipped
-        PASS [   0.013s] ( 1/31) gf2-core::simd_equiv_demo demo_xor_unaligned_slice_offsets
+     Summary [   0.623s] 31 tests run: 31 passed, 2024 skipped
+        PASS [   0.007s] ( 1/31) gf2-core::simd_equiv_demo demo_xor_word_boundary_lengths
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    implementation: avx2
+    test demo_xor_word_boundary_lengths ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] ( 2/31) gf2-core::simd_equiv_demo demo_xor_unaligned_slice_offsets
   stdout ───
 
     running 1 test
@@ -17,7 +29,7 @@
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
 
 
-        PASS [   0.014s] ( 2/31) gf2-core::simd_equiv_demo demo_xor_matches_the_word_loop_proptest
+        PASS [   0.007s] ( 3/31) gf2-core::simd_equiv_demo demo_xor_matches_the_word_loop_proptest
   stdout ───
 
     running 1 test
@@ -31,39 +43,16 @@
     proptest: FileFailurePersistence::SourceParallel set, but no source file known
     proptest: FileFailurePersistence::SourceParallel set, but no source file known
 
-        PASS [   0.015s] ( 3/31) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_word_boundaries
+        PASS [   0.007s] ( 4/31) gf2-core gfp::simd_ops::tests::specialized_primes_do_not_use_generic_montgomery_path
   stdout ───
 
     running 1 test
-    implementation: resolve_xor_inplace over scalar, avx2
-    test hoisted_xor_dispatch_word_boundaries ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
-
-
-        PASS [   0.015s] ( 4/31) gf2-core kernels::backend::tests::every_backend_counts_set_bits
-  stdout ───
-
-    running 1 test
-    implementation: scalar
-    implementation: avx2
-    test kernels::backend::tests::every_backend_counts_set_bits ... ok
+    test gfp::simd_ops::tests::specialized_primes_do_not_use_generic_montgomery_path ... ok
 
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.015s] ( 5/31) gf2-core kernels::backend::tests::every_backend_xors_word_by_word
-  stdout ───
-
-    running 1 test
-    implementation: scalar
-    implementation: avx2
-    test kernels::backend::tests::every_backend_xors_word_by_word ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
-
-
-        PASS [   0.016s] ( 6/31) gf2-core gfp::simd_ops::tests::m31_simd_mul_matches_scalar_across_boundary_lens
+        PASS [   0.007s] ( 5/31) gf2-core gfp::simd_ops::tests::m31_simd_mul_matches_scalar_across_boundary_lens
   stdout ───
 
     running 1 test
@@ -74,29 +63,50 @@
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.016s] ( 7/31) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_16
+        PASS [   0.007s] ( 6/31) gf2-core kernels::backend::tests::every_backend_complements_word_by_word
   stdout ───
 
     running 1 test
-    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
-    test boundary_lengths_gf2_16 ... ok
+    implementation: scalar
+    implementation: avx2
+    test kernels::backend::tests::every_backend_complements_word_by_word ... ok
 
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.016s] ( 8/31) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_matches_the_word_loop_proptest
+        PASS [   0.007s] ( 7/31) gf2-core gfp::simd_ops::tests::generic_montgomery_guard_excludes_unsupported_moduli
+  stdout ───
+
+    running 1 test
+    test gfp::simd_ops::tests::generic_montgomery_guard_excludes_unsupported_moduli ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] ( 8/31) gf2-core kernels::backend::tests::every_backend_counts_set_bits
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    implementation: avx2
+    test kernels::backend::tests::every_backend_counts_set_bits ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] ( 9/31) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_matches_the_word_loop_proptest
   stdout ───
 
     running 1 test
     implementation: resolve_xor_inplace over scalar, avx2
     test hoisted_xor_dispatch_matches_the_word_loop_proptest ... ok
 
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.01s
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
 
   stderr ───
     proptest: FileFailurePersistence::SourceParallel set, but no source file known
 
-        PASS [   0.016s] ( 9/31) gf2-core::simd_equiv_demo helper_rejects_a_mutated_reference
+        PASS [   0.007s] (10/31) gf2-core::simd_equiv_demo helper_rejects_a_mutated_reference
   stdout ───
 
     running 1 test
@@ -111,30 +121,48 @@
     proptest: Aborting shrinking after the PROPTEST_MAX_SHRINK_ITERS environment variable or ProptestConfig.max_shrink_iters iterations (set 256 to a large(r) value to shrink more; current configuration: 256 iterations)
     proptest: FileFailurePersistence::SourceParallel set, but no source file known
 
-    thread 'helper_rejects_a_mutated_reference' (3907278) panicked at crates/gf2-core/tests/simd_equiv/mod.rs:76:10:
-    scalar and SIMD implementations diverged on a proptest input: Fail(Reason("post-state mismatch: scalar=([985211016945806785, 6311619754590276115, 13863437528599195631, 8405070465373193659], [985211016945806784, 6311619754590276114, 13863437528599195630, 8405070465373193658]) simd=([985211016945806784, 6311619754590276114, 13863437528599195630, 8405070465373193658], [985211016945806784, 6311619754590276114, 13863437528599195630, 8405070465373193658]) input=([0, 0, 0, 0], [985211016945806784, 6311619754590276114, 13863437528599195630, 8405070465373193658])"), ([0, 0, 0, 0], [985211016945806784, 6311619754590276114, 13863437528599195630, 8405070465373193658]))
+    thread 'helper_rejects_a_mutated_reference' (816150) panicked at crates/gf2-core/tests/simd_equiv/mod.rs:76:10:
+    scalar and SIMD implementations diverged on a proptest input: Fail(Reason("post-state mismatch: scalar=([1506383622707657709, 9862451529049601987, 11264009679545408103, 10386127538654326774], [1506383622707657708, 9862451529049601986, 11264009679545408102, 10386127538654326775]) simd=([1506383622707657708, 9862451529049601986, 11264009679545408102, 10386127538654326775], [1506383622707657708, 9862451529049601986, 11264009679545408102, 10386127538654326775]) input=([0, 0, 0, 0], [1506383622707657708, 9862451529049601986, 11264009679545408102, 10386127538654326775])"), ([0, 0, 0, 0], [1506383622707657708, 9862451529049601986, 11264009679545408102, 10386127538654326775]))
     note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
     proptest: FileFailurePersistence::SourceParallel set, but no source file known
     proptest: Aborting shrinking after the PROPTEST_MAX_SHRINK_ITERS environment variable or ProptestConfig.max_shrink_iters iterations (set 256 to a large(r) value to shrink more; current configuration: 256 iterations)
     proptest: FileFailurePersistence::SourceParallel set, but no source file known
 
-    thread 'helper_rejects_a_mutated_reference' (3907278) panicked at crates/gf2-core/tests/simd_equiv/mod.rs:76:10:
-    scalar and SIMD implementations diverged on a proptest input: Fail(Reason("post-state mismatch: scalar=([2927290407054079353, 626940844149068724, 423691761955533425, 17396610956446774558], [2927290407054079352, 626940844149068725, 423691761955533424, 17396610956446774559]) simd=([2927290407054079352, 626940844149068725, 423691761955533424, 17396610956446774559], [2927290407054079352, 626940844149068725, 423691761955533424, 17396610956446774559]) input=([0, 0, 0, 0], [2927290407054079352, 626940844149068725, 423691761955533424, 17396610956446774559])"), ([0, 0, 0, 0], [2927290407054079352, 626940844149068725, 423691761955533424, 17396610956446774559]))
+    thread 'helper_rejects_a_mutated_reference' (816150) panicked at crates/gf2-core/tests/simd_equiv/mod.rs:76:10:
+    scalar and SIMD implementations diverged on a proptest input: Fail(Reason("post-state mismatch: scalar=([6218084395553675428, 18199588897728960184, 6392868196328467353, 18061000186726854929], [6218084395553675429, 18199588897728960185, 6392868196328467352, 18061000186726854928]) simd=([6218084395553675429, 18199588897728960185, 6392868196328467352, 18061000186726854928], [6218084395553675429, 18199588897728960185, 6392868196328467352, 18061000186726854928]) input=([0, 0, 0, 0], [6218084395553675429, 18199588897728960185, 6392868196328467352, 18061000186726854928])"), ([0, 0, 0, 0], [6218084395553675429, 18199588897728960185, 6392868196328467352, 18061000186726854928]))
 
-        PASS [   0.020s] (10/31) gf2-core gfp::simd_ops::tests::test_small_prime_prepack_matvec_boundary_lengths
+        PASS [   0.007s] (11/31) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_word_boundaries
   stdout ───
 
     running 1 test
-    implementation: Fp<251> element operations
-    implementation: fp_try_prepack_matvec, P = 251
-    implementation: Fp<7> element operations
-    implementation: fp_try_prepack_matvec, P = 7
-    test gfp::simd_ops::tests::test_small_prime_prepack_matvec_boundary_lengths ... ok
+    implementation: resolve_xor_inplace over scalar, avx2
+    test hoisted_xor_dispatch_word_boundaries ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+
+        PASS [   0.007s] (12/31) gf2-core kernels::backend::tests::every_backend_xor_is_an_involution
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    implementation: avx2
+    test kernels::backend::tests::every_backend_xor_is_an_involution ... ok
 
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.020s] (11/31) gf2-core gfp::simd_ops::tests::medium_simd_matches_scalar_word_boundaries
+        PASS [   0.008s] (13/31) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_unaligned_slices
+  stdout ───
+
+    running 1 test
+    implementation: resolve_xor_inplace over scalar, avx2
+    test hoisted_xor_dispatch_unaligned_slices ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+
+        PASS [   0.008s] (14/31) gf2-core gfp::simd_ops::tests::medium_simd_matches_scalar_word_boundaries
   stdout ───
 
     running 1 test
@@ -155,16 +183,17 @@
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.021s] (12/31) gf2-core gfp::simd_ops::tests::specialized_primes_do_not_use_generic_montgomery_path
+        PASS [   0.007s] (15/31) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_16
   stdout ───
 
     running 1 test
-    test gfp::simd_ops::tests::specialized_primes_do_not_use_generic_montgomery_path ... ok
+    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
+    test boundary_lengths_gf2_16 ... ok
 
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
 
 
-        PASS [   0.020s] (13/31) gf2-core kernels::backend::tests::every_backend_ors_word_by_word
+        PASS [   0.007s] (16/31) gf2-core kernels::backend::tests::every_backend_ors_word_by_word
   stdout ───
 
     running 1 test
@@ -175,7 +204,7 @@
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.020s] (14/31) gf2-core kernels::backend::tests::every_backend_ands_word_by_word
+        PASS [   0.008s] (17/31) gf2-core kernels::backend::tests::every_backend_ands_word_by_word
   stdout ───
 
     running 1 test
@@ -186,58 +215,7 @@
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.021s] (15/31) gf2-core kernels::backend::tests::every_backend_complements_word_by_word
-  stdout ───
-
-    running 1 test
-    implementation: scalar
-    implementation: avx2
-    test kernels::backend::tests::every_backend_complements_word_by_word ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
-
-
-        PASS [   0.024s] (16/31) gf2-core kernels::backend::tests::every_backend_answers_the_fixed_vectors
-  stdout ───
-
-    running 1 test
-    implementation: scalar
-    implementation: avx2
-    test kernels::backend::tests::every_backend_answers_the_fixed_vectors ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
-
-
-        PASS [   0.025s] (17/31) gf2-core gfp::simd_ops::tests::generic_montgomery_guard_excludes_unsupported_moduli
-  stdout ───
-
-    running 1 test
-    test gfp::simd_ops::tests::generic_montgomery_guard_excludes_unsupported_moduli ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
-
-
-        PASS [   0.025s] (18/31) gf2-core::simd_equiv_dispatch_hoist hoisted_xor_dispatch_unaligned_slices
-  stdout ───
-
-    running 1 test
-    implementation: resolve_xor_inplace over scalar, avx2
-    test hoisted_xor_dispatch_unaligned_slices ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.01s
-
-
-        PASS [   0.011s] (19/31) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_8
-  stdout ───
-
-    running 1 test
-    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
-    test boundary_lengths_gf2_8 ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
-
-
-        PASS [   0.026s] (20/31) gf2-core gfp::simd_ops::tests::generic_simd_matches_scalar_for_proof_suite_primes
+        PASS [   0.008s] (18/31) gf2-core gfp::simd_ops::tests::generic_simd_matches_scalar_for_proof_suite_primes
   stdout ───
 
     running 1 test
@@ -270,50 +248,20 @@
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.012s] (21/31) gf2-core::simd_equiv_gf2m_batch proptest_gf2_16_batch_mul_matches_field_single_shot
+        PASS [   0.009s] (19/31) gf2-core gfp::simd_ops::tests::test_small_prime_prepack_matvec_boundary_lengths
   stdout ───
 
     running 1 test
-    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
-    test proptest_gf2_16_batch_mul_matches_field_single_shot ... ok
+    implementation: Fp<251> element operations
+    implementation: fp_try_prepack_matvec, P = 251
+    implementation: Fp<7> element operations
+    implementation: fp_try_prepack_matvec, P = 7
+    test gfp::simd_ops::tests::test_small_prime_prepack_matvec_boundary_lengths ... ok
 
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
-
-  stderr ───
-    proptest: FileFailurePersistence::SourceParallel set, but no source file known
-
-        PASS [   0.010s] (22/31) gf2-core::simd_equiv_gf2m_batch square_matches_mul_self_gf2_8
-  stdout ───
-
-    running 1 test
-    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
-    test square_matches_mul_self_gf2_8 ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.015s] (23/31) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_32
-  stdout ───
-
-    running 1 test
-    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
-    test boundary_lengths_gf2_32 ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
-
-
-        PASS [   0.028s] (24/31) gf2-core::simd_equiv_demo demo_xor_word_boundary_lengths
-  stdout ───
-
-    running 1 test
-    implementation: scalar
-    implementation: avx2
-    test demo_xor_word_boundary_lengths ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
-
-
-        PASS [   0.028s] (25/31) gf2-core gfp::simd_ops::tests::proptest_small_prime_prepack_matvec_boundary_fp251
+        PASS [   0.010s] (20/31) gf2-core gfp::simd_ops::tests::proptest_small_prime_prepack_matvec_boundary_fp251
   stdout ───
 
     running 1 test
@@ -418,30 +366,49 @@
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.013s] (26/31) gf2-core::simd_equiv_gf2m_batch proptest_gf2_32_batch_mul_matches_field_single_shot
-  stdout ───
-
-    running 1 test
-    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
-    test proptest_gf2_32_batch_mul_matches_field_single_shot ... ok
-
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
-
-  stderr ───
-    proptest: FileFailurePersistence::SourceParallel set, but no source file known
-
-        PASS [   0.030s] (27/31) gf2-core kernels::backend::tests::every_backend_xor_is_an_involution
+        PASS [   0.010s] (21/31) gf2-core kernels::backend::tests::every_backend_xors_word_by_word
   stdout ───
 
     running 1 test
     implementation: scalar
     implementation: avx2
-    test kernels::backend::tests::every_backend_xor_is_an_involution ... ok
+    test kernels::backend::tests::every_backend_xors_word_by_word ... ok
 
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
 
 
-        PASS [   0.011s] (28/31) gf2-core::simd_equiv_gf2m_batch square_matches_mul_self_gf2_16_word_boundary_lengths
+        PASS [   0.010s] (22/31) gf2-core kernels::backend::tests::every_backend_answers_the_fixed_vectors
+  stdout ───
+
+    running 1 test
+    implementation: scalar
+    implementation: avx2
+    test kernels::backend::tests::every_backend_answers_the_fixed_vectors ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.00s
+
+
+        PASS [   0.004s] (23/31) gf2-core::simd_equiv_gf2m_batch square_matches_mul_self_gf2_8
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
+    test square_matches_mul_self_gf2_8 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+
+        PASS [   0.004s] (24/31) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_8
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
+    test boundary_lengths_gf2_8 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+
+        PASS [   0.004s] (25/31) gf2-core::simd_equiv_gf2m_batch square_matches_mul_self_gf2_16_word_boundary_lengths
   stdout ───
 
     running 1 test
@@ -451,7 +418,29 @@
     test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
 
 
-        PASS [   0.015s] (29/31) gf2-core::simd_equiv_gf2m_batch proptest_gf2_8_batch_mul_matches_field_single_shot
+        PASS [   0.004s] (26/31) gf2-core::simd_equiv_gf2m_batch boundary_lengths_gf2_32
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
+    test boundary_lengths_gf2_32 ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+
+        PASS [   0.005s] (27/31) gf2-core::simd_equiv_gf2m_batch proptest_gf2_16_batch_mul_matches_field_single_shot
+  stdout ───
+
+    running 1 test
+    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
+    test proptest_gf2_16_batch_mul_matches_field_single_shot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+  stderr ───
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+
+        PASS [   0.005s] (28/31) gf2-core::simd_equiv_gf2m_batch proptest_gf2_8_batch_mul_matches_field_single_shot
   stdout ───
 
     running 1 test
@@ -463,10 +452,28 @@
   stderr ───
     proptest: FileFailurePersistence::SourceParallel set, but no source file known
 
-        PASS [   0.069s] (30/31) gf2-core gfp::simd_ops::tests::proptest_small_prime_gemm_boundary_fp251
+        PASS [   0.005s] (29/31) gf2-core::simd_equiv_gf2m_batch proptest_gf2_32_batch_mul_matches_field_single_shot
   stdout ───
 
     running 1 test
+    implementation: batch_mul and batch_square over the GF(2^m) batch SIMD kernel
+    test proptest_gf2_32_batch_mul_matches_field_single_shot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+  stderr ───
+    proptest: FileFailurePersistence::SourceParallel set, but no source file known
+
+        PASS [   0.028s] (30/31) gf2-core gfp::simd_ops::tests::proptest_small_prime_gemm_boundary_fp251
+  stdout ───
+
+    running 1 test
+    implementation: Fp<251> dot-product loop
+    implementation: fp_small_try_gemm_classical, P = 251
+    implementation: Fp<251> dot-product loop
+    implementation: fp_small_try_gemm_classical, P = 251
+    implementation: Fp<251> dot-product loop
+    implementation: fp_small_try_gemm_classical, P = 251
     implementation: Fp<251> dot-product loop
     implementation: fp_small_try_gemm_classical, P = 251
     implementation: Fp<251> dot-product loop
@@ -513,10 +520,10 @@
     implementation: fp_small_try_gemm_classical, P = 251
     test gfp::simd_ops::tests::proptest_small_prime_gemm_boundary_fp251 ... ok
 
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.05s
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.02s
 
 
-        PASS [   1.192s] (31/31) gf2-core gfp::simd_ops::tests::test_small_prime_gemm_dispatch_boundary_lengths
+        PASS [   0.617s] (31/31) gf2-core gfp::simd_ops::tests::test_small_prime_gemm_dispatch_boundary_lengths
   stdout ───
 
     running 1 test
@@ -528,7 +535,7 @@
     implementation: fp_small_try_gemm_classical, P = 251
     test gfp::simd_ops::tests::test_small_prime_gemm_dispatch_boundary_lengths ... ok
 
-    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 1.18s
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2039 filtered out; finished in 0.61s
 
 
 # exit: 0
