@@ -25,7 +25,7 @@
 #   dev/active/d1b4f85e/run.sh <out-dir>
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 if [[ $# -ne 1 ]]; then
