@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-05T03:11:50.403945489Z",
   "context": {},
   "created_at": "2026-10-05T01:07:43.262477011Z",
   "dependencies": [],
@@ -19,7 +20,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "State the safety contract at every AVX2 kernel unsafe boundary",
-  "updated_at": "2026-10-05T01:07:43.262477011Z"
+  "updated_at": "2026-10-05T03:11:50.403945489Z"
 }

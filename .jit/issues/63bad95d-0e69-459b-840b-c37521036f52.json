@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-05T03:11:50.800000359Z",
   "context": {},
   "created_at": "2026-09-06T19:17:39.477371101Z",
   "dependencies": [
@@ -40,7 +41,7 @@
     "satisfies:1a379447/REQ-06"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Calibrate production dispatch for the 5900X",
-  "updated_at": "2026-10-05T03:09:18.162416048Z"
+  "updated_at": "2026-10-05T03:11:50.800000359Z"
 }
