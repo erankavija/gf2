@@ -39,7 +39,7 @@
     "counts": {
       "receipt": 20,
       "receipt-snapshot": 27,
-      "record": 19,
+      "record": 18,
       "tracker": 1
     },
     "files": [
@@ -223,13 +223,6 @@
         ]
       },
       {
-        "path": "dev/active/bc091474/run-candidate.sh",
-        "class": "record",
-        "lines": [
-          50
-        ]
-      },
-      {
         "path": "dev/active/bc091474/smoke-plans/2-isolated.plan.json",
         "class": "record",
         "lines": [
@@ -263,7 +256,7 @@
         "lines": [
           36,
           37,
-          54
+          55
         ]
       },
       {

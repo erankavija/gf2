@@ -44,7 +44,8 @@ of either class, and the script exits 0. Each reader has one disposition:
 | `avx2.rs` of `gf2-kernels-simd` | Removed: the guard against selecting both factors, the `XOR_UNROLL` constant of each factor and the configuration-gated loop of `avx2_xor_into`. |
 | `Cargo.toml` of `gf2-kernels-simd` | Removed: the two `check-cfg` entries. |
 | `tests/harness_contract.rs` of the logical harness | Changed: the plan-projection test passes its candidate arm's flags as an opaque string, and that string names no kernel configuration. |
-| `run-candidate.sh` and `portfolio.md` of the candidate study | Kept byte for byte: the unroll pilot receipts pin both by digest. The [corrections](../../bc091474/unroll-variant-corrections.md) give their reading on a tree without the bodies. |
+| `run-candidate.sh` of the candidate study | Changed: `build`, `smoke` and a `window` or `profile-window` without its committed receipt or profile refuse, and the script names neither configuration. Each pilot receipt holds the launcher it ran under. |
+| `portfolio.md` of the candidate study | Kept byte for byte: the unroll pilot receipts pin it by digest. The [corrections](../../bc091474/unroll-variant-corrections.md) give its reading, and the snapshotted launcher's, on a tree without the bodies. |
 | Smoke plans, candidate disassemblies and profile host records of the candidate study | Kept: each records the flags of the build it describes. |
 | `survey/source-evidence.json` of `fcb04d66` | Kept: the ledger describes the files at the commits its rows record. |
 | Rows of class `receipt`, `receipt-snapshot` and `tracker` | Kept. The `receipt-snapshot` rows under this directory are the `before` bytes. |
@@ -126,8 +127,8 @@ producing-input snapshots only:
 - the logical-buffer [no-adoption verdict](../fcb04d66/no-change-outcome.md)
   and its [verification record](../fcb04d66/verification.md).
 
-The frozen portfolio and launcher keep their bytes, and the
-[corrections](../../bc091474/unroll-variant-corrections.md) beside them carry
+The frozen portfolio keeps its bytes, and the
+[corrections](../../bc091474/unroll-variant-corrections.md) beside it carry
 the statement.
 
 ## Gates
