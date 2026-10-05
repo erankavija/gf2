@@ -1481,6 +1481,15 @@
       "status": "open",
       "raised_at": "2026-10-05T03:20Z",
       "resolution": null
+    },
+    {
+      "category": "issue criterion scope (54e70918 REQ-03)",
+      "issue": "54e70918",
+      "question": "REQ-01 and REQ-02 are met for the two named files (29 list-form tests run their reference on every host). REQ-03 as written requires that no test in the workspace returns early on a missing SIMD bundle; 225 remain (gf2-kernels-simd 214, gf2-core 6 in benches/tuning_calibration.rs, gf2-algebra 5), and they have no reference to assert without SIMD. Options: (A) narrow REQ-03 to gf2-core test targets and file one issue per remaining crate with a skip-mechanism choice; (B) keep REQ-03 and choose the mechanism now (fail with a stated precondition, or a libtest-mimic harness that reports skips).",
+      "recommendation": "A, with the six gf2-core bench tests failing on a stated precondition",
+      "status": "open",
+      "raised_at": "2026-10-05T08:45Z",
+      "resolution": null
     }
   ],
   "rework_counts": {
@@ -2126,7 +2135,8 @@
     "Session 27: bug 54e70918 filed (two gf2-core SIMD equivalence test files pass vacuously without a SIMD bundle).",
     "Session 27: 1b034786 DONE (gates pass at aa743ddca after rework 1; review reviews/1b034786-r1.md) and 7d44b71f DONE (gates pass; review reviews/7d44b71f-r1.md). fa1d8733 is unblocked.",
     "Session 27: dispatched fa1d8733 and 54e70918 at 856c78b38. Held for the invoker: f63a2464 (three code-review rulings), b2e09d41 (shared checker under the freeze), a87ae828 (generator edit denied to a worker by the permission system), bfc2ceab (per-interface design choice), 316150fd and dd359005 (their criteria add steps to scripts/cargo-ci.sh, shared infrastructure), 4337c02e and the timed part of 63bad95d (benchmark windows and five plan decisions).",
-    "Session 27: bug 66698c3c filed (6e87c436 drift and assembly generators fail on main after the 1b034786 change to m4rm.rs)."
+    "Session 27: bug 66698c3c filed (6e87c436 drift and assembly generators fail on main after the 1b034786 change to m4rm.rs).",
+    "Session 27: 54e70918 partial merged (gf2_core::kernels::backend::contract; search record simd-early-returns.json: 258 before, 225 after). The lead wrote REQ-03 broader than the finding supported; narrowing it is an invoker decision."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2191,7 +2201,7 @@
       "w-b2e09d41": "held, no commits; awaits invoker ruling",
       "w-63bad95d": "untimed stage merged; holds for the invoker's plan decisions",
       "w-fa1d8733": "agent-fa1d8733",
-      "w-54e70918": "agent-54e70918"
+      "w-54e70918": "partial merged; REQ-03 awaits the invoker"
     },
     "m4ri_pilot": "v4-r1-pilot ran 2026-09-28T23:00Z, key 53a5bb9b75c30e58; verified from its execution log; resolution record dev/bench_results/2037941f/m4ri-gap-resolution.md records eligible",
     "m4ri_confirmation": {

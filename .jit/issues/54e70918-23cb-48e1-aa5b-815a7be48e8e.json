@@ -5,7 +5,131 @@
   "created_at": "2026-10-05T05:37:09.672929457Z",
   "dependencies": [],
   "description": "Two SIMD equivalence test files return early when the host publishes no SIMD bundle, so they pass without comparing anything; a shared equivalence test always exercises at least one implementation and says which.\n\n## Background\n\n`crates/gf2-core/tests/simd_equiv_demo.rs` and `crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs` compare SIMD kernels with their scalar references. Each test returns at once when feature detection finds no bundle, and the test is then reported as passed. On a host without AVX2, or in a build where detection is disabled, the suite reports equivalence that it did not check.\n\n## Success Criteria\n\n- [hard] REQ-01: Each test in the two files either runs its scalar reference assertions on every host or is reported as skipped, never as passed, when no SIMD implementation is available.\n- [hard] REQ-02: Each test asserts that it exercised a non-zero number of implementations and names them in its output.\n- [hard] REQ-03: A committed search record lists every test in the workspace that returns early on a missing SIMD bundle, and none remains outside this rule.\n\n## Notes\n\nFound while making the M4RM Gray-table contract test non-vacuous.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Verification: SIMD equivalence tests that assert on every host",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/verification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "Search record: tests returning early on a missing SIMD probe",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/simd-early-returns.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Implementations each list-form test ran (table)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-implementations.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "Implementations each list-form test ran (record)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-implementations.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "Source-evidence ledger",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Suite runner over the gf2-core feature configurations",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/run-suites.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: all-features-implementations",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/all-features-implementations.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: all-features-targets",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/all-features-targets.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: all-features-whole",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/all-features-whole.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: default-implementations",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/default-implementations.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: default-targets",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/default-targets.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: default-whole",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/default-whole.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: no-simd-implementations",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/no-simd-implementations.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: no-simd-targets",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/no-simd-targets.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: no-simd-whole",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/no-simd-whole.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: simd-implementations",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/simd-implementations.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: simd-targets",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/simd-targets.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "format": "markdown",
+      "label": "Test log: simd-whole",
+      "path": "dev/active/1a379447-zen3-cpu-performance/54e70918/survey/test-logs/simd-whole.txt"
+    }
+  ],
   "first_ready_at": "2026-10-05T05:37:09.672929457Z",
   "gates_required": [
     "cargo-ci",
@@ -21,5 +145,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Stop SIMD equivalence tests passing without running on hosts without SIMD",
-  "updated_at": "2026-10-05T06:36:53.255718358Z"
+  "updated_at": "2026-10-05T08:41:45.600845703Z"
 }
