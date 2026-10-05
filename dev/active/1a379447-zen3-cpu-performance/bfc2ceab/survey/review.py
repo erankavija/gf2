@@ -889,6 +889,17 @@ INTERFACES = [
     },
 ]
 
+# The checked form of an entry point, which its detection function publishes
+# under `--cfg gf2_entry_checked`: the wrapper's name with `_safe` replaced.
+# The two Gray-PAM wrappers hold their check as a statement under the cfg.
+CHECKED_SUFFIX = ("_safe", "_checked")
+CHECKED_IN_PLACE = {"pam-f32", "pam-f64"}
+CHECKED_CFG = "gf2_entry_checked"
+
+# The contract test of the checked build calls every pointer with arguments
+# that break its condition; it is outside the caller scan.
+CONDITION_TEST = (SIMD, "tests/entry_conditions.rs")
+
 # How a call site meets the entry point's conditions.
 DISCHARGES = {
     "by-construction": "the caller builds the operands so that the condition holds in "

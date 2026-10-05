@@ -12,15 +12,16 @@ An entry point is a safe function of `gf2-kernels-simd`, published through a saf
 |---|---|
 | safe functions holding an `unsafe` block outside test code | 88 |
 | entry points of the inventory | 24 |
+| checked forms compiled under `cfg(gf2_entry_checked)` | 22 |
 | safe pointer types they are published through | 17 |
 | cost classes | 4 |
 | safe functions cleared | 64 |
 
 ## Coverage
 
-An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim.
+An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim. The checked form of an entry point, compiled under `cfg(gf2_entry_checked)` alone, is counted with its entry point.
 
-In every tracked Rust file outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.
+In every tracked Rust file outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, and outside the condition test of the checked build, which does the same, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.
 
 | Basis of a cleared function | Functions | Meaning |
 |---|---|---|
@@ -39,9 +40,9 @@ The M4RM Gray-table builders are the house form of a checked safe entry point: t
 
 ### `fp_small::SmallPrimeSpmmRowFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `spmm_row_safe` | `crates/gf2-kernels-simd/src/fp_small.rs` | `x86::fp_small::fp_small_spmm_row` | 1 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `spmm_row_safe` | `crates/gf2-kernels-simd/src/fp_small.rs` | `x86::fp_small::fp_small_spmm_row` | 1 | 0 | 0 | killed by SIGSEGV | `spmm_row_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -57,9 +58,9 @@ Forwarding caller: the safe public hook `FiniteField::try_simd_spmm` passes its 
 
 ### `fp_medium::MediumPrimeSpmmRowFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `spmm_row_safe` | `crates/gf2-kernels-simd/src/fp_medium.rs` | `x86::fp_medium::fp_medium_spmm_row` | 1 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `spmm_row_safe` | `crates/gf2-kernels-simd/src/fp_medium.rs` | `x86::fp_medium::fp_medium_spmm_row` | 1 | 0 | 0 | killed by SIGSEGV | `spmm_row_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -77,9 +78,9 @@ Forwarding caller: the safe public hook `FiniteField::try_simd_spmm` passes its 
 
 ### `fp_small_ple::SmallPrimePlePanelBaseFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `ple_panel_base_safe` | `crates/gf2-kernels-simd/src/fp_small_ple.rs` | `x86::fp_small_ple::ple_panel_base_canonical` | 1 | 0 | 2 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `ple_panel_base_safe` | `crates/gf2-kernels-simd/src/fp_small_ple.rs` | `x86::fp_small_ple::ple_panel_base_canonical` | 1 | 0 | 2 | killed by SIGSEGV | `ple_panel_base_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -95,9 +96,9 @@ Contract text: `small-ple-type-doc`, `small-ple-wrapper`. Checked in release bui
 
 ### `fp_medium_ple::MediumPrimePlePanelBaseFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `ple_panel_base_safe` | `crates/gf2-kernels-simd/src/fp_medium_ple.rs` | `x86::fp_medium_ple::ple_panel_base_canonical_u16` | 1 | 0 | 2 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `ple_panel_base_safe` | `crates/gf2-kernels-simd/src/fp_medium_ple.rs` | `x86::fp_medium_ple::ple_panel_base_canonical_u16` | 1 | 0 | 2 | killed by SIGSEGV | `ple_panel_base_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -115,11 +116,11 @@ Contract text: `medium-ple-type-doc`, `medium-ple-wrapper`. Checked in release b
 
 ### `bipedal::BipedalBinaryKernelFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `add_safe` | `crates/gf2-kernels-simd/src/bipedal/mod.rs` | `x86::bipedal_avx2::run_add_batch::<Config3>` | 1 | 0 | 0 | killed by SIGSEGV |
-| `sub_safe` | `crates/gf2-kernels-simd/src/bipedal/mod.rs` | `x86::bipedal_avx2::run_sub_batch::<Config3>` | 1 | 0 | 0 | killed by SIGSEGV |
-| `mul_safe` | `crates/gf2-kernels-simd/src/bipedal/mod.rs` | `x86::bipedal_avx2::run_mul_batch::<Config3>` | 0 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `add_safe` | `crates/gf2-kernels-simd/src/bipedal/mod.rs` | `x86::bipedal_avx2::run_add_batch::<Config3>` | 1 | 0 | 0 | killed by SIGSEGV | `add_checked` |
+| `sub_safe` | `crates/gf2-kernels-simd/src/bipedal/mod.rs` | `x86::bipedal_avx2::run_sub_batch::<Config3>` | 1 | 0 | 0 | killed by SIGSEGV | `sub_checked` |
+| `mul_safe` | `crates/gf2-kernels-simd/src/bipedal/mod.rs` | `x86::bipedal_avx2::run_mul_batch::<Config3>` | 0 | 0 | 0 | killed by SIGSEGV | `mul_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -136,9 +137,9 @@ Unchecked form the crate publishes: `bipedal-unsafe-entry`.
 
 ### `bipedal::BipedalUnaryKernelFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `neg_safe` | `crates/gf2-kernels-simd/src/bipedal/mod.rs` | `x86::bipedal_avx2::run_neg_batch::<Config3>` | 0 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `neg_safe` | `crates/gf2-kernels-simd/src/bipedal/mod.rs` | `x86::bipedal_avx2::run_neg_batch::<Config3>` | 0 | 0 | 0 | killed by SIGSEGV | `neg_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -152,11 +153,11 @@ No tracked Rust file calls these entry points.
 
 ### `bipedal::packed5::F5BinaryKernelFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `add5_safe` | `crates/gf2-kernels-simd/src/bipedal/packed5.rs` | `x86::bipedal_avx2_packed5::run_add5_batch` | 0 | 0 | 0 | killed by SIGSEGV |
-| `sub5_safe` | `crates/gf2-kernels-simd/src/bipedal/packed5.rs` | `x86::bipedal_avx2_packed5::run_sub5_batch` | 0 | 0 | 0 | killed by SIGSEGV |
-| `mul5_safe` | `crates/gf2-kernels-simd/src/bipedal/packed5.rs` | `x86::bipedal_avx2_packed5::run_mul5_batch` | 0 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `add5_safe` | `crates/gf2-kernels-simd/src/bipedal/packed5.rs` | `x86::bipedal_avx2_packed5::run_add5_batch` | 0 | 0 | 0 | killed by SIGSEGV | `add5_checked` |
+| `sub5_safe` | `crates/gf2-kernels-simd/src/bipedal/packed5.rs` | `x86::bipedal_avx2_packed5::run_sub5_batch` | 0 | 0 | 0 | killed by SIGSEGV | `sub5_checked` |
+| `mul5_safe` | `crates/gf2-kernels-simd/src/bipedal/packed5.rs` | `x86::bipedal_avx2_packed5::run_mul5_batch` | 0 | 0 | 0 | killed by SIGSEGV | `mul5_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -168,9 +169,9 @@ No tracked Rust file calls these entry points.
 
 ### `bipedal::packed5::F5UnaryKernelFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `neg5_safe` | `crates/gf2-kernels-simd/src/bipedal/packed5.rs` | `x86::bipedal_avx2_packed5::run_neg5_batch` | 0 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `neg5_safe` | `crates/gf2-kernels-simd/src/bipedal/packed5.rs` | `x86::bipedal_avx2_packed5::run_neg5_batch` | 0 | 0 | 0 | killed by SIGSEGV | `neg5_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -182,11 +183,11 @@ No tracked Rust file calls these entry points.
 
 ### `bipedal::packed7::F7BinaryKernelFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `add7_safe` | `crates/gf2-kernels-simd/src/bipedal/packed7.rs` | `x86::bipedal_avx2_packed7::run_add7_batch` | 0 | 0 | 0 | killed by SIGSEGV |
-| `sub7_safe` | `crates/gf2-kernels-simd/src/bipedal/packed7.rs` | `x86::bipedal_avx2_packed7::run_sub7_batch` | 0 | 0 | 0 | killed by SIGSEGV |
-| `mul7_safe` | `crates/gf2-kernels-simd/src/bipedal/packed7.rs` | `x86::bipedal_avx2_packed7::run_mul7_batch` | 0 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `add7_safe` | `crates/gf2-kernels-simd/src/bipedal/packed7.rs` | `x86::bipedal_avx2_packed7::run_add7_batch` | 0 | 0 | 0 | killed by SIGSEGV | `add7_checked` |
+| `sub7_safe` | `crates/gf2-kernels-simd/src/bipedal/packed7.rs` | `x86::bipedal_avx2_packed7::run_sub7_batch` | 0 | 0 | 0 | killed by SIGSEGV | `sub7_checked` |
+| `mul7_safe` | `crates/gf2-kernels-simd/src/bipedal/packed7.rs` | `x86::bipedal_avx2_packed7::run_mul7_batch` | 0 | 0 | 0 | killed by SIGSEGV | `mul7_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -198,9 +199,9 @@ No tracked Rust file calls these entry points.
 
 ### `bipedal::packed7::F7UnaryKernelFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `neg7_safe` | `crates/gf2-kernels-simd/src/bipedal/packed7.rs` | `x86::bipedal_avx2_packed7::run_neg7_batch` | 0 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `neg7_safe` | `crates/gf2-kernels-simd/src/bipedal/packed7.rs` | `x86::bipedal_avx2_packed7::run_neg7_batch` | 0 | 0 | 0 | killed by SIGSEGV | `neg7_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -214,9 +215,9 @@ No tracked Rust file calls these entry points.
 
 ### `fp_small::SmallPrimeGemmRowPanelFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `gemm_row_panel_safe` | `crates/gf2-kernels-simd/src/fp_small.rs` | `x86::fp_small::fp_small_gemm_row_panel` | 2 | 0 | 0 | not run |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `gemm_row_panel_safe` | `crates/gf2-kernels-simd/src/fp_small.rs` | `x86::fp_small::fp_small_gemm_row_panel` | 2 | 0 | 0 | not run | `gemm_row_panel_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -235,9 +236,9 @@ Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` p
 
 ### `fp_small_panel::SmallPrimePanelGemmFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `batch_gemm_safe` | `crates/gf2-kernels-simd/src/fp_small_panel.rs` | `x86::fp_small_panel::fp_small_panel_gemm` | 1 | 0 | 2 | not run |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `batch_gemm_safe` | `crates/gf2-kernels-simd/src/fp_small_panel.rs` | `x86::fp_small_panel::fp_small_panel_gemm` | 1 | 0 | 2 | not run | `batch_gemm_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -256,10 +257,10 @@ Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` p
 
 ### `fp_small_f32::SmallPrimeF32GemmFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `batch_gemm_safe` | `crates/gf2-kernels-simd/src/fp_small_f32.rs` | `x86::fp_small_f32::fp_small_f32_gemm` | 1 | 0 | 2 | killed by SIGSEGV |
-| `batch_gemm_route_a_safe` | `crates/gf2-kernels-simd/src/fp_small_f32.rs` | `x86::fp_small_f32::fp_small_f32_gemm_route_a` | 1 | 0 | 1 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `batch_gemm_safe` | `crates/gf2-kernels-simd/src/fp_small_f32.rs` | `x86::fp_small_f32::fp_small_f32_gemm` | 1 | 0 | 2 | killed by SIGSEGV | `batch_gemm_checked` |
+| `batch_gemm_route_a_safe` | `crates/gf2-kernels-simd/src/fp_small_f32.rs` | `x86::fp_small_f32::fp_small_f32_gemm_route_a` | 1 | 0 | 1 | killed by SIGSEGV | `batch_gemm_route_a_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -280,9 +281,9 @@ Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` p
 
 ### `fp_medium::MediumPrimeGemmPanelFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `gemm_panel_safe` | `crates/gf2-kernels-simd/src/fp_medium.rs` | `x86::fp_medium::fp_medium_gemm_panel` | 1 | 0 | 0 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `gemm_panel_safe` | `crates/gf2-kernels-simd/src/fp_medium.rs` | `x86::fp_medium::fp_medium_gemm_panel` | 1 | 0 | 0 | killed by SIGSEGV | `gemm_panel_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -300,9 +301,9 @@ Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` p
 
 ### `fp_medium_f64::FpMediumF64GemmFn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `batch_gemm_safe` | `crates/gf2-kernels-simd/src/fp_medium_f64.rs` | `x86::fp_medium_f64::fp_medium_f64_gemm` | 1 | 0 | 2 | killed by SIGSEGV |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `batch_gemm_safe` | `crates/gf2-kernels-simd/src/fp_medium_f64.rs` | `x86::fp_medium_f64::fp_medium_f64_gemm` | 1 | 0 | 2 | killed by SIGSEGV | `batch_gemm_checked` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -321,9 +322,9 @@ Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` p
 
 ### `modem::PamSqDistancesF32Fn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `pam_sq_distances_f32_avx2_safe` | `crates/gf2-kernels-simd/src/modem.rs` | `modem::avx2::pam_sq_distances_f32_avx2` | 0 | 0 | 4 | not run |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `pam_sq_distances_f32_avx2_safe` | `crates/gf2-kernels-simd/src/modem.rs` | `modem::avx2::pam_sq_distances_f32_avx2` | 0 | 0 | 4 | not run | a statement of `pam_sq_distances_f32_avx2_safe` under `cfg(gf2_entry_checked)` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|
@@ -339,9 +340,9 @@ Witness: dimensions `symbols` = 2^32, `levels` = 2^32 pass the release assertion
 
 ### `modem::PamSqDistancesF64Fn`
 
-| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call |
-|---|---|---|---|---|---|---|
-| `pam_sq_distances_f64_avx2_safe` | `crates/gf2-kernels-simd/src/modem.rs` | `modem::avx2::pam_sq_distances_f64_avx2` | 1 | 1 | 2 | not run |
+| Entry point | Module | Kernel | Production calls | Bench calls | Test calls | Witness call | Checked form |
+|---|---|---|---|---|---|---|---|
+| `pam_sq_distances_f64_avx2_safe` | `crates/gf2-kernels-simd/src/modem.rs` | `modem::avx2::pam_sq_distances_f64_avx2` | 1 | 1 | 2 | not run | a statement of `pam_sq_distances_f64_avx2_safe` under `cfg(gf2_entry_checked)` |
 
 | Condition no release build checks | Checked in a debug build at | Unchecked access |
 |---|---|---|

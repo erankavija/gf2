@@ -5,24 +5,24 @@
     {
       "id": "small-spmm-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/fp_small.rs",
       "line": 63,
       "occurrences": 1,
       "verbatim": "/// Each index must satisfy `a_cols[h] * b_stride + n <= b.len()`, and",
       "why": "The column bound is prose on the safe pointer type, outside its Panics section.",
-      "sha256": "41797f1e856234acce292a17cfd6229fd839243211a7c95317dce2b38d0e6bbf"
+      "sha256": "1faa49d2947a51cddce65577586921b0e956c2a7330effbb39dec1b8432e3e6c"
     },
     {
       "id": "small-spmm-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/fp_small.rs",
-      "line": 179,
+      "line": 197,
       "occurrences": 1,
       "verbatim": "    // The column bound is the caller's, as `SmallPrimeSpmmRowFn` documents; the",
       "why": "The safe wrapper leaves the column bound to its caller.",
-      "sha256": "41797f1e856234acce292a17cfd6229fd839243211a7c95317dce2b38d0e6bbf"
+      "sha256": "1faa49d2947a51cddce65577586921b0e956c2a7330effbb39dec1b8432e3e6c"
     },
     {
       "id": "small-spmm-length-assert",
@@ -60,24 +60,24 @@
     {
       "id": "medium-spmm-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
       "line": 39,
       "occurrences": 1,
       "verbatim": "/// Each index must satisfy `a_cols[h] * b_stride + n <= b.len()`.",
       "why": "The column bound is prose on the safe pointer type, outside its Panics section.",
-      "sha256": "938a03eddcde01b210aa5b6e0157b41a8eedb255b1761717b6a76ca3d06ce270"
+      "sha256": "24b74dd2e24200ab1c7da57871690fdfb38447fefd9d41590793365088c731c6"
     },
     {
       "id": "medium-spmm-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
-      "line": 136,
+      "line": 143,
       "occurrences": 1,
       "verbatim": "    // The column bound is the caller's, as `MediumPrimeSpmmRowFn` documents;",
       "why": "The safe wrapper leaves the column bound to its caller.",
-      "sha256": "938a03eddcde01b210aa5b6e0157b41a8eedb255b1761717b6a76ca3d06ce270"
+      "sha256": "24b74dd2e24200ab1c7da57871690fdfb38447fefd9d41590793365088c731c6"
     },
     {
       "id": "medium-spmm-length-assert",
@@ -115,24 +115,24 @@
     {
       "id": "small-ple-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
       "line": 31,
       "occurrences": 1,
       "verbatim": "/// (`< p`). These preconditions are debug-asserted by the kernel.",
       "why": "The safe pointer type states its caller conditions as debug-asserted.",
-      "sha256": "845c44c9994fc116a96f1eb588544c1c5020d8aef36f9a534428b8e771568869"
+      "sha256": "fe5808bda1092ac74255ad3720b5eb3a5eeb9566bce78cebf287147b86f6b42b"
     },
     {
       "id": "small-ple-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
-      "line": 114,
+      "line": 118,
       "occurrences": 1,
       "verbatim": "    // `SmallPrimePlePanelBaseFn`, established by the gf2-core dispatch",
       "why": "The safe wrapper attributes the conditions to one calling crate.",
-      "sha256": "845c44c9994fc116a96f1eb588544c1c5020d8aef36f9a534428b8e771568869"
+      "sha256": "fe5808bda1092ac74255ad3720b5eb3a5eeb9566bce78cebf287147b86f6b42b"
     },
     {
       "id": "small-ple-window-debug",
@@ -203,24 +203,24 @@
     {
       "id": "medium-ple-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
       "line": 36,
       "occurrences": 1,
       "verbatim": "/// (`< p`). These preconditions are debug-asserted by the kernel.",
       "why": "The safe pointer type states its caller conditions as debug-asserted.",
-      "sha256": "bd2f37a5d01fbf3b6d40e9583094a8bf6f1d7233c4201da410239cf3753eba86"
+      "sha256": "87710823c6ddb7b3bbdeaca916046e7ab5dfc36e68c93082794f0529ce2481ab"
     },
     {
       "id": "medium-ple-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
-      "line": 131,
+      "line": 135,
       "occurrences": 1,
       "verbatim": "    // `MediumPrimePlePanelBaseFn`, established by the gf2-core dispatch",
       "why": "The safe wrapper attributes the conditions to one calling crate.",
-      "sha256": "bd2f37a5d01fbf3b6d40e9583094a8bf6f1d7233c4201da410239cf3753eba86"
+      "sha256": "87710823c6ddb7b3bbdeaca916046e7ab5dfc36e68c93082794f0529ce2481ab"
     },
     {
       "id": "medium-ple-window-debug",
@@ -291,46 +291,46 @@
     {
       "id": "bipedal-binary-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
       "line": 126,
       "occurrences": 1,
       "verbatim": "/// [`BipedalAvx2Fns::mul_fn`]. All six slices share length divisible by 4.",
       "why": "The slice shape is prose on the safe pointer type.",
-      "sha256": "153a4ddd5eefa817fce9cb1d635fe5c456fcbcdb54b1e0c9d8b3694e551582b4"
+      "sha256": "6f660d03a4d367788269d544eb5af2a4174462fc258d4ca7fbf42a280f057706"
     },
     {
       "id": "bipedal-unary-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
       "line": 132,
       "occurrences": 1,
       "verbatim": "/// Used by [`BipedalAvx2Fns::neg_fn`]. All four slices share length",
       "why": "The slice shape is prose on the safe pointer type.",
-      "sha256": "153a4ddd5eefa817fce9cb1d635fe5c456fcbcdb54b1e0c9d8b3694e551582b4"
+      "sha256": "6f660d03a4d367788269d544eb5af2a4174462fc258d4ca7fbf42a280f057706"
     },
     {
       "id": "bipedal-binary-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
-      "line": 197,
+      "line": 210,
       "occurrences": 3,
       "verbatim": "    // The slice shape is the caller's, as `BipedalBinaryKernelFn` documents.",
       "why": "The three binary wrappers leave the slice shape to their caller.",
-      "sha256": "153a4ddd5eefa817fce9cb1d635fe5c456fcbcdb54b1e0c9d8b3694e551582b4"
+      "sha256": "6f660d03a4d367788269d544eb5af2a4174462fc258d4ca7fbf42a280f057706"
     },
     {
       "id": "bipedal-unary-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
-      "line": 218,
+      "line": 270,
       "occurrences": 1,
       "verbatim": "    // The slice shape is the caller's, as `BipedalUnaryKernelFn` documents.",
       "why": "The unary wrapper leaves the slice shape to its caller.",
-      "sha256": "153a4ddd5eefa817fce9cb1d635fe5c456fcbcdb54b1e0c9d8b3694e551582b4"
+      "sha256": "6f660d03a4d367788269d544eb5af2a4174462fc258d4ca7fbf42a280f057706"
     },
     {
       "id": "bipedal-binary-debug",
@@ -379,57 +379,57 @@
     {
       "id": "bipedal-unsafe-entry",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
       "line": 40,
       "occurrences": 1,
       "verbatim": "    pub unsafe fn run_add_batch(",
       "why": "The crate publishes the same kernels as `unsafe fn` items as well, with the slice shape under Safety.",
-      "sha256": "153a4ddd5eefa817fce9cb1d635fe5c456fcbcdb54b1e0c9d8b3694e551582b4"
+      "sha256": "6f660d03a4d367788269d544eb5af2a4174462fc258d4ca7fbf42a280f057706"
     },
     {
       "id": "f5-binary-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
       "line": 255,
       "occurrences": 1,
       "verbatim": "/// All nine slices must have the same length (a multiple of 4 for the AVX2 path).",
       "why": "The slice shape is prose on the safe pointer type.",
-      "sha256": "91972d63a423aa342c1e6bfad52d84e04fe33bc048ffefac2d47184991b8d27d"
+      "sha256": "4c36cde72ea683ff7d10b6f0305e36e5a2aaa2a6fbebe89052fa14bde547ad73"
     },
     {
       "id": "f5-unary-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
       "line": 262,
       "occurrences": 1,
       "verbatim": "/// All six slices must have the same length (a multiple of 4 for the AVX2 path).",
       "why": "The slice shape is prose on the safe pointer type.",
-      "sha256": "91972d63a423aa342c1e6bfad52d84e04fe33bc048ffefac2d47184991b8d27d"
+      "sha256": "4c36cde72ea683ff7d10b6f0305e36e5a2aaa2a6fbebe89052fa14bde547ad73"
     },
     {
       "id": "f5-binary-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
-      "line": 324,
+      "line": 337,
       "occurrences": 3,
       "verbatim": "    // The slice shape is the caller's, as `F5BinaryKernelFn` documents.",
       "why": "The three binary wrappers leave the slice shape to their caller.",
-      "sha256": "91972d63a423aa342c1e6bfad52d84e04fe33bc048ffefac2d47184991b8d27d"
+      "sha256": "4c36cde72ea683ff7d10b6f0305e36e5a2aaa2a6fbebe89052fa14bde547ad73"
     },
     {
       "id": "f5-unary-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
-      "line": 386,
+      "line": 513,
       "occurrences": 1,
       "verbatim": "    // The slice shape is the caller's, as `F5UnaryKernelFn` documents.",
       "why": "The unary wrapper leaves the slice shape to its caller.",
-      "sha256": "91972d63a423aa342c1e6bfad52d84e04fe33bc048ffefac2d47184991b8d27d"
+      "sha256": "4c36cde72ea683ff7d10b6f0305e36e5a2aaa2a6fbebe89052fa14bde547ad73"
     },
     {
       "id": "f5-binary-debug",
@@ -478,46 +478,46 @@
     {
       "id": "f7-binary-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
       "line": 184,
       "occurrences": 1,
       "verbatim": "/// All three slices must have the same length (a multiple of 4 for AVX2).",
       "why": "The slice shape is prose on the safe pointer type.",
-      "sha256": "5568f918424cd8b2256e2c261043a398df8958e51d07885860b27f79897a9fa6"
+      "sha256": "801c1752b3c8bf3930bfbf3deec968e817d9cf414a8ed1c5735d4884f312c86e"
     },
     {
       "id": "f7-unary-type-doc",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
       "line": 190,
       "occurrences": 1,
       "verbatim": "/// Both slices must have the same length (a multiple of 4 for AVX2).",
       "why": "The slice shape is prose on the safe pointer type.",
-      "sha256": "5568f918424cd8b2256e2c261043a398df8958e51d07885860b27f79897a9fa6"
+      "sha256": "801c1752b3c8bf3930bfbf3deec968e817d9cf414a8ed1c5735d4884f312c86e"
     },
     {
       "id": "f7-binary-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
-      "line": 240,
+      "line": 253,
       "occurrences": 3,
       "verbatim": "    // The slice shape is the caller's, as `F7BinaryKernelFn` documents.",
       "why": "The three binary wrappers leave the slice shape to their caller.",
-      "sha256": "5568f918424cd8b2256e2c261043a398df8958e51d07885860b27f79897a9fa6"
+      "sha256": "801c1752b3c8bf3930bfbf3deec968e817d9cf414a8ed1c5735d4884f312c86e"
     },
     {
       "id": "f7-unary-wrapper",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
-      "line": 261,
+      "line": 304,
       "occurrences": 1,
       "verbatim": "    // The slice shape is the caller's, as `F7UnaryKernelFn` documents.",
       "why": "The unary wrapper leaves the slice shape to its caller.",
-      "sha256": "5568f918424cd8b2256e2c261043a398df8958e51d07885860b27f79897a9fa6"
+      "sha256": "801c1752b3c8bf3930bfbf3deec968e817d9cf414a8ed1c5735d4884f312c86e"
     },
     {
       "id": "f7-debug",
@@ -687,35 +687,35 @@
     {
       "id": "pam-assert",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/modem.rs",
-      "line": 246,
+      "line": 254,
       "occurrences": 2,
       "verbatim": "            \"out.len() must equal num_symbols * pam_levels.len()\"",
       "why": "Both wrappers compare `out.len()` with a wrapping product of two slice lengths.",
-      "sha256": "3d64cf1cece98789717530521ce22a7a4312ce0b8eb737e818bef3efc16cef1f"
+      "sha256": "f63b01739e26f2774977f368382bc0b00547f4f00213a1831f981901d76cd234"
     },
     {
       "id": "pam-f32-store",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/modem.rs",
-      "line": 339,
+      "line": 355,
       "occurrences": 1,
       "verbatim": "                _mm256_storeu_ps(out_ptr.add(c * 8), v_d);",
       "why": "The f32 kernel stores through a raw pointer into `out`.",
-      "sha256": "3d64cf1cece98789717530521ce22a7a4312ce0b8eb737e818bef3efc16cef1f"
+      "sha256": "f63b01739e26f2774977f368382bc0b00547f4f00213a1831f981901d76cd234"
     },
     {
       "id": "pam-f64-store",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/modem.rs",
-      "line": 402,
+      "line": 418,
       "occurrences": 1,
       "verbatim": "                _mm256_storeu_pd(out_ptr.add(c * 4), v_d);",
       "why": "The f64 kernel stores through a raw pointer into `out`.",
-      "sha256": "3d64cf1cece98789717530521ce22a7a4312ce0b8eb737e818bef3efc16cef1f"
+      "sha256": "f63b01739e26f2774977f368382bc0b00547f4f00213a1831f981901d76cd234"
     },
     {
       "id": "gray-check-products",
@@ -742,13 +742,13 @@
     {
       "id": "gray-check-panics-doc",
       "project": "gf2",
-      "commit": "6d03804a2a6e329f00879b676537125479916660",
+      "commit": "957c88904349a8babebf73e89e3b17993a3b52f4",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
-      "line": 93,
+      "line": 95,
       "occurrences": 1,
       "verbatim": "/// Panics if `stride_words` is not the width this builder specializes for, if",
       "why": "The pointer type of the checked builders lists its conditions under Panics.",
-      "sha256": "0282f83b6e5ca8232497f4f62404fe107e7575a0b664a4523eb00a7b3c1326ec"
+      "sha256": "d04a1d376fb5174463496f88e4f93f1d5d1acf9be27bb0192bd8279fa03e2fee"
     },
     {
       "id": "gray-check-contract",

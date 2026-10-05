@@ -5,10 +5,11 @@
   "source_evidence": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/source-evidence.json",
   "instruction_counts": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/instruction-counts.json",
   "witness_runs": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/witness-runs.json",
-  "scan_rule": "An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim.",
-  "use_rule": "In every tracked Rust file outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.",
+  "scan_rule": "An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim. The checked form of an entry point, compiled under `cfg(gf2_entry_checked)` alone, is counted with its entry point.",
+  "use_rule": "In every tracked Rust file outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, and outside the condition test of the checked build, which does the same, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.",
   "counts": {
     "safe_functions_with_an_unsafe_block": 88,
+    "checked_forms_under_the_cfg": 22,
     "entry_points": 24,
     "pointer_types": 17,
     "cost_classes": 4,
@@ -91,6 +92,7 @@
           "safe_function": "spmm_row_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small.rs",
           "kernel": "x86::fp_small::fp_small_spmm_row",
+          "checked_form": "`spmm_row_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -197,6 +199,7 @@
           "safe_function": "spmm_row_safe",
           "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
           "kernel": "x86::fp_medium::fp_medium_spmm_row",
+          "checked_form": "`spmm_row_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -299,6 +302,7 @@
           "safe_function": "ple_panel_base_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
           "kernel": "x86::fp_small_ple::ple_panel_base_canonical",
+          "checked_form": "`ple_panel_base_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -463,6 +467,7 @@
           "safe_function": "ple_panel_base_safe",
           "module": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
           "kernel": "x86::fp_medium_ple::ple_panel_base_canonical_u16",
+          "checked_form": "`ple_panel_base_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -618,6 +623,7 @@
           "safe_function": "add_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
           "kernel": "x86::bipedal_avx2::run_add_batch::<Config3>",
+          "checked_form": "`add_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -645,6 +651,7 @@
           "safe_function": "sub_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
           "kernel": "x86::bipedal_avx2::run_sub_batch::<Config3>",
+          "checked_form": "`sub_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -672,6 +679,7 @@
           "safe_function": "mul_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
           "kernel": "x86::bipedal_avx2::run_mul_batch::<Config3>",
+          "checked_form": "`mul_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -746,6 +754,7 @@
           "safe_function": "neg_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
           "kernel": "x86::bipedal_avx2::run_neg_batch::<Config3>",
+          "checked_form": "`neg_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -822,6 +831,7 @@
           "safe_function": "add5_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
           "kernel": "x86::bipedal_avx2_packed5::run_add5_batch",
+          "checked_form": "`add5_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -835,6 +845,7 @@
           "safe_function": "sub5_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
           "kernel": "x86::bipedal_avx2_packed5::run_sub5_batch",
+          "checked_form": "`sub5_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -848,6 +859,7 @@
           "safe_function": "mul5_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
           "kernel": "x86::bipedal_avx2_packed5::run_mul5_batch",
+          "checked_form": "`mul5_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -921,6 +933,7 @@
           "safe_function": "neg5_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
           "kernel": "x86::bipedal_avx2_packed5::run_neg5_batch",
+          "checked_form": "`neg5_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -996,6 +1009,7 @@
           "safe_function": "add7_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
           "kernel": "x86::bipedal_avx2_packed7::run_add7_batch",
+          "checked_form": "`add7_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -1009,6 +1023,7 @@
           "safe_function": "sub7_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
           "kernel": "x86::bipedal_avx2_packed7::run_sub7_batch",
+          "checked_form": "`sub7_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -1022,6 +1037,7 @@
           "safe_function": "mul7_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
           "kernel": "x86::bipedal_avx2_packed7::run_mul7_batch",
+          "checked_form": "`mul7_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -1095,6 +1111,7 @@
           "safe_function": "neg7_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
           "kernel": "x86::bipedal_avx2_packed7::run_neg7_batch",
+          "checked_form": "`neg7_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [],
           "call_sites": {
@@ -1166,6 +1183,7 @@
           "safe_function": "gemm_row_panel_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small.rs",
           "kernel": "x86::fp_small::fp_small_gemm_row_panel",
+          "checked_form": "`gemm_row_panel_checked`",
           "witness_call_ends": null,
           "callers": [
             {
@@ -1273,6 +1291,7 @@
           "safe_function": "batch_gemm_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
           "kernel": "x86::fp_small_panel::fp_small_panel_gemm",
+          "checked_form": "`batch_gemm_checked`",
           "witness_call_ends": null,
           "callers": [
             {
@@ -1384,6 +1403,7 @@
           "safe_function": "batch_gemm_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
           "kernel": "x86::fp_small_f32::fp_small_f32_gemm",
+          "checked_form": "`batch_gemm_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -1425,6 +1445,7 @@
           "safe_function": "batch_gemm_route_a_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
           "kernel": "x86::fp_small_f32::fp_small_f32_gemm_route_a",
+          "checked_form": "`batch_gemm_route_a_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -1530,6 +1551,7 @@
           "safe_function": "gemm_panel_safe",
           "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
           "kernel": "x86::fp_medium::fp_medium_gemm_panel",
+          "checked_form": "`gemm_panel_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -1625,6 +1647,7 @@
           "safe_function": "batch_gemm_safe",
           "module": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
           "kernel": "x86::fp_medium_f64::fp_medium_f64_gemm",
+          "checked_form": "`batch_gemm_checked`",
           "witness_call_ends": "killed by SIGSEGV",
           "callers": [
             {
@@ -1733,6 +1756,7 @@
           "safe_function": "pam_sq_distances_f32_avx2_safe",
           "module": "crates/gf2-kernels-simd/src/modem.rs",
           "kernel": "modem::avx2::pam_sq_distances_f32_avx2",
+          "checked_form": "a statement of `pam_sq_distances_f32_avx2_safe` under `cfg(gf2_entry_checked)`",
           "witness_call_ends": null,
           "callers": [
             {
@@ -1819,6 +1843,7 @@
           "safe_function": "pam_sq_distances_f64_avx2_safe",
           "module": "crates/gf2-kernels-simd/src/modem.rs",
           "kernel": "modem::avx2::pam_sq_distances_f64_avx2",
+          "checked_form": "a statement of `pam_sq_distances_f64_avx2_safe` under `cfg(gf2_entry_checked)`",
           "witness_call_ends": null,
           "callers": [
             {

@@ -35,12 +35,14 @@ SCAN_RULE = (
     "a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest "
     "preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe "
     "function with a block outside test code is either an entry point of the inventory "
-    "or cleared with a basis and a source claim."
+    "or cleared with a basis and a source claim. The checked form of an entry point, "
+    "compiled under `cfg(gf2_entry_checked)` alone, is counted with its entry point."
 )
 USE_RULE = (
     "In every tracked Rust file outside receipt input snapshots and outside this "
-    "record's own directory, whose witness example calls the pointers on purpose, a "
-    "call is a line holding `.<field>)(` for a published pointer field of the "
+    "record's own directory, whose witness example calls the pointers on purpose, and "
+    "outside the condition test of the checked build, which does the same, a call is "
+    "a line holding `.<field>)(` for a published pointer field of the "
     "inventory, doc comments included; a value use is `.<field>` in code text that no "
     "call parenthesis follows. Each file and field is assigned in the review with the "
     "entry points its uses reach and their counts."
@@ -109,8 +111,9 @@ def scan_uses():
     value = re.compile(rf"\.({names})\b(?!\s*\)\s*\()")
     found = {}
     own = str(OUT.relative_to(ROOT)) + "/"
+    condition_test = f"{package(review.CONDITION_TEST[0])}/{review.CONDITION_TEST[1]}"
     for path in tracked("**/*.rs"):
-        if path.startswith(own):
+        if path.startswith(own) or path == condition_test:
             continue
         source = (ROOT / path).read_text()
         if not re.search(names, source):
@@ -185,9 +188,16 @@ def build():
         for identifier, path, wrapper, kernel in interface["entries"]:
             entry_of[(path, wrapper)] = identifier
     cleared = {(path, function): basis for path, function, basis, *_ in review.CLEARED}
+    checked = {
+        (path, wrapper.replace(*review.CHECKED_SUFFIX)): identifier
+        for (path, wrapper), identifier in entry_of.items()
+        if identifier not in review.CHECKED_IN_PLACE
+    }
     for key in sorted(set(entry_of) & set(cleared)):
         problems.append(f"{key}: both an entry point and cleared")
-    for key in sorted(set(scanned) - set(entry_of) - set(cleared)):
+    for key in sorted(set(checked) - set(scanned)):
+        problems.append(f"{key}: the checked form of {checked[key]} is absent")
+    for key in sorted(set(scanned) - set(entry_of) - set(cleared) - set(checked)):
         problems.append(f"{key}: a safe function with an unsafe block has no verdict")
     for key in sorted((set(entry_of) | set(cleared)) - set(scanned)):
         problems.append(f"{key}: the verdict names no safe function with an unsafe block")
@@ -240,6 +250,11 @@ def build():
                     "safe_function": wrapper,
                     "module": f"{package(KERNEL_PACKAGE)}/{path}",
                     "kernel": kernel,
+                    "checked_form": (
+                        f"a statement of `{wrapper}` under `cfg({review.CHECKED_CFG})`"
+                        if identifier in review.CHECKED_IN_PLACE
+                        else f"`{wrapper.replace(*review.CHECKED_SUFFIX)}`"
+                    ),
                     "witness_call_ends": ended.get(identifier),
                     "callers": sites,
                     "call_sites": {
@@ -289,7 +304,8 @@ def build():
         "scan_rule": SCAN_RULE,
         "use_rule": USE_RULE,
         "counts": {
-            "safe_functions_with_an_unsafe_block": len(scanned),
+            "safe_functions_with_an_unsafe_block": len(scanned) - len(checked),
+            "checked_forms_under_the_cfg": len(checked),
             "entry_points": entry_count,
             "pointer_types": len(interfaces),
             "cost_classes": len(review.CLASSES),
@@ -390,6 +406,8 @@ def inventory_page(record):
                 ["safe functions holding an `unsafe` block outside test code",
                  counts["safe_functions_with_an_unsafe_block"]],
                 ["entry points of the inventory", counts["entry_points"]],
+                ["checked forms compiled under `cfg(gf2_entry_checked)`",
+                 counts["checked_forms_under_the_cfg"]],
                 ["safe pointer types they are published through", counts["pointer_types"]],
                 ["cost classes", counts["cost_classes"]],
                 ["safe functions cleared", counts["cleared_safe_functions"]],
@@ -427,11 +445,11 @@ def inventory_page(record):
             out.append(
                 table(
                     ["Entry point", "Module", "Kernel", "Production calls", "Bench calls",
-                     "Test calls", "Witness call"],
+                     "Test calls", "Witness call", "Checked form"],
                     [[f"`{entry['safe_function']}`", f"`{entry['module']}`",
                       f"`{entry['kernel']}`", sites(entry, "production"),
                       sites(entry, "bench"), sites(entry, "test"),
-                      entry["witness_call_ends"] or "not run"]
+                      entry["witness_call_ends"] or "not run", entry["checked_form"]]
                      for entry in interface["entries"]],
                 )
             )
