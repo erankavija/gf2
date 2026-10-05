@@ -19,6 +19,14 @@ pub fn m4rm_gray_build_scalar(
     table_size: usize,
     valid_rows: usize,
 ) {
+    assert_gray_build_lengths(
+        "m4rm_gray_build_scalar",
+        buffer.len(),
+        panel.len(),
+        stride_words,
+        table_size,
+        valid_rows,
+    );
     buffer[..stride_words].fill(0);
     let mut prev_gray = 0usize;
     for i in 1..table_size {
@@ -40,6 +48,39 @@ pub fn m4rm_gray_build_scalar(
 }
 
 const _: M4rmGrayBuildFn = m4rm_gray_build_scalar;
+
+/// The argument check every Gray-table builder runs before its first store.
+///
+/// The Gray index of `i < table_size` stays below `table_size` only for a
+/// power of two, and a builder stores entry 0 unconditionally.
+///
+/// # Panics
+///
+/// Panics, with a message opening with `builder`, unless `table_size` is a
+/// nonzero power of two, neither `table_size * stride_words` nor
+/// `valid_rows * stride_words` overflows `usize`, `buffer_len` covers the
+/// first product and `panel_len` the second.
+pub fn assert_gray_build_lengths(
+    builder: &str,
+    buffer_len: usize,
+    panel_len: usize,
+    stride_words: usize,
+    table_size: usize,
+    valid_rows: usize,
+) {
+    assert!(
+        table_size.is_power_of_two(),
+        "{builder}: table_size must be a nonzero power of two"
+    );
+    let Some(table_words) = table_size.checked_mul(stride_words) else {
+        panic!("{builder}: table_size * stride_words overflows usize");
+    };
+    assert!(buffer_len >= table_words, "{builder}: buffer too small");
+    let Some(panel_words) = valid_rows.checked_mul(stride_words) else {
+        panic!("{builder}: valid_rows * stride_words overflows usize");
+    };
+    assert!(panel_len >= panel_words, "{builder}: panel too small");
+}
 
 /// The argument contract of a Gray-table builder, as cases any implementation
 /// can be handed.

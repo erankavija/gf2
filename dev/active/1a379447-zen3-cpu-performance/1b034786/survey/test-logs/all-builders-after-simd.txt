@@ -1,0 +1,642 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-kernels-simd -p gf2-core --all-features -E binary(m4rm_gray_build_contract) | test(/^m4rm::tests::/) --cargo-profile ci-test --profile ci --no-capture
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
+    Finished `ci-test` profile [optimized] target(s) in 0.29s
+────────────
+ Nextest run ID beb49cd9-91e3-47df-a4c0-cde5cd1e0f4b with nextest profile: ci
+    Starting 3 tests across 99 binaries (3066 tests skipped)
+       START [         ] (1/3) gf2-core::m4rm_gray_build_contract a_block_of_word_size_rows_is_rejected
+
+running 1 test
+
+thread 'a_block_of_word_size_rows_is_rejected' (2766892) panicked at crates/gf2-core/src/alg/m4rm.rs:612:9:
+build_gray_table_flat: 2^k_block overflows usize
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test a_block_of_word_size_rows_is_rejected ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (1/3) gf2-core::m4rm_gray_build_contract a_block_of_word_size_rows_is_rejected
+       START [         ] (2/3) gf2-core::m4rm_gray_build_contract every_gray_table_builder_answers_the_contract
+
+running 1 test
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 1: zero table size
+ok      m4rm_gray_build_scalar, stride 1: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 1: buffer one word short
+ok      m4rm_gray_build_scalar, stride 1: panel one word short
+ok      m4rm_gray_build_scalar, stride 1: one-entry table
+ok      m4rm_gray_build_scalar, stride 1: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build_scalar: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build_scalar: valid_rows * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 4: zero table size
+ok      m4rm_gray_build_scalar, stride 4: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 4: overflowing table length
+ok      m4rm_gray_build_scalar, stride 4: overflowing panel length
+ok      m4rm_gray_build_scalar, stride 4: buffer one word short
+ok      m4rm_gray_build_scalar, stride 4: panel one word short
+ok      m4rm_gray_build_scalar, stride 4: one-entry table
+ok      m4rm_gray_build_scalar, stride 4: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build_scalar: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build_scalar: valid_rows * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 5: zero table size
+ok      m4rm_gray_build_scalar, stride 5: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 5: overflowing table length
+ok      m4rm_gray_build_scalar, stride 5: overflowing panel length
+ok      m4rm_gray_build_scalar, stride 5: buffer one word short
+ok      m4rm_gray_build_scalar, stride 5: panel one word short
+ok      m4rm_gray_build_scalar, stride 5: one-entry table
+ok      m4rm_gray_build_scalar, stride 5: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build_scalar: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build_scalar: valid_rows * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 8: zero table size
+ok      m4rm_gray_build_scalar, stride 8: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 8: overflowing table length
+ok      m4rm_gray_build_scalar, stride 8: overflowing panel length
+ok      m4rm_gray_build_scalar, stride 8: buffer one word short
+ok      m4rm_gray_build_scalar, stride 8: panel one word short
+ok      m4rm_gray_build_scalar, stride 8: one-entry table
+ok      m4rm_gray_build_scalar, stride 8: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build_scalar: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build_scalar: valid_rows * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 16: zero table size
+ok      m4rm_gray_build_scalar, stride 16: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 16: overflowing table length
+ok      m4rm_gray_build_scalar, stride 16: overflowing panel length
+ok      m4rm_gray_build_scalar, stride 16: buffer one word short
+ok      m4rm_gray_build_scalar, stride 16: panel one word short
+ok      m4rm_gray_build_scalar, stride 16: one-entry table
+ok      m4rm_gray_build_scalar, stride 16: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build4: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build4: valid_rows * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build4: buffer too small
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build4: panel too small
+ok      m4rm_gray_build4, stride 4: zero table size
+ok      m4rm_gray_build4, stride 4: table size not a power of two
+ok      m4rm_gray_build4, stride 4: overflowing table length
+ok      m4rm_gray_build4, stride 4: overflowing panel length
+ok      m4rm_gray_build4, stride 4: buffer one word short
+ok      m4rm_gray_build4, stride 4: panel one word short
+ok      m4rm_gray_build4, stride 4: one-entry table
+ok      m4rm_gray_build4, stride 4: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build8: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build8: valid_rows * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build8: buffer too small
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build8: panel too small
+ok      m4rm_gray_build8, stride 8: zero table size
+ok      m4rm_gray_build8, stride 8: table size not a power of two
+ok      m4rm_gray_build8, stride 8: overflowing table length
+ok      m4rm_gray_build8, stride 8: overflowing panel length
+ok      m4rm_gray_build8, stride 8: buffer one word short
+ok      m4rm_gray_build8, stride 8: panel one word short
+ok      m4rm_gray_build8, stride 8: one-entry table
+ok      m4rm_gray_build8, stride 8: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 1: buffer one word short
+ok      build_gray_table_flat, stride 1: one-entry table
+ok      build_gray_table_flat, stride 1: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+build_gray_table_flat: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 4: overflowing table length
+ok      build_gray_table_flat, stride 4: buffer one word short
+ok      build_gray_table_flat, stride 4: one-entry table
+ok      build_gray_table_flat, stride 4: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+build_gray_table_flat: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 5: overflowing table length
+ok      build_gray_table_flat, stride 5: buffer one word short
+ok      build_gray_table_flat, stride 5: one-entry table
+ok      build_gray_table_flat, stride 5: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+build_gray_table_flat: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 8: overflowing table length
+ok      build_gray_table_flat, stride 8: buffer one word short
+ok      build_gray_table_flat, stride 8: one-entry table
+ok      build_gray_table_flat, stride 8: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+build_gray_table_flat: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 16: overflowing table length
+ok      build_gray_table_flat, stride 16: buffer one word short
+ok      build_gray_table_flat, stride 16: one-entry table
+ok      build_gray_table_flat, stride 16: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+build_gray_table_flat: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 20: overflowing table length
+ok      build_gray_table_flat, stride 20: buffer one word short
+ok      build_gray_table_flat, stride 20: one-entry table
+ok      build_gray_table_flat, stride 20: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+build_gray_table_flat: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 24: overflowing table length
+ok      build_gray_table_flat, stride 24: buffer one word short
+ok      build_gray_table_flat, stride 24: one-entry table
+ok      build_gray_table_flat, stride 24: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+build_gray_table_flat: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 32: overflowing table length
+ok      build_gray_table_flat, stride 32: buffer one word short
+ok      build_gray_table_flat, stride 32: one-entry table
+ok      build_gray_table_flat, stride 32: 32-entry tables
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+build_gray_table_flat: table_size * stride_words overflows usize
+
+thread 'every_gray_table_builder_answers_the_contract' (2766894) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+build_gray_table_flat: buffer too small
+ok      build_gray_table_flat, stride 40: overflowing table length
+ok      build_gray_table_flat, stride 40: buffer one word short
+ok      build_gray_table_flat, stride 40: one-entry table
+ok      build_gray_table_flat, stride 40: 32-entry tables
+test every_gray_table_builder_answers_the_contract ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (2/3) gf2-core::m4rm_gray_build_contract every_gray_table_builder_answers_the_contract
+       START [         ] (3/3) gf2-kernels-simd m4rm::tests::every_published_builder_answers_the_gray_build_contract
+
+running 1 test
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 1: zero table size
+ok      m4rm_gray_build_scalar, stride 1: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 1: buffer one word short
+ok      m4rm_gray_build_scalar, stride 1: panel one word short
+ok      m4rm_gray_build_scalar, stride 1: one-entry table
+ok      m4rm_gray_build_scalar, stride 1: 32-entry tables
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build_scalar: table_size * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build_scalar: valid_rows * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 4: zero table size
+ok      m4rm_gray_build_scalar, stride 4: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 4: overflowing table length
+ok      m4rm_gray_build_scalar, stride 4: overflowing panel length
+ok      m4rm_gray_build_scalar, stride 4: buffer one word short
+ok      m4rm_gray_build_scalar, stride 4: panel one word short
+ok      m4rm_gray_build_scalar, stride 4: one-entry table
+ok      m4rm_gray_build_scalar, stride 4: 32-entry tables
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build_scalar: table_size * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build_scalar: valid_rows * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 5: zero table size
+ok      m4rm_gray_build_scalar, stride 5: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 5: overflowing table length
+ok      m4rm_gray_build_scalar, stride 5: overflowing panel length
+ok      m4rm_gray_build_scalar, stride 5: buffer one word short
+ok      m4rm_gray_build_scalar, stride 5: panel one word short
+ok      m4rm_gray_build_scalar, stride 5: one-entry table
+ok      m4rm_gray_build_scalar, stride 5: 32-entry tables
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build_scalar: table_size * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build_scalar: valid_rows * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 8: zero table size
+ok      m4rm_gray_build_scalar, stride 8: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 8: overflowing table length
+ok      m4rm_gray_build_scalar, stride 8: overflowing panel length
+ok      m4rm_gray_build_scalar, stride 8: buffer one word short
+ok      m4rm_gray_build_scalar, stride 8: panel one word short
+ok      m4rm_gray_build_scalar, stride 8: one-entry table
+ok      m4rm_gray_build_scalar, stride 8: 32-entry tables
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build_scalar: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build_scalar: table_size * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build_scalar: valid_rows * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build_scalar: buffer too small
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build_scalar: panel too small
+ok      m4rm_gray_build_scalar, stride 16: zero table size
+ok      m4rm_gray_build_scalar, stride 16: table size not a power of two
+ok      m4rm_gray_build_scalar, stride 16: overflowing table length
+ok      m4rm_gray_build_scalar, stride 16: overflowing panel length
+ok      m4rm_gray_build_scalar, stride 16: buffer one word short
+ok      m4rm_gray_build_scalar, stride 16: panel one word short
+ok      m4rm_gray_build_scalar, stride 16: one-entry table
+ok      m4rm_gray_build_scalar, stride 16: 32-entry tables
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build4: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build4: table_size * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build4: valid_rows * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build4: buffer too small
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build4: panel too small
+ok      m4rm_gray_build4, stride 4: zero table size
+ok      m4rm_gray_build4, stride 4: table size not a power of two
+ok      m4rm_gray_build4, stride 4: overflowing table length
+ok      m4rm_gray_build4, stride 4: overflowing panel length
+ok      m4rm_gray_build4, stride 4: buffer one word short
+ok      m4rm_gray_build4, stride 4: panel one word short
+ok      m4rm_gray_build4, stride 4: one-entry table
+ok      m4rm_gray_build4, stride 4: 32-entry tables
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:71:5:
+m4rm_gray_build8: table_size must be a nonzero power of two
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:76:9:
+m4rm_gray_build8: table_size * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:80:9:
+m4rm_gray_build8: valid_rows * stride_words overflows usize
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:78:5:
+m4rm_gray_build8: buffer too small
+
+thread 'm4rm::tests::every_published_builder_answers_the_gray_build_contract' (2766896) panicked at crates/gf2-kernels-simd/src/m4rm.rs:82:5:
+m4rm_gray_build8: panel too small
+ok      m4rm_gray_build8, stride 8: zero table size
+ok      m4rm_gray_build8, stride 8: table size not a power of two
+ok      m4rm_gray_build8, stride 8: overflowing table length
+ok      m4rm_gray_build8, stride 8: overflowing panel length
+ok      m4rm_gray_build8, stride 8: buffer one word short
+ok      m4rm_gray_build8, stride 8: panel one word short
+ok      m4rm_gray_build8, stride 8: one-entry table
+ok      m4rm_gray_build8, stride 8: 32-entry tables
+test m4rm::tests::every_published_builder_answers_the_gray_build_contract ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 296 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (3/3) gf2-kernels-simd m4rm::tests::every_published_builder_answers_the_gray_build_contract
+────────────
+     Summary [   0.023s] 3 tests run: 3 passed, 3066 skipped
+# exit: 0
