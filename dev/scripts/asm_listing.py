@@ -45,7 +45,7 @@ def symbols(artefact: str) -> dict[str, str]:
 def selectors(artefact: str) -> list[str]:
     """The listing's symbols as `regen-asm.sh` arguments, in listing order."""
     return [
-        name if index is None else f"{name}#{index}" for name, index in SYMBOL.findall(artefact)
+        f"{name}#{index}" if index else name for name, index in SYMBOL.findall(artefact)
     ]
 
 

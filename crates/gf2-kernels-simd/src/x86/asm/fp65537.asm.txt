@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 06729b4
-; regenerated   : 2026-04-29T10:11:42Z
+; commit        : b85adc0a1
+; regenerated   : 2026-10-05T03:26:11Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,29 +18,28 @@
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_mul
 ;==========================================================
 
-   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-33d3f5b7/crates/gf2-kernels-simd)
 
-    Finished `release` profile [optimized] target(s) in 0.59s
+    Finished `release` profile [optimized] target(s) in 0.11s
 gf2_kernels_simd::x86::fp65537::fp65537_batch_mul:
 	sub rsp, 40
 	mov qword ptr [rsp + 8], rsi
 	mov qword ptr [rsp + 16], rcx
 	cmp rsi, rcx
-	jne .LBB55_8
+	jne .LBB110_8
 	mov qword ptr [rsp + 24], rsi
 	mov qword ptr [rsp + 32], r9
 	cmp rsi, r9
-	jne .LBB55_9
+	jne .LBB110_9
 	mov rax, rsi
 	shr rax, 3
-	je .LBB55_5
+	je .LBB110_5
 	shl rax, 5
 	xor ecx, ecx
 	vpxor xmm0, xmm0, xmm0
-	vpbroadcastq ymm1, qword ptr [rip + .LCPI55_0]
-	vpbroadcastq ymm2, qword ptr [rip + .LCPI55_1]
-	vpbroadcastq ymm3, qword ptr [rip + .LCPI55_2]
-.LBB55_4:
+	vpbroadcastq ymm1, qword ptr [rip + .LCPI110_0]
+	vpbroadcastq ymm2, qword ptr [rip + .LCPI110_1]
+	vpbroadcastq ymm3, qword ptr [rip + .LCPI110_2]
+.LBB110_4:
 	vmovdqu ymm4, ymmword ptr [rdi + rcx]
 	vmovdqu ymm5, ymmword ptr [rdx + rcx]
 	vpmuludq ymm6, ymm5, ymm4
@@ -70,13 +69,13 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_mul:
 	vmovdqu ymmword ptr [r8 + rcx], ymm4
 	add rcx, 32
 	cmp rax, rcx
-	jne .LBB55_4
-.LBB55_5:
+	jne .LBB110_4
+.LBB110_5:
 	movabs rax, 2305843009213693944
 	and rax, rsi
 	cmp rax, rsi
-	je .LBB55_7
-.LBB55_6:
+	je .LBB110_7
+.LBB110_6:
 	mov ecx, dword ptr [rdi + 4*rax]
 	mov r9d, dword ptr [rdx + 4*rax]
 	imul r9, rcx
@@ -90,22 +89,22 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_mul:
 	mov dword ptr [r8 + 4*rax], r9d
 	inc rax
 	cmp rax, rsi
-	jb .LBB55_6
-.LBB55_7:
+	jb .LBB110_6
+.LBB110_7:
 	add rsp, 40
 	vzeroupper
 	ret
-.LBB55_8:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.68]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.69]
+.LBB110_8:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.198]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.199]
 	lea rsi, [rsp + 8]
 	lea rdx, [rsp + 16]
 	mov r8d, 69
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB55_9:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.70]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.71]
+.LBB110_9:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.200]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.201]
 	lea rsi, [rsp + 24]
 	lea rdx, [rsp + 32]
 	mov r8d, 65
@@ -116,25 +115,25 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_mul:
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_add
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
 
+    Finished `release` profile [optimized] target(s) in 0.05s
 gf2_kernels_simd::x86::fp65537::fp65537_batch_add:
 	sub rsp, 40
 	mov qword ptr [rsp + 8], rsi
 	mov qword ptr [rsp + 16], rcx
 	cmp rsi, rcx
-	jne .LBB54_8
+	jne .LBB109_8
 	mov qword ptr [rsp + 24], rsi
 	mov qword ptr [rsp + 32], r9
 	cmp rsi, r9
-	jne .LBB54_9
+	jne .LBB109_9
 	mov rax, rsi
 	shr rax, 3
-	je .LBB54_5
+	je .LBB109_5
 	shl rax, 5
 	xor ecx, ecx
-	vpbroadcastd ymm0, dword ptr [rip + .LCPI54_0]
-.LBB54_4:
+	vpbroadcastd ymm0, dword ptr [rip + .LCPI109_0]
+.LBB109_4:
 	vmovdqu ymm1, ymmword ptr [rdx + rcx]
 	vpaddd ymm1, ymm1, ymmword ptr [rdi + rcx]
 	vpaddd ymm2, ymm1, ymm0
@@ -142,13 +141,13 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_add:
 	vmovdqu ymmword ptr [r8 + rcx], ymm1
 	add rcx, 32
 	cmp rax, rcx
-	jne .LBB54_4
-.LBB54_5:
+	jne .LBB109_4
+.LBB109_5:
 	movabs rax, 2305843009213693944
 	and rax, rsi
 	cmp rax, rsi
-	je .LBB54_7
-.LBB54_6:
+	je .LBB109_7
+.LBB109_6:
 	mov ecx, dword ptr [rdx + 4*rax]
 	add ecx, dword ptr [rdi + 4*rax]
 	mov r9d, ecx
@@ -157,22 +156,22 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_add:
 	mov dword ptr [r8 + 4*rax], r9d
 	inc rax
 	cmp rax, rsi
-	jb .LBB54_6
-.LBB54_7:
+	jb .LBB109_6
+.LBB109_7:
 	add rsp, 40
 	vzeroupper
 	ret
-.LBB54_8:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.63]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.65]
+.LBB109_8:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.193]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.195]
 	lea rsi, [rsp + 8]
 	lea rdx, [rsp + 16]
 	mov r8d, 69
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB54_9:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.66]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.67]
+.LBB109_9:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.196]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.197]
 	lea rsi, [rsp + 24]
 	lea rdx, [rsp + 32]
 	mov r8d, 65
@@ -183,25 +182,25 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_add:
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_sub
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
 
+    Finished `release` profile [optimized] target(s) in 0.08s
 gf2_kernels_simd::x86::fp65537::fp65537_batch_sub:
 	sub rsp, 40
 	mov qword ptr [rsp + 8], rsi
 	mov qword ptr [rsp + 16], rcx
 	cmp rsi, rcx
-	jne .LBB56_8
+	jne .LBB111_8
 	mov qword ptr [rsp + 24], rsi
 	mov qword ptr [rsp + 32], r9
 	cmp rsi, r9
-	jne .LBB56_9
+	jne .LBB111_9
 	mov rax, rsi
 	shr rax, 3
-	je .LBB56_5
+	je .LBB111_5
 	shl rax, 5
 	xor ecx, ecx
-	vpbroadcastd ymm0, dword ptr [rip + .LCPI56_0]
-.LBB56_4:
+	vpbroadcastd ymm0, dword ptr [rip + .LCPI111_0]
+.LBB111_4:
 	vmovdqu ymm1, ymmword ptr [rdi + rcx]
 	vpsubd ymm1, ymm1, ymmword ptr [rdx + rcx]
 	vpaddd ymm2, ymm1, ymm0
@@ -209,13 +208,13 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_sub:
 	vmovdqu ymmword ptr [r8 + rcx], ymm1
 	add rcx, 32
 	cmp rax, rcx
-	jne .LBB56_4
-.LBB56_5:
+	jne .LBB111_4
+.LBB111_5:
 	movabs rax, 2305843009213693944
 	and rax, rsi
 	cmp rax, rsi
-	je .LBB56_7
-.LBB56_6:
+	je .LBB111_7
+.LBB111_6:
 	mov ecx, dword ptr [rdi + 4*rax]
 	sub ecx, dword ptr [rdx + 4*rax]
 	lea r9d, [rcx + 65537]
@@ -224,22 +223,22 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_sub:
 	mov dword ptr [r8 + 4*rax], ecx
 	inc rax
 	cmp rax, rsi
-	jb .LBB56_6
-.LBB56_7:
+	jb .LBB111_6
+.LBB111_7:
 	add rsp, 40
 	vzeroupper
 	ret
-.LBB56_8:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.72]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.73]
+.LBB111_8:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.202]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.203]
 	lea rsi, [rsp + 8]
 	lea rdx, [rsp + 16]
 	mov r8d, 69
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB56_9:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.74]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.75]
+.LBB111_9:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.204]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.205]
 	lea rsi, [rsp + 24]
 	lea rdx, [rsp + 32]
 	mov r8d, 65
@@ -250,8 +249,8 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_sub:
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
 
+    Finished `release` profile [optimized] target(s) in 0.06s
 gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	push rbp
 	push r15
@@ -263,29 +262,29 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	mov qword ptr [rsp + 8], rsi
 	mov qword ptr [rsp + 24], rcx
 	cmp rcx, rsi
-	jne .LBB57_1
+	jne .LBB112_1
 	mov qword ptr [rsp + 32], r9
 	cmp r9, rcx
-	jne .LBB57_4
+	jne .LBB112_4
 	mov rax, qword ptr [rsp + 200]
 	mov qword ptr [rsp + 40], rax
 	cmp rax, rcx
-	jne .LBB57_6
+	jne .LBB112_6
 	mov rax, qword ptr [rsp + 224]
 	mov qword ptr [rsp + 48], rax
 	cmp rax, rcx
-	jne .LBB57_8
+	jne .LBB112_8
 	mov rax, qword ptr [rsp + 240]
 	mov qword ptr [rsp + 56], rax
 	cmp rax, rcx
-	jne .LBB57_11
+	jne .LBB112_11
 	mov r14, qword ptr [rsp + 232]
 	mov r9, qword ptr [rsp + 216]
 	mov esi, dword ptr [rsp + 208]
 	mov r10, qword ptr [rsp + 192]
 	mov r11, rcx
 	shr r11, 3
-	je .LBB57_17
+	je .LBB112_17
 	vmovd xmm0, esi
 	vpbroadcastd ymm0, xmm0
 	vmovdqu ymmword ptr [rsp + 96], ymm0
@@ -294,15 +293,15 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	shl r11, 5
 	xor ebx, ebx
 	vpxor xmm2, xmm2, xmm2
-	vpbroadcastq ymm3, qword ptr [rip + .LCPI57_0]
-	vpbroadcastq ymm4, qword ptr [rip + .LCPI57_1]
-	vpbroadcastq ymm5, qword ptr [rip + .LCPI57_2]
-	vpbroadcastd ymm6, dword ptr [rip + .LCPI57_3]
-	vpbroadcastd ymm7, dword ptr [rip + .LCPI57_4]
-	jmp .LBB57_14
-.LBB57_25:
+	vpbroadcastq ymm3, qword ptr [rip + .LCPI112_0]
+	vpbroadcastq ymm4, qword ptr [rip + .LCPI112_1]
+	vpbroadcastq ymm5, qword ptr [rip + .LCPI112_2]
+	vpbroadcastd ymm6, dword ptr [rip + .LCPI112_3]
+	vpbroadcastd ymm7, dword ptr [rip + .LCPI112_4]
+	jmp .LBB112_14
+.LBB112_25:
 	vpxor xmm11, xmm11, xmm11
-.LBB57_26:
+.LBB112_26:
 	vmovdqu ymm12, ymmword ptr [rdi + rbx]
 	vmovdqu ymm13, ymmword ptr [r8 + rbx]
 	vpmuludq ymm14, ymm13, ymm12
@@ -372,8 +371,8 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	vmovdqu ymmword ptr [r14 + rbx], ymm0
 	add rbx, 32
 	cmp r11, rbx
-	je .LBB57_17
-.LBB57_14:
+	je .LBB112_17
+.LBB112_14:
 	vmovdqu ymm10, ymmword ptr [rdx + rbx]
 	vmovdqu ymm9, ymmword ptr [r10 + rbx]
 	vpmuludq ymm8, ymm9, ymm10
@@ -401,10 +400,10 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	vpsllq ymm8, ymm8, 32
 	vpor ymm8, ymm8, ymm12
 	test esi, esi
-	je .LBB57_25
+	je .LBB112_25
 	vmovdqa ymm11, ymm8
 	cmp esi, 1
-	je .LBB57_26
+	je .LBB112_26
 	vpmuludq ymm0, ymm12, ymmword ptr [rsp + 96]
 	vpblendw ymm1, ymm2, ymm0, 17
 	vpsrlq ymm0, ymm0, 16
@@ -428,13 +427,13 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	vpor ymm1, ymm12, ymm1
 	vpsllq ymm1, ymm1, 32
 	vpor ymm11, ymm0, ymm1
-	jmp .LBB57_26
-.LBB57_17:
+	jmp .LBB112_26
+.LBB112_17:
 	movabs r11, 2305843009213693944
 	and r11, rcx
 	cmp r11, rcx
-	jne .LBB57_18
-.LBB57_23:
+	jne .LBB112_18
+.LBB112_23:
 	add rsp, 136
 	pop rbx
 	pop r12
@@ -444,12 +443,12 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	pop rbp
 	vzeroupper
 	ret
-.LBB57_18:
+.LBB112_18:
 	mov qword ptr [rsp + 16], rdi
-	jmp .LBB57_19
-.LBB57_20:
+	jmp .LBB112_19
+.LBB112_20:
 	mov ebp, dword ptr [rsp + 208]
-.LBB57_22:
+.LBB112_22:
 	add rbp, r15
 	mov r8d, 4294901759
 	lea eax, [r8 + rbp]
@@ -474,8 +473,8 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	mov r8, rdx
 	mov rdx, rdi
 	mov rdi, qword ptr [rsp + 16]
-	jae .LBB57_23
-.LBB57_19:
+	jae .LBB112_23
+.LBB112_19:
 	mov esi, dword ptr [rdi + 4*r11]
 	mov rdi, rdx
 	mov eax, dword ptr [rdx + 4*r11]
@@ -514,10 +513,10 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	add r13, 65537
 	mov eax, dword ptr [rsp + 208]
 	test eax, eax
-	je .LBB57_20
+	je .LBB112_20
 	mov rbp, r12
 	cmp eax, 1
-	je .LBB57_22
+	je .LBB112_22
 	mov rax, r12
 	mov esi, dword ptr [rsp + 208]
 	imul rax, rsi
@@ -527,42 +526,42 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	lea rax, [rbp + 65537]
 	cmp rax, 65537
 	cmovb rbp, rax
-	jmp .LBB57_22
-.LBB57_1:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.76]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.77]
+	jmp .LBB112_22
+.LBB112_1:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.206]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.207]
 	lea rsi, [rsp + 24]
 	lea rdx, [rsp + 8]
 	mov r8d, 69
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB57_4:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.78]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.79]
+.LBB112_4:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.208]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.209]
 	lea rsi, [rsp + 32]
 	lea rdx, [rsp + 8]
 	mov r8d, 69
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB57_6:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.80]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.81]
+.LBB112_6:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.210]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.211]
 	lea rsi, [rsp + 40]
 	lea rdx, [rsp + 8]
 	mov r8d, 69
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB57_8:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.82]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.83]
+.LBB112_8:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.212]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.213]
 	lea rsi, [rsp + 48]
 	lea rdx, [rsp + 8]
 	mov r8d, 77
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB57_11:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.84]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.85]
+.LBB112_11:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.214]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.215]
 	lea rsi, [rsp + 56]
 	lea rdx, [rsp + 8]
 	mov r8d, 77
@@ -573,7 +572,7 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.06s
 
 gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	push rbp
@@ -586,34 +585,34 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	mov qword ptr [rsp], rsi
 	mov qword ptr [rsp + 32], rcx
 	cmp rcx, rsi
-	jne .LBB58_1
+	jne .LBB113_1
 	mov qword ptr [rsp + 40], r9
 	cmp r9, rcx
-	jne .LBB58_4
+	jne .LBB113_4
 	mov rax, qword ptr [rsp + 584]
 	mov qword ptr [rsp + 48], rax
 	cmp rax, rcx
-	jne .LBB58_6
+	jne .LBB113_6
 	mov rax, qword ptr [rsp + 600]
 	mov qword ptr [rsp + 56], rax
 	cmp rax, rcx
-	jne .LBB58_8
+	jne .LBB113_8
 	mov rax, qword ptr [rsp + 616]
 	mov qword ptr [rsp + 64], rax
 	cmp rax, rcx
-	jne .LBB58_10
+	jne .LBB113_10
 	mov rax, qword ptr [rsp + 640]
 	mov qword ptr [rsp + 72], rax
 	cmp rax, rcx
-	jne .LBB58_12
+	jne .LBB113_12
 	mov rax, qword ptr [rsp + 656]
 	mov qword ptr [rsp + 80], rax
 	cmp rax, rcx
-	jne .LBB58_15
+	jne .LBB113_15
 	mov rax, qword ptr [rsp + 672]
 	mov qword ptr [rsp + 88], rax
 	cmp rax, rcx
-	jne .LBB58_17
+	jne .LBB113_17
 	mov rax, qword ptr [rsp + 664]
 	mov rsi, qword ptr [rsp + 648]
 	mov r9, qword ptr [rsp + 632]
@@ -623,7 +622,7 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	mov r11, qword ptr [rsp + 576]
 	mov r15, rcx
 	shr r15, 3
-	je .LBB58_23
+	je .LBB113_23
 	vmovd xmm0, r10d
 	vpbroadcastd ymm0, xmm0
 	vmovdqu ymmword ptr [rsp + 288], ymm0
@@ -632,21 +631,21 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	shl r15, 5
 	xor r12d, r12d
 	vpxor xmm11, xmm11, xmm11
-	vpbroadcastq ymm3, qword ptr [rip + .LCPI58_0]
-	vpbroadcastq ymm5, qword ptr [rip + .LCPI58_1]
-	vpbroadcastq ymm14, qword ptr [rip + .LCPI58_2]
-	vpbroadcastd ymm15, dword ptr [rip + .LCPI58_3]
-	vpbroadcastd ymm0, dword ptr [rip + .LCPI58_4]
+	vpbroadcastq ymm3, qword ptr [rip + .LCPI113_0]
+	vpbroadcastq ymm5, qword ptr [rip + .LCPI113_1]
+	vpbroadcastq ymm14, qword ptr [rip + .LCPI113_2]
+	vpbroadcastd ymm15, dword ptr [rip + .LCPI113_3]
+	vpbroadcastd ymm0, dword ptr [rip + .LCPI113_4]
 	vmovdqu ymmword ptr [rsp + 192], ymm0
 	vmovdqu ymmword ptr [rsp + 352], ymm5
 	vmovdqu ymmword ptr [rsp + 320], ymm14
-	jmp .LBB58_20
-.LBB58_31:
+	jmp .LBB113_20
+.LBB113_31:
 	vpaddd ymm0, ymm15, ymm2
 	vpminud ymm0, ymm2, ymm0
 	vmovdqu ymmword ptr [rsp + 96], ymm0
 	vpxor xmm0, xmm0, xmm0
-.LBB58_32:
+.LBB113_32:
 	vmovdqu ymm9, ymmword ptr [rsp + 160]
 	vmovdqu ymm10, ymmword ptr [rsp + 128]
 	vpaddd ymm1, ymm9, ymmword ptr [rsp + 384]
@@ -739,8 +738,8 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	vmovdqu ymmword ptr [rax + r12], ymm1
 	add r12, 32
 	cmp r15, r12
-	je .LBB58_23
-.LBB58_20:
+	je .LBB113_23
+.LBB113_20:
 	vmovdqu ymm2, ymmword ptr [rdi + r12]
 	vmovdqu ymm12, ymmword ptr [rdx + r12]
 	vmovdqu ymm9, ymmword ptr [r8 + r12]
@@ -827,7 +826,7 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	vmovdqu ymmword ptr [rsp + 448], ymm10
 	vmovdqu ymmword ptr [rsp + 416], ymm4
 	vmovdqu ymmword ptr [rsp + 384], ymm12
-	je .LBB58_31
+	je .LBB113_31
 	vpaddd ymm1, ymm9, ymm12
 	vpaddd ymm7, ymm15, ymm1
 	vpminud ymm1, ymm1, ymm7
@@ -869,14 +868,14 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	vpminud ymm1, ymm7, ymm1
 	cmp r10d, 1
 	vmovdqa ymm4, ymm8
-	jne .LBB58_33
+	jne .LBB113_33
 	vpaddd ymm0, ymm1, ymm2
 	vpaddd ymm1, ymm15, ymm0
 	vpminud ymm0, ymm0, ymm1
 	vmovdqu ymmword ptr [rsp + 96], ymm0
 	vmovdqa ymm0, ymm4
-	jmp .LBB58_32
-.LBB58_33:
+	jmp .LBB113_32
+.LBB113_33:
 	vmovdqu ymm13, ymmword ptr [rsp + 288]
 	vpmuludq ymm7, ymm13, ymm1
 	vpblendw ymm8, ymm9, ymm7, 17
@@ -929,13 +928,13 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	vpor ymm1, ymm8, ymm1
 	vpsllq ymm1, ymm1, 32
 	vpor ymm0, ymm0, ymm1
-	jmp .LBB58_32
-.LBB58_23:
+	jmp .LBB113_32
+.LBB113_23:
 	movabs r15, 2305843009213693944
 	and r15, rcx
 	cmp r15, rcx
-	jne .LBB58_24
-.LBB58_29:
+	jne .LBB113_24
+.LBB113_29:
 	add rsp, 520
 	pop rbx
 	pop r12
@@ -945,15 +944,15 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	pop rbp
 	vzeroupper
 	ret
-.LBB58_24:
+.LBB113_24:
 	mov qword ptr [rsp + 24], rcx
 	mov qword ptr [rsp + 16], rdi
 	mov qword ptr [rsp + 8], rdx
-	jmp .LBB58_25
-.LBB58_26:
+	jmp .LBB113_25
+.LBB113_26:
 	mov r13d, dword ptr [rsp + 624]
 	mov rax, r13
-.LBB58_28:
+.LBB113_28:
 	mov r8, rdi
 	mov rcx, qword ptr [rsp + 24]
 	mov rdx, qword ptr [rsp + 8]
@@ -978,8 +977,8 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	mov r13, r12
 	mov r14, qword ptr [rsp + 592]
 	mov r11, qword ptr [rsp + 576]
-	jae .LBB58_29
-.LBB58_25:
+	jae .LBB113_29
+.LBB113_25:
 	mov r9d, dword ptr [rdi + 4*r15]
 	mov r10d, dword ptr [rdx + 4*r15]
 	mov rdi, r8
@@ -1092,9 +1091,9 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	cmovb r9, rdx
 	mov ecx, dword ptr [rsp + 624]
 	test ecx, ecx
-	je .LBB58_26
+	je .LBB113_26
 	cmp ecx, 1
-	je .LBB58_28
+	je .LBB113_28
 	mov ecx, dword ptr [rsp + 624]
 	imul rax, rcx
 	movzx edx, ax
@@ -1112,66 +1111,66 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	cmovb rsi, rax
 	mov rax, rdx
 	mov r13, rsi
-	jmp .LBB58_28
-.LBB58_1:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.86]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.87]
+	jmp .LBB113_28
+.LBB113_1:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.216]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.217]
 	lea rsi, [rsp + 32]
 	mov rdx, rsp
 	mov r8d, 81
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB58_4:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.88]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.89]
+.LBB113_4:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.218]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.219]
 	lea rsi, [rsp + 40]
 	mov rdx, rsp
 	mov r8d, 81
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB58_6:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.90]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.91]
+.LBB113_6:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.220]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.221]
 	lea rsi, [rsp + 48]
 	mov rdx, rsp
 	mov r8d, 81
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB58_8:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.92]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.93]
+.LBB113_8:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.222]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.223]
 	lea rsi, [rsp + 56]
 	mov rdx, rsp
 	mov r8d, 81
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB58_10:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.94]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.95]
+.LBB113_10:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.224]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.225]
 	lea rsi, [rsp + 64]
 	mov rdx, rsp
 	mov r8d, 81
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB58_12:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.96]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.97]
+.LBB113_12:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.226]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.227]
 	lea rsi, [rsp + 72]
 	mov rdx, rsp
 	mov r8d, 89
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB58_15:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.98]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.99]
+.LBB113_15:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.228]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.229]
 	lea rsi, [rsp + 80]
 	mov rdx, rsp
 	mov r8d, 89
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB58_17:
-	lea rcx, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.100]
-	lea r9, [rip + .Lanon.8b748ad9979b0e0c8a7f98fe67fa3791.101]
+.LBB113_17:
+	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.230]
+	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.231]
 	lea rsi, [rsp + 88]
 	mov rdx, rsp
 	mov r8d, 89

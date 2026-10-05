@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 815466ed9
-; regenerated   : 2026-10-05T00:53:00Z
+; commit        : b85adc0a1
+; regenerated   : 2026-10-05T03:26:03Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -309,7 +309,7 @@ gf2_kernels_simd::x86::avx2::avx2_and_popcnt:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_find_first_one
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.06s
 
 gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 	test rsi, rsi
@@ -404,7 +404,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_find_first_zero
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.05s
 
 gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 	test rsi, rsi
@@ -502,7 +502,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_shift_left_words
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.05s
 
 gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 	push r15
@@ -614,7 +614,7 @@ gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_shift_right_words
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.05s
 
 gf2_kernels_simd::x86::avx2::avx2_shift_right_words:
 	push rax
