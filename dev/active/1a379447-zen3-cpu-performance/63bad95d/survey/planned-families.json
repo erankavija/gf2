@@ -1,0 +1,469 @@
+{
+ "schema": "calibration-plan-families-v1",
+ "issue": "63bad95d",
+ "status": "plan for review; no addendum is frozen from this record",
+ "pilot_pairs": 12,
+ "builds": {
+  "conservative-portable": {
+   "rustflags": null,
+   "selectors": "conservative table, no profile installed",
+   "external": "portable build of the comparator, its own runtime dispatch if it has one"
+  },
+  "tuned-portable": {
+   "rustflags": "--cfg gf2_tuning_baked",
+   "selectors": "candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile",
+   "external": "the same portable comparator build as the conservative level"
+  },
+  "native": {
+   "rustflags": "-C target-cpu=native --cfg gf2_tuning_baked",
+   "selectors": "candidate profile",
+   "external": "comparator built with -march=native"
+  }
+ },
+ "families": [
+  {
+   "id": "63bad95d-profile-holdout-matvec",
+   "purpose": "selector-calibration",
+   "selector": "bit_matrix.matvec_simd_min_words",
+   "question": "Does the profile's matvec threshold help the allocated whole product at strides the threshold confirmation did not measure?",
+   "condition": "Runs only when the confirmation of 4337c02e yields a threshold other than the conservative value; a stride at which both builds select one lane is dropped with the reason recorded.",
+   "objective_rule": "A cell is an improvement cell when its stride lies between two strides 4337c02e confirms improved, and a non-regression cell otherwise.",
+   "cells": [
+    {
+     "cell_id": "matvec-r1024-16w-warm",
+     "role": "confirmatory",
+     "objective": "by-rule",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::matvec, 1024 rows, 16-word stride",
+     "small_input": false
+    },
+    {
+     "cell_id": "matvec-r1024-48w-warm",
+     "role": "confirmatory",
+     "objective": "by-rule",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::matvec, 1024 rows, 48-word stride",
+     "small_input": false
+    },
+    {
+     "cell_id": "matvec-r1024-16w-streaming",
+     "role": "confirmatory",
+     "objective": "by-rule",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "streaming",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::matvec, 1024 rows, 16-word stride, rotating banks",
+     "small_input": false
+    },
+    {
+     "cell_id": "matvec-r1024-12w-warm",
+     "role": "holdout",
+     "objective": "by-rule",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::matvec, 1024 rows, 12-word stride",
+     "small_input": false
+    },
+    {
+     "cell_id": "matvec-r1024-24w-tail1-warm",
+     "role": "holdout",
+     "objective": "by-rule",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::matvec, 1024 rows, 24-word stride, one bit short of the word boundary",
+     "small_input": false
+    },
+    {
+     "cell_id": "matvec-r1024-40w-cold",
+     "role": "holdout",
+     "objective": "by-rule",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "cold",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::matvec, 1024 rows, 40-word stride, first use",
+     "small_input": false
+    }
+   ]
+  },
+  {
+   "id": "63bad95d-profile-holdout-transpose",
+   "purpose": "selector-calibration",
+   "selector": "PRODUCTION_PREFERENCE",
+   "question": "Does the profile's transpose lane help or leave unharmed transpose workloads the lane-selection family did not measure?",
+   "condition": "Runs when the lane is admitted as a candidate selector (plan, open decisions).",
+   "objective_rule": "Improvement where the lane-selection confirmation records the same operation improved at another size; non-regression for whole consumers and small inputs.",
+   "cells": [
+    {
+     "cell_id": "transpose-block-1024-1core",
+     "role": "confirmatory",
+     "objective": "improvement",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "64x64 block transpose, 1024 blocks",
+     "small_input": false
+    },
+    {
+     "cell_id": "bitslice-unpack-m16-1core",
+     "role": "confirmatory",
+     "objective": "improvement",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BCH bit-slice parity unpack, degree 16",
+     "small_input": false
+    },
+    {
+     "cell_id": "bitmatrix-transpose-8192x2048-1core",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::transpose, 8192 x 2048",
+     "small_input": false
+    },
+    {
+     "cell_id": "bitmatrix-transpose-63x4097-1core",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::transpose, 63 x 4097, partial tiles in both dimensions",
+     "small_input": false
+    },
+    {
+     "cell_id": "bitmatrix-transpose-1x1-1core",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::transpose, 1 x 1, one partial tile",
+     "small_input": true
+    },
+    {
+     "cell_id": "transpose-bulk-16384-6core",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "physical-cores-6",
+     "cache_state": "streaming",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "64x64 block transpose, 16384 blocks per worker",
+     "small_input": false
+    }
+   ]
+  },
+  {
+   "id": "63bad95d-profile-dispatch-overhead",
+   "purpose": "selector-calibration",
+   "selector": "entries whose selection the profile leaves unchanged",
+   "question": "Does the profile build leave small inputs of the unchanged entry points no worse?",
+   "condition": "Runs when the profile differs from the conservative table in at least one selector.",
+   "objective_rule": "Every cell is a non-regression cell.",
+   "cells": [
+    {
+     "cell_id": "xor-inplace-8w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 8 words",
+     "small_input": true
+    },
+    {
+     "cell_id": "popcount-8w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::popcount, 8 words",
+     "small_input": true
+    },
+    {
+     "cell_id": "clmul-wide-4w-owned",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "gf2m::wide::clmul_wide, 4 words",
+     "small_input": true
+    },
+    {
+     "cell_id": "xor-inplace-1w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 1 word",
+     "small_input": true
+    },
+    {
+     "cell_id": "and-popcount-7w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::and_popcount, 7 words",
+     "small_input": true
+    },
+    {
+     "cell_id": "matvec-r64-1w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "BitMatrix::matvec, 64 rows, 1-word stride",
+     "small_input": true
+    }
+   ]
+  },
+  {
+   "id": "63bad95d-native-ladder",
+   "purpose": "consumer-family",
+   "selector": "build configuration",
+   "question": "Is the native build of the profile no worse than its portable build on one primary workload per entry-point group?",
+   "condition": "Runs for the committed profile; when the profile equals the conservative table the baseline arm is the conservative portable build.",
+   "objective_rule": "Every cell is a non-regression cell.",
+   "cells": [
+    {
+     "cell_id": "matvec-r1024-24w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "BitMatrix::matvec, 1024 rows, 24-word stride",
+     "small_input": false
+    },
+    {
+     "cell_id": "bitmatrix-transpose-8192x2048-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "BitMatrix::transpose, 8192 x 2048",
+     "small_input": false
+    },
+    {
+     "cell_id": "transpose-block-1024-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "64x64 block transpose, 1024 blocks",
+     "small_input": false
+    },
+    {
+     "cell_id": "popcount-1024w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::popcount, 1024 words",
+     "small_input": false
+    },
+    {
+     "cell_id": "xor-inplace-8w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::xor_inplace, 8 words",
+     "small_input": true
+    },
+    {
+     "cell_id": "clmul-wide-9w-owned-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "gf2m::wide::clmul_wide, 9 words",
+     "small_input": false
+    }
+   ]
+  },
+  {
+   "id": "63bad95d-transpose-external-ladder",
+   "purpose": "kernel-family",
+   "selector": "PRODUCTION_PREFERENCE",
+   "question": "How far is the profile's transpose kernel from M4RI and Bitshuffle when both sides build at the same level?",
+   "condition": "Runs with the transpose holdout family; the conservative level is the committed comparator confirmation of 1d4fd63d.",
+   "objective_rule": "Every cell is a comparator-gap cell with the external library as candidate; it selects nothing.",
+   "cells": [
+    {
+     "cell_id": "transpose-kernel-64-vs-m4ri-tuned",
+     "role": "confirmatory",
+     "objective": "comparator-gap",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "external",
+     "workload": "64-word transpose kernel against M4RI",
+     "small_input": false
+    },
+    {
+     "cell_id": "transpose-kernel-64-vs-bitshuffle-tuned",
+     "role": "confirmatory",
+     "objective": "comparator-gap",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "external",
+     "workload": "64-word transpose kernel against Bitshuffle",
+     "small_input": false
+    },
+    {
+     "cell_id": "transpose-kernel-64-vs-m4ri-native",
+     "role": "confirmatory",
+     "objective": "comparator-gap",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "native",
+     "candidate_build": "external",
+     "workload": "64-word transpose kernel against M4RI",
+     "small_input": false
+    },
+    {
+     "cell_id": "transpose-kernel-64-vs-bitshuffle-native",
+     "role": "confirmatory",
+     "objective": "comparator-gap",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "native",
+     "candidate_build": "external",
+     "workload": "64-word transpose kernel against Bitshuffle",
+     "small_input": false
+    }
+   ]
+  },
+  {
+   "id": "63bad95d-matvec-external-ladder",
+   "purpose": "consumer-family",
+   "selector": "bit_matrix.matvec_simd_min_words",
+   "question": "How far is the profile's dense product from the matched M4RI operation when both sides build at the same level?",
+   "condition": "Runs with the matvec holdout family at the two shapes the M4RI operation match qualifies; the conservative level is the committed M4RI confirmation of the mid-range story.",
+   "objective_rule": "Every cell is a comparator-gap cell with the external library as candidate; it selects nothing.",
+   "cells": [
+    {
+     "cell_id": "matvec-qualified-shape-a-vs-m4ri-tuned",
+     "role": "confirmatory",
+     "objective": "comparator-gap",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "external",
+     "workload": "matched M4RI product, first qualified shape",
+     "small_input": false
+    },
+    {
+     "cell_id": "matvec-qualified-shape-b-vs-m4ri-tuned",
+     "role": "confirmatory",
+     "objective": "comparator-gap",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "external",
+     "workload": "matched M4RI product, second qualified shape",
+     "small_input": false
+    },
+    {
+     "cell_id": "matvec-qualified-shape-a-vs-m4ri-native",
+     "role": "confirmatory",
+     "objective": "comparator-gap",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "native",
+     "candidate_build": "external",
+     "workload": "matched M4RI product, first qualified shape",
+     "small_input": false
+    },
+    {
+     "cell_id": "matvec-qualified-shape-b-vs-m4ri-native",
+     "role": "confirmatory",
+     "objective": "comparator-gap",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "native",
+     "candidate_build": "external",
+     "workload": "matched M4RI product, second qualified shape",
+     "small_input": false
+    }
+   ]
+  }
+ ]
+}
