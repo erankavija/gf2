@@ -7,7 +7,9 @@ The table joins the committed pilot campaign addendum with the harness's own
 cell listing (`dense-campaign list`), which names each cell's arms and whether
 the frozen addendum makes it confirmatory. The comparison arithmetic reads the
 resample count, the P-20 tail rule and the attempt allocation from the
-campaign-support sources and the reservations from the family ledger.
+campaign-support sources and the reservations from the family ledger. The
+table fails when a cell sits at a stride the holdout declaration of `63bad95d`
+reserves.
 """
 
 import json
@@ -66,6 +68,12 @@ def main():
     resamples, tail_draws = protocol_rules()
     draws = resamples * corrected / 2
 
+    holdout = repository_files.live_file(ROOT, "matvec-holdout-cells.json")
+    reserved = set(json.loads((ROOT / holdout).read_bytes())["reserved_stride_words"])
+    strides = {cell["workload"]["size"]["words"] for cell in addendum["cells"]}
+    if strides & reserved:
+        raise SystemExit(f"cells sit at reserved strides {sorted(strides & reserved)}")
+
     effect = addendum["effect"]
     lines = [
         "# Lane-threshold cells",
@@ -90,6 +98,8 @@ def main():
         f"| Attempt alpha | {attempt_alpha:.6g} |",
         f"| Corrected alpha | {corrected:.6g} |",
         f"| Expected draws per bootstrap tail (P-20 needs {tail_draws}) | {draws:.4g} |",
+        f"| Strides `{holdout}` reserves | {', '.join(map(str, sorted(reserved)))} |",
+        f"| Strides of this family | {', '.join(map(str, sorted(strides)))} |",
         "",
         "## Cells",
         "",

@@ -57,7 +57,7 @@ pub const DENSE_PARITY_ADDENDUM: FrozenAddendum = FrozenAddendum {
 /// The lane-threshold addendum, which freezes [`Question::MatvecLaneThreshold`].
 pub const LANE_THRESHOLD_ADDENDUM: FrozenAddendum = FrozenAddendum {
     path: "dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md",
-    sha256: "b67084174f5ec86729492cc31e10e3dceddd2dea93956a1f1c42f6380294e482",
+    sha256: "1adb0a12c24c5a0d8a4102ed29a66fb4738ad98be70c284bcb702ff2343b98a0",
     identity: "4337c02e-matvec-lane-threshold-v1",
     frozen_utc: "2026-10-05T00:00:00Z",
 };

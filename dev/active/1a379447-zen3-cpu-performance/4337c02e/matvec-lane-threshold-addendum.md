@@ -54,7 +54,9 @@ changes no selector. Installing a value, its before and after cells on the
 changed selection and the holdout strides belong to the selector-calibration
 families of `63bad95d`
 ([calibration plan](../63bad95d/calibration-plan.md), overlap and adoption
-sections); this family declares no stride that plan holds out.
+sections). This family declares no stride that the
+[holdout declaration](../63bad95d/survey/matvec-holdout-cells.json) of
+`63bad95d` reserves; the generated [cell table](cell-table.md) checks it.
 
 No earlier family asks this question on a ledger: the scalar-reference rows
 above are exploratory cells of `2037941f-dense-allocated-matvec`, whose
@@ -91,14 +93,14 @@ the reason the dense-parity addendum states.
 
 Confirmatory cells, all `warm`:
 
-| Cell | $W$ | Objective | Why it is declared |
-|---|---:|---|---|
-| `lane-r1024-8w-warm` | 8 | improvement | exploratory row favours the scalar lane; the present threshold |
-| `lane-r1024-9w-warm` | 9 | improvement | exploratory row favours the scalar lane |
-| `lane-r1024-63w-warm` | 63 | improvement | exploratory row favours the scalar lane |
-| `lane-r1024-64w-warm` | 64 | improvement | neighbour; exploratory row does not favour the scalar lane |
-| `lane-r1024-65w-warm` | 65 | improvement | neighbour; exploratory row is inconclusive |
-| `lane-r1024-7w-control-warm` | 7 | non-regression | lower neighbour and control: both builds run the scalar lane |
+| Cell | $W$ | Objective | Why it is declared | Role in the confirmation |
+|---|---:|---|---|---|
+| `lane-r1024-8w-warm` | 8 | improvement | exploratory row favours the scalar lane; the present threshold | confirmatory |
+| `lane-r1024-9w-warm` | 9 | improvement | exploratory row favours the scalar lane | confirmatory |
+| `lane-r1024-63w-warm` | 63 | improvement | exploratory row favours the scalar lane | confirmatory |
+| `lane-r1024-64w-warm` | 64 | improvement | neighbour; exploratory row does not favour the scalar lane | confirmatory |
+| `lane-r1024-65w-warm` | 65 | improvement | neighbour; exploratory row is inconclusive | confirmatory |
+| `lane-r1024-7w-control-warm` | 7 | non-regression | lower neighbour and control: both builds run the scalar lane | confirmatory |
 
 Exploratory cells, measured in the pilot only:
 
@@ -129,14 +131,22 @@ the one-attempt rule and by the same floor.
 
 ## Margins and resolution
 
-| Setting | Value | Rationale |
-|---|---:|---|
-| Worthwhile speedup | 1.08 | The dense-parity addendum's bar for the same allocated consumer. It exceeds the equivalence margin, so an `improved` cell is not explained by a build difference the control admits: $1.08/1.05 > 1$. |
-| Equivalence margin | 1.05 | The finest non-inferiority statement that addendum finds available at this consumer's resolution. |
-| Resolution ceiling | 0.035 | The dense-parity allocated family's ceiling, for the same cells' boundary. |
-| Material gap | none | The family holds no comparator-gap cell. |
-| Complexity budget | 0 unsafe kernels, 0 added source lines | The outcome is one value of an existing selector. |
-| Pilot trials per cell | 2 | The pilot and one replacement for a pilot voided under the protocol's voided-attempt rule. |
+| Family | Worthwhile speedup | Equivalence margin | Material gap | Resolution ceiling | One plus ceiling | Complexity budget | Pilot trials per cell |
+|---|---:|---:|---:|---:|---:|---|---:|
+| lane threshold | 1.08 | 1.05 | none | 0.035 | 1.035 | 0 unsafe kernels, 0 added source lines | 2 |
+
+- The worthwhile speedup is the dense-parity addendum's bar for the same
+  allocated consumer. It exceeds the equivalence margin, so an `improved` cell
+  is not explained by a build difference the control admits: $1.08/1.05 > 1$.
+- The equivalence margin is the finest non-inferiority statement that addendum
+  finds available at this consumer's resolution.
+- The resolution ceiling is the dense-parity allocated family's, for the same
+  boundary.
+- The family holds no comparator-gap cell, so it declares no material gap.
+- The outcome is one value of an existing selector, so the complexity budget
+  is zero.
+- The pilot budget covers the pilot and one replacement for a pilot voided
+  under the protocol's voided-attempt rule.
 
 The pilot-derived resolution $r$ is the largest relative bootstrap half-width
 over the six confirmatory cells at $\alpha_c$, rounded upward to the next
