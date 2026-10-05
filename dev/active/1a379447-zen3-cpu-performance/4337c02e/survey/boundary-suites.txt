@@ -1,0 +1,64 @@
+# Shared matvec suite on both lanes (jit:4337c02e)
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+## simd build
+# command: ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --test simd_equiv_matvec --test matrix_vector --cargo-profile ci-test --profile ci
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_empty
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_identity
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_matches_sparse
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_simple
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_word_boundary_64
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_word_boundary_65
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_wrong_size
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_xor_cancellation
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_zero_matrix
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_empty
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_identity
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_matches_sparse
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_relationship
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_simple
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_word_boundary_64
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_word_boundary_65
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_wrong_size
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_xor
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_zero_matrix
+PASS gf2-core::matrix_vector property_tests::matvec_identity_preserves_vector
+PASS gf2-core::matrix_vector property_tests::matvec_matches_sparse_random
+PASS gf2-core::matrix_vector property_tests::matvec_transpose_identity_preserves_vector
+PASS gf2-core::matrix_vector property_tests::matvec_transpose_matches_sparse_random
+PASS gf2-core::matrix_vector property_tests::matvec_zero_produces_zero
+PASS gf2-core::simd_equiv_matvec matvec_boundary_shapes_index_canonically_and_keep_zero_tails
+PASS gf2-core::simd_equiv_matvec matvec_is_exact_on_both_sides_of_each_threshold_stride
+PASS gf2-core::simd_equiv_matvec matvec_matches_scalar_reference_proptest_sizes_0_to_1024
+PASS gf2-core::simd_equiv_matvec matvec_word_boundary_lengths_match_scalar_reference
+# summary: 28 tests run: 28 passed, 0 skipped
+## build without simd
+# command: ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --test simd_equiv_matvec --test matrix_vector --cargo-profile ci-test --profile ci
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_empty
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_identity
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_matches_sparse
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_simple
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_word_boundary_64
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_word_boundary_65
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_wrong_size
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_xor_cancellation
+PASS gf2-core::matrix_vector matvec_tests::test_matvec_zero_matrix
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_empty
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_identity
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_matches_sparse
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_relationship
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_simple
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_word_boundary_64
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_word_boundary_65
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_wrong_size
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_xor
+PASS gf2-core::matrix_vector matvec_transpose_tests::test_matvec_transpose_zero_matrix
+PASS gf2-core::matrix_vector property_tests::matvec_identity_preserves_vector
+PASS gf2-core::matrix_vector property_tests::matvec_matches_sparse_random
+PASS gf2-core::matrix_vector property_tests::matvec_transpose_identity_preserves_vector
+PASS gf2-core::matrix_vector property_tests::matvec_transpose_matches_sparse_random
+PASS gf2-core::matrix_vector property_tests::matvec_zero_produces_zero
+PASS gf2-core::simd_equiv_matvec matvec_boundary_shapes_index_canonically_and_keep_zero_tails
+PASS gf2-core::simd_equiv_matvec matvec_is_exact_on_both_sides_of_each_threshold_stride
+PASS gf2-core::simd_equiv_matvec matvec_matches_scalar_reference_proptest_sizes_0_to_1024
+PASS gf2-core::simd_equiv_matvec matvec_word_boundary_lengths_match_scalar_reference
+# summary: 28 tests run: 28 passed, 0 skipped
