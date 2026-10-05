@@ -1,0 +1,22 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --lib --cargo-profile ci-test --profile ci -E 'test(test_from_words_) | test(test_boundary_) | test(test_mask_tail_invariant)'
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
+    Finished `ci-test` profile [optimized] target(s) in 2m 28s
+────────────
+ Nextest run ID 0a2f17c5-128e-49e7-88a4-25a4ad7d8d24 with nextest profile: ci
+    Starting 12 tests across 1 binary (2031 tests skipped)
+        PASS [   0.004s] ( 1/12) gf2-core bitvec::tests::test_from_words_masks_dirty_tail
+        PASS [   0.005s] ( 2/12) gf2-core gf2m::wide::tests::test_boundary_m63_tail_masking
+        PASS [   0.005s] ( 3/12) gf2-core bitvec::tests::test_boundary_63_bits
+        PASS [   0.005s] ( 4/12) gf2-core gf2m::wide::tests::test_boundary_m64_tail_masking
+        PASS [   0.005s] ( 5/12) gf2-core gf2m::wide::tests::test_boundary_m1_degenerate_field
+        PASS [   0.005s] ( 6/12) gf2-core bitvec::tests::test_mask_tail_invariant
+        PASS [   0.005s] ( 7/12) gf2-core bitvec::tests::test_from_words_drops_excess_words
+        PASS [   0.005s] ( 8/12) gf2-core gf2m::wide::tests::test_from_words_accepts_masked_input
+        PASS [   0.005s] ( 9/12) gf2-core bitvec::tests::test_boundary_64_bits
+        PASS [   0.006s] (10/12) gf2-core gf2m::wide::tests::test_from_words_debug_asserts_unmasked_tail
+        PASS [   0.006s] (11/12) gf2-core gf2m::wide::tests::test_boundary_m65_tail_masking
+        PASS [   0.006s] (12/12) gf2-core bitvec::tests::test_boundary_65_bits
+────────────
+     Summary [   0.012s] 12 tests run: 12 passed, 2031 skipped
+# exit: 0

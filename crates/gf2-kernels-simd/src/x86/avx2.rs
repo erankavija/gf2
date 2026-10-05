@@ -336,6 +336,15 @@ unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {
     total
 }
 
+/// Counts the set bits of the word-wise AND over the common prefix of two
+/// slices.
+///
+/// # Safety
+///
+/// The host supports AVX2; `super::detect_x86` establishes that before
+/// building the bundle that calls this function, and other hosts keep the
+/// scalar route. Both slices are only read, so they may alias. Every
+/// unaligned 32-byte load and every tail byte lies inside the common prefix.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {
     let len = lhs.len().min(rhs.len());
@@ -684,6 +693,7 @@ pub(crate) fn fns() -> LogicalFns {
         unsafe { avx2_popcnt(src) }
     }
     fn and_popcnt_fn(lhs: &[u64], rhs: &[u64]) -> u64 {
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_and_popcnt(lhs, rhs) }
     }
     fn popcnt_csa_fn(src: &[u64]) -> u64 {

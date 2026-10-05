@@ -1,0 +1,219 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "6e87c436-route-2037941f-dense-matvec-vs-m4ri",
+  "issue": "e1f9a78f",
+  "family": "2037941f-dense-matvec-vs-m4ri",
+  "plan_sha256": "7873519fbff68b66911103fc5c5921af2c5e0555311dc96277d6cdf1cb58dc9e",
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
+  "addendum_sha256": "10cc1516edf6044d902e3cf29fbdf7bc3c6bd5c25fa3903915aa6a97ce35f880",
+  "cells": [
+    {
+      "cell_id": "m4ri-gap-65x512-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+          "executable_sha256": "f5d04cdab6ef50be9acfe33b8cf9c4da231b9dfac4a3c5e66e4aa85fa77148e2",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "m4ri-gap-65x4096-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+          "executable_sha256": "f5d04cdab6ef50be9acfe33b8cf9c4da231b9dfac4a3c5e66e4aa85fa77148e2",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "m4ri-gap-1x1-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=1/cols=1/base%64=0/banks=1x16B/working-set=16B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+          "executable_sha256": "f5d04cdab6ef50be9acfe33b8cf9c4da231b9dfac4a3c5e66e4aa85fa77148e2",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=1/cols=1/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "m4ri-gap-63x63-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=63/cols=63/base%64=0/banks=1x512B/working-set=512B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+          "executable_sha256": "f5d04cdab6ef50be9acfe33b8cf9c4da231b9dfac4a3c5e66e4aa85fa77148e2",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=63/cols=63/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "m4ri-gap-64x64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=64/cols=64/base%64=0/banks=1x520B/working-set=520B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+          "executable_sha256": "f5d04cdab6ef50be9acfe33b8cf9c4da231b9dfac4a3c5e66e4aa85fa77148e2",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=64/cols=64/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "m4ri-gap-65x65-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=2w/rows=65/cols=65/base%64=0/banks=1x1056B/working-set=1056B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+          "executable_sha256": "f5d04cdab6ef50be9acfe33b8cf9c4da231b9dfac4a3c5e66e4aa85fa77148e2",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=65/words=2/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "m4ri-gap-65x512-retained-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+          "executable_sha256": "f5d04cdab6ef50be9acfe33b8cf9c4da231b9dfac4a3c5e66e4aa85fa77148e2",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "m4ri-gap-65x4096-retained-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+          "executable_sha256": "f5d04cdab6ef50be9acfe33b8cf9c4da231b9dfac4a3c5e66e4aa85fa77148e2",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1/sha256=1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}

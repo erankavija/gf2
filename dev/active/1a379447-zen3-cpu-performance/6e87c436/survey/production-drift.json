@@ -1,0 +1,1378 @@
+{
+  "schema": "dense-production-drift-v1",
+  "issue": "6e87c436",
+  "packages": [
+    "crates/gf2-core",
+    "crates/gf2-kernels-simd"
+  ],
+  "classifier_rule": "Rust sources only. Line comments (`//` to the end of the line, doc comments included) and block comments (`/* */`, nested) outside string, raw-string, byte-string and character literals are removed; trailing whitespace is removed from every line; lines left empty are removed. Two files whose remaining text is equal are comment-or-blank-only. Leading whitespace, line breaks inside code and `#[doc]` attributes count as code.",
+  "task_change": {
+    "anchor": "61e1a8e5af844dc787e04e3ba994a2ef00b14623",
+    "changed_package_paths": [
+      "crates/gf2-core/tests/popcount_routes.rs",
+      "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+      "crates/gf2-kernels-simd/src/x86/avx2.rs"
+    ],
+    "changed_production_paths": [
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+        "class": "assembly-listing"
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "comment-or-blank-only"
+      }
+    ]
+  },
+  "baselines": [
+    {
+      "receipts": [
+        {
+          "campaign_id": "v4-r1-2037941f-dense-isolated-fused-parity",
+          "receipt": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/receipt.json",
+          "snapshot": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/inputs/producing"
+        },
+        {
+          "campaign_id": "v4-r1-2037941f-dense-allocated-matvec",
+          "receipt": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json",
+          "snapshot": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/inputs/producing"
+        },
+        {
+          "campaign_id": "v4-r1-2037941f-dense-matvec-vs-m4ri",
+          "receipt": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json",
+          "snapshot": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/inputs/producing"
+        },
+        {
+          "campaign_id": "v4-r1-confirmation-2037941f-dense-matvec-vs-m4ri",
+          "receipt": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json",
+          "snapshot": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/inputs/producing"
+        }
+      ],
+      "class_counts": {
+        "identical": 24,
+        "comment-or-blank-only": 134,
+        "code-differs": 13
+      },
+      "files": [
+        {
+          "path": "crates/gf2-core/Cargo.toml",
+          "measured_sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3",
+          "current_sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-core/src/alg/gauss.rs",
+          "measured_sha256": "d561f41ab9e4f0fea54a714ae437b341f44e1edf74aed53ca425828ac072f06c",
+          "current_sha256": "c481bf0d4d2d65d3a4069ed8b857a6ee605581015ddc6262c5c4b7fe7fb1671b",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/alg/m4rm.asm.txt",
+          "measured_sha256": "97dc3880393a6fbae8b115ffb7d3ceb037aa477c55be19cf8b408a41368ec3f3",
+          "current_sha256": "97dc3880393a6fbae8b115ffb7d3ceb037aa477c55be19cf8b408a41368ec3f3",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-core/src/alg/m4rm.rs",
+          "measured_sha256": "c370a0081f573f2405de17590a53fe981f219bfb47294885c15a335e14d9aff5",
+          "current_sha256": "1afba9cfd21839155d25aa085df108218736188c92eeb2cc5f23c1442230767b",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+              "issue": "4997a3ed",
+              "subject": "docs(jit:4997a3ed): drop test narration, add panic contracts"
+            },
+            {
+              "commit": "bccaeb29ad80b2bf18ebde74f4f655dfcb2258ea",
+              "issue": "4997a3ed",
+              "subject": "docs(jit:4997a3ed): tersify bitvec, matrix, sparse and m4rm comments"
+            },
+            {
+              "commit": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+              "issue": "34adff85",
+              "subject": "docs(jit:34adff85): fix rustdoc warnings across the workspace"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-core/src/alg/matmul.rs",
+          "measured_sha256": "ba9ff8d8bcaebcad2064561aee360a70a687f4356350e17a241a736f3fa1f8e8",
+          "current_sha256": "6976e02bd7bbc67e5c37bd44bf488c8c06ca0f73c715772877841ff3c57c66bc",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/alg/mod.rs",
+          "measured_sha256": "f4ecc302299435b96bbe06087fa3fd2122c7a3f2168a168344aabd54144b5cba",
+          "current_sha256": "91cea8787cc6a2f7c5c5008573045f84b4bb4429b76c89e1f4c7566e19c43a2b",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/alg/rref.rs",
+          "measured_sha256": "8dcffc305190b780f4917334cfe6f83fe85f22501ab8ee8093ba435bf8ebe341",
+          "current_sha256": "a716f5c119320973001cd8053058d660ca676223035ba35b0ab9adce203ffd0a",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/alg/strassen.rs",
+          "measured_sha256": "d6799b178d11312a105691a5bac02ec770a252f771ac3ab96b1cb4a2fe668c72",
+          "current_sha256": "b6e809aaec47a4332c62d70395dba9fa9b30b24548d303f9c3548eceef7bc59a",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/bench_seed.rs",
+          "measured_sha256": "26b2a5e1d47c8428c8041b7400c49736a038630cc27cbea989e2d634ec0f19d6",
+          "current_sha256": "79a0426355381156d8c0e69e0ba49f19ee33897fa63d14db5926336309cf9809",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/bitslice.rs",
+          "measured_sha256": "41a35b6de8d3ed79236cfa587ce3db52f24f26949e91d151ff6adb5ebef8fa37",
+          "current_sha256": "e76d4d2c46f12fb6d2f5d4808e180aa4061994f8fd30b4266dae5469655e0aba",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/bitvec.rs",
+          "measured_sha256": "21bed369cb2ca6345c923df438c7a356d3e928bec18cd029c89cfa9245b0d76f",
+          "current_sha256": "23b1682c128a73cc0153cbba54ed85765f281501c42c6d8c59b3e7538789cd33",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+              "issue": "4997a3ed",
+              "subject": "docs(jit:4997a3ed): drop test narration, add panic contracts"
+            },
+            {
+              "commit": "bccaeb29ad80b2bf18ebde74f4f655dfcb2258ea",
+              "issue": "4997a3ed",
+              "subject": "docs(jit:4997a3ed): tersify bitvec, matrix, sparse and m4rm comments"
+            },
+            {
+              "commit": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623",
+              "issue": "a0a29512",
+              "subject": "docs(jit:a0a29512): remove tautological examples in gf2-core"
+            },
+            {
+              "commit": "fd2e785d4e2c9d5983886840396c9f880114ead0",
+              "issue": "79873126",
+              "subject": "fix(jit:79873126): enforce tail masking in BitVec::from_words"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-core/src/bitvec_sync_tests.rs",
+          "measured_sha256": "7f78c215ea84bc977ce6e0f627d5da0290469f74a02b727aa1d7f16e19f8c196",
+          "current_sha256": "3110534a75efaf4c903d03d14b1da0baa9fd1dba545edaff56f73a52d553531f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/compute/backend.rs",
+          "measured_sha256": "f81bde57c318368ae7f1222e9033f634563f67fc9d1f38cb182fec2ca2b78952",
+          "current_sha256": "1a497442681e52d5a9c7c1f218166fd40396028a73e09c3a869907f536ac38b6",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/compute/batch_tests.rs",
+          "measured_sha256": "c83b89cd87bf638885a85e14cc2bf0a952d1cd1c7ce1eddad550c99093a6a761",
+          "current_sha256": "4d2d53e2e3634996e922342f6b1de7e6f99d87e03da549d6ef8fb23b99304e8c",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/compute/cpu.rs",
+          "measured_sha256": "995a0babf3cb2c44d94799b8f390ff111a8d2aa80dd88faee04c40ca6cad4a1e",
+          "current_sha256": "b3698008db0c21742d8d7976458e5501d48f80bce65f7b4330174d7400d1f672",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/compute/field.rs",
+          "measured_sha256": "d7649ef59899d0cac9fd369c8231a9f9fc9e92943159fda07f0e9d5b7e832afe",
+          "current_sha256": "445222f024b70b586d6865f5b5857e200c12b4c401df7f7d5e9e968f56a4c87c",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/compute/mod.rs",
+          "measured_sha256": "e760fec2e2857061129febfc834c8772524e22b26b9e303e7bb402d95528debd",
+          "current_sha256": "944a7dff9c6c322e455663821064075f1efed9a5af57b93922f7e872b6f510f4",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/axiom_tests.rs",
+          "measured_sha256": "655bee89be3aa3eea2fdc3938cd0a93ee10ebd4f6304d12254244355ce6d6b60",
+          "current_sha256": "40195a9fa520f6565164b6a0befe6d450bfb4918619681caeaece0d88a288af5",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/batch_ops.rs",
+          "measured_sha256": "3513f96b2b10f11dff8bfc0ae128b37828bc48f779b3f64487f42eb1ca6974ad",
+          "current_sha256": "8eb6a3f6f283ff32e30fb828ec0912ecec1957d46a9034d90d8fe6b7a898d225",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/charpoly.rs",
+          "measured_sha256": "40e87253e42d303e9ed93b670faa15a71a70d546f62efe0a922d4b6f587fcb5c",
+          "current_sha256": "17e322d9551ec0e61cfff01aed8c7a7bbe595d99fe3bb8d00a5a25f2d07e6609",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/expr.rs",
+          "measured_sha256": "35169c2b41530cb2cde50927b4c6564a046906e3e9b1fe6487373543679c2af0",
+          "current_sha256": "1bcdc560d0634891f54414acad792147adadc0b78e71e299ac6352d100ea6a24",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/extension.rs",
+          "measured_sha256": "71e8a7f3d352d89db8194316a3adb5ba01f7dfaf68bcd3c81cfa71bc25b2cde7",
+          "current_sha256": "029981f561e025d0ae2278709e20d5462551520764f050eb055321021b688fd0",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/extension_wiedemann.rs",
+          "measured_sha256": "22c32c6a82136941ed9004faaf3644ad6f96a4e24ad0b9a0df5e34bd7a6af8cd",
+          "current_sha256": "79eb09dd8b45848612d2e420048b67f449d99a6a595673107ab3ee6d197d720f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/inverse.rs",
+          "measured_sha256": "b99376e37a11e13d51e202a514df455cae9f21314bb8415c0a66b59df7442822",
+          "current_sha256": "65067bc3ed6aae5879c7a69769da1d7bb501b73addc8d97175db66dcf57eef23",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/irreducibility.rs",
+          "measured_sha256": "d0c70553b3d9f5f3cfc21b9ca10d289737bb855196d01a94ae8a13f41f543d43",
+          "current_sha256": "a18f8a23379ac8afbeee0e8684872ac89419a6e2d8c8cf255081aa74817fd989",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/matrix.rs",
+          "measured_sha256": "42ae97c163d1fd637e5c4f79019eaea77efc5ab7e7fe8b57e88491a0fe9003c3",
+          "current_sha256": "72854706f9f82cdf057424eebab76d2366af9a1e3c3f4b3265b8a2cb42d74118",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "3925d9b08f0ddeb0c09affbbc23996f564792b5d",
+              "issue": "f2064e90",
+              "subject": "docs(jit:f2064e90): delete name-echo Rustdoc on private field helpers"
+            },
+            {
+              "commit": "2c991a75deade1a7aa35c07d4650c2f41cb4e325",
+              "issue": "f2064e90",
+              "subject": "docs(jit:f2064e90): replace name-echo Rustdoc in dense field matrix"
+            },
+            {
+              "commit": "fc4e232c31d02fd237b6edcf5f8e38c85b4fe488",
+              "issue": "f2064e90",
+              "subject": "docs(jit:f2064e90): tersify dense field matrix module comments"
+            },
+            {
+              "commit": "d02c46b10f68f83a3b945f58ea4ed6b09b4d9031",
+              "issue": "12907582",
+              "subject": "docs(jit:12907582): state actual F_5 bound and small-prime dispatch"
+            },
+            {
+              "commit": "c1203721ef82b9071862c1b18258e23a8f329ffb",
+              "issue": "12907582",
+              "subject": "docs(jit:12907582): drop wave and status history from touched docs"
+            },
+            {
+              "commit": "f91daa0398e25eafbad24f6920e79e3d21338a16",
+              "issue": "12907582",
+              "subject": "docs(jit:12907582): cite owning issues instead of dev/ doc paths"
+            },
+            {
+              "commit": "0a0c2a458f508a5e91362e42c318e92a117f965b",
+              "issue": "12907582",
+              "subject": "docs(jit:12907582): repoint nonexistent CLAUDE.md section citations"
+            },
+            {
+              "commit": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623",
+              "issue": "a0a29512",
+              "subject": "docs(jit:a0a29512): remove tautological examples in gf2-core"
+            },
+            {
+              "commit": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+              "issue": "34adff85",
+              "subject": "docs(jit:34adff85): fix rustdoc warnings across the workspace"
+            },
+            {
+              "commit": "87b5b733cfe48080df53aff8603574b9e0fc82af",
+              "issue": "dbd8787d",
+              "subject": "feat(jit:dbd8787d): declare and implement the seam threshold campaign"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-core/src/field/mod.rs",
+          "measured_sha256": "029b15d3067309c75c1309f469ad82ba4f82a60c78a58ad86ea7aacbb42a27e8",
+          "current_sha256": "5f9a6a4ff9e7f9e7e8554b5f0d856c1c20890d7224160af0062b9963a82d1b97",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/modulus_select.rs",
+          "measured_sha256": "b4b1e35c49842548339f6da0bb0296d435369253b7121296ee3f25f4031d14e9",
+          "current_sha256": "19ef53a954dd359d748f2c8a285c99e3793af88ab4413bc33fb087e600ce87ac",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/ntt.rs",
+          "measured_sha256": "455efeeb6c615d6aace4fa1e655a0d0e98d12e4de123ee085a00c2449c9cf253",
+          "current_sha256": "1fd5fbc514dfbc8cb539c05727a8729eeb37710c21a9bc6dac5beddafe3752d7",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/ple.rs",
+          "measured_sha256": "48eba168ccc3b8b85e2164b0caaf539386e99501c705a91caa1d96af78002abb",
+          "current_sha256": "2a1fd60bc05522fe1b8b497776656134c9b8e50c9fb9cb447a8672d03db85730",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "bf2bf491ff69b209c3a6a8fb8980f5c178352b89",
+              "issue": "fa4939c3",
+              "subject": "docs(jit:fa4939c3): correct three attributions, address five lines"
+            },
+            {
+              "commit": "3925d9b08f0ddeb0c09affbbc23996f564792b5d",
+              "issue": "f2064e90",
+              "subject": "docs(jit:f2064e90): delete name-echo Rustdoc on private field helpers"
+            },
+            {
+              "commit": "2c991a75deade1a7aa35c07d4650c2f41cb4e325",
+              "issue": "f2064e90",
+              "subject": "docs(jit:f2064e90): replace name-echo Rustdoc in dense field matrix"
+            },
+            {
+              "commit": "fc4e232c31d02fd237b6edcf5f8e38c85b4fe488",
+              "issue": "f2064e90",
+              "subject": "docs(jit:f2064e90): tersify dense field matrix module comments"
+            },
+            {
+              "commit": "39c361f23925a8330aafd5b9a9fb16af7bbfd9f9",
+              "issue": "dbd8787d",
+              "subject": "docs(jit:dbd8787d): state current seam and SIMD selections only"
+            },
+            {
+              "commit": "056b320288c626143891f702d172f4711ef9f9e1",
+              "issue": "dbd8787d",
+              "subject": "chore(jit:dbd8787d): merge the seam threshold publication and cutover"
+            },
+            {
+              "commit": "8cc7f42ad3265a091026e40dfef536f75244cabc",
+              "issue": "dbd8787d",
+              "subject": "feat(jit:dbd8787d): cut the seam thresholds over to the dbd profile"
+            },
+            {
+              "commit": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623",
+              "issue": "a0a29512",
+              "subject": "docs(jit:a0a29512): remove tautological examples in gf2-core"
+            },
+            {
+              "commit": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+              "issue": "34adff85",
+              "subject": "docs(jit:34adff85): fix rustdoc warnings across the workspace"
+            },
+            {
+              "commit": "87b5b733cfe48080df53aff8603574b9e0fc82af",
+              "issue": "dbd8787d",
+              "subject": "feat(jit:dbd8787d): declare and implement the seam threshold campaign"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-core/src/field/poly.rs",
+          "measured_sha256": "a105836035d821c304d591f8712f1fa61e770223cffda3ce588cd449ab536e4c",
+          "current_sha256": "efeb46aecba3c6b237dfd509e25972bb6386f7b46365a5b4938d1535af2691a4",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/poly_interpolate.rs",
+          "measured_sha256": "440e9701cd0093f0447e7a570144144bc1ad2af407155b436335b0bd2ed9556a",
+          "current_sha256": "f9643f4186256f4ef75d428ff7fcd6d6284bb06715210cfe8c8c8f91d3a5b88d",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/sparse_matrix.rs",
+          "measured_sha256": "ee7e37c4f1cafcc7df20a7358bf3b046efc047253653f27b22d5d3bce1d7eac5",
+          "current_sha256": "962427876c6006ecf3264b6ca6b82b5ad3059ca8850a932ff6cd5f926d1d38de",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/test_random_matrix.rs",
+          "measured_sha256": "ae83a9b107931c723e45717fc0d19db3c5a840c672bfcc5ed97b5871ca330a1a",
+          "current_sha256": "464bbc3478d3cb9fb4a7a0e74766736602b92d2d34c03a82eee3ca7b3495eb8a",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/traits.rs",
+          "measured_sha256": "f65a730d99b3e296699f72c4e34262e4675bc4832f45b8d50db2fdaa69b2062e",
+          "current_sha256": "50fa3b9cfd3eb3f5548506b311c9c23b725df35eb0e07adda47237e5d41dd6da",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/triangular.rs",
+          "measured_sha256": "8e7311a12e6d9f850608654dc937c2a4abe5d0bd21e700acd2e0a4b22a10bdfa",
+          "current_sha256": "8e2eefe050c06807cab762afc26e6ba3a010acc2bdbfd5ba0e23034d2a851fd5",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/two_adic.rs",
+          "measured_sha256": "888061b06666af378e63631422668091544e57c7c6fa30e23deffa53c077a7a2",
+          "current_sha256": "2679b803a256fd24794b1a9766a82a1d75766bb9c38d70175477d61cdf43e111",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/vec.rs",
+          "measured_sha256": "02d68423ba3d719472f6c43bd3cae6754c7b310279f40830c5b410c5c1dd72b2",
+          "current_sha256": "ebdb1d765509fc6b6c4ac7f8033d635f2d75e319c394b4ca5fcd90e23c23f66e",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/field/winograd.rs",
+          "measured_sha256": "5120e729155c352b65ebdf118bd2c0cc41332f5caa61bf02fe0107b7bed0776d",
+          "current_sha256": "e6891ea9b7057f62766d246831e176e0388f06bf7a322b452230b2c05ff2dcb9",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/barrett.rs",
+          "measured_sha256": "15a8908ac8a720f5b57d0b141392743b42c1a614271dc181518cbdfe4cc7c526",
+          "current_sha256": "afc7aac4bfea55f876716527c9f9690f1e6c0d59238bde664c447cd66d73b6dc",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "529e58bd2f5b0cc48e6c6c7f81b01237b82cd222",
+              "issue": "545b113f",
+              "subject": "docs(jit:545b113f): merge module doc titles into the orientation"
+            },
+            {
+              "commit": "34786a537362dacfe3c81b2800ff10927425108b",
+              "issue": "545b113f",
+              "subject": "docs(jit:545b113f): restore gf2-core module doc title lines"
+            },
+            {
+              "commit": "7b08bb1103a9e72ca808ff8d3f45d5362fdc7914",
+              "issue": "545b113f",
+              "subject": "docs(jit:545b113f): reduce gf2-core module docs to the contract"
+            },
+            {
+              "commit": "f8693f5831fe3bf053945b37384e3b26eb8df54b",
+              "issue": "67b5d1d8",
+              "subject": "docs(jit:67b5d1d8): delete restating test comments in gf2m"
+            },
+            {
+              "commit": "3821ed316bcfd94714e51e251580060986f59c83",
+              "issue": "67b5d1d8",
+              "subject": "docs(jit:67b5d1d8): apply sweep standard v2 to the gf2m module"
+            },
+            {
+              "commit": "ab057f1fc276463c4e5837b0b6c7c093ec148f0b",
+              "issue": "67b5d1d8",
+              "subject": "docs(jit:67b5d1d8): tersify gf2m comments outside wide.rs"
+            },
+            {
+              "commit": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623",
+              "issue": "a0a29512",
+              "subject": "docs(jit:a0a29512): remove tautological examples in gf2-core"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/batch.rs",
+          "measured_sha256": "f03e789d5c5d88db02f87ece51b94379342fe824f334dec7ea0a01780c1e9e5d",
+          "current_sha256": "850c7733e7a9b7924874a6a0f5e3ece47b83b752c379427fcb5a3b7b69c07a2e",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/byte_table.rs",
+          "measured_sha256": "88004553150b6bef26890b7b9aaade409c1097fc0678fe972abf2e4611b285e3",
+          "current_sha256": "34d7d2c3eaddfd1ae6a429b8e64e9de6cb1083686086fdaa448cdaaa6b053973",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/field.rs",
+          "measured_sha256": "8774579e6737a0e529ad7b00dc6117cf0c140f197a3a9e3ab43b4f132ae8d924",
+          "current_sha256": "fc927a4f32a48965c6ef155c5bf76c4316823f23444e38e9ebaf342e133885a7",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/generation.rs",
+          "measured_sha256": "95a6e9eae3edbb76ba06517998215ec5ddc0cacf36aa57adda6cb35ca7c64725",
+          "current_sha256": "3187065b8bb2dd8210adfb4de25382b4d0e5b7bcd34e755d8c61989ca090fb84",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/mod.rs",
+          "measured_sha256": "e0d5e11f973ac6fca4a3f6e68bb0aa5c3d236c55cf97ce280f046ecbe2575bc0",
+          "current_sha256": "4fdcca430f603677d4dcaca505ef560129e8f24ac9afbe8d4885ae7950fa3f8b",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/mul_raw.rs",
+          "measured_sha256": "60fc5cf7a83359de3459cd5f291a4c98ecd7543de6c1fa1c5f197f0b9edba7f3",
+          "current_sha256": "ed979a495474bfd54e6deafdb182896b7a5f82c0090295ed7dbf5242ceebcef0",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/poly_helpers.rs",
+          "measured_sha256": "851acb7aaff2757199bb2692497a80a7c86f7ae9477fcec5507ef15650e0bf0d",
+          "current_sha256": "cde2e735f3d8a4cf205c541a6d2dbcdc69da4c287b6646b566c802e6a519ab0a",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/thread_safety_tests.rs",
+          "measured_sha256": "b1a01e4b6d287468039e23bc3c3877dc0c7941ab6d686aaab87d5632dfa0cf05",
+          "current_sha256": "f5f45146a00b7d4fb083dc311e8234df8615298ec64c58337d2a1c7e9036f5e8",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/uint_ext.rs",
+          "measured_sha256": "f74a634e281513741027f04ea5bc67363a4f102def41d1556c3f2303ada9fbe7",
+          "current_sha256": "90e4f5c7cca2330f4b741bd4c28dcabef13f0a9b9043dba6904a6cf73765835c",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide.rs",
+          "measured_sha256": "aee38c8af9fe3bec09d90c644f4b1d89c1aa64f97259cdba527acc105da90166",
+          "current_sha256": "db4e12f98a2057808fc27531cadcb0d42d44e596ec4414b9ba48b710186c4e91",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gf2m/wide_config.rs",
+          "measured_sha256": "488d36db123cae0093b0657ca2ace584ab6ce8b6bef3232955b740c6e53f8e49",
+          "current_sha256": "59a2ad96fb1ae9845b1aacab54bc004471b8f8ae9221fcb3e11650f7a896fac5",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfp/mod.rs",
+          "measured_sha256": "689de4b9bbb587e9429663b9ed9ce41dd16e9bc6058f27cba8f7070b50a26f9f",
+          "current_sha256": "871a420a6b947ca872821ad58199eeab97b255588a5c3182e574fc08427f9878",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfp/montgomery.rs",
+          "measured_sha256": "40be91235c20192d69eb0af66ba434bb3e9d32a7c36e227f73295d1831cf4387",
+          "current_sha256": "6c0d3feba1628294a613910434d46fdfede113bdcf887e88d88a6c28d48c73a4",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+          "measured_sha256": "b7629632afb3be02427fc5fee0ac2d7015c1374afa5cd5263fbb6c01493d4525",
+          "current_sha256": "6e9684fdf653ff1f06e968663f9774db9b551623ed5492003263c64e6dfec609",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfp/specialized.rs",
+          "measured_sha256": "798943d7fe039598aea91e1d55e3afcef3e5aae4f2779558861f1e3c8d18d7e7",
+          "current_sha256": "55202177b2411144ffe74dd17ef768b71fe6ca677d58ee7d074dc0c22440abea",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfpn/batch.rs",
+          "measured_sha256": "0f286713a052ad9a8657131f00bf096b9b2f15595ba6a4d774cdd842edb15e50",
+          "current_sha256": "46c191d8ae4021ee8f9e82684e458349a6329da93f2eba178d250c113376f94f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfpn/cubic.rs",
+          "measured_sha256": "e29acc9e22ef71f14865d89d173a2e3a8324232d7fc84bd11ae1bd20a36efb87",
+          "current_sha256": "c7e5eaab52c5ce630e7896dc9fdd5089361976d0f9101bf6e5c6f1fea85bfd90",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfpn/ext_config.rs",
+          "measured_sha256": "f05019fca63e7d6c654f96672a6b6bc995019a8506ad14e07c0210a0e01578e1",
+          "current_sha256": "3cc754b924692dcaa605c0ae2d644923f7b95a5cf5ef6b7820d6a2b0b8500e6f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfpn/mod.rs",
+          "measured_sha256": "c95aa1199b8e0dffc15b8234a6e2d2a59a0d5a203075b419f3da8552ba222471",
+          "current_sha256": "f4a32d1ba60414bd56bc138bf40863684019995a73ebcae88e08fc5a0452278e",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfpn/quadratic.rs",
+          "measured_sha256": "be9bf36dd31475cfb74f4d7c4b452c3963cec690ec69ddd621b3ccc6721be0af",
+          "current_sha256": "129527f378f737601c26341f3905a15b16db13c6aaaaf1cd3b4038135fbd5590",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/gfpn/quotient.rs",
+          "measured_sha256": "0fc47d3ea27ac5654cacf81a3baa1dbd43dc9d64921963402e9324ba75646673",
+          "current_sha256": "31da4da5def239dd3a03e4999004bc04acf9f6280947376a97a18063b53db052",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/io/bitvec.rs",
+          "measured_sha256": "64a5f25cf3f8ab6d99d2ebe0a9076fcfa696997fe4259ab1158e9fdcf137a70e",
+          "current_sha256": "ccd6b68064a4ac89c37e7229b7224011d82bc147a09e7c82629f6fa11fb040c6",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/io/error.rs",
+          "measured_sha256": "2b079a486d0949e3f83711a94d23d19902d6c754ef85f7b323c293735934bf5e",
+          "current_sha256": "2b079a486d0949e3f83711a94d23d19902d6c754ef85f7b323c293735934bf5e",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-core/src/io/field_matrix.rs",
+          "measured_sha256": "bb1638390e651856a6a02badb70196708f08302f5f820335e769e9daee5a585d",
+          "current_sha256": "c30a90c1929a7531b42d7a20a7ac2fb878162c920af3676f8b95e72adf8f7f86",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/io/format.rs",
+          "measured_sha256": "32aef610628c30773ed5664f2709864f2f85ed37c0bddcc0092ace31b592d1f6",
+          "current_sha256": "736defb3e21d017932623bb4e5f97fa2e4de9d54c8e47cf976df93ead1256f46",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/io/formats.rs",
+          "measured_sha256": "5faf84ddb19499271dd08078f4161ea7078df13aab5834affe2a6528cbe20057",
+          "current_sha256": "71fd7045dedb0551f44fdf7a93b3156d0222d1b113bf5accb04c0fcb6dc77798",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/io/header.rs",
+          "measured_sha256": "af8cc3a00e5439cd413c6feb3404eda73c142688647c675a27ff5b7f4eb02064",
+          "current_sha256": "e118b973daa249175d812624c9236b42ddbbbf581174c319d7671fffc6699c76",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/io/matrix.rs",
+          "measured_sha256": "07493c834d5449194db5ac7560b4a3c7f9e2e7787517c47f54a2e98c166b3cd6",
+          "current_sha256": "4aaa118f0e1a23776600f8a65e5d595e544eb710b96730de7c18246661c85a0a",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/io/mod.rs",
+          "measured_sha256": "576db88b52ec77a7a9e010c77feb2ad8893ef47a12c3106de9267df4227e42da",
+          "current_sha256": "a22ba72f543a6977defd053133cb90f2f6184db4db8b3462e3ccee5ae037f872",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/io/sparse.rs",
+          "measured_sha256": "f0974bcaafbe99d17f9f75867b5807aaff09a83f40b0a14b7b962f1c77e9e021",
+          "current_sha256": "85731185eb0f39ff3f188d7b2fb4b70a6194d64fd42e84bc8a06472e3f05e82e",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/aarch64.rs",
+          "measured_sha256": "f52194401a3c13a160e56408433b28866b8cdce2c4130549e4e745dcc23045fa",
+          "current_sha256": "35ca065fdd7f7603d96f43212b8c61a9d546b9ad236bbfec22920d7d177f7d57",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/backend.rs",
+          "measured_sha256": "0b1492433aa0c4de35261d7714af5ebafabbd8f27dc2d8410e1b1066cb07dce0",
+          "current_sha256": "0b3e6aa008cd8967d4f11330e6adb2307c6b233f8f53a45e322d2026229cf1ee",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/mod.rs",
+          "measured_sha256": "b5f38cf6057cc58548143a020ba3cc0d0f9397642e9648444caf3c848e7cdc03",
+          "current_sha256": "f452e4591878c489d1712cd1e4d303e65e397e3799e6a9aca6f9bf79cead2894",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/ops.rs",
+          "measured_sha256": "f403317def8759869e20c7631c4ef8ce857453ce0fa0556a802ffb55b8d35042",
+          "current_sha256": "e8246956b9846eeb941eab44e9683e35888b5c6142b960be643ef22bac0338f0",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/scalar/logical.rs",
+          "measured_sha256": "533ad1a6000d80be1d33c43b2677b802f02ae9abf30a75c72b170a1adba69eac",
+          "current_sha256": "b6312750a8788cc9b63c2382fcc9902295a7c90243e8949c7afb16d55727ff67",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/scalar/mod.rs",
+          "measured_sha256": "a511ca0c8d74e290554e22c4d3c22ddcae9ed29ddb996e1d38cf730b93400f7b",
+          "current_sha256": "f870c4e3e7fb5e9c83903fb58b45c8d70b8740e46387a894d753257b70a6da7c",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/scalar/primitives.rs",
+          "measured_sha256": "22da185fc976baca8c2be7e3653088fcc1130f62ddf04f6a7ed474f7bbf512f4",
+          "current_sha256": "6f07e237009808a072791a5cac37ab5fd0840c1f91584afc721cc626e06d0b21",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/simd/mod.rs",
+          "measured_sha256": "763205012e86d4c2f5c4c4418808fec985a5e83841f356d588512e4ac671e2a6",
+          "current_sha256": "e07c4f45b74438f05d6a10c12e40ff57c12e04d2bfc55402a433047861214ac5",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+              "issue": "c6aa0e84",
+              "subject": "docs(jit:c6aa0e84): tersify kernels and tuning comments"
+            },
+            {
+              "commit": "d0685dad0ff701e249c025540fe0e9efa8dbfc8c",
+              "issue": "12907582",
+              "subject": "docs(jit:12907582): correct SIMD target docs, trace bare TODOs"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/test_utils.rs",
+          "measured_sha256": "25c92a622beabfbde1d48dcf8a39875551523cbb4302aeef7cf52f03169230cc",
+          "current_sha256": "57cd3ab1bbce5151321569b5c4aac2077b99b09d10ba4d220c43535d35ec1b3a",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/kernels/x86.rs",
+          "measured_sha256": "719ae6c3d68c9e8256dcf93a19e91d74e0d24035ca4c5157da3451dd5d3c3286",
+          "current_sha256": "b6ebf6171e39648ef44e21861c3c93b1824c3982a116aca70f05b508e5603a73",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/lib.rs",
+          "measured_sha256": "b9825c855fe17896d5282e3dc4a6199a63ba19427ce296b62eed7413b939467b",
+          "current_sha256": "f6ff97b938389bad9bd1861c13a5bbec3266791435a16409ecb496a879751450",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/macros.rs",
+          "measured_sha256": "2fe7803ba67bab41295ea444d240774fe2493ecd621a5076dbe123d2ad07995e",
+          "current_sha256": "c4db3da46308795c37d7cf881f7567a33c85cbbf43ed43a453fecb6e3a077d98",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/matrix.asm.txt",
+          "measured_sha256": "e761c1335ef1ff1e6c39f5610cd552aa78282293e3faf69467d2f3ab6fc188c2",
+          "current_sha256": "e761c1335ef1ff1e6c39f5610cd552aa78282293e3faf69467d2f3ab6fc188c2",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-core/src/matrix.rs",
+          "measured_sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d",
+          "current_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/matrix_like.rs",
+          "measured_sha256": "4f60e11757bb039a7554ce4ed08684e4b624dd3f116563962add8c28a8ecdd7f",
+          "current_sha256": "09c527fd51cec29a0686dce5d98ba52064ffe54c152d58baff8b5877d7b3c331",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/primitive_polys.rs",
+          "measured_sha256": "b6319033edf5a2262f61def5ef3b4d4965bc0d9dbd8e52086b06c8d679320b6f",
+          "current_sha256": "963298af05ac882e8a3b9b3fa1c4543882dface94c98c0d4ddf8cccf930be01d",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/residual_shift.rs",
+          "measured_sha256": "d623e99c319c85a29bb9097f8c8f31a6b9d86b33587cc70c69ecd39016f8846b",
+          "current_sha256": "85740e9ab83e983ddc4ce6d179906628a90f72035900fc6ed94dd07debd2f7d6",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/rng.rs",
+          "measured_sha256": "e84732f6e6434cc2a0d62b58d2c75a168eeca3e33005e91d82932fa0b7d6853b",
+          "current_sha256": "968ded10ec97e8a7bd15d05be289594761946b371bcc566c4419cb6553efaf66",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/sparse.asm.txt",
+          "measured_sha256": "af7800aa016b0785ed53706ea4718962ffa88b8bf70f834cc73909ba9f9d5fb2",
+          "current_sha256": "af7800aa016b0785ed53706ea4718962ffa88b8bf70f834cc73909ba9f9d5fb2",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-core/src/sparse.rs",
+          "measured_sha256": "dfddef2bdc4061016b5669c37f6b3a1cd03d948cc4a76332681b627284336798",
+          "current_sha256": "64aa6b26a1d9ed7c944fc482939a230f8a35ee0b708af3d2411b110f89db79ea",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/test_scratch.rs",
+          "measured_sha256": "c4c1aa1a00e5d779f6dd50e0fbb9d965e90f9d09479757e7b0c50feeb86cfa6f",
+          "current_sha256": "ca8fd5c2c9295ace78ccc75fc87b437dba1ac7916d74c3a3d679d811f22cd581",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-core/src/tuning/baked.rs",
+          "measured_sha256": "ed999b04939f0832d0f7386aadb51ca2ba65828a55c3060ecd246e3a2926be90",
+          "current_sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+              "issue": "c6aa0e84",
+              "subject": "docs(jit:c6aa0e84): tersify kernels and tuning comments"
+            },
+            {
+              "commit": "8cc7f42ad3265a091026e40dfef536f75244cabc",
+              "issue": "dbd8787d",
+              "subject": "feat(jit:dbd8787d): cut the seam thresholds over to the dbd profile"
+            },
+            {
+              "commit": "e100821df5a85cacd541fd986861c9747b17d84a",
+              "issue": "a83583e0",
+              "subject": "feat(jit:a83583e0): publish extent campaign and cut readers over"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-core/src/tuning/mechanism.rs",
+          "measured_sha256": "7371ca8763b27bba59a4153a23606aad787237fab508f2c1898c07c7de13b719",
+          "current_sha256": "7371ca8763b27bba59a4153a23606aad787237fab508f2c1898c07c7de13b719",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-core/src/tuning/mod.rs",
+          "measured_sha256": "82c84427d61bfef516ef82ef33da4ca380c8a2d8abb02a8dd5005200ebcc83ce",
+          "current_sha256": "3d3710f291ffe3c9921cf46f22ad18be35e0eeb36da3767da6f79b01bcd14f87",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+              "issue": "fa4939c3",
+              "subject": "docs(jit:fa4939c3): address the works fifteen comment lines name"
+            },
+            {
+              "commit": "fa29c6a3976e162d8994dfc19ea85c90df848f7c",
+              "issue": "545b113f",
+              "subject": "docs(jit:545b113f): head the tuning example and refresh the record"
+            },
+            {
+              "commit": "529e58bd2f5b0cc48e6c6c7f81b01237b82cd222",
+              "issue": "545b113f",
+              "subject": "docs(jit:545b113f): merge module doc titles into the orientation"
+            },
+            {
+              "commit": "34786a537362dacfe3c81b2800ff10927425108b",
+              "issue": "545b113f",
+              "subject": "docs(jit:545b113f): restore gf2-core module doc title lines"
+            },
+            {
+              "commit": "7b08bb1103a9e72ca808ff8d3f45d5362fdc7914",
+              "issue": "545b113f",
+              "subject": "docs(jit:545b113f): reduce gf2-core module docs to the contract"
+            },
+            {
+              "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+              "issue": "c6aa0e84",
+              "subject": "docs(jit:c6aa0e84): tersify kernels and tuning comments"
+            },
+            {
+              "commit": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+              "issue": "34adff85",
+              "subject": "docs(jit:34adff85): fix rustdoc warnings across the workspace"
+            },
+            {
+              "commit": "e100821df5a85cacd541fd986861c9747b17d84a",
+              "issue": "a83583e0",
+              "subject": "feat(jit:a83583e0): publish extent campaign and cut readers over"
+            },
+            {
+              "commit": "21790510c0aac0b8459abe75825b4deb61e479e2",
+              "issue": "a83583e0",
+              "subject": "docs(jit:a83583e0): state tuning compatibility boundary as its current contract"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-core/src/tuning/profile.rs",
+          "measured_sha256": "1c5b18477797eac20384fcf30e417bfdab6515339dcc084df5fe478401d7b0fb",
+          "current_sha256": "cb9f02c9cf9e29bd0ff31d9ac3f8c9befd16628e51ef40069705a4d0b2624b18",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/Cargo.toml",
+          "measured_sha256": "1615b749bb494e7ba84129756c1a845a026cc6151ae994025102654e3f0f6561",
+          "current_sha256": "b0dc9ef6cd502300cea4ae05ace857a337bca5c07fbec054717a24886f1814e8",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "876c5f6919268ce692a9a77549d8257253fd842d",
+              "issue": "12907582",
+              "subject": "docs(jit:12907582): correct crate-root and module doc drift"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bch_encode.rs",
+          "measured_sha256": "9a55049459f3745c360d59e02abfac4dbc8f92633184ef6f35112bbb6354d57d",
+          "current_sha256": "f3bd84b07714beb32f4ae226a59928602c810ab1b323fef02651337e33d185f8",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs",
+          "measured_sha256": "98c9c3edd0130749ccf02ad5006ab4c73a0b56baa736dc14ee6cbf0d59f4c17e",
+          "current_sha256": "fa0074f1a472a15bb2024284e463e8d170367be2f01bdcd775a37599878bfdf9",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/framework.rs",
+          "measured_sha256": "ab00cf16b07867970f4a5c68b9d4da5079ebde3dae4a079a2e27907772632ac4",
+          "current_sha256": "1c5d6a1e13a17ffd898e4d04975853cb20a3310fdbe26f59a2dc72e0c2ebf4e5",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/lanes.rs",
+          "measured_sha256": "a37362602d32ed72faf80c9cd4c42ef67ba6cf50241f677b2fb1ec4a6f06cf5e",
+          "current_sha256": "b1026f6a0b8a5598bb12104f45954ef00a16ee65f667b7a5486390245e463b52",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+          "measured_sha256": "63ab65571d4babd7cf3a889df2335320f1a2b2dd998d3d7a0a7168559750ed77",
+          "current_sha256": "d4104b45aceb8d97e89e8f554a626db545ff80ffd70b23dd12f40d42d2b99756",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+          "measured_sha256": "1d3bd57360cdb08f5d5704ff7ea9dd619695eaf83b0b8afcda3eed3d2fdcf886",
+          "current_sha256": "e9b27271aab85634a54d597b9bc42c6886c5fbe82459087d710de44117f96023",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+          "measured_sha256": "e63941a14a0e76be26afb97fbbaa7d9efafa9d51df8baff4e7f2fde59744e86e",
+          "current_sha256": "479d29119b8f449532fe40d75d113a8e43b8d89c4b600e8f6d2561268cb07bf2",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/clmul_scalar.rs",
+          "measured_sha256": "69b87a2624ce1abe10ed0aee9b8aa9b09f245c2abf46b32240966e42816e096d",
+          "current_sha256": "773816360343ab380e894920c793549303d98bb939216e6edfc3955c792ad7ab",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp65537.rs",
+          "measured_sha256": "d48c830b27e53041a89ccda5e8ece19ddcb642cbe2a248f38586146f5e3cb8ac",
+          "current_sha256": "7ac50c544f59c3226a1bcc3bd9769cf1a76bc6bb536a28fce898765a05104e54",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_generic.rs",
+          "measured_sha256": "6b4b7dd52ee325a982e3134e632a8e1a3b0509b5415340e39f61987a21e2fb61",
+          "current_sha256": "88461372c40a7d75c5f20a87c4c5c6e3d733bc8d34a10e0fc6b4afff1555b95f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
+          "measured_sha256": "fb46dbecb352f1a191a0d675787af2f09bcf4f1ec6f4bca5c5ff338e439a3120",
+          "current_sha256": "fda984987bb42f5ff11ea06f78eb3bf333f5ce153dc0a89e24d50ddec5c6cbe4",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
+          "measured_sha256": "24bec2a0d131ea70b422c0ccfe9099d1e9e806858f434eb6a28f4ec5df49d13e",
+          "current_sha256": "38e7bfc780478a616fa2d669ec191fd1b420b0c1d6868b63faa689079da4f1e7",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
+          "measured_sha256": "719852e059106b305b00e36fbd3c87f0befed47f9c4618f8c8bcff3fe633100a",
+          "current_sha256": "9a082983f8d1130b96af7011e182865ba7aac3057d136975c1314e88137e19a5",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_small.rs",
+          "measured_sha256": "04bc8785ba22af8c4b0fedbfebae42ff21030bc57661be3d700ff1f1a7d56944",
+          "current_sha256": "7872e7c9199f728ecf5574ec762f2025c46f66f8c277b51234b363fea8c16550",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+          "measured_sha256": "6b5c1c3f2676f38fb2adb9349a640b1b1c3901e178b11ab021a5bfaf691e2b84",
+          "current_sha256": "b9e0a2c35f0213701135cd0b8a6f43448e23e221e1f9172fea26f715ec72cbe6",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
+          "measured_sha256": "a14b813e2bb8fbfce2c5e4d84914511316b9e2bdaa859904b2c04e281e504bc0",
+          "current_sha256": "587ec2f663f383217d5c476eb24d0c2b940354181f10215c06991fcdf6015e14",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
+          "measured_sha256": "fbd9aa0eb85280a2f0b0cb2fc5b4a867de24496d2123bb33f28b64b2f57853dd",
+          "current_sha256": "3631b0efd9fe84684a97d561afaaa47881e966d00753688de832ee6877a87275",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+          "measured_sha256": "30a6c259fe90dabc84b94c32b61363531b2b33bd819ddcb71e112f8dab8260bb",
+          "current_sha256": "2be2a9e88cc3e05a89a84556b884b39579373b66b4f71043647cf549e62b4001",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+          "measured_sha256": "fb534d4979366faf3d3d550bb9e088a7a06171f3fc164361e54f1acfce604fa3",
+          "current_sha256": "b812380aa21b14e0b0aea47c5ebb21b9cd54a81b4b8c0108f4e9af4d4d3c9b99",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/gf2m_gemm.rs",
+          "measured_sha256": "27d99ee222b5bf78ec25f59bbcf3cb94de88e92ccb8e68a9f65c60b7df6c317e",
+          "current_sha256": "7cb8133e7edea78bb1acb7a00bcbd8035dd8593a76e0d0c3699994f5acddefb2",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+          "measured_sha256": "1ec1f3b214b03fd4c5bacb76a0b1a9658c200eacea804ebf6c17a2f5118ee5e0",
+          "current_sha256": "943d4b376f8e9b5631119f9761bf727f538f059b8b22c918efe9ed8342f68153",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/lib.rs",
+          "measured_sha256": "513dd58d846a668f6c0845f68b05c81fbc5c7c80e4b90b7e415fc0c210b4cc43",
+          "current_sha256": "8d86f7d27e222f05b52ea96e8889c2d7b3ce462959e131d340ac8ed2b5006746",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/llr.rs",
+          "measured_sha256": "efed86c90e984cc38854e5065a5f280bac7a2f5f65998aa7b750cf6258eca17b",
+          "current_sha256": "80fa47b3c755a7c6ba0479211536d36d164d3977e3373fc57fc447860cdca597",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/mersenne.rs",
+          "measured_sha256": "5118c17feb25c9278d18ed97754d4fdb08f0cf6419b1881b16b28345b8f85ac3",
+          "current_sha256": "dce665bc9419ec6d04b797b512d4cbdfd73f9f55f0f1345e5b9d8f7c28b613e8",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/modem.rs",
+          "measured_sha256": "451a767c840cfc3a8b98ef2f2a63bc5a48b613980c8bf748240476588549a3a7",
+          "current_sha256": "85bce092f5a2efdffc077490d2a85ae0a8536f19b670ed6370bcf89b10afb9e0",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/prefetch.rs",
+          "measured_sha256": "74352170691de56ad5b6f5d73678100cb015301e57de3349cb28a174bdfc0be0",
+          "current_sha256": "fc9c46511ff50c87a79bf9afa6729b42914528d7d683ba3d6d3f11a659e4c86d",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/shift_funnel.rs",
+          "measured_sha256": "62fcdcbc276cbc61bbf3ba11fc15357c3ebc603ef3876a51f45c5297b8605d8d",
+          "current_sha256": "486d45ea9f111d76cf344fecf239933056d95c75599619b942de3ad4aca3df23",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/transpose.rs",
+          "measured_sha256": "89dd89e6b72fa72f0bd3257c696088d06eaa6722d6261c55f56cfae0e0e4e526",
+          "current_sha256": "56a34a83daca16e1b798701c63cabdfc14355f45326a01797fa26730cb41b5c6",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/_lto_opacity_callsites.asm.txt",
+          "measured_sha256": "790b6b29e121fb799592c5f5df51c166add937f3ff5113abbd3cf7c75780d17d",
+          "current_sha256": "6e1cb69287c95a91f30afe560d7917097fd6777a0f6020914413f9f1faa2eebd",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "42dc2f1978b979df89e40217375a9d6f6e18e963",
+              "issue": "9f47bb94",
+              "subject": "docs(jit:9f47bb94): bring x86 comments and asm notes to standard v2"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/avx2.asm.txt",
+          "measured_sha256": "041b5cbb17f142942d50c2c74d7e722df9469a51709589644849e89c1bd3f5dd",
+          "current_sha256": "b54470f1399bbdc7e3fe61096c869cf5eea1dc64955ce72a04f493a7b8c54053",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "16e5c4b6b4fca98f4278a76ffe3be9b971fef50e",
+              "issue": "6e87c436",
+              "subject": "docs(jit:6e87c436): state the fused AVX2 count safety contract"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bch_encode.asm.txt",
+          "measured_sha256": "6a581427eb63070cf81158a3ead723321768ec10400a79bfa2066cf399fc2bfe",
+          "current_sha256": "6a581427eb63070cf81158a3ead723321768ec10400a79bfa2066cf399fc2bfe",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+          "measured_sha256": "05b98041183b78b982e2e93aaa4069b482f8169cc7580e914cfbafe5f645baaa",
+          "current_sha256": "05b98041183b78b982e2e93aaa4069b482f8169cc7580e914cfbafe5f645baaa",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
+          "measured_sha256": "426f58a03cf4534d60c3707ce534367126196802255be0aaa52258b77ee94719",
+          "current_sha256": "426f58a03cf4534d60c3707ce534367126196802255be0aaa52258b77ee94719",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
+          "measured_sha256": "2e62c1a12b590d4f96eb7311e621713bd8b9d6eb5d8ca329adb49d7944bd328d",
+          "current_sha256": "2e62c1a12b590d4f96eb7311e621713bd8b9d6eb5d8ca329adb49d7944bd328d",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx512.asm.txt",
+          "measured_sha256": "6e2fbee2f0f4712986d9ee01b83fb87379617939bc17daf44ddd7ba206b8a236",
+          "current_sha256": "b882a1d2383d771a48488bbbcffa0e846bde2fa04ef5bebfd68ec38ceba5180c",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "42dc2f1978b979df89e40217375a9d6f6e18e963",
+              "issue": "9f47bb94",
+              "subject": "docs(jit:9f47bb94): bring x86 comments and asm notes to standard v2"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/clmul.asm.txt",
+          "measured_sha256": "b6f0f5ebaee59ab6ba5a5feffc371654219099281f107ee97740695fe49272e2",
+          "current_sha256": "b6f0f5ebaee59ab6ba5a5feffc371654219099281f107ee97740695fe49272e2",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp65537.asm.txt",
+          "measured_sha256": "7f956dc6b6e4626b3e08b34a80462f0149a302fae997ee83320c2cb1459e22a3",
+          "current_sha256": "7f956dc6b6e4626b3e08b34a80462f0149a302fae997ee83320c2cb1459e22a3",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_generic.asm.txt",
+          "measured_sha256": "085945e68ad400b2ef4fd088410c226c15d9c1eddef5fecc3136e9814b709e67",
+          "current_sha256": "085945e68ad400b2ef4fd088410c226c15d9c1eddef5fecc3136e9814b709e67",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium.asm.txt",
+          "measured_sha256": "a2c97d2fdf3c0783244a3b9a4068ab2b62a87fed33e3ab9f5ce0ca03a12f9a2f",
+          "current_sha256": "a2c97d2fdf3c0783244a3b9a4068ab2b62a87fed33e3ab9f5ce0ca03a12f9a2f",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_f64.asm.txt",
+          "measured_sha256": "a4c1132436c646f69a15378e590721bf91c347f691f661de40d0e6a20674736b",
+          "current_sha256": "a4c1132436c646f69a15378e590721bf91c347f691f661de40d0e6a20674736b",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt",
+          "measured_sha256": "ef3ec0ed92bf8d8c1c12fb1fcffd18a6247833045f1b794edb9e380c26bb158e",
+          "current_sha256": "ef3ec0ed92bf8d8c1c12fb1fcffd18a6247833045f1b794edb9e380c26bb158e",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt",
+          "measured_sha256": "3beffb4576ba6126dbea0f8ce8dc350ba54aa8123672b946282e240191c6e574",
+          "current_sha256": "3beffb4576ba6126dbea0f8ce8dc350ba54aa8123672b946282e240191c6e574",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_f32.asm.txt",
+          "measured_sha256": "9e9e77ffd2091e567caed41ea162a0ae87a8a3660e3fffcffdc512a63eb3a013",
+          "current_sha256": "9e9e77ffd2091e567caed41ea162a0ae87a8a3660e3fffcffdc512a63eb3a013",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_panel.asm.txt",
+          "measured_sha256": "394741e66b471389f55ccfc66419fad0f3a9ba7264e000ba067e056c0cdabbc0",
+          "current_sha256": "394741e66b471389f55ccfc66419fad0f3a9ba7264e000ba067e056c0cdabbc0",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_batch.asm.txt",
+          "measured_sha256": "6fa1ff354353916a5700b01a516af4ff7470a1013a8120d16db546e66be91942",
+          "current_sha256": "6fa1ff354353916a5700b01a516af4ff7470a1013a8120d16db546e66be91942",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/gf2m_wide.asm.txt",
+          "measured_sha256": "72214ba30eec1a4c8fcd4abcdf190c2c81aa464f66dddd3081a32357326fdf56",
+          "current_sha256": "72214ba30eec1a4c8fcd4abcdf190c2c81aa464f66dddd3081a32357326fdf56",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/mersenne.asm.txt",
+          "measured_sha256": "58df6f7a281044dc7b9916f9aaa46b766b52847a4f3a4544e6cd9c1efc3bccf2",
+          "current_sha256": "58df6f7a281044dc7b9916f9aaa46b766b52847a4f3a4544e6cd9c1efc3bccf2",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/popcount.asm.txt",
+          "measured_sha256": "2ab005e5ecfe3c55fa4a35be8b693317c5d4290a3d3d3f5b0b4541b96fa9889b",
+          "current_sha256": "2ab005e5ecfe3c55fa4a35be8b693317c5d4290a3d3d3f5b0b4541b96fa9889b",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt",
+          "measured_sha256": "faf36d9a3b7972ca514e79e0a2127e9f598d71ee52407391b9ef4aac99b008f6",
+          "current_sha256": "faf36d9a3b7972ca514e79e0a2127e9f598d71ee52407391b9ef4aac99b008f6",
+          "class": "identical"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt",
+          "measured_sha256": "684a8be580c57ec2b503740fb7c5bd0839ee665fd334bdbb65a9d6a2a44af542",
+          "current_sha256": "6195631f0495dcf687ccfa3fcd470a3596cdd5dc891d5e5dca145c37411b7fdc",
+          "class": "code-differs",
+          "changed_by": [
+            {
+              "commit": "42dc2f1978b979df89e40217375a9d6f6e18e963",
+              "issue": "9f47bb94",
+              "subject": "docs(jit:9f47bb94): bring x86 comments and asm notes to standard v2"
+            }
+          ]
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+          "measured_sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12",
+          "current_sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/bch_encode.rs",
+          "measured_sha256": "3601c3b13e0b921cb7c7298c87e5b8ba04af92beee4fd4634fe33fe253df9f15",
+          "current_sha256": "3cd2aa01ae1c250fe62418bd1866c60ee84b307c9e0aec280194bb417083025c",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+          "measured_sha256": "8269ee99f77d77af53bcf047d230d548aa23f44e469b095f91984c31c8b012f4",
+          "current_sha256": "13c50d7ec609be399f1c1a0958ad1676e85975161e8c7fc0e4b542d662b751e0",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs",
+          "measured_sha256": "0ad2cf38fcbe03a5bc2e36b920056d74fd6110be59aea7de6e9d71adaa83e791",
+          "current_sha256": "8593051551c0068fff561b2b2606c559df4372d6c2c782ae8dac4e25dbf3f76a",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs",
+          "measured_sha256": "6955e532a267da21a0ef2834e684b892c6fc6143e18888d72f41fd93b27e9521",
+          "current_sha256": "a2c542946acdb1197edcdeceece9832f4a4893ef04af848b9f998e2fad3f31c4",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs",
+          "measured_sha256": "fec4243bcc2b3cf5c41eb9a1f0647bbfcee5269458427f1d1d45fb2ec990f660",
+          "current_sha256": "aea908c86d450be7975f40e125a0937b7f3dc3881a203e1d60ed26a4e6107b6f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/clmul.rs",
+          "measured_sha256": "a4c59d76fb90bcfa4ca9ff87459b80741e88003abd7c71f8d5c4167c915b0616",
+          "current_sha256": "956931e8cfdb076f1cf7a71f1e13b1ff66b9069ff64a24afd660a988e5f2ae83",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+          "measured_sha256": "28597457a5523ef7030313e31e92d6082af709f4c1fa1ac9f6d693edf57d7a50",
+          "current_sha256": "fe78555d56da0e45675202eaf2af3c749067a333b4bed30ce3637822dc382be4",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_generic.rs",
+          "measured_sha256": "0a30f181d9818e32c42b2ebbfb05fd92f9f8d950b6df9ec9ff22d3951bf49d85",
+          "current_sha256": "61f011311b4fb12289093e8324a63bb75b68c4b74e9c2b126bcc9019c645cf49",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+          "measured_sha256": "29842afef301387bd9f355d1330eb666168b551c6b4563ad2e35f4780656af63",
+          "current_sha256": "1e958697865c9f938f5d4b7d43ebc803b460d5c4df3076029f17b1e6237cc3d0",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs",
+          "measured_sha256": "46d14e6e33e2214d77035ec75e958d01bcae02fc686666f0f2568e8605034ba7",
+          "current_sha256": "e18998b468b43dd46329a87a81995942db0926f96c4f0b929b508e4d15a51674",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs",
+          "measured_sha256": "e299296bea8891eeb9294c52eb7445006a81e86d6642f8b1681e346c48f1e6a1",
+          "current_sha256": "7bbf846fc207e82445828cadfe71212abc14ef47dc833f6a4906f2c1bc730ad0",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+          "measured_sha256": "7d702d3c6019af54c710b54eff92d3bf26b5a556a0dbfd42d4a2f6c58ac2e3f1",
+          "current_sha256": "cc1446d89fd1102d4f2f1ae9002ebc6382f17c62e12f1d0ea44c82b32a2ffc9a",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+          "measured_sha256": "ade0e6709429fe3493b02e6c6759e07a273dedbf92cab0b391738fc53aa268e7",
+          "current_sha256": "fd0030ed3f555ae6b17523902969a8b688dca2d84a3a6b48728b7b87b3ae5aaf",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_small_panel.rs",
+          "measured_sha256": "801c6841cd440fcf63d6f3244ce3ee1ed1a76e985e55f9225d1c6e913857c179",
+          "current_sha256": "bf35d0b66852b5874281bda11cada8c0a63ce80350b792f5f18745111dac116f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs",
+          "measured_sha256": "db5bd1f6dffe4cd2684285516615935f7936944732fb86aeac80e8d78f2766e4",
+          "current_sha256": "4cc49cf814ba0e37178191f046bdfee290a4a9bd568b954f410a9795b4e1186f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+          "measured_sha256": "3a660491c147703650de7147b8d3a7aca2cae695eb43a6ba500e391f2e186eee",
+          "current_sha256": "2270415319daed1cbbc41b2712db024720866f5130a6e06ff734ff5ce82e6def",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_common.rs",
+          "measured_sha256": "3f3a3dd12607ac8b5259f2334e3e9b8026f7ca51ebc36158bf100df32a083881",
+          "current_sha256": "6d12b5971faf47d2b22f9f25381cd6baca809dc272e1455271915c27d86ecae7",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+          "measured_sha256": "1e705775745245d93bb5092fa7460991238c42d8dc37092fba53b888e0feddba",
+          "current_sha256": "41bbb69b28be5023149596b77c8805ff1676a557e9ea6268f64fe561e7ca300f",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs",
+          "measured_sha256": "dda98102f4a5aa12a75734a63cde2c494a20770e7f1798ba8b56dd878d4c98c1",
+          "current_sha256": "f7a58e201046944c63c8754e4fd9b57685920664e97bd0d4546f2da4d489158d",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+          "measured_sha256": "f1427b4284e0a7fbbf4f26dbe199d6f18bc6bc945197efedc0edeb2cd439f513",
+          "current_sha256": "56ef8bc27e64c0032f43a6689bc89ab63e6e07e837e07785d11e7232f86c2df5",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/mod.rs",
+          "measured_sha256": "e41f255912be25dd16310253cc627763c0d6f00651421f4d604330cfb0baf2b7",
+          "current_sha256": "c30c64846087d3914df8b1484423e63a76904e03339b55059740616fbed2042e",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
+          "measured_sha256": "dcf7d0bafb1d8393f86ab4607d19456b49a19774d6f66a2652a7c521ee854cc3",
+          "current_sha256": "ea00368adb3872f681a1afcd7360d74eb5fec012a04e75c095f573725923204c",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/shift_funnel.rs",
+          "measured_sha256": "6cf3bf514038ef11c4f86a79c8409e55365f61f6a43d1bb9ee7af0c19b7a2d74",
+          "current_sha256": "598653ac42101957ded24fbb2a9ecf00bcd9218390340ab75e4b4a1990972f25",
+          "class": "comment-or-blank-only"
+        },
+        {
+          "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
+          "measured_sha256": "9f796e462ef36dc826dda66a4d1b431626851a134c1b65686e8f25e30b37ad1c",
+          "current_sha256": "2c7e024c8b0fb9893ed942487ca804b3baadb57c77a2c2f783d7e3d8a9e0bd8a",
+          "class": "comment-or-blank-only"
+        }
+      ]
+    }
+  ]
+}
