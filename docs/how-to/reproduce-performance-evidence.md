@@ -60,8 +60,8 @@ relative to the clone root, estimated minutes and command. The
 wrapper requires, and runs each job under `bash -c` from its worktree. It
 takes the root of the checkout that contains it from
 `git rev-parse --show-toplevel` and resolves worktrees against that root.
-`--print-root` prints the root and exits before the window opens; the printed
-path is the clone root:
+`--print-root` prints that root without opening a window; the printed path is
+the clone root:
 
 ```sh
 "$GF2"/dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh --print-root

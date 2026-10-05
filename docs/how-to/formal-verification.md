@@ -1,8 +1,8 @@
 # Run and extend the Lean 4 proofs
 
 `scripts/verify-lean.sh` translates selected `gf2-core` and `gf2-algebra`
-functions into Lean 4 with Charon and Aeneas (@/citation/HoProtzenko2022; the
-pinned pair is @/citation/AeneasVerif2026). Hand-written theorems under
+functions into Lean 4 with Charon and Aeneas (`@/citation/HoProtzenko2022`; the
+pinned pair is `@/citation/AeneasVerif2026`). Hand-written theorems under
 `proofs/` state specifications over the translated definitions. The extraction
 scope is the `--start-from` and `--opaque` flag list of the script's two Charon
 invocations.
@@ -56,7 +56,7 @@ each pass exists. Charon compiles with `--cfg verify_lean`, so items under
 |---|---|
 | `Types.lean`, `Funs.lean`, `*_Template.lean`, `TypesExternal.lean` | Regenerated on every run |
 | `Gf2Algebra/FunsExternal.lean` | Copied from its template on every run |
-| `Gf2Core/FunsExternal.lean` | Hand-maintained; seeded from the template only when absent |
+| `Gf2Core/FunsExternal.lean` | Hand-maintained; created from the template when the file is missing |
 | `Proofs/*.lean` | Hand-written |
 
 CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or

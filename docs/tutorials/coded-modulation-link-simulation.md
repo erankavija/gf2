@@ -116,12 +116,9 @@ holds the raw outputs, toolchain and host:
 Rerunning the command with `--resume` loads the completed checkpoints,
 simulates no frames and rewrites the CSV with the same deterministic columns.
 A resume with a different `--max-frames` fails with `ConfigHashMismatch`, so
-a larger budget is a fresh run. The
-checkpoint hash covers the run-control fields of `PipelineConfig`, listed at
-`gf2_sim::snr_checkpoint::config_hash`, including the worker count, so a resume
-runs on a host with the same available parallelism. It excludes the rate,
-modulation, decoder and demapper; a run that changes any of them uses a new
-`--output-dir`.
+a larger budget is a fresh run;
+[Run a simulation campaign](../how-to/run-simulation-campaigns.md#checkpointed-dvb-t2-campaigns)
+lists the arguments the checkpoint hash covers and those it excludes.
 
 ## Adapt it
 

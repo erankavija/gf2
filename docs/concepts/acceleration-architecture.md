@@ -28,7 +28,7 @@ only detection and dispatch.
 Each kernel family in `gf2-kernels-simd` exports a `detect` function that
 returns a bundle of function pointers, such as `LogicalFns` for bitwise and
 population-count operations or `gf2m_batch::Gf2mBatchFns` for batched
-GF(2^m) multiplication. Every family except `modem` wraps the bundle in
+$\mathrm{GF}(2^m)$ multiplication. Every family except `modem` wraps the bundle in
 `Option`: `None` means the host lacks an instruction set extension the bundle
 requires, and the caller runs its scalar code. The `modem` detectors always
 return a bundle of scalar or AVX2 entries. The
@@ -39,8 +39,8 @@ caches sit behind one accessor per bundle (`maybe_simd`, `maybe_gf2m_batch`,
 their own caches for LLR, modem, BCH-encode and bipedal bundles.
 
 Bundles are detected independently. A host can bind the logical bundle and
-lack the extensions of the GF(2^m) batch bundle, in which case bit operations
-run vectorized and GF(2^m) batches run scalar.
+lack the extensions of the $\mathrm{GF}(2^m)$ batch bundle, in which case bit
+operations run vectorized and $\mathrm{GF}(2^m)$ batches run scalar.
 
 ### Route selection
 

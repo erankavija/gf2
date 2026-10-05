@@ -8,7 +8,7 @@
 | CI compilers | stable Rust for the build, test, lint and doc battery; Rust 1.95.0 for the `gf2-sim` compile-fail guard | [`ci.yml`](../../.github/workflows/ci.yml) |
 | Lean proofs | the toolchain pinned in [`lean-toolchain`](../../proofs/lean-toolchain), installed through elan | [formal verification how-to](../how-to/formal-verification.md) |
 | Lean regeneration | patched Charon and Aeneas with a pinned Rust nightly | [formal verification how-to](../how-to/formal-verification.md) |
-| GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`); tested with ROCm 7.2 | [`build.rs`](../../crates/gf2-kernels-hip/build.rs), [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs) |
+| GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`) | [`build.rs`](../../crates/gf2-kernels-hip/build.rs), [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs) |
 
 ## Operating systems
 

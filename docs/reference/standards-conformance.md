@@ -21,8 +21,8 @@ demultiplexer (§6.1.4) and cell interleaver (§6.1.5) are outside the library.
 
 ### Bit order
 
-- **BCH.** The standard transmits the highest-degree coefficient first in both
-  the message and the parity block. `dvb_t2_bch_code` therefore declares
+- **BCH.** EN 302 755 orders the message and the parity block from the
+  highest-degree coefficient down. `dvb_t2_bch_code` therefore declares
   `DVB_T2_LAYOUT = SystematicLayout::MessageParityDescending`: coordinate `d`
   is a message bit for `d < K_bch` and a parity bit above it. The layout maps
   and the internal polynomial convention are defined in the `bch::encode`
