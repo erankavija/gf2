@@ -4,6 +4,7 @@ Importing this module puts the shared scripts on `sys.path`; they resolve
 files under the root git reports.
 """
 
+import functools
 import subprocess
 import sys
 from pathlib import Path
@@ -38,15 +39,21 @@ ISSUE = "bfc2ceab"
 KERNEL_PACKAGE = "gf2-kernels-simd"
 
 
+@functools.cache
 def package(name):
     """Root-relative directory of the live Cargo package `name`."""
     return repository_files.package_directory(ROOT, name)
 
 
-def tracked(pattern):
-    """Sorted root-relative tracked paths matching the glob `pattern`, outside receipt snapshots."""
+@functools.cache
+def _tracked(pattern):
     listing = subprocess.run(
         ["git", "-C", str(ROOT), "ls-files", "--", f":(glob){pattern}"],
         capture_output=True, check=True, text=True,
     ).stdout.split()
-    return sorted(path for path in listing if not repository_files.is_snapshot_copy(path))
+    return tuple(sorted(path for path in listing if not repository_files.is_snapshot_copy(path)))
+
+
+def tracked(pattern):
+    """Sorted root-relative tracked paths matching the glob `pattern`, outside receipt snapshots."""
+    return list(_tracked(pattern))

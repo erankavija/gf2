@@ -384,7 +384,7 @@
       "line": 40,
       "occurrences": 1,
       "verbatim": "    pub unsafe fn run_add_batch(",
-      "why": "The crate already publishes the same kernels as `unsafe fn` items with the slice shape under Safety.",
+      "why": "The crate publishes the same kernels as `unsafe fn` items as well, with the slice shape under Safety.",
       "sha256": "153a4ddd5eefa817fce9cb1d635fe5c456fcbcdb54b1e0c9d8b3694e551582b4"
     },
     {
@@ -738,6 +738,28 @@
       "verbatim": "        crate::m4rm::assert_gray_build_lengths(",
       "why": "Each specialized Gray builder runs the shared check before its `unsafe` block.",
       "sha256": "cc83c8486dd2de3747cae7d9e4ad13610bba25f270efced22fcc7627a76839c4"
+    },
+    {
+      "id": "gray-check-panics-doc",
+      "project": "gf2",
+      "commit": "6d03804a2a6e329f00879b676537125479916660",
+      "path": "crates/gf2-kernels-simd/src/lib.rs",
+      "line": 93,
+      "occurrences": 1,
+      "verbatim": "/// Panics if `stride_words` is not the width this builder specializes for, if",
+      "why": "The pointer type of the checked builders lists its conditions under Panics.",
+      "sha256": "0282f83b6e5ca8232497f4f62404fe107e7575a0b664a4523eb00a7b3c1326ec"
+    },
+    {
+      "id": "gray-check-contract",
+      "project": "gf2",
+      "commit": "0e7d75424dee853d7fce5558188b640171f32b74",
+      "path": "crates/gf2-kernels-simd/src/m4rm.rs",
+      "line": 93,
+      "occurrences": 1,
+      "verbatim": "pub mod contract {",
+      "why": "The builders share one argument contract, as cases any implementation can be handed; a rejection case requires a panic under the builder's name and an untouched buffer.",
+      "sha256": "3bd8c600c4ce17bb50cf492f63e486e62a1ea4ff08b5440aeb56b50e77e9dbce"
     },
     {
       "id": "tile-index-check",

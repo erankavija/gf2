@@ -1,0 +1,631 @@
+{
+  "schema": "check-instruction-counts-v1",
+  "issue": "bfc2ceab",
+  "rule": "Per symbol, the instruction text `asm_listing.RULE` defines. A line ending in `:` is a label; every other line is an instruction. A block is a maximal run of instructions that no label interrupts and that ends at a jump, a `ret` or the end of the symbol. A panic block is a block whose last instruction calls a `core::panicking` function. `instructions` counts every instruction; `outside_panic_blocks` leaves the panic blocks out, so it counts each loop body once and both sides of a branch. A loop is a jump to a label that stands earlier in the symbol; its body is the instructions outside panic blocks from that label through the jump. `added` is `outside_panic_blocks` of the checked form minus that of the current form.",
+  "prototype_listing": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/check-prototype.asm.txt",
+    "instruction_text_sha256": "cf20368472d14ae0f4708b48aa0f8d9ae2208b49976d9fd25a43c538eb4e7547"
+  },
+  "kernel_listings": [
+    {
+      "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+      "sha256": "fa35260b1833b7e1705b79aa3b5e4a43a3291a39eb23c75b0cd2fdb971dc120a"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
+      "sha256": "5612ec68a220301a64f769b49b7be29ced697f5beeebcef7ccfd343d9675a609"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
+      "sha256": "76499111dd50861a464d5ea8c276cd4153a05ed57ad7b8821b0fff6ca9f6c381"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt",
+      "sha256": "cb08862266fe06396cf8534293f390bbfcb82ffd0e7b00343c9c8f02b9de1427"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt",
+      "sha256": "200b0b6ab9041aa003c2ef60ce8be747bae3642cba08418ac43afa326a66e080"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/x86/asm/fp_small_ple.asm.txt",
+      "sha256": "46f55db78b1cc30a06437b8569904c0fc0b7f353ab238396480be36ca0f54419"
+    }
+  ],
+  "interfaces": [
+    {
+      "interface": "small-prime-spmm-row",
+      "class": "sparse-row-index",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "spmm_small_current",
+            "instructions": 18,
+            "outside_panic_blocks": 18,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "spmm_small_checked",
+            "instructions": 71,
+            "outside_panic_blocks": 55,
+            "loop_bodies": [
+              5
+            ]
+          },
+          "added": 37,
+          "added_loop_bodies": [
+            5
+          ]
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_spmm_row",
+        "instructions": 147,
+        "outside_panic_blocks": 131,
+        "loop_bodies": [
+          10,
+          14,
+          21,
+          21,
+          31,
+          48,
+          84
+        ]
+      }
+    },
+    {
+      "interface": "medium-prime-spmm-row",
+      "class": "sparse-row-index",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "spmm_medium_current",
+            "instructions": 18,
+            "outside_panic_blocks": 18,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "spmm_medium_checked",
+            "instructions": 70,
+            "outside_panic_blocks": 54,
+            "loop_bodies": [
+              5
+            ]
+          },
+          "added": 36,
+          "added_loop_bodies": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "interface": "small-prime-ple-panel",
+      "class": "ple-panel",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "ple_small_current",
+            "instructions": 16,
+            "outside_panic_blocks": 16,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "ple_small_checked",
+            "instructions": 42,
+            "outside_panic_blocks": 26,
+            "loop_bodies": []
+          },
+          "added": 10,
+          "added_loop_bodies": []
+        },
+        {
+          "check": "entry scan in the safe entry point",
+          "current": {
+            "symbol": "ple_small_current",
+            "instructions": 16,
+            "outside_panic_blocks": 16,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "ple_small_scan_checked",
+            "instructions": 65,
+            "outside_panic_blocks": 45,
+            "loop_bodies": [
+              6
+            ]
+          },
+          "added": 29,
+          "added_loop_bodies": [
+            6
+          ]
+        },
+        {
+          "check": "pivot inverse read",
+          "current": {
+            "symbol": "pivot_inverse_u8_current",
+            "instructions": 3,
+            "outside_panic_blocks": 3,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "pivot_inverse_u8_checked",
+            "instructions": 9,
+            "outside_panic_blocks": 6,
+            "loop_bodies": []
+          },
+          "added": 3,
+          "added_loop_bodies": []
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/fp_small_ple.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::fp_small_ple::ple_panel_base_canonical",
+        "instructions": 356,
+        "outside_panic_blocks": 341,
+        "loop_bodies": [
+          7,
+          8,
+          8,
+          8,
+          9,
+          14,
+          15,
+          18,
+          21,
+          22,
+          29,
+          35,
+          51,
+          71,
+          91,
+          141,
+          162
+        ]
+      }
+    },
+    {
+      "interface": "medium-prime-ple-panel",
+      "class": "ple-panel",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "ple_medium_current",
+            "instructions": 16,
+            "outside_panic_blocks": 16,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "ple_medium_checked",
+            "instructions": 41,
+            "outside_panic_blocks": 25,
+            "loop_bodies": []
+          },
+          "added": 9,
+          "added_loop_bodies": []
+        },
+        {
+          "check": "entry scan in the safe entry point",
+          "current": {
+            "symbol": "ple_medium_current",
+            "instructions": 16,
+            "outside_panic_blocks": 16,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "ple_medium_scan_checked",
+            "instructions": 67,
+            "outside_panic_blocks": 47,
+            "loop_bodies": [
+              6
+            ]
+          },
+          "added": 31,
+          "added_loop_bodies": [
+            6
+          ]
+        },
+        {
+          "check": "pivot inverse read",
+          "current": {
+            "symbol": "pivot_inverse_u16_current",
+            "instructions": 3,
+            "outside_panic_blocks": 3,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "pivot_inverse_u16_checked",
+            "instructions": 9,
+            "outside_panic_blocks": 6,
+            "loop_bodies": []
+          },
+          "added": 3,
+          "added_loop_bodies": []
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::fp_medium_ple::ple_panel_base_canonical_u16",
+        "instructions": 373,
+        "outside_panic_blocks": 359,
+        "loop_bodies": [
+          7,
+          8,
+          8,
+          9,
+          10,
+          14,
+          15,
+          15,
+          21,
+          25,
+          27,
+          32,
+          56,
+          69,
+          95,
+          161,
+          162
+        ]
+      }
+    },
+    {
+      "interface": "bipedal-binary",
+      "class": "packed-lengths",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "bipedal_binary_current",
+            "instructions": 18,
+            "outside_panic_blocks": 18,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "bipedal_binary_checked",
+            "instructions": 49,
+            "outside_panic_blocks": 33,
+            "loop_bodies": []
+          },
+          "added": 15,
+          "added_loop_bodies": []
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_add_batch",
+        "instructions": 20,
+        "outside_panic_blocks": 20,
+        "loop_bodies": [
+          14
+        ]
+      }
+    },
+    {
+      "interface": "bipedal-unary",
+      "class": "packed-lengths",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "bipedal_unary_current",
+            "instructions": 14,
+            "outside_panic_blocks": 14,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "bipedal_unary_checked",
+            "instructions": 41,
+            "outside_panic_blocks": 25,
+            "loop_bodies": []
+          },
+          "added": 11,
+          "added_loop_bodies": []
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch",
+        "instructions": 31,
+        "outside_panic_blocks": 31,
+        "loop_bodies": [
+          6
+        ]
+      }
+    },
+    {
+      "interface": "f5-binary",
+      "class": "packed-lengths",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "f5_binary_current",
+            "instructions": 24,
+            "outside_panic_blocks": 24,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "f5_binary_checked",
+            "instructions": 61,
+            "outside_panic_blocks": 45,
+            "loop_bodies": []
+          },
+          "added": 21,
+          "added_loop_bodies": []
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_add5_batch",
+        "instructions": 82,
+        "outside_panic_blocks": 82,
+        "loop_bodies": [
+          68
+        ]
+      }
+    },
+    {
+      "interface": "f5-unary",
+      "class": "packed-lengths",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "f5_unary_current",
+            "instructions": 18,
+            "outside_panic_blocks": 18,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "f5_unary_checked",
+            "instructions": 49,
+            "outside_panic_blocks": 33,
+            "loop_bodies": []
+          },
+          "added": 15,
+          "added_loop_bodies": []
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_neg5_batch",
+        "instructions": 22,
+        "outside_panic_blocks": 22,
+        "loop_bodies": [
+          16
+        ]
+      }
+    },
+    {
+      "interface": "f7-binary",
+      "class": "packed-lengths",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "f7_binary_current",
+            "instructions": 9,
+            "outside_panic_blocks": 9,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "f7_binary_checked",
+            "instructions": 37,
+            "outside_panic_blocks": 21,
+            "loop_bodies": []
+          },
+          "added": 12,
+          "added_loop_bodies": []
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch",
+        "instructions": 414,
+        "outside_panic_blocks": 414,
+        "loop_bodies": [
+          390
+        ]
+      }
+    },
+    {
+      "interface": "f7-unary",
+      "class": "packed-lengths",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "f7_unary_current",
+            "instructions": 6,
+            "outside_panic_blocks": 6,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "f7_unary_checked",
+            "instructions": 32,
+            "outside_panic_blocks": 16,
+            "loop_bodies": []
+          },
+          "added": 10,
+          "added_loop_bodies": []
+        }
+      ],
+      "kernel": {
+        "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
+        "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch",
+        "instructions": 202,
+        "outside_panic_blocks": 202,
+        "loop_bodies": [
+          191
+        ]
+      }
+    },
+    {
+      "interface": "small-prime-gemm-row-panel",
+      "class": "dense-shape-product",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "gemm_row_panel_current",
+            "instructions": 16,
+            "outside_panic_blocks": 16,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "gemm_row_panel_checked",
+            "instructions": 54,
+            "outside_panic_blocks": 32,
+            "loop_bodies": []
+          },
+          "added": 16,
+          "added_loop_bodies": []
+        }
+      ]
+    },
+    {
+      "interface": "small-prime-panel-gemm",
+      "class": "dense-shape-product",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "small_panel_gemm_current",
+            "instructions": 18,
+            "outside_panic_blocks": 18,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "small_panel_gemm_checked",
+            "instructions": 80,
+            "outside_panic_blocks": 58,
+            "loop_bodies": []
+          },
+          "added": 40,
+          "added_loop_bodies": []
+        }
+      ]
+    },
+    {
+      "interface": "small-prime-f32-gemm",
+      "class": "dense-shape-product",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "small_f32_gemm_current",
+            "instructions": 18,
+            "outside_panic_blocks": 18,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "small_f32_gemm_checked",
+            "instructions": 80,
+            "outside_panic_blocks": 58,
+            "loop_bodies": []
+          },
+          "added": 40,
+          "added_loop_bodies": []
+        }
+      ]
+    },
+    {
+      "interface": "medium-prime-gemm-panel",
+      "class": "dense-shape-product",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "medium_panel_gemm_current",
+            "instructions": 18,
+            "outside_panic_blocks": 18,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "medium_panel_gemm_checked",
+            "instructions": 79,
+            "outside_panic_blocks": 57,
+            "loop_bodies": []
+          },
+          "added": 39,
+          "added_loop_bodies": []
+        }
+      ]
+    },
+    {
+      "interface": "medium-prime-f64-gemm",
+      "class": "dense-shape-product",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "medium_f64_gemm_current",
+            "instructions": 18,
+            "outside_panic_blocks": 18,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "medium_f64_gemm_checked",
+            "instructions": 79,
+            "outside_panic_blocks": 57,
+            "loop_bodies": []
+          },
+          "added": 39,
+          "added_loop_bodies": []
+        }
+      ]
+    },
+    {
+      "interface": "pam-distances-f32",
+      "class": "dense-shape-product",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "pam_f32_current",
+            "instructions": 16,
+            "outside_panic_blocks": 16,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "pam_f32_checked",
+            "instructions": 56,
+            "outside_panic_blocks": 34,
+            "loop_bodies": []
+          },
+          "added": 18,
+          "added_loop_bodies": []
+        }
+      ]
+    },
+    {
+      "interface": "pam-distances-f64",
+      "class": "dense-shape-product",
+      "pairs": [
+        {
+          "check": "safe entry point",
+          "current": {
+            "symbol": "pam_f64_current",
+            "instructions": 16,
+            "outside_panic_blocks": 16,
+            "loop_bodies": []
+          },
+          "checked": {
+            "symbol": "pam_f64_checked",
+            "instructions": 56,
+            "outside_panic_blocks": 34,
+            "loop_bodies": []
+          },
+          "added": 18,
+          "added_loop_bodies": []
+        }
+      ]
+    }
+  ]
+}

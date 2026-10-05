@@ -1,0 +1,119 @@
+{
+  "schema": "caller-trusted-witness-runs-v1",
+  "issue": "bfc2ceab",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "profile": "release",
+  "entries_without_a_witness": [
+    "gemm-row-panel",
+    "pam-f32",
+    "pam-f64",
+    "small-panel-gemm"
+  ],
+  "runs": [
+    {
+      "entry": "small-spmm",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "medium-spmm",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "small-ple",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "medium-ple",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "bipedal-add",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "bipedal-sub",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "bipedal-mul",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "bipedal-neg",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "f5-add",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "f5-sub",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "f5-mul",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "f5-neg",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "f7-add",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "f7-sub",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "f7-mul",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "f7-neg",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "medium-gemm-panel",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "medium-f64-gemm",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "small-f32-gemm",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "small-f32-gemm-route-a",
+      "outcome": "killed by SIGSEGV",
+      "returned": false
+    },
+    {
+      "entry": "control",
+      "outcome": "exit status 0",
+      "returned": true
+    }
+  ]
+}

@@ -123,7 +123,7 @@ CLAIMS = [
      "A lane store writes four words through a raw pointer."),
     ("bipedal-unsafe-entry", SIMD, "src/bipedal/mod.rs",
      "pub unsafe fn run_add_batch(", 1,
-     "The crate already publishes the same kernels as `unsafe fn` items with the slice "
+     "The crate publishes the same kernels as `unsafe fn` items as well, with the slice "
      "shape under Safety."),
     ("f5-binary-type-doc", SIMD, "src/bipedal/packed5.rs",
      "/// All nine slices must have the same length (a multiple of 4 for the AVX2 path).", 1,
@@ -224,6 +224,13 @@ CLAIMS = [
     ("gray-check-call", SIMD, "src/x86/avx2.rs",
      "crate::m4rm::assert_gray_build_lengths(", 2,
      "Each specialized Gray builder runs the shared check before its `unsafe` block."),
+    ("gray-check-panics-doc", SIMD, "src/lib.rs",
+     "/// Panics if `stride_words` is not the width this builder specializes for, if", 1,
+     "The pointer type of the checked builders lists its conditions under Panics."),
+    ("gray-check-contract", SIMD, "src/m4rm.rs", "pub mod contract {", 1,
+     "The builders share one argument contract, as cases any implementation can be "
+     "handed; a rejection case requires a panic under the builder's name and an "
+     "untouched buffer."),
     ("tile-index-check", SIMD, "src/x86/avx2.rs",
      "idx.iter().all(|&entry| {", 1,
      "The M4RM tile wrappers check eight table indices per call with checked arithmetic: "
@@ -538,13 +545,13 @@ CLASSES = {
         "hoist": "The check stands ahead of the word loop. A caller that passes four "
                  "words per call runs it once per vector iteration.",
         "hot_path": "yes for the two F_3 kernels the single-word SIMD permanent calls "
-                    "once per Gray step; the other entry points have no caller in the "
-                    "workspace",
+                    "once per Gray step; no tracked Rust file calls the other entry "
+                    "points",
     },
     "dense-shape-product": {
         "title": "Dense kernels: shape products that wrap",
         "check": "`checked_mul` in place of each wrapping product the release "
-                 "assertions already compare.",
+                 "assertions compare.",
         "granularity": "per call",
         "hoist": "The comparisons exist; only their products change, ahead of every "
                  "loop.",
@@ -967,55 +974,61 @@ DECISIONS = {
     "dense-shape-product": (
         "a",
         "The assertions exist and compare with a wrapping product; `checked_mul` closes "
-        "the gap once per call, the calling dispatchers size their operands from the "
-        "same wrapping products, and no caller could hold an `unsafe` block.",
+        "the gap once per call. The calling dispatchers size their operands from the "
+        "same wrapping products, and no production caller can hold an `unsafe` block.",
     ),
     "ple-panel": (
         "a",
         "The shape check is one product per panel and the index check one comparison "
-        "per pivot, both outside the update loops; the two production callers already "
+        "per pivot, both outside the update loops; the two production callers "
         "meet both conditions by construction.",
     ),
     "sparse-row-index": (
-        "a, with a before/after cell",
+        "a",
         "The one production caller forwards column indices from a safe public hook and "
-        "cannot hold an `unsafe` block, so an unchecked pointer needs the row loop moved "
-        "into the kernel crate. The scan is one comparison per non-zero per row, on a "
+        "cannot hold an `unsafe` block, so an unchecked row kernel needs the row loop "
+        "inside the kernel crate. The scan is one comparison per non-zero per row, on a "
         "hot path, and the M4RM tile wrappers set the precedent of an index check per "
         "call.",
     ),
     "packed-lengths": (
-        "a, with a before/after cell for the F_3 add and sub pointers",
-        "The check is a handful of comparisons per call. The F_5, F_7, F_3 mul and F_3 "
-        "neg pointers have no caller in the workspace. The F_3 add and sub pointers are "
+        "a",
+        "The check is a handful of comparisons per call. No tracked Rust file calls the "
+        "F_5, F_7, F_3 mul and F_3 neg pointers. The F_3 add and sub pointers are "
         "called once per Gray step with four words, which puts the check beside one "
-        "vector iteration; the crate already publishes the unchecked form of those "
+        "vector iteration; the crate publishes the unchecked form of those "
         "kernels as `unsafe fn` items.",
     ),
 }
 
-# Candidate before/after cells for the checks that stay on a hot path. No
-# committed protocol family holds an arm over these consumers.
+# Candidate before/after cells for the checks that stay on a hot path:
+# (cell, interface, workload, why).
 MEASUREMENT_CELLS = [
-    ("spmm-small-narrow", "sparse-row-index",
+    ("spmm-small-narrow", "small-prime-spmm-row",
      "`SparseFieldMatrix::matmat` over a prime at most 251, dense operand of 16 columns",
      "whole consumer; the scan is largest against the kernel's work when the row has "
      "one 16-column block"),
-    ("spmm-small-wide", "sparse-row-index",
+    ("spmm-small-wide", "small-prime-spmm-row",
      "`SparseFieldMatrix::matmat` over a prime at most 251, dense operand of 1024 columns",
      "whole consumer; the scan is amortized over 64 blocks per row"),
-    ("spmm-medium-narrow", "sparse-row-index",
+    ("spmm-medium-narrow", "medium-prime-spmm-row",
      "`SparseFieldMatrix::matmat` over a prime above 251, dense operand of 16 columns",
      "whole consumer; the u16 lane"),
-    ("permanent-f3-singleword-simd", "packed-lengths",
+    ("permanent-f3-singleword-simd", "bipedal-binary",
      "`permanent_bipedal3_singleword_simd` on one matrix",
      "whole consumer; one checked kernel call per Gray step"),
-    ("ple-small-panel", "ple-panel",
+    ("ple-small-panel", "small-prime-ple-panel",
      "`FieldMatrix::ple` over a prime at most 251 at a width the panel base takes",
      "whole consumer; one bounds check per pivot"),
-    ("matvec-small-packed", "dense-shape-product",
+    ("matvec-small-packed", "small-prime-gemm-row-panel",
      "the packed small-prime matrix-vector product",
      "whole consumer; one checked product per call, as the control of the per-call "
      "class"),
 ]
 PILOT_MINUTES, CONFIRMATION_MINUTES = 8, 8
+
+# Text that would name one of the inventory's consumers in a measurement
+# family of the dispatch route inventory (jit:63bad95d).
+FAMILY_RECORD = "route-inventory.json"
+CONSUMER_TOKENS = ["Fp<", "gfp::", "fp_small", "fp_medium", "SparseFieldMatrix", "::ple",
+                   "permanent", "bipedal", "pam_sq", "demap"]
