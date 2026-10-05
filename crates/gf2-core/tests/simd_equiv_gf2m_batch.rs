@@ -1,20 +1,40 @@
-//! SIMD-vs-scalar equivalence for the GF(2^m) batch element-wise multiply
-//! kernel, `m ∈ {8, 16, 32}`, against three independent references:
-//! bit-by-bit shift-and-add, per-element `Gf2mField` multiplication, and
-//! log/exp tables for `m ∈ {8, 16}`; the batch square is checked against it.
-
-#![cfg(feature = "simd")]
+//! Equivalence of the GF(2^m) batch element-wise multiply, `m ∈ {8, 16, 32}`,
+//! with three independent references: bit-by-bit shift-and-add, per-element
+//! `Gf2mField` multiplication, and log/exp tables for `m ∈ {8, 16}`; the batch
+//! square is checked against it. The batch entry points answer on every host;
+//! [`batch_entries`] names the kernel they dispatch to.
 
 mod simd_equiv;
 
 use gf2_core::gf2m::batch::{batch_mul, batch_square};
 use gf2_core::gf2m::Gf2mField;
+use gf2_core::kernels::backend::contract::{assert_each, Implementation};
 use proptest::prelude::any;
 use proptest::strategy::Strategy;
 use simd_equiv::{assert_simd_matches_scalar, WORD_BOUNDARY_LENGTHS};
 
-fn gf2m_batch_simd_available() -> bool {
-    gf2_core::kernels::simd::maybe_gf2m_batch().is_some()
+/// The kernel `batch_mul` and `batch_square` run for `m ∈ {8, 16, 32}`.
+fn dispatched_kernel() -> &'static str {
+    #[cfg(feature = "simd")]
+    if gf2_core::kernels::simd::maybe_gf2m_batch().is_some() {
+        return "the GF(2^m) batch SIMD kernel";
+    }
+    "the scalar loop"
+}
+
+struct Batch {
+    mul: fn(&Gf2mField, &[u64], &[u64], &mut [u64]),
+    square: fn(&Gf2mField, &[u64], &mut [u64]),
+}
+
+fn batch_entries() -> Vec<Implementation<Batch>> {
+    vec![Implementation::new(
+        format!("batch_mul and batch_square over {}", dispatched_kernel()),
+        Batch {
+            mul: batch_mul,
+            square: batch_square,
+        },
+    )]
 }
 
 /// Bit-by-bit GF(2^m) multiplication, independent of every PCLMULQDQ path.
@@ -76,11 +96,6 @@ impl LogExpOracle {
 }
 
 fn run_boundary_test(m: u32, poly: u64) {
-    if !gf2m_batch_simd_available() {
-        eprintln!("GF(2^m) batch SIMD backend unavailable — skipping batch-mul boundary test");
-        return;
-    }
-
     let field = Gf2mField::new(m as usize, poly);
     let mask = if m == 64 { u64::MAX } else { (1u64 << m) - 1 };
     let oracle = if m <= 16 {
@@ -89,42 +104,44 @@ fn run_boundary_test(m: u32, poly: u64) {
         None
     };
 
-    for &bits in WORD_BOUNDARY_LENGTHS {
-        let len = bits;
-        let a: Vec<u64> = (0..len)
-            .map(|i| (i as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) & mask)
-            .collect();
-        let b: Vec<u64> = (0..len)
-            .map(|i| (i as u64).wrapping_mul(0x6C62_272E_07BB_0142) & mask)
-            .collect();
+    assert_each(&batch_entries(), |batch| {
+        for &bits in WORD_BOUNDARY_LENGTHS {
+            let len = bits;
+            let a: Vec<u64> = (0..len)
+                .map(|i| (i as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) & mask)
+                .collect();
+            let b: Vec<u64> = (0..len)
+                .map(|i| (i as u64).wrapping_mul(0x6C62_272E_07BB_0142) & mask)
+                .collect();
 
-        let mut got = vec![0u64; len];
-        batch_mul(&field, &a, &b, &mut got);
+            let mut got = vec![0u64; len];
+            (batch.mul)(&field, &a, &b, &mut got);
 
-        for i in 0..len {
-            let bitwise = scalar_bitwise_mul(a[i], b[i], m, poly);
-            assert_eq!(
-                got[i], bitwise,
-                "bitwise oracle disagrees at m={m}, len={len}, i={i}"
-            );
-            if a[i] != 0 && b[i] != 0 {
-                let ea = field.element(a[i]);
-                let eb = field.element(b[i]);
-                let single = (&ea * &eb).value();
+            for i in 0..len {
+                let bitwise = scalar_bitwise_mul(a[i], b[i], m, poly);
                 assert_eq!(
-                    got[i], single,
-                    "Gf2mField single-shot disagrees at m={m}, len={len}, i={i}"
+                    got[i], bitwise,
+                    "bitwise oracle disagrees at m={m}, len={len}, i={i}"
                 );
-            }
-            if let Some(oracle) = oracle.as_ref() {
-                let log_exp = oracle.mul(a[i], b[i]);
-                assert_eq!(
-                    got[i], log_exp,
-                    "log/exp oracle disagrees at m={m}, len={len}, i={i}"
-                );
+                if a[i] != 0 && b[i] != 0 {
+                    let ea = field.element(a[i]);
+                    let eb = field.element(b[i]);
+                    let single = (&ea * &eb).value();
+                    assert_eq!(
+                        got[i], single,
+                        "Gf2mField single-shot disagrees at m={m}, len={len}, i={i}"
+                    );
+                }
+                if let Some(oracle) = oracle.as_ref() {
+                    let log_exp = oracle.mul(a[i], b[i]);
+                    assert_eq!(
+                        got[i], log_exp,
+                        "log/exp oracle disagrees at m={m}, len={len}, i={i}"
+                    );
+                }
             }
         }
-    }
+    });
 }
 
 #[test]
@@ -169,112 +186,106 @@ fn batch_pair_strategy(
 
 #[test]
 fn proptest_gf2_8_batch_mul_matches_field_single_shot() {
-    if !gf2m_batch_simd_available() {
-        return;
-    }
     let field = Gf2mField::new(8, 0b100011101);
-    assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>, u32, u64), (), _, _, _>(
-        |input| {
-            let (a, b, m, poly) = input;
-            let mut out = vec![0u64; a.len()];
-            for i in 0..a.len() {
-                out[i] = scalar_bitwise_mul(a[i], b[i], *m, *poly);
-            }
-            *a = out;
-        },
-        |input| {
-            let (a, b, _m, _poly) = input;
-            let mut out = vec![0u64; a.len()];
-            batch_mul(&field, a, b, &mut out);
-            *a = out;
-        },
-        batch_pair_strategy(8, 257),
-    );
+    assert_each(&batch_entries(), |batch| {
+        assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>, u32, u64), (), _, _, _>(
+            |input| {
+                let (a, b, m, poly) = input;
+                let mut out = vec![0u64; a.len()];
+                for i in 0..a.len() {
+                    out[i] = scalar_bitwise_mul(a[i], b[i], *m, *poly);
+                }
+                *a = out;
+            },
+            |input| {
+                let (a, b, _m, _poly) = input;
+                let mut out = vec![0u64; a.len()];
+                (batch.mul)(&field, a, b, &mut out);
+                *a = out;
+            },
+            batch_pair_strategy(8, 257),
+        );
+    });
 }
 
 #[test]
 fn proptest_gf2_16_batch_mul_matches_field_single_shot() {
-    if !gf2m_batch_simd_available() {
-        return;
-    }
     let field = Gf2mField::new(16, 0b1_0001_0000_0000_1011);
-    assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>, u32, u64), (), _, _, _>(
-        |input| {
-            let (a, b, m, poly) = input;
-            let mut out = vec![0u64; a.len()];
-            for i in 0..a.len() {
-                out[i] = scalar_bitwise_mul(a[i], b[i], *m, *poly);
-            }
-            *a = out;
-        },
-        |input| {
-            let (a, b, _m, _poly) = input;
-            let mut out = vec![0u64; a.len()];
-            batch_mul(&field, a, b, &mut out);
-            *a = out;
-        },
-        batch_pair_strategy(16, 257),
-    );
+    assert_each(&batch_entries(), |batch| {
+        assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>, u32, u64), (), _, _, _>(
+            |input| {
+                let (a, b, m, poly) = input;
+                let mut out = vec![0u64; a.len()];
+                for i in 0..a.len() {
+                    out[i] = scalar_bitwise_mul(a[i], b[i], *m, *poly);
+                }
+                *a = out;
+            },
+            |input| {
+                let (a, b, _m, _poly) = input;
+                let mut out = vec![0u64; a.len()];
+                (batch.mul)(&field, a, b, &mut out);
+                *a = out;
+            },
+            batch_pair_strategy(16, 257),
+        );
+    });
 }
 
 #[test]
 fn proptest_gf2_32_batch_mul_matches_field_single_shot() {
-    if !gf2m_batch_simd_available() {
-        return;
-    }
     let field = Gf2mField::new(32, 0b1_0000_0000_0100_0000_0000_0000_0000_0111);
-    assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>, u32, u64), (), _, _, _>(
-        |input| {
-            let (a, b, m, poly) = input;
-            let mut out = vec![0u64; a.len()];
-            for i in 0..a.len() {
-                out[i] = scalar_bitwise_mul(a[i], b[i], *m, *poly);
-            }
-            *a = out;
-        },
-        |input| {
-            let (a, b, _m, _poly) = input;
-            let mut out = vec![0u64; a.len()];
-            batch_mul(&field, a, b, &mut out);
-            *a = out;
-        },
-        batch_pair_strategy(32, 257),
-    );
+    assert_each(&batch_entries(), |batch| {
+        assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>, u32, u64), (), _, _, _>(
+            |input| {
+                let (a, b, m, poly) = input;
+                let mut out = vec![0u64; a.len()];
+                for i in 0..a.len() {
+                    out[i] = scalar_bitwise_mul(a[i], b[i], *m, *poly);
+                }
+                *a = out;
+            },
+            |input| {
+                let (a, b, _m, _poly) = input;
+                let mut out = vec![0u64; a.len()];
+                (batch.mul)(&field, a, b, &mut out);
+                *a = out;
+            },
+            batch_pair_strategy(32, 257),
+        );
+    });
 }
 
 #[test]
 fn square_matches_mul_self_gf2_8() {
-    if !gf2m_batch_simd_available() {
-        return;
-    }
     let field = Gf2mField::gf256();
-    let mask = 0xFFu64;
-    let a: Vec<u64> = (0..=255u64).map(|i| i & mask).collect();
-    let mut squared = vec![0u64; a.len()];
-    let mut product = vec![0u64; a.len()];
-    batch_square(&field, &a, &mut squared);
-    batch_mul(&field, &a, &a, &mut product);
-    assert_eq!(
-        squared, product,
-        "square(a) should equal mul(a, a) elementwise"
-    );
+    let a: Vec<u64> = (0..=255u64).collect();
+    assert_each(&batch_entries(), |batch| {
+        let mut squared = vec![0u64; a.len()];
+        let mut product = vec![0u64; a.len()];
+        (batch.square)(&field, &a, &mut squared);
+        (batch.mul)(&field, &a, &a, &mut product);
+        assert_eq!(
+            squared, product,
+            "square(a) should equal mul(a, a) elementwise"
+        );
+    });
 }
 
 #[test]
 fn square_matches_mul_self_gf2_16_word_boundary_lengths() {
-    if !gf2m_batch_simd_available() {
-        return;
-    }
     let field = Gf2mField::gf65536();
     let mask = 0xFFFFu64;
-    for &len in WORD_BOUNDARY_LENGTHS {
-        let a: Vec<u64> = (0..len)
-            .map(|i| (i as u64).wrapping_mul(0x9E37_79B9) & mask)
-            .collect();
-        let mut squared = vec![0u64; len];
-        let mut product = vec![0u64; len];
-        batch_square(&field, &a, &mut squared);
-        batch_mul(&field, &a, &a, &mut product);
-        assert_eq!(squared, product, "square != mul-self at len={len}");
-    }
+    assert_each(&batch_entries(), |batch| {
+        for &len in WORD_BOUNDARY_LENGTHS {
+            let a: Vec<u64> = (0..len)
+                .map(|i| (i as u64).wrapping_mul(0x9E37_79B9) & mask)
+                .collect();
+            let mut squared = vec![0u64; len];
+            let mut product = vec![0u64; len];
+            (batch.square)(&field, &a, &mut squared);
+            (batch.mul)(&field, &a, &a, &mut product);
+            assert_eq!(squared, product, "square != mul-self at len={len}");
+        }
+    });
 }

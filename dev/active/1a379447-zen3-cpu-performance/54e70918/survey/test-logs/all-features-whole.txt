@@ -1,0 +1,10 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --status-level fail --final-status-level fail --cargo-profile ci-test --profile ci
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
+    Finished `ci-test` profile [optimized] target(s) in 2m 49s
+────────────
+ Nextest run ID 86912273-48fd-4926-a0fc-17b099b0c72e with nextest profile: ci
+    Starting 2752 tests across 98 binaries (16 tests skipped)
+────────────
+     Summary [   7.549s] 2752 tests run: 2752 passed, 16 skipped
+# exit: 0
