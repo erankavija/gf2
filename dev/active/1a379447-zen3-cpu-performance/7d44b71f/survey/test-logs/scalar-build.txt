@@ -1,5 +1,6 @@
 # toolchain: rustc 1.95.0 (59807616e 2026-04-14)
 # command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --no-default-features --features rand,io,parallel,visualization,tuning-profile,test-support --cargo-profile ci-test --profile ci --status-level fail --final-status-level fail
+   Compiling gf2-kernels-simd v0.1.0 (crates/gf2-kernels-simd)
    Compiling gf2-core v0.1.0 (crates/gf2-core)
 warning: unused import: `super::*`
     --> crates/gf2-core/src/gfp/simd_ops.rs:2665:9
@@ -30,10 +31,10 @@ warning: constant `BOUNDARY_LENS` is never used
      |               ^^^^^^^^^^^^^
 
 warning: `gf2-core` (lib test) generated 4 warnings (run `cargo fix --lib -p gf2-core --tests` to apply 1 suggestion)
-    Finished `ci-test` profile [optimized] target(s) in 2m 42s
+    Finished `ci-test` profile [optimized] target(s) in 2m 40s
 ────────────
- Nextest run ID 4b989f07-e347-4959-809e-aad960fc4c12 with nextest profile: ci
+ Nextest run ID 79e8dc64-a61a-465f-b76c-7b275d9b4b47 with nextest profile: ci
     Starting 2477 tests across 85 binaries (16 tests skipped)
 ────────────
-     Summary [   1.346s] 2477 tests run: 2477 passed, 16 skipped
+     Summary [   1.292s] 2477 tests run: 2477 passed, 16 skipped
 # exit: 0

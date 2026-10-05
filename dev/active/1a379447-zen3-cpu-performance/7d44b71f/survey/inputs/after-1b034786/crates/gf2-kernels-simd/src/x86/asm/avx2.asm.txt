@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : f86313232
-; regenerated   : 2026-10-05T04:30:39Z
+; commit        : 1f5157072
+; regenerated   : 2026-10-05T04:23:07Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -19,8 +19,8 @@
 ;==========================================================
 
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-7d44b71f/crates/gf2-kernels-simd)
-    Finished `release` profile [optimized] target(s) in 2.40s
 
+    Finished `release` profile [optimized] target(s) in 2.46s
 gf2_kernels_simd::x86::avx2::avx2_xor_into:
 	cmp rcx, rsi
 	cmovb rsi, rcx

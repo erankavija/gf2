@@ -1,7 +1,7 @@
 {
   "schema": "crate-function-digests-v1",
   "issue": "7d44b71f",
-  "tree": "current",
+  "tree": "after-1b034786",
   "command": "cargo rustc --release -p gf2-kernels-simd --lib -- --emit=asm",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
   "rule": "Per `@function` symbol of the emitted assembly, the lines from its label to its `.Lfunc_end` label, without assembler directives. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_`, `.LJTI<n>_`, `.Ltmp<n>`, `.Lfunc_begin<n>`, `.Lexception<n>` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
@@ -9,7 +9,7 @@
     "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/after-1b034786-baseline.json",
     "baseline_sha256": "5fb82b74fc81ada8514c8121a52c524bb26a1cc81c42912a3e3d0d5092a11e2a"
   },
-  "sources_sha256": "8d6e8975bc5840158d11c61738bd38e775ad4b919d369727e75884948386fe81",
+  "sources_sha256": "5dbfc0acd58bdb7eb98cee1500a06a9d3666301bd72b2ee8e90d9b56777a8067",
   "functions": {
     "_ZN102_$LT$core..iter..adapters..map..Map$LT$I$C$F$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h3b1146d8c8ecba6eE": "b0f0d99c476ed096bbfd819c977dbeb1b316eb945701031c7ddfff86e1041b7f",
     "_ZN16gf2_kernels_simd10bch_encode12BchEncodeFns12absorb_block17h9bcd14f44017f24cE": "7adb4e08f348f22e4fe1d24d33f67aa57ba8d6ea9b91019260af2e3b4f25f543",
