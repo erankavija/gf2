@@ -853,12 +853,6 @@
     {
       "commit": null,
       "doc_type": "tool",
-      "label": "ldpc-plan-check.rs",
-      "path": "dev/active/3be770d5/survey/harness/src/bin/ldpc-plan-check.rs"
-    },
-    {
-      "commit": null,
-      "doc_type": "tool",
       "label": "ldpc-profile.rs",
       "path": "dev/active/3be770d5/survey/harness/src/bin/ldpc-profile.rs"
     },
@@ -961,5 +955,5 @@
   "priority": "high",
   "state": "done",
   "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-  "updated_at": "2026-10-03T16:30:09.563680506Z"
+  "updated_at": "2026-10-05T21:42:23.885765798Z"
 }

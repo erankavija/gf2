@@ -18733,3 +18733,4 @@
 {"from":"in_progress","id":"df1718c2-6074-40ce-a194-f6ef4a80a665","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:41:50.427872227Z","to":"done","type":"issue_state_changed"}
 {"id":"43d98ba7-554b-4fe0-8399-8d983aa17e30","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:41:50.427872227Z","type":"issue_completed"}
 {"from":"backlog","id":"7f2fe5af-de0e-46c3-a636-dcf70ec65ecd","issue_id":"e28795c1-8d70-4ea0-a563-0e469904c52c","timestamp":"2026-10-05T21:41:50.525924411Z","to":"ready","type":"issue_state_changed"}
+{"fields":["documents"],"id":"2106726d-7dba-47b3-9367-1bc23010400a","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-10-05T21:42:23.885765798Z","type":"issue_updated","updated_by":"doc-remove"}
