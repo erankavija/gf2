@@ -28,39 +28,6 @@
  "bundle_getters": [
   "fns"
  ],
- "tests_by_file": {
-  "crates/gf2-kernels-simd/src/x86/avx2.rs": 5
- },
- "tests": [
-  {
-   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-   "test": "test_m4rm_tile8x4_wrapper_panics_on_invalid_table",
-   "test_line": 873,
-   "via": null
-  },
-  {
-   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-   "test": "test_m4rm_gray_xor16_wrapper_panics_on_short_src",
-   "test_line": 883,
-   "via": null
-  },
-  {
-   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-   "test": "test_m4rm_gray_build4_matches_scalar",
-   "test_line": 903,
-   "via": null
-  },
-  {
-   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-   "test": "test_m4rm_gray_build8_matches_scalar",
-   "test_line": 918,
-   "via": null
-  },
-  {
-   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-   "test": "test_m4rm_gray_build4_rejects_wrong_stride",
-   "test_line": 934,
-   "via": null
-  }
- ]
+ "tests_by_file": {},
+ "tests": []
 }
