@@ -6,10 +6,10 @@
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
   "rule": "Per `@function` symbol of the emitted assembly, the lines from its label to its `.Lfunc_end` label, without assembler directives. Compiler-numbered local names are reduced to their kind: `.LBB<n>_`, `.LCPI<n>_`, `.LJTI<n>_`, `.Ltmp<n>`, `.Lfunc_begin<n>`, `.Lexception<n>` and `.Lanon.<hash>.<n>`; their numbers and hashes follow the crate's function count and source line positions. Mnemonics, operands, registers, immediates and label suffixes are compared verbatim.",
   "anchor": {
-    "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/before-1b034786-baseline.json",
-    "baseline_sha256": "14ff937e67ae9218a83e0e42ca23227298f5e3832fcf63c416f2ab9251910e58"
+    "baseline": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/after-1b034786-baseline.json",
+    "baseline_sha256": "5fb82b74fc81ada8514c8121a52c524bb26a1cc81c42912a3e3d0d5092a11e2a"
   },
-  "sources_sha256": "c6c64ad701accb55911f5477c6a06cc0f8cf2327dba21cefbca10113c9f5b18d",
+  "sources_sha256": "8d6e8975bc5840158d11c61738bd38e775ad4b919d369727e75884948386fe81",
   "functions": {
     "_ZN102_$LT$core..iter..adapters..map..Map$LT$I$C$F$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h3b1146d8c8ecba6eE": "b0f0d99c476ed096bbfd819c977dbeb1b316eb945701031c7ddfff86e1041b7f",
     "_ZN16gf2_kernels_simd10bch_encode12BchEncodeFns12absorb_block17h9bcd14f44017f24cE": "7adb4e08f348f22e4fe1d24d33f67aa57ba8d6ea9b91019260af2e3b4f25f543",
@@ -98,6 +98,7 @@
     "_ZN16gf2_kernels_simd3x864avx221avx2_shift_left_words17hd8f5aa9b72ee9954E": "9adbee3c50950d3eded4dae397b674ebcf2d94a9d6087887c6fa0631d436c5a6",
     "_ZN16gf2_kernels_simd3x864avx221m4rm_table_rows_cover17h58bd5bbc07481ab6E": "f7afe66053f1a238ef4d7aefa1b96d7598e098348a06b7e8754fe413d37cbcd8",
     "_ZN16gf2_kernels_simd3x864avx222avx2_shift_right_words17h786caa05552616f4E": "07ce9421df2dd95c21605463267b3dc9b3a0465453095d768b122245853a3160",
+    "_ZN16gf2_kernels_simd3x864avx230assert_m4rm_gray_build_lengths17h2ffb00dfb103cee7E": "f426c2ec1095425581ae30b9ad91b362c0ae1c646c539fd99b1c6000a77dba97",
     "_ZN16gf2_kernels_simd3x864avx23fns13and_popcnt_fn17h64743a199dbe775fE": "9921579579bb497208a048d31e8a9316b01747eac8c8a722929ec0eb234b33eb",
     "_ZN16gf2_kernels_simd3x864avx23fns13popcnt_csa_fn17hfea3b40875730345E": "560b75f5947ac71493ac56239f09c8fbb3e05c3cc3c24c0f7138f85e8ee2275e",
     "_ZN16gf2_kernels_simd3x864avx23fns15m4rm_tile8x4_fn17h19f7d6b30844d0cfE": "cbf0892164ff83e8ea111a9f91105157548016c8a02c460f358fba2dfe05d9f3",
@@ -106,8 +107,8 @@
     "_ZN16gf2_kernels_simd3x864avx23fns17find_first_one_fn17hb62e3ca462be0161E": "4f89f628aeb373c2d8969c5988d4945512de616e63f76c935caca4ffa742a96f",
     "_ZN16gf2_kernels_simd3x864avx23fns18find_first_zero_fn17hfdca57177936f948E": "337a125b3d8224e55b8792fb65a5051b2ae2339a77fffc3baf62f0bc41690ce2",
     "_ZN16gf2_kernels_simd3x864avx23fns18m4rm_gray_xor16_fn17hc655eacb11e41749E": "e7b6696b8b1aaada47a110b190f4bbb154c45669acc7865dead30a52d4174cc6",
-    "_ZN16gf2_kernels_simd3x864avx23fns19m4rm_gray_build4_fn17h0edbe1697cb03042E": "e5661a784063b546e04455baa860741482d46a90c74e7f55080816cbbb2a1412",
-    "_ZN16gf2_kernels_simd3x864avx23fns19m4rm_gray_build8_fn17hd5c3e7622b0f7433E": "ffb6baf4abeb0cee836e660af9dc6eab479dc698ee0b7e54597114678a57a5fa",
+    "_ZN16gf2_kernels_simd3x864avx23fns19m4rm_gray_build4_fn17h0edbe1697cb03042E": "67e095a8e7870f5141bf2d22613df8cf5df8b87c3002e23833378fc6128dddab",
+    "_ZN16gf2_kernels_simd3x864avx23fns19m4rm_gray_build8_fn17hd5c3e7622b0f7433E": "800799d7b5464c6a25e184e84a28fd674e6b42daf1749a2707be3fbbf547e531",
     "_ZN16gf2_kernels_simd3x864avx23fns19shift_left_words_fn17h45d3dd3c02e48127E": "cb6af082578951f50c57793f9eeff0d36143a84aaecf598ffa3b5d4774ad7a27",
     "_ZN16gf2_kernels_simd3x864avx23fns20shift_right_words_fn17h5e6c524e9bb62847E": "6382794e31e0345910c9eb638a6411ebdac66d5af3b4426521a051c948f47593",
     "_ZN16gf2_kernels_simd3x864avx23fns21popcnt_instruction_fn17h73fb3c8721b73ffeE": "9eb6724669d8485f133c559b9c50a403a5812ed0cc01bccd41c07f70b9a55b4e",
@@ -255,6 +256,7 @@
     "_ZN3std4sync9once_lock17OnceLock$LT$T$GT$10initialize17hfd93a99289740d22E": "fcb535c290703ebe33ef4c0fdb486481e14d9aac6e294130a19877e445050356",
     "_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h442544156f339f87E": "00180765e292cfc675a9312d058043fba8535896e780b02f033ee44a550e02d8",
     "_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17hc31149c9a7129021E": "c310b8ba9636f5039c2c7e52874b3d1cc8c8783299127e9ec0d5418538a6cca8",
+    "_ZN44_$LT$$RF$T$u20$as$u20$core..fmt..Display$GT$3fmt17hf3be6dc60591776eE": "ce596a26c0c27ac8747e432d844498b7cf21b98b487679c346feab3478971e98",
     "_ZN4core3ops8function6FnOnce40call_once$u7b$$u7b$vtable.shim$u7d$$u7d$17h52b8d5eb95f56b67E": "f9b69431c2f450b5055489a30798e7c90f9481fd1359fd3fb7c3381e5cf5b8f6",
     "_ZN4core3ops8function6FnOnce40call_once$u7b$$u7b$vtable.shim$u7d$$u7d$17h58cae0d792645e8eE": "3a539e2d1630157409137f6fbe1fba4e4504ab59e9ca6f76126a3e892cbbe0bb",
     "_ZN4core3ops8function6FnOnce40call_once$u7b$$u7b$vtable.shim$u7d$$u7d$17h68c8d30162545396E": "9a16ad739e80eb0b946fe6b64b8ea40f74a3ecb008ac566bcc13402a38c8611f",

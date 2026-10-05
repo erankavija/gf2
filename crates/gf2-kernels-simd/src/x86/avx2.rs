@@ -672,6 +672,9 @@ pub(crate) fn fns() -> LogicalFns {
             table_size,
             valid_rows,
         );
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
+        // The assertions above fix the stride, require a power-of-two
+        // `table_size` and bound both buffers with checked products.
         unsafe { avx2_m4rm_gray_build4(buffer, panel, stride_words, table_size, valid_rows) }
     }
     fn m4rm_gray_build8_fn(
@@ -690,6 +693,9 @@ pub(crate) fn fns() -> LogicalFns {
             table_size,
             valid_rows,
         );
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
+        // The assertions above fix the stride, require a power-of-two
+        // `table_size` and bound both buffers with checked products.
         unsafe { avx2_m4rm_gray_build8(buffer, panel, stride_words, table_size, valid_rows) }
     }
     fn m4rm_tile8x4_fn(
