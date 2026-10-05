@@ -22,6 +22,11 @@ use super::gf2m_common::{clmul_barrett_scalar as clmul_barrett_reduce_inline, ym
 
 /// Load 2 elements into a `__m256i` placing each in the low 64 bits of its
 /// 128-bit lane.
+///
+/// # Safety
+///
+/// The host supports AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1. Every argument is
+/// a value, so no pointer, length or aliasing condition applies.
 #[inline(always)]
 unsafe fn pack_pair(x0: u64, x1: u64) -> __m256i {
     _mm256_set_epi64x(0, x1 as i64, 0, x0 as i64)
@@ -29,12 +34,22 @@ unsafe fn pack_pair(x0: u64, x1: u64) -> __m256i {
 
 /// Produce two `__m256i` registers each holding two `u64` operands placed
 /// in the low half of their 128-bit lane.
+///
+/// # Safety
+///
+/// The host supports AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1. Every argument is
+/// a value, so no pointer, length or aliasing condition applies.
 #[inline(always)]
 unsafe fn pack_quad(x0: u64, x1: u64, x2: u64, x3: u64) -> (__m256i, __m256i) {
     (pack_pair(x0, x1), pack_pair(x2, x3))
 }
 
 /// Extract the low 64 bits of each 128-bit lane of two YMM registers.
+///
+/// # Safety
+///
+/// The host supports AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1. Every argument is
+/// a value, so no pointer, length or aliasing condition applies.
 #[inline(always)]
 unsafe fn extract_quad_lo(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) {
     let lane0 = _mm256_extracti128_si256::<0>(r_lo);
@@ -50,6 +65,11 @@ unsafe fn extract_quad_lo(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) 
 }
 
 /// Extract the high 64 bits of each 128-bit lane of two YMM registers.
+///
+/// # Safety
+///
+/// The host supports AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1. Every argument is
+/// a value, so no pointer, length or aliasing condition applies.
 #[allow(dead_code)]
 #[inline(always)]
 unsafe fn extract_quad_hi(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) {
@@ -68,6 +88,11 @@ unsafe fn extract_quad_hi(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) 
 /// Inner loop body: process one block of 4 elements via YMM-resident
 /// reduction and the static byte-shift `SHIFT`. Caller selects `SHIFT` from
 /// `degree / 8`.
+///
+/// # Safety
+///
+/// The host supports AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1. Every argument is
+/// a value, so no pointer, length or aliasing condition applies.
 #[inline(always)]
 unsafe fn process_quad_mul<const SHIFT: i32>(
     a0: u64,
@@ -102,6 +127,11 @@ unsafe fn process_quad_mul<const SHIFT: i32>(
 /// Recover `modulus` from the broadcast YMM-packed copy. The constant lives
 /// in the low 64 bits of lane 0; this avoids passing it as a separate
 /// scalar through every helper.
+///
+/// # Safety
+///
+/// The host supports AVX2, VPCLMULQDQ, PCLMULQDQ and SSE4.1. Every argument is
+/// a value, so no pointer, length or aliasing condition applies.
 #[inline(always)]
 unsafe fn modulus_from_ymm(mod_ymm: __m256i) -> u64 {
     let lane0 = _mm256_extracti128_si256::<0>(mod_ymm);
@@ -119,6 +149,9 @@ use super::gf2m_common::correct;
 /// # Safety
 /// Requires `avx2`, `vpclmulqdq`, `pclmulqdq`, and `sse4.1` CPU features,
 /// and `degree ∈ {8, 16, 32}`.
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 #[target_feature(
     enable = "avx2",
     enable = "vpclmulqdq",
@@ -289,10 +322,14 @@ mod tests {
         let a: Vec<u64> = (0..64u64).map(|i| (i * 0x9E37_79B9) & mask).collect();
         let b: Vec<u64> = (0..64u64).map(|i| (i * 0x6C62_272E + 7) & mask).collect();
         let mut got = vec![0u64; 64];
+        // SAFETY: AVX2 and VPCLMULQDQ were detected above. In rustc's
+        // target-feature hierarchy they enable PCLMULQDQ and SSE4.1.
         unsafe { gf2m_batch_mul_ymm_unroll4(&a, &b, &mut got, mu, poly, m) };
 
         for i in 0..64 {
             let expected =
+                // SAFETY: AVX2 and VPCLMULQDQ were detected above. In rustc's
+                // target-feature hierarchy they enable PCLMULQDQ and SSE4.1.
                 unsafe { crate::x86::clmul::clmul_barrett_reduce(a[i], b[i], mu, poly, m) };
             assert_eq!(got[i], expected, "mismatch at i={i}, m={m}");
         }
@@ -312,9 +349,13 @@ mod tests {
         let a: Vec<u64> = (0..32u64).map(|i| (i * 0xABCD) & mask).collect();
         let b: Vec<u64> = (0..32u64).map(|i| (i * 0x1234 + 5) & mask).collect();
         let mut got = vec![0u64; 32];
+        // SAFETY: AVX2 and VPCLMULQDQ were detected above. In rustc's
+        // target-feature hierarchy they enable PCLMULQDQ and SSE4.1.
         unsafe { gf2m_batch_mul_ymm_unroll4(&a, &b, &mut got, mu, poly, m) };
         for i in 0..32 {
             let expected =
+                // SAFETY: AVX2 and VPCLMULQDQ were detected above. In rustc's
+                // target-feature hierarchy they enable PCLMULQDQ and SSE4.1.
                 unsafe { crate::x86::clmul::clmul_barrett_reduce(a[i], b[i], mu, poly, m) };
             assert_eq!(got[i], expected, "i={i}");
         }
@@ -338,9 +379,13 @@ mod tests {
             .map(|i| (i + 1).wrapping_mul(0x6C62_272E_07BB_0142) & mask)
             .collect();
         let mut got = vec![0u64; 32];
+        // SAFETY: AVX2 and VPCLMULQDQ were detected above. In rustc's
+        // target-feature hierarchy they enable PCLMULQDQ and SSE4.1.
         unsafe { gf2m_batch_mul_ymm_unroll4(&a, &b, &mut got, mu, poly, m) };
         for i in 0..32 {
             let expected =
+                // SAFETY: AVX2 and VPCLMULQDQ were detected above. In rustc's
+                // target-feature hierarchy they enable PCLMULQDQ and SSE4.1.
                 unsafe { crate::x86::clmul::clmul_barrett_reduce(a[i], b[i], mu, poly, m) };
             assert_eq!(got[i], expected, "i={i}");
         }

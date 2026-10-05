@@ -17,6 +17,11 @@ use core::arch::x86_64::*;
 ///
 /// Each input lane `p` must satisfy `p ≤ 2^32` — which holds for any
 /// product of two canonical values (`max = 65536² = 2^32`).
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn reduce_fp65537_64(p: __m256i) -> __m256i {
@@ -48,6 +53,9 @@ unsafe fn reduce_fp65537_64(p: __m256i) -> __m256i {
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical
 /// (`< 65537`).
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp65537_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
@@ -78,6 +86,9 @@ pub unsafe fn fp65537_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
 /// Caller must ensure AVX2 is available at runtime. All input values
 /// must be canonical (strictly less than `65537`); behaviour is undefined
 /// otherwise.
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 ///
 /// # Panics
 ///
@@ -119,6 +130,9 @@ pub unsafe fn fp65537_batch_mul(a: &[u32], b: &[u32], out: &mut [u32]) {
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical.
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 ///
 /// # Panics
 ///
@@ -178,6 +192,9 @@ pub unsafe fn fp65537_batch_add(a: &[u32], b: &[u32], out: &mut [u32]) {
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical
 /// (`< 65537`).
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out_c0` and `out_c1`.
 ///
 /// # Panics
 ///
@@ -322,6 +339,10 @@ fn scalar_tail_sub(a: u64, b: u64) -> u64 {
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp65537_add8(a: __m256i, b: __m256i, p_vec: __m256i) -> __m256i {
@@ -329,6 +350,10 @@ unsafe fn fp65537_add8(a: __m256i, b: __m256i, p_vec: __m256i) -> __m256i {
     _mm256_min_epu32(s, _mm256_sub_epi32(s, p_vec))
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp65537_sub8(a: __m256i, b: __m256i, p_vec: __m256i) -> __m256i {
@@ -337,6 +362,10 @@ unsafe fn fp65537_sub8(a: __m256i, b: __m256i, p_vec: __m256i) -> __m256i {
     _mm256_min_epu32(diff, _mm256_sub_epi32(diff, p_vec))
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp65537_mul_beta8(x: __m256i, beta: u32, beta_vec: __m256i) -> __m256i {
@@ -360,6 +389,10 @@ unsafe fn fp65537_mul_beta8(x: __m256i, beta: u32, beta_vec: __m256i) -> __m256i
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical
 /// (`< 65537`).
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out_c0`, `out_c1` and
+/// `out_c2`.
 ///
 /// # Panics
 ///
@@ -518,6 +551,9 @@ pub unsafe fn fp65537_batch_cubic_karatsuba(
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical.
 ///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
+///
 /// # Panics
 ///
 /// Panics if slice lengths differ.
@@ -580,6 +616,7 @@ mod tests {
         let a: Vec<u32> = (0..16u32).map(|i| (i * 12345) % 65537).collect();
         let b: Vec<u32> = (0..16u32).map(|i| (i * 67890) % 65537).collect();
         let mut out = vec![0u32; 16];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp65537_batch_mul(&a, &b, &mut out) };
         for i in 0..16 {
             assert_eq!(out[i], scalar_mul(a[i], b[i]), "i={i}");
@@ -594,6 +631,7 @@ mod tests {
         let a: Vec<u32> = (0..13u32).map(|i| (i * 12345) % 65537).collect();
         let b: Vec<u32> = (0..13u32).map(|i| (i * 67890) % 65537).collect();
         let mut out = vec![0u32; 13];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp65537_batch_mul(&a, &b, &mut out) };
         for i in 0..13 {
             assert_eq!(out[i], scalar_mul(a[i], b[i]), "i={i}");
@@ -610,6 +648,7 @@ mod tests {
         let a = vec![0u32, 1, 65536, 32768, 1, 65536, 0, 65535];
         let b = vec![65536, 0, 65536, 2, 32768, 1, 0, 3];
         let mut out = vec![0u32; 8];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp65537_batch_mul(&a, &b, &mut out) };
         for i in 0..8 {
             assert_eq!(out[i], scalar_mul(a[i], b[i]), "i={i}");
@@ -626,6 +665,7 @@ mod tests {
         let a = vec![65536u32; 16];
         let b = vec![65536u32; 16];
         let mut out = vec![0u32; 16];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp65537_batch_mul(&a, &b, &mut out) };
         // 65536 ≡ -1 (mod 65537), so 65536 * 65536 ≡ 1.
         for (i, &v) in out.iter().enumerate() {
@@ -641,6 +681,7 @@ mod tests {
         let a: Vec<u32> = (0..17u32).map(|i| (i * 4093) % 65537).collect();
         let b: Vec<u32> = (0..17u32).map(|i| (i * 9973) % 65537).collect();
         let mut out = vec![0u32; 17];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp65537_batch_add(&a, &b, &mut out) };
         for i in 0..17 {
             assert_eq!(out[i], scalar_add(a[i], b[i]), "i={i}");
@@ -655,6 +696,7 @@ mod tests {
         let a = vec![0u32, 1, 65536, 65536, 32768, 65535, 65536, 1];
         let b = vec![0u32, 65536, 1, 65536, 32769, 2, 0, 65536];
         let mut out = vec![0u32; 8];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp65537_batch_add(&a, &b, &mut out) };
         for i in 0..8 {
             assert_eq!(out[i], scalar_add(a[i], b[i]), "i={i}");
@@ -669,6 +711,7 @@ mod tests {
         let a: Vec<u32> = (0..17u32).map(|i| (i * 4093) % 65537).collect();
         let b: Vec<u32> = (0..17u32).map(|i| (i * 9973) % 65537).collect();
         let mut out = vec![0u32; 17];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp65537_batch_sub(&a, &b, &mut out) };
         for i in 0..17 {
             assert_eq!(out[i], scalar_sub(a[i], b[i]), "i={i}");
@@ -689,6 +732,7 @@ mod tests {
 
             let mut out_c0 = vec![0u32; n];
             let mut out_c1 = vec![0u32; n];
+            // SAFETY: AVX2 was detected above.
             unsafe {
                 fp65537_batch_karatsuba(&a0, &a1, &b0, &b1, beta, &mut out_c0, &mut out_c1);
             }
@@ -726,6 +770,7 @@ mod tests {
             let mut out_c0 = vec![0u32; n];
             let mut out_c1 = vec![0u32; n];
             let mut out_c2 = vec![0u32; n];
+            // SAFETY: AVX2 was detected above.
             unsafe {
                 fp65537_batch_cubic_karatsuba(
                     &a0,
@@ -792,6 +837,7 @@ mod tests {
 
             let mut out_c0 = vec![0u32; n];
             let mut out_c1 = vec![0u32; n];
+            // SAFETY: AVX2 was detected above.
             unsafe {
                 fp65537_batch_karatsuba(&a0, &a1, &b0, &b1, beta, &mut out_c0, &mut out_c1);
             }
@@ -820,6 +866,7 @@ mod tests {
         let a = vec![0u32, 65536, 0, 1, 32768, 65535, 65536, 65536];
         let b = vec![0u32, 65536, 65536, 0, 32769, 65535, 1, 65536];
         let mut out = vec![0u32; 8];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp65537_batch_sub(&a, &b, &mut out) };
         for i in 0..8 {
             assert_eq!(out[i], scalar_sub(a[i], b[i]), "i={i}");

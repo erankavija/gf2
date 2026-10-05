@@ -20,12 +20,21 @@ pub const CSA_BLOCK_VECTORS: usize = 16;
 /// Words folded by one Harley-Seal block.
 pub const CSA_BLOCK_WORDS: usize = CSA_BLOCK_VECTORS * WORDS_PER_VECTOR;
 
+/// # Safety
+///
+/// `ptr` is valid for a 32-byte read at any alignment, nothing writes those
+/// bytes during the call, and the host supports AVX.
 #[inline(always)]
 unsafe fn loadu(ptr: *const u8) -> __m256i {
     _mm256_loadu_si256(ptr as *const __m256i)
 }
 
 /// The 4-bit population-count lookup table, duplicated across both lanes.
+///
+/// # Safety
+///
+/// The host supports AVX. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline(always)]
 unsafe fn nibble_lut() -> __m256i {
     _mm256_setr_epi8(
@@ -38,6 +47,11 @@ unsafe fn nibble_lut() -> __m256i {
 ///
 /// Two `VPSHUFB` lookups and one `VPADDB` give a per-byte count, at most eight
 /// per byte; `VPSADBW` against zero sums each 8-byte group into its lane.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline(always)]
 unsafe fn lane_sums(v: __m256i, lut: __m256i, mask0f: __m256i, zero: __m256i) -> __m256i {
     let lo = _mm256_and_si256(v, mask0f);
@@ -50,6 +64,11 @@ unsafe fn lane_sums(v: __m256i, lut: __m256i, mask0f: __m256i, zero: __m256i) ->
 ///
 /// `_mm_extract_epi64` needs SSE4.1, so the high half is read by shifting the
 /// 128-bit register instead.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline(always)]
 unsafe fn horizontal_sum(acc: __m256i) -> u64 {
     let acc128 = _mm_add_epi64(
@@ -66,6 +85,11 @@ unsafe fn horizontal_sum(acc: __m256i) -> u64 {
 /// `high` their majority, so `2 * high + low` equals `a + b + c` bit column by
 /// bit column (`@/citation/Mula2018`). Five Boolean operations over three
 /// live inputs.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline(always)]
 unsafe fn csa(a: __m256i, b: __m256i, c: __m256i) -> (__m256i, __m256i) {
     let u = _mm256_xor_si256(a, b);
@@ -83,6 +107,11 @@ unsafe fn csa(a: __m256i, b: __m256i, c: __m256i) -> (__m256i, __m256i) {
 /// accumulators stay live across the call, which leaves the remaining
 /// architectural YMM registers for the eight loaded planes and the lookup
 /// constants.
+///
+/// # Safety
+///
+/// The host supports AVX2. The three accumulators are distinct exclusive
+/// borrows and `planes` is a value, so no pointer or length condition applies.
 #[inline(always)]
 unsafe fn fold_eight(
     ones: &mut __m256i,
@@ -108,6 +137,11 @@ unsafe fn fold_eight(
 }
 
 /// Adds the weight-1, 2, 4 and 8 accumulators to a running count.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline(always)]
 unsafe fn fold_carries(
     ones: __m256i,
@@ -154,6 +188,12 @@ pub(crate) unsafe fn popcnt_words(buf: &[u64]) -> u64 {
 ///
 /// The remainder is at most three words, so the lowering of `count_ones` never
 /// dominates a call that reached the vector loop.
+///
+/// # Safety
+///
+/// No target feature is required. `buf` is read through its reference at
+/// indices below `buf.len()` for any `whole_vectors`, so no pointer, length or
+/// aliasing condition falls on the caller.
 #[inline(always)]
 unsafe fn word_tail(buf: &[u64], whole_vectors: usize) -> u64 {
     let mut total = 0u64;

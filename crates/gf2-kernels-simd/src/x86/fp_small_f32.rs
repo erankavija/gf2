@@ -52,6 +52,9 @@ fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
 /// `p ∈ [3, 251]` is an odd prime, and every input lane holds a
 /// non-negative integer canonical residue in `[0, p)`.
 ///
+/// The shape assertions bound every access, and the slice references carry
+/// pointer validity and exclusive access to `c`.
+///
 /// # Panics
 ///
 /// Panics if any slice length disagrees with `m`, `k`, `n`.
@@ -202,6 +205,9 @@ pub unsafe fn fp_small_f32_gemm(
 /// `p ∈ [3, 251]` is an odd prime, and every input lane holds a
 /// non-negative integer canonical residue in `[0, p)`.
 ///
+/// The shape assertions bound every access, and the slice references carry
+/// pointer validity and exclusive access to `c`.
+///
 /// # Panics
 ///
 /// Panics if any slice length disagrees with `m`, `k`, `n`.
@@ -315,6 +321,14 @@ pub unsafe fn fp_small_f32_gemm_route_a(
 /// inner k-chunked FMA + i32-sum tower, then dispatches to
 /// [`store_and_reduce_tile_route_a`] for the vectorized output reduction
 /// instead of the scalar [`store_and_reduce_tile`].
+///
+/// # Safety
+///
+/// The host supports AVX2 and FMA. `M_EFF <= M_R`, `a_pack_f32` holds `M_R *
+/// k` lanes, `b_packed` holds `k * N_R` lanes from `panel_off`, `n_eff <=
+/// N_R`, and `c` holds the cells `(i_blk + r) * n + j_blk + j_off` for `r <
+/// M_EFF` and `j_off < n_eff`. The references carry pointer validity and
+/// exclusive access to `c`.
 #[inline]
 #[target_feature(enable = "avx2,fma")]
 #[allow(clippy::too_many_arguments)]
@@ -443,6 +457,12 @@ unsafe fn run_one_panel_route_a<const M_EFF: usize>(
 /// row-major form `dst[t * M_R + i] = a[(i_blk + i) * k + t]`. The
 /// dst slack rows (`i ∈ [M_EFF, M_R)`) hold zeros (already initialised
 /// by the caller's zero-fill).
+///
+/// # Safety
+///
+/// The host supports AVX2. `M_EFF <= M_R`, `a` holds at least `(i_blk + M_EFF)
+/// * k` lanes and `dst` at least `M_R * k`. The references carry pointer
+/// validity and exclusive access to `dst`.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn pack_a_block<const M_EFF: usize>(a: &[f32], i_blk: usize, k: usize, dst: &mut [f32]) {
@@ -477,6 +497,13 @@ unsafe fn pack_a_block<const M_EFF: usize>(a: &[f32], i_blk: usize, k: usize, ds
 /// interleaved row-major (`a_pack_f32[t * M_R + i] = a[(i_blk + i) * k + t]`).
 /// `b_packed` is the N-major B-panel buffer: `n_panels × k × N_R` f32;
 /// `panel_off` and `n_eff` select the active panel slice.
+///
+/// # Safety
+///
+/// The host supports AVX2 and FMA. `M_EFF <= M_R`, `a_pack_f32` holds `M_R *
+/// k` lanes, `b_packed` holds `k * N_R` lanes from `panel_off`, and `n_eff <=
+/// N_R`. `c` is written through bounds-checked indexing; the references carry
+/// pointer validity and exclusive access to it.
 #[inline]
 #[target_feature(enable = "avx2,fma")]
 unsafe fn run_one_panel<const M_EFF: usize>(
@@ -630,6 +657,11 @@ fn compute_k_max(p: u8) -> usize {
 
 /// Round-to-nearest f32 → i32 SIMD cast. Inputs in `[0, 2^24]` produce
 /// exact integer i32 lanes.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn round_ps_to_epi32(v: __m256) -> __m256i {
@@ -641,6 +673,11 @@ unsafe fn round_ps_to_epi32(v: __m256) -> __m256i {
 ///
 /// `_mm256_packus_epi32` and `_mm256_packus_epi16` pack per 128-bit half,
 /// so a `vpermq` between them gathers `r[0..8]` into the low 128 bits.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn pack_i32x8_to_u8(reduced: __m256i) -> [u8; 8] {
@@ -677,6 +714,12 @@ unsafe fn pack_i32x8_to_u8(reduced: __m256i) -> [u8; 8] {
 /// `⌈k / k_max(p)⌉`. For `p = 251` and `k ≤ 1024`, the chunk count is
 /// ≤ 4, so each lane is in `[0, 4 · 2²⁴] = [0, 2²⁶]`, well within the
 /// 32-bit-lane Barrett's safe range `[0, 2³²)`.
+///
+/// # Safety
+///
+/// The host supports AVX2. `1 <= m_eff <= M_R`, `n_eff <= N_R`, and `c` holds
+/// the cells `(i_blk + r) * n + j_blk + j_off` for `r < m_eff` and `j_off <
+/// n_eff`. The exclusive reference to `c` carries pointer validity.
 #[inline]
 #[target_feature(enable = "avx2")]
 #[allow(clippy::too_many_arguments)]
@@ -706,6 +749,10 @@ unsafe fn store_and_reduce_tile_route_a(
     let mu_vec = _mm256_set1_epi64x(mu32 as i64);
     let p_vec = _mm256_set1_epi32(p_i32);
 
+    /// # Safety
+    ///
+    /// `dst` is valid for writing `n_eff` bytes into a buffer the caller holds
+    /// exclusively, `n_eff <= N_R`, and the host supports AVX2.
     #[inline(always)]
     unsafe fn write_row(
         s0: __m256i,
@@ -788,6 +835,12 @@ unsafe fn store_and_reduce_tile_route_a(
 
 /// Store the 12 i32 SIMD accumulators of the `4 × 24` tile to scratch,
 /// reduce modulo `p`, and write the canonical bytes into `c`.
+///
+/// # Safety
+///
+/// The host supports AVX2. The sums are values and `c` is written through
+/// bounds-checked indexing, so no pointer or length condition applies; its
+/// exclusive reference carries pointer validity.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn store_and_reduce_tile(
@@ -898,6 +951,8 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} m={m} k={k} n={n}");
@@ -924,6 +979,8 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} k={k}");
@@ -947,6 +1004,8 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} n={n}");
@@ -970,6 +1029,8 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} m={m}");
@@ -985,6 +1046,7 @@ mod tests {
             return;
         }
         let mut out: Vec<u8> = vec![];
+        // SAFETY: AVX2 and FMA were detected above.
         unsafe { fp_small_f32_gemm(&[], &[], 0, 0, 0, 7, &mut out) };
         assert!(out.is_empty());
     }
@@ -1014,6 +1076,8 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "route-A p={p} m={m} k={k} n={n}");
@@ -1039,6 +1103,8 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "route-A p={p} k={k}");
@@ -1061,6 +1127,8 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "route-A p={p} n={n}");
@@ -1083,6 +1151,8 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "route-A p={p} m={m}");
@@ -1098,6 +1168,7 @@ mod tests {
             return;
         }
         let mut out: Vec<u8> = vec![];
+        // SAFETY: AVX2 and FMA were detected above.
         unsafe { fp_small_f32_gemm_route_a(&[], &[], 0, 0, 0, 7, &mut out) };
         assert!(out.is_empty());
     }
@@ -1127,6 +1198,8 @@ mod tests {
                 let bt_f = u8_to_f32(&bt);
                 let mut got_route_a = vec![0u8; m * n];
                 let mut got_existing = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe {
                     fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got_route_a);
                     fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got_existing);

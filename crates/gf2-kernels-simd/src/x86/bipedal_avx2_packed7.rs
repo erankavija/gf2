@@ -17,6 +17,9 @@ use core::arch::x86_64::*;
 ///
 /// AVX2 must be available at runtime (caller's precondition via inlining into
 /// a `#[target_feature(enable = "avx2")]` function).
+///
+/// `a` and `b` are values and `lut` a fixed-size array reference, so no
+/// pointer, length or aliasing condition applies.
 #[inline(always)]
 unsafe fn binary7_avx2_lane(a: __m256i, b: __m256i, lut: &[u8; 65536]) -> __m256i {
     let a0 = _mm256_extract_epi64(a, 0) as u64;
@@ -40,6 +43,9 @@ unsafe fn binary7_avx2_lane(a: __m256i, b: __m256i, lut: &[u8; 65536]) -> __m256
 ///
 /// AVX2 must be available at runtime (caller's precondition via inlining into
 /// a `#[target_feature(enable = "avx2")]` function).
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline(always)]
 unsafe fn neg7_avx2_lane(a: __m256i) -> __m256i {
     let a0 = _mm256_extract_epi64(a, 0) as u64;
@@ -53,15 +59,21 @@ unsafe fn neg7_avx2_lane(a: __m256i) -> __m256i {
     _mm256_set_epi64x(r3, r2, r1, r0)
 }
 
+/// # Safety
+///
+/// `offset + 4 <= src.len()` and the host supports AVX2. `src` is read through
+/// a reference that carries pointer validity.
 #[inline(always)]
 unsafe fn load256(src: &[u64], offset: usize) -> __m256i {
-    // SAFETY: caller ensures offset + 4 <= src.len() and AVX2 available.
     _mm256_loadu_si256(src.as_ptr().add(offset) as *const __m256i)
 }
 
+/// # Safety
+///
+/// `offset + 4 <= dst.len()` and the host supports AVX2. The exclusive
+/// reference to `dst` carries pointer validity.
 #[inline(always)]
 unsafe fn store256(dst: &mut [u64], offset: usize, v: __m256i) {
-    // SAFETY: caller ensures offset + 4 <= dst.len() and AVX2 available.
     _mm256_storeu_si256(dst.as_mut_ptr().add(offset) as *mut __m256i, v)
 }
 

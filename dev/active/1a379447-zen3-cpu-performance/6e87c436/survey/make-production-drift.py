@@ -8,7 +8,7 @@ itself:
 
   identical              the digests agree
   comment-or-blank-only  a Rust source whose bytes differ and whose code text
-                         agrees, by the rule of `code_text`
+                         agrees, by `rust_code_text.RULE`
   code-differs           every other differing file, with the commits that
                          changed the path after the newest commit holding the
                          measured bytes
@@ -33,16 +33,14 @@ import re
 import subprocess
 
 from locate import (
+    ANCHOR,
     CAMPAIGNS,
     HERE,
     PACKAGES,
     ROOT,
-    anchor_bytes,
-    anchor_digests,
-    anchor_identity,
-    changed_since_anchor,
     repo_artifacts,
     repository_files,
+    rust_code_text,
 )
 
 
@@ -54,49 +52,6 @@ def git(*arguments):
 
 SNAPSHOT = pathlib.Path("inputs") / "producing"
 DIGEST_MAPS = ("behavior_sha256", "build_inputs_sha256")
-
-RULE = (
-    "Rust sources only. Line comments (`//` to the end of the line, doc comments "
-    "included) and block comments (`/* */`, nested) outside string, raw-string, "
-    "byte-string and character literals are removed; trailing whitespace is "
-    "removed from every line; lines left empty are removed. Two files whose "
-    "remaining text is equal are comment-or-blank-only. Leading whitespace, "
-    "line breaks inside code and `#[doc]` attributes count as code."
-)
-
-LEXEME = re.compile(
-    r"""
-      (?P<line>//[^\n]*)
-    | (?P<block>/\*)
-    | b?r(?P<hashes>\#*)".*?"(?P=hashes)
-    | b?"(?:\\.|[^"\\])*"
-    | b?'(?:\\(?:u\{[0-9a-fA-F_]+\}|.)|[^\\'\n])'
-    """,
-    re.S | re.X,
-)
-BLOCK_EDGE = re.compile(r"/\*|\*/")
-
-
-def code_text(source):
-    """`source` under RULE."""
-    kept, position = [], 0
-    while match := LEXEME.search(source, position):
-        kept.append(source[position:match.start()])
-        position = match.end()
-        if match["block"]:
-            depth = 1
-            while depth:
-                edge = BLOCK_EDGE.search(source, position)
-                if edge is None:
-                    raise SystemExit("unterminated block comment")
-                depth += 1 if edge[0] == "/*" else -1
-                position = edge.end()
-        elif not match["line"]:
-            kept.append(match[0])
-    kept.append(source[position:])
-    lines = (line.rstrip() for line in "".join(kept).splitlines())
-    return [line for line in lines if line]
-
 
 def sha256(data):
     return hashlib.sha256(data).hexdigest()
@@ -129,7 +84,7 @@ def classify(path, measured, snapshot):
     held = (snapshot / path).read_bytes()
     if sha256(held) != measured:
         raise SystemExit(f"{snapshot / path} does not hold the digest its receipt records")
-    if path.endswith(".rs") and code_text(held.decode()) == code_text(data.decode()):
+    if path.endswith(".rs") and rust_code_text.code_text(held.decode()) == rust_code_text.code_text(data.decode()):
         return entry | {"class": "comment-or-blank-only"}
     return entry | {"class": "code-differs", "changed_by": changing_commits(path, measured)}
 
@@ -141,9 +96,9 @@ def task_class(path):
     current = ROOT / path
     comment_only = (
         path.endswith(".rs")
-        and path in anchor_digests()
+        and path in ANCHOR.digests()
         and current.is_file()
-        and code_text(anchor_bytes(path).decode()) == code_text(current.read_text())
+        and rust_code_text.code_text(ANCHOR.bytes(path).decode()) == rust_code_text.code_text(current.read_text())
     )
     return {"path": path, "class": "comment-or-blank-only" if comment_only else "code-differs"}
 
@@ -199,7 +154,7 @@ def main():
     for value in manifest.values():
         if isinstance(value, list):
             producing_inputs.update(value)
-    changed = changed_since_anchor()
+    changed = ANCHOR.changed()
     production = [
         task_class(path)
         for path in changed
@@ -211,9 +166,9 @@ def main():
         "schema": "dense-production-drift-v1",
         "issue": "6e87c436",
         "packages": directories,
-        "classifier_rule": RULE,
+        "classifier_rule": rust_code_text.RULE,
         "task_change": {
-            "anchor": anchor_identity(),
+            "anchor": ANCHOR.identity(),
             "changed_package_paths": changed,
             "changed_production_paths": production,
         },

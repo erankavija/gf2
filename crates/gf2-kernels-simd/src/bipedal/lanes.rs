@@ -40,6 +40,9 @@ pub trait BipedalLogicalLanes: Copy {
     /// # Safety
     ///
     /// Hardware feature must be available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     unsafe fn and(a: Self, b: Self) -> Self;
 
     /// Lane-wise bitwise XOR.
@@ -47,6 +50,9 @@ pub trait BipedalLogicalLanes: Copy {
     /// # Safety
     ///
     /// Hardware feature must be available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     unsafe fn xor(a: Self, b: Self) -> Self;
 
     /// Lane-wise bitwise OR.
@@ -54,6 +60,9 @@ pub trait BipedalLogicalLanes: Copy {
     /// # Safety
     ///
     /// Hardware feature must be available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     unsafe fn or(a: Self, b: Self) -> Self;
 
     /// Lane-wise `a AND NOT b`.
@@ -61,6 +70,9 @@ pub trait BipedalLogicalLanes: Copy {
     /// # Safety
     ///
     /// Hardware feature must be available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     unsafe fn andn(a: Self, b: Self) -> Self;
 }
 
@@ -73,6 +85,9 @@ pub struct Avx2Lane(pub __m256i);
 impl BipedalLogicalLanes for Avx2Lane {
     const U64_PER_LANE: usize = 4;
 
+    /// # Safety
+    ///
+    /// As [`BipedalLogicalLanes::loadu`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn loadu(src: &[u64], offset: usize) -> Self {
         // SAFETY: caller ensures `offset + 4 <= src.len()` and AVX2 availability.
@@ -83,6 +98,9 @@ impl BipedalLogicalLanes for Avx2Lane {
         }
     }
 
+    /// # Safety
+    ///
+    /// As [`BipedalLogicalLanes::storeu`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn storeu(dst: &mut [u64], offset: usize, v: Self) {
         // SAFETY: caller ensures `offset + 4 <= dst.len()` and AVX2 availability.
@@ -91,24 +109,36 @@ impl BipedalLogicalLanes for Avx2Lane {
         }
     }
 
+    /// # Safety
+    ///
+    /// As [`BipedalLogicalLanes::and`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn and(a: Self, b: Self) -> Self {
         // SAFETY: AVX2 availability is the caller's precondition.
         unsafe { Avx2Lane(_mm256_and_si256(a.0, b.0)) }
     }
 
+    /// # Safety
+    ///
+    /// As [`BipedalLogicalLanes::xor`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn xor(a: Self, b: Self) -> Self {
         // SAFETY: AVX2 availability is the caller's precondition.
         unsafe { Avx2Lane(_mm256_xor_si256(a.0, b.0)) }
     }
 
+    /// # Safety
+    ///
+    /// As [`BipedalLogicalLanes::or`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn or(a: Self, b: Self) -> Self {
         // SAFETY: AVX2 availability is the caller's precondition.
         unsafe { Avx2Lane(_mm256_or_si256(a.0, b.0)) }
     }
 
+    /// # Safety
+    ///
+    /// As [`BipedalLogicalLanes::andn`], with AVX2 as the feature.
     #[inline(always)]
     unsafe fn andn(a: Self, b: Self) -> Self {
         // SAFETY: AVX2 availability is the caller's precondition.

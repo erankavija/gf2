@@ -1,0 +1,73 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-kernels-simd --test m4rm_gray_build_contract --cargo-profile ci-test --profile ci
+   Compiling gf2-kernels-simd v0.1.0 (crates/gf2-kernels-simd)
+    Finished `ci-test` profile [optimized] target(s) in 0.28s
+────────────
+ Nextest run ID 3ce031eb-e461-4583-9ebb-1d86589a0331 with nextest profile: ci
+    Starting 5 tests across 1 binary
+        PASS [   0.004s] (1/5) gf2-kernels-simd::m4rm_gray_build_contract each_entry_is_the_xor_of_the_panel_rows_its_index_selects
+        FAIL [   0.004s] (2/5) gf2-kernels-simd::m4rm_gray_build_contract an_overflowing_panel_length_is_rejected
+  stdout ───
+
+    running 1 test
+    test an_overflowing_panel_length_is_rejected ... FAILED
+
+    failures:
+
+    failures:
+        an_overflowing_panel_length_is_rejected
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+  stderr ───
+
+    thread 'an_overflowing_panel_length_is_rejected' (2321593) panicked at crates/gf2-kernels-simd/tests/m4rm_gray_build_contract.rs:51:45:
+    m4rm_gray_build4 accepted the arguments
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        PASS [   0.004s] (3/5) gf2-kernels-simd::m4rm_gray_build_contract a_one_entry_table_is_the_zero_entry
+        FAIL [   0.004s] (4/5) gf2-kernels-simd::m4rm_gray_build_contract a_zero_table_size_is_rejected
+  stdout ───
+
+    running 1 test
+    test a_zero_table_size_is_rejected ... FAILED
+
+    failures:
+
+    failures:
+        a_zero_table_size_is_rejected
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+  stderr ───
+
+    thread 'a_zero_table_size_is_rejected' (2321594) panicked at crates/gf2-kernels-simd/tests/m4rm_gray_build_contract.rs:51:45:
+    m4rm_gray_build4 accepted the arguments
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        FAIL [   0.004s] (5/5) gf2-kernels-simd::m4rm_gray_build_contract a_table_size_that_is_not_a_power_of_two_is_rejected
+  stdout ───
+
+    running 1 test
+    test a_table_size_that_is_not_a_power_of_two_is_rejected ... FAILED
+
+    failures:
+
+    failures:
+        a_table_size_that_is_not_a_power_of_two_is_rejected
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+  stderr ───
+
+    thread 'a_table_size_that_is_not_a_power_of_two_is_rejected' (2321592) panicked at crates/gf2-kernels-simd/tests/m4rm_gray_build_contract.rs:51:45:
+    m4rm_gray_build4 accepted the arguments
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+────────────
+     Summary [   0.004s] 5 tests run: 2 passed, 3 failed, 0 skipped
+        FAIL [   0.004s] (2/5) gf2-kernels-simd::m4rm_gray_build_contract an_overflowing_panel_length_is_rejected
+        FAIL [   0.004s] (4/5) gf2-kernels-simd::m4rm_gray_build_contract a_zero_table_size_is_rejected
+        FAIL [   0.004s] (5/5) gf2-kernels-simd::m4rm_gray_build_contract a_table_size_that_is_not_a_power_of_two_is_rejected
+error: test run failed
+# exit: 100

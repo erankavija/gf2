@@ -31,6 +31,11 @@ pub(crate) const fn barrett_mu_u16(p: u8) -> u16 {
 
 /// Reduces 16 packed `u16` lanes (each `< 2¹⁶`) modulo `p`, returning
 /// 16 packed canonical `u16` lanes (each `< p`).
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn reduce_mod_p_u16(n: __m256i, p: u8) -> __m256i {
@@ -58,6 +63,11 @@ unsafe fn reduce_mod_p_u16(n: __m256i, p: u8) -> __m256i {
 /// in `[-(p-1), p-1]`; adding `p` lifts negatives into `[1, p-1]` while
 /// leaving non-negatives in `[p, 2p-1]`. A single conditional subtract
 /// canonicalises.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn canon_after_sub(diff: __m256i, p: u8) -> __m256i {
@@ -70,6 +80,11 @@ unsafe fn canon_after_sub(diff: __m256i, p: u8) -> __m256i {
 
 /// Loads 16 packed bytes from `ptr` and zero-extends them into a
 /// 256-bit vector of 16 `u16` lanes.
+///
+/// # Safety
+///
+/// `ptr` is valid for a 16-byte read at any alignment, nothing writes those
+/// bytes during the call, and the host supports AVX2.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn load_u8_to_u16(ptr: *const u8) -> __m256i {
@@ -79,6 +94,11 @@ unsafe fn load_u8_to_u16(ptr: *const u8) -> __m256i {
 
 /// Packs a 256-bit vector of 16 canonical `u16` lanes (each `< 256`)
 /// back to 16 contiguous bytes at `ptr`.
+///
+/// # Safety
+///
+/// `ptr` is valid for a 16-byte write at any alignment into a buffer the
+/// caller holds exclusively, and the host supports AVX2.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn store_u16_to_u8(v: __m256i, ptr: *mut u8) {
@@ -125,6 +145,9 @@ fn scalar_sub_mod(a: u8, b: u8, p: u8) -> u8 {
 ///
 /// Caller must ensure AVX2 is available at runtime, `p` is an odd
 /// prime in `[3, 251]`, and all input bytes are canonical (`< p`).
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 ///
 /// # Panics
 ///
@@ -328,6 +351,9 @@ pub unsafe fn fp_small_batch_dot(a: &[u8], b: &[u8], p: u8) -> u8 {
 /// Caller must ensure AVX2 is available, `p` is an odd prime in
 /// `[3, 251]`, and all input bytes are canonical (`< p`).
 ///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
+///
 /// # Panics
 ///
 /// Panics if `bt.len() != n * k` or `out.len() != n`.
@@ -453,6 +479,8 @@ pub unsafe fn fp_small_gemm_row_panel(
 ///   * Every byte of `buf` and `chain_j` is canonical (`< p`).
 ///   * `buf.len() >= chain_j.len()`.
 ///
+/// The references carry pointer validity and exclusive access to `buf`.
+///
 /// # Panics
 ///
 /// Panics if `buf.len() < chain_j.len()`.
@@ -557,6 +585,9 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
 /// - `a_vals.len() == a_cols.len()`,
 /// - every `a_cols[h] * b_stride + n` is within `b.len()`,
 /// - every `a_vals[h] < p` and each B-byte read is canonical (`< p`).
+///
+/// The asserted lengths bound the remaining accesses, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 ///
 /// # Panics
 ///
@@ -669,6 +700,9 @@ pub unsafe fn fp_small_spmm_row(
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available at runtime.
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub(crate) unsafe fn barrett_reduce_lane32(x: __m256i, mu_vec: __m256i, p_vec: __m256i) -> __m256i {
@@ -696,6 +730,10 @@ pub(crate) unsafe fn barrett_reduce_lane32(x: __m256i, mu_vec: __m256i, p_vec: _
     _mm256_min_epu32(r, _mm256_sub_epi32(r, p_vec))
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn horizontal_sum_u32(v: __m256i) -> u32 {
@@ -732,6 +770,8 @@ mod tests {
                 .map(|x| x as u8)
                 .collect();
             let mut out = vec![0u8; 32];
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2.
             unsafe { fp_small_batch_mul(&a, &b, p, &mut out) };
             for i in 0..32 {
                 let expected = ((a[i] as u32 * b[i] as u32) % p as u32) as u8;
@@ -749,6 +789,8 @@ mod tests {
                 .map(|x| x as u8)
                 .collect();
             let mut out = vec![0u8; 21];
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2.
             unsafe { fp_small_batch_mul(&a, &b, p, &mut out) };
             for i in 0..21 {
                 let expected = ((a[i] as u32 * b[i] as u32) % p as u32) as u8;
@@ -766,6 +808,8 @@ mod tests {
                 .map(|i| ((i as u32 * 7 + 3) % p as u32) as u8)
                 .collect();
             let mut out = vec![0u8; len];
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2.
             unsafe { fp_small_batch_mul(&a, &b, p, &mut out) };
             for i in 0..len {
                 let expected = ((a[i] as u32 * b[i] as u32) % p as u32) as u8;
@@ -783,6 +827,8 @@ mod tests {
                 .map(|x| x as u8)
                 .collect();
             let mut out = vec![0u8; 40];
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2.
             unsafe { fp_small_batch_add(&a, &b, p, &mut out) };
             for i in 0..40 {
                 let expected = (a[i] as u16 + b[i] as u16) % p as u16;
@@ -800,6 +846,8 @@ mod tests {
                 .map(|x| x as u8)
                 .collect();
             let mut out = vec![0u8; 40];
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2.
             unsafe { fp_small_batch_sub(&a, &b, p, &mut out) };
             for i in 0..40 {
                 let expected = (a[i] as i32 - b[i] as i32).rem_euclid(p as i32) as u16;
@@ -816,6 +864,8 @@ mod tests {
                 let b: Vec<u8> = (0..len as u32)
                     .map(|i| ((i * 23 + 5) % p as u32) as u8)
                     .collect();
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2.
                 let got = unsafe { fp_small_batch_dot(&a, &b, p) };
                 let mut expected: u64 = 0;
                 for i in 0..len {
@@ -838,6 +888,8 @@ mod tests {
                     .map(|i| ((i * 19 + 3) % p as u32) as u8)
                     .collect();
                 let mut out = vec![0u8; n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2.
                 unsafe { fp_small_gemm_row_panel(&a, &bt, k, n, p, &mut out) };
                 for j in 0..n {
                     let mut expected: u64 = 0;
@@ -875,6 +927,8 @@ mod tests {
                     .map(|i| ((i * 23 + 5) % p as u32) as u8)
                     .collect();
                 let mut out = vec![0u8; n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2.
                 unsafe { fp_small_spmm_row(&a_vals, &a_cols, &b, b_stride, n, p, &mut out) };
                 for (j, &val) in out.iter().enumerate() {
                     let mut expected: u64 = 0;
@@ -900,6 +954,8 @@ mod tests {
             let a_cols: Vec<usize> = vec![];
             let b: Vec<u8> = (0..n).map(|i| ((i * 7) as u8) % p).collect();
             let mut out = vec![5u8; n];
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2.
             unsafe { fp_small_spmm_row(&a_vals, &a_cols, &b, n, n, p, &mut out) };
             for (j, &val) in out.iter().enumerate().take(n) {
                 assert_eq!(val, 0, "p={p} j={j}");
@@ -987,6 +1043,8 @@ mod tests {
                         .collect();
                     let mut expected = buf.clone();
                     scalar_sub_scaled_oracle(&mut expected, &chain_j, alpha, p);
+                    // SAFETY: `run_for_primes` runs this closure only after
+                    // detecting AVX2.
                     unsafe { fp_small_sub_scaled(&mut buf, &chain_j, alpha, p, mu) };
                     assert_eq!(buf, expected, "p={p} alpha={alpha} len={len}");
                 }
@@ -1011,6 +1069,8 @@ mod tests {
             let alpha = 7u8 % p;
             let mut expected = buf.clone();
             scalar_sub_scaled_oracle(&mut expected[..chain_len], &chain_j, alpha, p);
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2.
             unsafe { fp_small_sub_scaled(&mut buf, &chain_j, alpha, p, mu) };
             assert_eq!(buf, expected, "p={p}");
             let original_tail: Vec<u8> = (chain_len..chain_len + buf_extra)
@@ -1042,6 +1102,8 @@ mod tests {
                 let alpha = (step() as u32 % p as u32) as u8;
                 let mut expected = buf.clone();
                 scalar_sub_scaled_oracle(&mut expected, &chain_j, alpha, p);
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2.
                 unsafe { fp_small_sub_scaled(&mut buf, &chain_j, alpha, p, mu) };
                 assert_eq!(buf, expected, "p={p} alpha={alpha} len={len}");
             }
@@ -1061,6 +1123,8 @@ mod tests {
                 .map(|i| ((i * 13 + 2) % p as u32) as u8)
                 .collect();
             let mut buf = original_buf.clone();
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2.
             unsafe { fp_small_sub_scaled(&mut buf, &chain_j, 0, p, mu) };
             assert_eq!(buf, original_buf, "p={p} alpha=0 must be no-op");
         });

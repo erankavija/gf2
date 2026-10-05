@@ -1,0 +1,16 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-kernels-simd -p gf2-core -p gf2-algebra -p gf2-coding --all-features --cargo-profile ci-test --profile ci --status-level fail --final-status-level fail
+   Compiling gf2-kernels-simd v0.1.0 (crates/gf2-kernels-simd)
+warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
+   Compiling gf2-kernels-hip v0.1.0 (crates/gf2-kernels-hip)
+   Compiling gf2-stats v0.1.0 (crates/gf2-stats)
+   Compiling gf2-coding v0.1.0 (crates/gf2-coding)
+   Compiling gf2-algebra v0.1.0 (crates/gf2-algebra)
+    Finished `ci-test` profile [optimized] target(s) in 3m 22s
+────────────
+ Nextest run ID 53c9b531-2a99-4ed8-84d1-fea2e027e8d0 with nextest profile: ci
+    Starting 5248 tests across 174 binaries (189 tests skipped)
+────────────
+     Summary [  12.213s] 5248 tests run: 5248 passed, 189 skipped
+# exit: 0

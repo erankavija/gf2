@@ -1,0 +1,18 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-kernels-simd --test m4rm_gray_build_contract --cargo-profile ci-test --profile ci
+   Compiling gf2-kernels-simd v0.1.0 (crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
+   Compiling gf2-algebra v0.1.0 (crates/gf2-algebra)
+    Finished `ci-test` profile [optimized] target(s) in 4.07s
+────────────
+ Nextest run ID bfeb16fd-a512-4507-8db4-caba46058ef3 with nextest profile: ci
+    Starting 6 tests across 1 binary
+        PASS [   0.004s] (1/6) gf2-kernels-simd::m4rm_gray_build_contract a_one_entry_table_is_the_zero_entry
+        PASS [   0.004s] (2/6) gf2-kernels-simd::m4rm_gray_build_contract an_overflowing_panel_length_is_rejected
+        PASS [   0.004s] (3/6) gf2-kernels-simd::m4rm_gray_build_contract an_overflowing_table_length_is_rejected
+        PASS [   0.004s] (4/6) gf2-kernels-simd::m4rm_gray_build_contract a_zero_table_size_is_rejected
+        PASS [   0.004s] (5/6) gf2-kernels-simd::m4rm_gray_build_contract each_entry_is_the_xor_of_the_panel_rows_its_index_selects
+        PASS [   0.004s] (6/6) gf2-kernels-simd::m4rm_gray_build_contract a_table_size_that_is_not_a_power_of_two_is_rejected
+────────────
+     Summary [   0.004s] 6 tests run: 6 passed, 0 skipped
+# exit: 0

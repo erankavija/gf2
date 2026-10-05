@@ -1,0 +1,132 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::shift_funnel::shift_left_funnel_bmi2
+; extra symbols : gf2_kernels_simd::x86::shift_funnel::shift_right_funnel_bmi2
+; output        : crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : b85adc0a1
+; regenerated   : 2026-10-05T03:26:19Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::shift_funnel::shift_left_funnel_bmi2
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
+
+gf2_kernels_simd::x86::shift_funnel::shift_left_funnel_bmi2:
+	push r14
+	push rbx
+	mov eax, 64
+	sub eax, ecx
+	lea r8, [rdx + 3]
+	cmp rsi, r8
+	jb .LBB58_3
+	mov r9d, ecx
+	and r9d, 63
+	mov r10d, eax
+	and r10d, 63
+	lea rbx, [8*rdx]
+	mov r11, rdi
+	sub r11, rbx
+	add r11, -8
+.LBB58_2:
+	shlx rbx, qword ptr [r11 + 8*rsi], r9
+	shrx r14, qword ptr [r11 + 8*rsi - 8], r10
+	or r14, rbx
+	mov qword ptr [rdi + 8*rsi - 8], r14
+	shlx rbx, qword ptr [r11 + 8*rsi - 8], r9
+	shrx r14, qword ptr [r11 + 8*rsi - 16], r10
+	or r14, rbx
+	mov qword ptr [rdi + 8*rsi - 16], r14
+	add rsi, -2
+	cmp rsi, r8
+	jae .LBB58_2
+.LBB58_3:
+	lea r8, [rdx + 1]
+	cmp rsi, r8
+	jbe .LBB58_6
+	and ecx, 63
+	and eax, 63
+	add rdi, -8
+	shl rdx, 3
+	mov r9, rdi
+	sub r9, rdx
+.LBB58_5:
+	shlx rdx, qword ptr [r9 + 8*rsi], rcx
+	shrx r10, qword ptr [r9 + 8*rsi - 8], rax
+	or r10, rdx
+	mov qword ptr [rdi + 8*rsi], r10
+	dec rsi
+	cmp rsi, r8
+	ja .LBB58_5
+.LBB58_6:
+	pop rbx
+	pop r14
+	ret
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::shift_funnel::shift_right_funnel_bmi2
+;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
+
+gf2_kernels_simd::x86::shift_funnel::shift_right_funnel_bmi2:
+	push r14
+	push rbx
+	mov eax, 64
+	sub eax, ecx
+	mov r8, rdx
+	not r8
+	add r8, rsi
+	cmp r8, 2
+	jae .LBB59_6
+	xor esi, esi
+	jmp .LBB59_2
+.LBB59_6:
+	mov r9d, ecx
+	and r9d, 63
+	mov r10d, eax
+	and r10d, 63
+	lea r11, [rdi + 8*rdx]
+	add r11, 16
+	xor ebx, ebx
+.LBB59_7:
+	shrx rsi, qword ptr [r11 + 8*rbx - 16], r9
+	shlx r14, qword ptr [r11 + 8*rbx - 8], r10
+	or r14, rsi
+	mov qword ptr [rdi + 8*rbx], r14
+	shrx rsi, qword ptr [r11 + 8*rbx - 8], r9
+	shlx r14, qword ptr [r11 + 8*rbx], r10
+	or r14, rsi
+	mov qword ptr [rdi + 8*rbx + 8], r14
+	lea rsi, [rbx + 2]
+	add rbx, 4
+	cmp rbx, r8
+	mov rbx, rsi
+	jbe .LBB59_7
+.LBB59_2:
+	cmp rsi, r8
+	jae .LBB59_5
+	and ecx, 63
+	and eax, 63
+	lea rdx, [rdi + 8*rdx]
+	add rdx, 8
+.LBB59_4:
+	shrx r9, qword ptr [rdx + 8*rsi - 8], rcx
+	shlx r10, qword ptr [rdx + 8*rsi], rax
+	or r10, r9
+	mov qword ptr [rdi + 8*rsi], r10
+	inc rsi
+	cmp rsi, r8
+	jb .LBB59_4
+.LBB59_5:
+	pop rbx
+	pop r14
+	ret

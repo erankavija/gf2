@@ -56,7 +56,7 @@ fn detect_x86() -> Option<FpMediumF64Fns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_gemm_safe(a: &[f64], bt: &[f64], m: usize, k: usize, n: usize, p: u16, c: &mut [u16]) {
-    // Safety: `detect_x86` only returns this pointer when AVX2 + FMA3
+    // SAFETY: `detect_x86` only returns this pointer when AVX2 + FMA3
     // are both available at runtime.
     unsafe { crate::x86::fp_medium_f64::fp_medium_f64_gemm(a, bt, m, k, n, p, c) }
 }

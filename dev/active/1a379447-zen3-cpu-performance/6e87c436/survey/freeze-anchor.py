@@ -10,48 +10,17 @@ its snapshots only; the commit id is kept as an informational field.
 Usage: freeze-anchor.py COMMIT
 """
 
-import hashlib
-import json
-import subprocess
 import sys
 
-from locate import ANCHOR_BASELINE, ANCHOR_SNAPSHOT, PACKAGES, ROOT, repository_files
-
-
-def git(*arguments):
-    return subprocess.run(
-        ["git", "-C", str(ROOT), *arguments], capture_output=True, check=True
-    ).stdout
+from locate import ANCHOR, PACKAGES, ROOT, repository_files
 
 
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(__doc__)
-    commit = git("rev-parse", sys.argv[1]).decode().strip()
     directories = [repository_files.package_directory(ROOT, name) for name in PACKAGES]
-    digests = {}
-    for path in git("ls-tree", "-r", "--name-only", commit, "--", *directories).decode().split():
-        held = git("show", f"{commit}:{path}")
-        digests[path] = hashlib.sha256(held).hexdigest()
-        current = ROOT / path
-        if not current.is_file() or current.read_bytes() != held:
-            snapshot = ANCHOR_SNAPSHOT / path
-            snapshot.parent.mkdir(parents=True, exist_ok=True)
-            snapshot.write_bytes(held)
-    ANCHOR_BASELINE.write_text(
-        json.dumps(
-            {
-                "schema": "dense-outcome-anchor-v1",
-                "issue": "6e87c436",
-                "commit_informational": commit,
-                "packages": directories,
-                "sha256": digests,
-            },
-            indent=2,
-        )
-        + "\n"
-    )
-    print(f"{ANCHOR_BASELINE.relative_to(ROOT)}: {len(digests)} anchor files")
+    count = ANCHOR.freeze(sys.argv[1], directories, "dense-outcome-anchor-v1", "6e87c436")
+    print(f"{ANCHOR.baseline.relative_to(ROOT)}: {count} anchor files")
 
 
 if __name__ == "__main__":

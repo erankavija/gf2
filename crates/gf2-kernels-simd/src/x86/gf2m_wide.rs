@@ -22,6 +22,9 @@ use core::arch::x86_64::*;
 /// # Safety
 ///
 /// Requires the `pclmulqdq` and `sse4.1` CPU features.
+///
+/// The array references fix every length and carry pointer validity and
+/// exclusive access to `out`.
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_wide4_xmm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
     for slot in out.iter_mut() {
@@ -56,6 +59,9 @@ pub unsafe fn clmul_wide4_xmm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
 /// # Safety
 ///
 /// Requires the `avx2` and `vpclmulqdq` CPU features.
+///
+/// The array references fix every length and carry pointer validity and
+/// exclusive access to `out`.
 #[target_feature(enable = "avx2", enable = "vpclmulqdq")]
 pub unsafe fn clmul_wide4_ymm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
     for slot in out.iter_mut() {
@@ -101,6 +107,9 @@ pub unsafe fn clmul_wide4_ymm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
 /// # Safety
 ///
 /// Requires the `pclmulqdq` and `sse4.1` CPU features.
+///
+/// The array references fix every length and carry pointer validity and
+/// exclusive access to `out`.
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_wide9_xmm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
     for slot in out.iter_mut() {
@@ -131,6 +140,9 @@ pub unsafe fn clmul_wide9_xmm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
 /// # Safety
 ///
 /// Requires the `avx2` and `vpclmulqdq` CPU features.
+///
+/// The array references fix every length and carry pointer validity and
+/// exclusive access to `out`.
 #[target_feature(enable = "avx2", enable = "vpclmulqdq")]
 pub unsafe fn clmul_wide9_ymm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
     for slot in out.iter_mut() {
@@ -223,6 +235,11 @@ pub unsafe fn clmul_wide9_ymm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
 ///
 /// `diag[k]` holds the XOR of all 128-bit word products with `i + j == k`.
 /// Therefore output limb `t` is `hi(diag[t - 1]) XOR lo(diag[t])`.
+///
+/// # Safety
+///
+/// The host supports SSE4.1. `diag` is a value and `out` a fixed-size
+/// exclusive reference, so no pointer, length or aliasing condition applies.
 #[target_feature(enable = "sse4.1")]
 unsafe fn fold_diagonals_9x9(diag: [__m128i; 17], out: &mut [u64; 18]) {
     let lo0 = _mm_extract_epi64::<0>(diag[0]) as u64;
@@ -307,6 +324,7 @@ mod tests {
         }
         for (a, b) in sample_vectors4() {
             let mut got = [0u64; 8];
+            // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
             unsafe { clmul_wide4_xmm(&a, &b, &mut got) };
             assert_eq!(
                 got.as_slice(),
@@ -325,6 +343,7 @@ mod tests {
         }
         for (a, b) in sample_vectors4() {
             let mut got = [0u64; 8];
+            // SAFETY: AVX2 and VPCLMULQDQ were detected above.
             unsafe { clmul_wide4_ymm(&a, &b, &mut got) };
             assert_eq!(
                 got.as_slice(),
@@ -343,6 +362,7 @@ mod tests {
         }
         for (a, b) in sample_vectors9() {
             let mut got = [0u64; 18];
+            // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
             unsafe { clmul_wide9_xmm(&a, &b, &mut got) };
             assert_eq!(
                 &got[..],
@@ -361,6 +381,7 @@ mod tests {
         }
         for (a, b) in sample_vectors9() {
             let mut got = [0u64; 18];
+            // SAFETY: AVX2 and VPCLMULQDQ were detected above.
             unsafe { clmul_wide9_ymm(&a, &b, &mut got) };
             assert_eq!(
                 &got[..],

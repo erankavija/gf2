@@ -245,7 +245,7 @@ mod avx2 {
             num_symbols * axis_len,
             "out.len() must equal num_symbols * pam_levels.len()"
         );
-        // Safety: detect_f32 only returns this function pointer when
+        // SAFETY: detect_f32 only returns this function pointer when
         // `is_x86_feature_detected!("avx2")` succeeded, so AVX2 is
         // guaranteed available. The asserts above guarantee every slice
         // access inside the inner function stays within bounds.
@@ -277,7 +277,7 @@ mod avx2 {
             num_symbols * axis_len,
             "out.len() must equal num_symbols * pam_levels.len()"
         );
-        // Safety: see `pam_sq_distances_f32_avx2_safe`. AVX2 availability
+        // SAFETY: see `pam_sq_distances_f32_avx2_safe`. AVX2 availability
         // is guaranteed by the detection path; slice-length invariants
         // are guaranteed by the asserts above.
         unsafe { pam_sq_distances_f64_avx2(z, g, inv_n0_eq, pam_levels, out) }
@@ -290,6 +290,10 @@ mod avx2 {
     /// Requires the AVX2 CPU feature. The caller (via
     /// [`pam_sq_distances_f32_avx2_safe`]) must only reach this function
     /// after a positive `is_x86_feature_detected!("avx2")` probe.
+    ///
+    /// `out` holds at least `z.len() * pam_levels.len()` lanes; the other
+    /// slices are bounds-checked. The references carry pointer validity and
+    /// exclusive access to `out`.
     #[target_feature(enable = "avx2")]
     unsafe fn pam_sq_distances_f32_avx2(
         z: &[f32],
@@ -349,6 +353,10 @@ mod avx2 {
     /// # Safety
     ///
     /// Requires the AVX2 CPU feature.
+    ///
+    /// `out` holds at least `z.len() * pam_levels.len()` lanes; the other
+    /// slices are bounds-checked. The references carry pointer validity and
+    /// exclusive access to `out`.
     #[target_feature(enable = "avx2")]
     unsafe fn pam_sq_distances_f64_avx2(
         z: &[f64],

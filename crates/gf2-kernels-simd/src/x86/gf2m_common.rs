@@ -27,6 +27,11 @@ use core::arch::x86_64::*;
 ///
 /// Output: the canonical `u64` representation of `a * b mod modulus`,
 /// masked to `degree` bits.
+///
+/// # Safety
+///
+/// The host supports PCLMULQDQ and SSE4.1. Every argument is a value, so no
+/// pointer, length or aliasing condition applies.
 #[inline(always)]
 pub(crate) unsafe fn clmul_barrett_scalar(
     a: u64,
@@ -94,6 +99,11 @@ pub(crate) unsafe fn clmul_barrett_scalar(
 /// Returns the partially-reduced `(r_lo, r_hi)` YMM pair; callers must
 /// run the [`correct`] step on each `u64` lane to land the result in
 /// `[0, P)`.
+///
+/// # Safety
+///
+/// The host supports AVX2 and VPCLMULQDQ. Every argument is a value, so no
+/// pointer, length or aliasing condition applies.
 #[inline(always)]
 pub(crate) unsafe fn ymm_barrett_reduce<const SHIFT_BYTES: i32>(
     prod_lo: __m256i,
