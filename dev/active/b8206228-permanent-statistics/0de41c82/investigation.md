@@ -286,7 +286,7 @@ not only F_3:
 
 The proof targets are pinned to a fixed inherent surface for the
 Charon/Aeneas pipeline (`packed7.rs:485-497`, naming
-`dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d6_lean_packed7_sketch.md` §4 and the `packed5.rs:326-401`
+`dev/plans/30e98ef1/d6_lean_packed7_sketch.md` §4 and the `packed5.rs:326-401`
 pattern it adapts). **Consequence:** a new *public* packed representation
 attracts a proof obligation by convention, and `AGENTS.md:114-116` requires an
 approved sketch (lemma statements, strategy, exact production path) *before*
