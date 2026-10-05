@@ -113,9 +113,6 @@ CLAIMS = [
     ("popcount-csa-comparator", SIMD, "src/lib.rs",
      "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,", 1,
      "The carry-save kernels are direct bundle fields that no resolver selects."),
-    ("xor-unroll-cfg-declared", SIMD, "Cargo.toml",
-     "'cfg(gf2_xor_unroll2)', 'cfg(gf2_xor_unroll4)'] }", 1,
-     "The XOR unroll bodies compile only under two private compiler configurations."),
     # BitMatrix::matvec.
     ("matvec-threshold-conservative", CORE, "src/matrix.rs",
      "pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;", 1,

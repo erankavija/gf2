@@ -5,46 +5,46 @@
     {
       "id": "core-default-features",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 53,
       "occurrences": 1,
       "verbatim": "default = [\"rand\", \"io\"]",
       "why": "A standalone `gf2-core` build enables neither `simd` nor `tuning-profile`.",
-      "sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3"
+      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
     },
     {
       "id": "core-simd-optional",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 57,
       "occurrences": 1,
       "verbatim": "simd = []",
       "why": "Kernel dispatch is the opt-in `simd` cargo feature.",
-      "sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3"
+      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
     },
     {
       "id": "core-tuning-profile-feature",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 67,
       "occurrences": 1,
       "verbatim": "tuning-profile = [\"dep:serde\", \"dep:serde_json\", \"dep:sha2\"]",
       "why": "`tuning-profile` adds profile parsing only; it selects no profile.",
-      "sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3"
+      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
     },
     {
       "id": "core-baked-cfg-declared",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 13,
       "occurrences": 1,
       "verbatim": "unexpected_cfgs = { level = \"warn\", check-cfg = ['cfg(kani)', 'cfg(verify_lean)', 'cfg(gf2_tuning_baked)'] }",
       "why": "`gf2_tuning_baked` is a declared compiler configuration and no cargo feature, so `--all-features` does not set it.",
-      "sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3"
+      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
     },
     {
       "id": "coding-default-simd",
@@ -214,46 +214,46 @@
     {
       "id": "bit-threshold-conservative",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
       "path": "crates/gf2-core/src/kernels/backend.rs",
       "line": 75,
       "occurrences": 1,
       "verbatim": "pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;",
       "why": "The conservative definition of `bit_backend.simd_min_words`.",
-      "sha256": "0b3e6aa008cd8967d4f11330e6adb2307c6b233f8f53a45e322d2026229cf1ee"
+      "sha256": "9d411a915fc3c2e4c37b7362efea331326498d5b05c9d817bc78553aa1f0a9b4"
     },
     {
       "id": "bit-threshold-baked-alias",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
       "path": "crates/gf2-core/src/kernels/backend.rs",
       "line": 78,
       "occurrences": 1,
       "verbatim": "const SIMD_MIN_WORDS: usize = crate::tuning::baked::SIMD_MIN_WORDS;",
       "why": "A `gf2_tuning_baked` build substitutes the baked bit-backend threshold.",
-      "sha256": "0b3e6aa008cd8967d4f11330e6adb2307c6b233f8f53a45e322d2026229cf1ee"
+      "sha256": "9d411a915fc3c2e4c37b7362efea331326498d5b05c9d817bc78553aa1f0a9b4"
     },
     {
       "id": "bit-threshold-default-alias",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
       "path": "crates/gf2-core/src/kernels/backend.rs",
       "line": 81,
       "occurrences": 1,
       "verbatim": "const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;",
       "why": "An ordinary build compares with the conservative constant.",
-      "sha256": "0b3e6aa008cd8967d4f11330e6adb2307c6b233f8f53a45e322d2026229cf1ee"
+      "sha256": "9d411a915fc3c2e4c37b7362efea331326498d5b05c9d817bc78553aa1f0a9b4"
     },
     {
       "id": "bit-threshold-read",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
       "path": "crates/gf2-core/src/kernels/backend.rs",
       "line": 95,
       "occurrences": 1,
       "verbatim": "    if _size >= SIMD_MIN_WORDS {",
       "why": "One compile-time comparison, compiled under `simd`, selects the SIMD backend.",
-      "sha256": "0b3e6aa008cd8967d4f11330e6adb2307c6b233f8f53a45e322d2026229cf1ee"
+      "sha256": "9d411a915fc3c2e4c37b7362efea331326498d5b05c9d817bc78553aa1f0a9b4"
     },
     {
       "id": "ops-xor-resolver",
@@ -302,24 +302,13 @@
     {
       "id": "popcount-csa-comparator",
       "project": "gf2",
-      "commit": "51c447e88e17d6c5d6206d319becd3b459a404fe",
+      "commit": "6d03804a2a6e329f00879b676537125479916660",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
-      "line": 131,
+      "line": 135,
       "occurrences": 1,
       "verbatim": "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,",
       "why": "The carry-save kernels are direct bundle fields that no resolver selects.",
-      "sha256": "8d86f7d27e222f05b52ea96e8889c2d7b3ce462959e131d340ac8ed2b5006746"
-    },
-    {
-      "id": "xor-unroll-cfg-declared",
-      "project": "gf2",
-      "commit": "876c5f6919268ce692a9a77549d8257253fd842d",
-      "path": "crates/gf2-kernels-simd/Cargo.toml",
-      "line": 13,
-      "occurrences": 1,
-      "verbatim": "unexpected_cfgs = { level = \"warn\", check-cfg = ['cfg(kani)', 'cfg(gf2_tuning_baked)', 'cfg(gf2_xor_unroll2)', 'cfg(gf2_xor_unroll4)'] }",
-      "why": "The XOR unroll bodies compile only under two private compiler configurations.",
-      "sha256": "b0dc9ef6cd502300cea4ae05ace857a337bca5c07fbec054717a24886f1814e8"
+      "sha256": "0282f83b6e5ca8232497f4f62404fe107e7575a0b664a4523eb00a7b3c1326ec"
     },
     {
       "id": "matvec-threshold-conservative",
@@ -500,24 +489,24 @@
     {
       "id": "clmul-batch-default-lane",
       "project": "gf2",
-      "commit": "8323db600d58127baa37d47b4240d898392bd6d0",
+      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
       "path": "crates/gf2-kernels-simd/src/gf2m.rs",
       "line": 60,
       "occurrences": 1,
       "verbatim": "    detect_with_clmul_batch_preference(ClmulBatchLane::Sequential)",
       "why": "The default raw-batch lane is sequential PCLMULQDQ; the YMM lane needs an explicit preference.",
-      "sha256": "2be2a9e88cc3e05a89a84556b884b39579373b66b4f71043647cf549e62b4001"
+      "sha256": "04c9bb29cfcf3b172ecbd622e977a4953e0ffe94af317f9ad4640f0037241c32"
     },
     {
       "id": "clmul-batch-feature-gate",
       "project": "gf2",
-      "commit": "8323db600d58127baa37d47b4240d898392bd6d0",
+      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
       "path": "crates/gf2-kernels-simd/src/gf2m.rs",
       "line": 86,
       "occurrences": 2,
       "verbatim": "    if is_x86_feature_detected!(\"pclmulqdq\") && is_x86_feature_detected!(\"sse4.1\") {",
       "why": "The GF(2^m) bundle exists only with PCLMULQDQ and SSE4.1.",
-      "sha256": "2be2a9e88cc3e05a89a84556b884b39579373b66b4f71043647cf549e62b4001"
+      "sha256": "04c9bb29cfcf3b172ecbd622e977a4953e0ffe94af317f9ad4640f0037241c32"
     },
     {
       "id": "dot-batch-kernel",
