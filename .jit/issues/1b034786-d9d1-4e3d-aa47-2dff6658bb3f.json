@@ -156,8 +156,16 @@
       "doc_type": "evidence",
       "label": "Per-symbol instruction text of the gf2-core M4RM listing across the argument checks",
       "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/listing-comparison.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/1b034786-r1.md"
     }
   ],
+  "done_at": "2026-10-05T06:36:34.180552729Z",
   "first_ready_at": "2026-10-05T03:28:58.602274285Z",
   "gates_required": [
     "cargo-ci",
@@ -167,17 +175,17 @@
   "gates_status": {
     "asm-artefact-present": {
       "status": "passed",
-      "updated_at": "2026-10-05T04:57:46.333477225Z",
+      "updated_at": "2026-10-05T06:19:42.081252742Z",
       "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T04:58:58.126689585Z",
+      "updated_at": "2026-10-05T06:20:53.394976321Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T05:03:06.665475891Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T06:27:25.578153271Z",
       "updated_by": "auto:executor"
     }
   },
@@ -188,7 +196,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Reject invalid table sizes in the safe M4RM Gray-table wrappers",
-  "updated_at": "2026-10-05T06:10:26.682067144Z"
+  "updated_at": "2026-10-05T06:36:34.180552729Z"
 }

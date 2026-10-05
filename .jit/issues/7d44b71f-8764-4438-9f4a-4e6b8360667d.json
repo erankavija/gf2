@@ -200,8 +200,34 @@
       "doc_type": "evidence",
       "label": "Tree holding every contract, by per-path content digest",
       "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/contracts-complete-baseline.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9d6f2c76b2a326d9d607ad51b4c0b5854f5e3aa915fcf32347817ebc1ca71a01",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../7d44b71f/verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c7ac8791458d1043344facaca7ca7f3613d53f1c4d5ab4a1095aef0d5fae6b03",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../7d44b71f/survey/unsafe-inventory.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/unsafe-inventory.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/7d44b71f-r1.md"
     }
   ],
+  "done_at": "2026-10-05T06:36:34.270228083Z",
   "first_ready_at": "2026-10-05T01:07:43.262477011Z",
   "gates_required": [
     "cargo-ci",
@@ -211,17 +237,17 @@
   "gates_status": {
     "asm-artefact-present": {
       "status": "passed",
-      "updated_at": "2026-10-05T05:03:06.925131780Z",
+      "updated_at": "2026-10-05T06:27:25.937067204Z",
       "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T05:04:18.244685246Z",
+      "updated_at": "2026-10-05T06:28:37.338281501Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-10-05T05:09:34.182898079Z",
+      "updated_at": "2026-10-05T06:36:10.973970703Z",
       "updated_by": "auto:executor"
     }
   },
@@ -232,7 +258,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "State the safety contract at every AVX2 kernel unsafe boundary",
-  "updated_at": "2026-10-05T06:10:26.280262071Z"
+  "updated_at": "2026-10-05T06:36:34.270228083Z"
 }
