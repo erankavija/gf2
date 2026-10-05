@@ -11,8 +11,16 @@
       "doc_type": "evidence",
       "label": "Dense verdict end-state digests",
       "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/dense-verdict-end-state.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/66698c3c-r1.md"
     }
   ],
+  "done_at": "2026-10-05T19:41:16.348787522Z",
   "first_ready_at": "2026-10-05T07:16:39.465043307Z",
   "gates_required": [
     "cargo-ci",
@@ -21,12 +29,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T18:58:21.516748449Z",
+      "updated_at": "2026-10-05T19:32:51.231765460Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T19:12:00.874542881Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T19:40:41.522965565Z",
       "updated_by": "auto:executor"
     }
   },
@@ -37,7 +45,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Keep the dense-parity verdict's drift records verifiable on later trees",
-  "updated_at": "2026-10-05T19:12:00.874542881Z"
+  "updated_at": "2026-10-05T19:41:16.429954290Z"
 }

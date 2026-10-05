@@ -12,8 +12,16 @@
       "format": "markdown",
       "label": "Family producing closures in the CI contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/3a8ec493/family-closure-ci.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/3a8ec493-r1.md"
     }
   ],
+  "done_at": "2026-10-05T19:41:16.179357517Z",
   "first_ready_at": "2026-10-05T18:38:42.922102507Z",
   "gates_required": [
     "cargo-ci",
@@ -22,12 +30,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T18:55:14.029664023Z",
+      "updated_at": "2026-10-05T19:31:32.731445989Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T19:03:18.066397264Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T19:36:15.071863456Z",
       "updated_by": "auto:executor"
     }
   },
@@ -38,7 +46,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Check the mid-range family producing closures in the CI contract",
-  "updated_at": "2026-10-05T19:03:18.066397264Z"
+  "updated_at": "2026-10-05T19:41:16.258514754Z"
 }
