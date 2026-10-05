@@ -1,0 +1,7 @@
+addendum_pointer	replacement	shared_check	ldpc-plan-check	runner-without-schema-validation
+/family/description	""	reject	reject	accept
+/cells/0/decoder/code/identity	""	reject	reject	accept
+/cells/0/decoder/input/llr_source	""	reject	reject	accept
+/cells/0/decoder/input/llr_sha256	""	reject	reject	accept
+/cells/0/decoder/input/llr_sha256	" "	reject	reject	accept
+/cells/0/decoder/input/llr_sha256	"x"	reject	reject	accept
