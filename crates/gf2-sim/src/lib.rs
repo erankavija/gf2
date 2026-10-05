@@ -3,9 +3,9 @@
 //! parallel, seeded simulation. The typestate [`presets`]
 //! ([`Pipeline::dvb_t2`], [`Pipeline::nr_5g`]) build the standard chains with
 //! the builder order checked at compile time; [`graph::Chain`] wires an
-//! arbitrary DAG of [`Stage`]s. [`Pipeline::run`] drives a DVB-T2 BICM SNR
-//! sweep and [`TopologyExecutor::run`] drives one batch through any built
-//! pipeline.
+//! arbitrary DAG of [`Stage`]s. [`Pipeline::run`] drives a DVB-T2
+//! (`@/citation/Etsi2015`) BICM SNR sweep and [`TopologyExecutor::run`] drives
+//! one batch through any built pipeline.
 //!
 //! # Examples
 //!
