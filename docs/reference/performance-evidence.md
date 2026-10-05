@@ -18,9 +18,8 @@ Claims whose method line cites this section come from confirmatory cells of
 the
 [Zen 3 benchmark protocol](https://github.com/erankavija/gf2/blob/6776fe30ea9af85ad509ddca95926f051421676d/dev/active/f547c394/protocol.md).
 Each such receipt carries a snapshot of the protocol version that evaluates it.
-Beside the linked `acceptance-summary.md`, its `receipt.json` and
-`inputs/family-addendum.json` record the host, build, workload, baseline and
-date.
+Its `receipt.json`, linked beside each summary, records the host, build,
+workload, baseline and date.
 
 - **Comparison basis.** A cell times two arms on one frozen workload with the
   same inputs and output contract, checked for equivalence before timing.
@@ -77,9 +76,9 @@ date.
 - **Build:** rustc 1.95.0; RUSTFLAGS `-C target-cpu=native` on both arms.
 - **Date:** 2026-09-14.
 - **Evidence:** at commit `cdbefa4be6bf`:
-  [whole decode](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/acceptance-summary.md),
-  [fixed iterations](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/acceptance-summary.md),
-  [check-node update](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/acceptance-summary.md).
+  [whole decode](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/receipt.json)),
+  [fixed iterations](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/receipt.json)),
+  [check-node update](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/receipt.json)).
 
 <a id="nr-ldpc-encode"></a>
 
@@ -102,7 +101,7 @@ date.
 - **Hardware:** AMD Ryzen 9 5900X, SMT on, Linux 7.2.2.
 - **Build:** rustc 1.95.0; gf2 `-C target-cpu=native`.
 - **Date:** 2026-09-13.
-- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/8896b2a339846f28a5d29bed8da346f45c730a2b/dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md)
+- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/8896b2a339846f28a5d29bed8da346f45c730a2b/dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/8896b2a339846f28a5d29bed8da346f45c730a2b/dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json))
   at commit `8896b2a33984`.
 
 <a id="nr-llr-derate"></a>
@@ -123,7 +122,7 @@ date.
 - **Build:** rustc 1.97.0; gf2 `-C target-cpu=native`, control arm
   `-C target-cpu=x86-64`.
 - **Date:** 2026-09-10.
-- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/f88bd137298d93f57f8867acc1f9207186ffbaca/dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.md)
+- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/f88bd137298d93f57f8867acc1f9207186ffbaca/dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/f88bd137298d93f57f8867acc1f9207186ffbaca/dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/receipt.json))
   at commit `f88bd137298d`.
 
 <a id="gf2x-long-product"></a>
@@ -146,7 +145,7 @@ date.
 - **Hardware:** AMD Ryzen 9 5900X, SMT on, Linux 7.2.2.
 - **Build:** rustc 1.95.0; gf2 build kind `native`, no RUSTFLAGS recorded.
 - **Date:** 2026-09-13.
-- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/4fd96ef94d8176712b80b16662f1f067acd5c4a0/dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/acceptance-summary.md)
+- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/4fd96ef94d8176712b80b16662f1f067acd5c4a0/dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/4fd96ef94d8176712b80b16662f1f067acd5c4a0/dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/receipt.json))
   at commit `4fd96ef94d81`.
 
 <a id="f3-permanent-batched-avx2"></a>
@@ -171,7 +170,8 @@ date.
 - **Baseline:** the scalar one-word kernel.
 - **Hardware:** AMD Ryzen 9 5900X, Linux 7.1.6, governor `powersave`.
 - **Build:** rustc 1.95.0, `cargo bench` with features `simd` and
-  `test-support`, no RUSTFLAGS; measured source revision `88474a74ceee`.
+  `test-support`; the receipt's command sets no RUSTFLAGS; measured source
+  revision `88474a74ceee`.
 - **Date:** 2026-08-10.
 - **Evidence:** [receipt](https://github.com/erankavija/gf2/blob/a8937d14ce000cc4fbcde5b2afc0d9e6da624eef/dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md)
   at commit `a8937d14ce00`.

@@ -45,8 +45,8 @@ release mode.
   refuses to run and `scripts/cargo-budget.sh` applies no budget or lock.
 - `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
   `CARGO_CI_STEPS=<pcre>` runs matching steps only, no CI verdict; `^$` lists them.
-- A `dev/scripts/ccx1-bench-flock.sh --full-host` run sets `CARGO_CI_NO_LOCK=1`
-  for its own cargo work; the script's header states the lock protocol.
+- A command run under `dev/scripts/ccx1-bench-flock.sh` must set
+  `CARGO_CI_NO_LOCK=1` for its own cargo work; the script's header states why.
 - `RAYON_NUM_THREADS` in `.cargo/config.toml` pairs with `threads-required` in
   `.config/nextest.toml`; change one and change the other. A binary run directly
   from `target/` inherits neither.
