@@ -62,6 +62,7 @@ Repointed, path text only, except the one restated sentence:
 | `dev/active/ae03bcd0-general-bch/investigation.md` | the audit |
 | `investigation.md` (prior-art row and CONTRIBUTING consumers paragraph) | the audit |
 | `27f0f3b1-inventory-notes.md` | the stub; the sentence states that epic 6dc81018 is archived |
+| `dev/active/6dc81018-field-capability-dispatch/breakdown.json`, `breakdown.json` (JSON strings; both files parse) | the stub directory |
 
 Hits of a pre-move path that keep their bytes:
 
@@ -69,13 +70,20 @@ Hits of a pre-move path that keep their bytes:
 | --- | --- |
 | `dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/{investigation.md,classification.md,breakdown.json}` | Files of a marker-backed archive; code-span citations, no inline link |
 | `dev/archive/ae82bd73-gf2-algebra-permanent/active/{0606186a/0606186a-impl-handoff.md,ae82bd73-handoff-13.md}`, `dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md` | Same |
-| `dev/active/6dc81018-field-capability-dispatch/breakdown.json`, `breakdown.json` | Copies of tracker issue descriptions, which keep their text |
-| `616e1d7c-preexec.json`, `67048b47-linked-pairs.txt`, `eb2a833d-link-scan.txt` | Committed tool outputs |
-| `M`, `path` and `inbound` fields | The fields name the source by schema |
+| `616e1d7c-preexec.json` | Committed tool output: the archive preview taken before execution commit `50de04a6b` |
+| `67048b47-linked-pairs.txt` | Committed tool output of `67048b47-doc-links.py`, committed at `d5b3d8b4b` |
+| `eb2a833d-link-scan.txt` | Committed tool output of `eb2a833d-link-scan.py`, committed at `1e92d5273` |
+| `M`, `path`, `bundle` and `inbound` fields | The fields name the source by schema |
+| This record | It names the moved paths |
 | `.jit/issues/` descriptions and the document references of 7f818151 | Tracker state; `target/0a0ece44-relink.sh` repoints the references |
 
-`investigation.md` Appendices A and B and `036615b0-inventory-notes.md` name the
-three entries by bare name in inventory rows of their census commit.
+`investigation.md` Appendices A and B name the three entries by bare name in
+census rows of the tree at `fca6df53d`, the commit its header states.
+`036615b0-inventory-notes.md` names two of them by bare name with their commit
+scopes. Neither file holds a pre-move path of the three entries.
+
+`git grep -nF <pre-move path>` for each of the three paths, outside `.jit/`,
+the marker-backed archives and `L`, finds the files of the table above only.
 
 No moved file names its own directory by path literal (REQ-05): `rg` for the
 three pre-move paths under the three mirror locations finds nothing.
