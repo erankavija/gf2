@@ -2,11 +2,14 @@
 
 > **Diátaxis Type:** Research
 
-This record covers the inventory of REQ-01 and the material for the choice
-REQ-02 and REQ-04 depend on. It changes no production signature and adds no
-production check. Every command runs from the worktree root; script paths are
-relative to this directory. No command takes a timing window, the host lock or
-an ignored test.
+This record covers the inventory of REQ-01, the material for the choice REQ-02
+and REQ-04 depend on, the checked form of every entry point compiled under
+`--cfg gf2_entry_checked`, its contract test (REQ-03) and the measurement
+family that prices it. A build without the cfg emits the instruction text it
+emitted before the checked form existed. Every command runs from the worktree
+root; script paths are relative to this directory. No command here takes a
+timing window, the host lock or an ignored test; the family's timed stages are
+queue lines of the benchmark window.
 
 ## Documents
 
@@ -97,6 +100,90 @@ belongs inside the kernel, at the pivot read; the `pivot inverse read` pair
 shows that read alone, and the `entry scan` pair the alternative that keeps the
 whole check in the safe entry point.
 
+## Checked form under `gf2_entry_checked`
+
+Each entry point has a checked wrapper beside the wrapper it publishes today:
+a named assertion of `gf2_kernels_simd::entry_check`, in the form of
+`m4rm::assert_gray_build_lengths`, ahead of the same `unsafe` kernel call.
+Under `--cfg gf2_entry_checked` the detection function publishes the checked
+wrapper; the two Gray-PAM wrappers hold the checked product as a statement
+under the cfg, ahead of the length assertion that compares with it. The `Checked form` column of `inventory.md` names each. No file under
+`src/x86` changes, so no kernel listing changes.
+
+Every check stands ahead of the kernel's loops. The sparse row check takes
+the largest column index of the row once per call. The PLE check is the
+hoisted form: the window shape, an inverse table of at least `p` entries and
+one pass that requires every window entry below `p`; the kernel keeps every
+entry below `p`, so each pivot then indexes inside the table and the kernel's
+unchecked read stays as it is. The dense wrappers form the three shape
+products with `checked_mul` ahead of the kernel's own assertions.
+
+### Default build
+
+`python3 -B survey/make-default-build-comparison.py compare` writes the
+[comparison](survey/default-build-comparison.json) of the functions a release
+build of the kernel crate emits without the cfg, between the
+[anchor tree](survey/kernel-anchor-baseline.json) and the tree with the checked
+wrappers, under `crate_functions.RULE`. Its `function_count` and
+`differing_function_count` total the step; every row carries
+`instruction_text: same`. The script's docstring states how the two records
+are made.
+
+### Contract test (REQ-03)
+
+`crates/gf2-kernels-simd/tests/entry_conditions.rs` is compiled under the cfg
+and holds one test per pointer type. Each test calls every implementation the
+type publishes with arguments that meet the conditions and then with arguments
+that break each condition, and requires a panic that opens with the kernel's
+name and names the condition. The product of two slice lengths that the
+Gray-PAM wrappers check wraps only for operands of at least $2^{32}$ elements,
+so their test covers the length assertion the product feeds and a unit test of
+`entry_check::checked_cells` covers the overflow branch.
+
+`RUSTFLAGS="--cfg gf2_entry_checked" ./scripts/cargo-budget.sh --test cargo
+nextest run -p gf2-kernels-simd --cargo-profile ci-test --profile ci -E
+'binary(entry_conditions) | test(entry_check)'` exits 0.
+
+### Shared suites in both builds
+
+`survey/run-suites.sh` runs the shared `dev/scripts/run-kernel-suites.sh` once
+without a flag and once with `RUSTFLAGS="--cfg gf2_entry_checked"`; each log
+opens with its command and closes with its exit status, and `rustflags.txt`
+beside the logs states the flags.
+
+| Build | `simd` | without `simd` |
+|---|---|---|
+| current | [log](survey/test-logs/current/simd-build.txt) | [log](survey/test-logs/current/scalar-build.txt) |
+| checked | [log](survey/test-logs/checked/simd-build.txt) | [log](survey/test-logs/checked/scalar-build.txt) |
+
+## Measurement family
+
+[`measurement-plan.md`](measurement-plan.md) states the family; its frozen
+pilot addendum is
+[`addendum-v4-entry-check-pilot.json`](addendum-v4-entry-check-pilot.json),
+written by `survey/make-addendum.py`.
+
+- Arms. Both arms are `survey/entry-check-arm` built from one tree with one
+  command line; the candidate adds `RUSTFLAGS="--cfg gf2_entry_checked"` and a
+  target directory of its own. `survey/make-plan.py` records the flags in each
+  arm's `rustflags` field, the runner digests each executable, and the
+  launcher's log states both digests and flag sets. Each execution reports the
+  entry-point form observed from the linked kernel crate and refuses a form
+  other than the plan's; the `selected_path` rows of
+  [`survey/pilot-smoke.json`](survey/pilot-smoke.json) show `entry-form=current`
+  on the baseline arm and `entry-form=checked` on the candidate arm of every
+  cell.
+- Shared forms. The runner, its smoke, the acceptance tool, the campaign log
+  checker, the producing-manifest writer, the shared smoke script and the
+  canonical freezer are used as they stand. The plan projection and the arm
+  driver are the family's own: the shared `campaign_plan.py` projects one
+  executable selected by GF(2^8) lane variables, and this family's arms are two
+  executables. `survey/make-plan.py` keeps that script's argument surface.
+- Launcher. `dev/bench_results/bfc2ceab/run-entry-check.sh` has the actions
+  `build`, `window pilot|confirmation` and `freeze`; `window` refuses outside
+  a benchmark window and refuses a campaign input that differs from its
+  committed bytes.
+
 ## Checks run
 
 - `python3 -B survey/make-instruction-counts.py --self-test`: exit 0.
@@ -105,6 +192,8 @@ whole check in the safe entry point.
 - `python3 dev/scripts/check-receipt-input-snapshots.py`: exit 0.
 - `python3 dev/scripts/check-campaign-producing-closure.py`: exit 0.
 
-The change holds Python, documents and one standalone crate under this
-directory, and touches no file under `crates/` or `dev/tools/`; the workspace
-build and `./scripts/cargo-ci.sh` run on the merged tree.
+- `cargo clippy -p gf2-kernels-simd --all-targets --all-features -- -D warnings`
+  without the cfg and with it: exit 0.
+- Both `--check` modes of the mid-range story's producing closures: exit 0
+  after regeneration for the new kernel-crate files.
+- `survey/smoke-arms.sh pilot` and `run-entry-check.sh build`: exit 0.

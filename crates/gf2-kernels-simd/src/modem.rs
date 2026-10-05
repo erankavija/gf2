@@ -240,11 +240,11 @@ mod avx2 {
             num_symbols,
             "inv_n0_eq.len() must equal z.len()"
         );
+        // The length assertion below compares with this product.
         #[cfg(gf2_entry_checked)]
-        crate::entry_check::assert_shape(
+        crate::entry_check::checked_cells(
             "pam_sq_distances_f32_avx2",
             "out",
-            out.len(),
             num_symbols,
             axis_len,
         );
@@ -280,11 +280,11 @@ mod avx2 {
             num_symbols,
             "inv_n0_eq.len() must equal z.len()"
         );
+        // The length assertion below compares with this product.
         #[cfg(gf2_entry_checked)]
-        crate::entry_check::assert_shape(
+        crate::entry_check::checked_cells(
             "pam_sq_distances_f64_avx2",
             "out",
-            out.len(),
             num_symbols,
             axis_len,
         );

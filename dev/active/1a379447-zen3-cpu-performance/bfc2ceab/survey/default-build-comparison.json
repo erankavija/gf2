@@ -10,7 +10,7 @@
     "step": "anchor to the checked wrappers, default build",
     "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
     "before_sources_sha256": "76c32a9cc7a0222b5ae961b5072c3f57b9174d95d130049c7eef2e598c315ed9",
-    "after_sources_sha256": "8b02825a1cf1a4ed3724e5341eace1e12fa5bd30818812e3489f4113184f30fc",
+    "after_sources_sha256": "a6845fc59359818d88d5478dcb3362775131cf31b3e712f66d51344312296c98",
     "function_count": 258,
     "differing_function_count": 0,
     "functions": [

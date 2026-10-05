@@ -693,7 +693,7 @@
       "occurrences": 2,
       "verbatim": "            \"out.len() must equal num_symbols * pam_levels.len()\"",
       "why": "Both wrappers compare `out.len()` with a wrapping product of two slice lengths.",
-      "sha256": "f63b01739e26f2774977f368382bc0b00547f4f00213a1831f981901d76cd234"
+      "sha256": "0033579fc11d794d8a71b819e9a88eac6991c05baa90cdb68d0f6e5a735cf966"
     },
     {
       "id": "pam-f32-store",
@@ -704,7 +704,7 @@
       "occurrences": 1,
       "verbatim": "                _mm256_storeu_ps(out_ptr.add(c * 8), v_d);",
       "why": "The f32 kernel stores through a raw pointer into `out`.",
-      "sha256": "f63b01739e26f2774977f368382bc0b00547f4f00213a1831f981901d76cd234"
+      "sha256": "0033579fc11d794d8a71b819e9a88eac6991c05baa90cdb68d0f6e5a735cf966"
     },
     {
       "id": "pam-f64-store",
@@ -715,7 +715,7 @@
       "occurrences": 1,
       "verbatim": "                _mm256_storeu_pd(out_ptr.add(c * 4), v_d);",
       "why": "The f64 kernel stores through a raw pointer into `out`.",
-      "sha256": "f63b01739e26f2774977f368382bc0b00547f4f00213a1831f981901d76cd234"
+      "sha256": "0033579fc11d794d8a71b819e9a88eac6991c05baa90cdb68d0f6e5a735cf966"
     },
     {
       "id": "gray-check-products",
@@ -1105,7 +1105,7 @@
     {
       "id": "queue-dense-product",
       "project": "gf2",
-      "commit": "39d93e195c376692c54f2240c831d7048e026a3b",
+      "commit": "3b3e6c271c3f37fcc5166b5050af7f5b85ee5606",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
       "line": 30,
       "occurrences": 1,
@@ -1116,7 +1116,7 @@
     {
       "id": "queue-axpy",
       "project": "gf2",
-      "commit": "39d93e195c376692c54f2240c831d7048e026a3b",
+      "commit": "3b3e6c271c3f37fcc5166b5050af7f5b85ee5606",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
       "line": 29,
       "occurrences": 1,

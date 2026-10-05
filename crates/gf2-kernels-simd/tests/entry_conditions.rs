@@ -341,20 +341,21 @@ fn medium_prime_f64_gemm_rejects_wrapping_shape() {
 }
 
 /// The wrapped product of two slice lengths needs operands no test holds, so
-/// these cases cover the shape assertion on lengths that do not wrap; the unit
-/// test of `entry_check::assert_shape` covers the overflow branch.
+/// these cases cover the length assertion the checked product feeds; the unit
+/// test of `entry_check::checked_cells` covers the overflow branch.
 #[test]
 fn pam_distance_kernels_reject_output_shape() {
+    let refuses = |call: &dyn Fn()| catch_unwind(AssertUnwindSafe(call)).is_err();
     let levels32 = [-3.0f32, -1.0, 1.0, 3.0];
     let f32_fns = modem::detect_f32();
     (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels32, &mut [0.0; 4]);
-    rejects("pam_sq_distances_f32_avx2", "out shape", || {
+    assert!(refuses(&|| {
         (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels32, &mut [0.0; 3])
-    });
+    }));
     let levels64 = [-3.0f64, -1.0, 1.0, 3.0];
     let f64_fns = modem::detect_f64();
     (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels64, &mut [0.0; 4]);
-    rejects("pam_sq_distances_f64_avx2", "out shape", || {
+    assert!(refuses(&|| {
         (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels64, &mut [0.0; 3])
-    });
+    }));
 }

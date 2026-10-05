@@ -75,18 +75,31 @@ pub(crate) fn assert_packed_lengths<const SLICES: usize>(kernel: &str, lengths: 
     );
 }
 
-/// Panics unless `length == rows * cols`, without overflow.
+/// `rows * cols`; panics when the product overflows.
 #[inline]
-pub(crate) fn assert_shape(kernel: &str, operand: &str, length: usize, rows: usize, cols: usize) {
+pub(crate) fn checked_cells(kernel: &str, operand: &str, rows: usize, cols: usize) -> usize {
     let Some(cells) = rows.checked_mul(cols) else {
         panic!("{kernel}: shape of {operand} overflows usize");
     };
+    cells
+}
+
+/// Panics unless `length == rows * cols`, without overflow.
+#[inline]
+pub(crate) fn assert_shape(kernel: &str, operand: &str, length: usize, rows: usize, cols: usize) {
+    let cells = checked_cells(kernel, operand, rows, cols);
     assert!(length == cells, "{kernel}: {operand} shape");
 }
 
 #[cfg(test)]
 mod tests {
-    use super::assert_shape;
+    use super::{assert_shape, checked_cells};
+
+    #[test]
+    #[should_panic(expected = "kernel: shape of out overflows usize")]
+    fn cells_reject_a_product_that_overflows() {
+        checked_cells("kernel", "out", 1 << 32, 1 << 32);
+    }
 
     #[test]
     fn shape_accepts_the_exact_product() {

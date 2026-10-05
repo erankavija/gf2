@@ -891,7 +891,8 @@ INTERFACES = [
 
 # The checked form of an entry point, which its detection function publishes
 # under `--cfg gf2_entry_checked`: the wrapper's name with `_safe` replaced.
-# The two Gray-PAM wrappers hold their check as a statement under the cfg.
+# The two Gray-PAM wrappers hold their checked product as a statement under
+# the cfg.
 CHECKED_SUFFIX = ("_safe", "_checked")
 CHECKED_IN_PLACE = {"pam-f32", "pam-f64"}
 CHECKED_CFG = "gf2_entry_checked"
