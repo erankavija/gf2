@@ -97,7 +97,8 @@ its baseline digest.
 
 ## Shared suites (REQ-03)
 
-`survey/run-suites.sh` runs both rows and writes the logs. Each log opens with
+`dev/scripts/run-kernel-suites.sh <this directory>/survey/test-logs` runs both
+rows and writes the logs. Each log opens with
 the toolchain and command and closes with the exit status; its nextest
 `Summary` line carries the test counts.
 
