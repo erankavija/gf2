@@ -963,9 +963,9 @@ def render_workloads(workloads):
         "",
         "One row per committed receipt: the path each arm reported in every pair of its "
         "cells, on the executable the receipt pins. `Sources` counts the producing source "
-        "files whose bytes differ in the current tree, of those the receipt pins, and "
-        "names the differing files that hold a selector read site; a differing digest "
-        "alone does not state a different selection.",
+        "files whose bytes differ in the current tree, of those the receipt pins, and how "
+        "many of the differing files hold a selector read site; the record names them. A "
+        "differing digest alone does not state a different selection.",
         "",
     ]
     for track in ("core-kernel", "coding-consumer", "decoder", "protocol"):
@@ -989,8 +989,8 @@ def render_workloads(workloads):
                         "not pinned per file" if row["producing_sources"] is None else (
                             f"{row['producing_sources']['changed_in_tree']} of "
                             f"{row['producing_sources']['pinned_files']}"
-                            + ("; " + code(row["producing_sources"]["changed_selector_sites"])
-                               if row["producing_sources"]["changed_selector_sites"] else "")
+                            + f"; {len(row['producing_sources']['changed_selector_sites'])} "
+                            "hold a selector read site"
                         ),
                     ]
                     for row in rows
