@@ -12,5 +12,5 @@ error[E0432]: unresolved import `gf2_core::dispatch_contract`
 
 For more information about this error, try `rustc --explain E0432`.
 error: could not compile `gf2-core` (test "dispatch_fallback") due to 1 previous error
-error: command `/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/cargo test --no-run --message-format json-render-diagnostics --package gf2-core --test dispatch_fallback --profile ci-test` exited with code 101
+error: command `~/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/cargo test --no-run --message-format json-render-diagnostics --package gf2-core --test dispatch_fallback --profile ci-test` exited with code 101
 # exit: 101
