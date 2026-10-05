@@ -848,6 +848,26 @@ fn m4rm_table_rows_cover(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::m4rm::contract::kernel_builders;
+    use gf2_core::kernels::backend::contract::{assert_each, Implementation};
+
+    /// The bundle the host's AVX2 detection publishes; empty without AVX2.
+    fn detected() -> Vec<Implementation<LogicalFns>> {
+        crate::detect()
+            .map(|bundle| Implementation::new("avx2", bundle))
+            .into_iter()
+            .collect()
+    }
+
+    /// The Gray-table builders of `stride`: the portable reference and, with
+    /// AVX2, the specialized builder.
+    fn builders_of(stride: usize) -> Vec<Implementation<crate::m4rm::contract::Builder<'static>>> {
+        kernel_builders()
+            .into_iter()
+            .filter(|builder| builder.stride_words == stride)
+            .map(|builder| Implementation::new(builder.label.clone(), builder))
+            .collect()
+    }
 
     #[test]
     fn test_m4rm_table_rows_cover_accepts_valid_tile() {
@@ -871,20 +891,22 @@ mod tests {
     #[test]
     #[should_panic(expected = "table_buffer must cover")]
     fn test_m4rm_tile8x4_wrapper_panics_on_invalid_table() {
-        let fns = fns();
-        let mut c_block = vec![0u64; 8 * 16];
-        let table = vec![0u64; 16];
-        let idx = [0, 1, 2, 3, 4, 5, 6, 7];
-        (fns.m4rm_tile8x4_fn)(&mut c_block, 16, 0, &table, &idx);
+        assert_each(&detected(), |fns| {
+            let mut c_block = vec![0u64; 8 * 16];
+            let table = vec![0u64; 16];
+            let idx = [0, 1, 2, 3, 4, 5, 6, 7];
+            (fns.m4rm_tile8x4_fn)(&mut c_block, 16, 0, &table, &idx);
+        });
     }
 
     #[test]
     #[should_panic(expected = "src must contain at least 16 words")]
     fn test_m4rm_gray_xor16_wrapper_panics_on_short_src() {
-        let fns = fns();
-        let mut acc = [[0u64; 8]; 2];
-        let src = [0u64; 15];
-        (fns.m4rm_gray_xor16_fn)(&mut acc, &src);
+        assert_each(&detected(), |fns| {
+            let mut acc = [[0u64; 8]; 2];
+            let src = [0u64; 15];
+            (fns.m4rm_gray_xor16_fn)(&mut acc, &src);
+        });
     }
 
     fn pseudo_panel(rows: usize, stride: usize, seed: u64) -> Vec<u64> {
@@ -901,40 +923,55 @@ mod tests {
 
     #[test]
     fn test_m4rm_gray_build4_matches_scalar() {
-        let fns = fns();
         let stride = 4;
-        for valid_rows in 1..=8usize {
-            let table_size = 1usize << valid_rows;
-            let panel = pseudo_panel(valid_rows, stride, 0xA53C_9E11 ^ valid_rows as u64);
-            let mut expected = vec![0u64; table_size * stride];
-            crate::m4rm_gray_build_scalar(&mut expected, &panel, stride, table_size, valid_rows);
-            let mut got = vec![0u64; table_size * stride];
-            (fns.m4rm_gray_build4_fn)(&mut got, &panel, stride, table_size, valid_rows);
-            assert_eq!(got, expected, "stride4 build mismatch at k={valid_rows}");
-        }
+        assert_each(&builders_of(stride), |builder| {
+            for valid_rows in 1..=8usize {
+                let table_size = 1usize << valid_rows;
+                let panel = pseudo_panel(valid_rows, stride, 0xA53C_9E11 ^ valid_rows as u64);
+                let mut expected = vec![0u64; table_size * stride];
+                crate::m4rm_gray_build_scalar(
+                    &mut expected,
+                    &panel,
+                    stride,
+                    table_size,
+                    valid_rows,
+                );
+                let mut got = vec![0u64; table_size * stride];
+                (builder.build)(&mut got, &panel, stride, table_size, valid_rows);
+                assert_eq!(got, expected, "stride4 build mismatch at k={valid_rows}");
+            }
+        });
     }
 
     #[test]
     fn test_m4rm_gray_build8_matches_scalar() {
-        let fns = fns();
         let stride = 8;
-        for valid_rows in 1..=8usize {
-            let table_size = 1usize << valid_rows;
-            let panel = pseudo_panel(valid_rows, stride, 0x71B2_44DD ^ valid_rows as u64);
-            let mut expected = vec![0u64; table_size * stride];
-            crate::m4rm_gray_build_scalar(&mut expected, &panel, stride, table_size, valid_rows);
-            let mut got = vec![0u64; table_size * stride];
-            (fns.m4rm_gray_build8_fn)(&mut got, &panel, stride, table_size, valid_rows);
-            assert_eq!(got, expected, "stride8 build mismatch at k={valid_rows}");
-        }
+        assert_each(&builders_of(stride), |builder| {
+            for valid_rows in 1..=8usize {
+                let table_size = 1usize << valid_rows;
+                let panel = pseudo_panel(valid_rows, stride, 0x71B2_44DD ^ valid_rows as u64);
+                let mut expected = vec![0u64; table_size * stride];
+                crate::m4rm_gray_build_scalar(
+                    &mut expected,
+                    &panel,
+                    stride,
+                    table_size,
+                    valid_rows,
+                );
+                let mut got = vec![0u64; table_size * stride];
+                (builder.build)(&mut got, &panel, stride, table_size, valid_rows);
+                assert_eq!(got, expected, "stride8 build mismatch at k={valid_rows}");
+            }
+        });
     }
 
     #[test]
     #[should_panic(expected = "m4rm_gray_build4: stride_words must be 4")]
     fn test_m4rm_gray_build4_rejects_wrong_stride() {
-        let fns = fns();
-        let mut buf = vec![0u64; 8];
-        let panel = vec![0u64; 8];
-        (fns.m4rm_gray_build4_fn)(&mut buf, &panel, 8, 2, 1);
+        assert_each(&detected(), |fns| {
+            let mut buf = vec![0u64; 8];
+            let panel = vec![0u64; 8];
+            (fns.m4rm_gray_build4_fn)(&mut buf, &panel, 8, 2, 1);
+        });
     }
 }
