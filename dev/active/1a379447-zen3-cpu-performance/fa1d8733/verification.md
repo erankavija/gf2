@@ -48,7 +48,7 @@ of either class, and the script exits 0. Each reader has one disposition:
 | Smoke plans, candidate disassemblies and profile host records of the candidate study | Kept: each records the flags of the build it describes. |
 | `survey/source-evidence.json` of `fcb04d66` | Kept: the ledger describes the files at the commits its rows record. |
 | Rows of class `receipt`, `receipt-snapshot` and `tracker` | Kept. The `receipt-snapshot` rows under this directory are the `before` bytes. |
-| Generators, ledger and inventory of `63bad95d` | Unchanged by this task; `63bad95d` owns them. Its `survey/make-source-evidence.py` pins the removed manifest entry as claim `xor-unroll-cfg-declared`, and its inventory lists the configurations as the selector `xor-unroll-configurations`. |
+| Generators, source ledger, route inventory and calibration plan of `63bad95d` | Changed: the generators declare neither the claim on the removed manifest entry nor a selector for the configurations, the plan's selector table has no row for them, and the regenerated ledger and inventory state the current tree. Its workload routes keep the flags the unroll pilot receipts record for their arms. |
 | Documents of class `record` that describe the candidates | Updated; see [Documents](#documents-req-04). |
 
 ## Instruction text (REQ-02)
@@ -106,7 +106,7 @@ with the changed flag string.
 
 `python3 dev/scripts/check-receipt-input-snapshots.py` exits 0.
 `git log --format= --name-only --grep='(jit:fa1d8733)'` lists the paths this
-task's commits touch: none lies under a receipt directory, none is a ledger,
+task's commits touch: none lies under a receipt directory, none is a trial ledger,
 and the paths under an `inputs` directory are this task's `before` snapshots.
 
 ## Documents (REQ-04)

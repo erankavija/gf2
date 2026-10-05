@@ -39,7 +39,7 @@
     "counts": {
       "receipt": 20,
       "receipt-snapshot": 27,
-      "record": 24,
+      "record": 19,
       "tracker": 1
     },
     "files": [
@@ -48,45 +48,6 @@
         "class": "tracker",
         "lines": [
           7
-        ]
-      },
-      {
-        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.json",
-        "class": "record",
-        "lines": [
-          1832,
-          1835,
-          1845,
-          1848
-        ]
-      },
-      {
-        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.md",
-        "class": "record",
-        "lines": [
-          348,
-          349
-        ]
-      },
-      {
-        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/make-route-inventory.py",
-        "class": "record",
-        "lines": [
-          251
-        ]
-      },
-      {
-        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/make-source-evidence.py",
-        "class": "record",
-        "lines": [
-          117
-        ]
-      },
-      {
-        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-        "class": "record",
-        "lines": [
-          320
         ]
       },
       {
