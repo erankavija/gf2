@@ -330,31 +330,6 @@ required-features = ["simd"]
 name = "bench_csv_emitter"
 required-features = ["rand"]
 
-# ── Issue `2a0ffb18` (story `166b2691`, epic `babcf05e` — gf2-core
-# PPC-spiral S0 measurement infrastructure) ──
-#
-# Demo driver for the SIMD-vs-scalar equivalence proptest helper at
-# `tests/simd_equiv/mod.rs`. The driver imports
-# `gf2_core::kernels::simd::maybe_simd`, which is itself
-# `#[cfg(feature = "simd")]`. Gate the integration test on the same
-# feature so a default-feature build (without `simd`) skips this target
-# entirely instead of failing to compile. Mirrors the SIMD-gated
-# `[[bench]]` entries above (`fp_specialized`, `soa_batch`,
-# `gf2m_wide_mul`).
-[[test]]
-name = "simd_equiv_demo"
-required-features = ["simd"]
-
-[[test]]
-name = "simd_equiv_dispatch_hoist"
-required-features = ["simd"]
-
-# ── Issue `ec286cee` (story `SC`, kernel C1) — GF(2^m) batch element-wise
-# multiply/square via VPCLMULQDQ-on-YMM.
-[[test]]
-name = "simd_equiv_gf2m_batch"
-required-features = ["simd"]
-
 # ── Issue `e8fe47f5` (epic `6dc81018`) — runs the pinned selector
 # non-regression harness's own `#[cfg(test)]` module, which a
 # `harness = false` bench target does not otherwise execute. Gated on the same
