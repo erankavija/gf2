@@ -1141,7 +1141,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T00:01:49.249857515Z",
+      "updated_at": "2026-10-05T00:31:01.964302590Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -1150,8 +1150,8 @@
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T00:24:31.337145547Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T00:36:38.931094886Z",
       "updated_by": "auto:executor"
     }
   },
@@ -1173,5 +1173,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Evaluate quantized layered and QC-aware LDPC candidates",
-  "updated_at": "2026-10-05T00:28:29.643481550Z"
+  "updated_at": "2026-10-05T00:36:38.931094886Z"
 }
