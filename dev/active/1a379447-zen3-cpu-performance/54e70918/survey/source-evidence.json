@@ -1,0 +1,50 @@
+{
+ "schema": "source-evidence-v1",
+ "issue": "54e70918",
+ "claims": [
+  {
+   "claim": "demo-returns-without-a-backend",
+   "project": "gf2",
+   "commit": "d424d91f1df3632a351511f567c9dcd17159b271",
+   "path": "crates/gf2-core/tests/simd_equiv_demo.rs",
+   "line": 41,
+   "verbatim": "    if gf2_core::kernels::simd::maybe_simd().is_none() {",
+   "occurrences": 4,
+   "sha256": "0a27e6fd4753f3e2b4fa669940f33fddbb37046d15f2cd74330801732e9914ac",
+   "why": "Each occurrence opens a block that returns from its test before any comparison, so the test passes without a SIMD backend."
+  },
+  {
+   "claim": "hoist-returns-without-a-backend",
+   "project": "gf2",
+   "commit": "d424d91f1df3632a351511f567c9dcd17159b271",
+   "path": "crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs",
+   "line": 28,
+   "verbatim": "    if gf2_core::kernels::simd::maybe_simd().is_none() {",
+   "occurrences": 3,
+   "sha256": "ca271eaf4f5cacbd17048f47be3d2ccad396be9656a81681faec2b9622572403",
+   "why": "Each occurrence opens a block that returns from its test before any comparison, although the resolver under test answers without a backend."
+  },
+  {
+   "claim": "backend-is-detected-once",
+   "project": "gf2",
+   "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+   "path": "crates/gf2-core/src/kernels/simd/mod.rs",
+   "line": 51,
+   "verbatim": "pub static SIMD_BACKEND: LazyLock<Option<SimdBackend>> = LazyLock::new(SimdBackend::detect);",
+   "occurrences": 1,
+   "sha256": "7a0f80e40e895e89c4cbcf311a50adecc319973eca972caea187a1a493dc488a",
+   "why": "`maybe_simd` reads a process-wide value initialized from detection; the module publishes no setter or override."
+  },
+  {
+   "claim": "detection-reads-the-processor",
+   "project": "gf2",
+   "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+   "path": "crates/gf2-kernels-simd/src/x86/mod.rs",
+   "line": 44,
+   "verbatim": "    if cfg!(any(target_arch = \"x86\", target_arch = \"x86_64\")) && is_x86_feature_detected!(\"avx2\") {",
+   "occurrences": 1,
+   "sha256": "c30c64846087d3914df8b1484423e63a76904e03339b55059740616fbed2042e",
+   "why": "The logical bundle depends on the target and the processor feature only, so a host with AVX2 cannot be made to report no bundle."
+  }
+ ]
+}
