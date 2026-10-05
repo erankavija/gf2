@@ -5,7 +5,105 @@
   "created_at": "2026-10-05T03:50:56.277599299Z",
   "dependencies": [],
   "description": "The focused test command the engineering contract gives for `gf2-core` does not compile with default features, and several kernel tests call AVX2 code without detecting the feature.\n\n## Background\n\n`cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci`, the focused example in the repository's engineering contract, fails to compile: `crates/gf2-core/tests/tuning_conservative_cfg.rs` calls `support::prepared_core_json`, which exists only under the `tuning-profile` feature, and the build without `simd` warns of an unused `super::*` import. The CI contract builds with `--all-features` and never sees it. Separately, tests in `crates/gf2-kernels-simd/src/x86/avx2.rs` obtain the AVX2 function bundle and call it without checking that the host supports AVX2.\n\n## Success Criteria\n\n- [hard] REQ-01: `gf2-core` test targets compile and pass with default features, with `simd` alone and with all features on Rust 1.95, and the CI contract runs at least one configuration without `--all-features` for `gf2-core`.\n- [hard] REQ-02: Every test in the kernel crate that executes an AVX2 kernel is skipped or takes the tested fallback on a host without AVX2, shown by the test's own feature check. A test that has no reference to assert without AVX2 fails on a stated precondition.\n- [hard] REQ-03: No test asserts a route that the build's feature set cannot select.\n\n## Notes\n\nFound while running the kernel crate's suites with and without the `simd` feature.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run before the fix (all-features-build)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/before/all-features-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run before the fix (all-features-run)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/before/all-features-run.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run before the fix (default-build)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/before/default-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run before the fix (default-run)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/before/default-run.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run before the fix (simd-build)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/before/simd-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run before the fix (simd-run)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/before/simd-run.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run after the fix (all-features-build)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/after/all-features-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run after the fix (all-features-run)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/after/all-features-run.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run after the fix (default-build)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/after/default-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run after the fix (default-run)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/after/default-run.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run after the fix (simd-build)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/after/simd-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "gf2-core test build and run after the fix (simd-run)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/feature-logs/after/simd-run.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "AVX2 and PCLMULQDQ kernel tests without a host check, generated by find-unguarded-kernel-tests.py",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/unguarded-kernel-tests.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "target-directory growth of the default-features-core CI steps",
+      "path": "dev/active/1a379447-zen3-cpu-performance/316150fd/ci-step-growth.txt"
+    }
+  ],
   "first_ready_at": "2026-10-05T03:50:56.277599299Z",
   "gates_required": [
     "cargo-ci",
@@ -21,5 +119,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Make gf2-core tests build without all features and gate AVX2 kernel tests",
-  "updated_at": "2026-10-05T21:05:47.868649389Z"
+  "updated_at": "2026-10-05T21:15:23.295750271Z"
 }

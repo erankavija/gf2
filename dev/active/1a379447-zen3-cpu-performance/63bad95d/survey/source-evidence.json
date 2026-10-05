@@ -5,46 +5,46 @@
     {
       "id": "core-default-features",
       "project": "gf2",
-      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+      "commit": "a96c12dbb8940fb78b48230caf98953786919fb7",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 53,
       "occurrences": 1,
       "verbatim": "default = [\"rand\", \"io\"]",
       "why": "A standalone `gf2-core` build enables neither `simd` nor `tuning-profile`.",
-      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
+      "sha256": "92039e84f35a42aa559f3e27c3cc86235ccc88a0e3a3ceaddf1672355ba5ed0e"
     },
     {
       "id": "core-simd-optional",
       "project": "gf2",
-      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+      "commit": "a96c12dbb8940fb78b48230caf98953786919fb7",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 57,
       "occurrences": 1,
       "verbatim": "simd = []",
       "why": "Kernel dispatch is the opt-in `simd` cargo feature.",
-      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
+      "sha256": "92039e84f35a42aa559f3e27c3cc86235ccc88a0e3a3ceaddf1672355ba5ed0e"
     },
     {
       "id": "core-tuning-profile-feature",
       "project": "gf2",
-      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+      "commit": "a96c12dbb8940fb78b48230caf98953786919fb7",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 67,
       "occurrences": 1,
       "verbatim": "tuning-profile = [\"dep:serde\", \"dep:serde_json\", \"dep:sha2\"]",
       "why": "`tuning-profile` adds profile parsing only; it selects no profile.",
-      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
+      "sha256": "92039e84f35a42aa559f3e27c3cc86235ccc88a0e3a3ceaddf1672355ba5ed0e"
     },
     {
       "id": "core-baked-cfg-declared",
       "project": "gf2",
-      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+      "commit": "a96c12dbb8940fb78b48230caf98953786919fb7",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 13,
       "occurrences": 1,
       "verbatim": "unexpected_cfgs = { level = \"warn\", check-cfg = ['cfg(kani)', 'cfg(verify_lean)', 'cfg(gf2_tuning_baked)'] }",
       "why": "`gf2_tuning_baked` is a declared compiler configuration and no cargo feature, so `--all-features` does not set it.",
-      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
+      "sha256": "92039e84f35a42aa559f3e27c3cc86235ccc88a0e3a3ceaddf1672355ba5ed0e"
     },
     {
       "id": "coding-default-simd",
@@ -126,24 +126,24 @@
     {
       "id": "ci-baked-step",
       "project": "gf2",
-      "commit": "70aff745c582a90cda3b4d3d028b9de7a2c21958",
+      "commit": "d0700fd4fdd09f7b930a136a650426bbc4128703",
       "path": "scripts/cargo-ci.sh",
-      "line": 280,
+      "line": 304,
       "occurrences": 1,
       "verbatim": "run_step baked-core env RUSTFLAGS=\"--cfg gf2_tuning_baked\" \"$BUDGET\" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable",
       "why": "CI builds the baked configuration in one scoped step; every other step keeps the conservative constants.",
-      "sha256": "6e084c6121cd65823b384b4c5760b1d89b28c208213082c5c3464d2b92245a0d"
+      "sha256": "7f0a68fb8b5fb797b56f23b93274e37106f756c3a34008f36a8e195ce86da52f"
     },
     {
       "id": "ci-feature-flags",
       "project": "gf2",
-      "commit": "70aff745c582a90cda3b4d3d028b9de7a2c21958",
+      "commit": "d0700fd4fdd09f7b930a136a650426bbc4128703",
       "path": "scripts/cargo-ci.sh",
-      "line": 208,
+      "line": 222,
       "occurrences": 1,
       "verbatim": "  FEAT_FLAGS=\"--features simd,parallel,visualization,llr-f64\"",
       "why": "The workspace test step of CI enables `simd`, so it runs the shared fallback contract on the kernel build only.",
-      "sha256": "6e084c6121cd65823b384b4c5760b1d89b28c208213082c5c3464d2b92245a0d"
+      "sha256": "7f0a68fb8b5fb797b56f23b93274e37106f756c3a34008f36a8e195ce86da52f"
     },
     {
       "id": "logical-bundle-detect",
@@ -555,13 +555,13 @@
     {
       "id": "tuning-baked-owner-digest",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
       "path": "crates/gf2-core/src/tuning/baked.rs",
-      "line": 11,
+      "line": 17,
       "occurrences": 1,
       "verbatim": "/// with SHA-256 `8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa`.",
       "why": "The baked constants pin the measured core owner by content digest.",
-      "sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb"
+      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
     },
     {
       "id": "tuning-active-accessor",
@@ -731,24 +731,24 @@
     {
       "id": "baked-matvec-conservative-test",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
       "path": "crates/gf2-core/src/tuning/baked.rs",
-      "line": 124,
+      "line": 130,
       "occurrences": 1,
       "verbatim": "    fn matvec_simd_min_words_matches_conservative_section() {",
       "why": "A unit test holds the baked matvec threshold equal to the conservative value while no measured owner states the field.",
-      "sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb"
+      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
     },
     {
       "id": "baked-measured-owner-test",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
       "path": "crates/gf2-core/src/tuning/baked.rs",
-      "line": 93,
+      "line": 99,
       "occurrences": 1,
       "verbatim": "    fn baked_simd_threshold_matches_the_strict_measured_owner() {",
       "why": "A unit test holds a measured baked constant equal to the measured owner's value.",
-      "sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb"
+      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
     },
     {
       "id": "codec-token-value",
