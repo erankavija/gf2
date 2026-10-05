@@ -88,9 +88,11 @@ pub type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; 8]);
 ///
 /// # Panics
 ///
-/// Panics if `buffer` is smaller than `table_size * stride_words`, if `panel`
-/// is smaller than `valid_rows * stride_words`, or if `stride_words` is not the
-/// width this builder specializes for.
+/// Panics if `stride_words` is not the width this builder specializes for, if
+/// `table_size` is zero or not a power of two, if `table_size * stride_words`
+/// or `valid_rows * stride_words` overflows `usize`, if `buffer` is smaller
+/// than `table_size * stride_words`, or if `panel` is smaller than
+/// `valid_rows * stride_words`.
 pub type M4rmGrayBuildFn = fn(&mut [u64], &[u64], usize, usize, usize);
 
 /// Set of accelerated logical operations. Each function must have identical

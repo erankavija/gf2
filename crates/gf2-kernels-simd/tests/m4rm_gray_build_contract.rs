@@ -77,6 +77,16 @@ fn a_table_size_that_is_not_a_power_of_two_is_rejected() {
 }
 
 #[test]
+fn an_overflowing_table_length_is_rejected() {
+    for (name, build, stride) in builders() {
+        let table_size = usize::MAX / stride + 1;
+        assert!(table_size.is_power_of_two());
+        let message = rejection(build, stride, 1, 1, table_size, 1);
+        assert_rejected(name, message, "table_size * stride_words overflows usize");
+    }
+}
+
+#[test]
 fn an_overflowing_panel_length_is_rejected() {
     for (name, build, stride) in builders() {
         let valid_rows = usize::MAX / stride + 1;
