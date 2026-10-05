@@ -111,9 +111,16 @@ fixtures_before=$(fixture_inventory)
 failed=0
 summary=""
 
+# CARGO_CI_STEPS, a PCRE over step names, restricts a run to the matching
+# steps; `dev/active/1a379447-zen3-cpu-performance/316150fd/measure-ci-step-growth.sh`
+# uses it to run one step on a tree where the others have run.
 run_step() {
   local name="$1"
   shift
+
+  if [ -n "${CARGO_CI_STEPS:-}" ] && ! grep -qP -- "$CARGO_CI_STEPS" <<<"$name"; then
+    return 0
+  fi
 
   local started=$SECONDS
 
@@ -220,6 +227,16 @@ run_step tuning-algebra-no-default "$BUDGET" cargo check -p gf2-algebra --no-def
 run_step tuning-algebra-codec-only "$BUDGET" cargo check -p gf2-algebra --no-default-features --features tuning-profile
 run_step tuning-coding-no-default "$BUDGET" cargo check -p gf2-coding --no-default-features
 run_step tuning-coding-codec-only "$BUDGET" cargo check -p gf2-coding --no-default-features --features tuning-profile
+
+# One package configuration without --all-features: default features, no
+# `simd`, the build a bare `cargo nextest run -p <package>` selects. The check
+# compiles every test target, so a target that needs a feature it does not
+# name fails here. The execution step runs the target of the kernel-dispatch
+# fallback contract (`gf2_core::dispatch_contract`) in the build that has no
+# kernel route to select.
+run_step default-features-core-check "$BUDGET" cargo check -p gf2-core --tests --profile ci-test
+run_step default-features-core-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback --no-run
+run_step default-features-core-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback
 
 # Build outside the exclusive lock, then execute inside it. The workspace
 # compile with GPU/SIMD features is the heaviest work here, and holding the
