@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 28559fd2
-; regenerated   : 2026-09-13T17:28:20Z
+; commit        : 8ff1644cb
+; regenerated   : 2026-10-05T03:38:07Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,12 +18,11 @@
 ; symbol: gf2_kernels_simd::x86::popcount::avx2_popcnt_csa
 ;==========================================================
 
-   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-5cbb6545/crates/gf2-kernels-simd)
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 2.52s
 gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	test rsi, rsi
-	je .LBB120_1
+	je .LBB125_1
 	mov rax, rsi
 	shr rax, 2
 	mov rcx, rsi
@@ -34,14 +33,14 @@ gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	vpxor xmm6, xmm6, xmm6
 	vpxor xmm2, xmm2, xmm2
 	vpxor xmm1, xmm1, xmm1
-	je .LBB120_5
+	je .LBB125_5
 	mov rdx, rcx
 	shl rdx, 9
 	vpxor xmm3, xmm3, xmm3
 	xor r8d, r8d
-	vpbroadcastb ymm4, byte ptr [rip + .LCPI120_2]
-	vmovdqa ymm5, ymmword ptr [rip + .LCPI120_1]
-.LBB120_4:
+	vpbroadcastb ymm4, byte ptr [rip + .LCPI125_2]
+	vmovdqa ymm5, ymmword ptr [rip + .LCPI125_1]
+.LBB125_4:
 	vmovdqu ymm9, ymmword ptr [rdi + r8]
 	vmovdqu ymm10, ymmword ptr [rdi + r8 + 32]
 	vmovdqu ymm11, ymmword ptr [rdi + r8 + 64]
@@ -143,8 +142,8 @@ gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	vpaddq ymm2, ymm9, ymm2
 	add r8, 512
 	cmp rdx, r8
-	jne .LBB120_4
-.LBB120_5:
+	jne .LBB125_4
+.LBB125_5:
 	push rbp
 	push r15
 	push r14
@@ -157,9 +156,9 @@ gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	vpextrq rdx, xmm2, 1
 	add rdx, r8
 	vpsrlw ymm3, ymm1, 4
-	vpbroadcastb ymm2, byte ptr [rip + .LCPI120_2]
+	vpbroadcastb ymm2, byte ptr [rip + .LCPI125_2]
 	vpand ymm4, ymm1, ymm2
-	vmovdqa ymm1, ymmword ptr [rip + .LCPI120_1]
+	vmovdqa ymm1, ymmword ptr [rip + .LCPI125_1]
 	vpshufb ymm4, ymm1, ymm4
 	vpand ymm3, ymm3, ymm2
 	vpshufb ymm3, ymm1, ymm3
@@ -209,12 +208,12 @@ gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	mov r11, rcx
 	shl r11, 4
 	sub rax, r11
-	jbe .LBB120_8
+	jbe .LBB125_8
 	shl rcx, 9
 	add rcx, rdi
 	vpxor xmm4, xmm4, xmm4
 	vpxor xmm0, xmm0, xmm0
-.LBB120_7:
+.LBB125_7:
 	vmovdqu ymm5, ymmword ptr [rcx]
 	vpsrlw ymm6, ymm5, 4
 	vpand ymm5, ymm5, ymm2
@@ -226,8 +225,8 @@ gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	vpaddq ymm0, ymm5, ymm0
 	add rcx, 32
 	dec rax
-	jne .LBB120_7
-.LBB120_8:
+	jne .LBB125_7
+.LBB125_8:
 	shl rdx, 4
 	vmovq qword ptr [rsp - 8], xmm3
 	vpextrq rax, xmm3, 1
@@ -239,12 +238,12 @@ gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	and r15, rsi
 	xor r14d, r14d
 	cmp r15, rsi
-	je .LBB120_11
+	je .LBB125_11
 	movabs r12, 6148914691236517205
 	movabs r13, 3689348814741910323
 	movabs rbp, 1085102592571150095
 	movabs rcx, 72340172838076673
-.LBB120_10:
+.LBB125_10:
 	mov rbx, qword ptr [rdi + 8*r15]
 	inc r15
 	mov r11, rbx
@@ -264,8 +263,8 @@ gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	shr r11, 56
 	add r14, r11
 	cmp r15, rsi
-	jb .LBB120_10
-.LBB120_11:
+	jb .LBB125_10
+.LBB125_11:
 	add r8, rdx
 	add r8, r9
 	add r8, qword ptr [rsp - 8]
@@ -282,7 +281,7 @@ gf2_kernels_simd::x86::popcount::avx2_popcnt_csa:
 	pop rbp
 	vzeroupper
 	ret
-.LBB120_1:
+.LBB125_1:
 	xor eax, eax
 	ret
 
@@ -296,7 +295,7 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 	cmp rcx, rsi
 	cmovb rsi, rcx
 	test rsi, rsi
-	je .LBB122_1
+	je .LBB127_1
 	mov rcx, rsi
 	shr rcx, 2
 	mov r8, rsi
@@ -307,14 +306,14 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 	vpxor xmm7, xmm7, xmm7
 	vpxor xmm2, xmm2, xmm2
 	vpxor xmm1, xmm1, xmm1
-	je .LBB122_6
+	je .LBB127_6
 	mov rax, r8
 	shl rax, 9
 	vpxor xmm3, xmm3, xmm3
 	xor r9d, r9d
-	vpbroadcastb ymm4, byte ptr [rip + .LCPI122_2]
-	vmovdqa ymm5, ymmword ptr [rip + .LCPI122_1]
-.LBB122_5:
+	vpbroadcastb ymm4, byte ptr [rip + .LCPI127_2]
+	vmovdqa ymm5, ymmword ptr [rip + .LCPI127_1]
+.LBB127_5:
 	vmovdqu ymm9, ymmword ptr [rdx + r9]
 	vmovdqu ymm10, ymmword ptr [rdx + r9 + 32]
 	vmovdqu ymm11, ymmword ptr [rdx + r9 + 64]
@@ -432,8 +431,8 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 	vpaddq ymm2, ymm9, ymm2
 	add r9, 512
 	cmp rax, r9
-	jne .LBB122_5
-.LBB122_6:
+	jne .LBB127_5
+.LBB127_6:
 	push r15
 	push r14
 	push rbx
@@ -444,9 +443,9 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 	add r9, rax
 	shl r9, 4
 	vpsrlw ymm3, ymm1, 4
-	vpbroadcastb ymm2, byte ptr [rip + .LCPI122_2]
+	vpbroadcastb ymm2, byte ptr [rip + .LCPI127_2]
 	vpand ymm4, ymm1, ymm2
-	vmovdqa ymm1, ymmword ptr [rip + .LCPI122_1]
+	vmovdqa ymm1, ymmword ptr [rip + .LCPI127_1]
 	vpshufb ymm4, ymm1, ymm4
 	vpand ymm3, ymm3, ymm2
 	vpshufb ymm3, ymm1, ymm3
@@ -498,11 +497,11 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 	mov r15, r8
 	shl r15, 4
 	sub rcx, r15
-	jbe .LBB122_9
+	jbe .LBB127_9
 	shl r8, 9
 	vpxor xmm3, xmm3, xmm3
 	vpxor xmm0, xmm0, xmm0
-.LBB122_8:
+.LBB127_8:
 	vmovdqu ymm4, ymmword ptr [rdx + r8]
 	vpand ymm4, ymm4, ymmword ptr [rdi + r8]
 	vpsrlw ymm5, ymm4, 4
@@ -515,8 +514,8 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 	vpaddq ymm0, ymm4, ymm0
 	add r8, 32
 	dec rcx
-	jne .LBB122_8
-.LBB122_9:
+	jne .LBB127_8
+.LBB127_9:
 	vextracti128 xmm1, ymm0, 1
 	vpaddq xmm0, xmm1, xmm0
 	vmovq rcx, xmm0
@@ -531,12 +530,12 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 	movabs r11, 1152921504606846972
 	and r11, rsi
 	cmp r11, rsi
-	je .LBB122_12
+	je .LBB127_12
 	movabs rcx, 6148914691236517205
 	movabs r8, 3689348814741910323
 	movabs r9, 1085102592571150095
 	movabs r10, 72340172838076673
-.LBB122_11:
+.LBB127_11:
 	mov rbx, qword ptr [rdx + 8*r11]
 	and rbx, qword ptr [rdi + 8*r11]
 	inc r11
@@ -557,14 +556,14 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 	shr r14, 56
 	add rax, r14
 	cmp r11, rsi
-	jb .LBB122_11
-.LBB122_12:
+	jb .LBB127_11
+.LBB127_12:
 	pop rbx
 	pop r14
 	pop r15
 	vzeroupper
 	ret
-.LBB122_1:
+.LBB127_1:
 	xor eax, eax
 	ret
 
@@ -576,17 +575,17 @@ gf2_kernels_simd::x86::popcount::avx2_and_popcnt_csa:
 
 gf2_kernels_simd::x86::popcount::popcnt_words:
 	test rsi, rsi
-	je .LBB119_1
+	je .LBB124_1
 	shl rsi, 3
 	xor eax, eax
 	xor ecx, ecx
-.LBB119_3:
+.LBB124_3:
 	popcnt rdx, qword ptr [rdi + rcx]
 	add rax, rdx
 	add rcx, 8
 	cmp rsi, rcx
-	jne .LBB119_3
+	jne .LBB124_3
 	ret
-.LBB119_1:
+.LBB124_1:
 	xor eax, eax
 	ret

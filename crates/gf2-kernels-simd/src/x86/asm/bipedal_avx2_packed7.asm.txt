@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 5c35cf9f
-; regenerated   : 2026-05-14T14:30:04Z
+; commit        : 8ff1644cb
+; regenerated   : 2026-10-05T03:37:56Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,11 +18,11 @@
 ; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch:
 	test rsi, rsi
-	je .LBB35_4
+	je .LBB67_4
 	push rbp
 	push r15
 	push r14
@@ -36,8 +36,8 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch:
 	mov qword ptr [rsp - 80], rdx
 	mov qword ptr [rsp - 64], rsi
 	mov qword ptr [rsp - 72], rdi
-	mov r14, qword ptr [rip + gf2_kernels_simd::bipedal::packed7::ADD7_LUT@GOTPCREL]
-.LBB35_2:
+	lea r14, [rip + gf2_kernels_simd::bipedal::packed7::ADD7_LUT]
+.LBB67_2:
 	mov qword ptr [rsp - 128], rax
 	mov rcx, qword ptr [r8 + 8*rax + 24]
 	mov rax, qword ptr [rsp - 128]
@@ -427,7 +427,7 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch:
 	vmovdqu xmmword ptr [rcx + 8*rax], xmm0
 	add rax, 4
 	cmp rax, rdi
-	jb .LBB35_2
+	jb .LBB67_2
 	add rsp, 312
 	pop rbx
 	pop r12
@@ -435,18 +435,18 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch:
 	pop r14
 	pop r15
 	pop rbp
-.LBB35_4:
+.LBB67_4:
 	ret
 
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch:
 	test rsi, rsi
-	je .LBB38_4
+	je .LBB70_4
 	push rbp
 	push r15
 	push r14
@@ -460,8 +460,8 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch:
 	mov qword ptr [rsp - 80], rdx
 	mov qword ptr [rsp - 64], rsi
 	mov qword ptr [rsp - 72], rdi
-	mov r14, qword ptr [rip + gf2_kernels_simd::bipedal::packed7::SUB7_LUT@GOTPCREL]
-.LBB38_2:
+	lea r14, [rip + gf2_kernels_simd::bipedal::packed7::SUB7_LUT]
+.LBB70_2:
 	mov qword ptr [rsp - 128], rax
 	mov rcx, qword ptr [r8 + 8*rax + 24]
 	mov rax, qword ptr [rsp - 128]
@@ -851,7 +851,7 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch:
 	vmovdqu xmmword ptr [rcx + 8*rax], xmm0
 	add rax, 4
 	cmp rax, rdi
-	jb .LBB38_2
+	jb .LBB70_2
 	add rsp, 312
 	pop rbx
 	pop r12
@@ -859,7 +859,7 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch:
 	pop r14
 	pop r15
 	pop rbp
-.LBB38_4:
+.LBB70_4:
 	ret
 
 ;==========================================================
@@ -870,7 +870,7 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_sub7_batch:
 
 gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch:
 	test rsi, rsi
-	je .LBB36_4
+	je .LBB68_4
 	push rbp
 	push r15
 	push r14
@@ -884,8 +884,8 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch:
 	mov qword ptr [rsp - 80], rdx
 	mov qword ptr [rsp - 64], rsi
 	mov qword ptr [rsp - 72], rdi
-	mov r14, qword ptr [rip + gf2_kernels_simd::bipedal::packed7::MUL7_LUT@GOTPCREL]
-.LBB36_2:
+	lea r14, [rip + gf2_kernels_simd::bipedal::packed7::MUL7_LUT]
+.LBB68_2:
 	mov qword ptr [rsp - 128], rax
 	mov rcx, qword ptr [r8 + 8*rax + 24]
 	mov rax, qword ptr [rsp - 128]
@@ -1275,7 +1275,7 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch:
 	vmovdqu xmmword ptr [rcx + 8*rax], xmm0
 	add rax, 4
 	cmp rax, rdi
-	jb .LBB36_2
+	jb .LBB68_2
 	add rsp, 312
 	pop rbx
 	pop r12
@@ -1283,24 +1283,24 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_mul7_batch:
 	pop r14
 	pop r15
 	pop rbp
-.LBB36_4:
+.LBB68_4:
 	ret
 
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.02s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch:
 	test rsi, rsi
-	je .LBB37_4
+	je .LBB69_4
 	push rbp
 	push r14
 	push rbx
 	xor eax, eax
-	mov rcx, qword ptr [rip + gf2_kernels_simd::bipedal::packed7::SUB7_LUT@GOTPCREL]
-.LBB37_2:
+	lea rcx, [rip + gf2_kernels_simd::bipedal::packed7::SUB7_LUT]
+.LBB69_2:
 	mov r8, qword ptr [rdi + 8*rax]
 	mov r9, qword ptr [rdi + 8*rax + 8]
 	mov r11, qword ptr [rdi + 8*rax + 24]
@@ -1308,177 +1308,177 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch:
 	mov ebx, r11d
 	shl ebx, 8
 	movzx ebx, bx
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	mov r14d, r11d
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14d, 8
 	or r14, rbx
 	mov ebx, r11d
 	shr ebx, 8
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl ebx, 16
 	or rbx, r14
 	mov r14d, r11d
 	shr r14d, 16
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14d, 24
 	or r14, rbx
 	mov rbx, r11
 	shr rbx, 24
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl rbx, 32
 	or rbx, r14
 	mov r14, r11
 	shr r14, 32
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14, 40
 	or r14, rbx
 	mov rbx, r11
 	shr rbx, 40
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl rbx, 48
 	or rbx, r14
 	mov ebp, r10d
 	shl ebp, 8
 	movzx r14d, bp
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shr r11, 48
 	and r11d, 65280
-	movzx r11d, byte ptr [rcx + r11]
+	movzx r11d, byte ptr [r11 + rcx]
 	shl r11, 56
 	or r11, rbx
 	mov ebx, r10d
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl ebx, 8
 	or rbx, r14
 	mov r14d, r10d
 	shr r14d, 8
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14d, 16
 	or r14, rbx
 	mov ebx, r10d
 	shr ebx, 16
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl ebx, 24
 	or rbx, r14
 	mov r14, r10
 	shr r14, 24
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14, 32
 	or r14, rbx
 	mov rbx, r10
 	shr rbx, 32
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl rbx, 40
 	or rbx, r14
 	mov r14, r10
 	shr r14, 40
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14, 48
 	or r14, rbx
 	mov ebx, r9d
 	shl ebx, 8
 	movzx ebx, bx
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shr r10, 48
 	and r10d, 65280
-	movzx r10d, byte ptr [rcx + r10]
+	movzx r10d, byte ptr [r10 + rcx]
 	shl r10, 56
 	or r10, r14
 	mov r14d, r9d
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14d, 8
 	or r14, rbx
 	mov ebx, r9d
 	shr ebx, 8
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl ebx, 16
 	or rbx, r14
 	mov r14d, r9d
 	shr r14d, 16
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14d, 24
 	or r14, rbx
 	mov rbx, r9
 	shr rbx, 24
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl rbx, 32
 	or rbx, r14
 	mov r14, r9
 	shr r14, 32
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14, 40
 	or r14, rbx
 	mov rbx, r9
 	shr rbx, 40
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl rbx, 48
 	or rbx, r14
 	mov ebp, r8d
 	shl ebp, 8
 	movzx r14d, bp
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shr r9, 48
 	and r9d, 65280
-	movzx r9d, byte ptr [rcx + r9]
+	movzx r9d, byte ptr [r9 + rcx]
 	shl r9, 56
 	or r9, rbx
 	mov ebx, r8d
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl ebx, 8
 	or rbx, r14
 	mov r14d, r8d
 	shr r14d, 8
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14d, 16
 	or r14, rbx
 	mov ebx, r8d
 	shr ebx, 16
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl ebx, 24
 	or rbx, r14
 	mov r14, r8
 	shr r14, 24
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14, 32
 	or r14, rbx
 	mov rbx, r8
 	shr rbx, 32
 	and ebx, 65280
-	movzx ebx, byte ptr [rcx + rbx]
+	movzx ebx, byte ptr [rbx + rcx]
 	shl rbx, 40
 	or rbx, r14
 	mov r14, r8
 	shr r14, 40
 	and r14d, 65280
-	movzx r14d, byte ptr [rcx + r14]
+	movzx r14d, byte ptr [r14 + rcx]
 	shl r14, 48
 	or r14, rbx
 	shr r8, 48
 	and r8d, 65280
-	movzx r8d, byte ptr [rcx + r8]
+	movzx r8d, byte ptr [r8 + rcx]
 	shl r8, 56
 	or r8, r14
 	vmovq xmm0, r9
@@ -1491,9 +1491,9 @@ gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch:
 	vmovdqu xmmword ptr [rdx + 8*rax], xmm0
 	add rax, 4
 	cmp rax, rsi
-	jb .LBB37_2
+	jb .LBB69_2
 	pop rbx
 	pop r14
 	pop rbp
-.LBB37_4:
+.LBB69_4:
 	ret

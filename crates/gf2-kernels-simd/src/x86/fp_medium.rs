@@ -19,6 +19,11 @@ use core::arch::x86_64::*;
 /// Barrett-reduces via [`super::fp_small::barrett_reduce_lane32`].
 ///
 /// `m32` carries `μ = ⌊2³² / P⌋` broadcast as 8 u32 lanes.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_medium_batch_mul16(a: __m256i, b: __m256i, p32: __m256i, m32: __m256i) -> __m256i {
@@ -46,6 +51,11 @@ unsafe fn fp_medium_batch_mul16(a: __m256i, b: __m256i, p32: __m256i, m32: __m25
 ///
 /// Sum `s = a + b ≤ 2P - 2 < 2^17`, so the add runs in 32-bit lanes with a
 /// branchless conditional subtract of `P`.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_medium_add16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
@@ -65,6 +75,11 @@ unsafe fn fp_medium_add16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
 }
 
 /// Lane-wise modular subtraction for 16 u16 lanes.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_medium_sub16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
@@ -102,6 +117,9 @@ unsafe fn fp_medium_sub16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
 /// `< p`, and `barrett_m == floor(2^32 / p)`. Behaviour is undefined
 /// otherwise. Inputs in Montgomery raw storage are *not* an unsoundness
 /// hazard but produce a wrong-domain result.
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 ///
 /// # Panics
 ///
@@ -144,6 +162,9 @@ pub unsafe fn fp_medium_batch_mul(a: &[u16], b: &[u16], p: u16, barrett_m: u32, 
 ///
 /// Caller must ensure AVX2 is available at runtime and all input values
 /// are `< p`. Behaviour is undefined otherwise.
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_medium_batch_add(a: &[u16], b: &[u16], p: u16, out: &mut [u16]) {
     assert_eq!(a.len(), b.len(), "fp_medium_batch_add: length mismatch");
@@ -181,6 +202,9 @@ pub unsafe fn fp_medium_batch_add(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
 ///
 /// Caller must ensure AVX2 is available at runtime and all input values
 /// are `< p`. Behaviour is undefined otherwise.
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16]) {
     assert_eq!(a.len(), b.len(), "fp_medium_batch_sub: length mismatch");
@@ -235,6 +259,9 @@ pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
 ///
 /// Caller must ensure AVX2 is available and all input values are `< p`.
 ///
+/// The length assertion bounds every load. Both slices are only read, through
+/// references that carry pointer validity.
+///
 /// # Panics
 ///
 /// Panics if `a.len() != b.len()`.
@@ -251,6 +278,11 @@ pub unsafe fn fp_medium_batch_dot(a: &[u16], b: &[u16], p: u16) -> u32 {
 
 /// Fast path for `p ≤ 32767`: signed `_mm256_madd_epi16` with per-prime
 /// panel-size accumulation in u32 lanes before draining to u64.
+///
+/// # Safety
+///
+/// The host supports AVX2 and `b` is at least as long as `a`. Both slices are
+/// only read, through references that carry pointer validity.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_medium_batch_dot_madd(a: &[u16], b: &[u16], p: u16) -> u32 {
@@ -313,6 +345,11 @@ unsafe fn fp_medium_batch_dot_madd(a: &[u16], b: &[u16], p: u16) -> u32 {
 /// Fallback path for `p > 32767`: full u32 products via mullo + mulhi,
 /// widened to u64 per chunk. No panel batching possible (a single u32
 /// product can approach 2^32).
+///
+/// # Safety
+///
+/// The host supports AVX2 and `b` is at least as long as `a`. Both slices are
+/// only read, through references that carry pointer validity.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_medium_batch_dot_mulhi(a: &[u16], b: &[u16], p: u16) -> u32 {
@@ -389,6 +426,8 @@ unsafe fn fp_medium_batch_dot_mulhi(a: &[u16], b: &[u16], p: u16) -> u32 {
 /// - `a_vals.len() == a_cols.len()`,
 /// - every `a_cols[h] * b_stride + n <= b.len()`,
 /// - `out.len() == n`.
+///
+/// The references carry pointer validity and exclusive access to `out`.
 ///
 /// # Panics
 ///
@@ -535,6 +574,9 @@ fn fp_medium_nc_panels_outer(n_panels: usize, k: usize) -> usize {
 /// Caller must ensure AVX2 is available at runtime, `p in (251, 2^16)`
 /// is an odd prime, and all input lanes are canonical (`< p`).
 ///
+/// The shape assertions bound every access, and the slice references carry
+/// pointer validity and exclusive access to `c`.
+///
 /// # Panics
 ///
 /// Panics if any slice length disagrees with `m`, `k`, `n`.
@@ -647,6 +689,12 @@ pub unsafe fn fp_medium_gemm_panel(
 /// Monomorphised on `M_EFF` so the row-fold loop collapses to a
 /// straight stride-2 write for the steady-state `M_EFF == MR ==
 /// 2` case and to a single unit-stride write for `M_EFF == 1`.
+///
+/// # Safety
+///
+/// The host supports AVX2. `M_EFF <= FP_MEDIUM_PANEL_MR`, `a` holds at least
+/// `(i_blk + M_EFF) * k` lanes and `a_pack` at least `FP_MEDIUM_PANEL_MR * k`.
+/// The references carry pointer validity and exclusive access to `a_pack`.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_medium_pack_a_block<const M_EFF: usize>(
@@ -689,6 +737,15 @@ unsafe fn fp_medium_pack_a_block<const M_EFF: usize>(
 /// `fp_medium_pack_a_block`: `a_pack[t * MR + r]` holds the A row-`r`
 /// value at column `t` for the current i_blk strip. This converts
 /// the MR row reads per k-step into a single contiguous load.
+///
+/// # Safety
+///
+/// The host supports AVX2. `M_EFF <= FP_MEDIUM_PANEL_MR`, `a_pack` holds at
+/// least `FP_MEDIUM_PANEL_MR * k` lanes, `b_packed` holds `k *
+/// FP_MEDIUM_PANEL_NR` lanes from `panel_off`, `n_eff <= FP_MEDIUM_PANEL_NR`,
+/// and `c` holds the cells `(i_blk + r) * n + j_blk + j_off` for `r < M_EFF`
+/// and `j_off < n_eff`. The references carry pointer validity and exclusive
+/// access to `c`.
 #[inline]
 #[target_feature(enable = "avx2")]
 #[allow(clippy::too_many_arguments)]
@@ -948,6 +1005,7 @@ mod tests {
         let a: Vec<u16> = (0..50u16).map(|i| (i * 137) % P_65521).collect();
         let b: Vec<u16> = (0..50u16).map(|i| (i * 211 + 17) % P_65521).collect();
         let mut out = vec![0u16; 50];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_medium_batch_mul(&a, &b, P_65521, M_65521, &mut out) };
         for i in 0..50 {
             assert_eq!(out[i], scalar_mul(a[i], b[i], P_65521), "i={i}");
@@ -967,6 +1025,7 @@ mod tests {
             65520u16, 0, 65520, 2, 32760, 1, 0, 3, 65519, 32761, 65520, 100, 0, 65520, 2, 32760,
         ];
         let mut out = vec![0u16; 16];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_medium_batch_mul(&a, &b, P_65521, M_65521, &mut out) };
         for i in 0..16 {
             assert_eq!(out[i], scalar_mul(a[i], b[i], P_65521), "i={i}");
@@ -986,6 +1045,7 @@ mod tests {
                 .map(|i| ((i as u32 * 211 + 7) % P_65521 as u32) as u16)
                 .collect();
             let mut out = vec![0u16; len];
+            // SAFETY: AVX2 was detected above.
             unsafe { fp_medium_batch_mul(&a, &b, P_65521, M_65521, &mut out) };
             for i in 0..len {
                 assert_eq!(out[i], scalar_mul(a[i], b[i], P_65521), "len={len} i={i}");
@@ -1006,6 +1066,7 @@ mod tests {
                 .map(|i| ((i as u32 * 9973) % P_65521 as u32) as u16)
                 .collect();
             let mut out = vec![0u16; len];
+            // SAFETY: AVX2 was detected above.
             unsafe { fp_medium_batch_add(&a, &b, P_65521, &mut out) };
             for i in 0..len {
                 assert_eq!(out[i], scalar_add(a[i], b[i], P_65521), "len={len} i={i}");
@@ -1026,6 +1087,7 @@ mod tests {
                 .map(|i| ((i as u32 * 9973) % P_65521 as u32) as u16)
                 .collect();
             let mut out = vec![0u16; len];
+            // SAFETY: AVX2 was detected above.
             unsafe { fp_medium_batch_sub(&a, &b, P_65521, &mut out) };
             for i in 0..len {
                 assert_eq!(out[i], scalar_sub(a[i], b[i], P_65521), "len={len} i={i}");
@@ -1045,6 +1107,7 @@ mod tests {
             let b: Vec<u16> = (0..len)
                 .map(|i| ((i as u32 * 23 + 5) % P_65521 as u32) as u16)
                 .collect();
+            // SAFETY: AVX2 was detected above.
             let got = unsafe { fp_medium_batch_dot(&a, &b, P_65521) };
             let mut expected: u64 = 0;
             for i in 0..len {
@@ -1062,6 +1125,7 @@ mod tests {
         // Worst-case lane saturation: every product is (P-1)² ≈ 2^32.
         let a = vec![65520u16; 1024];
         let b = vec![65520u16; 1024];
+        // SAFETY: AVX2 was detected above.
         let got = unsafe { fp_medium_batch_dot(&a, &b, P_65521) };
         let expected = (1024u64 * 65520u64 * 65520u64) % P_65521 as u64;
         assert_eq!(got as u64, expected);
@@ -1081,10 +1145,12 @@ mod tests {
                 .map(|i| ((i as u32 * 23 + 5) % p as u32) as u16)
                 .collect();
             let mut out = vec![0u16; 200];
+            // SAFETY: AVX2 was detected above.
             unsafe { fp_medium_batch_mul(&a, &b, p, m, &mut out) };
             for i in 0..200 {
                 assert_eq!(out[i], scalar_mul(a[i], b[i], p), "p={p} i={i}");
             }
+            // SAFETY: AVX2 was detected above.
             let got = unsafe { fp_medium_batch_dot(&a, &b, p) };
             let mut expected: u64 = 0;
             for i in 0..200 {
@@ -1120,6 +1186,7 @@ mod tests {
                     .map(|i| ((i * 23 + 5) % p as u32) as u16)
                     .collect();
                 let mut out = vec![0u16; n];
+                // SAFETY: AVX2 was detected above.
                 unsafe { fp_medium_spmm_row(&a_vals, &a_cols, &b, n, n, p, &mut out) };
                 for (j, &val) in out.iter().enumerate() {
                     let mut expected: u64 = 0;
@@ -1148,6 +1215,7 @@ mod tests {
         let a_cols: Vec<usize> = vec![];
         let b: Vec<u16> = (0..n).map(|i| ((i as u32 * 7) % p as u32) as u16).collect();
         let mut out = vec![5u16; n];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_medium_spmm_row(&a_vals, &a_cols, &b, n, n, p, &mut out) };
         for (j, &val) in out.iter().enumerate().take(n) {
             assert_eq!(val, 0, "j={j}");
@@ -1199,6 +1267,7 @@ mod tests {
                     .map(|i| ((i as u32 * 23 + 7) % p as u32) as u16)
                     .collect();
                 let mut got = vec![0u16; m * n];
+                // SAFETY: AVX2 was detected above.
                 unsafe { fp_medium_gemm_panel(&a, &bt, m, k, n, p, &mut got) };
                 let expected = scalar_gemm_u16(&a, &bt, m, k, n, p);
                 assert_eq!(got, expected, "p={p} m={m} k={k} n={n}");
@@ -1219,6 +1288,7 @@ mod tests {
         let a: Vec<u16> = vec![65520u16; m * k];
         let bt: Vec<u16> = vec![65520u16; n * k];
         let mut got = vec![0u16; m * n];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_medium_gemm_panel(&a, &bt, m, k, n, p, &mut got) };
         let cell = ((k as u64) * 65520u64 * 65520u64) % p as u64;
         for &v in &got {
@@ -1235,12 +1305,16 @@ mod tests {
         // early-return path without scribbling on the empty c slice.
         let p = 65521u16;
         let mut out0 = vec![];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_medium_gemm_panel(&[], &[], 0, 0, 0, p, &mut out0) };
         let mut out_m = vec![];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_medium_gemm_panel(&[], &[42u16; 4], 0, 1, 4, p, &mut out_m) };
         let mut out_n = vec![];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_medium_gemm_panel(&[42u16; 4], &[], 4, 1, 0, p, &mut out_n) };
         let mut out_k = vec![0u16; 4 * 4];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_medium_gemm_panel(&[], &[], 4, 0, 4, p, &mut out_k) };
         // k=0 leaves c unchanged at its caller-provided initial value.
         for &v in &out_k {

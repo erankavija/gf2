@@ -35,6 +35,9 @@ pub use crate::fp_small_panel::KC;
 /// Caller must ensure AVX2 is available at runtime, `p ∈ [3, 251]`
 /// is an odd prime, and all input bytes are canonical (`< p`).
 ///
+/// The shape assertions bound every access, and the slice references carry
+/// pointer validity and exclusive access to `c`.
+///
 /// # Panics
 ///
 /// Panics if any slice length disagrees with `m`, `k`, `n`.
@@ -175,6 +178,12 @@ pub unsafe fn fp_small_panel_gemm(
 /// `dst` is a `Vec<u32>` of length `MR * (k_padded / 2)`; the layout
 /// matches the inner-kernel access pattern
 /// `a_pack32[(t/2) * MR + i] = (a[i,t+1] << 16) | a[i,t]`.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every access is bounds-checked through references
+/// that carry pointer validity and exclusive access to `dst`, so no length
+/// condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn pack_a_block<const M_EFF: usize>(
@@ -234,6 +243,12 @@ unsafe fn pack_a_block<const M_EFF: usize>(
 }
 
 /// Drives all n-panels for one MR-row block of A.
+///
+/// # Safety
+///
+/// As [`run_one_panel`] for each of the `n_panels` panels: `b_packed` holds
+/// `n_panels * panel_bytes` bytes with `panel_bytes == k_padded * NR`, and `c`
+/// holds rows `i_blk..i_blk + M_EFF` of width `n`.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn run_one_m_block<const M_EFF: usize>(
@@ -272,6 +287,14 @@ unsafe fn run_one_m_block<const M_EFF: usize>(
 /// `KC / 2` pair-steps per cache chunk. After the last chunk for
 /// this panel, the 12 u32 SIMD accumulators are reduced mod p and
 /// packed to u8 output bytes.
+///
+/// # Safety
+///
+/// The host supports AVX2. `M_EFF <= MR`, `a_pack32` holds `MR * (k_padded /
+/// 2)` lanes, `b_packed` holds `k_padded * NR` bytes from `panel_off`, `n_eff
+/// <= NR`, and `c` holds the cells `(i_blk + r) * n + j_blk + j_off` for `r <
+/// M_EFF` and `j_off < n_eff`. The references carry pointer validity and
+/// exclusive access to `c`.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn run_one_panel<const M_EFF: usize>(
@@ -411,6 +434,11 @@ unsafe fn run_one_panel<const M_EFF: usize>(
 ///
 /// The same pack sequence as `pack_i32x8_to_u8` in
 /// `crate::x86::fp_small_f32`.
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn pack_i32x8_to_u8_local(reduced: __m256i) -> [u8; 8] {
@@ -484,6 +512,8 @@ mod tests {
                     .map(|i| ((i * 23 + 5) % p as u32) as u8)
                     .collect();
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2.
                 unsafe { fp_small_panel_gemm(&a, &bt, m, k, n, p, &mut got) };
                 let expected = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, expected, "p={p} m={m} k={k} n={n}");
@@ -507,6 +537,8 @@ mod tests {
                     .map(|i| ((i * 19 + 3) % p as u32) as u8)
                     .collect();
                 let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2.
                 unsafe { fp_small_panel_gemm(&a, &bt, m, k, n, p, &mut got) };
                 let expected = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, expected, "p={p} n={n}");
@@ -522,6 +554,7 @@ mod tests {
         let a: Vec<u8> = vec![];
         let bt: Vec<u8> = vec![];
         let mut out: Vec<u8> = vec![];
+        // SAFETY: AVX2 was detected above.
         unsafe { fp_small_panel_gemm(&a, &bt, 0, 0, 0, 7, &mut out) };
         assert!(out.is_empty());
     }

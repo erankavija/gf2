@@ -42,6 +42,9 @@ pub trait BipedalLikeConfig {
     ///
     /// Hardware feature underlying [`Self::MagLane`] / [`Self::SgnLane`]
     /// must be available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     unsafe fn add_lane(
         m1: Self::MagLane,
         s1: Self::SgnLane,
@@ -55,6 +58,9 @@ pub trait BipedalLikeConfig {
     ///
     /// Hardware feature underlying [`Self::MagLane`] / [`Self::SgnLane`]
     /// must be available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     unsafe fn sub_lane(
         m1: Self::MagLane,
         s1: Self::SgnLane,
@@ -70,6 +76,9 @@ pub trait BipedalLikeConfig {
     ///
     /// Hardware feature underlying [`Self::MagLane`] / [`Self::SgnLane`]
     /// must be available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     unsafe fn mul_lane(
         m1: Self::MagLane,
         s1: Self::SgnLane,
@@ -86,6 +95,9 @@ pub trait BipedalLikeConfig {
     ///
     /// Hardware feature underlying [`Self::MagLane`] / [`Self::SgnLane`]
     /// must be available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     unsafe fn neg_lane(m: Self::MagLane, s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane);
 }
 
@@ -112,6 +124,9 @@ where
     ///
     /// Hardware feature underlying `C::MagLane` and `C::SgnLane` must be
     /// available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     #[inline(always)]
     pub unsafe fn add(
         m1: C::MagLane,
@@ -129,6 +144,9 @@ where
     ///
     /// Hardware feature underlying `C::MagLane` and `C::SgnLane` must be
     /// available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     #[inline(always)]
     pub unsafe fn sub(
         m1: C::MagLane,
@@ -146,6 +164,9 @@ where
     ///
     /// Hardware feature underlying `C::MagLane` and `C::SgnLane` must be
     /// available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     #[inline(always)]
     pub unsafe fn mul(
         m1: C::MagLane,
@@ -163,6 +184,9 @@ where
     ///
     /// Hardware feature underlying `C::MagLane` and `C::SgnLane` must be
     /// available.
+    ///
+    /// Every argument is a value, so no pointer, length or aliasing condition
+    /// applies.
     #[inline(always)]
     pub unsafe fn neg(m: C::MagLane, s: C::SgnLane) -> (C::MagLane, C::SgnLane) {
         // SAFETY: forwarded precondition — hardware feature available.

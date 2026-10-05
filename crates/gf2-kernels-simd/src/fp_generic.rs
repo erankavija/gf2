@@ -52,19 +52,19 @@ fn detect_x86() -> Option<FpGenericFns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_mul_safe(a: &[u64], b: &[u64], modulus: u64, p_inv: u64, out: &mut [u64]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_generic::fp_montgomery_batch_mul(a, b, modulus, p_inv, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_add_safe(a: &[u64], b: &[u64], modulus: u64, out: &mut [u64]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_generic::fp_montgomery_batch_add(a, b, modulus, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_sub_safe(a: &[u64], b: &[u64], modulus: u64, out: &mut [u64]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_generic::fp_montgomery_batch_sub(a, b, modulus, out) }
 }
 

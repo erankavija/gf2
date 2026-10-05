@@ -1,0 +1,8 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; output        : crates/gf2-kernels-simd/src/x86/asm/gf2m_common.asm.txt
+; ---------------------------------------------------------
+; No listing: every function of `x86/gf2m_common.rs` is `#[inline(always)]`.
+; Its instructions appear inside the kernels of `gf2m_batch.asm.txt` and
+; `gf2m_gemm.asm.txt`.

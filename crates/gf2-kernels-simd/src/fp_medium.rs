@@ -35,6 +35,12 @@ pub type MediumPrimeBatchDotFn = fn(&[u16], &[u16], u16) -> u32;
 /// a_cols)` with canonical u16 lanes; `b` is a row-major dense u16
 /// matrix with row stride `b_stride`. `out` is the dense output row of
 /// length `n`.
+///
+/// Each index must satisfy `a_cols[h] * b_stride + n <= b.len()`.
+///
+/// # Panics
+///
+/// Panics if `a_vals.len() != a_cols.len()` or `out.len() != n`.
 pub type MediumPrimeSpmmRowFn = fn(&[u16], &[usize], &[u16], usize, usize, u16, &mut [u16]);
 
 /// Whole-GEMM panel kernel for medium-prime `Fp<P>` with `P ∈ (251,
@@ -94,25 +100,25 @@ fn detect_x86() -> Option<MediumPrimeFns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_mul_safe(a: &[u16], b: &[u16], p: u16, barrett_m: u32, out: &mut [u16]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_medium::fp_medium_batch_mul(a, b, p, barrett_m, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_add_safe(a: &[u16], b: &[u16], p: u16, out: &mut [u16]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_medium::fp_medium_batch_add(a, b, p, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_sub_safe(a: &[u16], b: &[u16], p: u16, out: &mut [u16]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_medium::fp_medium_batch_sub(a, b, p, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_dot_safe(a: &[u16], b: &[u16], p: u16) -> u32 {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_medium::fp_medium_batch_dot(a, b, p) }
 }
 
@@ -126,13 +132,15 @@ fn spmm_row_safe(
     p: u16,
     out: &mut [u16],
 ) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
+    // The column bound is the caller's, as `MediumPrimeSpmmRowFn` documents;
+    // the kernel asserts the other lengths.
     unsafe { crate::x86::fp_medium::fp_medium_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn gemm_panel_safe(a: &[u16], bt: &[u16], m: usize, k: usize, n: usize, p: u16, c: &mut [u16]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_medium::fp_medium_gemm_panel(a, bt, m, k, n, p, c) }
 }
 

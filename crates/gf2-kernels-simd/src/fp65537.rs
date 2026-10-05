@@ -114,19 +114,19 @@ fn detect_x86() -> Option<Fp65537Fns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_mul_safe(a: &[u32], b: &[u32], out: &mut [u32]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp65537::fp65537_batch_mul(a, b, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_add_safe(a: &[u32], b: &[u32], out: &mut [u32]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp65537::fp65537_batch_add(a, b, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_sub_safe(a: &[u32], b: &[u32], out: &mut [u32]) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp65537::fp65537_batch_sub(a, b, out) }
 }
 
@@ -140,7 +140,7 @@ fn batch_karatsuba_safe(
     out_c0: &mut [u32],
     out_c1: &mut [u32],
 ) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp65537::fp65537_batch_karatsuba(a0, a1, b0, b1, beta, out_c0, out_c1) }
 }
 
@@ -158,7 +158,7 @@ fn batch_cubic_karatsuba_safe(
     out_c1: &mut [u32],
     out_c2: &mut [u32],
 ) {
-    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe {
         crate::x86::fp65537::fp65537_batch_cubic_karatsuba(
             a0, a1, a2, b0, b1, b2, beta, out_c0, out_c1, out_c2,

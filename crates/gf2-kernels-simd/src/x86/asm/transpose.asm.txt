@@ -4,12 +4,12 @@
 ; primary       : gf2_kernels_simd::x86::transpose::transpose_64x64_avx2#0
 ; extra symbols : gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6 gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_pshufb gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_movemask
 ; output        : crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt
-; rustc         : rustc 1.97.0 (2d8144b78 2026-07-07)
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 3dad2478
-; regenerated   : 2026-09-13T11:48:34Z
+; commit        : 8ff1644cb
+; regenerated   : 2026-10-05T03:38:07Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,9 +18,8 @@
 ; symbol: gf2_kernels_simd::x86::transpose::transpose_64x64_avx2 (index 0)
 ;==========================================================
 
-   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1d4fd63d/crates/gf2-kernels-simd)
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 4.32s
 gf2_kernels_simd::x86::transpose::transpose_64x64_avx2:
 	push rbx
 	sub rsp, 704
@@ -162,7 +161,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2:
 	vpxor ymm5, ymm5, ymm2
 	vpsllw ymm6, ymm5, 8
 	vpxor ymm6, ymm6, ymm3
-	vpbroadcastw ymm3, word ptr [rip + .LCPI198_0]
+	vpbroadcastw ymm3, word ptr [rip + .LCPI141_0]
 	vpand ymm5, ymm5, ymm3
 	vpxor ymm2, ymm5, ymm2
 	vmovdqu ymmword ptr [rsp + 640], ymm2
@@ -216,7 +215,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2:
 	vpxor ymm15, ymm15, ymm7
 	vpsrlq ymm0, ymm6, 4
 	vpxor ymm7, ymm0, ymm5
-	vpbroadcastq ymm0, qword ptr [rip + .LCPI198_1]
+	vpbroadcastq ymm0, qword ptr [rip + .LCPI141_1]
 	vpand ymm7, ymm7, ymm0
 	vpsllq ymm11, ymm7, 4
 	vpxor ymm6, ymm11, ymm6
@@ -286,12 +285,12 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2:
 	lea rcx, [rsp + 144]
 	xor edx, edx
 	movabs rsi, 3689348814741910323
-.LBB198_1:
+.LBB141_1:
 	xor r8d, r8d
-.LBB198_2:
+.LBB141_2:
 	lea rdi, [rax + r8]
 	cmp rdi, 63
-	ja .LBB198_11
+	ja .LBB141_11
 	mov rdi, qword ptr [rcx + 8*r8 - 16]
 	mov r9, qword ptr [rcx + 8*r8]
 	mov r10, rdi
@@ -305,22 +304,22 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2:
 	mov qword ptr [rcx + 8*r8], r10
 	inc r8
 	cmp r8, 2
-	jne .LBB198_2
+	jne .LBB141_2
 	add rdx, 4
 	add rax, 4
 	add rcx, 32
 	cmp rdx, 64
-	jb .LBB198_1
+	jb .LBB141_1
 	mov eax, 1
 	lea rcx, [rsp + 136]
 	xor edx, edx
 	movabs rsi, 6148914691236517205
-.LBB198_6:
+.LBB141_6:
 	xor r8d, r8d
-.LBB198_7:
+.LBB141_7:
 	lea rdi, [rax + r8]
 	cmp rdi, 63
-	ja .LBB198_11
+	ja .LBB141_11
 	mov rdi, qword ptr [rcx + 8*r8 - 8]
 	mov r9, qword ptr [rcx + 8*r8]
 	mov r10, rdi
@@ -334,12 +333,12 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2:
 	mov qword ptr [rcx + 8*r8], r10
 	inc r8
 	cmp r8, 1
-	jne .LBB198_7
+	jne .LBB141_7
 	add rdx, 2
 	add rax, 2
 	add rcx, 16
 	cmp rdx, 64
-	jb .LBB198_6
+	jb .LBB141_6
 	lea rsi, [rsp + 128]
 	mov edx, 512
 	mov rdi, rbx
@@ -348,8 +347,8 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2:
 	add rsp, 704
 	pop rbx
 	ret
-.LBB198_11:
-	lea rdx, [rip + .Lanon.9d35f9650c42b45bd48afc665672ce64.320]
+.LBB141_11:
+	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.325]
 	mov esi, 64
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
@@ -358,7 +357,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2:
 ; symbol: gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.06s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6:
 	sub rsp, 104
@@ -496,7 +495,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6:
 	vpxor ymm4, ymm0, ymm7
 	vpsllw ymm0, ymm4, 8
 	vpxor ymm9, ymm0, ymm6
-	vpbroadcastw ymm0, word ptr [rip + .LCPI199_0]
+	vpbroadcastw ymm0, word ptr [rip + .LCPI142_0]
 	vpand ymm4, ymm4, ymm0
 	vpxor ymm4, ymm4, ymm7
 	vmovdqu ymmword ptr [rsp + 32], ymm4
@@ -554,7 +553,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6:
 	vmovdqu ymmword ptr [rsp - 32], ymm0
 	vpsrlq ymm0, ymm9, 4
 	vpxor ymm8, ymm0, ymm4
-	vpbroadcastq ymm0, qword ptr [rip + .LCPI199_1]
+	vpbroadcastq ymm0, qword ptr [rip + .LCPI142_1]
 	vpand ymm8, ymm8, ymm0
 	vpsllq ymm7, ymm8, 4
 	vpxor ymm9, ymm9, ymm7
@@ -618,7 +617,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6:
 	vpermq ymm1, ymm9, 238
 	vpsrlq ymm0, ymm0, 2
 	vpxor ymm1, ymm0, ymm1
-	vpbroadcastq ymm0, qword ptr [rip + .LCPI199_2]
+	vpbroadcastq ymm0, qword ptr [rip + .LCPI142_2]
 	vpand ymm1, ymm1, ymm0
 	vpsllq xmm2, xmm1, 2
 	vpxor ymm2, ymm9, ymm2
@@ -787,7 +786,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6:
 	vpshufd ymm0, ymm1, 68
 	vpshufd ymm2, ymm1, 238
 	vpsrlq ymm3, ymm0, 1
-	vpbroadcastq ymm0, qword ptr [rip + .LCPI199_3]
+	vpbroadcastq ymm0, qword ptr [rip + .LCPI142_3]
 	vpxor ymm2, ymm3, ymm2
 	vpand ymm2, ymm2, ymm0
 	vpaddq ymm3, ymm2, ymm2
@@ -968,7 +967,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6:
 ; symbol: gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_pshufb
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.05s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_pshufb:
 	push rbx
@@ -992,25 +991,25 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_pshufb:
 	vmovups ymmword ptr [rsp + 32], ymm0
 	vmovups ymmword ptr [rsp], ymm0
 	xor ecx, ecx
-.LBB200_1:
+.LBB143_1:
 	mov rdx, qword ptr [rdi + rcx]
 	mov qword ptr [rsp + rcx], rdx
 	add rcx, 8
 	cmp rcx, 512
-	jne .LBB200_1
+	jne .LBB143_1
 	vmovdqu ymm1, ymmword ptr [rsp]
 	vmovdqu ymm3, ymmword ptr [rsp + 32]
 	vmovdqu ymm4, ymmword ptr [rsp + 64]
 	vmovdqu ymm5, ymmword ptr [rsp + 96]
 	vpsrlw ymm2, ymm1, 4
-	vpbroadcastb ymm0, byte ptr [rip + .LCPI200_3]
+	vpbroadcastb ymm0, byte ptr [rip + .LCPI143_3]
 	vpand ymm6, ymm1, ymm0
-	vmovdqa ymm1, ymmword ptr [rip + .LCPI200_1]
+	vmovdqa ymm1, ymmword ptr [rip + .LCPI143_1]
 	vpshufb ymm6, ymm1, ymm6
 	vpand ymm2, ymm2, ymm0
 	vpshufb ymm7, ymm1, ymm2
 	vpsllw ymm6, ymm6, 4
-	vpbroadcastd ymm2, dword ptr [rip + .LCPI200_2]
+	vpbroadcastd ymm2, dword ptr [rip + .LCPI143_2]
 	vpand ymm6, ymm6, ymm2
 	vpor ymm6, ymm6, ymm7
 	vmovdqu ymmword ptr [rsp + 1024], ymm6
@@ -1181,91 +1180,91 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_pshufb:
 	lea rdx, [rsp + 1024]
 	xor esi, esi
 	xor edi, edi
-	jmp .LBB200_4
-.LBB200_3:
+	jmp .LBB143_4
+.LBB143_3:
 	inc rdi
 	add rdx, 64
 	add rsi, 8
 	cmp rdi, 8
-	je .LBB200_5
-.LBB200_4:
+	je .LBB143_5
+.LBB143_4:
 	mov r8, rdx
 	xor r9d, r9d
-	jmp .LBB200_7
-.LBB200_6:
+	jmp .LBB143_7
+.LBB143_6:
 	inc r9
 	inc r8
 	cmp r9, 8
-	je .LBB200_3
-.LBB200_7:
+	je .LBB143_3
+.LBB143_7:
 	mov r10, r9
 	shl r10, 6
 	xor r11d, r11d
-	jmp .LBB200_8
-.LBB200_24:
+	jmp .LBB143_8
+.LBB143_24:
 	inc r11
 	cmp r11, 8
-	je .LBB200_6
-.LBB200_8:
+	je .LBB143_6
+.LBB143_8:
 	lea ecx, [rsi + r11]
 	mov ebx, 1
 	shl rbx, cl
 	movzx ecx, byte ptr [r8 + 8*r11]
 	test cl, cl
-	js .LBB200_9
+	js .LBB143_9
 	test cl, 64
-	jne .LBB200_11
-.LBB200_12:
+	jne .LBB143_11
+.LBB143_12:
 	test cl, 32
-	jne .LBB200_13
-.LBB200_14:
+	jne .LBB143_13
+.LBB143_14:
 	test cl, 16
-	jne .LBB200_15
-.LBB200_16:
+	jne .LBB143_15
+.LBB143_16:
 	test cl, 8
-	jne .LBB200_17
-.LBB200_18:
+	jne .LBB143_17
+.LBB143_18:
 	test cl, 4
-	jne .LBB200_19
-.LBB200_20:
+	jne .LBB143_19
+.LBB143_20:
 	test cl, 2
-	jne .LBB200_21
-.LBB200_22:
+	jne .LBB143_21
+.LBB143_22:
 	test cl, 1
-	je .LBB200_24
-	jmp .LBB200_23
-.LBB200_9:
+	je .LBB143_24
+	jmp .LBB143_23
+.LBB143_9:
 	or qword ptr [rsp + r10 + 512], rbx
 	test cl, 64
-	je .LBB200_12
-.LBB200_11:
+	je .LBB143_12
+.LBB143_11:
 	or qword ptr [rsp + r10 + 520], rbx
 	test cl, 32
-	je .LBB200_14
-.LBB200_13:
+	je .LBB143_14
+.LBB143_13:
 	or qword ptr [rsp + r10 + 528], rbx
 	test cl, 16
-	je .LBB200_16
-.LBB200_15:
+	je .LBB143_16
+.LBB143_15:
 	or qword ptr [rsp + r10 + 536], rbx
 	test cl, 8
-	je .LBB200_18
-.LBB200_17:
+	je .LBB143_18
+.LBB143_17:
 	or qword ptr [rsp + r10 + 544], rbx
 	test cl, 4
-	je .LBB200_20
-.LBB200_19:
+	je .LBB143_20
+.LBB143_19:
 	or qword ptr [rsp + r10 + 552], rbx
 	test cl, 2
-	je .LBB200_22
-.LBB200_21:
+	je .LBB143_22
+.LBB143_21:
 	or qword ptr [rsp + r10 + 560], rbx
 	test cl, 1
-	je .LBB200_24
-.LBB200_23:
+	je .LBB143_24
+.LBB143_23:
 	or qword ptr [rsp + r10 + 568], rbx
-	jmp .LBB200_24
-.LBB200_5:
+	jmp .LBB143_24
+.LBB143_5:
 	lea rsi, [rsp + 512]
 	mov edx, 512
 	mov rdi, rax
@@ -1301,7 +1300,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_movemask:
 	vmovdqu ymmword ptr [rsp - 96], ymm0
 	vmovdqu ymmword ptr [rsp - 128], ymm0
 	mov rax, -8
-.LBB201_1:
+.LBB144_1:
 	vmovq xmm0, qword ptr [rdi + 8*rax + 80]
 	vmovq xmm1, qword ptr [rdi + 8*rax + 64]
 	vmovq xmm2, qword ptr [rdi + 8*rax + 88]
@@ -1332,9 +1331,9 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_movemask:
 	vpextrq qword ptr [rsp + rax + 328], xmm0, 1
 	add rax, 8
 	cmp rax, 56
-	jb .LBB201_1
+	jb .LBB144_1
 	xor eax, eax
-.LBB201_3:
+.LBB144_3:
 	vmovdqu ymm0, ymmword ptr [rsp + rax - 128]
 	vmovdqu ymm1, ymmword ptr [rsp + rax - 96]
 	vpmovmskb ecx, ymm1
@@ -1393,78 +1392,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_movemask:
 	mov qword ptr [rsi + rax], rdx
 	add rax, 64
 	cmp rax, 512
-	jne .LBB201_3
+	jne .LBB144_3
 	add rsp, 392
 	vzeroupper
 	ret
-
-
-;==========================================================
-; Derived annotation: counts taken from the disassembly above.
-;==========================================================
-
-;=== derived annotation for gf2_kernels_simd::x86::transpose::transpose_64x64_avx2 (index 0) ===
-;
-; instructions                            326
-; stack frame bytes                       704
-; block copies (memcpy)                   2
-; frame stores                            31
-; frame loads                             27
-; vmovdqu (256-bit unaligned moves)       58
-; vpxor (vector XOR)                      97
-; vpand (vector AND)                      16
-; vpsllq (vector shift left (quadword))   16
-; vpsrlq (vector shift right (quadword))  32
-; vpblendd (vector blend (doubleword))    8
-; call (calls)                            3
-;
-
-;=== derived annotation for gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_ymm6 ===
-;
-; instructions                            602
-; stack frame bytes                       104
-; block copies (memcpy)                   0
-; frame stores                            15
-; frame loads                             15
-; vmovdqu (256-bit unaligned moves)       113
-; vpxor (vector XOR)                      193
-; vpand (vector AND)                      48
-; vpsllq (vector shift left (quadword))   32
-; vpsrlq (vector shift right (quadword))  64
-; vpblendd (vector blend (doubleword))    40
-; vpermq (cross-lane quadword permute)    32
-; vpshufd (in-lane doubleword shuffle)    32
-;
-
-;=== derived annotation for gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_pshufb ===
-;
-; instructions                       281
-; stack frame bytes                  1536
-; block copies (memcpy)              1
-; frame stores                       57
-; frame loads                        16
-; vmovdqu (256-bit unaligned moves)  48
-; vpxor (vector XOR)                 1
-; vpand (vector AND)                 48
-; vpshufb (in-lane byte shuffle)     32
-; call (calls)                       1
-;
-
-;=== derived annotation for gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_movemask ===
-;
-; instructions                               113
-; stack frame bytes                          392
-; block copies (memcpy)                      0
-; frame stores                               24
-; frame loads                                2
-; vmovdqu (256-bit unaligned moves)          18
-; vpxor (vector XOR)                         1
-; vpmovmskb (byte sign-bit extraction)       16
-; vpaddb (vector byte add)                   2
-; vpunpcklbw (byte interleave (low))         4
-; vpunpcklwd (word interleave (low))         2
-; vpunpckhwd (word interleave (high))        2
-; vpunpckldq (doubleword interleave (low))   2
-; vpunpckhdq (doubleword interleave (high))  2
-; vmovq (64-bit vector move)                 12
-;

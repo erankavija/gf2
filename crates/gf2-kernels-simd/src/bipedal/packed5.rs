@@ -259,7 +259,7 @@ pub type F5BinaryKernelFn =
 
 /// Unary batch kernel for F_5: `(b0, b1, b2) -> (out0, out1, out2)`.
 ///
-/// All six slices must have the same length.
+/// All six slices must have the same length (a multiple of 4 for the AVX2 path).
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type F5UnaryKernelFn = fn(&[u64], &[u64], &[u64], &mut [u64], &mut [u64], &mut [u64]);
 
@@ -321,6 +321,7 @@ fn add5_safe(
     out_b2: &mut [u64],
 ) {
     // SAFETY: `detect_avx2_f5` only sets this fn ptr when AVX2 is available.
+    // The slice shape is the caller's, as `F5BinaryKernelFn` documents.
     unsafe {
         crate::x86::bipedal_avx2_packed5::run_add5_batch(
             b0a, b1a, b2a, b0b, b1b, b2b, out_b0, out_b1, out_b2,
@@ -342,6 +343,7 @@ fn sub5_safe(
     out_b2: &mut [u64],
 ) {
     // SAFETY: `detect_avx2_f5` only sets this fn ptr when AVX2 is available.
+    // The slice shape is the caller's, as `F5BinaryKernelFn` documents.
     unsafe {
         crate::x86::bipedal_avx2_packed5::run_sub5_batch(
             b0a, b1a, b2a, b0b, b1b, b2b, out_b0, out_b1, out_b2,
@@ -363,6 +365,7 @@ fn mul5_safe(
     out_b2: &mut [u64],
 ) {
     // SAFETY: `detect_avx2_f5` only sets this fn ptr when AVX2 is available.
+    // The slice shape is the caller's, as `F5BinaryKernelFn` documents.
     unsafe {
         crate::x86::bipedal_avx2_packed5::run_mul5_batch(
             b0a, b1a, b2a, b0b, b1b, b2b, out_b0, out_b1, out_b2,
@@ -380,6 +383,7 @@ fn neg5_safe(
     out_b2: &mut [u64],
 ) {
     // SAFETY: `detect_avx2_f5` only sets this fn ptr when AVX2 is available.
+    // The slice shape is the caller's, as `F5UnaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2_packed5::run_neg5_batch(b0, b1, b2, out_b0, out_b1, out_b2) }
 }
 
