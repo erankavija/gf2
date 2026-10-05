@@ -23,7 +23,12 @@ CORE, SIMD, CODING, SIM, ALGEBRA, SUPPORT = (
     "tuning-campaign-support",
 )
 
-# (claim id, package or None for a unique tracked file name, path, fragment, occurrences, why)
+# A document located by file name and opening line.
+SEAM_PROTOCOL = ("premeasurement-protocol.md",
+                 b"# Seam threshold calibration: premeasurement protocol")
+
+# (claim id, package, a (name, opening) document, or None for a unique tracked file name;
+#  path; fragment; occurrences; why)
 CLAIMS = [
     # Cargo features and build configuration.
     ("core-default-features", CORE, "Cargo.toml", 'default = ["rand", "io"]', 1,
@@ -124,7 +129,7 @@ CLAIMS = [
      "        if stride_words >= MATVEC_SIMD_MIN_WORDS_SELECTED {", 1,
      "One compile-time comparison of the row stride selects the SIMD lane."),
     ("matvec-bundle-check", CORE, "src/matrix.rs",
-     "                if let Some(fns) = crate::simd::maybe_simd() {", 1,
+     "        if let Some(fns) = crate::simd::maybe_simd() {", 1,
      "The SIMD lane runs only when the logical bundle is detected."),
     ("matvec-fused-kernel", CORE, "src/matrix.rs",
      "            y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);", 1,
@@ -227,10 +232,15 @@ CLAIMS = [
     ("calibration-validator-behavior", None, "validate-tuning-extent-campaign.py",
      'CORE_BEHAVIOR = "tuning-calibration-v4"', 1,
      "The independent validator pins the producer's behavior token."),
-    ("matvec-scalar-lane-private", CORE, "src/matrix.rs",
-     "    fn matvec_scalar(&self, x: &crate::BitVec) -> crate::BitVec {", 1,
-     "The scalar lane has no public entry, so one build cannot time both lanes at a "
-     "stride the selector sends to the SIMD lane."),
+    ("matvec-lane-entry", CORE, "src/matrix.rs",
+     "    pub fn matvec_with_route(&self, x: &crate::BitVec, route: MatvecRoute) -> "
+     "crate::BitVec {", 1,
+     "One public entry runs the dense product on a caller-chosen lane, so one build "
+     "times both lanes at one stride."),
+    ("matvec-lane-entry-test", CORE, "tests/simd_equiv_matvec.rs",
+     "fn each_route_matches_the_reference_at_stride_and_word_boundaries() {", 1,
+     "Both lanes of the entry match the bit-level reference at the stride and word "
+     "boundaries."),
     ("baked-matvec-conservative-test", CORE, "src/tuning/baked.rs",
      "    fn matvec_simd_min_words_matches_conservative_section() {", 1,
      "A unit test holds the baked matvec threshold equal to the conservative value "
@@ -238,6 +248,20 @@ CLAIMS = [
     ("baked-measured-owner-test", CORE, "src/tuning/baked.rs",
      "    fn baked_simd_threshold_matches_the_strict_measured_owner() {", 1,
      "A unit test holds a measured baked constant equal to the measured owner's value."),
+    ("codec-token-value", CORE, "src/tuning/mod.rs",
+     'const CORE_HARNESS_SCHEMA: &str = "tuning-calibration-v4";', 1,
+     "The core codec names one producer behavior token."),
+    ("codec-accepts-one-token", CORE, "src/tuning/mod.rs",
+     "                if harness_schema.as_str() == CORE_HARNESS_SCHEMA =>", 1,
+     "A calibrated core section reopens only under that token, so a new token would "
+     "reject every committed measured owner."),
+    ("seam-token-unchanged", SEAM_PROTOCOL, None,
+     "The core behaviour token stays `tuning-calibration-v4` and the owner protocol", 1,
+     "The seam campaign added three swept fields under the unchanged token because case "
+     "and result wire shapes did not change."),
+    ("seam-identity-in-manifest", SEAM_PROTOCOL, None,
+     "[`producing-build-inputs.json`](producing-build-inputs.json) carries the", 1,
+     "A campaign's identity is its producing manifest, not the token."),
     # Frozen protocol arithmetic.
     ("protocol-family-alpha", SUPPORT, "src/protocol.rs", "    family_alpha: 0.05,", 1,
      "The frozen family-wise alpha."),
@@ -330,7 +354,9 @@ def main():
     if len({claim[0] for claim in CLAIMS}) != len(CLAIMS):
         raise SystemExit("claim identifiers repeat")
     for identifier, owner, relative, fragment, occurrences, why in CLAIMS:
-        if owner is None:
+        if isinstance(owner, tuple):
+            path = repository_files.document(ROOT, *owner)
+        elif owner is None:
             path = repository_files.live_file(ROOT, relative)
         else:
             path = f"{package(owner)}/{relative}"

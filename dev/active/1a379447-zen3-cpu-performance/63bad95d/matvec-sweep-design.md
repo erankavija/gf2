@@ -8,13 +8,12 @@ Design of the retained-threshold sweep of
 `crates/gf2-core/benches/tuning_calibration.rs`. Claim identifiers in
 backticks resolve in
 [`survey/source-evidence.json`](survey/source-evidence.json). This document
-changes no source.
+changes no source; the lane entry of §1 is in the tree.
 
 ## 1. One entry for a caller-chosen lane
 
-The scalar lane has no public entry (`matvec-scalar-lane-private`), and both
-the producer arms and the cells of `4337c02e` need the two lanes of one
-executable at one stride. One entry serves both:
+The producer arms and the cells of `4337c02e` need the two lanes of one
+executable at one stride. One entry serves both (`matvec-lane-entry`):
 
 ```rust
 impl BitMatrix {
@@ -23,19 +22,26 @@ impl BitMatrix {
 }
 ```
 
-- `BitMatrix::matvec` becomes
-  `self.matvec_with_route(x, matvec_route(self.stride_words))`, so the
-  production call and a pinned lane run one body, as `BitMatrix::transpose`
-  and `transpose_with_block_kernel` do.
-- `MatvecRoute::Simd` runs the scalar lane when the `simd` feature is off or
-  the logical bundle is not detected, which is what `matvec` does today
-  (`matvec-bundle-check`). A caller that needs the kernel lane checks
+- `BitMatrix::matvec` and the entry share the scalar lane and one
+  always-inlined SIMD-lane helper. `matvec` keeps its own two-arm selection,
+  so its instruction text, and that of both lanes, is the same before and
+  after in the default and the `simd` build:
+  [`survey/matvec-asm-comparison.json`](survey/matvec-asm-comparison.json),
+  written by `survey/make-matvec-asm-comparison.py` from the listings under
+  `survey/asm/`. Without `simd` the entry delegates to `matvec`, where both
+  routes are the scalar lane.
+- `MatvecRoute::Simd` runs the scalar lane when the `simd` feature is off,
+  when the logical bundle is not detected (`matvec-bundle-check`), and for a
+  matrix without columns. A caller that needs the kernel lane checks
   `gf2_core::kernels::simd::maybe_simd()` first, as the producer's bit-backend
   arm does (`calibration-bit-arm`).
 - The method is public in every build and adds no process-global switch, so a
   timed arm measures the production code path.
-- Shared-suite coverage precedes the method: `tests/simd_equiv_matvec.rs`
-  compares both routes with its bit-level reference at its boundary shapes.
+- `tests/simd_equiv_matvec.rs` compares both routes with its bit-level
+  reference at the 0, 1, 63, 64 and 65-word strides and the word boundaries
+  (`matvec-lane-entry-test`); the logs of the build with and without `simd`
+  are `survey/test-logs/matvec-route-simd-build.txt` and
+  `survey/test-logs/matvec-route-scalar-build.txt`.
 
 `4337c02e` uses this entry for its two arms and adds none of its own.
 
@@ -69,11 +75,20 @@ profile: each arm calls its lane directly.
   the inventory the producer checks (`calibration-inventory-closed`), and one
   more nine-point two-arm sweep in the declared cell, probe, child and window
   counts.
-- **Behavior token.** `tuning-calibration-v4` stays. The seam campaign added
-  three fields under the same token because case and result wire shapes did
-  not change, and they do not change here; the core codec accepts exactly this
-  token, so every committed measured owner keeps reopening. The campaign's
-  identity is its producing manifest, as for the seam campaign.
+- **Behavior token.** `tuning-calibration-v4` stays. The core codec names one
+  token (`codec-token-value`) and reopens a calibrated section only under it
+  (`codec-accepts-one-token`), so a new token would reject every committed
+  measured owner. The seam campaign added three swept fields under the
+  unchanged token because case and result wire shapes did not change
+  (`seam-token-unchanged`), and they do not change here. The campaign's
+  identity is its producing manifest (`seam-identity-in-manifest`).
+- **Telling the owners apart.** An owner of this campaign differs from an
+  owner that omits the field in three recorded places: its selector body
+  states `bit_matrix.matvec_simd_min_words`, so the field moves from the
+  omitted to the measured side of the inventory partition; its measurement
+  block carries the digest of the producer executable that holds the sweep;
+  and its profile identifier is this campaign's run identifier, whose receipt
+  pins the campaign's producing manifest.
 - **Validator.** `dev/scripts/validate-tuning-extent-campaign.py` gains the
   field's operand reconstruction, its grid and the new counts
   (`calibration-validator-behavior`).
@@ -97,9 +112,8 @@ A disagreement keeps the conservative value and both records are committed.
 
 ## 5. Order of work
 
-1. `matvec_with_route` with its shared-suite tests.
-2. Producer field, validator, protocol amendment, declaration and manifest;
+1. Producer field, validator, protocol amendment, declaration and manifest;
    untimed `--self-check`, `--list-grid` and `--capability-report`.
-3. One queue line for the full core campaign.
-4. Baked constant and witnesses, after the campaign and the confirmation of
+2. One queue line for the full core campaign.
+3. Baked constant and witnesses, after the campaign and the confirmation of
    `4337c02e`.

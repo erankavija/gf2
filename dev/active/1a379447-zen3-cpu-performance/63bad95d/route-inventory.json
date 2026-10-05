@@ -3,11 +3,11 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "8f5b69b363e9b0e2f468fb15aa071b2ddddb0c561114290acfef0c421ca94915"
+  "sha256": "ca5e7f23136ba6da51674d2a08fa53b91d3bd2c9f336a6eb8b43d79c99d11d81"
  },
  "counts": {
   "entry point groups": 9,
-  "public entry points": 23,
+  "public entry points": 24,
   "routes": 21,
   "selectors of the core tuning section": 37,
   "core selectors selected at compile time": 8,
@@ -143,7 +143,8 @@
    "id": "dense-matvec",
    "package": "gf2-core",
    "entries": [
-    "BitMatrix::matvec"
+    "BitMatrix::matvec",
+    "BitMatrix::matvec_with_route"
    ],
    "routes": [
     [
@@ -171,7 +172,8 @@
     "matvec-threshold-baked-alias",
     "matvec-threshold-read",
     "matvec-bundle-check",
-    "matvec-fused-kernel"
+    "matvec-fused-kernel",
+    "matvec-lane-entry"
    ]
   },
   {
