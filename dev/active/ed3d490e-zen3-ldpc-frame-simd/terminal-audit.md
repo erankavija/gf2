@@ -5,9 +5,8 @@
 Planning record of `2133d15f`. It applies the terminal invariant of the
 planning skill (`.agents/skills/jit-planning-lead/SKILL.md`, "Terminal
 invariant") and the plan-review prompt (`contrib/gates/plan-review-prompt.md`)
-to every leaf of [breakdown.json](breakdown.json), one row per leaf of the
-47-leaf manifest the audit reads, and names the leaves that replace each
-failing one.
+to the manifest the audit reads, one row per leaf of that manifest, and names
+the leaves of [breakdown.json](breakdown.json) that replace each failing one.
 
 The standard is the one the plan-review gate applies: one protocol family per
 leaf, one tool per leaf, one evidence mechanism per leaf, code apart from
