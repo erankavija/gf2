@@ -1,7 +1,9 @@
 # dev/plans removal (ec655592)
 
 Commits: `65acf0aae` (moves, citations), `c2ad54d52` (citations in four
-files), `e34089ad0` (manifest rows, archived stub).
+files), `e34089ad0` (manifest rows, archived stub). The commit that carries
+this revision of the record repoints the citations inside the two active
+plans, one inventory note and one legacy-mirror document.
 
 ## Moved files
 
@@ -21,12 +23,12 @@ Ownership of the terminal rows is the `owners[].inside_subtree` field of
 files only, the 026fc832 plan lists all four. The first three directories are
 the output of `jit doc dir <owner> dev/active` plus the manifest's `plans/`.
 
-`dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md` and
+`dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md` belongs to the open
+owner 3eeb57f6;
 `dev/archive/026fc832-gf2-core-sota-stretch/plans/m4rie_promotion_evidence.md`
-have equal SHA-256: the first belongs to the open owner 3eeb57f6, the second
-to cbecfced and 507b0036.
+belongs to cbecfced and 507b0036. The two differ in three path citations.
 
-The moved files keep their bytes. `.jit/config.toml` and
+The six files moved into archives keep their bytes. `.jit/config.toml` and
 `packages/jit-default/manifest.toml` list `dev/plans` among the managed and
 issue-scoped paths; this unit leaves both files unchanged.
 
@@ -46,20 +48,37 @@ Scan: `git grep -nE 'dev/plans|\.\./plans/|plans/[a-z0-9_]+\.md'`, then
 | `dev/research/simd_batching_bench/src/{lib.rs,generic.rs}` module docs, `dev/research/permanent_gpu_crossover/src/main.rs` (`N_VALUES` doc) | citation removed |
 | `dev/research/{f5,f7}_packing/src/main.rs:130` | the closing printed sentence, which names the encoding decision, is removed; the other printed lines are unchanged |
 | `dev/active/4e732b56/findings.md:34`, `dev/active/ae03bcd0-general-bch/plan.md:12,436` | Markdown link targets |
-| `dev/active/ae03bcd0-general-bch/investigation.md:5,182,187,205,463,485`, `dev/active/6dc81018-field-capability-dispatch/investigation.md:514,515,531,534`, `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:404` | path text of the moved files |
+| `dev/active/ae03bcd0-general-bch/investigation.md:5,182,187,205,463,485`, `dev/active/6dc81018-field-capability-dispatch/investigation.md:514,515,531,534`, `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:404`, `dev/active/fa787f85-documentation-overhaul/27f0f3b1-inventory-notes.md:7` | path text of the moved files |
+| `dev/active/16283d6f-fieldmatrix-gpu/plans/gpu_fieldmatrix_sketch.md:91`, `dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md:15,31,328`, `dev/archive/legacy/crates/gf2-core/docs/COMPUTE_BACKEND_DESIGN.md:144` | path text to the file itself or to the archived plan |
 
 No deleted comment sits between two nested `if`s.
 
 Remaining citations of a `dev/plans/` path absent from the tree, with the ground for each:
 
-| Location | Ground |
+| Location | Ground | Evidence |
+|---|---|---|
+| `packages/jit-default/manifest.toml:353,397`, `.jit/config.toml:163` | policy values in configuration files | each value is the directory name `dev/plans` |
+| `.jit/` | tracker state | issue descriptions, events and the commit-pinned references tabulated under Tracker references |
+| `dev/bench_results/` | receipts and snapshot `inputs/` trees | the dated reports directly under it belong to unit b2bb1065 |
+| `dev/archive/<id>-<slug>/` | file inside a marker-backed container archive | each citing file's archive directory holds `.jit-container` |
+| `migration/manifest.toml`, `migration/check_test.py` | manifest `path` keys and `inbound` fields; checker fixtures | |
+| `*-preexec*.json`, `1ca94ec2-verify.txt`, `67048b47-linked-pairs.txt` | committed tool output | each owning record names the commit of its run |
+| `83f9ce69-rearchive.md:105,106`, `f29a9225-rearchive.md:60` | tracker state | the cells name the paths of the commit-pinned references |
+
+Unprefixed file names are relative to
+`dev/active/fa787f85-documentation-overhaul/`.
+
+Matches of `dev/plans` in `dev/active/` that none of the grounds above covers:
+
+| Location | Content |
 |---|---|
-| `packages/jit-default/manifest.toml:353,397` | path-policy values, not plan citations |
-| `dev/bench_results/` | receipts, snapshot `inputs/` trees and reports of unit b2bb1065 |
-| `dev/archive/` other than the stub | historical documents inside archives; the moved plans cite each other by their `dev/plans/` paths and keep their bytes |
-| `dev/active/16283d6f-fieldmatrix-gpu/plans/gpu_fieldmatrix_sketch.md:91`, `dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md:15,31,328` | moved files keep their bytes |
-| `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:289,521,522,807,862`, `dev/active/b8206228-permanent-statistics/progress.json:1030` | sentences that quote the stale citations of Rust sources at the investigated checkout |
-| `dev/active/fa787f85-documentation-overhaul/` | manifest `path` keys, checker fixtures, and records, plans and handoffs of this epic that name the pre-move location |
+| `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:289,521,522` | quotes the path a Rust source cited in the tree at `f5c01332`, the checkout the document header names |
+| the same file `:807,862`, `dev/active/b8206228-permanent-statistics/progress.json:1030` | names the bucket or the elided pattern `dev/plans/...`; no file path |
+| `12907582-drift-preaudit.md:83,87,88,90,91,116` | audit rows that quote stale citations of Rust sources and manifests |
+| `1ca94ec2-rearchive.md:47,100` | a file unit 1ca94ec2 removed |
+| `83f9ce69-rearchive.md:75`, `41e1d47d-disposition.md:33`, `req18-pretriage.md:29`, `dev-path-code-consumers.md:10,232`, `fa787f85-planning-brief.md:22,65`, `ffc35b8c-sweep-brief-template.md:45,133` | the bucket name or an elided pattern |
+| `dev-path-code-consumers.md:235` | `dev/plans/gf2_core_ppc_spiral.md`, quoted as the text of `scripts/asm-artefact-present.sh` |
+| `handoff-8.md:36`, `investigation.md:50,80,278`, `plan.md:191,301`, `breakdown.json:490,3937,3960,3980,5364`, `progress.json:914,1900` | epic plan, handoff and investigation text |
 
 ## Manifest rows
 
