@@ -1,16 +1,56 @@
 #!/usr/bin/env python3
-"""Generate the content closure for the residual-shift campaign."""
+"""Generate the content closure for the residual-shift campaign.
 
-import json
-import os
+Usage: make-shift-producing-inputs.py [--check] [output]
+       (default shift-profile-producing-inputs.json beside this script)
+
+`--check` writes nothing and exits non-zero when the closure at `output` differs
+from the tree.
+"""
+
+import argparse
 import subprocess
 import sys
+from pathlib import Path
 
-ACTIVE = "dev/active/c04dd4ac-zen3-shifts-and-permutations"
-SURVEY = f"{ACTIVE}/survey"
-TOOL = "dev/tools/tuning-campaign-support"
-LAUNCHER = f"{SURVEY}/run-shift-profile.sh"
-LOCK = "dev/scripts/ccx1-bench-flock.sh"
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
+
+
+def _scripts():
+    """Directory of the one live `producing_closure.py`, outside receipt snapshots."""
+    listing = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+         "--", ":(glob)**/producing_closure.py"],
+        check=True, capture_output=True, text=True,
+    ).stdout.split("\0")
+    live = [path for path in listing if path and "inputs" not in Path(path).parts[:-1]]
+    if len(live) != 1:
+        raise SystemExit(f"{len(live)} live producing_closure.py files; exactly one must exist")
+    return ROOT / Path(live[0]).parent
+
+
+sys.path.insert(0, str(_scripts()))
+import producing_closure  # noqa: E402
+
+files = producing_closure.repository_files
+
+
+def located(name):
+    return files.live_file(ROOT, name)
+
+
+SURVEY_DIRECTORY = SURVEY.relative_to(ROOT).as_posix()
+ACTIVE = SURVEY.parent.relative_to(ROOT).as_posix()
+OUTPUT = f"{SURVEY_DIRECTORY}/shift-profile-producing-inputs.json"
+TOOL = files.package_directory(ROOT, "tuning-campaign-support")
+LAUNCHER = f"{SURVEY_DIRECTORY}/run-shift-profile.sh"
+LOCK = located("ccx1-bench-flock.sh")
 LIFECYCLE = [
     LAUNCHER,
     LOCK,
@@ -35,58 +75,40 @@ EXTRA = [
     f"{ACTIVE}/shift-profile-addendum.json",
     f"{ACTIVE}/shift-profile-consumer-audit.json",
     f"{ACTIVE}/shift-profile-validation.json",
-    f"{SURVEY}/find-shift-executable.py",
-    f"{SURVEY}/freeze-shift-addendum.py",
-    f"{SURVEY}/inspect-shift-consumers.py",
-    f"{SURVEY}/make-shift-plan.py",
-    f"{SURVEY}/make-shift-producing-inputs.py",
+    f"{SURVEY_DIRECTORY}/find-shift-executable.py",
+    f"{SURVEY_DIRECTORY}/freeze-shift-addendum.py",
+    f"{SURVEY_DIRECTORY}/inspect-shift-consumers.py",
+    f"{SURVEY_DIRECTORY}/make-shift-plan.py",
+    f"{SURVEY_DIRECTORY}/make-shift-producing-inputs.py",
     f"{TOOL}/Cargo.toml",
-    "scripts/cargo-budget.sh",
+    located("cargo-budget.sh"),
+    located("producing_closure.py"),
+    located("repository_files.py"),
 ]
 
 
-def rust_sources(root, directory):
-    found = []
-    for base, _, files in os.walk(os.path.join(root, directory)):
-        for name in files:
-            if name.endswith(".rs"):
-                found.append(os.path.relpath(os.path.join(base, name), root))
-    return found
-
-
 def main():
-    root = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    output = sys.argv[1] if len(sys.argv) > 1 else f"{SURVEY}/shift-profile-producing-inputs.json"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("output", nargs="?", type=Path, default=ROOT / OUTPUT)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="compare the closure at output with this tree's instead of writing it",
+    )
+    arguments = parser.parse_args()
     behavior = set()
-    for directory in (
-        "crates/gf2-core/src",
-        "crates/gf2-kernels-simd/src",
-        f"{TOOL}/src",
-    ):
-        behavior.update(rust_sources(root, directory))
+    for directory in ("crates/gf2-core/src", "crates/gf2-kernels-simd/src", f"{TOOL}/src"):
+        behavior.update(producing_closure.rust_sources(ROOT, directory))
     behavior.update(["crates/gf2-core/benches/shifts.rs", LAUNCHER, LOCK])
     all_inputs = behavior | set(EXTRA)
-    missing = [path for path in sorted(all_inputs) if not os.path.isfile(os.path.join(root, path))]
+    missing = [path for path in sorted(all_inputs) if not (ROOT / path).is_file()]
     if missing:
         raise SystemExit(f"producing inputs missing from the tree: {missing}")
-    manifest = {
-        "schema": "tuning-campaign-producing-inputs-v1",
-        "behavior_sources": sorted(behavior),
-        "lifecycle_sources": sorted(LIFECYCLE),
-        "build_inputs": sorted(all_inputs),
-    }
-    with open(output, "w") as destination:
-        json.dump(manifest, destination, indent=2)
-        destination.write("\n")
-    print(
-        f"{len(manifest['behavior_sources'])} behavior, "
-        f"{len(manifest['lifecycle_sources'])} lifecycle, "
-        f"{len(manifest['build_inputs'])} build inputs -> {output}"
+    producing_closure.emit(
+        arguments.output,
+        producing_closure.document(behavior, LIFECYCLE, all_inputs),
+        arguments.check,
+        f"{SURVEY_DIRECTORY}/make-shift-producing-inputs.py",
     )
 
 
