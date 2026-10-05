@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-05T03:28:59.086805086Z",
   "context": {},
   "created_at": "2026-10-05T03:28:58.602274285Z",
@@ -82,7 +82,23 @@
     "code-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-10-05T04:57:46.333477225Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T04:58:58.126689585Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-05T05:03:06.665475891Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "1b034786-d9d1-4e3d-aa47-2dff6658bb3f",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -92,5 +108,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reject invalid table sizes in the safe M4RM Gray-table wrappers",
-  "updated_at": "2026-10-05T04:48:33.429014753Z"
+  "updated_at": "2026-10-05T05:03:06.665475891Z"
 }
