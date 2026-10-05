@@ -48,10 +48,11 @@ Harness description, "Provenance artifacts":
 > why. Both are regenerated rather than edited, so a claim that moves fails its
 > generator instead of going stale in prose.
 
-**Narrowed.** The generator reads the working tree and fails when a fragment
-disappears or changes its occurrence count; a fragment that moves is written at
-its new line. The committed ledger keeps the bytes the receipts pin and
-describes the files at its recorded commits, as C-01 states.
+**Narrowed.** The generator reads each cited file at the commit the committed
+ledger row records and reproduces the ledger byte for byte; it refuses to write
+a ledger that differs, and `--check` compares without writing. The committed
+ledger keeps the bytes the receipts pin and describes the files at its recorded
+commits, as C-01 states.
 
 **Reading used.** The ledger is a record of its recorded commits, verified
 against their content. The closure manifest the same paragraph names is
