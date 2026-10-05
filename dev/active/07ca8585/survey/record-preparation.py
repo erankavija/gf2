@@ -35,7 +35,7 @@ SHIM = pathlib.Path("dev/active/c077a88b/survey/harness/cpp/aff3ct_shim.cpp")
 C077 = pathlib.Path("dev/bench_results/c077a88b/v3-preparation")
 LAUNCHER = pathlib.Path("dev/bench_results") / ISSUE / "run-campaign.sh"
 GF2_EXECUTABLES = ["gf2-throughput-arm", "ldpc-alloc-census"]
-AFF3CT_EXECUTABLES = ["aff3ct-throughput-arm", "ldpc-plan-check", "ldpc-throughput-validate"]
+AFF3CT_EXECUTABLES = ["aff3ct-throughput-arm", "ldpc-throughput-validate"]
 BEHAVIOR_ADDITIONS = [SURVEY / "arms.json", SURVEY / "make-plan.py", LAUNCHER]
 
 

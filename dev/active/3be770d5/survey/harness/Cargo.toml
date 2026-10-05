@@ -57,10 +57,6 @@ name = "ldpc-alloc-census"
 path = "src/bin/ldpc-alloc-census.rs"
 
 [[bin]]
-name = "ldpc-plan-check"
-path = "src/bin/ldpc-plan-check.rs"
-
-[[bin]]
 name = "ldpc-throughput-validate"
 path = "src/bin/ldpc-throughput-validate.rs"
 required-features = ["aff3ct"]
