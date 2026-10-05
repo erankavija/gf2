@@ -2664,13 +2664,60 @@ pub(crate) fn fp_chain_poly_arith_available<const P: u64>() -> bool {
 mod tests {
     use super::*;
 
+    use crate::kernels::backend::contract::{assert_each, Implementation};
+
     const WORD_BOUNDARY_LENS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];
 
-    #[cfg(feature = "simd")]
-    fn check_small_prime_prepack_matvec<const P: u64>(lens: &[usize]) {
-        if crate::simd::maybe_fp_small().is_none() {
-            return; // non-AVX2 host — fast path genuinely unreachable
+    /// The `Fp<P>` operations the tests of this module take as their
+    /// reference, required to agree with integer arithmetic modulo `P`.
+    fn fp_reference_matches_integers<const P: u64>() {
+        let p = u128::from(P);
+        for i in 0..257u64 {
+            let x = i.wrapping_mul(1_000_003).wrapping_add(17);
+            let y = i.wrapping_mul(2_000_033).wrapping_add(23);
+            let (a, b) = (Fp::<P>::new(x), Fp::<P>::new(y));
+            let (x, y) = (u128::from(x % P), u128::from(y % P));
+            assert_eq!(u128::from((a + b).value()), (x + y) % p, "add P={P}, i={i}");
+            assert_eq!(
+                u128::from((a - b).value()),
+                (x + p - y) % p,
+                "sub P={P}, i={i}"
+            );
+            assert_eq!(u128::from((a * b).value()), x * y % p, "mul P={P}, i={i}");
         }
+    }
+
+    /// Runs the reference check on every host, then `accelerated` when the
+    /// kernel bundle behind `dispatch` is published.
+    fn assert_against_reference<const P: u64>(
+        dispatch: &str,
+        published: bool,
+        accelerated: &dyn Fn(),
+    ) {
+        let reference: &dyn Fn() = &fp_reference_matches_integers::<P>;
+        let mut implementations = vec![Implementation::new(
+            format!("Fp<{P}> element operations"),
+            reference,
+        )];
+        if published {
+            implementations.push(Implementation::new(
+                format!("{dispatch}, P = {P}"),
+                accelerated,
+            ));
+        }
+        assert_each(&implementations, |run| run());
+    }
+
+    /// `sum_t lhs[t] * rhs[t]` in integer arithmetic modulo `P`.
+    fn integer_dot<const P: u64>(lhs: &[Fp<P>], rhs: &[Fp<P>]) -> u128 {
+        let products = lhs
+            .iter()
+            .zip(rhs)
+            .map(|(x, y)| u128::from(x.value()) * u128::from(y.value()) % u128::from(P));
+        products.sum::<u128>() % u128::from(P)
+    }
+
+    fn check_small_prime_prepack_matvec<const P: u64>(lens: &[usize]) {
         for &k in lens {
             for &m in lens {
                 if k == 0 || m == 0 {
@@ -2744,23 +2791,18 @@ mod tests {
 
     #[test]
     fn test_small_prime_prepack_matvec_boundary_lengths() {
-        #[cfg(not(feature = "simd"))]
-        return;
-
         const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
 
-        #[cfg(feature = "simd")]
-        {
-            check_small_prime_prepack_matvec::<251>(BOUNDARY_LENS);
-            check_small_prime_prepack_matvec::<7>(BOUNDARY_LENS);
-        }
+        let published = crate::simd::maybe_fp_small().is_some();
+        assert_against_reference::<251>("fp_try_prepack_matvec", published, &|| {
+            check_small_prime_prepack_matvec::<251>(BOUNDARY_LENS)
+        });
+        assert_against_reference::<7>("fp_try_prepack_matvec", published, &|| {
+            check_small_prime_prepack_matvec::<7>(BOUNDARY_LENS)
+        });
     }
 
-    #[cfg(feature = "simd")]
     fn check_small_prime_gemm_dispatch<const P: u64>(lens: &[usize]) {
-        if crate::simd::maybe_fp_small().is_none() {
-            return;
-        }
         for &m in lens {
             for &k in lens {
                 for &n in lens {
@@ -2823,17 +2865,18 @@ mod tests {
 
     #[test]
     fn test_small_prime_gemm_dispatch_boundary_lengths() {
-        #[cfg(not(feature = "simd"))]
-        return;
-
         const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65, 128, 129];
 
-        #[cfg(feature = "simd")]
-        {
-            check_small_prime_gemm_dispatch::<7>(BOUNDARY_LENS);
-            check_small_prime_gemm_dispatch::<31>(BOUNDARY_LENS);
-            check_small_prime_gemm_dispatch::<251>(BOUNDARY_LENS);
-        }
+        let published = crate::simd::maybe_fp_small().is_some();
+        assert_against_reference::<7>("fp_small_try_gemm_classical", published, &|| {
+            check_small_prime_gemm_dispatch::<7>(BOUNDARY_LENS)
+        });
+        assert_against_reference::<31>("fp_small_try_gemm_classical", published, &|| {
+            check_small_prime_gemm_dispatch::<31>(BOUNDARY_LENS)
+        });
+        assert_against_reference::<251>("fp_small_try_gemm_classical", published, &|| {
+            check_small_prime_gemm_dispatch::<251>(BOUNDARY_LENS)
+        });
     }
 
     proptest::proptest! {
@@ -2850,52 +2893,58 @@ mod tests {
             let m = BOUNDARY_LENS[m_idx];
             let k = BOUNDARY_LENS[k_idx];
             let n = BOUNDARY_LENS[n_idx];
-            #[cfg(feature = "simd")]
-            {
-                if crate::simd::maybe_fp_small().is_none() {
-                    return Ok(());
-                }
-                if m == 0 || k == 0 || n == 0 {
-                    let a: Vec<Fp<251>> = vec![Fp::<251>::new(0); m * k];
-                    let bt: Vec<Fp<251>> = vec![Fp::<251>::new(0); n * k];
-                    let mut out = vec![Fp::<251>::new(0); m * n];
-                    let used = fp_small_try_gemm_classical::<251>(&a, &bt, m, k, n, &mut out);
-                    proptest::prop_assert!(!used);
-                    return Ok(());
-                }
-                let mut s = seed;
-                let a: Vec<Fp<251>> = (0..m * k)
+            if m == 0 || k == 0 || n == 0 {
+                let a: Vec<Fp<251>> = vec![Fp::<251>::new(0); m * k];
+                let bt: Vec<Fp<251>> = vec![Fp::<251>::new(0); n * k];
+                let mut out = vec![Fp::<251>::new(0); m * n];
+                let used = fp_small_try_gemm_classical::<251>(&a, &bt, m, k, n, &mut out);
+                proptest::prop_assert!(!used);
+                return Ok(());
+            }
+            let mut s = seed;
+            let mut draw = |len: usize| -> Vec<Fp<251>> {
+                (0..len)
                     .map(|_| {
                         s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9);
                         Fp::<251>::new(s)
                     })
-                    .collect();
-                let bt: Vec<Fp<251>> = (0..n * k)
-                    .map(|_| {
-                        s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9);
-                        Fp::<251>::new(s)
-                    })
-                    .collect();
-                let mut out_ref = vec![Fp::<251>::new(0); m * n];
+                    .collect()
+            };
+            let a = draw(m * k);
+            let bt = draw(n * k);
+
+            let reference = |out: &mut [Fp<251>]| {
                 for i in 0..m {
                     for j in 0..n {
                         let mut acc = Fp::<251>::new(0);
                         for t in 0..k {
                             acc += a[i * k + t] * bt[j * k + t];
                         }
-                        out_ref[i * n + j] = acc;
+                        out[i * n + j] = acc;
                     }
                 }
-                let mut out_simd = vec![Fp::<251>::new(0); m * n];
-                let used = fp_small_try_gemm_classical::<251>(&a, &bt, m, k, n, &mut out_simd);
-                proptest::prop_assert!(used);
+            };
+            let accelerated = |out: &mut [Fp<251>]| {
+                assert!(fp_small_try_gemm_classical::<251>(&a, &bt, m, k, n, out));
+            };
+            let mut implementations: Vec<Implementation<&dyn Fn(&mut [Fp<251>])>> =
+                vec![Implementation::new("Fp<251> dot-product loop", &reference)];
+            if crate::simd::maybe_fp_small().is_some() {
+                implementations.push(Implementation::new(
+                    "fp_small_try_gemm_classical, P = 251",
+                    &accelerated,
+                ));
+            }
+            assert_each(&implementations, |gemm| {
+                let mut out = vec![Fp::<251>::new(0); m * n];
+                gemm(&mut out);
                 for i in 0..m {
                     for j in 0..n {
-                        proptest::prop_assert_eq!(out_simd[i * n + j], out_ref[i * n + j]);
+                        let expected = integer_dot(&a[i * k..][..k], &bt[j * k..][..k]);
+                        assert_eq!(u128::from(out[i * n + j].value()), expected, "({i}, {j})");
                     }
                 }
-            }
-            let _ = (m, k, n, seed);
+            });
         }
     }
 
@@ -2911,58 +2960,55 @@ mod tests {
             const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
             let m = BOUNDARY_LENS[m_idx];
             let k = BOUNDARY_LENS[k_idx];
-            #[cfg(feature = "simd")]
-            {
-                if crate::simd::maybe_fp_small().is_none() {
-                    return Ok(()); // non-AVX2 host — fast path unreachable
-                }
-                if m == 0 || k == 0 {
-                    let a: Vec<Fp<251>> = vec![Fp::<251>::new(0); m * k];
-                    let x: Vec<Fp<251>> = vec![Fp::<251>::new(0); k];
-                    if let Some(packed) = fp_try_prepack_matvec::<251>(&a, m, k) {
-                        let mut y_simd = vec![Fp::<251>::new(0); m];
-                        packed.matvec(&x, &mut y_simd);
-                        for &y_i in &y_simd {
-                            proptest::prop_assert_eq!(y_i, Fp::<251>::new(0));
-                        }
-                    }
-                    return Ok(());
-                }
-                let mut s = seed;
-                let a: Vec<Fp<251>> = (0..m * k)
-                    .map(|_| { s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9); Fp::<251>::new(s) })
-                    .collect();
-                let x: Vec<Fp<251>> = (0..k)
-                    .map(|_| { s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9); Fp::<251>::new(s) })
-                    .collect();
-                let mut y_ref = vec![Fp::<251>::new(0); m];
+            let mut s = seed;
+            let mut draw = |len: usize| -> Vec<Fp<251>> {
+                (0..len)
+                    .map(|_| {
+                        s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9);
+                        Fp::<251>::new(s)
+                    })
+                    .collect()
+            };
+            let a = draw(m * k);
+            let x = draw(k);
+
+            let reference = |y: &mut [Fp<251>]| {
                 for i in 0..m {
                     let mut acc = Fp::<251>::new(0);
-                    for j in 0..k { acc += a[i * k + j] * x[j]; }
-                    y_ref[i] = acc;
+                    for j in 0..k {
+                        acc += a[i * k + j] * x[j];
+                    }
+                    y[i] = acc;
                 }
-                let packed = fp_try_prepack_matvec::<251>(&a, m, k).unwrap();
-                let mut y_simd = vec![Fp::<251>::new(0); m];
-                packed.matvec(&x, &mut y_simd);
-                for i in 0..m {
-                    proptest::prop_assert_eq!(y_simd[i], y_ref[i]);
-                }
+            };
+            // A zero dimension leaves the pack free to decline; the rows it
+            // accepts hold the empty sum.
+            let accelerated = |y: &mut [Fp<251>]| match fp_try_prepack_matvec::<251>(&a, m, k) {
+                Some(packed) => packed.matvec(&x, y),
+                None => assert!(m == 0 || k == 0, "declined a {m} x {k} matrix"),
+            };
+            let mut implementations: Vec<Implementation<&dyn Fn(&mut [Fp<251>])>> =
+                vec![Implementation::new("Fp<251> dot-product loop", &reference)];
+            if crate::simd::maybe_fp_small().is_some() {
+                implementations.push(Implementation::new(
+                    "fp_try_prepack_matvec, P = 251",
+                    &accelerated,
+                ));
             }
-            let _ = (m, k, seed);
+            assert_each(&implementations, |matvec| {
+                let mut y = vec![Fp::<251>::new(0); m];
+                matvec(&mut y);
+                for i in 0..m {
+                    let expected = integer_dot(&a[i * k..][..k], &x);
+                    assert_eq!(u128::from(y[i].value()), expected, "row {i}");
+                }
+            });
         }
     }
 
     fn check_generic_prime<const P: u64>() {
-        #[cfg(not(feature = "simd"))]
-        {
-            return;
-        }
-        #[cfg(feature = "simd")]
-        {
-            if crate::simd::maybe_fp_generic().is_none() {
-                return;
-            }
-
+        let published = crate::simd::maybe_fp_generic().is_some();
+        assert_against_reference::<P>("generic Montgomery vector operations", published, &|| {
             for &len in WORD_BOUNDARY_LENS {
                 let a: Vec<Fp<P>> = (0..len as u64)
                     .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
@@ -2984,7 +3030,7 @@ mod tests {
                     assert_eq!(got_mul[i], a[i] * b[i], "mul P={P}, len={len}, i={i}");
                 }
             }
-        }
+        });
     }
 
     #[test]
@@ -3005,16 +3051,8 @@ mod tests {
     }
 
     fn check_small_prime<const P: u64>() {
-        #[cfg(not(feature = "simd"))]
-        {
-            return;
-        }
-        #[cfg(feature = "simd")]
-        {
-            if crate::simd::maybe_fp_small().is_none() {
-                return;
-            }
-
+        let published = crate::simd::maybe_fp_small().is_some();
+        assert_against_reference::<P>("small-prime vector operations", published, &|| {
             for &len in WORD_BOUNDARY_LENS {
                 let a: Vec<Fp<P>> = (0..len as u64)
                     .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
@@ -3036,20 +3074,12 @@ mod tests {
                     assert_eq!(got_mul[i], a[i] * b[i], "mul P={P}, len={len}, i={i}");
                 }
             }
-        }
+        });
     }
 
     fn check_medium_prime<const P: u64>() {
-        #[cfg(not(feature = "simd"))]
-        {
-            return;
-        }
-        #[cfg(feature = "simd")]
-        {
-            if crate::simd::maybe_fp_medium().is_none() {
-                return;
-            }
-
+        let published = crate::simd::maybe_fp_medium().is_some();
+        assert_against_reference::<P>("medium-prime vector operations", published, &|| {
             for &len in WORD_BOUNDARY_LENS {
                 let a: Vec<Fp<P>> = (0..len as u64)
                     .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
@@ -3083,7 +3113,7 @@ mod tests {
                     assert_eq!(got_dot, expected, "dot P={P}, len={len}");
                 }
             }
-        }
+        });
     }
 
     #[test]
@@ -3116,40 +3146,36 @@ mod tests {
     /// and, at every word-boundary length, the SIMD-batched Mersenne31
     /// multiply matches the scalar element-wise product bit-exactly.
     #[test]
-    #[cfg(feature = "simd")]
     fn m31_simd_mul_matches_scalar_across_boundary_lens() {
-        if crate::simd::maybe_mersenne().is_none() {
-            // Non-AVX2 host; the fast path is genuinely unreachable here
-            // and the dispatch ordering is therefore moot at runtime.
-            return;
-        }
-
         const P: u64 = M31;
 
-        for &len in WORD_BOUNDARY_LENS {
-            let a: Vec<Fp<P>> = (0..len as u64)
-                .map(|i| Fp::<P>::new(i.wrapping_mul(2_654_435_761).wrapping_add(11)))
-                .collect();
-            let b: Vec<Fp<P>> = (0..len as u64)
-                .map(|i| Fp::<P>::new(i.wrapping_mul(40_503).wrapping_add(7)))
-                .collect();
+        let published = crate::simd::maybe_mersenne().is_some();
+        assert_against_reference::<P>("Mersenne-31 try_simd_mul_vec", published, &|| {
+            for &len in WORD_BOUNDARY_LENS {
+                let a: Vec<Fp<P>> = (0..len as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(2_654_435_761).wrapping_add(11)))
+                    .collect();
+                let b: Vec<Fp<P>> = (0..len as u64)
+                    .map(|i| Fp::<P>::new(i.wrapping_mul(40_503).wrapping_add(7)))
+                    .collect();
 
-            let got = <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b)
-                .expect("M31 dispatch must yield Some on AVX2 host");
-            assert_eq!(
-                got.len(),
-                len,
-                "len mismatch on M31 SIMD multiply, len={len}",
-            );
-
-            for i in 0..len {
-                let expected = a[i] * b[i];
+                let got = <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b)
+                    .expect("M31 dispatch must yield Some on AVX2 host");
                 assert_eq!(
-                    got[i], expected,
-                    "M31 SIMD multiply diverges from scalar at len={len}, i={i}",
+                    got.len(),
+                    len,
+                    "len mismatch on M31 SIMD multiply, len={len}",
                 );
+
+                for i in 0..len {
+                    let expected = a[i] * b[i];
+                    assert_eq!(
+                        got[i], expected,
+                        "M31 SIMD multiply diverges from scalar at len={len}, i={i}",
+                    );
+                }
             }
-        }
+        });
     }
 
     #[test]

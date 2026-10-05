@@ -99,9 +99,205 @@ pub fn select_backend_for_size(_size: usize) -> SelectedBackend {
     SelectedBackend::Scalar
 }
 
+/// The list form of a shared equivalence test: every implementation a build
+/// publishes, the portable reference first, so the test compares at least one
+/// implementation on every host and reports which.
+///
+/// This module's own tests run the [`Backend`] cases over
+/// [`contract::backends`], and the `simd_equiv_*` integration tests of this
+/// crate run theirs through [`contract::assert_each`].
+#[cfg(any(test, feature = "test-support"))]
+pub mod contract {
+    use super::Backend;
+
+    /// One implementation under test.
+    pub struct Implementation<T> {
+        /// Names the implementation in the report.
+        pub label: String,
+        /// What a check is handed.
+        pub subject: T,
+    }
+
+    impl<T> Implementation<T> {
+        /// `subject` under `label`.
+        pub fn new(label: impl Into<String>, subject: T) -> Self {
+            Self {
+                label: label.into(),
+                subject,
+            }
+        }
+    }
+
+    /// Every [`Backend`] of this build: the scalar reference, present on
+    /// every host, and the detected SIMD backend under the `simd` feature.
+    pub fn backends() -> Vec<Implementation<&'static dyn Backend>> {
+        let scalar: &'static dyn Backend = &crate::kernels::scalar::SCALAR_BACKEND;
+        #[allow(unused_mut)]
+        let mut backends = vec![Implementation::new(scalar.name(), scalar)];
+        #[cfg(feature = "simd")]
+        if let Some(simd) = crate::kernels::simd::maybe_simd() {
+            backends.push(Implementation::new(simd.name(), simd as &dyn Backend));
+        }
+        backends
+    }
+
+    /// Runs `check` on every implementation, printing each label before its
+    /// run so a failure follows the name of the implementation that failed.
+    ///
+    /// # Panics
+    ///
+    /// Panics when `implementations` is empty or `check` panics.
+    pub fn assert_each<T>(implementations: &[Implementation<T>], check: impl Fn(&T)) {
+        assert!(
+            !implementations.is_empty(),
+            "no implementation was enumerated"
+        );
+        for implementation in implementations {
+            println!("implementation: {}", implementation.label);
+            check(&implementation.subject);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use super::contract::{assert_each, backends};
     use super::*;
+    use crate::bench_seed::splitmix64;
+    use crate::kernels::test_utils;
+
+    /// Word counts on both sides of the four-word vector step and of the
+    /// selection threshold, up to several cache lines.
+    const WORD_COUNTS: [usize; 26] = [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 63, 64, 65, 127, 128, 256, 512,
+        1024, 1025,
+    ];
+
+    fn words(count: usize, seed: u64) -> Vec<u64> {
+        let mut state = seed;
+        (0..count).map(|_| splitmix64(&mut state)).collect()
+    }
+
+    /// Requires `kernel` to leave in `dst` the word-by-word image of `word`.
+    fn assert_binary(
+        operation: &str,
+        kernel: impl Fn(&dyn Backend, &mut [u64], &[u64]),
+        word: impl Fn(u64, u64) -> u64,
+    ) {
+        assert_each(&backends(), |backend| {
+            for count in WORD_COUNTS {
+                let dst = words(count, 0xDEAD_BEEF);
+                let src = words(count, 0xCAFE_BABE);
+                let expected: Vec<u64> = dst.iter().zip(&src).map(|(&a, &b)| word(a, b)).collect();
+                let mut got = dst;
+                kernel(*backend, &mut got, &src);
+                assert_eq!(
+                    got,
+                    expected,
+                    "{} {operation}, {count} words",
+                    backend.name()
+                );
+            }
+        });
+    }
+
+    #[test]
+    fn every_backend_xors_word_by_word() {
+        assert_binary(
+            "xor",
+            |backend, dst, src| backend.xor(dst, src),
+            |a, b| a ^ b,
+        );
+    }
+
+    #[test]
+    fn every_backend_ands_word_by_word() {
+        assert_binary(
+            "and",
+            |backend, dst, src| backend.and(dst, src),
+            |a, b| a & b,
+        );
+    }
+
+    #[test]
+    fn every_backend_ors_word_by_word() {
+        assert_binary("or", |backend, dst, src| backend.or(dst, src), |a, b| a | b);
+    }
+
+    #[test]
+    fn every_backend_complements_word_by_word() {
+        assert_each(&backends(), |backend| {
+            for count in WORD_COUNTS {
+                let original = words(count, 0xFEED_FACE);
+                let expected: Vec<u64> = original.iter().map(|&word| !word).collect();
+                let mut got = original.clone();
+                backend.not(&mut got);
+                assert_eq!(got, expected, "{} not, {count} words", backend.name());
+                backend.not(&mut got);
+                assert_eq!(got, original, "{} not twice, {count} words", backend.name());
+            }
+        });
+    }
+
+    #[test]
+    fn every_backend_counts_set_bits() {
+        assert_each(&backends(), |backend| {
+            for count in WORD_COUNTS {
+                let buf = words(count, 0xC0FF_EE00);
+                let expected: u64 = buf.iter().map(|word| u64::from(word.count_ones())).sum();
+                assert_eq!(
+                    backend.popcount(&buf),
+                    expected,
+                    "{}, {count} words",
+                    backend.name()
+                );
+                assert_eq!(backend.popcount(&vec![0u64; count]), 0);
+                assert_eq!(backend.popcount(&vec![u64::MAX; count]), 64 * count as u64);
+            }
+        });
+    }
+
+    #[test]
+    fn every_backend_xor_is_an_involution() {
+        assert_each(&backends(), |backend| {
+            for count in WORD_COUNTS {
+                let original = words(count, 0x1111_1111);
+                let src = words(count, 0x2222_2222);
+                let mut buf = original.clone();
+                backend.xor(&mut buf, &src);
+                backend.xor(&mut buf, &src);
+                assert_eq!(buf, original, "{}, {count} words", backend.name());
+
+                let mut alternating = vec![0xAAAA_AAAA_AAAA_AAAAu64; count];
+                backend.xor(&mut alternating, &vec![0x5555_5555_5555_5555u64; count]);
+                assert_eq!(alternating, vec![u64::MAX; count]);
+            }
+        });
+    }
+
+    #[test]
+    fn every_backend_answers_the_fixed_vectors() {
+        assert_each(&backends(), |backend| {
+            test_utils::test_backend_and_equivalence(*backend);
+            test_utils::test_backend_or_equivalence(*backend);
+            test_utils::test_backend_xor_equivalence(*backend);
+            test_utils::test_backend_not_equivalence(*backend);
+            test_utils::test_backend_popcount_equivalence(*backend);
+            test_utils::test_backend_parity_xor_property(*backend);
+            test_utils::test_backend_parity_correctness(*backend);
+            test_utils::test_backend_trailing_zeros_correctness(*backend);
+            test_utils::test_backend_leading_zeros_correctness(*backend);
+            test_utils::test_backend_empty_slices(*backend);
+            test_utils::test_backend_single_word(*backend);
+            test_utils::test_backend_large_slice(*backend);
+        });
+    }
+
+    #[test]
+    #[should_panic(expected = "no implementation was enumerated")]
+    fn an_empty_implementation_list_is_refused() {
+        assert_each(&Vec::<contract::Implementation<()>>::new(), |_| {});
+    }
 
     struct MockBackend;
 
