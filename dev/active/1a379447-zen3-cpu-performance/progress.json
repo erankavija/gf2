@@ -676,7 +676,7 @@
      "short_id": "ed3d490e",
      "title": "Vectorize LDPC decoding across frames",
      "classification": "implementation",
-     "status": "pending",
+     "status": "bracket scaffolded (P 2133d15f, B e28795c1); plan and manifest merged, 38 tasks; plan-review running",
      "tracker_state": "backlog"
     },
     {
@@ -2223,7 +2223,10 @@
   "Session 27: main cargo-ci passes with the 54e70918 partial merge (838a91963) and with fa1d8733 merged (8a1f7f3fd); both 2037941f closure checks pass. fa1d8733 gates: asm-artefact-present and cargo-ci PASS; code-review FAIL F1, a reading of REQ-03 that the lead's loose wording invites. No rework dispatched: the fix is an invoker amendment of the criterion text. The family closures are not covered by cargo-ci's campaign-producing-closure step; a CI step for them is an invoker decision (shared infrastructure).",
   "Session 27: handoff-24.md written; wave 4 holds entirely on invoker decisions.",
   "Session 28: all nine handoff-24 escalations ruled by the invoker; four issue texts amended as approved (fa1d8733 REQ-03, 54e70918 REQ-03, f63a2464 REQ-04, b2e09d41 Notes).",
-  "Invoker rule 2026-10-05 (session 28): an idle or stopped agent is never resumed; further work on an issue goes to a newly spawned agent with a self-contained brief."
+  "Invoker rule 2026-10-05 (session 28): resume an agent only while it is recently active (the one-hour agent cache window); an agent idle longer starts as a new session with a self-contained brief.",
+  "Invoker constraint 2026-10-05: the ed3d490e breakdown is 38 tasks and does not grow; a review asking for more coverage is answered by consolidation, otherwise escalate.",
+  "Invoker decisions on the ed3d490e plan (2026-10-05): general batch soft-decoder trait in gf2-coding (DEC-07), fixed waves, gf2-coding as third owner of the offline tuning system, descriptive QC comparison, two default paths, decoded words of implementer-reported length (DEC-08 to DEC-12).",
+  "Session 28: worker worktrees no longer run the full cargo-ci.sh at delivery (30 to 47 minutes under load with sccache off, split job budget, exclusive test lock and nice 19); they run focused suites and the lead gates the merged tree with BUSY_HOST_OVERRIDE=1."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
