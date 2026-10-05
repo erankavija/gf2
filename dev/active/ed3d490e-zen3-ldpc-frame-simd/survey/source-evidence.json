@@ -343,6 +343,248 @@
       "topic": "tuning-owners",
       "why": "The profile composer emits an owner envelope for the same two owners.",
       "sha256": "60792ad0996df23b934011ebfc6b882cebc9dddd45d0b25e3b6e402d6389e37d"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/traits.rs",
+      "line": 1659,
+      "verbatim": "    fn decode_soft(&self, llrs: &[Llr]) -> BitVec;",
+      "occurrences": 1,
+      "topic": "decoder-traits",
+      "why": "The single-frame soft decode takes the decoder by shared reference and returns the decoded bits.",
+      "sha256": "6891a30840b14f734231d607e1127165d7a70cebee2a2f9629c01310e4c6c518"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/traits.rs",
+      "line": 1667,
+      "verbatim": "    fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {",
+      "occurrences": 1,
+      "topic": "decoder-traits",
+      "why": "Every soft decoder reports a per-frame result, the per-frame reference a default batch loop reproduces.",
+      "sha256": "6891a30840b14f734231d607e1127165d7a70cebee2a2f9629c01310e4c6c518"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/traits.rs",
+      "line": 1677,
+      "verbatim": "    fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult;",
+      "occurrences": 1,
+      "topic": "decoder-traits",
+      "why": "The iterative decode takes the decoder mutably and an iteration cap, so a batch call over it needs both.",
+      "sha256": "6891a30840b14f734231d607e1127165d7a70cebee2a2f9629c01310e4c6c518"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/traits.rs",
+      "line": 1634,
+      "verbatim": "pub trait HardDecisionDecoder {",
+      "occurrences": 1,
+      "topic": "decoder-traits",
+      "why": "Hard-decision decoding is a separate trait over bit vectors.",
+      "sha256": "6891a30840b14f734231d607e1127165d7a70cebee2a2f9629c01310e4c6c518"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/traits.rs",
+      "line": 1696,
+      "verbatim": "pub trait StreamingDecoder {",
+      "occurrences": 1,
+      "topic": "decoder-traits",
+      "why": "Streaming decoding is a separate stateful trait.",
+      "sha256": "6891a30840b14f734231d607e1127165d7a70cebee2a2f9629c01310e4c6c518"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/traits.rs",
+      "line": 587,
+      "verbatim": "        pub fn block_encoder_contract<C>(code: &C, message: &C::Symbols)",
+      "occurrences": 1,
+      "topic": "decoder-traits",
+      "why": "The traits module carries shared contract functions that each implementer's tests call.",
+      "sha256": "6891a30840b14f734231d607e1127165d7a70cebee2a2f9629c01310e4c6c518"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 881,
+      "verbatim": "pub struct DecodeOutcome {",
+      "occurrences": 1,
+      "topic": "decoder-traits",
+      "why": "A per-frame outcome type without owned bits exists and is LDPC-local.",
+      "sha256": "4616ccfe69f8ee9a3cf500b3dd99396a12f1b700d1ec7738fadd8e230d52a27d"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 900,
+      "verbatim": "        // For non-iterative interface, just return hard decisions on input LLRs",
+      "occurrences": 1,
+      "topic": "implementers",
+      "why": "The LDPC decoder's non-iterative soft decode is a hard decision; its decoding entry is the iterative one.",
+      "sha256": "4616ccfe69f8ee9a3cf500b3dd99396a12f1b700d1ec7738fadd8e230d52a27d"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/gldpc/mod.rs",
+      "line": 793,
+      "verbatim": "            decoded.push_bit(llrs[sys_col].hard_decision());",
+      "occurrences": 1,
+      "topic": "implementers",
+      "why": "The GLDPC decoder's non-iterative soft decode is a hard decision at the systematic positions.",
+      "sha256": "7d37f63a8fc43c061b1641a58f376b48e8f463ad766cd6fafbd2a8afd59dd36d"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+      "line": 832,
+      "verbatim": "        let mut decoder = Nr5gRateMatchedDecoder::new((*self).clone());",
+      "occurrences": 1,
+      "topic": "implementers",
+      "why": "The rate-matched code's soft decode builds a decoder per frame.",
+      "sha256": "f5ef0d71e0eb71de0c8f8335b8309756f81d693020040065002ce077fe48613d"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/osd/generator.rs",
+      "line": 105,
+      "verbatim": "    pub fn decode(&self, llrs: &[Llr]) -> Result<GeneratorMatrixOsdResult, OsdEngineError> {",
+      "occurrences": 1,
+      "topic": "implementers",
+      "why": "The OSD decoder decodes one frame by shared reference.",
+      "sha256": "7c3effcec1558958f45d2f3388633221feeef6e68d2ce04adca1441f73a0bd13"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/grand/orbgrand.rs",
+      "line": 257,
+      "verbatim": "    pub fn decode(&self, llrs: &[Llr]) -> OrbGrandResult {",
+      "occurrences": 1,
+      "topic": "implementers",
+      "why": "The ORBGRAND decoder decodes one frame by shared reference.",
+      "sha256": "15c251f1d59da2fce0e32ad0810c84a378c8c07108ed906de412626cade83ab8"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/concat.rs",
+      "line": 82,
+      "verbatim": "    ldpc_decoder: Mutex<LdpcDecoder>,",
+      "occurrences": 1,
+      "topic": "implementers",
+      "why": "The DVB-T2 concatenated codec serializes its frames through one mutex-guarded single-frame LDPC decoder.",
+      "sha256": "0a0427ca6074da0c5e7eea21d0ad05778d5fea40e5cff5306cb98de2cd77278c"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/modem/demapper.rs",
+      "line": 186,
+      "verbatim": "    fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]);",
+      "occurrences": 1,
+      "topic": "batch-trait-style",
+      "why": "The modem batch traits write into caller-provided output storage.",
+      "sha256": "f6423c7c3286bee7aa98cee5fb91ab323ee8b92c1dd79e437d5a1ad9f98a5617"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/modem/demapper.rs",
+      "line": 192,
+      "verbatim": "impl<S: ModemScalar, T: BatchSoftDemapper<S> + ?Sized> BatchSoftDemapper<S> for Box<T> {",
+      "occurrences": 1,
+      "topic": "batch-trait-style",
+      "why": "The modem batch traits are usable boxed.",
+      "sha256": "f6423c7c3286bee7aa98cee5fb91ab323ee8b92c1dd79e437d5a1ad9f98a5617"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/src/ldpc/core.rs",
+      "line": 1109,
+      "verbatim": "    pub fn encode_batch(&self, messages: &[BitVec]) -> Vec<BitVec> {",
+      "occurrences": 1,
+      "topic": "batch-encoding",
+      "why": "Batch encoding has its own entry points.",
+      "sha256": "4616ccfe69f8ee9a3cf500b3dd99396a12f1b700d1ec7738fadd8e230d52a27d"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-sim/src/stage.rs",
+      "line": 17,
+      "verbatim": "    type Scratch: Default + Send + Sync + 'static;",
+      "occurrences": 1,
+      "topic": "stage-boundary",
+      "why": "Stage scratch is default-constructed and shared-safe, so decoder state in it is built on first use.",
+      "sha256": "79c89c9e9e4655cfd9a489f133fd80520e1e694caea02b3da1d5ee4b71609e19"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-sim/src/stage.rs",
+      "line": 28,
+      "verbatim": "    fn process(&self, input: &I, scratch: &mut Self::Scratch) -> Result<O, StageError>;",
+      "occurrences": 1,
+      "topic": "stage-boundary",
+      "why": "A stage processes by shared reference; only its scratch is mutable.",
+      "sha256": "79c89c9e9e4655cfd9a489f133fd80520e1e694caea02b3da1d5ee4b71609e19"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-sim/src/stages/mod.rs",
+      "line": 433,
+      "verbatim": "            let (bbframe, iterations) = match self.codec.decode_soft_counted(llrs) {",
+      "occurrences": 1,
+      "topic": "sim-consumer",
+      "why": "The DVB-T2 decode stage decodes one frame per call of the concatenated codec.",
+      "sha256": "07c883c7f8c258dfcdf3aaf13710952b87913a671d84b873585521ac7dfcb8e2"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/tests/backend_integration.rs",
+      "line": 55,
+      "verbatim": "    let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);",
+      "occurrences": 1,
+      "topic": "decode-batch-callers",
+      "why": "An integration test calls the inherent batch function.",
+      "sha256": "81761f6f990a2efd5da13437616e9f63dcfb6a5b057587472cf573f9cd00cd5f"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "crates/gf2-coding/benches/allocation_optimization.rs",
+      "line": 27,
+      "verbatim": "        b.iter(|| LdpcDecoder::decode_batch(black_box(&code), black_box(&batch), black_box(50)));",
+      "occurrences": 1,
+      "topic": "decode-batch-callers",
+      "why": "A benchmark calls the inherent batch function.",
+      "sha256": "8565134873888d4bfc28af668eaf286cef33b761ebd3111891182790021999ea"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd45787ce1a883bd7fa0cac1192ded0d712e010a",
+      "path": "docs/how-to/select-acceleration.md",
+      "line": 133,
+      "verbatim": "    LdpcDecoder::decode_batch_with_config(&code, &frames, 50, config)",
+      "occurrences": 1,
+      "topic": "decode-batch-callers",
+      "why": "A permanent how-to page shows the inherent batch function.",
+      "sha256": "b7feaae704e6d3bc700df29790801ce551d3706c90535342d928464f76449361"
     }
   ]
 }
