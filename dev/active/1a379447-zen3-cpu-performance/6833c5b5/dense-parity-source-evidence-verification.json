@@ -1,0 +1,210 @@
+{
+  "schema": "source-evidence-verification-v1",
+  "ledger": {
+    "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json",
+    "sha256": "8896a6c30bb509b7320e64a8fec5dc8fe5601edb7e2a3ad117912b110a1d5800"
+  },
+  "project": "gf2",
+  "compared_tree": "fcb972da393c878665b1653856d76ddf5b299731",
+  "class": "recorded-commits",
+  "rows": 17,
+  "rows_of_other_projects": 0,
+  "holding_at_recorded_commits": 17,
+  "holding_in_compared_tree": 1,
+  "differing_from_compared_tree": [
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "    pub fn matvec(&self, x: &crate::BitVec) -> crate::BitVec {",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 1538,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        1056
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623"
+    },
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "        match matvec_route(self.stride_words) {",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 1541,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        1059
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623"
+    },
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "pub fn matvec_route(stride_words: usize) -> MatvecRoute {",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 50,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        44
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "bccaeb29ad80b2bf18ebde74f4f655dfcb2258ea"
+    },
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "        if stride_words >= MATVEC_SIMD_MIN_WORDS_SELECTED {",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 53,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        47
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "bccaeb29ad80b2bf18ebde74f4f655dfcb2258ea"
+    },
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 18,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        15
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "bccaeb29ad80b2bf18ebde74f4f655dfcb2258ea"
+    },
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "        for row in self.data.chunks_exact(self.stride_words).take(self.rows) {",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 1606,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        1120
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623"
+    },
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "            y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 1607,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        1121
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623"
+    },
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "    fn row_dot_parity_scalar(row: &[u64], x_words: &[u64]) -> bool {",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 1568,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        1086
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623"
+    },
+    {
+      "path": "crates/gf2-core/src/matrix.rs",
+      "verbatim": "        let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };",
+      "recorded_commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "recorded_line": 316,
+      "tree_sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54",
+      "tree_lines": [
+        275,
+        296
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623"
+    },
+    {
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "verbatim": "    pub fn with_capacity(bits: usize) -> Self {",
+      "recorded_commit": "e2e3d8ff3158ba152173cf67b913638c35dc26e3",
+      "recorded_line": 115,
+      "tree_sha256": "23b1682c128a73cc0153cbba54ed85765f281501c42c6d8c59b3e7538789cd33",
+      "tree_lines": [
+        72
+      ],
+      "first_file_change": "fd2e785d4e2c9d5983886840396c9f880114ead0",
+      "first_line_displacement": "a88cb7585a6ba6c6cfd3e52a99058aa5d5014623"
+    },
+    {
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "verbatim": "    pub fn push_bit(&mut self, bit: bool) {",
+      "recorded_commit": "e2e3d8ff3158ba152173cf67b913638c35dc26e3",
+      "recorded_line": 283,
+      "tree_sha256": "23b1682c128a73cc0153cbba54ed85765f281501c42c6d8c59b3e7538789cd33",
+      "tree_lines": [
+        163
+      ],
+      "first_file_change": "fd2e785d4e2c9d5983886840396c9f880114ead0",
+      "first_line_displacement": "fd2e785d4e2c9d5983886840396c9f880114ead0"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "verbatim": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
+      "recorded_commit": "c3010276373f3b60332cbcdebb1abae9f5be79c2",
+      "recorded_line": 343,
+      "tree_sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462",
+      "tree_lines": [
+        349
+      ],
+      "first_file_change": "9730ac590c0f52b40734b18099ce1af55e258b73",
+      "first_line_displacement": "9730ac590c0f52b40734b18099ce1af55e258b73"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "verbatim": "    fn and_popcnt_fn(lhs: &[u64], rhs: &[u64]) -> u64 {",
+      "recorded_commit": "c3010276373f3b60332cbcdebb1abae9f5be79c2",
+      "recorded_line": 713,
+      "tree_sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462",
+      "tree_lines": [
+        695
+      ],
+      "first_file_change": "9730ac590c0f52b40734b18099ce1af55e258b73",
+      "first_line_displacement": "9730ac590c0f52b40734b18099ce1af55e258b73"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/lib.rs",
+      "verbatim": "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,",
+      "recorded_commit": "e2e3d8ff3158ba152173cf67b913638c35dc26e3",
+      "recorded_line": 130,
+      "tree_sha256": "8d86f7d27e222f05b52ea96e8889c2d7b3ce462959e131d340ac8ed2b5006746",
+      "tree_lines": [
+        131
+      ],
+      "first_file_change": "884bec41ff75740b0aa5f3a447c5314b46a50be6",
+      "first_line_displacement": "876c5f6919268ce692a9a77549d8257253fd842d"
+    },
+    {
+      "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
+      "verbatim": "        .filter(|c| c.role != CellRole::Exploratory)",
+      "recorded_commit": "6cdf576e2623f5593a2f0bf4389eac546b26844b",
+      "recorded_line": 109,
+      "tree_sha256": "4b8abb212518f2726132401db766712f18cba473108170e54e8e6289d167d811",
+      "tree_lines": [
+        108,
+        196
+      ],
+      "first_file_change": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "first_line_displacement": "24437c521dcdd13db61baf7c457d73c32372b2ba"
+    },
+    {
+      "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
+      "verbatim": "                || f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;",
+      "recorded_commit": "0dbfdac60bf2b324b76ccc61cab6b2bcb78448a2",
+      "recorded_line": 2166,
+      "tree_sha256": "c8f3dc32510822b38472eef913af508ad98b47abc6a8195e60877a0dfc736be8",
+      "tree_lines": [
+        2153
+      ],
+      "first_file_change": "64f1a4f691177b72ce325a964aa3929f2201220a",
+      "first_line_displacement": "64f1a4f691177b72ce325a964aa3929f2201220a"
+    }
+  ]
+}
