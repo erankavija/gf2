@@ -233,6 +233,17 @@ def main():
         f"{record['offline_tuning_campaign']['session_budget_minutes']:g} minutes "
         f"(`{seam}`, budget section).",
         "",
+        "## Build levels",
+        "",
+        table(["Arm identity", "RUSTFLAGS", "Selectors", "Competitor", "Definition"],
+              [[f"`{name}`", f"`{level['rustflags']}`" if level["rustflags"] else "none",
+                level["selectors"], level["external"], level.get("definition", "")]
+               for name, level in plan["builds"].items()]),
+        "",
+        "## Excluded from the plan",
+        "",
+        table(["Subject", "Reason"], [[row["id"], row["reason"]] for row in plan["excluded"]]),
+        "",
         "## Planned cells",
         "",
         table(["Family", "Cell", "Role", "Objective", "Metric", "Core arm", "Cache",
