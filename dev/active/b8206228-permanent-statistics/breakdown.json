@@ -456,7 +456,7 @@
           "creates": [
             "crates/gf2-sim/src/permanent_campaign/mod.rs",
             "crates/gf2-sim/src/permanent_campaign/schema.rs",
-            "dev/active/b8206228-permanent-statistics/simulation_results/permanent-zero-fraction/README.md"
+            "dev/simulation_results/permanent-zero-fraction/README.md"
           ],
           "touches": [
             "crates/gf2-sim/src/lib.rs"
@@ -509,7 +509,7 @@
           ],
           "touches": [
             "crates/gf2-sim/src/permanent_campaign/mod.rs",
-            "dev/active/b8206228-permanent-statistics/simulation_results/permanent-zero-fraction/README.md"
+            "dev/simulation_results/permanent-zero-fraction/README.md"
           ]
         }
       }
@@ -1610,7 +1610,7 @@
             "dev/simulation_results/permanent-zero-fraction/fixtures/"
           ],
           "touches": [
-            "dev/active/b8206228-permanent-statistics/simulation_results/permanent-zero-fraction/README.md"
+            "dev/simulation_results/permanent-zero-fraction/README.md"
           ]
         }
       }

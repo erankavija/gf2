@@ -50,5 +50,5 @@ None. The owner's standing 02:00 window admission rule is satisfied by the timer
 - Armed run: `systemctl --user list-timers gf2-equivalence-s24.timer`; runner + results: `~/.local/state/gf2-session24/{run-equivalence.sh,runner.log,RESULT.txt}`
 - Harness extension: `dev/research/permanent-sampling-feas/src/campaign_selection.rs` (authority parsing + budgets), commit `4e847a3f`
 - Addendum draft: `dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence-addendum.md`
-- 6dfb1b5e evidence: `crates/gf2-sim/src/permanent_campaign/driver.rs:738` test; `dev/active/b8206228-permanent-statistics/simulation_results/permanent-zero-fraction/README.md` §manifest identities
+- 6dfb1b5e evidence: `crates/gf2-sim/src/permanent_campaign/driver.rs:738` test; `dev/simulation_results/permanent-zero-fraction/README.md` §manifest identities
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json` (`session_24_state`)

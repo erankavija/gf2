@@ -1,6 +1,6 @@
 //! Inspect, checksum, conform, and verify a published permanent-zero-fraction
 //! dataset, described in
-//! the dataset README. This binary
+//! `dev/simulation_results/permanent-zero-fraction/README.md`. This binary
 //! never creates or mutates a dataset file: `checksums` prints to standard
 //! output.
 //!
