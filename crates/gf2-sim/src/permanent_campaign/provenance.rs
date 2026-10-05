@@ -2,7 +2,7 @@
 //! [`approve_emission`] gates publication on the executable identity the frozen
 //! manifest names, and [`verify_dataset`] re-checks published bytes against
 //! [`INTEGRITY_FILE`], whose format
-//! the dataset README documents.
+//! `dev/simulation_results/permanent-zero-fraction/README.md` documents.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
