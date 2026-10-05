@@ -1,0 +1,326 @@
+{
+  "schema": "source-evidence-v1",
+  "issue": "6e87c436",
+  "claims": [
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1056,
+      "occurrences": 1,
+      "verbatim": "    pub fn matvec(&self, x: &crate::BitVec) -> crate::BitVec {",
+      "why": "The public dense product whose behaviour and selection this outcome leaves unchanged.",
+      "sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54"
+    },
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1059,
+      "occurrences": 1,
+      "verbatim": "        match matvec_route(self.stride_words) {",
+      "why": "The public call selects its lane from the row stride alone.",
+      "sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54"
+    },
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 47,
+      "occurrences": 1,
+      "verbatim": "        if stride_words >= MATVEC_SIMD_MIN_WORDS_SELECTED {",
+      "why": "One threshold comparison separates the scalar lane from the SIMD lane.",
+      "sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54"
+    },
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 15,
+      "occurrences": 1,
+      "verbatim": "pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;",
+      "why": "The ordinary build compares the stride with this conservative constant.",
+      "sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54"
+    },
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 18,
+      "occurrences": 1,
+      "verbatim": "const MATVEC_SIMD_MIN_WORDS_SELECTED: usize = crate::tuning::baked::MATVEC_SIMD_MIN_WORDS;",
+      "why": "A `gf2_tuning_baked` build substitutes the baked matvec threshold, not the `bit_backend` threshold.",
+      "sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54"
+    },
+    {
+      "project": "gf2",
+      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "path": "crates/gf2-core/src/tuning/baked.rs",
+      "line": 17,
+      "occurrences": 1,
+      "verbatim": "pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;",
+      "why": "The baked matvec threshold equals the conservative constant, so a baked build selects the same lane for every stride.",
+      "sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb"
+    },
+    {
+      "project": "gf2",
+      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "path": "crates/gf2-core/src/tuning/baked.rs",
+      "line": 12,
+      "occurrences": 1,
+      "verbatim": "pub(crate) const SIMD_MIN_WORDS: usize = 8;",
+      "why": "The baked `bit_backend.simd_min_words` value is a separate constant that the matvec selector does not read.",
+      "sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb"
+    },
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1062,
+      "occurrences": 1,
+      "verbatim": "                if let Some(fns) = crate::simd::maybe_simd() {",
+      "why": "The SIMD lane runs only when the host kernel bundle is detected.",
+      "sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54"
+    },
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1065,
+      "occurrences": 2,
+      "verbatim": "                self.matvec_scalar(x)",
+      "why": "The scalar implementation serves the scalar lane and the undetected-bundle fallback.",
+      "sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54"
+    },
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1121,
+      "occurrences": 1,
+      "verbatim": "            y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);",
+      "why": "The SIMD lane folds each row's parity from the fused AND-popcount bundle entry.",
+      "sha256": "fcead8141ed430a558567887cb99a07b3d95bf2323fbbf13bfd111993dda3d54"
+    },
+    {
+      "project": "gf2",
+      "commit": "7b08bb1103a9e72ca808ff8d3f45d5362fdc7914",
+      "path": "crates/gf2-core/src/lib.rs",
+      "line": 13,
+      "occurrences": 1,
+      "verbatim": "#![deny(unsafe_code)]",
+      "why": "The crate holding `BitMatrix::matvec` admits no unsafe code.",
+      "sha256": "f6ff97b938389bad9bd1861c13a5bbec3266791435a16409ecb496a879751450"
+    },
+    {
+      "project": "gf2",
+      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "path": "crates/gf2-core/Cargo.toml",
+      "line": 57,
+      "occurrences": 1,
+      "verbatim": "simd = []",
+      "why": "SIMD dispatch is an opt-in feature, so the scalar build is a separate test target.",
+      "sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3"
+    },
+    {
+      "project": "gf2",
+      "commit": "6a34004348bd7d409b9077a746498a2e1bbdae74",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 140,
+      "occurrences": 3,
+      "verbatim": "        bv.mask_tail();",
+      "why": "`BitVec::from_words` masks the tail after dropping surplus words, so a matvec operand carries zero padding.",
+      "sha256": "23b1682c128a73cc0153cbba54ed85765f281501c42c6d8c59b3e7538789cd33"
+    },
+    {
+      "project": "gf2",
+      "commit": "16e5c4b6b4fca98f4278a76ffe3be9b971fef50e",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 349,
+      "occurrences": 1,
+      "verbatim": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
+      "why": "The fused AVX2 kernel body lives in the isolated kernel crate.",
+      "sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462"
+    },
+    {
+      "project": "gf2",
+      "commit": "16e5c4b6b4fca98f4278a76ffe3be9b971fef50e",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 344,
+      "occurrences": 1,
+      "verbatim": "/// The host supports AVX2; `super::detect_x86` establishes that before",
+      "why": "The fused kernel's `# Safety` section opens with the required target feature and the runtime gate that guards the call.",
+      "sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462"
+    },
+    {
+      "project": "gf2",
+      "commit": "16e5c4b6b4fca98f4278a76ffe3be9b971fef50e",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 347,
+      "occurrences": 1,
+      "verbatim": "/// unaligned 32-byte load and every tail byte lies inside the common prefix.",
+      "why": "The same section bounds every read by the shorter slice and admits aliasing of the two read-only operands.",
+      "sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462"
+    },
+    {
+      "project": "gf2",
+      "commit": "16e5c4b6b4fca98f4278a76ffe3be9b971fef50e",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 697,
+      "occurrences": 1,
+      "verbatim": "        unsafe { avx2_and_popcnt(lhs, rhs) }",
+      "why": "The safe bundle entry is the unsafe boundary of the fused kernel.",
+      "sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462"
+    },
+    {
+      "project": "gf2",
+      "commit": "16e5c4b6b4fca98f4278a76ffe3be9b971fef50e",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 696,
+      "occurrences": 3,
+      "verbatim": "        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.",
+      "why": "The fused entry and both carry-save entries state the detection contract at their unsafe calls.",
+      "sha256": "2a58ba6d960b95283bbe5ffe493b0008cf1eab39ea901569af36664b87884462"
+    },
+    {
+      "project": "gf2",
+      "commit": "d0685dad0ff701e249c025540fe0e9efa8dbfc8c",
+      "path": "crates/gf2-kernels-simd/src/x86/mod.rs",
+      "line": 44,
+      "occurrences": 1,
+      "verbatim": "    if cfg!(any(target_arch = \"x86\", target_arch = \"x86_64\")) && is_x86_feature_detected!(\"avx2\") {",
+      "why": "The bundle exists only after runtime AVX2 detection.",
+      "sha256": "c30c64846087d3914df8b1484423e63a76904e03339b55059740616fbed2042e"
+    },
+    {
+      "project": "gf2",
+      "commit": "51c447e88e17d6c5d6206d319becd3b459a404fe",
+      "path": "crates/gf2-kernels-simd/src/lib.rs",
+      "line": 131,
+      "occurrences": 1,
+      "verbatim": "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,",
+      "why": "The carry-save fused comparator stays a direct bundle field outside the matvec route.",
+      "sha256": "8d86f7d27e222f05b52ea96e8889c2d7b3ce462959e131d340ac8ed2b5006746"
+    },
+    {
+      "project": "gf2",
+      "commit": "938ff374c941c6003222ea8e5b69401fc891d637",
+      "path": "crates/gf2-core/tests/simd_equiv/mod.rs",
+      "line": 12,
+      "occurrences": 1,
+      "verbatim": "pub const WORD_BOUNDARY_LENGTHS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];",
+      "why": "The shared SIMD-equivalence helper owns the word-boundary length list.",
+      "sha256": "4d244f34b264b2635871ca9ded9d2633ef18fdb7d14c267b661db9fb4a4b7d65"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "line": 71,
+      "occurrences": 1,
+      "verbatim": "fn matvec_word_boundary_lengths_match_scalar_reference() {",
+      "why": "Square boundary shapes compare the public product with a bit-level reference.",
+      "sha256": "e83baca8794ca60fd55e0f393fd951a51c579ac47662bc11b2d7b16cfd77f0b2"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "line": 99,
+      "occurrences": 1,
+      "verbatim": "const BOUNDARY_COLS: [usize; 12] = [0, 1, 63, 64, 65, 449, 511, 512, 513, 575, 576, 577];",
+      "why": "The deterministic boundary test spans empty, scalar-lane and eight- and nine-word SIMD-lane column counts.",
+      "sha256": "e83baca8794ca60fd55e0f393fd951a51c579ac47662bc11b2d7b16cfd77f0b2"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "line": 115,
+      "occurrences": 1,
+      "verbatim": "    for rows in [0, 1, 63, 64, 65] {",
+      "why": "The same test spans the output word boundaries.",
+      "sha256": "e83baca8794ca60fd55e0f393fd951a51c579ac47662bc11b2d7b16cfd77f0b2"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "line": 135,
+      "occurrences": 1,
+      "verbatim": "                assert_zero_tail(&product, &context);",
+      "why": "Each product's padding beyond its length is asserted zero.",
+      "sha256": "e83baca8794ca60fd55e0f393fd951a51c579ac47662bc11b2d7b16cfd77f0b2"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "line": 130,
+      "occurrences": 1,
+      "verbatim": "            let all_set = BitVec::from_words(vec![u64::MAX; cols.div_ceil(64) + 1], cols);",
+      "why": "A dirty-tailed, over-long word operand exercises `from_words` masking on the matvec path.",
+      "sha256": "e83baca8794ca60fd55e0f393fd951a51c579ac47662bc11b2d7b16cfd77f0b2"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "line": 150,
+      "occurrences": 1,
+      "verbatim": "fn matvec_matches_scalar_reference_proptest_sizes_0_to_1024() {",
+      "why": "Random shapes on both lanes compare with the bit-level reference.",
+      "sha256": "e83baca8794ca60fd55e0f393fd951a51c579ac47662bc11b2d7b16cfd77f0b2"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/popcount_routes.rs",
+      "line": 134,
+      "occurrences": 1,
+      "verbatim": "fn every_fused_route_counts_slices_at_each_word_offset() {",
+      "why": "Every fused route, the bundle entry included, runs on slices at each word offset.",
+      "sha256": "dbbd372f0cf05080063b73062727b9bb0576ed5df8ee930f734e142e67d7dc2b"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/popcount_routes.rs",
+      "line": 118,
+      "occurrences": 1,
+      "verbatim": "fn every_fused_route_counts_the_intersection() {",
+      "why": "Every fused route runs on aligned buffers of the empty, boundary and block lengths.",
+      "sha256": "dbbd372f0cf05080063b73062727b9bb0576ed5df8ee930f734e142e67d7dc2b"
+    },
+    {
+      "project": "gf2",
+      "commit": "09eb0b6f17a82f7cb70f94c206923d387098228c",
+      "path": "crates/gf2-core/tests/popcount_routes.rs",
+      "line": 226,
+      "occurrences": 1,
+      "verbatim": "fn matrix_vector_parity_agrees_across_strides_that_change_the_route() {",
+      "why": "The public product is checked on strides of both lanes.",
+      "sha256": "dbbd372f0cf05080063b73062727b9bb0576ed5df8ee930f734e142e67d7dc2b"
+    },
+    {
+      "project": "gf2",
+      "commit": "938ff374c941c6003222ea8e5b69401fc891d637",
+      "path": "crates/gf2-core/tests/matrix_selection_baked.rs",
+      "line": 36,
+      "occurrences": 1,
+      "verbatim": "        matvec_route(conservative),",
+      "why": "The baked-build witness observes the SIMD lane at the conservative threshold.",
+      "sha256": "e0a8cab7abdec037f912e934d2251dfe076fd38abaeb9dcf8122d45ca7458644"
+    },
+    {
+      "project": "gf2",
+      "commit": "4752476f3bc6b267c4bc05c67e51d066c4ac54c5",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/routes.rs",
+      "line": 294,
+      "occurrences": 1,
+      "verbatim": "        route: matvec_route(stride_words),",
+      "why": "An arm's reported `selected_path` lane is the public selector's answer for the cell's stride.",
+      "sha256": "3d2b23cc30cc12d15a30a0d6643476f7d29137045b05fb3c77ff0a90e858c610"
+    }
+  ]
+}

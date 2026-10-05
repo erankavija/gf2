@@ -1,0 +1,323 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "6e87c436-route-2037941f-dense-isolated-fused-parity",
+  "issue": "e1f9a78f",
+  "family": "2037941f-dense-isolated-fused-parity",
+  "plan_sha256": "c6f7d99feff08fa542c046eb5990594e508b75863ece3d9171bece58d351642b",
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-isolated-fused-parity.json",
+  "addendum_sha256": "28685a0913aed107090c0c489de6a68fe47c534314854551b2d015e2a8ac31fb",
+  "cells": [
+    {
+      "cell_id": "and-popcnt-8w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=1x128B/working-set=128B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-9w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=1x144B/working-set=144B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=1x144B/working-set=144B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-63w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=1x1008B/working-set=1008B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=1x1008B/working-set=1008B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-64w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=1x1024B/working-set=1024B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=1x1024B/working-set=1024B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-65w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=1x1040B/working-set=1040B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=1x1040B/working-set=1040B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-7w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=7/row%64=0/x%64=0/banks=1x112B/working-set=112B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=7/row%64=0/x%64=0/banks=1x112B/working-set=112B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-66w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=66/row%64=0/x%64=0/banks=1x1056B/working-set=1056B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=66/row%64=0/x%64=0/banks=1x1056B/working-set=1056B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-8w-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=8/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-9w-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=8x8388720B/working-set=67109760B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=9/row%64=0/x%64=0/banks=8x8388720B/working-set=67109760B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-63w-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=8x8389584B/working-set=67116672B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=63/row%64=0/x%64=0/banks=8x8389584B/working-set=67116672B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-64w-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=64/row%64=0/x%64=0/banks=8x8388608B/working-set=67108864B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcnt-65w-streaming",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "and-popcnt-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=8x8388640B/working-set=67109120B",
+          "windows": 0
+        },
+        {
+          "arm": "and-popcnt-b",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "7139c897f86a98477eee69f739c60225e498f5b1526fa35c81f344f5d7d9cda5",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-kernels-simd/LogicalFns::and_popcnt_fn/indirect/w=65/row%64=0/x%64=0/banks=8x8388640B/working-set=67109120B",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
