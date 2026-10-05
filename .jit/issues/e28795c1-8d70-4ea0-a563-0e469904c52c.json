@@ -1,0 +1,45 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-05T19:28:49.112013653Z",
+  "dependencies": [
+    "2133d15f-688e-442c-bb20-48debba72307"
+  ],
+  "description": "After the plan-review checkpoint passes, decompose the plan for Vectorize LDPC decoding across frames (ed3d490e) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
+  "documents": [],
+  "gates_required": [
+    "coverage-preview",
+    "breakdown-review"
+  ],
+  "gates_status": {
+    "breakdown-review": {
+      "status": "pending",
+      "updated_at": "2026-10-05T19:28:49.112013653Z",
+      "updated_by": null
+    },
+    "coverage-preview": {
+      "status": "pending",
+      "updated_at": "2026-10-05T19:28:49.112013653Z",
+      "updated_by": null
+    }
+  },
+  "id": "e28795c1-8d70-4ea0-a563-0e469904c52c",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-coding",
+    "component:gf2-kernels-simd",
+    "component:gf2-sim",
+    "story:zen3-ldpc-frame-simd",
+    "satisfies:1a379447/REQ-03",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/Cassagne2019",
+    "cites:@/citation/Srsran2026",
+    "cites:@/citation/Xdsopl2026",
+    "type:breakdown",
+    "brackets:ed3d490e"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "breakdown: Vectorize LDPC decoding across frames",
+  "updated_at": "2026-10-05T19:28:49.112013653Z"
+}
