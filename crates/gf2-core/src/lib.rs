@@ -1,14 +1,12 @@
-//! # gf2-core: GF(2) primitives
-//!
 //! Bit strings ([`BitVec`], [`BitSlice`], [`BitSliceMut`]), dense
 //! ([`BitMatrix`]) and sparse ([`sparse`]) GF(2) matrices, and finite-field
 //! arithmetic ([`field`], [`gf2m`], [`gfp`], [`gfpn`]).
 //!
-//! ## Design Invariants
+//! # Design invariants
 //!
 //! - **Storage**: Dense contiguous `u64` words in little-endian bit order.
-//! - **Bit Numbering**: Within each word, bit `i` maps to `word = i >> 6`, `mask = 1u64 << (i & 63)`.
-//! - **Tail Masking**: Padding bits beyond `len_bits` in the last word are always zeroed.
+//! - **Bit numbering**: Bit `i` maps to `word = i >> 6`, `mask = 1u64 << (i & 63)`.
+//! - **Tail masking**: Bits of the last word at or above `len_bits` are zero.
 
 #![deny(unsafe_code)]
 #![warn(missing_docs)]

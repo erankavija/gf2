@@ -37,8 +37,8 @@
 //!
 //! `tests/determinism.rs` asserts that, at a fixed seed, the columns `fer`,
 //! `frames`, `errors` and `mean_iters` are byte-identical across CPU worker
-//! counts {1, 2, 4, 8, 24} and that a run resumed from a checkpoint equals an
-//! uninterrupted one. `tests/gpu_byte_identity.rs` asserts byte-identical
+//! counts and that a run resumed from a checkpoint equals an uninterrupted
+//! one. `tests/gpu_byte_identity.rs` asserts byte-identical
 //! `fer`, `frames` and `errors` between the CPU and CPU+GPU paths.
 #![deny(unsafe_code)]
 #![warn(missing_docs)]

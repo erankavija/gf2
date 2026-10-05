@@ -1,5 +1,5 @@
-//! Error-correcting codes built on `gf2-core` primitives. The canonical trait
-//! surface is generic over the code symbol field and representation
+//! Error-correcting codes built on `gf2-core` primitives. The code traits are
+//! generic over the symbol field and its representation
 //! ([`FieldVec`](gf2_core::field::FieldVec)/[`FieldMatrix`](gf2_core::field::matrix::FieldMatrix)),
 //! with packed binary specializations using
 //! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::BitMatrix).
