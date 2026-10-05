@@ -111,8 +111,16 @@
       "format": "markdown",
       "label": "Ledger verification",
       "path": "dev/active/1a379447-zen3-cpu-performance/6833c5b5/verification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/a87ae828-r1.md"
     }
   ],
+  "done_at": "2026-10-05T19:26:21.666829302Z",
   "first_ready_at": "2026-10-05T03:39:14.959300842Z",
   "gates_required": [
     "cargo-ci",
@@ -120,8 +128,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-10-05T18:56:55.390246353Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T19:15:28.167892561Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -137,7 +145,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Stop the dense-parity source-evidence generator rewriting its pinned ledger",
-  "updated_at": "2026-10-05T19:07:21.945439710Z"
+  "updated_at": "2026-10-05T19:26:21.949145911Z"
 }

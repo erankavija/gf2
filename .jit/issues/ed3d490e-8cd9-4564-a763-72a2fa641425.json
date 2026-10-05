@@ -41,7 +41,7 @@
     "cites:@/citation/Xdsopl2026"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Vectorize LDPC decoding across frames",
-  "updated_at": "2026-10-01T22:42:02.374807529Z"
+  "updated_at": "2026-10-05T19:26:21.890603243Z"
 }

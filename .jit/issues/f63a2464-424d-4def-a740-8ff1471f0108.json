@@ -1130,8 +1130,16 @@
       "format": "markdown",
       "label": "Recorded corrections to frozen statements",
       "path": "dev/active/f63a2464/corrections.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review, rework 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f63a2464-r2.md"
     }
   ],
+  "done_at": "2026-10-05T19:26:21.789786239Z",
   "first_ready_at": "2026-09-06T19:59:26.709153676Z",
   "gates_required": [
     "cargo-ci",
@@ -1141,17 +1149,17 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T00:31:01.964302590Z",
+      "updated_at": "2026-10-05T19:14:12.026596479Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T00:11:16.256758331Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T19:19:55.041605896Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-10-05T00:36:38.931094886Z",
+      "updated_at": "2026-10-05T19:25:37.231610947Z",
       "updated_by": "auto:executor"
     }
   },
@@ -1171,7 +1179,7 @@
     "cites:@/citation/Xdsopl2026"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Evaluate quantized layered and QC-aware LDPC candidates",
-  "updated_at": "2026-10-05T18:38:21.989406615Z"
+  "updated_at": "2026-10-05T19:26:22.002039967Z"
 }
