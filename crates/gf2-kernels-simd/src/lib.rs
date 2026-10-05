@@ -35,6 +35,7 @@ pub mod gf2m_batch;
 pub mod gf2m_gemm;
 pub mod gf2m_wide;
 pub mod llr;
+pub mod m4rm;
 pub mod mersenne;
 pub mod modem;
 pub mod prefetch;
@@ -42,6 +43,7 @@ pub mod shift_funnel;
 pub mod transpose;
 
 pub use clmul_scalar::clmul_u64_scalar;
+pub use m4rm::m4rm_gray_build_scalar;
 pub use prefetch::prefetch_read_l1;
 
 /// Words one Harley-Seal carry-save block of [`LogicalFns::popcnt_csa_fn`]
