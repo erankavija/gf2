@@ -472,7 +472,7 @@ fn a_candidate_build_keeps_public_routes_and_declares_its_compiler_flag() {
             "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
             "/tmp/gf2-contract.lock",
             "/nonexistent/baseline-arm",
-            Some(("/nonexistent/candidate-arm", "--cfg gf2_xor_unroll2")),
+            Some(("/nonexistent/candidate-arm", "--cfg contract_candidate")),
             None,
             Route::PublicXorB,
             Some(2),
@@ -489,7 +489,7 @@ fn a_candidate_build_keeps_public_routes_and_declares_its_compiler_flag() {
         );
         assert_eq!(
             plan.arms[candidate].rustflags.as_deref(),
-            Some("--cfg gf2_xor_unroll2")
+            Some("--cfg contract_candidate")
         );
         assert_eq!(plan.cells[0].baseline_arm, baseline);
         assert_eq!(plan.cells[0].candidate_arm, candidate);

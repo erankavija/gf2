@@ -38,11 +38,9 @@
   "current": {
     "counts": {
       "receipt": 20,
-      "receipt-snapshot": 25,
-      "record": 20,
-      "tracker": 1,
-      "workspace-manifest": 1,
-      "workspace-source": 2
+      "receipt-snapshot": 27,
+      "record": 21,
+      "tracker": 1
     },
     "files": [
       {
@@ -50,28 +48,6 @@
         "class": "tracker",
         "lines": [
           7
-        ]
-      },
-      {
-        "path": "crates/gf2-kernels-simd/Cargo.toml",
-        "class": "workspace-manifest",
-        "lines": [
-          13
-        ]
-      },
-      {
-        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "class": "workspace-source",
-        "lines": [
-          26,
-          29,
-          30,
-          31,
-          32,
-          50,
-          51,
-          52,
-          58
         ]
       },
       {
@@ -199,6 +175,35 @@
         ]
       },
       {
+        "path": "dev/active/1a379447-zen3-cpu-performance/fa1d8733/survey/find-flag-readers.py",
+        "class": "record",
+        "lines": [
+          24
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/fa1d8733/survey/inputs/before/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/fa1d8733/survey/inputs/before/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          26,
+          29,
+          30,
+          31,
+          32,
+          50,
+          51,
+          52,
+          58
+        ]
+      },
+      {
         "path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json",
         "class": "record",
         "lines": [
@@ -219,14 +224,6 @@
         "class": "record",
         "lines": [
           23
-        ]
-      },
-      {
-        "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/tests/harness_contract.rs",
-        "class": "workspace-source",
-        "lines": [
-          475,
-          492
         ]
       },
       {

@@ -6,7 +6,7 @@ with its class under RULE:
 
   before   the kernel package's files in the tree `before-baseline.json`
            identifies
-  current  every tracked file of the working tree
+  current  every tracked file of the working tree other than the record
 
 Exits nonzero after writing when a `current` file of class `workspace-source`
 or `workspace-manifest` matches.
@@ -98,8 +98,12 @@ def main():
     held = sorted(before.digests())
     before_rows = matches(held, before.bytes, classifier(held))
     tracked = git_paths("ls-files", "-z")
+    output = HERE / "flag-readers.json"
     # A symbolic link is listed with its target, which carries the text.
-    files = [path for path in tracked if not (ROOT / path).is_symlink()]
+    files = [
+        path for path in tracked
+        if not (ROOT / path).is_symlink() and ROOT / path != output
+    ]
     current_rows = matches(files, lambda path: (ROOT / path).read_bytes(), classifier(tracked))
     record = {
         "schema": "xor-unroll-flag-readers-v1",
@@ -109,7 +113,6 @@ def main():
         "before": before.identity() | {"counts": counts(before_rows), "files": before_rows},
         "current": {"counts": counts(current_rows), "files": current_rows},
     }
-    output = HERE / "flag-readers.json"
     output.write_text(json.dumps(record, indent=2) + "\n")
     print(f"{output.relative_to(ROOT)}: before {json.dumps(record['before']['counts'])}, "
           f"current {json.dumps(record['current']['counts'])}")
