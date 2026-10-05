@@ -75,7 +75,7 @@ The search is finite. The [logical](logical-buffer-addendum.md#search-and-stoppi
 | The selected SIMD lane of `matvec` does not lead the scalar reference at every anchor. | Preserved experiment: the `scalar-reference` rows. Tracked follow-up: `63bad95d` calibrates core kernel selectors and their production routes under the frozen protocol and keeps conservative values where no arm wins. | `jit issue show 63bad95d` |
 | No committed record compares the logical receipts' pinned sources with the current tree, and the dense comparison describes the tree its task delivered. | Each receipt pins its producing sources per file, so its validity does not depend on the current tree. Tracked follow-up: `63bad95d` inventories the routes each measured production workload executes. | [Producing identity](mid-range-tables.md#host-toolchain-and-producing-identity) |
 | The dense-parity source-evidence ledger does not match what its generator writes after other issues' source edits. | Tracked follow-up: `6833c5b5`. | `jit issue show 6833c5b5` |
-| AVX2 kernel wrappers other than the fused AND-popcount route lack a stated safety contract. | Tracked follow-up: `7d44b71f`. | `jit issue show 7d44b71f` |
+| AVX2 kernel wrappers other than the fused AND-popcount route call their kernels without a stated safety contract, as `7d44b71f` records. | Tracked follow-up: `7d44b71f`. | `jit issue show 7d44b71f` |
 
 ## Permanent documentation
 
