@@ -12,8 +12,8 @@ Check (a): After one subtraction and one division per call, one comparison per n
 
 | Pointer type | Entry points | Instructions (a) adds | Kernel instructions | Option (b) | Recommended | Cells in the plan |
 |---|---|---|---|---|---|---|
-| `fp_small::SmallPrimeSpmmRowFn` | `spmm_row_safe` | +37, loop body [5] | 131, loop bodies [10, 14, 21, 21, 31, 48, 84] | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | `spmm-small-narrow`, `spmm-small-wide` |
-| `fp_medium::MediumPrimeSpmmRowFn` | `spmm_row_safe` | +36, loop body [5] | no committed listing | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | `spmm-medium-narrow` |
+| `fp_small::SmallPrimeSpmmRowFn` | `spmm_row_safe` | +37, loop body [5] | 131, loop bodies [10, 14, 21, 21, 31, 48, 84] | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | `spmm-small-n16`, `spmm-small-n1024` |
+| `fp_medium::MediumPrimeSpmmRowFn` | `spmm_row_safe` | +36, loop body [5] | no committed listing | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | `spmm-medium-n16`, `spmm-medium-n1024` |
 
 Reason for option (a): The one production caller forwards column indices from a safe public hook and cannot hold an `unsafe` block, so an unchecked row kernel needs the row loop inside the kernel crate. The scan is one comparison per non-zero per row, on a hot path, and the M4RM tile wrappers set the precedent of an index check per call.
 
@@ -23,8 +23,8 @@ Check (a): One checked product and one comparison per call for the window shape;
 
 | Pointer type | Entry points | Instructions (a) adds | Kernel instructions | Option (b) | Recommended | Cells in the plan |
 |---|---|---|---|---|---|---|
-| `fp_small_ple::SmallPrimePlePanelBaseFn` | `ple_panel_base_safe` | +10; entry scan in the safe entry point: +29, loop body [6]; pivot inverse read: +3 | 341, loop bodies [7, 8, 8, 8, 9, 14, 15, 18, 21, 22, 29, 35, 51, 71, 91, 141, 162] | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 2 in benches and tests | (a) | `ple-small-panel` |
-| `fp_medium_ple::MediumPrimePlePanelBaseFn` | `ple_panel_base_safe` | +9; entry scan in the safe entry point: +31, loop body [6]; pivot inverse read: +3 | 359, loop bodies [7, 8, 8, 9, 10, 14, 15, 15, 21, 25, 27, 32, 56, 69, 95, 161, 162] | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 2 in benches and tests | (a) | — |
+| `fp_small_ple::SmallPrimePlePanelBaseFn` | `ple_panel_base_safe` | +10; entry scan in the safe entry point: +29, loop body [6]; pivot inverse read: +3 | 341, loop bodies [7, 8, 8, 8, 9, 14, 15, 18, 21, 22, 29, 35, 51, 71, 91, 141, 162] | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 2 in benches and tests | (a) | `ple-small-n128` |
+| `fp_medium_ple::MediumPrimePlePanelBaseFn` | `ple_panel_base_safe` | +9; entry scan in the safe entry point: +31, loop body [6]; pivot inverse read: +3 | 359, loop bodies [7, 8, 8, 9, 10, 14, 15, 15, 21, 25, 27, 32, 56, 69, 95, 161, 162] | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 2 in benches and tests | (a) | `ple-medium-n128` |
 
 Reason for option (a): The shape check is one product per panel and the index check one comparison per pivot, both outside the update loops; the two production callers meet both conditions by construction.
 
@@ -34,7 +34,7 @@ Check (a): One mask test and one length comparison per further slice, per call. 
 
 | Pointer type | Entry points | Instructions (a) adds | Kernel instructions | Option (b) | Recommended | Cells in the plan |
 |---|---|---|---|---|---|---|
-| `bipedal::BipedalBinaryKernelFn` | `add_safe`, `sub_safe`, `mul_safe` | +15 | 20, loop bodies [14] | 3 bundle field(s) and table entries; `// SAFETY:` sites: 2 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | `permanent-f3-singleword-simd` |
+| `bipedal::BipedalBinaryKernelFn` | `add_safe`, `sub_safe`, `mul_safe` | +15 | 20, loop bodies [14] | 3 bundle field(s) and table entries; `// SAFETY:` sites: 2 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | `permanent-f3-n14` |
 | `bipedal::BipedalUnaryKernelFn` | `neg_safe` | +11 | 31, loop bodies [6] | 1 bundle field(s) and table entry; `// SAFETY:` sites: 0 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | — |
 | `bipedal::packed5::F5BinaryKernelFn` | `add5_safe`, `sub5_safe`, `mul5_safe` | +21 | 82, loop bodies [68] | 3 bundle field(s) and table entries; `// SAFETY:` sites: 0 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | — |
 | `bipedal::packed5::F5UnaryKernelFn` | `neg5_safe` | +15 | 22, loop bodies [16] | 1 bundle field(s) and table entry; `// SAFETY:` sites: 0 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | — |
@@ -49,7 +49,7 @@ Check (a): `checked_mul` in place of each wrapping product the release assertion
 
 | Pointer type | Entry points | Instructions (a) adds | Kernel instructions | Option (b) | Recommended | Cells in the plan |
 |---|---|---|---|---|---|---|
-| `fp_small::SmallPrimeGemmRowPanelFn` | `gemm_row_panel_safe` | +16 | no committed listing | 1 bundle field(s) and table entry; `// SAFETY:` sites: 2 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | `matvec-small-packed` |
+| `fp_small::SmallPrimeGemmRowPanelFn` | `gemm_row_panel_safe` | +16 | no committed listing | 1 bundle field(s) and table entry; `// SAFETY:` sites: 2 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | `gemm-small-n32` |
 | `fp_small_panel::SmallPrimePanelGemmFn` | `batch_gemm_safe` | +40 | no committed listing | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 2 in benches and tests | (a) | — |
 | `fp_small_f32::SmallPrimeF32GemmFn` | `batch_gemm_safe`, `batch_gemm_route_a_safe` | +40 | no committed listing | 2 bundle field(s) and table entries; `// SAFETY:` sites: 2 production in a crate that denies `unsafe_code`, 3 in benches and tests | (a) | — |
 | `fp_medium::MediumPrimeGemmPanelFn` | `gemm_panel_safe` | +39 | no committed listing | 1 bundle field(s) and table entry; `// SAFETY:` sites: 1 production in a crate that denies `unsafe_code`, 0 in benches and tests | (a) | — |

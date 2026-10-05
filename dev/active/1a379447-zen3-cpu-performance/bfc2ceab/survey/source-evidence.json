@@ -1111,7 +1111,7 @@
       "occurrences": 1,
       "verbatim": "4c1e441f\t.agents/worktrees/agent-c04dd4ac\t6\tdev/bench_results/4c1e441f/run-dense-product-confirmation.sh window confirmation",
       "why": "The queue line of a six-cell warm confirmation states its estimate in minutes.",
-      "sha256": "3fd35ada607b18424113ac7eab787cea283e362524966da187ee0f199841f0ec"
+      "sha256": "78b196846ca5d4004c46dd67dc5407b4d0935a71ccf5ea16bfed6547580e3ced"
     },
     {
       "id": "queue-axpy",
@@ -1122,7 +1122,7 @@
       "occurrences": 1,
       "verbatim": "ad2a6a58\t.agents/worktrees/agent-0a357f94\t8\tdev/bench_results/ad2a6a58/run-axpy-confirmation.sh window confirmation",
       "why": "The queue line of a second warm confirmation states its estimate in minutes.",
-      "sha256": "3fd35ada607b18424113ac7eab787cea283e362524966da187ee0f199841f0ec"
+      "sha256": "78b196846ca5d4004c46dd67dc5407b4d0935a71ccf5ea16bfed6547580e3ced"
     },
     {
       "id": "bench-sparse-matmat",

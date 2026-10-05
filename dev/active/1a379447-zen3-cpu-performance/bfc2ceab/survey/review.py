@@ -1029,31 +1029,22 @@ DECISIONS = {
     ),
 }
 
-# Candidate before/after cells for the checks that stay on a hot path:
-# (cell, interface, workload, why).
-MEASUREMENT_CELLS = [
-    ("spmm-small-narrow", "small-prime-spmm-row",
-     "`SparseFieldMatrix::matmat` over a prime at most 251, dense operand of 16 columns",
-     "whole consumer; the scan is largest against the kernel's work when the row has "
-     "one 16-column block"),
-    ("spmm-small-wide", "small-prime-spmm-row",
-     "`SparseFieldMatrix::matmat` over a prime at most 251, dense operand of 1024 columns",
-     "whole consumer; the scan is amortized over 64 blocks per row"),
-    ("spmm-medium-narrow", "medium-prime-spmm-row",
-     "`SparseFieldMatrix::matmat` over a prime above 251, dense operand of 16 columns",
-     "whole consumer; the u16 lane"),
-    ("permanent-f3-singleword-simd", "bipedal-binary",
-     "`permanent_bipedal3_singleword_simd` on one matrix",
-     "whole consumer; one checked kernel call per Gray step"),
-    ("ple-small-panel", "small-prime-ple-panel",
-     "`FieldMatrix::ple` over a prime at most 251 at a width the panel base takes",
-     "whole consumer; one bounds check per pivot"),
-    ("matvec-small-packed", "small-prime-gemm-row-panel",
-     "the packed small-prime matrix-vector product",
-     "whole consumer; one checked product per call, as the control of the per-call "
-     "class"),
-]
-PILOT_MINUTES, CONFIRMATION_MINUTES = 8, 8
+# The pilot cells of the entry-check cost family, by the interface whose
+# checked form each measures; the frozen pilot addendum holds the cells.
+PILOT_ADDENDUM = "addendum-v4-entry-check-pilot.json"
+PILOT_CELLS = {
+    "spmm-small-n16": "small-prime-spmm-row",
+    "spmm-small-n1024": "small-prime-spmm-row",
+    "spmm-medium-n16": "medium-prime-spmm-row",
+    "spmm-medium-n1024": "medium-prime-spmm-row",
+    "permanent-f3-n14": "bipedal-binary",
+    "ple-small-n128": "small-prime-ple-panel",
+    "ple-medium-n128": "medium-prime-ple-panel",
+    "gemm-small-n32": "small-prime-gemm-row-panel",
+}
+# Estimate of the pilot's window minutes, builds included.
+PILOT_MINUTES = 12
+QUEUE_COMMAND = "dev/bench_results/bfc2ceab/run-entry-check.sh window pilot"
 
 # Text that would name one of the inventory's consumers in a measurement
 # family of the dispatch route inventory (jit:63bad95d).

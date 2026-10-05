@@ -1,0 +1,219 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "bfc2ceab-entry-check-pilot-arms-smoke",
+  "issue": "bfc2ceab",
+  "family": "caller-trusted-entry-check-cost",
+  "plan_sha256": "de570e6bdcf0f1386dc9136c974b64182119e59b26bf8093defc0e4af9e470f0",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/addendum-v4-entry-check-pilot.json",
+  "addendum_sha256": "1ec7125f20389c3ee1a53f9654c293b42014132f48b592e83e07c14dee8649f2",
+  "cells": [
+    {
+      "cell_id": "spmm-small-n16",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "f62fbf73116700d90a99e498262b74fbeeed6625b21b9e614344024e4991b7b9",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-small-n1024",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8158/dense-cols=1024/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "f62fbf73116700d90a99e498262b74fbeeed6625b21b9e614344024e4991b7b9",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8158/dense-cols=1024/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-medium-n16",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "f62fbf73116700d90a99e498262b74fbeeed6625b21b9e614344024e4991b7b9",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-medium-n1024",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8163/dense-cols=1024/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "f62fbf73116700d90a99e498262b74fbeeed6625b21b9e614344024e4991b7b9",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8163/dense-cols=1024/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "permanent-f3-n14",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "f62fbf73116700d90a99e498262b74fbeeed6625b21b9e614344024e4991b7b9",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "ple-small-n128",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "f62fbf73116700d90a99e498262b74fbeeed6625b21b9e614344024e4991b7b9",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "ple-medium-n128",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldMatrix<Fp<65521>>::ple/n=128/panel-cols=128/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "f62fbf73116700d90a99e498262b74fbeeed6625b21b9e614344024e4991b7b9",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldMatrix<Fp<65521>>::ple/n=128/panel-cols=128/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "gemm-small-n32",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "f62fbf73116700d90a99e498262b74fbeeed6625b21b9e614344024e4991b7b9",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}

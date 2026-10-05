@@ -2378,40 +2378,60 @@
   },
   "measurement_cells": [
     {
-      "cell": "spmm-small-narrow",
+      "cell": "spmm-small-n16",
       "interface": "small-prime-spmm-row",
-      "workload": "`SparseFieldMatrix::matmat` over a prime at most 251, dense operand of 16 columns",
-      "why": "whole consumer; the scan is largest against the kernel's work when the row has one 16-column block"
+      "workload": "sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols16",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
     },
     {
-      "cell": "spmm-small-wide",
+      "cell": "spmm-small-n1024",
       "interface": "small-prime-spmm-row",
-      "workload": "`SparseFieldMatrix::matmat` over a prime at most 251, dense operand of 1024 columns",
-      "why": "whole consumer; the scan is amortized over 64 blocks per row"
+      "workload": "sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols1024",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
     },
     {
-      "cell": "spmm-medium-narrow",
+      "cell": "spmm-medium-n16",
       "interface": "medium-prime-spmm-row",
-      "workload": "`SparseFieldMatrix::matmat` over a prime above 251, dense operand of 16 columns",
-      "why": "whole consumer; the u16 lane"
+      "workload": "sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols16",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
     },
     {
-      "cell": "permanent-f3-singleword-simd",
+      "cell": "spmm-medium-n1024",
+      "interface": "medium-prime-spmm-row",
+      "workload": "sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols1024",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "permanent-f3-n14",
       "interface": "bipedal-binary",
-      "workload": "`permanent_bipedal3_singleword_simd` on one matrix",
-      "why": "whole consumer; one checked kernel call per Gray step"
+      "workload": "permanent-f3-n14",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
     },
     {
-      "cell": "ple-small-panel",
+      "cell": "ple-small-n128",
       "interface": "small-prime-ple-panel",
-      "workload": "`FieldMatrix::ple` over a prime at most 251 at a width the panel base takes",
-      "why": "whole consumer; one bounds check per pivot"
+      "workload": "ple-prime7-n128",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
     },
     {
-      "cell": "matvec-small-packed",
+      "cell": "ple-medium-n128",
+      "interface": "medium-prime-ple-panel",
+      "workload": "ple-prime65521-n128",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "gemm-small-n32",
       "interface": "small-prime-gemm-row-panel",
-      "workload": "the packed small-prime matrix-vector product",
-      "why": "whole consumer; one checked product per call, as the control of the per-call class"
+      "workload": "gemm-prime7-n32",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
     }
   ],
   "family_scan": {
