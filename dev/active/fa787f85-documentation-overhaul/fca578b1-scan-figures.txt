@@ -1,0 +1,14 @@
+# docs/reference/performance-evidence.md: 24 matches, not listed
+AGENTS.md:103: wall-clock: Do not widen a wall-clock assertion to accommodate a busy runner.
+AGENTS.md:107: crossover: Profile before optimizing. A performance, crossover, or scalability claim must
+AGENTS.md:107: scalability: Profile before optimizing. A performance, crossover, or scalability claim must
+AGENTS.md:166: crossover: - **benchmark-backed-performance** — Performance and crossover claims cite a reproducible benchmark protocol and committed receipt from a suitable uncontended host; estimates are identified as estimates.
+AGENTS.md:167: slower: - **test-tier-budgets** — Every test respects its tier's configured time budget: release-mode fast-tier tests within the per-test and suite budgets, ignored slow and simulation tests within the nightly budget or through an explicitly serialized or host-gated execution path; slower work carries a descriptive ignore tier.
+docs/concepts/finite-field-arithmetic.md:89: $256 \times: process-wide $256 \times 256$ byte product table, built once per
+docs/how-to/reproduce-performance-evidence.md:51: $250$ ms: The receipt ran five fresh executions of five $250$ ms repetitions under
+docs/tutorials/coded-modulation-link-simulation.md:68: 300 frames: count to at least 50, or at 300 frames, so the four points cost at most 1200
+docs/tutorials/coded-modulation-link-simulation.md:85: wall-clock: `wall_seconds` is the host's sweep wall-clock time divided by the number of
+docs/tutorials/coded-modulation-link-simulation.md:94: 95%: `mean_iters` is the mean belief-propagation iteration count. The 95%
+docs/tutorials/coded-modulation-link-simulation.md:99: 95%: | Es/N0 (dB) | Errors / frames | FER | 95% interval |
+docs/tutorials/field-linear-algebra-at-scale.md:29: wall-clock: Each line ends with the host's wall-clock time for that field, an
+hits: 12

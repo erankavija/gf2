@@ -25,11 +25,11 @@ Two backend crates hold the workspace's production `unsafe` code and are
 reached through the library crates' Cargo features
 ([acceleration architecture](docs/concepts/acceleration-architecture.md)):
 
-- [`gf2-kernels-simd`](crates/gf2-kernels-simd/README.md) holds AVX2 kernels
-  for x86 and x86_64, selected by run-time CPU detection under the `simd`
-  feature of `gf2-core`, `gf2-coding` and `gf2-algebra`. The feature is a
-  default of `gf2-coding` and `gf2-algebra`; hosts without AVX2 run scalar
-  code.
+- [`gf2-kernels-simd`](crates/gf2-kernels-simd/README.md) holds SIMD kernels
+  for x86 and x86_64, selected by run-time CPU detection; a host lacking the
+  extensions a kernel requires runs scalar code. The `simd` feature of
+  `gf2-core`, `gf2-coding` and `gf2-algebra`, a default of the latter two,
+  [gates most of that detection](docs/how-to/select-acceleration.md#select-the-instruction-set).
 - `gf2-kernels-hip` holds HIP kernels for AMD GPUs, enabled by the `hip`
   feature, a default of no crate: BCH syndrome evaluation, BCJR decoding and
   Gray-QAM demapping in `gf2-coding`, batch permanents in `gf2-algebra`, and

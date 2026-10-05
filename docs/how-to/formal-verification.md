@@ -1,8 +1,8 @@
 # Run and extend the Lean 4 proofs
 
 `scripts/verify-lean.sh` translates selected `gf2-core` and `gf2-algebra`
-functions into Lean 4 with Charon and Aeneas (@/citation/HoProtzenko2022; the
-pinned pair is @/citation/AeneasVerif2026). Hand-written theorems under
+functions into Lean 4 with Charon and Aeneas (`@/citation/HoProtzenko2022`; the
+pinned pair is `@/citation/AeneasVerif2026`). Hand-written theorems under
 `proofs/` state specifications over the translated definitions. The extraction
 scope is the `--start-from` and `--opaque` flag list of the script's two Charon
 invocations.
@@ -48,15 +48,15 @@ git add proofs/Gf2Core/ proofs/Gf2Algebra/
 The script runs Charon into `target/charon/`, Aeneas into `proofs/Gf2Core/` and
 `proofs/Gf2Algebra/`, the post-processing passes `scripts/fix-aeneas-dupes.py`,
 `scripts/fix-aeneas-sorrys.py` and `scripts/fix-aeneas-gf2algebra.py`, and
-`lake build`. [`proofs/WORKAROUNDS.md`](../../proofs/WORKAROUNDS.md) states why
-each pass exists. Charon compiles with `--cfg verify_lean`, so items under
+`lake build`. [`proofs/WORKAROUNDS.md`](../../proofs/WORKAROUNDS.md) and the
+scripts' docstrings state why each pass exists. Charon compiles with `--cfg verify_lean`, so items under
 `#[cfg(not(verify_lean))]` are absent from the extraction.
 
 | File in `proofs/Gf2Core/`, `proofs/Gf2Algebra/` | Owner |
 |---|---|
 | `Types.lean`, `Funs.lean`, `*_Template.lean`, `TypesExternal.lean` | Regenerated on every run |
 | `Gf2Algebra/FunsExternal.lean` | Copied from its template on every run |
-| `Gf2Core/FunsExternal.lean` | Hand-maintained; seeded from the template only when absent |
+| `Gf2Core/FunsExternal.lean` | Hand-maintained; created from the template when the file is missing |
 | `Proofs/*.lean` | Hand-written |
 
 CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or

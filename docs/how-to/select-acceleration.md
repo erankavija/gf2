@@ -48,7 +48,9 @@ baseline `x86-64` build measure the same
 
 The bundle accessors in `gf2_core::kernels::simd` return `None` when the host
 lacks an extension the bundle requires, and the route reporters return the
-arm a dispatcher takes for an operand size:
+arm a selector picks for an operand size. `matvec_route` reports the
+word-count comparison alone; the dispatcher runs scalar code when the bundle
+is absent:
 
 ```rust
 use gf2_core::kernels::simd::{maybe_gf2m_batch, maybe_simd};
@@ -95,9 +97,8 @@ scalar reference recurrence for every code. The table, bit-sliced and
 carry-less-multiply fold families, the last two through the
 `gf2_kernels_simd::bch_encode` kernels, run only from the bounds an installed
 `CodingTuning` sets. Every family writes the same codeword bits
-([algorithm families](../../crates/gf2-coding/src/bch/encode.rs)). No committed
-receipt measures their crossovers, so take the bounds from a measurement on
-the target host:
+([algorithm families](../../crates/gf2-coding/src/bch/encode.rs)). Take the
+bounds from a measurement on the target host:
 
 ```rust
 use gf2_coding::tuning::{CodingTuning, EncodeSelectors};
@@ -134,7 +135,7 @@ let results = pool.install(|| {
 });
 ```
 
-The repository's `.cargo/config.toml` sets `RAYON_NUM_THREADS=4` for every
+The repository's `.cargo/config.toml` sets `RAYON_NUM_THREADS` for every
 process Cargo launches unless the environment sets it; a binary run directly
 from `target/` uses rayon's default of one thread per available CPU.
 
@@ -154,7 +155,7 @@ GPU paths run only where the caller selects them:
 | BCH syndromes and decoding | `BinaryBchDecoder::compute_syndromes_batch_gpu` or `correct_batch_gpu` in place of the CPU batch calls |
 | Max-log soft demapping of Gray-QAM presets | `GpuGrayQamSoftDemapper::new(spec, max_batch)` as the `BatchSoftDemapper<f32>` |
 | Product-code SISO decoding | `TurboDecoderConfig::use_gpu_bcjr`, or `use_gpu_bcjr = true` in the `turbo` table of a `sim_runner` curve |
-| DVB-T2 LDPC decoding and demapping in `gf2-sim` | `with_gpu(true)` on the `gf2_sim::presets::dvb_t2` builder, or `dvb_t2_awgn_campaign --gpu` |
+| DVB-T2 (`@/citation/Etsi2015`) LDPC decoding and demapping in `gf2-sim` | `with_gpu(true)` on the `gf2_sim::presets::dvb_t2` builder, or `dvb_t2_awgn_campaign --gpu` |
 
 The consumers handle HIP failures differently
 ([HIP backend](../concepts/acceleration-architecture.md#hip-backend)).

@@ -80,9 +80,10 @@ A single-word product selects its path in this order:
 
 Batch and region entry points dispatch separately:
 
-- `gf2m::batch::{batch_mul, batch_square}` serve $m \in \{8, 16, 32\}$,
-  with a vector kernel on hosts reporting AVX2, VPCLMULQDQ and SSE4.1 and a
-  scalar Barrett path otherwise; both produce identical results.
+- `gf2m::batch::{batch_mul, batch_square}` run a vector kernel for
+  $m \in \{8, 16, 32\}$ under the `simd` feature on hosts reporting AVX2,
+  VPCLMULQDQ, PCLMULQDQ and SSE4.1, and per-element scalar multiplication
+  otherwise; both produce identical results.
 - $\mathrm{GF}(2^8)$ AXPY and classical GEMM over a single-word
   representation (`u64`-backed `Gf2mElement` or `Gf2mWide<1, Cfg>`) read a
   process-wide $256 \times 256$ byte product table, built once per
@@ -178,7 +179,7 @@ the covered degrees, each entry's source and the test that verifies it:
   verified irreducible only. A caller that needs primitivity there verifies
   it independently.
 - `verify(m, poly)` returns `Matches`, `Conflict` or `Unknown` against
-  `standard(m)`, and `trinomials(m)` lists catalogued primitive trinomials.
+  `standard(m)`, and `trinomials(m)` lists the catalogued trinomials.
 
 `gf2m::generation::PrimitiveGenerator` searches for primitive polynomials by
 exhaustive, trinomial or pentanomial strategy.
