@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | JIT issue | `fd9d5416` (Committed performance receipts: non-regression, determinism, SOTA comparison) |
-| Epic | `ae03bcd0`, criteria REQ-13, REQ-14 of [plan.md](../ae03bcd0-general-bch/plan.md) |
-| Run | [`dev/active/d1b4f85e/run.sh`](../d1b4f85e/run.sh), cells of the `d1b4f85e` amendment of [workload-selection.md](../4e732b56/workload-selection.md) |
+| Epic | `ae03bcd0`, criteria REQ-13, REQ-14 of [plan.md](../plan.md) |
+| Run | [`dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`](../d1b4f85e/run.sh), cells of the `d1b4f85e` amendment of [workload-selection.md](../../4e732b56/workload-selection.md) |
 | Renderer | [`render_receipt.py`](render_receipt.py); tests in [`tests/test_render_receipt.py`](tests/test_render_receipt.py) |
 
 This note fixes how the receipt turns one window run into the REQ-01 and
@@ -16,13 +16,13 @@ figure from committed files at render time.
 | Input | Path | Role |
 |---|---|---|
 | Window run | `<run-dir>/` from `run.sh`: `host.txt`, `logs/`, `dispatch.jsonl`, `samples/` | New measurements and dispatch record |
-| Pinned pre-cutover receipt | [`dev/bench_results/88ca7d2f/`](../../bench_results/88ca7d2f/) | Tier A baseline (Criterion samples) |
-| ID mapping | [`dev/active/591a1c5e/smoke-run.md`](../591a1c5e/smoke-run.md) § ID mapping | Which Tier A cells are comparable |
-| External-baseline survey | [`dev/bench_results/4e732b56/`](../../bench_results/4e732b56/) CSVs | Tier B baseline (survey `gf2` column) and REQ-02 rows |
+| Pinned pre-cutover receipt | [`dev/bench_results/88ca7d2f/`](../../../bench_results/88ca7d2f/) | Tier A baseline (Criterion samples) |
+| ID mapping | [`dev/active/ae03bcd0-general-bch/591a1c5e/smoke-run.md`](../591a1c5e/smoke-run.md) § ID mapping | Which Tier A cells are comparable |
+| External-baseline survey | [`dev/bench_results/4e732b56/`](../../../bench_results/4e732b56/) CSVs | Tier B baseline (survey `gf2` column) and REQ-02 rows |
 
 ## 2. Statistical rule
 
-The plan's rule, quoted from [plan.md](../ae03bcd0-general-bch/plan.md)
+The plan's rule, quoted from [plan.md](../plan.md)
 § `evidence-protocol`:
 
 > Performance acceptance ("no statistically measurable regression"): the
@@ -146,12 +146,12 @@ The protocol texts that govern re-measurement:
   SOTA target matrix (uncontended, pinned toolchain, committed
   seeds/revision/host)."
 - SOTA reference acceptance protocol § 5
-  ([sota_reference_acceptance_protocol.md](../../archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md)),
+  ([sota_reference_acceptance_protocol.md](../../../archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md)),
   which the SOTA target matrix applies: "Cross-host runs are permitted; they
   must publish their own `host.txt`, but they cannot displace a Zen-3
   baseline. If the dev host is replaced, every promoted reference must be
   re-measured before the new host's baseline is committed".
-- Survey [findings.md](../4e732b56/findings.md) § 8.3: "the `perf-receipts`
+- Survey [findings.md](../../4e732b56/findings.md) § 8.3: "the `perf-receipts`
   task should re-establish its non-regression baseline on the governor it
   intends to keep rather than inheriting these numbers as absolutes. The
   *ratios* between implementations, which is what the selection rests on, are
@@ -228,5 +228,5 @@ The tests cover these cases:
 - A split W1 digest fails determinism.
 - A missing scalar-arm output is reported as a gap.
 
-Usage: `python3 dev/active/fd9d5416/tests/test_render_receipt.py`; render with
-`dev/active/fd9d5416/render_receipt.py <run-dir> > <receipt>.md`.
+Usage: `python3 dev/active/ae03bcd0-general-bch/fd9d5416/tests/test_render_receipt.py`; render with
+`dev/active/ae03bcd0-general-bch/fd9d5416/render_receipt.py <run-dir> > <receipt>.md`.

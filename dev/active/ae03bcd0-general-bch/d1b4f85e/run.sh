@@ -22,7 +22,7 @@
 #
 # Usage (from the repository root, with GF2_BENCH_WINDOW=1 exported by the
 # window runner):
-#   dev/active/d1b4f85e/run.sh <out-dir>
+#   dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh <out-dir>
 set -euo pipefail
 
 REPO_ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
