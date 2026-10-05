@@ -123,5 +123,5 @@ expectation fails in the scalar build at the task anchor.
 ## Assembly gate and CI
 
 `./scripts/asm-artefact-present.sh` exits 0 and reports that no SIMD source
-file changed. `./scripts/cargo-ci.sh` runs from the worktree root before
-delivery.
+file changed. `CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-ci.sh` exits 0 from the
+worktree root with every step reported `ok`.
