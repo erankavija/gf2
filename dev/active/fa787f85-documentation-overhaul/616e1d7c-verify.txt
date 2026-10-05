@@ -22,14 +22,28 @@ pinned sources of the excluded entries present: ok 8
 == rerun
 fresh preview eligible, no blocker, nothing to publish or delete: ok {"already_archived": 525, "block": 0, "copy": 78, "move": 443, "pending_deletions": 0, "retain": 25}
 == links
-dev/archive/6dc81018-field-capability-dispatch: Markdown files 60, local links 239: ok unresolved 0, resolving from the plan source path only 3
-files of this issue under the active area: Markdown files 3, local links 10: ok unresolved 0
-  source path only dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-11.md:140 ../../../.agents/skills/jit-execution-lead/SKILL.md
-  source path only dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:82 ../../../crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json
-  source path only dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:98 ../../../crates/gf2-algebra/data/tuning-profiles/conservative.json
+dev/archive/6dc81018-field-capability-dispatch: Markdown files 60, local links 239: FAIL unresolved 2
+files of this issue under the active area: Markdown files 7, local links 26: ok unresolved 0
+  unresolved dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:82 ../../../crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json
+  unresolved dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:98 ../../../crates/gf2-algebra/data/tuning-profiles/conservative.json
 == manifest
-   431 jit-container-archive / complete / in plan
-    33 retained-operational / complete / in plan
-     1 retained-operational / pending / not in plan
-  not complete dev/active/389aa4de/receipt-notes.md
-rows of plan sources complete: ok
+     5 1ac74567 / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 220cab0b / retained-operational / complete / dev/active
+     1 2a85f728 / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+   181 34d85cb9 / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 389aa4de / retained-operational / complete / dev/active/86b9c719-quality-documentation-tech-debt
+     1 3fa7c9d0 / retained-operational / complete / dev/active
+    57 50b47eae / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     6 50b47eae / retained-operational / complete / dev/active
+    15 6dc81018-field-capability-dispatch / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     6 6dc81018-field-capability-dispatch / retained-operational / complete / dev/active
+    87 7d7c647c / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 7d7c647c / retained-operational / complete / dev/active
+     1 7d824b2f / retained-operational / complete / dev/active
+    14 9162956b / retained-operational / complete / dev/active
+     1 972e2b88 / retained-operational / complete / dev/active
+    67 e6ea0dde / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 eaae1b56 / retained-operational / complete / dev/active
+    18 eb9b324c / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 fc976a80 / retained-operational / complete / dev/active
+rows complete, each file at its destination: ok 465 rows of 16 entries
