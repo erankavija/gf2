@@ -28,6 +28,13 @@ BUDGET="$(dirname "$0")/cargo-budget.sh"
 NEXTEST_CI_PROFILE=ci
 [ -n "${BUSY_HOST_OVERRIDE:-}" ] && NEXTEST_CI_PROFILE=ci-busy
 
+# CARGO_CI_STEPS is a PCRE over step names; only the matching steps run, so
+# `CARGO_CI_STEPS='^doc$' ./scripts/cargo-ci.sh` re-runs the doc step. A
+# filtered run is a focused re-run: its summary states the filter and the
+# skipped steps, and it is not the CI contract's verdict. The summary lists
+# every step with its status, so `CARGO_CI_STEPS='^$'`, which matches no step,
+# prints the step names without running any.
+
 # Resolve the real cargo binary. Some local setups place a debugging shim
 # at ~/.cargo/bin/cargo (or its rustup proxy target) that exits 0 for every
 # invocation; without this guard each cargo step below would silently
@@ -109,16 +116,16 @@ fixture_inventory() {
 fixtures_before=$(fixture_inventory)
 
 failed=0
+skipped=0
 summary=""
 
-# CARGO_CI_STEPS, a PCRE over step names, restricts a run to the matching
-# steps; `dev/active/1a379447-zen3-cpu-performance/316150fd/measure-ci-step-growth.sh`
-# uses it to run one step on a tree where the others have run.
 run_step() {
   local name="$1"
   shift
 
   if [ -n "${CARGO_CI_STEPS:-}" ] && ! grep -qP -- "$CARGO_CI_STEPS" <<<"$name"; then
+    skipped=$((skipped + 1))
+    summary+="  - $name: skipped by CARGO_CI_STEPS"$'\n'
     return 0
   fi
 
@@ -317,6 +324,10 @@ else
 fi
 
 echo "$summary"
+
+if [ -n "${CARGO_CI_STEPS:-}" ]; then
+  echo "FILTERED RUN: CARGO_CI_STEPS='$CARGO_CI_STEPS' skipped $skipped steps; this is not the CI contract's verdict."
+fi
 
 if [ "$failed" -ne 0 ]; then
   exit 1
