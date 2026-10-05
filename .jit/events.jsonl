@@ -18725,3 +18725,7 @@
 {"from":"in_progress","id":"07479c34-2468-42df-af85-b9b3ae5260b4","issue_id":"316150fd-0a09-45db-8b0e-2a89ce4d64db","timestamp":"2026-10-05T21:32:59.774195739Z","to":"done","type":"issue_state_changed"}
 {"id":"c1efef92-b9f6-4bb3-bebb-566864fb7243","issue_id":"316150fd-0a09-45db-8b0e-2a89ce4d64db","timestamp":"2026-10-05T21:32:59.774195739Z","type":"issue_completed"}
 {"fields":["documents"],"id":"92f575b2-bdd7-4dc2-8e7a-86ade4a5b0be","issue_id":"316150fd-0a09-45db-8b0e-2a89ce4d64db","timestamp":"2026-10-05T21:32:59.847444404Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"819810a5-ec05-43c0-aeea-9189eafbf563","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:37:31.319175856Z","type":"issue_updated","updated_by":"doc-remove"}
+{"fields":["documents"],"id":"3ff54b9d-f390-46d9-b1ee-18cd39455d46","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:37:31.598953254Z","type":"issue_updated","updated_by":"doc-remove"}
+{"fields":["documents"],"id":"3b6c4589-e9e2-4ba4-a8a7-2abca4f2243a","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:37:31.654461831Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"f90f88f9-57fc-45dc-86cc-f2eb6c93bde5","issue_id":"2133d15f-688e-442c-bb20-48debba72307","timestamp":"2026-10-05T21:37:31.713139345Z","type":"issue_updated","updated_by":"doc-add"}
