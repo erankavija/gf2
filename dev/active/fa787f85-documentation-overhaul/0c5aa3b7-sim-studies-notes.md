@@ -17,7 +17,7 @@ at `412b3cd49`. Owner epic b8206228 is open, so moved files sit under its
 | `dev/studies/91605d4d/receipts.md` | digest-pinned | `dev/active/b8206228-permanent-statistics/receipt-inventory.md:35` |
 | `dev/studies/6c7fcb38/receipts.md` | digest-pinned | `dev/active/b8206228-permanent-statistics/receipt-inventory.md:44` |
 | `dev/studies/a9284086/receipt.md` | consumed | `dev/studies/a9284086/analysis.py:1092` reads it |
-| `dev/studies/0dffa759/findings.md` | digest-pinned citation target | cited by path in `dev/active/b8206228-permanent-statistics/freeze-feasibility-draft.md:11`, whose digest `dev/active/b8206228-permanent-statistics/manifest-draft/manifest.json` pins |
+| `dev/studies/0dffa759/findings.md` | digest-pinned citation target | cited by path in `dev/active/b8206228-permanent-statistics/backend-selection-draft.md:24`, whose SHA-256 sits at `dev/active/b8206228-permanent-statistics/manifest-draft/manifest.json:1634` |
 | `dev/simulation_results/permanent-zero-fraction/README.md` | moves | `dev/active/b8206228-permanent-statistics/simulation_results/permanent-zero-fraction/README.md` |
 | `dev/studies/0dffa759/req08-amendment-draft.md` | moves | `dev/active/b8206228-permanent-statistics/studies/0dffa759/req08-amendment-draft.md` |
 | `dev/studies/0dffa759/rng-provenance-addendum.md` | moves | `dev/active/b8206228-permanent-statistics/studies/0dffa759/rng-provenance-addendum.md` |
@@ -33,6 +33,7 @@ directory beyond the base commit.
 | moved addendum, moved amendment draft | link targets and their matching link labels |
 | `dev/studies/0dffa759/findings.md` | seven link targets to the two moved files |
 | `dev/active/b8206228-permanent-statistics/handoff.md:62` | dataset README path |
+| `dev/active/b8206228-permanent-statistics/{dispatch-7a816262-phase1,handoff-7,handoff-18,handoff-20}.md`, `dev/active/b8206228-permanent-statistics/progress.json`, `dev/active/b8206228-permanent-statistics/breakdown.json`, `dev/active/b8206228-permanent-statistics/freeze-feasibility-draft.md`, `dev/active/b8206228-permanent-statistics/generate_manifest_draft.py` | citations of the moved files' paths |
 | `crates/gf2-sim/src/bin/permanent_dataset.rs`, `crates/gf2-sim/src/permanent_campaign/provenance.rs` | path citation replaced by "the dataset README"; line counts unchanged |
 
 ## Retained citations
@@ -41,10 +42,8 @@ Files that keep their bytes and cite a moved note by its earlier path.
 
 | File | Reason |
 | --- | --- |
-| `dev/studies/b488f02c/feasibility-study.md:1036,1095,1506` | digest-pinned |
-| `dev/active/b8206228-permanent-statistics/freeze-feasibility-draft.md:30`, `dev/active/b8206228-permanent-statistics/generate_manifest_draft.py:501` | digest-pinned draft and its generator |
-| `dev/active/b8206228-permanent-statistics/dispatch-7a816262-phase1.md:59`, `dev/active/b8206228-permanent-statistics/handoff-7.md:21`, `dev/active/b8206228-permanent-statistics/handoff-18.md`, `dev/active/b8206228-permanent-statistics/handoff-20.md`, `dev/active/b8206228-permanent-statistics/progress.json`, `dev/active/b8206228-permanent-statistics/breakdown.json` | historical |
-| `dev/bench_results/*/inputs/producing/` | snapshot copies |
+| `dev/studies/b488f02c/feasibility-study.md:1036,1095,1506` | SHA-256 at `dev/active/b8206228-permanent-statistics/receipt-inventory.md:16` |
+| `dev/bench_results/*/inputs/producing/` | snapshot copies of the two gf2-sim sources |
 
 ## Verification
 
