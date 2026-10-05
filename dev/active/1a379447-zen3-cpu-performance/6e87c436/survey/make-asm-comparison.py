@@ -9,16 +9,20 @@ writes `asm-comparison.json` beside itself with each symbol's instruction text
 digests. Any symbol whose text differs under `asm_listing.RULE` fails the script after the
 record is written.
 
+Refuses to write on a tree that differs from the one
+`dense-verdict-end-state.json` pins.
+
 Usage: make-asm-comparison.py
 """
 
 import json
 import pathlib
 
-from locate import ANCHOR, HERE, ROOT, asm_listing, repository_files
+from locate import ANCHOR, HERE, ROOT, asm_listing, end_state, repository_files
 
 
 def main():
+    end_state().require_matching_tree("asm-comparison.json")
     package = pathlib.Path(repository_files.package_directory(ROOT, "gf2-kernels-simd"))
     changed = [
         pathlib.Path(path)

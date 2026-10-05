@@ -21,7 +21,8 @@ anchor, which `anchor-baseline.json` identifies by per-path digest. Each one
 that is a producing input or lies under `src/` is classified against its
 snapshotted anchor bytes by the same rule; an annotated assembly listing is classed
 `assembly-listing`, since `make-asm-comparison.py` compares it per symbol. The
-script fails when a changed production path is `code-differs`.
+script fails when a changed production path is `code-differs`, and refuses to
+write on a tree that differs from the one `dense-verdict-end-state.json` pins.
 
 Usage: make-production-drift.py
 """
@@ -38,6 +39,8 @@ from locate import (
     HERE,
     PACKAGES,
     ROOT,
+    byte_class,
+    end_state,
     repo_artifacts,
     repository_files,
     rust_code_text,
@@ -84,7 +87,7 @@ def classify(path, measured, snapshot):
     held = (snapshot / path).read_bytes()
     if sha256(held) != measured:
         raise SystemExit(f"{snapshot / path} does not hold the digest its receipt records")
-    if path.endswith(".rs") and rust_code_text.code_text(held.decode()) == rust_code_text.code_text(data.decode()):
+    if byte_class(path, held, data) == "comment-or-blank-only":
         return entry | {"class": "comment-or-blank-only"}
     return entry | {"class": "code-differs", "changed_by": changing_commits(path, measured)}
 
@@ -94,16 +97,17 @@ def task_class(path):
     if path.endswith(".asm.txt"):
         return {"path": path, "class": "assembly-listing"}
     current = ROOT / path
-    comment_only = (
-        path.endswith(".rs")
-        and path in ANCHOR.digests()
-        and current.is_file()
-        and rust_code_text.code_text(ANCHOR.bytes(path).decode()) == rust_code_text.code_text(current.read_text())
-    )
-    return {"path": path, "class": "comment-or-blank-only" if comment_only else "code-differs"}
+    comparable = path in ANCHOR.digests() and current.is_file()
+    return {
+        "path": path,
+        "class": byte_class(path, ANCHOR.bytes(path), current.read_bytes())
+        if comparable
+        else "code-differs",
+    }
 
 
 def main():
+    end_state().require_matching_tree("production-drift.json")
     directories = [repository_files.package_directory(ROOT, name) for name in PACKAGES]
     measured_sets = {}
     for campaign in CAMPAIGNS:

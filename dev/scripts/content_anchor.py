@@ -4,7 +4,8 @@ A baseline record holds the SHA-256 of every file of the named package
 directories at the anchor commit, and a snapshot directory holds the anchor
 bytes of the paths the working tree changes, as a receipt snapshots its
 producing inputs. Readers use the record and its snapshots only; the commit id
-is an informational field.
+is an informational field. A path without a snapshot is read by digest from the
+blobs git holds, never from the working tree.
 """
 
 from __future__ import annotations
@@ -21,10 +22,33 @@ def _git(root: Path, *arguments: str) -> bytes:
     ).stdout
 
 
-class Anchor:
-    """A baseline record at `baseline` with its byte snapshots under `snapshot`."""
+def sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
-    def __init__(self, root: Path, baseline: Path, snapshot: Path):
+
+def history_blob(root: Path, path: str, digest: str) -> bytes | None:
+    """The newest committed content of `path` with SHA-256 `digest`, or `None`.
+
+    Searches every commit of any ref that changed `path`.
+    """
+    history = _git(root, "log", "--all", "--format=%H", "--", path).decode().split()
+    for commit in history:
+        shown = subprocess.run(
+            ["git", "-C", str(root), "show", f"{commit}:{path}"], capture_output=True
+        )
+        if shown.returncode == 0 and sha256(shown.stdout) == digest:
+            return shown.stdout
+    return None
+
+
+class Anchor:
+    """A baseline record at `baseline`, with byte snapshots under `snapshot` when it has any.
+
+    The record also serves as a pinned end state: `require_matching_tree`
+    refuses a working tree that differs from it.
+    """
+
+    def __init__(self, root: Path, baseline: Path, snapshot: Path | None = None):
         self.root, self.baseline, self.snapshot = root, baseline, snapshot
 
     def digests(self) -> dict[str, str]:
@@ -35,7 +59,7 @@ class Anchor:
         """The baseline record's root-relative path and digest."""
         return {
             "baseline": str(self.baseline.relative_to(self.root)),
-            "baseline_sha256": hashlib.sha256(self.baseline.read_bytes()).hexdigest(),
+            "baseline_sha256": sha256(self.baseline.read_bytes()),
         }
 
     def bytes_or_none(self, path: str) -> bytes | None:
@@ -45,12 +69,15 @@ class Anchor:
     def bytes(self, path: str) -> bytes:
         """The anchor bytes of `path`, checked against the baseline digest.
 
-        Read from the snapshot when it holds `path` and from the working tree
-        otherwise.
+        Read from the snapshot when it holds `path` and from the committed
+        blobs of `path` otherwise.
         """
-        held = self.snapshot / path
-        data = (held if held.is_file() else self.root / path).read_bytes()
-        if hashlib.sha256(data).hexdigest() != self.digests()[path]:
+        digest = self.digests()[path]
+        held = None if self.snapshot is None else self.snapshot / path
+        data = held.read_bytes() if held is not None and held.is_file() else history_blob(
+            self.root, path, digest
+        )
+        if data is None or sha256(data) != digest:
             raise SystemExit(f"no file holds the baseline digest of {path}")
         return data
 
@@ -61,23 +88,36 @@ class Anchor:
         tracked = _git(self.root, "ls-files", "--", *packages).decode().split()
         changed = set(tracked) ^ set(digests)
         for path in set(tracked) & set(digests):
-            if hashlib.sha256((self.root / path).read_bytes()).hexdigest() != digests[path]:
+            if sha256((self.root / path).read_bytes()) != digests[path]:
                 changed.add(path)
         return sorted(changed)
+
+    def require_matching_tree(self, what: str) -> None:
+        """Exits naming the differing paths unless the working tree is the recorded one."""
+        differing = self.changed()
+        if differing:
+            raise SystemExit(
+                f"{what} describes the tree pinned by {self.baseline.relative_to(self.root)}; "
+                f"{len(differing)} paths of the working tree differ from it, so nothing is "
+                "written: " + ", ".join(differing)
+            )
 
     def freeze(self, commit: str, directories: list[str], schema: str, issue: str) -> int:
         """Writes the baseline for `commit` and snapshots each path the working tree changes.
 
-        Returns the number of anchor files.
+        Returns the number of anchor files. Without a snapshot directory no
+        bytes are kept.
         """
         commit = _git(self.root, "rev-parse", commit).decode().strip()
         digests = {}
         listing = _git(self.root, "ls-tree", "-r", "--name-only", commit, "--", *directories)
         for path in listing.decode().split():
             held = _git(self.root, "show", f"{commit}:{path}")
-            digests[path] = hashlib.sha256(held).hexdigest()
+            digests[path] = sha256(held)
             current = self.root / path
-            if not current.is_file() or current.read_bytes() != held:
+            if self.snapshot is not None and (
+                not current.is_file() or current.read_bytes() != held
+            ):
                 snapshot = self.snapshot / path
                 snapshot.parent.mkdir(parents=True, exist_ok=True)
                 snapshot.write_bytes(held)
