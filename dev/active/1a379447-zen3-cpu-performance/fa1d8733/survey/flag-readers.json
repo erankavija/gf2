@@ -39,7 +39,7 @@
     "counts": {
       "receipt": 20,
       "receipt-snapshot": 27,
-      "record": 21,
+      "record": 24,
       "tracker": 1
     },
     "files": [
@@ -204,6 +204,13 @@
         ]
       },
       {
+        "path": "dev/active/1a379447-zen3-cpu-performance/fa1d8733/verification.md",
+        "class": "record",
+        "lines": [
+          44
+        ]
+      },
+      {
         "path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json",
         "class": "record",
         "lines": [
@@ -238,6 +245,13 @@
         "class": "record",
         "lines": [
           4
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/make-candidate-tables.py",
+        "class": "record",
+        "lines": [
+          169
         ]
       },
       {
@@ -280,6 +294,15 @@
         "class": "record",
         "lines": [
           32
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/unroll-variant-corrections.md",
+        "class": "record",
+        "lines": [
+          36,
+          37,
+          54
         ]
       },
       {
