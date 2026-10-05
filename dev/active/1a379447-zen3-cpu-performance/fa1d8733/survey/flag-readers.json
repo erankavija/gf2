@@ -1,0 +1,659 @@
+{
+  "schema": "xor-unroll-flag-readers-v1",
+  "issue": "fa1d8733",
+  "pattern": "gf2_xor_unroll|\\bXOR_UNROLL\\b",
+  "rule": "A file matches when a line of its text matches PATTERN, comments and literals included. Classes, first match wins: `receipt-snapshot`, a path under an `inputs` directory; `tracker`, a path under `.jit`; `workspace-source`, a `.rs` file under the directory of a Cargo package; `workspace-manifest`, a `Cargo.toml` or `Cargo.lock`, or a `config.toml` in a `.cargo` directory; `receipt`, a file under a directory that holds a `receipt.json`; `record`, any other file. A Cargo package is a directory holding a tracked `Cargo.toml` outside receipt snapshots, whether or not the root workspace lists it.",
+  "before": {
+    "baseline": "dev/active/1a379447-zen3-cpu-performance/fa1d8733/survey/before-baseline.json",
+    "baseline_sha256": "9e05028fdcfccc73e3d601b4793940e704c5baac4d399b7a0a59c71c8f530e42",
+    "counts": {
+      "workspace-manifest": 1,
+      "workspace-source": 1
+    },
+    "files": [
+      {
+        "path": "crates/gf2-kernels-simd/Cargo.toml",
+        "class": "workspace-manifest",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "workspace-source",
+        "lines": [
+          26,
+          29,
+          30,
+          31,
+          32,
+          50,
+          51,
+          52,
+          58
+        ]
+      }
+    ]
+  },
+  "current": {
+    "counts": {
+      "receipt": 20,
+      "receipt-snapshot": 25,
+      "record": 20,
+      "tracker": 1,
+      "workspace-manifest": 1,
+      "workspace-source": 2
+    },
+    "files": [
+      {
+        "path": ".jit/issues/fa1d8733-f970-4677-8971-1b9bada40ae4.json",
+        "class": "tracker",
+        "lines": [
+          7
+        ]
+      },
+      {
+        "path": "crates/gf2-kernels-simd/Cargo.toml",
+        "class": "workspace-manifest",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "workspace-source",
+        "lines": [
+          26,
+          29,
+          30,
+          31,
+          32,
+          50,
+          51,
+          52,
+          58
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.json",
+        "class": "record",
+        "lines": [
+          1832,
+          1835,
+          1845,
+          1848
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.md",
+        "class": "record",
+        "lines": [
+          348,
+          349
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/make-route-inventory.py",
+        "class": "record",
+        "lines": [
+          251
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/make-source-evidence.py",
+        "class": "record",
+        "lines": [
+          117
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
+        "class": "record",
+        "lines": [
+          320
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
+        "class": "record",
+        "lines": [
+          28,
+          29,
+          32,
+          33
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/inputs/anchor/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/inputs/after-1b034786/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          26,
+          29,
+          30,
+          31,
+          32,
+          50,
+          51,
+          52,
+          58
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/inputs/anchor/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/inputs/before-1b034786/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          26,
+          29,
+          30,
+          31,
+          32,
+          50,
+          51,
+          52,
+          58
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/inputs/contracts-complete/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          26,
+          29,
+          30,
+          31,
+          32,
+          50,
+          51,
+          52,
+          58
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json",
+        "class": "record",
+        "lines": [
+          74,
+          83,
+          92
+        ]
+      },
+      {
+        "path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/verification.md",
+        "class": "record",
+        "lines": [
+          19
+        ]
+      },
+      {
+        "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
+        "class": "record",
+        "lines": [
+          23
+        ]
+      },
+      {
+        "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/tests/harness_contract.rs",
+        "class": "workspace-source",
+        "lines": [
+          475,
+          492
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/asm/unroll2-avx2-xor.asm.txt",
+        "class": "record",
+        "lines": [
+          4
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/asm/unroll4-avx2-xor.asm.txt",
+        "class": "record",
+        "lines": [
+          4
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/readiness.md",
+        "class": "record",
+        "lines": [
+          7
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/run-candidate.sh",
+        "class": "record",
+        "lines": [
+          50
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/smoke-plans/2-isolated.plan.json",
+        "class": "record",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/smoke-plans/2-row.plan.json",
+        "class": "record",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/smoke-plans/4-isolated.plan.json",
+        "class": "record",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "path": "dev/active/bc091474/smoke-plans/4-row.plan.json",
+        "class": "record",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "path": "dev/active/fa787f85-documentation-overhaul/perf-evidence-catalog.md",
+        "class": "record",
+        "lines": [
+          105
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/inputs/producing/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/inputs/producing/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/inputs/producing/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/inputs/producing/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/execution.log",
+        "class": "receipt",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/inputs/producing/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/inputs/producing/dev/active/bc091474/run-candidate.sh",
+        "class": "receipt-snapshot",
+        "lines": [
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/invocations.log",
+        "class": "receipt",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/launcher.log",
+        "class": "receipt",
+        "lines": [
+          1,
+          16
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/plan.json",
+        "class": "receipt",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/receipt.json",
+        "class": "receipt",
+        "lines": [
+          8327
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/execution.log",
+        "class": "receipt",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/inputs/producing/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/inputs/producing/dev/active/bc091474/run-candidate.sh",
+        "class": "receipt-snapshot",
+        "lines": [
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/invocations.log",
+        "class": "receipt",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/launcher.log",
+        "class": "receipt",
+        "lines": [
+          1,
+          16
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/plan.json",
+        "class": "receipt",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/receipt.json",
+        "class": "receipt",
+        "lines": [
+          8327
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/execution.log",
+        "class": "receipt",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/inputs/producing/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/inputs/producing/dev/active/bc091474/run-candidate.sh",
+        "class": "receipt-snapshot",
+        "lines": [
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/invocations.log",
+        "class": "receipt",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/launcher.log",
+        "class": "receipt",
+        "lines": [
+          1,
+          16
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/plan.json",
+        "class": "receipt",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/receipt.json",
+        "class": "receipt",
+        "lines": [
+          8327
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/execution.log",
+        "class": "receipt",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/inputs/producing/crates/gf2-kernels-simd/Cargo.toml",
+        "class": "receipt-snapshot",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs",
+        "class": "receipt-snapshot",
+        "lines": [
+          18,
+          21,
+          22,
+          23,
+          24,
+          42,
+          43,
+          44,
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/inputs/producing/dev/active/bc091474/run-candidate.sh",
+        "class": "receipt-snapshot",
+        "lines": [
+          50
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/invocations.log",
+        "class": "receipt",
+        "lines": [
+          1
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/launcher.log",
+        "class": "receipt",
+        "lines": [
+          1,
+          16
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/plan.json",
+        "class": "receipt",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/receipt.json",
+        "class": "receipt",
+        "lines": [
+          8327
+        ]
+      },
+      {
+        "path": "dev/bench_results/bc091474/profile-unroll2/host.txt",
+        "class": "record",
+        "lines": [
+          108
+        ]
+      },
+      {
+        "path": "dev/bench_results/bc091474/profile-unroll4/host.txt",
+        "class": "record",
+        "lines": [
+          108
+        ]
+      }
+    ]
+  }
+}
