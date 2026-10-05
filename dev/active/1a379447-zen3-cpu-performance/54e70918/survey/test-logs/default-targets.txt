@@ -1,5 +1,6 @@
 # toolchain: rustc 1.95.0 (59807616e 2026-04-14)
 # command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch --status-level fail --final-status-level fail --cargo-profile ci-test --profile ci
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
 warning: constant `SIMD_MIN_WORDS` is never used
   --> crates/gf2-core/src/tuning/baked.rs:12:18
    |
@@ -27,10 +28,10 @@ warning: constant `DOT_CHUNK_LEN` is never used
    |                  ^^^^^^^^^^^^^
 
 warning: `gf2-core` (lib test) generated 4 warnings
-    Finished `ci-test` profile [optimized] target(s) in 0.05s
+    Finished `ci-test` profile [optimized] target(s) in 2m 29s
 ────────────
- Nextest run ID 2ed44fdb-73ac-43e4-876b-f8bab2b2ab97 with nextest profile: ci
+ Nextest run ID 5280d4d4-7b81-41b9-8f07-5a38ada0c579 with nextest profile: ci
     Starting 2014 tests across 4 binaries (16 tests skipped)
 ────────────
-     Summary [   1.346s] 2014 tests run: 2014 passed, 16 skipped
+     Summary [   1.337s] 2014 tests run: 2014 passed, 16 skipped
 # exit: 0

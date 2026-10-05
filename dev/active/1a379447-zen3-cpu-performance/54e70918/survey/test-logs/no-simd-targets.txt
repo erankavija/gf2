@@ -1,8 +1,9 @@
 # toolchain: rustc 1.95.0 (59807616e 2026-04-14)
 # command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --no-default-features --features rand,io,parallel,visualization,tuning-profile,test-support --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch --status-level fail --final-status-level fail --cargo-profile ci-test --profile ci
-    Finished `ci-test` profile [optimized] target(s) in 0.05s
+    Blocking waiting for file lock on artifact directory
+    Finished `ci-test` profile [optimized] target(s) in 1.89s
 ────────────
- Nextest run ID 24e74011-9990-42f9-857c-0ce786f0334e with nextest profile: ci
+ Nextest run ID af170a0b-9b5f-4984-89df-f5a0e31581e7 with nextest profile: ci
     Starting 2023 tests across 4 binaries (16 tests skipped)
 ────────────
      Summary [   1.306s] 2023 tests run: 2023 passed, 16 skipped

@@ -1,5 +1,7 @@
 # toolchain: rustc 1.95.0 (59807616e 2026-04-14)
 # command: nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --features simd --lib --test simd_equiv_demo --test simd_equiv_dispatch_hoist --test simd_equiv_gf2m_batch --status-level fail --final-status-level fail --cargo-profile ci-test --profile ci
+    Blocking waiting for file lock on artifact directory
+   Compiling gf2-core v0.1.0 (crates/gf2-core)
 warning: constant `SIMD_MIN_WORDS` is never used
   --> crates/gf2-core/src/tuning/baked.rs:12:18
    |
@@ -27,10 +29,10 @@ warning: constant `DOT_CHUNK_LEN` is never used
    |                  ^^^^^^^^^^^^^
 
 warning: `gf2-core` (lib test) generated 4 warnings
-    Finished `ci-test` profile [optimized] target(s) in 0.05s
+    Finished `ci-test` profile [optimized] target(s) in 2m 38s
 ────────────
- Nextest run ID 7021f30b-e023-4ec6-b692-67fab507c160 with nextest profile: ci
+ Nextest run ID 7b9c2151-680c-410d-bcf9-809480b200a2 with nextest profile: ci
     Starting 2030 tests across 4 binaries (16 tests skipped)
 ────────────
-     Summary [   1.475s] 2030 tests run: 2030 passed, 16 skipped
+     Summary [   1.447s] 2030 tests run: 2030 passed, 16 skipped
 # exit: 0
