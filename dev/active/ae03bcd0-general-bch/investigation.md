@@ -127,7 +127,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
 
 12. **`already-done` for the existing pipeline, qualified for GF(2^m).** The
    documented pipeline verifies `gfp/` and `gfpn/` arithmetic and extracts
-   field-trait declarations with opaque bodies (`docs/lean4-verification-pipeline.md:18-25`).
+   field-trait declarations with opaque bodies (`dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md:18-25`).
    The current extraction surface makes `gfp/` and `gfpn/` transparent, starts
    from raw GF(2^m) multiplication, and marks runtime `gf2m::field`,
    `gf2m::generation`, `field`, `matrix`, `primitive_polys`, and related
@@ -137,7 +137,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
    inverse progress obligations (`proofs/Gf2Core/Proofs/Gf2mDefs.lean:1-27`;
    `Gf2mProgress.lean:1-15,69-114`). `scripts/verify-lean.sh` feeds the Charon /
    Aeneas extraction and then the Lean build; the committed build gate is
-   `cd proofs && lake build` (`docs/lean4-verification-pipeline.md:73-85,180-191`).
+   `cd proofs && lake build` (`dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md:73-85,180-191`).
    Therefore “binary-extension arithmetic is proven/extracted” is true for the
    raw bounded path, not for the runtime field-carrying implementation or
    `FieldPoly`; the latter remains behind the opaque `field` surface.
