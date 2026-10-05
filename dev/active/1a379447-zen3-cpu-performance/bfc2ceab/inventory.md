@@ -224,7 +224,8 @@ Witness: dimensions `k` = 2^32, `n` = 2^32 pass the release assertions with oper
 
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|
-| `gemm_row_panel_safe` | `crates/gf2-core/src/gfp/simd_ops.rs` | production | 2 | `wrapping` | `core-gemm-row-loop`, `core-matvec-call`, `core-matvec-pack-debug`, `core-gemm-small-debug` |
+| `gemm_row_panel_safe` | `crates/gf2-core/src/gfp/simd_ops.rs` | production | 1 | `wrapping` | `core-gemm-row-loop`, `core-gemm-row-scratch`, `core-gemm-small-debug` |
+| `gemm_row_panel_safe` | `crates/gf2-core/src/gfp/simd_ops.rs` | production | 1 | `forwarded` | `core-matvec-call`, `core-matvec-pack-debug` |
 
 ### `fp_small_panel::SmallPrimePanelGemmFn`
 
@@ -338,7 +339,7 @@ Witness: dimensions `symbols` = 2^32, `levels` = 2^32 pass the release assertion
 
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|
-| `pam_sq_distances_f64_avx2_safe` | `crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs` | production | 1 | `by-construction` | `coding-pam-output` |
+| `pam_sq_distances_f64_avx2_safe` | `crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs` | production | 1 | `wrapping` | `coding-pam-output` |
 | `pam_sq_distances_f64_avx2_safe` | `crates/gf2-coding/benches/cpu_dispatch_probe.rs` | bench | 1 | `test-fixture` | `coding-pam-bench-output` |
 | `pam_sq_distances_f64_avx2_safe` | `crates/gf2-kernels-simd/src/modem.rs` | test | 2 | `test-fixture` | — |
 
@@ -348,7 +349,7 @@ Witness: dimensions `symbols` = 2^32, `levels` = 2^32 pass the release assertion
 |---|---|
 | `by-construction` | the caller builds the operands so that the condition holds in every build |
 | `forwarded` | the caller passes its own arguments on; a debug assertion or the invariant of one upstream type is all that holds the condition |
-| `wrapping` | the caller sizes its operands from the same wrapping products, so it passes the release assertions without establishing the condition |
+| `wrapping` | the caller sizes its operands from the same wrapping products, so it passes the release assertions without establishing that the products fit |
 | `test-fixture` | a test, benchmark or example builds operands of the stated shape |
 
 ## Uses outside the inventory

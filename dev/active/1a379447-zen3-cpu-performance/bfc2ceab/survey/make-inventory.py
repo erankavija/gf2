@@ -198,7 +198,9 @@ def build():
     for owner, relative, field, kind, reach, discharge, claims in review.USES:
         path = f"{package(owner)}/{relative}"
         need(claims, f"use {relative}")
-        assigned[(path, field)] = sum(count for _, count in reach)
+        assigned[(path, field)] = assigned.get((path, field), 0) + sum(
+            count for _, count in reach
+        )
         for entry, count in reach:
             if entry is None:
                 continue

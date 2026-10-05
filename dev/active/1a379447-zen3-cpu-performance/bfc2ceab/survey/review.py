@@ -291,6 +291,8 @@ CLAIMS = [
     ("core-gemm-u8-scratch", CORE, "src/gfp/simd_ops.rs",
      "a_u8.resize(m * k, 0u8);", 1,
      "The byte-panel scratch is sized from the wrapping products."),
+    ("core-gemm-row-scratch", CORE, "src/gfp/simd_ops.rs", "let bt_len = n * k;", 1,
+     "The byte-lane baseline sizes the transposed operand from a wrapping product."),
     ("core-gemm-f32-direct", CORE, "src/gfp/simd_ops.rs",
      "let mut out_u8 = vec![0u8; m * n];", 1,
      "The direct f32 route sizes its output from a wrapping product."),
@@ -323,8 +325,8 @@ CLAIMS = [
      "The single-word SIMD permanent calls one kernel per Gray step."),
     ("coding-pam-output", CODING, "src/modem/fast_gray_qam_demapper.rs",
      "let mut d_i: Vec<f64> = vec![0.0; num_symbols * axis_len];", 1,
-     "The demapper sizes the distance slab from the product of the symbol count and the "
-     "level count of vectors it holds."),
+     "The demapper sizes the distance slab from the wrapping product of the lengths of "
+     "two vectors it holds."),
     ("coding-pam-bench-output", CODING, "benches/cpu_dispatch_probe.rs",
      "let mut out = vec![0.0f64; batch * pam.len()];", 1,
      "The benchmark sizes the slab from the product of two small counts."),
@@ -894,7 +896,8 @@ DISCHARGES = {
     "forwarded": "the caller passes its own arguments on; a debug assertion or the "
                  "invariant of one upstream type is all that holds the condition",
     "wrapping": "the caller sizes its operands from the same wrapping products, so it "
-                "passes the release assertions without establishing the condition",
+                "passes the release assertions without establishing that the products "
+                "fit",
     "test-fixture": "a test, benchmark or example builds operands of the stated shape",
 }
 
@@ -923,9 +926,11 @@ USES = [
      [("medium-gemm-panel", 1)], "wrapping",
      ["core-gemm-u16-scratch", "core-gemm-medium-debug", "core-gemm-hook"]),
     (CORE, "src/gfp/simd_ops.rs", "gemm_row_panel_fn", "production",
-     [("gemm-row-panel", 2)], "wrapping",
-     ["core-gemm-row-loop", "core-matvec-call", "core-matvec-pack-debug",
-      "core-gemm-small-debug"]),
+     [("gemm-row-panel", 1)], "wrapping",
+     ["core-gemm-row-loop", "core-gemm-row-scratch", "core-gemm-small-debug"]),
+    (CORE, "src/gfp/simd_ops.rs", "gemm_row_panel_fn", "production",
+     [("gemm-row-panel", 1)], "forwarded",
+     ["core-matvec-call", "core-matvec-pack-debug"]),
     (ALGEBRA, "src/permanent/bipedal3.rs", "add_fn", "production",
      [("bipedal-add", 1)], "by-construction",
      ["algebra-bipedal-buffers", "algebra-bipedal-loop"]),
@@ -933,7 +938,7 @@ USES = [
      [("bipedal-sub", 1)], "by-construction",
      ["algebra-bipedal-buffers", "algebra-bipedal-loop"]),
     (CODING, "src/modem/fast_gray_qam_demapper.rs", "pam_sq_distances_fn", "production",
-     [("pam-f64", 1)], "by-construction", ["coding-pam-output"]),
+     [("pam-f64", 1)], "wrapping", ["coding-pam-output"]),
     (CODING, "benches/cpu_dispatch_probe.rs", "pam_sq_distances_fn", "bench",
      [("pam-f64", 1), (None, 1)], "test-fixture", ["coding-pam-bench-output"]),
     (SIMD, "src/fp_small_ple.rs", "ple_panel_base_fn", "test",

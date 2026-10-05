@@ -56,7 +56,7 @@
   "discharges": {
     "by-construction": "the caller builds the operands so that the condition holds in every build",
     "forwarded": "the caller passes its own arguments on; a debug assertion or the invariant of one upstream type is all that holds the condition",
-    "wrapping": "the caller sizes its operands from the same wrapping products, so it passes the release assertions without establishing the condition",
+    "wrapping": "the caller sizes its operands from the same wrapping products, so it passes the release assertions without establishing that the products fit",
     "test-fixture": "a test, benchmark or example builds operands of the stated shape"
   },
   "interfaces": [
@@ -1165,14 +1165,26 @@
               "path": "crates/gf2-core/src/gfp/simd_ops.rs",
               "field": "gemm_row_panel_fn",
               "kind": "production",
-              "calls": 2,
+              "calls": 1,
               "denies_unsafe_code": true,
               "discharge": "wrapping",
               "claims": [
                 "core-gemm-row-loop",
-                "core-matvec-call",
-                "core-matvec-pack-debug",
+                "core-gemm-row-scratch",
                 "core-gemm-small-debug"
+              ]
+            },
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "gemm_row_panel_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "forwarded",
+              "claims": [
+                "core-matvec-call",
+                "core-matvec-pack-debug"
               ]
             }
           ],
@@ -1788,7 +1800,7 @@
               "kind": "production",
               "calls": 1,
               "denies_unsafe_code": true,
-              "discharge": "by-construction",
+              "discharge": "wrapping",
               "claims": [
                 "coding-pam-output"
               ]

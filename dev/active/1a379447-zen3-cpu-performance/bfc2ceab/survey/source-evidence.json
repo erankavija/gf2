@@ -971,6 +971,17 @@
       "sha256": "b0f06d825870c4e89d61a3e2010be44d3fd4e402437f1e891704e9ace49847b0"
     },
     {
+      "id": "core-gemm-row-scratch",
+      "project": "gf2",
+      "commit": "76f4a7d52453fb02fc379412f3d5718963bafcbc",
+      "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+      "line": 624,
+      "occurrences": 1,
+      "verbatim": "                        let bt_len = n * k;",
+      "why": "The byte-lane baseline sizes the transposed operand from a wrapping product.",
+      "sha256": "b0f06d825870c4e89d61a3e2010be44d3fd4e402437f1e891704e9ace49847b0"
+    },
+    {
       "id": "core-gemm-f32-direct",
       "project": "gf2",
       "commit": "76f4a7d52453fb02fc379412f3d5718963bafcbc",
@@ -1077,7 +1088,7 @@
       "line": 194,
       "occurrences": 1,
       "verbatim": "        let mut d_i: Vec<f64> = vec![0.0; num_symbols * axis_len];",
-      "why": "The demapper sizes the distance slab from the product of the symbol count and the level count of vectors it holds.",
+      "why": "The demapper sizes the distance slab from the wrapping product of the lengths of two vectors it holds.",
       "sha256": "4ff6aedbcc4b9cd2b79784544264b0de0a6b2e95edb291cb64108b9246eba483"
     },
     {
