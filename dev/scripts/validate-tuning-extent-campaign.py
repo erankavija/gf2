@@ -209,13 +209,15 @@ THRESHOLD_GRIDS = {
     "gemm.winograd_min_dim": [32, 64, 96, 127, 128, 129, 192, 256, 512],
     "triangular.base_case_max_dim": [2, 4, 6, 7, 8, 9, 12, 16, 32],
     "ple.scalar_base_max_cols": [2, 3, 4, 6, 8, 12, 16, 24, 32],
+    "bit_matrix.matvec_simd_min_words": [4, 7, 8, 9, 32, 63, 64, 65, 128],
 }
 # Seed tags: the retained thresholds take their declaration order, the three
-# seam thresholds take 28-30 after the extent tags 16-27.
+# seam thresholds take 28-30 after the extent tags 16-27, the matvec threshold 31.
 THRESHOLD_TAGS = {field: tag for tag, field in enumerate(list(THRESHOLD_GRIDS)[:16])} | {
     "gemm.winograd_min_dim": 28,
     "triangular.base_case_max_dim": 29,
     "ple.scalar_base_max_cols": 30,
+    "bit_matrix.matvec_simd_min_words": 31,
 }
 # Each `_max_` threshold's codec floor; absent fields are lower-bound thresholds.
 THRESHOLD_UPPER_FLOORS = {
@@ -246,6 +248,7 @@ THRESHOLD_ENUMS = {
     "gemm.winograd_min_dim": "winograd_min_dim",
     "triangular.base_case_max_dim": "triangular_base_case_max_dim",
     "ple.scalar_base_max_cols": "ple_scalar_base_max_cols",
+    "bit_matrix.matvec_simd_min_words": "matvec_simd_min_words",
 }
 THRESHOLD_DEFAULTS = {
     "bit_backend.simd_min_words": 8,
@@ -267,7 +270,13 @@ THRESHOLD_DEFAULTS = {
     "gemm.winograd_min_dim": 128,
     "triangular.base_case_max_dim": 8,
     "ple.scalar_base_max_cols": 1,
+    "bit_matrix.matvec_simd_min_words": 8,
 }
+# Row count of every matvec fixture; the grid point is the row stride in words.
+MATVEC_ROWS = 1024
+# Thresholds selected at compile time: both arms install the grid point and
+# call their backend or lane directly.
+DIRECT_ARM_THRESHOLDS = {"bit_backend.simd_min_words", "bit_matrix.matvec_simd_min_words"}
 
 
 def expected_core_retained_grid() -> list[dict[str, Any]]:
@@ -292,7 +301,7 @@ def expected_core_retained_grid() -> list[dict[str, Any]]:
         for variant in variants:
             result.append({"field": field, "variant": variant, "grid": grid,
                            "default": THRESHOLD_DEFAULTS[path]})
-    require(len(result) == 20, "internal retained report grid count changed")
+    require(len(result) == 21, "internal retained report grid count changed")
     return result
 
 
@@ -832,6 +841,7 @@ def validate_retained_seeds(seeds: Any, field: str, size: int) -> None:
             "triangular.base_case_max_dim": [("unit_lower", 0xE00), ("unit_upper", 0xE01),
                                              ("rhs", 0xE02)],
             "ple.scalar_base_max_cols": [("unit_lower", 0xF00), ("unit_upper", 0xF01)],
+            "bit_matrix.matvec_simd_min_words": [("matrix", 0x1000), ("vector", 0x1001)],
         }[field]
         expected_streams = [(f"{name}[{bank}]", role + (bank << 16))
                             for bank in range(8) for name, role in roles]
@@ -873,7 +883,7 @@ def threshold_forcing(case: Any) -> list[dict[str, Any]]:
     size, conservative = spec["size"], spec["arm"] == "conservative"
     family, leaf = field.split(".")
     value = size + int(conservative)
-    if field == "bit_backend.simd_min_words":
+    if field in DIRECT_ARM_THRESHOLDS:
         value = size
     elif field == "polynomial.karatsuba_min_degree":
         value = MAX_U64 if conservative else size
@@ -972,6 +982,7 @@ def threshold_shape(field: str, size: int) -> str:
                "polynomial.div_rem_fast_min_len": f"dividend_len={2*size} divisor_len={size}",
                "polynomial.subproduct_min_len": f"coefficients={size} points={size}",
                "bit_matrix.transpose_simple_max_blocks": f"{64*size}x{64*size}",
+               "bit_matrix.matvec_simd_min_words": f"{MATVEC_ROWS}x{64*size} * {64*size}",
                "soa_batch.parallel_min_len": f"quadratic+cubic length={size}",
                "polynomial.interpolate_fast_min_points": f"{size} distinct points"}
     if field in formats:
@@ -1007,6 +1018,7 @@ THRESHOLD_ROUTES = {
     "gemm.winograd_min_dim": ("classical", "winograd"),
     "triangular.base_case_max_dim": ("base_case", "recursive"),
     "ple.scalar_base_max_cols": ("scalar_base", "block_recursive"),
+    "bit_matrix.matvec_simd_min_words": ("scalar", "simd"),
 }
 
 
@@ -1019,6 +1031,11 @@ def validate_threshold_route(case: Any, outcome: Any) -> None:
     if field == "bit_backend.simd_min_words":
         effective = "baked_selector_direct_backend"
         capability = outcome["capability_observation"] if arm else "scalar_backend"
+        require(not arm or capability == "simd_backend=avx2",
+                "unknown concrete SIMD capability")
+    elif field == "bit_matrix.matvec_simd_min_words":
+        effective = "baked_selector_direct_lane"
+        capability = outcome["capability_observation"] if arm else "scalar_lane"
         require(not arm or capability == "simd_backend=avx2",
                 "unknown concrete SIMD capability")
     elif field in {"polynomial.karatsuba_min_degree", "polynomial.karatsuba_max_out_len",
@@ -1173,6 +1190,9 @@ def operand_identity(owner: str, field: str, shape: int, retained: bool = False)
             parts.append(m31(random_values(seed(0xE02,bank),m*m,M31)))
         elif retained and tag == 30:
             parts.append(m31(lu_product(m,seed(0xF00,bank),seed(0xF01,bank),M31)))
+        elif retained and tag == 31:
+            parts.append(bit(MATVEC_ROWS,64*shape,0x1000))
+            parts.append(values_hash(b'gf2-calibration-bit-vector-v1',[64*shape],random_values(seed(0x1001,bank),shape,1<<64)))
         elif field.startswith('bit_matrix.'):
             parts.append(bit(m,n,0x100))
         elif field.startswith('soa_batch.'):
@@ -1227,7 +1247,7 @@ def operand_identity(owner: str, field: str, shape: int, retained: bool = False)
         domain=b'gf2-extent-operands-bank-role-tuple-v1'
     else:
         domain={5:b'unary-bit',6:b'soa',7:b'binary-bit',8:b'binary-bit',9:b'unary-bit',10:b'unary-fp251',11:b'binary-fp251',12:b'unary-fp251',13:b'unary-fp251',14:b'binary-fp251',15:b'interpolation',
-                28:b'winograd-m31',29:b'solve-m31',30:b'ple-m31'}[tag]
+                28:b'winograd-m31',29:b'solve-m31',30:b'ple-m31',31:b'matvec'}[tag]
         domain=b'gf2-calibration-'+domain+b'-banks-v1'
     return tuple_hash(domain,parts)
 
