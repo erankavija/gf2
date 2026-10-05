@@ -197,3 +197,5 @@ written by `survey/make-addendum.py`.
 - Both `--check` modes of the mid-range story's producing closures: exit 0
   after regeneration for the new kernel-crate files.
 - `survey/smoke-arms.sh pilot` and `run-entry-check.sh build`: exit 0.
+- `CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-ci.sh`: exit 0 with every step
+  reported `ok`.
