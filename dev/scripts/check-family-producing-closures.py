@@ -25,6 +25,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.dont_write_bytecode = True  # a check writes nothing, however invoked
+
 from repository_files import live_file, package_directory, repository_root, tracked_files
 
 GENERATOR = "make-*-producing-inputs.py"
@@ -104,8 +106,9 @@ def status(root: Path) -> str:
 
 
 def run_generator(root: Path, generator: str, *arguments: str) -> subprocess.CompletedProcess:
+    # Without `-B`: the generator itself suppresses bytecode.
     return subprocess.run(
-        [sys.executable, "-B", str(root / generator), *arguments],
+        [sys.executable, str(root / generator), *arguments],
         capture_output=True, text=True, cwd=root,
     )
 
@@ -148,6 +151,8 @@ def live_generator_findings(live: Path, name: str) -> list[str]:
         before, listing = tree_bytes(root), status(root)
         written = [b for p, b in before.items() if p.endswith("producing-inputs.json")]
         findings = []
+        if any(p.endswith(".pyc") for p in before):
+            findings.append(f"{name} writes bytecode into the repository")
         if len(written) != 1 or positional.read_bytes() != written[0]:
             findings.append(f"{name} writes a different closure to its first argument")
         accepted = run_generator(root, generator, "--check")
