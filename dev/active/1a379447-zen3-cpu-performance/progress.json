@@ -1,7 +1,7 @@
 {
   "epic_id": "1a379447-212f-4aff-b2c3-a83c13021e1d",
   "epic_short_id": "1a379447",
-  "current_wave": 3,
+  "current_wave": 4,
   "waves": [
     {
       "wave_number": 1,
@@ -2077,7 +2077,8 @@
     "Session 27: 6e87c436 merged; gates at 9491c8b07: asm-artefact-present, cargo-ci, doc-review, research-review PASS; code-review FAIL F1 (verification.md prescribes an anchor expression that resolves to HEAD on main, so the drift and assembly records do not reproduce; pin the recorded anchor by content identity). Rework 1 dispatched. Bug 7d44b71f filed for the remaining AVX2 safety contracts.",
     "Session 27: 6e87c436 DONE (no-change verdict; gates pass at 6ed11e791 after rework 1; review reviews/6e87c436-r1.md). Next: 2ad3a3e0, then story 2037941f.",
     "Session 27: 2ad3a3e0 merged; gates at b44fdfc17: cargo-ci, code-review, research-review PASS; doc-review FAIL F1 (mid-range-findings.md says no production code changes while the same document names two production edits). Rework 1 dispatched. Issues 4337c02e (matvec SIMD threshold versus scalar lane) and fa1d8733 (unselected XOR unroll bodies) filed under the epic.",
-    "Session 27: 2ad3a3e0 DONE (gates pass at e6e82bc09 after rework 1; review reviews/2ad3a3e0-r1.md). Story 2037941f has no open descendant; its seven gates run next, holistic-review last."
+    "Session 27: 2ad3a3e0 DONE (gates pass at e6e82bc09 after rework 1; review reviews/2ad3a3e0-r1.md). Story 2037941f has no open descendant; its seven gates run next, holistic-review last.",
+    "Session 27: story 2037941f DONE (all seven gates pass; review reviews/2037941f-r1.md). Wave 3 is complete: both stories c04dd4ac and 2037941f are done. current_wave advanced to 4."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2135,9 +2136,7 @@
     "session": 27,
     "date": "2026-10-04",
     "instruction": "Invoker (2026-10-05): enable the five held confirmation rows (f63a2464 x3, ad2a6a58, 4c1e441f) alongside the M4RI confirmation. Wave 3 remains the current wave.",
-    "wave_3_containers": [
-      "2037941f"
-    ],
+    "wave_3_containers": [],
     "remaining_descendants": [],
     "active_workers": {},
     "m4ri_pilot": "v4-r1-pilot ran 2026-09-28T23:00Z, key 53a5bb9b75c30e58; verified from its execution log; resolution record dev/bench_results/2037941f/m4ri-gap-resolution.md records eligible",

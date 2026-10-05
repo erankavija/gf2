@@ -40,7 +40,7 @@
     "satisfies:1a379447/REQ-06"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Calibrate production dispatch for the 5900X",
-  "updated_at": "2026-10-01T22:41:33.581557357Z"
+  "updated_at": "2026-10-05T03:09:18.162416048Z"
 }

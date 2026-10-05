@@ -436,8 +436,34 @@
       "format": "markdown",
       "label": "summarize-dense-profile.py",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/summarize-dense-profile.py"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2f50deee48413af4dd539a2f0f13c5a0d23b670010f2e4ee91e2ed41cc9f45b1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "60417d992490f032b6e26539f0e94cd5eccfb9e90a6ff95bb4ff66d00da5729d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/2037941f-r1.md"
     }
   ],
+  "done_at": "2026-10-05T03:09:18.092787157Z",
   "first_ready_at": "2026-02-21T19:49:04.209118475Z",
   "gates_required": [
     "repo-validate",
@@ -450,19 +476,29 @@
   ],
   "gates_status": {
     "asm-artefact-present": {
-      "status": "pending",
-      "updated_at": "2026-09-06T19:18:41.333900525Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-05T02:45:38.318191774Z",
+      "updated_by": "auto:executor"
     },
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-09-06T19:18:41.333900525Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-05T02:46:47.655607351Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-09-06T19:18:41.333900525Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-05T02:56:47.993019198Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T02:49:49.506158400Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "passed",
+      "updated_at": "2026-10-05T03:09:01.698023284Z",
+      "updated_by": "auto:executor"
     },
     "repo-validate": {
       "status": "passed",
@@ -470,9 +506,9 @@
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "pending",
-      "updated_at": "2026-09-06T19:18:41.333900525Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-05T03:03:14.113497019Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "2037941f-852c-4d94-9d49-ad06a364dca8",
@@ -488,7 +524,7 @@
     "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Profile and optimize mid-range buffer operations (8-64 words)",
-  "updated_at": "2026-10-05T02:45:28.272446268Z"
+  "updated_at": "2026-10-05T03:09:18.092787157Z"
 }
