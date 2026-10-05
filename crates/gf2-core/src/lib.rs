@@ -40,6 +40,9 @@ pub mod rng;
 pub mod bench_seed;
 
 #[cfg(feature = "test-support")]
+pub mod dispatch_contract;
+
+#[cfg(feature = "test-support")]
 pub mod test_scratch;
 
 pub use bitslice::{BitSlice, BitSliceMut};

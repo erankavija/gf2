@@ -157,6 +157,29 @@ pub fn transpose_route(n_row_blocks: usize, n_col_blocks: usize) -> TransposeRou
     )
 }
 
+/// The 64×64 block kernel and lane [`BitMatrix::transpose`] resolves: under
+/// the `simd` cargo feature the lane `gf2_kernels_simd::transpose::detect`
+/// publishes, otherwise the portable kernel.
+fn resolved_transpose_block() -> (
+    gf2_kernels_simd::transpose::Transpose64x64Fn,
+    gf2_kernels_simd::transpose::TransposeLane,
+) {
+    use gf2_kernels_simd::transpose::{transpose_64x64_scalar, TransposeLane};
+
+    #[cfg(feature = "simd")]
+    if let Some(fns) = crate::simd::maybe_transpose() {
+        return (fns.transpose_64x64, fns.lane);
+    }
+    (transpose_64x64_scalar, TransposeLane::Scalar)
+}
+
+/// Reports the 64×64 block lane [`BitMatrix::transpose`] runs on this host
+/// in this build.
+#[must_use]
+pub fn transpose_block_lane() -> gf2_kernels_simd::transpose::TransposeLane {
+    resolved_transpose_block().1
+}
+
 /// Reports the transpose arm against already-resolved selector values.
 fn transpose_route_resolved(
     transpose_simple_max_blocks: usize,
@@ -860,21 +883,10 @@ impl BitMatrix {
         self.transpose_with_block_kernel(Self::resolved_block_kernel())
     }
 
-    /// The 64×64 block kernel [`Self::transpose`] resolves: under the `simd`
-    /// cargo feature the lane `gf2_kernels_simd::transpose::detect` publishes,
-    /// otherwise the portable kernel.
+    /// The 64×64 block kernel [`Self::transpose`] resolves, which is the
+    /// kernel of the lane [`transpose_block_lane`] reports.
     fn resolved_block_kernel() -> gf2_kernels_simd::transpose::Transpose64x64Fn {
-        #[cfg(feature = "simd")]
-        {
-            match crate::simd::maybe_transpose() {
-                Some(fns) => fns.transpose_64x64,
-                None => gf2_kernels_simd::transpose::transpose_64x64_scalar,
-            }
-        }
-        #[cfg(not(feature = "simd"))]
-        {
-            gf2_kernels_simd::transpose::transpose_64x64_scalar
-        }
+        resolved_transpose_block().0
     }
 
     /// [`Self::transpose`] driven by one caller-chosen 64×64 block kernel.
