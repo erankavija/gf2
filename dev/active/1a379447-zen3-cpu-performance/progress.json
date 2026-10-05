@@ -622,8 +622,26 @@
      "short_id": "3a8ec493",
      "title": "Check the mid-range family producing closures in the CI contract",
      "classification": "implementation",
-     "status": "pending",
+     "status": "merged cec96628b; cargo-ci pass; code-review F1 F2, rework 1",
      "tracker_state": "ready"
+    },
+    {
+     "id": "fa1d8733",
+     "short_id": "fa1d8733",
+     "classification": "implementation",
+     "status": "done"
+    },
+    {
+     "id": "a87ae828",
+     "short_id": "a87ae828",
+     "classification": "implementation",
+     "status": "merged 67071b412; code-review pass; cargo-ci re-run"
+    },
+    {
+     "id": "66698c3c",
+     "short_id": "66698c3c",
+     "classification": "implementation",
+     "status": "merged 5a6b20f80; cargo-ci pass; code-review F1, rework 1"
     }
    ]
   },
@@ -635,7 +653,7 @@
      "short_id": "f63a2464",
      "title": "Evaluate quantized layered and QC-aware LDPC candidates",
      "classification": "research",
-     "status": "in_progress: three QC pilots collected from the 2026-09-19 window and merged at 3c6c8274c; frozen stop rules applied: Q no-proceed (S2), L no-proceed (S2), QC proceeds to its confirmatory attempt on each of its three ledgers (single-worker, multicore, comparator; the decision record's 'family' read as the ledger's question, recorded in findings.md Limits); confirmations frozen by the canonical freezer via freeze-confirmations.sh, every pilot cell retained (budget six per ledger), smoked untimed, three lines queued for the 2026-09-20 window from the pinned worktree agent-9fb40c83. Comparator pilot ratio below one on both cells (candidate slower than the matched AFF3CT arm), preserved. Final round after the confirmations: outcomes, S4, converge qc-arm-smoke and ldpc-plan-check on the runner subcommands, rebase, gates cargo-ci, code-review, research-review.",
+     "status": "in_progress: rework 2 merged at beb6a6fa3. Invoker rulings recorded: no family proceeds (Q and L under S2; QC has no valid confirmatory verdict under the frozen cap, corrections C-09); REQ-04 amended; production design removed. Gates re-run on the merged tree.",
      "tracker_state": "in_progress"
     },
     {
@@ -1587,10 +1605,12 @@
   "a0812b83": 2,
   "c04dd4ac": 2,
   "50f0bd42": 2,
-  "f63a2464": 1,
+  "f63a2464": 2,
   "6e87c436": 1,
   "2ad3a3e0": 1,
-  "1b034786": 1
+  "1b034786": 1,
+  "3a8ec493": 1,
+  "66698c3c": 1
  },
  "surfaced_pitfalls": [
   {

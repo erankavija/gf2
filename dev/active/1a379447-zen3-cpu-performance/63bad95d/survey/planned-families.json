@@ -1,7 +1,7 @@
 {
  "schema": "calibration-plan-families-v1",
  "issue": "63bad95d",
- "status": "plan for review; no addendum is frozen from this record",
+ "status": "plan record; no addendum is frozen from it",
  "pilot_pairs": 12,
  "builds": {
   "conservative-portable": {
@@ -12,7 +12,8 @@
   "tuned-portable": {
    "rustflags": "--cfg gf2_tuning_baked",
    "selectors": "candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile",
-   "external": "the same portable comparator build as the conservative level"
+   "external": "the same portable comparator build as the conservative level",
+   "definition": "Defined by the profile's selectors at the portable instruction-set level. The polynomial host-targeting campaigns of c7113c5a define the same arm identity by the instruction-set flag -C target-cpu=x86-64-v3 with no profile; the two are different levels."
   },
   "native": {
    "rustflags": "-C target-cpu=native --cfg gf2_tuning_baked",
@@ -26,164 +27,119 @@
    "purpose": "selector-calibration",
    "selector": "bit_matrix.matvec_simd_min_words",
    "question": "Does the profile's matvec threshold help the allocated whole product at strides the threshold confirmation did not measure?",
-   "condition": "Runs only when the confirmation of 4337c02e yields a threshold other than the conservative value; a stride at which both builds select one lane is dropped with the reason recorded.",
-   "objective_rule": "A cell is an improvement cell when its stride lies between two strides 4337c02e confirms improved, and a non-regression cell otherwise.",
+   "condition": "Runs only when the confirmation of 4337c02e yields a threshold other than the conservative value. Every cell stays in the family; at a stride where both builds select one lane the cell records build-to-build dispersion.",
+   "objective_rule": "Every cell is a non-regression cell; the improvement claim is the confirmation of 4337c02e.",
    "cells": [
     {
      "cell_id": "matvec-r1024-16w-warm",
      "role": "confirmatory",
-     "objective": "by-rule",
+     "objective": "non-regression",
      "metric_kind": "whole-consumer",
      "core_arm": "single-core",
      "cache_state": "warm",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
      "workload": "BitMatrix::matvec, 1024 rows, 16-word stride",
-     "small_input": false
+     "small_input": false,
+     "size": {
+      "rows": 1024,
+      "columns": 1024,
+      "words": 16
+     },
+     "seed": 631601
     },
     {
      "cell_id": "matvec-r1024-48w-warm",
      "role": "confirmatory",
-     "objective": "by-rule",
+     "objective": "non-regression",
      "metric_kind": "whole-consumer",
      "core_arm": "single-core",
      "cache_state": "warm",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
      "workload": "BitMatrix::matvec, 1024 rows, 48-word stride",
-     "small_input": false
+     "small_input": false,
+     "size": {
+      "rows": 1024,
+      "columns": 3072,
+      "words": 48
+     },
+     "seed": 634801
     },
     {
      "cell_id": "matvec-r1024-16w-streaming",
      "role": "confirmatory",
-     "objective": "by-rule",
+     "objective": "non-regression",
      "metric_kind": "whole-consumer",
      "core_arm": "single-core",
      "cache_state": "streaming",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
      "workload": "BitMatrix::matvec, 1024 rows, 16-word stride, rotating banks",
-     "small_input": false
+     "small_input": false,
+     "size": {
+      "rows": 1024,
+      "columns": 1024,
+      "words": 16
+     },
+     "seed": 631602
     },
     {
      "cell_id": "matvec-r1024-12w-warm",
      "role": "holdout",
-     "objective": "by-rule",
+     "objective": "non-regression",
      "metric_kind": "whole-consumer",
      "core_arm": "single-core",
      "cache_state": "warm",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
      "workload": "BitMatrix::matvec, 1024 rows, 12-word stride",
-     "small_input": false
+     "small_input": false,
+     "size": {
+      "rows": 1024,
+      "columns": 768,
+      "words": 12
+     },
+     "seed": 631201
     },
     {
      "cell_id": "matvec-r1024-24w-tail1-warm",
      "role": "holdout",
-     "objective": "by-rule",
+     "objective": "non-regression",
      "metric_kind": "whole-consumer",
      "core_arm": "single-core",
      "cache_state": "warm",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
      "workload": "BitMatrix::matvec, 1024 rows, 24-word stride, one bit short of the word boundary",
-     "small_input": false
+     "small_input": false,
+     "size": {
+      "rows": 1024,
+      "columns": 1535,
+      "words": 24
+     },
+     "seed": 632401
     },
     {
-     "cell_id": "matvec-r1024-40w-cold",
-     "role": "holdout",
-     "objective": "by-rule",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "cold",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::matvec, 1024 rows, 40-word stride, first use",
-     "small_input": false
-    }
-   ]
-  },
-  {
-   "id": "63bad95d-profile-holdout-transpose",
-   "purpose": "selector-calibration",
-   "selector": "PRODUCTION_PREFERENCE",
-   "question": "Does the profile's transpose lane help or leave unharmed transpose workloads the lane-selection family did not measure?",
-   "condition": "Runs when the lane is admitted as a candidate selector (plan, open decisions).",
-   "objective_rule": "Improvement where the lane-selection confirmation records the same operation improved at another size; non-regression for whole consumers and small inputs.",
-   "cells": [
-    {
-     "cell_id": "transpose-block-1024-1core",
-     "role": "confirmatory",
-     "objective": "improvement",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "64x64 block transpose, 1024 blocks",
-     "small_input": false
-    },
-    {
-     "cell_id": "bitslice-unpack-m16-1core",
-     "role": "confirmatory",
-     "objective": "improvement",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BCH bit-slice parity unpack, degree 16",
-     "small_input": false
-    },
-    {
-     "cell_id": "bitmatrix-transpose-8192x2048-1core",
-     "role": "confirmatory",
-     "objective": "non-regression",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::transpose, 8192 x 2048",
-     "small_input": false
-    },
-    {
-     "cell_id": "bitmatrix-transpose-63x4097-1core",
+     "cell_id": "matvec-r1024-40w-streaming",
      "role": "holdout",
      "objective": "non-regression",
      "metric_kind": "whole-consumer",
      "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::transpose, 63 x 4097, partial tiles in both dimensions",
-     "small_input": false
-    },
-    {
-     "cell_id": "bitmatrix-transpose-1x1-1core",
-     "role": "holdout",
-     "objective": "non-regression",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::transpose, 1 x 1, one partial tile",
-     "small_input": true
-    },
-    {
-     "cell_id": "transpose-bulk-16384-6core",
-     "role": "holdout",
-     "objective": "non-regression",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "physical-cores-6",
      "cache_state": "streaming",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
-     "workload": "64x64 block transpose, 16384 blocks per worker",
-     "small_input": false
+     "workload": "BitMatrix::matvec, 1024 rows, 40-word stride, rotating banks",
+     "small_input": false,
+     "size": {
+      "rows": 1024,
+      "columns": 2560,
+      "words": 40
+     },
+     "seed": 634001
     }
-   ]
+   ],
+   "holdout_declaration": "matvec-holdout-cells.json"
   },
   {
    "id": "63bad95d-profile-dispatch-overhead",
@@ -350,64 +306,6 @@
    ]
   },
   {
-   "id": "63bad95d-transpose-external-ladder",
-   "purpose": "kernel-family",
-   "selector": "PRODUCTION_PREFERENCE",
-   "question": "How far is the profile's transpose kernel from M4RI and Bitshuffle when both sides build at the same level?",
-   "condition": "Runs with the transpose holdout family; the conservative level is the committed comparator confirmation of 1d4fd63d.",
-   "objective_rule": "Every cell is a comparator-gap cell with the external library as candidate; it selects nothing.",
-   "cells": [
-    {
-     "cell_id": "transpose-kernel-64-vs-m4ri-tuned",
-     "role": "confirmatory",
-     "objective": "comparator-gap",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "tuned-portable",
-     "candidate_build": "external",
-     "workload": "64-word transpose kernel against M4RI",
-     "small_input": false
-    },
-    {
-     "cell_id": "transpose-kernel-64-vs-bitshuffle-tuned",
-     "role": "confirmatory",
-     "objective": "comparator-gap",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "tuned-portable",
-     "candidate_build": "external",
-     "workload": "64-word transpose kernel against Bitshuffle",
-     "small_input": false
-    },
-    {
-     "cell_id": "transpose-kernel-64-vs-m4ri-native",
-     "role": "confirmatory",
-     "objective": "comparator-gap",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "native",
-     "candidate_build": "external",
-     "workload": "64-word transpose kernel against M4RI",
-     "small_input": false
-    },
-    {
-     "cell_id": "transpose-kernel-64-vs-bitshuffle-native",
-     "role": "confirmatory",
-     "objective": "comparator-gap",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "native",
-     "candidate_build": "external",
-     "workload": "64-word transpose kernel against Bitshuffle",
-     "small_input": false
-    }
-   ]
-  },
-  {
    "id": "63bad95d-matvec-external-ladder",
    "purpose": "consumer-family",
    "selector": "bit_matrix.matvec_simd_min_words",
@@ -464,6 +362,20 @@
      "small_input": false
     }
    ]
+  }
+ ],
+ "excluded": [
+  {
+   "id": "transpose lane selection",
+   "reason": "PRODUCTION_PREFERENCE is retained and is no candidate; the non-qualifying confirmations of 1d4fd63d and 04b85d10 are the recorded outcome."
+  },
+  {
+   "id": "transpose external ladder",
+   "reason": "The profile selects nothing on the transpose route, so its tuned arm is the conservative arm the committed comparator confirmations measure, and REQ-09 asks for the three build levels of what this issue calibrates. The native build of the transpose entry point is covered by the native ladder's non-regression cells."
+  },
+  {
+   "id": "carry-save count crossover",
+   "reason": "No selector exists and none is added; the exploratory crossover of 5cbb6545 is a recorded limit."
   }
  ]
 }
