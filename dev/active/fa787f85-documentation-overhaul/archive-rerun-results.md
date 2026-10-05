@@ -30,6 +30,10 @@ run exits 0.
 | 6dc81018 | 616e1d7c | `e15dbdaef` | 2 | 0 | 0 | 0 | false |
 | 97bf0879 | b2bb1065 | `86f10640a` | 1 | 0 | 0 | 0 | false |
 | 97bf0879 | b2bb1065 | `86f10640a` | 2 | 0 | 0 | 0 | false |
+| 026fc832 | ec655592 | `f0a72c2d7` | 1 | 0 | 0 | 0 | false |
+| 026fc832 | ec655592 | `f0a72c2d7` | 2 | 0 | 0 | 0 | false |
+| 97bf0879 | ec655592 | `f0a72c2d7` | 1 | 0 | 0 | 0 | false |
+| 97bf0879 | ec655592 | `f0a72c2d7` | 2 | 0 | 0 | 0 | false |
 
 An adopted publication records the identity of a file that already sits at its
 archive destination; it moves no file. The adopting runs follow edits the units
