@@ -1461,6 +1461,24 @@
       "raised_at": "2026-10-05T03:20Z",
       "resolution": null,
       "evidence": "session scratchpad b2e09d41-fuzz/fuzz.py and plan-comparison.txt (ephemeral); worktree agent-b2e09d41 clean at fcb972da3"
+    },
+    {
+      "category": "architectural decisions and shared infrastructure (63bad95d calibration plan)",
+      "issue": "63bad95d",
+      "question": "calibration-plan.md section 8: (1) transpose lane ownership; (2) matvec threshold mechanism, which changes the tuning producer and validator of an archived epic; (3) carry-save crossover as a separate issue; (4) definition of tuned-portable; (5) a CI step for the dispatch contract without simd",
+      "recommendation": "the plan's own recommendations: named exception, producer sweep, separate issue, profile definition, one scoped CI step",
+      "status": "open",
+      "raised_at": "2026-10-05T04:30Z",
+      "resolution": null
+    },
+    {
+      "category": "benchmark window authorization (wave 4)",
+      "issue": "63bad95d, 4337c02e",
+      "question": "may wave 4 arm overnight windows at 02:00 Europe/Helsinki as wave 3 did",
+      "recommendation": "yes",
+      "status": "open",
+      "raised_at": "2026-10-05T03:20Z",
+      "resolution": null
     }
   ],
   "rework_counts": {
@@ -2099,7 +2117,8 @@
     "Session 27: wave 4 started at fcb972da3 with 7d44b71f, b2e09d41, 6833c5b5 and the untimed first stage of 63bad95d. fa1d8733 follows 7d44b71f (same file). 4337c02e and the timed part of 63bad95d wait for the invoker to authorize benchmark windows for wave 4. Common worker rules for the wave are in the session scratchpad (ephemeral); their content is the Traps list of handoff-23 plus worker-brief.md.",
     "Session 27: bug 1b034786 filed (safe M4RM Gray-table wrappers reach an out-of-bounds store for a non-power-of-two table size); 7d44b71f depends on it; same worker, same worktree, commits scoped to the bug first.",
     "Session 27: 6833c5b5 DONE (ledger verified at its recorded commits, bytes unchanged; shared verifier dev/scripts/verify-source-evidence.py; gates pass first round; review reviews/6833c5b5-r1.md). Bug a87ae828 filed for the generator that overwrites the pinned ledger; the worker's attempt to edit that generator was denied by the permission system, so the edit waits for the invoker.",
-    "Session 27: filed from the 7d44b71f worker's findings: bfc2ceab (caller-trusted safe kernel entry points reach UB on violated length conditions; design choice per interface), 316150fd (gf2-core tests do not compile with default features; AVX2 kernel tests run without feature detection), dd359005 (no scalar-lane test builds of gf2-algebra and gf2-coding). All wired under the epic; the invoker may re-parent them, since they reach beyond Zen 3 performance."
+    "Session 27: filed from the 7d44b71f worker's findings: bfc2ceab (caller-trusted safe kernel entry points reach UB on violated length conditions; design choice per interface), 316150fd (gf2-core tests do not compile with default features; AVX2 kernel tests run without feature detection), dd359005 (no scalar-lane test builds of gf2-algebra and gf2-coding). All wired under the epic; the invoker may re-parent them, since they reach beyond Zen 3 performance.",
+    "Session 27: 63bad95d untimed stage merged (route inventory, dispatch_contract fallback suite, calibration plan and budget; merged-tree cargo-ci passes). Nothing frozen. 4337c02e runs before 63bad95d freezes; the threshold edit happens in 63bad95d."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2163,7 +2182,7 @@
     "active_workers": {
       "w-7d44b71f": "agent-7d44b71f",
       "w-b2e09d41": "held, no commits; awaits invoker ruling",
-      "w-63bad95d": "agent-63bad95d, untimed first stage only (inventory, fallback tests, calibration plan)"
+      "w-63bad95d": "untimed stage merged; holds for the invoker's plan decisions"
     },
     "m4ri_pilot": "v4-r1-pilot ran 2026-09-28T23:00Z, key 53a5bb9b75c30e58; verified from its execution log; resolution record dev/bench_results/2037941f/m4ri-gap-resolution.md records eligible",
     "m4ri_confirmation": {
