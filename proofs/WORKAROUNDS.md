@@ -182,7 +182,7 @@ the same four ops as the production trait surface.
 
 | Tool | Version | Pin |
 |------|---------|-----|
-| Charon | v0.1.217 | local patched build, base `487f0320` + 1 implied-clause fix (`dev/active/charon-patch-backup-2026-05-15/implied-clause-rebased-487f0320.patch`) |
+| Charon | v0.1.217 | local patched build, base `487f0320` + 1 implied-clause fix (`dev/archive/legacy/dev/active/charon-patch-backup-2026-05-15/implied-clause-rebased-487f0320.patch`) |
 | Aeneas | 5220259c | git rev `5220259c`; declares Charon `487f0320` via `charon-pin`; needs OCaml dep `ppx_deriving_yojson` |
 | Lean4 | v4.30.0-rc2 | via `proofs/lean-toolchain` |
 | Rust nightly | nightly-2026-06-01 | required by Charon for rustc internals (components incl. `miri`) |

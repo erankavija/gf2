@@ -75,7 +75,7 @@ Production implementations are:
 - `Packed7` / `Packed7Vec` —
   `crates/gf2-algebra/src/packed/packed7.rs:581` and `:1056`.
 
-The archived research stub is at `dev/archive/packed_field_stub/src/lib.rs`:
+The archived research stub is at `dev/archive/legacy/dev/archive/packed_field_stub/src/lib.rs`:
 it redeclares both traits at `:80` and `:331`, and has stub implementations at
 `:774` and `:968`. Its `fold_mul` still returns zero at `:1389-1392` and
 `:1619-1624`; it is a historical demonstration, not the production
@@ -464,7 +464,7 @@ Production algorithm consumers are `crates/gf2-algebra/src/permanent/bipedal3.rs
 `src/bipedal/packed7.rs:864`.
 
 The archived research stub records declarations at
-`dev/archive/packed_field_stub/src/lib.rs:80` and `:331`; production research
+`dev/archive/legacy/dev/archive/packed_field_stub/src/lib.rs:80` and `:331`; production research
 consumers are `dev/research/permanent-sampling-feas/src/gray_update.rs`,
 `dev/research/permanent-sampling-feas/src/backend.rs`,
 `dev/research/permanent_wave_gpu/src/f5_candidates.rs`, and
@@ -526,7 +526,7 @@ listed in the Rust/proof lists above are not repeated:
   `dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md:150`,
   `dev/active/b8206228-permanent-statistics/investigation.md:228`,
   `dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv:17`,
-  and `dev/active/charon-patch-backup-2026-05-15/hrtb-associated-types.rs:4`.
+  and `dev/archive/legacy/dev/active/charon-patch-backup-2026-05-15/hrtb-associated-types.rs:4`.
 - Research and plans: `dev/archive/e095a100-gfpm-arithmetic/research/rns_representation.md:235`,
   `dev/plans/16283d6f-fieldmatrix-gpu/gpu_fieldmatrix_sketch.md:37`,
   `dev/archive/e095a100-gfpm-arithmetic/plans/6fb4abad_breakdown.md:10`, `dev/archive/e095a100-gfpm-arithmetic/plans/70972f06_audit.md:74`,
@@ -643,7 +643,7 @@ the same trait definitions at `crates/gf2-algebra/src/packed/mod.rs:88-107` and
 `:374-385`, and the production implementations match the frozen type list.
 The freeze explicitly says there is no automated checker at `:135-142`; the
 archived research stub’s parallel declarations at
-`dev/archive/packed_field_stub/src/lib.rs:80-331` preserve the historical
+`dev/archive/legacy/dev/archive/packed_field_stub/src/lib.rs:80-331` preserve the historical
 evidence that the repository had an unfrozen research copy. The accurate
 primitive claim is “production API matches a documentation freeze,” not
 “the repository contains only one enforced declaration.”
