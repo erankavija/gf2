@@ -187,7 +187,7 @@ pub type F7BinaryKernelFn = fn(&[u64], &[u64], &mut [u64]);
 
 /// Unary batch kernel for F_7: `a_words -> out_words`.
 ///
-/// Both slices must have the same length.
+/// Both slices must have the same length (a multiple of 4 for AVX2).
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type F7UnaryKernelFn = fn(&[u64], &mut [u64]);
 
@@ -237,24 +237,28 @@ fn detect_avx2_f7_uncached() -> Option<F7AvxFns> {
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn add7_safe(a: &[u64], b: &[u64], out: &mut [u64]) {
     // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
+    // The slice shape is the caller's, as `F7BinaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2_packed7::run_add7_batch(a, b, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn sub7_safe(a: &[u64], b: &[u64], out: &mut [u64]) {
     // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
+    // The slice shape is the caller's, as `F7BinaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2_packed7::run_sub7_batch(a, b, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn mul7_safe(a: &[u64], b: &[u64], out: &mut [u64]) {
     // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
+    // The slice shape is the caller's, as `F7BinaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2_packed7::run_mul7_batch(a, b, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn neg7_safe(a: &[u64], out: &mut [u64]) {
     // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
+    // The slice shape is the caller's, as `F7UnaryKernelFn` documents.
     unsafe { crate::x86::bipedal_avx2_packed7::run_neg7_batch(a, out) }
 }
 

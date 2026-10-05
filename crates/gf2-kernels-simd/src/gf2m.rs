@@ -139,7 +139,10 @@ fn gf2m_mul_pclmul_safe(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
 /// Multiply two GF(2^m) elements using PCLMULQDQ.
 ///
 /// # Safety
-/// Requires PCLMULQDQ CPU feature.
+///
+/// The host supports PCLMULQDQ and SSE4.1; the product halves are read with
+/// `_mm_extract_epi64`. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq")]
 unsafe fn gf2m_mul_pclmul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
@@ -167,6 +170,11 @@ unsafe fn gf2m_mul_pclmul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 
 }
 
 /// Reduction for GF(2^8).
+///
+/// # Safety
+///
+/// No target feature, pointer, length or aliasing condition applies: the body
+/// is integer arithmetic on values.
 #[inline(always)]
 unsafe fn reduce_gf256(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
     // The product has degree at most 14.
@@ -191,6 +199,11 @@ unsafe fn reduce_gf256(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
 }
 
 /// Reduction for GF(2^16).
+///
+/// # Safety
+///
+/// No target feature, pointer, length or aliasing condition applies: the body
+/// is integer arithmetic on values.
 #[inline(always)]
 unsafe fn reduce_gf65536(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
     // The product has degree at most 30.
@@ -214,6 +227,11 @@ unsafe fn reduce_gf65536(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
 }
 
 /// Generic reduction for arbitrary `m`.
+///
+/// # Safety
+///
+/// No target feature, pointer, length or aliasing condition applies: the body
+/// is integer arithmetic on values.
 #[inline(always)]
 unsafe fn reduce_generic(mut lo: u64, hi: u64, m: usize, primitive_poly: u64) -> u64 {
     if hi != 0 {

@@ -39,6 +39,9 @@ pub use crate::fp_small_ple::PANEL_SCRATCH_COLS;
 /// canonical (`< p`). `p` must be an odd prime in `[3, 251]`.
 /// `row_perm.len() == m`, `inv_table.len() == p as usize`,
 /// `window.len() == m * win`.
+///
+/// The references carry pointer validity and exclusive access to `window` and
+/// `row_perm`.
 #[target_feature(enable = "avx2")]
 pub unsafe fn ple_panel_base_canonical(
     window: &mut [u8],
@@ -113,6 +116,12 @@ pub unsafe fn ple_panel_base_canonical(
 }
 
 /// Swap two rows of the row-major window panel.
+///
+/// # Safety
+///
+/// The host supports AVX2 and `window` holds rows `r1` and `r2` of `win` 449
+/// each. The exclusive reference carries pointer validity, and distinct rows
+/// are disjoint.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn swap_panel_rows(window: &mut [u8], win: usize, r1: usize, r2: usize) {
@@ -147,6 +156,12 @@ unsafe fn swap_panel_rows(window: &mut [u8], win: usize, r1: usize, r2: usize) {
 ///   2. Update the tail `window[k, col+1..win] -= mult *
 ///      window[rank, col+1..win]` (mod p) via AVX2 axpy: 8-lane u32
 ///      MUL + `barrett_reduce_lane32` + conditional-subtract pack.
+///
+/// # Safety
+///
+/// The host supports AVX2. `window` holds at least `m * win` 449, `col < win`
+/// and `rank < m`. The exclusive reference carries pointer validity; the pivot
+/// row is copied out before any write.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fused_scale_and_schur(
@@ -367,6 +382,10 @@ mod tests {
                 let mut row_perm_oracle: Vec<usize> = (0..m).collect();
                 let mut pivot_cols_oracle: Vec<usize> = Vec::new();
 
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2; `window`, `row_perm` and `inv_table` have
+                // the lengths the kernel requires, and every bytes is below
+                // `p`.
                 let rank = unsafe {
                     ple_panel_base_canonical(
                         &mut window,
@@ -412,6 +431,9 @@ mod tests {
             let mut window = vec![0u8; m * win];
             let mut row_perm: Vec<usize> = (0..m).collect();
             let mut pivot_cols: Vec<usize> = Vec::new();
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2; `window`, `row_perm` and `inv_table` have the lengths the
+            // kernel requires, and every bytes is below `p`.
             let rank = unsafe {
                 ple_panel_base_canonical(
                     &mut window,
@@ -446,6 +468,9 @@ mod tests {
             let mut row_perm_oracle: Vec<usize> = (0..m).collect();
             let mut pivot_cols_oracle: Vec<usize> = Vec::new();
 
+            // SAFETY: `run_for_primes` runs this closure only after detecting
+            // AVX2; `window`, `row_perm` and `inv_table` have the lengths the
+            // kernel requires, and every bytes is below `p`.
             let rank = unsafe {
                 ple_panel_base_canonical(
                     &mut window,

@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : b85adc0a1
-; regenerated   : 2026-10-05T03:26:07Z
+; commit        : 8ff1644cb
+; regenerated   : 2026-10-05T03:37:55Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -226,7 +226,7 @@ gf2_kernels_simd::x86::bipedal_avx2::run_add_batch:
 ; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch:
 	test rsi, rsi
@@ -256,7 +256,7 @@ gf2_kernels_simd::x86::bipedal_avx2::run_sub_batch:
 ; symbol: gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::bipedal_avx2::run_mul_batch:
 	test rsi, rsi

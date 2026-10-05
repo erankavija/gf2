@@ -16,6 +16,11 @@ use core::arch::x86_64::*;
 ///
 /// Each input lane `p` must satisfy `p < 2^62` (which holds for any product
 /// of two canonical M31 values).
+///
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn reduce_m31_64(p: __m256i) -> __m256i {
@@ -50,6 +55,9 @@ unsafe fn reduce_m31_64(p: __m256i) -> __m256i {
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical (`< 2^31 - 1`).
+///
+/// Every argument is a value, so no pointer, length or aliasing condition
+/// applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn mersenne31_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
@@ -80,6 +88,9 @@ pub unsafe fn mersenne31_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
 /// Caller must ensure AVX2 is available at runtime. All input values
 /// must be canonical (strictly less than `2^31 - 1`); behaviour is
 /// undefined otherwise.
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `out`.
 ///
 /// # Panics
 ///
@@ -124,6 +135,9 @@ pub unsafe fn mersenne31_batch_mul(a: &[u32], b: &[u32], out: &mut [u32]) {
 ///
 /// Caller must ensure AVX2 is available and all inputs are canonical
 /// (`< 2^31 - 1`).
+///
+/// The length assertions bound every load and store, and the slice references
+/// carry pointer validity and exclusive access to `acc`.
 ///
 /// # Panics
 ///
@@ -183,6 +197,9 @@ pub unsafe fn mersenne31_batch_mul_add(a: &[u32], b: &[u32], acc: &mut [u32]) {
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical
 /// (`< 2^31 - 1`).
+///
+/// The length assertion bounds every load. Both slices are only read, through
+/// references that carry pointer validity.
 ///
 /// # Panics
 ///
@@ -267,6 +284,7 @@ mod tests {
         let a: Vec<u32> = (0..16u32).map(|i| i * 12345 % P31).collect();
         let b: Vec<u32> = (0..16u32).map(|i| i * 67890 % P31).collect();
         let mut out = vec![0u32; 16];
+        // SAFETY: AVX2 was detected above.
         unsafe { mersenne31_batch_mul(&a, &b, &mut out) };
         for i in 0..16 {
             assert_eq!(out[i], scalar_m31_mul(a[i], b[i]), "i={i}");
@@ -281,6 +299,7 @@ mod tests {
         let a: Vec<u32> = (0..13u32).map(|i| i * 12345 % P31).collect();
         let b: Vec<u32> = (0..13u32).map(|i| i * 67890 % P31).collect();
         let mut out = vec![0u32; 13];
+        // SAFETY: AVX2 was detected above.
         unsafe { mersenne31_batch_mul(&a, &b, &mut out) };
         for i in 0..13 {
             assert_eq!(out[i], scalar_m31_mul(a[i], b[i]), "i={i}");
@@ -295,6 +314,7 @@ mod tests {
         let a = vec![0u32, 1, P31 - 1, P31 / 2, 1, P31 - 1, 0, P31 / 3];
         let b = vec![P31 - 1, 0, P31 - 1, 2, P31 / 2, 1, 0, 3];
         let mut out = vec![0u32; 8];
+        // SAFETY: AVX2 was detected above.
         unsafe { mersenne31_batch_mul(&a, &b, &mut out) };
         for i in 0..8 {
             assert_eq!(out[i], scalar_m31_mul(a[i], b[i]), "i={i}");
@@ -313,6 +333,7 @@ mod tests {
             let b: Vec<u32> = (0..len as u32)
                 .map(|i| (i.wrapping_mul(23) + 5) % P31)
                 .collect();
+            // SAFETY: AVX2 was detected above.
             let got = unsafe { mersenne31_batch_dot(&a, &b) };
             let mut expected: u64 = 0;
             for i in 0..len {
@@ -331,6 +352,7 @@ mod tests {
         let b: Vec<u32> = (0..16u32).map(|i| (i * 29 + 3) % P31).collect();
         let initial_acc: Vec<u32> = (0..16u32).map(|i| (i * 31) % P31).collect();
         let mut acc = initial_acc.clone();
+        // SAFETY: AVX2 was detected above.
         unsafe { mersenne31_batch_mul_add(&a, &b, &mut acc) };
         for i in 0..16 {
             let m = scalar_m31_mul(a[i], b[i]);

@@ -103,6 +103,9 @@ fn maxabs_avx2_f64_safe(inputs: &[f64]) -> f64 {
 ///
 /// # Safety
 /// Requires AVX2 CPU feature.
+///
+/// `inputs` is only read, through a reference that carries pointer validity,
+/// and every load lies inside it.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
 unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
@@ -164,6 +167,9 @@ unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Requires AVX2 CPU feature.
+///
+/// `inputs` is only read, through a reference that carries pointer validity,
+/// and every load lies inside it.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
 unsafe fn maxabs_avx2_f32(inputs: &[f32]) -> f32 {
@@ -208,6 +214,9 @@ unsafe fn maxabs_avx2_f32(inputs: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Requires AVX2 CPU feature.
+///
+/// `inputs` is only read, through a reference that carries pointer validity,
+/// and every load lies inside it.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
 unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
@@ -264,6 +273,9 @@ unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
 ///
 /// # Safety
 /// Requires AVX2 CPU feature.
+///
+/// `inputs` is only read, through a reference that carries pointer validity,
+/// and every load lies inside it.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
 unsafe fn maxabs_avx2_f64(inputs: &[f64]) -> f64 {

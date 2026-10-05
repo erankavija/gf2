@@ -17,6 +17,9 @@ use core::arch::x86_64::*;
 /// The caller must ensure the AVX2 feature is enabled at runtime.
 /// `crate::transpose::lane` only publishes a function pointer to this fn
 /// when `is_x86_feature_detected!("avx2")` returns true.
+///
+/// The array references fix both lengths and carry pointer validity and
+/// exclusive access to `output`.
 #[target_feature(enable = "avx2")]
 pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 64]) {
     // The buffer is aligned to 8 bytes; YMM loads/stores use
@@ -99,6 +102,9 @@ pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 
 /// The caller must ensure the AVX2 feature is enabled at runtime.
 /// `crate::transpose::lane` only publishes a function pointer to this fn
 /// when `is_x86_feature_detected!("avx2")` returns true.
+///
+/// The array references fix both lengths and carry pointer validity and
+/// exclusive access to `output`.
 #[target_feature(enable = "avx2")]
 pub(crate) unsafe fn transpose_64x64_avx2_pshufb(input: &[u64; 64], output: &mut [u64; 64]) {
     let mut bytes = [0u8; 64 * 8];
@@ -163,6 +169,9 @@ pub(crate) unsafe fn transpose_64x64_avx2_pshufb(input: &[u64; 64], output: &mut
 /// The caller must ensure the AVX2 feature is enabled at runtime.
 /// `crate::transpose::lane` only publishes a function pointer to this fn
 /// when `is_x86_feature_detected!("avx2")` returns true.
+///
+/// The array references fix both lengths and carry pointer validity and
+/// exclusive access to `output`.
 #[target_feature(enable = "avx2")]
 pub(crate) unsafe fn transpose_64x64_avx2_ymm6(input: &[u64; 64], output: &mut [u64; 64]) {
     let inp = input.as_ptr();
@@ -282,6 +291,9 @@ pub(crate) unsafe fn transpose_64x64_avx2_ymm6(input: &[u64; 64], output: &mut [
 /// The caller must ensure the AVX2 feature is enabled at runtime.
 /// `crate::transpose::lane` only publishes a function pointer to this fn
 /// when `is_x86_feature_detected!("avx2")` returns true.
+///
+/// The array references fix both lengths and carry pointer validity and
+/// exclusive access to `output`.
 #[target_feature(enable = "avx2")]
 pub(crate) unsafe fn transpose_64x64_avx2_movemask(input: &[u64; 64], output: &mut [u64; 64]) {
     // `planes[q]` is byte column `q` of all 64 rows.

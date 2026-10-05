@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : b85adc0a1
-; regenerated   : 2026-10-05T03:26:11Z
+; commit        : 8ff1644cb
+; regenerated   : 2026-10-05T03:38:01Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,8 +18,8 @@
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_mul
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 0.11s
 gf2_kernels_simd::x86::fp65537::fp65537_batch_mul:
 	sub rsp, 40
 	mov qword ptr [rsp + 8], rsi
@@ -115,8 +115,8 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_mul:
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_add
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 0.05s
 gf2_kernels_simd::x86::fp65537::fp65537_batch_add:
 	sub rsp, 40
 	mov qword ptr [rsp + 8], rsi
@@ -182,8 +182,8 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_add:
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_sub
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 0.08s
 gf2_kernels_simd::x86::fp65537::fp65537_batch_sub:
 	sub rsp, 40
 	mov qword ptr [rsp + 8], rsi
@@ -249,8 +249,8 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_sub:
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
 
-    Finished `release` profile [optimized] target(s) in 0.06s
 gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 	push rbp
 	push r15
@@ -572,7 +572,7 @@ gf2_kernels_simd::x86::fp65537::fp65537_batch_karatsuba:
 ; symbol: gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.06s
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::fp65537::fp65537_batch_cubic_karatsuba:
 	push rbp

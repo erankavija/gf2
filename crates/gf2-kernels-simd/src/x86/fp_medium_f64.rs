@@ -54,6 +54,9 @@ fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
 /// `p ∈ (251, 65535]` is an odd prime, and every input lane holds a
 /// non-negative integer canonical residue in `[0, p)`.
 ///
+/// The shape assertions bound every access, and the slice references carry
+/// pointer validity and exclusive access to `c`.
+///
 /// # Panics
 ///
 /// Panics if any slice length disagrees with `m`, `k`, `n`.
@@ -188,6 +191,12 @@ pub unsafe fn fp_medium_f64_gemm(
 /// row-major form `dst[t * M_R + i] = a[(i_blk + i) * k + t]`. The
 /// dst slack rows (`i ∈ [M_EFF, M_R)`) hold zeros (already initialised
 /// by the caller's zero-fill).
+///
+/// # Safety
+///
+/// The host supports AVX2. `M_EFF <= M_R`, `a` holds at least `(i_blk + M_EFF)
+/// * k` lanes and `dst` at least `M_R * k`. The references carry pointer
+/// validity and exclusive access to `dst`.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn pack_a_block<const M_EFF: usize>(a: &[f64], i_blk: usize, k: usize, dst: &mut [f64]) {
@@ -222,6 +231,13 @@ unsafe fn pack_a_block<const M_EFF: usize>(a: &[f64], i_blk: usize, k: usize, ds
 /// interleaved row-major (`a_pack_f64[t * M_R + i] = a[(i_blk + i) * k + t]`).
 /// `b_packed` is the N-major B-panel buffer: `n_panels × k × N_R` f64;
 /// `panel_off` and `n_eff` select the active panel slice.
+///
+/// # Safety
+///
+/// The host supports AVX2 and FMA. `M_EFF <= M_R`, `a_pack_f64` holds `M_R *
+/// k` lanes, `b_packed` holds `k * N_R` lanes from `panel_off`, and `n_eff <=
+/// N_R`. `c` is written through bounds-checked indexing; the references carry
+/// pointer validity and exclusive access to it.
 #[inline]
 #[target_feature(enable = "avx2,fma")]
 unsafe fn run_one_panel<const M_EFF: usize>(
@@ -360,6 +376,11 @@ unsafe fn run_one_panel<const M_EFF: usize>(
 /// therefore in `(-p, p)`; a single `r += p` if `r < 0` brings it into
 /// `[0, p)`. We never need a second iteration because the quotient
 /// error is bounded by 1, not 2.
+///
+/// # Safety
+///
+/// The host supports AVX2 and FMA. Every argument is a value, so no pointer,
+/// length or aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2,fma")]
 unsafe fn barrett_reduce_pd(x: __m256d, p_f64: f64, p_inv_f64: f64) -> __m256d {
@@ -377,6 +398,12 @@ unsafe fn barrett_reduce_pd(x: __m256d, p_f64: f64, p_inv_f64: f64) -> __m256d {
 
 /// Store the 12 f64 accumulators of the `4 × 12` tile to scratch,
 /// apply f64 Barrett reduction, and write the canonical u16 cells into `c`.
+///
+/// # Safety
+///
+/// The host supports AVX2 and FMA. The accumulators are values and `c` is
+/// written through bounds-checked indexing, so no pointer or length condition
+/// applies; its exclusive reference carries pointer validity.
 #[inline]
 #[target_feature(enable = "avx2,fma")]
 #[allow(clippy::too_many_arguments)]
@@ -541,6 +568,8 @@ mod tests {
                 let a_f = u16_to_f64(&a);
                 let bt_f = u16_to_f64(&bt);
                 let mut got = vec![0u16; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} m={m} k={k} n={n}");
@@ -567,6 +596,8 @@ mod tests {
                 let a_f = u16_to_f64(&a);
                 let bt_f = u16_to_f64(&bt);
                 let mut got = vec![0u16; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} k={k}");
@@ -590,6 +621,8 @@ mod tests {
                 let a_f = u16_to_f64(&a);
                 let bt_f = u16_to_f64(&bt);
                 let mut got = vec![0u16; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} n={n}");
@@ -613,6 +646,8 @@ mod tests {
                 let a_f = u16_to_f64(&a);
                 let bt_f = u16_to_f64(&bt);
                 let mut got = vec![0u16; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
                 unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} m={m}");
@@ -628,6 +663,7 @@ mod tests {
             return;
         }
         let mut out: Vec<u16> = vec![];
+        // SAFETY: AVX2 and FMA were detected above.
         unsafe { fp_medium_f64_gemm(&[], &[], 0, 0, 0, 65521, &mut out) };
         assert!(out.is_empty());
     }
@@ -660,6 +696,7 @@ mod tests {
                         let a_f = u16_to_f64(&a);
                         let bt_f = u16_to_f64(&bt);
                         let mut got = vec![0u16; m * n];
+                        // SAFETY: AVX2 and FMA were detected above.
                         unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
                         let want = scalar_gemm(&a, &bt, m, k, n, p);
                         assert_eq!(got, want, "p={p} m={m} k={k} n={n}");
@@ -700,9 +737,14 @@ mod tests {
                 for (i, &v) in chunk.iter().enumerate() {
                     buf[i] = v as f64;
                 }
+                // SAFETY: AVX2 and FMA were detected above. `buf` holds the
+                // four lanes the load reads.
                 let v = unsafe { _mm256_loadu_pd(buf.as_ptr()) };
+                // SAFETY: AVX2 and FMA were detected above.
                 let r = unsafe { barrett_reduce_pd(v, p_f, p_inv) };
                 let mut out = [0.0f64; 4];
+                // SAFETY: AVX2 and FMA were detected above. `out` holds the
+                // four lanes the store writes.
                 unsafe { _mm256_storeu_pd(out.as_mut_ptr(), r) };
                 for (i, &v) in chunk.iter().enumerate() {
                     let expected = (v % p) as f64;

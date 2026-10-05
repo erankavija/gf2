@@ -8,6 +8,10 @@
 
 use core::arch::x86_64::*;
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn unsigned_lt_epi64(a: __m256i, b: __m256i) -> __m256i {
@@ -15,6 +19,10 @@ unsafe fn unsigned_lt_epi64(a: __m256i, b: __m256i) -> __m256i {
     _mm256_cmpgt_epi64(_mm256_xor_si256(b, sign), _mm256_xor_si256(a, sign))
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn select_epi64(mask: __m256i, when_true: __m256i, when_false: __m256i) -> __m256i {
@@ -24,6 +32,10 @@ unsafe fn select_epi64(mask: __m256i, when_true: __m256i, when_false: __m256i) -
     )
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn add_mod_u64x4(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
@@ -34,6 +46,10 @@ unsafe fn add_mod_u64x4(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
     select_epi64(_mm256_or_si256(overflow, ge_p), diff, sum)
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn sub_mod_u64x4(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
@@ -42,6 +58,10 @@ unsafe fn sub_mod_u64x4(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
     _mm256_add_epi64(diff, _mm256_and_si256(borrow, p))
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn mul_lo_u64x4(a: __m256i, b: __m256i) -> __m256i {
@@ -57,6 +77,10 @@ unsafe fn mul_lo_u64x4(a: __m256i, b: __m256i) -> __m256i {
     _mm256_add_epi64(p0, _mm256_slli_epi64(_mm256_add_epi64(p1, p2), 32))
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn mul_wide_u64x4(a: __m256i, b: __m256i) -> (__m256i, __m256i) {
@@ -85,6 +109,10 @@ unsafe fn mul_wide_u64x4(a: __m256i, b: __m256i) -> (__m256i, __m256i) {
     (lo, hi)
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn mul_hi_u64x4(a: __m256i, b: __m256i) -> __m256i {
@@ -110,6 +138,10 @@ unsafe fn mul_hi_u64x4(a: __m256i, b: __m256i) -> __m256i {
     )
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn montgomery_redc_u64x4(
@@ -130,6 +162,10 @@ unsafe fn montgomery_redc_u64x4(
     select_epi64(unsigned_lt_epi64(u, p), u, u_minus_p)
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn montgomery_redc_u64x4_signed_final(
@@ -149,6 +185,10 @@ unsafe fn montgomery_redc_u64x4_signed_final(
     select_epi64(_mm256_cmpgt_epi64(p, u), u, u_minus_p)
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_montgomery_mul4(a: __m256i, b: __m256i, p: __m256i, p_inv: __m256i) -> __m256i {
@@ -156,6 +196,10 @@ pub unsafe fn fp_montgomery_mul4(a: __m256i, b: __m256i, p: __m256i, p_inv: __m2
     montgomery_redc_u64x4(t_lo, t_hi, p, p_inv)
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_montgomery_mul4_signed_final(
@@ -168,6 +212,10 @@ unsafe fn fp_montgomery_mul4_signed_final(
     montgomery_redc_u64x4_signed_final(t_lo, t_hi, p, p_inv)
 }
 
+/// # Safety
+///
+/// The host supports AVX2. Every argument is a value, so no pointer, length or
+/// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_montgomery_mul4_select<const SIGNED_FINAL: bool>(
@@ -183,6 +231,11 @@ unsafe fn fp_montgomery_mul4_select<const SIGNED_FINAL: bool>(
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. `a_ptr` and `b_ptr` are valid for reading `nvec`
+/// 256-bit vectors at any alignment, and `o_ptr` for writing as many into a
+/// buffer the caller holds exclusively.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_montgomery_batch_mul_vecs<const SIGNED_FINAL: bool>(
@@ -224,6 +277,11 @@ unsafe fn fp_montgomery_batch_mul_vecs<const SIGNED_FINAL: bool>(
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. The length assertions bound every load and store,
+/// and the slice references carry pointer validity and exclusive access to
+/// `out`.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_montgomery_batch_mul(
     a: &[u64],
@@ -261,6 +319,11 @@ pub unsafe fn fp_montgomery_batch_mul(
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. The length assertions bound every load and store,
+/// and the slice references carry pointer validity and exclusive access to
+/// `out`.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_montgomery_batch_add(a: &[u64], b: &[u64], modulus: u64, out: &mut [u64]) {
     assert_eq!(a.len(), b.len(), "fp_montgomery_batch_add: length mismatch");
@@ -291,6 +354,11 @@ pub unsafe fn fp_montgomery_batch_add(a: &[u64], b: &[u64], modulus: u64, out: &
     }
 }
 
+/// # Safety
+///
+/// The host supports AVX2. The length assertions bound every load and store,
+/// and the slice references carry pointer validity and exclusive access to
+/// `out`.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_montgomery_batch_sub(a: &[u64], b: &[u64], modulus: u64, out: &mut [u64]) {
     assert_eq!(a.len(), b.len(), "fp_montgomery_batch_sub: length mismatch");
@@ -362,6 +430,7 @@ mod tests {
                     .map(|i| (i.wrapping_mul(987_654_321_987) + 11) % p)
                     .collect();
                 let mut out = vec![0u64; len];
+                // SAFETY: AVX2 was detected above.
                 unsafe { fp_montgomery_batch_mul(&a, &b, p, p_inv, &mut out) };
                 for i in 0..len {
                     assert_eq!(
