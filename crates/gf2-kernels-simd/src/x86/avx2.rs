@@ -664,13 +664,13 @@ pub(crate) fn fns() -> LogicalFns {
         valid_rows: usize,
     ) {
         assert_eq!(stride_words, 4, "m4rm_gray_build4: stride_words must be 4");
-        assert!(
-            buffer.len() >= table_size * stride_words,
-            "m4rm_gray_build4: buffer too small"
-        );
-        assert!(
-            panel.len() >= valid_rows * stride_words,
-            "m4rm_gray_build4: panel too small"
+        assert_m4rm_gray_build_lengths(
+            "m4rm_gray_build4",
+            buffer.len(),
+            panel.len(),
+            stride_words,
+            table_size,
+            valid_rows,
         );
         unsafe { avx2_m4rm_gray_build4(buffer, panel, stride_words, table_size, valid_rows) }
     }
@@ -682,13 +682,13 @@ pub(crate) fn fns() -> LogicalFns {
         valid_rows: usize,
     ) {
         assert_eq!(stride_words, 8, "m4rm_gray_build8: stride_words must be 8");
-        assert!(
-            buffer.len() >= table_size * stride_words,
-            "m4rm_gray_build8: buffer too small"
-        );
-        assert!(
-            panel.len() >= valid_rows * stride_words,
-            "m4rm_gray_build8: panel too small"
+        assert_m4rm_gray_build_lengths(
+            "m4rm_gray_build8",
+            buffer.len(),
+            panel.len(),
+            stride_words,
+            table_size,
+            valid_rows,
         );
         unsafe { avx2_m4rm_gray_build8(buffer, panel, stride_words, table_size, valid_rows) }
     }
@@ -823,6 +823,33 @@ pub(crate) fn fns() -> LogicalFns {
         shift_left_words_fn,
         shift_right_words_fn,
     }
+}
+
+/// Panics unless `table_size` is a nonzero power of two and the buffers hold
+/// `table_size` entries and `valid_rows` panel rows of `stride_words` words.
+///
+/// The Gray index of `i < table_size` stays below `table_size` only for a
+/// power of two, and the builders store entry 0 unconditionally.
+fn assert_m4rm_gray_build_lengths(
+    builder: &str,
+    buffer_len: usize,
+    panel_len: usize,
+    stride_words: usize,
+    table_size: usize,
+    valid_rows: usize,
+) {
+    assert!(
+        table_size.is_power_of_two(),
+        "{builder}: table_size must be a nonzero power of two"
+    );
+    let Some(table_words) = table_size.checked_mul(stride_words) else {
+        panic!("{builder}: table_size * stride_words overflows usize");
+    };
+    assert!(buffer_len >= table_words, "{builder}: buffer too small");
+    let Some(panel_words) = valid_rows.checked_mul(stride_words) else {
+        panic!("{builder}: valid_rows * stride_words overflows usize");
+    };
+    assert!(panel_len >= panel_words, "{builder}: panel too small");
 }
 
 #[inline]
