@@ -12,8 +12,16 @@
       "format": "markdown",
       "label": "Closure check modes and prior closure state",
       "path": "dev/active/1a379447-zen3-cpu-performance/81afdf8e/closure-check-record.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/81afdf8e-r1.md"
     }
   ],
+  "done_at": "2026-10-05T20:44:36.075753764Z",
   "first_ready_at": "2026-10-05T19:41:15.835289918Z",
   "gates_required": [
     "cargo-ci",
@@ -22,12 +30,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-05T19:50:18.878261607Z",
+      "updated_at": "2026-10-05T20:28:39.147615492Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-05T19:55:47.636458788Z",
+      "status": "passed",
+      "updated_at": "2026-10-05T20:35:14.714101149Z",
       "updated_by": "auto:executor"
     }
   },
@@ -38,7 +46,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Give the external and shift producing-closure generators a check mode",
-  "updated_at": "2026-10-05T19:55:47.636458788Z"
+  "updated_at": "2026-10-05T20:44:36.427686956Z"
 }
