@@ -10,11 +10,35 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "dbc70b3ad4336df6ab78ed316a18f8f1df603ee2b2617012b206be01004137c7",
+          "content_hash": "752dcbc68beb10a06c51069a46fc5215621ab1cf86fd3ab406c224ec5273e117",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "survey/test-logs/after-fix.txt",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/after-fix.txt"
+          "original_path": "survey/test-logs/all-builders-before-simd.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/all-builders-before-simd.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88cc8774c8eff37c3455be2946f678e351b29065e0b523c4eac25f57667c71bb",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/all-builders-before-scalar.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/all-builders-before-scalar.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b4a7eaf25d7a8fef0e8eae258d4cefdda4a703948bd38e5a5e41fe35c3d689bf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/listing-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/listing-comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e504f5010f9d6b4788c2268f81ce59ee8fa45f112c0b4054388aa927c477173f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/inputs/before-checks/m4rm.asm.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/inputs/before-checks/m4rm.asm.txt"
         },
         {
           "asset_type": "local",
@@ -26,7 +50,23 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "a8f28ed3ae769ff254900847f30b59249a21f581eedd69f61583f635fffda3bf",
+          "content_hash": "dbc70b3ad4336df6ab78ed316a18f8f1df603ee2b2617012b206be01004137c7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/after-fix.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/after-fix.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9d989fc76a8e189d4d876c7cb04ef460fda00bb3f3ea0ab98da2fbc90a18549f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/all-builders-after-simd.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/all-builders-after-simd.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cf9b31a2fdd171cc35da526fac9ebf6e06dc3540c5d3a75c4b94a8bb8a9677f2",
           "is_shared": false,
           "mime_type": "text/plain",
           "original_path": "survey/test-logs/simd-build.txt",
@@ -34,11 +74,19 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "2442d65c6fe26aa514e8aa29d7c5e1db9dc5ed996a56c427e6bce30cdc7e145a",
+          "content_hash": "4e51fe45436d2cd0fb5639fc47287db20c611bfa3046d94aa66968dc9f68b475",
           "is_shared": false,
           "mime_type": "text/plain",
           "original_path": "survey/test-logs/scalar-build.txt",
           "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/scalar-build.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4ddb596c491b890521fc4bc2304d6cbadb73e815fc8f4ad4f6fb946c805d4f22",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/all-builders-after-scalar.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/all-builders-after-scalar.txt"
         }
       ],
       "commit": null,
@@ -74,6 +122,40 @@
       "format": "markdown",
       "label": "gf2-core fast-tier suites without the simd feature",
       "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/scalar-build.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Gray-table contract over every builder, before the shared check, simd build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/all-builders-before-simd.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Gray-table contract over every builder, before the shared check, scalar build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/all-builders-before-scalar.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Gray-table contract over every builder, after the shared check, simd build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/all-builders-after-simd.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Gray-table contract over every builder, after the shared check, scalar build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/test-logs/all-builders-after-scalar.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Per-symbol instruction text of the gf2-core M4RM listing across the argument checks",
+      "path": "dev/active/1a379447-zen3-cpu-performance/1b034786/survey/listing-comparison.json"
     }
   ],
   "first_ready_at": "2026-10-05T03:28:58.602274285Z",
@@ -108,5 +190,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reject invalid table sizes in the safe M4RM Gray-table wrappers",
-  "updated_at": "2026-10-05T05:03:06.665475891Z"
+  "updated_at": "2026-10-05T06:10:26.682067144Z"
 }

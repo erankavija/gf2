@@ -12,59 +12,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "f6ad9bb0eab5f57932bd0b1509ab92276b683f8e14b25cff2d8c1d992783a5de",
+          "content_hash": "963e6685842951604f6b32be04ad13747ddcad22368eb01d103974441f1ff4eb",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "survey/feature-hierarchy.rs",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/feature-hierarchy.rs"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a4cabfd4b97906a070305531ea3721a6bf7738cc109e8d28b03f1394f1d730f6",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "survey/test-logs/scalar-build.txt",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/test-logs/scalar-build.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9cbe588006ac072f8d0bc9f31fdab6a799d184d6d0189bd665ac0d6aecfc2732",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/crate-function-comparison.json",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-function-comparison.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "5fb82b74fc81ada8514c8121a52c524bb26a1cc81c42912a3e3d0d5092a11e2a",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/after-1b034786-baseline.json",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/after-1b034786-baseline.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7efd8c687da0dea5f2ec9cf4abeb2e374949b6857786ae2113b05f5641dd6c24",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "survey/test-logs/simd-build.txt",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/test-logs/simd-build.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ef71917fd2a39c57977d97d65b09db20c9c485318eff2b97119213f70838f990",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/anchor-baseline.json",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/anchor-baseline.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "35140db2e63c23a4b2e1e5616ab80b4b6d0117a11e18fb5731fe197c9645d091",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../1b034786/verification.md",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/verification.md"
+          "original_path": "survey/asm-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/asm-comparison.json"
         },
         {
           "asset_type": "local",
@@ -76,11 +28,35 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "a4cabfd4b97906a070305531ea3721a6bf7738cc109e8d28b03f1394f1d730f6",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/scalar-build.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/test-logs/scalar-build.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a109f4fdc3bc07be2a8e270f4a3949ac0ee8f9e5aa4db9402b762783fcc73f8a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/contracts-complete-baseline.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/contracts-complete-baseline.json"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "14ff937e67ae9218a83e0e42ca23227298f5e3832fcf63c416f2ab9251910e58",
           "is_shared": false,
           "mime_type": null,
           "original_path": "survey/before-1b034786-baseline.json",
           "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/before-1b034786-baseline.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7efd8c687da0dea5f2ec9cf4abeb2e374949b6857786ae2113b05f5641dd6c24",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/simd-build.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/test-logs/simd-build.txt"
         },
         {
           "asset_type": "local",
@@ -92,11 +68,43 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "33e7de4a2d9869210c4e4f4b31781e56c9fd72d2f10587959be3434beac2a9e7",
+          "content_hash": "f6ad9bb0eab5f57932bd0b1509ab92276b683f8e14b25cff2d8c1d992783a5de",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "survey/asm-comparison.json",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/asm-comparison.json"
+          "original_path": "survey/feature-hierarchy.rs",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/feature-hierarchy.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ef71917fd2a39c57977d97d65b09db20c9c485318eff2b97119213f70838f990",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/anchor-baseline.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/anchor-baseline.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5fb82b74fc81ada8514c8121a52c524bb26a1cc81c42912a3e3d0d5092a11e2a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/after-1b034786-baseline.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/after-1b034786-baseline.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c24724ae5609753ed1a9c054153df9722823f4b8f2d6d561948ff9d496583588",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1b034786/verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/1b034786/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9e468a2e2a663fa1b973b375d7ee7b341e2d3a7c4f5f87712211298e379cb80a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/crate-function-comparison.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-function-comparison.json"
         }
       ],
       "commit": null,
@@ -184,8 +192,14 @@
     {
       "commit": null,
       "doc_type": "evidence",
-      "label": "Function digests of the current build",
-      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-functions-current.json"
+      "label": "Function digests of the contracts-complete build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/crate-functions-contracts-complete.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Tree holding every contract, by per-path content digest",
+      "path": "dev/active/1a379447-zen3-cpu-performance/7d44b71f/survey/contracts-complete-baseline.json"
     }
   ],
   "first_ready_at": "2026-10-05T01:07:43.262477011Z",
@@ -220,5 +234,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "State the safety contract at every AVX2 kernel unsafe boundary",
-  "updated_at": "2026-10-05T05:09:34.182898079Z"
+  "updated_at": "2026-10-05T06:10:26.280262071Z"
 }
