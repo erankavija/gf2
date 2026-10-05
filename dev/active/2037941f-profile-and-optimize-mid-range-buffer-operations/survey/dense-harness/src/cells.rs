@@ -57,9 +57,9 @@ pub const DENSE_PARITY_ADDENDUM: FrozenAddendum = FrozenAddendum {
 /// The lane-threshold addendum, which freezes [`Question::MatvecLaneThreshold`].
 pub const LANE_THRESHOLD_ADDENDUM: FrozenAddendum = FrozenAddendum {
     path: "dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md",
-    sha256: "1adb0a12c24c5a0d8a4102ed29a66fb4738ad98be70c284bcb702ff2343b98a0",
+    sha256: "e95dbb382c70a0498973f6909c899657657f7b95bb22d25cce76bc2367be1047",
     identity: "4337c02e-matvec-lane-threshold-v1",
-    frozen_utc: "2026-10-05T00:00:00Z",
+    frozen_utc: "2026-10-05T19:34:54Z",
 };
 
 /// Name stem of the external shared object a comparator arm loads.
@@ -75,13 +75,15 @@ pub const NEIGHBOR_WORDS: [usize; 2] = [7, 66];
 pub const ALL_WORDS: [usize; 7] = [7, 8, 9, 63, 64, 65, 66];
 /// Logical column counts the oracle exercises at the word boundary.
 pub const BOUNDARY_BITS: [usize; 5] = [0, 1, 63, 64, 65];
-/// Lane-threshold strides the SIMD build sends to the SIMD lane; with the
-/// control they form that question's confirmatory family.
-pub const LANE_WORDS: [usize; 5] = [8, 9, 63, 64, 65];
-/// Lane-threshold control stride, on the scalar lane in both builds.
+/// Lane-threshold strides the selector sends to the SIMD lane; they form that
+/// question's confirmatory family.
+pub const LANE_WORDS: [usize; 6] = [8, 9, 32, 63, 64, 65];
+/// Lane-threshold control stride, which the selector sends to the scalar lane.
 pub const LANE_CONTROL_WORDS: usize = 7;
 /// Exploratory lane-threshold strides.
-pub const LANE_NEIGHBOR_WORDS: [usize; 4] = [10, 32, 62, 66];
+pub const LANE_NEIGHBOR_WORDS: [usize; 3] = [10, 62, 66];
+/// Lane-threshold strides measured in the streaming cache state.
+pub const LANE_STREAMING_WORDS: [usize; 5] = [8, 9, 63, 64, 65];
 /// Rows in every gf2-only allocated cell.
 pub const MATVEC_ROWS: usize = 1024;
 /// Word count at and above which the production selector takes the SIMD lane.
@@ -100,7 +102,7 @@ pub enum Question {
     AllocatedMatvec,
     /// Whole-consumer gap against the qualified external M4RI product.
     MatvecVsM4ri,
-    /// Public `BitMatrix::matvec` on the scalar lane against the SIMD lane.
+    /// `BitMatrix::matvec` pinned to the scalar lane against the selected lane.
     MatvecLaneThreshold,
 }
 
@@ -390,8 +392,8 @@ impl Cell {
         !matches!(self.workload, Workload::AndPopcnt { .. })
     }
 
-    /// True for the lane-threshold control, whose stride both builds send to
-    /// the scalar lane.
+    /// True for the lane-threshold control, whose stride the selector sends
+    /// to the scalar lane.
     pub fn lane_control(&self) -> bool {
         self.question == Question::MatvecLaneThreshold
             && self.workload.stride_words() < SIMD_LANE_MIN_WORDS
@@ -499,8 +501,8 @@ pub fn cells() -> Vec<Cell> {
             .map(|shape| comparator(shape, true)),
     );
 
-    // Lane threshold: the five lane strides and the control, then the
-    // exploratory strides, the streaming lane strides and the two cold cells.
+    // Lane threshold: the lane strides, then the control, the exploratory
+    // strides, the streaming strides and the two cold cells.
     let lane = |words: usize, cache: Cache, anchor: bool| {
         let control = if words < SIMD_LANE_MIN_WORDS { "-control" } else { "" };
         spec(
@@ -512,9 +514,9 @@ pub fn cells() -> Vec<Cell> {
         )
     };
     table.extend(LANE_WORDS.map(|w| lane(w, Cache::Warm, true)));
-    table.push(lane(LANE_CONTROL_WORDS, Cache::Warm, true));
+    table.push(lane(LANE_CONTROL_WORDS, Cache::Warm, false));
     table.extend(LANE_NEIGHBOR_WORDS.map(|w| lane(w, Cache::Warm, false)));
-    table.extend(LANE_WORDS.map(|w| lane(w, Cache::Streaming, false)));
+    table.extend(LANE_STREAMING_WORDS.map(|w| lane(w, Cache::Streaming, false)));
     table.extend([8, 64].map(|w| lane(w, Cache::Cold, false)));
 
     // Ordinal zero uses the campaign seed; ordinal i the i-th subsequent

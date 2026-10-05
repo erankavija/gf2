@@ -6,7 +6,7 @@
 >
 > **Owning issue:** `4337c02e`
 >
-> **Frozen UTC:** `2026-10-05T00:00:00Z`
+> **Frozen UTC:** `2026-10-05T19:34:54Z`
 
 This addendum freezes one question, its cells, margins and resolution rule:
 at which row strides the scalar lane of the public `BitMatrix::matvec` gives a
@@ -38,9 +38,11 @@ lane and every smaller stride to the scalar lane (`matvec-threshold-read`,
 rows that contrast the two lanes at five strides: rows
 `matvec-r1024-{8,9,63,64,65}w-scalar-reference-warm` of
 [the mid-range tables](../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md),
-section `v4-r1-2037941f-dense-allocated-matvec`. Exploratory rows select
-nothing, and that addendum keeps its scalar-reference cells exploratory and
-forbids a threshold edit, so the question needs its own family.
+section `v4-r1-2037941f-dense-allocated-matvec`. Those rows take the scalar
+lane from a second executable built without the `simd` feature. Exploratory
+rows select nothing, and that addendum keeps its scalar-reference cells
+exploratory and forbids a threshold edit, so the question needs its own
+family.
 
 | Field | Value |
 |---|---|
@@ -50,8 +52,8 @@ forbids a threshold edit, so the question needs its own family.
 | Holdout | none declared |
 
 The family measures the lane contrast and yields a threshold value. It
-changes no selector. Installing a value, its before and after cells on the
-changed selection and the holdout strides belong to the selector-calibration
+changes no selector. Installing a value, measuring the profile build that
+carries it and the holdout strides belong to the selector-calibration
 families of `63bad95d`
 ([calibration plan](../63bad95d/calibration-plan.md), overlap and adoption
 sections). This family declares no stride that the
@@ -66,46 +68,66 @@ table). This family's first confirmation is therefore attempt 1.
 
 ## Arms and what they contrast
 
-| Arm | Executable | Lane at a stride of eight words or more | Lane below eight words |
+Both arms are one executable: the harness `dense-arm` built
+`conservative-portable` with the `simd` feature.
+
+| Arm | Timed call | Lane at a stride of eight words or more | Lane below eight words |
 |---|---|---|---|
-| baseline `matvec-a` | the harness `dense-arm` built with the `simd` feature | SIMD (fused AND-population-count, `matvec-fused-kernel`) | scalar |
-| candidate `matvec-scalar-reference` | the same sources built without `simd` | scalar | scalar |
+| baseline `matvec-a` | public `BitMatrix::matvec` | SIMD (fused AND-population-count, `matvec-fused-kernel`) | scalar |
+| candidate `matvec-lane-scalar` | public `BitMatrix::matvec_with_route` with `MatvecRoute::Scalar` | scalar | scalar |
 
-Both arms call the public method, are `conservative-portable`, and report the
-lane they observe; `verify_lane` of the harness refuses a cell whose observed
-lane differs from this table. A speedup above one favours the scalar lane.
+A speedup above one favours the scalar lane. The baseline is the selection
+production makes today. The candidate runs the scalar lane a raised threshold
+makes production run at that stride, so each cell is a before and after cell
+of the changed selection on its stride.
 
-The scalar lane has no public entry (`matvec-scalar-lane-private`), so the
-contrast is a contrast of two builds, as in the committed scalar-reference
-rows. The two builds compile the scalar lane in different surroundings. The
-control cell below measures that difference where both builds run the scalar
-lane, and the resolution rule refuses a threshold when the control does not
-bound it.
+[`survey/lane-call-sites.txt`](survey/lane-call-sites.txt), written by
+[`survey/record-lane-call-sites.sh`](survey/record-lane-call-sites.sh) from
+the arm executable, lists the lane symbols and their callers: `matvec` and
+`matvec_with_route` call one `matvec_scalar` symbol, so the candidate executes
+the instructions production executes on the scalar lane, by identity of the
+symbol. The assembly record of `63bad95d`
+([`matvec-asm-comparison.json`](../63bad95d/survey/matvec-asm-comparison.json))
+compares the entry's listings before and after `matvec_with_route`.
+
+What a cell does not include: the candidate enters through
+`matvec_with_route`, which matches on the route argument, where production
+compares the stride with the threshold inside `matvec`. The lane argument
+passes an optimisation barrier, so the match stays in the measured call. The
+exploratory control cell, at a stride the selector sends to the scalar lane,
+measures that entry difference with the lane held equal.
 
 ## Cells
 
 Every cell has 1024 rows, $64W$ columns, the `full` column shape, the
 `whole-consumer` metric with conversion and setup costs included,
 `single-core-latency` scaling, the `single-core` arm and one worker. One
-reported operation is one public `matvec` call including the allocation and
-the appends of its returned `BitVec`. The multi-core arms are inapplicable for
-the reason the dense-parity addendum states.
+reported operation is one call including the allocation and the appends of
+its returned `BitVec`. The multi-core arms are inapplicable for the reason the
+dense-parity addendum states.
 
-Confirmatory cells, all `warm`:
+Confirmatory cells, all `warm`, all with the `improvement` objective:
 
-| Cell | $W$ | Objective | Why it is declared | Role in the confirmation |
-|---|---:|---|---|---|
-| `lane-r1024-8w-warm` | 8 | improvement | exploratory row favours the scalar lane; the present threshold | confirmatory |
-| `lane-r1024-9w-warm` | 9 | improvement | exploratory row favours the scalar lane | confirmatory |
-| `lane-r1024-63w-warm` | 63 | improvement | exploratory row favours the scalar lane | confirmatory |
-| `lane-r1024-64w-warm` | 64 | improvement | neighbour; exploratory row does not favour the scalar lane | confirmatory |
-| `lane-r1024-65w-warm` | 65 | improvement | neighbour; exploratory row is inconclusive | confirmatory |
-| `lane-r1024-7w-control-warm` | 7 | non-regression | lower neighbour and control: both builds run the scalar lane | confirmatory |
+| Cell | $W$ | Why it is declared | Role in the confirmation |
+|---|---:|---|---|
+| `lane-r1024-8w-warm` | 8 | exploratory row favours the scalar lane; the present threshold | confirmatory |
+| `lane-r1024-9w-warm` | 9 | exploratory row favours the scalar lane | confirmatory |
+| `lane-r1024-32w-warm` | 32 | interior stride: a value of 64 or more rests on it | confirmatory |
+| `lane-r1024-63w-warm` | 63 | exploratory row favours the scalar lane | confirmatory |
+| `lane-r1024-64w-warm` | 64 | neighbour; exploratory row does not favour the scalar lane | confirmatory |
+| `lane-r1024-65w-warm` | 65 | neighbour; exploratory row is inconclusive | confirmatory |
+
+The sixth cell is the 32-word stride because the exploratory rows place the
+end of the scalar lane's lead between 63 and 64 words, and a threshold there
+moves every stride from 8 to 63. With cells at 8, 9 and 63 only, that value
+would rest on the two ends of the interval; the 32-word cell puts one
+confirmatory cell inside it.
 
 Exploratory cells, measured in the pilot only:
 
-- `lane-r1024-{10,32,62,66}w-warm`: strides between and beyond the lane
-  strides, which show whether the contrast is monotone in the stride;
+- `lane-r1024-7w-control-warm`, a `non-regression` cell: both arms run the
+  scalar lane, so it shows the entry difference stated above;
+- `lane-r1024-{10,62,66}w-warm`: neighbours of the lane strides;
 - `lane-r1024-{8,9,63,64,65}w-streaming`;
 - `lane-r1024-8w-cold` and `lane-r1024-64w-cold`, with `cold_calls` one.
 
@@ -136,8 +158,7 @@ the one-attempt rule and by the same floor.
 | lane threshold | 1.08 | 1.05 | none | 0.035 | 1.035 | 0 unsafe kernels, 0 added source lines | 2 |
 
 - The worthwhile speedup is the dense-parity addendum's bar for the same
-  allocated consumer. It exceeds the equivalence margin, so an `improved` cell
-  is not explained by a build difference the control admits: $1.08/1.05 > 1$.
+  allocated consumer.
 - The equivalence margin is the finest non-inferiority statement that addendum
   finds available at this consumer's resolution.
 - The resolution ceiling is the dense-parity allocated family's, for the same
@@ -158,38 +179,37 @@ exceed one plus the ceiling: $1.08 > 1.035$ and $1.05 > 1.035$.
 ## Resolution rule
 
 The rule reads the confirmation's acceptance summary and nothing else. Let
-the lane strides in ascending order be $s_1,\dots,s_5 = 8, 9, 63, 64, 65$.
+the lane strides in ascending order be
+$s_1,\dots,s_6 = 8, 9, 32, 63, 64, 65$.
 
 1. **Validity.** The summary's verdict is `accepted`. Otherwise the outcome
    is *no change*.
-2. **Control.** The control cell's outcome is `pass`, its decision is
-   `not-worse`, and its interval's upper bound is at most the equivalence
-   margin, so the interval lies inside $[1/1.05,\ 1.05]$. Otherwise the
-   outcome is *no change*, recorded as *control failed*.
-3. **Leading run.** Let $k$ be the number of leading lane strides whose cell
+2. **Leading run.** Let $k$ be the number of leading lane strides whose cell
    outcome is `pass`: $s_1,\dots,s_k$ all pass and $s_{k+1}$ does not, or
-   $k=5$.
-4. **Value.** If $k=0$ the outcome is *no change* and the threshold stays at
+   $k=6$.
+3. **Value.** If $k=0$ the outcome is *no change* and the threshold stays at
    its conservative value. Otherwise the confirmed threshold value is
-   $s_k + 1$: one of 9, 10, 64, 65 or 66.
+   $s_k + 1$: one of 9, 10, 33, 64, 65 or 66.
 
 A lane cell that passes after the leading run ends does not move the value:
 the selector is a single boundary, and a stride set that is not one interval
 from the present threshold keeps the smaller value. Every cell stays in the
 receipt with its recorded outcome whatever the rule yields.
 
-A value of 64 or more places strides 10 to 62 on the scalar lane without a
-confirmatory cell of this family between 9 and 63. This family states that
-limit and does not close it: the holdout strides of `63bad95d` lie in that
-interval and decide adoption there.
+A value above 10 places strides on the scalar lane that no confirmatory cell
+of this family measures: 10 to 31 for the value 33, and also 33 to 62 for a
+value of 64 or more. This family states that limit and does not close it: the
+holdout strides of `63bad95d` lie in those intervals and decide adoption
+there.
 
-The outcome record of this issue states the value or *no change*, each
-cell's outcome as the summary records it, and the step of this rule that
-decided. That record is what `63bad95d` consumes.
+[`survey/make-outcome.py`](survey/make-outcome.py) applies the rule and writes
+the outcome record of this issue: the value or *no change*, each cell's
+outcome as the summary records it, and the step that decided. That record
+hands the value to `63bad95d`.
 
 ## Search and stopping
 
 One pilot of all cells, then one confirmation of the six confirmatory cells
-on the same executables' sources. No adaptive extension, no early stop, no
+on the same sources. No adaptive extension, no early stop, no
 reuse of pilot pairs. An `inconclusive`, `unstable` or `not-confirmatory`
 cell is terminal for this family and counts as not passing in the rule.

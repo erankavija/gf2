@@ -67,8 +67,8 @@ then the exact exploratory additions in document order.
 | `matvec-vs-m4ri` | 8 | `m4ri-gap-{R}x{C}[-retained]-warm` |
 | `matvec-lane-threshold` | 17 | `lane-r1024-{W}w[-control]-{warm,cold,streaming}` |
 
-A lane-threshold cell's baseline arm is `matvec-a` in the ordinary build and
-its compared arm is `matvec-scalar-reference`, so a speedup above one favours
+A lane-threshold cell's baseline arm is `matvec-a` and its compared arm is
+`matvec-lane-scalar` in the same executable, so a speedup above one favours
 the scalar lane.
 
 The addendum's fourth question, `scalar-reference`, owns no ledger. Its cells
@@ -139,6 +139,7 @@ bundle exactly as the public `matvec` does.
 | `matvec-a`, `matvec-b` | one public `BitMatrix::matvec`, output allocation and appends inside, release outside | `conservative-portable` |
 | `matvec-scalar-reference` | the same public call from the build without `simd`, which reaches the four-accumulator scalar row parity | `conservative-portable` |
 | `m4ri-peer-gf2` | one public `BitMatrix::matvec` whose returned `BitVec` is also released inside the call | `conservative-portable` |
+| `matvec-lane-scalar` | one public `BitMatrix::matvec_with_route` pinned to the scalar lane, at the allocated boundary of `matvec-a` | `conservative-portable` |
 | `m4ri-mzd-mul` | `mzd_init` for `A`, `x`, `y`, packing, `mzd_mul(y, A, x, 0)`, unpacking into a gf2 `BitVec`, disposal | `external` |
 
 `Route::check_build` refuses a route the running executable cannot serve: the
@@ -235,7 +236,7 @@ matrix and the vector, so the oracle shares no code with the measured route.
 | `matvec-cols-{C}-rows-{R}` | every pairing of the logical boundaries 0, 1, 63, 64, 65 on both the column count and the output length: every output bit against the parity oracle, the output length, `get` against the output words, zero tail padding, and immutability of the matrix and the vector against a rebuild at the same seed |
 | `matvec-{W}w-{full,tail1}` | all seven word counts in both column shapes: the same product checks plus the zero padding bit of every `tail1` row and of the vector |
 | `matvec-anchor-{W}w` | the five anchors at the frozen 1024-row geometry: observed rows, columns, stride, the lane the build resolves, and every output bit |
-| `matvec-lane-{W}w` | every lane-threshold stride at the same geometry, with the same checks |
+| `matvec-lane-{W}w` | every lane-threshold stride at the same geometry, with the same checks and the pinned scalar lane's output against the public call's |
 | `and-popcnt-{W}w` | all seven word counts: the bundle entry's count against an independent per-word count, its low bit against the row parity, and purity across two calls |
 | `m4ri-{R}x{C}` | in `dense-m4ri-arm --oracle`: every unpacked output bit against the gf2 peer, zero tail padding, the retained arm against the fresh arm, and input immutability |
 

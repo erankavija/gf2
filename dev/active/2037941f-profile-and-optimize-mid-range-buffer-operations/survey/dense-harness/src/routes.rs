@@ -62,17 +62,20 @@ pub enum Route {
     MatvecScalarReference,
     /// gf2 side of the external M4RI comparison.
     M4riPeerGf2,
+    /// Allocated `BitMatrix::matvec_with_route` pinned to the scalar lane.
+    MatvecLaneScalar,
 }
 
 impl Route {
     /// Every route, in declaration order.
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 7] = [
         Self::AndPopcntA,
         Self::AndPopcntB,
         Self::MatvecA,
         Self::MatvecB,
         Self::MatvecScalarReference,
         Self::M4riPeerGf2,
+        Self::MatvecLaneScalar,
     ];
 
     /// The arm name the plan gives this route.
@@ -84,6 +87,7 @@ impl Route {
             Self::MatvecB => "matvec-b",
             Self::MatvecScalarReference => "matvec-scalar-reference",
             Self::M4riPeerGf2 => "m4ri-peer-gf2",
+            Self::MatvecLaneScalar => "matvec-lane-scalar",
         }
     }
 
@@ -91,9 +95,10 @@ impl Route {
     pub fn question(self) -> Question {
         match self {
             Self::AndPopcntA | Self::AndPopcntB => Question::IsolatedFusedParity,
-            Self::MatvecA | Self::MatvecB | Self::MatvecScalarReference => {
-                Question::AllocatedMatvec
-            }
+            Self::MatvecA
+            | Self::MatvecB
+            | Self::MatvecScalarReference
+            | Self::MatvecLaneScalar => Question::AllocatedMatvec,
             Self::M4riPeerGf2 => Question::MatvecVsM4ri,
         }
     }
@@ -101,6 +106,12 @@ impl Route {
     /// Whether this route's executable carries the `simd` feature.
     pub fn simd_build(self) -> bool {
         self != Self::MatvecScalarReference
+    }
+
+    /// The lane this route pins through `BitMatrix::matvec_with_route`, or
+    /// `None` when the production selector chooses.
+    pub fn pinned_lane(self) -> Option<MatvecRoute> {
+        (self == Self::MatvecLaneScalar).then_some(MatvecRoute::Scalar)
     }
 
     /// Resolves a route name.
@@ -155,6 +166,19 @@ pub fn fused_and_popcnt(bundle: &LogicalFns, row: &[u64], vector: &[u64]) -> u64
 #[inline]
 pub fn public_matvec(matrix: &BitMatrix, vector: &BitVec) -> BitVec {
     black_box(matrix).matvec(black_box(vector))
+}
+
+/// One allocated product on `route`: the public `matvec`, or the public
+/// `matvec_with_route` on the lane the route pins.
+///
+/// The pinned lane passes the barrier, so the entry keeps its route match and
+/// reaches the lane body `matvec` reaches rather than a specialised copy.
+#[inline]
+pub fn route_matvec(route: Route, matrix: &BitMatrix, vector: &BitVec) -> BitVec {
+    match route.pinned_lane() {
+        Some(lane) => black_box(matrix).matvec_with_route(black_box(vector), black_box(lane)),
+        None => public_matvec(matrix, vector),
+    }
 }
 
 /// Output observation shared by every arm.
@@ -256,10 +280,22 @@ pub struct ShapeFacts {
 impl ShapeFacts {
     /// The protocol's name for the resolved lane.
     pub fn lane(self) -> &'static str {
-        match self.route {
-            MatvecRoute::Simd => "simd-lane",
-            MatvecRoute::Scalar => "scalar-lane",
+        lane_name(self.route)
+    }
+
+    /// The lane `route` executes: its pinned lane, or the resolved one.
+    pub fn executed_lane(self, route: Route) -> String {
+        match route.pinned_lane() {
+            Some(lane) => format!("{}-pinned", lane_name(lane)),
+            None => self.lane().to_owned(),
         }
+    }
+}
+
+fn lane_name(lane: MatvecRoute) -> &'static str {
+    match lane {
+        MatvecRoute::Simd => "simd-lane",
+        MatvecRoute::Scalar => "scalar-lane",
     }
 }
 

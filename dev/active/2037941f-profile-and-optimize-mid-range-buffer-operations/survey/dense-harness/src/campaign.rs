@@ -125,21 +125,18 @@ fn rules(question: Question) -> FamilyRules {
         },
         Question::MatvecLaneThreshold => FamilyRules {
             purpose: FamilyPurpose::ConsumerFamily,
-            description: "Public BitMatrix::matvec including its output allocation and appends, \
-                          the scalar four-accumulator lane as candidate against the selected \
-                          fused AND-population-count SIMD lane, at the frozen lane strides, the \
-                          seven-word control and the exploratory strides and cache states. This \
-                          addendum is the pilot: every cell is exploratory and no cell decides a \
-                          threshold.",
+            description: "Allocated BitMatrix::matvec including its output allocation and \
+                          appends, pinned to the scalar four-accumulator lane through \
+                          matvec_with_route as candidate against the public call on its selected \
+                          lane in the same build, at the frozen lane strides, the seven-word \
+                          control and the exploratory strides and cache states. This addendum is \
+                          the pilot: every cell is exploratory and no cell decides a threshold.",
             worthwhile_speedup: Some(1.08),
             rationale: "The allocated consumer's bar of the dense-parity addendum, held for a \
-                        lane change on the same boundary; it exceeds the equivalence margin the \
-                        control bounds the build difference with, so an improved cell is not \
-                        explained by a build difference the control admits.",
+                        lane change on the same boundary.",
             equivalence_margin: 1.05,
             equivalence_rationale: "A non-inferiority statement finer than five percent is not \
-                                    available at the allocated consumer's resolution; the \
-                                    control cell holds the two builds' scalar lanes to it.",
+                                    available at the allocated consumer's resolution.",
             material_gap_threshold: None,
             material_gap_rationale: "The lane-threshold family holds no comparator-gap cell and \
                                      declares no external gap.",
@@ -287,11 +284,9 @@ pub fn cell_arms(cell: &Cell) -> (&'static str, &'static str) {
         }
         Question::AllocatedMatvec => (Route::MatvecA.id(), Route::MatvecB.id()),
         Question::MatvecVsM4ri => (Route::M4riPeerGf2.id(), M4RI_ARM),
-        // The selected SIMD-build route is the baseline, so a speedup above one
-        // favours the scalar lane a raised threshold would select.
-        Question::MatvecLaneThreshold => {
-            (Route::MatvecA.id(), Route::MatvecScalarReference.id())
-        }
+        // The selected route is the baseline, so a speedup above one favours
+        // the scalar lane a raised threshold would select.
+        Question::MatvecLaneThreshold => (Route::MatvecA.id(), Route::MatvecLaneScalar.id()),
     }
 }
 
@@ -317,6 +312,11 @@ fn arm_description(route: Route) -> &'static str {
         Route::MatvecScalarReference => {
             "The same public route from an executable built without the simd feature, which \
              reaches the four-accumulator scalar row-parity route"
+        }
+        Route::MatvecLaneScalar => {
+            "One public BitMatrix::matvec_with_route pinned to the scalar lane in the same build \
+             as the public route, with the output allocation and every output append inside the \
+             measured call"
         }
         Route::M4riPeerGf2 => {
             "One public BitMatrix::matvec on a fresh gf2 matrix and vector, with the returned \

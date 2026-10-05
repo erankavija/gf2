@@ -1,0 +1,525 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "4337c02e-matvec-simd-threshold",
+    "issue": "4337c02e",
+    "purpose": "consumer-family",
+    "description": "Allocated BitMatrix::matvec including its output allocation and appends, pinned to the scalar four-accumulator lane through matvec_with_route as candidate against the public call on its selected lane in the same build, at the frozen lane strides, the seven-word control and the exploratory strides and cache states. This addendum is the pilot: every cell is exploratory and no cell decides a threshold."
+  },
+  "frozen": {
+    "frozen_utc": "2026-10-05T19:34:54Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.08,
+    "rationale": "The allocated consumer's bar of the dense-parity addendum, held for a lane change on the same boundary.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "A non-inferiority statement finer than five percent is not available at the allocated consumer's resolution.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The lane-threshold family holds no comparator-gap cell and declares no external gap."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "Zero production lines and zero unsafe kernels: the outcome is one value of the existing threshold selector, installed through the offline tuning system by its owning issue."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "lane-r1024-8w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-8w-warm",
+        "size": {
+          "columns": 512,
+          "rows": 1024,
+          "words": 8
+        },
+        "seed": 12648515098981064796
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-9w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-9w-warm",
+        "size": {
+          "columns": 576,
+          "rows": 1024,
+          "words": 9
+        },
+        "seed": 5021283998818678245
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-32w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-32w-warm",
+        "size": {
+          "columns": 2048,
+          "rows": 1024,
+          "words": 32
+        },
+        "seed": 16796321352183190978
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-63w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-63w-warm",
+        "size": {
+          "columns": 4032,
+          "rows": 1024,
+          "words": 63
+        },
+        "seed": 7853332388584294086
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-64w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-64w-warm",
+        "size": {
+          "columns": 4096,
+          "rows": 1024,
+          "words": 64
+        },
+        "seed": 17646653668858466141
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-65w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-65w-warm",
+        "size": {
+          "columns": 4160,
+          "rows": 1024,
+          "words": 65
+        },
+        "seed": 18007595829725884186
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-7w-control-warm",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-7w-control-warm",
+        "size": {
+          "columns": 448,
+          "rows": 1024,
+          "words": 7
+        },
+        "seed": 1286265030805450969
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-10w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-10w-warm",
+        "size": {
+          "columns": 640,
+          "rows": 1024,
+          "words": 10
+        },
+        "seed": 14462899862535391801
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-62w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-62w-warm",
+        "size": {
+          "columns": 3968,
+          "rows": 1024,
+          "words": 62
+        },
+        "seed": 9943242655895909558
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-66w-warm",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-66w-warm",
+        "size": {
+          "columns": 4224,
+          "rows": 1024,
+          "words": 66
+        },
+        "seed": 15928534749216509732
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-8w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-8w-streaming",
+        "size": {
+          "columns": 512,
+          "rows": 1024,
+          "words": 8
+        },
+        "seed": 7749379611429190400
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-9w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-9w-streaming",
+        "size": {
+          "columns": 576,
+          "rows": 1024,
+          "words": 9
+        },
+        "seed": 15175416710337516128
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-63w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-63w-streaming",
+        "size": {
+          "columns": 4032,
+          "rows": 1024,
+          "words": 63
+        },
+        "seed": 12811103516179566968
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-64w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-64w-streaming",
+        "size": {
+          "columns": 4096,
+          "rows": 1024,
+          "words": 64
+        },
+        "seed": 4973446482803456889
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-65w-streaming",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-65w-streaming",
+        "size": {
+          "columns": 4160,
+          "rows": 1024,
+          "words": 65
+        },
+        "seed": 3918656663368403482
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-8w-cold",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-8w-cold",
+        "size": {
+          "columns": 512,
+          "rows": 1024,
+          "words": 8
+        },
+        "seed": 8106451528656394979
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "cold_calls": 1,
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "lane-r1024-64w-cold",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "matvec-lane-threshold-lane-r1024-64w-cold",
+        "size": {
+          "columns": 4096,
+          "rows": 1024,
+          "words": 64
+        },
+        "seed": 12314752866932148147
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "cold",
+      "cold_calls": 1,
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

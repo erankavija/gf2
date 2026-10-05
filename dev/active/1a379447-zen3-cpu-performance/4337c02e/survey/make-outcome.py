@@ -18,31 +18,18 @@ OUTPUT = HERE.parent / "outcome.json"
 RENDERED = HERE.parent / "outcome.md"
 
 
-def resolve(verdict, cells, equivalence):
+def resolve(verdict, cells):
     """The rule's value and deciding step.
 
     `cells` holds one mapping per confirmatory cell with its `stride`,
-    `objective`, `outcome`, `decision` and interval `upper` bound. Returns
-    `(value, step)`; `value` is `None` for *no change*.
+    `objective` and `outcome`. Returns `(value, step)`; `value` is `None` for
+    *no change*.
     """
     if verdict != "accepted":
         return None, "validity: the acceptance summary's verdict is not accepted"
-    controls = [cell for cell in cells if cell["objective"] == "non-regression"]
-    lanes = sorted(
-        (cell for cell in cells if cell["objective"] == "improvement"),
-        key=lambda cell: cell["stride"],
-    )
-    if len(controls) != 1 or len(controls) + len(lanes) != len(cells) or not lanes:
-        raise ValueError("the confirmation does not hold one control and the lane cells")
-    control = controls[0]
-    bounded = (
-        control["outcome"] == "pass"
-        and control["decision"] == "not-worse"
-        and control["upper"] is not None
-        and control["upper"] <= equivalence
-    )
-    if not bounded:
-        return None, "control: control failed"
+    lanes = sorted(cells, key=lambda cell: cell["stride"])
+    if not lanes or any(cell["objective"] != "improvement" for cell in lanes):
+        raise ValueError("the confirmation does not hold improvement lane cells only")
     leading = 0
     for cell in lanes:
         if cell["outcome"] != "pass":
@@ -54,31 +41,23 @@ def resolve(verdict, cells, equivalence):
 
 
 def self_test():
-    def cell(stride, outcome, objective="improvement", decision="improved", upper=1.2):
-        return {
-            "stride": stride, "objective": objective, "outcome": outcome,
-            "decision": decision, "upper": upper,
-        }
-
-    def control(outcome="pass", decision="not-worse", upper=1.01):
-        return cell(7, outcome, "non-regression", decision, upper)
-
     def lanes(*outcomes):
-        return [cell(stride, outcome) for stride, outcome in zip((8, 9, 63, 64, 65), outcomes)]
+        return [
+            {"stride": stride, "objective": "improvement", "outcome": outcome}
+            for stride, outcome in zip((8, 9, 32, 63, 64, 65), outcomes)
+        ]
 
-    passing = ["pass"] * 5
+    passing = ["pass"] * 6
     cases = [
-        (("accepted", lanes(*passing) + [control()], 1.05), 66),
-        (("rejected", lanes(*passing) + [control()], 1.05), None),
-        (("accepted", lanes("pass", "pass", "pass", "not-material", "pass") + [control()], 1.05), 64),
-        (("accepted", lanes("pass", "pass", "inconclusive", "pass", "pass") + [control()], 1.05), 10),
-        (("accepted", lanes("pass", "fail", "pass", "pass", "pass") + [control()], 1.05), 9),
-        (("accepted", lanes("not-material", "pass", "pass", "pass", "pass") + [control()], 1.05), None),
-        (("accepted", lanes("pass", "pass", "pass", "pass", "unstable") + [control()], 1.05), 65),
-        (("accepted", lanes(*passing) + [control(upper=1.06)], 1.05), None),
-        (("accepted", lanes(*passing) + [control(decision="improved")], 1.05), None),
-        (("accepted", lanes(*passing) + [control(outcome="fail", decision="regressed")], 1.05), None),
-        (("accepted", lanes(*passing) + [control(outcome="not-confirmatory")], 1.05), None),
+        (("accepted", lanes(*passing)), 66),
+        (("rejected", lanes(*passing)), None),
+        (("accepted", lanes("pass", "pass", "pass", "pass", "not-material", "pass")), 64),
+        (("accepted", lanes("pass", "pass", "pass", "inconclusive", "pass", "pass")), 33),
+        (("accepted", lanes("pass", "pass", "fail", "pass", "pass", "pass")), 10),
+        (("accepted", lanes("pass", "not-confirmatory", "pass", "pass", "pass", "pass")), 9),
+        (("accepted", lanes("not-material", "pass", "pass", "pass", "pass", "pass")), None),
+        (("accepted", lanes("pass", "pass", "pass", "pass", "pass", "unstable")), 65),
+        (("accepted", list(reversed(lanes("pass", "pass", "pass", "pass", "fail", "fail")))), 64),
     ]
     for arguments, expected in cases:
         value, step = resolve(*arguments)
@@ -124,8 +103,7 @@ def main():
         )
     if {cell["cell_id"] for cell in cells} != set(declared):
         raise SystemExit(f"{summary_path} does not report every declared cell")
-    equivalence = addendum["effect"]["equivalence_margin"]
-    value, step = resolve(summary["verdict"], cells, equivalence)
+    value, step = resolve(summary["verdict"], cells)
     document = {
         "schema": "matvec-lane-threshold-outcome-v1",
         "issue": "4337c02e",
@@ -142,7 +120,7 @@ def main():
             "addendum": str(addendum_path),
             "addendum_sha256": sha256(addendum_path),
             "verdict": summary["verdict"],
-            "equivalence_margin": equivalence,
+            "equivalence_margin": addendum["effect"]["equivalence_margin"],
             "worthwhile_speedup": addendum["effect"]["worthwhile_speedup"],
         },
         "cells": sorted(cells, key=lambda cell: cell["stride"]),

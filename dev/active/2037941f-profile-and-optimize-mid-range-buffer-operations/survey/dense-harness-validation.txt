@@ -14,7 +14,7 @@
 # unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
-# family_addendum=4337c02e-matvec-simd-threshold path=dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md sha256=b67084174f5ec86729492cc31e10e3dceddd2dea93956a1f1c42f6380294e482 identity=4337c02e-matvec-lane-threshold-v1 frozen_utc=2026-10-05T00:00:00Z
+# family_addendum=4337c02e-matvec-simd-threshold path=dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md sha256=e95dbb382c70a0498973f6909c899657657f7b95bb22d25cce76bc2367be1047 identity=4337c02e-matvec-lane-threshold-v1 frozen_utc=2026-10-05T19:34:54Z
 PASS harness contract: 53 tests pass
 PASS matvec-cols-0-rows-0: 6 checks
 PASS matvec-cols-0-rows-1: 9 checks
@@ -60,16 +60,16 @@ PASS matvec-anchor-9w: 1027 checks
 PASS matvec-anchor-63w: 1027 checks
 PASS matvec-anchor-64w: 1027 checks
 PASS matvec-anchor-65w: 1027 checks
-PASS matvec-lane-8w: 1027 checks
-PASS matvec-lane-9w: 1027 checks
-PASS matvec-lane-63w: 1027 checks
-PASS matvec-lane-64w: 1027 checks
-PASS matvec-lane-65w: 1027 checks
-PASS matvec-lane-7w: 1027 checks
-PASS matvec-lane-10w: 1027 checks
-PASS matvec-lane-32w: 1027 checks
-PASS matvec-lane-62w: 1027 checks
-PASS matvec-lane-66w: 1027 checks
+PASS matvec-lane-8w: 1028 checks
+PASS matvec-lane-9w: 1028 checks
+PASS matvec-lane-32w: 1028 checks
+PASS matvec-lane-63w: 1028 checks
+PASS matvec-lane-64w: 1028 checks
+PASS matvec-lane-65w: 1028 checks
+PASS matvec-lane-7w: 1028 checks
+PASS matvec-lane-10w: 1028 checks
+PASS matvec-lane-62w: 1028 checks
+PASS matvec-lane-66w: 1028 checks
 PASS and-popcnt-7w: 3 checks
 PASS and-popcnt-8w: 3 checks
 PASS and-popcnt-9w: 3 checks
@@ -122,16 +122,16 @@ PASS matvec-anchor-9w: 1027 checks
 PASS matvec-anchor-63w: 1027 checks
 PASS matvec-anchor-64w: 1027 checks
 PASS matvec-anchor-65w: 1027 checks
-PASS matvec-lane-8w: 1027 checks
-PASS matvec-lane-9w: 1027 checks
-PASS matvec-lane-63w: 1027 checks
-PASS matvec-lane-64w: 1027 checks
-PASS matvec-lane-65w: 1027 checks
-PASS matvec-lane-7w: 1027 checks
-PASS matvec-lane-10w: 1027 checks
-PASS matvec-lane-32w: 1027 checks
-PASS matvec-lane-62w: 1027 checks
-PASS matvec-lane-66w: 1027 checks
+PASS matvec-lane-8w: 1028 checks
+PASS matvec-lane-9w: 1028 checks
+PASS matvec-lane-32w: 1028 checks
+PASS matvec-lane-63w: 1028 checks
+PASS matvec-lane-64w: 1028 checks
+PASS matvec-lane-65w: 1028 checks
+PASS matvec-lane-7w: 1028 checks
+PASS matvec-lane-10w: 1028 checks
+PASS matvec-lane-62w: 1028 checks
+PASS matvec-lane-66w: 1028 checks
 PASS and-popcnt-7w: 3 checks
 PASS and-popcnt-8w: 3 checks
 PASS and-popcnt-9w: 3 checks
@@ -147,9 +147,9 @@ PASS m4ri-1x1: 7 checks
 PASS m4ri-63x63: 69 checks
 PASS m4ri-64x64: 70 checks
 PASS m4ri-65x65: 71 checks
-# dense-m4ri-arm sha256: 417429202c0c8f3b30a98388b66276de5365e81d3b1832e8d08f81114702e6d7
+# dense-m4ri-arm sha256: 5f6f17edd3b2c9352da8bd92218dcfa36a15cd7dedb487e8b9c9e7c45a023886
 # libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
-# dense-arm sha256: d1912c7750f711d16e03540c3d82e6ba69295f2b2d8faa9282a0eefeda496e5e
-# dense-campaign sha256: 4380114abaf97a7858a0774af2188a437b4623e84aee0b7013a0e8a398c6858c
-# dense-oracle sha256: 0c39faa597bf5627ade98951dfbc45938492f1fba5aa22d380d173a561da6229
-# dense-arm (scalar-reference) sha256: 9e8b2238cf3123f4d62404a8742a46f18f1db3762e378b5c3483ad4d64639e91
+# dense-arm sha256: b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c
+# dense-campaign sha256: 4a0e6aac6504df0f2c82f7b800193e947db0954b00d3302c95e2d9cf254838d1
+# dense-oracle sha256: 8c8a9834f341dcf4f78e5f05d4c382f04079c1d50b45104a7374394188dad9de
+# dense-arm (scalar-reference) sha256: 0e3943f50b6a306e7ec1acb620c01e2ac9ed4e06c35ef8d06108ba737720c86f

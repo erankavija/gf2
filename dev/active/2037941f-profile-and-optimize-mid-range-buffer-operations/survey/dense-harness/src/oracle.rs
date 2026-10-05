@@ -13,7 +13,9 @@ use crate::cells::{
     LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS,
 };
 use crate::fixture::MatvecBanks;
-use crate::routes::{fused_and_popcnt, fused_bundle, public_matvec, verify_lane, verify_shape, Route};
+use crate::routes::{
+    fused_and_popcnt, fused_bundle, public_matvec, route_matvec, verify_lane, verify_shape, Route,
+};
 use gf2_core::{BitMatrix, BitVec};
 
 /// Rows of the oracle's word-count matrices; 65 exercises a partial output word.
@@ -184,7 +186,15 @@ fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
                 return Err(fail(&name, format!("row {row} differs from the parity oracle")));
             }
         }
-        report.push(OracleCase { name, checks: MATVEC_ROWS + 3 });
+        let mut checks = MATVEC_ROWS + 3;
+        if group == "lane" {
+            // The pinned scalar lane returns the bits the selected lane returns.
+            if route_matvec(Route::MatvecLaneScalar, &item.matrix, &item.vector) != output {
+                return Err(fail(&name, "the pinned scalar lane differs from the public call"));
+            }
+            checks += 1;
+        }
+        report.push(OracleCase { name, checks });
     }
     Ok(())
 }

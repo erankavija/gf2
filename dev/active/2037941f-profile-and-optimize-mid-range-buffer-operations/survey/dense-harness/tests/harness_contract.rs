@@ -16,7 +16,8 @@ use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
 use dense_parity_harness::inputs;
 use dense_parity_harness::oracle;
 use dense_parity_harness::routes::{
-    run_windows, verify_lane, verify_shape, OutputSink, Route, WindowPlan, MAX_RETAINED_OUTPUTS,
+    route_matvec, run_windows, verify_lane, verify_shape, OutputSink, Route, WindowPlan,
+    MAX_RETAINED_OUTPUTS,
     RETAINED_BUDGET_BYTES, RETAINED_OUTPUT_BYTES, RETAINED_PEAK_BYTES,
 };
 use dense_parity_harness::wire::{self, Case};
@@ -79,8 +80,8 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
         .collect();
     // Isolated: 5 anchors, 2 neighbours, 5 streaming. Allocated: 5 anchors,
     // 2 neighbours, 5 tail1, 2 cold, 5 streaming, 5 scalar-reference. M4RI:
-    // 6 qualified shapes plus 2 retained-state cells. Lane threshold: 5 lane
-    // strides, the control, 4 exploratory strides, 5 streaming, 2 cold.
+    // 6 qualified shapes plus 2 retained-state cells. Lane threshold: 6 lane
+    // strides, the control, 3 exploratory strides, 5 streaming, 2 cold.
     assert_eq!(counts, vec![12, 24, 8, 17]);
     assert_eq!(table.len(), counts.iter().sum::<usize>());
 
@@ -97,8 +98,8 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
     assert_eq!(ids[36], "m4ri-gap-65x512-warm");
     assert_eq!(ids[42], "m4ri-gap-65x512-retained-warm");
     assert_eq!(ids[44], "lane-r1024-8w-warm");
-    assert_eq!(ids[49], "lane-r1024-7w-control-warm");
-    assert_eq!(ids[50], "lane-r1024-10w-warm");
+    assert_eq!(ids[50], "lane-r1024-7w-control-warm");
+    assert_eq!(ids[51], "lane-r1024-10w-warm");
     assert_eq!(ids[54], "lane-r1024-8w-streaming");
     assert_eq!(ids[59], "lane-r1024-8w-cold");
 
@@ -120,11 +121,11 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
     assert!(reference.iter().all(|id| id.contains("scalar-reference")));
 }
 
-/// The lane-threshold family contrasts the two lanes at the allocated boundary:
-/// the SIMD build is the baseline and the build without `simd` the candidate,
-/// its confirmatory cells are the lane strides and the control, and only the
-/// control, whose stride both builds send to the scalar lane, is a
-/// non-regression cell.
+/// The lane-threshold family contrasts the two lanes at the allocated boundary
+/// inside one build: the public call is the baseline and the call pinned to
+/// the scalar lane the candidate. Its confirmatory cells are the lane strides,
+/// and only the exploratory control, whose stride the selector sends to the
+/// scalar lane, is a non-regression cell.
 #[test]
 fn the_lane_threshold_family_contrasts_the_two_lanes_at_its_frozen_strides() {
     let question = Question::MatvecLaneThreshold;
@@ -135,15 +136,16 @@ fn the_lane_threshold_family_contrasts_the_two_lanes_at_its_frozen_strides() {
         .filter(|cell| cell.anchor)
         .map(|cell| cell.workload.stride_words())
         .collect();
-    let expected: Vec<usize> = LANE_WORDS.into_iter().chain([LANE_CONTROL_WORDS]).collect();
-    assert_eq!(anchors, expected);
+    assert_eq!(anchors, LANE_WORDS);
+    assert!(LANE_WORDS.iter().all(|words| *words >= SIMD_LANE_MIN_WORDS));
     assert!(LANE_CONTROL_WORDS < SIMD_LANE_MIN_WORDS);
+    assert!(table.iter().any(|cell| cell.lane_control() && !cell.anchor));
     let strides: BTreeSet<usize> = table.iter().map(|cell| cell.workload.stride_words()).collect();
     assert!(LANE_NEIGHBOR_WORDS.iter().all(|words| strides.contains(words)));
     for cell in &table {
         assert_eq!(
             campaign::cell_arms(cell),
-            (Route::MatvecA.id(), Route::MatvecScalarReference.id()),
+            (Route::MatvecA.id(), Route::MatvecLaneScalar.id()),
             "{}",
             cell.cell_id
         );
@@ -168,13 +170,26 @@ fn the_lane_threshold_family_contrasts_the_two_lanes_at_its_frozen_strides() {
         let item = banks.item(0, 0);
         let facts = verify_shape(&item.matrix, &item.vector, banks.rows(), banks.columns())
             .expect("the frozen shape holds");
-        let served = if cfg!(feature = "simd") {
-            Route::MatvecA
-        } else {
-            Route::MatvecScalarReference
-        };
-        verify_lane(facts, served).expect("the build's lane");
+        if cfg!(feature = "simd") {
+            for route in [Route::MatvecA, Route::MatvecLaneScalar] {
+                verify_lane(facts, route).expect("the selector's lane");
+            }
+            let pinned = facts.executed_lane(Route::MatvecLaneScalar);
+            assert_eq!(pinned, "scalar-lane-pinned");
+            assert_eq!(facts.executed_lane(Route::MatvecA), facts.lane());
+            assert_eq!(
+                route_matvec(Route::MatvecLaneScalar, &item.matrix, &item.vector),
+                route_matvec(Route::MatvecA, &item.matrix, &item.vector),
+                "{}",
+                cell.cell_id
+            );
+        }
     }
+    assert_eq!(Route::MatvecLaneScalar.question(), Question::AllocatedMatvec);
+    assert!(Route::MatvecLaneScalar.simd_build());
+    assert!(Route::ALL
+        .iter()
+        .all(|route| route.pinned_lane().is_some() == (*route == Route::MatvecLaneScalar)));
     assert!(cells().iter().all(|cell| cell.question == question || !cell.lane_control()));
 
     let addendum = campaign::addendum(question, ISSUE, FROZEN);
