@@ -3,7 +3,7 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "5848406cd841fbadb1b7cae90b021b362e3cd078a4892bd1c25d6f784bbf6e6c"
+  "sha256": "be0d3087f1da9c8b64b8ff4b9758a152d11fd8944f0ed97944899c266bea84c7"
  },
  "counts": {
   "entry point groups": 9,
@@ -13,9 +13,9 @@
   "core selectors selected at compile time": 8,
   "core selectors the measured owner states": 30,
   "scanned constants a tuning section owns": 51,
-  "scanned constants outside the tuning sections": 40,
-  "of those, class selector": 10,
-  "declared selectors outside the tuning sections": 7,
+  "scanned constants outside the tuning sections": 38,
+  "of those, class selector": 8,
+  "declared selectors outside the tuning sections": 6,
   "witness configurations": 7,
   "committed protocol receipts": 151,
   "core-kernel receipts": 97,
@@ -52,9 +52,7 @@
    "selectors": [
     "bit_backend.simd_min_words"
    ],
-   "private": [
-    "xor-unroll-configurations"
-   ],
+   "private": [],
    "witness": "kernels::select_backend_for_size",
    "claims": [
     "core-simd-optional",
@@ -63,8 +61,7 @@
     "bit-threshold-baked-alias",
     "ops-xor-resolver",
     "logical-bundle-detect",
-    "core-logical-bundle-once",
-    "xor-unroll-cfg-declared"
+    "core-logical-bundle-once"
    ]
   },
   {
@@ -1192,8 +1189,8 @@
     "measured_owner": 4,
     "read_sites": [
      "crates/gf2-core/src/alg/m4rm.rs:437",
-     "crates/gf2-core/src/alg/m4rm.rs:899",
-     "crates/gf2-core/src/alg/m4rm.rs:983"
+     "crates/gf2-core/src/alg/m4rm.rs:909",
+     "crates/gf2-core/src/alg/m4rm.rs:993"
     ]
    },
    {
@@ -1462,33 +1459,33 @@
    "definition": "const B2_GRAY_TILE_WORDS: usize = 8;",
    "class": "kernel-geometry",
    "read_sites": [
-    "crates/gf2-core/src/alg/m4rm.rs:629",
-    "crates/gf2-core/src/alg/m4rm.rs:642",
-    "crates/gf2-core/src/alg/m4rm.rs:643",
-    "crates/gf2-core/src/alg/m4rm.rs:644",
-    "crates/gf2-core/src/alg/m4rm.rs:647",
-    "crates/gf2-core/src/alg/m4rm.rs:650",
+    "crates/gf2-core/src/alg/m4rm.rs:639",
+    "crates/gf2-core/src/alg/m4rm.rs:652",
     "crates/gf2-core/src/alg/m4rm.rs:653",
-    "crates/gf2-core/src/alg/m4rm.rs:656",
-    "crates/gf2-core/src/alg/m4rm.rs:684",
-    "crates/gf2-core/src/alg/m4rm.rs:686",
-    "crates/gf2-core/src/alg/m4rm.rs:701",
-    "crates/gf2-core/src/alg/m4rm.rs:702",
-    "crates/gf2-core/src/alg/m4rm.rs:717",
-    "crates/gf2-core/src/alg/m4rm.rs:719",
-    "crates/gf2-core/src/alg/m4rm.rs:732",
-    "crates/gf2-core/src/alg/m4rm.rs:733",
-    "crates/gf2-core/src/alg/m4rm.rs:747",
-    "crates/gf2-core/src/alg/m4rm.rs:748",
-    "crates/gf2-core/src/alg/m4rm.rs:767",
-    "crates/gf2-core/src/alg/m4rm.rs:769",
-    "crates/gf2-core/src/alg/m4rm.rs:783",
-    "crates/gf2-core/src/alg/m4rm.rs:784",
-    "crates/gf2-core/src/alg/m4rm.rs:785",
-    "crates/gf2-core/src/alg/m4rm.rs:790",
-    "crates/gf2-core/src/alg/m4rm.rs:799",
+    "crates/gf2-core/src/alg/m4rm.rs:654",
+    "crates/gf2-core/src/alg/m4rm.rs:657",
+    "crates/gf2-core/src/alg/m4rm.rs:660",
+    "crates/gf2-core/src/alg/m4rm.rs:663",
+    "crates/gf2-core/src/alg/m4rm.rs:666",
+    "crates/gf2-core/src/alg/m4rm.rs:694",
+    "crates/gf2-core/src/alg/m4rm.rs:696",
+    "crates/gf2-core/src/alg/m4rm.rs:711",
+    "crates/gf2-core/src/alg/m4rm.rs:712",
+    "crates/gf2-core/src/alg/m4rm.rs:727",
+    "crates/gf2-core/src/alg/m4rm.rs:729",
+    "crates/gf2-core/src/alg/m4rm.rs:742",
+    "crates/gf2-core/src/alg/m4rm.rs:743",
+    "crates/gf2-core/src/alg/m4rm.rs:757",
+    "crates/gf2-core/src/alg/m4rm.rs:758",
+    "crates/gf2-core/src/alg/m4rm.rs:777",
+    "crates/gf2-core/src/alg/m4rm.rs:779",
+    "crates/gf2-core/src/alg/m4rm.rs:793",
+    "crates/gf2-core/src/alg/m4rm.rs:794",
+    "crates/gf2-core/src/alg/m4rm.rs:795",
     "crates/gf2-core/src/alg/m4rm.rs:800",
-    "crates/gf2-core/src/alg/m4rm.rs:803"
+    "crates/gf2-core/src/alg/m4rm.rs:809",
+    "crates/gf2-core/src/alg/m4rm.rs:810",
+    "crates/gf2-core/src/alg/m4rm.rs:813"
    ]
   },
   {
@@ -1498,9 +1495,9 @@
    "definition": "const B2_GRAY_MAX_TILES: usize = 4;",
    "class": "kernel-geometry",
    "read_sites": [
-    "crates/gf2-core/src/alg/m4rm.rs:642",
-    "crates/gf2-core/src/alg/m4rm.rs:766",
-    "crates/gf2-core/src/alg/m4rm.rs:769"
+    "crates/gf2-core/src/alg/m4rm.rs:652",
+    "crates/gf2-core/src/alg/m4rm.rs:776",
+    "crates/gf2-core/src/alg/m4rm.rs:779"
    ]
   },
   {
@@ -1519,15 +1516,15 @@
    "class": "kernel-geometry",
    "read_sites": [
     "crates/gf2-core/src/alg/m4rm.rs:70",
-    "crates/gf2-core/src/alg/m4rm.rs:1027",
-    "crates/gf2-core/src/alg/m4rm.rs:1149",
-    "crates/gf2-core/src/alg/m4rm.rs:1151",
-    "crates/gf2-core/src/alg/m4rm.rs:1152",
-    "crates/gf2-core/src/alg/m4rm.rs:1154",
-    "crates/gf2-core/src/alg/m4rm.rs:1189",
-    "crates/gf2-core/src/alg/m4rm.rs:1205",
-    "crates/gf2-core/src/alg/m4rm.rs:1317",
-    "crates/gf2-core/src/alg/m4rm.rs:1319"
+    "crates/gf2-core/src/alg/m4rm.rs:1037",
+    "crates/gf2-core/src/alg/m4rm.rs:1159",
+    "crates/gf2-core/src/alg/m4rm.rs:1161",
+    "crates/gf2-core/src/alg/m4rm.rs:1162",
+    "crates/gf2-core/src/alg/m4rm.rs:1164",
+    "crates/gf2-core/src/alg/m4rm.rs:1199",
+    "crates/gf2-core/src/alg/m4rm.rs:1215",
+    "crates/gf2-core/src/alg/m4rm.rs:1327",
+    "crates/gf2-core/src/alg/m4rm.rs:1329"
    ]
   },
   {
@@ -1538,14 +1535,14 @@
    "class": "kernel-geometry",
    "read_sites": [
     "crates/gf2-core/src/alg/m4rm.rs:65",
-    "crates/gf2-core/src/alg/m4rm.rs:1157",
-    "crates/gf2-core/src/alg/m4rm.rs:1192",
-    "crates/gf2-core/src/alg/m4rm.rs:1194",
-    "crates/gf2-core/src/alg/m4rm.rs:1268",
+    "crates/gf2-core/src/alg/m4rm.rs:1167",
+    "crates/gf2-core/src/alg/m4rm.rs:1202",
+    "crates/gf2-core/src/alg/m4rm.rs:1204",
     "crates/gf2-core/src/alg/m4rm.rs:1278",
-    "crates/gf2-core/src/alg/m4rm.rs:1295",
-    "crates/gf2-core/src/alg/m4rm.rs:1298",
-    "crates/gf2-core/src/alg/m4rm.rs:1303",
+    "crates/gf2-core/src/alg/m4rm.rs:1288",
+    "crates/gf2-core/src/alg/m4rm.rs:1305",
+    "crates/gf2-core/src/alg/m4rm.rs:1308",
+    "crates/gf2-core/src/alg/m4rm.rs:1313",
     "crates/gf2-core/src/tuning/mod.rs:788"
    ]
   },
@@ -1758,11 +1755,11 @@
    "read_sites": [
     "crates/gf2-kernels-simd/src/fp_small_ple.rs:11",
     "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:22",
-    "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:173",
-    "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:175",
+    "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:188",
+    "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:190",
     "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:22",
-    "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:169",
-    "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:170"
+    "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:184",
+    "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:185"
    ]
   },
   {
@@ -1774,17 +1771,17 @@
    "read_sites": [
     "crates/gf2-kernels-simd/src/fp_medium_ple.rs:16",
     "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:22",
-    "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:173",
-    "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:175",
+    "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:188",
+    "crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:190",
     "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:22",
-    "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:169",
-    "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:170"
+    "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:184",
+    "crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:185"
    ]
   },
   {
    "id": "POPCOUNT_CSA_BLOCK_WORDS",
    "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/lib.rs:53",
+   "defined": "crates/gf2-kernels-simd/src/lib.rs:55",
    "definition": "pub const POPCOUNT_CSA_BLOCK_WORDS: usize = x86::popcount::CSA_BLOCK_WORDS;",
    "class": "kernel-geometry",
    "read_sites": []
@@ -1806,12 +1803,12 @@
    "definition": "const M4RM_TILE_ROWS: usize = 8;",
    "class": "kernel-geometry",
    "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:185",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:181",
     "crates/gf2-kernels-simd/src/x86/avx2.rs:219",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:641",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:669",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:761",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:771"
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:688",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:718",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:819",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:829"
    ]
   },
   {
@@ -1823,35 +1820,9 @@
    "read_sites": [
     "crates/gf2-kernels-simd/src/x86/avx2.rs:222",
     "crates/gf2-kernels-simd/src/x86/avx2.rs:224",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:649",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:658",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:676"
-   ]
-  },
-  {
-   "id": "XOR_UNROLL",
-   "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/avx2.rs:22",
-   "definition": "const XOR_UNROLL: usize = 2;",
-   "class": "selector",
-   "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:24",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:43",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:44",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:50"
-   ]
-  },
-  {
-   "id": "XOR_UNROLL",
-   "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/avx2.rs:24",
-   "definition": "const XOR_UNROLL: usize = 4;",
-   "class": "selector",
-   "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:22",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:43",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:44",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:50"
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:696",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:705",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:725"
    ]
   },
   {
@@ -1868,39 +1839,39 @@
   {
    "id": "FP_MEDIUM_PANEL_MR",
    "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/fp_medium.rs:492",
+   "defined": "crates/gf2-kernels-simd/src/x86/fp_medium.rs:531",
    "definition": "const FP_MEDIUM_PANEL_MR: usize = 2;",
    "class": "kernel-geometry",
    "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:589",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:591",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:598",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:604",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:608",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:662",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:663",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:666",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:733"
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:631",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:633",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:640",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:646",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:650",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:710",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:711",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:714",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:790"
    ]
   },
   {
    "id": "FP_MEDIUM_PANEL_NR",
    "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/fp_medium.rs:495",
+   "defined": "crates/gf2-kernels-simd/src/x86/fp_medium.rs:534",
    "definition": "const FP_MEDIUM_PANEL_NR: usize = 16;",
    "class": "kernel-geometry",
    "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:504",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:562",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:563",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:566",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:567",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:571",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:600",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:601",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:619",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:620",
-    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:731"
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:543",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:604",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:605",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:608",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:609",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:613",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:642",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:643",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:661",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:662",
+    "crates/gf2-kernels-simd/src/x86/fp_medium.rs:788"
    ]
   },
   {
@@ -1910,20 +1881,20 @@
    "definition": "const K_CHUNK_CAP: usize = 4096;",
    "class": "selector",
    "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:113",
+    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:116",
     "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:25",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:108",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:244"
+    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:111",
+    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:250"
    ]
   },
   {
    "id": "CHUNK_VEC",
    "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/fp_small.rs:271",
+   "defined": "crates/gf2-kernels-simd/src/x86/fp_small.rs:294",
    "definition": "const CHUNK_VEC: usize = 16384;",
    "class": "selector",
    "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/fp_small.rs:281"
+    "crates/gf2-kernels-simd/src/x86/fp_small.rs:304"
    ]
   },
   {
@@ -1934,20 +1905,20 @@
    "class": "selector",
    "read_sites": [
     "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:27",
-    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:113",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:108",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:244"
+    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:116",
+    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:111",
+    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:250"
    ]
   },
   {
    "id": "I_TILE",
    "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:130",
+   "defined": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:136",
    "definition": "const I_TILE: usize = 4;",
    "class": "selector",
    "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:135",
-    "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:155"
+    "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:141",
+    "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:161"
    ]
   },
   {
@@ -1958,10 +1929,10 @@
    "class": "kernel-geometry",
    "read_sites": [
     "crates/gf2-kernels-simd/src/x86/popcount.rs:21",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:160",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:186",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:259",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:309"
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:200",
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:226",
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:299",
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:349"
    ]
   },
   {
@@ -1972,12 +1943,12 @@
    "class": "kernel-geometry",
    "read_sites": [
     "crates/gf2-kernels-simd/src/x86/popcount.rs:21",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:198",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:201",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:226",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:274",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:277",
-    "crates/gf2-kernels-simd/src/x86/popcount.rs:302"
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:238",
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:241",
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:266",
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:314",
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:317",
+    "crates/gf2-kernels-simd/src/x86/popcount.rs:342"
    ]
   },
   {
@@ -1987,7 +1958,7 @@
    "definition": "pub const CSA_BLOCK_WORDS: usize = CSA_BLOCK_VECTORS * WORDS_PER_VECTOR;",
    "class": "kernel-geometry",
    "read_sites": [
-    "crates/gf2-kernels-simd/src/lib.rs:53"
+    "crates/gf2-kernels-simd/src/lib.rs:55"
    ]
   },
   {
@@ -2016,14 +1987,6 @@
   }
  ],
  "declared_selectors": [
-  {
-   "id": "xor-unroll-configurations",
-   "package": "gf2-kernels-simd",
-   "what": "Two private compiler configurations select the XOR unroll bodies.",
-   "claims": [
-    "xor-unroll-cfg-declared"
-   ]
-  },
   {
    "id": "popcount-comparator-kernels",
    "package": "gf2-kernels-simd",
@@ -2275,33 +2238,6 @@
    ],
    "outcome_documents": [
     "dev/active/5cbb6545/findings.md"
-   ]
-  },
-  {
-   "selector": "xor-unroll-configurations",
-   "measured_owner_states_it": false,
-   "protocol_evidence": "exploratory",
-   "families": [
-    {
-     "family": "2037941f-logical-isolated-xor",
-     "issue": "18a87159",
-     "route_contrast_roles": [
-      "exploratory"
-     ],
-     "campaigns": []
-    },
-    {
-     "family": "2037941f-logical-public-row-xor",
-     "issue": "18a87159",
-     "route_contrast_roles": [
-      "exploratory"
-     ],
-     "campaigns": []
-    }
-   ],
-   "outcome_documents": [
-    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
-    "dev/active/1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md"
    ]
   },
   {
@@ -5544,6 +5480,6 @@
  ],
  "workload_routes": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
-  "sha256": "18f43d8fa951d824c599a4c5e8ab22bfbb9c5103ed0f0d22c97f2240ca36df69"
+  "sha256": "c87b70620e8361fe14c4fbeaa419b760dc36c0783fdbc3a95a6cc25a9d7330b0"
  }
 }
