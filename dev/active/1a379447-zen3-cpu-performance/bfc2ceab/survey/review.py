@@ -307,8 +307,8 @@ CLAIMS = [
      "a_f64.resize(m * k, 0.0f64);", 1,
      "The f64 scratch is sized from the wrapping products."),
     ("core-gemm-hook", CORE, "src/gfp/mod.rs", "fn try_simd_gemm_classical(", 1,
-     "The dense product hook is a safe method of the public `FiniteField` trait and "
-     "forwards its dimensions to the dispatchers."),
+     "`Fp` implements the dense product hook of the public `FiniteField` trait by "
+     "forwarding its dimensions to the dispatchers."),
     ("core-matvec-pack-debug", CORE, "src/gfp/simd_ops.rs",
      "debug_assert_eq!(rows.len(), m * k);", 1,
      "The packed matrix relates its data to `m * k` in a debug assertion only."),
@@ -973,6 +973,18 @@ OUTSIDE_NOTE = "`scalar_fns_f64`, the scalar implementation, which holds no `uns
 # Crates whose library target denies `unsafe_code`, with the claim.
 DENYING = {CORE: "core-denies-unsafe", ALGEBRA: "algebra-denies-unsafe",
            CODING: "coding-denies-unsafe"}
+
+# Safe methods of the public `FiniteField` trait that pass their caller's
+# arguments on to an entry point: interface id to (hook, claim).
+FORWARDING_HOOKS = {
+    "small-prime-spmm-row": ("FiniteField::try_simd_spmm", "core-spmm-hook"),
+    "medium-prime-spmm-row": ("FiniteField::try_simd_spmm", "core-spmm-hook"),
+    "small-prime-gemm-row-panel": ("FiniteField::try_simd_gemm_classical", "core-gemm-hook"),
+    "small-prime-panel-gemm": ("FiniteField::try_simd_gemm_classical", "core-gemm-hook"),
+    "small-prime-f32-gemm": ("FiniteField::try_simd_gemm_classical", "core-gemm-hook"),
+    "medium-prime-gemm-panel": ("FiniteField::try_simd_gemm_classical", "core-gemm-hook"),
+    "medium-prime-f64-gemm": ("FiniteField::try_simd_gemm_classical", "core-gemm-hook"),
+}
 
 # Per class: the recommended option and the reason.
 DECISIONS = {

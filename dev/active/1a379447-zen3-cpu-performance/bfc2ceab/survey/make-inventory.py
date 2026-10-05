@@ -260,6 +260,10 @@ def build():
             "entries": entries,
             "checked_form": added[interface["id"]],
         }
+        if interface["id"] in review.FORWARDING_HOOKS:
+            hook, claim = review.FORWARDING_HOOKS[interface["id"]]
+            need([claim], interface["id"])
+            row["forwarding_hook"] = {"hook": hook, "claim": claim}
         if "witness" in interface:
             row["witness"] = witness(interface["witness"])
         if "unchecked_precedent" in interface:
@@ -452,6 +456,11 @@ def inventory_page(record):
                     + f", while the dimensions describe {found['elements_the_dimensions_describe']} "
                     f"elements of `{found['short_operand']}`."
                 )]
+            if "forwarding_hook" in interface:
+                hook = interface["forwarding_hook"]
+                out += ["", f"Forwarding caller: the safe public hook `{hook['hook']}` "
+                            f"passes its caller's arguments on to this entry point "
+                            f"(`{hook['claim']}`)."]
             if "unchecked_precedent" in interface:
                 out += ["", f"Unchecked form the crate publishes: "
                             f"`{interface['unchecked_precedent']}`."]

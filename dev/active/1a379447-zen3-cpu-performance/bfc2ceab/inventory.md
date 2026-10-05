@@ -49,6 +49,8 @@ The M4RM Gray-table builders are the house form of a checked safe entry point: t
 
 Contract text: `small-spmm-type-doc`, `small-spmm-wrapper`. Checked in release builds: `small-spmm-length-assert`.
 
+Forwarding caller: the safe public hook `FiniteField::try_simd_spmm` passes its caller's arguments on to this entry point (`core-spmm-hook`).
+
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|
 | `spmm_row_safe` | `crates/gf2-core/src/gfp/simd_ops.rs` | production | 1 | `forwarded` | `core-spmm-small-call`, `core-spmm-medium-call`, `core-spmm-columns-forwarded`, `core-spmm-debug`, `core-spmm-hook`, `core-spmm-matmat-assert`, `core-sparse-triplet-assert` |
@@ -64,6 +66,8 @@ Contract text: `small-spmm-type-doc`, `small-spmm-wrapper`. Checked in release b
 | every `a_cols[h] * b_stride + n` is at most `b.len()`, without overflow | — | `medium-spmm-vector-read`, `medium-spmm-tail-read` |
 
 Contract text: `medium-spmm-type-doc`, `medium-spmm-wrapper`. Checked in release builds: `medium-spmm-length-assert`.
+
+Forwarding caller: the safe public hook `FiniteField::try_simd_spmm` passes its caller's arguments on to this entry point (`core-spmm-hook`).
 
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|
@@ -222,6 +226,8 @@ Contract text: —. Checked in release builds: `row-panel-assert`.
 
 Witness: dimensions `k` = 2^32, `n` = 2^32 pass the release assertions with operand lengths `a` = 2^32, `bt` = 0, `out` = 2^32, while the dimensions describe 2^64 elements of `bt`.
 
+Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` passes its caller's arguments on to this entry point (`core-gemm-hook`).
+
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|
 | `gemm_row_panel_safe` | `crates/gf2-core/src/gfp/simd_ops.rs` | production | 1 | `wrapping` | `core-gemm-row-loop`, `core-gemm-row-scratch`, `core-gemm-small-debug` |
@@ -240,6 +246,8 @@ Witness: dimensions `k` = 2^32, `n` = 2^32 pass the release assertions with oper
 Contract text: —. Checked in release builds: `small-panel-assert`.
 
 Witness: dimensions `m` = 2^40, `k` = 1, `n` = 2^24 pass the release assertions with operand lengths `a` = 2^40, `bt` = 2^24, `c` = 0, while the dimensions describe 2^64 elements of `c`.
+
+Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` passes its caller's arguments on to this entry point (`core-gemm-hook`).
 
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|
@@ -260,6 +268,8 @@ Witness: dimensions `m` = 2^40, `k` = 1, `n` = 2^24 pass the release assertions 
 Contract text: —. Checked in release builds: `small-f32-assert`, `small-f32-route-a-assert`.
 
 Witness: dimensions `m` = 2^63, `k` = 2, `n` = 2 pass the release assertions with operand lengths `a` = 0, `bt` = 4, `c` = 0, while the dimensions describe 2^64 elements of `a`.
+
+Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` passes its caller's arguments on to this entry point (`core-gemm-hook`).
 
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|
@@ -282,6 +292,8 @@ Contract text: —. Checked in release builds: `medium-panel-assert`.
 
 Witness: dimensions `m` = 2^63, `k` = 2, `n` = 2 pass the release assertions with operand lengths `a` = 0, `bt` = 4, `c` = 0, while the dimensions describe 2^64 elements of `a`.
 
+Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` passes its caller's arguments on to this entry point (`core-gemm-hook`).
+
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|
 | `gemm_panel_safe` | `crates/gf2-core/src/gfp/simd_ops.rs` | production | 1 | `wrapping` | `core-gemm-u16-scratch`, `core-gemm-medium-debug`, `core-gemm-hook` |
@@ -299,6 +311,8 @@ Witness: dimensions `m` = 2^63, `k` = 2, `n` = 2 pass the release assertions wit
 Contract text: —. Checked in release builds: `medium-f64-assert`.
 
 Witness: dimensions `m` = 2^63, `k` = 2, `n` = 2 pass the release assertions with operand lengths `a` = 0, `bt` = 4, `c` = 0, while the dimensions describe 2^64 elements of `a`.
+
+Forwarding caller: the safe public hook `FiniteField::try_simd_gemm_classical` passes its caller's arguments on to this entry point (`core-gemm-hook`).
 
 | Entry point | Caller | Kind | Calls | Discharge | Claims |
 |---|---|---|---|---|---|

@@ -160,6 +160,10 @@
             84
           ]
         }
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_spmm",
+        "claim": "core-spmm-hook"
       }
     },
     {
@@ -247,6 +251,10 @@
             ]
           }
         ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_spmm",
+        "claim": "core-spmm-hook"
       }
     },
     {
@@ -1218,6 +1226,10 @@
           }
         ]
       },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
+      },
       "witness": {
         "dimensions": {
           "k": "2^32",
@@ -1320,6 +1332,10 @@
             "added_loop_bodies": []
           }
         ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
       },
       "witness": {
         "dimensions": {
@@ -1466,6 +1482,10 @@
           }
         ]
       },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
+      },
       "witness": {
         "dimensions": {
           "m": "2^63",
@@ -1556,6 +1576,10 @@
             "added_loop_bodies": []
           }
         ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
       },
       "witness": {
         "dimensions": {
@@ -1660,6 +1684,10 @@
             "added_loop_bodies": []
           }
         ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
       },
       "witness": {
         "dimensions": {

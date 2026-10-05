@@ -38,8 +38,8 @@ every use of a published pointer field, and the recommendations.
 `make-inventory.py` states under which conditions it fails before writing; its
 `scan_rule` and `use_rule` fields state what the coverage means. Two
 consecutive runs of the four record generators leave `git diff --exit-code`
-clean. The listing's banner carries the commit and time of its run, and
-`make-instruction-counts.py` reads its instruction text alone;
+clean, and so do two runs of `regen-prototype-listing.py`, which removes the
+banner lines that carry the commit and time of a run.
 `make-instruction-counts.py --self-test` checks the counting rule on a
 fixture.
 

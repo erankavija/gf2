@@ -3,9 +3,9 @@
 
 Runs the shared `regen-asm.sh` from the `check-prototype` crate under Rust
 1.95 for every prototype function `review.py` names, and writes
-`check-prototype.asm.txt` beside this script. The listing's banner carries the
-commit and time of the run; `make-instruction-counts.py` reads the
-instruction text alone.
+`check-prototype.asm.txt` beside this script. The banner lines that carry the
+commit and time of the run are removed, so the listing reproduces byte for
+byte from one tree and toolchain.
 
 Usage: regen-prototype-listing.py, with no arguments
 """
@@ -19,6 +19,7 @@ from locate import HERE, ROOT, repository_files
 REGENERATOR = b"#!/usr/bin/env bash\n# Regenerates per-symbol asm artefacts for SIMD review.\n"
 LISTING = "check-prototype.asm.txt"
 TOOLCHAIN = "1.95.0"
+VOLATILE = ("; commit        :", "; regenerated   :")
 
 
 def prototype_functions():
@@ -40,7 +41,11 @@ def main():
         check=True,
         env=os.environ | {"RUSTUP_TOOLCHAIN": TOOLCHAIN},
     )
-    print(f"{(HERE / LISTING).relative_to(ROOT)}: {len(symbols)} symbols")
+    listing = HERE / LISTING
+    kept = [line for line in listing.read_text().splitlines(keepends=True)
+            if not line.startswith(VOLATILE)]
+    listing.write_text("".join(kept))
+    print(f"{listing.relative_to(ROOT)}: {len(symbols)} symbols")
 
 
 if __name__ == "__main__":

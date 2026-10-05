@@ -1033,7 +1033,7 @@
       "line": 549,
       "occurrences": 1,
       "verbatim": "    fn try_simd_gemm_classical(",
-      "why": "The dense product hook is a safe method of the public `FiniteField` trait and forwards its dimensions to the dispatchers.",
+      "why": "`Fp` implements the dense product hook of the public `FiniteField` trait by forwarding its dimensions to the dispatchers.",
       "sha256": "871a420a6b947ca872821ad58199eeab97b255588a5c3182e574fc08427f9878"
     },
     {
