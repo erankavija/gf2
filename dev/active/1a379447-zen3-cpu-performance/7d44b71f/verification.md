@@ -92,8 +92,12 @@ differs. Every symbol row of both steps carries `instruction_text: same`.
 
 A listing with `regenerated: false` holds the bytes of its step's first tree. In the first step these are
 `bipedal_avx512.asm.txt`, which records no symbol, and
-`_lto_opacity_callsites.asm.txt`, which is produced from a `gf2-core` example outside
-`regen-asm.sh`. `gf2m_common.asm.txt` records no symbol either, because every
+`_lto_opacity_callsites.asm.txt`. That listing is exempt from regeneration: its
+banner records rustc 1.95.0 and an extraction from the assembly of the `gf2-core`
+example `lto_opacity_audit`, its two symbols are `gf2-core` call sites and not
+functions of this package, `regen-asm.sh` does not write it, and
+`asm-artefact-present.sh` maps no kernel source to it. Its rows compare equal
+bytes and show nothing about this change. `gf2m_common.asm.txt` records no symbol either, because every
 function of that module is `#[inline(always)]` and is emitted inside the
 `gf2m_batch` and `gf2m_gemm` kernels. The second step regenerates the `avx2` listing
 alone. A regenerated listing differs from its
