@@ -5,7 +5,14 @@
   "created_at": "2026-10-05T07:16:39.465043307Z",
   "dependencies": [],
   "description": "The generators of the dense-parity no-change verdict's drift and assembly records fail on the current tree after a later code change to a file they baseline; a committed record stays verifiable when unrelated work moves on.\n\n## Background\n\n`dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/` holds generators that compare a content-pinned anchor baseline of the two kernel crates with the working tree and write `production-drift.json` and `asm-comparison.json`. They were designed to fail when a baselined file later differs in code. A later fix changed `crates/gf2-core/src/alg/m4rm.rs`, and the generators now stop with \"no file holds the baseline digest\" instead of reproducing the committed records. The records describe the tree the verdict was issued on; the verdict's claim is about that tree.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed check verifies the committed drift and assembly records against content they pin, on any later tree, and exits zero while those pinned contents are present; it writes nothing.\n- [hard] REQ-02: Regenerating a record on a tree that differs from the pinned end state refuses to overwrite and says which paths differ, shown by a test on a tree where a baselined file has changed.\n- [hard] REQ-03: The verdict's verification document states which tree its records describe and gives the check command; no committed record's bytes change.\n\n## Notes\n\nFound while removing the unselected XOR unroll bodies. Content-anchor tooling shared by later tasks lives under `dev/scripts`.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Dense verdict end-state digests",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/dense-verdict-end-state.json"
+    }
+  ],
   "first_ready_at": "2026-10-05T07:16:39.465043307Z",
   "gates_required": [
     "cargo-ci",
@@ -21,5 +28,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Keep the dense-parity verdict's drift records verifiable on later trees",
-  "updated_at": "2026-10-05T18:43:43.997141768Z"
+  "updated_at": "2026-10-05T18:53:21.822023894Z"
 }

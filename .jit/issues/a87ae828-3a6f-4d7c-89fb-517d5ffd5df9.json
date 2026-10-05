@@ -5,7 +5,114 @@
   "created_at": "2026-10-05T03:39:14.959300842Z",
   "dependencies": [],
   "description": "The generator of the dense-parity source-evidence ledger reads the working tree and overwrites a receipt-pinned ledger when run; a pinned record is not rewritten by its own tool.\n\n## Background\n\n`dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py` writes `survey/dense-parity-source-evidence.json` from whatever tree it runs in. The ledger is a producing input pinned by the dense-parity receipts and cited by the frozen dense-parity addendum, and it is verified as a record of its recorded commits by `dev/scripts/verify-source-evidence.py`. Running the generator on a later tree replaces the pinned bytes with rows for that tree. The revision the ledger records reproduces every row's commit and digest fields.\n\n## Success Criteria\n\n- [hard] REQ-01: Running the generator on any tree leaves the committed ledger byte-identical or refuses to write, shown by a test that runs it on a tree where cited lines have moved.\n- [hard] REQ-02: The generator reproduces the committed ledger from the content of the revision the ledger records, and a check mode reports a mismatch without writing.\n- [hard] REQ-03: No committed receipt, receipt input snapshot, trial ledger or frozen addendum changes, and the dense producing-input closure check passes.\n\n## Notes\n\nFound while making the ledger verifiable. The generator is itself an enumerated producing input of the dense campaigns; committed receipts keep their own snapshot of it.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "839378637eaa0948417080e5d793645a5b2705c540810c330676ea9752e82e0f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-harness.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-harness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8fc1946db843806f7336b194bd2af9fb25985c9d92fb74cadf5d017e1c4f8349",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/6833c5b5/verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6833c5b5/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum-v1.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c30b4b9c94a4224a7b1b84f2fc114b47c87b8ed873fb84ca6c5db724adda219b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/6833c5b5/dense-parity-source-evidence-verification.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6833c5b5/dense-parity-source-evidence-verification.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8896a6c30bb509b7320e64a8fec5dc8fe5601edb7e2a3ad117912b110a1d5800",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/dense-parity-source-evidence.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f0bfe9e99eaf07194fe98e7eadcd52d990b1a5742dc1c6971b88ef389c9ba980",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/make-dense-parity-source-evidence.py",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Dense-parity corrections",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "8896a6c30bb509b7320e64a8fec5dc8fe5601edb7e2a3ad117912b110a1d5800",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f0bfe9e99eaf07194fe98e7eadcd52d990b1a5742dc1c6971b88ef389c9ba980",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "89761516d9cd220d7b8ab7eff7fcae783003ae107ffc10d16040094e6405a080",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c30b4b9c94a4224a7b1b84f2fc114b47c87b8ed873fb84ca6c5db724adda219b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dense-parity-source-evidence-verification.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/6833c5b5/dense-parity-source-evidence-verification.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Ledger verification",
+      "path": "dev/active/1a379447-zen3-cpu-performance/6833c5b5/verification.md"
+    }
+  ],
   "first_ready_at": "2026-10-05T03:39:14.959300842Z",
   "gates_required": [
     "cargo-ci",
@@ -21,5 +128,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Stop the dense-parity source-evidence generator rewriting its pinned ledger",
-  "updated_at": "2026-10-05T18:43:44.450174204Z"
+  "updated_at": "2026-10-05T18:53:21.758891954Z"
 }
