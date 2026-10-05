@@ -7239,17 +7239,18 @@ mod tests {
         }
     }
 
-    /// The independent validator reconstructs each seam field's operand
+    /// The independent validator reconstructs each listed field's operand
     /// digest from the declared seeds; a drift on either side would fail a
     /// complete campaign's validation after its measurement.
     #[test]
-    fn validator_reconstructs_the_seam_threshold_operands() {
+    fn validator_reconstructs_the_follow_on_threshold_operands() {
         let mut rows = Vec::new();
         for field in [
             CalibratedField::WinogradMinDim,
             CalibratedField::TriangularBaseCaseMaxDim,
             CalibratedField::PleScalarBaseMaxCols,
             CalibratedField::TrsmBlockedMinDim,
+            CalibratedField::MatvecSimdMinWords,
         ] {
             for size in field.grid().into_iter().take(2) {
                 rows.push(serde_json::json!({
