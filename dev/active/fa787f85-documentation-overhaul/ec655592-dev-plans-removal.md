@@ -3,7 +3,7 @@
 Commits: `65acf0aae` (moves, citations), `c2ad54d52` (citations in four
 files), `e34089ad0` (manifest rows, archived stub). The commit that carries
 this revision of the record repoints the citations inside the two active
-plans, one inventory note and one legacy-mirror document.
+plans and one legacy-mirror document.
 
 ## Moved files
 
@@ -48,7 +48,7 @@ Scan: `git grep -nE 'dev/plans|\.\./plans/|plans/[a-z0-9_]+\.md'`, then
 | `dev/research/simd_batching_bench/src/{lib.rs,generic.rs}` module docs, `dev/research/permanent_gpu_crossover/src/main.rs` (`N_VALUES` doc) | citation removed |
 | `dev/research/{f5,f7}_packing/src/main.rs:130` | the closing printed sentence, which names the encoding decision, is removed; the other printed lines are unchanged |
 | `dev/active/4e732b56/findings.md:34`, `dev/active/ae03bcd0-general-bch/plan.md:12,436` | Markdown link targets |
-| `dev/active/ae03bcd0-general-bch/investigation.md:5,182,187,205,463,485`, `dev/active/6dc81018-field-capability-dispatch/investigation.md:514,515,531,534`, `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:404`, `dev/active/fa787f85-documentation-overhaul/27f0f3b1-inventory-notes.md:7` | path text of the moved files |
+| `dev/active/ae03bcd0-general-bch/investigation.md:5,182,187,205,463,485`, `dev/active/6dc81018-field-capability-dispatch/investigation.md:514,515,531,534`, `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:404` | path text of the moved files |
 | `dev/active/16283d6f-fieldmatrix-gpu/plans/gpu_fieldmatrix_sketch.md:91`, `dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md:15,31,328`, `dev/archive/legacy/crates/gf2-core/docs/COMPUTE_BACKEND_DESIGN.md:144` | path text to the file itself or to the archived plan |
 
 No deleted comment sits between two nested `if`s.
@@ -76,6 +76,7 @@ Matches of `dev/plans` in `dev/active/` that none of the grounds above covers:
 | the same file `:807,862`, `dev/active/b8206228-permanent-statistics/progress.json:1030` | names the bucket or the elided pattern `dev/plans/...`; no file path |
 | `12907582-drift-preaudit.md:83,87,88,90,91,116` | audit rows that quote stale citations of Rust sources and manifests |
 | `1ca94ec2-rearchive.md:47,100` | a file unit 1ca94ec2 removed |
+| `27f0f3b1-inventory-notes.md:7` | `dev/plans/field_poly_module_overview.md`; main changes the adjacent lines after this branch's base, so the line is left to the merge |
 | `83f9ce69-rearchive.md:75`, `41e1d47d-disposition.md:33`, `req18-pretriage.md:29`, `dev-path-code-consumers.md:10,232`, `fa787f85-planning-brief.md:22,65`, `ffc35b8c-sweep-brief-template.md:45,133` | the bucket name or an elided pattern |
 | `dev-path-code-consumers.md:235` | `dev/plans/gf2_core_ppc_spiral.md`, quoted as the text of `scripts/asm-artefact-present.sh` |
 | `handoff-8.md:36`, `investigation.md:50,80,278`, `plan.md:191,301`, `breakdown.json:490,3937,3960,3980,5364`, `progress.json:914,1900` | epic plan, handoff and investigation text |
