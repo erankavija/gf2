@@ -610,7 +610,7 @@
     {
       "id": "calibration-fields",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 377,
       "occurrences": 1,
@@ -621,7 +621,7 @@
     {
       "id": "calibration-bit-arm",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 2323,
       "occurrences": 1,
@@ -654,7 +654,7 @@
     {
       "id": "calibration-inventory-closed",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "4a82d4308b581e05b37db7dbf087184b81058805",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 217,
       "occurrences": 1,
