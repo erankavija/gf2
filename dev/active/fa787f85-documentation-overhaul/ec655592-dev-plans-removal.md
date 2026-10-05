@@ -42,7 +42,7 @@ Scan: `git grep -nE 'dev/plans|\.\./plans/|plans/[a-z0-9_]+\.md'`, then
 | `proofs/Gf2Algebra/Proofs/{Bipedal3Correctness.lean:5, Packed5Correctness.lean:5, Packed7Correctness.lean:4, RyserBounded.lean:7,108,109}`, `proofs/WORKAROUNDS.md:136`, `scripts/fix-aeneas-gf2algebra.py:4,166,224`, `scripts/verify-lean.sh:141,143,145` | path text to the sketches under `dev/archive/ae82bd73-gf2-algebra-permanent/plans/` |
 | `scripts/asm-artefact-present.sh:4,104` | path text to `dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md` |
 | `dev/research/perm_uniformity_gpu/README.md:64`, `dev/research/permanent_gpu_crossover/README.md:13,15` | path text to the writeups under `dev/archive/ae82bd73-gf2-algebra-permanent/plans/` |
-| `dev/archive/packed_field_stub/src/lib.rs:10,1067` | path text to the design records under `dev/archive/ae82bd73-gf2-algebra-permanent/plans/` |
+| the archived packed-field research stub, `src/lib.rs:10,1067` | path text to the design records under `dev/archive/ae82bd73-gf2-algebra-permanent/plans/` |
 | `dev/research/simd_batching_bench/src/{lib.rs,generic.rs}` module docs, `dev/research/permanent_gpu_crossover/src/main.rs` (`N_VALUES` doc) | citation removed |
 | `dev/research/{f5,f7}_packing/src/main.rs:130` | the closing printed sentence, which names the encoding decision, is removed; the other printed lines are unchanged |
 | `dev/active/4e732b56/findings.md:34`, `dev/active/ae03bcd0-general-bch/plan.md:12,436` | Markdown link targets |
@@ -71,14 +71,17 @@ Remaining citations of a `dev/plans/` path absent from the tree, with the ground
 
 ## Tracker references
 
-`target/ec655592-relink.sh` (uncommitted) repoints every reference under
-`dev/plans/` and rescans two documents whose links change. `jit doc
-check-links` rejects a reference pinned to a commit whose tree lacks its path
-(`missing_document ... not found in commit tree`), so each pinned reference
-takes the move commit `65acf0aae` as its pin. At that commit the flint and
-ntl files equal their bytes at the pin `5871eccf` the tracker holds;
-`sota_target_matrix.md` and `small_prime_kernel_strategy.md` differ from their
-bytes at `47e4525` and `3f62600`.
+`target/ec655592-relink.sh` (uncommitted) repoints the unpinned references of
+16283d6f, 3eeb57f6 and ae03bcd0 to the `dev/active` destinations and rescans
+two linked documents whose Markdown links change. Each commit-pinned reference
+keeps its `dev/plans/` path and its pin, which name the bytes the issue relied
+on.
+
+| Pinned path | Pin | Issues |
+|---|---|---|
+| `dev/plans/sota_target_matrix.md` | `47e4525` | 4c0d0202, 97bf0879, cbecfced |
+| `dev/plans/small_prime_kernel_strategy.md` | `3f62600` | 5cacaec5, 662f7a15, 97bf0879, b9aed0d8 |
+| `dev/plans/flint_promotion_evidence.md`, `dev/plans/ntl_promotion_evidence.md` | `5871eccf` | 73ab8eef, cbecfced |
 
 ## Verification
 
