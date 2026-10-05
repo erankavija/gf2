@@ -69,8 +69,9 @@ fn a_block_of_word_size_rows_is_rejected() {
     });
     let payload = outcome.expect_err("a table of 2^64 entries was accepted");
     let message = payload
-        .downcast_ref::<String>()
-        .cloned()
+        .downcast_ref::<&str>()
+        .map(|text| (*text).to_owned())
+        .or_else(|| payload.downcast_ref::<String>().cloned())
         .unwrap_or_default();
     assert!(
         message.starts_with("build_gray_table_flat") && message.contains("overflows usize"),
