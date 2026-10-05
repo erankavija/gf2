@@ -52,11 +52,11 @@ ENTRY_POINTS = [
         "cargo_features": ["simd"],
         "runtime_checks": ["avx2"],
         "selectors": ["bit_backend.simd_min_words"],
-        "private": ["xor-unroll-configurations"],
+        "private": [],
         "witness": "kernels::select_backend_for_size",
         "claims": ["core-simd-optional", "bit-threshold-read", "bit-threshold-default-alias",
                    "bit-threshold-baked-alias", "ops-xor-resolver", "logical-bundle-detect",
-                   "core-logical-bundle-once", "xor-unroll-cfg-declared"],
+                   "core-logical-bundle-once"],
     },
     {
         "id": "population-count",
@@ -198,9 +198,6 @@ ENTRY_POINTS = [
 
 # Selectors and selector-like choices that are no scanned constant.
 DECLARED_SELECTORS = [
-    ("xor-unroll-configurations", SIMD,
-     "Two private compiler configurations select the XOR unroll bodies.",
-     ["xor-unroll-cfg-declared"]),
     ("popcount-comparator-kernels", SIMD,
      "The scalar POPCNT and carry-save kernels are bundle fields that no resolver selects.",
      ["popcount-csa-comparator", "ops-popcount-resolver"]),
@@ -248,7 +245,6 @@ CLASSES = {
     "KG_MAX_RETRIES": "algorithm-limit",
     "WIEDEMANN_DETERMINISTIC_VERIFY_N": "algorithm-limit",
     "UNROLL": "kernel-geometry",
-    "XOR_UNROLL": "selector",
     "WIEDEMANN_MAX_RETRIES": "algorithm-limit",
     "MAX_DECODE_DEPTH": "algorithm-limit",
     "MAX_SEEDS": "algorithm-limit",
@@ -329,9 +325,6 @@ EVIDENCE = [
      ["transpose-lane-selection", "bit-storage-layout-consumers"], ["transpose", "bit-storage"]),
     ("popcount-comparator-kernels",
      ["popcount-route-selection", "fused-count-consumers"], ["popcount"]),
-    ("xor-unroll-configurations",
-     ["2037941f-logical-isolated-xor", "2037941f-logical-public-row-xor"],
-     ["mid-range", "logical-buffer"]),
     ("wide-kernel-widths", ["public-clmul-wide-dispatch"], ["public-clmul"]),
     ("raw-batch-default-lane", ["ymm-clmul-dispatch"], ["ymm-dispatch"]),
     ("gf2m-batch-capability", ["gf2m-clmul-crossover"], ["clmul-crossover"]),

@@ -121,7 +121,7 @@ ARTIFACTS = (
     ("REQ-04", ("source-evidence.json", '"issue": "6e87c436"'), "dense selection and kernel source ledger"),
     ("REQ-04", "production-drift.json", "measured-versus-recorded production source classes"),
     ("REQ-04", "route-comparison.json", "measured and re-observed path per dense cell arm"),
-    ("REQ-04", "asm-comparison.json", "per-symbol instruction text of the AVX2 module"),
+    ("REQ-04", ("asm-comparison.json", '"issue": "6e87c436"'), "per-symbol instruction text of the AVX2 module"),
     ("REQ-05", lambda: STORY / "breakdown.json", "authoritative breakdown manifest"),
     ("REQ-05", lambda: STORY / "review.md", "adversarial plan review"),
     ("REQ-05", "profile-provenance.md", "candidate profile invocation and fixture identity"),

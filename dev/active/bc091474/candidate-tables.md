@@ -67,7 +67,7 @@ The frozen screen selects no confirmatory identity. The [isolated ledger](../../
 
 ## Code complexity
 
-The candidate source commit changes the existing AVX2 XOR file. Its diff adds 25 nonblank source lines against its parent, within the frozen 80-line cap. The measured symbol sizes below come from the release disassembly headers; size is not a speed result.
+The candidate source commit changes the existing AVX2 XOR file. Its diff adds 25 nonblank source lines against its parent, within the frozen 80-line cap. The measured symbol sizes below come from the release disassembly headers; size is not a speed result. Both candidate bodies exist in the pilot receipts' producing-input snapshots only, as `inputs/producing/crates/gf2-kernels-simd/src/x86/avx2.rs` of each receipt; the current kernel source holds neither ([removal record](../1a379447-zen3-cpu-performance/fa1d8733/verification.md)).
 
 | Body | Symbol bytes | Assembly |
 |---|---:|---|

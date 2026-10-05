@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 709dab83a
-; regenerated   : 2026-10-05T06:44:49Z
+; commit        : 6d03804a2
+; regenerated   : 2026-10-05T05:20:00Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -18,6 +18,9 @@
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_xor_into
 ;==========================================================
 
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-7d44b71f/crates/gf2-kernels-simd)
+
+    Finished `release` profile [optimized] target(s) in 2.39s
 gf2_kernels_simd::x86::avx2::avx2_xor_into:
 	cmp rcx, rsi
 	cmovb rsi, rcx
@@ -51,6 +54,8 @@ gf2_kernels_simd::x86::avx2::avx2_xor_into:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_and_into
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.02s
 
 gf2_kernels_simd::x86::avx2::avx2_and_into:
 	cmp rcx, rsi
@@ -86,6 +91,8 @@ gf2_kernels_simd::x86::avx2::avx2_and_into:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_or_into
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.02s
+
 gf2_kernels_simd::x86::avx2::avx2_or_into:
 	cmp rcx, rsi
 	cmovb rsi, rcx
@@ -120,6 +127,8 @@ gf2_kernels_simd::x86::avx2::avx2_or_into:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_not_into
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
+
 gf2_kernels_simd::x86::avx2::avx2_not_into:
 	mov rax, rsi
 	shr rax, 2
@@ -150,6 +159,8 @@ gf2_kernels_simd::x86::avx2::avx2_not_into:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_popcnt
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_popcnt:
 	test rsi, rsi
@@ -212,6 +223,8 @@ gf2_kernels_simd::x86::avx2::avx2_popcnt:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_and_popcnt
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_and_popcnt:
 	cmp rcx, rsi
@@ -296,6 +309,8 @@ gf2_kernels_simd::x86::avx2::avx2_and_popcnt:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_find_first_one
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 	test rsi, rsi
@@ -389,6 +404,8 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_find_first_zero
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 	test rsi, rsi
@@ -485,6 +502,8 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_shift_left_words
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 	push r15
@@ -596,6 +615,8 @@ gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_shift_right_words
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
+
 gf2_kernels_simd::x86::avx2::avx2_shift_right_words:
 	push rax
 	test rdx, rdx
@@ -690,6 +711,8 @@ gf2_kernels_simd::x86::avx2::avx2_shift_right_words:
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build4
 ;==========================================================
 
+    Finished `release` profile [optimized] target(s) in 0.03s
+
 gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build4:
 	vxorps xmm0, xmm0, xmm0
 	vmovups ymmword ptr [rdi], ymm0
@@ -725,6 +748,8 @@ gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build4:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8:
 	vxorps xmm0, xmm0, xmm0
@@ -765,6 +790,8 @@ gf2_kernels_simd::x86::avx2::avx2_m4rm_gray_build8:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4:
 	push r15
@@ -837,6 +864,8 @@ gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8x4:
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8xn
 ;==========================================================
+
+    Finished `release` profile [optimized] target(s) in 0.03s
 
 gf2_kernels_simd::x86::avx2::avx2_m4rm_tile8xn:
 	cmp rsi, 4

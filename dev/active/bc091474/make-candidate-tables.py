@@ -14,6 +14,7 @@ FAMILIES = {
     "isolated": "2037941f-logical-isolated-xor",
     "row": "2037941f-logical-public-row-xor",
 }
+KERNEL_SOURCE = "crates/gf2-kernels-simd/src/x86/avx2.rs"
 PROFILE_CASES = (
     "xor-8w-a64-warm@public-xor-a",
     "xor-9w-a64-warm@public-xor-a",
@@ -81,7 +82,7 @@ def ledger_comparisons(family):
 def added_nonblank_source_lines():
     patch = subprocess.check_output(
         ["git", "diff", "c30102763^", "c30102763", "--",
-         "crates/gf2-kernels-simd/src/x86/avx2.rs"],
+         KERNEL_SOURCE],
         cwd=ROOT, text=True,
     )
     return sum(line.startswith("+") and not line.startswith("+++")
@@ -162,13 +163,21 @@ def main():
               "before any reservation or candidate confirmation; the "
               "[frozen portfolio](portfolio.md) defines that stop rule.", ""]
 
+    for (factor, family) in sources:
+        snapshot = (RESULTS / "2037941f" / FAMILIES[family] / f"bc091474-u{factor}-pilot"
+                    / "inputs/producing" / KERNEL_SOURCE)
+        assert f"gf2_xor_unroll{factor}" in snapshot.read_text(), snapshot
     added = added_nonblank_source_lines()
     assert added <= 80
     lines += ["## Code complexity", "",
               "The candidate source commit changes the existing AVX2 XOR file. "
               f"Its diff adds {added} nonblank source lines against its parent, "
               "within the frozen 80-line cap. The measured symbol sizes below "
-              "come from the release disassembly headers; size is not a speed result.",
+              "come from the release disassembly headers; size is not a speed result. "
+              "Both candidate bodies exist in the pilot receipts' producing-input "
+              f"snapshots only, as `inputs/producing/{KERNEL_SOURCE}` of each receipt; "
+              "the current kernel source holds neither ([removal record]"
+              "(../1a379447-zen3-cpu-performance/fa1d8733/verification.md)).",
               "", "| Body | Symbol bytes | Assembly |", "|---|---:|---|"]
     for variant, label in (("baseline", "Baseline"), ("unroll2", "Factor 2"),
                            ("unroll4", "Factor 4")):

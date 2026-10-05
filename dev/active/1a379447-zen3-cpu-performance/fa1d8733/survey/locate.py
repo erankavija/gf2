@@ -1,4 +1,4 @@
-"""Shared locators for this task's generators (jit:7d44b71f).
+"""Shared locators for this task's generators (jit:fa1d8733).
 
 Importing this module puts the shared scripts on `sys.path`; they resolve
 files under the root git reports.
@@ -36,45 +36,20 @@ import crate_functions  # noqa: E402
 import repository_files  # noqa: E402
 import rust_code_text  # noqa: E402
 
-ISSUE = "7d44b71f"
+ISSUE = "fa1d8733"
 PACKAGE_NAME = "gf2-kernels-simd"
 PACKAGE = repository_files.package_directory(ROOT, PACKAGE_NAME)
 
-# The baselines this task compares, each by content: per-path digests, and
-# byte snapshots of the paths the working tree changes. An `inputs` directory
-# is outside every live lookup.
+# The two trees this task compares, each by content: per-path digests of the
+# kernel package, and byte snapshots of the paths the working tree changes.
 #
-#   anchor            the unedited sources with listings regenerated from them
-#   before-1b034786   the tree holding this task's contracts, before the code
-#                     change of jit:1b034786
-#   after-1b034786    the tree that change leaves
-#   contracts-complete  the tree holding the contracts of the two calls that
-#                     change makes dischargeable
-#
-# The task's own change is `anchor` to `before-1b034786` and `after-1b034786`
-# to `contracts-complete`; the step between belongs to jit:1b034786.
-FIX = "1b034786"
-
-
-def _baseline(stage):
-    return content_anchor.Anchor(ROOT, HERE / f"{stage}-baseline.json", HERE / "inputs" / stage)
-
-
-ANCHOR = _baseline("anchor")
-BEFORE_FIX = _baseline(f"before-{FIX}")
-AFTER_FIX = _baseline(f"after-{FIX}")
-COMPLETE = _baseline("contracts-complete")
+#   before  the sources holding the unroll bodies and their listing
+#   after   the sources without them and the listing regenerated from those
 BASELINES = {
-    "anchor": ANCHOR,
-    f"before-{FIX}": BEFORE_FIX,
-    f"after-{FIX}": AFTER_FIX,
-    "contracts-complete": COMPLETE,
+    stage: content_anchor.Anchor(ROOT, HERE / f"{stage}-baseline.json", HERE / "inputs" / stage)
+    for stage in ("before", "after")
 }
-# The task's two steps, as (name, first tree, last tree).
-STEPS = [
-    (f"anchor to before-{FIX}", "anchor", f"before-{FIX}"),
-    (f"after-{FIX} to contracts-complete", f"after-{FIX}", "contracts-complete"),
-]
+STEP = "before to after"
 
 
 def tracked(suffix):

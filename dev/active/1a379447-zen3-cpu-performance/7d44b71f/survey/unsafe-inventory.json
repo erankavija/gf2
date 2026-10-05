@@ -1095,231 +1095,231 @@
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 44,
+        "line": 36,
         "kind": "unsafe fn",
         "item": "avx2_xor_into",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 79,
+        "line": 61,
         "kind": "unsafe fn",
         "item": "avx2_m4rm_gray_xor16",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 108,
+        "line": 90,
         "kind": "unsafe fn",
         "item": "avx2_m4rm_gray_build4",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 150,
+        "line": 132,
         "kind": "unsafe fn",
         "item": "avx2_m4rm_gray_build8",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 194,
+        "line": 176,
         "kind": "unsafe fn",
         "item": "avx2_m4rm_tile8x4",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 233,
+        "line": 215,
         "kind": "unsafe fn",
         "item": "avx2_m4rm_tile8xn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 251,
+        "line": 233,
         "kind": "unsafe fn",
         "item": "avx2_and_into",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 275,
+        "line": 257,
         "kind": "unsafe fn",
         "item": "avx2_or_into",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 299,
+        "line": 281,
         "kind": "unsafe fn",
         "item": "avx2_not_into",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 325,
+        "line": 307,
         "kind": "unsafe fn",
         "item": "avx2_popcnt",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 383,
+        "line": 365,
         "kind": "unsafe fn",
         "item": "avx2_and_popcnt",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 438,
+        "line": 420,
         "kind": "unsafe fn",
         "item": "avx2_find_first_one",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 482,
+        "line": 464,
         "kind": "unsafe fn",
         "item": "avx2_find_first_zero",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 527,
+        "line": 509,
         "kind": "unsafe fn",
         "item": "avx2_shift_left_words",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 580,
+        "line": 562,
         "kind": "unsafe fn",
         "item": "avx2_shift_right_words",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 634,
+        "line": 616,
         "kind": "unsafe block",
         "item": "and_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 641,
+        "line": 623,
         "kind": "unsafe block",
         "item": "or_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 648,
+        "line": 630,
         "kind": "unsafe block",
         "item": "xor_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 657,
+        "line": 639,
         "kind": "unsafe block",
         "item": "m4rm_gray_xor16_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 678,
+        "line": 660,
         "kind": "unsafe block",
         "item": "m4rm_gray_build4_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 699,
+        "line": 681,
         "kind": "unsafe block",
         "item": "m4rm_gray_build8_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 730,
+        "line": 712,
         "kind": "unsafe block",
         "item": "m4rm_tile8x4_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 754,
+        "line": 736,
         "kind": "unsafe block",
         "item": "m4rm_tile8xn_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 761,
+        "line": 743,
         "kind": "unsafe block",
         "item": "not_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 765,
+        "line": 747,
         "kind": "unsafe block",
         "item": "popcnt_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 769,
+        "line": 751,
         "kind": "unsafe block",
         "item": "and_popcnt_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 773,
+        "line": 755,
         "kind": "unsafe block",
         "item": "popcnt_csa_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 777,
+        "line": 759,
         "kind": "unsafe block",
         "item": "and_popcnt_csa_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 781,
+        "line": 763,
         "kind": "unsafe block",
         "item": "popcnt_instruction_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 785,
+        "line": 767,
         "kind": "unsafe block",
         "item": "find_first_one_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 789,
+        "line": 771,
         "kind": "unsafe block",
         "item": "find_first_zero_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 796,
+        "line": 778,
         "kind": "unsafe block",
         "item": "shift_left_words_fn",
         "contract": true
       },
       {
         "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-        "line": 803,
+        "line": 785,
         "kind": "unsafe block",
         "item": "shift_right_words_fn",
         "contract": true

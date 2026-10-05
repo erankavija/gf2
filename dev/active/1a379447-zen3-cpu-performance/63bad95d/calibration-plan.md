@@ -36,7 +36,6 @@ plan adds the calibration disposition.
 | `bit_backend.simd_min_words` | core section, compile time; the measured owner states it | confirmatory | Retained. Small-input cells of §6 guard it. |
 | `raw-batch-default-lane`, `gf2m-batch-capability` | constants and capability checks | confirmatory | Retained: the confirmations keep the sequential lane and add no length gate. |
 | `wide-kernel-widths`, `gf256-table-predicate`, `residual-shift-capability` | structural or capability choices | confirmatory, qualifying | Retained: each route is adopted by its own qualifying receipt. |
-| `xor-unroll-configurations` | private compiler configurations | exploratory | Retained without a candidate; `fa1d8733` removes the unselected bodies. |
 | `bit_matrix.transpose_simple_max_blocks`, `bit_matrix.transpose_macro_tile_blocks`, `field_vec.dot_chunk_len` | core section; the measured owner states them | none under this protocol | Retained at the measured owner's values. |
 
 The remaining core selectors route no entry point a kernel family of this
