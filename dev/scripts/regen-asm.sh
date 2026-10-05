@@ -25,6 +25,7 @@
 #                    TARGET_CPU=x86-64-v3 for portable baselines, or
 #                    TARGET_CPU=native for host-tuned dumps).
 #   EXTRA_RUSTFLAGS  appended verbatim to RUSTFLAGS.
+#   CARGO_FEATURES   passed to cargo as --features. Default: <empty>.
 #
 # Tooling: requires cargo-show-asm (https://github.com/pacak/cargo-show-asm).
 # Install with: cargo install cargo-show-asm --locked
@@ -67,6 +68,11 @@ extra_symbols=("$@")
 # inlined away, which can make per-symbol asm extraction fail.
 target_cpu="${TARGET_CPU:-}"
 extra_rustflags="${EXTRA_RUSTFLAGS:-}"
+cargo_features="${CARGO_FEATURES:-}"
+feature_args=()
+if [[ -n "$cargo_features" ]]; then
+    feature_args=(--features "$cargo_features")
+fi
 if [[ -n "$target_cpu" ]]; then
     rustflags_value="-C target-cpu=${target_cpu} ${extra_rustflags}"
 else
@@ -114,6 +120,9 @@ fi
     echo "; rustc         : ${rustc_version}"
     echo "; host triple   : ${host_triple}"
     echo "; target-cpu    : ${target_cpu:-<unset; rely on #[target_feature]>}"
+    if [[ -n "$cargo_features" ]]; then
+        echo "; features      : ${cargo_features}"
+    fi
     echo "; RUSTFLAGS     : ${rustflags_value:-<empty>}"
     echo "; commit        : ${git_sha}"
     echo "; regenerated   : ${date_now}"
@@ -142,12 +151,18 @@ emit_with_show_asm() {
         echo "; symbol: ${display_sym}"
         echo ";=========================================================="
         echo
+        # Cargo's status output stays out of the listing: it carries build
+        # times and host paths, and arrives interleaved with the assembly.
+        local status
+        status=$(mktemp)
         if ! RUSTFLAGS="$rustflags_value" cargo asm \
-            -p "$crate" --lib "$asm_sym" "${selector_args[@]}" --simplify 2>&1; then
-            echo
-            echo "; (cargo asm failed for symbol ${display_sym}; output above)" >&2
+            -p "$crate" --lib "${feature_args[@]}" "$asm_sym" "${selector_args[@]}" --simplify 2>"$status"; then
+            cat "$status" >&2
+            rm -f -- "$status"
+            echo "; (cargo asm failed for symbol ${display_sym})" >&2
             return 1
         fi
+        rm -f -- "$status"
     } >> "$out_path"
 }
 
@@ -199,7 +214,7 @@ emit_with_fallback() {
         # log dump.
         local cargo_log="$tmp/cargo.out"
         if ! RUSTFLAGS="$rustflags_value" \
-                cargo rustc --release --target-dir "$tmp" -p "$crate" --lib -- \
+                cargo rustc --release --target-dir "$tmp" -p "$crate" --lib "${feature_args[@]}" -- \
                     "${rustc_args[@]}" >"$cargo_log" 2>&1; then
             cat "$cargo_log"
             echo

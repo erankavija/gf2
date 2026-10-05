@@ -584,9 +584,13 @@ fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -
 /// `buffer[i * stride_words..(i + 1) * stride_words]`, is the XOR of the rows
 /// that the bits of `i` select.
 ///
-/// `buffer` must hold at least `2^k_block * stride_words` words, with
-/// `stride_words = n.div_ceil(64)`; `xor` is the row XOR resolved for that
-/// stride.
+/// `stride_words` is `n.div_ceil(64)`; `xor` is the row XOR resolved for
+/// that stride.
+///
+/// # Panics
+///
+/// Panics, before any store, if `2^k_block` or `2^k_block * stride_words`
+/// overflows `usize` or `buffer` holds fewer words than that product.
 #[doc(hidden)]
 #[inline(never)]
 pub fn build_gray_table_flat(
@@ -597,19 +601,25 @@ pub fn build_gray_table_flat(
     buffer: &mut [u64],
     xor: XorInplaceFn,
 ) {
-    let table_size = 1usize << k_block;
-    let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
-
-    if stride_words == 0 || table_size == 0 {
+    let stride_words = n.div_ceil(64);
+    if stride_words == 0 {
         return;
     }
-
-    debug_assert!(
-        buffer.len() >= table_size * stride_words,
-        "build_gray_table_flat: buffer too small ({} < {} × {})",
+    let Some(table_size) = u32::try_from(k_block)
+        .ok()
+        .and_then(|shift| 1usize.checked_shl(shift))
+    else {
+        panic!("build_gray_table_flat: 2^k_block overflows usize");
+    };
+    // The table is a power of two by construction and the panel is `b`'s own
+    // rows, so the shared check decides the buffer length alone.
+    gf2_kernels_simd::m4rm::assert_gray_build_lengths(
+        "build_gray_table_flat",
         buffer.len(),
+        0,
+        stride_words,
         table_size,
-        stride_words
+        0,
     );
 
     #[cfg(feature = "simd")]

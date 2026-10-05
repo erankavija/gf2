@@ -10,7 +10,7 @@
 ; features      : simd
 ; RUSTFLAGS     : -C target-cpu=native 
 ; commit        : cd4d22220
-; regenerated   : 2026-10-05T06:01:18Z
+; regenerated   : 2026-10-05T06:00:40Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -60,7 +60,7 @@ gf2_core::alg::m4rm::multiply:
 	jmp .LBB255_18
 .LBB255_4:
 	mov rbp, rsi
-	lea rsi, [rip + .Lanon.026db1514c3308d319403452880e385c.395]
+	lea rsi, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.392]
 	lea rdi, [rsp + 328]
 	mov qword ptr [rsp + 128], r13
 	call qword ptr [rip + gf2_core::tuning::active@GOTPCREL]
@@ -167,7 +167,7 @@ gf2_core::alg::m4rm::multiply:
 	lea rcx, [rsp + 264]
 	lea rsi, [rsp + 272]
 	lea rdx, [rsp + 280]
-	lea r9, [rip + .Lanon.026db1514c3308d319403452880e385c.394]
+	lea r9, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.391]
 	mov qword ptr [rsp + 152], rax
 	xor edi, edi
 	mov qword ptr [rsp + 328], rcx
@@ -179,7 +179,7 @@ gf2_core::alg::m4rm::multiply:
 	mov qword ptr [rsp + 368], r8
 	mov qword ptr [rsp + 376], rdx
 	mov qword ptr [rsp + 384], r8
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.393]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.390]
 	lea rdx, [rsp + 288]
 	lea r8, [rsp + 328]
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
@@ -689,7 +689,7 @@ gf2_core::alg::m4rm::multiply:
 .LBB255_110:
 	mov r12, qword ptr [rsp + 64]
 	add r13, rax
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.587]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.584]
 	mov rdi, rax
 	mov r15, r13
 	jmp .LBB255_119
@@ -717,8 +717,8 @@ gf2_core::alg::m4rm::multiply:
 	mov qword ptr [rsp + 312], rcx
 	mov qword ptr [rsp + 320], r8
 	mov r14, qword ptr [rsp + 32]
-	lea rdi, [rip + .Lanon.026db1514c3308d319403452880e385c.585]
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.586]
+	lea rdi, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.582]
+	lea rdx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.583]
 	lea rsi, [rsp + 296]
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
 	jmp .LBB255_121
@@ -728,7 +728,7 @@ gf2_core::alg::m4rm::multiply:
 	mov r14, qword ptr [rsp + 32]
 	mov r12, qword ptr [rsp + 80]
 .LBB255_116:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.380]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.380]
 	mov r15, r13
 	jmp .LBB255_120
 .LBB255_117:
@@ -736,7 +736,7 @@ gf2_core::alg::m4rm::multiply:
 .LBB255_118:
 	mov r12, qword ptr [rsp + 40]
 	add r15, rdi
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.627]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.624]
 .LBB255_119:
 	mov r14, qword ptr [rsp + 32]
 .LBB255_120:
@@ -758,10 +758,10 @@ gf2_core::alg::m4rm::multiply:
 	mov r12, qword ptr [rsp + 40]
 	mov r14, qword ptr [rsp + 32]
 	mov r15, qword ptr [rsp + 96]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.627]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.624]
 	jmp .LBB255_120
 .LBB255_126:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.627]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.624]
 	mov r12, rax
 	jmp .LBB255_119
 	jmp .LBB255_134
@@ -1656,14 +1656,14 @@ gf2_core::alg::m4rm::update_panel_register_tiled:
 	mov qword ptr [rsp + 72], rcx
 	lea rax, [rsp + 448]
 	lea rcx, [rsp + 72]
-	lea rdi, [rip + .Lanon.026db1514c3308d319403452880e385c.589]
+	lea rdi, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.586]
 	mov qword ptr [rsp + 120], rax
 	mov qword ptr [rsp + 128], rsi
 	mov qword ptr [rsp + 136], rcx
 	mov qword ptr [rsp + 144], rsi
 	mov qword ptr [rsp + 152], rdx
 	mov qword ptr [rsp + 160], rsi
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.599]
+	lea rdx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.596]
 	lea rsi, [rsp + 120]
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
 .LBB253_179:
@@ -1882,49 +1882,49 @@ gf2_core::alg::m4rm::update_panel_register_tiled:
 	pop rbp
 	ret
 .LBB253_217:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.627]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.624]
 	mov rdx, r8
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB253_218:
 	mov rdx, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
 	mov rcx, qword ptr [rsp + 400]
 	lea rax, [rsp + 120]
-	lea rdi, [rip + .Lanon.026db1514c3308d319403452880e385c.585]
+	lea rdi, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.582]
 	lea rsi, [rsp + 336]
 	mov qword ptr [rsp + 336], rax
 	mov qword ptr [rsp + 344], rdx
 	mov qword ptr [rsp + 352], rcx
 	mov qword ptr [rsp + 360], rdx
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.626]
+	lea rdx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.623]
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
 .LBB253_219:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.587]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.584]
 	mov rdi, r15
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB253_220:
 	mov rsi, r9
 .LBB253_221:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.382]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.382]
 	mov rdx, r11
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB253_222:
 	mov rdx, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
 	mov rcx, qword ptr [rsp + 104]
 	lea rax, [rsp + 72]
-	lea rdi, [rip + .Lanon.026db1514c3308d319403452880e385c.585]
+	lea rdi, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.582]
 	lea rsi, [rsp + 120]
 	mov qword ptr [rsp + 120], rax
 	mov qword ptr [rsp + 128], rdx
 	mov qword ptr [rsp + 136], rcx
 	mov qword ptr [rsp + 144], rdx
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.586]
+	lea rdx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.583]
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
 .LBB253_223:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.600]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.597]
 	mov rsi, rax
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB253_224:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.587]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.584]
 	mov rdi, rax
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB253_225:
@@ -1933,25 +1933,25 @@ gf2_core::alg::m4rm::update_panel_register_tiled:
 	jmp .LBB253_229
 .LBB253_232:
 	mov rsi, rax
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.392]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.389]
 	mov rdx, r11
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB253_226:
 	mov rdi, qword ptr [rsp + 56]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.381]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.381]
 	mov rsi, r9
 	mov rdx, rax
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB253_231:
 	mov rsi, r10
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.382]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.382]
 	mov rdx, r11
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB253_227:
 	mov rcx, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
 	lea rax, [rsp + 120]
-	lea rdi, [rip + .Lanon.026db1514c3308d319403452880e385c.585]
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.586]
+	lea rdi, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.582]
+	lea rdx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.583]
 	lea rsi, [rsp + 336]
 	mov qword ptr [rsp + 336], rax
 	mov qword ptr [rsp + 344], rcx
@@ -1963,7 +1963,7 @@ gf2_core::alg::m4rm::update_panel_register_tiled:
 	mov r13, rbp
 .LBB253_229:
 	mov rdx, qword ptr [rsp]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.627]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.624]
 	mov rdi, r15
 	mov rsi, r13
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
@@ -1974,7 +1974,7 @@ gf2_core::alg::m4rm::update_panel_register_tiled:
 	cmp r13, qword ptr [rsp]
 	ja .LBB253_229
 	xor edi, edi
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.392]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.389]
 	mov rdx, r11
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 
@@ -1990,64 +1990,52 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	push r12
 	push rbx
 	sub rsp, 424
-	mov eax, ecx
-	and eax, 63
-	mov r13, rcx
-	shr r13, 6
-	cmp rax, 1
-	sbb r13, -1
 	test rcx, rcx
-	je .LBB252_103
-	mov rbp, rdx
-	cmp rdx, 63
-	ja .LBB252_33
-	mov qword ptr [rsp + 96], r8
-	mov r10, r9
-	mov r14, rsi
+	je .LBB252_97
+	mov qword ptr [rsp + 72], r9
+	mov r15, qword ptr [rip + gf2_core::simd::FNS@GOTPCREL]
+	mov r13, rcx
+	and ecx, 63
+	mov ebx, edx
+	and ebx, 63
+	shr r13, 6
+	mov r14d, 1
 	mov r12, rdi
-	lea rdi, [rip + .Lanon.026db1514c3308d319403452880e385c.383]
-	mov esi, 21
-	mov rdx, r10
-	xor ecx, ecx
-	mov r8, r13
 	mov rax, qword ptr [rsp + 480]
+	cmp rcx, 1
+	sbb r13, -1
 	mov qword ptr [rsp + 48], rax
-	mov eax, 1
-	mov qword ptr [rsp], 0
-	mov qword ptr [rsp + 64], r10
-	shlx r9, rax, rbp
-	mov qword ptr [rsp + 56], r9
-	call qword ptr [rip + gf2_kernels_simd::m4rm::assert_gray_build_lengths@GOTPCREL]
-	mov rbx, qword ptr [rip + gf2_core::simd::FNS@GOTPCREL]
-	mov eax, dword ptr [rbx + 144]
+	mov eax, dword ptr [r15 + 144]
+	mov qword ptr [rsp + 96], r8
 	test eax, eax
-	jne .LBB252_34
-	cmp qword ptr [rbx], 0
-	mov r10, qword ptr [rsp + 96]
-	mov r9, qword ptr [rsp + 64]
-	je .LBB252_35
-.LBB252_4:
+	jne .LBB252_114
+.LBB252_2:
+	shlx rax, r14, rbx
+	cmp qword ptr [r15], 0
+	mov qword ptr [rsp + 56], rax
+	mov r9, qword ptr [rsp + 72]
+	je .LBB252_16
 	cmp r13, 4
-	je .LBB252_23
+	je .LBB252_39
 	cmp r13, 8
-	je .LBB252_17
+	je .LBB252_33
 	cmp r13, 16
-	jne .LBB252_35
-	mov rcx, qword ptr [rbx + 24]
+	jne .LBB252_16
+	mov rax, qword ptr [r15 + 24]
 	vxorps xmm0, xmm0, xmm0
 	vmovups ymmword ptr [rsp + 240], ymm0
 	vmovups ymmword ptr [rsp + 208], ymm0
 	vmovups ymmword ptr [rsp + 176], ymm0
 	vmovups ymmword ptr [rsp + 144], ymm0
-	mov qword ptr [rsp + 24], rcx
+	mov qword ptr [rsp + 88], rax
 	cmp r9, 15
-	jbe .LBB252_122
-	vmovups ymmword ptr [r10 + 96], ymm0
-	vmovups ymmword ptr [r10 + 64], ymm0
-	vmovups ymmword ptr [r10 + 32], ymm0
-	vmovups ymmword ptr [r10], ymm0
-	test rbp, rbp
-	je .LBB252_103
+	jbe .LBB252_120
+	vmovups ymmword ptr [r8 + 96], ymm0
+	vmovups ymmword ptr [r8 + 64], ymm0
+	vmovups ymmword ptr [r8 + 32], ymm0
+	vmovups ymmword ptr [r8], ymm0
+	test rbx, rbx
+	je .LBB252_97
 	mov rax, r12
 	mov rcx, qword ptr [rax + 8]
 	mov rbx, qword ptr [r12 + 24]
@@ -2055,10 +2043,11 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	mov rax, qword ptr [rax + 16]
 	lea rbp, [rsp + 208]
 	mov r15d, 1
+	mov r14, rsi
 	xor r13d, r13d
-	mov qword ptr [rsp + 88], rcx
+	mov qword ptr [rsp + 40], rcx
 	mov qword ptr [rsp + 48], rax
-.LBB252_10:
+.LBB252_9:
 	mov rax, r13
 	mov r13, r15
 	shr r13
@@ -2067,155 +2056,47 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	tzcnt rdi, rax
 	add rdi, r14
 	cmp rdi, rbx
-	jae .LBB252_14
+	jae .LBB252_13
 	imul rdi, r12
 	mov rsi, rdi
 	add rsi, r12
-	jb .LBB252_31
+	jb .LBB252_108
 	cmp rsi, qword ptr [rsp + 48]
-	ja .LBB252_31
-	mov rax, qword ptr [rsp + 88]
+	ja .LBB252_108
+	mov rax, qword ptr [rsp + 40]
 	mov rdx, r12
 	lea rsi, [rax + 8*rdi]
 	lea rdi, [rsp + 144]
 	vzeroupper
-	call qword ptr [rsp + 24]
-	mov r10, qword ptr [rsp + 96]
-.LBB252_14:
-	mov rdx, qword ptr [rsp + 64]
+	call qword ptr [rsp + 88]
+	mov r9, qword ptr [rsp + 72]
+	mov r8, qword ptr [rsp + 96]
+.LBB252_13:
 	mov rsi, r13
 	shl rsi, 4
 	lea rax, [rsi + 8]
-	cmp rax, rdx
-	ja .LBB252_32
+	cmp rax, r9
+	ja .LBB252_109
 	vmovups ymm0, ymmword ptr [rsp + 144]
 	vmovups ymm1, ymmword ptr [rsp + 176]
 	mov rcx, rsi
 	or rcx, 15
-	vmovups ymmword ptr [r10 + 8*rsi + 32], ymm1
-	vmovups ymmword ptr [r10 + 8*rsi], ymm0
-	cmp rcx, rdx
-	jae .LBB252_30
+	vmovups ymmword ptr [r8 + 8*rsi + 32], ymm1
+	vmovups ymmword ptr [r8 + 8*rsi], ymm0
+	cmp rcx, r9
+	jae .LBB252_102
 	vmovups ymm0, ymmword ptr [rbp]
 	vmovups ymm1, ymmword ptr [rbp + 32]
 	inc r15
-	vmovups ymmword ptr [r10 + 8*rax + 32], ymm1
-	vmovups ymmword ptr [r10 + 8*rax], ymm0
+	vmovups ymmword ptr [r8 + 8*rax + 32], ymm1
+	vmovups ymmword ptr [r8 + 8*rax], ymm0
 	cmp qword ptr [rsp + 56], r15
-	jne .LBB252_10
-	jmp .LBB252_103
-.LBB252_17:
-	mov rdx, qword ptr [r12 + 24]
-	lea rax, [rbp + r14]
-	cmp rax, rdx
-	ja .LBB252_24
-	mov rcx, rdx
-	sub rcx, r14
-	mov qword ptr [rsp + 112], r14
-	cmp rbp, rcx
-	seta cl
-	cmp rdx, r14
-	jb .LBB252_125
-	test cl, cl
-	jne .LBB252_127
-.LBB252_20:
-	mov rcx, qword ptr [r12 + 40]
-	mov rdx, qword ptr [r12 + 16]
-	imul r14, rcx
-	imul rcx, rbp
-	mov rsi, r14
-	add rsi, rcx
-	jb .LBB252_123
-	cmp rsi, rdx
-	ja .LBB252_123
-	shl r14, 3
-	add r14, qword ptr [r12 + 8]
-	mov qword ptr [rsp], rbp
-	mov rsi, r9
-	mov r8d, 8
-	mov rdi, r10
-	mov r9, qword ptr [rsp + 56]
-	mov rdx, r14
-	call qword ptr [rbx + 40]
-	jmp .LBB252_103
-.LBB252_23:
-	mov rdx, qword ptr [r12 + 24]
-	lea rax, [rbp + r14]
-	cmp rax, rdx
-	jbe .LBB252_25
-.LBB252_24:
-	lea rax, [r13 + 7]
-	movabs rcx, 1152921504606846968
-	mov rbx, rbp
-	mov qword ptr [rsp + 136], 0
-	and rcx, rax
-	neg rcx
-	lea rbp, [r13 + rcx + 8]
-	jmp .LBB252_38
-.LBB252_25:
-	mov rcx, rdx
-	sub rcx, r14
-	mov qword ptr [rsp + 112], r14
-	cmp rbp, rcx
-	seta cl
-	cmp rdx, r14
-	jb .LBB252_126
-	test cl, cl
-	jne .LBB252_127
-.LBB252_27:
-	mov rcx, qword ptr [r12 + 40]
-	mov rdx, qword ptr [r12 + 16]
-	imul r14, rcx
-	imul rcx, rbp
-	mov rsi, r14
-	add rsi, rcx
-	jb .LBB252_123
-	cmp rsi, rdx
-	ja .LBB252_123
-	shl r14, 3
-	add r14, qword ptr [r12 + 8]
-	mov qword ptr [rsp], rbp
-	mov rsi, r9
-	mov r8d, 4
-	mov rdi, r10
-	mov r9, qword ptr [rsp + 56]
-	mov rdx, r14
-	call qword ptr [rbx + 32]
-	jmp .LBB252_103
-.LBB252_30:
-	mov rdx, qword ptr [rsp + 64]
-	add rsi, 16
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.387]
-	mov rdi, rax
-	vzeroupper
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_31:
-	mov rdx, qword ptr [rsp + 48]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.627]
-	vzeroupper
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_32:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.388]
-	mov rdi, rsi
-	mov rsi, rax
-	vzeroupper
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_33:
-	lea rdi, [rip + .Lanon.026db1514c3308d319403452880e385c.384]
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.385]
-	mov esi, 97
-	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
-.LBB252_34:
-	call std::sync::once_lock::OnceLock<T>::initialize
-	cmp qword ptr [rbx], 0
-	mov r10, qword ptr [rsp + 96]
-	mov r9, qword ptr [rsp + 64]
-	jne .LBB252_4
-.LBB252_35:
+	jne .LBB252_9
+	jmp .LBB252_97
+.LBB252_16:
 	cmp r13, 33
-	jae .LBB252_40
+	jae .LBB252_21
 	lea rcx, [r13 + 7]
-	mov rbx, rbp
 	mov rbp, r13
 	mov rax, rcx
 	and ecx, 120
@@ -2225,19 +2106,16 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	sub rbp, rcx
 	mov qword ptr [rsp + 136], rcx
 	cmp rax, 3
-	ja .LBB252_59
+	ja .LBB252_53
 	lea rcx, [rip + .LJTI252_0]
 	movsxd rax, dword ptr [rcx + 4*rax]
 	add rax, rcx
 	jmp rax
-.LBB252_38:
 	cmp rbp, 8
-	jne .LBB252_52
+	jne .LBB252_56
 	mov rdx, qword ptr [rsp + 56]
 	mov rdi, r12
-	mov rsi, r14
 	mov rcx, r13
-	mov r8, r10
 	add rsp, 424
 	pop rbx
 	pop r12
@@ -2246,78 +2124,77 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	pop r15
 	pop rbp
 	jmp gf2_core::alg::m4rm::gray_walk_full
-.LBB252_40:
-	lea rbx, [8*r13]
+.LBB252_21:
+	mov r14, r12
+	mov qword ptr [rsp + 88], rsi
+	lea r15, [8*r13]
 	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
 	mov esi, 8
-	mov rdi, rbx
-	mov qword ptr [rsp + 40], rbx
+	mov rdi, r15
+	mov qword ptr [rsp + 32], r15
 	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
-	mov qword ptr [rsp + 24], rax
 	test rax, rax
-	je .LBB252_130
-	mov rdx, qword ptr [rsp + 64]
+	je .LBB252_128
+	mov rdx, qword ptr [rsp + 72]
 	mov rdi, qword ptr [rsp + 96]
+	mov r12, rax
 	cmp r13, rdx
-	ja .LBB252_117
+	ja .LBB252_115
 	lea rdx, [8*r13]
-	mov rbx, r12
 	xor esi, esi
-	mov r12, r14
 	call qword ptr [rip + memset@GOTPCREL]
-	test rbp, rbp
-	je .LBB252_51
-	mov rax, rbx
-	mov rcx, qword ptr [rax + 8]
-	mov rbp, qword ptr [rbx + 24]
-	mov rbx, qword ptr [rbx + 40]
-	mov rax, qword ptr [rax + 16]
+	test rbx, rbx
+	je .LBB252_32
+	mov rax, qword ptr [r14 + 8]
+	mov rbp, qword ptr [r14 + 24]
+	mov rbx, qword ptr [r14 + 40]
+	mov rcx, qword ptr [r14 + 16]
 	mov r15d, 1
 	xor r14d, r14d
-	mov qword ptr [rsp + 104], rcx
-	mov qword ptr [rsp + 88], rax
-.LBB252_44:
+	mov qword ptr [rsp + 104], rax
+	mov qword ptr [rsp + 40], rcx
+.LBB252_25:
 	mov rax, r14
 	mov r14, r15
 	shr r14
 	xor r14, r15
 	xor rax, r14
 	tzcnt rdi, rax
-	add rdi, r12
+	add rdi, qword ptr [rsp + 88]
 	cmp rdi, rbp
-	jae .LBB252_48
+	jae .LBB252_29
 	imul rdi, rbx
 	mov rsi, rdi
 	add rsi, rbx
-	jb .LBB252_108
-	cmp rsi, qword ptr [rsp + 88]
-	ja .LBB252_108
+	jb .LBB252_103
+	cmp rsi, qword ptr [rsp + 40]
+	ja .LBB252_103
 	mov rax, qword ptr [rsp + 104]
 	lea rdx, [rax + 8*rdi]
-	mov rdi, qword ptr [rsp + 24]
+	mov rdi, r12
 	mov rsi, r13
 	mov rcx, rbx
 	call qword ptr [rsp + 48]
-.LBB252_48:
+.LBB252_29:
 	mov rdi, r14
 	imul rdi, r13
 	mov rax, rdi
 	add rax, r13
-	jb .LBB252_104
-	cmp rax, qword ptr [rsp + 64]
-	ja .LBB252_104
+	jb .LBB252_98
+	cmp rax, qword ptr [rsp + 72]
+	ja .LBB252_98
 	mov rax, qword ptr [rsp + 96]
-	mov rsi, qword ptr [rsp + 24]
 	lea rdx, [8*r13]
 	inc r15
+	mov rsi, r12
 	lea rdi, [rax + 8*rdi]
 	call qword ptr [rip + memcpy@GOTPCREL]
 	cmp qword ptr [rsp + 56], r15
-	jne .LBB252_44
-.LBB252_51:
-	mov rdi, qword ptr [rsp + 24]
-	mov rsi, qword ptr [rsp + 40]
+	jne .LBB252_25
+.LBB252_32:
+	mov rsi, qword ptr [rsp + 32]
 	mov edx, 8
+	mov rdi, r12
 	add rsp, 424
 	pop rbx
 	pop r12
@@ -2326,97 +2203,174 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	pop r15
 	pop rbp
 	jmp qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-.LBB252_52:
+.LBB252_33:
+	mov rdi, rsi
+	lea rax, [rdx + rsi]
+	mov rsi, qword ptr [r12 + 24]
+	cmp rax, rsi
+	ja .LBB252_40
+	mov rcx, rsi
+	sub rcx, rdi
+	mov qword ptr [rsp + 112], rdi
+	cmp rdx, rcx
+	seta cl
+	cmp rsi, rdi
+	mov rsi, rdi
+	jb .LBB252_123
+	test cl, cl
+	jne .LBB252_125
+.LBB252_36:
+	mov rcx, qword ptr [r12 + 40]
+	mov rax, qword ptr [r12 + 16]
+	mov rdi, r8
+	imul rsi, rcx
+	imul rcx, rdx
+	mov r8, rsi
+	add rsi, rcx
+	jb .LBB252_121
+	cmp rsi, rax
+	ja .LBB252_121
+	mov rax, r8
+	shl rax, 3
+	add rax, qword ptr [r12 + 8]
+	mov qword ptr [rsp], rdx
+	mov rsi, r9
+	mov r8d, 8
+	mov r9, qword ptr [rsp + 56]
+	mov rdx, rax
+	call qword ptr [r15 + 40]
+	jmp .LBB252_97
+.LBB252_39:
+	mov rdi, rsi
+	lea rax, [rdx + rsi]
+	mov rsi, qword ptr [r12 + 24]
+	cmp rax, rsi
+	jbe .LBB252_44
+.LBB252_40:
+	lea rax, [r13 + 7]
+	movabs rcx, 1152921504606846968
+	mov qword ptr [rsp + 136], 0
+	mov rsi, rdi
+	and rcx, rax
+	neg rcx
+	lea rbp, [r13 + rcx + 8]
+	cmp rbp, 8
+	jne .LBB252_43
+	mov rdx, qword ptr [rsp + 56]
+	mov rdi, r12
+	mov rcx, r13
+	add rsp, 424
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	jmp gf2_core::alg::m4rm::gray_walk_full
+.LBB252_43:
+	mov al, 1
+	mov dword ptr [rsp + 48], eax
+	mov al, 1
+	mov qword ptr [rsp + 80], 0
+	mov dword ptr [rsp + 28], 0
+	mov dword ptr [rsp + 24], 0
+	mov qword ptr [rsp + 40], rax
+	mov qword ptr [rsp + 64], 0
+	jmp .LBB252_59
+.LBB252_44:
+	mov rcx, rsi
+	sub rcx, rdi
+	mov qword ptr [rsp + 112], rdi
+	cmp rdx, rcx
+	seta cl
+	cmp rsi, rdi
+	mov rsi, rdi
+	jb .LBB252_124
+	test cl, cl
+	jne .LBB252_125
+.LBB252_46:
+	mov rcx, qword ptr [r12 + 40]
+	mov rax, qword ptr [r12 + 16]
+	mov rdi, r8
+	imul rsi, rcx
+	imul rcx, rdx
+	mov r8, rsi
+	add rsi, rcx
+	jb .LBB252_121
+	cmp rsi, rax
+	ja .LBB252_121
+	mov rax, r8
+	shl rax, 3
+	add rax, qword ptr [r12 + 8]
+	mov qword ptr [rsp], rdx
+	mov rsi, r9
+	mov r8d, 4
+	mov r9, qword ptr [rsp + 56]
+	mov rdx, rax
+	call qword ptr [r15 + 32]
+	jmp .LBB252_97
+	cmp rbp, 8
+	jne .LBB252_54
+	mov rdx, qword ptr [rsp + 56]
+	mov rdi, r12
+	mov rcx, r13
+	add rsp, 424
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	jmp gf2_core::alg::m4rm::gray_walk_full
+	cmp rbp, 8
+	jne .LBB252_55
+	mov rdx, qword ptr [rsp + 56]
+	mov rdi, r12
+	mov rcx, r13
+	add rsp, 424
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	jmp gf2_core::alg::m4rm::gray_walk_full
+.LBB252_53:
+	mov qword ptr [rsp + 64], -1
+	mov qword ptr [rsp + 80], 0
+	mov dword ptr [rsp + 28], 0
+	mov dword ptr [rsp + 24], 0
+	mov dword ptr [rsp + 48], 0
+	mov qword ptr [rsp + 40], 0
+	jmp .LBB252_59
+.LBB252_54:
+	mov eax, 2
+	mov qword ptr [rsp + 64], rax
+	mov al, 1
+	mov dword ptr [rsp + 28], eax
+	mov qword ptr [rsp + 80], 0
+	jmp .LBB252_57
+.LBB252_55:
+	mov eax, 3
+	mov qword ptr [rsp + 64], rax
 	mov al, 1
 	mov dword ptr [rsp + 24], eax
-	mov al, 1
 	mov qword ptr [rsp + 80], 0
-	mov dword ptr [rsp + 36], 0
-	mov dword ptr [rsp + 32], 0
-	mov qword ptr [rsp + 48], rax
-	mov qword ptr [rsp + 72], 0
-	jmp .LBB252_65
-	cmp rbp, 8
-	jne .LBB252_60
-	mov rdx, qword ptr [rsp + 56]
-	mov rdi, r12
-	mov rsi, r14
-	mov rcx, r13
-	mov r8, r10
-	add rsp, 424
-	pop rbx
-	pop r12
-	pop r13
-	pop r14
-	pop r15
-	pop rbp
-	jmp gf2_core::alg::m4rm::gray_walk_full
-	cmp rbp, 8
-	jne .LBB252_61
-	mov rdx, qword ptr [rsp + 56]
-	mov rdi, r12
-	mov rsi, r14
-	mov rcx, r13
-	mov r8, r10
-	add rsp, 424
-	pop rbx
-	pop r12
-	pop r13
-	pop r14
-	pop r15
-	pop rbp
-	jmp gf2_core::alg::m4rm::gray_walk_full
-	cmp rbp, 8
-	jne .LBB252_62
-	mov rdx, qword ptr [rsp + 56]
-	mov rdi, r12
-	mov rsi, r14
-	mov rcx, r13
-	mov r8, r10
-	add rsp, 424
-	pop rbx
-	pop r12
-	pop r13
-	pop r14
-	pop r15
-	pop rbp
-	jmp gf2_core::alg::m4rm::gray_walk_full
-.LBB252_59:
-	mov qword ptr [rsp + 72], -1
-	mov qword ptr [rsp + 80], 0
-	mov dword ptr [rsp + 36], 0
-	mov dword ptr [rsp + 32], 0
-	mov dword ptr [rsp + 24], 0
-	mov qword ptr [rsp + 48], 0
-	jmp .LBB252_65
-.LBB252_60:
-	mov eax, 2
-	mov qword ptr [rsp + 72], rax
-	mov al, 1
-	mov dword ptr [rsp + 36], eax
-	mov qword ptr [rsp + 80], 0
-	jmp .LBB252_63
-.LBB252_61:
-	mov eax, 3
-	mov qword ptr [rsp + 72], rax
-	mov al, 1
-	mov dword ptr [rsp + 32], eax
-	mov qword ptr [rsp + 80], 0
-	mov dword ptr [rsp + 36], 0
-	jmp .LBB252_64
-.LBB252_62:
+	mov dword ptr [rsp + 28], 0
+	jmp .LBB252_58
+.LBB252_56:
 	mov eax, 1
-	mov qword ptr [rsp + 72], rax
+	mov qword ptr [rsp + 64], rax
 	mov al, 1
 	mov qword ptr [rsp + 80], rax
-	mov dword ptr [rsp + 36], 0
-.LBB252_63:
-	mov dword ptr [rsp + 32], 0
-.LBB252_64:
-	mov al, 1
+	mov dword ptr [rsp + 28], 0
+.LBB252_57:
 	mov dword ptr [rsp + 24], 0
-	mov qword ptr [rsp + 48], rax
-.LBB252_65:
+.LBB252_58:
+	mov al, 1
+	mov dword ptr [rsp + 48], 0
+	mov qword ptr [rsp + 40], rax
+.LBB252_59:
 	vxorps xmm0, xmm0, xmm0
 	vmovups ymmword ptr [rsp + 368], ymm0
 	vmovups ymmword ptr [rsp + 336], ymm0
@@ -2427,28 +2381,28 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	vmovups ymmword ptr [rsp + 176], ymm0
 	vmovups ymmword ptr [rsp + 144], ymm0
 	cmp r13, r9
-	ja .LBB252_121
+	ja .LBB252_119
 	lea rdx, [8*r13]
-	mov qword ptr [rsp + 88], r14
-	mov rdi, r10
+	mov qword ptr [rsp + 88], rsi
+	mov rdi, r8
 	xor esi, esi
 	vzeroupper
 	call qword ptr [rip + memset@GOTPCREL]
 	test rbx, rbx
-	je .LBB252_103
+	je .LBB252_97
 	mov rax, qword ptr [r12 + 24]
 	mov rdx, qword ptr [r12 + 40]
+	mov rsi, rbp
 	mov ebx, 1
 	mov qword ptr [rsp + 104], rax
 	mov rax, qword ptr [r12 + 8]
 	mov qword ptr [rsp + 416], rax
 	mov rax, qword ptr [r12 + 16]
 	mov qword ptr [rsp + 128], rax
-	mov rcx, qword ptr [rsp + 72]
-	mov qword ptr [rsp + 40], rdx
+	mov rcx, qword ptr [rsp + 64]
+	mov qword ptr [rsp + 32], rdx
 	lea rax, [8*rcx]
-	mov rsi, rax
-	add rsi, rbp
+	add rsi, rax
 	mov r14, rax
 	setb al
 	cmp rsi, rdx
@@ -2460,31 +2414,31 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	shl rax, 6
 	lea r15, [rsp + rax + 144]
 	mov byte ptr [rsp + 23], dl
-.LBB252_68:
+.LBB252_62:
 	mov rax, r12
 	mov r12, rbx
 	shr r12
 	mov r8, qword ptr [rsp + 96]
-	mov rdx, qword ptr [rsp + 64]
+	mov rdx, qword ptr [rsp + 72]
 	xor r12, rbx
 	xor rax, r12
 	tzcnt rdi, rax
 	add rdi, qword ptr [rsp + 88]
 	cmp rdi, qword ptr [rsp + 104]
-	jae .LBB252_86
-	mov rax, qword ptr [rsp + 40]
+	jae .LBB252_80
+	mov rax, qword ptr [rsp + 32]
 	imul rdi, rax
 	mov rsi, rdi
 	add rsi, rax
-	jb .LBB252_110
+	jb .LBB252_105
 	cmp rsi, qword ptr [rsp + 128]
-	ja .LBB252_110
+	ja .LBB252_105
 	mov rax, qword ptr [rsp + 416]
-	cmp byte ptr [rsp + 24], 0
+	cmp byte ptr [rsp + 48], 0
 	lea rax, [rax + 8*rdi]
-	jne .LBB252_80
-	cmp qword ptr [rsp + 40], 7
-	jbe .LBB252_115
+	jne .LBB252_74
+	cmp qword ptr [rsp + 32], 7
+	jbe .LBB252_112
 	mov rcx, qword ptr [rax]
 	xor qword ptr [rsp + 144], rcx
 	mov rcx, qword ptr [rax + 8]
@@ -2502,9 +2456,9 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	mov rcx, qword ptr [rax + 56]
 	xor qword ptr [rsp + 200], rcx
 	cmp byte ptr [rsp + 80], 0
-	jne .LBB252_80
-	cmp qword ptr [rsp + 40], 16
-	jb .LBB252_116
+	jne .LBB252_74
+	cmp qword ptr [rsp + 32], 16
+	jb .LBB252_113
 	mov rcx, qword ptr [rax + 64]
 	xor qword ptr [rsp + 208], rcx
 	mov rcx, qword ptr [rax + 72]
@@ -2521,10 +2475,10 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	xor qword ptr [rsp + 256], rcx
 	mov rcx, qword ptr [rax + 120]
 	xor qword ptr [rsp + 264], rcx
-	cmp byte ptr [rsp + 36], 0
-	jne .LBB252_80
-	cmp qword ptr [rsp + 40], 24
-	jb .LBB252_118
+	cmp byte ptr [rsp + 28], 0
+	jne .LBB252_74
+	cmp qword ptr [rsp + 32], 24
+	jb .LBB252_116
 	mov rcx, qword ptr [rax + 128]
 	xor qword ptr [rsp + 272], rcx
 	mov rcx, qword ptr [rax + 136]
@@ -2541,10 +2495,10 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	xor qword ptr [rsp + 320], rcx
 	mov rcx, qword ptr [rax + 184]
 	xor qword ptr [rsp + 328], rcx
-	cmp byte ptr [rsp + 32], 0
-	jne .LBB252_80
-	cmp qword ptr [rsp + 40], 32
-	jb .LBB252_124
+	cmp byte ptr [rsp + 24], 0
+	jne .LBB252_74
+	cmp qword ptr [rsp + 32], 32
+	jb .LBB252_122
 	mov rcx, qword ptr [rax + 192]
 	xor qword ptr [rsp + 336], rcx
 	mov rcx, qword ptr [rax + 200]
@@ -2561,81 +2515,81 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	xor qword ptr [rsp + 384], rcx
 	mov rcx, qword ptr [rax + 248]
 	xor qword ptr [rsp + 392], rcx
-.LBB252_80:
+.LBB252_74:
 	cmp byte ptr [rsp + 23], 0
-	jne .LBB252_111
-	cmp byte ptr [rsp + 48], 0
-	je .LBB252_129
+	jne .LBB252_106
+	cmp byte ptr [rsp + 40], 0
+	je .LBB252_127
 	cmp rbp, 9
-	jae .LBB252_112
+	jae .LBB252_107
 	cmp r13, qword ptr [rsp + 136]
-	je .LBB252_86
+	je .LBB252_80
 	lea rax, [rax + 8*r14]
 	xor ecx, ecx
-.LBB252_85:
+.LBB252_79:
 	mov rsi, qword ptr [rax + 8*rcx]
 	xor qword ptr [r15 + 8*rcx], rsi
 	inc rcx
 	cmp rbp, rcx
-	jne .LBB252_85
-.LBB252_86:
+	jne .LBB252_79
+.LBB252_80:
 	mov rdi, r12
 	imul rdi, r13
-	cmp byte ptr [rsp + 24], 0
-	jne .LBB252_98
+	cmp byte ptr [rsp + 48], 0
+	jne .LBB252_92
 	lea rsi, [rdi + 8]
 	cmp rdi, -9
-	ja .LBB252_114
+	ja .LBB252_111
 	cmp rsi, rdx
-	ja .LBB252_114
+	ja .LBB252_111
 	vmovups ymm0, ymmword ptr [rsp + 144]
 	vmovups ymm1, ymmword ptr [rsp + 176]
 	cmp byte ptr [rsp + 80], 0
 	vmovups ymmword ptr [r8 + 8*rdi + 32], ymm1
 	vmovups ymmword ptr [r8 + 8*rdi], ymm0
-	jne .LBB252_98
+	jne .LBB252_92
 	lea rax, [rdi + 16]
 	cmp rax, rdx
-	ja .LBB252_113
+	ja .LBB252_110
 	lea rcx, [rsp + 336]
-	cmp byte ptr [rsp + 36], 0
+	cmp byte ptr [rsp + 28], 0
 	vmovups ymm0, ymmword ptr [rcx - 128]
 	vmovups ymm1, ymmword ptr [rcx - 96]
 	vmovups ymmword ptr [r8 + 8*rsi + 32], ymm1
 	vmovups ymmword ptr [r8 + 8*rsi], ymm0
-	jne .LBB252_98
+	jne .LBB252_92
 	lea rsi, [rdi + 24]
 	cmp rdi, -25
-	ja .LBB252_120
+	ja .LBB252_118
 	cmp rsi, rdx
-	ja .LBB252_120
+	ja .LBB252_118
 	vmovups ymm0, ymmword ptr [rcx - 64]
 	vmovups ymm1, ymmword ptr [rcx - 32]
-	cmp byte ptr [rsp + 32], 0
+	cmp byte ptr [rsp + 24], 0
 	vmovups ymmword ptr [r8 + 8*rax + 32], ymm1
 	vmovups ymmword ptr [r8 + 8*rax], ymm0
-	jne .LBB252_98
+	jne .LBB252_92
 	lea rax, [rdi + 32]
 	cmp rdi, -33
-	ja .LBB252_113
+	ja .LBB252_110
 	cmp rax, rdx
-	ja .LBB252_113
+	ja .LBB252_110
 	lea rax, [rsp + 336]
 	vmovups ymm0, ymmword ptr [rax]
 	vmovups ymm1, ymmword ptr [rax + 32]
 	vmovups ymmword ptr [r8 + 8*rsi + 32], ymm1
 	vmovups ymmword ptr [r8 + 8*rsi], ymm0
-.LBB252_98:
+.LBB252_92:
 	add rdi, r14
 	mov rsi, rdi
 	add rsi, rbp
-	jb .LBB252_106
+	jb .LBB252_100
 	cmp rsi, rdx
-	ja .LBB252_106
-	cmp byte ptr [rsp + 48], 0
-	je .LBB252_128
+	ja .LBB252_100
+	cmp byte ptr [rsp + 40], 0
+	je .LBB252_126
 	cmp rbp, 9
-	jae .LBB252_107
+	jae .LBB252_101
 	lea rdi, [r8 + 8*rdi]
 	lea rdx, [8*rbp]
 	mov rsi, r15
@@ -2643,8 +2597,8 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	vzeroupper
 	call qword ptr [rip + memcpy@GOTPCREL]
 	cmp rbx, qword ptr [rsp + 56]
-	jne .LBB252_68
-.LBB252_103:
+	jne .LBB252_62
+.LBB252_97:
 	add rsp, 424
 	pop rbx
 	pop r12
@@ -2654,119 +2608,149 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	pop rbp
 	vzeroupper
 	ret
-.LBB252_104:
-	mov rdx, qword ptr [rsp + 64]
+.LBB252_98:
+	mov rdx, qword ptr [rsp + 72]
 	mov r13, rax
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.390]
-.LBB252_105:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.387]
+.LBB252_99:
 	mov rsi, r13
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-	jmp .LBB252_109
-.LBB252_106:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.373]
+	jmp .LBB252_104
+.LBB252_100:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.373]
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_107:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.372]
+.LBB252_101:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.372]
 	mov edx, 8
 	xor edi, edi
 	mov rsi, rbp
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_108:
-	mov rdx, qword ptr [rsp + 88]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.627]
+.LBB252_102:
+	add rsi, 16
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.384]
+	mov rdi, rax
+	mov rdx, r9
+	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_109:
-	ud2
-.LBB252_110:
-	mov rdx, qword ptr [rsp + 128]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.627]
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_111:
-	mov rsi, qword ptr [rsp + 408]
+.LBB252_103:
 	mov rdx, qword ptr [rsp + 40]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.376]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.624]
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB252_104:
+	ud2
+.LBB252_105:
+	mov rdx, qword ptr [rsp + 128]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.624]
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB252_106:
+	mov rsi, qword ptr [rsp + 408]
+	mov rdx, qword ptr [rsp + 32]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.376]
 	mov rdi, r14
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_112:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.375]
+.LBB252_107:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.375]
 	mov edx, 8
 	xor edi, edi
 	mov rsi, rbp
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_113:
-	mov rdi, rsi
-	mov rsi, rax
-.LBB252_114:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.374]
+.LBB252_108:
+	mov rdx, qword ptr [rsp + 48]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.624]
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_115:
+.LBB252_109:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.385]
+	mov rdi, rsi
+	mov rsi, rax
+	mov rdx, r9
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB252_110:
+	mov rdi, rsi
+	mov rsi, rax
+.LBB252_111:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.374]
+	vzeroupper
+	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB252_112:
 	xor edi, edi
-	mov rdx, qword ptr [rsp + 40]
+	mov rdx, qword ptr [rsp + 32]
 	lea rsi, [rdi + 8]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.377]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.377]
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_116:
+.LBB252_113:
 	mov edi, 8
-	mov rdx, qword ptr [rsp + 40]
+	mov rdx, qword ptr [rsp + 32]
 	lea rsi, [rdi + 8]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.377]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.377]
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_120:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.374]
+.LBB252_118:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.374]
 	mov rdi, rax
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_117:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.391]
+.LBB252_114:
+	mov qword ptr [rsp + 56], r12
+	mov rbp, rsi
+	mov r12, rdx
+	call std::sync::once_lock::OnceLock<T>::initialize
+	mov rdx, r12
+	mov r8, qword ptr [rsp + 96]
+	mov r12, qword ptr [rsp + 56]
+	mov rsi, rbp
+	jmp .LBB252_2
+.LBB252_115:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.388]
 	xor edi, edi
-	jmp .LBB252_105
-.LBB252_118:
+	jmp .LBB252_99
+.LBB252_116:
 	mov edi, 16
-	mov rdx, qword ptr [rsp + 40]
+	mov rdx, qword ptr [rsp + 32]
 	lea rsi, [rdi + 8]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.377]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.377]
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_121:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.378]
+.LBB252_119:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.378]
 	xor edi, edi
 	mov rsi, r13
 	mov rdx, r9
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_122:
-	mov rdx, qword ptr [rsp + 64]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.389]
+.LBB252_120:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.386]
 	mov esi, 16
 	xor edi, edi
+	mov rdx, r9
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_123:
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.591]
-	mov rdi, r14
+.LBB252_121:
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.588]
+	mov rdi, r8
+	mov rdx, rax
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB252_124:
+.LBB252_122:
 	mov edi, 24
-	mov rdx, qword ptr [rsp + 40]
+	mov rdx, qword ptr [rsp + 32]
 	lea rsi, [rdi + 8]
-	lea rcx, [rip + .Lanon.026db1514c3308d319403452880e385c.377]
+	lea rcx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.377]
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
+.LBB252_123:
+	mov cl, 1
+	test cl, cl
+	je .LBB252_36
+	jmp .LBB252_125
+.LBB252_124:
+	mov cl, 1
+	test cl, cl
+	je .LBB252_46
 .LBB252_125:
-	mov cl, 1
-	test cl, cl
-	je .LBB252_20
-	jmp .LBB252_127
-.LBB252_126:
-	mov cl, 1
-	test cl, cl
-	je .LBB252_27
-.LBB252_127:
 	mov rdx, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
 	lea rcx, [rsp + 112]
 	add r12, 24
-	lea rdi, [rip + .Lanon.026db1514c3308d319403452880e385c.589]
+	lea rdi, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.586]
 	lea rsi, [rsp + 144]
 	mov qword ptr [rsp + 120], rax
 	mov qword ptr [rsp + 144], rcx
@@ -2776,28 +2760,28 @@ gf2_core::alg::m4rm::build_gray_table_flat:
 	mov qword ptr [rsp + 168], rdx
 	mov qword ptr [rsp + 176], r12
 	mov qword ptr [rsp + 184], rdx
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.590]
+	lea rdx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.587]
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
-.LBB252_128:
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.371]
-	mov rdi, qword ptr [rsp + 72]
+.LBB252_126:
+	lea rdx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.371]
+	mov rdi, qword ptr [rsp + 64]
 	mov esi, 4
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
-.LBB252_129:
-	lea rdx, [rip + .Lanon.026db1514c3308d319403452880e385c.370]
-	mov rdi, qword ptr [rsp + 72]
+.LBB252_127:
+	lea rdx, [rip + .Lanon.d936d5798ebe3001cbf6c8a7dc4ee6f8.370]
+	mov rdi, qword ptr [rsp + 64]
 	mov esi, 4
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
-.LBB252_130:
-	mov rsi, qword ptr [rsp + 40]
+.LBB252_128:
+	mov rsi, qword ptr [rsp + 32]
 	mov edi, 8
 	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
-	jmp .LBB252_133
-.LBB252_133:
-	mov rdi, qword ptr [rsp + 24]
-	mov rsi, qword ptr [rsp + 40]
+	jmp .LBB252_131
+.LBB252_131:
+	mov rsi, qword ptr [rsp + 32]
 	mov edx, 8
+	mov rdi, r12
 	mov rbx, rax
 	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
 	mov rdi, rbx

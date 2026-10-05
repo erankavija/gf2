@@ -7,17 +7,15 @@ selects and digests each function's instruction text under RULE.
   freeze STAGE  writes `crate-functions-<stage>.json` for one of the baselines
                 `locate.py` names; refuses unless every package file other than
                 an assembly listing holds that baseline's digest, so the record
-                describes that tree. Its `anchor` object identifies the
-                baseline.
-  current       writes `crate-functions-current.json` and
-                `crate-function-comparison.json`, which joins the records per
-                function across this task's two steps: `anchor` to
-                `before-1b034786`, and `after-1b034786` to the working tree.
-                The second step is present once its baseline record exists.
-                Exits nonzero after writing when a function differs across a
-                step or exists on one side only.
+                describes that tree.
+  compare       writes `crate-function-comparison.json`, which joins the
+                committed records per function across this task's two steps.
+                Each record's `sources_sha256` must equal the digest of its
+                baseline's source digests, which ties the record to that tree
+                by content. Exits nonzero after writing when a function
+                differs across a step or exists on one side only.
 
-Usage: make-crate-functions.py freeze STAGE | current
+Usage: make-crate-functions.py freeze STAGE | compare
 """
 
 import hashlib
@@ -26,7 +24,7 @@ import re
 import subprocess
 import sys
 
-from locate import BASELINES, HERE, ISSUE, PACKAGE_NAME, ROOT, repository_files, tracked
+from locate import BASELINES, HERE, ISSUE, PACKAGE_NAME, ROOT, STEPS, repository_files, tracked
 
 RULE = (
     "Per `@function` symbol of the emitted assembly, the lines from its label "
@@ -80,10 +78,15 @@ def functions(assembly):
     return dict(sorted(digests.items()))
 
 
+def sources_digest(digests):
+    """Digest of the per-path digests of the package files other than listings."""
+    sources = {path: held for path, held in digests.items() if not path.endswith(".asm.txt")}
+    return hashlib.sha256(json.dumps(sources, sort_keys=True).encode()).hexdigest()
+
+
 def record(tree, baseline):
     sources = {
-        path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
-        for path in tracked("") if not path.endswith(".asm.txt")
+        path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in tracked("")
     }
     rustc = subprocess.run(["rustc", "--version"], capture_output=True, check=True, text=True)
     return {
@@ -94,7 +97,7 @@ def record(tree, baseline):
         "rustc": rustc.stdout.strip(),
         "rule": RULE,
         "anchor": baseline.identity(),
-        "sources_sha256": hashlib.sha256(json.dumps(sources, sort_keys=True).encode()).hexdigest(),
+        "sources_sha256": sources_digest(sources),
         "functions": functions(emitted()),
     }
 
@@ -133,7 +136,11 @@ def join(name, before, after):
 
 
 def held(stage):
-    return json.loads((HERE / f"crate-functions-{stage}.json").read_bytes())
+    """The committed record of `stage`, checked against that baseline's source digests."""
+    found = json.loads((HERE / f"crate-functions-{stage}.json").read_bytes())
+    if found["sources_sha256"] != sources_digest(BASELINES[stage].digests()):
+        raise SystemExit(f"crate-functions-{stage}.json does not describe the {stage} sources")
+    return found
 
 
 def main():
@@ -146,14 +153,9 @@ def main():
         name = f"crate-functions-{stage}.json"
         print(f"{write(name, made)}: {len(made['functions'])} functions")
         return
-    if sys.argv[1:] != ["current"]:
+    if sys.argv[1:] != ["compare"]:
         raise SystemExit(__doc__)
-    later = "after-1b034786" if (HERE / "crate-functions-after-1b034786.json").is_file() else None
-    current = record("current", BASELINES[later or "before-1b034786"])
-    write("crate-functions-current.json", current)
-    steps = [join("anchor to before-1b034786", held("anchor"), held("before-1b034786"))]
-    if later:
-        steps.append(join("after-1b034786 to working tree", held(later), current))
+    steps = [join(name, held(first), held(last)) for name, first, last in STEPS]
     comparison = {
         "schema": "crate-function-comparison-v2",
         "issue": ISSUE,
