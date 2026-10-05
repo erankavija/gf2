@@ -463,6 +463,24 @@
   "estimated_confirmation_minutes": 10.229809832
  },
  "offline_tuning_campaign": {
+  "matvec_sweep_stride_words": [
+   4,
+   7,
+   8,
+   9,
+   32,
+   63,
+   64,
+   65,
+   128
+  ],
+  "reserved_stride_words": [
+   12,
+   16,
+   24,
+   40,
+   48
+  ],
   "protocol": "dev/active/dbd8787d/premeasurement-protocol.md",
   "session_budget_minutes": 180.0
  }
