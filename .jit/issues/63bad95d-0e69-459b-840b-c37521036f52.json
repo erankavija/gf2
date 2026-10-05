@@ -20,6 +20,442 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "1b34395171f89fbd9d38578d45d5dd579fafaa3436fece0b0c492d4de7cdaa68",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-witness/core-baked.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-baked.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "aa9436c202e7e946d234a8e152859026307ed60583fc75aa93d583ddd96b734c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "route-inventory.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-witness/coding-no-default-features.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/coding-no-default-features.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-witness/sim-default.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/sim-default.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-witness/coding-default.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/coding-default.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b78409ccfed4d1bfbac2b946f216f205e5c3690953644e9e2f78da2dcafbbc84",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-witness/core-default.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-default.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-witness/core-all-features.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-all-features.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-witness/core-simd.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-simd.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5848406cd841fbadb1b7cae90b021b362e3cd078a4892bd1c25d6f784bbf6e6c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Dispatch route inventory of the core kernels (generated)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Dispatch route inventory record",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "18f43d8fa951d824c599a4c5e8ab22bfbb9c5103ed0f0d22c97f2240ca36df69",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "workload-routes.jsonl",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Routes of the measured workloads (generated)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Per-cell routes of every committed receipt",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "f455f9917ac44cdb5c6ce7f42ac68d8dff14949d99d67ee4bbe6671920f2fdf5",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/core-default.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/core-default.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a46df9d6e0a7d113d1218bfe4bfef761ad1faa02a533aa91ea2af77654d93d95",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/core-all-features.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/core-all-features.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca0f52cfdc51c29a2bd9232417a3abf9e282a33601a30cefcbe1543d1ce1840c",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/core-baked.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/core-baked.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7dca3ba27f565a9ca47d17d708078137b15a21d6726c650d7061a91bd5656945",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/coding-default.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/coding-default.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a1d0f63b489793ad3c7c3f58d5dd25b423a2b00cd3e5ab25cf75fcdfdc43854e",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/sim-default.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/sim-default.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c7a7aee3099adf1293c1f21655b01a1f850ab7d1571202f81a37cc9e7f2676c7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/before-contract.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/before-contract.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a0d2a61f3e2d8ebbf65da08cb7b5c2fc42c3ca0071922aa992133dbe154251e4",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "route-inventory.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d2645db2e32e9dae7f575403e656a1328165083983dc50945863a3a4aff60863",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/coding-no-default-features.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/coding-no-default-features.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6e8f69d3ad6890383753e302699b1435eca5ad0a3f9772fccff13c2e87280b03",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/route-witness/dependency-features.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/dependency-features.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "78f790f8bf70b8d40c7db652265bdcc7b505d87d59fdf869d957258e01db474f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/test-logs/core-simd.txt",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/core-simd.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5848406cd841fbadb1b7cae90b021b362e3cd078a4892bd1c25d6f784bbf6e6c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Dispatch fallback verification (REQ-10)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/fallback-verification.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2bddd88f693dcbb28de4d9dbfe21d86a2982c7f80a7efa21a57788e56b6247e7",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "fallback-verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/fallback-verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3c654eed2a537e9127103ec9de26c63aa68565d9ee96b96524b3855a2e8139dd",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a0d2a61f3e2d8ebbf65da08cb7b5c2fc42c3ca0071922aa992133dbe154251e4",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "route-inventory.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8151e97208266437cf92a5814963cc603e245cd4a746cd6d14f2e146e69b1f41",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "calibration-budget.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/calibration-budget.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "18f43d8fa951d824c599a4c5e8ab22bfbb9c5103ed0f0d22c97f2240ca36df69",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "workload-routes.jsonl",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5848406cd841fbadb1b7cae90b021b362e3cd078a4892bd1c25d6f784bbf6e6c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c376cb82b59215ed3bead3814cd6fd6c660a246188289f39c544703cee956fd8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/planned-families.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/planned-families.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Calibration plan for review (nothing frozen)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/calibration-plan.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c376cb82b59215ed3bead3814cd6fd6c660a246188289f39c544703cee956fd8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/planned-families.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/planned-families.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "534cdb6d2ff4760ebfc31a4610d345edd03617eae6c5cae794a981c8805c3f13",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "calibration-budget.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/calibration-budget.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Calibration budget and planned cells (generated)",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/calibration-budget.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Calibration budget record with P-20 arithmetic",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/calibration-budget.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Planned calibration families and cells",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/planned-families.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Source-evidence ledger of the inventory and plan",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Route witness record: core-default",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-default.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Fallback contract run log: core-default",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/core-default.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Route witness record: core-simd",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-simd.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Fallback contract run log: core-simd",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/core-simd.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Route witness record: core-all-features",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-all-features.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Fallback contract run log: core-all-features",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/core-all-features.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Route witness record: core-baked",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-baked.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Fallback contract run log: core-baked",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/core-baked.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Route witness record: coding-default",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/coding-default.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Fallback contract run log: coding-default",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/coding-default.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Route witness record: coding-no-default-features",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/coding-no-default-features.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Fallback contract run log: coding-no-default-features",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/coding-no-default-features.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Route witness record: sim-default",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/sim-default.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Fallback contract run log: sim-default",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/sim-default.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "label": "Kernel package features per dependency build",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/dependency-features.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Failing run before the contract module",
+      "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/test-logs/before-contract.txt"
     }
   ],
   "first_ready_at": "2026-09-06T19:17:39.477371101Z",
@@ -43,5 +479,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Calibrate production dispatch for the 5900X",
-  "updated_at": "2026-10-05T03:11:50.800000359Z"
+  "updated_at": "2026-10-05T04:20:22.638820785Z"
 }
