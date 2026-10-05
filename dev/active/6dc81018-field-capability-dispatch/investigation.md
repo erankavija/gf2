@@ -509,7 +509,7 @@ generated/handwritten proof files:
   `Proofs/RyserBounded.lean:121-137`.
 
 The direct documentation/code-reference consumers include
-`docs/lean4-verification-pipeline.md:24`, `crates/gf2-core/README.md:15`,
+`dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md:24`, `crates/gf2-core/README.md:15`,
 `crates/gf2-algebra/README.md:5`, `dev/archive/legacy/crates/gf2-core/docs/GF2M.md:16`,
 `dev/plans/field_poly_module_overview.md:19`,
 `dev/archive/e095a100-gfpm-arithmetic/plans/bdf95060_breakdown.md:8`, `dev/plans/small_prime_kernel_strategy.md:310`,
@@ -583,7 +583,7 @@ listed in the Rust/proof lists above are not repeated:
   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md:18`,
   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent_completion.md:54`,
   and `dev/studies/0dffa759/findings.md:1022`.
-- User-facing docs and proof maintenance: `docs/lean4-verification-pipeline.md:24`,
+- User-facing docs and proof maintenance: `dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md:24`,
   `dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:65`,
   `dev/archive/bb85c68a-field-linear-algebra/docs/presentations/bb85c68a-fieldmatrix/talk.html:84`,
   `proofs/WORKAROUNDS.md:5`, `scripts/fix-aeneas-dupes.py:4`,
