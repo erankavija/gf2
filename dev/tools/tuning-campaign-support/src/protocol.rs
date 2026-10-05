@@ -740,6 +740,36 @@ impl FamilyAddendum {
         serde_json::from_slice(bytes).map_err(|error| format!("addendum does not decode: {error}"))
     }
 
+    /// Violations of the addendum `bytes` against the live addendum schema
+    /// below `root` that declares the schema identity the addendum names, one
+    /// line each; empty when the addendum conforms.
+    ///
+    /// # Errors
+    ///
+    /// Fails when `bytes` are not JSON naming a schema, or when not exactly
+    /// one live schema document declares that identity or it cannot be read.
+    pub fn schema_violations(root: &Path, bytes: &[u8]) -> io::Result<Vec<String>> {
+        let invalid = |message: String| io::Error::new(io::ErrorKind::InvalidData, message);
+        let instance: serde_json::Value = serde_json::from_slice(bytes)
+            .map_err(|error| invalid(format!("addendum is not JSON: {error}")))?;
+        let identity = instance
+            .get("schema")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| invalid("addendum names no schema".to_owned()))?;
+        let path = SharedInput::AddendumSchema.locate(root, identity)?;
+        let schema = serde_json::from_slice(&fs::read(root.join(&path))?)
+            .map_err(|error| invalid(format!("{path} is not JSON: {error}")))?;
+        Ok(crate::schema::validate(&schema, &instance)
+            .into_iter()
+            .map(|violation| {
+                format!(
+                    "addendum schema violation at {}: {}",
+                    violation.instance_path, violation.message
+                )
+            })
+            .collect())
+    }
+
     /// Structural and semantic validation independent of freezing state.
     pub fn validate(&self) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
