@@ -1,0 +1,66 @@
+{
+ "issue": "316150fd",
+ "rule": "Scope: every live `.rs` file git lists under the `gf2-kernels-simd` package directory, outside receipt input snapshots. Comments are blanked before matching, and names are matched outside literals. Test function and probe: as in the rule of `find-simd-early-returns.py`, with probes derived over the scanned files. Target-feature function: a `fn` item that carries a `#[target_feature(...)]` attribute. Bundle getter: a `fn` outside a `#[cfg(test)]` module whose return type is a type named `...Fns`, that is not an `Option`, and whose body holds a call to a target-feature function. Test helper: a `fn` inside a `#[cfg(test)]` module that is not a test. Kernel use: the body of a test, or of a test helper it calls by bare name (to a fixed point), calls a target-feature function or a bundle getter by bare name. Host check: the body of the test, or of a test helper it calls, holds a probe. Listed: a test with a kernel use and no host check; `via` names the helper that holds the kernel use when the test does not.",
+ "files_scanned": 54,
+ "derived_probe_names": [
+  "avx2_vpclmul_available",
+  "detect",
+  "detect_571",
+  "detect_avx2",
+  "detect_avx2_f5",
+  "detect_avx2_f5_uncached",
+  "detect_avx2_f7",
+  "detect_avx2_f7_uncached",
+  "detect_avx2_uncached",
+  "detect_f32",
+  "detect_f64",
+  "detect_wide",
+  "detect_x86",
+  "detect_x86_f32",
+  "detect_x86_f64",
+  "detect_x86_wide",
+  "has_avx2",
+  "has_avx2_f5",
+  "has_avx2_f7",
+  "ymm_batch_lane_supported"
+ ],
+ "target_feature_functions": 141,
+ "bundle_getters": [
+  "fns"
+ ],
+ "tests_by_file": {
+  "crates/gf2-kernels-simd/src/x86/avx2.rs": 5
+ },
+ "tests": [
+  {
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "test": "test_m4rm_tile8x4_wrapper_panics_on_invalid_table",
+   "test_line": 873,
+   "via": null
+  },
+  {
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "test": "test_m4rm_gray_xor16_wrapper_panics_on_short_src",
+   "test_line": 883,
+   "via": null
+  },
+  {
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "test": "test_m4rm_gray_build4_matches_scalar",
+   "test_line": 903,
+   "via": null
+  },
+  {
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "test": "test_m4rm_gray_build8_matches_scalar",
+   "test_line": 918,
+   "via": null
+  },
+  {
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "test": "test_m4rm_gray_build4_rejects_wrong_stride",
+   "test_line": 934,
+   "via": null
+  }
+ ]
+}
