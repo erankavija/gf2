@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-05T06:36:53.126447922Z",
   "context": {},
   "created_at": "2026-10-05T02:13:55.518842609Z",
@@ -239,7 +239,23 @@
     "code-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-10-05T09:05:00.055052397Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-05T09:06:09.866182479Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-05T09:11:34.819633312Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "fa1d8733-f970-4677-8971-1b9bada40ae4",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -249,5 +265,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Remove the unselected XOR unroll bodies from the AVX2 kernel",
-  "updated_at": "2026-10-05T08:55:50.462195418Z"
+  "updated_at": "2026-10-05T09:11:34.819633312Z"
 }

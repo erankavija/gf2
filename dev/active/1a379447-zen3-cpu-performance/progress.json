@@ -1490,6 +1490,15 @@
       "status": "open",
       "raised_at": "2026-10-05T08:45Z",
       "resolution": null
+    },
+    {
+      "category": "issue criterion wording (fa1d8733 REQ-03)",
+      "issue": "fa1d8733",
+      "question": "code-review F1: REQ-03 says no committed receipt, input snapshot or ledger changes; the issue's commits add content-anchor snapshots under the task's survey/inputs/before/ and regenerate the 63bad95d source-evidence ledger, route inventory and workload-route record (which named the removed flags). The lead wrote \"ledger\" meaning the campaigns' trial ledgers and \"input snapshot\" meaning receipt input snapshots, and ordered the 63bad95d regeneration. Options: (A) amend REQ-03 to \"No committed receipt, receipt input snapshot or trial ledger changes\"; (B) keep the wording, which the merged history cannot satisfy.",
+      "recommendation": "A",
+      "status": "open",
+      "raised_at": "2026-10-05T09:15Z",
+      "resolution": null
     }
   ],
   "rework_counts": {
@@ -2136,7 +2145,8 @@
     "Session 27: 1b034786 DONE (gates pass at aa743ddca after rework 1; review reviews/1b034786-r1.md) and 7d44b71f DONE (gates pass; review reviews/7d44b71f-r1.md). fa1d8733 is unblocked.",
     "Session 27: dispatched fa1d8733 and 54e70918 at 856c78b38. Held for the invoker: f63a2464 (three code-review rulings), b2e09d41 (shared checker under the freeze), a87ae828 (generator edit denied to a worker by the permission system), bfc2ceab (per-interface design choice), 316150fd and dd359005 (their criteria add steps to scripts/cargo-ci.sh, shared infrastructure), 4337c02e and the timed part of 63bad95d (benchmark windows and five plan decisions).",
     "Session 27: bug 66698c3c filed (6e87c436 drift and assembly generators fail on main after the 1b034786 change to m4rm.rs).",
-    "Session 27: 54e70918 partial merged (gf2_core::kernels::backend::contract; search record simd-early-returns.json: 258 before, 225 after). The lead wrote REQ-03 broader than the finding supported; narrowing it is an invoker decision."
+    "Session 27: 54e70918 partial merged (gf2_core::kernels::backend::contract; search record simd-early-returns.json: 258 before, 225 after). The lead wrote REQ-03 broader than the finding supported; narrowing it is an invoker decision.",
+    "Session 27: main cargo-ci passes with the 54e70918 partial merge (838a91963) and with fa1d8733 merged (8a1f7f3fd); both 2037941f closure checks pass. fa1d8733 gates: asm-artefact-present and cargo-ci PASS; code-review FAIL F1, a reading of REQ-03 that the lead's loose wording invites. No rework dispatched: the fix is an invoker amendment of the criterion text. The family closures are not covered by cargo-ci's campaign-producing-closure step; a CI step for them is an invoker decision (shared infrastructure)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2200,7 +2210,7 @@
     "active_workers": {
       "w-b2e09d41": "held, no commits; awaits invoker ruling",
       "w-63bad95d": "untimed stage merged; holds for the invoker's plan decisions",
-      "w-fa1d8733": "agent-fa1d8733",
+      "w-fa1d8733": "merged at 78a1fb6f8; holds; code-review F1 awaits the invoker",
       "w-54e70918": "partial merged; REQ-03 awaits the invoker"
     },
     "m4ri_pilot": "v4-r1-pilot ran 2026-09-28T23:00Z, key 53a5bb9b75c30e58; verified from its execution log; resolution record dev/bench_results/2037941f/m4ri-gap-resolution.md records eligible",
