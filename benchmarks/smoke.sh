@@ -111,7 +111,7 @@ fi
 # dispatch contract for 507b0036 is read-only on run.sh), so we run
 # m4rie's correctness-oracle path directly here. This invokes the
 # container's `m4rie_bench --smoke` to satisfy the per-cell n=16
-# bitwise-equality check required by `dev/plans/sota_reference_acceptance_protocol.md`
+# bitwise-equality check required by `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md`
 # § 6 for every claimed (op, field) cell — currently matmul over GF(2^4),
 # GF(2^8), GF(2^16). Failure exits non-zero and fails the smoke gate.
 #

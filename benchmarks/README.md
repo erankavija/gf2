@@ -165,8 +165,9 @@ at 4096 are formally deferred (see below).
 
 **M4RI scope exclusions.** The M4RI library does not expose a
 `charpoly` or `minpoly` interface. Per the protocol's `not-supported-
-by-library` exclusion class (`dev/plans/sota_reference_acceptance_
-protocol.md` § 8), those operations are documented as having no
+by-library` exclusion class
+(`dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md`
+§ 8), those operations are documented as having no
 M4RI lane and are sourced from a different reference (today: gf2-core
 itself; future: LinBox per `jit:79388011`). M4RI's `mzd_addmul`
 (rectangular fgemm) and sparse paths remain out of scope for this

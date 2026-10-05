@@ -16,7 +16,7 @@
 //     rank but mutates `mat_zz_p` in place; we expose it as `echelon`
 //     for parity with fflas. PLUQ is NOT exposed by NTL at this level
 //     of the API — `LU` is internal — so we skip the `pluq` cell and
-//     document the gap in dev/plans/ntl_promotion_evidence.md.
+//     document the gap in dev/archive/026fc832-gf2-core-sota-stretch/plans/ntl_promotion_evidence.md.
 //   * Sizes: 16 (smoke only) and 64 by default. Larger sizes (256,
 //     1024) opt in via --large; per-cell wall-clock is capped at
 //     kCellBudgetNs to avoid runaway on hosts where NTL is materially

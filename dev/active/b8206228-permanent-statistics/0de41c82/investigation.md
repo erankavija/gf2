@@ -286,7 +286,7 @@ not only F_3:
 
 The proof targets are pinned to a fixed inherent surface for the
 Charon/Aeneas pipeline (`packed7.rs:485-497`, naming
-`dev/plans/30e98ef1/d6_lean_packed7_sketch.md` §4 and the `packed5.rs:326-401`
+`dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d6_lean_packed7_sketch.md` §4 and the `packed5.rs:326-401`
 pattern it adapts). **Consequence:** a new *public* packed representation
 attracts a proof obligation by convention, and `AGENTS.md:114-116` requires an
 approved sketch (lemma statements, strategy, exact production path) *before*
@@ -401,7 +401,7 @@ re-derive. Paths are repo-relative; each was opened.
   plan that established the crate's evidence protocol (`## Evidence protocol`,
   `:51`) and the multi-arch `.co` seam (design doc §6, referenced from
   `build.rs:50` and `host/arch.rs:4`).
-- `dev/plans/16283d6f-fieldmatrix-gpu/gpu_fieldmatrix_sketch.md` — an unrelated
+- `dev/active/16283d6f-fieldmatrix-gpu/plans/gpu_fieldmatrix_sketch.md` — an unrelated
   GPU epic sketch; relevant only for its storage/transfer-model section
   (`:33-52`) as a precedent for how this repo frames device residency.
 

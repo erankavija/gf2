@@ -1,7 +1,7 @@
 // benchmarks/reference/ntl_flint_smoke.cpp
 //
 // Cross-equality oracle for NTL and FLINT on the per-operation
-// contracts in dev/plans/sota_reference_acceptance_protocol.md § 6.
+// contracts in dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md § 6.
 //
 // At n=16, for each (operation, field) cell that BOTH libraries cover,
 // this binary fills the same SplitMix64-derived input matrix in both

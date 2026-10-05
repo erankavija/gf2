@@ -18,7 +18,7 @@
 //! that only put `#[target_feature]` on the per-prime side measured a 12-34x
 //! penalty against the generic framework — that was a benchmark artefact,
 //! not a real cost. The current implementation closes the gap modulo a
-//! small constant factor (see `dev/plans/r4_simd_batching_decision.md`).
+//! small constant factor.
 //!
 //! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment.
 

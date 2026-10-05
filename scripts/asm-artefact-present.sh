@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # JIT gate runner: asm-artefact-present.
 #
-# Enforces the PPC-spiral I3 convention (see dev/plans/gf2_core_ppc_spiral.md):
+# Enforces the PPC-spiral I3 convention (see dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md):
 # every change to a SIMD source file under
 #   crates/gf2-kernels-simd/src/x86/<module>.rs
 # must be accompanied by a corresponding regenerated artefact at
@@ -101,7 +101,7 @@ if (( ${#missing[@]} > 0 )); then
         echo "  ./dev/scripts/regen-asm.sh gf2-kernels-simd <symbol> \\"
         echo "      ${asm_prefix}<module>.asm.txt"
         echo
-        echo "See dev/plans/gf2_core_ppc_spiral.md (section I3) for rationale."
+        echo "See dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md (section I3) for rationale."
     } >&2
     exit 1
 fi
