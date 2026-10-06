@@ -77,3 +77,16 @@ prints nothing:
 "$R/5a25717c-verdicts.sh" "$PWD/target/f79bcba3-verdicts.txt"
 diff "$PWD/target/f79bcba3-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
 ```
+
+## Repeat at the 602652bf entry move
+
+The same commands at `8fd000a700be73025bbf1c05971aa3dca18ad9d7`, the parent of
+the 602652bf commits, and at `8ec2a4abefc198d232cface645325c5266193fd1`, after
+the `f547c394` and `bdc507a3` entries move under the epic directory, write the
+listing `f79bcba3-verdicts-before.txt`: 151 receipts. At each commit this
+command prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/602652bf-verdicts.txt"
+diff "$PWD/target/602652bf-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```
