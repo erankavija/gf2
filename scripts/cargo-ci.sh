@@ -223,7 +223,7 @@ summarize_fail() {
 if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
   FEAT_FLAGS="--all-features"
 else
-  FEAT_FLAGS="--features simd,parallel,visualization,llr-f64"
+  FEAT_FLAGS="--features simd,parallel,visualization"
 fi
 
 # Run all steps in order; continue through failures to report all of them.
@@ -302,7 +302,7 @@ run_step fmt    "$BUDGET" cargo fmt --all -- --check
 
 # Fixed rather than host-dependent: matches the doc and doctest steps of
 # .github/workflows/ci.yml.
-DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand,llr-f64"
+DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand"
 run_step doc     env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc --workspace --release --no-deps $DOC_FEAT_FLAGS
 run_step doctest "$BUDGET" --test cargo test --doc --workspace --release $DOC_FEAT_FLAGS
 

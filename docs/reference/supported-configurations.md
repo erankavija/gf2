@@ -59,7 +59,7 @@ features in other crates.
 | [`gf2-core`](../../crates/gf2-core/Cargo.toml) | `rand`, `io` | none |
 | [`gf2-coding`](../../crates/gf2-coding/Cargo.toml) | `simd`, `sim-observability` | `simd`, `parallel`, `visualization`, `tuning-profile` enable the same `gf2-core` feature; `bench-csv` enables `gf2-core/test-support`; `hip` enables `gf2-kernels-hip/hip` |
 | [`gf2-algebra`](../../crates/gf2-algebra/Cargo.toml) | `simd`, `parallel`, `f5`, `f7` | `simd`, `parallel`, `tuning-profile` enable the same `gf2-core` feature; `hip` enables `gf2-kernels-hip/hip` |
-| [`gf2-sim`](../../crates/gf2-sim/Cargo.toml) | none | `hip` enables `gf2-coding/hip` and `gf2-algebra/hip`; `llr-f64` enables `gf2-coding/llr-f64` |
+| [`gf2-sim`](../../crates/gf2-sim/Cargo.toml) | none | `hip` enables `gf2-coding/hip` and `gf2-algebra/hip` |
 | [`gf2-kernels-simd`](../../crates/gf2-kernels-simd/Cargo.toml) | none | none; `avx2` and `avx512` gate no code |
 | [`gf2-kernels-hip`](../../crates/gf2-kernels-hip/Cargo.toml) | none | none |
 | [`gf2-stats`](../../crates/gf2-stats/Cargo.toml) | no features | none |
