@@ -67,7 +67,7 @@ CLAIMS = [
      "CI builds the baked configuration in one scoped step; every other step keeps the "
      "conservative constants."),
     ("ci-feature-flags", None, "cargo-ci.sh",
-     '  FEAT_FLAGS="--features simd,parallel,visualization,llr-f64"', 1,
+     '  FEAT_FLAGS="--features simd,parallel,visualization"', 1,
      "The workspace test step of CI enables `simd`, so it runs the shared fallback "
      "contract on the kernel build only."),
     # Kernel bundle detection.

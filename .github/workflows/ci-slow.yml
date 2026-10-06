@@ -54,7 +54,7 @@ jobs:
       # A name-based filter here would rot as tests are added; the gates live
       # with the tests. See crates/gf2-coding/tests/common/mod.rs.
       run: >
-        cargo nextest run --workspace --features simd,parallel,visualization,io,rand,llr-f64
+        cargo nextest run --workspace --features simd,parallel,visualization,io,rand
         --release --profile slow --run-ignored ignored-only
 
   kani-heavy:
