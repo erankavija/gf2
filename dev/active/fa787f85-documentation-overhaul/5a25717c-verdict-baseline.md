@@ -90,3 +90,17 @@ command prints nothing:
 "$R/5a25717c-verdicts.sh" "$PWD/target/602652bf-verdicts.txt"
 diff "$PWD/target/602652bf-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
 ```
+
+## Repeat at the 198aafa3 entry move
+
+The same commands at `3f1433616163ce2dc89817eca79f5f6428d58d6a`, the parent of
+the 198aafa3 commits, and at `59f56ce93e6ad38ec7e092eac6cb37729a60742d`, after
+the entries `4c1e441f`,
+`53c5a8c0`, `6c6b09b1`, `6fb89a3c`, `ad2a6a58`, `c077a88b`, `c7113c5a` and
+`f63a2464` move under the epic directory, write the listing
+`f79bcba3-verdicts-before.txt`. At each commit this command prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/198aafa3-verdicts.txt"
+diff "$PWD/target/198aafa3-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```
