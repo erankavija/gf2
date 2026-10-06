@@ -79,8 +79,8 @@ Each build rewrites two tracked lockfiles,
 `dev/active/19513245/survey/field-laws/Cargo.lock` and
 `E/6c6b09b1/survey/field-laws/Cargo.lock` (one `tempfile` line each), at the
 baseline and at the repeat, and `cargo +1.95.0 metadata --locked` fails on
-both. The committed lockfiles keep their bytes; resolution of every tracked
-harness lockfile under `--locked` -> 58a4bb51 (jit issue show 58a4bb51).
+both -> 0d1e9536 (jit issue show 0d1e9536). The committed lockfiles keep
+their bytes.
 
 ## Scripts (REQ-04)
 
@@ -157,7 +157,7 @@ Tracker files under `.jit/` are outside the scan: they are tracker state.
 | Manifest | `python3 R/migration/check.py` at `95ba9291f` and after | no finding, exit 0: each row whose path is one of the eight flat directories or lies below one is `complete`, with its source at its destination under `E` or, for the five deletion rows of `264a453d2`, absent | twelve tracked files of the entries have no row of their own; the row of their directory covers them. The command exits 1 at `552a0548d` |
 | Tracker | the two commands below, on the main checkout | 308 unpinned references under the eight flat paths, 29 commit-pinned, which keep the path of their commit | the tracker changes themselves: the relink script of the unit's return makes them on the main checkout |
 | Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each of the 13 steps `ok` on the tree of `59f56ce93` | the CI verdict: the filtered run omits every cargo step |
-| Formatting | `cargo +1.95.0 fmt --check` in each harness crate whose Rust files `552a0548d` edits | exit 0 in six crates; `E/6c6b09b1/survey/ext-side/build.rs` is formatted in that commit | `S/survey/dense-harness` exits 1 at `3f1433616` and at `552a0548d`, in lines the commit leaves alone |
+| Formatting | `cargo +1.95.0 fmt --check` in each harness crate whose Rust files `552a0548d` edits | exit 0 in six crates; `E/6c6b09b1/survey/ext-side/build.rs` is formatted in that commit | `S/survey/dense-harness` exits 1 at `3f1433616` and at `552a0548d`, in lines the commit leaves alone -> 3d864278 (jit issue show 3d864278) |
 
 ```
 P='^dev/active/(4c1e441f|53c5a8c0|6c6b09b1|6fb89a3c|ad2a6a58|c077a88b|c7113c5a|f63a2464)(/|$)'
