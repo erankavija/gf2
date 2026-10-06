@@ -1628,6 +1628,34 @@ impl DecoderResult {
             queries: None,
         }
     }
+
+    /// Returns the decode metadata without the decoded bits.
+    pub fn outcome(&self) -> DecodeOutcome {
+        DecodeOutcome {
+            iterations: self.iterations,
+            converged: self.converged,
+            syndrome_check_passed: self.syndrome_check_passed,
+            queries: self.queries,
+        }
+    }
+}
+
+/// Outcome of a decode that writes its decoded bits into caller-provided
+/// storage.
+///
+/// The fields carry the meanings of the same-named fields of
+/// [`DecoderResult`], which owns its decoded bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct DecodeOutcome {
+    /// Number of iterations performed.
+    pub iterations: usize,
+    /// Whether the decoder converged to a valid codeword.
+    pub converged: bool,
+    /// Whether the syndrome check passed.
+    pub syndrome_check_passed: bool,
+    /// Number of parity-check queries performed, when the decoder counts
+    /// them.
+    pub queries: Option<usize>,
 }
 
 /// Hard-decision decoder for block codes.
@@ -1681,6 +1709,177 @@ pub trait IterativeSoftDecoder: SoftDecoder {
 
     /// Resets internal decoder state, so that none leaks between codewords.
     fn reset(&mut self);
+}
+
+/// Soft-decision block decoder that decodes several whole frames per call.
+///
+/// A frame is the [`frame_len`](Self::frame_len) LLRs of one block, under the
+/// sign convention of [`SoftDecoder`]. Decoding takes the decoder mutably
+/// because an implementer may own a workspace. Hard-decision decoding
+/// ([`HardDecisionDecoder`]), streaming decoding ([`StreamingDecoder`]) and
+/// batch encoding have their own entry points.
+///
+/// # Implementers
+///
+/// Every [`SoftDecoder`] is a batch decoder of granularity one that decodes
+/// each frame with [`SoftDecoder::decode_soft_with_result`]. For
+/// [`LdpcDecoder`](crate::ldpc::LdpcDecoder) and
+/// [`GldpcDecoder`](crate::gldpc::GldpcDecoder) that path is their
+/// hard-decision `decode_soft`; [`IterativeBatchDecoder`] reaches their
+/// iterative decoding.
+///
+/// # Allocation
+///
+/// Decoded words and outcomes are caller-provided and the workspace belongs
+/// to the implementer, so an implementer decodes without allocating once its
+/// workspace is sized. The [`SoftDecoder`] path and [`IterativeBatchDecoder`]
+/// allocate what the single-frame decode they call allocates.
+///
+/// # Trait objects
+///
+/// [`decode_batch`](Self::decode_batch) is generic over the frame type, so
+/// the trait is not dyn compatible and consumers take a type parameter
+/// bounded by it. The bound admits unsized types: `dyn SoftDecoder` is a
+/// batch decoder.
+pub trait BatchSoftDecoder {
+    /// Returns the number of LLRs in one frame.
+    fn frame_len(&self) -> usize;
+
+    /// Returns the number of bits in one decoded word.
+    fn decoded_len(&self) -> usize;
+
+    /// Returns the number of frames the implementer decodes together. A batch
+    /// of any length is valid; one whose length is a multiple of the
+    /// granularity leaves no group incomplete.
+    fn batch_granularity(&self) -> usize;
+
+    /// Decodes `frames[i]` into `decoded[i]`, replacing its contents with
+    /// [`decoded_len`](Self::decoded_len) bits, and writes its outcome to
+    /// `outcomes[i]`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a frame's length differs from
+    /// [`frame_len`](Self::frame_len), or if `decoded` or `outcomes` differs
+    /// in length from `frames`.
+    fn decode_batch<F: AsRef<[Llr]>>(
+        &mut self,
+        frames: &[F],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+    );
+}
+
+/// Decodes each frame with `decode_frame`, in input order.
+fn decode_batch_per_frame<F: AsRef<[Llr]>>(
+    frame_len: usize,
+    frames: &[F],
+    decoded: &mut [BitVec],
+    outcomes: &mut [DecodeOutcome],
+    mut decode_frame: impl FnMut(&[Llr]) -> DecoderResult,
+) {
+    assert_eq!(
+        decoded.len(),
+        frames.len(),
+        "a batch needs one decoded word per frame"
+    );
+    assert_eq!(
+        outcomes.len(),
+        frames.len(),
+        "a batch needs one outcome per frame"
+    );
+    for (index, frame) in frames.iter().enumerate() {
+        let llrs = frame.as_ref();
+        assert_eq!(
+            llrs.len(),
+            frame_len,
+            "frame {index} has {} LLRs, the decoder takes {frame_len}",
+            llrs.len()
+        );
+        let result = decode_frame(llrs);
+        outcomes[index] = result.outcome();
+        decoded[index] = result.decoded_bits;
+    }
+}
+
+impl<D: SoftDecoder + ?Sized> BatchSoftDecoder for D {
+    fn frame_len(&self) -> usize {
+        self.n()
+    }
+
+    fn decoded_len(&self) -> usize {
+        self.k()
+    }
+
+    fn batch_granularity(&self) -> usize {
+        1
+    }
+
+    fn decode_batch<F: AsRef<[Llr]>>(
+        &mut self,
+        frames: &[F],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+    ) {
+        decode_batch_per_frame(self.n(), frames, decoded, outcomes, |llrs| {
+            self.decode_soft_with_result(llrs)
+        });
+    }
+}
+
+/// Batch decoder of granularity one over an [`IterativeSoftDecoder`]: each
+/// frame is decoded by [`IterativeSoftDecoder::decode_iterative`] under one
+/// iteration cap.
+#[derive(Debug, Clone)]
+pub struct IterativeBatchDecoder<D> {
+    decoder: D,
+    max_iterations: usize,
+}
+
+impl<D: IterativeSoftDecoder> IterativeBatchDecoder<D> {
+    /// Wraps `decoder` with the iteration cap of every frame.
+    pub fn new(decoder: D, max_iterations: usize) -> Self {
+        Self {
+            decoder,
+            max_iterations,
+        }
+    }
+
+    /// Returns the iteration cap of every frame.
+    pub fn max_iterations(&self) -> usize {
+        self.max_iterations
+    }
+
+    /// Returns the wrapped decoder.
+    pub fn into_inner(self) -> D {
+        self.decoder
+    }
+}
+
+impl<D: IterativeSoftDecoder> BatchSoftDecoder for IterativeBatchDecoder<D> {
+    fn frame_len(&self) -> usize {
+        self.decoder.n()
+    }
+
+    fn decoded_len(&self) -> usize {
+        self.decoder.k()
+    }
+
+    fn batch_granularity(&self) -> usize {
+        1
+    }
+
+    fn decode_batch<F: AsRef<[Llr]>>(
+        &mut self,
+        frames: &[F],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+    ) {
+        let max_iterations = self.max_iterations;
+        decode_batch_per_frame(self.decoder.n(), frames, decoded, outcomes, |llrs| {
+            self.decoder.decode_iterative(llrs, max_iterations)
+        });
+    }
 }
 
 /// Streaming encoder for convolutional codes; state persists across calls.
@@ -2258,5 +2457,229 @@ mod erased_handle_tests {
         let erased = ErasedSymbols::new(&code, message.clone());
         let recovered = erased.downcast(&code).unwrap();
         assert_eq!(&*recovered, &message);
+    }
+}
+
+#[cfg(test)]
+mod batch_decoder_tests {
+    use super::*;
+
+    const K: usize = 3;
+    const N: usize = 5;
+
+    /// Decodes the hard decisions of the first `K` LLRs. The iteration count
+    /// is one more than the number of negative LLRs, so frames differ in
+    /// their outcomes; the single-shot path reports it as the query count.
+    struct MockDecoder;
+
+    fn hard_bits(llrs: &[Llr]) -> BitVec {
+        let mut bits = BitVec::new();
+        for llr in &llrs[..K] {
+            bits.push_bit(llr.hard_decision());
+        }
+        bits
+    }
+
+    fn needed_iterations(llrs: &[Llr]) -> usize {
+        1 + llrs.iter().filter(|llr| llr.hard_decision()).count()
+    }
+
+    impl SoftDecoder for MockDecoder {
+        fn k(&self) -> usize {
+            K
+        }
+
+        fn n(&self) -> usize {
+            N
+        }
+
+        fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
+            hard_bits(llrs)
+        }
+
+        fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+            DecoderResult {
+                queries: Some(needed_iterations(llrs)),
+                ..DecoderResult::success(hard_bits(llrs))
+            }
+        }
+    }
+
+    impl IterativeSoftDecoder for MockDecoder {
+        fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
+            let needed = needed_iterations(llrs);
+            let converged = needed <= max_iterations;
+            DecoderResult::new(
+                hard_bits(llrs),
+                needed.min(max_iterations),
+                converged,
+                converged,
+            )
+        }
+
+        fn last_iteration_count(&self) -> usize {
+            0
+        }
+
+        fn reset(&mut self) {}
+    }
+
+    /// Frame `f` has its first `f` LLRs negative, so no two frames agree in
+    /// decoded word or iteration count.
+    fn frames(count: usize) -> Vec<Vec<Llr>> {
+        (0..count)
+            .map(|f| {
+                (0..N)
+                    .map(|i| Llr::new(if i < f { -1.0 } else { 1.0 }))
+                    .collect()
+            })
+            .collect()
+    }
+
+    fn decode<D: BatchSoftDecoder + ?Sized>(
+        decoder: &mut D,
+        frames: &[Vec<Llr>],
+    ) -> (Vec<BitVec>, Vec<DecodeOutcome>) {
+        let mut decoded = vec![BitVec::new(); frames.len()];
+        let mut outcomes = vec![DecodeOutcome::default(); frames.len()];
+        decoder.decode_batch(frames, &mut decoded, &mut outcomes);
+        (decoded, outcomes)
+    }
+
+    #[test]
+    fn soft_decoder_batch_matches_single_frame_decodes_in_input_order() {
+        let frames = frames(N);
+        let (decoded, outcomes) = decode(&mut MockDecoder, &frames);
+
+        for (f, frame) in frames.iter().enumerate() {
+            let single = MockDecoder.decode_soft_with_result(frame);
+            assert_eq!(decoded[f], single.decoded_bits, "frame {f}");
+            assert_eq!(
+                decoded[f].len(),
+                BatchSoftDecoder::decoded_len(&MockDecoder)
+            );
+            assert_eq!(outcomes[f], single.outcome(), "frame {f}");
+        }
+        assert!(outcomes.windows(2).all(|pair| pair[0] != pair[1]));
+    }
+
+    #[test]
+    fn soft_decoder_reports_its_shape_with_granularity_one() {
+        assert_eq!(BatchSoftDecoder::frame_len(&MockDecoder), N);
+        assert_eq!(BatchSoftDecoder::decoded_len(&MockDecoder), K);
+        assert_eq!(BatchSoftDecoder::batch_granularity(&MockDecoder), 1);
+    }
+
+    #[test]
+    fn iterative_adapter_batch_matches_capped_single_frame_decodes_in_input_order() {
+        let cap = 3;
+        let frames = frames(N);
+        let mut adapter = IterativeBatchDecoder::new(MockDecoder, cap);
+        let (decoded, outcomes) = decode(&mut adapter, &frames);
+
+        for (f, frame) in frames.iter().enumerate() {
+            let single = MockDecoder.decode_iterative(frame, cap);
+            assert_eq!(decoded[f], single.decoded_bits, "frame {f}");
+            assert_eq!(decoded[f].len(), adapter.decoded_len());
+            assert_eq!(outcomes[f], single.outcome(), "frame {f}");
+        }
+        // The cap separates converged frames from capped ones.
+        assert!(outcomes.iter().any(|outcome| outcome.converged));
+        assert!(outcomes.iter().any(|outcome| !outcome.converged));
+    }
+
+    #[test]
+    fn iterative_adapter_reports_its_shape_with_granularity_one() {
+        let adapter = IterativeBatchDecoder::new(MockDecoder, 7);
+        assert_eq!(adapter.frame_len(), N);
+        assert_eq!(adapter.decoded_len(), K);
+        assert_eq!(adapter.batch_granularity(), 1);
+        assert_eq!(adapter.max_iterations(), 7);
+    }
+
+    #[test]
+    fn empty_batch_decodes_nothing_on_both_paths() {
+        let (decoded, outcomes) = decode(&mut MockDecoder, &[]);
+        assert!(decoded.is_empty() && outcomes.is_empty());
+
+        let mut adapter = IterativeBatchDecoder::new(MockDecoder, 3);
+        let (decoded, outcomes) = decode(&mut adapter, &[]);
+        assert!(decoded.is_empty() && outcomes.is_empty());
+    }
+
+    #[test]
+    fn frames_are_accepted_as_borrowed_slices() {
+        let owned = frames(2);
+        let borrowed: Vec<&[Llr]> = owned.iter().map(Vec::as_slice).collect();
+        let mut decoded = vec![BitVec::new(); 2];
+        let mut outcomes = vec![DecodeOutcome::default(); 2];
+        MockDecoder.decode_batch(&borrowed, &mut decoded, &mut outcomes);
+
+        assert_eq!((decoded, outcomes), decode(&mut MockDecoder, &owned));
+    }
+
+    #[test]
+    fn decoder_result_outcome_carries_every_metadata_field() {
+        let result = DecoderResult {
+            queries: Some(9),
+            ..DecoderResult::new(BitVec::new(), 4, true, false)
+        };
+        let outcome = result.outcome();
+
+        assert_eq!(outcome.iterations, result.iterations);
+        assert_eq!(outcome.converged, result.converged);
+        assert_eq!(outcome.syndrome_check_passed, result.syndrome_check_passed);
+        assert_eq!(outcome.queries, result.queries);
+    }
+
+    #[test]
+    #[should_panic(expected = "frame 1 has 4 LLRs")]
+    fn soft_decoder_batch_panics_on_wrong_frame_length() {
+        let mut frames = frames(2);
+        frames[1].pop();
+        decode(&mut MockDecoder, &frames);
+    }
+
+    #[test]
+    #[should_panic(expected = "frame 1 has 4 LLRs")]
+    fn iterative_adapter_batch_panics_on_wrong_frame_length() {
+        let mut frames = frames(2);
+        frames[1].pop();
+        decode(&mut IterativeBatchDecoder::new(MockDecoder, 3), &frames);
+    }
+
+    #[test]
+    #[should_panic(expected = "one decoded word per frame")]
+    fn batch_panics_on_mismatched_decoded_slice() {
+        let frames = frames(2);
+        let mut decoded = vec![BitVec::new(); 1];
+        let mut outcomes = vec![DecodeOutcome::default(); 2];
+        MockDecoder.decode_batch(&frames, &mut decoded, &mut outcomes);
+    }
+
+    #[test]
+    #[should_panic(expected = "one outcome per frame")]
+    fn batch_panics_on_mismatched_outcome_slice() {
+        let frames = frames(2);
+        let mut decoded = vec![BitVec::new(); 2];
+        let mut outcomes = vec![DecodeOutcome::default(); 3];
+        IterativeBatchDecoder::new(MockDecoder, 3).decode_batch(
+            &frames,
+            &mut decoded,
+            &mut outcomes,
+        );
+    }
+
+    /// A `dyn SoftDecoder` is a batch decoder through the blanket
+    /// implementation, which is the dynamically dispatched route.
+    #[test]
+    fn unsized_soft_decoder_is_a_batch_decoder() {
+        let mut boxed: Box<dyn SoftDecoder> = Box::new(MockDecoder);
+        let frames = frames(3);
+
+        assert_eq!(
+            decode(&mut *boxed, &frames),
+            decode(&mut MockDecoder, &frames)
+        );
     }
 }
