@@ -3,7 +3,7 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "bf67677d5146947072e4e234e856e0aba7a1977b793241dc62e48672178e5cc7"
+  "sha256": "65df04ee71c20952aaac571649b785bd64262105d839854a34103269e83aab3c"
  },
  "counts": {
   "entry point groups": 9,
@@ -13,7 +13,7 @@
   "core selectors selected at compile time": 8,
   "core selectors the measured owner states": 30,
   "scanned constants a tuning section owns": 51,
-  "scanned constants outside the tuning sections": 38,
+  "scanned constants outside the tuning sections": 37,
   "of those, class selector": 8,
   "declared selectors outside the tuning sections": 6,
   "witness configurations": 7,
@@ -1444,6 +1444,8 @@
     "selectors": [
      "encode.bitslice_interleaved_min_batch",
      "encode.clmul_fold_min_batch",
+     "encode.lane_max_edges",
+     "encode.lane_min_frames",
      "encode.table_remainder_min_batch",
      "encode.table_remainder_min_redundancy"
     ],
@@ -1781,14 +1783,6 @@
    ]
   },
   {
-   "id": "POPCOUNT_CSA_BLOCK_WORDS",
-   "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/lib.rs:54",
-   "definition": "pub const POPCOUNT_CSA_BLOCK_WORDS: usize = x86::popcount::CSA_BLOCK_WORDS;",
-   "class": "kernel-geometry",
-   "read_sites": []
-  },
-  {
    "id": "PRODUCTION_PREFERENCE",
    "package": "gf2-kernels-simd",
    "defined": "crates/gf2-kernels-simd/src/transpose.rs:73",
@@ -1959,9 +1953,7 @@
    "defined": "crates/gf2-kernels-simd/src/x86/popcount.rs:21",
    "definition": "pub const CSA_BLOCK_WORDS: usize = CSA_BLOCK_VECTORS * WORDS_PER_VECTOR;",
    "class": "kernel-geometry",
-   "read_sites": [
-    "crates/gf2-kernels-simd/src/lib.rs:54"
-   ]
+   "read_sites": []
   },
   {
    "id": "N_MAX_MULTIWORD",
