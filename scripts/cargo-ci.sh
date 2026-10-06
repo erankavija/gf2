@@ -274,6 +274,8 @@ repository_files=$(git ls-files -- ':(glob)**/repository_files.py')
 family_closures=$(python3 -B "$repository_files" file check-family-producing-closures.py)
 run_step family-producing-closures-self-test python3 -B "$family_closures" --self-test
 run_step family-producing-closures python3 -B "$family_closures"
+campaign_records=$(python3 -B "$repository_files" file validate_tuning_extent_campaign_test.py)
+run_step tuning-campaign-records python3 -B "$campaign_records"
 run_step receipt-input-snapshots-self-test python3 dev/scripts/check-receipt-input-snapshots.py --self-test
 run_step receipt-input-snapshots python3 dev/scripts/check-receipt-input-snapshots.py
 run_step addendum-schema-versions-self-test python3 dev/scripts/check-addendum-schema-versions.py --self-test

@@ -104,6 +104,11 @@ profile: each arm calls its lane directly (`calibration-matvec-field`,
   field's grid, seed tag, roles, route contract and operand reconstruction
   (`validator-matvec-grid`, `calibration-validator-behavior`); the producer's
   operand-check test compares the reconstruction with the producer's digests.
+  A campaign's field table is the part of the validator's table that the
+  campaign's core inventory names, bound by the declared cell count, so the
+  session record of every published campaign stays checkable
+  (`--session-record`); a declaration without a stage is checked against the
+  complete table (`--declaration-check`).
 - **Protocol.** [`premeasurement-protocol.md`](premeasurement-protocol.md)
   amends the seam protocol by reference: scope, the field's row, fixture and
   seed roles, counts, budget, and the imported algebra owner.
