@@ -1,0 +1,99 @@
+## dev/active/00dd43c3/survey/test_pilot_freeze.py
+..
+----------------------------------------------------------------------
+Ran 2 tests
+
+OK
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/test-profile-intervals.py
+...
+----------------------------------------------------------------------
+Ran 3 tests
+
+OK
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-producing-inputs.py --check
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/shift-profile-producing-inputs.json: enumerates this tree
+exit=0
+## dev/active/00dd43c3/survey/freeze-pilot.py --check
+dev/active/00dd43c3/pilot-addendum.json
+dev/active/00dd43c3/profile-context.json
+exit=0
+## dev/active/00dd43c3/survey/freeze-pilot.py
+dev/active/00dd43c3/pilot-addendum.json
+dev/active/00dd43c3/profile-context.json
+exit=0
+## dev/active/00dd43c3/survey/make-plan.py plan-00dd43c3.json /tmp/shifts-arm /tmp/unused-shift-lock --label pilot --campaign-id test-residual-pilot
+7 cells -> .git/cc060974/plan-00dd43c3.json
+exit=0
+out plan-00dd43c3.json raw=371959a28867af8b23bc23725390de25f6fea881dad1788524380e699246d281 flat=371959a28867af8b23bc23725390de25f6fea881dad1788524380e699246d281
+## dev/active/00dd43c3/survey/make-producing-inputs.py
+dev/active/00dd43c3/survey/producing-inputs.json: 174 behavior, 12 lifecycle, 193 build inputs
+exit=0
+## dev/active/00dd43c3/survey/freeze-confirmation.py
+the family's one-candidate confirmation attempt is already reserved
+exit=1
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/freeze-shift-addendum.py --check
+dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json: frozen matrix matches (10 cells)
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/freeze-shift-addendum.py
+dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json: froze 10 exploratory cells
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/inspect-shift-consumers.py
+dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-consumer-audit.json: 341 files, 0 downstream calls
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-addendum.py 2026-09-15T01:26:02Z
+dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json: 10 exploratory cells
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-plan.py --addendum dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json --campaign-id test-dvb --campaign-seed 1 --lock /tmp/unused-dvb-lock --executable /tmp/dvb-arm --producing-manifest dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json --output plan-dvb.json
+.git/cc060974/plan-dvb.json: 10 cells, 4 arms
+exit=0
+out plan-dvb.json raw=fd07dc2e98eb51b7818f3b1a3247c18d8288e0bb26add5e00194e668bec214ed flat=fd07dc2e98eb51b7818f3b1a3247c18d8288e0bb26add5e00194e668bec214ed
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-tables.py dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-source-evidence.json dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile > dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile-tables.md
+exit=0 
+against dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile-tables.md same raw=2872152b8f2a0b20ffec52257a0190904b5cdae913384eb0311a87ffd629fc43 flat=2872152b8f2a0b20ffec52257a0190904b5cdae913384eb0311a87ffd629fc43
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-producing-inputs.py
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json: 19 behavior, 2 lifecycle, 33 build inputs
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-profile-provenance.py dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile > dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md
+exit=0 
+against dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md same raw=3a7a7aba8190290099e609ccf3974a569f5782c0463b17e9f8919f0a5d592b1c flat=3a7a7aba8190290099e609ccf3974a569f5782c0463b17e9f8919f0a5d592b1c
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-profile.py dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile > dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md
+exit=0 
+against dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md same raw=2b246ad01f2c66b327e37eafc669ecbb38ac527aae38e0d8fa8ad473803b8e79 flat=2b246ad01f2c66b327e37eafc669ecbb38ac527aae38e0d8fa8ad473803b8e79
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-profile-provenance.py dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile > dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md
+exit=0 
+against dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md same raw=eb381c9a11d95c26b669549fa46b9a306dc9d31be33f34ba91baa9f7b236013f flat=eb381c9a11d95c26b669549fa46b9a306dc9d31be33f34ba91baa9f7b236013f
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-profile.py dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile > dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/profile-summary.md
+exit=0 
+against dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/profile-summary.md same raw=2c83b2f58b01a7055802f0d71b3a39b77bd3f96f000418fb87e06b6e76e06748 flat=2c83b2f58b01a7055802f0d71b3a39b77bd3f96f000418fb87e06b6e76e06748
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-publication-tables.py > dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-tables.md
+exit=0 
+against dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-tables.md same raw=192115f41432a0534d4ec59d71d88eff692a893dd4e2af440b27435cb6a9779d flat=192115f41432a0534d4ec59d71d88eff692a893dd4e2af440b27435cb6a9779d
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-plan.py plan-shift.json /tmp/shifts-arm /tmp/unused-shift-lock --campaign-id test-shift
+10 cells -> .git/cc060974/plan-shift.json
+exit=0
+out plan-shift.json raw=66526b70731d1ea59bb4f4cdd4082aa4a602afcdbac71fed2fbb88e9fe9cfd11 flat=66526b70731d1ea59bb4f4cdd4082aa4a602afcdbac71fed2fbb88e9fe9cfd11
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-producing-inputs.py
+173 behavior, 12 lifecycle, 190 build inputs -> dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/shift-profile-producing-inputs.json
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-source-evidence.py
+crates/gf2-core/src/bitvec.rs: required source fragment is absent: self.data[i] = (self.data[i - word_shift] << bit_shift)
+exit=1
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-source-evidence.py
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-source-evidence.json: 3 call edges, 5 source pins
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-voided-attempt.py
+dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json: 0 cells measured, 10 unmeasured
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-voided-attempt-record.py
+dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json: 0 of 10 cells measured, 1 child diagnostics
+exit=0
+## dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-shift-receipt.py
+exit=0
+## files rewritten in place with other bytes: added, deleted, path, flat
+10 0 dev/active/00dd43c3/survey/producing-inputs.json flat=8a279a0fd0d9342238cb19d9e9f9173b94c200683c5025c1c95a9199f7fbd105
+2 2 dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-consumer-audit.json flat=165bc7ae5408a8136cc75ce0fdc622f62eb62aee1b81a34bb819602ae76bdda0
+18 577 dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json flat=817ead118f293c93144609877f718f01ccf2bf08f9e6b333b717dd06c0bb90cd
+20 20 dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-source-evidence.json flat=53d92abeb432c609fd2500f796d91b86d996de857f79fe1cc197a3d8c562aecd
+3 3 dev/bench_results/c04dd4ac/residual-shift-tables.md flat=dae4f458ebd166ae5006b52e9c17e4204ca0bcf5ee9bbd69b08c9d76bbf1bd4c
