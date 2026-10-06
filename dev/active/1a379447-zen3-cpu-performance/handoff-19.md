@@ -61,5 +61,5 @@
 - [Dense harness review](reviews/e1f9a78f-r7.md), [dense baseline review](reviews/c73ffa25-preparation.md), [DVB latest review](reviews/9fb40c83-r5.md).
 - [Dense preparation](2037941f-profile-and-optimize-mid-range-buffer-operations/dense-baseline-preparation.md), [DVB preparation](c04dd4ac-zen3-shifts-and-permutations/dvb-profile-r4-preparation.md).
 - [Queue](bench-window/queue.tsv), [window runner](bench-window/run-window.sh); runtime orchestration log `.agents/bench-window/window.log`.
-- DVB generator: `dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-profile-provenance.py`; input `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile`; output sibling `v4-r2-dynamic-profile-provenance.md`.
+- DVB generator: `dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/survey/make-profile-provenance.py`; input `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile`; output sibling `v4-r2-dynamic-profile-provenance.md`.
 - Pinned out-of-wave trees remain as recorded in handoff-18; foreign `agent-02b8137c-run` is untouched. Raw session audit files under `/tmp/gf2-wave3-session24` are optional diagnostics, not durable evidence dependencies.

@@ -2,7 +2,7 @@
 
 > **Diátaxis Type:** Explanation
 
-The [generated publication tables](publication-tables.md) give the accepted receipt identities, protocol snapshots, sample counts, intervals, latency or throughput, whole-consumer costs, conversion passes, runtime hosts, and content digests used here. Regenerate them with `python3 -B dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-publication-tables.py`. The [reviewed plan](plan.md) and [breakdown](breakdown.json) define the family's selection and dependency rules; this document publishes their completed outcomes.
+The [generated publication tables](publication-tables.md) give the accepted receipt identities, protocol snapshots, sample counts, intervals, latency or throughput, whole-consumer costs, conversion passes, runtime hosts, and content digests used here. Regenerate them with `python3 -B dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/survey/make-publication-tables.py`. The [reviewed plan](plan.md) and [breakdown](breakdown.json) define the family's selection and dependency rules; this document publishes their completed outcomes.
 
 ## Family dispositions
 
