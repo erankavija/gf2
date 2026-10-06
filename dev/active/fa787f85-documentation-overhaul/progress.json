@@ -1934,6 +1934,26 @@
    ],
    "recommendation": "baseline",
    "resolution": ""
+  },
+  {
+   "issue": "f6148d1e, f694f59a",
+   "question": "OPEN: REQ-03 cannot hold: the byte-fixed campaign-declaration.json of dbd8787d and a83583e0 names its protocol and producing manifest by flat path (lines 4-5; dbd8787d/producing-build-inputs.json:102,120,293 names its own declaration), and dev/scripts/validate-tuning-extent-campaign.py:580,4850,5026 and tuning-extent-campaign-driver.rs (579..3958), provenance.rs validate_at join those strings to the root. Trial move (reverted): cargo-ci step tuning-campaign-validator fails with ENOENT on dev/active/dbd8787d/premeasurement-protocol.md; nextest tuning-campaign-support 213/213 before, producing_input_manifest_rejects_authority_and_path_mutations fails after. No commit exists; evidence in agent-b23c364a/target/decl-return.md.",
+   "options": [
+    "A: file a decoupling task in this epic (successor of 8bd873f7): driver and validator resolve a declaration's protocol, producing manifest and manifest self-entries relative to the located declaration or by content, with a relocated-entry test and verdict baseline; both moves depend on it. It changes shared measurement tooling that epic 1a379447 campaigns run.",
+    "B: hold both entries flat in the 5ec5dcc1 form (rows retained-operational, complete) with REQ-02 amended and a tracked move issue"
+   ],
+   "recommendation": "A when no extent campaign is in flight; B to close the epic first",
+   "resolution": ""
+  },
+  {
+   "issue": "f6148d1e, f694f59a",
+   "question": "OPEN: REQ-07 (each tracker document reference names the new path) conflicts with the tracker: dbd8787d references name archive copies (unpinned); a83583e0 documents 2 and 5-11 are commit-pinned to the flat path by 616e1d7c DEC-01 so the 6dc81018 archive plan retains the entry. Relinking to the active path may make a rerun collect the entries.",
+   "options": [
+    "a: amend REQ-07 to references keep their archive path or pin",
+    "b: relink and accept re-collection"
+   ],
+   "recommendation": "a",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -2216,7 +2236,8 @@
   "Session 10: fca578b1 done after rework 1 (thirteen b4b4b9ee issues cited in its record). e1f262a7 done after one lead record fix: a record must not name an uncommitted relink script or describe the tracker relink as outstanding; state the committed tracker reference. A preregistration keeps its bytes even when no digest of it is committed (the lead wrongly had e1f262a7 repoint design.md:517 and reverted it before merge). 2596b143 dispatched at cac8fa20e (opus, cache-seeded worktree). Unmerged branches awaiting owner rulings: worktree-agent-7dbcde0c, worktree-agent-616e1d7c, worktree-agent-b23c364a.",
   "Session 10 end: 2596b143 done on the first gate run. Every open unit waits on an owner ruling or on a unit that does; handoff-9.md lists the questions and the next actions.",
   "Session 11 (2026-10-06 evening): owner answered the six open questions of handoff-9.md (all recommendations); criteria amendments and DECs written on 616e1d7c, 7dbcde0c, b23c364a, 5ec5dcc1. Peer session gf2-ad shares the main checkout. Branches worktree-agent-4337c02e and worktree-agent-bfc2ceab (open issues of epic 1a379447) carry unmerged edits under dev/active/2037941f-*, c7113c5a, 4c1e441f, ad2a6a58 and f547c394.",
-  "Session 11 owner instruction (2026-10-06): never stop to ask; a task needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when the current and the next wave finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Owner rulings this session: zen3 entries move now and the parallel session conforms (in-flight branches 4337c02e, bfc2ceab); 616e1d7c REQ-04 amended (DEC-04). Peer lead gf2-ad: no build, cargo-ci or gate from 01:55 EEST until window.log shows window end; bench-window/ and the 1a379447 progress.json stay unedited; merges and gate batches are announced both ways. Filed: b5b336e5, 2e18b37c, cc060974 (zen3 decoupling moves), 5b3e7c81 (02b8137c move, b4b4b9ee). Lane order: f79bcba3, b5b336e5, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 in worktree agent-zen3lane. Manifest rows whose source another epic removed (ad2a6a58 runner-smoke.txt, f63a2464 qc-arm-smoke.rs) need a disposition in 198aafa3."
+  "Session 11 owner instruction (2026-10-06): never stop to ask; a task needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when the current and the next wave finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Owner rulings this session: zen3 entries move now and the parallel session conforms (in-flight branches 4337c02e, bfc2ceab); 616e1d7c REQ-04 amended (DEC-04). Peer lead gf2-ad: no build, cargo-ci or gate from 01:55 EEST until window.log shows window end; bench-window/ and the 1a379447 progress.json stay unedited; merges and gate batches are announced both ways. Filed: b5b336e5, 2e18b37c, cc060974 (zen3 decoupling moves), 5b3e7c81 (02b8137c move, b4b4b9ee). Lane order: f79bcba3, b5b336e5, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 in worktree agent-zen3lane. Manifest rows whose source another epic removed (ad2a6a58 runner-smoke.txt, f63a2464 qc-arm-smoke.rs) need a disposition in 198aafa3.",
+  "Session 11: 616e1d7c done (gate batch at fc571c890). Review lesson repeated: link every unit record and output with jit doc add BEFORE gating (7dbcde0c, b23c364a, 5ec5dcc1 failed on it), and keep volatile counts out of records (5ec5dcc1 F2, single-source-prose). A verifier run inside a worker worktree counts that worktree's untracked target/ files and its stale .jit snapshot: regenerate committed verifier outputs on main after the merge. f6148d1e and f694f59a are blocked on owner input (declarations name siblings by flat path). Zen3 lane (worktree agent-zen3lane, unmerged): f79bcba3, b5b336e5, 602652bf done by workers; 198aafa3 running; merge to main waits for the peer's BATCH-END."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
