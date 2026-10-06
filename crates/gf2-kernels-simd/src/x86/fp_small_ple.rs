@@ -340,9 +340,7 @@ mod tests {
     }
 
     fn run_for_primes(test: impl Fn(u8)) {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &p in &[3u8, 5, 7, 11, 13, 17, 31, 127, 241, 251] {
             test(p);
         }

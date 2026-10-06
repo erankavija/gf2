@@ -514,11 +514,11 @@ mod tests {
     use super::*;
 
     fn run_for_primes(test: impl Fn(u16)) {
-        if !std::arch::is_x86_feature_detected!("avx2")
-            || !std::arch::is_x86_feature_detected!("fma")
-        {
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+fma",
+            std::arch::is_x86_feature_detected!("avx2")
+                && std::arch::is_x86_feature_detected!("fma"),
+        )]);
         // Sample primes spanning the medium range (251 < p ≤ 65535).
         for &p in &[257u16, 521, 1031, 4099, 16381, 32771, 65521] {
             test(p);
@@ -659,9 +659,7 @@ mod tests {
     fn gemm_matches_scalar_zero_dims() {
         let avail = std::arch::is_x86_feature_detected!("avx2")
             && std::arch::is_x86_feature_detected!("fma");
-        if !avail {
-            return;
-        }
+        crate::contract::require(&[("avx2+fma", avail)]);
         let mut out: Vec<u16> = vec![];
         // SAFETY: AVX2 and FMA were detected above.
         unsafe { fp_medium_f64_gemm(&[], &[], 0, 0, 0, 65521, &mut out) };
@@ -672,9 +670,7 @@ mod tests {
     fn gemm_matches_scalar_boundary_lengths() {
         let avail = std::arch::is_x86_feature_detected!("avx2")
             && std::arch::is_x86_feature_detected!("fma");
-        if !avail {
-            return;
-        }
+        crate::contract::require(&[("avx2+fma", avail)]);
         let primes = [257u16, 65521];
         let lens = [0usize, 1, 15, 16, 17, 63, 64, 65];
         for &p in &primes {
@@ -710,9 +706,7 @@ mod tests {
     fn barrett_reduce_pd_matches_scalar_mod() {
         let avail = std::arch::is_x86_feature_detected!("avx2")
             && std::arch::is_x86_feature_detected!("fma");
-        if !avail {
-            return;
-        }
+        crate::contract::require(&[("avx2+fma", avail)]);
         let primes = [257u64, 521, 1031, 4099, 16381, 32771, 65521];
         for &p in &primes {
             let p_f = p as f64;
