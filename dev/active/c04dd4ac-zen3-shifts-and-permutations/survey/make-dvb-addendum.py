@@ -10,13 +10,20 @@ The matrix is declared here once and projected into the campaign plan by
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 ISSUE = "9fb40c83"
 FAMILY = "dvb-t2-interleave-consumer-profile"
-DEFAULT_OUTPUT = pathlib.Path(
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json"
+SURVEY = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
 )
+DEFAULT_OUTPUT = SURVEY.parent.relative_to(ROOT) / "dvb-profile-addendum.json"
+# The ledger path as the frozen addendum states it.
 LEDGER = (
     "dev/active/c04dd4ac-zen3-shifts-and-permutations/"
     "dvb-profile-trial-ledger.jsonl"

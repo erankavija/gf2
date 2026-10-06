@@ -5,15 +5,31 @@ import json
 import math
 import re
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ACTIVE = Path("dev/active/00dd43c3")
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
+sys.path.insert(0, str(ROOT / "dev/scripts"))
+import repository_files  # noqa: E402
+
+ACTIVE = SURVEY.parent.relative_to(ROOT)
 RESULTS = Path("dev/bench_results/00dd43c3")
 PILOT = RESULTS / "v4-r1-pilot"
 LEDGER = RESULTS / "residual-shift-family-ledger.jsonl"
 ADDENDUM = ACTIVE / "pilot-addendum.json"
-FREEZER = Path("dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py")
+FREEZER = Path(
+    repository_files.document(
+        ROOT, "freeze-confirmation.py",
+        b'#!/usr/bin/env python3\n"""Freeze a confirmation addendum from its accepted pilot.',
+    )
+)
 RECEIPT_SOURCE = Path("dev/tools/tuning-campaign-support/src/receipt.rs")
 TRIAL_LEDGER_SOURCE = Path("dev/tools/tuning-campaign-support/src/trial_ledger.rs")
 

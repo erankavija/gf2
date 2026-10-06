@@ -7,15 +7,19 @@ both drive the same cases and arms from the frozen addendum.
 
 import argparse
 import json
+import subprocess
+from pathlib import Path
 
-ADDENDUM = (
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/"
-    "shift-profile-addendum.json"
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
 )
-PRODUCING = (
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/"
-    "shift-profile-producing-inputs.json"
-)
+ACTIVE = SURVEY.parent.relative_to(ROOT).as_posix()
+ADDENDUM = f"{ACTIVE}/shift-profile-addendum.json"
+PRODUCING = f"{ACTIVE}/survey/shift-profile-producing-inputs.json"
 SEED = 2026091585
 
 

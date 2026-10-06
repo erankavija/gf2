@@ -10,14 +10,22 @@ import collections
 import hashlib
 import json
 import pathlib
+import subprocess
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
+SURVEY = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
 STAGE = pathlib.Path(
     "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned"
 )
 OUTPUT = pathlib.Path(
     "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json"
 )
+# The addendum path as the committed record states it.
 ADDENDUM = pathlib.Path(
     "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json"
 )
@@ -74,7 +82,7 @@ def main():
         .splitlines()
     ]
     plan = json.loads((ROOT / STAGE / "plan.json").read_text())
-    addendum_bytes = (ROOT / ADDENDUM).read_bytes()
+    addendum_bytes = (SURVEY.parent / ADDENDUM.name).read_bytes()
     declared = json.loads(addendum_bytes)["cells"]
     started = {
         event["case"]["cell_id"] for event in events if event["event"] == "cell-start"

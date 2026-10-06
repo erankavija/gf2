@@ -3,6 +3,7 @@
 set -euo pipefail
 
 repo=$(git rev-parse --show-toplevel)
+survey=$(realpath --relative-to="$repo" "$(dirname "${BASH_SOURCE[0]}")")
 cd "$repo"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
@@ -19,8 +20,7 @@ if [[ "$action" == window && "${GF2_BENCH_WINDOW:-0}" != 1 ]]; then
   exit 2
 fi
 
-active=dev/active/00dd43c3
-survey="$active/survey"
+active=$(dirname "$survey")
 build=target/00dd43c3
 stage="$build/$phase-stage"
 plan="$build/$phase-plan.json"
@@ -45,7 +45,7 @@ if [[ "$action" == prepare ]]; then
     --bin benchmark-ab-runner --bin benchmark-acceptance
   ./scripts/cargo-budget.sh cargo build --release -p gf2-core --bench shifts \
     --all-features --message-format=json >"$build/shifts-build.jsonl"
-  arm=$(python3 -B dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/find-shift-executable.py \
+  arm=$(python3 -B "$(python3 -B dev/scripts/repository_files.py file find-shift-executable.py)" \
     "$build/shifts-build.jsonl")
   "$arm" --check-request-mirror
   "$arm" --verify >"$build/validation.json"

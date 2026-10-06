@@ -3,8 +3,8 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
-MANIFEST="${REPO}/dev/active/1a379447-zen3-cpu-performance/eda07788/survey/gf2-side/Cargo.toml"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
+MANIFEST="${REPO}/$(dirname "$(python3 -B "${REPO}/dev/scripts/repository_files.py" file xdsopl-pin.txt)")/gf2-side/Cargo.toml"
 EXT="${GF2_9FB40C83_EXT:-${REPO}/.agents/ext/9fb40c83}"
 PIN=32357d8ad55a6a302c34e093759f0454e45cca56
 if [[ -n "${GF2_9FB40C83_XDSOPL_SOURCE:-}" ]]; then
@@ -40,7 +40,7 @@ export GF2_XDSOPL_INCLUDE="${EXT}/xdsopl-ldpc"
 export GF2_XDSOPL_CXX_ARCH=native
 
 cd "${REPO}"
-RECORD=dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/harness-validation.txt
+RECORD="$(realpath --relative-to="${REPO}" "${HERE}")/harness-validation.txt"
 
 ./scripts/cargo-budget.sh cargo build --release --locked --manifest-path "${MANIFEST}" --bins
 

@@ -12,10 +12,14 @@ import json
 import pathlib
 import subprocess
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
-OUTPUT = pathlib.Path(
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/shift-source-evidence.json"
+SURVEY = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
 )
+OUTPUT = SURVEY.relative_to(ROOT) / "shift-source-evidence.json"
 PROJECT = "gf2"
 
 BITVEC = pathlib.Path("crates/gf2-core/src/bitvec.rs")

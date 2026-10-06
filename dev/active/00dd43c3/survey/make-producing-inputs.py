@@ -4,14 +4,16 @@
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 ROOT = subprocess.run(
     ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True
 ).stdout.strip()
 sys.path.insert(0, os.path.join(ROOT, "dev/scripts"))
 import campaign_inputs
+import repository_files
 
-ACTIVE = "dev/active/00dd43c3"
+ACTIVE = os.path.relpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ROOT)
 SURVEY = f"{ACTIVE}/survey"
 TOOL = "dev/tools/tuning-campaign-support"
 LAUNCHER = f"{SURVEY}/run-campaign.sh"
@@ -53,7 +55,7 @@ def main():
             f"{SURVEY}/freeze-confirmation.py",
             f"{SURVEY}/make-producing-inputs.py",
             f"{SURVEY}/verify-smoke.py",
-            "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/find-shift-executable.py",
+            repository_files.live_file(Path(ROOT), "find-shift-executable.py"),
             "dev/scripts/campaign_inputs.py",
             "dev/scripts/verify-campaign-log.py",
             "dev/scripts/check-campaign-producing-closure.py",

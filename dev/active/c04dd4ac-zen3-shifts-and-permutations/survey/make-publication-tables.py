@@ -13,9 +13,21 @@ import hashlib
 import importlib.util
 import json
 import pathlib
+import subprocess
+import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
-ACTIVE = "dev/active/c04dd4ac-zen3-shifts-and-permutations"
+SURVEY = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
+sys.path.insert(0, str(ROOT / "dev/scripts"))
+import repository_files  # noqa: E402
+
+ACTIVE = SURVEY.parent.relative_to(ROOT).as_posix()
+RESIDUAL = pathlib.Path(repository_files.live_file(ROOT, "profile-context.json")).parent.as_posix()
 BENCH = "dev/bench_results/c04dd4ac"
 SHIFT = f"{BENCH}/residual-shift-profile"
 DVB = f"{BENCH}/dvb-interleave-profile/v4-r2-pilot"
@@ -25,7 +37,7 @@ NR = "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation"
 TICK = chr(96)
 
 _spec = importlib.util.spec_from_file_location(
-    "dvb_attribution", ROOT / ACTIVE / "survey/make-dvb-tables.py"
+    "dvb_attribution", SURVEY / "make-dvb-tables.py"
 )
 if _spec is None or _spec.loader is None:
     raise RuntimeError("the canonical DVB attribution renderer is unavailable")
@@ -323,7 +335,7 @@ def print_nr(receipt: dict, summary: dict) -> None:
 
 
 def print_disposition_sources(profile: dict, confirmation: dict) -> None:
-    context_path = "dev/active/00dd43c3/profile-context.json"
+    context_path = f"{RESIDUAL}/profile-context.json"
     context = json.loads(path(context_path).read_text())
     for key in ("profile_receipt", "profile_summary"):
         pin = context[key]
@@ -338,7 +350,7 @@ def print_disposition_sources(profile: dict, confirmation: dict) -> None:
             raise ValueError(f"the confirmation has no pass for {direction}")
     if profile["qualifies"]:
         raise ValueError("the exploratory workload profile has become an adoption receipt")
-    outcome = "dev/active/00dd43c3/confirmation-outcome.md"
+    outcome = f"{RESIDUAL}/confirmation-outcome.md"
     print("## Content-pinned dispositions")
     print()
     print(
@@ -353,13 +365,18 @@ def print_disposition_sources(profile: dict, confirmation: dict) -> None:
     print("|---|---|---|")
     for relative, role in (
         (context_path, "profile context pin"),
-        ("dev/active/00dd43c3/pilot-addendum.json", "frozen retention rule"),
-        ("dev/active/00dd43c3/confirmation-derivation.txt", "retained and dropped pilot cells"),
+        (f"{RESIDUAL}/pilot-addendum.json", "frozen retention rule"),
+        (f"{RESIDUAL}/confirmation-derivation.txt", "retained and dropped pilot cells"),
         (outcome, "completed retention disposition"),
         (f"{ACTIVE}/shift-profile.md", "material workload disposition"),
         (f"{ACTIVE}/shift-feasibility-record.md", "Rust 1.95 and scalar-fallback feasibility"),
         (f"{ACTIVE}/dvb-interleave-profile.md", "DVB not-material disposition"),
-        ("dev/active/1a379447-zen3-cpu-performance/eda07788/findings.md", "NR no-win and unavailable mappings"),
+        (
+            repository_files.document(
+                ROOT, "findings.md", b"# Shift and coding-permutation baselines\n"
+            ),
+            "NR no-win and unavailable mappings",
+        ),
         (f"{ACTIVE}/investigation.md", "consumer and comparator survey"),
     ):
         print(f"| {quoted(relative)} | {quoted(digest(relative))} | {role} |")

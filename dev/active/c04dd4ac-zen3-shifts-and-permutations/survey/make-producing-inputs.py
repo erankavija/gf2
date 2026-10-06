@@ -6,7 +6,13 @@ import pathlib
 import subprocess
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
+SURVEY = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
 # The one live `repository_files.py`, outside receipt snapshots; it locates the
 # shared protocol inputs by name.
 SHARED = [
@@ -23,8 +29,8 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str((ROOT / SHARED[0]).parent))
 import repository_files  # noqa: E402
 
-SURVEY = pathlib.Path("dev/active/c04dd4ac-zen3-shifts-and-permutations/survey")
-OLD = pathlib.Path("dev/active/1a379447-zen3-cpu-performance/eda07788/survey")
+SURVEY = SURVEY.relative_to(ROOT)
+OLD = pathlib.Path(repository_files.live_file(ROOT, "xdsopl-pin.txt")).parent
 SUPPORT = pathlib.Path("dev/tools/tuning-campaign-support/src")
 OUTPUT = SURVEY / "dvb-producing-inputs.json"
 
@@ -76,14 +82,14 @@ def main():
         str(SURVEY / "dvb-source-evidence.json"),
         str(SURVEY / "make-producing-inputs.py"),
         str(SURVEY / "profile-cases.txt"),
-        "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json",
+        str(SURVEY.parent / "dvb-profile-addendum.json"),
         str(OLD / "gf2-side/Cargo.lock"),
         str(OLD / "gf2-side/Cargo.toml"),
         str(OLD / "gf2-side/build.rs"),
         str(OLD / "fetch-build.sh"),
         repository_files.live_file(ROOT, "addendum.schema.json"),
         repository_files.document(ROOT, "protocol.md", repository_files.PROTOCOL_OPENING),
-        "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+        repository_files.live_file(ROOT, "measurement-contract.md"),
         "scripts/cargo-budget.sh",
     ] + files_under(
         pathlib.Path("crates/gf2-core/src"),

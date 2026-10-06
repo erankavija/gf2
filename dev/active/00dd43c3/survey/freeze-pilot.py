@@ -5,9 +5,17 @@ import argparse
 import copy
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
-ACTIVE = Path("dev/active/00dd43c3")
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
+ACTIVE = SURVEY.parent.relative_to(ROOT)
 PROFILE = Path("dev/bench_results/c04dd4ac/residual-shift-profile")
 PROFILE_RECEIPT = PROFILE / "receipt.json"
 PROFILE_SUMMARY = PROFILE / "acceptance-summary.json"

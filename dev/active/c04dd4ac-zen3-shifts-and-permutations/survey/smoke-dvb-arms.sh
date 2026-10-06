@@ -7,7 +7,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || {
     echo 'invoke from the worker worktree root' >&2
     exit 2
@@ -19,8 +19,8 @@ case "${MODE}" in
     *) echo "usage: $0 [--check]" >&2; exit 2 ;;
 esac
 
-ACTIVE=dev/active/c04dd4ac-zen3-shifts-and-permutations
-SURVEY="${ACTIVE}/survey"
+SURVEY="$(realpath --relative-to="${REPO}" "${HERE}")"
+ACTIVE="$(dirname "${SURVEY}")"
 ADDENDUM="${ACTIVE}/dvb-profile-addendum.json"
 PRODUCING="${SURVEY}/dvb-producing-inputs.json"
 PLAN_TOOL="${SURVEY}/make-dvb-plan.py"

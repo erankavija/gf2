@@ -8,9 +8,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
 PROFILE = ROOT / "dev/bench_results/c04dd4ac/residual-shift-profile"
-ACTIVE = ROOT / "dev/active/00dd43c3"
+ACTIVE = SURVEY.parent
 
 
 class PilotFreezeTest(unittest.TestCase):
@@ -39,7 +45,7 @@ class PilotFreezeTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "plan.json"
             subprocess.run(
-                ["python3", "-B", "dev/active/00dd43c3/survey/make-plan.py", str(path),
+                ["python3", "-B", str(SURVEY / "make-plan.py"), str(path),
                  "/tmp/shifts-arm", "/tmp/unused-shift-lock", "--label", "pilot",
                  "--campaign-id", "test-residual-pilot"],
                 cwd=ROOT, check=True, capture_output=True, text=True,

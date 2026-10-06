@@ -3,10 +3,20 @@
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 
 ISSUE = "85fc5ff4"
-ACTIVE = Path("dev/active/c04dd4ac-zen3-shifts-and-permutations")
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
+ACTIVE = SURVEY.parent.relative_to(ROOT)
+# The ledger path as the frozen addendum states it.
+LEDGER = "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl"
 OUTPUT = ACTIVE / "shift-profile-addendum.json"
 FROZEN_UTC = "2026-09-15T01:15:22Z"
 
@@ -116,7 +126,7 @@ def addendum():
             "alpha": 0.05,
             "prior_confirmatory_trials": 0,
             "prior_trials": [],
-            "ledger_path": str(ACTIVE / "shift-profile-trial-ledger.jsonl"),
+            "ledger_path": LEDGER,
         },
         "search_budget": {
             "max_pilot_trials_per_cell": 1,

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Project the committed residual-shift profile evidence into tables.
 
-Usage: dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-shift-receipt.py
+Usage: summarize-shift-receipt.py
 
 Reads only committed artifacts: the accepted receipt and its acceptance
 summary, the receipt-local input snapshots, the execution log, the frozen
@@ -21,9 +21,14 @@ import hashlib
 import json
 import os
 import statistics
+import subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, os.pardir, os.pardir, os.pardir, os.pardir))
+ROOT = subprocess.run(
+    ["git", "-C", HERE, "rev-parse", "--show-toplevel"],
+    check=True, capture_output=True, text=True,
+).stdout.strip()
+# The entry path as the committed tables state it.
 ACTIVE = "dev/active/c04dd4ac-zen3-shifts-and-permutations"
 CAMPAIGN = "dev/bench_results/c04dd4ac/residual-shift-profile"
 OUTPUT = "dev/bench_results/c04dd4ac/residual-shift-tables.md"
@@ -39,7 +44,8 @@ EXECUTION_LOG = f"{CAMPAIGN}/execution.log"
 
 
 def read_bytes(relative):
-    with open(os.path.join(ROOT, relative), "rb") as handle:
+    live = os.path.join(os.path.dirname(HERE), os.path.relpath(relative, ACTIVE))
+    with open(live if relative.startswith(ACTIVE) else os.path.join(ROOT, relative), "rb") as handle:
         return handle.read()
 
 

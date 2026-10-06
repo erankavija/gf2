@@ -9,17 +9,19 @@ set -euo pipefail
 }
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || {
     echo 'invoke from the worker worktree root' >&2
     exit 2
 }
 RUN_ID="${1:-v4-r2}"
-ADDENDUM=dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json
-PRODUCING=dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json
-LEDGER=dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-trial-ledger.jsonl
-PLAN_TOOL=dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-plan.py
-LAUNCHER=dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-dvb-campaign.sh
+SURVEY="$(realpath --relative-to="${REPO}" "${HERE}")"
+ACTIVE="$(dirname "${SURVEY}")"
+ADDENDUM="${ACTIVE}/dvb-profile-addendum.json"
+PRODUCING="${SURVEY}/dvb-producing-inputs.json"
+LEDGER="${ACTIVE}/dvb-profile-trial-ledger.jsonl"
+PLAN_TOOL="${SURVEY}/make-dvb-plan.py"
+LAUNCHER="${SURVEY}/run-dvb-campaign.sh"
 TARGET="${REPO}/target/9fb40c83-arms-native"
 ARM="${TARGET}/release/dvb-profile-arm"
 CAMPAIGN="${RUN_ID}-9fb40c83-dvb-interleave-profile"

@@ -3,9 +3,19 @@
 
 import argparse
 import json
+import subprocess
+from pathlib import Path
 
-PILOT_ADDENDUM = "dev/active/00dd43c3/pilot-addendum.json"
-PRODUCING = "dev/active/00dd43c3/survey/producing-inputs.json"
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
+ACTIVE = SURVEY.parent.relative_to(ROOT).as_posix()
+PILOT_ADDENDUM = f"{ACTIVE}/pilot-addendum.json"
+PRODUCING = f"{ACTIVE}/survey/producing-inputs.json"
 
 
 def arm(executable, mode, description):

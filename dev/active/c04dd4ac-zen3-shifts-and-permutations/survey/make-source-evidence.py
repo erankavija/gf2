@@ -4,18 +4,26 @@
 import hashlib
 import json
 import pathlib
+import subprocess
+import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
-OUTPUT = pathlib.Path(
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-source-evidence.json"
+SURVEY = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
 )
+sys.path.insert(0, str(ROOT / "dev/scripts"))
+import repository_files  # noqa: E402
+OUTPUT = SURVEY.relative_to(ROOT) / "dvb-source-evidence.json"
 
 SOURCES = {
     "interleaver": pathlib.Path("crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs"),
     "bicm": pathlib.Path("crates/gf2-coding/src/dvb_t2_bicm_harness.rs"),
     "stage": pathlib.Path("crates/gf2-sim/src/stages/mod.rs"),
-    "profile_arm": pathlib.Path("dev/active/1a379447-zen3-cpu-performance/eda07788/survey/gf2-side/src/bin/dvb-profile-arm.rs"),
-    "xdsopl": pathlib.Path("dev/active/1a379447-zen3-cpu-performance/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp"),
+    "profile_arm": pathlib.Path(repository_files.live_file(ROOT, "dvb-profile-arm.rs")),
+    "xdsopl": pathlib.Path(repository_files.live_file(ROOT, "xdsopl_shim.cpp")),
 }
 
 EXPECT = {

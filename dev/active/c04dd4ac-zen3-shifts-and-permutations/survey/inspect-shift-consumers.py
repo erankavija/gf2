@@ -5,15 +5,19 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
 OWNER = Path("crates/gf2-core/src/bitvec.rs")
 CALL = re.compile(r"\.\s*shift_(left|right)\s*\(")
-OUTPUT = Path(
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/"
-    "shift-profile-consumer-audit.json"
-)
+OUTPUT = SURVEY.parent.relative_to(ROOT) / "shift-profile-consumer-audit.json"
 
 
 def report():

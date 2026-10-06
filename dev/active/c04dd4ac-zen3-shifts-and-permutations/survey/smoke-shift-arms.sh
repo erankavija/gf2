@@ -19,7 +19,7 @@ case "$mode" in
   *) echo "usage: $0 [--check]" >&2; exit 2 ;;
 esac
 
-active=dev/active/c04dd4ac-zen3-shifts-and-permutations
+active=$(dirname "$(realpath --relative-to="$repo" "$(dirname "${BASH_SOURCE[0]}")")")
 survey="$active/survey"
 record="$active/shift-profile-smoke.json"
 smoke=target/85fc5ff4-arm-smoke

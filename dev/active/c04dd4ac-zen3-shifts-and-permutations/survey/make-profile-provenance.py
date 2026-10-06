@@ -35,6 +35,7 @@ import re
 import subprocess
 import sys
 
+# Paths in the measured tree, as the committed provenance records state them.
 MANIFEST = "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json"
 BUILD_RECORD = "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/harness-validation.txt"
 BUILD_GATE = "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/build-dvb-harness.sh"
@@ -148,7 +149,13 @@ def closure(manifest: dict) -> list[tuple[str, str]]:
 def main() -> None:
     if not 2 <= len(sys.argv) <= 3:
         fail("usage: make-profile-provenance.py <profile-dir> [<output>]")
-    repo = pathlib.Path(__file__).resolve().parents[4]
+    survey = pathlib.Path(__file__).resolve().parent
+    repo = pathlib.Path(
+        subprocess.run(
+            ["git", "-C", str(survey), "rev-parse", "--show-toplevel"],
+            check=True, capture_output=True, text=True,
+        ).stdout.strip()
+    )
     session = pathlib.Path(sys.argv[1])
     out = open(sys.argv[2], "w", encoding="utf-8") if len(sys.argv) == 3 else sys.stdout
 
@@ -287,7 +294,7 @@ def main() -> None:
         f"| counter and sample files ({len(perf)}), aggregate | `{aggregate}` |",
         file=out,
     )
-    print(f"| `{RENDERER}` at this checkout | `{sha256((repo / RENDERER).read_bytes())}` |", file=out)
+    print(f"| `{RENDERER}` at this checkout | `{sha256((survey / pathlib.Path(RENDERER).name).read_bytes())}` |", file=out)
     print(file=out)
     print(
         "The aggregate is the SHA-256 of the `<digest>  <path>` lines of every counter and "
