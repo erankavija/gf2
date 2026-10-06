@@ -782,7 +782,7 @@
      "short_id": "2596b143",
      "title": "Record the final Rustdoc example census and doctest timing",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "3759f995-edc4-4061-8b45-0ec30078a691",
@@ -1853,6 +1853,16 @@
    ],
    "recommendation": "first option",
    "resolution": ""
+  },
+  {
+   "issue": "fca578b1",
+   "question": "OPEN: AGENTS.md mission sentence lost \"high-performance\" under @/inv/no-marketing in the audit; restoring it adds a line to a 200-line file.",
+   "options": [
+    "keep the edit",
+    "restore the wording and cut a line elsewhere"
+   ],
+   "recommendation": "no strong preference",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -2132,7 +2142,8 @@
   "Session 10 gate batch 1 at 6a38cc8b6 (cargo-ci 4 min warm): fdb998ec, 0b8f09f3, 8466f5ae, b2bb1065 done. 0c5aa3b7 doc-review F1 and 0a0ece44 code-review F1 fail on one class: citations of a moved path left in non-pinned active documents under a \"historical\" or \"copy of descriptions\" ground. Accepted grounds for a remaining old path: digest pin at file:line, marker-backed archive, receipts and inputs/ snapshots, tool output at a named commit, manifest schema fields, tracker state. Brief every move unit with this. Pinned tracker references stay untouched (old path at pinned commit). 0a0ece44 cargo-ci failed once on gf2-sim GPU AWGN tests (SIGABRT, 15 s timeout) in the evaluate-many rerun: infrastructure, rerun.",
   "Session 10 gate batch 2 at c1dd3218c: 0c5aa3b7 (two reworks), 0a0ece44 (one rework), ec655592 (first run, after a pre-gate fix of the retained-citation class) done. Lessons: a move unit scopes Markdown by `git ls-files -- <dir> | grep` at any depth and leaves no manifest row of its directories pending; a dataset README that Rustdoc cites stays beside its dataset (0c5aa3b7, as the OSD READMEs); after repointing links inside a tracker-referenced document, rescan the reference with `jit doc add` (asset metadata), pinned references excepted.",
   "Session 10 after the window (ended 02:09 EEST): b959ffe8 done on the first gate run. fca578b1 failed code-review and doc-review on one finding (deferred divergences neither fixed nor tracked); thirteen issues filed under b4b4b9ee and rework 1 sent. The session hit its usage limit at 02:29 and resumed at 04:01. e1f262a7 (sonnet) and b23c364a (opus) dispatched at 4dfbab9ce in cache-seeded worktrees. Blocked on owner rulings: 5ec5dcc1, 7dbcde0c, 616e1d7c, and the zen3 cluster (f79bcba3, 198aafa3, 7039d680, 602652bf, decoupling tasks T2 to T4). After fca578b1 merges: 2596b143.",
-  "Session 10: fca578b1 done after rework 1 (thirteen b4b4b9ee issues cited in its record). e1f262a7 done after one lead record fix: a record must not name an uncommitted relink script or describe the tracker relink as outstanding; state the committed tracker reference. A preregistration keeps its bytes even when no digest of it is committed (the lead wrongly had e1f262a7 repoint design.md:517 and reverted it before merge). 2596b143 dispatched at cac8fa20e (opus, cache-seeded worktree). Unmerged branches awaiting owner rulings: worktree-agent-7dbcde0c, worktree-agent-616e1d7c, worktree-agent-b23c364a."
+  "Session 10: fca578b1 done after rework 1 (thirteen b4b4b9ee issues cited in its record). e1f262a7 done after one lead record fix: a record must not name an uncommitted relink script or describe the tracker relink as outstanding; state the committed tracker reference. A preregistration keeps its bytes even when no digest of it is committed (the lead wrongly had e1f262a7 repoint design.md:517 and reverted it before merge). 2596b143 dispatched at cac8fa20e (opus, cache-seeded worktree). Unmerged branches awaiting owner rulings: worktree-agent-7dbcde0c, worktree-agent-616e1d7c, worktree-agent-b23c364a.",
+  "Session 10 end: 2596b143 done on the first gate run. Every open unit waits on an owner ruling or on a unit that does; handoff-9.md lists the questions and the next actions."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
