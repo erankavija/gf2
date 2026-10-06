@@ -1954,6 +1954,17 @@
    ],
    "recommendation": "a",
    "resolution": ""
+  },
+  {
+   "issue": "f79bcba3, b5b336e5, 602652bf (and the remaining zen3 units)",
+   "question": "OPEN: `jit doc add` (jit 1.0.0) refuses a document or a captured asset whose path exceeds its depth budget (\"capture path ... exceeds the depth budget\"; a nine-component path such as dev/active/1a379447-zen3-cpu-performance/04b85d10/survey/gf2-side/src/bin/consumer-arm.rs fails), and one binary document (1d0da41f/survey/baseline-source.tar.gz, \"is not UTF-8\"). After the lane merge d6657b90e the relink scripts repointed every other reference; the references listed in depth-budget-rejected.txt (owner issue, new path) keep their flat path, which the tree lacks. The criterion \"each tracker document reference names the new path\" cannot hold for them.",
+   "options": [
+    "A: raise or make configurable the depth budget in jit, then rerun the three relink scripts (idempotent; in agent-zen3lane/target)",
+    "B: remove the rejected references from their issues",
+    "C: amend the criterion to exempt paths jit rejects"
+   ],
+   "recommendation": "A",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -2237,7 +2248,8 @@
   "Session 10 end: 2596b143 done on the first gate run. Every open unit waits on an owner ruling or on a unit that does; handoff-9.md lists the questions and the next actions.",
   "Session 11 (2026-10-06 evening): owner answered the six open questions of handoff-9.md (all recommendations); criteria amendments and DECs written on 616e1d7c, 7dbcde0c, b23c364a, 5ec5dcc1. Peer session gf2-ad shares the main checkout. Branches worktree-agent-4337c02e and worktree-agent-bfc2ceab (open issues of epic 1a379447) carry unmerged edits under dev/active/2037941f-*, c7113c5a, 4c1e441f, ad2a6a58 and f547c394.",
   "Session 11 owner instruction (2026-10-06): never stop to ask; a task needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when the current and the next wave finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Owner rulings this session: zen3 entries move now and the parallel session conforms (in-flight branches 4337c02e, bfc2ceab); 616e1d7c REQ-04 amended (DEC-04). Peer lead gf2-ad: no build, cargo-ci or gate from 01:55 EEST until window.log shows window end; bench-window/ and the 1a379447 progress.json stay unedited; merges and gate batches are announced both ways. Filed: b5b336e5, 2e18b37c, cc060974 (zen3 decoupling moves), 5b3e7c81 (02b8137c move, b4b4b9ee). Lane order: f79bcba3, b5b336e5, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 in worktree agent-zen3lane. Manifest rows whose source another epic removed (ad2a6a58 runner-smoke.txt, f63a2464 qc-arm-smoke.rs) need a disposition in 198aafa3.",
-  "Session 11: 616e1d7c done (gate batch at fc571c890). Review lesson repeated: link every unit record and output with jit doc add BEFORE gating (7dbcde0c, b23c364a, 5ec5dcc1 failed on it), and keep volatile counts out of records (5ec5dcc1 F2, single-source-prose). A verifier run inside a worker worktree counts that worktree's untracked target/ files and its stale .jit snapshot: regenerate committed verifier outputs on main after the merge. f6148d1e and f694f59a are blocked on owner input (declarations name siblings by flat path). Zen3 lane (worktree agent-zen3lane, unmerged): f79bcba3, b5b336e5, 602652bf done by workers; 198aafa3 running; merge to main waits for the peer's BATCH-END."
+  "Session 11: 616e1d7c done (gate batch at fc571c890). Review lesson repeated: link every unit record and output with jit doc add BEFORE gating (7dbcde0c, b23c364a, 5ec5dcc1 failed on it), and keep volatile counts out of records (5ec5dcc1 F2, single-source-prose). A verifier run inside a worker worktree counts that worktree's untracked target/ files and its stale .jit snapshot: regenerate committed verifier outputs on main after the merge. f6148d1e and f694f59a are blocked on owner input (declarations name siblings by flat path). Zen3 lane (worktree agent-zen3lane, unmerged): f79bcba3, b5b336e5, 602652bf done by workers; 198aafa3 running; merge to main waits for the peer's BATCH-END.",
+  "Session 11: lane units f79bcba3, b5b336e5, 602652bf merged on main at d6657b90e (clean merge of 3f1433616); relink scripts ran in a tolerant copy (add failure skips the removal). 198aafa3 continues on the lane branch."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
