@@ -9,11 +9,11 @@ Move commit: `deda5bf29`. Baseline record: [11964cb8-baseline.md](11964cb8-basel
 | Source | `dev/active/3f664839/design.md` |
 | Destination | `dev/active/b8206228-permanent-statistics/3f664839/design.md` |
 | Directory check | `jit doc dir b8206228 dev/active` prints `dev/active/b8206228-permanent-statistics` |
-| Bytes | `git mv` in `deda5bf29` reports a pure rename; the path text of `design.md:517` is repointed in the following commit |
+| Bytes | `git diff -M --stat 4dfbab9ce HEAD -- dev/active` reports the design as a pure rename |
 | Manifest row | `dev/active/3f664839/design.md`, `status = "complete"`; `check.py` reports no finding for it |
 | Rust files changed | none |
 | Entry scripts | none; the entry holds only `design.md` |
-| Own-path literal in the entry | `design.md:517` cites the entry's own path as prose; no digest or blob pin of the file exists in the tree, so the line is repointed (path text only) |
+| Own-path literal in the entry | `design.md:517` cites the entry's own path as prose; the file is a preregistration whose bytes `plan.md:69-71` (`relocation-protocol`) fixes, and its manifest row is `digest_pinned = true`; the line is kept |
 
 ## Consumers
 
@@ -22,6 +22,7 @@ Move commit: `deda5bf29`. Baseline record: [11964cb8-baseline.md](11964cb8-basel
 | No digest or blob pin | `git grep -nF "$(sha256sum < FILE \| cut -d' ' -f1)"`, same with `git hash-object FILE`, over the whole tree including `crates/` and `.jit` | no tracked file pins the bytes of the design, of `handoff-22.md` or of the two `f547c394` sweep files |
 | Code citations | `git grep -n '3f664839' -- crates dev/scripts scripts dev/tools` | one hit, the test fixture below |
 | Validator | `crates/gf2-sim/src/permanent_rare_event/artifact.rs:98` documents `path` as informational; `validate_design` (`artifact.rs:4219`) checks revision, blob and SHA-256 only | validation never compares `path` with a filesystem path |
+| Design identity | `validate_design` (`artifact.rs:4219`) checks a design's revision, blob and SHA-256 | an artifact embeds the blob of this file, so its bytes stay |
 | Path as data | `artifact.rs:4504` compares the whole `DesignIdentityV1` value for equality; the value is serialized into the configuration digest | the field feeds identity equality and a digest as an opaque string |
 
 | Literal | Ground | Evidence |
@@ -36,7 +37,7 @@ Move commit: `deda5bf29`. Baseline record: [11964cb8-baseline.md](11964cb8-basel
 | --- | --- | --- |
 | `b8206228-permanent-statistics/handoff-22.md:20,79` | repointed | unpinned handoff |
 | `fa787f85-documentation-overhaul/dev-path-code-consumers.md:99` | heading repointed | unpinned survey |
-| `3f664839/design.md:517` | repointed | no tracked file records the file's SHA-256 or blob id; the manifest row's `digest_pinned = true` is a flag, not a pin |
+| `3f664839/design.md:517` | kept | preregistration whose bytes `plan.md:69-71` (`relocation-protocol`) fixes; manifest row `digest_pinned = true` |
 | `f547c394/research-r3-sweeps.json` (`:3001,4968,4973`), `research-r3-sweep-resolutions.md` (`:588,963,964`) | kept | sweep output measured at reviewed commit `259c1b9a` (`f547c394/findings.md:65`), cited as record in `decoupling-findings.md:352` |
 | `dev/bench_results/*/inputs/producing/**` | kept | receipt `inputs/` snapshots |
 | `migration/manifest.toml` | kept | manifest schema fields |

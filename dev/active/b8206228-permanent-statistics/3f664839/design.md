@@ -514,7 +514,7 @@ not only its digest. Its fields are:
   and address-partition identifier
   `gf2.rare-event-stream-partitions/v1`;
 - preregistration identity: repository-relative path
-  `dev/active/b8206228-permanent-statistics/3f664839/design.md`, the pinned preregistration Git revision and
+  `dev/active/3f664839/design.md`, the pinned preregistration Git revision and
   blob object ID that resolve those exact committed bytes, and the SHA-256 of
   those bytes; plus the repository-relative immutable configuration path, its
   `gf2.rare-event-configuration/v1` identifier, and its canonical-byte
