@@ -6,7 +6,7 @@ receipt pins by digest and a checkout of that revision does not carry. This
 script resolves each one to a file of the same revision whose bytes hash to the
 pinned digest, writes it into the receipt's snapshot, stages it past
 `.gitignore`, and records source and digest in
-`dev/active/a203a23c/restored-inputs.json`.
+`dev/active/1a379447-zen3-cpu-performance/a203a23c/restored-inputs.json`.
 
 Only content that already exists in the repository at the base revision is
 written, so no measurement evidence is reconstructed and every restored byte
@@ -15,9 +15,9 @@ as unrestored with its receipt.
 
 `sources_by_digest` hashes every file the base revision tracks, reading blob
 bytes through one `git cat-file --batch` process rather than one process per
-file; `dev/active/a203a23c/timing/` records the cost that batching avoids.
+file; `dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/` records the cost that batching avoids.
 
-Usage: dev/active/a203a23c/restore-receipt-inputs.py <base-revision>
+Usage: dev/active/1a379447-zen3-cpu-performance/a203a23c/restore-receipt-inputs.py <base-revision>
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-RECORD = "dev/active/a203a23c/restored-inputs.json"
+RECORD = "dev/active/1a379447-zen3-cpu-performance/a203a23c/restored-inputs.json"
 CHECKER = "dev/scripts/check-receipt-input-snapshots.py"
 NO_SOURCE = "no file of the base revision carries this digest"
 
@@ -113,7 +113,7 @@ def main() -> int:
             "Files added to committed receipt input snapshots so a fresh checkout "
             "reproduces the acceptance verdict, with the committed source of each."
         ),
-        "generator": "dev/active/a203a23c/restore-receipt-inputs.py",
+        "generator": "dev/active/1a379447-zen3-cpu-performance/a203a23c/restore-receipt-inputs.py",
         "check": CHECKER,
         "base_revision": base,
         "restored": restored,

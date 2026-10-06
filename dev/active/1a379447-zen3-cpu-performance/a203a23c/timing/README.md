@@ -47,7 +47,7 @@ so it runs against a `git clone --shared --no-checkout` of this repository
 placed in a git-ignored directory under `target/` and detached at
 `8cfc015de59f8e3accc51bca46d13d94b0bee267`. That is the revision the tool was
 written against: the `base_revision` of
-`dev/active/a203a23c/restored-inputs.json`, and the revision whose committed
+`dev/active/1a379447-zen3-cpu-performance/a203a23c/restored-inputs.json`, and the revision whose committed
 receipts pin snapshot files the revision itself does not carry. Sharing the
 object store means the clone reads this repository's own objects; the clone's
 working tree and index absorb every write.
@@ -192,16 +192,16 @@ back-filled into it.
 
 ```
 ./dev/scripts/ccx1-bench-flock.sh --full-host \
-  python3 -B dev/active/a203a23c/timing/measure.py \
+  python3 -B dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py \
   --scratch target/a203a23c-scratch --repetitions 5 \
-  > dev/active/a203a23c/timing/timing.json
+  > dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/timing.json
 ```
 
 To re-derive an existing record's assessment without measuring anything:
 
 ```
-python3 -B dev/active/a203a23c/timing/measure.py \
-  --assess dev/active/a203a23c/timing/timing.json
+python3 -B dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py \
+  --assess dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/timing.json
 ```
 
 `--scratch` holds the clone and the extracted tool sources; `target/` is

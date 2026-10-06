@@ -210,7 +210,7 @@ recorded-AList pilots. None supplies v3 resolution evidence.
 The r3 and r4 matched-algorithm and quality-compatible pilots carry an
 acceptance summary recording them as accepted that a fresh checkout does not
 reproduce, for two reasons the
-[re-evaluation record](../../a203a23c/receipt-reevaluation.json) states per
+[re-evaluation record](../a203a23c/receipt-reevaluation.json) states per
 receipt; that record enumerates them.
 Their snapshot of the standalone harness lockfile was never committed and the
 harness has since resolved its dependencies again, so no content of this

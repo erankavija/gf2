@@ -2,7 +2,7 @@
 
 > **Diátaxis Type:** Explanation
 
-**Current disposition:** The [confirmation outcome](../00dd43c3/confirmation-outcome.md)
+**Current disposition:** The [confirmation outcome](../../00dd43c3/confirmation-outcome.md)
 retains the BMI2-gated route under the frozen rule below. This document remains
 the premeasurement rule record.
 
@@ -19,9 +19,9 @@ build reaches either of them through the force switch of
 `gf2_core::residual_shift`.
 
 That is the whole of this work's claim. Nothing here measures either route or
-compares them: the [profile](../c04dd4ac-zen3-shifts-and-permutations/shift-profile.md)
+compares them: the [profile](../../c04dd4ac-zen3-shifts-and-permutations/shift-profile.md)
 records the branch as material and nominates the form, and the
-[feasibility record](../c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md)
+[feasibility record](../../c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md)
 establishes that the form compiles at the repository's MSRV and reaches the
 instructions its nomination names. Feasibility is not a win, and neither is
 shipping. The A/B confirmation `00dd43c3` is what measures the two routes
@@ -30,8 +30,8 @@ against each other.
 ## The frozen rule decides
 
 `00dd43c3` freezes its acceptance rule before it launches, under the epic's
-[measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [shared protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md). That rule, not a reading of
+[measurement contract](../measurement-contract.md)
+and the [shared protocol](../f547c394/protocol.md). That rule, not a reading of
 its numbers afterwards, decides the route's disposition:
 
 - A qualifying verdict retains the route in production. The confirmation's
@@ -46,11 +46,11 @@ consumer set records.
 
 ## Rust 1.95 evidence
 
-`dev/active/f8dd4dde/validate-msrv-record.json`, produced by the committed
-`dev/active/f8dd4dde/validate-msrv.sh`, is REQ-06's build-and-suite record: it
+`dev/active/1a379447-zen3-cpu-performance/f8dd4dde/validate-msrv-record.json`, produced by the committed
+`dev/active/1a379447-zen3-cpu-performance/f8dd4dde/validate-msrv.sh`, is REQ-06's build-and-suite record: it
 builds `gf2-core` and `gf2-kernels-simd` and runs the shared residual-shift
 suite and the shift and funnel tests under `RUSTUP_TOOLCHAIN=1.95`, and its
-own witness probe (`dev/active/f8dd4dde/msrv-validation/`) reports the host's
+own witness probe (`dev/active/1a379447-zen3-cpu-performance/f8dd4dde/msrv-validation/`) reports the host's
 `bmi2` detection and the route each arm of the force switch executed. The
 assembly artefact's toolchain header reflects whichever default toolchain was
 active when the crate's `dev/scripts/regen-asm.sh` last ran — this crate's
@@ -80,9 +80,9 @@ the portable path already runs. The items that go:
   disposition.
 - The `# Routes` paragraphs of `BitVec::shift_left` and `BitVec::shift_right`
   lose their residual-kernel sentence and keep the word-aligned bundle's.
-- `dev/active/f8dd4dde/validate-msrv.sh`, its record
-  `dev/active/f8dd4dde/validate-msrv-record.json`, and the witness probe
-  `dev/active/f8dd4dde/msrv-validation/`: evidence for the kernel route alone.
+- `dev/active/1a379447-zen3-cpu-performance/f8dd4dde/validate-msrv.sh`, its record
+  `dev/active/1a379447-zen3-cpu-performance/f8dd4dde/validate-msrv-record.json`, and the witness probe
+  `dev/active/1a379447-zen3-cpu-performance/f8dd4dde/msrv-validation/`: evidence for the kernel route alone.
 
 Removal also closes this document: a removed route needs no retention rule, and
 the confirmation's outcome record carries the reason.

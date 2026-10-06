@@ -2,7 +2,7 @@
 """Write the producing-input manifest of this assessment's campaigns (jit:19513245).
 
 Usage: make-producing-inputs.py [output]
-       (default dev/active/19513245/survey/producing-inputs.json)
+       (default dev/active/1a379447-zen3-cpu-performance/19513245/survey/producing-inputs.json)
 
 The manifest selects every repository file whose bytes can change what a
 campaign measures or how it runs: the gf2 production crates the arm compiles,
@@ -20,7 +20,7 @@ import os
 import subprocess
 import sys
 
-ISSUE = "dev/active/19513245"
+ISSUE = "dev/active/1a379447-zen3-cpu-performance/19513245"
 SURVEY = f"{ISSUE}/survey"
 REUSED = "dev/active/1a379447-zen3-cpu-performance/6c6b09b1/survey"
 TOOL = "dev/tools/tuning-campaign-support"

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # Rust 1.95 build-and-suite validation record for jit f8dd4dde (REQ-06).
 #
-# Usage: ./validate-msrv.sh [output.json]   (default dev/active/f8dd4dde/validate-msrv-record.json)
+# Usage: ./validate-msrv.sh [output.json]   (default dev/active/1a379447-zen3-cpu-performance/f8dd4dde/validate-msrv-record.json)
 
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 export PATH="$HOME/.cargo/bin:$PATH"
 export RUSTUP_TOOLCHAIN=1.95
-OUTPUT=${1:-dev/active/f8dd4dde/validate-msrv-record.json}
+OUTPUT=${1:-dev/active/1a379447-zen3-cpu-performance/f8dd4dde/validate-msrv-record.json}
 BUDGET=./scripts/cargo-budget.sh
-WITNESS_MANIFEST=dev/active/f8dd4dde/msrv-validation/Cargo.toml
+WITNESS_MANIFEST=dev/active/1a379447-zen3-cpu-performance/f8dd4dde/msrv-validation/Cargo.toml
 LOG=$(mktemp)
 trap 'rm -f "$LOG"' EXIT
 

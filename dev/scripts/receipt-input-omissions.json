@@ -10,7 +10,7 @@
       "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
       "recorded_in": [
         "dev/active/1a379447-zen3-cpu-performance/c077a88b/findings.md",
-        "dev/active/a203a23c/receipt-reevaluation.json"
+        "dev/active/1a379447-zen3-cpu-performance/a203a23c/receipt-reevaluation.json"
       ]
     },
     {
@@ -20,7 +20,7 @@
       "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
       "recorded_in": [
         "dev/active/1a379447-zen3-cpu-performance/c077a88b/findings.md",
-        "dev/active/a203a23c/receipt-reevaluation.json"
+        "dev/active/1a379447-zen3-cpu-performance/a203a23c/receipt-reevaluation.json"
       ]
     },
     {
@@ -30,7 +30,7 @@
       "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
       "recorded_in": [
         "dev/active/1a379447-zen3-cpu-performance/c077a88b/findings.md",
-        "dev/active/a203a23c/receipt-reevaluation.json"
+        "dev/active/1a379447-zen3-cpu-performance/a203a23c/receipt-reevaluation.json"
       ]
     },
     {
@@ -40,7 +40,7 @@
       "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
       "recorded_in": [
         "dev/active/1a379447-zen3-cpu-performance/c077a88b/findings.md",
-        "dev/active/a203a23c/receipt-reevaluation.json"
+        "dev/active/1a379447-zen3-cpu-performance/a203a23c/receipt-reevaluation.json"
       ]
     },
     {
@@ -50,7 +50,7 @@
       "cause": "the standalone LDPC harness resolved its dependencies again after these pilots ran, and no file of this repository carries the digest the receipt pins, so the snapshot cannot be completed from committed content",
       "recorded_in": [
         "dev/active/1a379447-zen3-cpu-performance/c077a88b/findings.md",
-        "dev/active/a203a23c/receipt-reevaluation.json"
+        "dev/active/1a379447-zen3-cpu-performance/a203a23c/receipt-reevaluation.json"
       ]
     }
   ]

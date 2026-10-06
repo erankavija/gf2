@@ -25,14 +25,14 @@ The evidence has three layers, each in its own place:
   composed: the route selected at run time, allocation counts, coefficient
   reuse counts, table preparation, the conversion probes and hardware
   counters. Its nine-session result is the generated
-  [profile summary](../../bench_results/19513245/r1-consumer-profile/profile-summary.md),
+  [profile summary](../../../bench_results/19513245/r1-consumer-profile/profile-summary.md),
   and [Profile completion](#profile-completion) records its completeness and
   attribution rather than inferring profile facts from the A/B receipts;
 - three **A/B campaign families** under
-  [protocol version 4](../1a379447-zen3-cpu-performance/f547c394/protocol.md) and the
-  [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md),
+  [protocol version 4](../f547c394/protocol.md) and the
+  [measurement contract](../measurement-contract.md),
   each with a pilot and a confirmation, which decide: the
-  [generated tables](../../bench_results/19513245/tables.md) carry every cell's
+  [generated tables](../../../bench_results/19513245/tables.md) carry every cell's
   paired estimate with its bootstrap interval;
 - the **generated code** of both routes under
   [`survey/asm/`](survey/asm), which explains the limits the campaigns measure.
@@ -58,7 +58,7 @@ route medians; the A/B receipts, not those quotients, decide adoption.
 | `survey/make-source-evidence.py` | `survey/source-evidence.json`: every code claim below, cited by claim ID |
 | `survey/run-profile.sh` | the profile series, its host record, its counters and its summary |
 | `survey/disassemble.sh` | [`survey/asm/`](survey/asm): the annotated release disassembly of both measured executables and their instruction mix |
-| `../6c6b09b1/survey/analysis` (`survey-analysis tables`) | [the generated tables](../../bench_results/19513245/tables.md) |
+| `../6c6b09b1/survey/analysis` (`survey-analysis tables`) | [the generated tables](../../../bench_results/19513245/tables.md) |
 
 The host is `fraktaali`, a Ryzen 9 5900X; each receipt records its CPU model,
 kernel, governors, SMT state and CPU mask per session, and the profile records
@@ -550,7 +550,7 @@ change to pair with a crate-local assembly artifact.
 
 REQ-02's profile is complete under
 `dev/bench_results/19513245/r1-consumer-profile`. The append-only
-[`repetitions.log`](../../bench_results/19513245/r1-consumer-profile/repetitions.log)
+[`repetitions.log`](../../../bench_results/19513245/r1-consumer-profile/repetitions.log)
 records nine starts, nine completions and the terminal `series done`, with no
 discarded or unfinished session. Every `rep-*/cases.json` contains each of the
 38 unique ladder cases exactly once, with no missing or extra case. The first
@@ -559,12 +559,12 @@ cases declared in `survey/counter-cases.txt`; every CSV contains cycles,
 instructions, branches, branch misses, cache references and cache misses.
 
 All sessions record the same `consumer-profile` SHA-256. It matches the digest
-in the [host record](../../bench_results/19513245/r1-consumer-profile/host.txt),
+in the [host record](../../../bench_results/19513245/r1-consumer-profile/host.txt),
 [`conformance/build-record.txt`](conformance/build-record.txt) and
 [`survey/asm/consumer-profile/index.txt`](survey/asm/consumer-profile/index.txt).
 The host record's `consumer-arm` digest likewise matches the build record and
 its assembly index. The generated
-[`profile-summary.md`](../../bench_results/19513245/r1-consumer-profile/profile-summary.md)
+[`profile-summary.md`](../../../bench_results/19513245/r1-consumer-profile/profile-summary.md)
 is derived from the nine structured records by the committed summarizer. The
 command recorded for reproduction is
 `env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/19513245/survey/run-profile.sh dev/bench_results/19513245/r1-consumer-profile`

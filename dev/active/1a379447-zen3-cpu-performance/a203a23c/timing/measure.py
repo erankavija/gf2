@@ -30,7 +30,7 @@ Four series run in the fixed order the sampling plan declares:
    stages them. They therefore run against a scratch `git clone --shared` of
    this repository checked out at 8cfc015de59f8e3accc51bca46d13d94b0bee267, the
    revision whose snapshots are missing the files the tool restores and the
-   `base_revision` recorded in `dev/active/a203a23c/restored-inputs.json`. The
+   `base_revision` recorded in `dev/active/1a379447-zen3-cpu-performance/a203a23c/restored-inputs.json`. The
    clone is reset with `git reset --hard` and `git clean -fdx` before every
    repetition, so every repetition performs the whole restoration, and the
    form's two source files are placed into the clone afterwards, outside the
@@ -66,13 +66,13 @@ re-derived without measuring anything again; the observed fields cannot be
 back-filled, and a record written before they existed simply lacks them.
 
 Usage:
-  dev/active/a203a23c/timing/measure.py --scratch <directory> [--repetitions N]
-  dev/active/a203a23c/timing/measure.py --assess <record.json>
+  dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py --scratch <directory> [--repetitions N]
+  dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py --assess <record.json>
 
 Measuring prints one JSON record to stdout; `--assess` rewrites the named
 record in place. Run from the repository root, and run a measurement under
 `dev/scripts/ccx1-bench-flock.sh --full-host` so host contention does not
-distort the wall times; see dev/active/a203a23c/timing/README.md.
+distort the wall times; see dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/README.md.
 """
 
 from __future__ import annotations
@@ -110,7 +110,7 @@ SERIES_ORDER = (
 # than observed from one. Every other figure a record carries is observed at
 # run time, derived from the record's own samples, or an identity citation.
 SAMPLING_PLAN = {
-    "declared_in": "dev/active/a203a23c/timing/README.md",
+    "declared_in": "dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/README.md",
     "repetitions_per_series": 5,
     "statistic_of_record": ["min_s", "median_s"],
     "early_stopping": (
@@ -848,7 +848,7 @@ def sanitized_command(scratch_flag: str) -> str:
             parts.append(f"{scratch_flag}=<scratch-directory>")
         else:
             parts.append(argument)
-    return "python3 -B dev/active/a203a23c/timing/measure.py " + " ".join(parts)
+    return "python3 -B dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py " + " ".join(parts)
 
 
 def main() -> int:
@@ -947,7 +947,7 @@ def main() -> int:
             "form committed at 76812a4e's parent and the batch form committed at "
             "76812a4e, against one fixed workload."
         ),
-        "generator": "dev/active/a203a23c/timing/measure.py",
+        "generator": "dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py",
         "declaration_note": DECLARATION_NOTE,
         "command": sanitized_command("--scratch"),
         "repetitions": repetitions,

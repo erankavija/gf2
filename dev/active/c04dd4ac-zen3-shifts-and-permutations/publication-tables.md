@@ -124,9 +124,9 @@ The exploratory profile's receipt and summary match their context pins. The conf
 | `dev/active/00dd43c3/profile-context.json` | `9afdec8e2ce4a7f80361f314606f49c392399889a13e867212e5655c615b3d38` | profile context pin |
 | `dev/active/00dd43c3/pilot-addendum.json` | `8712cd79a9d511d9bbc9b8701aa3241c85279959c3272f15c0c56f08a3df0d2f` | frozen retention rule |
 | `dev/active/00dd43c3/confirmation-derivation.txt` | `36ee11f4502b047d43c11ad65aff4ab7a11b42033e2e92703430b9abecc0e4a2` | retained and dropped pilot cells |
-| `dev/active/00dd43c3/confirmation-outcome.md` | `01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19` | completed retention disposition |
+| `dev/active/00dd43c3/confirmation-outcome.md` | `b0b2798a543d29ce46a76a7605e83e876b7c095279ac40a3ba6f16a998419fc6` | completed retention disposition |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` | `7ab7804d647d33f2fb7d48781065c1b77d052189d8d8e4147dd2bc5ce23bd601` | material workload disposition |
-| `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md` | `ff772ffc6558e49f69803f7b89decb94baac704b770ac3e4e3cb6f1b0e80c9ad` | Rust 1.95 and scalar-fallback feasibility |
+| `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md` | `aef23fc5ae74d6a51e78c9b541e25bc7f47039286f3aadf55bb2e104c459dfb8` | Rust 1.95 and scalar-fallback feasibility |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md` | `678751a05a7dc2f00f7e73ec4d1184836075e6577dc5c87d7be2585b91fdc2e6` | DVB not-material disposition |
 | `dev/active/1a379447-zen3-cpu-performance/eda07788/findings.md` | `414d7edbe56e38e2d1ce9fd1b07fb78372d781661a3b9e3cbb344ac5c5e318f6` | NR no-win and unavailable mappings |
-| `dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md` | `6a563e9f9748ea35fcf923e7bcfac34c9a7a1e03c007355d0bd9279ae548de5a` | consumer and comparator survey |
+| `dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md` | `54a37449ebcaf40d53971a306bec783755c94935e8d33ec8a041ac19a05b5e6b` | consumer and comparator survey |
