@@ -46,6 +46,6 @@ None.
 ## Reference artefacts
 
 - Receipt protocol: `dev/active/ae03bcd0-general-bch/fd9d5416/receipt-protocol.md`; renderer `dev/active/ae03bcd0-general-bch/fd9d5416/render_receipt.py`.
-- Runner: `dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`; smoke evidence `dev/active/ae03bcd0-general-bch/d1b4f85e/smoke-run.md`; contract amendments in `dev/active/4e732b56/workload-selection.md`.
-- Baselines: `dev/bench_results/88ca7d2f/`, survey `dev/active/4e732b56/findings.md`.
+- Runner: `dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`; smoke evidence `dev/active/ae03bcd0-general-bch/d1b4f85e/smoke-run.md`; contract amendments in `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md`.
+- Baselines: `dev/bench_results/88ca7d2f/`, survey `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`.
 - Queue: `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`.

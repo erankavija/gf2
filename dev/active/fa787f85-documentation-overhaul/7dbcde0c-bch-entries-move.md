@@ -46,7 +46,7 @@ render in the corresponding two lines; the same record names its owner.
 | File | Edit |
 |---|---|
 | `ae03bcd0-general-bch/handoff-8.md`, `progress.json` | code spans and one JSON string naming the three entries |
-| `4e732b56/workload-selection.md:312` | code span naming the runner |
+| `ae03bcd0-general-bch/4e732b56/workload-selection.md:312` | code span naming the runner |
 | `fa787f85-documentation-overhaul/handoff-6.md:58`, `handoff-9.md:33`, `wave11-worker-brief.md:58` | code span naming the fd9d5416 directory |
 | `fa787f85-documentation-overhaul/dev-path-code-consumers.md` | the row of the renderer test's smoke-run literals is removed and the renderer leaves the `dev/bench_results` row: `render_receipt.py:104` locates both by content |
 
