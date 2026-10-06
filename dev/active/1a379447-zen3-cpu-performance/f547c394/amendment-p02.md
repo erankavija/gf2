@@ -17,16 +17,16 @@ receipt is evaluated under the version it pins.
 ## Enforcement
 
 - `evaluate_version` in
-  [receipt.rs](../../tools/tuning-campaign-support/src/receipt.rs) applies
+  [receipt.rs](../../../tools/tuning-campaign-support/src/receipt.rs) applies
   P-02 to the three shared pins of every receipt, whichever protocol version
   the receipt pins.
 - `ArtifactPin::validate_shape` and `ArtifactPin::verify_content` in
-  [protocol.rs](../../tools/tuning-campaign-support/src/protocol.rs) check the
+  [protocol.rs](../../../tools/tuning-campaign-support/src/protocol.rs) check the
   path syntax, the digest syntax and the snapshot digest.
 - `SharedInput::identity` in the same file reads the edition a document's
   bytes declare.
 - `acceptance_identifies_shared_pins_by_digest_not_by_source_path` in
-  [protocol_contracts.rs](../../tools/tuning-campaign-support/tests/protocol_contracts.rs)
+  [protocol_contracts.rs](../../../tools/tuning-campaign-support/tests/protocol_contracts.rs)
   accepts pins whose source path differs from the live document's path and
   rejects a pin whose digest identifies another document kind; the
   neighbouring P-02 tests reject a missing snapshot and a digest mismatch.
@@ -34,7 +34,7 @@ receipt is evaluated under the version it pins.
 ## Verdicts
 
 This record is text: the evaluator reads no amendment record.
-[The verdict record](../fa787f85-documentation-overhaul/5a25717c-verdict-baseline.md)
+[The verdict record](../../fa787f85-documentation-overhaul/5a25717c-verdict-baseline.md)
 lists the verdict and findings of every committed
 `zen3-benchmark-receipt-v1` receipt and the command that reproduces the
 listing.

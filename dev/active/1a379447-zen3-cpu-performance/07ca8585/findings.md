@@ -4,7 +4,7 @@
 
 Design record and outcome for `07ca8585`. The
 [measurement contract](../measurement-contract.md)
-and the [shared protocol](../../f547c394/protocol.md) govern every timed cell.
+and the [shared protocol](../f547c394/protocol.md) govern every timed cell.
 The predecessor `3be770d5` ranks the levers this issue spends; its
 [findings](../3be770d5/findings.md) and
 [tables](../../../bench_results/3be770d5/tables.md) are the authoritative source

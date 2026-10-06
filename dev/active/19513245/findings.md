@@ -29,7 +29,7 @@ The evidence has three layers, each in its own place:
   and [Profile completion](#profile-completion) records its completeness and
   attribution rather than inferring profile facts from the A/B receipts;
 - three **A/B campaign families** under
-  [protocol version 4](../f547c394/protocol.md) and the
+  [protocol version 4](../1a379447-zen3-cpu-performance/f547c394/protocol.md) and the
   [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md),
   each with a pilot and a confirmation, which decide: the
   [generated tables](../../bench_results/19513245/tables.md) carry every cell's

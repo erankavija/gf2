@@ -1,6 +1,6 @@
 # Logical-buffer candidate portfolio (jit:bc091474)
 
-This portfolio is frozen before candidate code, pilot samples, or a new receipt. It applies the [frozen logical-buffer addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md) and [protocol version 4](../../f547c394/protocol.md) to the accepted [baseline and profile](../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md). The addendum, protocol, and baseline receipts retain their existing bytes.
+This portfolio is frozen before candidate code, pilot samples, or a new receipt. It applies the [frozen logical-buffer addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md) and [protocol version 4](../f547c394/protocol.md) to the accepted [baseline and profile](../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md). The addendum, protocol, and baseline receipts retain their existing bytes.
 
 ## Profile decision
 

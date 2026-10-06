@@ -8,8 +8,8 @@ one dispatch shared by public and internal callers. No multiplication algorithm
 changed: the kernels already existed, and the routing is what this issue adds.
 
 The [measurement contract](../measurement-contract.md)
-and the [shared protocol](../../f547c394/protocol.md) at
-[version 4](../../f547c394/amendment-v4.md) govern the receipt this issue needs.
+and the [shared protocol](../f547c394/protocol.md) at
+[version 4](../f547c394/amendment-v4.md) govern the receipt this issue needs.
 Both the pilot and the confirmation receipt exist and are accepted. This
 report states no measured value of its own; every number points at the
 acceptance summary row that holds it.

@@ -6,7 +6,7 @@ This plan fixes the operation, the configuration grid, the comparator arms and
 the campaign order for JIT issue `12fdeb5b`. It changes no production kernel.
 The normative rules are the
 [measurement contract](../measurement-contract.md)
-and [protocol version 4](../../f547c394/protocol.md); this document declares only
+and [protocol version 4](../f547c394/protocol.md); this document declares only
 what the contract leaves to the family, and the frozen addenda carry the
 numbers.
 

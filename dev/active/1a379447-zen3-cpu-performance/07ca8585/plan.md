@@ -4,7 +4,7 @@
 
 How `07ca8585` measures the change the [findings](findings.md) describe. The
 [measurement contract](../measurement-contract.md)
-and the [protocol](../../f547c394/protocol.md) supply every rule; this plan states
+and the [protocol](../f547c394/protocol.md) supply every rule; this plan states
 only what is specific to this issue.
 
 ## Arms

@@ -6,8 +6,8 @@ Outcome record for `f63a2464`, the bounded checkpoint that decides the three
 candidate families `3be770d5`'s lever ranking leaves standing on a comparator or
 labelled estimate. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [frozen protocol](../f547c394/protocol.md) with its
-[version-4 amendment](../f547c394/amendment-v4.md) govern every timed cell.
+and the [frozen protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) with its
+[version-4 amendment](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md) govern every timed cell.
 
 Three documents are the frozen instruments this record is judged against, each
 committed before the evidence it governs: the

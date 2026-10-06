@@ -18,7 +18,7 @@ rests on three generated records and one ledger:
   identifiers appear in backticks.
 
 The [measurement contract](../measurement-contract.md) and
-[protocol version 4](../../f547c394/protocol.md) govern every timed cell. The
+[protocol version 4](../f547c394/protocol.md) govern every timed cell. The
 external comparator is M4RI [AlbrechtBard2026].
 
 ## 1. Selectors and their disposition

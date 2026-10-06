@@ -7,13 +7,13 @@ provenance.” Parallel sessions and repository-owned JIT records change commit
 identities independently of measurement behavior. The invoker also explicitly
 requests this as a project invariant. The canonical rule is
 `@/inv/behavioral-evidence-validity`, projected from `.jit/invariants.toml` into
-`AGENTS.md`; the [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
+`AGENTS.md`; the [measurement contract](../measurement-contract.md)
 applies it to this epic.
 
 ## Review resolution
 
 The round-1 review is preserved at
-[the original verdict](../1a379447-zen3-cpu-performance/reviews/f547c394-r1.md).
+[the original verdict](../reviews/f547c394-r1.md).
 Its Git-object-availability and Git-ancestry requirements are superseded by the
 invoker's explicit clarification. This is an authorized contract amendment,
 not a passing verdict on the incomplete implementation.
@@ -43,13 +43,13 @@ Acceptance validates exact saved-plan bytes and their cell/arm connections,
 and uses read-only shared checkpoint inspection. Source-control locators remain
 informational.
 
-[Revalidation evidence](../../bench_results/f547c394/revalidation.json) records
+[Revalidation evidence](../../../bench_results/f547c394/revalidation.json) records
 the release acceptance executable digest, its source/build input identities,
 toolchain, commands, results and unchanged raw-evidence digests. It includes
 results from both committed receipt directories and their clean Git exports,
 plus the preceding acceptance summaries for comparison. The
-[pilot](../../bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json)
-and [confirmation](../../bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json)
+[pilot](../../../bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json)
+and [confirmation](../../../bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json)
 carry all required opening facts; neither requires regeneration. The frozen
 logs, plans, receipts, snapshots and raw samples retain their original bytes.
 The pilot supplies exploratory evidence only and does not qualify for

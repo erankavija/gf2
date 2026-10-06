@@ -151,8 +151,8 @@ value.
 ### `measurement-authority` [plan-fixed] — contract, protocol version 4 and worker brief
 
 The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md),
-the [protocol](../f547c394/protocol.md) with its
-[version-4 amendment](../f547c394/amendment-v4.md) and the
+the [protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) with its
+[version-4 amendment](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md) and the
 [worker brief](../1a379447-zen3-cpu-performance/worker-brief.md) govern every
 timed cell. Each family has its own append-only ledger and at most the cell
 count its first confirmatory attempt admits, recomputed from the tooling. A
@@ -466,7 +466,7 @@ Manifest source identifiers resolve as follows; the criteria `REQ-01` and
 | Source | Location |
 |---|---|
 | `MEASUREMENT-CONTRACT` | [measurement-contract.md](../1a379447-zen3-cpu-performance/measurement-contract.md) |
-| `PROTOCOL-V4` | [protocol.md](../f547c394/protocol.md), [amendment-v4.md](../f547c394/amendment-v4.md) |
+| `PROTOCOL-V4` | [protocol.md](../1a379447-zen3-cpu-performance/f547c394/protocol.md), [amendment-v4.md](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md) |
 | `WORKER-BRIEF` | [worker-brief.md](../1a379447-zen3-cpu-performance/worker-brief.md) |
 | `DECISION-RECORD-F63A2464` | [decision-record.md](../f63a2464/decision-record.md), [findings.md](../f63a2464/findings.md), [corrections.md](../f63a2464/corrections.md) |
 | `CONTRACT-REVIEW-F63A2464` | [numerical-contract-review.md](../f63a2464/numerical-contract-review.md) |

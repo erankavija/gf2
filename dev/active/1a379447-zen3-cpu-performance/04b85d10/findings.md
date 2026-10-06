@@ -5,9 +5,9 @@
 Survey for `04b85d10`. No production kernel, selector, encoder or decoder is
 changed and no independent BCH campaign is started. The
 [measurement contract](../measurement-contract.md)
-and the [shared protocol](../../f547c394/protocol.md) govern every receipt. Six
-receipts pin [version 3](../../f547c394/amendment-v3.md) and two pin
-[version 4](../../f547c394/amendment-v4.md); each is evaluated under the version
+and the [shared protocol](../f547c394/protocol.md) govern every receipt. Six
+receipts pin [version 3](../f547c394/amendment-v3.md) and two pin
+[version 4](../f547c394/amendment-v4.md); each is evaluated under the version
 it pins. [Recorded contradictions](#recorded-contradictions) says which
 conclusions the version-4 pilots replace, and
 [Confirmation admissibility](#confirmation-admissibility) says why the

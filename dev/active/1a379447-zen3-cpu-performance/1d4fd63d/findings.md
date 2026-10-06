@@ -3,7 +3,7 @@
 > **Diátaxis Type:** Explanation
 
 Report for `1d4fd63d` (epic `1a379447`). The [measurement contract](../measurement-contract.md)
-and the [shared protocol](../../f547c394/protocol.md) at [version 4](../../f547c394/amendment-v4.md)
+and the [shared protocol](../f547c394/protocol.md) at [version 4](../f547c394/amendment-v4.md)
 govern every receipt; each receipt pins the contract, the protocol, the
 addendum schema and its family addendum by digest and commits its producing
 snapshot, its journal and its checkpoints. This report carries the argument and

@@ -36,7 +36,7 @@ Historical rows below retain their reviewed wording and evidence references.
 [The raw pre-work audit](research-r3-prework.txt) precedes source edits.
 The local tracker reports no matching research/code review runs. The linked
 R1/R2 reviews, prior rework table and lead’s subsequently linked
-[R3 prior-findings ledger](../1a379447-zen3-cpu-performance/reviews/f547c394-r3.md#prior-findings-regression-table-tier-15)
+[R3 prior-findings ledger](../reviews/f547c394-r3.md#prior-findings-regression-table-tier-15)
 supply the historical findings below. That ledger identifies research R1 as
 citation-label drift, records its authorized repair, and reopens code R2 F1
 as the current host-provenance finding. The epic handoffs corroborate the

@@ -10,7 +10,7 @@
 > **Against:** [`dense-parity-addendum-v1.md`](dense-parity-addendum-v1.md), identity
 > `2037941f-dense-parity-v1`, and the
 > [measurement contract](../measurement-contract.md)
-> and [protocol version 4](../../f547c394/protocol.md) it specializes
+> and [protocol version 4](../f547c394/protocol.md) it specializes
 
 This record walks the frozen addendum from top to bottom and, for every
 normative clause, names the harness location that carries it, the test that

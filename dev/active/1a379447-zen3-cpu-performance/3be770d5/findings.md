@@ -4,10 +4,10 @@
 
 Survey for `3be770d5`. It measures and ranks; it changes no production decoder.
 The [measurement contract](../measurement-contract.md)
-and the [shared protocol](../../f547c394/protocol.md) govern every timed cell.
+and the [shared protocol](../f547c394/protocol.md) govern every timed cell.
 A receipt pins, snapshots and is evaluated under the version it names: the
-three pilots name [version 3](../../f547c394/amendment-v3.md) and the two matched
-confirmations name [version 4](../../f547c394/amendment-v4.md), which admits a
+three pilots name [version 3](../f547c394/amendment-v3.md) and the two matched
+confirmations name [version 4](../f547c394/amendment-v4.md), which admits a
 version-3 pilot as resolution evidence because both versions derive the pilot
 resolution identically. The [plan](plan.md) maps each criterion to what
 `c077a88b` already settles.

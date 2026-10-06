@@ -8,7 +8,7 @@ Survey for `c077a88b`. No production kernel changes are included. The
 and the finalized campaign receipts, are the numerical projection of this
 survey; regenerating them reproduces the committed file byte for byte. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [frozen protocol](../f547c394/protocol.md) govern both families.
+and [frozen protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) govern both families.
 
 This report carries the argument and cites the evidence: it states no measured
 or derived value. Every figure lives in `tables.md`, in the receipts and

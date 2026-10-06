@@ -110,8 +110,8 @@ left for its owner; it is reported rather than patched here.
 
 The [validation report](rework-validation-r5.md) identifies the release
 evaluator, records the focused tests, and verifies the frozen
-[v3 r2 pilot](../../bench_results/f547c394/v3-r2-pilot/receipt.json) and
-[confirmation](../../bench_results/f547c394/v3-r2-confirmation/receipt.json)
+[v3 r2 pilot](../../../bench_results/f547c394/v3-r2-pilot/receipt.json) and
+[confirmation](../../../bench_results/f547c394/v3-r2-confirmation/receipt.json)
 receipts. Both evidence collections contain their complete frozen inputs and
 report zero acceptance findings. These receipts exercise the protocol pipeline
 without claiming a gf2 speedup. The version-4 interrupted-cell rule is

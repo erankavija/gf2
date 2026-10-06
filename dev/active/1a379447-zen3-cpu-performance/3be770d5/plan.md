@@ -4,10 +4,10 @@
 
 Plan for `3be770d5`. The issue measures and ranks; it changes no production
 decoder. The [measurement contract](../measurement-contract.md)
-and the [shared protocol](../../f547c394/protocol.md) govern every timed cell,
+and the [shared protocol](../f547c394/protocol.md) govern every timed cell,
 each receipt under the version it names: the pilots
-[version 3](../../f547c394/amendment-v3.md) and the matched confirmations
-[version 4](../../f547c394/amendment-v4.md).
+[version 3](../f547c394/amendment-v3.md) and the matched confirmations
+[version 4](../f547c394/amendment-v4.md).
 
 ## What `c077a88b` already establishes
 

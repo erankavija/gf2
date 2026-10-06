@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Compares the acceptance verdict of every committed benchmark receipt under
 # the benchmark-acceptance binary built from a base revision and under the one
-# built from HEAD, and writes dev/active/bdc507a3/verdict-preservation.json.
+# built from HEAD, and writes dev/active/1a379447-zen3-cpu-performance/bdc507a3/verdict-preservation.json.
 #
-# Usage: dev/active/bdc507a3/compare-acceptance-verdicts.sh <base-revision>
+# Usage: dev/active/1a379447-zen3-cpu-performance/bdc507a3/compare-acceptance-verdicts.sh <base-revision>
 #
 # Run from any directory of the repository; the tooling crate must have no
 # uncommitted change, so HEAD identifies the evaluated source. Receipts are
@@ -109,7 +109,7 @@ record = {
     "schema": "bdc507a3-verdict-preservation-v1",
     "purpose": "Acceptance verdicts of every committed benchmark receipt under the evaluator before and after protocol version 4 changed the P-11 rule for interrupted cells.",
     "committed_verdict": "Verdict of the acceptance summary committed beside the receipt, which an earlier evaluator wrote from the files present where it ran.",
-    "generator": "dev/active/bdc507a3/compare-acceptance-verdicts.sh",
+    "generator": "dev/active/1a379447-zen3-cpu-performance/bdc507a3/compare-acceptance-verdicts.sh",
     "toolchain": subprocess.run(["rustc", "--version"], capture_output=True, text=True, check=True).stdout.strip(),
     "base": {
         "revision": base,
@@ -131,7 +131,7 @@ record = {
         ],
     },
 }
-output = root / "dev/active/bdc507a3/verdict-preservation.json"
+output = root / "dev/active/1a379447-zen3-cpu-performance/bdc507a3/verdict-preservation.json"
 output.write_text(json.dumps(record, indent=2) + "\n")
 print(json.dumps({key: value for key, value in record["result"].items() if not isinstance(value, list)}))
 EOF

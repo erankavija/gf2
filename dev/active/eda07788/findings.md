@@ -53,8 +53,8 @@ missing, and on which side?
 ## Method and evidence
 
 The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [shared protocol](../f547c394/protocol.md) at
-[version 3](../f547c394/amendment-v3.md) — the version these receipts pin,
+and the [shared protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) at
+[version 3](../1a379447-zen3-cpu-performance/f547c394/amendment-v3.md) — the version these receipts pin,
 snapshot and are evaluated under — govern all timed work.
 Committed commands produce every artifact:
 
@@ -148,8 +148,8 @@ and pack spans inside the windows.
 
 ### Warm-state defect and re-measurement
 
-[Version 3](../f547c394/amendment-v3.md) of the
-[shared protocol](../f547c394/protocol.md) defines a `warm` cell as one untimed
+[Version 3](../1a379447-zen3-cpu-performance/f547c394/amendment-v3.md) of the
+[shared protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) defines a `warm` cell as one untimed
 pass over the working set before calibration, and its P-17 requires the applied
 cache state to match the declaration (*Sampling design*). The v3
 receipts snapshot the arm sources under `inputs/producing/`. In those
@@ -213,7 +213,7 @@ that spends no comparison, so the family's m and t stay where the withdrawn
 confirmation left them (*Family accounting (P-20)* in both sections) and the
 P-20 tail condition still fails. No cell of this family can reach a
 confirmatory outcome under protocol version 3, whichever further attempt is
-made, and [version 4](../f547c394/amendment-v4.md) restores none: its
+made, and [version 4](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md) restores none: its
 per-candidate cap counts attempts per protocol version, while the family
 ledger's sequential attempt budget still counts every earlier reservation, so a
 further attempt spends a smaller alpha again. The re-measurement therefore
@@ -541,7 +541,7 @@ receipt, input-tree and summary bytes are unchanged. Each confirmation's
 execution log is byte-identical to the runner's canonical log. The
 re-measurement addendum is checked against the version-3 schema snapshot its
 receipt pins, whose digest equals the committed
-[`addendum-v3.schema.json`](../f547c394/addendum-v3.schema.json); `freeze-remeasure.py`
+[`addendum-v3.schema.json`](../1a379447-zen3-cpu-performance/f547c394/addendum-v3.schema.json); `freeze-remeasure.py`
 reproduces that addendum byte for byte from the committed evidence, and
 `summarize-v3.py` reproduces both table documents byte for byte from the
 committed receipts.

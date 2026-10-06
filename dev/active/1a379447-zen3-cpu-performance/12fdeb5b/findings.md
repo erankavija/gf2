@@ -5,8 +5,8 @@
 Survey for `12fdeb5b`. It measures and records; it changes no production
 encoder. The
 [measurement contract](../measurement-contract.md)
-and the [shared protocol](../../f547c394/protocol.md) govern every timed cell; the
-addenda name [version 4](../../f547c394/amendment-v4.md) and each receipt is
+and the [shared protocol](../f547c394/protocol.md) govern every timed cell; the
+addenda name [version 4](../f547c394/amendment-v4.md) and each receipt is
 evaluated under the version it pins. The [plan](plan.md) fixes the operation,
 the grid and the campaign order. Every figure this survey publishes lives in
 the generated
@@ -221,7 +221,7 @@ An earlier confirmatory campaign, `nr-encode-confirmation-12fdeb5b-20260913t0642
 launched against an addendum that declared the resolution at the pilot's own
 alpha rather than under the rule above. The executor aborted it for that
 procedural defect before reading any of its results and voided it under the
-[protocol's voided-attempt rule](../../f547c394/protocol.md), so its reservation
+[protocol's voided-attempt rule](../f547c394/protocol.md), so its reservation
 does not enter the chain the confirmation reserves on and it spends no
 comparison and no candidate attempt. Its stage is preserved whole at
 [`2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned`](../../../bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation-abandoned/execution.log),
@@ -239,7 +239,7 @@ spends the family's comparisons and both candidates' single attempt, which
 leaves the re-run outside the one-attempt cap. Both stages pin the protocol
 snapshot that precedes the rule — `inputs/protocol.md` in the aborted stage and
 in the confirmation receipt is the same file, and it differs from the current
-[protocol](../../f547c394/protocol.md) — so the re-run's status as a permitted
+[protocol](../f547c394/protocol.md) — so the re-run's status as a permitted
 retry was not preregistered. The amendment records the rule without a version
 change, which acceptance is indifferent to, but that does not make the rule
 prior to the measurement.
