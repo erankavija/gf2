@@ -17,7 +17,7 @@ written "tables § heading", with a row named by its cell ID; a receipt or
 summary field; or a named file. Speedup intervals are the acceptance tool's at
 the corrected alpha; per-call times, rates and cycles per byte in the tables are
 medians over a cell's pairs and are descriptive, as tables § Method and
-§ Rates state. Running `dev/active/5cbb6545/survey/summarize.py` from the
+§ Rates state. Running `dev/active/1a379447-zen3-cpu-performance/5cbb6545/survey/summarize.py` from the
 repository root reproduces the tables byte for byte. Code and instruction claims
 cite [`survey/source-evidence.json`](survey/source-evidence.json) by claim ID in
 backticks; each entry holds the path, line, verbatim text and reason.

@@ -16,7 +16,7 @@ contrast; a receipt or summary field; or a named file. Speedup intervals are
 the acceptance tool's at the corrected alpha; every other interval in the
 tables is the generator's 95% percentile bootstrap, descriptive and not
 family-corrected, as tables § Method states. Running
-`dev/active/26465e6c/survey/summarize-receipts.py` from the repository root
+`dev/active/1a379447-zen3-cpu-performance/26465e6c/survey/summarize-receipts.py` from the repository root
 reproduces the tables byte for byte. Code claims cite
 [`survey/source-evidence.json`](survey/source-evidence.json) by claim ID in
 backticks; each entry holds the commit, path, line and verbatim text.
