@@ -626,6 +626,8 @@ impl LdpcDecoder {
 
     /// Decodes multiple LLR blocks in batch with the default configuration.
     ///
+    /// A cap of zero behaves as in [`LdpcDecoder::decode_codeword_into`].
+    ///
     /// Each block is decoded independently by its own decoder, built on a
     /// clone of `code`; under the `parallel` feature the blocks run on rayon.
     pub fn decode_batch(
@@ -636,7 +638,8 @@ impl LdpcDecoder {
         Self::decode_batch_with_config(code, llr_blocks, max_iterations, DecoderConfig::default())
     }
 
-    /// As [`Self::decode_batch`], with a custom configuration.
+    /// As [`Self::decode_batch`], with a custom configuration; the cap of zero
+    /// behaves as there.
     pub fn decode_batch_with_config(
         code: &LdpcCode,
         llr_blocks: &[Vec<Llr>],
@@ -1298,54 +1301,61 @@ mod decoder_tests {
         }
     }
 
-    /// Observable results of one zero-cap decode, for per-frame comparison.
-    fn zero_cap_observation(
-        decoder: &mut LdpcDecoder,
-        llrs: &[Llr],
-    ) -> (Vec<f32>, BitVec, usize, bool, bool) {
+    /// Decodes `llrs` at a cap of zero and checks every result field against
+    /// values computed from the frame and the check list alone.
+    fn assert_zero_cap_decode(decoder: &mut LdpcDecoder, checks: &[&[usize]], llrs: &[Llr]) {
         let mut codeword = BitVec::new();
         let outcome = decoder.decode_codeword_into(llrs, 0, &mut codeword);
-        let posterior = decoder.posterior_llrs().iter().map(|l| l.value()).collect();
-        (
-            posterior,
-            codeword,
-            outcome.iterations,
-            outcome.converged,
-            outcome.syndrome_check_passed,
-        )
+
+        let posterior: Vec<u32> = decoder
+            .posterior_llrs()
+            .iter()
+            .map(|l| l.value().to_bits())
+            .collect();
+        let channel: Vec<u32> = llrs.iter().map(|l| l.value().to_bits()).collect();
+        assert_eq!(posterior, channel);
+
+        let hard: Vec<bool> = llrs.iter().map(|l| l.value() < 0.0).collect();
+        assert_eq!(codeword.len(), hard.len());
+        for (i, &bit) in hard.iter().enumerate() {
+            assert_eq!(codeword.get(i), bit, "codeword bit {i}");
+        }
+
+        let syndrome_ok = checks
+            .iter()
+            .all(|vars| vars.iter().filter(|&&v| hard[v]).count() % 2 == 0);
+        assert_eq!(outcome.syndrome_check_passed, syndrome_ok);
+        assert_eq!(outcome.converged, syndrome_ok);
+        assert_eq!(outcome.iterations, 0);
+        assert_eq!(decoder.last_iteration_count(), 0);
     }
 
     #[test]
     fn test_zero_cap_results_depend_only_on_the_frame() {
         let edges = vec![(0, 0), (0, 1), (1, 1), (1, 2)];
+        let checks: [&[usize]; 2] = [&[0, 1], &[1, 2]];
         let code = LdpcCode::from_edges(2, 3, &edges);
-        // Valid word 000 and invalid word 100 as hard decisions.
-        let valid = vec![Llr::new(3.0), Llr::new(2.0), Llr::new(1.0)];
-        let invalid = vec![Llr::new(-3.0), Llr::new(2.0), Llr::new(1.0)];
+        let llr = |v: [f32; 3]| v.map(Llr::new).to_vec();
+        let frames = [
+            llr([3.0, 2.0, 1.0]),    // hard word 000: satisfies both checks
+            llr([-3.0, 2.0, 1.0]),   // hard word 100: violates check 0
+            llr([-0.5, -7.25, 4.0]), // hard word 110: violates check 1
+        ];
 
-        let mut fresh = LdpcDecoder::new(code.clone());
-        let expect_valid = zero_cap_observation(&mut fresh, &valid);
-        let mut fresh = LdpcDecoder::new(code.clone());
-        let expect_invalid = zero_cap_observation(&mut fresh, &invalid);
+        for order in [[0, 1, 2], [2, 1, 0], [1, 0, 1]] {
+            let mut decoder = LdpcDecoder::new(code.clone());
+            for &f in &order {
+                assert_zero_cap_decode(&mut decoder, &checks, &frames[f]);
+            }
+        }
 
-        let channel: Vec<f32> = invalid.iter().map(|l| l.value()).collect();
-        assert_eq!(expect_invalid.0, channel);
-        assert_eq!(expect_invalid.1.count_ones(), 1);
-        assert_eq!(expect_invalid.2, 0);
-        assert!(!expect_invalid.3 && !expect_invalid.4);
-        assert_eq!(expect_valid.1.count_ones(), 0);
-        assert!(expect_valid.3 && expect_valid.4);
-
-        let mut decoder = LdpcDecoder::new(code.clone());
-        assert_eq!(zero_cap_observation(&mut decoder, &valid), expect_valid);
-        assert_eq!(zero_cap_observation(&mut decoder, &invalid), expect_invalid);
-        assert_eq!(zero_cap_observation(&mut decoder, &valid), expect_valid);
-
-        // A preceding decode with iterations leaves no trace either.
-        let mut decoder = LdpcDecoder::new(code);
-        decoder.decode_to_codeword(&valid, 5);
-        assert_eq!(zero_cap_observation(&mut decoder, &invalid), expect_invalid);
-        assert_eq!(decoder.last_iteration_count(), 0);
+        for f in 0..frames.len() {
+            let mut decoder = LdpcDecoder::new(code.clone());
+            for g in 0..frames.len() {
+                decoder.decode_to_codeword(&frames[g], 5);
+                assert_zero_cap_decode(&mut decoder, &checks, &frames[f]);
+            }
+        }
     }
 
     #[test]

@@ -921,6 +921,8 @@ impl SoftDecoder for Nr5gRateMatchedDecoder {
 }
 
 impl IterativeSoftDecoder for Nr5gRateMatchedDecoder {
+    /// The cap of zero behaves as in [`LdpcDecoder::decode_codeword_into`], over
+    /// the de-rate-matched mother-code LLRs.
     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
         assert_eq!(
             llrs.len(),
