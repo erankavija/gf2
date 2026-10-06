@@ -10,7 +10,9 @@ destinations at 50de04a6b with the planned sha256: ok 401/401
 move sources absent at the execution commit and in the working tree: ok 395/395
 copy sources present with the planned sha256: ok 6/6
 destinations differing from the plan are files changed after execution: ok 112 differ, 289 hold the planned sha256
-copy sources under the active area: 35 present, 33 equal to their archive file
+copy sources under the active area: 35 present, 31 equal to their archive file
+  differs from its archive file dev/active/6dc81018-field-capability-dispatch/breakdown.json
+  differs from its archive file dev/active/6dc81018-field-capability-dispatch/classification.md
   differs from its archive file dev/active/6dc81018-field-capability-dispatch/investigation.md
   differs from its archive file dev/active/eaae1b56/premeasurement-protocol.md
 == excluded
@@ -22,10 +24,8 @@ pinned sources of the excluded entries present: ok 8
 == rerun
 fresh preview eligible, no blocker, nothing to publish or delete: ok {"already_archived": 525, "block": 0, "copy": 78, "move": 443, "pending_deletions": 0, "retain": 25}
 == links
-dev/archive/6dc81018-field-capability-dispatch: Markdown files 60, local links 239: FAIL unresolved 2
+dev/archive/6dc81018-field-capability-dispatch: Markdown files 60, local links 239: ok unresolved 0
 files of this issue under the active area: Markdown files 7, local links 26: ok unresolved 0
-  unresolved dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:82 ../../../crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json
-  unresolved dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:98 ../../../crates/gf2-algebra/data/tuning-profiles/conservative.json
 == manifest
      5 1ac74567 / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
      1 220cab0b / retained-operational / complete / dev/active

@@ -40,19 +40,17 @@ status.
 |---|---|---|---|
 | REQ-01 | `preview`, `marker`, `bytes`: the plan is eligible without blocker; 401 of 401 published destinations hold the planned sha256 at the execution commit; 395 of 395 move sources are absent; 6 of 6 copy sources hold the planned sha256 | The files the plan moves are under `AR`, byte-identical to their sources at execution; `manifest` adds that the file of each of the 465 rows is at its destination, or at its path when the destination is empty | — |
 | REQ-02 | `references`: 522 of 522 relinked tracker documents on 25 issues name their archive path | The tracker of the checkout names the archive path for each reference the plan relinks | References of kept files that an issue outside the container owns; the reference of issue 389aa4de to its note, which `jit doc check-links --scope all` covers |
-| REQ-03 | `links`: 237 of 239 local links in the 60 Markdown files of `AR` resolve, and 26 of 26 in the 7 Markdown files of this issue under the active area | Each inline link outside fenced code resolves from its file's directory or, with a leading `/`, from the checkout root, except the two below | Anchors, code-span paths, links in non-Markdown files |
+| REQ-03 | `links`: 239 of 239 local links in the 60 Markdown files of `AR` resolve, and 26 of 26 in the 7 Markdown files of this issue under the active area | Each inline link outside fenced code resolves from its file's directory or, with a leading `/`, from the checkout root | Anchors, code-span paths, links in non-Markdown files |
 | REQ-04 | `excluded`: no path under `dev/active/a83583e0` or `dev/active/dbd8787d` changes, is published or is deleted | The code-pinned entries are in place | The Rust CI verdict; `cargo-ci` runs it |
 | REQ-05 | `manifest`: each of the 465 rows is `complete`; `python3 616e1d7c-rows.py --check` exits 0 | 431 rows archived, 33 retained in place, 1 moved under `Q` | — |
 | REQ-06 | Commit `03272e29d` | Path text only, per entry in the commit message | — |
 
-The two unresolved links are
-`AR/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:82,98`. The file is the
-plan's copy of the receipt `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md`,
-from whose directory both targets resolve. With root-relative targets in the
-archive copy alone, the preview blocks on `destination-conflict` for the
-receipt and `unpreservable-layout` for `dev/active/7d824b2f/design.md`; with
-the same targets in both files it is eligible. The verifier exits 1 on the two
-links.
+The receipt `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` and its copy
+`AR/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` carry root-relative
+targets on lines 82 and 98 (decision DEC-03 of the issue) and hold equal bytes.
+With the same targets in both files the preview is eligible; with them in the
+archive copy alone it blocks on `destination-conflict` for the receipt and
+`unpreservable-layout` for `dev/active/7d824b2f/design.md`.
 
 `rerun`: a fresh preview is eligible, without blocker, and publishes and
 deletes nothing. It does not establish the result of a second `--execute`.
@@ -82,9 +80,9 @@ Each row below is `retained-operational`, empty destination, `complete`.
 | `classification.md`, `plan.md`, `investigation.md`, `breakdown.json` of the epic directory | Relative link targets of the designs above and of each other |
 | `handoff-12.md`, `handoff-13.md` of the epic directory | References of 6dc81018 pinned to commits `623f5568` and `4c70534c` |
 
-Two kept files differ from their archive file by citation repoints of other
-units after the first archive run: `6dc81018-field-capability-dispatch/investigation.md`
-and `eaae1b56/premeasurement-protocol.md`. The plan reports neither as a
+Four kept files differ from their archive file by edits of other units after
+the first archive run: `6dc81018-field-capability-dispatch/{breakdown.json,classification.md,investigation.md}`
+and `eaae1b56/premeasurement-protocol.md`. The plan reports none as a
 conflict. `AR/active/7d7c647c/design.md` holds the bytes of its source
 (commit `1be94823d`): an archive file that differs both from its source and
 from its recorded publication blocks the plan with `destination-conflict`.
