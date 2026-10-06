@@ -8,12 +8,12 @@ search and stop budget. It is committed before any prototype of any family
 exists, so no budget below is chosen with a prototype result in view.
 
 The [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [frozen protocol](../f547c394/protocol.md) with its
-[version-4 amendment](../f547c394/amendment-v4.md) govern every timed cell.
+and the [frozen protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) with its
+[version-4 amendment](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md) govern every timed cell.
 Prior evidence this record builds on is the decoder comparison of
 [`c077a88b`](../c077a88b/findings.md), the throughput-gap profile and lever
-ranking of [`3be770d5`](../3be770d5/findings.md), and the allocation-free update
-of [`07ca8585`](../07ca8585/findings.md). This record states no measured value:
+ranking of [`3be770d5`](../1a379447-zen3-cpu-performance/3be770d5/findings.md), and the allocation-free update
+of [`07ca8585`](../1a379447-zen3-cpu-performance/07ca8585/findings.md). This record states no measured value:
 every figure it rests on stays in those reports' generated tables and receipts.
 Code claims are in [source-evidence.json](survey/source-evidence.json), written
 by [make-source-evidence.py](survey/make-source-evidence.py), which refuses a

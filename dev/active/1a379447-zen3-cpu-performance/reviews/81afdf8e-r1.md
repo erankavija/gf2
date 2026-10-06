@@ -8,7 +8,7 @@ cargo-ci and code-review passed after rework 1.
 ### Prior-findings regression table (Tier 1.5)
 | Round | Finding (1-line) | Status at HEAD | file:line |
 |-------|------------------|----------------|-----------|
-| R1 | F1: a direct `--check` run wrote imported-helper bytecode into the repository | closed: each generator and the checker disable bytecode writing before importing a repository module; the self-test invokes the generators without `-B` | `dev/active/1d4fd63d/make-external-producing-inputs.py:46`; `dev/scripts/check-family-producing-closures.py:28` |
+| R1 | F1: a direct `--check` run wrote imported-helper bytecode into the repository | closed: each generator and the checker disable bytecode writing before importing a repository module; the self-test invokes the generators without `-B` | `dev/active/1a379447-zen3-cpu-performance/1d4fd63d/make-external-producing-inputs.py:46`; `dev/scripts/check-family-producing-closures.py:28` |
 
 ### Success criteria
 - [x] REQ-01 — both generators have a `--check` mode; the checker's self-test stages both in a fixture repository, adds an enumerated source and observes the rejection with no file written.

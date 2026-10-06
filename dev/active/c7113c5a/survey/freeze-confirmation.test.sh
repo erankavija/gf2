@@ -31,6 +31,9 @@ PILOT_ADDENDUM=dev/active/1c602857/addendum-v4-public-clmul-pilot.json
 CONFIRMATION_ADDENDUM=dev/active/1c602857/addendum-v4-public-clmul-confirmation.json
 RECORD=dev/active/1c602857/confirmation-derivation.txt
 FROZEN=2026-09-13T06:35:49Z
+# The three paths above are the ones the committed bytes record. The fixture
+# keeps that layout; the files lie beside the one live pilot addendum.
+live=$(dirname "$(git ls-files -- ":(glob)**/${PILOT_ADDENDUM##*/}" ':(exclude,glob)**/inputs/**')")
 
 fixture=$(mktemp -d)
 trap 'rm -rf "$fixture"' EXIT
@@ -38,7 +41,7 @@ mkdir -p "$fixture/$(dirname "$FREEZER")" "$fixture/$PILOT" \
   "$fixture/$(dirname "$PILOT_ADDENDUM")" "$fixture/$(dirname "$CONFIRMATION_ADDENDUM")"
 cp "$FREEZER" "$fixture/$FREEZER"
 cp "$PILOT/receipt.json" "$PILOT/acceptance-summary.json" "$fixture/$PILOT/"
-cp "$PILOT_ADDENDUM" "$fixture/$PILOT_ADDENDUM"
+cp "$live/${PILOT_ADDENDUM##*/}" "$fixture/$PILOT_ADDENDUM"
 
 freeze() {
   (cd "$fixture" && python3 "$FREEZER" \
@@ -51,9 +54,9 @@ schema=$(python3 -c "import json; print(json.load(open('$fixture/$PILOT/acceptan
 [[ "$schema" == zen3-benchmark-acceptance-v1 ]] \
   || { echo "case v1 pilot: fixture pilot summary is schema $schema, expected zen3-benchmark-acceptance-v1 (test fixture is stale)" >&2; exit 2; }
 freeze "$CONFIRMATION_ADDENDUM" "$RECORD"
-cmp "$CONFIRMATION_ADDENDUM" "$fixture/$CONFIRMATION_ADDENDUM" \
+cmp "$live/${CONFIRMATION_ADDENDUM##*/}" "$fixture/$CONFIRMATION_ADDENDUM" \
   || { echo "case v1 pilot: confirmation addendum differs from the committed bytes" >&2; exit 1; }
-cmp "$RECORD" "$fixture/$RECORD" \
+cmp "$live/${RECORD##*/}" "$fixture/$RECORD" \
   || { echo "case v1 pilot: derivation record differs from the committed bytes" >&2; exit 1; }
 grep -q '^family.*attempt alpha 0.025, per-comparison confidence' "$fixture/$RECORD" \
   || { echo "case v1 pilot: legacy single-line family accounting missing" >&2

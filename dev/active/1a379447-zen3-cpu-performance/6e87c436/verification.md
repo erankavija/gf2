@@ -98,7 +98,7 @@ current tree in release mode and drives every cell through the shared runner's
 validation position with no timing window:
 
 ```sh
-S=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
+S=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations
 D=dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke
 for f in dense-isolated-fused-parity dense-allocated-matvec; do
   $S/survey/run-dense-harness.sh window --family 2037941f-$f \

@@ -23,7 +23,7 @@ publish = false
 
 [dependencies]
 ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
-ldpc-throughput-harness = { path = "../../../3be770d5/survey/harness" }
+ldpc-throughput-harness = { path = "../../../1a379447-zen3-cpu-performance/3be770d5/survey/harness" }
 ldpc-candidate-prototypes = { path = "../prototypes" }
 gf2-coding = { path = "../../../../../crates/gf2-coding" }
 tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }

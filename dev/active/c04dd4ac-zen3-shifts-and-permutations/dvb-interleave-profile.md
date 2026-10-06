@@ -214,7 +214,7 @@ measurement. The fresh v4-r3 launcher records its listings in each repetition.
 One attempt of this family is voided: campaign
 `v4-r1-9fb40c83-dvb-interleave-profile` aborts on a procedural defect in its
 own launch before any result is read, under the voided-attempt rule of
-[`protocol.md`](../f547c394/protocol.md). Its stage is preserved whole at
+[`protocol.md`](../1a379447-zen3-cpu-performance/f547c394/protocol.md). Its stage is preserved whole at
 [`v4-r1-pilot-abandoned`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log)
 and
 [`v4-voided-profile-attempt.json`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json)

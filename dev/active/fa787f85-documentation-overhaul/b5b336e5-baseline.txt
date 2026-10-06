@@ -1,0 +1,19 @@
+$ bash <entry>/run-candidate.test.sh
+ok: build 2 isolated
+ok: smoke 2 isolated
+ok: window 2 isolated
+ok: build 2 row
+ok: smoke 2 row
+ok: window 2 row
+ok: profile-window 2 profile
+ok: build 4 isolated
+ok: smoke 4 isolated
+ok: window 4 isolated
+ok: build 4 row
+ok: smoke 4 row
+ok: window 4 row
+ok: profile-window 4 profile
+exit=0
+$ python3 -B <survey>/make-logical-producing-inputs.py --check
+dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json: enumerates this tree
+exit=0

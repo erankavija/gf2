@@ -38,6 +38,7 @@ import hashlib
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 ISSUE = pathlib.Path("dev/active/eda07788")
@@ -46,7 +47,7 @@ PILOT = ISSUE / "addendum-dvb-t2-bit-interleave-v3-pilot.json"
 CONFIRMATION = ISSUE / "addendum-dvb-t2-bit-interleave-v3-confirmation.json"
 CONFIRMATION_RECEIPT = RESULTS / "2026-09-08-eda07788-dvb-t2-v3-confirmation/receipt.json"
 VALIDATION = ISSUE / "survey/validation-output-v3-remeasure.txt"
-SCHEMA = pathlib.Path("dev/active/f547c394/addendum.schema.json")
+SCHEMA = "addendum.schema.json"
 OUTPUT = ISSUE / "addendum-dvb-t2-bit-interleave-v3-remeasure.json"
 # The v1 pilot froze its cells under its own family id; they are the same
 # question as the continuing family's.
@@ -73,6 +74,15 @@ CONVENTION = (
     "xdsopl/LDPC comparator is ahead of gf2, above 1 in a `-control-` cell means the `-C target-cpu=native` gf2 build "
     "is ahead of the conservative-portable gf2 control."
 )
+
+
+def located(name: str) -> pathlib.Path:
+    """Root-relative path the repository-file helper prints for the live file `name`."""
+    def output(*command: str) -> str:
+        return subprocess.run(command, check=True, capture_output=True, text=True).stdout.strip()
+    helper = output("git", "ls-files", "--cached", "--others", "--exclude-standard",
+                    "--", ":(glob)**/repository_files.py")
+    return pathlib.Path(output(sys.executable, "-B", helper, "file", name))
 
 
 def candidate_identity(arm: dict) -> str:
@@ -176,7 +186,7 @@ def main() -> int:
     history = pilot_history()
     trials = {cell["cell_id"]: len(history.get(cell["cell_id"], [])) + 1 for cell in pilot["cells"]}
     budget = max(trials.values())
-    cap = json.loads(SCHEMA.read_text())["properties"]["search_budget"]["properties"]["max_pilot_trials_per_cell"]["maximum"]
+    cap = json.loads(located(SCHEMA).read_text())["properties"]["search_budget"]["properties"]["max_pilot_trials_per_cell"]["maximum"]
     if budget > cap:
         raise SystemExit(f"a cell would reach pilot trial {budget}, above the cap {cap}")
 

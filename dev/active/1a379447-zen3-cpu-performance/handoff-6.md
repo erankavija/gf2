@@ -67,10 +67,10 @@ None.
 
 ## Reference artefacts
 
-- Epic: `jit issue show 1a379447`; [measurement contract](measurement-contract.md); [progress](progress.json); protocol `dev/active/f547c394/protocol.md` (v3).
+- Epic: `jit issue show 1a379447`; [measurement contract](measurement-contract.md); [progress](progress.json); protocol `dev/active/1a379447-zen3-cpu-performance/f547c394/protocol.md` (v3).
 - Independent review helper: `scratchpad/indep-review.sh <id> <tag>` from session 7. It builds the gate context (issue, gate, latest run) and runs `contrib/gates/research-review.sh` unchanged with the configured `REVIEWER_AGENT`. The scratchpad is session-local, so recreate it from that description.
 - Review outputs this session: the session-7 scratchpad `reviews/<id>-<tag>.out`. Gate run records: `.jit/gate-runs/`.
-- Closed-issue evidence: `dev/active/c077a88b/`, `dev/bench_results/c077a88b/`, `dev/active/1d0da41f/`, `dev/bench_results/1d0da41f/v3-*`.
+- Closed-issue evidence: `dev/active/c077a88b/`, `dev/bench_results/c077a88b/`, `dev/active/1a379447-zen3-cpu-performance/1d0da41f/`, `dev/bench_results/1d0da41f/v3-*`.
 - Scripts: `.agents/skills/jit-execution-lead/scripts/{dispatch-worker-worktree.sh,check-leak-into-main.sh,reclaim-worker-worktree.sh}`.
 
 ## Update log

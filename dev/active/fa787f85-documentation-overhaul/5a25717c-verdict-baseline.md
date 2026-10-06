@@ -64,3 +64,29 @@ git log --diff-filter=A --format=%H -- "$A"
 "$R/5a25717c-verdicts.sh" "$PWD/target/5a25717c-verdicts-amendment.txt"
 diff "$PWD/target/5a25717c-verdicts-amendment.txt" "$R/5a25717c-verdicts-after.txt"
 ```
+
+## Repeat at the f79bcba3 entry move
+
+The same commands at `b05286e53614b62324f985832af766423849465c`, the parent of
+the f79bcba3 commits, and at `264a453d22787531c8e021b38fad061a63592638`,
+after eight zen3 entries move under the epic directory, write the same
+listing, `f79bcba3-verdicts-before.txt`. At the second commit this command
+prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/f79bcba3-verdicts.txt"
+diff "$PWD/target/f79bcba3-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```
+
+## Repeat at the 602652bf entry move
+
+The same commands at `8fd000a700be73025bbf1c05971aa3dca18ad9d7`, the parent of
+the 602652bf commits, and at `8ec2a4abefc198d232cface645325c5266193fd1`, after
+the `f547c394` and `bdc507a3` entries move under the epic directory, write the
+listing `f79bcba3-verdicts-before.txt`: 151 receipts. At each commit this
+command prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/602652bf-verdicts.txt"
+diff "$PWD/target/602652bf-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```

@@ -7,8 +7,8 @@ AND-population-count candidates for `gf2-core`, retains the established
 production routes, and adds two directly testable carry-save kernels to
 `gf2-kernels-simd`. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [shared protocol](../f547c394/protocol.md) at
-[version 4](../f547c394/amendment-v4.md) — the version every receipt pins,
+and the [shared protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) at
+[version 4](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md) — the version every receipt pins,
 snapshots and is evaluated under — govern every receipt.
 
 This report states no measured value. Each conclusion points to its source: a

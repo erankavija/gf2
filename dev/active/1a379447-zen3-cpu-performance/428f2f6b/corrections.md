@@ -3,7 +3,7 @@
 > **Diátaxis Type:** Reference
 
 Record of every conclusion that the citation pass changes in
-`dev/active/c077a88b/findings.md`, `dev/active/1d0da41f/findings.md` and
+`dev/active/c077a88b/findings.md`, `dev/active/1a379447-zen3-cpu-performance/1d0da41f/findings.md` and
 `dev/active/eda07788/findings.md`. The inventories beside this file
 (`inventory-<issue>.json`) carry the full statement-by-statement audit; this
 file holds only the cases where a hand-copied number and its authoritative

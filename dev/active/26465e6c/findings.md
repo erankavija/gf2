@@ -5,8 +5,8 @@
 Survey for `26465e6c` on the Ryzen 9 5900X. It changes no production kernel or
 library. The
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [shared protocol](../f547c394/protocol.md) at
-[version 3](../f547c394/amendment-v3.md) — the version every receipt pins,
+and the [shared protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) at
+[version 3](../1a379447-zen3-cpu-performance/f547c394/amendment-v3.md) — the version every receipt pins,
 snapshots and is evaluated under — govern every receipt.
 
 This report states no measured value. Each conclusion points to its source: a
@@ -97,7 +97,7 @@ session had started the interrupted cell again, which P-11 rejects. Under
 protocol v3 only a stop at a cell boundary, at a cell-budget pause or between
 sessions, resumes without repeating a cell; protocol v4 lifts that restriction
 by journalling the abandoned attempt (`bdc507a3`,
-[amendment](../f547c394/amendment-v4.md)). These receipts pin v3 and are
+[amendment](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md)). These receipts pin v3 and are
 evaluated under the rules they pin, so the rejection stands. The receipt stays
 published and is not resolution evidence:
 `v3-and-popcnt-pilot-r2` re-measured the same frozen pilot addendum as the

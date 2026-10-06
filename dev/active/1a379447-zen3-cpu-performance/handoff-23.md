@@ -76,6 +76,6 @@
 
 - Epic: `jit issue show 1a379447`; progress: `progress.json`; worker brief `worker-brief.md`; measurement contract `measurement-contract.md`.
 - Reviews of this session: `reviews/50f0bd42-r2.md`, `reviews/ad2a6a58-r1.md`, `reviews/4c1e441f-r1.md`, `reviews/6e87c436-r1.md`, `reviews/2ad3a3e0-r1.md`, `reviews/2037941f-r1.md`.
-- Story synthesis: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md`, `mid-range-tables.md`.
+- Story synthesis: `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md`, `mid-range-tables.md`.
 - `f63a2464`: `dev/active/f63a2464/decision-record.md`, `findings.md`, `corrections.md`; `dev/bench_results/f63a2464/timing-tables.md`, `memory/peak-rss.json`.
 - Window: `bench-window/run-window.sh`, `bench-window/queue.tsv`, state `.agents/bench-window/`.

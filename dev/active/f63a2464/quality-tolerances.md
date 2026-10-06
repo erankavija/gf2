@@ -8,7 +8,7 @@ cells; the [decision record](decision-record.md) fixes the search budget and the
 [numerical-contract review](numerical-contract-review.md) fixes what each family
 declares.
 
-The [frozen protocol](../f547c394/protocol.md) supplies the statistics: the
+The [frozen protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md) supplies the statistics: the
 independent quality sampling unit is the frame, the marginal BER interval is the
 frame-bounded Hoeffding interval and the marginal FER interval is Wilson at the
 frozen quality confidence, and a fastest-quality-compatible arm is certified

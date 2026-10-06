@@ -116,7 +116,7 @@ smoke's own record.
 
 Campaign `residual-shift-profile-85fc5ff4-v4` reaches the benchmark window with
 an arm that cannot complete the handshake, and the executor voids it under the
-[protocol's voided-attempt rule](../f547c394/protocol.md) rather than spending
+[protocol's voided-attempt rule](../1a379447-zen3-cpu-performance/f547c394/protocol.md) rather than spending
 its reservation: the defect is procedural and in the attempt's own launch, and
 no result of it is read. Its reservation stays outside the chain the replacement
 attempt reserves on, so the ledger's single line is the replacement campaign's

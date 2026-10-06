@@ -3,8 +3,26 @@
 
 import json
 import pathlib
+import subprocess
+import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[4]
+# The one live `repository_files.py`, outside receipt snapshots; it locates the
+# shared protocol inputs by name.
+SHARED = [
+    path
+    for path in subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "--", ":(glob)**/repository_files.py"],
+        capture_output=True, check=True, text=True,
+    ).stdout.split()
+    if "inputs" not in pathlib.Path(path).parts[:-1]
+]
+if len(SHARED) != 1:
+    raise SystemExit(f"{len(SHARED)} live repository_files.py files; exactly one must exist")
+sys.dont_write_bytecode = True
+sys.path.insert(0, str((ROOT / SHARED[0]).parent))
+import repository_files  # noqa: E402
+
 SURVEY = pathlib.Path("dev/active/c04dd4ac-zen3-shifts-and-permutations/survey")
 OLD = pathlib.Path("dev/active/eda07788/survey")
 SUPPORT = pathlib.Path("dev/tools/tuning-campaign-support/src")
@@ -63,8 +81,8 @@ def main():
         str(OLD / "gf2-side/Cargo.toml"),
         str(OLD / "gf2-side/build.rs"),
         str(OLD / "fetch-build.sh"),
-        "dev/active/f547c394/addendum.schema.json",
-        "dev/active/f547c394/protocol.md",
+        repository_files.live_file(ROOT, "addendum.schema.json"),
+        repository_files.document(ROOT, "protocol.md", repository_files.PROTOCOL_OPENING),
         "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
         "scripts/cargo-budget.sh",
     ] + files_under(

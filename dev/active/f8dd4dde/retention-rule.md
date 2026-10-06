@@ -31,7 +31,7 @@ against each other.
 
 `00dd43c3` freezes its acceptance rule before it launches, under the epic's
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [shared protocol](../f547c394/protocol.md). That rule, not a reading of
+and the [shared protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md). That rule, not a reading of
 its numbers afterwards, decides the route's disposition:
 
 - A qualifying verdict retains the route in production. The confirmation's

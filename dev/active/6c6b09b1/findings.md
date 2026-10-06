@@ -31,7 +31,7 @@ GF-Complete and ISA-L once field polynomial, coefficient reuse, accumulation
 and overlap are matched; how far current gf2 is from those libraries on this
 Ryzen 9 5900X under the
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and [protocol version 4](../f547c394/protocol.md), per cache regime,
+and [protocol version 4](../1a379447-zen3-cpu-performance/f547c394/protocol.md), per cache regime,
 kernel-isolated and as a whole byte-region consumer; and which cells gf2 loses,
 as the baseline for the feasibility issue `19513245`. The issue excludes
 adoption and any production change, so every cell is a `comparator-gap` cell
@@ -537,7 +537,7 @@ operations: ISA-L's region multiply-accumulate ahead of `FieldVec::axpy`
 (`matmul-m4rie-n128-1core`), and gf2's `batch_mul` ahead of GF-Complete's
 per-element loop (`pairwise-gfcomplete-l2-1core`). Its flagged-window counts
 follow v1's pooled rule, which version 3 replaced by an execution-local rule
-([amendment](../f547c394/amendment-v3.md)). Its committed acceptance summary
+([amendment](../1a379447-zen3-cpu-performance/f547c394/amendment-v3.md)). Its committed acceptance summary
 predates a field the current evaluator writes into each cell claim; the
 evaluator built from the current tree reaches the same verdict, findings and
 qualification on the same receipt, and the committed summary stays as it is,

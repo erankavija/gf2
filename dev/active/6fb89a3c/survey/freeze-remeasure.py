@@ -33,12 +33,13 @@ import collections
 import hashlib
 import json
 import pathlib
+import subprocess
 import sys
 import tempfile
 
 ISSUE = pathlib.Path("dev/active/6fb89a3c")
 RESULTS = pathlib.Path("dev/bench_results/6fb89a3c")
-SCHEMA = pathlib.Path("dev/active/f547c394/addendum.schema.json")
+SCHEMA = "addendum.schema.json"
 STEMS = {"transpose": "addendum-transpose", "logical": "addendum-logical-buffer", "bch": "addendum-bch-genmatrix"}
 SPLITMIX = ("Workload seeds expand through SplitMix64 [Steele2014], implemented as tuning_campaign_support::abtest::SplitMix64 "
             "(dev/tools/tuning-campaign-support/src/abtest.rs) in the gf2 arms and as splitmix64_next "
@@ -57,6 +58,15 @@ REBUILT = {
                        "cell's preallocated output outside the pass; the fixed arm's warm pass runs the timed call on every "
                        "bank (dev/active/6fb89a3c/survey/m4ri_transpose_arm.c)"),
 }
+
+
+def located(name: str) -> pathlib.Path:
+    """Root-relative path the repository-file helper prints for the live file `name`."""
+    def output(*command: str) -> str:
+        return subprocess.run(command, check=True, capture_output=True, text=True).stdout.strip()
+    helper = output("git", "ls-files", "--cached", "--others", "--exclude-standard",
+                    "--", ":(glob)**/repository_files.py")
+    return pathlib.Path(output(sys.executable, "-B", helper, "file", name))
 
 
 def records(log: pathlib.Path) -> list[dict]:
@@ -209,7 +219,7 @@ def main() -> int:
     history = pilot_history({family_id, predecessor_id}, output)
     trials = {cell["cell_id"]: len(history.get(cell["cell_id"], [])) + 1 for cell in pilot["cells"]}
     budget = max(trials.values())
-    cap = json.loads(SCHEMA.read_text())["properties"]["search_budget"]["properties"]["max_pilot_trials_per_cell"]["maximum"]
+    cap = json.loads(located(SCHEMA).read_text())["properties"]["search_budget"]["properties"]["max_pilot_trials_per_cell"]["maximum"]
     if budget > cap:
         raise SystemExit(f"{family}: a cell would reach pilot trial {budget}, above the cap {cap}")
 

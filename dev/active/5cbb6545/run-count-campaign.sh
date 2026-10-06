@@ -57,7 +57,7 @@ cd "$repo"
 # A minimal environment (a systemd unit with no login shell) carries no
 # ~/.cargo/bin and no pinned toolchain; every other tool this launcher or its
 # helpers call resolves from /usr/bin. Exported before any cargo or tool
-# invocation, mirroring dev/active/1c602857/run-public-clmul.sh.
+# invocation, mirroring dev/active/1a379447-zen3-cpu-performance/1c602857/run-public-clmul.sh.
 export PATH="$HOME/.cargo/bin:$PATH" RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
 ISSUE=5cbb6545
 ACTIVE="dev/active/$ISSUE"
