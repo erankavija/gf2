@@ -25,7 +25,7 @@ pinned sources of the excluded entries present: ok 8
 fresh preview eligible, no blocker, nothing to publish or delete: ok {"already_archived": 525, "block": 0, "copy": 78, "move": 443, "pending_deletions": 0, "retain": 25}
 == links
 dev/archive/6dc81018-field-capability-dispatch: Markdown files 60, local links 239: ok unresolved 0
-files of this issue under the active area: Markdown files 11, local links 27: ok unresolved 0
+files of this issue under the active area: Markdown files 11, local links 26: ok unresolved 0
 == manifest
      5 1ac74567 / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
      1 220cab0b / retained-operational / complete / dev/active
@@ -83,5 +83,5 @@ each consumer lies in an entry with a moved or archived row: ok 222 consumers on
      2 repointed: dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-8.md
      4 repointed: dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/design.md
      4 repointed: dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md
-citations at 42929def5 with an absent target: each line is kept or carries the path: ok 3126 citations in 149 files, 616e1d7c-citations.txt
+citations at 42929def5 with an absent target: each is repointed or kept on a ground: ok 3126 citations in 149 files, 52 repointed
 working-tree citations with an absent target are citations kept above: ok 3074

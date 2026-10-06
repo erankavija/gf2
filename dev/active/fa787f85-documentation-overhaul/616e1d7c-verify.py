@@ -34,20 +34,18 @@ a fresh preview. Sections:
               the destination is empty.
   consumers   the `consumers` fields of those rows: each consumer lies inside
               an entry of which a row has a destination.
-  citations   writes 616e1d7c-citations.txt: each citation at SWEEP, outside
-              the tracker directory and that file, of a path under an entry of
-              `manifest`
-              (as `<active area>/<entry>...` or `../<entry>/...`) that is
-              absent from the working tree, as `file:line`, cited path and
-              action. `repointed` names the path the line carries in the
-              working tree; `kept` names the first of: manifest file, digest
+  citations   each citation at SWEEP, outside the tracker directory, of a path
+              under an entry of `manifest` (as `<active area>/<entry>...` or
+              `../<entry>/...`) that is absent from the working tree, counted
+              per citing file and action. `repointed`: the line carries the
+              path of the file in the working tree. `kept` names the first of: manifest file, digest
               pin (manifest `digest_pinned`, or the file's sha256 or blob id
               in a tracked file other than the tracker event log and the
               files of this issue), `.jit-container` root, equal bytes with
               the archive file the plan copies it to, tracker reference at a
-              commit, tracker document type, file suffix. A line that changed
-              without carrying the path fails, and so does a working-tree
-              citation with an absent target that SWEEP lacks. The cited
+              commit, tracker document type, file suffix other than `.md`. A
+              citation with neither fails, and so does a working-tree citation
+              with an absent target that SWEEP lacks. The cited
               `:line` suffixes are not checked.
 
 Exit 1 on any failed check.
@@ -80,7 +78,6 @@ def git(*args, text=True):
 ROOT = Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True).stdout.strip())
 HERE = Path(__file__).resolve().parent
 PREEXEC = HERE / f"{ISSUE}-preexec.json"
-CITATIONS = HERE / f"{ISSUE}-citations.txt"
 ACTIVE = HERE.parent.relative_to(ROOT).as_posix()
 FAILED = []
 
@@ -157,7 +154,7 @@ def cited(names, rev=None):
     """(file, line number, token, path) per citation of an entry in `rev`, or in the working tree."""
     found = set()
     for name in names:
-        args = ["grep", "-nIF", "-e", f"{ACTIVE}/{name}", "-e", f"../{name}/", *([rev] if rev else []), "--", ":!.jit", f":!{CITATIONS.relative_to(ROOT).as_posix()}"]
+        args = ["grep", "-nIF", "-e", f"{ACTIVE}/{name}", "-e", f"../{name}/", *([rev] if rev else []), "--", ":!.jit"]
         out = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True).stdout
         token = re.compile(rf"(?:{re.escape(ACTIVE)}/|(?:\.\./)+){re.escape(name)}(?![\w-])(?:/[\w.{{}},*+@=/-]*)?")
         for row in out.splitlines():
@@ -317,33 +314,29 @@ def main():
             return f"tracker reference of {refs[0][1]} at {refs[0][0]}"
         if refs:
             return f"tracker document of {refs[0][1]}: {refs[0][2]}"
-        return f"file suffix {Path(name).suffix}"
+        return f"file suffix {Path(name).suffix}" if Path(name).suffix != ".md" else None
 
     copied = {a["source"]: a["destination"] for a in arts if a["action"] == "copy"}
     live = {}
-    out, actions, changed = [], collections.Counter(), []
+    actions, changed = collections.Counter(), []
     for name, number, cite, path in absent:
         home = homes.get(path) or f"{root}/{Path(ACTIVE).name}/{path[len(ACTIVE) + 1:]}"
         if name not in live:
             live[name] = (ROOT / name).read_text(errors="replace").splitlines() if (ROOT / name).is_file() else []
         text = live[name][number - 1] if number <= len(live[name]) else ""
-        if cite in text:
+        if cite in text and ground(name):
             action = f"kept: {ground(name)}"
             actions[(action, "" if "container root" in action else name)] += 1
-        elif (ROOT / home).exists() and home in text:
-            action = f"repointed: {home}"
+        elif cite not in text and (ROOT / home).exists() and home in text:
             actions[("repointed:", name)] += 1
         else:
-            action = "changed"
             changed.append(f"{name}:{number} {cite}")
-        out.append(f"{name}:{number}\t{path}\t{action}")
-    CITATIONS.write_text("\n".join(out) + "\n")
     for (action, name), count in sorted(actions.items()):
         print(f"  {count:4d} {action}{' ' + name if name else ''}")
     for line in changed:
-        print("  changed without the path", line)
-    check(f"citations at {SWEEP[:9]} with an absent target: each line is kept or carries the path", not changed,
-          f"{len(absent)} citations in {len({c[0] for c in absent})} files, {CITATIONS.name}")
+        print("  neither repointed nor kept", line)
+    check(f"citations at {SWEEP[:9]} with an absent target: each is repointed or kept on a ground", not changed,
+          f"{len(absent)} citations in {len({c[0] for c in absent})} files, {sum(n for (a, _), n in actions.items() if a == 'repointed:')} repointed")
     after = sorted(c for c in cited(names) if not present(c[3]))
     fresh_cites = [c for c in after if (c[0], c[1], c[2]) not in {(a[0], a[1], a[2]) for a in absent}]
     for c in fresh_cites:
