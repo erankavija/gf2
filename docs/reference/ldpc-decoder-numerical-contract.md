@@ -22,7 +22,11 @@ decoder's under these rules.
   variable from the resulting check-to-variable messages.
 - **Outside the contract.** Quantized message alphabets and layered schedules
   are outside the contract.
-- **Iteration cap.** The rules hold for an iteration cap of at least one.
+- **Iteration cap.** The rules hold for every iteration cap. At a cap of zero
+  no iteration runs: the posterior equals the frame's channel LLRs, the
+  decoded codeword is their hard decision, `iterations` is 0, and
+  `syndrome_check_passed` and `converged` both equal the syndrome test of that
+  word.
 
 ## Notation
 
@@ -142,11 +146,11 @@ and the syndrome passes when every check has parity 0.
   syndrome is tested once, after the last iteration. `converged` equals that
   test.
 - **Iteration count.** `iterations` counts the iterations performed, the
-  terminating one included.
+  terminating one included; it is 0 at a cap of zero.
 - **Syndrome flag.** `syndrome_check_passed` is the syndrome test of the
   terminal beliefs.
 - **Posterior.** `LdpcDecoder::posterior_llrs` returns the beliefs of the last
-  iteration performed, and the decoded codeword is their hard decision,
+  iteration performed (the channel LLRs when none is performed), and the decoded codeword is their hard decision,
   whether or not the syndrome passes.
 
 The fields are those of `gf2_coding::ldpc::DecodeOutcome` and
