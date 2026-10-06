@@ -1,0 +1,34 @@
+pilot receipt  dev/bench_results/bfc2ceab/r1-entry-check-pilot/receipt.json
+receipt sha256 17bf9e14205bd5684c64285dfe4e5d4b500f7f7074a1ed1c4e175a429fa2b06f
+campaign       bfc2ceab-r1-entry-check-pilot
+verdict        accepted (label pilot)
+family         caller-trusted-entry-check-cost: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+spmm-small-n16                          12     0.93266     0.93086     0.93494    0.0024
+spmm-small-n1024                        12     0.99373     0.99307     0.99439    0.0007
+spmm-medium-n16                         12     0.93734     0.93446     0.94048    0.0033
+spmm-medium-n1024                       12     0.99111     0.99032     0.99216    0.0011
+permanent-f3-n14                        12     0.99716     0.97798      1.0028    0.0192
+ple-small-n128                          12      1.0018     0.99855       1.005    0.0032
+ple-medium-n128                         12     0.99325     0.99173     0.99995    0.0067
+gemm-small-n32                          12     0.98506     0.97967     0.98929    0.0055
+gemm-medium-n32                         12       1.001           1      1.0025    0.0015
+
+widest relative half-width   0.019233
+frozen measurement resolution 0.02
+restated the family description for the confirmatory stage
+
+selection      6 of 9 pilot cells become confirmatory
+rationale      The pilot addendum freezes this selection: P-20's tail-support bound admits six confirmatory comparisons on the family's first attempt, one cell per check grain of each cost class; spmm-small-n1024 and spmm-medium-n1024 are dropped because the 16-column cells carry the row scan at its least favourable, and ple-medium-n128 because its panel check has the form of ple-small-n128. The dropped cells keep their pilot evidence.
+retained       spmm-small-n16
+retained       spmm-medium-n16
+retained       permanent-f3-n14
+retained       ple-small-n128
+retained       gemm-small-n32
+retained       gemm-medium-n32
+dropped        spmm-small-n1024
+dropped        spmm-medium-n1024
+dropped        ple-medium-n128
+margins: equivalence 1.05, material gap None
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/bfc2ceab/addendum-v4-entry-check-confirmation.json
