@@ -150,8 +150,8 @@ the unit's assignment lists; the return of the unit raises both.
 
 | Id | Divergence | Tracking |
 |---|---|---|
-| V1 | `C/survey/make-shift-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/bitvec.rs` lacks the fragment `self.data[i] = (self.data[i - word_shift] << bit_shift)` | tracking issue: none |
-| V2 | `E/63bad95d/survey/make-calibration-budget.py` and `make-route-inventory.py` list tracked paths; on a clone of `37391ec5c` they rewrite `calibration-budget.json`, `calibration-budget.md`, `route-inventory.json` and `route-inventory.md` with other bytes, and the committed lines `:151`, `:104`, `:2421,2422` and `:386` of those files state the flat path of the two entries | tracking issue: none |
+| V1 | `C/survey/make-shift-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/bitvec.rs` lacks the fragment `self.data[i] = (self.data[i - word_shift] << bit_shift)` | -> c3ef9ee7 (`jit issue show c3ef9ee7`) |
+| V2 | `E/63bad95d/survey/make-calibration-budget.py` and `make-route-inventory.py` list tracked paths; on a clone of `37391ec5c` they rewrite `calibration-budget.json`, `calibration-budget.md`, `route-inventory.json` and `route-inventory.md` with other bytes, and the committed lines `:151`, `:104`, `:2421,2422` and `:386` of those files state the flat path of the two entries | -> 63bad95d (`jit issue show 63bad95d`), the open issue that owns both generators |
 
 ## Verdicts (REQ-07)
 
