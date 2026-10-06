@@ -7,8 +7,9 @@ from the worktree root.
 The rule is the *Margins and resolution* section of the lane-threshold
 addendum, applied through the dense story's shared `resolution_rule`. The
 record states the outcome the rule fixes, `eligible` or
-`resolution-insufficient`, and the floor the canonical freezer derives from the
-whole pilot, which decides whether that resolution can be frozen.
+`resolution-insufficient`, and the whole pilot's widest cell, which the rule
+excludes. The standard output line carries the resolution and the outcome for
+the freeze script.
 """
 
 import hashlib
@@ -60,26 +61,15 @@ def main():
     whole = WIDEST.search(subprocess.check_output(command, cwd=ROOT, text=True))
     if not whole:
         raise SystemExit("canonical resolution output states no whole-pilot width")
-    floor = rounded(float(whole.group(1)))
-    freezer = repo_artifacts.containing("freeze-confirmation.py", "--resolution-decimals")
     if not eligible:
         consequence = (
             "The frozen family rule ends this family after its exploratory pilot. "
             "No confirmatory reservation is made and the threshold stays unchanged."
         )
-        freeze = ""
     else:
-        consequence = "The pilot resolves the family within its frozen ceiling."
-        freeze = (
-            f"\nThe canonical freezer `{freezer}` takes the widest relative half-width of the "
-            f"whole pilot at the pilot's alpha as the floor of a supplied resolution: "
-            f"{float(whole.group(1)):.6f} in `{whole.group(2)}`, rounded upward to {floor:.3f}. "
-            + (
-                "The floor is at or below $r$, so the freezer pins $r$.\n"
-                if floor <= resolution
-                else "The floor exceeds $r$, so the freezer refuses $r$ and this record freezes "
-                "no confirmation addendum.\n"
-            )
+        consequence = (
+            "The pilot resolves the family within its frozen ceiling. The canonical freezer "
+            "pins this resolution in the confirmation addendum."
         )
     rows = "\n".join(f"| `{cell}` | {measured[cell]} | {widths[cell]:.6f} |" for cell in ids)
     ledger = addendum["family_wise"]["ledger_path"]
@@ -103,10 +93,13 @@ def main():
         f"{rows}\n\n"
         f"Largest confirmatory width: {maximum:.6f}; frozen upward rounding to 0.001: "
         f"$r={resolution:.3f}$. Family ceiling: {limit:.3f}.\n\n"
-        f"**Outcome: `{outcome}`.** {consequence}\n" + freeze,
+        f"**Outcome: `{outcome}`.** {consequence}\n\n"
+        f"The exploratory cells take no part in $r$. The widest relative half-width of the "
+        f"whole pilot at the pilot's alpha is {float(whole.group(1)):.6f}, in "
+        f"`{whole.group(2)}`.\n",
         encoding="utf-8",
     )
-    print(f"resolution={resolution:.3f} outcome={outcome} freezer_floor={floor:.3f}")
+    print(f"resolution={resolution:.3f} outcome={outcome}")
 
 
 if __name__ == "__main__":

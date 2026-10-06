@@ -21,6 +21,6 @@ Ledger `dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl` through t
 
 Largest confirmatory width: 0.033567; frozen upward rounding to 0.001: $r=0.034$. Family ceiling: 0.035.
 
-**Outcome: `eligible`.** The pilot resolves the family within its frozen ceiling.
+**Outcome: `eligible`.** The pilot resolves the family within its frozen ceiling. The canonical freezer pins this resolution in the confirmation addendum.
 
-The canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py` takes the widest relative half-width of the whole pilot at the pilot's alpha as the floor of a supplied resolution: 0.227797 in `lane-r1024-8w-cold`, rounded upward to 0.228. The floor exceeds $r$, so the freezer refuses $r$ and this record freezes no confirmation addendum.
+The exploratory cells take no part in $r$. The widest relative half-width of the whole pilot at the pilot's alpha is 0.227797, in `lane-r1024-8w-cold`.
