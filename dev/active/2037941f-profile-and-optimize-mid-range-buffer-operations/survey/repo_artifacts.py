@@ -10,6 +10,7 @@ Usage: repo_artifacts.py tracked NAME | containing NAME TEXT
                          | receipt CAMPAIGN | addendum CAMPAIGN | ledger CAMPAIGN
 """
 
+import hashlib
 import json
 import pathlib
 import subprocess
@@ -68,9 +69,21 @@ def receipt(campaign):
 
 
 def addendum(campaign):
-    """The root-relative campaign addendum the receipt of `campaign` pins."""
-    record = json.loads((ROOT / receipt(campaign) / "receipt.json").read_bytes())
-    return pathlib.Path(record["addendum"]["path"])
+    """The root-relative campaign addendum the receipt of `campaign` pins.
+
+    The pin identifies it by file name and SHA-256; the path the receipt
+    records is where the file lay at the run.
+    """
+    pin = json.loads((ROOT / receipt(campaign) / "receipt.json").read_bytes())["addendum"]
+    name = pathlib.Path(pin["path"]).name
+    listing = _git("-C", str(ROOT), "ls-files", "--", f":(glob)**/{name}").splitlines()
+    return _one(
+        [
+            path for path in listing
+            if hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == pin["sha256"]
+        ],
+        f"{name} with SHA-256 {pin['sha256']}",
+    )
 
 
 def ledger(campaign):
