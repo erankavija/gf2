@@ -1355,14 +1355,9 @@ fn an_extra_campaign_input_joins_the_closure() {
     std::fs::remove_dir_all(&root).expect("the scratch closure is removed");
 }
 
-/// The repository root, five directories above this crate's manifest.
+/// The repository root of the checkout the test runs in.
 fn repository_root() -> std::path::PathBuf {
-    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(5)
-        .expect("the harness crate sits five directories below the repository root")
-        .canonicalize()
-        .expect("the repository root resolves")
+    tuning_campaign_support::repository::repository_root().expect("the repository root resolves")
 }
 
 /// The pins the harness carries are the frozen document's own bytes and its own

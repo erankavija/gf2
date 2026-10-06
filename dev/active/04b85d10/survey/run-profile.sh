@@ -27,7 +27,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 ISSUE=04b85d10
 FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
 MANIFEST="${HERE}/gf2-side/Cargo.toml"

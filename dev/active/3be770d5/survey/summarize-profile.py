@@ -65,7 +65,9 @@ from intervals import (  # noqa: E402
     wilson_interval,
 )
 
-REPO = pathlib.Path(__file__).resolve().parents[4]
+REPO = pathlib.Path(subprocess.check_output(
+    ["git", "-C", str(pathlib.Path(__file__).resolve().parent), "rev-parse", "--show-toplevel"], text=True
+).strip())
 BINARY = REPO / "target/ldpc-throughput/release/ldpc-profile"
 IDENTITY = REPO / "dev/bench_results/3be770d5/preparation/build-identity.json"
 EXPECTED_BINARY_SHA256 = None

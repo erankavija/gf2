@@ -15,7 +15,7 @@ import re
 import shlex
 import subprocess
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
+from repo_artifacts import ROOT
 STORY = pathlib.Path("dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations")
 SURVEY = STORY / "survey"
 RESULTS = pathlib.Path("dev/bench_results/2037941f")

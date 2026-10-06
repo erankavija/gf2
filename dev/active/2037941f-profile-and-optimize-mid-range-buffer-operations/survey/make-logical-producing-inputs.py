@@ -8,10 +8,42 @@ that no longer enumerates its own tree.
 import argparse
 import json
 import pathlib
+import subprocess
+import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
-STORY = pathlib.Path("dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations")
-SURVEY = STORY / "survey"
+SURVEY_DIRECTORY = pathlib.Path(__file__).resolve().parent
+
+
+def _git(*arguments):
+    return subprocess.run(
+        ["git", "-C", str(SURVEY_DIRECTORY), *arguments], capture_output=True, check=True, text=True
+    ).stdout
+
+
+ROOT = pathlib.Path(_git("rev-parse", "--show-toplevel").strip())
+# The one live `repository_files.py`, outside receipt snapshots; it locates the
+# files of other directories by name.
+SHARED = [
+    path
+    for path in _git(
+        "ls-files", "-z", "--full-name", "--cached", "--others", "--exclude-standard", "--",
+        ":(top,glob)**/repository_files.py",
+    ).split("\0")
+    if path and "inputs" not in pathlib.Path(path).parts[:-1]
+]
+if len(SHARED) != 1:
+    raise SystemExit(f"{len(SHARED)} live repository_files.py files; exactly one must exist")
+sys.dont_write_bytecode = True  # `--check` writes nothing, however invoked
+sys.path.insert(0, str((ROOT / SHARED[0]).parent))
+import repository_files  # noqa: E402
+
+
+def located(name):
+    return repository_files.live_file(ROOT, name)
+
+
+SURVEY = SURVEY_DIRECTORY.relative_to(ROOT)
+STORY = SURVEY.parent
 HARNESS = SURVEY / "harness"
 SUPPORT = pathlib.Path("dev/tools/tuning-campaign-support/src")
 OUTPUT = SURVEY / "logical-producing-inputs.json"
@@ -39,7 +71,7 @@ def closure():
         "isal-build-pins.sh",
     )] + ["dev/scripts/ccx1-bench-flock.sh"]
     lifecycle += files_under(SUPPORT)
-    lifecycle.append("dev/active/bc091474/run-candidate.sh")
+    lifecycle.append(located("run-candidate.sh"))
     behavior = sorted(
         set(
             files_under(HARNESS / "src", pathlib.Path("crates/gf2-core/src"), pathlib.Path("crates/gf2-coding/src"))
@@ -80,11 +112,12 @@ def closure():
                 str(SURVEY / "make-logical-producing-inputs.py"),
                 str(SURVEY / "logical-source-evidence.json"),
                 str(STORY / "logical-harness.md"),
-                "dev/active/bc091474/portfolio.md",
-                "dev/active/f547c394/addendum.schema.json",
-                "dev/active/f547c394/protocol.md",
-                "dev/active/f547c394/amendment-v4.md",
-                "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+                located("portfolio.md"),
+                *SHARED,
+                located("addendum.schema.json"),
+                repository_files.document(ROOT, "protocol.md", repository_files.PROTOCOL_OPENING),
+                located("amendment-v4.md"),
+                located("measurement-contract.md"),
                 "scripts/cargo-budget.sh",
             ]
             + files_under(pathlib.Path("crates/gf2-kernels-simd/src"))

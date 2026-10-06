@@ -11,7 +11,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 BIN="${1:-${REPO}/target/bb769456-arms/release}"
 ASM="${2:-${HERE}/asm}"
 SYMBOL_TABLE="${HERE}/logical-asm-symbols.txt"

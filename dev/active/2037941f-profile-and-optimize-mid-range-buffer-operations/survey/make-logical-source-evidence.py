@@ -12,7 +12,7 @@ import json
 import pathlib
 import subprocess
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
+from repo_artifacts import ROOT
 STORY = pathlib.Path("dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations")
 OUTPUT = STORY / "survey" / "logical-source-evidence.json"
 

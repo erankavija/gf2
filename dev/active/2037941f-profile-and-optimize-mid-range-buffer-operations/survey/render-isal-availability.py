@@ -8,7 +8,7 @@ import re
 import sys
 
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
+from repo_artifacts import ROOT
 STORY = pathlib.Path("dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations")
 VALIDATION = STORY / "survey/logical-harness-validation.txt"
 PROBE = STORY / "isal-probe-record.txt"

@@ -582,6 +582,7 @@
     "dev/active/f547c394/amendment-v4.md",
     "dev/active/f547c394/protocol.md",
     "dev/scripts/ccx1-bench-flock.sh",
+    "dev/scripts/repository_files.py",
     "dev/tools/tuning-campaign-support/Cargo.toml",
     "dev/tools/tuning-campaign-support/src/abtest.rs",
     "dev/tools/tuning-campaign-support/src/arm.rs",
