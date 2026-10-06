@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # usage: 7039d680-checks.sh state|builds|tests|selfchecks <outfile>
 # Checks of the entries 26465e6c, eda07788 and 5cbb6545 wherever they live
-# under dev/active/; inputs/ snapshot directories are outside every listing,
-# and a printed path omits dev/active/ and the epic directory.
+# under dev/active/; inputs/ snapshot directories are outside every listing.
+# builds, tests and selfchecks print a path without dev/active/ and the epic
+# directory.
 #   state       `--check` result of each live closure generator; the relative
 #               Cargo path dependencies and build-script paths that leave or
 #               name an entry; entry code that counts directory levels.
