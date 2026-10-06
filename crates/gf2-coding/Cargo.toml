@@ -43,7 +43,9 @@ sha2 = "0.10"
 # Self-dev-dependency enabling `test-support` for integration tests that
 # share helpers with crate-internal unit tests (ETSI CSP test-point
 # parser, etc.). Pattern matches gf2-algebra.
-gf2-coding = { path = ".", features = ["test-support"] }
+# `default-features = false` keeps `simd` out of a `--no-default-features` test
+# build; the features of the build come from the command line.
+gf2-coding = { path = ".", default-features = false, features = ["test-support"] }
 # SVG plot generation for the d4851c3d presentation figures example only.
 # Default-features disabled: we only need the SVG backend, not the bitmap
 # / font backends, which keeps the build lean.
