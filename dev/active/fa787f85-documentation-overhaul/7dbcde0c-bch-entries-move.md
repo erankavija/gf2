@@ -28,7 +28,7 @@ and the mapping document path), which differ by the directory level alone. The
 same record states the command whose `diff` is empty with the directory above
 each entry removed from those paths; the capture at `e83c98376` has the same
 SHA-256. The committed fd9d5416 receipt keeps its bytes and differs from a
-render in the corresponding two lines; the same record names its owner.
+render in the corresponding two lines, which hold the paths observed at its run.
 
 ## Checks
 

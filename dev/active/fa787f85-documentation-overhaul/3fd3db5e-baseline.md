@@ -77,6 +77,5 @@ this prints nothing:
 ```
 
 The command under *Committed receipt* prints the same two differences at lines
-3 and 33 of the committed fd9d5416 receipt. The receipt keeps its bytes; its
-re-render belongs to the open issue that owns it -> fd9d5416
-(`jit issue show fd9d5416`).
+3 and 33 of the committed fd9d5416 receipt. The receipt keeps its bytes: the
+two lines hold the paths the renderer observed at its run.
