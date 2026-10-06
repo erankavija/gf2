@@ -61,15 +61,14 @@ renderer and the test are byte-identical renames.
 | Part of the capture | Result against [3fd3db5e-before.txt](3fd3db5e-before.txt) |
 | --- | --- |
 | Test results of `RenderReceiptTest` | identical |
-| Synthetic receipt | lines 14 and 44 differ; every other line is identical |
+| Synthetic receipt | identical apart from three paths in lines 14 and 44 |
 | Capture SHA-256 | `c0bd5c71fcd36267d35fa482d862dce87f63c68121937f91a5ff186cb7cece00` |
 
-The capture is not byte-identical to the baseline. The renderer prints its own
-path, its protocol's path and the located mapping document's path as it
-observes them at run time: line 14 holds the first two and line 44 the third.
-The command of the second block under *Output* prints the two changed line
-pairs. With the directory above each entry removed from the three paths, it
-prints nothing:
+The renderer prints its own path, its protocol's path and the located mapping
+document's path as it observes them at run time: line 14 holds the first two
+and line 44 the third. The three paths differ from the baseline by the
+directory level alone: with the directory above each entry removed from them,
+this prints nothing:
 
 ```
 { python3 -B "$T" -v RenderReceiptTest 2>&1 | sed -E 's/ in [0-9.]+s$/ in <t>s/'
@@ -78,5 +77,6 @@ prints nothing:
 ```
 
 The command under *Committed receipt* prints the same two differences at lines
-3 and 33 of the committed fd9d5416 receipt, whose bytes this move leaves
-unchanged.
+3 and 33 of the committed fd9d5416 receipt. The receipt keeps its bytes; its
+re-render belongs to the open issue that owns it -> fd9d5416
+(`jit issue show fd9d5416`).

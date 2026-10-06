@@ -30,7 +30,7 @@
 
 - [ ] Apply the owner's answers to the five open questions, then:
   - `616e1d7c`: under option A, `git apply target/616e1d7c-receipt-links.patch` in its worktree, regenerate `616e1d7c-verify.txt`, drop the record's unresolved-links paragraph, bring the branch to main, merge, run `target/616e1d7c-relink.sh`, rerun the 6dc81018 archive twice and record both runs, regenerate `96cea1b9-archive-rows.txt`, then gate. Its record must state the committed tracker reference and name no uncommitted script.
-  - `7dbcde0c` and `b23c364a`: merge both before gating either; `dev/active/fd9d5416/receipt-protocol.md:7,154` must read `../4e732b56/` after both merges. Remove the ignored `__pycache__` directories of the two source entries on main.
+  - `7dbcde0c` and `b23c364a`: merge both before gating either; `dev/active/ae03bcd0-general-bch/fd9d5416/receipt-protocol.md:7,154` must read `../4e732b56/` after both merges. Remove the ignored `__pycache__` directories of the two source entries on main.
 - [ ] Under option A of the zen3 question: file T2 to T4 from `decoupling-findings.md`, amend `602652bf` (A1) and the criteria of `f79bcba3`, `198aafa3`, `7039d680`, `602652bf` for the hazards listed there, then dispatch in the dependency order of the proposal. `f79bcba3` sets the six manifest rows whose source `jit:b2e09d41` removed.
 - [ ] `f6148d1e` and `f694f59a` after `616e1d7c`; then `9451498f`, `d6ebc4ec`, `c852d9b2`, `af84619e`.
 - [ ] Before the epic gate, reconcile `surfaced_pitfalls`: the test-written receipt at the top level of `dev/bench_results` against REQ-14, and the `AGENTS.md` rows of the audit against REQ-02 and REQ-17.
