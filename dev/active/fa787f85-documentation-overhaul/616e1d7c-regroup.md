@@ -110,11 +110,10 @@ Repointed in commit `7d18de5f4`, path and link-target text only:
 Two repointed command quotations name generated files that no commit holds
 (`34d85cb9/extraction/R2_gf2_core.llbc`, `e6ea0dde/extraction/X3_gf2_core.llbc`).
 
-The `citations` section of the output counts, per citing file, the 3126
-citations at commit `42929def5` of a path under an entry of this unit that the
-tree lacks, found by `git grep -F` for `dev/active/<entry>` and `../<entry>/`
-outside `.jit/`: 52 repointed in commit `55fbea37a`, 3074 kept and present at
-the tip.
+The `citations` section of the output counts, per citing file and ground, the
+citations of a path under an entry of this unit that the tree lacks, found by
+`git grep -F` for `dev/active/<entry>` and `../<entry>/` outside `.jit/`: 3071
+outside the tracker documents of fa787f85. Commit `55fbea37a` repoints 52.
 
 Repointed in commit `55fbea37a`, path text only:
 
@@ -137,15 +136,14 @@ Citations that keep their bytes, each on one ground:
 | Citing file | Citations | Ground |
 |---|---|---|
 | `migration/manifest.toml` | 938 | Manifest schema fields |
-| `616e1d7c-preexec.json` | 828 | Digest pin: content hash at `.jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json:38` |
+| `616e1d7c-preexec.json` | 828 | Digest pin: content hash in `.jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json` |
 | `67048b47-linked-pairs.txt`, `96cea1b9-archive-rows.txt`, `7bac1303-harness-path-trials.txt` | 395, 431, 3 | Tool output: listings that units 67048b47, 96cea1b9 and 7bac1303 commit beside their scripts |
-| 125 files under `AR`, the `container root` line of the output: 95 logs, 14 excerpts, 12 Lean files, `progress.json`, `breakdown.json`, two receipts | 468 | Marker-backed archive files |
-| `AR/active/6dc81018-field-capability-dispatch/handoff.md:14` | 1 | Digest pin: content hash at `.jit/issues/389aa4de-e6dc-4adb-a2e8-03153192b8cc.json:41` |
+| Files under `AR`, the `container root` line of the output: logs, excerpts, Lean files, `progress.json`, `breakdown.json`, `handoff.md`, two receipts | 469 | Marker-backed archive files |
 | `dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md:136`, `2026-08-22-post-cutover-receipt-4.md:138,139` | 3 | Receipts, equal in bytes to their archive files |
 | `dev/active/6dc81018-field-capability-dispatch/breakdown.json:42,126,457,458` | 4 | Tracker state: the breakdown manifest of 6dc81018; the tree holds none of the four cited paths |
-| `handoff-8.md:31,66` and `progress.json` of this epic directory | 3 | Tracker state: session handoff and execution progress of fa787f85, quoting code-review finding F2 and the owner question that decision DEC-02 answers |
+| Session handoffs and `progress.json` of this epic directory | not counted | Tracker state: tracker documents of fa787f85 |
 
-The two Lean files among the 12 that a person wrote,
+The two Lean files among them that a person wrote,
 `AR/active/1ac74567/elaboration/FunsExternal.lean` and
 `AR/active/e6ea0dde/elaboration/Statements.lean`, are the inputs of the
 committed elaboration logs.

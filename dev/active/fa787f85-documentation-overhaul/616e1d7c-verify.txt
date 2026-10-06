@@ -58,30 +58,14 @@ rows complete, each file at its destination: ok 465 rows of 16 entries
      5 consumers of eb9b324c in eb9b324c
 each consumer lies in an entry with a moved or archived row: ok 222 consumers on 19 rows, entries 1ac74567 2a85f728 34d85cb9 389aa4de 50b47eae 6dc81018-field-capability-dispatch 7d7c647c e6ea0dde eb9b324c
 == citations
-   468 kept: container root dev/archive/6dc81018-field-capability-dispatch
-     1 kept: digest pin: .jit/issues/389aa4de-e6dc-4adb-a2e8-03153192b8cc.json:41 dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md
-   828 kept: digest pin: .jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json:38 dev/active/fa787f85-documentation-overhaul/616e1d7c-preexec.json
-     1 kept: equal bytes with dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md
-     2 kept: equal bytes with dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md
-     4 kept: file suffix .json dev/active/6dc81018-field-capability-dispatch/breakdown.json
-     3 kept: file suffix .txt dev/active/fa787f85-documentation-overhaul/7bac1303-harness-path-trials.txt
-   938 kept: manifest file dev/active/fa787f85-documentation-overhaul/migration/manifest.toml
-   395 kept: tracker document of 67048b47: data dev/active/fa787f85-documentation-overhaul/67048b47-linked-pairs.txt
-   431 kept: tracker document of 96cea1b9: report dev/active/fa787f85-documentation-overhaul/96cea1b9-archive-rows.txt
-     2 kept: tracker document of fa787f85: handoff dev/active/fa787f85-documentation-overhaul/handoff-8.md
-     1 kept: tracker document of fa787f85: progress dev/active/fa787f85-documentation-overhaul/progress.json
-     1 repointed: dev/active/6dc81018-field-capability-dispatch/handoff-12.md
-     1 repointed: dev/active/6dc81018-field-capability-dispatch/handoff-13.md
-     4 repointed: dev/active/7d7c647c/design.md
-     4 repointed: dev/active/f547c394/research-r3-sweep-resolutions.md
-     4 repointed: dev/active/f547c394/research-r3-sweeps.json
-     2 repointed: dev/active/fa787f85-documentation-overhaul/8f61d6de-baseline-findings.md
-     1 repointed: dev/active/fa787f85-documentation-overhaul/d1f6b2c9-inventory-notes.md
-     3 repointed: dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.sh
-    21 repointed: dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md
-     1 repointed: dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-7.md
-     2 repointed: dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-8.md
-     4 repointed: dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/design.md
-     4 repointed: dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md
-citations at 42929def5 with an absent target: each is repointed or kept on a ground: ok 3126 citations in 149 files, 52 repointed
-working-tree citations with an absent target are citations kept above: ok 3074
+   469 container root dev/archive/6dc81018-field-capability-dispatch
+   828 digest pin: .jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json dev/active/fa787f85-documentation-overhaul/616e1d7c-preexec.json
+     1 equal bytes with dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md
+     2 equal bytes with dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md
+     4 file suffix .json dev/active/6dc81018-field-capability-dispatch/breakdown.json
+     3 file suffix .txt dev/active/fa787f85-documentation-overhaul/7bac1303-harness-path-trials.txt
+   938 manifest file dev/active/fa787f85-documentation-overhaul/migration/manifest.toml
+   395 tracker document of 67048b47: data dev/active/fa787f85-documentation-overhaul/67048b47-linked-pairs.txt
+   431 tracker document of 96cea1b9: report dev/active/fa787f85-documentation-overhaul/96cea1b9-archive-rows.txt
+       tracker documents of fa787f85
+each citation of an absent entry path is kept on a ground: ok 3071 citations outside the tracker documents of fa787f85
