@@ -22,7 +22,7 @@ arm constructs from.
 
 The script writes the addendum and nothing else. The confirmation addendum is
 derived from the committed pilot receipt by the canonical freezer,
-`dev/active/c7113c5a/survey/freeze-confirmation.py`.
+`dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`.
 """
 
 import argparse

@@ -29,7 +29,7 @@ is committed and exploratory. The canonical
 sets `pilot_pairs` to the protocol maximum, which the
 [protocol](../f547c394/protocol.md#frozen-shared-settings) fixes at 24; the
 projected plan carries 24 for every qualified M4RI cell. The confirmation
-uses the [canonical freezer](../../c7113c5a/survey/freeze-confirmation.py),
+uses the [canonical freezer](../c7113c5a/survey/freeze-confirmation.py),
 fresh pairs, and this family's own append-only ledger. A comparator gap never
 authorizes production adoption.
 

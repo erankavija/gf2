@@ -359,7 +359,7 @@ def print_disposition_sources(profile: dict, confirmation: dict) -> None:
         (f"{ACTIVE}/shift-profile.md", "material workload disposition"),
         (f"{ACTIVE}/shift-feasibility-record.md", "Rust 1.95 and scalar-fallback feasibility"),
         (f"{ACTIVE}/dvb-interleave-profile.md", "DVB not-material disposition"),
-        ("dev/active/eda07788/findings.md", "NR no-win and unavailable mappings"),
+        ("dev/active/1a379447-zen3-cpu-performance/eda07788/findings.md", "NR no-win and unavailable mappings"),
         (f"{ACTIVE}/investigation.md", "consumer and comparator survey"),
     ):
         print(f"| {quoted(relative)} | {quoted(digest(relative))} | {role} |")

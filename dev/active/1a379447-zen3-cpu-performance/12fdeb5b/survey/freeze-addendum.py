@@ -11,7 +11,7 @@ cell list, seeds, margins and rationales are the declarations below; everything
 else comes from the protocol's frozen shared settings.
 
 The confirmation stage owns no freezing logic of its own: it delegates to the
-canonical `dev/active/c7113c5a/survey/freeze-confirmation.py`, which derives the
+canonical `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`, which derives the
 measurement resolution from the committed pilot receipt, pins that receipt by
 path and digest, and writes the derivation record beside the addendum. This
 module supplies the cell selection P-20's tail-support bound admits, its
@@ -32,7 +32,7 @@ import sys
 FAMILY_ID = "nr-rate-matched-encode-baselines-v1"
 LEDGER = "dev/active/1a379447-zen3-cpu-performance/12fdeb5b/nr-rate-matched-encode-trial-ledger.jsonl"
 PILOT_ADDENDUM = "dev/active/1a379447-zen3-cpu-performance/12fdeb5b/addendum-nr-encode-pilot.json"
-CANONICAL_FREEZER = "dev/active/c7113c5a/survey/freeze-confirmation.py"
+CANONICAL_FREEZER = "dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py"
 RESOLUTION_DERIVATION = "dev/active/1a379447-zen3-cpu-performance/12fdeb5b/pilot-resolution-nr-encode.txt"
 FAMILY_ALPHA = 0.05
 

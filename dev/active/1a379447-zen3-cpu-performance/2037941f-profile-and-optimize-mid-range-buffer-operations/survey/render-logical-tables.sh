@@ -2,7 +2,7 @@
 # Render the three logical baselines' interval tables (jit:18a87159).
 #
 # The tables come from the canonical generator, `survey-analysis tables`
-# (dev/active/6c6b09b1/survey/analysis), which reads committed receipt bytes
+# (dev/active/1a379447-zen3-cpu-performance/6c6b09b1/survey/analysis), which reads committed receipt bytes
 # and re-derives every interval through the shared campaign tooling. This
 # script only names this issue's receipts, so no private table variant exists.
 #
@@ -26,7 +26,7 @@ export CARGO_CI_NO_SCCACHE=1
 RUN_ID="${1:-v4-r1}"
 RESULTS=dev/bench_results/2037941f
 OUTPUT="${RESULTS}/logical-tables.md"
-ANALYSIS=dev/active/6c6b09b1/survey/analysis/Cargo.toml
+ANALYSIS=dev/active/1a379447-zen3-cpu-performance/6c6b09b1/survey/analysis/Cargo.toml
 TARGET="${REPO}/target/18a87159-analysis"
 
 receipts=()

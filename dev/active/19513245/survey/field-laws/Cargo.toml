@@ -15,7 +15,7 @@ rust-version = "1.95"
 publish = false
 
 [dependencies]
-byte-field-gf2-side = { path = "../../../6c6b09b1/survey/gf2-side" }
+byte-field-gf2-side = { path = "../../../1a379447-zen3-cpu-performance/6c6b09b1/survey/gf2-side" }
 bytefield-consumer = { path = "../consumer" }
 gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "test-support"] }
 

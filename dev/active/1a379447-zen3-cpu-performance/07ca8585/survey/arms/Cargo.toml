@@ -30,7 +30,7 @@ default = []
 aff3ct = ["ldpc-throughput-harness/aff3ct"]
 
 [dependencies]
-ldpc-survey-harness = { path = "../../../../c077a88b/survey/harness" }
+ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
 ldpc-throughput-harness = { path = "../../../3be770d5/survey/harness" }
 gf2-coding = { path = "../../../../../../crates/gf2-coding" }
 tuning-campaign-support = { path = "../../../../../tools/tuning-campaign-support" }

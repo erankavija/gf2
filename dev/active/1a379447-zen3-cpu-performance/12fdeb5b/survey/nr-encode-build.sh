@@ -6,7 +6,7 @@
 #   dev/active/1a379447-zen3-cpu-performance/12fdeb5b/survey/nr-encode-build.sh <aff3ct-root> <srsran-root> [staging-dir]
 #
 # <aff3ct-root> is the AFF3CT v4.7.0 tree and <srsran-root> the srsRAN Project
-# tree that `dev/active/c077a88b/survey/fetch-build.sh` clones. This script
+# tree that `dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/fetch-build.sh` clones. This script
 # only reads them, and refuses a tree whose commit, submodule commit or
 # static-library digest differs from the pins below, which are the ones
 # `c077a88b`'s build identity records. Build output goes to the staging

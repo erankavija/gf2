@@ -7,7 +7,7 @@ The external arms of this issue's comparator family are not rebuilt from new
 sources: they are the executables 6fb89a3c built from its committed C sources
 and pinned in its `build-evidence.json`, whose warm pass its
 `verify-warm-pass.py` observed under gdb and whose bit mapping its
-`verify-bit-mapping.py` checked. `dev/active/6fb89a3c/survey/fetch-build.sh`
+`verify-bit-mapping.py` checked. `dev/active/1a379447-zen3-cpu-performance/6fb89a3c/survey/fetch-build.sh`
 reproduces them, and this script decides whether the executables present are
 byte-identical to those pins.
 
@@ -41,7 +41,7 @@ def main():
         ).stdout.strip()
     )
     parser = argparse.ArgumentParser()
-    parser.add_argument("--survey", default=str(root / "dev/active/6fb89a3c/survey"))
+    parser.add_argument("--survey", default=str(root / "dev/active/1a379447-zen3-cpu-performance/6fb89a3c/survey"))
     arguments = parser.parse_args()
     survey = pathlib.Path(arguments.survey)
     pinned = json.loads((survey / "build-evidence.json").read_text())
@@ -53,7 +53,7 @@ def main():
         agrees = got == want
         mismatches += not agrees
         records[name] = {
-            "pinned_by": "dev/active/6fb89a3c/survey/build-evidence.json",
+            "pinned_by": "dev/active/1a379447-zen3-cpu-performance/6fb89a3c/survey/build-evidence.json",
             "pinned_sha256": want,
             "observed_sha256": got,
             "agrees": agrees,
@@ -61,8 +61,8 @@ def main():
 
     report = {
         "schema": "1d4fd63d-external-arm-check-v1",
-        "source_of_pins": "dev/active/6fb89a3c/survey/build-evidence.json",
-        "rebuilt_by": "dev/active/6fb89a3c/survey/fetch-build.sh",
+        "source_of_pins": "dev/active/1a379447-zen3-cpu-performance/6fb89a3c/survey/build-evidence.json",
+        "rebuilt_by": "dev/active/1a379447-zen3-cpu-performance/6fb89a3c/survey/fetch-build.sh",
         "m4ri": {
             key: pinned["m4ri"][key] for key in ("version", "source") if key in pinned["m4ri"]
         },

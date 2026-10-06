@@ -209,7 +209,7 @@ Rules common to the families:
 
 - **Pilot.** Each family has one exploratory pilot of its non-holdout cells at
   the pair count `planned-families.json` declares; the canonical freezer
-  `dev/active/c7113c5a/survey/freeze-confirmation.py` derives the confirmation
+  `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py` derives the confirmation
   addendum from the committed pilot receipt.
 - **Holdout.** Holdout cells are declared in a holdout record before the
   pilot runs and attached by the freezer; no sample of a holdout workload

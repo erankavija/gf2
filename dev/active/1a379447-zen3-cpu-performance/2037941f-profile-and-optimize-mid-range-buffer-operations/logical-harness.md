@@ -80,7 +80,7 @@ transcription is a pilot: every cell is `exploratory`,
 `family_wise.prior_confirmatory_trials` is zero, because a version-4 addendum
 derives prior comparisons from its authoritative ledger. A confirmation
 addendum is derived from the committed pilot receipt by the canonical freezer
-`dev/active/c7113c5a/survey/freeze-confirmation.py`; this harness writes no
+`dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`; this harness writes no
 confirmation addendum.
 
 Margins, complexity budgets, search budgets, ledger paths, cache states,

@@ -153,7 +153,7 @@ def cell(code_key, manifest, arm_key, candidate, spec):
                 "h_sha256": manifest["h_sha256"],
             },
             "input": {
-                "llr_source": f"dev/active/c077a88b/survey bundle {CATALOGUE['codes'][code_key]['bundle']} (ldpc-make-inputs)",
+                "llr_source": f"dev/active/1a379447-zen3-cpu-performance/c077a88b/survey bundle {CATALOGUE['codes'][code_key]['bundle']} (ldpc-make-inputs)",
                 "llr_sha256": manifest["llrs_sha256"],
                 "frames": manifest["frames"],
                 "seed": manifest["seed"],

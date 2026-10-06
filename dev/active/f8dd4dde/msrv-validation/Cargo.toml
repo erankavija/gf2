@@ -3,7 +3,7 @@
 # Standalone workspace so this probe adds no target, feature, or dependency to
 # the production workspace; it consumes `gf2-core` by path with the `simd` and
 # `test-support` features the residual-shift force switch and lane witness
-# need, exactly as `dev/active/6c6b09b1/survey/field-laws` does for the same
+# need, exactly as `dev/active/1a379447-zen3-cpu-performance/6c6b09b1/survey/field-laws` does for the same
 # two features. Authorizes no production source.
 
 [workspace]

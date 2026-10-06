@@ -42,7 +42,7 @@ acceptance tool records every cell's outcome as `Pilot`. The frozen addenda
 leave `effect.measurement_resolution` null, which is why each acceptance row
 carries the note `unresolved: effect.measurement_resolution`: the resolution
 that a confirmation needs is derived from these pilots by
-`dev/active/c7113c5a/survey/freeze-confirmation.py`, not declared ahead of
+`dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`, not declared ahead of
 them.
 
 ## Isolated XOR baseline (REQ-01, REQ-02, REQ-03)

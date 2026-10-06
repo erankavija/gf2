@@ -21,3 +21,14 @@ test locates the same files by SHA-256):
 | `dev/active/f547c394/addendum-v2.schema.json` | `dev/active/f547c394/addendum-smoke-v2-pilot.json` | yes | 0 |
 | `dev/active/f547c394/addendum-v3.schema.json` | `dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json` | yes | 0 |
 | `dev/active/f547c394/addendum.schema.json` | `dev/active/5cbb6545/addendum-popcount-v4-confirmation.json` | yes | 0 |
+
+## Repeat at the 7039d680 entry move
+
+The same command at `47f407583eade69629253bf6794d6565d42e8206`, the parent of
+the 7039d680 commits, and at `14d3ab4438b3aea3f0a59711e16ea2e84ace613d`, after
+the entries `26465e6c`, `eda07788` and `5cbb6545` move under
+`dev/active/1a379447-zen3-cpu-performance/`, gives the same result:
+`each_protocol_version_validates_against_its_own_committed_schema` passed. The
+test locates the five pairs by SHA-256, so the per-fixture results are the
+rows of the table above; at the second commit the addenda of rows two, four
+and five lie under the epic directory.

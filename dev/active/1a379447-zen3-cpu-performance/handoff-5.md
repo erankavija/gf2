@@ -22,7 +22,7 @@
 - The final pre-merge `cargo-ci` passed all 25 steps, including 5,979 tests with 248 skipped. A post-merge CI run is still required by the execution-lead workflow.
 - Two independent Terra xhigh reviews were started on `32d8087d` and interrupted before verdicts. Run both again from scratch on the final stable commit, require convergence, then run the configured gates. The issue remains open.
 
-Canonical evidence: `dev/active/c077a88b/findings.md`, `dev/bench_results/c077a88b/tables.md`, `dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/`, and `dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot/`.
+Canonical evidence: `dev/active/1a379447-zen3-cpu-performance/c077a88b/findings.md`, `dev/bench_results/c077a88b/tables.md`, `dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/`, and `dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot/`.
 
 ### `1d0da41f` — protocol-v3 negative evidence complete on branch; integration pending
 

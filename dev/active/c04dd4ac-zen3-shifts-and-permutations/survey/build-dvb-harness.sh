@@ -4,7 +4,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "${HERE}/../../../.." && pwd)"
-MANIFEST="${REPO}/dev/active/eda07788/survey/gf2-side/Cargo.toml"
+MANIFEST="${REPO}/dev/active/1a379447-zen3-cpu-performance/eda07788/survey/gf2-side/Cargo.toml"
 EXT="${GF2_9FB40C83_EXT:-${REPO}/.agents/ext/9fb40c83}"
 PIN=32357d8ad55a6a302c34e093759f0454e45cca56
 if [[ -n "${GF2_9FB40C83_XDSOPL_SOURCE:-}" ]]; then

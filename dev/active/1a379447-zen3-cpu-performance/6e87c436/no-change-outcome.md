@@ -20,7 +20,7 @@ source: it adds the safety contract of the fused AVX2 kernel.
   distinct full-count fusion within the frozen
   [cost boundary](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md#operations-and-cost-boundaries).
   The generic carry-save comparator stays the preserved
-  [non-qualifying result](../../5cbb6545/findings.md), and the scalar
+  [non-qualifying result](../5cbb6545/findings.md), and the scalar
   four-accumulator route stays a reference arm.
 - **No external gap.** The
   [confirmation acceptance summary](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/acceptance-summary.md)

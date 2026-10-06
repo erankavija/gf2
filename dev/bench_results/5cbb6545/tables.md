@@ -1,6 +1,6 @@
 # Receipt tables for jit:5cbb6545
 
-Written by `dev/active/5cbb6545/survey/summarize.py` from the committed receipts, their snapshotted addenda, the acceptance summaries beside them, the clock observation `dev/active/5cbb6545/survey/clock-observation.json` and the conformance record `dev/active/5cbb6545/validation.json`. Running it from the repository root reproduces this file byte for byte. Source: the receipts under `dev/bench_results/5cbb6545/`; finding counts are in § Campaigns, column *Findings*.
+Written by `dev/active/1a379447-zen3-cpu-performance/5cbb6545/survey/summarize.py` from the committed receipts, their snapshotted addenda, the acceptance summaries beside them, the clock observation `dev/active/1a379447-zen3-cpu-performance/5cbb6545/survey/clock-observation.json` and the conformance record `dev/active/1a379447-zen3-cpu-performance/5cbb6545/validation.json`. Running it from the repository root reproduces this file byte for byte. Source: the receipts under `dev/bench_results/5cbb6545/`; finding counts are in § Campaigns, column *Findings*.
 
 ## Method
 
@@ -31,8 +31,8 @@ Each confirmation's declared measurement resolution against the widest relative 
 
 | Confirmation | Pinned pilot | Derivation record | Pilot widest relative half-width | Declared resolution | alpha_c | Draws per tail | Arms match | Cells recorded not-confirmatory |
 |---|---|---|---|---|---|---|---|---|
-| `popcount-confirmation` | `popcount-pilot-r2` | `dev/active/5cbb6545/pilot-resolution-popcount.txt` | 0.012148 | 0.020 | 0.004167 | 20.83 | no | none |
-| `fused-confirmation` | `fused-pilot-r2` | `dev/active/5cbb6545/pilot-resolution-fused.txt` | 0.028926 | 0.030 | 0.004167 | 20.83 | no | none |
+| `popcount-confirmation` | `popcount-pilot-r2` | `dev/active/1a379447-zen3-cpu-performance/5cbb6545/pilot-resolution-popcount.txt` | 0.012148 | 0.020 | 0.004167 | 20.83 | no | none |
+| `fused-confirmation` | `fused-pilot-r2` | `dev/active/1a379447-zen3-cpu-performance/5cbb6545/pilot-resolution-fused.txt` | 0.028926 | 0.030 | 0.004167 | 20.83 | no | none |
 
 ## Rates (REQ-09)
 
@@ -94,7 +94,7 @@ Every probe of every cell that declares its conversion costs included: the whole
 
 ## Clock observation
 
-The clock the cycles-per-byte column converts at, from `dev/active/5cbb6545/survey/clock-observation.json`: one child per arm per confirmatory cell, on that cell's own case, under `perf stat` for user-space cycles and task-clock. *Timed share* is the fraction of the child's task-clock its five timed windows occupy, from the child's own window record. The record establishes a clock and no comparison; *Route* is the route the observation's candidate-producing executable took. The final production route is stated in the findings and protected by the conformance record. The observation runs an arm executable of its own, whose digest the line below this table gives beside the revision; the receipts' own arm digests are in § Campaigns.
+The clock the cycles-per-byte column converts at, from `dev/active/1a379447-zen3-cpu-performance/5cbb6545/survey/clock-observation.json`: one child per arm per confirmatory cell, on that cell's own case, under `perf stat` for user-space cycles and task-clock. *Timed share* is the fraction of the child's task-clock its five timed windows occupy, from the child's own window record. The record establishes a clock and no comparison; *Route* is the route the observation's candidate-producing executable took. The final production route is stated in the findings and protected by the conformance record. The observation runs an arm executable of its own, whose digest the line below this table gives beside the revision; the receipts' own arm digests are in § Campaigns.
 
 | Cell | Arm | Route | Cycles | Task clock (ms) | Cycles/ns | Timed share |
 |---|---|---|---|---|---|---|
@@ -136,7 +136,7 @@ The conformance record beside this survey, whose raw outputs carry the case coun
 | production selection audit | `rg for unsupported CSA selector and automatic-dispatch references` | `dev/active/5cbb6545/validation-production.txt` | 0 |
 | source-evidence reproduction | `dev/active/5cbb6545/survey/source-evidence.json` | `dev/active/5cbb6545/validation-source-evidence.txt` | 0 |
 
-All groups pass: `passed` is true in `dev/active/5cbb6545/validation.json`.
+All groups pass: `passed` is true in `dev/active/1a379447-zen3-cpu-performance/5cbb6545/validation.json`.
 
 ## Cells: `popcount-sweep`
 

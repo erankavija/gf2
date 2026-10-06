@@ -11,7 +11,7 @@ a general batch soft-decoder trait of `gf2-coding`, whose first specialised
 implementer it is, over isolated `gf2-kernels-simd` kernels; `gf2-sim` stages
 consume the trait. It is calibrated through the offline tuning system and measured under the
 [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md).
-The [candidate decision record](../f63a2464/decision-record.md) closes the
+The [candidate decision record](../1a379447-zen3-cpu-performance/f63a2464/decision-record.md) closes the
 quantized, layered and QC-aware families with no candidate proceeding, so no
 such candidate enters the scope and the numerical contract does not change.
 
@@ -39,7 +39,7 @@ from the probe crate [survey/intrinsics-probe](survey/intrinsics-probe/src/lib.r
 | REQ-11 | No quantization and no schedule change is introduced; the contract page states their exclusion. | `decoder-numerical-contract-page`, `outcome-publication` | Decision record; DEC-02 |
 | REQ-12 | The bounded record is committed and closed; the outcome record sets inter-frame and QC-aware intra-frame cells against their common baseline. | `outcome-publication` | Decision record; DEC-10 |
 | REQ-13 | Decode selectors join the coding tuning section; a coding owner producer calibrates them through the offline tuning campaign; a `selector-calibration` family reconfirms the profile on holdout inputs with fill, transposition and workspace costs inside the call. | `decode-selector-family`, `decode-route-decision`, `coding-tuning-producer`, `profile-composer-coding-owner`, the two `campaign-*-coding-owner` entries, `tuned-profile-arm`, the `decoder-calibration-*` and `selector-holdout-*` entries, `decoder-dispatch-verification`, `batch-decoding-reference-pages` | Contract `tuning-owner-mechanism`; DEC-09 |
-| REQ-14 | The canonical contract gains a permanent page with the batch clauses; the suite covers random and all-zero codewords, mixed convergence and nonconvergence, signed zero, ties and punctured and filler inputs. | `decoder-numerical-contract-page`, `lane-kernel-portable`, `batch-conformance-suite`, `nr-rate-matched-batch-decode` | [Numerical-contract review](../f63a2464/numerical-contract-review.md) |
+| REQ-14 | The canonical contract gains a permanent page with the batch clauses; the suite covers random and all-zero codewords, mixed convergence and nonconvergence, signed zero, ties and punctured and filler inputs. | `decoder-numerical-contract-page`, `lane-kernel-portable`, `batch-conformance-suite`, `nr-rate-matched-batch-decode` | [Numerical-contract review](../1a379447-zen3-cpu-performance/f63a2464/numerical-contract-review.md) |
 
 ## Shared architectural contracts
 
@@ -159,13 +159,13 @@ count its first confirmatory attempt admits, recomputed from the tooling. A
 timed run is a queue line for the benchmark window; preparation and collection
 are separate entries. The steady-state operation and the recorded corpus are
 those of [`3be770d5`](../1a379447-zen3-cpu-performance/3be770d5/findings.md) and
-[`c077a88b`](../c077a88b/findings.md), and each timed execution checks its
+[`c077a88b`](../1a379447-zen3-cpu-performance/c077a88b/findings.md), and each timed execution checks its
 per-frame errors against the prepared quality record.
 
 ### `comparison-arms` [plan-fixed] — AFF3CT arms the pinned build admits
 
 The comparator is AFF3CT [Cassagne2019] at the pin of
-[`c077a88b`](../c077a88b/findings.md). The matched arm is its flooding f32
+[`c077a88b`](../1a379447-zen3-cpu-performance/c077a88b/findings.md). The matched arm is its flooding f32
 normalized min-sum decoder. Its horizontal-layered normalized min-sum INTER
 modes in f32 and i16 and its float sum-product INTRA mode are fastest-compatible
 arms: exploratory, labelled by precision, schedule and update rule, and
@@ -468,12 +468,12 @@ Manifest source identifiers resolve as follows; the criteria `REQ-01` and
 | `MEASUREMENT-CONTRACT` | [measurement-contract.md](../1a379447-zen3-cpu-performance/measurement-contract.md) |
 | `PROTOCOL-V4` | [protocol.md](../1a379447-zen3-cpu-performance/f547c394/protocol.md), [amendment-v4.md](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md) |
 | `WORKER-BRIEF` | [worker-brief.md](../1a379447-zen3-cpu-performance/worker-brief.md) |
-| `DECISION-RECORD-F63A2464` | [decision-record.md](../f63a2464/decision-record.md), [findings.md](../f63a2464/findings.md), [corrections.md](../f63a2464/corrections.md) |
-| `CONTRACT-REVIEW-F63A2464` | [numerical-contract-review.md](../f63a2464/numerical-contract-review.md) |
+| `DECISION-RECORD-F63A2464` | [decision-record.md](../1a379447-zen3-cpu-performance/f63a2464/decision-record.md), [findings.md](../1a379447-zen3-cpu-performance/f63a2464/findings.md), [corrections.md](../1a379447-zen3-cpu-performance/f63a2464/corrections.md) |
+| `CONTRACT-REVIEW-F63A2464` | [numerical-contract-review.md](../1a379447-zen3-cpu-performance/f63a2464/numerical-contract-review.md) |
 | `PROFILE-3BE770D5` | [findings.md](../1a379447-zen3-cpu-performance/3be770d5/findings.md) |
 | `UPDATE-07CA8585` | [findings.md](../1a379447-zen3-cpu-performance/07ca8585/findings.md) |
-| `COMPARATOR-C077A88B` | [findings.md](../c077a88b/findings.md) |
-| `CONSUMERS-EDA07788` | [findings.md](../eda07788/findings.md) |
+| `COMPARATOR-C077A88B` | [findings.md](../1a379447-zen3-cpu-performance/c077a88b/findings.md) |
+| `CONSUMERS-EDA07788` | [findings.md](../1a379447-zen3-cpu-performance/eda07788/findings.md) |
 | `CONSUMERS-12FDEB5B` | [findings.md](../1a379447-zen3-cpu-performance/12fdeb5b/findings.md) |
 | `CALIBRATION-PLAN-63BAD95D` | [calibration-plan.md](../1a379447-zen3-cpu-performance/63bad95d/calibration-plan.md) |
 | `SOURCE-EVIDENCE` | [survey/source-evidence.json](survey/source-evidence.json) |
