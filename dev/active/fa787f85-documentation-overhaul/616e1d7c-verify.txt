@@ -58,7 +58,7 @@ rows complete, each file at its destination: ok 465 rows of 16 entries
      5 consumers of eb9b324c in eb9b324c
 each consumer lies in an entry with a moved or archived row: ok 222 consumers on 19 rows, entries 1ac74567 2a85f728 34d85cb9 389aa4de 50b47eae 6dc81018-field-capability-dispatch 7d7c647c e6ea0dde eb9b324c
 == citations
-   469 container root dev/archive/6dc81018-field-capability-dispatch
+   412 container root dev/archive/6dc81018-field-capability-dispatch
    828 digest pin: .jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json dev/active/fa787f85-documentation-overhaul/616e1d7c-preexec.json
      1 equal bytes with dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md
      2 equal bytes with dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md
@@ -68,4 +68,4 @@ each consumer lies in an entry with a moved or archived row: ok 222 consumers on
    395 tracker document of 67048b47: data dev/active/fa787f85-documentation-overhaul/67048b47-linked-pairs.txt
    431 tracker document of 96cea1b9: report dev/active/fa787f85-documentation-overhaul/96cea1b9-archive-rows.txt
        tracker documents of fa787f85
-each citation of an absent entry path is kept on a ground: ok 3071 citations outside the tracker documents of fa787f85
+each citation of an absent entry path is kept on a ground: ok 3014 citations outside the tracker documents of fa787f85

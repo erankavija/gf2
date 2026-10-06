@@ -112,7 +112,7 @@ Two repointed command quotations name generated files that no commit holds
 
 The `citations` section of the output counts, per citing file and ground, the
 citations of a path under an entry of this unit that the tree lacks, found by
-`git grep -F` for `dev/active/<entry>` and `../<entry>/` outside `.jit/`: 3071
+`git grep -F` for `dev/active/<entry>` and `../<entry>/` outside `.jit/`: 3014
 outside the tracker documents of fa787f85. Commit `55fbea37a` repoints 52.
 
 Repointed in commit `55fbea37a`, path text only:
@@ -138,7 +138,7 @@ Citations that keep their bytes, each on one ground:
 | `migration/manifest.toml` | 938 | Manifest schema fields |
 | `616e1d7c-preexec.json` | 828 | Digest pin: content hash in `.jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json` |
 | `67048b47-linked-pairs.txt`, `96cea1b9-archive-rows.txt`, `7bac1303-harness-path-trials.txt` | 395, 431, 3 | Tool output: listings that units 67048b47, 96cea1b9 and 7bac1303 commit beside their scripts |
-| Files under `AR`, the `container root` line of the output: logs, excerpts, Lean files, `progress.json`, `breakdown.json`, `handoff.md`, two receipts | 469 | Marker-backed archive files |
+| Files under `AR`, the `container root` line of the output: logs, excerpts, Lean files, `progress.json`, `breakdown.json`, `handoff.md`, two receipts | 412 | Marker-backed archive files |
 | `dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md:136`, `2026-08-22-post-cutover-receipt-4.md:138,139` | 3 | Receipts, equal in bytes to their archive files |
 | `dev/active/6dc81018-field-capability-dispatch/breakdown.json:42,126,457,458` | 4 | Tracker state: the breakdown manifest of 6dc81018; the tree holds none of the four cited paths |
 | Session handoffs and `progress.json` of this epic directory | not counted | Tracker state: tracker documents of fa787f85 |
