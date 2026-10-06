@@ -3979,12 +3979,12 @@
     "exit": 0,
     "matches": [
       {
-        "path": "dev/active/2a85f728/asm-delta.md",
+        "path": "dev/archive/6dc81018-field-capability-dispatch/active/2a85f728/asm-delta.md",
         "line": 59,
         "text": "that commit \u2014 including `ACTIVE_SIMD_MIN_WORDS_RESOLVED`, the cold resolver,"
       },
       {
-        "path": "dev/active/2a85f728/asm-delta.md",
+        "path": "dev/archive/6dc81018-field-capability-dispatch/active/2a85f728/asm-delta.md",
         "line": 189,
         "text": "load, its test, the resolution branch, and the cold resolver call are absent"
       },
@@ -4399,7 +4399,7 @@
         "text": "fn calibrated_calls(target: Duration, mut call: impl FnMut(usize)) -> u64 {"
       },
       {
-        "path": "dev/active/4e732b56/workload-selection.md",
+        "path": "dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md",
         "line": 142,
         "text": "depends on a cold cache declares that as an amendment here before measuring"
       },
@@ -4454,7 +4454,7 @@
         "text": "- `cold`: no warm-up pass before the first window; fresh buffers per process."
       },
       {
-        "path": "dev/active/6dc81018-field-capability-dispatch/progress.json",
+        "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json",
         "line": 176,
         "text": "          \"notes\": \"Closed at c596d6a6 after 3 rework rounds plus one owner-granted counter reset. cargo-ci and code-review both pass. Mechanism: the bit-backend threshold is published into an AtomicUsize beside an AtomicBool resolved flag; each publication site stores the threshold Relaxed then the flag Release, and active_simd_min_words loads the flag Acquire before loading the threshold Relaxed. One-shot resolution preserved (a selection resolves active(), so a later install returns AlreadyResolved) and install publishes only after ACTIVE.set succeeds. Round history: R1 missed REQ-03's test entirely and silently regressed one-shot resolution by removing the only active() call from the selection path; R2 fixed both but published through two relaxed stores with no happens-before, which code-review caught as a real race; R3 followed the lead's own WRONG instruction to use a usize::MAX sentinel, which broke v1 schema semantics because design \\u00a72.1 documents usize::MAX as a meaningful simd_min_words; R4 (after owner reset) restored try_new and closed the race with Release/Acquire. The lead then corrected the amendment's inaccurate 'at most once per process' claim about the cold path directly.\""
       },
@@ -5255,7 +5255,7 @@
         "text": "            \"interval endpoints differ from adjacent 18-digit outward rendering\".into(),"
       },
       {
-        "path": "dev/active/6dc81018-field-capability-dispatch/handoff.md",
+        "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md",
         "line": 51,
         "text": "- **Do NOT reserve `usize::MAX` as a sentinel for any `_min_` threshold.** `dev/active/220cab0b/design.md` \u00a72.1: \"Both endpoints of the `usize` range are admissible and meaningful: for a `_min_` field, $t = \\texttt{usize::MAX}$\" \u2014 it is a valid `simd_min_words` meaning \"never use SIMD\". Rejecting it in `try_new` to free a sentinel turned a loadable v1 profile into a loader error and cost a full rework round. This was the **lead's** instruction, not a worker error. Fix publication races with `Release`/`Acquire` ordering, which reserves nothing."
       },

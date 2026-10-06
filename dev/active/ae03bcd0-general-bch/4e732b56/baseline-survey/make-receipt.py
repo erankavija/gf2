@@ -261,9 +261,9 @@ def main() -> int:
     print("## Reproduction")
     print()
     print("```")
-    print("dev/active/4e732b56/baseline-survey/fetch-build.sh")
-    print(f"dev/active/4e732b56/baseline-survey/run-survey.sh {run} <codes> <prefix>")
-    print(f"dev/active/4e732b56/baseline-survey/make-receipt.py {run}")
+    print("dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/fetch-build.sh")
+    print(f"dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/run-survey.sh {run} <codes> <prefix>")
+    print(f"dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/make-receipt.py {run}")
     print("```")
     return 0
 

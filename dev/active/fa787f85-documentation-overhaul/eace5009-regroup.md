@@ -22,7 +22,8 @@ the owners' single applicable `epic:` label.
 | 64fd3afd | 64fd3afd, 94597a51, b1bd75ca | 86b9c719 (3), ae03bcd0 (3) | L: `epic:general-bch` | `ae03bcd0-general-bch/64fd3afd/` | moved |
 | 4e732b56 | 4e732b56 | 86b9c719 (18), ae03bcd0 (18) | L: `epic:general-bch` | `ae03bcd0-general-bch/4e732b56/` | left: six manifest `consumers` rows (table below) |
 | 02b8137c, 3f664839, d1b4f85e, 591a1c5e, fd9d5416 | — | — | — | — | left: excluded by the issue description |
-| 220cab0b, 389aa4de, 3fa7c9d0 | — | 6dc81018, 86b9c719 | — | manifest epic 6dc81018 | left: scope of 616e1d7c |
+| 220cab0b, 3fa7c9d0 | — | 6dc81018, 86b9c719 | — | manifest epic 6dc81018 | left: scope of 616e1d7c |
+| 389aa4de | 389aa4de | 6dc81018, 86b9c719 | owner decision, plan row "Active-layout ties" | `86b9c719-quality-documentation-tech-debt/389aa4de/` | moved by 616e1d7c |
 | 3be770d5, c077a88b, f547c394 | — | 1a379447, d77176e5 | — | manifest epic 1a379447 | left: scope of 4f161183 and its exclusions |
 
 Each moved entry's destination equals the `destination` field of its manifest
@@ -43,9 +44,9 @@ script, so REQ-06 has no edit.
 
 ## Left in place, reported for decoupling
 
-Paths are relative to `dev/active/4e732b56/baseline-survey/`. Each consumer is a
-depth-dependent path under `no-dev-path-coupling`: it holds at the entry's
-current depth and at no other.
+Paths are relative to the entry's `baseline-survey/` directory at `917b5530a`.
+Each consumer is a depth-dependent path under `no-dev-path-coupling`: it holds
+at the depth of the flat entry and at no other.
 
 | Entry | Consumer | Construct | Decoupling under `no-dev-path-coupling` |
 |---|---|---|---|

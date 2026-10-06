@@ -619,6 +619,7 @@ impl LdpcDecoder {
     /// return zero beliefs. After decoding, the slice contains the beliefs from
     /// the final BP iteration, including when the final hard word fails its
     /// syndrome check, so callers can use it for immediate post-processing.
+    /// After a decode with a cap of zero they equal the frame's channel LLRs.
     pub fn posterior_llrs(&self) -> &[Llr] {
         &self.beliefs
     }
@@ -782,6 +783,8 @@ impl LdpcDecoder {
     /// systematic column mapping (e.g., 5G NR rate-matched codes that use
     /// natural column ordering per `docs/reference/standards-conformance.md`).
     ///
+    /// The cap of zero behaves as in [`LdpcDecoder::decode_codeword_into`].
+    ///
     /// # Panics
     ///
     /// Panics if `llrs.len()` differs from the code's `n`.
@@ -811,6 +814,10 @@ impl LdpcDecoder {
     /// `codeword` is overwritten with all `n` hard-decided codeword bits; its
     /// previous contents and length are discarded and its capacity is kept.
     ///
+    /// With `max_iterations == 0` no iteration runs: the posterior equals the
+    /// channel LLRs, the codeword is their hard decision, `iterations` is 0, and
+    /// `converged` equals the syndrome test of that word.
+    ///
     /// # Panics
     ///
     /// Panics if `llrs.len()` differs from the code's `n`.
@@ -835,6 +842,10 @@ impl LdpcDecoder {
         for (message, &var) in self.var_to_check.iter_mut().zip(edge_var.iter()) {
             *message = llrs[var as usize];
         }
+        // The first iteration overwrites every belief; only a zero cap reads them.
+        if max_iterations == 0 {
+            self.beliefs.copy_from_slice(llrs);
+        }
 
         let mut iterations = 0;
         let mut converged = false;
@@ -853,7 +864,7 @@ impl LdpcDecoder {
 
         self.last_iterations = iterations;
         let syndrome_check_passed = self.syndrome_passes();
-        if !early_termination {
+        if !early_termination || max_iterations == 0 {
             converged = syndrome_check_passed;
         }
 
@@ -883,8 +894,12 @@ impl SoftDecoder for LdpcDecoder {
         self.code.n()
     }
 
+    /// Returns the hard decisions of all `n` LLRs.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llrs.len() != n`.
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-        // For non-iterative interface, just return hard decisions on input LLRs
         assert_eq!(llrs.len(), self.n());
         let mut decoded = BitVec::with_capacity(self.n());
         for &llr in llrs {
@@ -892,9 +907,14 @@ impl SoftDecoder for LdpcDecoder {
         }
         decoded
     }
+
+    fn soft_decoded_len(&self) -> usize {
+        self.n()
+    }
 }
 
 impl IterativeSoftDecoder for LdpcDecoder {
+    /// The cap of zero behaves as in [`LdpcDecoder::decode_codeword_into`].
     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
         let mut decoded_codeword = BitVec::with_capacity(self.code.n());
         let outcome = self.decode_codeword_into(llrs, max_iterations, &mut decoded_codeword);
@@ -1276,6 +1296,56 @@ mod decoder_tests {
             assert!(result.syndrome_check_passed);
             assert_eq!(result.decoded_bits.count_ones(), 2);
         }
+    }
+
+    /// Observable results of one zero-cap decode, for per-frame comparison.
+    fn zero_cap_observation(
+        decoder: &mut LdpcDecoder,
+        llrs: &[Llr],
+    ) -> (Vec<f32>, BitVec, usize, bool, bool) {
+        let mut codeword = BitVec::new();
+        let outcome = decoder.decode_codeword_into(llrs, 0, &mut codeword);
+        let posterior = decoder.posterior_llrs().iter().map(|l| l.value()).collect();
+        (
+            posterior,
+            codeword,
+            outcome.iterations,
+            outcome.converged,
+            outcome.syndrome_check_passed,
+        )
+    }
+
+    #[test]
+    fn test_zero_cap_results_depend_only_on_the_frame() {
+        let edges = vec![(0, 0), (0, 1), (1, 1), (1, 2)];
+        let code = LdpcCode::from_edges(2, 3, &edges);
+        // Valid word 000 and invalid word 100 as hard decisions.
+        let valid = vec![Llr::new(3.0), Llr::new(2.0), Llr::new(1.0)];
+        let invalid = vec![Llr::new(-3.0), Llr::new(2.0), Llr::new(1.0)];
+
+        let mut fresh = LdpcDecoder::new(code.clone());
+        let expect_valid = zero_cap_observation(&mut fresh, &valid);
+        let mut fresh = LdpcDecoder::new(code.clone());
+        let expect_invalid = zero_cap_observation(&mut fresh, &invalid);
+
+        let channel: Vec<f32> = invalid.iter().map(|l| l.value()).collect();
+        assert_eq!(expect_invalid.0, channel);
+        assert_eq!(expect_invalid.1.count_ones(), 1);
+        assert_eq!(expect_invalid.2, 0);
+        assert!(!expect_invalid.3 && !expect_invalid.4);
+        assert_eq!(expect_valid.1.count_ones(), 0);
+        assert!(expect_valid.3 && expect_valid.4);
+
+        let mut decoder = LdpcDecoder::new(code.clone());
+        assert_eq!(zero_cap_observation(&mut decoder, &valid), expect_valid);
+        assert_eq!(zero_cap_observation(&mut decoder, &invalid), expect_invalid);
+        assert_eq!(zero_cap_observation(&mut decoder, &valid), expect_valid);
+
+        // A preceding decode with iterations leaves no trace either.
+        let mut decoder = LdpcDecoder::new(code);
+        decoder.decode_to_codeword(&valid, 5);
+        assert_eq!(zero_cap_observation(&mut decoder, &invalid), expect_invalid);
+        assert_eq!(decoder.last_iteration_count(), 0);
     }
 
     #[test]

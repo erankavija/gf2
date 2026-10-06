@@ -49,57 +49,57 @@
     {
       "id": "coding-default-simd",
       "project": "gf2",
-      "commit": "1ec0ce4b2d420ba94267222ecaa42ac819812f18",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-coding/Cargo.toml",
       "line": 55,
       "occurrences": 1,
       "verbatim": "default = [\"simd\", \"sim-observability\"]",
       "why": "A default `gf2-coding` build enables its `simd` feature.",
-      "sha256": "1e0edaf8a60a4246af35790c80b2032162519d750a67e614b7a1d4ad6e0e3a09"
+      "sha256": "1f0a0d25c54db942ff09005f55bc57db0ebd9ec3aa51443c8061ace7cd6e3621"
     },
     {
       "id": "coding-simd-forwards",
       "project": "gf2",
-      "commit": "1ec0ce4b2d420ba94267222ecaa42ac819812f18",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-coding/Cargo.toml",
       "line": 56,
       "occurrences": 1,
       "verbatim": "simd = [\"gf2-core/simd\"]",
       "why": "`gf2-coding/simd` is the edge that enables `gf2-core/simd`.",
-      "sha256": "1e0edaf8a60a4246af35790c80b2032162519d750a67e614b7a1d4ad6e0e3a09"
+      "sha256": "1f0a0d25c54db942ff09005f55bc57db0ebd9ec3aa51443c8061ace7cd6e3621"
     },
     {
       "id": "sim-default-empty",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-sim/Cargo.toml",
       "line": 63,
       "occurrences": 1,
       "verbatim": "default = []",
       "why": "`gf2-sim` has no default feature of its own.",
-      "sha256": "c86b45932622e602288863faa735b4a41c0ccf274141c7b08bdb5d056c66b68a"
+      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
     },
     {
       "id": "sim-depends-coding-defaults",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-sim/Cargo.toml",
       "line": 15,
       "occurrences": 1,
       "verbatim": "gf2-coding = { path = \"../gf2-coding\" }",
       "why": "`gf2-sim` takes `gf2-coding` with its default features, so every `gf2-sim` build enables `gf2-core/simd`.",
-      "sha256": "c86b45932622e602288863faa735b4a41c0ccf274141c7b08bdb5d056c66b68a"
+      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
     },
     {
       "id": "sim-depends-algebra-defaults",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-sim/Cargo.toml",
       "line": 16,
       "occurrences": 1,
       "verbatim": "gf2-algebra = { path = \"../gf2-algebra\" }",
       "why": "`gf2-sim` takes `gf2-algebra` with its default features.",
-      "sha256": "c86b45932622e602288863faa735b4a41c0ccf274141c7b08bdb5d056c66b68a"
+      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
     },
     {
       "id": "algebra-default-simd",
@@ -126,24 +126,24 @@
     {
       "id": "ci-baked-step",
       "project": "gf2",
-      "commit": "f94f90c8b901445e29ab413bb0e185ab7f8c1af4",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "scripts/cargo-ci.sh",
       "line": 316,
       "occurrences": 1,
       "verbatim": "run_step baked-core env RUSTFLAGS=\"--cfg gf2_tuning_baked\" \"$BUDGET\" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable",
       "why": "CI builds the baked configuration in one scoped step; every other step keeps the conservative constants.",
-      "sha256": "dd7acccd31647f32179707085f93d1ba4111b07ace4caa2b4cbd7135d789b261"
+      "sha256": "f204d752a3c415fc8684473bbcb1e880e6d62b60dbb727662a1333db5ebaaf0d"
     },
     {
       "id": "ci-feature-flags",
       "project": "gf2",
-      "commit": "f94f90c8b901445e29ab413bb0e185ab7f8c1af4",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "scripts/cargo-ci.sh",
       "line": 226,
       "occurrences": 1,
-      "verbatim": "  FEAT_FLAGS=\"--features simd,parallel,visualization,llr-f64\"",
+      "verbatim": "  FEAT_FLAGS=\"--features simd,parallel,visualization\"",
       "why": "The workspace test step of CI enables `simd`, so it runs the shared fallback contract on the kernel build only.",
-      "sha256": "dd7acccd31647f32179707085f93d1ba4111b07ace4caa2b4cbd7135d789b261"
+      "sha256": "f204d752a3c415fc8684473bbcb1e880e6d62b60dbb727662a1333db5ebaaf0d"
     },
     {
       "id": "logical-bundle-detect",
@@ -302,13 +302,13 @@
     {
       "id": "popcount-csa-comparator",
       "project": "gf2",
-      "commit": "c8d6e2543d9732b6dffdcd871d9d762dfe30c37a",
+      "commit": "e2c98226a1a34ce13e4ce9d4c78efc0fff570509",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
-      "line": 136,
+      "line": 137,
       "occurrences": 1,
       "verbatim": "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,",
       "why": "The carry-save kernels are direct bundle fields that no resolver selects.",
-      "sha256": "1db3272d9fce59f4d800be4c08245e091210d74508de61a4f5aa642a254c0787"
+      "sha256": "75351c56a3296aa9c952e3d801ed9f5a259242413e55eadf4b647ce538e5f9c4"
     },
     {
       "id": "matvec-threshold-conservative",
@@ -599,13 +599,13 @@
     {
       "id": "coding-tuning-section",
       "project": "gf2",
-      "commit": "4950dd043e906a3f2b3e49495f29d8db08b59363",
+      "commit": "b5b5ca1c17e8408ce7447ba0495c98fcd1e40094",
       "path": "crates/gf2-coding/src/tuning.rs",
       "line": 41,
       "occurrences": 1,
       "verbatim": "pub struct EncodeSelectors {",
       "why": "The BCH encode selectors are a coding-owned section outside this issue's calibration.",
-      "sha256": "21b166f236789d76eb6626171faa07ac0690669522d2e04b458e44dfe2079e9b"
+      "sha256": "e9f7c05f748f813d218883019e507c010a3a583378a092a03463c4464e34f546"
     },
     {
       "id": "calibration-fields",

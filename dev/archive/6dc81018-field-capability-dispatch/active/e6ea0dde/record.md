@@ -44,7 +44,7 @@ byte-identical to what ran.
 The spike record `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md` documents an Aeneas
 invocation (A8b) that exits 1: the blanket-default `pow` item its finding F4
 falsifies poisons the run, and the proof-obligation sketch
-`dev/active/1ac74567/proof-sketch.md` elaborates its lemma statements only
+`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md` elaborates its lemma statements only
 against a tree from which the `pow` chain is deleted by hand. Neither
 demonstrates a successful extraction. The epic owner's standard for this class
 is that the invocation itself exits 0 and that its output elaborates under at
@@ -191,7 +191,7 @@ Excluding `pow` costs the target class nothing, because neither target calls
 `pow` therefore survives as a *field* of the extracted `FiniteFieldExt`
 structure (`AX3_lean/Types.lean:122`) whose value each backend supplies, which
 is where the sketch already puts the obligation (`LawfulPow` in
-`dev/active/1ac74567/elaboration/statements.lean:55-56`). What the exclusion
+`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/statements.lean:55-56`). What the exclusion
 removes is only the falsified *default body* and the two lifted loop items under
 it.
 
@@ -400,7 +400,7 @@ at all; the full diff is in `elaboration/elaborate.log`. On that tree:
 - The proof sketch's lemma statements elaborate against this tree with exit 0,
   the nine `declaration uses 'sorry'` warnings being the deliberately unproved
   bodies. `elaboration/Statements.lean` differs from
-  `dev/active/1ac74567/elaboration/statements.lean` in two respects that touch
+  `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/statements.lean` in two respects that touch
   elaborated content: the generated module prefix, which follows the LLBC file
   name and is `X3Gf2Core` here rather than `R8bGf2Core`; and one docstring
   citation in L4, readdressed
@@ -430,7 +430,7 @@ at all; the full diff is in `elaboration/elaborate.log`. On that tree:
 - **REQ-03 — met.** The sketch's lemma statements elaborate at exit 0 against
   that tree, with the two addressing adjustments recorded above. The spike
   record `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md` and the sketch
-  `dev/active/1ac74567/proof-sketch.md` each carry an appended amendment citing
+  `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md` each carry an appended amendment citing
   this record, adding lines and changing none.
 
 ---

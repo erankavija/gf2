@@ -55,7 +55,7 @@ Traps of `handoff.md` to `handoff-5.md` remain in force. New this session:
 - **Do NOT run `dispatch-worker-worktree.sh` while another session has uncommitted tracker files on main.** It refuses a dirty main; ask that session to commit by explicit path, or add the worktree with `git worktree add -b worktree-agent-<id> .agents/worktrees/agent-<id> HEAD` when the worker builds nothing.
 - **Do NOT trust per-unit review for a story-wide criterion.** Every sweep unit passed review while 42 module docs stayed over twelve lines. Scan the whole tree against each story criterion before the story gate.
 - **Do NOT write a criterion from memory of an API.** The first text of `10a729d3` required a result for empty input, where `batch_gcd` panics. Read the item first.
-- **Do NOT edit under `dev/active/fd9d5416/` or merge for session `gf2-4e`.** Its permission classifier denied those actions; they are the owner's to approve.
+- **Do NOT edit under `dev/active/ae03bcd0-general-bch/fd9d5416/` or merge for session `gf2-4e`.** Its permission classifier denied those actions; they are the owner's to approve.
 
 ## Open questions needing invoker input
 

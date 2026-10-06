@@ -101,7 +101,9 @@ impl EncodeSelectors {
 /// `lane_max_edges` an upper bound on a Tanner-graph edge count, each over
 /// all of `usize`; `granules_per_task` is a positive count of
 /// preferred-granularity frame groups. The section stores, validates and
-/// serializes the family, and no decoder of this crate reads it.
+/// serializes the family, and
+/// [`decide_batch_route`](crate::ldpc::decide_batch_route) reads it to decide
+/// the LDPC batch route.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DecodeSelectors {
     lane_min_frames: usize,
@@ -255,7 +257,8 @@ impl CodingTuning {
         &self.selectors.encode
     }
 
-    /// Returns the decode selector family.
+    /// Returns the decode selector family read by
+    /// [`decide_batch_route`](crate::ldpc::decide_batch_route).
     #[must_use]
     pub const fn decode(&self) -> &DecodeSelectors {
         &self.selectors.decode

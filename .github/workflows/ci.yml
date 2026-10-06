@@ -47,24 +47,24 @@ jobs:
       run: cargo fmt --all -- --check
 
     - name: Run clippy
-      run: cargo clippy --workspace --all-targets --features simd,parallel,visualization,io,rand,llr-f64 -- -D warnings
+      run: cargo clippy --workspace --all-targets --features simd,parallel,visualization,io,rand -- -D warnings
 
     - name: Install cargo-nextest
       uses: taiki-e/install-action@nextest
 
     - name: Build
-      run: cargo build --workspace --release --verbose --features simd,parallel,visualization,io,rand,llr-f64
+      run: cargo build --workspace --release --verbose --features simd,parallel,visualization,io,rand
 
     - name: Run tests
-      run: cargo nextest run --workspace --release --features simd,parallel,visualization,io,rand,llr-f64 --profile ci
+      run: cargo nextest run --workspace --release --features simd,parallel,visualization,io,rand --profile ci
 
     - name: Build documentation
       env:
         RUSTDOCFLAGS: -D warnings
-      run: cargo doc --workspace --release --no-deps --features simd,parallel,visualization,io,rand,llr-f64
+      run: cargo doc --workspace --release --no-deps --features simd,parallel,visualization,io,rand
 
     - name: Run doctests
-      run: cargo test --doc --workspace --release --features simd,parallel,visualization,io,rand,llr-f64
+      run: cargo test --doc --workspace --release --features simd,parallel,visualization,io,rand
 
     - name: Build benchmarks
       run: cargo build --workspace --release --benches
@@ -134,7 +134,7 @@ jobs:
         # Algorithm modules that merely happen to be cfg(test-support)-gated
         # (e.g. alg/strassen.rs) are NOT excluded — they are real library logic.
         cargo llvm-cov \
-          --features simd,parallel,visualization,io,rand,llr-f64 \
+          --features simd,parallel,visualization,io,rand \
           --workspace \
           --json \
           --summary-only \

@@ -17,7 +17,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 EXT="${1:-${REPO}/.agents/ext}"
 
 # ---------------------------------------------------------------------- pins

@@ -74,63 +74,12 @@
   "ymm_batch_lane_supported"
  ],
  "tests_by_package": {
-  "gf2-algebra": 5,
   "ldpc-frame-lanes-intrinsics-probe": 4,
   "ldpc-intrinsics-probe": 10,
   "simd_batching_bench": 6
  },
- "tests_in_workspace_members": 5,
+ "tests_in_workspace_members": 0,
  "tests": [
-  {
-   "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
-   "test": "test_simd_vs_scalar_n8",
-   "test_line": 740,
-   "guard_function": "simd_vs_scalar_cross_check",
-   "return_line": 707,
-   "header": "let fns = match super::maybe_bipedal_avx2()",
-   "package": "gf2-algebra",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
-   "test": "test_simd_vs_scalar_n16",
-   "test_line": 745,
-   "guard_function": "simd_vs_scalar_cross_check",
-   "return_line": 707,
-   "header": "let fns = match super::maybe_bipedal_avx2()",
-   "package": "gf2-algebra",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
-   "test": "test_simd_vs_scalar_n24",
-   "test_line": 752,
-   "guard_function": "simd_vs_scalar_cross_check",
-   "return_line": 707,
-   "header": "let fns = match super::maybe_bipedal_avx2()",
-   "package": "gf2-algebra",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
-   "test": "test_simd_vs_scalar_n24_slow",
-   "test_line": 758,
-   "guard_function": "simd_vs_scalar_cross_check",
-   "return_line": 707,
-   "header": "let fns = match super::maybe_bipedal_avx2()",
-   "package": "gf2-algebra",
-   "workspace_member": true
-  },
-  {
-   "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
-   "test": "test_simd_vs_scalar_n32",
-   "test_line": 764,
-   "guard_function": "simd_vs_scalar_cross_check",
-   "return_line": 707,
-   "header": "let fns = match super::maybe_bipedal_avx2()",
-   "package": "gf2-algebra",
-   "workspace_member": true
-  },
   {
    "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/intrinsics-probe/src/lib.rs",
    "test": "check_row_lanes_match_the_canonical_scalar_row_bit_for_bit",

@@ -393,7 +393,7 @@ macro-tiled loop on a 2 MiB matrix. Block counts 256 and 4096 are an
 L2-resident run and an L3-resident streaming run. The packed BCH rows are
 those of [`survey/code-rows.json`](survey/code-rows.json), which carries the
 mother field, primitive polynomial and designed distance of each row of
-`dev/active/4e732b56/workload-selection.md` section 2 and which the harness
+`dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md` section 2 and which the harness
 test checks against the code the harness builds: $m = 14$ is row T2S, the
 mother code of the DVB-T2 short frame, and $m = 16$ is row T2N, the mother
 code of the normal frame [Etsi2015]. The v4 layout pilot declares both at

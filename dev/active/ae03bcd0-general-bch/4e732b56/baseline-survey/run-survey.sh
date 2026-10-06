@@ -22,7 +22,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 EXT="${REPO}/.agents/ext"
 FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
 

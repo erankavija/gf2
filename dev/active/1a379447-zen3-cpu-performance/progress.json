@@ -667,7 +667,7 @@
      "id": "dd359005",
      "short_id": "dd359005",
      "classification": "implementation",
-     "status": "in_progress: code-review failed twice on F1 (CI not pinned to Rust 1.95); invoker amended REQ-02 on 2026-10-06 (run record establishes 1.95; CI runs its own toolchain); code-review rerun pending",
+     "status": "done. Session 30: code-review passes on the amended REQ-02; review reviews/dd359005-r1.md.",
      "tracker_state": "ready"
     },
     {
@@ -2358,7 +2358,8 @@
   "Session 28: ed3d490e breakdown created and gated after the handoff was first written; handoff-25.md amended.",
   "Session 29: both 2026-10-06 window jobs exited rc 0 (4337c02e 7 min, bfc2ceab 2 min); verification from the campaign logs is with the stage workers. Eight workers dispatched. No window timer is armed for the next night; arm one after the queue lines merge.",
   "Session 30: session 29 left no handoff; state rebuilt. Merged 6818f1b6 rework, 8840b0ff and the 63bad95d validator stage; both 2026-10-06 pilots verified from their logs; window armed for 2026-10-07 02:00 with three jobs; six workers dispatched.",
-  "Session 30: unfiled defects reported by session-29 workers: full-stage re-validation of a tuning campaign fails once its producing worktree is removed (keep agent-63bad95d-run until 63bad95d closes); a gated LDPC test asserts AVX2 NaN divergence whenever simd is on and would fail on a host without AVX2; the SIMD early-return search record lists 20 tests in probe and bench crates outside the workspace members."
+  "Session 30: unfiled defects reported by session-29 workers: full-stage re-validation of a tuning campaign fails once its producing worktree is removed (keep agent-63bad95d-run until 63bad95d closes); a gated LDPC test asserts AVX2 NaN divergence whenever simd is on and would fail on a host without AVX2; the SIMD early-return search record lists 20 tests in probe and bench crates outside the workspace members.",
+  "Invoker ruling 2026-10-06 (confirmed to this session): the flat zen3 dev/active entries move under dev/active/1a379447-zen3-cpu-performance/ on main, executed by the fa787f85 lead (session gf2-14). After the 2026-10-07 window: merge main into worktree-agent-4337c02e and worktree-agent-bfc2ceab, relocate their added files, regenerate closure JSON files (no textual merge), regenerate the 63bad95d ledger and route inventory, run the four family closure checks. New queue lines use the new paths. The two leads announce merge and gate batches to each other."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [

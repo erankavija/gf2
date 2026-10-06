@@ -22,9 +22,15 @@ from __future__ import annotations
 import argparse
 import pathlib
 import re
+import subprocess
 import sys
 
-REPO = pathlib.Path(__file__).resolve().parents[4]
+REPO = pathlib.Path(
+    subprocess.check_output(
+        ["git", "-C", str(pathlib.Path(__file__).resolve().parent), "rev-parse", "--show-toplevel"],
+        text=True,
+    ).strip()
+)
 GENERATORS_RS = REPO / "crates/gf2-coding/src/bch/dvb_t2/generators.rs"
 
 # Contract row -> (constant in generators.rs, t)

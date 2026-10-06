@@ -7,7 +7,7 @@
 # Build flags mirror benchmarks/Containerfile (-O3 -march=native) so the
 # reference binaries and the gf2 release build see the same host ISA.
 
-EXT       ?= $(CURDIR)/../../../../.agents/ext
+EXT       ?= $(shell git -C $(CURDIR) rev-parse --show-toplevel)/.agents/ext
 AFF3CT    ?= $(EXT)/aff3ct
 M4RI_PFX  ?= $(EXT)/prefix
 

@@ -573,7 +573,7 @@ flowchart LR
 | Concurrent edits | `contrib/gates/doc-review-prompt.md` is being edited in another session and is outside this plan's footprints. |
 | Receipt and evidence integrity | Digest-pinned inputs and `dev/bench_results/` prefixes never change. Each code-pinned move follows its consumer's decoupling change and repeats the recorded verdict baseline (D-52, D-53). |
 | Shared manifest file | The seven inventory shards write one manifest file; each writes a disjoint row scope, and merges are row-level. |
-| Active-layout ties | Owner decisions, 2026-10-02: the membership-label tie-break is added to `active-layout`; `389aa4de` goes to `6dc81018` and `3be770d5` to `1a379447`, both of which carry both epics' labels. |
+| Active-layout ties | Owner decisions: the membership-label tie-break is added to `active-layout`, and `3be770d5` goes to `1a379447` (2026-10-02); `389aa4de` goes to `86b9c719`, the open epic the tracker places its issue under (2026-10-06). |
 | Doctest timing noise | The final census records toolchain, features, cache state and host load (REQ-07). |
 
 ## Investigation sources

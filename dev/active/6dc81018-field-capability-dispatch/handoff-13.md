@@ -81,4 +81,4 @@
 - Governing design: `dev/active/7d824b2f/design.md`
 - Implementation checkpoint: `ecd85315`
 - Prior durable checkpoint: `623f5568` and JIT link `f82e31f2`
-- Progress file: `dev/active/6dc81018-field-capability-dispatch/progress.json`
+- Progress file: `dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json`

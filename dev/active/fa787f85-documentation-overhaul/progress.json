@@ -1524,6 +1524,32 @@
    "id": "c73aa593",
    "epic": "b4b4b9ee",
    "reason": "gf2-side harness port (b23c364a DEC-01)"
+  },
+  {
+   "id": "b5b336e5",
+   "reason": "zen3 decoupling move (owner option A)"
+  },
+  {
+   "id": "2e18b37c",
+   "reason": "zen3 decoupling move (owner option A)"
+  },
+  {
+   "id": "cc060974",
+   "reason": "zen3 decoupling move (owner option A)"
+  },
+  {
+   "id": "5b3e7c81",
+   "reason": "move of the held 02b8137c entry (5ec5dcc1 DEC-01)"
+  },
+  {
+   "id": "7ff06801",
+   "epic": "b4b4b9ee",
+   "reason": "04b85d10 gf2-side harness port (found by f79bcba3)"
+  },
+  {
+   "id": "3514d822",
+   "epic": "b4b4b9ee",
+   "reason": "12fdeb5b addenda declare the family-wise ledger at the flat path (found by f79bcba3)"
   }
  ],
  "escalations": [
@@ -1868,6 +1894,31 @@
    ],
    "recommendation": "no strong preference",
    "resolution": "Owner (2026-10-06): keep the audit edit of the AGENTS.md mission sentence."
+  },
+  {
+   "issue": "616e1d7c",
+   "question": "code-review F1 (run at 9281ed8fc): REQ-04 read literally fails on archived entries whose manifest consumers are scripts of the same archived set.",
+   "resolution": "Owner (2026-10-06): amend REQ-04 to consumers outside the moved-or-archived set; DEC-04 on the issue."
+  },
+  {
+   "issue": "f79bcba3",
+   "question": "OPEN: REQ-05 holds two clauses that conflict for five frozen documents of entry 2037941f (dense-parity-addendum.md, dense-parity-addendum-v1.md, logical-buffer-addendum.md, isal-comparator.md, m4ri-operation-match.md): they keep their bytes (digests at cells.rs:22, dense-baseline-validation.txt:6, isal-dispatch-availability.md:7 and two receipts), so 21 relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md. Eleven resolve again once f547c394, 5cbb6545 and 6fb89a3c sit under the epic directory; ten (measurement-contract.md, dev/bench_results, crates) never do. Epic REQ-19 names unresolved links.",
+   "options": [
+    "A: amend the link clause of REQ-05 to exempt byte-fixed documents and keep the baseline rows",
+    "B: repoint the links and update ADDENDUM_SHA256 and the citing digests, which changes a frozen addendum's identity"
+   ],
+   "recommendation": "A",
+   "resolution": ""
+  },
+  {
+   "issue": "f79bcba3",
+   "question": "OPEN: REQ-03 (each harness crate in a moved entry builds after the move) cannot hold for 04b85d10/survey/gf2-side: E0432 on gf2_coding::bch::BchEncoder before and after the move alike (9 of 10 crates build). Port tracked in 7ff06801 (b4b4b9ee).",
+   "options": [
+    "amend REQ-03 to an unchanged build result for that crate, as b23c364a DEC-01",
+    "port the harness first"
+   ],
+   "recommendation": "the amendment",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -1930,7 +1981,7 @@
   "3759f995": 1,
   "f902240f": 2,
   "f29a9225": 2,
-  "616e1d7c": 2,
+  "616e1d7c": 1,
   "0c5aa3b7": 2,
   "0a0ece44": 1,
   "fca578b1": 1,
@@ -2149,7 +2200,8 @@
   "Session 10 after the window (ended 02:09 EEST): b959ffe8 done on the first gate run. fca578b1 failed code-review and doc-review on one finding (deferred divergences neither fixed nor tracked); thirteen issues filed under b4b4b9ee and rework 1 sent. The session hit its usage limit at 02:29 and resumed at 04:01. e1f262a7 (sonnet) and b23c364a (opus) dispatched at 4dfbab9ce in cache-seeded worktrees. Blocked on owner rulings: 5ec5dcc1, 7dbcde0c, 616e1d7c, and the zen3 cluster (f79bcba3, 198aafa3, 7039d680, 602652bf, decoupling tasks T2 to T4). After fca578b1 merges: 2596b143.",
   "Session 10: fca578b1 done after rework 1 (thirteen b4b4b9ee issues cited in its record). e1f262a7 done after one lead record fix: a record must not name an uncommitted relink script or describe the tracker relink as outstanding; state the committed tracker reference. A preregistration keeps its bytes even when no digest of it is committed (the lead wrongly had e1f262a7 repoint design.md:517 and reverted it before merge). 2596b143 dispatched at cac8fa20e (opus, cache-seeded worktree). Unmerged branches awaiting owner rulings: worktree-agent-7dbcde0c, worktree-agent-616e1d7c, worktree-agent-b23c364a.",
   "Session 10 end: 2596b143 done on the first gate run. Every open unit waits on an owner ruling or on a unit that does; handoff-9.md lists the questions and the next actions.",
-  "Session 11 (2026-10-06 evening): owner answered the six open questions of handoff-9.md (all recommendations); criteria amendments and DECs written on 616e1d7c, 7dbcde0c, b23c364a, 5ec5dcc1. Peer session gf2-ad shares the main checkout. Branches worktree-agent-4337c02e and worktree-agent-bfc2ceab (open issues of epic 1a379447) carry unmerged edits under dev/active/2037941f-*, c7113c5a, 4c1e441f, ad2a6a58 and f547c394."
+  "Session 11 (2026-10-06 evening): owner answered the six open questions of handoff-9.md (all recommendations); criteria amendments and DECs written on 616e1d7c, 7dbcde0c, b23c364a, 5ec5dcc1. Peer session gf2-ad shares the main checkout. Branches worktree-agent-4337c02e and worktree-agent-bfc2ceab (open issues of epic 1a379447) carry unmerged edits under dev/active/2037941f-*, c7113c5a, 4c1e441f, ad2a6a58 and f547c394.",
+  "Session 11 owner instruction (2026-10-06): never stop to ask; a task needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when the current and the next wave finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Owner rulings this session: zen3 entries move now and the parallel session conforms (in-flight branches 4337c02e, bfc2ceab); 616e1d7c REQ-04 amended (DEC-04). Peer lead gf2-ad: no build, cargo-ci or gate from 01:55 EEST until window.log shows window end; bench-window/ and the 1a379447 progress.json stay unedited; merges and gate batches are announced both ways. Filed: b5b336e5, 2e18b37c, cc060974 (zen3 decoupling moves), 5b3e7c81 (02b8137c move, b4b4b9ee). Lane order: f79bcba3, b5b336e5, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 in worktree agent-zen3lane. Manifest rows whose source another epic removed (ad2a6a58 runner-smoke.txt, f63a2464 qc-arm-smoke.rs) need a disposition in 198aafa3."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [

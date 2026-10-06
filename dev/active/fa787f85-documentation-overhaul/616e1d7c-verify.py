@@ -25,14 +25,33 @@ a fresh preview. Sections:
   links       inline Markdown links with a local target, outside fenced code, in
               the Markdown files of the archive root and in the Markdown files
               under the active area that a commit of this issue changed after
-              EXECUTION. A link of an archived file that resolves only from
-              the file's plan source path is listed and does not fail.
-  manifest    status of the manifest rows of the container's epic under the
-              active area, entries of EXCLUDED left out.
+              EXECUTION. Each target resolves from the file's own directory,
+              or from the checkout root when it starts with `/`.
+  manifest    the manifest rows under the active area that name the container
+              as epic or owner, entries of EXCLUDED left out: count per entry,
+              disposition, status and directory holding the entry. Each row is
+              complete and its file is at its destination, or at its path when
+              the destination is empty.
+  consumers   the `consumers` fields of those rows: each consumer lies inside
+              an entry of which a row has a destination.
+  citations   each citation at SWEEP, outside the tracker directory, of a path
+              under an entry of `manifest` (as `<active area>/<entry>...` or
+              `../<entry>/...`) that is absent from the working tree, counted
+              per citing file and action. `repointed`: the line carries the
+              path of the file in the working tree. `kept` names the first of: manifest file, digest
+              pin (manifest `digest_pinned`, or the file's sha256 or blob id
+              in a tracked file other than the tracker event log and the
+              files of this issue), `.jit-container` root, equal bytes with
+              the archive file the plan copies it to, tracker reference at a
+              commit, tracker document type, file suffix other than `.md`. A
+              citation with neither fails, and so does a working-tree citation
+              with an absent target that SWEEP lacks. The cited
+              `:line` suffixes are not checked.
 
 Exit 1 on any failed check.
 """
 import collections
+import glob
 import hashlib
 import json
 import re
@@ -46,6 +65,7 @@ ISSUE = "616e1d7c"
 CONTAINER = "6dc81018"
 EXCLUDED = ("a83583e0", "dbd8787d")  # code-pinned entries with their own move issues
 EXECUTION = "50de04a6b28b28f9710218e4d6509354ad9bb2e2"
+SWEEP = "42929def5cc0e8d02b59758c439b4e6a78974737"  # the tree the citation sweep reads
 FOOTER = f"jit:{ISSUE}"
 LINK = re.compile(r"\[(?:[^\[\]]|\[[^\]]*\])*\]\(\s*<?([^()\s<>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
 SKIP = re.compile(r"^(#|[A-Za-z][A-Za-z0-9+.-]*:)")
@@ -103,10 +123,8 @@ def entry(path):
     return path[len(ACTIVE) + 1:].split("/", 1)[0] if path.startswith(ACTIVE + "/") else None
 
 
-def unresolved_links(files, mirror=None):
-    """Count local links; split the unresolved ones by whether the target
-    resolves from the file's plan source path, where the planner evaluates it."""
-    total, bad, mirrored = 0, [], []
+def unresolved_links(files):
+    total, bad = 0, []
     for name in files:
         fenced = False
         for number, line in enumerate((ROOT / name).read_text(errors="replace").splitlines(), 1):
@@ -120,14 +138,35 @@ def unresolved_links(files, mirror=None):
                 total += 1
                 local = urllib.parse.unquote(target.split("#", 1)[0])
                 where = ROOT / local.lstrip("/") if local.startswith("/") else (ROOT / name).parent / local
-                if where.exists():
-                    continue
-                source = (mirror or {}).get(name)
-                if source and not local.startswith("/") and ((ROOT / source).parent / local).exists():
-                    mirrored.append(f"{name}:{number} {target}")
-                else:
+                if not where.exists():
                     bad.append(f"{name}:{number} {target}")
-    return total, bad, mirrored
+    return total, bad
+
+
+def present(path):
+    brace = re.search(r"\{([^{}]*)\}", path)
+    if brace:
+        return all(present(path[:brace.start()] + alt + path[brace.end():]) for alt in brace.group(1).split(","))
+    return bool(glob.glob(str(ROOT / path))) if "*" in path else (ROOT / path).exists()
+
+
+def cited(names, rev=None):
+    """(file, line number, token, path) per citation of an entry in `rev`, or in the working tree."""
+    found = set()
+    for name in names:
+        args = ["grep", "-nIF", "-e", f"{ACTIVE}/{name}", "-e", f"../{name}/", *([rev] if rev else []), "--", ":!.jit"]
+        out = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True).stdout
+        token = re.compile(rf"(?:{re.escape(ACTIVE)}/|(?:\.\./)+){re.escape(name)}(?![\w-])(?:/[\w.{{}},*+@=/-]*)?")
+        for row in out.splitlines():
+            name_, number, text = row[len(rev) + 1 if rev else 0:].split(":", 2)
+            for match in token.finditer(text):
+                cite = match.group(0).rstrip(".,/")
+                path = cite if cite.startswith(ACTIVE) else Path(name_).parent.joinpath(cite).as_posix()
+                parts = []
+                for part in path.split("/"):
+                    parts.pop() if part == ".." and parts else parts.append(part)
+                found.add((name_, int(number), cite, "/".join(parts)))
+    return found
 
 
 def main():
@@ -198,35 +237,111 @@ def main():
 
     print("== links")
     archive_md = [f for f in git("ls-files", "--", root).split("\n") if f.endswith(".md")]
-    total, bad, mirrored = unresolved_links(archive_md, {a["destination"]: a["source"] for a in arts if a["destination"]})
-    check(f"{root}: Markdown files {len(archive_md)}, local links {total}", not bad,
-          f"unresolved {len(bad)}, resolving from the plan source path only {len(mirrored)}")
+    total, bad = unresolved_links(archive_md)
+    check(f"{root}: Markdown files {len(archive_md)}, local links {total}", not bad, f"unresolved {len(bad)}")
     outside = sorted(f for f in git("diff", "--name-only", EXECUTION, "--", ACTIVE).split("\n")
                      if f.endswith(".md") and (ROOT / f).is_file() and FOOTER in git("log", "--format=%s", f"{EXECUTION}..HEAD", "--", f))
-    total, bad2, _ = unresolved_links(outside)
+    total, bad2 = unresolved_links(outside)
     check(f"files of this issue under the active area: Markdown files {len(outside)}, local links {total}", not bad2, f"unresolved {len(bad2)}")
     for line in bad + bad2:
         print("  unresolved", line)
-    for line in mirrored:
-        print("  source path only", line)
 
     print("== manifest")
     (manifest,) = [f for f in git("ls-files", "--", ":(glob)**/migration/manifest.toml").split("\n") if f]
     rows = tomllib.loads((ROOT / manifest).read_text())["artifacts"]
-    sources = {a["source"] for a in arts}
     states = collections.Counter()
-    pending = []
+    astray = []
     for row in rows:
-        if row["epic"] != CONTAINER or entry(row["path"]) in EXCLUDED + (None,):
+        name = entry(row["path"])
+        if CONTAINER not in (row["epic"], *row["owners"]) or name in EXCLUDED + (None,):
             continue
-        states[(row["disposition"], row["status"], "in plan" if row["path"] in sources else "not in plan")] += 1
-        if row["status"] != "complete":
-            pending.append(row["path"])
+        home = row["destination"] or row["path"]
+        states[(name, row["disposition"], row["status"], home[:home.rindex(f"/{name}/")])] += 1
+        if row["status"] != "complete" or not (ROOT / home).is_file() or (home != row["path"] and (ROOT / row["path"]).exists()):
+            astray.append(row["path"])
     for key, count in sorted(states.items()):
         print(f"  {count:4d} {' / '.join(key)}")
-    for path in pending:
-        print("  not complete", path)
-    check("rows of plan sources complete", not [p for p in pending if p in sources])
+    for path in astray:
+        print("  not complete or not at its destination", path)
+    check("rows complete, each file at its destination", not astray, f"{sum(states.values())} rows of {len({k[0] for k in states})} entries")
+
+    print("== consumers")
+    names = sorted({k[0] for k in states})
+    unit = [row for row in rows if entry(row["path"]) in names]
+    moved = {entry(row["path"]) for row in unit if row["destination"]}
+    pairs = collections.Counter((entry(row["path"]), entry(c)) for row in unit for c in row["consumers"])
+    for (owner, user), count in sorted(pairs.items(), key=str):
+        print(f"  {count:4d} consumers of {owner} in {user}")
+    outside = [f"{row['path']} <- {c}" for row in unit for c in row["consumers"] if entry(c) not in moved]
+    for line in outside:
+        print("  outside", line)
+    check("each consumer lies in an entry with a moved or archived row", not outside,
+          f"{sum(pairs.values())} consumers on {sum(1 for row in unit if row['consumers'])} rows, entries {' '.join(sorted(moved))}")
+
+    print("== citations")
+    homes = {row["path"]: row["destination"] for row in rows}
+    pinned = {f for row in rows if row["digest_pinned"] for f in (row["path"], row["destination"])}
+    absent = sorted(c for c in cited(names, SWEEP) if not present(c[3]))
+    files = sorted({c[0] for c in absent if (ROOT / c[0]).is_file()})
+    digests = {}
+    for name in files:
+        digests[file_sha(name)] = digests[git("hash-object", "--", name).strip()] = name
+    grep = subprocess.run(["git", "-C", str(ROOT), "grep", "-noIF", "-f", "-", "--", ":!.jit/events.jsonl", f":!{HERE.relative_to(ROOT).as_posix()}/{ISSUE}-*"],
+                          input="\n".join(digests), capture_output=True, text=True).stdout
+    pins = {}
+    for row in grep.splitlines():
+        where, number, digest = row.rsplit(":", 2)
+        pins.setdefault(digests[digest], f"{where}:{number}")
+    tracked = {}
+    for issue in issues.values():
+        for doc in issue["documents"]:
+            tracked.setdefault(doc["path"], []).append((doc["commit"] or "", issue["id"][:8], doc["doc_type"] or "untyped"))
+
+    def ground(name):
+        if name == manifest:
+            return "manifest file"
+        if name in pinned:
+            return "digest pin: manifest digest_pinned"
+        if name in pins:
+            return f"digest pin: {pins[name]}"
+        for parent in Path(name).parents:
+            if (ROOT / parent / ".jit-container").is_file():
+                return f"container root {parent.as_posix()}"
+        if name in copied and file_sha(name) == file_sha(copied[name]):
+            return f"equal bytes with {copied[name]}"
+        refs = sorted(tracked.get(name, []), reverse=True)
+        if refs and refs[0][0]:
+            return f"tracker reference of {refs[0][1]} at {refs[0][0]}"
+        if refs:
+            return f"tracker document of {refs[0][1]}: {refs[0][2]}"
+        return f"file suffix {Path(name).suffix}" if Path(name).suffix != ".md" else None
+
+    copied = {a["source"]: a["destination"] for a in arts if a["action"] == "copy"}
+    live = {}
+    actions, changed = collections.Counter(), []
+    for name, number, cite, path in absent:
+        home = homes.get(path) or f"{root}/{Path(ACTIVE).name}/{path[len(ACTIVE) + 1:]}"
+        if name not in live:
+            live[name] = (ROOT / name).read_text(errors="replace").splitlines() if (ROOT / name).is_file() else []
+        text = live[name][number - 1] if number <= len(live[name]) else ""
+        if cite in text and ground(name):
+            action = f"kept: {ground(name)}"
+            actions[(action, "" if "container root" in action else name)] += 1
+        elif cite not in text and (ROOT / home).exists() and home in text:
+            actions[("repointed:", name)] += 1
+        else:
+            changed.append(f"{name}:{number} {cite}")
+    for (action, name), count in sorted(actions.items()):
+        print(f"  {count:4d} {action}{' ' + name if name else ''}")
+    for line in changed:
+        print("  neither repointed nor kept", line)
+    check(f"citations at {SWEEP[:9]} with an absent target: each is repointed or kept on a ground", not changed,
+          f"{len(absent)} citations in {len({c[0] for c in absent})} files, {sum(n for (a, _), n in actions.items() if a == 'repointed:')} repointed")
+    after = sorted(c for c in cited(names) if not present(c[3]))
+    fresh_cites = [c for c in after if (c[0], c[1], c[2]) not in {(a[0], a[1], a[2]) for a in absent}]
+    for c in fresh_cites:
+        print(f"  not at {SWEEP[:9]}: {c[0]}:{c[1]} {c[2]}")
+    check("working-tree citations with an absent target are citations kept above", not fresh_cites, f"{len(after)}")
     return 1 if FAILED else 0
 
 

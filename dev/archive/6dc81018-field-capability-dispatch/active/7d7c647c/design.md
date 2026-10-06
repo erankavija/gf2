@@ -9,7 +9,7 @@ tuning profile, and what the Lean extraction surface holds afterwards.
 It executes owner decision DEC-T (2026-08-23), which rules that the four
 migrate inside epic `6dc81018` through a non-extracted read seam designed
 first
-(`dev/active/6dc81018-field-capability-dispatch/progress.json:785`). It is an
+(`dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json`). It is an
 additive amendment to the standing profile design
 [`dev/active/220cab0b/design.md`](../220cab0b/design.md) and reuses the field
 kinds, mechanism rule, and test conventions of the follow-on design
@@ -104,10 +104,10 @@ directly: the refinement obligations rest on the dictionary's arithmetic
 fields, "never on `WINOGRAD_THRESHOLD`, `TRI_BASE_THRESHOLD`, `PLE_BASE_COLS`
 or `PLE_PANEL_COLS`, which are declared in the extracted structure but
 referenced by no lemma"
-(`dev/active/1ac74567/proof-sketch.md:900-907`). The lemma statements project
+(`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md:900-907`). The lemma statements project
 `corecloneCloneInst.clone`, `coreopsarithMulInst.mul`,
 `FiniteFieldInst.characteristic` and the dictionary's `pow`
-(`dev/active/1ac74567/proof-sketch.md:149`, `:165`, `:555`, `:587`). A grep for
+(`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md:149`, `:165`, `:555`, `:587`). A grep for
 the four names over `proofs/` returns hits only in the four generated files.
 
 **They are the sole reason the two instance dictionaries are recursive.**
@@ -549,7 +549,7 @@ literal. Probe AS1 reproduces the substitution from a fresh extraction at the
 anchor.
 
 The divergence is inert for correctness: no lemma reads the field
-(`dev/active/1ac74567/proof-sketch.md:900-907`), and the Rust dispatch never
+(`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md:900-907`), and the Rust dispatch never
 consults the Lean value. It is nonetheless the third instance of the defect
 class that made classification §4.3 defer these constants, and it is
 `@/inv/no-deferred-defects` work. The cutover resolves it by deleting the
