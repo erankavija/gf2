@@ -96,7 +96,7 @@ names `dev/studies/{047b62ed,91605d4d,6c7fcb38,b488f02c}` and
 | `crates/gf2-sim/src/permanent_campaign/validation.rs:1363` | `preregistration_identity.path != "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json"` | identity |
 | `crates/gf2-sim/tests/permanent_validation.rs:39-40,653,680,1636-1672` | literals, `fs::read`, `read_dir` | read |
 
-## dev/active/3f664839
+## dev/active/b8206228-permanent-statistics/3f664839
 
 Content-identified: `validate_design`
 (`crates/gf2-sim/src/permanent_rare_event/artifact.rs:4246`) checks revision,
