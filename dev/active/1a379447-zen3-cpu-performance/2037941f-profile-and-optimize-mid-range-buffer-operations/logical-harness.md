@@ -230,13 +230,13 @@ instead of going stale in prose.
 
 ## Entry points
 
-The launcher is `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh`,
+The launcher is `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh`,
 invoked from the worktree root.
 It exports `~/.cargo/bin` on `PATH` itself, because the benchmark-window unit
 has no login shell.
 
 ```
-STORY=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
+STORY=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations
 $STORY/survey/run-logical-harness.sh build [--isal]
 $STORY/survey/run-logical-harness.sh cells --family <family-id> --issue <8-hex> \
     --frozen-utc <YYYY-MM-DDTHH:MM:SSZ> --output <path>
@@ -311,7 +311,7 @@ reaches the queue, and each owns its own ledger reservation.
 ## Untimed release smoke
 
 ```
-dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke [--isal]
+dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh smoke [--isal]
 ```
 
 The launcher projects each family's plan and smokes its arms with

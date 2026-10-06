@@ -17,7 +17,7 @@ Every command runs from the repository root.
 
 ```sh
 python3 -B dev/scripts/verify-source-evidence.py \
-    dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json \
+    dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json \
     --project gf2 --frame recorded-commits
 ```
 
@@ -34,7 +34,7 @@ classes and each refusal on this ledger.
 
 ```sh
 python3 -B dev/scripts/verify-source-evidence.py \
-    dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json \
+    dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json \
     --project gf2 --frame recorded-commits \
     --tree fcb972da393c878665b1653856d76ddf5b299731 \
     --record dev/active/1a379447-zen3-cpu-performance/6833c5b5/dense-parity-source-evidence-verification.json

@@ -10,7 +10,7 @@ The baseline tree was extracted before building:
 
 ```sh
 mkdir -p /tmp/gf2-1d0da41f-baseline-continuation
-tar -xzf dev/active/1d0da41f/survey/baseline-source.tar.gz \
+tar -xzf dev/active/1a379447-zen3-cpu-performance/1d0da41f/survey/baseline-source.tar.gz \
   -C /tmp/gf2-1d0da41f-baseline-continuation
 GF2_BASELINE_TREE=/tmp/gf2-1d0da41f-baseline-continuation \
   dev/bench_results/1d0da41f/run-clmul-ab.sh confirmation 2026-09-08
@@ -31,7 +31,7 @@ GF2_BENCH=1 CARGO_CI_NO_LOCK=1 \
   target/release/benchmark-ab-runner run \
   /tmp/gf2-confirmation-1d0da41f-20260908t084330z \
   /tmp/gf2-confirmation-1d0da41f-20260908t084330z.plan.json \
-  dev/active/1d0da41f/producing-inputs.json
+  dev/active/1a379447-zen3-cpu-performance/1d0da41f/producing-inputs.json
 ```
 
 The three sessions share the exact saved plan and content identity. Two paused

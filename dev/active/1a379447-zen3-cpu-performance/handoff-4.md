@@ -89,6 +89,6 @@ branch state below is a snapshot; re-read each branch before acting.
 - Epic: `jit issue show 1a379447`; [measurement contract](measurement-contract.md); [plan review](plan-review.md); [progress](progress.json).
 - **[Round-3 review record](reviews/f547c394-r3.md)** — F1–F19, the F8 onset predicate, the F14 amplification, and the three-rule set (R1 declared decimals stay decimal; R2 declared is checked against observed and a digest is not a value, and the checker may not share the deriver's implementation; R3 rules total over their class, guards total over their property). Earlier rounds: [r1](reviews/f547c394-r1.md), [r2](reviews/f547c394-r2.md).
 - Wave-1 evidence: `dev/active/f547c394/{protocol.md,design.md,provenance-clarification.md,rework-validation.md,rework-validation-raw-outputs.md,addendum.schema.json}`, `dev/bench_results/f547c394/`.
-- Merged wave-2 work: `1d0da41f` at `4d630aec`, evidence under `dev/active/1d0da41f/` and `dev/bench_results/1d0da41f/`.
+- Merged wave-2 work: `1d0da41f` at `4d630aec`, evidence under `dev/active/1a379447-zen3-cpu-performance/1d0da41f/` and `dev/bench_results/1d0da41f/`.
 - Infrastructure changed this session: `.config/nextest.toml` (`23aa0824`), `scripts/cargo-budget.sh` + `dev/scripts/ccx1-bench-flock.sh` + its test (`d088c284`, `b3de0686`), `AGENTS.md` mutex paragraph.
 - Scripts: `.agents/skills/jit-execution-lead/scripts/{dispatch-worker-worktree.sh,check-leak-into-main.sh,reclaim-worker-worktree.sh}`.

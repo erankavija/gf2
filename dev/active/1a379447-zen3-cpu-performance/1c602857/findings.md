@@ -148,7 +148,7 @@ round trip skips them when absent and rejects the null form. No timing or
 outcome from that smoke is committed beyond what the commit message states,
 so no duration or downstream-cost figure is claimed here.
 
-The fix is visible in the committed arm: `dev/active/1c602857/arms/src/main.rs`
+The fix is visible in the committed arm: `dev/active/1a379447-zen3-cpu-performance/1c602857/arms/src/main.rs`
 marks both fields `#[serde(default, skip_serializing_if = "Option::is_none")]`,
 so a request that leaves them unset omits them instead of serializing an
 explicit null. The lesson this issue draws from its own smoke: the child-v2

@@ -271,7 +271,7 @@ records, extract the `c077a88b` recorded-input archive into
 [record-preparation.py](survey/record-preparation.py), then run
 `dev/bench_results/3be770d5/run-campaign.sh FAMILY MODE RUN_ID prepare`
 followed by `window` for each family and mode, and
-`dev/active/3be770d5/survey/run-profile.sh DIR` for the profile series. Each
+`dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/run-profile.sh DIR` for the profile series. Each
 command resumes under its own identity; the script headers state their
 contracts. A confirmation refuses to run until its addendum is committed and
 unmodified, so freezing it with

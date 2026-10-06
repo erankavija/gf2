@@ -338,12 +338,12 @@ declares, and refuses a cell declaring another cache state.
 
 ## Entry points
 
-The launcher is `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh`,
+The launcher is `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh`,
 invoked from the worktree root. It exports `~/.cargo/bin` on `PATH` itself,
 because the benchmark-window unit has no login shell.
 
 ```
-STORY=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
+STORY=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations
 $STORY/survey/run-dense-harness.sh build [--m4ri]
 $STORY/survey/run-dense-harness.sh cells --family <family-id> --issue <8-hex> \
     --frozen-utc <YYYY-MM-DDTHH:MM:SSZ> --output <path>
@@ -412,7 +412,7 @@ campaign JSON addendum is committed.
 ## Untimed release smoke
 
 ```
-dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh smoke [--m4ri]
+dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh smoke [--m4ri]
 ```
 
 The record's own `# command:` header names the invocation that wrote it, so the

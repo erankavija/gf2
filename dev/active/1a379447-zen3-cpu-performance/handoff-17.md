@@ -66,7 +66,7 @@
 - Reviews this session: `reviews/d45aff82-r2.md`.
 - Shared smoke: `dev/tools/tuning-campaign-support/src/arm.rs` (`smoke`, `validate_cell`), `src/bin/benchmark-ab-runner.rs` (`SessionDispatch`, `smoke --stage`), `tests/protocol_contracts.rs`.
 - A/B families: `dev/active/ad2a6a58/` (confirmation addendum, `confirmation-derivation-axpy.txt`), `dev/active/4c1e441f/` (`confirmation-derivation-dense-product.txt`), `dev/active/f63a2464/` (`findings.md`, `freeze-confirmations.sh`, three confirmation addenda).
-- Logical baselines: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md`, `dev/bench_results/2037941f/logical-tables.md`, `logical-profile/profile-summary.md`.
+- Logical baselines: `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md`, `dev/bench_results/2037941f/logical-tables.md`, `logical-profile/profile-summary.md`.
 - DVB profile (9fb40c83): `dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile-tables.md:114` (F3 tables), `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/`.
 - Window: `bench-window/run-window.sh`, `bench-window/queue.tsv`, state `.agents/bench-window/`, unit `gf2-bench-window-20260920`.
 - History rewrite: `subject-rewrite-sha-map.tsv`, tag `archive/main-before-subject-rewrite`.

@@ -656,7 +656,7 @@ the arithmetic that bounds it.
   sampled-share interval they rank on, and the downstream issue; not-material
   findings are preserved, and an entry whose confirmed cell is withdrawn says
   so and names the exploratory cell that replaces it.
-- **REQ-05 — MET.** Changes are confined to `dev/active/04b85d10` and
+- **REQ-05 — MET.** Changes are confined to `dev/active/1a379447-zen3-cpu-performance/04b85d10` and
   `dev/bench_results/04b85d10`; the existing runner, acceptance tool and
   wrapper are reused unchanged. The v4 pilots reuse the same harness, launcher
   and plan derivation and add no kernel, so they select experiments rather

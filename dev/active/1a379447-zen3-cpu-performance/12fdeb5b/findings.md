@@ -317,8 +317,8 @@ measures a kernel, none proposes a change, and the family's
 ## Reproduction
 
 ```
-dev/active/12fdeb5b/survey/freeze-addendum.py smoke|pilot <addendum>
-dev/active/12fdeb5b/survey/freeze-addendum.py confirmation <addendum> <pilot-receipt-dir>
+dev/active/1a379447-zen3-cpu-performance/12fdeb5b/survey/freeze-addendum.py smoke|pilot <addendum>
+dev/active/1a379447-zen3-cpu-performance/12fdeb5b/survey/freeze-addendum.py confirmation <addendum> <pilot-receipt-dir>
 dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh smoke|pilot|confirmation
 ```
 

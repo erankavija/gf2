@@ -2,7 +2,7 @@
 
 > **Diátaxis Type:** Explanation
 
-Story `2037941f` profiles 8-64-word logical-buffer operations and their dense consumers on the Ryzen 9 5900X and selects no production route change. The [generated tables](mid-range-tables.md) carry the interval, decision, outcome and sample count of every campaign cell with each campaign's receipt and executable digests, host and toolchain; profile figures stay in the linked profile summaries; `python3 -B dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-mid-range-tables.py` regenerates them from committed bytes. This document interprets those rows against the story criteria and states no figure of its own. The external comparators are ISA-L [IsaL2026] and M4RI [AlbrechtBard2026].
+Story `2037941f` profiles 8-64-word logical-buffer operations and their dense consumers on the Ryzen 9 5900X and selects no production route change. The [generated tables](mid-range-tables.md) carry the interval, decision, outcome and sample count of every campaign cell with each campaign's receipt and executable digests, host and toolchain; profile figures stay in the linked profile summaries; `python3 -B dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-mid-range-tables.py` regenerates them from committed bytes. This document interprets those rows against the story criteria and states no figure of its own. The external comparators are ISA-L [IsaL2026] and M4RI [AlbrechtBard2026].
 
 ## Selected production routes
 
