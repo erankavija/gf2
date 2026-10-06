@@ -13,39 +13,15 @@ reserves.
 """
 
 import json
-import re
-import subprocess
 import sys
 
-from locate import FAMILY, HERE, ROOT, repository_files
+sys.dont_write_bytecode = True
+
+from budget import budget, listing  # noqa: E402
+from locate import FAMILY, HERE, ROOT, repository_files  # noqa: E402
 
 CAMPAIGN = HERE.parent / "campaigns" / "matvec-simd-threshold.json"
 OUTPUT = HERE.parent / "cell-table.md"
-TAIL_RULE = re.compile(
-    r"f64::from\(settings\.bootstrap_resamples\) \* corrected_alpha / 2\.0 < (\d+)\.0;"
-)
-ATTEMPT_RULE = "    Ok(family.family_wise.alpha / (attempts * (attempts + 1.0)))"
-
-
-def protocol_rules():
-    """Bootstrap resamples and the expected draws P-20 requires in each tail."""
-    support = ROOT / repository_files.package_directory(ROOT, "tuning-campaign-support") / "src"
-    resamples = re.search(
-        r"^    bootstrap_resamples: ([\d_]+),$", (support / "protocol.rs").read_text(), re.M
-    )
-    tail = TAIL_RULE.search((support / "receipt.rs").read_text())
-    if not resamples or not tail or ATTEMPT_RULE not in (support / "trial_ledger.rs").read_text():
-        raise SystemExit("the campaign-support sources no longer carry the rules this table reads")
-    return int(resamples.group(1).replace("_", "")), int(tail.group(1))
-
-
-def listing(tool):
-    rows = {}
-    raw = subprocess.check_output([tool, "list", "--family", FAMILY], cwd=ROOT, text=True)
-    for line in raw.splitlines():
-        ordinal, cell_id, *fields = line.split()
-        rows[cell_id] = dict(field.split("=", 1) for field in fields) | {"ordinal": ordinal}
-    return rows
 
 
 def main():
@@ -57,16 +33,9 @@ def main():
     if set(declared) != set(listed):
         raise SystemExit("the campaign addendum and the harness listing name different cells")
 
-    ledger = ROOT / addendum["family_wise"]["ledger_path"]
-    entries = [json.loads(line) for line in ledger.read_text().splitlines() if line]
-    spending = [entry for entry in entries if entry["comparisons"] > 0]
-    attempt = len(spending) + 1
     confirmatory = [cell for cell in declared if listed[cell]["confirmatory"] == "true"]
-    comparisons = sum(entry["comparisons"] for entry in spending) + len(confirmatory)
-    attempt_alpha = addendum["family_wise"]["alpha"] / (attempt * (attempt + 1))
-    corrected = attempt_alpha / comparisons
-    resamples, tail_draws = protocol_rules()
-    draws = resamples * corrected / 2
+    spent = budget(addendum, len(confirmatory))
+    tail_draws, draws = spent["tail_draws"], spent["draws"]
 
     holdout = repository_files.live_file(ROOT, "matvec-holdout-cells.json")
     reserved = set(json.loads((ROOT / holdout).read_bytes())["reserved_stride_words"])
@@ -92,11 +61,11 @@ def main():
         f"| Purpose | {addendum['family']['purpose']} |",
         f"| Worthwhile speedup | {effect['worthwhile_speedup']} |",
         f"| Equivalence margin | {effect['equivalence_margin']} |",
-        f"| Ledger entries, spending reservations | {len(entries)}, {len(spending)} |",
-        f"| Confirmation attempt | {attempt} |",
-        f"| Confirmatory cells, cumulative comparisons | {len(confirmatory)}, {comparisons} |",
-        f"| Attempt alpha | {attempt_alpha:.6g} |",
-        f"| Corrected alpha | {corrected:.6g} |",
+        f"| Ledger entries, spending reservations | {spent['entries']}, {spent['spending']} |",
+        f"| Confirmation attempt | {spent['attempt']} |",
+        f"| Confirmatory cells, cumulative comparisons | {len(confirmatory)}, {spent['comparisons']} |",
+        f"| Attempt alpha | {spent['attempt_alpha']:.6g} |",
+        f"| Corrected alpha | {spent['corrected']:.6g} |",
         f"| Expected draws per bootstrap tail (P-20 needs {tail_draws}) | {draws:.4g} |",
         f"| Strides `{holdout}` reserves | {', '.join(map(str, sorted(reserved)))} |",
         f"| Strides of this family | {', '.join(map(str, sorted(strides)))} |",

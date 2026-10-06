@@ -11,8 +11,11 @@ nothing.
 import argparse
 import hashlib
 import json
+import sys
 
-from locate import CONFIRMATION, FAMILY, HERE, ROOT, SELECTOR, repo_artifacts
+sys.dont_write_bytecode = True
+
+from locate import CONFIRMATION, FAMILY, HERE, ROOT, SELECTOR, repo_artifacts  # noqa: E402
 
 OUTPUT = HERE.parent / "outcome.json"
 RENDERED = HERE.parent / "outcome.md"
