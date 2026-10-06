@@ -4,7 +4,7 @@
 |---|---|
 | JIT issue | `fd9d5416` (Committed performance receipts: non-regression, determinism, SOTA comparison) |
 | Epic | `ae03bcd0`, criteria REQ-13, REQ-14 of [plan.md](../plan.md) |
-| Run | [`dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`](../d1b4f85e/run.sh), cells of the `d1b4f85e` amendment of [workload-selection.md](../../4e732b56/workload-selection.md) |
+| Run | [`dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`](../d1b4f85e/run.sh), cells of the `d1b4f85e` amendment of [workload-selection.md](../4e732b56/workload-selection.md) |
 | Renderer | [`render_receipt.py`](render_receipt.py); tests in [`tests/test_render_receipt.py`](tests/test_render_receipt.py) |
 
 This note fixes how the receipt turns one window run into the REQ-01 and
@@ -151,7 +151,7 @@ The protocol texts that govern re-measurement:
   must publish their own `host.txt`, but they cannot displace a Zen-3
   baseline. If the dev host is replaced, every promoted reference must be
   re-measured before the new host's baseline is committed".
-- Survey [findings.md](../../4e732b56/findings.md) § 8.3: "the `perf-receipts`
+- Survey [findings.md](../4e732b56/findings.md) § 8.3: "the `perf-receipts`
   task should re-establish its non-regression baseline on the governor it
   intends to keep rather than inheriting these numbers as absolutes. The
   *ratios* between implementations, which is what the selection rests on, are

@@ -12,7 +12,7 @@
 #
 # Every BCH benchmark appends its dispatch path to <out-dir>/dispatch.jsonl
 # (GF2_BCH_DISPATCH_RECORD; format in the d1b4f85e amendment of
-# dev/active/4e732b56/workload-selection.md).
+# dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md).
 # After the runs, the Criterion estimates.json, sample.json and benchmark.json
 # of every benchmark this run wrote are copied to <out-dir>/samples/, and the
 # run fails if a recorded ID has no fresh Criterion output, a W1 or W2 record

@@ -38,5 +38,5 @@ None. Wave 4 dispatch is the next action and is fully specified.
 
 - progress.json (current: waves 1-3 done, wave 4 next); plan.md; breakdown.json; bch-api-design.md; extension-design.md; investigation.md.
 - Landed API surfaces for wave-4+ workers: `gf2-core/src/field/{extension.rs,irreducibility.rs}` (FieldExtension, certificates, prove_irreducible, canonical_generator, element_of_exact_order), `gf2-coding/src/{error.rs,bch/error.rs}` (CodeError/BchError), `gf2-coding/src/traits.rs` (traits::block + traits::compat::binary_v1), `gf2-coding/src/linear.rs` (allocation-free canonical encoder).
-- Survey deliverables + kept baselines: dev/active/4e732b56/, dev/bench_results/4e732b56/, worktree agent-4e732b56.
+- Survey deliverables + kept baselines: dev/active/ae03bcd0-general-bch/4e732b56/, dev/bench_results/4e732b56/, worktree agent-4e732b56.
 - Peer coordination: forum bus ~/Projects/forum-poc/forum.sh (FORUM_DIR=/tmp/jit-forum), lock /tmp/gf2-main-leads.lock, owner minimal-serialization policy in progress.json coordination notes.

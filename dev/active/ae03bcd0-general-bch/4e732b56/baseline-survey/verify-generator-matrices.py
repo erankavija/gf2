@@ -26,7 +26,12 @@ import subprocess
 import sys
 import tempfile
 
-REPO = pathlib.Path(__file__).resolve().parents[4]
+REPO = pathlib.Path(
+    subprocess.check_output(
+        ["git", "-C", str(pathlib.Path(__file__).resolve().parent), "rev-parse", "--show-toplevel"],
+        text=True,
+    ).strip()
+)
 ROWS = ("B2", "B3", "T2S")
 
 

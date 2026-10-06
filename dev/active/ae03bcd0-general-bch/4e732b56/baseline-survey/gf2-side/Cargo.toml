@@ -13,8 +13,8 @@ edition = "2021"
 publish = false
 
 [dependencies]
-gf2-coding = { path = "../../../../../crates/gf2-coding" }
-gf2-core = { path = "../../../../../crates/gf2-core" }
+gf2-coding = { path = "../../../../../../crates/gf2-coding" }
+gf2-core = { path = "../../../../../../crates/gf2-core" }
 
 [profile.release]
 opt-level = 3

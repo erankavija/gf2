@@ -4,7 +4,7 @@
 |---|---|
 | JIT issue | `4e732b56` (Reproducible external-baseline survey and workload selection) |
 | Epic | `ae03bcd0` (Harden and generalize BCH codes over finite fields) |
-| Contract slot | `workload-selection` of [plan.md](../ae03bcd0-general-bch/plan.md) § *Shared architectural contracts* |
+| Contract slot | `workload-selection` of [plan.md](../plan.md) § *Shared architectural contracts* |
 | Evidence | [findings.md](findings.md) |
 | Consumers | `encode-dispatch`, `avx2-batch-kernels`, `genmatrix-perf`, `bench-extension`, `perf-receipts` |
 
@@ -17,7 +17,7 @@ amends it here first.
 
 The statistical acceptance rule, the conformance corpus, and the host
 conventions are not restated here; they are the `evidence-protocol` section of
-[plan.md](../ae03bcd0-general-bch/plan.md), which this document completes rather than replaces.
+[plan.md](../plan.md), which this document completes rather than replaces.
 
 ## 1. Workloads
 
@@ -206,7 +206,7 @@ per basis vector. The timed-route check shares M4RI's dump helper with the timed
 route; the dump is the timed route's output verbatim, and the verifier compares
 it with no normalization against the repository's row-major `[message | parity]`
 convention. For B2, B3, and T2S, the [generator-matrix agreement
-receipt](../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt)
+receipt](../../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt)
 records matching dimensions, `bit_exact_identical=True`, and `same_code=True`.
 This gives a consumer an independent check on the shape of the cost curve.
 The elimination route is primary because it is measurably faster at every row
@@ -313,7 +313,7 @@ runner is `dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`. The cells this subs
 §§ 2–6:
 
 * **Nonbinary rows.** The evidence protocol's corpus rows N1–N4
-  ([plan.md](../ae03bcd0-general-bch/plan.md) § `evidence-protocol`), built by
+  ([plan.md](../plan.md) § `evidence-protocol`), built by
   `gf2_coding::test_support::visit_bch_corpus` and measured in the
   field-generic representation on both workloads. § 1 defines W1 and W2 over
   binary codes; on these rows the throughput unit counts base-field symbols:

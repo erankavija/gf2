@@ -44,9 +44,9 @@ script, so REQ-06 has no edit.
 
 ## Left in place, reported for decoupling
 
-Paths are relative to `dev/active/4e732b56/baseline-survey/`. Each consumer is a
-depth-dependent path under `no-dev-path-coupling`: it holds at the entry's
-current depth and at no other.
+Paths are relative to the entry's `baseline-survey/` directory at `917b5530a`.
+Each consumer is a depth-dependent path under `no-dev-path-coupling`: it holds
+at the depth of the flat entry and at no other.
 
 | Entry | Consumer | Construct | Decoupling under `no-dev-path-coupling` |
 |---|---|---|---|
