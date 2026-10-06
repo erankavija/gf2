@@ -15,7 +15,9 @@ use gf2_core::tuning::{
     CanonicalValue, ProfileRegistryBuilder, SectionCodec, SectionError, TuningSection,
 };
 
-/// An owner envelope whose coding section holds the encode family alone.
+/// An owner envelope whose coding section holds the encode family alone,
+/// emitted by the owner codec at `d56f08e6c`, the commit before the decode
+/// family.
 const ENCODE_FAMILY_PROFILE: &str = include_str!("data/tuning_profile_encode_family.json");
 
 fn body(text: &str) -> CanonicalValue {
