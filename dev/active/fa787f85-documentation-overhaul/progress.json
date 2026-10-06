@@ -906,7 +906,7 @@
      "short_id": "e1f262a7",
      "title": "Move the 3f664839 design entry under its epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "ec655592-d647-4fbc-90de-ef44ed313067",
@@ -962,7 +962,7 @@
      "short_id": "b23c364a",
      "title": "Decouple and move the 4e732b56 baseline survey under the BCH epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     }
    ]
   },
@@ -981,14 +981,14 @@
      "short_id": "b959ffe8",
      "title": "Rewrite dev/index.md for the final dev layout",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "fca578b1-2593-4bc4-8f08-8a425f3b237f",
      "short_id": "fca578b1",
      "title": "Audit the permanent surface against the docs invariants",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "rework"
     }
    ]
   },
@@ -1454,6 +1454,71 @@
   {
    "id": "b23c364a",
    "reason": "decoupling task T1 of decoupling-findings.md (owner ruling 2026-10-04: decoupling tasks in this epic)"
+  },
+  {
+   "id": "51f299d2",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Reconcile the --all-features commands of AGENTS.md with hipcc"
+  },
+  {
+   "id": "578adb63",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Declare rust-version in the gf2-kernels-simd manifest"
+  },
+  {
+   "id": "20f5343b",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Route the cargo test steps of cargo-ci.sh through the test budget"
+  },
+  {
+   "id": "75a71fab",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Deny unsafe code in the binary crate roots"
+  },
+  {
+   "id": "774f2de4",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Enforce or restate the sixty-second fast-tier suite budget"
+  },
+  {
+   "id": "0407aca8",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Give the bare ignore in gf2-core axiom tests a tier reason"
+  },
+  {
+   "id": "37235fd6",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Flush checkpoints on SIGTERM or state SIGINT alone"
+  },
+  {
+   "id": "3a5894ed",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Check the Table 6a and 6b attribution in the DVB-T2 BCH parameters"
+  },
+  {
+   "id": "c7c11e7e",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: State the tested ROCm version at its source"
+  },
+  {
+   "id": "84b67272",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Remove the dev/active path literal from the benchmark lock wrapper"
+  },
+  {
+   "id": "b9238d44",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Remove or implement the AVX-512 bipedal entry points"
+  },
+  {
+   "id": "299132b7",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Locate the rank-event receipt without a dev path literal"
+  },
+  {
+   "id": "16fee10f",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Verify that each performance claim measures the shipped code path"
   }
  ],
  "escalations": [
@@ -1842,7 +1907,8 @@
   "f29a9225": 2,
   "616e1d7c": 2,
   "0c5aa3b7": 2,
-  "0a0ece44": 1
+  "0a0ece44": 1,
+  "fca578b1": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1983,12 +2049,12 @@
   {
    "issue": "fdb998ec",
    "finding": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs holds four avx512f entry points that panic unconditionally (unimplemented!), compiled only under cfg(target_feature = \"avx512f\").",
-   "disposition": "issue to file under b4b4b9ee"
+   "disposition": "filed b9238d44 (b4b4b9ee)"
   },
   {
    "issue": "b2bb1065",
    "finding": "crates/gf2-algebra/tests/rank_event_rates.rs:19,292 writes dev/bench_results/e0251af3-rank-event-rates.md by path literal (no-dev-path-coupling); the report stays at the top level of dev/bench_results as a test-written receipt.",
-   "disposition": "issue to file under b4b4b9ee; check against epic REQ-14 before the epic gate"
+   "disposition": "filed 299132b7 (b4b4b9ee); check against epic REQ-14 before the epic gate"
   },
   {
    "issue": "f79bcba3",
@@ -2004,6 +2070,11 @@
    "issue": "8466f5ae",
    "finding": "96cea1b9-archive-rows.txt is the --check output over every archive event of 6dc81018; a further archive execution of 6dc81018 (616e1d7c) changes it.",
    "disposition": "regenerate after the 616e1d7c archive reruns"
+  },
+  {
+   "issue": "fca578b1",
+   "finding": "AGENTS.md policy statements the tree does not meet (all-features vs hipcc, MSRV in gf2-kernels-simd manifest, --test rule in cargo-ci.sh, deny unsafe in bin roots, sixty-second suite budget, bare ignore) and the mission sentence edited under no-marketing.",
+   "disposition": "filed 51f299d2, 578adb63, 20f5343b, 75a71fab, 774f2de4, 0407aca8 (b4b4b9ee); mission wording reported to owner; epic REQ-02 and REQ-17 name AGENTS.md and permanent text: reconcile before the epic gate"
   }
  ],
  "notes": [
@@ -2048,7 +2119,8 @@
   "Session 9 close: owner asked for the handoff once running tasks finished. Wave 11 open items: 616e1d7c (rework, owner question), 2596b143 (not dispatched), 198aafa3 (wave 12, blocked). Benchmark window of gf2-53 armed for 02:00 on 2026-10-05; no build or gate from 01:55 until window.log shows window end.",
   "Session 10 (2026-10-06): owner instruction: subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Batch 1 dispatched 00:58 EEST at 412b3cd49 in worktrees created by `git worktree add` (no cache seeding, no builds): 616e1d7c rework 2, 7dbcde0c, 0a0ece44, b2bb1065, ec655592, 0c5aa3b7 (sonnet), fdb998ec; fix lane agent-fixlane7 (sonnet) for 8466f5ae and 0b8f09f3 at b68598fc6. Read-only explorer writes decoupling facts for the eight flat entries to the session scratchpad. Bench window timer gf2-bench-window-20261006 armed for 02:00 EEST: no build or gate from 01:55 until window.log shows window end. Build units for after the window: e1f262a7, 7039d680, 602652bf, f79bcba3 (2037941f is done, its entry moves), 198aafa3, then 2596b143.",
   "Session 10 gate batch 1 at 6a38cc8b6 (cargo-ci 4 min warm): fdb998ec, 0b8f09f3, 8466f5ae, b2bb1065 done. 0c5aa3b7 doc-review F1 and 0a0ece44 code-review F1 fail on one class: citations of a moved path left in non-pinned active documents under a \"historical\" or \"copy of descriptions\" ground. Accepted grounds for a remaining old path: digest pin at file:line, marker-backed archive, receipts and inputs/ snapshots, tool output at a named commit, manifest schema fields, tracker state. Brief every move unit with this. Pinned tracker references stay untouched (old path at pinned commit). 0a0ece44 cargo-ci failed once on gf2-sim GPU AWGN tests (SIGABRT, 15 s timeout) in the evaluate-many rerun: infrastructure, rerun.",
-  "Session 10 gate batch 2 at c1dd3218c: 0c5aa3b7 (two reworks), 0a0ece44 (one rework), ec655592 (first run, after a pre-gate fix of the retained-citation class) done. Lessons: a move unit scopes Markdown by `git ls-files -- <dir> | grep` at any depth and leaves no manifest row of its directories pending; a dataset README that Rustdoc cites stays beside its dataset (0c5aa3b7, as the OSD READMEs); after repointing links inside a tracker-referenced document, rescan the reference with `jit doc add` (asset metadata), pinned references excepted."
+  "Session 10 gate batch 2 at c1dd3218c: 0c5aa3b7 (two reworks), 0a0ece44 (one rework), ec655592 (first run, after a pre-gate fix of the retained-citation class) done. Lessons: a move unit scopes Markdown by `git ls-files -- <dir> | grep` at any depth and leaves no manifest row of its directories pending; a dataset README that Rustdoc cites stays beside its dataset (0c5aa3b7, as the OSD READMEs); after repointing links inside a tracker-referenced document, rescan the reference with `jit doc add` (asset metadata), pinned references excepted.",
+  "Session 10 after the window (ended 02:09 EEST): b959ffe8 done on the first gate run. fca578b1 failed code-review and doc-review on one finding (deferred divergences neither fixed nor tracked); thirteen issues filed under b4b4b9ee and rework 1 sent. The session hit its usage limit at 02:29 and resumed at 04:01. e1f262a7 (sonnet) and b23c364a (opus) dispatched at 4dfbab9ce in cache-seeded worktrees. Blocked on owner rulings: 5ec5dcc1, 7dbcde0c, 616e1d7c, and the zen3 cluster (f79bcba3, 198aafa3, 7039d680, 602652bf, decoupling tasks T2 to T4). After fca578b1 merges: 2596b143."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
