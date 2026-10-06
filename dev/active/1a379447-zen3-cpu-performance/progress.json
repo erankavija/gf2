@@ -514,6 +514,10 @@
      "classification": "implementation",
      "status": "done; reconciled against JIT on 2026-09-26. merged at d1825118; lead fix 2badfb20 (checker reads HEAD); gates code-review rerun failed; open (2026-09-16T19:12Z). Done after the staged-decoy self-test fix (4f6031a2).",
      "tracker_state": "done"
+    },
+    {
+     "id": "f6df53a9",
+     "status": "in_progress: dispatched session 30 (sonnet) in agent-f6df53a9; lead decision: a zero cap returns the hard decision of the channel LLRs with iteration count zero"
     }
    ]
   },
@@ -546,7 +550,7 @@
      "short_id": "63bad95d",
      "title": "Calibrate production dispatch for the 5900X",
      "classification": "implementation",
-     "status": "in_progress: session 29 stage dispatched (validator field table per stage inventory; producer campaign queue line for agent-63bad95d-run); protocol families wait for 4337c02e",
+     "status": "in_progress: validator stage merged at f94f90c8b (ledgers regenerated); producer campaign queued for the 2026-10-07 window from agent-63bad95d-run; protocol families wait for 4337c02e",
      "tracker_state": "in_progress"
     },
     {
@@ -614,7 +618,7 @@
      "short_id": "dcfe8386",
      "title": "Stop gf2-algebra SIMD cross-checks passing without running on hosts without SIMD",
      "classification": "implementation",
-     "status": "pending; after dd359005",
+     "status": "in_progress: dispatched session 30 (sonnet) in agent-dcfe8386",
      "tracker_state": "ready"
     },
     {
@@ -649,21 +653,21 @@
      "id": "4337c02e",
      "short_id": "4337c02e",
      "classification": "implementation",
-     "status": "in_progress: pilot ran in the 2026-10-06 window (job rc 0, unverified); stage 2 (verify, freeze confirmation, queue) dispatched session 29",
+     "status": "in_progress: pilot accepted (17 cells, verified from its log); six-cell confirmation frozen on the branch and queued for the 2026-10-07 window; branch merges after the confirmation",
      "tracker_state": "in_progress"
     },
     {
      "id": "bfc2ceab",
      "short_id": "bfc2ceab",
      "classification": "implementation",
-     "status": "in_progress: pilot ran in the 2026-10-06 window (job rc 0, unverified); stage 1c (verify, freeze confirmation, queue) dispatched session 29; per-interface choice stays with the invoker",
+     "status": "in_progress: pilot accepted (9 cells, verified from its log); six-cell confirmation frozen (resolution 0.02, margin 1.05) and queued for the 2026-10-07 window; per-interface choice returns to the invoker with the confirmation",
      "tracker_state": "in_progress"
     },
     {
      "id": "dd359005",
      "short_id": "dd359005",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 29 (opus) in agent-dd359005",
+     "status": "in_progress: code-review failed twice on F1 (CI not pinned to Rust 1.95); invoker amended REQ-02 on 2026-10-06 (run record establishes 1.95; CI runs its own toolchain); code-review rerun pending",
      "tracker_state": "ready"
     },
     {
@@ -678,7 +682,7 @@
      "short_id": "e6fe64c9",
      "title": "Make the llr-f64 cargo feature select f64 LLRs or remove it",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress: invoker ruled removal; dispatched session 30 (sonnet) in agent-e6fe64c9"
     }
    ]
   },
@@ -700,6 +704,14 @@
      "classification": "research",
      "status": "in_progress: pilot collected from the 2026-09-19 window and merged at 57ded10db; confirmation frozen (6 of 8 cells) and queued for the 2026-09-20 window from the pinned worktree agent-c04dd4ac; final round after the confirmation: converge smoke-arms.sh on benchmark-ab-runner smoke (the shared smoke script labels the throwaway plan 'pilot' unconditionally: fix at the shared source then), tables, outcome prose, rebase, gates.",
      "tracker_state": "in_progress"
+    },
+    {
+     "id": "6818f1b6",
+     "status": "done. Session 30: rustdoc rework merged at e3caac554; cargo-ci, code-review, doc-review pass; review reviews/6818f1b6-r1.md."
+    },
+    {
+     "id": "8840b0ff",
+     "status": "in_progress: merged at b7d604eed; cargo-ci passes; code-review F1 and doc-review F1 (blanket decoded_len reports k while the LDPC default decode writes n bits); rework 1 dispatched session 30 (opus) in agent-8840b0ff"
     }
    ]
   },
@@ -711,7 +723,7 @@
      "short_id": "ed3d490e",
      "title": "Vectorize LDPC decoding across frames",
      "classification": "implementation",
-     "status": "in_progress: 17 topological layers over the 66 tasks (computed from breakdown.json depends_on); layer 1 (c79d60f9, 6818f1b6, 8840b0ff) dispatched session 29",
+     "status": "in_progress: layer 1 c79d60f9 and 6818f1b6 done, 8840b0ff in rework; layer 2 53b74fc2 (portable lane kernels, opus) and ee12b09e (route decision, sonnet) dispatched session 30; 2438c16f and 441fbd5c wait for 8840b0ff",
      "tracker_state": "backlog"
     },
     {
@@ -1604,7 +1616,7 @@
    "status": "open",
    "raised_at": "2026-10-05T09:20Z",
    "resolution": null,
-   "interim": "Invoker 2026-10-05: measure first; the worker commits the inventory and the measured cost of each check, and the per-interface choice returns to the invoker with numbers."
+   "interim": "Invoker 2026-10-05: measure first; the worker commits the inventory and the measured cost of each check, and the per-interface choice returns to the invoker with numbers. Session 30: pilot accepted; confirmation queued for 2026-10-07."
   },
   {
    "category": "shared infrastructure (cargo-ci steps)",
@@ -1647,6 +1659,40 @@
    "status": "resolved",
    "raised_at": "2026-10-06T06:40Z",
    "resolution": "Invoker 2026-10-06: under epic 1a379447; filed as e6fe64c9 (bug, gates cargo-ci and code-review)."
+  },
+  {
+   "category": "issue criterion wording (dd359005 REQ-02)",
+   "issue": "dd359005",
+   "question": "code-review F1 twice: scalar-lane CI steps run the default toolchain; pin CI to 1.95 or amend REQ-02",
+   "recommendation": "amend",
+   "status": "resolved",
+   "raised_at": "2026-10-06T18:20Z",
+   "resolution": "Invoker 2026-10-06: amend REQ-02 (run record establishes Rust 1.95; CI runs the configuration on its own toolchain). Applied."
+  },
+  {
+   "category": "design decision (e6fe64c9)",
+   "issue": "e6fe64c9",
+   "question": "implement f64 LLRs or remove the llr-f64 feature",
+   "recommendation": "remove",
+   "status": "resolved",
+   "raised_at": "2026-10-06T18:20Z",
+   "resolution": "Invoker 2026-10-06: remove it."
+  },
+  {
+   "category": "benchmark window",
+   "issue": "1a379447",
+   "question": "keep the 2026-10-07 02:00 timer armed",
+   "status": "resolved",
+   "raised_at": "2026-10-06T18:20Z",
+   "resolution": "Invoker 2026-10-06: keep armed."
+  },
+  {
+   "category": "provenance (63bad95d, 4337c02e)",
+   "issue": "63bad95d, 4337c02e",
+   "question": "a83583e0 re-validation by session record; tuning-campaign-records CI step; freezer reads the pre-declared cells from the pinned prose addendum",
+   "status": "resolved",
+   "raised_at": "2026-10-06T18:20Z",
+   "resolution": "Decided by the lead under the standing rule and reported to the invoker: session-record check accepted, CI step kept, prose-addendum reading accepted."
   }
  ],
  "rework_counts": {
@@ -1689,7 +1735,10 @@
   "1b034786": 1,
   "3a8ec493": 1,
   "66698c3c": 1,
-  "2133d15f": 2
+  "2133d15f": 2,
+  "6818f1b6": 1,
+  "dd359005": 1,
+  "8840b0ff": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2307,7 +2356,9 @@
   "Invoker 2026-10-06: the ed3d490e plan stays one story; the 38-task cap is lifted for the plan-review splits and one full terminal-invariant audit (66 tasks, 104 edges at 21b646407; audit record terminal-audit.md beside the plan).",
   "Session 28: handoff-25.md written. Nine issues and the ed3d490e planning node closed; two pilots queued for the 2026-10-06 window.",
   "Session 28: ed3d490e breakdown created and gated after the handoff was first written; handoff-25.md amended.",
-  "Session 29: both 2026-10-06 window jobs exited rc 0 (4337c02e 7 min, bfc2ceab 2 min); verification from the campaign logs is with the stage workers. Eight workers dispatched. No window timer is armed for the next night; arm one after the queue lines merge."
+  "Session 29: both 2026-10-06 window jobs exited rc 0 (4337c02e 7 min, bfc2ceab 2 min); verification from the campaign logs is with the stage workers. Eight workers dispatched. No window timer is armed for the next night; arm one after the queue lines merge.",
+  "Session 30: session 29 left no handoff; state rebuilt. Merged 6818f1b6 rework, 8840b0ff and the 63bad95d validator stage; both 2026-10-06 pilots verified from their logs; window armed for 2026-10-07 02:00 with three jobs; six workers dispatched.",
+  "Session 30: unfiled defects reported by session-29 workers: full-stage re-validation of a tuning campaign fails once its producing worktree is removed (keep agent-63bad95d-run until 63bad95d closes); a gated LDPC test asserts AVX2 NaN divergence whenever simd is on and would fail on a host without AVX2; the SIMD early-return search record lists 20 tests in probe and bench crates outside the workspace members."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -2341,36 +2392,38 @@
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
  },
  "benchmark_window": {
-  "unit": "gf2-bench-window-20261006",
-  "armed_for": "2026-10-06T02:00:00+03:00",
+  "unit": "gf2-bench-window-20261007",
+  "armed_for": "2026-10-07T02:00:00+03:00",
   "state_dir": ".agents/bench-window",
   "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
   "pending_jobs": {
    "4337c02e": [
-    "pilot v4-r1, family 4337c02e-matvec-simd-threshold, worktree agent-4337c02e pinned at 2eeccb430"
+    "confirmation v4-r1, 15 min, worktree agent-4337c02e"
    ],
    "bfc2ceab": [
-    "pilot, family caller-trusted-entry-check-cost, worktree agent-bfc2ceab pinned at 0670ff5ff"
+    "confirmation, 8 min, worktree agent-bfc2ceab"
+   ],
+   "63bad95d": [
+    "producer calibration campaign, 160 min, worktree agent-63bad95d-run; a paused run exits 0 and needs a new queue line with its run identifier; its stage lives in /tmp"
    ]
   },
-  "note": "Verify the campaign from its own execution log, never the job rc."
+  "note": "Verify each campaign from its own execution log, never the job rc. Invoker confirmed the armed timer on 2026-10-06."
  },
  "session_scope": {
-  "session": 29,
-  "date": "2026-10-06",
-  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable.",
+  "session": 30,
+  "date": "2026-10-06 evening",
+  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Session 29 ended without a handoff (interrupted); its state was rebuilt from git, the tracker and its transcript.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
-  "disk": "134 GB free at session start; worker worktrees run focused suites only and stop below 40 GB free.",
-  "peer_session": "gf2-b2 (epic fa787f85) closed its session 2026-10-05 01:13 EEST. Its 198aafa3 REQ-01 waits on 4c1e441f, ad2a6a58 and f63a2464 reaching done or rejected; when each closes, notify the fa787f85 lead or the repository owner (that epic resumes from dev/active/fa787f85-documentation-overhaul/handoff-8.md).",
+  "disk": "86 GB free after seeding five worktrees; workers stop below 40 GB.",
+  "peer_session": "A session of epic fa787f85 commits on main concurrently (63b197337 at 21:32 EEST). Stage tracker files by name, never `git add -A .jit`.",
   "active_workers": {
-   "w-4337c02e-s2": "opus",
-   "w-bfc2ceab-s1c": "opus",
-   "w-dd359005": "opus",
-   "w-6605cac2": "sonnet",
-   "w-c79d60f9": "opus",
-   "w-6818f1b6": "opus",
-   "w-8840b0ff": "opus",
-   "w-63bad95d-s3": "opus"
-  }
+   "w-53b74fc2": "opus",
+   "w-8840b0ff-r1": "opus",
+   "w-ee12b09e": "sonnet",
+   "w-f6df53a9": "sonnet",
+   "w-dcfe8386": "sonnet",
+   "w-e6fe64c9": "sonnet"
+  },
+  "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave."
  }
 }
