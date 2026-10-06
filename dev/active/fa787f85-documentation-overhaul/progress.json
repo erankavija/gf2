@@ -1519,6 +1519,11 @@
    "id": "16fee10f",
    "epic": "b4b4b9ee",
    "reason": "found by the permanent-surface audit fca578b1: Verify that each performance claim measures the shipped code path"
+  },
+  {
+   "id": "c73aa593",
+   "epic": "b4b4b9ee",
+   "reason": "gf2-side harness port (b23c364a DEC-01)"
   }
  ],
  "escalations": [
@@ -1812,7 +1817,7 @@
     "amend REQ-01 as for f79bcba3 so the entry of an open owner stays in place and is reported"
    ],
    "recommendation": "second option",
-   "resolution": ""
+   "resolution": "Owner (2026-10-06): amend REQ-01 and REQ-02 so the entry of an open owner stays in place and is reported; DEC-01 on the issue."
   },
   {
    "issue": "7dbcde0c",
@@ -1822,7 +1827,7 @@
     "drop the branch"
    ],
    "recommendation": "first option",
-   "resolution": ""
+   "resolution": "Owner (2026-10-06): amend REQ-04 to identity apart from the three run-time-observed paths and accept the run.sh edit under REQ-05; DEC-02 on the issue."
   },
   {
    "issue": "616e1d7c",
@@ -1832,7 +1837,7 @@
     "B: amend REQ-03 to exempt byte copies of receipts"
    ],
    "recommendation": "A",
-   "resolution": ""
+   "resolution": "Owner (2026-10-06): option A, both files take root-relative link targets; DEC-03 on the issue."
   },
   {
    "issue": "zen3-cluster",
@@ -1842,7 +1847,7 @@
     "B: named exception: zen3 survey-harness entries stay flat until epic 1a379447 is terminal; reject the move units; amend epic REQ-11"
    ],
    "recommendation": "A",
-   "resolution": ""
+   "resolution": "Owner (2026-10-06): option A, file T2 to T4 and amend the four move units; D3 and D4 by regeneration where no build is needed, D5 keeps the literal."
   },
   {
    "issue": "b23c364a",
@@ -1852,7 +1857,7 @@
     "port the harness to the current BCH API first"
    ],
    "recommendation": "first option",
-   "resolution": ""
+   "resolution": "Owner (2026-10-06): amend REQ-04 to path-dependency resolution with the build result of the baseline; port tracked in c73aa593 (b4b4b9ee); DEC-01 on the issue."
   },
   {
    "issue": "fca578b1",
@@ -1862,7 +1867,7 @@
     "restore the wording and cut a line elsewhere"
    ],
    "recommendation": "no strong preference",
-   "resolution": ""
+   "resolution": "Owner (2026-10-06): keep the audit edit of the AGENTS.md mission sentence."
   }
  ],
  "rework_counts": {
@@ -2143,7 +2148,8 @@
   "Session 10 gate batch 2 at c1dd3218c: 0c5aa3b7 (two reworks), 0a0ece44 (one rework), ec655592 (first run, after a pre-gate fix of the retained-citation class) done. Lessons: a move unit scopes Markdown by `git ls-files -- <dir> | grep` at any depth and leaves no manifest row of its directories pending; a dataset README that Rustdoc cites stays beside its dataset (0c5aa3b7, as the OSD READMEs); after repointing links inside a tracker-referenced document, rescan the reference with `jit doc add` (asset metadata), pinned references excepted.",
   "Session 10 after the window (ended 02:09 EEST): b959ffe8 done on the first gate run. fca578b1 failed code-review and doc-review on one finding (deferred divergences neither fixed nor tracked); thirteen issues filed under b4b4b9ee and rework 1 sent. The session hit its usage limit at 02:29 and resumed at 04:01. e1f262a7 (sonnet) and b23c364a (opus) dispatched at 4dfbab9ce in cache-seeded worktrees. Blocked on owner rulings: 5ec5dcc1, 7dbcde0c, 616e1d7c, and the zen3 cluster (f79bcba3, 198aafa3, 7039d680, 602652bf, decoupling tasks T2 to T4). After fca578b1 merges: 2596b143.",
   "Session 10: fca578b1 done after rework 1 (thirteen b4b4b9ee issues cited in its record). e1f262a7 done after one lead record fix: a record must not name an uncommitted relink script or describe the tracker relink as outstanding; state the committed tracker reference. A preregistration keeps its bytes even when no digest of it is committed (the lead wrongly had e1f262a7 repoint design.md:517 and reverted it before merge). 2596b143 dispatched at cac8fa20e (opus, cache-seeded worktree). Unmerged branches awaiting owner rulings: worktree-agent-7dbcde0c, worktree-agent-616e1d7c, worktree-agent-b23c364a.",
-  "Session 10 end: 2596b143 done on the first gate run. Every open unit waits on an owner ruling or on a unit that does; handoff-9.md lists the questions and the next actions."
+  "Session 10 end: 2596b143 done on the first gate run. Every open unit waits on an owner ruling or on a unit that does; handoff-9.md lists the questions and the next actions.",
+  "Session 11 (2026-10-06 evening): owner answered the six open questions of handoff-9.md (all recommendations); criteria amendments and DECs written on 616e1d7c, 7dbcde0c, b23c364a, 5ec5dcc1. Peer session gf2-ad shares the main checkout. Branches worktree-agent-4337c02e and worktree-agent-bfc2ceab (open issues of epic 1a379447) carry unmerged edits under dev/active/2037941f-*, c7113c5a, 4c1e441f, ad2a6a58 and f547c394."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
