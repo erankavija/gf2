@@ -83,7 +83,7 @@ publishes them as `cells::UNAVAILABLE_ROWS` with their strides and reasons.
 companion beside the M4RI receipt with zero samples and comparisons.
 
 `dense-campaign cells` transcribes one family into a protocol version-4
-campaign JSON addendum against `dev/active/f547c394/addendum.schema.json`. The
+campaign JSON addendum against `dev/active/1a379447-zen3-cpu-performance/f547c394/addendum.schema.json`. The
 transcription is a pilot: every cell is `exploratory`,
 `effect.measurement_resolution` and `effect.resolution_evidence` are null, and
 `family_wise.prior_confirmatory_trials` is zero, because a version-4 addendum

@@ -54,7 +54,7 @@
 - Epic: `jit issue show 1a379447`; measurement contract `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md`; plan review record `plan-review.md` (same directory)
 - Progress file: `dev/active/1a379447-zen3-cpu-performance/progress.json`
 - Round-1 verdict: `dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md`; code-review run `.jit/gate-runs/2421a450-5812-455c-8fe9-caa49294f2da/result.json`
-- Worker deliverables: `dev/active/f547c394/{protocol.md,addendum.schema.json,addendum-protocol-smoke.json,design.md}`; `dev/tools/tuning-campaign-support/src/{abtest,host,process,protocol,receipt,schema}.rs` and `src/bin/{benchmark-ab-runner,benchmark-acceptance,ab-smoke-workload}.rs`; tests `tests/{protocol_contracts,host_process_contracts,schema_subset}.rs`
+- Worker deliverables: `dev/active/1a379447-zen3-cpu-performance/f547c394/{protocol.md,addendum.schema.json,addendum-protocol-smoke.json,design.md}`; `dev/tools/tuning-campaign-support/src/{abtest,host,process,protocol,receipt,schema}.rs` and `src/bin/{benchmark-ab-runner,benchmark-acceptance,ab-smoke-workload}.rs`; tests `tests/{protocol_contracts,host_process_contracts,schema_subset}.rs`
 - Smoke evidence (to be superseded in rework): `dev/bench_results/f547c394/run-smoke.sh`, `dev/bench_results/f547c394/2026-09-06-f547c394-smoke/`
 - Worker's final report: delivered in-session to the lead (not a file); its criterion table is reproduced in the round-1 verdict's evidence cites.
 - Worktree protocol and scripts: `~/.claude/skills/jit-execution-lead/references/worktree-dispatch-protocol.md`, `.agents/skills/jit-execution-lead/scripts/`

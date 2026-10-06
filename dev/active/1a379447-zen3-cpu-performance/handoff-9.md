@@ -70,7 +70,7 @@
 ## Reference artefacts
 
 - Epic: `jit issue show 1a379447`; [measurement contract](measurement-contract.md); [progress](progress.json); reviews under [reviews/](reviews/) (`3be770d5-r1.md`, `6fb89a3c-r2.md`).
-- Protocol v4: `dev/active/f547c394/{protocol.md,amendment-v4.md,addendum.schema.json}`.
+- Protocol v4: `dev/active/1a379447-zen3-cpu-performance/f547c394/{protocol.md,amendment-v4.md,addendum.schema.json}`.
 - Window: [run-window.sh](bench-window/run-window.sh), [queue.tsv](bench-window/queue.tsv), [follow-window.sh](bench-window/follow-window.sh); `systemctl --user list-timers | grep gf2` (needs `XDG_RUNTIME_DIR=/run/user/1000` and `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus`).
 - Pending artifact tables: [pending-links/](pending-links/).
 - Scripts: `.agents/skills/jit-execution-lead/scripts/{dispatch-worker-worktree.sh,check-leak-into-main.sh,reclaim-worker-worktree.sh}`.

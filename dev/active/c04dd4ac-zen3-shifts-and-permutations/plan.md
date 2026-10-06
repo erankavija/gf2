@@ -200,7 +200,7 @@ Manifest source-ID universe used by validation:
 | INV-PRIOR-ART | Investigation §Prior art, feasibility, and fit |
 | INV-ARCHITECTURE | Investigation architecture-fit and invariant findings |
 | MEASUREMENT-CONTRACT | `dev/active/1a379447-zen3-cpu-performance/measurement-contract.md` |
-| PROTOCOL-V4 | `dev/active/f547c394/protocol.md` and its v4 amendment |
+| PROTOCOL-V4 | `dev/active/1a379447-zen3-cpu-performance/f547c394/protocol.md` and its v4 amendment |
 | EDA07788-FINDINGS | `dev/active/eda07788/findings.md` |
 | DVB-REPAIR | Completed warm-pass repair `3e59cb9a` and its repaired exploratory receipt |
 | SHIFT-PROFILE | [`shift-profile.md`](shift-profile.md) and the artifacts its evidence map binds |
