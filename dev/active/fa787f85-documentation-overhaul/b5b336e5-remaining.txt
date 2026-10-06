@@ -4,3 +4,4 @@ manifest 1 26
 receipt-directory 12 24
 snapshot 20 36
 tool-output 3 18
+tracker-state 1 1

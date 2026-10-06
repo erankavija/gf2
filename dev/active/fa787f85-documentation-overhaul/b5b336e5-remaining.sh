@@ -10,6 +10,7 @@ class() {
     */inputs/*) echo snapshot ;;
     dev/bench_results/*) echo receipt-directory ;;
     */migration/manifest.toml) echo manifest ;;
+    */progress.json) echo tracker-state ;;
     */bench-window/*) echo bench-window ;;
     */plan-checks.tsv|*/flag-readers.json|*/7bac1303-harness-path-trials.txt) echo tool-output ;;
     */decoupling-findings.md) echo investigation-at-commit ;;
