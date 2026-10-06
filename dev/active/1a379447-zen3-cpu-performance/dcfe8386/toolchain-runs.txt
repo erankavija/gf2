@@ -1,0 +1,20 @@
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: ./scripts/cargo-budget.sh --test ./scripts/scalar-lane-tests.sh --cargo-profile ci-test --profile ci
+scalar lane: gf2-algebra v0.1.0 [f5,f7,parallel,test-support]
+scalar lane: gf2-coding v0.1.0 [sim-observability,test-support]
+scalar lane: gf2-core v0.1.0 [default,io,parallel,rand,test-support]
+scalar lane: gf2-kernels-simd v0.1.0 [default]
+scalar lane: gf2-stats v0.1.0 []
+scalar lane: tuning-campaign-support v0.1.0 []
+     Summary [   8.231s] 2155 tests run: 2155 passed, 166 skipped
+# exit: 0
+
+default: gf2-algebra v0.1.0 [default,f5,f7,parallel,simd,test-support]
+default: gf2-core v0.1.0 [default,io,parallel,rand,simd,test-support]
+default: gf2-kernels-simd v0.1.0 [default]
+default: gf2-stats v0.1.0 []
+default: tuning-campaign-support v0.1.0 []
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# command: ./scripts/cargo-budget.sh --test cargo nextest run --package=gf2-algebra --cargo-profile ci-test --profile ci
+     Summary [   3.352s] 519 tests run: 519 passed, 69 skipped
+# exit: 0
