@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# usage: cc060974-baseline.sh <outfile>
+# usage: cc060974-baseline.sh <outfile> [<commit>]
 # Runs the script tests and each Python generator of the entries 00dd43c3 and
-# c04dd4ac that needs no build, in a scratch clone of HEAD under target/, from
+# c04dd4ac that needs no build, in a scratch clone of <commit> (default HEAD) under target/, from
 # the clone's root. Entry directories are located by file name. The table
 # projection runs before the generators that rewrite its inputs.
 #   stdout line       the command's standard output and error, scratch prefix
 #                     removed, test durations removed.
 #   out <name>        a file the command writes outside the tree: SHA-256 of
-#                     its bytes (raw) and of its bytes with each entry path
-#                     under the epic directory rewritten to dev/active/<entry>
-#                     (flat).
+#                     its bytes (raw) and of its lines, sorted, without trailing
+#                     commas, each entry path under the epic directory
+#                     rewritten to dev/active/<entry> (flat).
 #   against <file>    standard output compared with a committed file: `same`
 #                     or the count of differing lines; raw and flat as above.
 #   last section      `git diff --numstat` of the clone: each committed file a
@@ -19,13 +19,14 @@ set -u
 top=$(git rev-parse --show-toplevel)
 out=$(realpath "$1")
 s=$top/target/cc060974-scratch
-rm -rf "$s"; git clone -q --shared "$top" "$s"; cd "$s" || exit 1
+rm -rf "$s"; git clone -q --shared --no-checkout "$top" "$s"; cd "$s" || exit 1
+git reset -q --hard "${2:-HEAD}"
 t=$s/.git/cc060974; mkdir -p "$t"
 Z=$(dirname "$(git ls-files -- ':(glob)dev/active/**/test_pilot_freeze.py')")
 C=$(dirname "$(git ls-files -- ':(glob)dev/active/**/test-profile-intervals.py')")
 ZA=$(dirname "$Z"); CA=$(dirname "$C")
 B=dev/bench_results/c04dd4ac/dvb-interleave-profile
-flat() { sed -E 's#dev/active/1a379447-zen3-cpu-performance/(00dd43c3|c04dd4ac-zen3-shifts-and-permutations)#dev/active/\1#g' "$1" | sha256sum | cut -d' ' -f1; }
+flat() { sed -E 's#dev/active/1a379447-zen3-cpu-performance/(00dd43c3|c04dd4ac-zen3-shifts-and-permutations)#dev/active/\1#g; s/,$//' "$1" | sort | sha256sum | cut -d' ' -f1; }
 sums() { echo "raw=$(sha256sum "$1" | cut -d' ' -f1) flat=$(flat "$1")"; }
 run() { # run <script> [args]: output and exit status
   echo "## ${*//$t\//}"
