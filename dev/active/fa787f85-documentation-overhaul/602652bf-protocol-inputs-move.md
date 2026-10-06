@@ -38,7 +38,7 @@ Readers decoupled in `deb8854e5`:
 
 | Reader | Form | Check |
 |---|---|---|
-| `dev/active/6fb89a3c/survey/freeze-remeasure.py`, `dev/active/eda07788/survey/freeze-remeasure.py` | `located("addendum.schema.json")` runs the `file` command of the one `repository_files.py` | `located(SCHEMA)` prints `E/f547c394/addendum.schema.json` at `08eaa462e`; `--self-test` of the first passes; neither freeze path is run |
+| `E/6fb89a3c/survey/freeze-remeasure.py`, `dev/active/eda07788/survey/freeze-remeasure.py` | `located("addendum.schema.json")` runs the `file` command of the one `repository_files.py` | `located(SCHEMA)` prints `E/f547c394/addendum.schema.json` at `08eaa462e`; `--self-test` of the first passes; neither freeze path is run |
 | `dev/active/eda07788/survey/gf2-side/tests/profile_addendum.rs` | `SharedInput::AddendumSchema.locate(REPO, ADDENDUM_SCHEMA_ID)` | at `deb8854e5`, with `GF2_XDSOPL_INCLUDE` set, seven of eight tests pass, among them the schema reader `profile_addendum_is_frozen_valid_and_fully_exploratory`; not rerun after the move |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-producing-inputs.py` | `repository_files.live_file`, `repository_files.document` | output at `deb8854e5` equals the output of its parent version; at `08eaa462e` it differs from that output in the two moved paths |
 
@@ -86,7 +86,7 @@ states the command and the two commits: 151 receipts, empty `diff`.
 The three links are the rows of the third table of
 `8f61d6de-baseline-findings.md`. The link
 `../bdc507a3/verdict-preservation.json` of `amendment-v4.md` resolves. The
-second table of that record holds 14 rows: the seven rows with a target
+second table of that record holds 13 rows: the seven rows with a target
 below `../f547c394/` are removed in `6fdb776f7`.
 
 `git diff -M --name-status deb8854e5 6fdb776f7` restricted to `*.json`,
