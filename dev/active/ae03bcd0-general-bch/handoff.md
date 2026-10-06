@@ -50,7 +50,7 @@ None. (The jit gate-retry fix was ordered by the invoker and is in the jit sessi
 
 - Epic: `jit issue show ae03bcd0`; plan `dev/active/ae03bcd0-general-bch/plan.md`; manifest `breakdown.json`; investigation `investigation.md`.
 - Extension design (contract producer): `dev/active/ae03bcd0-general-bch/extension-design.md`.
-- Survey: `dev/active/4e732b56/findings.md`, `dev/active/4e732b56/workload-selection.md`, receipts `dev/bench_results/4e732b56/`, harness `dev/active/4e732b56/baseline-survey/`.
+- Survey: `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`, `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md`, receipts `dev/bench_results/4e732b56/`, harness `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/`.
 - Preserved review verdict: `dev/active/ae03bcd0-general-bch/review-4e732b56-research-r1.json`.
 - Peer coordination: forum bus `~/Projects/forum-poc/forum.sh`, `FORUM_DIR=/tmp/jit-forum`, identities `agent:claude` ↔ `agent:codex`; lock `/tmp/gf2-main-leads.lock`.
 - jit defect thread: peer session `just-in-time-c5` (ListAgents), jit source `~/Projects/just-in-time`.

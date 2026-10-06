@@ -47,7 +47,7 @@ Scan: `git grep -nE 'dev/plans|\.\./plans/|plans/[a-z0-9_]+\.md'`, then
 | the archived packed-field research stub, `src/lib.rs:10,1067` | path text to the design records under `dev/archive/ae82bd73-gf2-algebra-permanent/plans/` |
 | `dev/research/simd_batching_bench/src/{lib.rs,generic.rs}` module docs, `dev/research/permanent_gpu_crossover/src/main.rs` (`N_VALUES` doc) | citation removed |
 | `dev/research/{f5,f7}_packing/src/main.rs:130` | the closing printed sentence, which names the encoding decision, is removed; the other printed lines are unchanged |
-| `dev/active/4e732b56/findings.md:34`, `dev/active/ae03bcd0-general-bch/plan.md:12,436` | Markdown link targets |
+| `dev/active/ae03bcd0-general-bch/4e732b56/findings.md:34`, `dev/active/ae03bcd0-general-bch/plan.md:12,436` | Markdown link targets |
 | `dev/active/ae03bcd0-general-bch/investigation.md:5,182,187,205,463,485`, `dev/active/6dc81018-field-capability-dispatch/investigation.md:514,515,531,534`, `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:404` | path text of the moved files |
 | `dev/active/16283d6f-fieldmatrix-gpu/plans/gpu_fieldmatrix_sketch.md:91`, `dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md:15,31,328`, `dev/archive/legacy/crates/gf2-core/docs/COMPUTE_BACKEND_DESIGN.md:144` | path text to the file itself or to the archived plan |
 
