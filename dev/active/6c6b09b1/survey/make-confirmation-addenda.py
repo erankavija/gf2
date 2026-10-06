@@ -132,7 +132,7 @@ def pilot_receipt(family_id, addendum_path):
         receipt = json.loads(receipt_path.read_bytes())
         if receipt.get("label") != "pilot" or receipt.get("family_id") != family_id:
             continue
-        if receipt.get("addendum", {}).get("path") == addendum_path:
+        if Path(receipt.get("addendum", {}).get("path", "")).name == Path(addendum_path).name:
             continue
         found.append(receipt_path)
     if len(found) != 1:

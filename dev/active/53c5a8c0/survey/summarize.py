@@ -25,11 +25,12 @@ distinct operations and no table averages across them.
 import json
 import os
 import statistics
+import subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, os.pardir, os.pardir, os.pardir, os.pardir))
+ROOT = subprocess.check_output(["git", "-C", HERE, "rev-parse", "--show-toplevel"], text=True).strip()
 BENCH = os.path.join(ROOT, "dev", "bench_results", "53c5a8c0")
-ACTIVE = os.path.join(ROOT, "dev", "active", "53c5a8c0")
+ACTIVE = os.path.dirname(HERE)
 
 CROSSOVER_SMOKE = "2026-09-13-53c5a8c0-crossover-wire-smoke"
 CROSSOVER_PILOT = "2026-09-13-53c5a8c0-crossover-pilot"

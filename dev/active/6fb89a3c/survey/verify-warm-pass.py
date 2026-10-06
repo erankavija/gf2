@@ -39,7 +39,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-REPO = ROOT.parents[3]
+REPO = Path(subprocess.check_output(["git", "-C", ROOT, "rev-parse", "--show-toplevel"], text=True).strip())
 # (binary, case, library call of the timed body, arguments that name buffers or
 # sizes the timed call reuses on every call). Registers follow the SysV ABI;
 # `array` is xor_gen_base's pointer array, compared element by element.

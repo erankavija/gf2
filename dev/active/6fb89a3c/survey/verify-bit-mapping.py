@@ -19,11 +19,12 @@ from pathlib import Path
 
 MASK = (1 << 64) - 1
 ROOT = Path(__file__).resolve().parent
+REPO = Path(subprocess.check_output(["git", "-C", ROOT, "rev-parse", "--show-toplevel"], text=True).strip())
 GF2_DUMP_CHECK = Path(os.environ.get(
     "GF2_SURVEY_GF2_DUMP",
     ROOT / "gf2-side" / "target" / "release" / "gf2_dump_check",
 ))
-GENERATORS_PATH = ROOT.parents[2] / "bench_results" / "4e732b56" / "generators.txt"
+GENERATORS_PATH = REPO / "dev" / "bench_results" / "4e732b56" / "generators.txt"
 
 TRANSPOSE_FIXED = [{"seed": seed} for seed in (1, 0x123456789ABCDEF0, 0xDEADBEEFCAFEBABE)]
 TRANSPOSE_TILED = [{"rows": rows, "cols": cols, "seed": 7}
@@ -75,7 +76,7 @@ def run_dump(binary: Path, case: dict, adapter: str | None = None) -> tuple[int,
         env["GF2_BITSHUFFLE_ADAPTER"] = adapter
     proc = subprocess.run(
         [str(binary), "--dump-check", json.dumps(case, separators=(",", ":"))],
-        cwd=ROOT.parents[3], text=True, capture_output=True, env=env,
+        cwd=REPO, text=True, capture_output=True, env=env,
     )
     return proc.returncode, proc.stdout.splitlines(), proc.stderr.strip()
 
@@ -158,12 +159,12 @@ def check_genmatrix_row_space(name: str, route: str) -> None:
     if not GF2_DUMP_CHECK.exists():
         raise RuntimeError(f"missing binary {GF2_DUMP_CHECK}")
     gf2_code, m4ri_binary = subprocess.run(
-        [str(GF2_DUMP_CHECK), "bch-genmatrix", name, route], cwd=ROOT.parents[3],
+        [str(GF2_DUMP_CHECK), "bch-genmatrix", name, route], cwd=REPO,
         text=True, capture_output=True, check=True,
     ).stdout.splitlines(), ROOT / "m4ri_genmatrix_arm"
     m4ri_proc = subprocess.run(
         [str(m4ri_binary), "--dump-check", json.dumps({"code": name, "seed": 1}, separators=(",", ":"))],
-        cwd=ROOT.parents[3], text=True, capture_output=True,
+        cwd=REPO, text=True, capture_output=True,
     )
     if m4ri_proc.returncode != 0:
         raise AssertionError(f"m4ri_genmatrix_arm --dump-check {name}: exit {m4ri_proc.returncode}: {m4ri_proc.stderr.strip()}")

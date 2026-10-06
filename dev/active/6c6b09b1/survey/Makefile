@@ -12,7 +12,7 @@
 # reference code and the gf2 release build see the same host ISA.
 
 HERE    := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-REPO    := $(abspath $(HERE)/../../../..)
+REPO    := $(shell git -C $(HERE) rev-parse --show-toplevel)
 PRIMARY := $(patsubst %/.git,%,$(shell git -C $(REPO) rev-parse --path-format=absolute --git-common-dir))
 SRC    ?= $(PRIMARY)/.agents/ext/6c6b09b1
 EXT    ?= $(REPO)/target/6c6b09b1-ext

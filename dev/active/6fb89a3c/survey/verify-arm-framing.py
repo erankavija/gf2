@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+REPO = Path(subprocess.check_output(["git", "-C", ROOT, "rev-parse", "--show-toplevel"], text=True).strip())
 GF2_TARGET = Path(os.environ.get("GF2_SURVEY_GF2_TARGET", ROOT / "gf2-side/target/release"))
 CASES = [
     (ROOT / "m4ri_transpose_arm", {"n": 64, "seed": 1}),
@@ -52,7 +53,7 @@ def main() -> None:
         env["GF2_TUNING_FRESH_CASE"] = "child-v2"
         process = subprocess.run(
             [str(binary)], input=json.dumps(request, separators=(",", ":")), text=True,
-            capture_output=True, cwd=ROOT.parents[3], env=env,
+            capture_output=True, cwd=REPO, env=env,
         )
         if process.returncode != 0:
             raise SystemExit(f"{binary.name}: exit {process.returncode}: {process.stderr}")

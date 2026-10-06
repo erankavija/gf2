@@ -34,7 +34,7 @@ elif [[ "${1:-}" == "--verify-sources" ]]; then
 fi
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 # Externals stage beside the primary checkout, never inside a worktree that
 # gets committed. `--git-common-dir` resolves to the primary `.git` directory
 # from a linked worktree as well as from the primary checkout itself.

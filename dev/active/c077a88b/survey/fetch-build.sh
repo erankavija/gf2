@@ -18,7 +18,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 EXT="${1:-/tmp/c077a88b-ext}"
 CMAKE="${GF2_CMAKE:-/usr/bin/cmake}"
 

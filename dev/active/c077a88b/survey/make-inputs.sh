@@ -14,7 +14,7 @@
 # Usage: make-inputs.sh [destination]
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${HERE}/../../../.." && pwd)"
+REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 EXT="${1:-/tmp/c077a88b-ext}"
 INPUTS="${EXT}/inputs"
 mkdir -p "${INPUTS}"

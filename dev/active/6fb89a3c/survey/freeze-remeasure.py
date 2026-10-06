@@ -122,7 +122,7 @@ def pilot_history(family_ids: set[str], output: pathlib.Path,
     for log in sorted(results.glob("*/execution.log")):
         entries = records(log)
         declared = entries[0]["details"]["addendum"]
-        if pathlib.Path(declared["path"]) == output:
+        if pathlib.Path(declared["path"]).name == output.name:
             continue
         snapshot = log.parent / declared["snapshot"]
         addendum = json.loads(snapshot.read_text())
