@@ -129,7 +129,7 @@ holds no line of the class `unclassified`.
 | `tracker-state` | `progress.json` of `E`; `breakdown.json` of `R` and `C` |
 | `frozen-document` | `dense-parity-addendum.md` and `dense-parity-addendum-v1.md` of the mid-range entry, with the digest pins `f79bcba3-zen3-move.md` lists |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
-| `session-record` | `E/handoff-3.md`, `E/handoff-9.md` and five files of `E/reviews/`: dated session and review-round records, which the dispatch of this unit excludes from editing |
+| `session-record` | `E/handoff-3.md:36`: a dated session record that cites `survey/drafts/` of the shifts entry, a directory absent from the tree |
 | `pinned-script` | eight scripts of `E/26465e6c/superseded/v1/survey/`; `arm-provenance.json:43-50` beside them holds the SHA-256 of each |
 | `addendum-text` | `E/eda07788/survey/freeze-remeasure.py:199,202,203,219`: text of the frozen re-measurement addendum, whose SHA-256 `dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json` pins and which the script reproduces byte for byte |
 | `snapshot-path` | `V3_SURVEY` of `E/eda07788/survey/inspect-sources.py:43`: a path inside a receipt `inputs/` snapshot |
