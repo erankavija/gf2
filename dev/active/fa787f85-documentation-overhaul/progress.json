@@ -1560,6 +1560,16 @@
    "id": "3d864278",
    "epic": "b4b4b9ee",
    "reason": "2037941f dense-harness fails cargo fmt --check (found by 198aafa3)"
+  },
+  {
+   "id": "f63ad8dd",
+   "epic": "b4b4b9ee",
+   "reason": "5cbb6545 gf2-side fails cargo fmt --check (found by 7039d680)"
+  },
+  {
+   "id": "e59f207c",
+   "epic": "b4b4b9ee",
+   "reason": "eda07788 inspect-sources.py needles not found (found by 7039d680)"
   }
  ],
  "escalations": [
@@ -1972,8 +1982,8 @@
    "resolution": "Lead (2026-10-06): no owner input needed. `jit doc add --skip-scan` accepts the deep paths and the binary document; the depth budget binds the asset scan. The 58 refused references and 16 that the aborted relink scripts had left name the new paths (commit after 4a23fb49e); `jit validate` exits 0. Their asset metadata is unscanned."
   },
   {
-   "issue": "198aafa3",
-   "question": "OPEN: REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3).",
+   "issue": "198aafa3, 7039d680",
+   "question": "OPEN: REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3). Same class in 7039d680: eda07788/survey/freeze-remeasure.py:199,202,203,219 are text of the frozen addendum the script reproduces byte for byte (lane tip 7fd76c6b3).",
    "options": [
     "accept both as grounded and amend REQ-04 to exempt literals that reproduce committed bytes",
     "change the literals and the committed bytes"
@@ -2223,6 +2233,11 @@
    "issue": "fca578b1",
    "finding": "AGENTS.md policy statements the tree does not meet (all-features vs hipcc, MSRV in gf2-kernels-simd manifest, --test rule in cargo-ci.sh, deny unsafe in bin roots, sixty-second suite budget, bare ignore) and the mission sentence edited under no-marketing.",
    "disposition": "filed 51f299d2, 578adb63, 20f5343b, 75a71fab, 774f2de4, 0407aca8 (b4b4b9ee); mission wording reported to owner; epic REQ-02 and REQ-17 name AGENTS.md and permanent text: reconcile before the epic gate"
+  },
+  {
+   "issue": "7039d680",
+   "finding": "Session records of epic 1a379447 keep flat paths of moved entries: handoff-3.md:36, handoff-9.md:46 and five reviews/ files (14 lines) under dev/active/1a379447-zen3-cpu-performance/; the lane was told to leave that session's files alone on 2026-10-06.",
+   "disposition": "repoint after the 1a379447 session ends (form of commit 59f56ce93); REQ-06 of 7039d680 and 198aafa3 name citations"
   }
  ],
  "notes": [
