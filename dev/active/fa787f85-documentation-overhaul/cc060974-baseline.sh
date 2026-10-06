@@ -2,7 +2,8 @@
 # usage: cc060974-baseline.sh <outfile>
 # Runs the script tests and each Python generator of the entries 00dd43c3 and
 # c04dd4ac that needs no build, in a scratch clone of HEAD under target/, from
-# the clone's root. Entry directories are located by file name.
+# the clone's root. Entry directories are located by file name. The table
+# projection runs before the generators that rewrite its inputs.
 #   stdout line       the command's standard output and error, scratch prefix
 #                     removed, test durations removed.
 #   out <name>        a file the command writes outside the tree: SHA-256 of
@@ -45,6 +46,7 @@ frozen() { sed -n 's/.*"frozen_utc": "\(.*\)".*/\1/p' "$1"; }
   run "$Z/test_pilot_freeze.py"
   run "$C/test-profile-intervals.py"
   run "$C/make-shift-producing-inputs.py" --check
+  run "$C/summarize-shift-receipt.py"
   run "$Z/freeze-pilot.py" --check
   run "$Z/freeze-pilot.py"
   run "$Z/make-plan.py" "$t/plan-00dd43c3.json" /tmp/shifts-arm /tmp/unused-shift-lock \
@@ -77,7 +79,6 @@ frozen() { sed -n 's/.*"frozen_utc": "\(.*\)".*/\1/p' "$1"; }
   run "$C/make-source-evidence.py"
   run "$C/make-voided-attempt.py"
   run "$C/make-voided-attempt-record.py"
-  run "$C/summarize-shift-receipt.py"
   echo '## files rewritten in place with other bytes: added, deleted, path, flat'
   git diff --numstat | while read -r a d f; do echo "$a $d $f flat=$(flat "$f")"; done
   git status --porcelain | grep -v '^ M' | sed 's/^/untracked or other: /'
