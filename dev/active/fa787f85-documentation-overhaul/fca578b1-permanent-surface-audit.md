@@ -2,7 +2,7 @@
 
 | Fact | Value |
 |---|---|
-| Measured commit | `a12757f45`: every committed output below is the script's output at this commit |
+| Measured commit | `999228b25`: every committed output below is the script's output at this commit |
 | Line numbers in the findings | commit `6a38cc8b6`, the state the audit read |
 | Prior-source base | `791beb2b0`, the parent of `61c3f0a6a`, the first commit of the overhaul that removes a documentation file |
 
@@ -33,7 +33,7 @@ directory.
 | Step | Establishes | Does not establish |
 |---|---|---|
 | Full reading of each surface file | The findings and dispositions below | Absence of a defect the reader missed |
-| Claim verification against code, manifests, scripts, configuration and the cited receipts, by reading | Each finding's evidence; the claims listed under [Not established](#not-established) stay unverified | That a command or snippet builds or runs: no `cargo` build, test or doc ran |
+| Claim verification against code, manifests, scripts, configuration and the cited receipts, by reading | Each finding's evidence | The claim classes under [Limits of the verification](#limits-of-the-verification) |
 | Pattern scans (`fca578b1-scans.py`) | Every match of the stated patterns is fixed or listed with a reason | Absence of a defect its patterns do not spell |
 | Word-run comparison (`fca578b1-verbatim.py`) | No page shares an unlisted run of $N$ consecutive prose words with a prior source | Absence of paraphrase or of shared runs shorter than $N$ |
 | `python3 contrib/gates/docs-mechanical.py` | Links, anchors, citations and item addresses resolve | Truth of the linked content |
@@ -76,6 +76,7 @@ Every row is fixed in the named commit.
 | `docs/how-to/select-acceleration.md:137` | `@/inv/single-source-prose` | A copied value of `RAYON_NUM_THREADS` | `124392903` |
 | `docs/how-to/select-acceleration.md:157` | `@/inv/external-claims-cited` | Standard named without a registry key | `124392903` |
 | `docs/reference/performance-evidence.md:4` | `@/inv/claims-trace-to-artifacts` | The evidence commit is stated as the source identity of a claim whose Build line names another revision | `71e933b84` |
+| `docs/reference/performance-evidence.md:7` | `@/inv/benchmark-backed-performance` | The introduction asserts that each receipt measures the shipped code path; no committed comparison establishes it (`@/issue/16fee10f`) | `999228b25` |
 | `docs/reference/performance-evidence.md:76`, `:101`, `:122`, `:145` | `@/inv/benchmark-backed-performance` | The linked summaries omit host, build, workload, baseline and date; each receipt's `receipt.json` holds them | `a12757f45` |
 | `docs/reference/performance-evidence.md:170` | `@/inv/benchmark-backed-performance` | "no RUSTFLAGS" without its source, the receipt's command | `a12757f45` |
 | `docs/reference/performance-evidence.md:110` | `@/inv/claims-trace-to-artifacts` | The stated interval hull excludes two receipt bounds | `71e933b84` |
@@ -102,8 +103,8 @@ Every row is fixed in the named commit.
 |---|---|---|
 | `README.md:6` | "aims to pair" | A purpose statement, which the landing page carries; the sentence makes no behavioral claim |
 | Crate READMEs, last line | Link into `target/doc/` | The owner-approved form, `@/issue/b16d013a/decision/DEC-01` |
-| `docs/reference/performance-evidence.md:17` | The linked protocol text differs in digest from the receipts' snapshots | The page states that each receipt carries its own snapshot |
-| `docs/reference/standards-conformance.md` | Standard symbols in code spans | They name the standard's parameters as the code does |
+| `docs/reference/performance-evidence.md:17` | The linked protocol text differs in digest from the receipts' snapshots | Not a defect: the link names the protocol, and the page states that each receipt carries the snapshot that evaluates it |
+| `docs/reference/standards-conformance.md` | Standard symbols in code spans | Not a defect: they name the standard's parameters as the code does |
 | Eponymous terms (Montgomery form, Rabin's criterion, Clopper–Pearson and the like) | No registry key cited | Vocabulary assumed under `@/inv/researcher-audience`; standards, libraries and data sets carry keys |
 
 Placement (`@/inv/adapted-diataxis-placement`), audience
@@ -114,31 +115,36 @@ build and sweep) and the Monte Carlo table of the link tutorial
 linked at a fixed commit) carry no finding. `wc -l AGENTS.md` prints the
 limit `@/inv/agents-md-scope` sets.
 
-### Policy statements awaiting the owner
+### Policy statements the tree does not meet
 
 `AGENTS.md` is the owner's contract. Each row is a policy sentence the tree
-does not meet or enforce; the sentence and the tree are unchanged.
+does not meet or enforce. This audit changes neither the sentence nor the
+tree; the issue of each row tracks the reconciliation.
 
-| `AGENTS.md` line | Invariant | Policy | Tree | Smallest fix: page / tree |
+| `AGENTS.md` line | Invariant | Policy | Tree | Tracked by |
 |---|---|---|---|---|
-| `:21`, `:24`, `:31`, `:32` | `@/inv/current-state-scope` | Commands pass `--all-features` | `hip` pulls in `gf2-kernels-hip`, whose `build.rs` needs `hipcc`; `scripts/cargo-ci.sh:222` passes a feature list without ROCm | Name the ROCm requirement beside the commands / none |
-| `:19` | `@/inv/single-source-prose` | MSRV 1.95 | `crates/gf2-kernels-simd/Cargo.toml` declares no `rust-version` | None / add `rust-version = "1.95"` |
-| `:42` | `@/inv/convention-convergence` | Test execution passes `--test` | `scripts/cargo-ci.sh:283`, `:304`, `:309`–`:312` run `cargo test` through the wrapper without it | Exempt `cargo-ci.sh` steps / add `--test` |
-| `:69` | `@/inv/current-state-scope` | Other production crates deny unsafe code | The binary roots under `crates/gf2-coding/src/bin/` and `crates/gf2-sim/src/bin/` carry no `deny(unsafe_code)`; none contains `unsafe` | Say "library crates" / a workspace lint |
-| `:98` | `@/inv/current-state-scope` | A sixty-second suite budget | `.config/nextest.toml` enforces per-test limits only | Call it a target / add a suite limit |
-| `:98` | `@/inv/convention-convergence` | Ignored tests carry a `slow:` or `sim:` reason | Bare `#[ignore]` at `crates/gf2-coding/src/bcjr/mod.rs:743`, `crates/gf2-coding/src/ldpc/core.rs:2013`, `crates/gf2-core/src/field/axiom_tests.rs:762`, `crates/gf2-coding/tests/nr5g_regression.rs:91`; `bench:` and `external:` reasons also occur | List the four prefixes / add reasons |
+| `:21`, `:24`, `:31`, `:32` | `@/inv/current-state-scope` | Commands pass `--all-features` | `hip` pulls in `gf2-kernels-hip`, whose `build.rs` needs `hipcc`; `scripts/cargo-ci.sh:222` passes a feature list without ROCm | `@/issue/51f299d2` |
+| `:19` | `@/inv/single-source-prose` | MSRV 1.95 | `crates/gf2-kernels-simd/Cargo.toml` declares no `rust-version` | `@/issue/578adb63` |
+| `:42` | `@/inv/convention-convergence` | Test execution passes `--test` | `scripts/cargo-ci.sh:283`, `:304`, `:309`–`:312` run `cargo test` through the wrapper without it | `@/issue/20f5343b` |
+| `:69` | `@/inv/current-state-scope` | Other production crates deny unsafe code | The binary roots under `crates/gf2-coding/src/bin/` and `crates/gf2-sim/src/bin/` carry no `deny(unsafe_code)`; none contains `unsafe` | `@/issue/75a71fab` |
+| `:97`, `:98` | `@/inv/current-state-scope` | A per-test kill and a sixty-second suite budget | `.config/nextest.toml` declares per-test limits and overrides and no suite limit | `@/issue/774f2de4` |
+| `:98` | `@/inv/convention-convergence` | Ignored tests carry a `slow:` or `sim:` reason | Bare `#[ignore]` at `crates/gf2-coding/src/bcjr/mod.rs:743`, `crates/gf2-coding/src/ldpc/core.rs:2013` and `crates/gf2-coding/tests/nr5g_regression.rs:91`; `bench:` and `external:` reasons also occur | `@/issue/18db6e3d` |
+| `:98` | `@/inv/convention-convergence` | Same policy | Bare `#[ignore]` at `crates/gf2-core/src/field/axiom_tests.rs:762` | `@/issue/0407aca8` |
 
-### Not established
+### Limits of the verification
 
-| Claim class | Reason |
-|---|---|
-| Commands and Rust snippets build and run | Checked by reading signatures and argument parsers |
-| Sample outputs of the two tutorials | Checked for internal consistency; the link tutorial's intervals are recomputed |
-| Charon `--opaque` and `taskset` behavior | External tools |
-| GitHub URLs are published | Each pinned commit and path exists in the local object store |
-| "A claim appears only where a receipt measures the code path the library ships" | Needs a per-receipt source comparison |
-| "not on crates.io"; gfx1030 as the only exercised architecture | No evidence in the tree either way |
-| Section and table numbers of the cited standards | The standards are not in the tree |
+Claim verification is by reading. Each row names a claim class the reading
+does not settle and what settles it.
+
+| Claim class | Checked | Settled by |
+|---|---|---|
+| Commands and Rust snippets build and run | Signatures and argument parsers | The `cargo-ci` gate of this issue builds the workspace and its doctests; the field tutorial command runs at `999228b25` and prints the page's sample lines with `<elapsed>` filled |
+| Sample output of the link tutorial | Internal consistency; the intervals recomputed | The run record the page links at a fixed commit |
+| A receipt measures the code path the library ships | The page states an admission rule in place of the assertion (`999228b25`) | `@/issue/16fee10f` tracks the per-receipt source comparison |
+| Charon `--opaque` and `taskset` behavior | The page's statements against the scripts that invoke the tools | Outside the tree: the tools' own documentation |
+| GitHub URLs are published | Each pinned commit and path exists in the local object store | Outside the tree: the state of the remote |
+| "not on crates.io"; gfx1030 as the only exercised architecture | No contrary evidence in the tree | Outside the tree: the registry and the hardware at hand |
+| Section and table numbers of the cited standards | Against the in-tree citations; the two numbers without one are removed (`71e933b84`) | Outside the tree: the standards' text; the one suspected mismatch is `@/issue/3a5894ed` |
 
 ## Scans
 
@@ -290,14 +296,15 @@ No other page shares a run of seven prose words with a prior source.
 ## Code observations
 
 Found while verifying claims; outside the audited surface and unchanged here.
+The pages state what the code does.
 
-| Location | Observation |
-|---|---|
-| `crates/gf2-sim/src/snr_checkpoint.rs:300`, `crates/gf2-coding/src/simulation.rs:45`, `crates/gf2-coding/Cargo.toml:68` | `ctrlc` is built without its `termination` feature, so SIGTERM ends the process without a checkpoint flush; the manifest comment states a SIGTERM flush |
-| `crates/gf2-core/src/primitive_polys.rs:108` | `trinomials(8)` returns a reducible polynomial; tracked by `@/issue/0657c9fa` |
-| `crates/gf2-coding/src/bch/dvb_t2/params.rs:40`, `:50` | Comments assign Table 6a to short frames and 6b to normal frames; unverified against the standard |
-| `crates/gf2-kernels-hip` | No file states the ROCm version the crate is tested with |
-| `dev/scripts/ccx1-bench-flock.sh:85` | A `dev/active/` path literal in an error message (`@/inv/no-dev-path-coupling`) |
+| Location | Observation | Tracked by |
+|---|---|---|
+| `crates/gf2-sim/src/snr_checkpoint.rs:300`, `crates/gf2-coding/src/simulation.rs:45`, `crates/gf2-coding/Cargo.toml:68` | `ctrlc` is built without its `termination` feature, so SIGTERM ends the process without a checkpoint flush; the manifest comment states a SIGTERM flush | `@/issue/37235fd6` |
+| `crates/gf2-core/src/primitive_polys.rs:108` | `trinomials(8)` returns a reducible polynomial | `@/issue/0657c9fa` |
+| `crates/gf2-coding/src/bch/dvb_t2/params.rs:40`, `:50` | Comments assign Table 6a to short frames and 6b to normal frames | `@/issue/3a5894ed` |
+| `crates/gf2-kernels-hip` | No file states the ROCm version the crate is tested with | `@/issue/c7c11e7e` |
+| `dev/scripts/ccx1-bench-flock.sh:85` | A `dev/active/` path literal in an error message (`@/inv/no-dev-path-coupling`) | `@/issue/84b67272` |
 
 ## Reproduction
 
