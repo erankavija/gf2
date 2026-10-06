@@ -3,7 +3,7 @@
 //! Each shim is one C++ translation unit with a C ABI. The AFF3CT shim links
 //! the pinned static library and must see the preprocessor definitions and
 //! language standard that library was built with, because its class layouts
-//! are gated on them; `dev/active/c077a88b`'s build identity records them and
+//! are gated on them; `c077a88b`'s build identity records them and
 //! the list below mirrors `eda07788`'s harness. The srsRAN shim compiles the
 //! LDPC translation units from source, because srsRAN's own CMake
 //! configuration stops on a host without MbedTLS.

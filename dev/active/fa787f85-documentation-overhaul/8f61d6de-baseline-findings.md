@@ -30,7 +30,6 @@ and the link text counts directory levels from the flat entry location
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md:567` | `broken-link` | `../../bench_results/04b85d10/tables.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md:13` | `broken-link` | `../1a379447-zen3-cpu-performance/measurement-contract.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md:341` | `broken-link` | `../../bench_results/04b85d10/tables.md` |
-| `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md:16` | `broken-link` | `../6fb89a3c/survey/fetch-build.sh` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md:59` | `broken-link` | `../../../crates/gf2-core/src/matrix.rs` |
 
 Each row of the third table is a relative link in a protocol document of the

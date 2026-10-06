@@ -119,7 +119,7 @@ LOCATION_RULES = [
     ("min-sum-dispatch", SIMD_LLR, 89, 91),
     ("min-sum-reduction", SIMD_LLR, 119, 181),
     ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/gf2.rs", 0, 10**9),
-    ("conversion-output", "dev/active/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9),
+    ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9),
     ("dispatch", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/pool.rs", 0, 10**9),
     ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx", 0, 10**9),
     ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/NMS/Update_rule_NMS.hxx", 0, 10**9),

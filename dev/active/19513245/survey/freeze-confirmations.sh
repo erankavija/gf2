@@ -5,7 +5,7 @@
 # Usage: dev/active/19513245/survey/freeze-confirmations.sh <frozen-utc>
 #
 # Every argument this script passes is the frozen design; the arithmetic is the
-# canonical freezer's, `dev/active/c7113c5a/survey/freeze-confirmation.py`,
+# canonical freezer's, `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`,
 # which pins the pilot receipt by path and SHA-256, derives the measurement
 # resolution from that pilot's widest relative bootstrap half-width, refuses an
 # addendum whose margins do not strictly exceed one plus that resolution, and
@@ -25,7 +25,7 @@ FROZEN=${1:?usage: freeze-confirmations.sh <YYYY-MM-DDTHH:MM:SSZ>}
 ISSUE=19513245
 ACTIVE=dev/active/$ISSUE
 RECEIPTS=dev/bench_results/$ISSUE
-FREEZER=dev/active/c7113c5a/survey/freeze-confirmation.py
+FREEZER=dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py
 
 # The confirmatory-stage preamble every family description opens with.
 STAGE="Confirmatory stage of issue $ISSUE, protocol version 4: every cell of this addendum is \

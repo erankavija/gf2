@@ -69,7 +69,7 @@ target/e1f9a78f-arms/release/dense-campaign unavailable \
 The projection accepts the confirmation's changed roles, resolution evidence,
 and family description after ordinary schema validation; it does not require
 the pilot's exact transcription. The confirmation still follows the canonical
-[freezer](../../c7113c5a/survey/freeze-confirmation.py) and runner checks.
+[freezer](../c7113c5a/survey/freeze-confirmation.py) and runner checks.
 
 The approved amendment is in the comparator receipt's
 [producing-input snapshot](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json).

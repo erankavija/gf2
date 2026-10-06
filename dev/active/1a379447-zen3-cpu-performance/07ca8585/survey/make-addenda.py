@@ -24,13 +24,13 @@ CODES = {
         "bundle": "dvb-t2-r12-waterfall",
         "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
         "workload": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
-        "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+        "llr_source": "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
     },
     "nr-bg1-z384": {
         "bundle": "nr-bg1-z384-mother",
         "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
         "workload": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
-        "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+        "llr_source": "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
     },
 }
 

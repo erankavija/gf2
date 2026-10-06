@@ -13,7 +13,7 @@ RESULTS = Path("dev/bench_results/00dd43c3")
 PILOT = RESULTS / "v4-r1-pilot"
 LEDGER = RESULTS / "residual-shift-family-ledger.jsonl"
 ADDENDUM = ACTIVE / "pilot-addendum.json"
-FREEZER = Path("dev/active/c7113c5a/survey/freeze-confirmation.py")
+FREEZER = Path("dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py")
 RECEIPT_SOURCE = Path("dev/tools/tuning-campaign-support/src/receipt.rs")
 TRIAL_LEDGER_SOURCE = Path("dev/tools/tuning-campaign-support/src/trial_ledger.rs")
 

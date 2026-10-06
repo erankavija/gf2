@@ -94,7 +94,7 @@ def main():
             / "dev/active/1a379447-zen3-cpu-performance/1d4fd63d/external-arms/target/release/transpose-lane-external-arm"
         ),
     )
-    parser.add_argument("--survey", default=str(root / "dev/active/6fb89a3c/survey"))
+    parser.add_argument("--survey", default=str(root / "dev/active/1a379447-zen3-cpu-performance/6fb89a3c/survey"))
     arguments = parser.parse_args()
     survey = pathlib.Path(arguments.survey)
 

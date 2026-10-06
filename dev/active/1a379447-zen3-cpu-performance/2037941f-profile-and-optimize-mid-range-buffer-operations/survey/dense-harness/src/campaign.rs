@@ -4,8 +4,8 @@
 //! The transcription is a pilot: every cell is exploratory, the measurement
 //! resolution and its evidence are unresolved, and the family derives its prior
 //! comparisons from the authoritative ledger. A confirmation addendum is
-//! derived from the committed pilot receipt by the canonical freezer
-//! `dev/active/c7113c5a/survey/freeze-confirmation.py`.
+//! derived from the committed pilot receipt by the canonical freezer,
+//! `freeze-confirmation.py` of the `c7113c5a` survey.
 //!
 //! Every numeric setting here is transcribed from the frozen prose addendum.
 //! Nothing in this module invents a margin, limit or rule.

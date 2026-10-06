@@ -13,7 +13,7 @@ gf2 lanes against each other, so it carries its own ledger.
 
 Every cell is exploratory here. The confirmation is derived from the committed
 pilot receipt by the canonical freezer,
-`dev/active/c7113c5a/survey/freeze-confirmation.py`, which selects the two
+`dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`, which selects the two
 cells P-20's tail-support bound admits.
 """
 

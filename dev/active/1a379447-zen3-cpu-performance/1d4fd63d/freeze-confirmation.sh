@@ -4,7 +4,7 @@
 # Usage: ./freeze-confirmation.sh <selected-stage receipt dir> <frozen-utc>
 #
 # The freezer is the canonical one,
-# `dev/active/c7113c5a/survey/freeze-confirmation.py`. It pins the named pilot
+# `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`. It pins the named pilot
 # receipt by path and SHA-256, derives the measurement resolution from that
 # receipt's own intervals, refuses a margin the resolution does not admit, and
 # writes the derivation record beside the addendum. This script holds the
@@ -23,7 +23,7 @@ PILOT=${1:?usage: freeze-confirmation.sh <selected-stage receipt dir> <frozen-ut
 FROZEN_UTC=${2:?usage: freeze-confirmation.sh <selected-stage receipt dir> <frozen-utc>}
 ACTIVE=dev/active/1a379447-zen3-cpu-performance/1d4fd63d
 
-python3 dev/active/c7113c5a/survey/freeze-confirmation.py \
+python3 dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py \
   --pilot-addendum "$ACTIVE/addendum-v4-transpose-lane-selected.json" \
   --pilot "$PILOT" \
   --frozen-utc "$FROZEN_UTC" \

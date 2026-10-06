@@ -21,7 +21,7 @@ const AFF3CT_DEFINITIONS: [&str; 6] = [
 ];
 
 /// The `c077a88b` shim this unit includes.
-const SURVEY_SHIM_DIR: &str = "../../../../c077a88b/survey/harness/cpp";
+const SURVEY_SHIM_DIR: &str = "../../../c077a88b/survey/harness/cpp";
 
 fn build_aff3ct() {
     println!("cargo:rerun-if-env-changed=GF2_AFF3CT_ROOT");

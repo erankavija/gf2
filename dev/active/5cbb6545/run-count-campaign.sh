@@ -29,7 +29,7 @@
 #                                 as the independent earlier sample.
 #   popcount-confirmation,        the frozen confirmatory stage. It refuses to
 #   fused-confirmation            run until
-#                                 dev/active/c7113c5a/survey/freeze-confirmation.py
+#                                 dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py
 #                                 has derived its addendum from the committed
 #                                 pilot receipt, stamping that receipt's digest
 #                                 and the measurement resolution: the family's
@@ -103,7 +103,7 @@ fi
 if [[ "${KIND:-}" == confirmation ]]; then
   if [[ ! -f "$ADDENDUM" ]]; then
     echo "$ADDENDUM does not exist; derive it from the committed pilot receipt" >&2
-    echo "with dev/active/c7113c5a/survey/freeze-confirmation.py, which reads" >&2
+    echo "with dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py, which reads" >&2
     echo "the pilot addendum and writes the confirmation one" >&2
     exit 2
   fi

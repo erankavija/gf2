@@ -6,7 +6,7 @@ Usage: make-addenda.py <stage> <frozen-utc> [output-directory]
 `stage` is `smoke` or `sweep`. Every cell of a generated addendum is
 exploratory: a confirmation addendum is never written here but derived from a
 committed pilot receipt by the canonical freezer
-`dev/active/c7113c5a/survey/freeze-confirmation.py`, which stamps the
+`dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`, which stamps the
 measurement resolution and the pilot digest.
 
 The cell tables come from `families.py`, which the runner plan reads too, so

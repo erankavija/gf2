@@ -23,7 +23,7 @@ default = []
 aff3ct = []
 
 [dependencies]
-ldpc-survey-harness = { path = "../../../../c077a88b/survey/harness" }
+ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
 gf2-coding = { path = "../../../../../../crates/gf2-coding" }
 gf2-core = { path = "../../../../../../crates/gf2-core" }
 tuning-campaign-support = { path = "../../../../../tools/tuning-campaign-support" }

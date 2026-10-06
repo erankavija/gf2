@@ -6,7 +6,7 @@
 #   dev/active/eda07788/survey/nr-derate-build.sh <aff3ct-root> [staging-dir]
 #
 # <aff3ct-root> is the AFF3CT v4.7.0 tree that
-# `dev/active/c077a88b/survey/fetch-build.sh` clones and builds. This script
+# `dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/fetch-build.sh` clones and builds. This script
 # only reads it, and refuses a tree whose commit or static-library digest
 # differs from the pins below, which are the ones `c077a88b`'s build identity
 # records. Build output goes to the staging directory, by default

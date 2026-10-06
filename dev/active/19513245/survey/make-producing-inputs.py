@@ -22,7 +22,7 @@ import sys
 
 ISSUE = "dev/active/19513245"
 SURVEY = f"{ISSUE}/survey"
-REUSED = "dev/active/6c6b09b1/survey"
+REUSED = "dev/active/1a379447-zen3-cpu-performance/6c6b09b1/survey"
 TOOL = "dev/tools/tuning-campaign-support"
 LOCK_WRAPPER = "dev/scripts/ccx1-bench-flock.sh"
 LAUNCHER = "dev/bench_results/19513245/run-consumer-bytefield.sh"

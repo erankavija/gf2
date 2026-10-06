@@ -13,7 +13,7 @@ each receipt under the version it names: the pilots
 
 | Criterion | Established by `c077a88b` | Pointer |
 |---|---|---|
-| REQ-01 | Topology, SMT and affinity observation for one pinned worker per arm; source/build identities of both arms. No worker-count normalization: every cell is a single-instance, single-worker call. | [findings](../../c077a88b/findings.md) "Limits and follow-up"; [build identity](../../../bench_results/c077a88b/v3-preparation/build-identity.json) |
+| REQ-01 | Topology, SMT and affinity observation for one pinned worker per arm; source/build identities of both arms. No worker-count normalization: every cell is a single-instance, single-worker call. | [findings](../c077a88b/findings.md) "Limits and follow-up"; [build identity](../../../bench_results/c077a88b/v3-preparation/build-identity.json) |
 | REQ-02 | No profile. Setup/conversion diagnostics only. | [tables](../../../bench_results/c077a88b/tables.md) "Matched-algorithm timing" |
 | REQ-03 | Names the follow-up issues; ranks nothing. | findings "Limits and follow-up" |
 | REQ-04 | Identical digested AList and recorded LLR bundles, NMS 0.75, flooding, cap 50, syndrome stopping; fastest-compatible AFF3CT modes with precision, schedule and wave size; recorded-corpus BER/FER counts, intervals and iteration distributions. | [tables](../../../bench_results/c077a88b/tables.md) "Quality on identical recorded inputs"; [validation](../../../bench_results/c077a88b/v3-preparation/validation.json) |
