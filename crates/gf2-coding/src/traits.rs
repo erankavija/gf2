@@ -1900,6 +1900,166 @@ impl<D: IterativeSoftDecoder> BatchSoftDecoder for IterativeBatchDecoder<D> {
     }
 }
 
+/// Shared behavioral checks for the decoder traits of this module; an
+/// implementer's tests call them.
+#[cfg(any(test, feature = "test-support"))]
+pub mod conformance {
+    use super::*;
+
+    /// Convergence kinds [`batch_soft_decoder_contract`] requires among the
+    /// reference outcomes of its frame set.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum ConvergenceMix {
+        /// No requirement, for a decoder whose outcomes cannot vary this way.
+        Any,
+        /// Two converging frames with different iteration counts and one
+        /// non-converging frame.
+        EarlyLateAndNonConverging,
+    }
+
+    /// Asserts the [`BatchSoftDecoder`] contract of `decoder` against its
+    /// single-frame reference.
+    ///
+    /// `reference` maps one frame to its decoded word and outcome. It is a
+    /// closure, so a batch decoder that is no single-frame decoder itself
+    /// names its reference freely: `|llrs| single.decode_iterative(llrs, cap)`
+    /// for a decoder with an iteration cap, `|llrs|
+    /// single.decode_soft_with_result(llrs)` for a [`SoftDecoder`].
+    ///
+    /// With $g$ the granularity and $F$ the frame count, the frame set is
+    /// decoded in batches of 0, 1, $g - 1$, $g$, $g + 1$, $2g - 1$, $2g$,
+    /// $2g + 1$ and $F$ frames: below, at and above the granularity, with
+    /// incomplete final groups of one and of $g - 1$ frames, alone and after
+    /// complete groups. For $g = 1$ the sizes are 0, 1, 2, 3 and $F$: the size
+    /// below the granularity is the empty batch and no group is incomplete.
+    ///
+    /// Each size splits the whole frame set into consecutive batches, in input
+    /// order, reversed and with the odd positions before the even ones, all
+    /// through the one `decoder`, so every frame meets several positions,
+    /// neighbours and predecessors and state carried between frames or calls
+    /// changes a result. Every decoded word and outcome, written over stale
+    /// caller values, must equal the reference's for the frame at that
+    /// position.
+    ///
+    /// # Panics
+    ///
+    /// Panics when a batch result departs from the reference or from the
+    /// decoder's reported shape, and when the frame set cannot show a
+    /// departure: fewer than $2g + 1$ frames, two frames with equal reference
+    /// results, or reference outcomes without the kinds `mix` names.
+    ///
+    /// # Complexity
+    ///
+    /// At most $24F$ frame decodes plus $F$ reference decodes.
+    pub fn batch_soft_decoder_contract<D, F>(
+        decoder: &mut D,
+        mut reference: impl FnMut(&[Llr]) -> DecoderResult,
+        frames: &[F],
+        mix: ConvergenceMix,
+    ) where
+        D: BatchSoftDecoder + ?Sized,
+        F: AsRef<[Llr]>,
+    {
+        let granularity = decoder.batch_granularity();
+        assert!(granularity >= 1, "a batch granularity is at least one");
+        assert!(
+            frames.len() > 2 * granularity,
+            "{} frames cannot fill two groups of {granularity} and start a third",
+            frames.len()
+        );
+
+        let expected: Vec<DecoderResult> = frames
+            .iter()
+            .map(|frame| reference(frame.as_ref()))
+            .collect();
+        for (f, result) in expected.iter().enumerate() {
+            assert_eq!(frames[f].as_ref().len(), decoder.frame_len(), "frame {f}");
+            assert_eq!(
+                result.decoded_bits.len(),
+                decoder.decoded_len(),
+                "reference word of frame {f}"
+            );
+            if let Some(twin) = expected[..f].iter().position(|earlier| earlier == result) {
+                panic!(
+                    "frames {twin} and {f} have equal reference results, which hides their order"
+                );
+            }
+        }
+        if mix == ConvergenceMix::EarlyLateAndNonConverging {
+            let converged = || {
+                expected
+                    .iter()
+                    .filter(|r| r.converged)
+                    .map(|r| r.iterations)
+            };
+            assert!(
+                converged().min() < converged().max(),
+                "the frame set needs an early and a late converging frame"
+            );
+            assert!(
+                expected.iter().any(|result| !result.converged),
+                "the frame set needs a non-converging frame"
+            );
+        }
+
+        let count = frames.len();
+        let mut sizes = vec![
+            0,
+            1,
+            granularity - 1,
+            granularity,
+            granularity + 1,
+            2 * granularity - 1,
+            2 * granularity,
+            2 * granularity + 1,
+            count,
+        ];
+        sizes.sort_unstable();
+        sizes.dedup();
+
+        let orders: [(&str, Vec<usize>); 3] = [
+            ("input", (0..count).collect()),
+            ("reversed", (0..count).rev().collect()),
+            (
+                "odd-then-even",
+                (1..count).step_by(2).chain((0..count).step_by(2)).collect(),
+            ),
+        ];
+        let stale_word = BitVec::ones(decoder.decoded_len() + 1);
+        let stale_outcome = DecodeOutcome {
+            iterations: usize::MAX,
+            converged: true,
+            syndrome_check_passed: true,
+            queries: Some(usize::MAX),
+        };
+
+        for (order_name, order) in &orders {
+            for &size in &sizes {
+                let batches: Vec<&[usize]> = if size == 0 {
+                    vec![&[]]
+                } else {
+                    order.chunks(size).collect()
+                };
+                for batch in batches {
+                    let views: Vec<&[Llr]> = batch.iter().map(|&f| frames[f].as_ref()).collect();
+                    let mut decoded = vec![stale_word.clone(); batch.len()];
+                    let mut outcomes = vec![stale_outcome; batch.len()];
+                    decoder.decode_batch(&views, &mut decoded, &mut outcomes);
+                    for (position, &f) in batch.iter().enumerate() {
+                        assert_eq!(
+                            (&decoded[position], outcomes[position]),
+                            (&expected[f].decoded_bits, expected[f].outcome()),
+                            "frame {f} at position {position} of a batch of {} \
+                             (batch size {size}, {order_name} order)",
+                            batch.len()
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Streaming encoder for convolutional codes; state persists across calls.
 pub trait StreamingEncoder {
     /// Encodes a single input bit and returns the output symbol(s).
@@ -2480,6 +2640,7 @@ mod erased_handle_tests {
 
 #[cfg(test)]
 mod batch_decoder_tests {
+    use super::conformance::{batch_soft_decoder_contract, ConvergenceMix};
     use super::*;
 
     const K: usize = 3;
@@ -2571,45 +2732,10 @@ mod batch_decoder_tests {
     fn _is_dyn_compatible(_: &mut dyn BatchSoftDecoder) {}
 
     #[test]
-    fn soft_decoder_batch_matches_single_frame_decodes_in_input_order() {
-        let frames = frames(N);
-        let (decoded, outcomes) = decode(&mut MockDecoder, &frames);
-
-        for (f, frame) in frames.iter().enumerate() {
-            let single = MockDecoder.decode_soft_with_result(frame);
-            assert_eq!(decoded[f], single.decoded_bits, "frame {f}");
-            assert_eq!(
-                decoded[f].len(),
-                BatchSoftDecoder::decoded_len(&MockDecoder)
-            );
-            assert_eq!(outcomes[f], single.outcome(), "frame {f}");
-        }
-        assert!(outcomes.windows(2).all(|pair| pair[0] != pair[1]));
-    }
-
-    #[test]
     fn soft_decoder_reports_its_shape_with_granularity_one() {
         assert_eq!(BatchSoftDecoder::frame_len(&MockDecoder), N);
         assert_eq!(BatchSoftDecoder::decoded_len(&MockDecoder), K);
         assert_eq!(BatchSoftDecoder::batch_granularity(&MockDecoder), 1);
-    }
-
-    #[test]
-    fn iterative_adapter_batch_matches_capped_single_frame_decodes_in_input_order() {
-        let cap = 3;
-        let frames = frames(N);
-        let mut adapter = IterativeBatchDecoder::new(MockDecoder, cap);
-        let (decoded, outcomes) = decode(&mut adapter, &frames);
-
-        for (f, frame) in frames.iter().enumerate() {
-            let single = MockDecoder.decode_iterative(frame, cap);
-            assert_eq!(decoded[f], single.decoded_bits, "frame {f}");
-            assert_eq!(decoded[f].len(), adapter.decoded_len());
-            assert_eq!(outcomes[f], single.outcome(), "frame {f}");
-        }
-        // The cap separates converged frames from capped ones.
-        assert!(outcomes.iter().any(|outcome| outcome.converged));
-        assert!(outcomes.iter().any(|outcome| !outcome.converged));
     }
 
     #[test]
@@ -2621,132 +2747,201 @@ mod batch_decoder_tests {
         assert_eq!(adapter.max_iterations(), 7);
     }
 
-    /// `count` frames of `n` LLRs whose sign patterns differ.
-    fn mixed_sign_frames(n: usize, count: usize) -> Vec<Vec<Llr>> {
-        (0..count)
-            .map(|f| {
-                (0..n)
-                    .map(|i| {
-                        let magnitude = 1.0 + (i % 3) as f32;
-                        Llr::new(if (7 * i + 3 * f) % 11 == 0 {
-                            -magnitude
-                        } else {
-                            magnitude
-                        })
-                    })
-                    .collect()
-            })
-            .collect()
+    const CAP: usize = 4;
+
+    fn soft_reference(llrs: &[Llr]) -> DecoderResult {
+        MockDecoder.decode_soft_with_result(llrs)
     }
 
-    fn assert_words_have_reported_length<D: BatchSoftDecoder + ?Sized>(
-        decoder: &mut D,
-        frames: &[Vec<Llr>],
-        expected: &[BitVec],
-    ) {
-        let (decoded, _) = decode(decoder, frames);
-        for (f, word) in decoded.iter().enumerate() {
-            assert_eq!(word.len(), decoder.decoded_len(), "frame {f}");
-            assert_eq!(word, &expected[f], "frame {f}");
+    fn capped_reference(llrs: &[Llr]) -> DecoderResult {
+        MockDecoder.decode_iterative(llrs, CAP)
+    }
+
+    /// The first `count` sign patterns of `N` LLRs whose results under
+    /// `reference` differ pairwise.
+    fn frames_with_distinct_results(
+        count: usize,
+        reference: fn(&[Llr]) -> DecoderResult,
+    ) -> Vec<Vec<Llr>> {
+        let mut results = Vec::new();
+        let frames: Vec<Vec<Llr>> = (0..1usize << N)
+            .map(|signs| {
+                (0..N)
+                    .map(|i| Llr::new(if signs >> i & 1 == 1 { -1.0 } else { 1.0 }))
+                    .collect::<Vec<Llr>>()
+            })
+            .filter(|frame| {
+                let result = reference(frame);
+                let is_new = !results.contains(&result);
+                results.push(result);
+                is_new
+            })
+            .take(count)
+            .collect();
+        assert_eq!(frames.len(), count);
+        frames
+    }
+
+    #[test]
+    fn soft_decoder_path_satisfies_the_batch_contract() {
+        let frames = frames_with_distinct_results(8, soft_reference);
+        batch_soft_decoder_contract(
+            &mut MockDecoder,
+            soft_reference,
+            &frames,
+            ConvergenceMix::Any,
+        );
+    }
+
+    #[test]
+    fn iterative_adapter_satisfies_the_batch_contract() {
+        let frames = frames_with_distinct_results(16, capped_reference);
+        batch_soft_decoder_contract(
+            &mut IterativeBatchDecoder::new(MockDecoder, CAP),
+            capped_reference,
+            &frames,
+            ConvergenceMix::EarlyLateAndNonConverging,
+        );
+    }
+
+    const GROUP: usize = 8;
+
+    #[derive(Clone, Copy, PartialEq)]
+    enum Defect {
+        ReversesCompleteGroups,
+        SkipsIncompleteGroup,
+        CarriesStateBetweenCalls,
+    }
+
+    /// Batch decoder of granularity [`GROUP`] over [`capped_reference`].
+    struct GroupedDecoder {
+        defect: Option<Defect>,
+        calls: usize,
+    }
+
+    impl GroupedDecoder {
+        fn new(defect: Option<Defect>) -> Self {
+            Self { defect, calls: 0 }
         }
     }
 
-    fn assert_soft_path_reports_its_word_length<D: SoftDecoder>(mut decoder: D) {
-        let frames = mixed_sign_frames(decoder.n(), 4);
-        let expected: Vec<BitVec> = frames
-            .iter()
-            .map(|frame| decoder.decode_soft_with_result(frame).decoded_bits)
-            .collect();
-        assert_words_have_reported_length(&mut decoder, &frames, &expected);
+    impl BatchSoftDecoder for GroupedDecoder {
+        fn frame_len(&self) -> usize {
+            N
+        }
+
+        fn decoded_len(&self) -> usize {
+            K
+        }
+
+        fn batch_granularity(&self) -> usize {
+            GROUP
+        }
+
+        fn decode_batch(
+            &mut self,
+            frames: &[&[Llr]],
+            decoded: &mut [BitVec],
+            outcomes: &mut [DecodeOutcome],
+        ) {
+            let complete = frames.len() - frames.len() % GROUP;
+            let decodable = match self.defect {
+                Some(Defect::SkipsIncompleteGroup) => complete,
+                _ => frames.len(),
+            };
+            decode_batch_per_frame(
+                N,
+                &frames[..decodable],
+                &mut decoded[..decodable],
+                &mut outcomes[..decodable],
+                capped_reference,
+            );
+            match self.defect {
+                Some(Defect::ReversesCompleteGroups) => {
+                    for start in (0..complete).step_by(GROUP) {
+                        decoded[start..start + GROUP].reverse();
+                        outcomes[start..start + GROUP].reverse();
+                    }
+                }
+                Some(Defect::CarriesStateBetweenCalls) => {
+                    for outcome in outcomes.iter_mut() {
+                        outcome.iterations += self.calls;
+                    }
+                }
+                _ => {}
+            }
+            self.calls += 1;
+        }
     }
 
-    fn assert_iterative_path_reports_its_word_length<D: IterativeSoftDecoder>(mut decoder: D) {
-        let cap = 5;
-        let frames = mixed_sign_frames(decoder.n(), 4);
-        let expected: Vec<BitVec> = frames
-            .iter()
-            .map(|frame| decoder.decode_iterative(frame, cap).decoded_bits)
-            .collect();
-        let mut adapter = IterativeBatchDecoder::new(decoder, cap);
-        assert_words_have_reported_length(&mut adapter, &frames, &expected);
-    }
-
-    fn ldpc_7_4() -> crate::ldpc::LdpcCode {
-        let edges = [
-            (0, 0),
-            (0, 1),
-            (0, 3),
-            (1, 0),
-            (1, 2),
-            (1, 4),
-            (2, 1),
-            (2, 2),
-            (2, 5),
-        ];
-        let code = crate::ldpc::LdpcCode::from_edges(3, 7, &edges);
-        assert_ne!(code.k(), code.n());
-        code
-    }
-
-    #[test]
-    fn ldpc_default_paths_write_words_of_the_reported_length() {
-        use crate::ldpc::LdpcDecoder;
-
-        assert_soft_path_reports_its_word_length(LdpcDecoder::new(ldpc_7_4()));
-        assert_iterative_path_reports_its_word_length(LdpcDecoder::new(ldpc_7_4()));
-    }
-
-    #[test]
-    fn gldpc_default_paths_write_words_of_the_reported_length() {
-        use crate::gldpc::{GldpcDecoder, QcGldpcCode};
-
-        let code = || QcGldpcCode::lentmaier(7, 4, 1);
-        assert_soft_path_reports_its_word_length(GldpcDecoder::new(code()));
-        assert_iterative_path_reports_its_word_length(GldpcDecoder::new(code()));
-    }
-
-    #[test]
-    fn rate_matched_nr_default_paths_write_words_of_the_reported_length() {
-        use crate::ldpc::nr_5g::Nr5gRateMatchedDecoder;
-        use crate::ldpc::QuasiCyclicLdpc;
-
-        let code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 49);
-        assert_soft_path_reports_its_word_length(code.clone());
-        assert_soft_path_reports_its_word_length(Nr5gRateMatchedDecoder::new(code.clone()));
-        assert_iterative_path_reports_its_word_length(Nr5gRateMatchedDecoder::new(code));
+    fn run_grouped_contract(defect: Option<Defect>) {
+        let frames = frames_with_distinct_results(2 * GROUP + 1, capped_reference);
+        batch_soft_decoder_contract(
+            &mut GroupedDecoder::new(defect),
+            capped_reference,
+            &frames,
+            ConvergenceMix::EarlyLateAndNonConverging,
+        );
     }
 
     #[test]
-    fn orbgrand_soft_path_writes_words_of_the_reported_length() {
-        use crate::grand::{OrbGrand, OrbGrandConfig};
-
-        let h = gf2_core::bitmatrix![
-            1, 1, 0, 1, 1, 0, 0;
-            1, 0, 1, 1, 0, 1, 0;
-            0, 1, 1, 1, 0, 0, 1
-        ];
-        assert_soft_path_reports_its_word_length(OrbGrand::new(h, OrbGrandConfig::default()));
+    fn grouped_decoder_satisfies_the_batch_contract() {
+        run_grouped_contract(None);
     }
 
     #[test]
-    fn osd_soft_path_writes_words_of_the_reported_length() {
-        use crate::linear::LinearBlockCode;
-        use crate::osd::{GeneratorMatrixOsdDecoder, OsdConfig};
-
-        assert_soft_path_reports_its_word_length(GeneratorMatrixOsdDecoder::new(
-            LinearBlockCode::hamming(3),
-            OsdConfig::new(2),
-        ));
+    #[should_panic(expected = "batch size 8, input order")]
+    fn contract_rejects_a_decoder_that_reorders_a_group() {
+        run_grouped_contract(Some(Defect::ReversesCompleteGroups));
     }
 
     #[test]
-    fn empty_batch_decodes_nothing_on_both_paths() {
-        let (decoded, outcomes) = decode(&mut MockDecoder, &[]);
-        assert!(decoded.is_empty() && outcomes.is_empty());
+    #[should_panic(expected = "batch size 1, input order")]
+    fn contract_rejects_a_decoder_that_skips_an_incomplete_group() {
+        run_grouped_contract(Some(Defect::SkipsIncompleteGroup));
+    }
 
-        let mut adapter = IterativeBatchDecoder::new(MockDecoder, 3);
-        let (decoded, outcomes) = decode(&mut adapter, &[]);
-        assert!(decoded.is_empty() && outcomes.is_empty());
+    #[test]
+    #[should_panic(expected = "batch size 1, input order")]
+    fn contract_rejects_a_decoder_that_carries_state_between_calls() {
+        run_grouped_contract(Some(Defect::CarriesStateBetweenCalls));
+    }
+
+    #[test]
+    #[should_panic(expected = "cannot fill two groups of 8")]
+    fn contract_rejects_a_frame_set_shorter_than_two_groups_and_a_frame() {
+        let frames = frames_with_distinct_results(2 * GROUP, capped_reference);
+        batch_soft_decoder_contract(
+            &mut GroupedDecoder::new(None),
+            capped_reference,
+            &frames,
+            ConvergenceMix::Any,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "frames 0 and 3 have equal reference results")]
+    fn contract_rejects_frames_with_equal_reference_results() {
+        let mut frames = frames_with_distinct_results(4, soft_reference);
+        frames[3] = frames[0].clone();
+        batch_soft_decoder_contract(
+            &mut MockDecoder,
+            soft_reference,
+            &frames,
+            ConvergenceMix::Any,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "needs an early and a late converging frame")]
+    fn contract_rejects_a_frame_set_without_the_required_convergence_mix() {
+        let frames = frames_with_distinct_results(8, soft_reference);
+        batch_soft_decoder_contract(
+            &mut MockDecoder,
+            soft_reference,
+            &frames,
+            ConvergenceMix::EarlyLateAndNonConverging,
+        );
     }
 
     #[test]
