@@ -18,7 +18,7 @@ larger than the records above.
 Append-only. Committed records under `dev/active/` and `dev/benchmarks/` carry
 citations anchored to the tree they were written against, so an amendment is
 appended and changes no pre-existing line
-(`dev/active/6dc81018-field-capability-dispatch/handoff.md:57`). The section
+([`handoff.md:57`](../../../archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md)). The section
 shape follows the precedents at
 `dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md:179` and
 `dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md:314`.
@@ -35,12 +35,12 @@ of what was swept.
 
 | Record | Anchor | Statement |
 |---|---|---|
-| `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` | `:338`–`:367` (F2) | "no grid point offers both arms and §2.7 rule 1 cannot be executed for this field" |
-| `dev/active/6dc81018-field-capability-dispatch/handoff.md` | `:26` (DEC-B6) | "`karatsuba_min_degree` is not sweepable (both arms private …)" |
+| [`2026-08-20-host-calibration.md`](../../../archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-host-calibration.md) | `:338`–`:367` (F2) | "no grid point offers both arms and §2.7 rule 1 cannot be executed for this field" |
+| [`handoff.md`](../../../archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md) | `:26` (DEC-B6) | "`karatsuba_min_degree` is not sweepable (both arms private …)" |
 | `dev/active/7d824b2f/design.md` | `:427`–`:431`, `:455`–`:461` | names the steering technique as one `389aa4de` builds, and cites the field's omission as the precedent for seventeen non-sweepable fields |
 | `crates/gf2-core/benches/tuning_calibration.rs` | module docs, `# Arm reachability` | **already rewritten** by this issue's own commits; listed so the inventory is complete |
 
-## Block A — append at the end of `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`
+## Block A — append at the end of [`2026-08-20-host-calibration.md`](../../../archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-host-calibration.md)
 
 ```markdown
 ## Amendment — issue `389aa4de` (<date>)
@@ -67,7 +67,7 @@ Every figure above, the emitted document quoted under §Emitted profile, and
 F2's account of what this run measured stand as taken.
 ```
 
-## Block B — append as a bullet to the current session section of `dev/active/6dc81018-field-capability-dispatch/handoff.md`
+## Block B — append as a bullet to the current session section of [`handoff.md`](../../../archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md)
 
 ```markdown
 - **DEC-B6 discharged by `389aa4de`**: `karatsuba_min_degree` is sweepable
@@ -144,7 +144,7 @@ recursion-shape caveat.
 ## Block D — DEC-B16, the mechanism the earlier records describe
 
 Three records describe the forcing as minimal-against-maximal: the issue's own
-Background, `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`
+Background, [`2026-08-20-host-calibration.md`](../../../archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-host-calibration.md)
 F2's tracked-owner paragraph at `:361`–`:367`, and
 `dev/active/7d824b2f/design.md` §5.1 condition 2 at `:427`–`:431`. DEC-B16
 supersedes that detail. The paragraph below carries the correction; append it

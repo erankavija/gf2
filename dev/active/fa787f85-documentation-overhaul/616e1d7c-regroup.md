@@ -5,7 +5,8 @@ whose top epic includes 6dc81018, less the code-pinned entries a83583e0 and
 dbd8787d. The epic is archived, so decision DEC-01 of the issue collects its
 entries through container archival. `jit archive container 6dc81018 --execute`
 ran on main in commit `50de04a6b`. `AR` is
-`dev/archive/6dc81018-field-capability-dispatch`.
+`dev/archive/6dc81018-field-capability-dispatch`. Decision DEC-02 places entry
+389aa4de under `Q`, `dev/active/86b9c719-quality-documentation-tech-debt`.
 
 | File | Content |
 |---|---|
@@ -27,23 +28,29 @@ ran on main in commit `50de04a6b`. `AR` is
 | 220cab0b, 3fa7c9d0, 7d824b2f, 972e2b88, eaae1b56, fc976a80 | one file each stays with an archive copy | 6 kept |
 | 9162956b | stays with an archive copy | 14 kept |
 | 6dc81018-field-capability-dispatch | 4 files stay with an archive copy; `handoff-12.md` and `handoff-13.md` stay without one | 6 kept |
-| 389aa4de | flat, outside the archive plan | 1 |
+| 389aa4de | under `Q/389aa4de/` | 1 moved |
+
+A file that stays is under `dev/active/<entry>/`. The `manifest`
+section of the output lists, per entry, the directory holding it and the row
+status.
 
 ## Criteria
 
 | Criterion | Evidence in `616e1d7c-verify.txt` | Establishes | Does not establish |
 |---|---|---|---|
-| REQ-01 | `preview`, `marker`, `bytes`: the plan is eligible without blocker; 401 of 401 published destinations hold the planned sha256 at the execution commit; 395 of 395 move sources are absent; 6 of 6 copy sources hold the planned sha256 | The files the plan moves are under `AR`, byte-identical to their sources at execution | Anything about 389aa4de |
-| REQ-02 | `references`: 522 of 522 relinked tracker documents on 25 issues name their archive path | The tracker of the checkout names the archive path for each reference the plan relinks | References of kept files that an issue outside the container owns |
-| REQ-03 | `links`: 0 unresolved in the 60 Markdown files of `AR` and in the Markdown files of this issue under the active area | Inline links outside fenced code resolve, except three that resolve from the plan source path only | Anchors, code-span paths, links in non-Markdown files |
+| REQ-01 | `preview`, `marker`, `bytes`: the plan is eligible without blocker; 401 of 401 published destinations hold the planned sha256 at the execution commit; 395 of 395 move sources are absent; 6 of 6 copy sources hold the planned sha256 | The files the plan moves are under `AR`, byte-identical to their sources at execution; `manifest` adds that the file of each of the 465 rows is at its destination, or at its path when the destination is empty | — |
+| REQ-02 | `references`: 522 of 522 relinked tracker documents on 25 issues name their archive path | The tracker of the checkout names the archive path for each reference the plan relinks | References of kept files that an issue outside the container owns; the reference of issue 389aa4de to its note, which `jit doc check-links --scope all` covers |
+| REQ-03 | `links`: 239 of 239 local links in the 60 Markdown files of `AR` resolve, and 26 of 26 in the 7 Markdown files of this issue under the active area | Each inline link outside fenced code resolves from its file's directory or, with a leading `/`, from the checkout root | Anchors, code-span paths, links in non-Markdown files |
 | REQ-04 | `excluded`: no path under `dev/active/a83583e0` or `dev/active/dbd8787d` changes, is published or is deleted | The code-pinned entries are in place | The Rust CI verdict; `cargo-ci` runs it |
-| REQ-05 | `manifest`: every row of a plan source is `complete`; `python3 616e1d7c-rows.py --check` exits 0 | 395 rows archived, 33 rows retained in place by this unit | — |
+| REQ-05 | `manifest`: each of the 465 rows is `complete`; `python3 616e1d7c-rows.py --check` exits 0 | 431 rows archived, 33 retained in place, 1 moved under `Q` | — |
 | REQ-06 | Commit `03272e29d` | Path text only, per entry in the commit message | — |
 
-The three links that resolve from the source path only are relative links
-from `AR` files to files outside the development root
-(`handoff-11.md:140`, `2026-09-01-eaae1b56.md:82,98`). The planner evaluates
-an archived file's links at its source path, so their targets keep their text.
+The receipt `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` and its copy
+`AR/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` carry root-relative
+targets on lines 82 and 98 (decision DEC-03 of the issue) and hold equal bytes.
+With the same targets in both files the preview is eligible; with them in the
+archive copy alone it blocks on `destination-conflict` for the receipt and
+`unpreservable-layout` for `dev/active/7d824b2f/design.md`.
 
 `rerun`: a fresh preview is eligible, without blocker, and publishes and
 deletes nothing. It does not establish the result of a second `--execute`.
@@ -73,18 +80,12 @@ Each row below is `retained-operational`, empty destination, `complete`.
 | `classification.md`, `plan.md`, `investigation.md`, `breakdown.json` of the epic directory | Relative link targets of the designs above and of each other |
 | `handoff-12.md`, `handoff-13.md` of the epic directory | References of 6dc81018 pinned to commits `623f5568` and `4c70534c` |
 
-Two kept files differ from their archive file by citation repoints of other
-units after the first archive run: `6dc81018-field-capability-dispatch/investigation.md`
-and `eaae1b56/premeasurement-protocol.md`. The plan reports neither as a
+Four kept files differ from their archive file by edits of other units after
+the first archive run: `6dc81018-field-capability-dispatch/{breakdown.json,classification.md,investigation.md}`
+and `eaae1b56/premeasurement-protocol.md`. The plan reports none as a
 conflict. `AR/active/7d7c647c/design.md` holds the bytes of its source
 (commit `1be94823d`): an archive file that differs both from its source and
 from its recorded publication blocks the plan with `destination-conflict`.
-
-## 389aa4de
-
-| File | Tracker parent of issue 389aa4de | Plan row "Active-layout ties" | State |
-|---|---|---|---|
-| `dev/active/389aa4de/receipt-notes.md` | 86b9c719 (`jit graph tree`), state backlog | assigns the entry to 6dc81018 | flat; in no archive plan; manifest row `pending` |
 
 ## Citations
 
@@ -98,6 +99,14 @@ Repointed in commit `44c701933`, path text only:
 | Comments in `AR/active/7d7c647c/probes/trim-logs.sh`, `e6ea0dde/extraction/trim-logs.sh`, `eb9b324c/pilot/pilot-build.sh`, `1ac74567/elaboration/elaborate.sh` | sibling entries |
 | Input paths `LED` in `AR/active/eb9b324c/pilot/pilot-analyse.py` and `SRC` in `AR/active/1ac74567/elaboration/elaborate.sh` | `50b47eae/s5-session`, `34d85cb9/extraction/A8b_lean` |
 
+Repointed in commit `7d18de5f4`, path and link-target text only:
+
+| File | Cites |
+|---|---|
+| `Q/389aa4de/receipt-notes.md:21,39,70` and `:38,43,147` | `AR/active/6dc81018-field-capability-dispatch/handoff.md`, `AR/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` |
+| `AR/active/6dc81018-field-capability-dispatch/handoff-6.md`, `handoff-7.md`, `handoff-8.md` | `Q/389aa4de/receipt-notes.md` |
+| `AR/active/6dc81018-field-capability-dispatch/handoff-11.md:140` | the execution-lead skill, by a root-relative target |
+
 Two repointed command quotations name generated files that no commit holds
 (`34d85cb9/extraction/R2_gf2_core.llbc`, `e6ea0dde/extraction/X3_gf2_core.llbc`).
 
@@ -110,8 +119,9 @@ Citations that keep their bytes:
 | Logs, excerpts and Lean outputs under `AR/active/`, `progress.json` | Tool outputs and continuation JSON |
 | `67048b47-linked-pairs.txt`, `7bac1303-harness-path-trials.txt`, `96cea1b9-archive-rows.txt` | Committed script outputs |
 | `migration/manifest.toml`, `path` fields | The field names the source by schema |
+| `handoff-8.md:31,66` and `progress.json` of this epic directory | Quotations of the review finding and of the owner question on the flat path of 389aa4de; continuation JSON |
 
-`git grep -F` for the five moved entry directories finds no citation in a
+`git grep -F` for the six moved entry directories finds no citation in a
 README, `AGENTS.md`, `docs/` page or Rust source outside `dev/archive/` and
 receipt `inputs/` trees. `scripts/cargo-ci.sh:268` and
 `crates/gf2-core/benches/tuning_calibration.rs:607` cite
@@ -127,4 +137,5 @@ python3 dev/active/fa787f85-documentation-overhaul/migration/check.py
 python3 contrib/gates/docs-mechanical.py
 ```
 
-`migration/check.py` reports no finding on a row of this unit.
+`migration/check.py` reports no finding on a row of this unit; it exits 1 on
+six rows of entries 3be770d5, 4c1e441f, ad2a6a58 and f63a2464.

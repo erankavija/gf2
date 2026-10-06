@@ -25,10 +25,13 @@ a fresh preview. Sections:
   links       inline Markdown links with a local target, outside fenced code, in
               the Markdown files of the archive root and in the Markdown files
               under the active area that a commit of this issue changed after
-              EXECUTION. A link of an archived file that resolves only from
-              the file's plan source path is listed and does not fail.
-  manifest    status of the manifest rows of the container's epic under the
-              active area, entries of EXCLUDED left out.
+              EXECUTION. Each target resolves from the file's own directory,
+              or from the checkout root when it starts with `/`.
+  manifest    the manifest rows under the active area that name the container
+              as epic or owner, entries of EXCLUDED left out: count per entry,
+              disposition, status and directory holding the entry. Each row is
+              complete and its file is at its destination, or at its path when
+              the destination is empty.
 
 Exit 1 on any failed check.
 """
@@ -103,10 +106,8 @@ def entry(path):
     return path[len(ACTIVE) + 1:].split("/", 1)[0] if path.startswith(ACTIVE + "/") else None
 
 
-def unresolved_links(files, mirror=None):
-    """Count local links; split the unresolved ones by whether the target
-    resolves from the file's plan source path, where the planner evaluates it."""
-    total, bad, mirrored = 0, [], []
+def unresolved_links(files):
+    total, bad = 0, []
     for name in files:
         fenced = False
         for number, line in enumerate((ROOT / name).read_text(errors="replace").splitlines(), 1):
@@ -120,14 +121,9 @@ def unresolved_links(files, mirror=None):
                 total += 1
                 local = urllib.parse.unquote(target.split("#", 1)[0])
                 where = ROOT / local.lstrip("/") if local.startswith("/") else (ROOT / name).parent / local
-                if where.exists():
-                    continue
-                source = (mirror or {}).get(name)
-                if source and not local.startswith("/") and ((ROOT / source).parent / local).exists():
-                    mirrored.append(f"{name}:{number} {target}")
-                else:
+                if not where.exists():
                     bad.append(f"{name}:{number} {target}")
-    return total, bad, mirrored
+    return total, bad
 
 
 def main():
@@ -198,35 +194,33 @@ def main():
 
     print("== links")
     archive_md = [f for f in git("ls-files", "--", root).split("\n") if f.endswith(".md")]
-    total, bad, mirrored = unresolved_links(archive_md, {a["destination"]: a["source"] for a in arts if a["destination"]})
-    check(f"{root}: Markdown files {len(archive_md)}, local links {total}", not bad,
-          f"unresolved {len(bad)}, resolving from the plan source path only {len(mirrored)}")
+    total, bad = unresolved_links(archive_md)
+    check(f"{root}: Markdown files {len(archive_md)}, local links {total}", not bad, f"unresolved {len(bad)}")
     outside = sorted(f for f in git("diff", "--name-only", EXECUTION, "--", ACTIVE).split("\n")
                      if f.endswith(".md") and (ROOT / f).is_file() and FOOTER in git("log", "--format=%s", f"{EXECUTION}..HEAD", "--", f))
-    total, bad2, _ = unresolved_links(outside)
+    total, bad2 = unresolved_links(outside)
     check(f"files of this issue under the active area: Markdown files {len(outside)}, local links {total}", not bad2, f"unresolved {len(bad2)}")
     for line in bad + bad2:
         print("  unresolved", line)
-    for line in mirrored:
-        print("  source path only", line)
 
     print("== manifest")
     (manifest,) = [f for f in git("ls-files", "--", ":(glob)**/migration/manifest.toml").split("\n") if f]
     rows = tomllib.loads((ROOT / manifest).read_text())["artifacts"]
-    sources = {a["source"] for a in arts}
     states = collections.Counter()
-    pending = []
+    astray = []
     for row in rows:
-        if row["epic"] != CONTAINER or entry(row["path"]) in EXCLUDED + (None,):
+        name = entry(row["path"])
+        if CONTAINER not in (row["epic"], *row["owners"]) or name in EXCLUDED + (None,):
             continue
-        states[(row["disposition"], row["status"], "in plan" if row["path"] in sources else "not in plan")] += 1
-        if row["status"] != "complete":
-            pending.append(row["path"])
+        home = row["destination"] or row["path"]
+        states[(name, row["disposition"], row["status"], home[:home.rindex(f"/{name}/")])] += 1
+        if row["status"] != "complete" or not (ROOT / home).is_file() or (home != row["path"] and (ROOT / row["path"]).exists()):
+            astray.append(row["path"])
     for key, count in sorted(states.items()):
         print(f"  {count:4d} {' / '.join(key)}")
-    for path in pending:
-        print("  not complete", path)
-    check("rows of plan sources complete", not [p for p in pending if p in sources])
+    for path in astray:
+        print("  not complete or not at its destination", path)
+    check("rows complete, each file at its destination", not astray, f"{sum(states.values())} rows of {len({k[0] for k in states})} entries")
     return 1 if FAILED else 0
 
 
