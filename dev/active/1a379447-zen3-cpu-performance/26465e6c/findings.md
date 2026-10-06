@@ -334,9 +334,9 @@ verdict, decision and outcome
 already superseded: that record was written while its snapshot lacked the
 `Cargo.lock` its receipt pins, a file the v1 branch never committed, so the tool
 rejected it on P-05. The lockfile is committed now from a byte-identical source
-([restoration record](../../a203a23c/restored-inputs.json)) and the pilot
+([restoration record](../a203a23c/restored-inputs.json)) and the pilot
 re-evaluates to the verdict its summary states
-([re-evaluation record](../../a203a23c/receipt-reevaluation.json)). No result here
+([re-evaluation record](../a203a23c/receipt-reevaluation.json)). No result here
 rests on that pilot.
 
 ## Baseline for 5cbb6545

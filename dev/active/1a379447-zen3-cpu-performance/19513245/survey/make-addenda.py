@@ -269,7 +269,7 @@ def main():
             "holdout": {"required": False, "cells": []},
             "cells": cells(),
         }
-        path = f"dev/active/{ISSUE}/addendum-v{version}-{short}-pilot.json"
+        path = f"dev/active/1a379447-zen3-cpu-performance/{ISSUE}/addendum-v{version}-{short}-pilot.json"
         with open(path, "w") as output:
             json.dump(addendum, output, indent=2)
             output.write("\n")

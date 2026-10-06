@@ -23,12 +23,12 @@
 # `target/` and the run is deleted and rebuilt on every invocation. It is a
 # smoke test of the wire, not a measurement, and its numbers decide nothing.
 #
-# Usage (from the repository root): dev/active/19513245/survey/smoke-arms.sh
+# Usage (from the repository root): dev/active/1a379447-zen3-cpu-performance/19513245/survey/smoke-arms.sh
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the repository root' >&2; exit 2; }
 ISSUE=19513245
-SURVEY=dev/active/$ISSUE/survey
+SURVEY=dev/active/1a379447-zen3-cpu-performance/$ISSUE/survey
 TARGET=$repo/target/$ISSUE-survey
 RUNNER=$repo/target/release/benchmark-ab-runner
 # The addendum and the ledger are artifacts the receipt pins by content, and a

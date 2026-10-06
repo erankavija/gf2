@@ -10,7 +10,7 @@ checkable at its location and the findings carry no line numbers of their own.
 The `path` of a claim is repository-relative. The gf2 revision is navigation
 metadata; the campaigns' producing manifests pin the source bytes.
 
-Usage: make-source-evidence.py > dev/active/19513245/survey/source-evidence.json
+Usage: make-source-evidence.py > dev/active/1a379447-zen3-cpu-performance/19513245/survey/source-evidence.json
 """
 
 import json
@@ -24,7 +24,7 @@ FIELD = "crates/gf2-core/src/gf2m/field.rs"
 WIDE = "crates/gf2-core/src/gf2m/wide.rs"
 BATCH = "crates/gf2-core/src/gf2m/batch.rs"
 GFP = "crates/gf2-core/src/gfp/mod.rs"
-SURVEY = "dev/active/19513245/survey/consumer/src"
+SURVEY = "dev/active/1a379447-zen3-cpu-performance/19513245/survey/consumer/src"
 PROTO_LIB = f"{SURVEY}/lib.rs"
 PROTO_TABLE = f"{SURVEY}/table.rs"
 
@@ -150,7 +150,7 @@ def main():
     json.dump({"schema": "bytefield-consumer-source-evidence-v1",
                "note": ("The gf2 revision is navigation metadata; each campaign's producing "
                         "manifest pins the source bytes it measured. Claims whose path is under "
-                        "dev/active/19513245/survey are the prototype's own source."),
+                        "dev/active/1a379447-zen3-cpu-performance/19513245/survey are the prototype's own source."),
                "claims": claims}, sys.stdout, indent=2)
     print()
 

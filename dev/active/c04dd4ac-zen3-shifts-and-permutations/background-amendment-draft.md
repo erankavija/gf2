@@ -5,7 +5,7 @@
 > **Status:** approved by the invoker and applied on 2026-09-28.
 
 Documentation review `228fc432` finding F2 identifies a stale statement in
-story `c04dd4ac`. The [implemented route](../f8dd4dde/retention-rule.md) and
+story `c04dd4ac`. The [implemented route](../1a379447-zen3-cpu-performance/f8dd4dde/retention-rule.md) and
 [confirmation outcome](../00dd43c3/confirmation-outcome.md) establish the
 current behavior.
 

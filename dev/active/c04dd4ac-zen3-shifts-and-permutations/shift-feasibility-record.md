@@ -140,7 +140,7 @@ The AVX2 lane-crossing form remains feasible at Rust 1.95 and unselected in
 this epic for the reason in the plan's decision table. The prototype remains
 planning evidence, not an implementation or a speed claim.
 
-The [retained production route](../f8dd4dde/retention-rule.md) places the BMI2
+The [retained production route](../1a379447-zen3-cpu-performance/f8dd4dde/retention-rule.md) places the BMI2
 funnel in `gf2-kernels-simd`, the owning CPU intrinsic crate. `BitVec` sends
 residual offsets to [`crate::residual_shift`](../../../crates/gf2-core/src/residual_shift.rs),
 which selects the bundle when the non-default `simd` cargo feature and observed

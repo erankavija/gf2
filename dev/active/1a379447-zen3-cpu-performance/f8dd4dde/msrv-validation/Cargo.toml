@@ -20,4 +20,4 @@ name = "residual-shift-msrv-witness"
 path = "src/main.rs"
 
 [dependencies]
-gf2-core = { path = "../../../../crates/gf2-core", features = ["simd", "test-support"] }
+gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "test-support"] }

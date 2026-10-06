@@ -2,7 +2,7 @@
 # Freeze the three confirmation addenda from the committed pilot receipts
 # (jit:19513245).
 #
-# Usage: dev/active/19513245/survey/freeze-confirmations.sh <frozen-utc>
+# Usage: dev/active/1a379447-zen3-cpu-performance/19513245/survey/freeze-confirmations.sh <frozen-utc>
 #
 # Every argument this script passes is the frozen design; the arithmetic is the
 # canonical freezer's, `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`,
@@ -23,7 +23,7 @@ repo=$(git rev-parse --show-toplevel)
 [[ "$PWD" == "$repo" ]] || { echo 'invoke from the repository root' >&2; exit 2; }
 FROZEN=${1:?usage: freeze-confirmations.sh <YYYY-MM-DDTHH:MM:SSZ>}
 ISSUE=19513245
-ACTIVE=dev/active/$ISSUE
+ACTIVE=dev/active/1a379447-zen3-cpu-performance/$ISSUE
 RECEIPTS=dev/bench_results/$ISSUE
 FREEZER=dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py
 
