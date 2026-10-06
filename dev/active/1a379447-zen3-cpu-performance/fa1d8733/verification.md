@@ -45,7 +45,7 @@ of either class, and the script exits 0. Each reader has one disposition:
 | `Cargo.toml` of `gf2-kernels-simd` | Removed: the two `check-cfg` entries. |
 | `tests/harness_contract.rs` of the logical harness | Changed: the plan-projection test passes its candidate arm's flags as an opaque string, and that string names no kernel configuration. |
 | `run-candidate.sh` of the candidate study | Changed: `build`, `smoke` and a `window` or `profile-window` without its committed receipt or profile refuse, and the script names neither configuration; `run-candidate.test.sh` beside it checks the refusals and exits 0. Each pilot receipt holds the launcher it ran under. The launcher's `smoke` action was the one caller of the logical closure's `--check`; no CI step runs either family closure's `--check`. |
-| `portfolio.md` of the candidate study | Kept byte for byte: the unroll pilot receipts pin it by digest. The [corrections](../../bc091474/unroll-variant-corrections.md) give its reading, and the snapshotted launcher's, on a tree without the bodies. |
+| `portfolio.md` of the candidate study | Kept byte for byte: the unroll pilot receipts pin it by digest. The [corrections](../bc091474/unroll-variant-corrections.md) give its reading, and the snapshotted launcher's, on a tree without the bodies. |
 | Smoke plans, candidate disassemblies and profile host records of the candidate study | Kept: each records the flags of the build it describes. |
 | `survey/source-evidence.json` of `fcb04d66` | Kept: the ledger describes the files at the commits its rows record. |
 | Rows of class `receipt`, `receipt-snapshot` and `tracker` | Kept. The `receipt-snapshot` rows under this directory are the `before` bytes. |
@@ -119,16 +119,16 @@ producing-input snapshots only:
   in its file table, its preserved outcomes and its residual gaps; its
   [tables](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md)
   are regenerated for the digests of the documents below;
-- the candidate study's [selection outcome](../../bc091474/pilot-outcome.md),
-  [premeasurement record](../../bc091474/readiness.md) and generated
-  [candidate tables](../../bc091474/candidate-tables.md), whose generator
+- the candidate study's [selection outcome](../bc091474/pilot-outcome.md),
+  [premeasurement record](../bc091474/readiness.md) and generated
+  [candidate tables](../bc091474/candidate-tables.md), whose generator
   checks that each pilot receipt's source snapshot names its factor's
   configuration;
 - the logical-buffer [no-adoption verdict](../fcb04d66/no-change-outcome.md)
   and its [verification record](../fcb04d66/verification.md).
 
 The frozen portfolio keeps its bytes, and the
-[corrections](../../bc091474/unroll-variant-corrections.md) beside it carry
+[corrections](../bc091474/unroll-variant-corrections.md) beside it carry
 the statement.
 
 ## Gates

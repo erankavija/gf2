@@ -29,7 +29,7 @@ Portfolio, "Acceptance and code bounds":
 pilot receipt snapshots under its `inputs/producing` directory, beside the
 manifest that declares the two configuration names. The current kernel source
 and manifest name neither configuration. The
-[reader record](../1a379447-zen3-cpu-performance/fa1d8733/survey/flag-readers.json)
+[reader record](../fa1d8733/survey/flag-readers.json)
 lists each file that names one, with its class.
 
 **Reading used.** "The candidate body" is the body in a pilot receipt's source
