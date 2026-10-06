@@ -1570,6 +1570,26 @@
    "id": "e59f207c",
    "epic": "b4b4b9ee",
    "reason": "eda07788 inspect-sources.py needles not found (found by 7039d680)"
+  },
+  {
+   "id": "3de8d0f3",
+   "epic": "b4b4b9ee",
+   "reason": "19513245 consumer crate fails cargo fmt --check (found by 2e18b37c)"
+  },
+  {
+   "id": "8163dacd",
+   "epic": "b4b4b9ee",
+   "reason": "moved-script literals do not reproduce committed records (19513245 freeze-confirmations.sh, 53c5a8c0 summarize-profile.py) (found by 2e18b37c)"
+  },
+  {
+   "id": "d12e9ded",
+   "epic": "b4b4b9ee",
+   "reason": "19513245 make-source-evidence.py exits 1 (found by 2e18b37c)"
+  },
+  {
+   "id": "c9920dc6",
+   "epic": "b4b4b9ee",
+   "reason": "a203a23c measure.py --assess not idempotent (found by 2e18b37c)"
   }
  ],
  "escalations": [
@@ -1982,8 +2002,8 @@
    "resolution": "Lead (2026-10-06): no owner input needed. `jit doc add --skip-scan` accepts the deep paths and the binary document; the depth budget binds the asset scan. The 58 refused references and 16 that the aborted relink scripts had left name the new paths (commit after 4a23fb49e); `jit validate` exits 0. Their asset metadata is unscanned."
   },
   {
-   "issue": "198aafa3, 7039d680",
-   "question": "OPEN: REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3). Same class in 7039d680: eda07788/survey/freeze-remeasure.py:199,202,203,219 are text of the frozen addendum the script reproduces byte for byte (lane tip 7fd76c6b3).",
+   "issue": "198aafa3, 7039d680, 2e18b37c",
+   "question": "OPEN: REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3). Same class in 7039d680: eda07788/survey/freeze-remeasure.py:199,202,203,219 are text of the frozen addendum the script reproduces byte for byte (lane tip 7fd76c6b3). Same class in 2e18b37c (lane tip d322f4f97): 19513245/survey/make-addenda.py:37 (commit 06fe749d3 reverts the 552a0548d edit of 198aafa3, which broke six frozen addenda), 19513245/survey/summarize-profile.py:67,176 and a203a23c/timing/measure.py:360,766 keep the flat path. The converse defect, scripts whose updated literal no longer reproduces a committed record, is tracked in 8163dacd.",
    "options": [
     "accept both as grounded and amend REQ-04 to exempt literals that reproduce committed bytes",
     "change the literals and the committed bytes"
