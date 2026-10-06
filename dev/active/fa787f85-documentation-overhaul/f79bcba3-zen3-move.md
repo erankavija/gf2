@@ -44,8 +44,8 @@ R/5a25717c-verdicts.sh <verdict-file>
 | Output | Holds | Baseline against repeat |
 |---|---|---|
 | `f79bcba3-state-before.txt`, `f79bcba3-state-after.txt` | `--check` exit status of each live closure generator; each relative Cargo path dependency that names or leaves an entry; each line of entry code matching `parents[n]`, `../..`, `ancestors()` or a quoted `../<name>` | every generator exits 0 in both; each path dependency gains one `../` or the epic directory name, apart from `E/07ca8585/survey/arms/Cargo.toml:34`, which names the `3be770d5` harness beside it and keeps its text; the third section holds 23 lines at the baseline and 8 at the repeat |
-| `f79bcba3-builds-before.txt`, `f79bcba3-builds-after.txt` | per harness manifest: exit status of `cargo +1.95.0 metadata`, exit status of `cargo +1.95.0 build`, first error line | `diff` prints nothing |
-| `f79bcba3-verdicts-before.txt`, `f79bcba3-verdicts-after.txt` | benchmark-acceptance verdict line and findings of each committed `zen3-benchmark-receipt-v1` receipt | `diff` prints nothing; `5a25717c-verdict-baseline.md` cites the pair |
+| `f79bcba3-builds-before.txt` | per harness manifest: exit status of `cargo +1.95.0 metadata`, exit status of `cargo +1.95.0 build`, first error line | the output at the repeat source is the same file: `diff` against it prints nothing |
+| `f79bcba3-verdicts-before.txt` | benchmark-acceptance verdict line and findings of each committed `zen3-benchmark-receipt-v1` receipt | the output at the repeat source is the same file: `diff` against it prints nothing; `5a25717c-verdict-baseline.md` states the repeat |
 
 The third section of the state listing does not match an `os.pardir` chain;
 `E/1d0da41f/survey/summarize.py:24` holds the one such chain of the eight
@@ -53,12 +53,12 @@ entries and gains one level in `05f7559c0`.
 
 ## Harness crates (REQ-03)
 
-`f79bcba3-builds-after.txt` holds one line per manifest the
+`f79bcba3-builds-before.txt` holds one line per manifest the
 `harness-path-dependencies` listing prints for the eight entries.
 
 | Manifest | Dependency resolution | Build on Rust 1.95 |
 |---|---|---|
-| `E/04b85d10/survey/gf2-side/Cargo.toml` | exit 0 | exit 101 at the baseline and at the repeat, first error `error[E0432]: unresolved import gf2_coding::bch::BchEncoder` |
+| `E/04b85d10/survey/gf2-side/Cargo.toml` | exit 0 | exit 101 at the baseline and at the repeat, first error `error[E0432]: unresolved import gf2_coding::bch::BchEncoder`; the port of the crate -> 7ff06801 (jit issue show 7ff06801) |
 | the nine other manifests | exit 0 | exit 0 |
 | `dev/active/f63a2464/survey/arms/Cargo.toml`, which names the `3be770d5` harness | not recorded | `CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh cargo +1.95.0 build --manifest-path dev/active/f63a2464/survey/arms/Cargo.toml` exits 0 at `05f7559c0` |
 
@@ -80,10 +80,11 @@ copies the build inputs alone into a scratch checkout and runs the generator
 there. The line enters both closures in `82ea39747`; in `05f7559c0` each
 closure differs from its parent in the moved paths alone.
 
-`E/1d4fd63d/make-external-producing-inputs.py` offers `--check`, so
-`check-family-producing-closures.py` compares its closure
-`E/1d4fd63d/external-producing-inputs.json` with the tree; `05f7559c0`
-regenerates that closure too, and its diff is the moved paths.
+`check-family-producing-closures.py` checks three closures of the moved
+entries: the two above and `E/1d4fd63d/external-producing-inputs.json`, whose
+generator `E/1d4fd63d/make-external-producing-inputs.py` resolves its paths
+at run time. Each is the output of its generator at `05f7559c0`, and its diff
+in that commit is the moved paths.
 
 `python3 dev/scripts/check-family-producing-closures.py` prints
 `4 family closures enumerate their trees` at each of the six commits.
@@ -111,30 +112,35 @@ because both entries lie under `E`.
 
 ## Flat paths that stay
 
-`R/f79bcba3-remaining.sh <outfile>` lists each tracked file outside `.jit/`
-and outside the `f79bcba3-` files of `R` that holds `dev/active/<entry>` for
-one of the eight entries; `f79bcba3-remaining.txt` is its output at
-`264a453d2`. The script assigns no file to the class `unclassified`.
+`R/f79bcba3-remaining.sh <outfile>` classifies each tracked file outside
+`.jit/` and outside the `f79bcba3-` files of `R` that holds
+`dev/active/<entry>` for one of the eight entries, and prints the files and
+matching lines per class; `f79bcba3-remaining.txt` is its output at
+`264a453d2`. The output holds no line of the class `unclassified`. For a file
+of a class whose ground is tool output,
+`git log -1 --follow --diff-filter=AM --format=%h -- <file>` names the commit.
 
 | Class | Files | Ground |
 |---|---|---|
 | `snapshot` | 688 | receipt `inputs/` snapshots |
 | `receipt-directory` | 372 | receipts, logs and generated tables under `dev/bench_results/` |
-| `data-record` | 77 | JSON, JSON Lines, TSV, text and log files: addenda, producing manifests, derivations, ledgers, smoke and validation records; tool output at the commit the listing names per file |
-| `epic-record` | 10 | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the listing names |
+| `data-record` | 77 | JSON, JSON Lines, TSV, text and log files: addenda, producing manifests, derivations, ledgers, smoke and validation records; tool output at the commit the command above names |
+| `epic-record` | 10 | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the command above names |
 | `frozen-document` | 5 | digest pins of the table above |
 | `manifest` | 1 | `path`, `consumers` and `inbound` fields of the migration manifest |
 | `bench-window` | 1 | `E/bench-window/queue.tsv`; the job key hashes the command text |
-| `lead-state` | 1 | `R/progress.json`, execution state of the epic lead |
+| `tracker-state` | 1 | `R/progress.json`, execution state of the epic |
 | `generated-table` | 1 | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
 | `fixture-layout` | 1 | `dev/active/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
 | `snapshot-path` | 1 | `E/04b85d10/survey/summarize-receipts.py:34`, a path inside a receipt snapshot |
 
 Tracker files under `.jit/` are outside the scan: they are tracker state.
 
-The eight producing manifests of the moved entries other than the three
+The nine producing manifests of the moved entries other than the three
 closures above keep their bytes (REQ-05) and list flat paths; each is in the
-`data-record` class.
+`data-record` class. Three addenda of `E/12fdeb5b` in that class declare
+`family_wise.ledger_path` at the flat path, and a receipt pins each of them;
+locating the ledger without the path -> 3514d822 (jit issue show 3514d822).
 
 ## Checks
 
@@ -179,7 +185,7 @@ jq -r '.documents[]? | select(.commit != null) | .path' .jit/issues/*.json | gre
 |---|---|
 | REQ-01 | table "Entries"; message of `05f7559c0` |
 | REQ-02 | `git ls-files dev/active/<entry>` prints nothing for each of the eight entries; `R/migration/check.py` |
-| REQ-03 | section "Harness crates"; `f79bcba3-builds-after.txt`; `f79bcba3-verdicts-after.txt`; message of `05f7559c0` |
+| REQ-03 | sections "Baseline and repeat" and "Harness crates"; message of `05f7559c0` |
 | REQ-04 | message of `05f7559c0`, list per entry |
 | REQ-05 | checks "Renames", "Byte-fixed data", "Links"; section "Frozen documents" |
 | REQ-06 | sections "Tracker" and "Manifest" |
