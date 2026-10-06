@@ -46,7 +46,6 @@ Known already: `f547c394`, `02b8137c`. Newly found:
 | `dev/active/5cbb6545/addendum-popcount-v4-confirmation.json` | `dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs:52` | same | read |
 | `dev/active/c077a88b/findings.md`, `dev/active/a203a23c/receipt-reevaluation.json` | `dev/scripts/receipt-input-omissions.json:12-13,22-23,...` | `documents` field | text (checker uses only `receipt`/`path` tuples) |
 | `dev/active/c077a88b/survey/harness/Cargo.lock` (snapshot copy) | `dev/scripts/receipt-input-omissions.json:8,18,28,38,48` | `path` under `dev/bench_results/c077a88b/.../inputs/producing/dev/active/c077a88b/...` | identity (tuple must stay "missing"; the path is inside `dev/bench_results`, so a `dev/active` move does not affect it) |
-| `dev/active/d1b4f85e/smoke-run.md`, `dev/active/591a1c5e/smoke-run.md` | `dev/active/fd9d5416/tests/test_render_receipt.py:63-64` | `REPO / "dev/active/..."` | read |
 | `dev/active/1d0da41f`, `dev/active/53c5a8c0` | `dev/active/{1d0da41f,53c5a8c0}/survey/summarize.py:25-26,31-32` | `os.path.join(ROOT, "dev", "active", id)` | read (self) |
 | `dev/active/<epic>/survey/*` harness crates (12fdeb5b, eda07788 x3, 2037941f x2, c7113c5a, 6fb89a3c, 04b85d10, 1d4fd63d x2, 53c5a8c0, 1c602857) | each `Cargo.toml` | `tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }` | relative dep; breaks if the crate's depth changes |
 | `dev/active/1d4fd63d/survey/annotate-asm.py` | `crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt:1406,1415,1423` | `;` comment | excluded (comment) |
@@ -173,7 +172,7 @@ blob and content SHA-256; fixtures carry the path as data.
 | `dev/bench_results/f547c394/...` | `dev/tools/.../tests/protocol_contracts.rs:336,453-454,476,492,996,1761-1765,2482,2664,3601` | fixture literals | read/identity (fixtures) |
 | `dev/bench_results/f547c394/run-smoke-v3.sh` | `dev/active/f547c394/producing-inputs.json` | closure entry | identity |
 | `dev/bench_results/e0251af3-rank-event-rates.md` | `crates/gf2-algebra/tests/rank_event_rates.rs:20,292` | `RECEIPT_FILE` | write |
-| `dev/bench_results/{88ca7d2f,4e732b56}` | `dev/active/fd9d5416/render_receipt.py:550-551`, `tests/test_render_receipt.py:115-116,150`; `dev/active/6fb89a3c/survey/verify-bit-mapping.py:26` | defaults | read |
+| `dev/bench_results/4e732b56` | `dev/active/6fb89a3c/survey/verify-bit-mapping.py:26` | defaults | read |
 | `dev/bench_results` | `.jit/config.toml:163,165` | config | config |
 
 ## dev/reference_data
