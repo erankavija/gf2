@@ -55,4 +55,4 @@ Move commit: `deda5bf29`. Baseline record: [11964cb8-baseline.md](11964cb8-basel
 
 ## Tracker
 
-Reference to the old path: issue `3f664839`, type `design`, label `Preregistered rare-event design`, no `commit` pin. It is relinked by `target/e1f262a7-relink.sh` (uncommitted). The script also rescans `handoff-22.md` (issue `b8206228`) and `dev-path-code-consumers.md` (issue `fa787f85`).
+`jit doc list 3f664839` shows one reference to the design, at the destination path, type `design`, label `Preregistered rare-event design`, without a `commit` pin. No tracker reference names the source path: `grep -l '"dev/active/3f664839/design.md"' .jit/issues/*.json` prints nothing.
