@@ -134,7 +134,7 @@ Decision record, "The question":
 > and QC-aware intra-frame work.
 
 **Corrected count.** The ranking of
-[`3be770d5`](../3be770d5/findings.md) carries two such rows relevant here,
+[`3be770d5`](../1a379447-zen3-cpu-performance/3be770d5/findings.md) carries two such rows relevant here,
 "Quantized/layered decoding" on a comparator estimate and "QC-aware intra-frame
 work" on a labelled estimate. This issue splits the first into families Q and L.
 

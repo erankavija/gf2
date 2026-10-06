@@ -21,7 +21,7 @@ SIMD as a comparator estimate with no gf2 mechanism, and the
 [re-sampled profile](../../bench_results/07ca8585/v4-r1-resampled-profile/profile.md)
 leaves the shared check-node loop as the dominant named decoder work after the
 canonical layout and shared reduction of
-[`07ca8585`](../07ca8585/findings.md). Code claims are in
+[`07ca8585`](../1a379447-zen3-cpu-performance/07ca8585/findings.md). Code claims are in
 [survey/source-evidence.json](survey/source-evidence.json), cited below by
 topic; the register-width forms the kernel needs compile at Rust 1.95 and agree
 with the canonical scalar statements in the
@@ -158,7 +158,7 @@ timed cell. Each family has its own append-only ledger and at most the cell
 count its first confirmatory attempt admits, recomputed from the tooling. A
 timed run is a queue line for the benchmark window; preparation and collection
 are separate entries. The steady-state operation and the recorded corpus are
-those of [`3be770d5`](../3be770d5/findings.md) and
+those of [`3be770d5`](../1a379447-zen3-cpu-performance/3be770d5/findings.md) and
 [`c077a88b`](../c077a88b/findings.md), and each timed execution checks its
 per-frame errors against the prepared quality record.
 
@@ -470,11 +470,11 @@ Manifest source identifiers resolve as follows; the criteria `REQ-01` and
 | `WORKER-BRIEF` | [worker-brief.md](../1a379447-zen3-cpu-performance/worker-brief.md) |
 | `DECISION-RECORD-F63A2464` | [decision-record.md](../f63a2464/decision-record.md), [findings.md](../f63a2464/findings.md), [corrections.md](../f63a2464/corrections.md) |
 | `CONTRACT-REVIEW-F63A2464` | [numerical-contract-review.md](../f63a2464/numerical-contract-review.md) |
-| `PROFILE-3BE770D5` | [findings.md](../3be770d5/findings.md) |
-| `UPDATE-07CA8585` | [findings.md](../07ca8585/findings.md) |
+| `PROFILE-3BE770D5` | [findings.md](../1a379447-zen3-cpu-performance/3be770d5/findings.md) |
+| `UPDATE-07CA8585` | [findings.md](../1a379447-zen3-cpu-performance/07ca8585/findings.md) |
 | `COMPARATOR-C077A88B` | [findings.md](../c077a88b/findings.md) |
 | `CONSUMERS-EDA07788` | [findings.md](../eda07788/findings.md) |
-| `CONSUMERS-12FDEB5B` | [findings.md](../12fdeb5b/findings.md) |
+| `CONSUMERS-12FDEB5B` | [findings.md](../1a379447-zen3-cpu-performance/12fdeb5b/findings.md) |
 | `CALIBRATION-PLAN-63BAD95D` | [calibration-plan.md](../1a379447-zen3-cpu-performance/63bad95d/calibration-plan.md) |
 | `SOURCE-EVIDENCE` | [survey/source-evidence.json](survey/source-evidence.json) |
 | `MSRV-FEASIBILITY` | [feasibility.json](../../bench_results/ed3d490e/intrinsic-feasibility/feasibility.json) |

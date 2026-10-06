@@ -132,7 +132,7 @@ one arm. A selector's effect is a `tuned-portable` candidate against a
 level and differ in selectors alone. The native ladder compares `native`
 against `tuned-portable`. Each comparator-gap cell pairs gf2 and the external
 library at one level; the conservative level is committed evidence (the M4RI
-confirmation the [mid-range synthesis](../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md)
+confirmation the [mid-range synthesis](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md)
 cites).
 
 `tuned-portable` here is defined by the profile's selectors at the portable

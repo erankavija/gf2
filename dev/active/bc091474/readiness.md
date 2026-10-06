@@ -1,6 +1,6 @@
 # Logical candidate premeasurement evidence (jit:bc091474)
 
-The [portfolio](portfolio.md) was committed before either experimental arm was built or sampled. The accepted [baseline and profile](../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md) motivates the two AVX2 loop identities and records the NR constructor's no-candidate outcome. The 64-word generic dispatch-hoist no-win and already-hoisted consumers remain outside this study.
+The [portfolio](portfolio.md) was committed before either experimental arm was built or sampled. The accepted [baseline and profile](../1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md) motivates the two AVX2 loop identities and records the NR constructor's no-candidate outcome. The 64-word generic dispatch-hoist no-win and already-hoisted consumers remain outside this study.
 
 ## Build and semantic result
 

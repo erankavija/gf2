@@ -115,9 +115,9 @@ and the paths under an `inputs` directory are this task's `before` snapshots.
 Each of these states that the unroll bodies exist in the pilot receipts'
 producing-input snapshots only:
 
-- the [mid-range findings](../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md),
+- the [mid-range findings](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md),
   in its file table, its preserved outcomes and its residual gaps; its
-  [tables](../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md)
+  [tables](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md)
   are regenerated for the digests of the documents below;
 - the candidate study's [selection outcome](../../bc091474/pilot-outcome.md),
   [premeasurement record](../../bc091474/readiness.md) and generated

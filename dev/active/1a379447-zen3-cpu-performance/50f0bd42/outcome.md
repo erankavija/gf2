@@ -36,18 +36,18 @@ windows. Their *Selected paths* section is the runtime path evidence: the gf2
 lane and stride each cell resolves, the M4RI fresh or retained route, and the
 loaded shared object with its digest. Their *Conversion and setup costs*
 section reports the construction each arm performs outside its windows. The
-[frozen addendum](../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md#m4ri-charged-components)
+[frozen addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md#m4ri-charged-components)
 fixes which of initialization, packing, product, unpacking, and disposal each
 cell charges inside its timed call. The external build and its commands are
-the [qualification record](../../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt)
-and [build pins](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh)
+the [qualification record](../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt)
+and [build pins](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh)
 in the receipt's producing-input snapshot. The matrices are pinned by the
-workload seeds of the [campaign addendum](../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json)
+workload seeds of the [campaign addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json)
 and the fixture source in the same snapshot.
 
 ## Semantic equivalence
 
-The [release validation record](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt)
+The [release validation record](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt)
 lists the exact-output oracle result for each qualified M4RI shape, including
 the one-bit and word-boundary shapes, against the independent row-parity
 oracle. The [confirmation smoke](confirmation-smoke.json) drives both arms of
@@ -83,11 +83,11 @@ against the fixed family ceiling. It records `eligible`, and it recomputes the
 attempt alpha and P-20's tail support from the ledger and the evaluator
 sources.
 
-The [confirmation addendum](../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json)
+The [confirmation addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json)
 is the canonical freezer's output for the
-[freeze script](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/freeze-m4ri-confirmation.sh)'s
+[freeze script](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/freeze-m4ri-confirmation.sh)'s
 arguments, and its
-[derivation record](../../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation-derivation.txt)
+[derivation record](../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation-derivation.txt)
 sits beside it. It pins the pilot receipt by path and SHA-256, keeps the
 frozen margins, and gives the two fresh mid-range cells the confirmatory role.
 `dense-campaign verify-confirmation` holds it to the pilot transcription and
@@ -122,7 +122,7 @@ carries each cell's interval, pair count, selected paths, and setup costs.
 ## Decision
 
 The decision uses the confirmation receipt only. The
-[frozen addendum](../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md#estimator-confidence-and-multiple-comparisons)
+[frozen addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md#estimator-confidence-and-multiple-comparisons)
 fixes the rule: each cell's interval is taken at the corrected alpha the
 ledger's attempt and the family's reserved comparisons give, and is compared
 with the family's equivalence margin and material-gap threshold. The summary's

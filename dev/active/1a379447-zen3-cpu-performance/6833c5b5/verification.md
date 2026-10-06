@@ -3,7 +3,7 @@
 > **Diátaxis Type:** Reference
 
 The dense-parity
-[source-evidence ledger](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json)
+[source-evidence ledger](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json)
 is a record pinned to the commits its rows record. Each row names a commit, a
 path, a line, the verbatim line and the digest of the whole file, and each
 citation resolves at that commit: the file there has the recorded digest and
@@ -51,7 +51,7 @@ and the first whose content displaces the cited line.
 
 ## Limits
 
-[`make-dense-parity-source-evidence.py`](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py)
+[`make-dense-parity-source-evidence.py`](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py)
 reads each cited file at the commit its ledger row records and reproduces the
 committed ledger byte for byte. It refuses to write a ledger that differs, and
 `--check` compares without writing. The recorded-commits check above verifies
@@ -59,4 +59,4 @@ the ledger independently of the generator.
 
 The documents that cite the ledger and keep their bytes carry their tree
 statement in the
-[dense-parity corrections](../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md).
+[dense-parity corrections](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md).
