@@ -1962,14 +1962,14 @@
   },
   {
    "issue": "f79bcba3, b5b336e5, 602652bf (and the remaining zen3 units)",
-   "question": "OPEN: `jit doc add` (jit 1.0.0) refuses a document or a captured asset whose path exceeds its depth budget (\"capture path ... exceeds the depth budget\"; a nine-component path such as dev/active/1a379447-zen3-cpu-performance/04b85d10/survey/gf2-side/src/bin/consumer-arm.rs fails), and one binary document (1d0da41f/survey/baseline-source.tar.gz, \"is not UTF-8\"). After the lane merge d6657b90e the relink scripts repointed every other reference; the references listed in depth-budget-rejected.txt (owner issue, new path) keep their flat path, which the tree lacks. The criterion \"each tracker document reference names the new path\" cannot hold for them.",
+   "question": "`jit doc add` (jit 1.0.0) refuses a document or a captured asset whose path exceeds its depth budget (\"capture path ... exceeds the depth budget\"; a nine-component path such as dev/active/1a379447-zen3-cpu-performance/04b85d10/survey/gf2-side/src/bin/consumer-arm.rs fails), and one binary document (1d0da41f/survey/baseline-source.tar.gz, \"is not UTF-8\"). After the lane merge d6657b90e the relink scripts repointed every other reference; the references listed in depth-budget-rejected.txt (owner issue, new path) keep their flat path, which the tree lacks. The criterion \"each tracker document reference names the new path\" cannot hold for them.",
    "options": [
     "A: raise or make configurable the depth budget in jit, then rerun the three relink scripts (idempotent; in agent-zen3lane/target)",
     "B: remove the rejected references from their issues",
     "C: amend the criterion to exempt paths jit rejects"
    ],
    "recommendation": "A",
-   "resolution": ""
+   "resolution": "Lead (2026-10-06): no owner input needed. `jit doc add --skip-scan` accepts the deep paths and the binary document; the depth budget binds the asset scan. The 58 refused references and 16 that the aborted relink scripts had left name the new paths (commit after 4a23fb49e); `jit validate` exits 0. Their asset metadata is unscanned."
   },
   {
    "issue": "198aafa3",
@@ -2294,6 +2294,7 @@
   "A unit that deletes Rustdoc from pub items fails REQ-04 (72768e37, aa0558c1), and a unit that restores a doc paraphrasing the body fails REQ-01 (13dfe1a5 code-review at 4293afd8d). Brief both rules together; gf2-core, gf2-sim and gf2-algebra set #![warn(missing_docs)], so a pub item's doc cannot be deleted there.",
   "Reviewers read every hunk of every tagged commit for removed planned-work statements; 'planned work: none' in a body failed four units. Run the deleted-line audit before the first gate and name each id as '<statement> (<file>) -> <id> (jit issue show <id>)'.",
   "A dev/active path in a module doc fails no-dev-path-coupling in review (13dfe1a5) while an @/issue address is classed as planned work: state what the artifact is and name no path.",
-  "A commit subject measured with awk on '%h %s' includes the hash; count ${#s} of the subject string before committing (a 72-character subject needed an amend)."
+  "A commit subject measured with awk on '%h %s' includes the hash; count ${#s} of the subject string before committing (a 72-character subject needed an amend).",
+  "`jit doc add` refuses a path or captured asset beyond its depth budget and a non-UTF-8 document; `--skip-scan` accepts them. A relink script must fall back to `--skip-scan` and must not abort midway: a reference left at an absent path fails `jit validate` and the repo-validate gate for every epic. Run `jit validate` after every relink."
  ]
 }
