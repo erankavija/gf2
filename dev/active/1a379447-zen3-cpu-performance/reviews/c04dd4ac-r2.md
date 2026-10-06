@@ -18,7 +18,7 @@ research review `a81574d2` and holistic review `262b7be8` report no findings.
 
 ## Success criteria
 
-The [publication](../../c04dd4ac-zen3-shifts-and-permutations/publication-findings.md)
+The [publication](../c04dd4ac-zen3-shifts-and-permutations/publication-findings.md)
 and its generated tables map each criterion to durable evidence.
 
 - [x] REQ-01: Frozen protocol/addendum identities, raw paired evidence,

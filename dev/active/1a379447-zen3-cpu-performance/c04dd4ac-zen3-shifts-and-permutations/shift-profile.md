@@ -14,7 +14,7 @@ This report states no measured value. Each quantitative conclusion points to
 its source:
 
 - **tables § `<section>`, row `<cell>`**: a section of the
-  [generated evidence tables](../../bench_results/c04dd4ac/residual-shift-tables.md),
+  [generated evidence tables](../../../bench_results/c04dd4ac/residual-shift-tables.md),
   written by
   [`survey/summarize-shift-receipt.py`](survey/summarize-shift-receipt.py) from
   the committed receipt, its acceptance summary, its execution log, the frozen
@@ -116,16 +116,16 @@ smoke's own record.
 
 Campaign `residual-shift-profile-85fc5ff4-v4` reaches the benchmark window with
 an arm that cannot complete the handshake, and the executor voids it under the
-[protocol's voided-attempt rule](../1a379447-zen3-cpu-performance/f547c394/protocol.md) rather than spending
+[protocol's voided-attempt rule](../f547c394/protocol.md) rather than spending
 its reservation: the defect is procedural and in the attempt's own launch, and
 no result of it is read. Its reservation stays outside the chain the replacement
 attempt reserves on, so the ledger's single line is the replacement campaign's
 own genesis reservation (tables § *Family accounting*).
 
 The aborted stage is preserved whole at
-[`2026-09-16-85fc5ff4-residual-shift-profile-abandoned`](../../bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned/execution.log),
+[`2026-09-16-85fc5ff4-residual-shift-profile-abandoned`](../../../bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned/execution.log),
 and
-[`v4-voided-launch-attempt.json`](../../bench_results/85fc5ff4/v4-voided-launch-attempt.json)
+[`v4-voided-launch-attempt.json`](../../../bench_results/85fc5ff4/v4-voided-launch-attempt.json)
 names the campaign, the addendum digest, the defect, the cells measured and
 unmeasured, and the abort. No figure in this profile comes from it: the stage
 carries no checkpointed unit and no timing window.
@@ -202,7 +202,7 @@ the scalar fallback behind runtime capability detection. This profile remains
 exploratory; feasibility makes no speed claim.
 
 The amended [plan](plan.md) and its
-[re-review](../1a379447-zen3-cpu-performance/reviews/85fc5ff4-r1.md) place the BMI2-gated
+[re-review](../reviews/85fc5ff4-r1.md) place the BMI2-gated
 scalar funnel implementation (`f8dd4dde`) and its A/B confirmation (`00dd43c3`)
 behind this profile, with publication (`a0812b83`) behind the confirmation.
 Both leaves are complete. The [accepted confirmation](../00dd43c3/confirmation-outcome.md)
@@ -223,6 +223,6 @@ profile remains the exploratory workload-cost evidence for the retained route.
 | [`shift-feasibility-record.md`](shift-feasibility-record.md) | The completed REQ-05 planning-time record: both nominated forms feasible at Rust 1.95, with the toolchain, assembly and correctness artefacts |
 | [`confirmation-outcome.md`](../00dd43c3/confirmation-outcome.md) | Accepted A/B verdict and frozen-rule decision to retain the selected BMI2 route |
 | [`survey/shift-source-evidence.json`](survey/shift-source-evidence.json) | The pinned code claims behind every mechanism statement above |
-| [`dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json`](../../bench_results/85fc5ff4/v4-voided-launch-attempt.json) | The voided launch attempt, its preserved stage and its unmeasured cells |
-| [`dev/bench_results/c04dd4ac/residual-shift-profile/`](../../bench_results/c04dd4ac/residual-shift-profile/) | The accepted exploratory receipt, its acceptance summary, execution log, checkpoints and input snapshots |
-| [`dev/bench_results/c04dd4ac/residual-shift-tables.md`](../../bench_results/c04dd4ac/residual-shift-tables.md) | Every figure this report points to |
+| [`dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json`](../../../bench_results/85fc5ff4/v4-voided-launch-attempt.json) | The voided launch attempt, its preserved stage and its unmeasured cells |
+| [`dev/bench_results/c04dd4ac/residual-shift-profile/`](../../../bench_results/c04dd4ac/residual-shift-profile/) | The accepted exploratory receipt, its acceptance summary, execution log, checkpoints and input snapshots |
+| [`dev/bench_results/c04dd4ac/residual-shift-tables.md`](../../../bench_results/c04dd4ac/residual-shift-tables.md) | Every figure this report points to |

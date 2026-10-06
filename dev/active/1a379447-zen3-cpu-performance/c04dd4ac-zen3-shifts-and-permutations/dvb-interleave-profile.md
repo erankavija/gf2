@@ -20,7 +20,7 @@ whole-consumer cell as `regressed`, so no cell reaches the threshold; the
 decomposition table adds the margin, with the two arms' intervals disjoint and
 the gf2 stage below the comparator in every cell. The per-cell decisions and
 intervals are the `Decision` and `Interval` columns of
-[`v4-r2-pilot/acceptance-summary.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md),
+[`v4-r2-pilot/acceptance-summary.md`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md),
 each over the six paired executions its `Pairs` column states. Because the
 disposition nominates nothing, REQ-05 permits this profile to complete; the
 complexity budget, the two-form nomination limit and the planning-time Rust
@@ -64,10 +64,10 @@ authoritative location for every figure below. Each table states the samples it
 summarises and carries the interval the generator's declared method gives that
 sample, or labels the figure descriptive where no interval is available. The
 preserved v4-r2 wall-time profile has its
-[`provenance record`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
+[`provenance record`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
 The fresh nine-repetition perf profile has its own
-[`provenance record`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md)
-and [`session summary`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/profile-summary.md).
+[`provenance record`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md)
+and [`session summary`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/profile-summary.md).
 The tables use the accepted paired receipt for materiality, the preserved
 profile for wall-time composition, and the fresh profile for repeated hardware
 counters, hot symbols and instructions.
@@ -96,7 +96,7 @@ counters, hot symbols and instructions.
   and bytes per call are an exact per-call census, and the wall time beside them
   an across-session median with its interval, in the across-session table; its
   raw source is the session's own `rep-NN/cases.json` records, which
-  [`v4-r2-dynamic-profile/profile-summary.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md)
+  [`v4-r2-dynamic-profile/profile-summary.md`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md)
   renders too. The counting allocator adds relaxed atomics, so those wall times
   explain composition only.
 - **Call graph and hot symbols.** The hot-symbol table gives the selected
@@ -162,20 +162,20 @@ every frozen cell through the shared `benchmark-ab-runner smoke`, whose contract
 ## Measurement record
 
 The protocol-v4 campaign executes into
-[`v4-r2-pilot`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/execution.log),
+[`v4-r2-pilot`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/execution.log),
 checkpointing at two cells per session. Its execution log opens every frozen
 cell, completes every frozen cell at the declared pairs with status `measured`,
 and closes with a terminal `complete` record; the acceptance summary accepts the
 receipt and qualifies it for no production selection.
 
 The preserved
-[`v4-r2-dynamic-profile`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log)
+[`v4-r2-dynamic-profile`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log)
 records nine completed sessions of direct scatter, the simulation stage,
 packed-boundary xdsopl and the full max-log BICM channel for every MODCOD. Its
 wall-time intervals and allocation census remain in the attribution tables.
 
 The fresh
-[`v4-r3-dynamic-profile`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/repetitions.log)
+[`v4-r3-dynamic-profile`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/repetitions.log)
 closes with nine completed repetitions. Every repetition records all sixteen
 cases, successful counters and hot samples, and instruction listings. The
 generated tables carry nine-repetition intervals for counters, hot symbols and
@@ -189,7 +189,7 @@ The preserved v4-r2 session records its executable digest per repetition but
 no source or build closure, so
 [`survey/make-profile-provenance.py`](survey/make-profile-provenance.py)
 reconstructs one from committed objects and publishes it as
-[`v4-r2-dynamic-profile-provenance.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
+[`v4-r2-dynamic-profile-provenance.md`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
 The generator locates the measured tree through the revision the session's host
 record carries as informational and accepts that tree only on content: its
 committed harness-validation record must state the executable digest every
@@ -206,7 +206,7 @@ generator's docstring states this limit and the rest of the method.
 The preserved v4-r2 session contains empty `.annotate.txt` files and stderr
 that names an option rejection. Offline annotation of its retained data
 succeeds with both command forms, as the
-[`review record`](../1a379447-zen3-cpu-performance/reviews/9fb40c83-r4.md)
+[`review record`](../reviews/9fb40c83-r4.md)
 documents. [`survey/render-hot-instructions.sh`](survey/render-hot-instructions.sh)
 produces its instruction listings from those retained samples without a new
 measurement. The fresh v4-r3 launcher records its listings in each repetition.
@@ -214,10 +214,10 @@ measurement. The fresh v4-r3 launcher records its listings in each repetition.
 One attempt of this family is voided: campaign
 `v4-r1-9fb40c83-dvb-interleave-profile` aborts on a procedural defect in its
 own launch before any result is read, under the voided-attempt rule of
-[`protocol.md`](../1a379447-zen3-cpu-performance/f547c394/protocol.md). Its stage is preserved whole at
-[`v4-r1-pilot-abandoned`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log)
+[`protocol.md`](../f547c394/protocol.md). Its stage is preserved whole at
+[`v4-r1-pilot-abandoned`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log)
 and
-[`v4-voided-profile-attempt.json`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json)
+[`v4-voided-profile-attempt.json`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json)
 records the campaign, the addendum digest, the defect, the cells measured and
 unmeasured and the abort. Its reservation does not enter the chain, so `v4-r2`
 holds sequence zero.

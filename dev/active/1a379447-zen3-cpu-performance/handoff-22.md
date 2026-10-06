@@ -54,7 +54,7 @@ None. Session ended at the invoker's request; the scheduled timer remains author
 ## Reference artefacts
 
 - Epic and issues: `jit issue show 1a379447`, `jit issue show 50f0bd42`; progress is `progress.json` in this directory.
-- Shift closure: [final review](reviews/c04dd4ac-r2.md), [pitfall audit](reviews/c04dd4ac-pitfall-audit.md), [publication](../c04dd4ac-zen3-shifts-and-permutations/publication-findings.md).
+- Shift closure: [final review](reviews/c04dd4ac-r2.md), [pitfall audit](reviews/c04dd4ac-pitfall-audit.md), [publication](c04dd4ac-zen3-shifts-and-permutations/publication-findings.md).
 - M4RI: [preparation](50f0bd42/preparation.md), [approved amendment](2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md), [canonical v2](2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md), [preserved v1](2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md).
 - Queue and runner: `bench-window/queue.tsv`, `bench-window/run-window.sh`. Logs live under `.agents/bench-window`; each campaign's own execution log is authoritative.
 - Scratch audits and gate summaries: `/tmp/gf2-wave3-session26/`. Durable JIT gate records retain the full findings.

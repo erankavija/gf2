@@ -51,6 +51,6 @@
 
 - Epic: `jit issue show 1a379447`; [progress](progress.json), [worker brief](worker-brief.md), [measurement contract](measurement-contract.md).
 - [Candidate readiness](bc091474/readiness.md), [portfolio](bc091474/portfolio.md), [candidate launcher](bc091474/run-candidate.sh).
-- [ISA-L pilot](2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isal-base-gap.json), [residual-shift pilot](../00dd43c3/pilot-addendum.json).
+- [ISA-L pilot](2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isal-base-gap.json), [residual-shift pilot](00dd43c3/pilot-addendum.json).
 - [Queue](bench-window/queue.tsv), [window runner](bench-window/run-window.sh); runtime log `.agents/bench-window/window.log`.
 - Pinned out-of-wave trees: agent-0a357f94 at a00540a8f (ad2a6a58), agent-9fb40c83 at 706450eed (f63a2464), agent-c04dd4ac at 897ca69ab (4c1e441f). Foreign agent-02b8137c-run must not be touched.

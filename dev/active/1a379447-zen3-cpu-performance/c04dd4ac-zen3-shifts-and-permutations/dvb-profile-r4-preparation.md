@@ -3,7 +3,7 @@
 > **Diátaxis Type:** Research note
 
 The accepted protocol-v4 paired receipt at
-[`v4-r2-pilot`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json)
+[`v4-r2-pilot`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json)
 continues to decide materiality. The fresh dynamic profile writes to
 `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/`.
 Its nine repetitions each collect the declared hardware counters, hot symbols,
@@ -14,7 +14,7 @@ append-only profile log closes all nine repetitions, and its raw counter and
 sample files support the generated intervals and provenance closure.
 
 The exact queue line is in
-[`bench-window/queue.tsv`](../1a379447-zen3-cpu-performance/bench-window/queue.tsv).
+[`bench-window/queue.tsv`](../bench-window/queue.tsv).
 The launcher prints and appends the authoritative profile log, checks its
 runtime producing-input snapshot on resume, and preserves an interrupted
 repetition before retrying it. The snapshot covers declared producing behavior,
