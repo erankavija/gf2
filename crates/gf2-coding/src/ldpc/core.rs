@@ -4,6 +4,7 @@
 use crate::ldpc::edge_layout::EdgeLayout;
 use crate::ldpc::min_sum::{min_sum_check_row, MinSumRule};
 use crate::llr::Llr;
+pub use crate::traits::DecodeOutcome;
 use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::sparse::SpBitMatrixDual;
 use gf2_core::BitVec;
@@ -868,23 +869,9 @@ impl LdpcDecoder {
             iterations,
             converged,
             syndrome_check_passed,
+            queries: None,
         }
     }
-}
-
-/// Outcome of a decode that writes its codeword into a caller-provided buffer.
-///
-/// The fields carry the same meanings as the corresponding fields of
-/// [`DecoderResult`], which owns its decoded bits; this type owns nothing and
-/// is returned by [`LdpcDecoder::decode_codeword_into`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct DecodeOutcome {
-    /// Number of BP iterations performed.
-    pub iterations: usize,
-    /// Whether the decoder converged to a valid codeword.
-    pub converged: bool,
-    /// Whether the final hard decisions satisfy every parity check.
-    pub syndrome_check_passed: bool,
 }
 
 impl SoftDecoder for LdpcDecoder {
@@ -915,6 +902,7 @@ impl IterativeSoftDecoder for LdpcDecoder {
             iterations,
             converged,
             syndrome_check_passed: syndrome_passed,
+            queries: _,
         } = outcome;
 
         // Message bit i is located at codeword position systematic_cols[i],
