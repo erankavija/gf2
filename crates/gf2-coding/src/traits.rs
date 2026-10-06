@@ -1679,12 +1679,20 @@ pub trait SoftDecoder {
     /// Returns the number of codeword bits (length).
     fn n(&self) -> usize;
 
-    /// Decodes the LLRs of one codeword and returns the message bits.
+    /// Decodes the LLRs of one codeword into a word of
+    /// [`soft_decoded_len`](Self::soft_decoded_len) bits.
     ///
     /// # Panics
     ///
     /// Panics if `llrs.len() != n()`
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec;
+
+    /// Returns the number of bits [`decode_soft`](Self::decode_soft) and
+    /// [`decode_soft_with_result`](Self::decode_soft_with_result) return: the
+    /// `k()` message bits, unless the implementer returns another word.
+    fn soft_decoded_len(&self) -> usize {
+        self.k()
+    }
 
     /// Decodes and returns the bits with decoder metadata; the default
     /// reports [`DecoderResult::success`].
@@ -1704,6 +1712,13 @@ pub trait IterativeSoftDecoder: SoftDecoder {
     /// `max_iterations`.
     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult;
 
+    /// Returns the number of bits
+    /// [`decode_iterative`](Self::decode_iterative) returns: the `k()`
+    /// message bits, unless the implementer returns another word.
+    fn iterative_decoded_len(&self) -> usize {
+        self.k()
+    }
+
     /// Returns the number of iterations used in the last decode.
     fn last_iteration_count(&self) -> usize;
 
@@ -1722,11 +1737,13 @@ pub trait IterativeSoftDecoder: SoftDecoder {
 /// # Implementers
 ///
 /// Every [`SoftDecoder`] is a batch decoder of granularity one that decodes
-/// each frame with [`SoftDecoder::decode_soft_with_result`]. For
+/// each frame with [`SoftDecoder::decode_soft_with_result`], into words of
+/// [`SoftDecoder::soft_decoded_len`] bits. For
 /// [`LdpcDecoder`](crate::ldpc::LdpcDecoder) and
 /// [`GldpcDecoder`](crate::gldpc::GldpcDecoder) that path is their
-/// hard-decision `decode_soft`; [`IterativeBatchDecoder`] reaches their
-/// iterative decoding.
+/// hard-decision `decode_soft`, which for `LdpcDecoder` returns all `n`
+/// codeword bits; [`IterativeBatchDecoder`] reaches their iterative decoding,
+/// into words of [`IterativeSoftDecoder::iterative_decoded_len`] bits.
 ///
 /// # Allocation
 ///
@@ -1744,7 +1761,9 @@ pub trait BatchSoftDecoder {
     /// Returns the number of LLRs in one frame.
     fn frame_len(&self) -> usize;
 
-    /// Returns the number of bits in one decoded word.
+    /// Returns the number of bits in each word
+    /// [`decode_batch`](Self::decode_batch) writes; the implementer chooses
+    /// whether that is a message or a codeword.
     fn decoded_len(&self) -> usize;
 
     /// Returns the number of frames the implementer decodes together. A batch
@@ -1806,7 +1825,7 @@ impl<D: SoftDecoder + ?Sized> BatchSoftDecoder for D {
     }
 
     fn decoded_len(&self) -> usize {
-        self.k()
+        self.soft_decoded_len()
     }
 
     fn batch_granularity(&self) -> usize {
@@ -1827,7 +1846,8 @@ impl<D: SoftDecoder + ?Sized> BatchSoftDecoder for D {
 
 /// Batch decoder of granularity one over an [`IterativeSoftDecoder`]: each
 /// frame is decoded by [`IterativeSoftDecoder::decode_iterative`] under one
-/// iteration cap.
+/// iteration cap, into a word of
+/// [`IterativeSoftDecoder::iterative_decoded_len`] bits.
 #[derive(Debug, Clone)]
 pub struct IterativeBatchDecoder<D> {
     decoder: D,
@@ -1860,7 +1880,7 @@ impl<D: IterativeSoftDecoder> BatchSoftDecoder for IterativeBatchDecoder<D> {
     }
 
     fn decoded_len(&self) -> usize {
-        self.decoder.k()
+        self.decoder.iterative_decoded_len()
     }
 
     fn batch_granularity(&self) -> usize {
@@ -2599,6 +2619,124 @@ mod batch_decoder_tests {
         assert_eq!(adapter.decoded_len(), K);
         assert_eq!(adapter.batch_granularity(), 1);
         assert_eq!(adapter.max_iterations(), 7);
+    }
+
+    /// `count` frames of `n` LLRs whose sign patterns differ.
+    fn mixed_sign_frames(n: usize, count: usize) -> Vec<Vec<Llr>> {
+        (0..count)
+            .map(|f| {
+                (0..n)
+                    .map(|i| {
+                        let magnitude = 1.0 + (i % 3) as f32;
+                        Llr::new(if (7 * i + 3 * f) % 11 == 0 {
+                            -magnitude
+                        } else {
+                            magnitude
+                        })
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+
+    fn assert_words_have_reported_length<D: BatchSoftDecoder + ?Sized>(
+        decoder: &mut D,
+        frames: &[Vec<Llr>],
+        expected: &[BitVec],
+    ) {
+        let (decoded, _) = decode(decoder, frames);
+        for (f, word) in decoded.iter().enumerate() {
+            assert_eq!(word.len(), decoder.decoded_len(), "frame {f}");
+            assert_eq!(word, &expected[f], "frame {f}");
+        }
+    }
+
+    fn assert_soft_path_reports_its_word_length<D: SoftDecoder>(mut decoder: D) {
+        let frames = mixed_sign_frames(decoder.n(), 4);
+        let expected: Vec<BitVec> = frames
+            .iter()
+            .map(|frame| decoder.decode_soft_with_result(frame).decoded_bits)
+            .collect();
+        assert_words_have_reported_length(&mut decoder, &frames, &expected);
+    }
+
+    fn assert_iterative_path_reports_its_word_length<D: IterativeSoftDecoder>(mut decoder: D) {
+        let cap = 5;
+        let frames = mixed_sign_frames(decoder.n(), 4);
+        let expected: Vec<BitVec> = frames
+            .iter()
+            .map(|frame| decoder.decode_iterative(frame, cap).decoded_bits)
+            .collect();
+        let mut adapter = IterativeBatchDecoder::new(decoder, cap);
+        assert_words_have_reported_length(&mut adapter, &frames, &expected);
+    }
+
+    fn ldpc_7_4() -> crate::ldpc::LdpcCode {
+        let edges = [
+            (0, 0),
+            (0, 1),
+            (0, 3),
+            (1, 0),
+            (1, 2),
+            (1, 4),
+            (2, 1),
+            (2, 2),
+            (2, 5),
+        ];
+        let code = crate::ldpc::LdpcCode::from_edges(3, 7, &edges);
+        assert_ne!(code.k(), code.n());
+        code
+    }
+
+    #[test]
+    fn ldpc_default_paths_write_words_of_the_reported_length() {
+        use crate::ldpc::LdpcDecoder;
+
+        assert_soft_path_reports_its_word_length(LdpcDecoder::new(ldpc_7_4()));
+        assert_iterative_path_reports_its_word_length(LdpcDecoder::new(ldpc_7_4()));
+    }
+
+    #[test]
+    fn gldpc_default_paths_write_words_of_the_reported_length() {
+        use crate::gldpc::{GldpcDecoder, QcGldpcCode};
+
+        let code = || QcGldpcCode::lentmaier(7, 4, 1);
+        assert_soft_path_reports_its_word_length(GldpcDecoder::new(code()));
+        assert_iterative_path_reports_its_word_length(GldpcDecoder::new(code()));
+    }
+
+    #[test]
+    fn rate_matched_nr_default_paths_write_words_of_the_reported_length() {
+        use crate::ldpc::nr_5g::Nr5gRateMatchedDecoder;
+        use crate::ldpc::QuasiCyclicLdpc;
+
+        let code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 49);
+        assert_soft_path_reports_its_word_length(code.clone());
+        assert_soft_path_reports_its_word_length(Nr5gRateMatchedDecoder::new(code.clone()));
+        assert_iterative_path_reports_its_word_length(Nr5gRateMatchedDecoder::new(code));
+    }
+
+    #[test]
+    fn orbgrand_soft_path_writes_words_of_the_reported_length() {
+        use crate::grand::{OrbGrand, OrbGrandConfig};
+
+        let h = gf2_core::bitmatrix![
+            1, 1, 0, 1, 1, 0, 0;
+            1, 0, 1, 1, 0, 1, 0;
+            0, 1, 1, 1, 0, 0, 1
+        ];
+        assert_soft_path_reports_its_word_length(OrbGrand::new(h, OrbGrandConfig::default()));
+    }
+
+    #[test]
+    fn osd_soft_path_writes_words_of_the_reported_length() {
+        use crate::linear::LinearBlockCode;
+        use crate::osd::{GeneratorMatrixOsdDecoder, OsdConfig};
+
+        assert_soft_path_reports_its_word_length(GeneratorMatrixOsdDecoder::new(
+            LinearBlockCode::hamming(3),
+            OsdConfig::new(2),
+        ));
     }
 
     #[test]
