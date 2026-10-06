@@ -782,7 +782,7 @@
      "short_id": "2596b143",
      "title": "Record the final Rustdoc example census and doctest timing",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "3759f995-edc4-4061-8b45-0ec30078a691",
@@ -906,7 +906,7 @@
      "short_id": "e1f262a7",
      "title": "Move the 3f664839 design entry under its epic dir",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "ec655592-d647-4fbc-90de-ef44ed313067",
@@ -962,7 +962,7 @@
      "short_id": "b23c364a",
      "title": "Decouple and move the 4e732b56 baseline survey under the BCH epic dir",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "blocked"
     }
    ]
   },
@@ -988,7 +988,7 @@
      "short_id": "fca578b1",
      "title": "Audit the permanent surface against the docs invariants",
      "classification": "implementation",
-     "status": "rework"
+     "status": "done"
     }
    ]
   },
@@ -1843,6 +1843,16 @@
    ],
    "recommendation": "A",
    "resolution": ""
+  },
+  {
+   "issue": "b23c364a",
+   "question": "OPEN: REQ-04 (the gf2-side crate builds on Rust 1.95 after the move) cannot hold: the crate fails with E0432 unresolved import gf2_coding::bch::BchEncoder at the baseline commit and after the move alike; commit 9591b0674 removed that API. Path dependencies resolve (cargo metadata). Branch worktree-agent-b23c364a (tip 0a8712dd8) is unmerged. dev/active/fd9d5416/receipt-protocol.md:7,154 link ../4e732b56/, so b23c364a and 7dbcde0c land together or docs-mechanical fails between them.",
+   "options": [
+    "amend REQ-04 to path-dependency resolution with the build result unchanged from the baseline, and file a debt issue for the port",
+    "port the harness to the current BCH API first"
+   ],
+   "recommendation": "first option",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -1908,7 +1918,8 @@
   "616e1d7c": 2,
   "0c5aa3b7": 2,
   "0a0ece44": 1,
-  "fca578b1": 1
+  "fca578b1": 1,
+  "e1f262a7": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2120,7 +2131,8 @@
   "Session 10 (2026-10-06): owner instruction: subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Batch 1 dispatched 00:58 EEST at 412b3cd49 in worktrees created by `git worktree add` (no cache seeding, no builds): 616e1d7c rework 2, 7dbcde0c, 0a0ece44, b2bb1065, ec655592, 0c5aa3b7 (sonnet), fdb998ec; fix lane agent-fixlane7 (sonnet) for 8466f5ae and 0b8f09f3 at b68598fc6. Read-only explorer writes decoupling facts for the eight flat entries to the session scratchpad. Bench window timer gf2-bench-window-20261006 armed for 02:00 EEST: no build or gate from 01:55 until window.log shows window end. Build units for after the window: e1f262a7, 7039d680, 602652bf, f79bcba3 (2037941f is done, its entry moves), 198aafa3, then 2596b143.",
   "Session 10 gate batch 1 at 6a38cc8b6 (cargo-ci 4 min warm): fdb998ec, 0b8f09f3, 8466f5ae, b2bb1065 done. 0c5aa3b7 doc-review F1 and 0a0ece44 code-review F1 fail on one class: citations of a moved path left in non-pinned active documents under a \"historical\" or \"copy of descriptions\" ground. Accepted grounds for a remaining old path: digest pin at file:line, marker-backed archive, receipts and inputs/ snapshots, tool output at a named commit, manifest schema fields, tracker state. Brief every move unit with this. Pinned tracker references stay untouched (old path at pinned commit). 0a0ece44 cargo-ci failed once on gf2-sim GPU AWGN tests (SIGABRT, 15 s timeout) in the evaluate-many rerun: infrastructure, rerun.",
   "Session 10 gate batch 2 at c1dd3218c: 0c5aa3b7 (two reworks), 0a0ece44 (one rework), ec655592 (first run, after a pre-gate fix of the retained-citation class) done. Lessons: a move unit scopes Markdown by `git ls-files -- <dir> | grep` at any depth and leaves no manifest row of its directories pending; a dataset README that Rustdoc cites stays beside its dataset (0c5aa3b7, as the OSD READMEs); after repointing links inside a tracker-referenced document, rescan the reference with `jit doc add` (asset metadata), pinned references excepted.",
-  "Session 10 after the window (ended 02:09 EEST): b959ffe8 done on the first gate run. fca578b1 failed code-review and doc-review on one finding (deferred divergences neither fixed nor tracked); thirteen issues filed under b4b4b9ee and rework 1 sent. The session hit its usage limit at 02:29 and resumed at 04:01. e1f262a7 (sonnet) and b23c364a (opus) dispatched at 4dfbab9ce in cache-seeded worktrees. Blocked on owner rulings: 5ec5dcc1, 7dbcde0c, 616e1d7c, and the zen3 cluster (f79bcba3, 198aafa3, 7039d680, 602652bf, decoupling tasks T2 to T4). After fca578b1 merges: 2596b143."
+  "Session 10 after the window (ended 02:09 EEST): b959ffe8 done on the first gate run. fca578b1 failed code-review and doc-review on one finding (deferred divergences neither fixed nor tracked); thirteen issues filed under b4b4b9ee and rework 1 sent. The session hit its usage limit at 02:29 and resumed at 04:01. e1f262a7 (sonnet) and b23c364a (opus) dispatched at 4dfbab9ce in cache-seeded worktrees. Blocked on owner rulings: 5ec5dcc1, 7dbcde0c, 616e1d7c, and the zen3 cluster (f79bcba3, 198aafa3, 7039d680, 602652bf, decoupling tasks T2 to T4). After fca578b1 merges: 2596b143.",
+  "Session 10: fca578b1 done after rework 1 (thirteen b4b4b9ee issues cited in its record). e1f262a7 done after one lead record fix: a record must not name an uncommitted relink script or describe the tracker relink as outstanding; state the committed tracker reference. A preregistration keeps its bytes even when no digest of it is committed (the lead wrongly had e1f262a7 repoint design.md:517 and reverted it before merge). 2596b143 dispatched at cac8fa20e (opus, cache-seeded worktree). Unmerged branches awaiting owner rulings: worktree-agent-7dbcde0c, worktree-agent-616e1d7c, worktree-agent-b23c364a."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
