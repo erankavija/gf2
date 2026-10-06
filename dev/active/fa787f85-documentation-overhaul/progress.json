@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 11,
+ "current_wave": 12,
  "waves": [
   {
    "wave_number": 1,
@@ -810,7 +810,7 @@
      "short_id": "616e1d7c",
      "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "83f9ce69-6d18-4767-ac9c-6b2f00485581",
@@ -864,35 +864,35 @@
      "short_id": "198aafa3",
      "title": "Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "5ec5dcc1-5344-4754-ad35-3e6ce3a327e7",
      "short_id": "5ec5dcc1",
      "title": "Move the 02b8137c validation journal under its epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "602652bf-0388-4604-882b-f874efff83c2",
      "short_id": "602652bf",
      "title": "Move the f547c394 protocol inputs under their epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "7039d680-06da-481e-b000-5f9bba44e9ee",
      "short_id": "7039d680",
      "title": "Move the addendum fixture entries under the zen3 epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "7dbcde0c-3a5c-472e-8c41-e5e1e8d71bfa",
      "short_id": "7dbcde0c",
      "title": "Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "b2bb1065-a8aa-4af7-a7d8-4f800ec8cf5a",
@@ -920,21 +920,21 @@
      "short_id": "f6148d1e",
      "title": "Move the dbd8787d campaign declaration entry under its epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "f694f59a-bf27-42d5-8197-b68b60b5bf37",
      "short_id": "f694f59a",
      "title": "Move the a83583e0 campaign declaration entry under its epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "f79bcba3-ec86-49c2-82a1-1689a67e6015",
      "short_id": "f79bcba3",
      "title": "Move zen3 survey-harness entries 04b85d10 to 3be770d5 under the epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "fdb998ec-6042-4112-8bf9-1f179128d62b",
@@ -961,6 +961,27 @@
      "id": "b23c364a-b92a-4824-8377-1965244cf80b",
      "short_id": "b23c364a",
      "title": "Decouple and move the 4e732b56 baseline survey under the BCH epic dir",
+     "classification": "implementation",
+     "status": "done"
+    },
+    {
+     "id": "b5b336e5-5eab-4877-8a48-256e6bf97bee",
+     "short_id": "b5b336e5",
+     "title": "Decouple the candidate scripts and move bc091474 under the zen3 epic dir",
+     "classification": "implementation",
+     "status": "blocked"
+    },
+    {
+     "id": "2e18b37c-22c7-46fa-bb57-42eee5353c0e",
+     "short_id": "2e18b37c",
+     "title": "Move entries f8dd4dde, a203a23c and 19513245 under the zen3 epic dir",
+     "classification": "implementation",
+     "status": "blocked"
+    },
+    {
+     "id": "cc060974-b76c-4ca0-8a59-c326e2043f23",
+     "short_id": "cc060974",
+     "title": "Decouple and move the residual-shift entries 00dd43c3 and c04dd4ac",
      "classification": "implementation",
      "status": "blocked"
     }
@@ -1590,6 +1611,11 @@
    "id": "c9920dc6",
    "epic": "b4b4b9ee",
    "reason": "a203a23c measure.py --assess not idempotent (found by 2e18b37c)"
+  },
+  {
+   "id": "c3ef9ee7",
+   "epic": "b4b4b9ee",
+   "reason": "c04dd4ac make-shift-source-evidence.py exits 1 (found by cc060974)"
   }
  ],
  "escalations": [
@@ -2002,11 +2028,11 @@
    "resolution": "Lead (2026-10-06): no owner input needed. `jit doc add --skip-scan` accepts the deep paths and the binary document; the depth budget binds the asset scan. The 58 refused references and 16 that the aborted relink scripts had left name the new paths (commit after 4a23fb49e); `jit validate` exits 0. Their asset metadata is unscanned."
   },
   {
-   "issue": "198aafa3, 7039d680, 2e18b37c",
-   "question": "OPEN: REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3). Same class in 7039d680: eda07788/survey/freeze-remeasure.py:199,202,203,219 are text of the frozen addendum the script reproduces byte for byte (lane tip 7fd76c6b3). Same class in 2e18b37c (lane tip d322f4f97): 19513245/survey/make-addenda.py:37 (commit 06fe749d3 reverts the 552a0548d edit of 198aafa3, which broke six frozen addenda), 19513245/survey/summarize-profile.py:67,176 and a203a23c/timing/measure.py:360,766 keep the flat path. The converse defect, scripts whose updated literal no longer reproduces a committed record, is tracked in 8163dacd.",
+   "issue": "198aafa3, 7039d680, 2e18b37c, cc060974",
+   "question": "OPEN: REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3). Same class in 7039d680: eda07788/survey/freeze-remeasure.py:199,202,203,219 are text of the frozen addendum the script reproduces byte for byte (lane tip 7fd76c6b3). Same class in 2e18b37c (lane tip d322f4f97): 19513245/survey/make-addenda.py:37 (commit 06fe749d3 reverts the 552a0548d edit of 198aafa3, which broke six frozen addenda), 19513245/survey/summarize-profile.py:67,176 and a203a23c/timing/measure.py:360,766 keep the flat path. The converse defect, scripts whose updated literal no longer reproduces a committed record, is tracked in 8163dacd. Same class in cc060974 against its REQ-01 (no literal names dev/active/): in the c04dd4ac entry survey/freeze-shift-addendum.py:19 and make-dvb-addendum.py:28 (ledger_path of frozen addenda), make-profile-provenance.py:39-47,218 (paths of the measured revision), make-voided-attempt.py:30,102,103, make-voided-attempt-record.py:18,43,49,50 and summarize-shift-receipt.py:32 keep flat paths as record text. The c04dd4ac breakdown.json keeps 14 flat paths (class breakdown-manifest in cc060974-remaining.txt; four name files that never existed).",
    "options": [
-    "accept both as grounded and amend REQ-04 to exempt literals that reproduce committed bytes",
-    "change the literals and the committed bytes"
+    "amend the literal criteria of the four units (198aafa3 REQ-04, 7039d680 REQ-05, 2e18b37c REQ-04, cc060974 REQ-01) to exempt text a script reproduces from a frozen document or committed record, and accept breakdown.json as kept",
+    "change the literals and regenerate the committed bytes"
    ],
    "recommendation": "the amendment",
    "resolution": ""
@@ -2310,7 +2336,8 @@
   "Session 11 owner instruction (2026-10-06): never stop to ask; a task needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when the current and the next wave finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Owner rulings this session: zen3 entries move now and the parallel session conforms (in-flight branches 4337c02e, bfc2ceab); 616e1d7c REQ-04 amended (DEC-04). Peer lead gf2-ad: no build, cargo-ci or gate from 01:55 EEST until window.log shows window end; bench-window/ and the 1a379447 progress.json stay unedited; merges and gate batches are announced both ways. Filed: b5b336e5, 2e18b37c, cc060974 (zen3 decoupling moves), 5b3e7c81 (02b8137c move, b4b4b9ee). Lane order: f79bcba3, b5b336e5, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 in worktree agent-zen3lane. Manifest rows whose source another epic removed (ad2a6a58 runner-smoke.txt, f63a2464 qc-arm-smoke.rs) need a disposition in 198aafa3.",
   "Session 11: 616e1d7c done (gate batch at fc571c890). Review lesson repeated: link every unit record and output with jit doc add BEFORE gating (7dbcde0c, b23c364a, 5ec5dcc1 failed on it), and keep volatile counts out of records (5ec5dcc1 F2, single-source-prose). A verifier run inside a worker worktree counts that worktree's untracked target/ files and its stale .jit snapshot: regenerate committed verifier outputs on main after the merge. f6148d1e and f694f59a are blocked on owner input (declarations name siblings by flat path). Zen3 lane (worktree agent-zen3lane, unmerged): f79bcba3, b5b336e5, 602652bf done by workers; 198aafa3 running; merge to main waits for the peer's BATCH-END.",
   "Session 11: lane units f79bcba3, b5b336e5, 602652bf merged on main at d6657b90e (clean merge of 3f1433616); relink scripts ran in a tolerant copy (add failure skips the removal). 198aafa3 continues on the lane branch.",
-  "Session 11: 5ec5dcc1 done. b5b336e5 passes cargo-ci, docs-mechanical and code-review at 365557a77; doc-review fails on the issue description's flat path (owner question). File move-unit descriptions without a path that the unit removes."
+  "Session 11: 5ec5dcc1 done. b5b336e5 passes cargo-ci, docs-mechanical and code-review at 365557a77; doc-review fails on the issue description's flat path (owner question). File move-unit descriptions without a path that the unit removes.",
+  "Session 11: the seven zen3 lane units are merged on main (merges d6657b90e, 99841ab2d, ffa978709 and the merge of db9f06677); 27 entries live under dev/active/1a379447-zen3-cpu-performance/; tracker references relinked by a generic pass (dangling unpinned reference -> counterpart under the epic directory, `--skip-scan` fallback); `jit validate` exits 0. The 63bad95d generators (make-calibration-budget.py, make-route-inventory.py) rewrite their outputs with other bytes on the moved tree: owned by open issue 63bad95d, whose lead regenerates them. Flat directories left under dev/active: 02b8137c (held, 5b3e7c81), dbd8787d and a83583e0 (blocked), and the retained or empty leftovers of 6dc81018."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
