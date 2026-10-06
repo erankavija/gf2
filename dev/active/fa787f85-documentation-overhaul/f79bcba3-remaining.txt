@@ -1,11 +1,12 @@
 bench-window 1 9
 data-record 77 466
-epic-record 10 281
+epic-record 11 286
 fixture-layout 1 3
 frozen-document 5 8
 generated-table 1 5
 manifest 1 492
 receipt-directory 372 2768
+session-record 1 1
 snapshot 688 3548
 snapshot-path 1 1
 tracker-state 1 2
