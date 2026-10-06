@@ -883,14 +883,22 @@ impl SoftDecoder for LdpcDecoder {
         self.code.n()
     }
 
+    /// Returns the hard decisions of all `n` LLRs.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llrs.len() != n`.
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-        // For non-iterative interface, just return hard decisions on input LLRs
         assert_eq!(llrs.len(), self.n());
         let mut decoded = BitVec::with_capacity(self.n());
         for &llr in llrs {
             decoded.push_bit(llr.hard_decision());
         }
         decoded
+    }
+
+    fn soft_decoded_len(&self) -> usize {
+        self.n()
     }
 }
 
