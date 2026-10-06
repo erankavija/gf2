@@ -750,129 +750,97 @@ mod tests {
 
         #[test]
         fn test_avx2_add5_matches_scalar_l0() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_add(0);
         }
 
         #[test]
         fn test_avx2_sub5_matches_scalar_l0() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_sub(0);
         }
 
         #[test]
         fn test_avx2_mul5_matches_scalar_l0() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_mul(0);
         }
 
         #[test]
         fn test_avx2_neg5_matches_scalar_l0() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_neg(0);
         }
 
         #[test]
         fn test_avx2_add5_matches_scalar_l4() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_add(4);
         }
 
         #[test]
         fn test_avx2_sub5_matches_scalar_l4() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_sub(4);
         }
 
         #[test]
         fn test_avx2_mul5_matches_scalar_l4() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_mul(4);
         }
 
         #[test]
         fn test_avx2_neg5_matches_scalar_l4() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_neg(4);
         }
 
         #[test]
         fn test_avx2_add5_matches_scalar_l16() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_add(16);
         }
 
         #[test]
         fn test_avx2_sub5_matches_scalar_l16() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_sub(16);
         }
 
         #[test]
         fn test_avx2_mul5_matches_scalar_l16() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_mul(16);
         }
 
         #[test]
         fn test_avx2_neg5_matches_scalar_l16() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_neg(16);
         }
 
         #[test]
         fn test_avx2_add5_matches_scalar_l64() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_add(64);
         }
 
         #[test]
         fn test_avx2_sub5_matches_scalar_l64() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_sub(64);
         }
 
         #[test]
         fn test_avx2_mul5_matches_scalar_l64() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_mul(64);
         }
 
         #[test]
         fn test_avx2_neg5_matches_scalar_l64() {
-            if !has_avx2_f5() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2_f5())]);
             check_avx2_neg(64);
         }
 
@@ -890,9 +858,7 @@ mod tests {
 
             #[test]
             fn test_avx2_add5_proptest((n_words, seed_a, seed_b) in f5_word_batch_strategy()) {
-                if !has_avx2_f5() {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", has_avx2_f5())]);
                 let (b0a, b1a, b2a) = make_f5_words(n_words, seed_a);
                 let (b0b, b1b, b2b) = make_f5_words(n_words, seed_b);
                 let mut avx_out0 = vec![0u64; n_words];
@@ -919,9 +885,7 @@ mod tests {
 
             #[test]
             fn test_avx2_sub5_proptest((n_words, seed_a, seed_b) in f5_word_batch_strategy()) {
-                if !has_avx2_f5() {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", has_avx2_f5())]);
                 let (b0a, b1a, b2a) = make_f5_words(n_words, seed_a);
                 let (b0b, b1b, b2b) = make_f5_words(n_words, seed_b);
                 let mut avx_out0 = vec![0u64; n_words];
@@ -948,9 +912,7 @@ mod tests {
 
             #[test]
             fn test_avx2_mul5_proptest((n_words, seed_a, seed_b) in f5_word_batch_strategy()) {
-                if !has_avx2_f5() {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", has_avx2_f5())]);
                 let (b0a, b1a, b2a) = make_f5_words(n_words, seed_a);
                 let (b0b, b1b, b2b) = make_f5_words(n_words, seed_b);
                 let mut avx_out0 = vec![0u64; n_words];
@@ -977,9 +939,7 @@ mod tests {
 
             #[test]
             fn test_avx2_neg5_proptest((n_words, seed_a, _seed_b) in f5_word_batch_strategy()) {
-                if !has_avx2_f5() {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", has_avx2_f5())]);
                 let (b0, b1, b2) = make_f5_words(n_words, seed_a);
                 let mut avx_out0 = vec![0u64; n_words];
                 let mut avx_out1 = vec![0u64; n_words];

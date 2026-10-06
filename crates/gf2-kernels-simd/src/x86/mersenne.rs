@@ -278,9 +278,7 @@ mod tests {
 
     #[test]
     fn batch_mul_exact_multiple_of_8() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u32> = (0..16u32).map(|i| i * 12345 % P31).collect();
         let b: Vec<u32> = (0..16u32).map(|i| i * 67890 % P31).collect();
         let mut out = vec![0u32; 16];
@@ -293,9 +291,7 @@ mod tests {
 
     #[test]
     fn batch_mul_with_tail() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u32> = (0..13u32).map(|i| i * 12345 % P31).collect();
         let b: Vec<u32> = (0..13u32).map(|i| i * 67890 % P31).collect();
         let mut out = vec![0u32; 13];
@@ -308,9 +304,7 @@ mod tests {
 
     #[test]
     fn batch_mul_boundary_values() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a = vec![0u32, 1, P31 - 1, P31 / 2, 1, P31 - 1, 0, P31 / 3];
         let b = vec![P31 - 1, 0, P31 - 1, 2, P31 / 2, 1, 0, 3];
         let mut out = vec![0u32; 8];
@@ -323,9 +317,7 @@ mod tests {
 
     #[test]
     fn batch_dot_matches_scalar() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &len in &[0, 1, 7, 8, 9, 16, 17, 100, 1024] {
             let a: Vec<u32> = (0..len as u32)
                 .map(|i| (i.wrapping_mul(17)) % P31)
@@ -345,9 +337,7 @@ mod tests {
 
     #[test]
     fn batch_mul_add_matches_scalar() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u32> = (0..16u32).map(|i| (i * 17) % P31).collect();
         let b: Vec<u32> = (0..16u32).map(|i| (i * 29 + 3) % P31).collect();
         let initial_acc: Vec<u32> = (0..16u32).map(|i| (i * 31) % P31).collect();

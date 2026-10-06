@@ -45,4 +45,4 @@ pub use ldpc::{
 };
 pub use linear::{LinearBlockCode, SyndromeTableDecoder};
 pub use llr::Llr;
-pub use traits::{DecoderResult, GeneratorMatrixAccess};
+pub use traits::{DecodeOutcome, DecoderResult, GeneratorMatrixAccess};

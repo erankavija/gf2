@@ -290,14 +290,13 @@ mod tests {
     fn clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host() {
         use std::arch::is_x86_feature_detected;
 
-        if !(is_x86_feature_detected!("avx2")
-            && is_x86_feature_detected!("vpclmulqdq")
-            && is_x86_feature_detected!("pclmulqdq")
-            && is_x86_feature_detected!("sse4.1"))
-        {
-            eprintln!("Skipping: host lacks AVX2+VPCLMULQDQ+PCLMULQDQ+SSE4.1");
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq+pclmulqdq+sse4.1",
+            is_x86_feature_detected!("avx2")
+                && is_x86_feature_detected!("vpclmulqdq")
+                && is_x86_feature_detected!("pclmulqdq")
+                && is_x86_feature_detected!("sse4.1"),
+        )]);
 
         let fns = detect_with_clmul_batch_preference(ClmulBatchLane::Ymm)
             .expect("a PCLMULQDQ host publishes a GF(2^m) bundle");
@@ -313,9 +312,7 @@ mod tests {
     /// The published lane tag accompanies the published batch kernel.
     #[test]
     fn clmul_batch_path_accompanies_clmul_batch_fn() {
-        let Some(fns) = detect() else {
-            return; // no PCLMULQDQ on this host
-        };
+        let fns = crate::contract::require_detected("gf2m::detect()", detect());
         assert_eq!(
             fns.clmul_batch_fn.is_some(),
             fns.clmul_batch_path.is_some(),
@@ -346,10 +343,10 @@ mod tests {
     fn test_gf256_mul() {
         use std::arch::is_x86_feature_detected;
 
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
 
         let fns = detect().unwrap();
 
@@ -375,9 +372,10 @@ mod tests {
     fn test_gf16_mul() {
         use std::arch::is_x86_feature_detected;
 
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
 
         let fns = detect().unwrap();
         let m = 4;

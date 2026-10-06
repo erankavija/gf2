@@ -396,9 +396,7 @@ mod tests {
 
     #[test]
     fn csa_matches_the_reference_across_block_boundaries() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for len in LENGTHS {
             for (label, words) in [
                 ("random", pattern(len, 0x5cbb_6545 ^ len as u64)),
@@ -414,9 +412,7 @@ mod tests {
 
     #[test]
     fn fused_csa_matches_the_reference_across_block_boundaries() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for len in LENGTHS {
             let lhs = pattern(len, 0xa1 ^ len as u64);
             let rhs = pattern(len, 0xb2 ^ len as u64);
@@ -433,9 +429,7 @@ mod tests {
 
     #[test]
     fn fused_csa_counts_the_shorter_operand() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let lhs = vec![u64::MAX; CSA_BLOCK_WORDS + 3];
         let rhs = vec![u64::MAX; 5];
         // SAFETY: AVX2 was detected above.
@@ -446,9 +440,7 @@ mod tests {
 
     #[test]
     fn scalar_popcnt_matches_the_reference() {
-        if !std::arch::is_x86_feature_detected!("popcnt") {
-            return;
-        }
+        crate::contract::require(&[("popcnt", std::arch::is_x86_feature_detected!("popcnt"))]);
         for len in [0, 1, 2, 3, 4, 7, 8, 63, 64, 65] {
             let words = pattern(len, 0xc3 ^ len as u64);
             // SAFETY: POPCNT was detected above.

@@ -565,17 +565,17 @@ mod tests {
     /// empty/identity/all-ones/zero-row contract.
     #[test]
     fn test_shared_permanent_backend_behavioral_suite() {
-        let mut backends: Vec<(&str, BatchBackend)> = vec![
+        let backends: Vec<(&str, BatchBackend)> = vec![
             ("generic Ryser", ryser_batch_backend),
             ("paper reference", reference_batch_backend),
             ("scalar bipedal", scalar_batch_backend),
             ("public dispatcher", dispatcher_batch_backend),
             ("four-lane batch", permanent_bipedal3_batch),
+            #[cfg(feature = "parallel")]
+            ("parallel bipedal", parallel_batch_backend),
+            #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+            ("singleword SIMD", singleword_simd_batch_backend),
         ];
-        #[cfg(feature = "parallel")]
-        backends.push(("parallel bipedal", parallel_batch_backend));
-        #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
-        backends.push(("singleword SIMD", singleword_simd_batch_backend));
 
         for (name, backend) in backends {
             shared_permanent_behavioral_suite(name, backend);

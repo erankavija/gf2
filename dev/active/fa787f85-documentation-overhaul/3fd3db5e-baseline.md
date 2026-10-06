@@ -51,3 +51,32 @@ from its committed window run; this command prints nothing:
 E=$(dirname "$(git ls-files ':(glob)**/*-fd9d5416-bch-performance-receipt.md')")
 python3 -B "$(dirname "$(dirname "$T")")/render_receipt.py" "$E"/*-d1b4f85e-w1w2 | diff - "$E"/*-fd9d5416-bch-performance-receipt.md
 ```
+
+## Repeat with the entries under the general BCH epic directory
+
+Source: `3720a3304dd7be8cbefea5f617ada6230be3fd9e`, the
+commit that moves the renderer, its test and the two smoke-run entries; the
+renderer and the test are byte-identical renames.
+
+| Part of the capture | Result against [3fd3db5e-before.txt](3fd3db5e-before.txt) |
+| --- | --- |
+| Test results of `RenderReceiptTest` | identical |
+| Synthetic receipt | identical apart from three paths in lines 14 and 44 |
+| Capture SHA-256 | `c0bd5c71fcd36267d35fa482d862dce87f63c68121937f91a5ff186cb7cece00` |
+
+The renderer prints its own path, its protocol's path and the located mapping
+document's path as it observes them at run time: line 14 holds the first two
+and line 44 the third. The three paths differ from the baseline by the
+directory level alone: with the directory above each entry removed from them,
+this prints nothing:
+
+```
+{ python3 -B "$T" -v RenderReceiptTest 2>&1 | sed -E 's/ in [0-9.]+s$/ in <t>s/'
+  python3 -B "$R/3fd3db5e-synthetic-receipt.py" "$T"; } |
+  sed -E 's#(dev/active/)[^/`]+/(fd9d5416|591a1c5e)/#\1\2/#g' | diff - "$R/3fd3db5e-before.txt"
+```
+
+The command under *Committed receipt* prints the same two differences at lines
+3 and 33 of the committed fd9d5416 receipt. The receipt keeps its bytes; its
+re-render belongs to the open issue that owns it -> fd9d5416
+(`jit issue show fd9d5416`).

@@ -345,9 +345,7 @@ mod tests {
     }
 
     fn run_for_primes(test: impl Fn(u16)) {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         // Cover small medium primes and the reference prime 65521.
         // 257 = smallest medium prime above the byte-lane cutoff.
         // 65521 = reference (largest prime under 2^16).

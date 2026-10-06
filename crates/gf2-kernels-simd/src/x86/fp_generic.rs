@@ -417,9 +417,7 @@ mod tests {
 
     #[test]
     fn batch_mul_matches_scalar_word_boundaries() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
 
         for &(p, p_inv) in &[(P61, p_inv(P61)), (P63, p_inv(P63))] {
             for &len in &[0usize, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257] {

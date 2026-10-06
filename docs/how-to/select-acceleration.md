@@ -101,7 +101,7 @@ carry-less-multiply fold families, the last two through the
 bounds from a measurement on the target host:
 
 ```rust
-use gf2_coding::tuning::{CodingTuning, EncodeSelectors};
+use gf2_coding::tuning::{CodingSelectors, CodingTuning, EncodeSelectors};
 use gf2_core::tuning::{self, CompiledProfileProvenance, PreparedEnvelope, ProfileId};
 
 // Table family from redundancy 32 at any batch length; bit-sliced and fold
@@ -109,7 +109,10 @@ use gf2_core::tuning::{self, CompiledProfileProvenance, PreparedEnvelope, Profil
 let encode = EncodeSelectors::try_new(32, 1, 64, 64)?;
 let id = ProfileId::parse("bch-encode-local")?;
 let prepared = PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
-    .insert(CodingTuning::from_selectors(encode))?
+    .insert(CodingTuning::from_selectors(CodingSelectors {
+        encode,
+        ..CodingSelectors::CONSERVATIVE
+    }))?
     .build()?;
 tuning::install(prepared)?;
 ```

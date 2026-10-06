@@ -4,9 +4,9 @@ Each claim below names its measurement method and states its workload,
 baseline, host, build and measurement date, and links the evidence that
 produced it at a fixed commit; that commit is the claim's source identity
 unless its Build line names a measured source revision.
-Ratios hold for the stated host and build. A claim appears only where a
-receipt measures the code path the library ships. Other pages cite these
-anchors instead of restating figures.
+Ratios hold for the stated host and build. The page admits a claim only with
+a committed receipt for its stated workload. Other pages cite these anchors
+instead of restating figures.
 
 ## Methodology
 

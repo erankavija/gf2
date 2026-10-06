@@ -38,6 +38,7 @@ Supported configurations, limits, evidence methods and stable contracts, placed 
 | [Supported configurations](reference/supported-configurations.md) | Toolchain, platforms, CPU and GPU requirements, Cargo features, installation and limitations |
 | [Standards conformance](reference/standards-conformance.md) | Supported DVB-T2 and 5G NR (`@/citation/ThreeGpp2017`) code configurations, bit order and conformance evidence |
 | [Performance evidence](reference/performance-evidence.md) | Measurement methodology and commit-pinned evidence for each performance claim |
+| [LDPC decoder numerical contract](reference/ldpc-decoder-numerical-contract.md) | Floating-point rules of the flooding min-sum LDPC decoder and the clauses binding a multi-frame decoder |
 
 ## Crates
 

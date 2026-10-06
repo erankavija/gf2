@@ -309,7 +309,7 @@ names where one consumer's improvement evidence is taken and adds no cell to
 consumes. The witnesses are `crates/gf2-coding/benches/bch_encode_w1.rs` (W1)
 and `crates/gf2-coding/benches/bch_genmatrix.rs` (W2), which share the § 2
 row table through `crates/gf2-coding/benches/bch_workloads.rs`; the window
-runner is `dev/active/d1b4f85e/run.sh`. The cells this subsection adds beyond
+runner is `dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`. The cells this subsection adds beyond
 §§ 2–6:
 
 * **Nonbinary rows.** The evidence protocol's corpus rows N1–N4

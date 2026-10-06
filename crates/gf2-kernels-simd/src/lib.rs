@@ -20,6 +20,8 @@ mod x86;
 pub mod bch_encode;
 pub mod bipedal;
 pub mod clmul_scalar;
+#[cfg(test)]
+mod contract;
 pub mod fp65537;
 pub mod fp_generic;
 pub mod fp_medium;

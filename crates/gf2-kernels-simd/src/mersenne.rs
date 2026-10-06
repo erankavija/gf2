@@ -107,10 +107,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_mul() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("mersenne::detect()", detect());
         let a: Vec<u32> = (0..50u32).map(|i| (i * 12345) % P31).collect();
         let b: Vec<u32> = (0..50u32).map(|i| (i * 67890 + 7) % P31).collect();
         let mut out = vec![0u32; 50];
@@ -123,10 +120,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_dot() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("mersenne::detect()", detect());
         for &len in &[0usize, 1, 7, 8, 100, 1024] {
             let a: Vec<u32> = (0..len as u32).map(|i| (i * 17) % P31).collect();
             let b: Vec<u32> = (0..len as u32).map(|i| (i * 23 + 5) % P31).collect();

@@ -76,6 +76,9 @@ SIMD and scalar routes run shared behavioral suites, for example
 `gf2-core`. Test binaries compiled without `simd`, such as
 [`m4rm_tiled_effective_no_simd.rs`](../../crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs),
 pin the scalar route's behavior.
+[`scripts/scalar-lane-tests.sh`](../../scripts/scalar-lane-tests.sh) runs the
+`gf2-algebra` and `gf2-coding` suites with their default features without
+`simd` and prints the feature list Cargo resolves for the build.
 
 ## HIP backend
 
