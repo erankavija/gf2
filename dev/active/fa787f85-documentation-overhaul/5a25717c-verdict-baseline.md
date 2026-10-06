@@ -64,3 +64,15 @@ git log --diff-filter=A --format=%H -- "$A"
 "$R/5a25717c-verdicts.sh" "$PWD/target/5a25717c-verdicts-amendment.txt"
 diff "$PWD/target/5a25717c-verdicts-amendment.txt" "$R/5a25717c-verdicts-after.txt"
 ```
+
+## Repeat at the f79bcba3 entry move
+
+The same commands at `b05286e53614b62324f985832af766423849465c`, the parent of
+the f79bcba3 commits, and at `264a453d22787531c8e021b38fad061a63592638`,
+after eight zen3 entries move under the epic directory, write
+`f79bcba3-verdicts-before.txt` and `f79bcba3-verdicts-after.txt`. The listings are identical; this command prints
+nothing:
+
+```
+diff "$R/f79bcba3-verdicts-before.txt" "$R/f79bcba3-verdicts-after.txt"
+```

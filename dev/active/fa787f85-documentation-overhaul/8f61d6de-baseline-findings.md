@@ -11,10 +11,10 @@ table quotes an unresolvable address on purpose (8f61d6de DEC-01).
 | `dev/active/1a379447-zen3-cpu-performance/9f0e385e/coverage-addressability.md:19` | `unresolved-item` | `@/issue/c04dd4ac/requirement/REQ-06` | Example of an address that does not resolve. |
 
 Each row of the second table is a relative link in a frozen addendum or
-comparator specification of the mid-range entry. A harness constant or a
-receipt pins the SHA-256 of the file, and the link text counts directory
-levels from the flat entry location (`f79bcba3-zen3-move.md`, section
-"Frozen documents").
+comparator specification of the mid-range entry. A harness constant, a
+receipt or a record of the receipt directory holds the SHA-256 of the file,
+and the link text counts directory levels from the flat entry location
+(`f79bcba3-zen3-move.md`, section "Frozen documents").
 
 | Location | Class | Target |
 |---|---|---|
