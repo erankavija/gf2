@@ -7,7 +7,7 @@ Usage:
                          --output <addendum> --record <derivation.txt>
                          [--cell <cell-id> ...] [--selection-rationale <text>]
                          [--resolution <float> --resolution-derivation <file>]
-                         [--resolution-decimals <n>]
+                         [--resolution-decimals <n>] [--frozen-rule <document>]
                          [--holdout-cells <declaration.json>] [--purpose <purpose>]
 
 The pilot's acceptance summary holds every cell's percentile interval at the
@@ -55,6 +55,18 @@ alpha, or P-20's endpoint shift between seed streams — supplies that value wit
 width computed here, which stays the floor, and the record carries the
 derivation verbatim so the frozen number remains reproducible from committed
 bytes.
+
+The floor covers the whole pilot unless the family froze, before its pilot,
+both the confirmatory cell set and a resolution rule over those cells.
+`--frozen-rule` names the document that does so, and the floor narrows to the
+retained cells only when all of the following hold: the pilot receipt pins the
+document's digest among its producing inputs; the document's table rows that
+end in a `confirmatory` column name exactly the `--cell` selection; and its
+prose sizes the resolution as the largest relative bootstrap half-width over
+its confirmatory cells. A document that fails any of them leaves the
+whole-pilot floor in force. The record states the floor's scope, the document
+and its digest, each cell the floor covers and each exploratory cell it
+excludes, whose half-width stays in the record's cell table.
 """
 
 import argparse
@@ -62,6 +74,28 @@ import copy
 import hashlib
 import json
 import math
+import re
+
+RULE_SENTENCE = re.compile(
+    r"largest relative bootstrap half-width over (?:its|the \w+) confirmatory cells")
+CONFIRMATORY_ROW = re.compile(r"\| `([^`]+)` \|(?:.*\|)? confirmatory \|")
+
+
+def retained_floor_refusal(path, receipt, selected):
+    """Why the document at `path` does not narrow the floor to `selected`, or `None`."""
+    with open(path, "rb") as handle:
+        rule_bytes = handle.read()
+    pinned = receipt.get("source", {}).get("producing", {}).get("behavior_sha256", {})
+    if pinned.get(path) != hashlib.sha256(rule_bytes).hexdigest():
+        return "the pilot receipt does not pin the frozen rule"
+    text = rule_bytes.decode()
+    declared = [match.group(1) for match in map(CONFIRMATORY_ROW.fullmatch, text.splitlines())
+                if match]
+    if not declared or set(declared) != set(selected):
+        return "the frozen rule declares other confirmatory cells than the selection"
+    if not RULE_SENTENCE.search(" ".join(text.split())):
+        return "the frozen rule sizes no resolution over its confirmatory cells"
+    return None
 
 
 def main():
@@ -83,6 +117,7 @@ def main():
     parser.add_argument("--resolution", type=float)
     parser.add_argument("--resolution-derivation")
     parser.add_argument("--resolution-decimals", type=int, default=2)
+    parser.add_argument("--frozen-rule")
     parser.add_argument("--holdout-cells")
     parser.add_argument("--purpose")
     args = parser.parse_args()
@@ -90,6 +125,8 @@ def main():
         raise SystemExit("a cell selection needs both --cell and --selection-rationale")
     if (args.resolution is None) != (args.resolution_derivation is None):
         raise SystemExit("a supplied resolution needs both a value and its derivation")
+    if args.frozen_rule and not (args.cells and args.resolution is not None):
+        raise SystemExit("a frozen rule needs a cell selection and a supplied resolution")
     replacements = {
         "worthwhile_speedup": (args.worthwhile_speedup, "rationale", args.worthwhile_rationale),
         "equivalence_margin": (args.equivalence_margin, "equivalence_rationale", args.equivalence_rationale),
@@ -151,10 +188,12 @@ def main():
         f"{'cell':<36}{'pairs':>6}{'estimate':>12}{'lower':>12}{'upper':>12}{'rel_half':>10}",
     ]
     widest = 0.0
+    halves = {}
     for cell in summary["cells"]:
         interval = cell["interval"]
         estimate = interval["estimate"]
         half = max(abs(estimate - interval["lower"]), abs(interval["upper"] - estimate)) / estimate
+        halves[cell["cell_id"]] = half
         widest = max(widest, half)
         lines.append(f"{cell['cell_id']:<36}{cell['pairs']:>6}{estimate:>12.5g}{interval['lower']:>12.5g}"
                      f"{interval['upper']:>12.5g}{half:>10.4f}")
@@ -162,6 +201,23 @@ def main():
     step = 10 ** decimals
     resolution = math.ceil(widest * step) / step
     lines += ["", f"widest relative half-width   {widest:.6f}"]
+    if args.frozen_rule:
+        refusal = retained_floor_refusal(args.frozen_rule, receipt, args.cells)
+        if refusal:
+            lines.append(f"floor scope                  whole pilot: {refusal}")
+        else:
+            with open(args.frozen_rule, "rb") as handle:
+                rule_sha = hashlib.sha256(handle.read()).hexdigest()
+            retained = [cell_id for cell_id in halves if cell_id in args.cells]
+            widest = max(halves[cell_id] for cell_id in retained)
+            resolution = math.ceil(widest * step) / step
+            lines += ["floor scope                  retained cells",
+                      f"frozen rule                  {args.frozen_rule}",
+                      f"rule sha256                  {rule_sha} (pinned by the pilot receipt)"]
+            lines += [f"floor cell                   {cell_id}" for cell_id in retained]
+            lines += [f"excluded from floor          {cell_id} (exploratory; half-width in its row above)"
+                      for cell_id in halves if cell_id not in args.cells]
+            lines.append(f"widest retained half-width   {widest:.6f}")
     if args.resolution is not None:
         if args.resolution < resolution:
             raise SystemExit(

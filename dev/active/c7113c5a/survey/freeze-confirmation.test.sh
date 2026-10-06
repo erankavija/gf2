@@ -18,7 +18,15 @@
 #      total, the attempt allocation and the corrected level distinctly, and
 #      never calls the attempt allocation "family-wise alpha";
 #   3. `--resolution-decimals 3` rounds the same pilot's widest half-width up
-#      to the next 0.001 in the addendum and in the record.
+#      to the next 0.001 in the addendum and in the record;
+#   4. every committed derivation record freezes again to its committed
+#      addendum and record bytes (`rederive-confirmation.py`);
+#   5. a frozen rule the pilot receipt pins, declaring the confirmatory cells
+#      and the resolution rule over them, floors a supplied resolution at the
+#      retained cells' width, and the record names the excluded cells;
+#   6. a supplied resolution below that retained-cells floor is refused;
+#   7. a rule the pilot receipt does not pin, and a selection other than the
+#      one the rule declares, keep the whole-pilot floor.
 #
 # Usage (from the repository root): freeze-confirmation.test.sh
 set -euo pipefail
@@ -97,5 +105,87 @@ if f"frozen measurement resolution {frozen:.3f}\n" not in record:
     raise SystemExit("case three decimals: the record does not state the frozen value")
 PY
 echo "case three decimals: rounds the widest half-width up to the next 0.001"
+
+# Case 4: every committed confirmation re-derives byte for byte.
+mapfile -t records < <(git grep -l '^frozen measurement resolution' -- 'dev/active/*.txt')
+python3 -B "$(dirname "$FREEZER")/rederive-confirmation.py" "$fixture/rederived" "${records[@]}" \
+  >"$fixture/rederived.txt" \
+  || { echo "case committed records: a committed confirmation no longer re-derives" >&2
+       grep -v '^same ' "$fixture/rederived.txt" >&2; exit 1; }
+echo "case committed records: ${#records[@]} committed confirmations re-derive byte for byte"
+
+# Cases 5 to 7 freeze the five narrow cells of the same pilot; its sixth cell
+# is the widest. The rule document exists only in the fixture, and the pinned
+# variant of the pilot records its digest the way a receipt pins a producing
+# input.
+RULE=rule.md
+SELECTED=(clmul-wide-9w-owned clmul-wide-4w-accumulate clmul-wide-1w-dispatch-overhead
+          clmul-wide-2w-dispatch-overhead clmul-wide-16w-dispatch-overhead)
+{
+  echo 'The pilot-derived resolution is the largest relative bootstrap half-width'
+  echo 'over the five confirmatory cells at the corrected alpha.'
+  echo
+  echo '| Cell | Role in the confirmation |'
+  echo '|---|---|'
+  for cell in "${SELECTED[@]}"; do echo "| \`$cell\` | confirmatory |"; done
+} >"$fixture/$RULE"
+PINNED=pinned-pilot
+mkdir "$fixture/$PINNED"
+python3 - "$fixture" "$PILOT" "$PINNED" "$RULE" <<'PY'
+import hashlib, json, sys
+fixture, pilot, pinned, rule = sys.argv[1:]
+receipt = json.load(open(f"{fixture}/{pilot}/receipt.json"))
+digest = hashlib.sha256(open(f"{fixture}/{rule}", "rb").read()).hexdigest()
+receipt["source"]["producing"]["behavior_sha256"][rule] = digest
+encoded = json.dumps(receipt).encode()
+open(f"{fixture}/{pinned}/receipt.json", "wb").write(encoded)
+summary = json.load(open(f"{fixture}/{pilot}/acceptance-summary.json"))
+summary["receipt_sha256"] = hashlib.sha256(encoded).hexdigest()
+json.dump(summary, open(f"{fixture}/{pinned}/acceptance-summary.json", "w"))
+PY
+# freeze_rule <pilot> <resolution> <prefix> <cell>...
+freeze_rule() {
+  local pilot=$1 resolution=$2 prefix=$3 cells=() cell
+  shift 3
+  for cell in "$@"; do cells+=(--cell "$cell"); done
+  (cd "$fixture" && python3 "$FREEZER" \
+    --pilot-addendum "$PILOT_ADDENDUM" --pilot "$pilot" --frozen-utc "$FROZEN" \
+    --output "$prefix.json" --record "$prefix.txt" --resolution-decimals 3 \
+    --resolution "$resolution" --resolution-derivation "$RULE" \
+    --selection-rationale 'the frozen rule names these cells' "${cells[@]}" \
+    --frozen-rule "$RULE" >/dev/null 2>"$prefix.err")
+}
+
+freeze_rule "$PINNED" 0.010 retained "${SELECTED[@]}" \
+  || { echo "case retained floor: the pinned rule's resolution was refused" >&2
+       cat "$fixture/retained.err" >&2; exit 1; }
+grep -q '^floor scope                  retained cells$' "$fixture/retained.txt" \
+  && grep -q '^excluded from floor          clmul-wide-4w-owned ' "$fixture/retained.txt" \
+  && [[ $(grep -c '^floor cell ' "$fixture/retained.txt") == "${#SELECTED[@]}" ]] \
+  || { echo "case retained floor: the record does not state the floor's scope and exclusions" >&2
+       cat "$fixture/retained.txt" >&2; exit 1; }
+echo "case retained floor: a pinned frozen rule floors the resolution at its confirmatory cells"
+
+if freeze_rule "$PINNED" 0.005 below "${SELECTED[@]}"; then
+  echo "case below retained floor: a resolution below the retained cells' width was frozen" >&2; exit 1
+fi
+grep -q 'below the pilot-alpha floor 0.007' "$fixture/below.err" \
+  || { echo "case below retained floor: unexpected refusal" >&2; cat "$fixture/below.err" >&2; exit 1; }
+echo "case below retained floor: refused"
+
+if freeze_rule "$PILOT" 0.010 unpinned "${SELECTED[@]}"; then
+  echo "case unpinned rule: a rule the pilot does not pin narrowed the floor" >&2; exit 1
+fi
+grep -q 'below the pilot-alpha floor 0.018' "$fixture/unpinned.err" \
+  || { echo "case unpinned rule: unexpected refusal" >&2; cat "$fixture/unpinned.err" >&2; exit 1; }
+if freeze_rule "$PINNED" 0.010 other "${SELECTED[@]:1}"; then
+  echo "case undeclared selection: a selection the rule does not declare narrowed the floor" >&2; exit 1
+fi
+grep -q 'below the pilot-alpha floor 0.018' "$fixture/other.err" \
+  || { echo "case undeclared selection: unexpected refusal" >&2; cat "$fixture/other.err" >&2; exit 1; }
+freeze_rule "$PILOT" 0.018 whole "${SELECTED[@]}" \
+  && grep -q '^floor scope                  whole pilot: ' "$fixture/whole.txt" \
+  || { echo "case unpinned rule: the record does not state the whole-pilot floor" >&2; exit 1; }
+echo "case unpinned rule: an unpinned rule and an undeclared selection keep the whole-pilot floor"
 
 echo 'freeze-confirmation.test.sh: every case passed'
