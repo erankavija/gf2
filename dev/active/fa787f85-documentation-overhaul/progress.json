@@ -1550,6 +1550,11 @@
    "id": "3514d822",
    "epic": "b4b4b9ee",
    "reason": "12fdeb5b addenda declare the family-wise ledger at the flat path (found by f79bcba3)"
+  },
+  {
+   "id": "94befdc3",
+   "epic": "b4b4b9ee",
+   "reason": "failing frozen-closure test of the eda07788 harness (found by 602652bf)"
   }
  ],
  "escalations": [
@@ -1918,6 +1923,16 @@
     "port the harness first"
    ],
    "recommendation": "the amendment",
+   "resolution": ""
+  },
+  {
+   "issue": "602652bf",
+   "question": "OPEN: same conflict as f79bcba3 REQ-05: digest-pinned protocol.md:5, protocol-v1.md:5 and amendment-v4.md:31 of f547c394 keep their bytes, so three relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md (18 baselined rows in total at the lane tip).",
+   "options": [
+    "baseline the rows and amend the link clause of REQ-06",
+    "change pinned bytes"
+   ],
+   "recommendation": "baseline",
    "resolution": ""
   }
  ],
