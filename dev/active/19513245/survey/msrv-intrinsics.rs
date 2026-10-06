@@ -21,7 +21,7 @@
 //!
 //! ```text
 //! rustc --edition 2021 -O --crate-type lib --emit metadata \
-//!     dev/active/19513245/survey/msrv-intrinsics.rs -o <temporary>
+//!     <this file> -o <temporary>
 //! ```
 
 #![allow(dead_code)]

@@ -34,7 +34,7 @@ MIB = 1024 * KIB
 RNG = (
     "Operands come from SplitMix64 [Steele2014] as implemented in tuning-campaign-support 0.1.0 "
     "(dev/tools/tuning-campaign-support/src/abtest.rs), seeded with the cell's workload seed and "
-    "read through OperandStream in dev/active/1a379447-zen3-cpu-performance/6c6b09b1/survey/arm-common/src/lib.rs: each operand "
+    "read through OperandStream in dev/active/6c6b09b1/survey/arm-common/src/lib.rs: each operand "
     "byte is the low byte of one output, and the fixed coefficient of a region or vector cell is "
     "the next output's low byte with its low bit set, so no cell measures the zero coefficient "
     "(the validation covers that case and every other byte coefficient)."
