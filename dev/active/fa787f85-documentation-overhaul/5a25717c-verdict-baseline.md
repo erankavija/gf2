@@ -117,3 +117,16 @@ this command prints nothing:
 "$R/5a25717c-verdicts.sh" "$PWD/target/7039d680-verdicts.txt"
 diff "$PWD/target/7039d680-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
 ```
+
+## Repeat at the cc060974 entry move
+
+The same commands at `d322f4f9762aab1a3716bdfbb31068ee5f701b69`, the lane tip
+under the cc060974 commits, and at `37391ec5cf4a395a21a89c9063f46ed3e2c60bcd`,
+after the entries `00dd43c3` and `c04dd4ac-zen3-shifts-and-permutations` move
+under the epic directory, write the listing `f79bcba3-verdicts-before.txt`. At
+each commit this command prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/cc060974-verdicts.txt"
+diff "$PWD/target/cc060974-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```

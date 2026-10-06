@@ -12,13 +12,13 @@ research review `a81574d2` and holistic review `262b7be8` report no findings.
 
 | Review | Finding | Status at HEAD | Evidence |
 |---|---|---|---|
-| Code `369860dc` F1 | Investigation describes BMI2 as unused and shifts as lacking materiality | Closed | `dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md:17` cites the shipped route; lines 18 and 22 cite the accepted profile and confirmation. The related DVB and feasibility claims are corrected together. |
+| Code `369860dc` F1 | Investigation describes BMI2 as unused and shifts as lacking materiality | Closed | `dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/investigation.md:17` cites the shipped route; lines 18 and 22 cite the accepted profile and confirmation. The related DVB and feasibility claims are corrected together. |
 | Doc `228fc432` F1 | Registered evidence hashes are stale | Closed | `.jit/issues/c04dd4ac-8103-47bb-b504-7cca92417dfc.json:30` and subsequent asset records match current files. The lead independently checked every registered local asset hash. The stable bracket review replaces the volatile progress citation. |
 | Doc `228fc432` F2 | Issue background describes only ordinary residual loops | Closed | `.jit/issues/c04dd4ac-8103-47bb-b504-7cca92417dfc.json:10` contains exactly the invoker-approved current-route sentence; all other description text and criteria remain unchanged. |
 
 ## Success criteria
 
-The [publication](../../c04dd4ac-zen3-shifts-and-permutations/publication-findings.md)
+The [publication](../c04dd4ac-zen3-shifts-and-permutations/publication-findings.md)
 and its generated tables map each criterion to durable evidence.
 
 - [x] REQ-01: Frozen protocol/addendum identities, raw paired evidence,

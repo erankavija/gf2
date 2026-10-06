@@ -59,10 +59,10 @@ committed lockfile keeps its bytes.
 
 | Id | Divergence | Tracking |
 |---|---|---|
-| D1 | `cargo +1.95.0 fmt --check` exits 1 in `E/19513245/survey/consumer` at `df7b52dd6`, in `src/bin/consumer-profile.rs`, a pure rename; it exits 0 in the other two harness crates | tracking issue: none |
-| D2 | `freeze-confirmations.sh` passes the addendum path under `E` to the `c7113c5a` freezer, which writes it into the line `confirmation addendum <path>` of each derivation record; the three committed records state the flat path and keep their bytes | tracking issue: none |
-| D3 | `19513245/survey/make-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/field/vec.rs:663` lacks the fragment of the claim `axpy-signature` | tracking issue: none |
-| D4 | `measure.py --assess` on `timing-tmpfs-superseded.json` wraps the two withdrawn scheduling statements a second time | tracking issue: none |
+| D1 | `cargo +1.95.0 fmt --check` exits 1 in `E/19513245/survey/consumer` at `df7b52dd6`, in `src/bin/consumer-profile.rs`, a pure rename; it exits 0 in the other two harness crates | -> 3de8d0f3 (jit issue show 3de8d0f3) |
+| D2 | `freeze-confirmations.sh` passes the addendum path under `E` to the `c7113c5a` freezer, which writes it into the line `confirmation addendum <path>` of each derivation record; the three committed records state the flat path and keep their bytes | -> 8163dacd (jit issue show 8163dacd) |
+| D3 | `19513245/survey/make-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/field/vec.rs:663` lacks the fragment of the claim `axpy-signature` | -> d12e9ded (jit issue show d12e9ded) |
+| D4 | `measure.py --assess` on `timing-tmpfs-superseded.json` wraps the two withdrawn scheduling statements a second time | -> c9920dc6 (jit issue show c9920dc6) |
 
 ## Harness crates (REQ-03)
 

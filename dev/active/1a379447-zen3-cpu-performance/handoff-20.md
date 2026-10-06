@@ -45,6 +45,6 @@ None. User-approved rounds 6 and 7 are complete. Any later scope change or repai
 ## Reference artefacts
 
 - Epic: `jit issue show 1a379447`; [progress](progress.json), [prior handoff](handoff-19.md), [worker brief](worker-brief.md), [measurement contract](measurement-contract.md).
-- [DVB round-7 review](reviews/9fb40c83-r7.md), [DVB report](../c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md), [provenance](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
+- [DVB round-7 review](reviews/9fb40c83-r7.md), [DVB report](c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md), [provenance](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
 - Coverage advisory: `jit issue show 9f0e385e`; affected breakdown `16560579`.
 - [Queue](bench-window/queue.tsv), [window runner](bench-window/run-window.sh); runtime orchestration log `.agents/bench-window/window.log`. Individual campaign logs remain authoritative.
