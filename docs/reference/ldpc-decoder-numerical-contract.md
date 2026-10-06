@@ -206,3 +206,7 @@ asserts the check-node rules against a scalar reference on ordinary inputs,
 ties, signed zero, extrema and non-finite values, and holds the codeword,
 iteration count and flags of `LdpcDecoder` to a per-edge reference decoder for
 every algorithm and both early-termination settings.
+
+The unit test `test_zero_cap_results_depend_only_on_the_frame` in
+[`ldpc/core.rs`](../../crates/gf2-coding/src/ldpc/core.rs) asserts the result at
+an iteration cap of zero against the frame's own channel LLRs and parity checks.
