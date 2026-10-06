@@ -100,15 +100,15 @@ holds the SHA-256 of the document.
 | `dense-parity-addendum-v1.md` | `S/survey/dense-baseline-validation.txt:6` | 5 |
 | `logical-buffer-addendum.md` | `dev/bench_results/2037941f/isal-dispatch-availability.md:7` | 2 |
 | `isal-comparator.md` | `dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json:4825` | 0 |
-| `m4ri-operation-match.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9383` | 2 |
+| `m4ri-operation-match.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9383` | 1 |
 
-The 14 links are the rows of the second table of
+The 13 links are the rows of the second table of
 `8f61d6de-baseline-findings.md`. Their targets are
 `../1a379447-zen3-cpu-performance/measurement-contract.md` (3),
-`../5cbb6545/findings.md` (2),
-`../6fb89a3c/survey/fetch-build.sh` (1), `../../bench_results/` (5) and
-`../../../crates/` (3). The three links to `../04b85d10/findings.md` and the
-seven to `../f547c394/` resolve, because the entries lie under `E`.
+`../5cbb6545/findings.md` (2), `../../bench_results/` (5) and
+`../../../crates/` (3). The three links to `../04b85d10/findings.md`, the
+seven to `../f547c394/` and the one to `../6fb89a3c/survey/fetch-build.sh`
+resolve, because the entries lie under `E`.
 
 ## Flat paths that stay
 
@@ -131,7 +131,7 @@ of a class whose ground is tool output,
 | `bench-window` | 1 | `E/bench-window/queue.tsv`; the job key hashes the command text |
 | `tracker-state` | 1 | `R/progress.json`, execution state of the epic |
 | `generated-table` | 1 | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
-| `fixture-layout` | 1 | `dev/active/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
+| `fixture-layout` | 1 | `E/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
 | `snapshot-path` | 1 | `E/04b85d10/survey/summarize-receipts.py:34`, a path inside a receipt snapshot |
 
 Tracker files under `.jit/` are outside the scan: they are tracker state.
