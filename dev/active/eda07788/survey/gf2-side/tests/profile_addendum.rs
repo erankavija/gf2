@@ -7,13 +7,14 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 use survey_gf2_side::CachePolicy;
 use tuning_campaign_support::arm::ArmRequest;
-use tuning_campaign_support::protocol::{CellRole, FamilyAddendum, MetricKind, RunnerPlan};
+use tuning_campaign_support::protocol::{
+    CellRole, FamilyAddendum, MetricKind, RunnerPlan, SharedInput, ADDENDUM_SCHEMA_ID,
+};
 use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::schema;
 use tuning_campaign_support::transport::{encode_case, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 
 const REPO: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../../..");
-const SCHEMA: &str = "dev/active/f547c394/addendum.schema.json";
 const ADDENDUM: &str = "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json";
 const PRODUCING: &str =
     "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json";
@@ -26,8 +27,11 @@ fn read(path: &str) -> Vec<u8> {
 
 #[test]
 fn profile_addendum_is_frozen_valid_and_fully_exploratory() {
+    let schema = SharedInput::AddendumSchema
+        .locate(Path::new(REPO), ADDENDUM_SCHEMA_ID)
+        .expect("one live addendum schema declares the current identity");
     let schema_value: serde_json::Value =
-        serde_json::from_slice(&read(SCHEMA)).expect("schema decodes");
+        serde_json::from_slice(&read(&schema)).expect("schema decodes");
     let bytes = read(ADDENDUM);
     let instance: serde_json::Value = serde_json::from_slice(&bytes).expect("addendum decodes");
     let violations = schema::validate(&schema_value, &instance);
