@@ -12,9 +12,9 @@ committed record carrying what they omit.
 
 | Manifest | Provenance block |
 | --- | --- |
-| [`../047b62ed/receipts.md`](../047b62ed/receipts.md) | §1, $\mathbb{F}_3$ campaign |
-| [`../91605d4d/receipts.md`](../91605d4d/receipts.md) | §1, $\mathbb{F}_5$ campaign |
-| [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) | §1, $\mathbb{F}_7$ campaign |
+| [`dev/studies/047b62ed/receipts.md`](../../../../studies/047b62ed/receipts.md) | §1, $\mathbb{F}_3$ campaign |
+| [`dev/studies/91605d4d/receipts.md`](../../../../studies/91605d4d/receipts.md) | §1, $\mathbb{F}_5$ campaign |
+| [`dev/studies/6c7fcb38/receipts.md`](../../../../studies/6c7fcb38/receipts.md) | §1, $\mathbb{F}_7$ campaign |
 
 ## 2. The revisions each campaign pins
 
@@ -27,7 +27,7 @@ All three campaigns pin the same pair, each stating it in its own §1:
   `tracked_worktree_dirty=false` at that moment. The intervening commit touches
   tracker state, two gate review prompts, and a package manifest, and no file
   under `crates/` or `dev/research/`
-  ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §1).
+  ([`dev/studies/047b62ed/receipts.md`](../../../../studies/047b62ed/receipts.md) §1).
 
 The generator sources named below are byte-identical at both revisions and in
 the current worktree, so the identity is the same whichever of the two a reader
@@ -102,7 +102,7 @@ must reach the harness source at the pinned revision to do so. This addendum
 closes that indirection for the three committed campaigns.
 
 It does not discharge the forward requirement. A campaign run against the
-production design of [`findings.md`](findings.md) §6.7 records the RNG algorithm
+production design of [`findings.md`](../../../../studies/0dffa759/findings.md) §6.7 records the RNG algorithm
 and version in the manifest itself, at the source that publishes the numbers,
 rather than leaving a reader to reconstruct it — which is what
 `@/inv/claims-trace-to-artifacts` asks of a committed artifact recording seeds,

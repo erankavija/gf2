@@ -39,8 +39,8 @@ representation is therefore a type choice:
 
 - `Fp<P>` is $\mathrm{GF}(P)$ for a const prime $P \le 2^{63}$. Mersenne
   primes $2^n - 1$ ($n \ge 31$) and Proth primes $k \cdot 2^n + 1$
-  ($n \ge 24$) are stored canonically with specialised reduction; other primes
-  are stored in Montgomery form. `GoldilocksFp` covers $2^{64} - 2^{32} + 1$.
+  ($n \ge 24$) are stored canonically with specialised reduction; other odd
+  primes are stored in Montgomery form. `GoldilocksFp` covers $2^{64} - 2^{32} + 1$.
 - `QuadraticExt<C>` and `CubicExt<C>` build $\mathrm{GF}(p^2)$ and
   $\mathrm{GF}(p^3)$ from an `ExtConfig` that names the base field and a
   non-residue $\beta$; they nest into towers.
@@ -85,8 +85,9 @@ let mut matrix = |n: usize| FieldMatrix::from_rows((0..n).map(|_| vector(n)).col
 
 ## Multiply
 
-`gemm` is cache-blocked and accumulates each dot product in the field's
-`Wide` type, reducing once per `F::max_unreduced_additions()` terms;
+Unless a field hook replaces it, `gemm` is cache-blocked and accumulates each
+dot product in the field's `Wide` type, reducing once per
+`F::max_unreduced_additions()` terms;
 extension towers inherit the bound of their prime base. The product check
 is probabilistic: one Freivalds probe $x$ compares $(AB)x$ with $A(Bx)$ in
 $O(n^2)$ operations. A wrong product passes with probability at most $1/|F|$

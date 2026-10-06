@@ -251,9 +251,7 @@ mod tests {
     }
 
     fn run_test(m: usize, k: usize, n: usize, degree: u32, modulus: u64) {
-        if !avx2_vpclmul_available() {
-            return;
-        }
+        crate::contract::require(&[("avx2+vpclmulqdq", avx2_vpclmul_available())]);
         let mu = compute_mu(modulus, degree);
         let mask = (1u64 << degree) - 1;
 
@@ -322,9 +320,7 @@ mod tests {
 
     #[test]
     fn broadcast_mul_xor_gf256() {
-        if !avx2_vpclmul_available() {
-            return;
-        }
+        crate::contract::require(&[("avx2+vpclmulqdq", avx2_vpclmul_available())]);
         let poly: u64 = 0b100011101;
         let mu = compute_mu(poly, 8);
         let mask = 0xFFu64;

@@ -120,10 +120,7 @@ mod tests {
 
     #[test]
     fn panelized_gemm_gf256_correctness() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("gf2m_gemm::detect()", detect());
         let poly: u64 = 0b100011101;
         let degree = 8u32;
         let mu = compute_mu(poly, degree);

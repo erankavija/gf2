@@ -4,10 +4,10 @@
   96cea1b9-archive-rows.py            rewrite the manifest rows, print each decision
   96cea1b9-archive-rows.py --check    print each decision; exit 1 if a row differs
 
-The moves come from the container's `artifact_archive_executed` event in
+The moves come from the container's `artifact_archive_executed` events in
 `.jit/events.jsonl`, whose `publications` pair each source with its archive
-destination; the `.jit-container` marker under the event's `destination_root`
-must name the same container. The working tree decides each manifest row whose
+destination; the latest event naming a source decides it. The `.jit-container`
+marker under each event's `destination_root` must name the same container. The working tree decides each manifest row whose
 `path` is a publication source:
 
 - `moved`: the source is absent and the destination exists. The row takes the
@@ -39,16 +39,16 @@ def tracked_manifest(root):
     return root / found[0]
 
 
-def archive_event(root, short_id):
+def archive_events(root, short_id):
     events = [json.loads(line) for line in (root / ".jit/events.jsonl").read_text().splitlines() if line.strip()]
     found = [e for e in events if e.get("type") == "artifact_archive_executed" and e["target"]["id"].startswith(short_id)]
-    if len(found) != 1:
-        sys.exit(f"{len(found)} archive events for container {short_id}; exactly one must exist")
-    event = found[0]
-    marker = root / event["destination_root"] / ".jit-container"
-    if not marker.is_file() or marker.read_text().strip() != event["target"]["id"]:
-        sys.exit(f"{marker.relative_to(root)}: marker does not name container {event['target']['id']}")
-    return event
+    if not found:
+        sys.exit(f"no archive event for container {short_id}")
+    for event in found:
+        marker = root / event["destination_root"] / ".jit-container"
+        if not marker.is_file() or marker.read_text().strip() != event["target"]["id"]:
+            sys.exit(f"{marker.relative_to(root)}: marker does not name container {event['target']['id']}")
+    return found
 
 
 def set_field(line, key, value):
@@ -64,14 +64,14 @@ def main():
     check = bool(sys.argv[1:])
     root = Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True).stdout.strip())
     manifest = tracked_manifest(root)
-    event = archive_event(root, CONTAINER)
+    publications = {p["source"]: p for e in sorted(archive_events(root, CONTAINER), key=lambda e: e["timestamp"]) for p in e["publications"]}
     rows = {r["path"]: r for r in tomllib.loads(manifest.read_text())["artifacts"]}
 
     def exists(p):
         return (root / p).exists() or (root / p).is_symlink()
 
     updates = {}
-    for pub in sorted((p for p in event["publications"] if p["source"] in rows), key=lambda p: p["source"]):
+    for pub in sorted((p for p in publications.values() if p["source"] in rows), key=lambda p: p["source"]):
         source, destination = pub["source"], pub["destination"]
         if exists(source):
             print(f"in-place {source}")

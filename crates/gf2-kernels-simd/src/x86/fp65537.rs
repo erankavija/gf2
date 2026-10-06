@@ -610,9 +610,7 @@ mod tests {
 
     #[test]
     fn batch_mul_exact_multiple_of_8() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u32> = (0..16u32).map(|i| (i * 12345) % 65537).collect();
         let b: Vec<u32> = (0..16u32).map(|i| (i * 67890) % 65537).collect();
         let mut out = vec![0u32; 16];
@@ -625,9 +623,7 @@ mod tests {
 
     #[test]
     fn batch_mul_with_tail() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u32> = (0..13u32).map(|i| (i * 12345) % 65537).collect();
         let b: Vec<u32> = (0..13u32).map(|i| (i * 67890) % 65537).collect();
         let mut out = vec![0u32; 13];
@@ -640,9 +636,7 @@ mod tests {
 
     #[test]
     fn batch_mul_boundary_values() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         // 65536 = P - 1, 0, 1, P/2, and intermediate values. Covers the
         // key 65536² = 2³² overflow edge case.
         let a = vec![0u32, 1, 65536, 32768, 1, 65536, 0, 65535];
@@ -659,9 +653,7 @@ mod tests {
     fn batch_mul_saturation_lane() {
         // 65536 × 65536 = 2^32 -- the one value that causes u32 mullo to wrap
         // to 0. Verifies the mul_epu32 + reduction path handles it correctly.
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a = vec![65536u32; 16];
         let b = vec![65536u32; 16];
         let mut out = vec![0u32; 16];
@@ -675,9 +667,7 @@ mod tests {
 
     #[test]
     fn batch_add_matches_scalar() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u32> = (0..17u32).map(|i| (i * 4093) % 65537).collect();
         let b: Vec<u32> = (0..17u32).map(|i| (i * 9973) % 65537).collect();
         let mut out = vec![0u32; 17];
@@ -690,9 +680,7 @@ mod tests {
 
     #[test]
     fn batch_add_boundary_values() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a = vec![0u32, 1, 65536, 65536, 32768, 65535, 65536, 1];
         let b = vec![0u32, 65536, 1, 65536, 32769, 2, 0, 65536];
         let mut out = vec![0u32; 8];
@@ -705,9 +693,7 @@ mod tests {
 
     #[test]
     fn batch_sub_matches_scalar() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u32> = (0..17u32).map(|i| (i * 4093) % 65537).collect();
         let b: Vec<u32> = (0..17u32).map(|i| (i * 9973) % 65537).collect();
         let mut out = vec![0u32; 17];
@@ -720,9 +706,7 @@ mod tests {
 
     #[test]
     fn batch_karatsuba_matches_scalar() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &n in &[0usize, 1, 7, 8, 9, 16, 17, 100, 1000] {
             let a0: Vec<u32> = (0..n as u32).map(|i| (i * 17) % 65537).collect();
             let a1: Vec<u32> = (0..n as u32).map(|i| (i * 23 + 5) % 65537).collect();
@@ -755,9 +739,7 @@ mod tests {
 
     #[test]
     fn batch_cubic_karatsuba_matches_scalar() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &n in &[0usize, 1, 7, 8, 9, 16, 17, 100, 1000] {
             let a0: Vec<u32> = (0..n as u32).map(|i| (i * 17) % 65537).collect();
             let a1: Vec<u32> = (0..n as u32).map(|i| (i * 23 + 5) % 65537).collect();
@@ -825,9 +807,7 @@ mod tests {
 
     #[test]
     fn batch_karatsuba_beta_0_and_1() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &beta in &[0u32, 1] {
             let n = 24;
             let a0: Vec<u32> = (0..n as u32).map(|i| (i * 17) % 65537).collect();
@@ -860,9 +840,7 @@ mod tests {
 
     #[test]
     fn batch_sub_boundary_values() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a = vec![0u32, 65536, 0, 1, 32768, 65535, 65536, 65536];
         let b = vec![0u32, 65536, 65536, 0, 32769, 65535, 1, 65536];
         let mut out = vec![0u32; 8];

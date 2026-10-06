@@ -5,9 +5,9 @@
 // `ntl_flint_smoke.cpp` (which already covers `charpoly` between NTL
 // and FLINT) by adding bitwise polynomial-coefficient equality for
 // minpoly (which NTL does not expose at the user-facing API level —
-// see dev/plans/ntl_promotion_evidence.md § Scope of promotion).
+// see dev/archive/026fc832-gf2-core-sota-stretch/plans/ntl_promotion_evidence.md § Scope of promotion).
 //
-// Per `dev/plans/sota_reference_acceptance_protocol.md` § 6
+// Per `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6
 // *Correctness-oracle harness*, every promoted (operation, field) cell
 // must be smoke-asserted at n=16 against a fixed-seeded input. The
 // existing per-library smokes cover internal contracts (LinBox:

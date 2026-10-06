@@ -26,7 +26,7 @@
  * reference does not yet exist in this harness (cf. the working
  * `ref_gf2m_mul` cross-check we have for matmul), so the echelon path
  * has been removed pending a future task that adds such a reference.
- * See `dev/plans/m4rie_promotion_evidence.md` *Target-matrix
+ * See `dev/archive/026fc832-gf2-core-sota-stretch/plans/m4rie_promotion_evidence.md` *Target-matrix
  * designation* for the full rationale.
  *
  * Field convention
@@ -44,7 +44,7 @@
  *
  * As a result: NO basis-change matrix is required — gf2-core values and
  * M4RIE `mzed_read_elem`/`mzed_write_elem` results are bitwise-equal on
- * the same canonical input. (See `dev/plans/m4rie_promotion_evidence.md`
+ * the same canonical input. (See `dev/archive/026fc832-gf2-core-sota-stretch/plans/m4rie_promotion_evidence.md`
  * for the corresponding criterion #3 evidence.)
  *
  * For the record, M4RIE's `irreducible_polynomials[]` table at

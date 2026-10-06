@@ -510,6 +510,7 @@ fn decoder_matches_the_scalar_contract_on_saturating_and_extreme_llrs() {
 /// kernel propagates a NaN through its vector lanes, than under the supported
 /// scalar reference, whose `f32::min` fold skips it. The decoder follows the
 /// scalar reference.
+#[cfg(feature = "simd")]
 #[test]
 fn the_public_reduction_api_and_the_scalar_contract_part_on_non_finite_messages() {
     let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(2, 8));

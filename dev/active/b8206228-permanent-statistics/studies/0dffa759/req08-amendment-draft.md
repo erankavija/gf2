@@ -8,10 +8,10 @@ and stubs below at the insertion points of §1.**
 REQ-08 of JIT issue `0dffa759` requires that, where the study's receipts support
 the three-plane $\mathbb{F}_7$ candidate, the archived $\mathbb{F}_7$ encoding
 decision be amended at its source with the permanent-workload evidence and the
-changed verdict. [`findings.md`](findings.md) §8 determines that the receipts do
+changed verdict. [`findings.md`](../../../../studies/0dffa759/findings.md) §8 determines that the receipts do
 support it. `dev/archive/` is permanent repository content and amending it is a
 deliberate act that needs the owner's approval
-([`../../active/b8206228-permanent-statistics/0de41c82/plan.md`](../../active/b8206228-permanent-statistics/0de41c82/plan.md):174). The
+([`dev/active/b8206228-permanent-statistics/0de41c82/plan.md`](../../0de41c82/plan.md):174). The
 owner gave that approval on 2026-08-17 and this document records the approved
 text and its insertion points.
 
@@ -134,4 +134,4 @@ premise and a scoped changed verdict; it does not re-decide the public packed
 $\mathbb{F}_7$ encoding, and no code, proof, or public type changes as a
 consequence of it. The archived verdict's ratification of `Packed7` as
 Candidate A stands, and the synthesis's representation-boundary choice
-([`findings.md`](findings.md) §7) is consistent with it standing.
+([`findings.md`](../../../../studies/0dffa759/findings.md) §7) is consistent with it standing.

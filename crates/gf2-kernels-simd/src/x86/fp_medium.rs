@@ -999,9 +999,7 @@ mod tests {
 
     #[test]
     fn batch_mul_matches_scalar_65521() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u16> = (0..50u16).map(|i| (i * 137) % P_65521).collect();
         let b: Vec<u16> = (0..50u16).map(|i| (i * 211 + 17) % P_65521).collect();
         let mut out = vec![0u16; 50];
@@ -1014,9 +1012,7 @@ mod tests {
 
     #[test]
     fn batch_mul_boundary_values_65521() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         // 65520 = P - 1 stresses the (P-1)² ≈ 2^32 overflow boundary.
         let a = vec![
             0u16, 1, 65520, 32760, 1, 65520, 0, 65519, 65520, 32761, 1, 100, 0, 65520, 32760, 1,
@@ -1034,9 +1030,7 @@ mod tests {
 
     #[test]
     fn batch_mul_with_tail_65521() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &len in &[0usize, 1, 7, 15, 16, 17, 31, 32, 33, 100, 1024, 4097] {
             let a: Vec<u16> = (0..len)
                 .map(|i| ((i as u32 * 137) % P_65521 as u32) as u16)
@@ -1055,9 +1049,7 @@ mod tests {
 
     #[test]
     fn batch_add_matches_scalar_65521() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &len in &[0usize, 1, 15, 16, 17, 100] {
             let a: Vec<u16> = (0..len)
                 .map(|i| ((i as u32 * 4093) % P_65521 as u32) as u16)
@@ -1076,9 +1068,7 @@ mod tests {
 
     #[test]
     fn batch_sub_matches_scalar_65521() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &len in &[0usize, 1, 15, 16, 17, 100] {
             let a: Vec<u16> = (0..len)
                 .map(|i| ((i as u32 * 4093) % P_65521 as u32) as u16)
@@ -1097,9 +1087,7 @@ mod tests {
 
     #[test]
     fn batch_dot_matches_scalar_65521() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &len in &[0usize, 1, 15, 16, 17, 100, 256, 1024] {
             let a: Vec<u16> = (0..len)
                 .map(|i| ((i as u32 * 17) % P_65521 as u32) as u16)
@@ -1119,9 +1107,7 @@ mod tests {
 
     #[test]
     fn batch_dot_boundary_values_65521() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         // Worst-case lane saturation: every product is (P-1)² ≈ 2^32.
         let a = vec![65520u16; 1024];
         let b = vec![65520u16; 1024];
@@ -1133,9 +1119,7 @@ mod tests {
 
     #[test]
     fn smaller_medium_primes_match_scalar() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &p in &[257u16, 509, 1009, 8191, 32749] {
             let m = barrett_m32(p);
             let a: Vec<u16> = (0..200)
@@ -1162,9 +1146,7 @@ mod tests {
 
     #[test]
     fn spmm_row_matches_scalar() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &p in &[257u16, 65521, 8191, 1009] {
             let cases = [
                 (1usize, 16usize, 8usize),
@@ -1206,9 +1188,7 @@ mod tests {
 
     #[test]
     fn spmm_row_empty_nnz() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let p = 65521u16;
         let n = 64;
         let a_vals: Vec<u16> = vec![];
@@ -1238,9 +1218,7 @@ mod tests {
 
     #[test]
     fn gemm_panel_matches_scalar_at_boundary_shapes() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let cases = [
             (1usize, 1usize, 1usize),
             (1, 16, 16),
@@ -1277,9 +1255,7 @@ mod tests {
 
     #[test]
     fn gemm_panel_boundary_values() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         // Worst-case lane saturation: every product is (P-1)² near 2^32.
         let p = 65521u16;
         let m = 4;
@@ -1298,9 +1274,7 @@ mod tests {
 
     #[test]
     fn gemm_panel_zero_outer_dims() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         // n=0 and m=0 are no-ops; the kernel must still execute the
         // early-return path without scribbling on the empty c slice.
         let p = 65521u16;

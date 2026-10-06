@@ -309,10 +309,10 @@ mod tests {
     #[test]
     fn unroll4_mul_matches_singleshot_gf256() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq")) {
-            eprintln!("skipping: no AVX2+VPCLMULQDQ");
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq",
+            is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq"),
+        )]);
 
         let m: u32 = 8;
         let poly: u64 = 0b100011101;
@@ -338,9 +338,10 @@ mod tests {
     #[test]
     fn unroll4_mul_matches_singleshot_gf2_16() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq")) {
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq",
+            is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq"),
+        )]);
         let m: u32 = 16;
         let poly: u64 = 0b1_0001_0000_0000_1011;
         let mu = compute_mu(poly, m);
@@ -364,9 +365,10 @@ mod tests {
     #[test]
     fn unroll4_mul_matches_singleshot_gf2_32() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq")) {
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq",
+            is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq"),
+        )]);
         let m: u32 = 32;
         let poly: u64 = 0b1_0000_0000_0100_0000_0000_0000_0000_0111;
         let mu = compute_mu(poly, m);
