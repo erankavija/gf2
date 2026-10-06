@@ -20,12 +20,10 @@ and the link text counts directory levels from the flat entry location
 |---|---|---|
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md:13` | `broken-link` | `../1a379447-zen3-cpu-performance/measurement-contract.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md:112` | `broken-link` | `../../../crates/gf2-core/src/matrix.asm.txt` |
-| `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md:536` | `broken-link` | `../5cbb6545/findings.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md:539` | `broken-link` | `../../bench_results/5cbb6545/tables.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md:557` | `broken-link` | `../../bench_results/04b85d10/tables.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md:17` | `broken-link` | `../1a379447-zen3-cpu-performance/measurement-contract.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md:116` | `broken-link` | `../../../crates/gf2-core/src/matrix.asm.txt` |
-| `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md:546` | `broken-link` | `../5cbb6545/findings.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md:549` | `broken-link` | `../../bench_results/5cbb6545/tables.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md:567` | `broken-link` | `../../bench_results/04b85d10/tables.md` |
 | `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md:13` | `broken-link` | `../1a379447-zen3-cpu-performance/measurement-contract.md` |

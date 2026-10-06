@@ -24,7 +24,7 @@ sys.path.insert(0, str((ROOT / SHARED[0]).parent))
 import repository_files  # noqa: E402
 
 SURVEY = pathlib.Path("dev/active/c04dd4ac-zen3-shifts-and-permutations/survey")
-OLD = pathlib.Path("dev/active/eda07788/survey")
+OLD = pathlib.Path("dev/active/1a379447-zen3-cpu-performance/eda07788/survey")
 SUPPORT = pathlib.Path("dev/tools/tuning-campaign-support/src")
 OUTPUT = SURVEY / "dvb-producing-inputs.json"
 

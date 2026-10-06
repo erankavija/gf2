@@ -128,5 +128,5 @@ The exploratory profile's receipt and summary match their context pins. The conf
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` | `7ab7804d647d33f2fb7d48781065c1b77d052189d8d8e4147dd2bc5ce23bd601` | material workload disposition |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md` | `ff772ffc6558e49f69803f7b89decb94baac704b770ac3e4e3cb6f1b0e80c9ad` | Rust 1.95 and scalar-fallback feasibility |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md` | `678751a05a7dc2f00f7e73ec4d1184836075e6577dc5c87d7be2585b91fdc2e6` | DVB not-material disposition |
-| `dev/active/eda07788/findings.md` | `d1a609fff64e422621ea65204a9f58f67e449a9c680829764525f4295b98ea4c` | NR no-win and unavailable mappings |
-| `dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md` | `888599c97c4197e66ccc87c66b53103075d55ab1869dd2a0dfaf33c48c3f06eb` | consumer and comparator survey |
+| `dev/active/1a379447-zen3-cpu-performance/eda07788/findings.md` | `414d7edbe56e38e2d1ce9fd1b07fb78372d781661a3b9e3cbb344ac5c5e318f6` | NR no-win and unavailable mappings |
+| `dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md` | `6a563e9f9748ea35fcf923e7bcfac34c9a7a1e03c007355d0bd9279ae548de5a` | consumer and comparator survey |

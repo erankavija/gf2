@@ -1,6 +1,6 @@
 # 5G NR rate-matched encoder comparison harness (jit:12fdeb5b).
 #
-# A standalone workspace, like `../../../../eda07788/survey/nr-derate`, so the
+# A standalone workspace, like `../../../eda07788/survey/nr-derate`, so the
 # survey adds no target, feature or dependency to the production workspace.
 # Each external adapter is feature-gated because it links a comparator build
 # that `../nr-encode-build.sh` verifies outside the repository; the gf2 arm

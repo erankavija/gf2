@@ -473,7 +473,7 @@ Manifest source identifiers resolve as follows; the criteria `REQ-01` and
 | `PROFILE-3BE770D5` | [findings.md](../1a379447-zen3-cpu-performance/3be770d5/findings.md) |
 | `UPDATE-07CA8585` | [findings.md](../1a379447-zen3-cpu-performance/07ca8585/findings.md) |
 | `COMPARATOR-C077A88B` | [findings.md](../1a379447-zen3-cpu-performance/c077a88b/findings.md) |
-| `CONSUMERS-EDA07788` | [findings.md](../eda07788/findings.md) |
+| `CONSUMERS-EDA07788` | [findings.md](../1a379447-zen3-cpu-performance/eda07788/findings.md) |
 | `CONSUMERS-12FDEB5B` | [findings.md](../1a379447-zen3-cpu-performance/12fdeb5b/findings.md) |
 | `CALIBRATION-PLAN-63BAD95D` | [calibration-plan.md](../1a379447-zen3-cpu-performance/63bad95d/calibration-plan.md) |
 | `SOURCE-EVIDENCE` | [survey/source-evidence.json](survey/source-evidence.json) |

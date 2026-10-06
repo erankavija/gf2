@@ -150,7 +150,7 @@ claim about isolated `mzd_mul` throughput.
    pilot row, and the unavailable companions of both receipts stay committed.
 4. **Prior evidence.** The fused AND-popcount route is the retained baseline,
    and the generic carry-save comparator stays the preserved
-   [non-qualifying result](../../5cbb6545/findings.md). Neither is presented
+   [non-qualifying result](../5cbb6545/findings.md). Neither is presented
    as new optimization work.
 
 ## Fusion portfolio

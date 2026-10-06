@@ -80,7 +80,7 @@ distinct full-count fusion with a profile-backed mechanism for the frozen
 whole-consumer anchor rule.
 Batching rows or packing output bits targets the observed row-loop share but
 changes the declared one-row comparator. The generic carry-save comparator
-remains the preserved [non-qualifying result](../../5cbb6545/findings.md); the
+remains the preserved [non-qualifying result](../5cbb6545/findings.md); the
 scalar four-accumulator route remains a reference arm. Neither is relabelled
 a new candidate.
 

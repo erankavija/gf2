@@ -14,8 +14,8 @@ SOURCES = {
     "interleaver": pathlib.Path("crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs"),
     "bicm": pathlib.Path("crates/gf2-coding/src/dvb_t2_bicm_harness.rs"),
     "stage": pathlib.Path("crates/gf2-sim/src/stages/mod.rs"),
-    "profile_arm": pathlib.Path("dev/active/eda07788/survey/gf2-side/src/bin/dvb-profile-arm.rs"),
-    "xdsopl": pathlib.Path("dev/active/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp"),
+    "profile_arm": pathlib.Path("dev/active/1a379447-zen3-cpu-performance/eda07788/survey/gf2-side/src/bin/dvb-profile-arm.rs"),
+    "xdsopl": pathlib.Path("dev/active/1a379447-zen3-cpu-performance/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp"),
 }
 
 EXPECT = {
