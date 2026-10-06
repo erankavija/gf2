@@ -806,17 +806,13 @@ mod tests {
 
     #[test]
     fn the_detected_bundle_matches_the_per_frame_reference() {
-        let Some(fns) = detect() else {
-            return;
-        };
+        let fns = crate::contract::require_detected("bch_encode::detect()", detect());
         check_bundle(&fns);
     }
 
     #[test]
     fn the_detected_bundle_matches_the_scalar_bundle_word_for_word() {
-        let Some(fns) = detect() else {
-            return;
-        };
+        let fns = crate::contract::require_detected("bch_encode::detect()", detect());
         let mut seeded = Seeded(0x2b69_68d3_0000_0002);
         for &redundancy in REDUNDANCIES {
             let masks: Vec<u64> = (0..redundancy)
@@ -938,17 +934,13 @@ mod tests {
 
     #[test]
     fn the_detected_fold_matches_the_per_frame_reference() {
-        let Some(fns) = detect() else {
-            return;
-        };
+        let fns = crate::contract::require_detected("bch_encode::detect()", detect());
         check_fold(&fns);
     }
 
     #[test]
     fn the_detected_fold_matches_the_scalar_fold_word_for_word() {
-        let Some(fns) = detect() else {
-            return;
-        };
+        let fns = crate::contract::require_detected("bch_encode::detect()", detect());
         let mut seeded = Seeded(0x2b69_68d3_0000_0005);
         for &redundancy in REDUNDANCIES {
             let words = redundancy.div_ceil(64);

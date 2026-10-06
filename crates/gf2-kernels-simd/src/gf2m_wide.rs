@@ -186,9 +186,7 @@ mod tests {
 
     #[test]
     fn dispatched_kernel_matches_scalar() {
-        let Some(fns) = detect() else {
-            return; // no SIMD on this host
-        };
+        let fns = crate::contract::require_detected("gf2m_wide::detect()", detect());
         let cases: [([u64; 4], [u64; 4]); 4] = [
             ([0, 0, 0, 0], [1, 2, 3, 4]),
             ([1, 1, 1, 1], [1, 1, 1, 1]),
@@ -226,9 +224,7 @@ mod tests {
 
     #[test]
     fn dispatched_wide571_kernel_matches_scalar() {
-        let Some(fns) = detect_571() else {
-            return; // no SIMD on this host
-        };
+        let fns = crate::contract::require_detected("gf2m_wide::detect_571()", detect_571());
         let cases: [([u64; 9], [u64; 9]); 3] = [
             ([0; 9], [1, 2, 3, 4, 5, 6, 7, 8, 9]),
             ([1; 9], [1; 9]),

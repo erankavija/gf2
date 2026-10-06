@@ -20,7 +20,7 @@
  *
  * charpoly and minpoly are not provided by M4RI and are excluded from
  * this lane (`not-supported-by-library` exclusion class per
- * `dev/plans/sota_reference_acceptance_protocol.md` § 8).
+ * `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 8).
  *
  * Build:
  *   gcc -O3 -march=native -std=c11 m4ri_bench.c -lm4ri -o m4ri_bench
@@ -32,7 +32,7 @@
  *
  * `--smoke` runs each new operation at n=16 against a fixed seeded
  * input and asserts the per-operation correctness contract from
- * `dev/plans/sota_reference_acceptance_protocol.md` § 6:
+ * `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6:
  *   * pluq:   reconstruct P*L*U == A and verify rank.
  *   * invert: A * A^{-1} == I.
  *   * solve:  A * x == b for a square full-rank system.
@@ -312,7 +312,7 @@ static void bench_solve(rci_t n, const char* regime, uint64_t seed,
 
 /* ----- smoke equality oracles (issue 5dea7457) -----------------------
  *
- * Per `dev/plans/sota_reference_acceptance_protocol.md` § 6, every new
+ * Per `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6, every new
  * (operation, field, n=16) cell must satisfy a specific algebraic
  * equality contract. The smoke functions below enforce those contracts
  * inside the harness and exit non-zero on any violation so that
@@ -545,7 +545,7 @@ int main(int argc, char** argv) {
             (unsigned long long)master_seed, warmup, iters, smoke);
 
     /* Smoke equality oracle for the new operations (issue 5dea7457).
-     * Per `dev/plans/sota_reference_acceptance_protocol.md` § 6 we run
+     * Per `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6 we run
      * each new operation at n=16 against fixed-seeded inputs and assert
      * the operation-specific algebraic invariants. */
     if (smoke) {

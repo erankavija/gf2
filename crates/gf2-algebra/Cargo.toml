@@ -50,7 +50,9 @@ serde_json = { workspace = true }
 # the workspace SSOT for deterministic mod-P matrix generation via
 # `gf2_core::rng::Lcg`. Mirrors the `gf2-core` pattern (see
 # `crates/gf2-core/Cargo.toml` lines 28-31, 53-56).
-gf2-algebra = { path = ".", features = ["test-support"] }
+# `default-features = false` keeps `simd` out of a `--no-default-features` test
+# build; the features of the build come from the command line.
+gf2-algebra = { path = ".", default-features = false, features = ["test-support"] }
 
 # ── Issue `b315564a` (epic `ae82bd73`) — Criterion bench suite for permanent ──
 [[bench]]
@@ -172,6 +174,11 @@ required-features = ["parallel", "tuning-profile"]
 [[test]]
 name = "tuning_profile_permanent_install_large_chunk"
 required-features = ["parallel", "tuning-profile"]
+
+# Includes the `batched_f3_permanent` bench, whose AVX2 lane exists under `simd`.
+[[test]]
+name = "batched_f3_permanent_harness"
+required-features = ["simd", "test-support"]
 
 [[test]]
 name = "tuning_calibration_harness"

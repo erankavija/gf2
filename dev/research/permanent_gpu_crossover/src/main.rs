@@ -47,8 +47,7 @@ mod harness {
     /// ~13,500 s of CPU wall-clock per repetition (~3.7 h). The crossover question at the
     /// production batch size is fully answerable from these two points: the GPU wins at
     /// both with comparable speedup, so the crossover threshold (at M=256) lies below the
-    /// smallest tested n. Extrapolation to larger n and the M-dependence of the crossover
-    /// is discussed in `dev/plans/s5_gpu_crossover.md` §3.
+    /// smallest tested n.
     pub const N_VALUES: &[usize] = &[24, 28];
 
     /// Fixed batch size for both CPU and GPU paths. The criterion requires a single

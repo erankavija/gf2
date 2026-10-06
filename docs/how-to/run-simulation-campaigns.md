@@ -3,7 +3,7 @@
 A campaign produces BER and BLER curves over an Eb/N0 or Es/N0 sweep. Two
 runners cover it: `sim_runner` in `gf2-coding` executes a TOML campaign file of
 LDPC, product-code and GLDPC curves, and `dvb_t2_awgn_campaign` in `gf2-sim`
-runs the DVB-T2 BICM chain with per-SNR checkpoints.
+runs the DVB-T2 (`@/citation/Etsi2015`) BICM chain with per-SNR checkpoints.
 
 ## Configure a campaign file
 
@@ -52,14 +52,14 @@ repository's own campaign files are in
 Check that the file parses and expands to the intended points:
 
 ```bash
-cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
+./scripts/cargo-budget.sh cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
     campaign.toml --dry-run
 ```
 
 Run every curve, or select curves with repeated `--curve <name>`:
 
 ```bash
-cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
+./scripts/cargo-budget.sh cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
     campaign.toml --parallel --seed 7
 ```
 
@@ -85,10 +85,10 @@ frame-error count reached `min_errors` and simulates the remaining points from
 their start; a point that ended at `max_frames` is simulated again. Product-code
 curves run with `--parallel` reuse no rows and recompute every point.
 
-- On LDPC, GLDPC and sequential product-code curves, SIGINT and SIGTERM do
-  not interrupt an in-flight point. With `--parallel` the run exits with
+- On LDPC, GLDPC and sequential product-code curves, SIGINT does not
+  interrupt an in-flight point. With `--parallel` the run exits with
   status 1 once its in-flight points finish; a sequential run continues.
-  Ending the process otherwise, for example with `kill -KILL <pid>`, flushes
+  Ending the process otherwise, for example with SIGTERM, flushes
   nothing and discards in-flight points as described above.
 - Reused rows are keyed by Eb/N0 alone. After changing a curve's parameters,
   delete its CSV or change `output_dir`.
@@ -102,23 +102,23 @@ curves run with `--parallel` reuse no rows and recompute every point.
 `dvb_t2_awgn_campaign` takes its configuration on the command line:
 
 ```bash
-cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
+./scripts/cargo-budget.sh cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
     --rate 1/2 --modulation 16qam --esn0-range 4.0:7.0:0.5 \
     --target-errors 100 --max-frames 10000000 \
     --output-dir dvb_r12_16qam --seed 42
 ```
 
 It writes `checkpoints/snr_<index>.json` under `--output-dir` at each SNR
-boundary and every `--heartbeat-frames` frames within a point. SIGINT or
-SIGTERM flushes the in-progress checkpoint and ends the run. Repeat the same
-command with `--resume` to continue. The checkpoints carry a BLAKE3 hash of
+boundary and every `--heartbeat-frames` frames within a point. SIGINT flushes
+the in-progress checkpoint and ends the run. Repeat the same command with
+`--resume` to continue. The checkpoints carry a BLAKE3 hash of
 `--seed`, `--esn0-range`, `--target-errors`, `--max-frames`,
 `--heartbeat-frames`, `--gpu`, `--strict-gpu` and the host's worker count, and a
 resume that changes any of them fails with a configuration-hash mismatch. The
 hash excludes `--rate`, `--modulation`, `--decoder` and `--demap`; a resume
 that changes them reuses the existing checkpoints. A run without `--resume` deletes existing
-checkpoints. The deterministic CSV columns of a resumed run are byte-identical
-to an uninterrupted run at the same seed
+checkpoints. The deterministic CSV columns of a resumed run equal, byte for
+byte, those of an uninterrupted run with that seed
 ([`campaign_cli_flags.rs`](../../crates/gf2-sim/tests/campaign_cli_flags.rs)).
 
 The output directory also holds `curve_<rate>_<modulation>.csv` with columns

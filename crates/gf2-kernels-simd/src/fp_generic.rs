@@ -95,10 +95,7 @@ mod tests {
 
     #[test]
     fn safe_wrappers_match_scalar_word_boundaries() {
-        let fns = match detect() {
-            Some(fns) => fns,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_generic::detect()", detect());
 
         for &len in &[0usize, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257] {
             let a: Vec<u64> = (0..len as u64)

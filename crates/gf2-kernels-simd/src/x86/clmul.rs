@@ -255,10 +255,10 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_u64_matches_scalar() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
 
         let test_cases: Vec<(u64, u64)> = vec![
             (0, 0),
@@ -292,9 +292,10 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_u64_commutative() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
 
         let pairs = [
             (0xABCD_EF01u64, 0x1234_5678u64),
@@ -315,9 +316,10 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_u64_exhaustive_small() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
 
         for a in 0u64..=255 {
             for b in 0u64..=255 {
@@ -408,10 +410,10 @@ mod tests {
     #[test]
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn ymm_lane_matches_portable_scalar() {
-        if !ymm_batch_lane_supported() {
-            eprintln!("Skipping: host lacks AVX2+VPCLMULQDQ+PCLMULQDQ+SSE4.1");
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq+pclmulqdq+sse4.1",
+            ymm_batch_lane_supported(),
+        )]);
         let fns = crate::gf2m::detect_with_clmul_batch_preference(crate::gf2m::ClmulBatchLane::Ymm)
             .unwrap();
         assert_lane_matches_scalar(CLMUL_BATCH_PATH_YMM, fns.clmul_batch_fn.unwrap());
@@ -421,10 +423,10 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn sequential_lane_matches_portable_scalar() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
         // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
         assert_lane_matches_scalar(CLMUL_BATCH_PATH_XMM, |a, b, out| unsafe {
             clmul_batch_sequential(a, b, out);
@@ -435,10 +437,10 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn dispatched_batch_matches_portable_scalar() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
         let fns = crate::gf2m::detect().unwrap();
         assert_lane_matches_scalar(fns.clmul_batch_path.unwrap(), fns.clmul_batch_fn.unwrap());
     }
@@ -446,10 +448,10 @@ mod tests {
     #[test]
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn dispatched_batch_agrees_with_both_lanes() {
-        if !ymm_batch_lane_supported() {
-            eprintln!("Skipping: host lacks the YMM lane");
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq+pclmulqdq+sse4.1",
+            ymm_batch_lane_supported(),
+        )]);
         for (a, b) in lane_conformance_cases() {
             let mut ymm = vec![0u128; a.len()];
             let mut xmm = vec![0u128; a.len()];
@@ -467,10 +469,10 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_clmul_barrett_reduce_matches_scalar() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            eprintln!("Skipping: PCLMULQDQ+SSE4.1 not available");
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
 
         let polys: &[(u32, u64)] = &[
             (2, 0b111),                // x^2 + x + 1

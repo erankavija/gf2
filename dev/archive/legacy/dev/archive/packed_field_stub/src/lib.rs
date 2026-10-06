@@ -7,7 +7,7 @@
 //! `gf2-core::gfp::Fp<P>` bounds, without committing the surface to the
 //! production workspace until the user-approval gate clears.
 //!
-//! See `dev/plans/d1b_packed_field_api.md` for the design rationale.
+//! See `dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md` for the design rationale.
 //!
 //! # Layout
 //!
@@ -1064,7 +1064,7 @@ pub mod bipedal3 {
     /// Column-major: each column is a `Bipedal3Vec` of length `n`. This
     /// stub stores the columns as a flat `Vec<Bipedal3Vec>`; the W1/T5
     /// implementation will switch to the unified column-major
-    /// `(mag, sgn)` `Vec<u64>` layout per `dev/plans/r3_multi_word_streaming.md`.
+    /// `(mag, sgn)` `Vec<u64>` layout per `dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md`.
     ///
     /// # Examples
     ///

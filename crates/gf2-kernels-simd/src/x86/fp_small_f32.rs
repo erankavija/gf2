@@ -898,11 +898,11 @@ mod tests {
     use super::*;
 
     fn run_for_primes(test: impl Fn(u8)) {
-        if !std::arch::is_x86_feature_detected!("avx2")
-            || !std::arch::is_x86_feature_detected!("fma")
-        {
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+fma",
+            std::arch::is_x86_feature_detected!("avx2")
+                && std::arch::is_x86_feature_detected!("fma"),
+        )]);
         for &p in &[3u8, 5, 7, 11, 13, 17, 31, 127, 251] {
             test(p);
         }
@@ -1042,9 +1042,7 @@ mod tests {
     fn gemm_matches_scalar_zero_dims() {
         let avail = std::arch::is_x86_feature_detected!("avx2")
             && std::arch::is_x86_feature_detected!("fma");
-        if !avail {
-            return;
-        }
+        crate::contract::require(&[("avx2+fma", avail)]);
         let mut out: Vec<u8> = vec![];
         // SAFETY: AVX2 and FMA were detected above.
         unsafe { fp_small_f32_gemm(&[], &[], 0, 0, 0, 7, &mut out) };
@@ -1164,9 +1162,7 @@ mod tests {
     fn route_a_gemm_matches_scalar_zero_dims() {
         let avail = std::arch::is_x86_feature_detected!("avx2")
             && std::arch::is_x86_feature_detected!("fma");
-        if !avail {
-            return;
-        }
+        crate::contract::require(&[("avx2+fma", avail)]);
         let mut out: Vec<u8> = vec![];
         // SAFETY: AVX2 and FMA were detected above.
         unsafe { fp_small_f32_gemm_route_a(&[], &[], 0, 0, 0, 7, &mut out) };

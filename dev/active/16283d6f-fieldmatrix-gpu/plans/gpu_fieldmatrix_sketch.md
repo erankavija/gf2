@@ -88,7 +88,7 @@ GPU only wins past a size floor that amortizes launch + transfer overhead. Expec
 
 | # | Story | Depends on | Notes |
 |---|---|---|---|
-| 1 | Design `FieldDevice` trait + `DFieldMatrix` memory model | (CPU epic bb85c68a done) | Design-only. Produces a companion to `dev/plans/gpu_fieldmatrix_sketch.md`. |
+| 1 | Design `FieldDevice` trait + `DFieldMatrix` memory model | (CPU epic bb85c68a done) | Design-only. Produces a companion to `dev/active/16283d6f-fieldmatrix-gpu/plans/gpu_fieldmatrix_sketch.md`. |
 | 2 | Device `Fp<P>` Montgomery arithmetic + cross-check vs. CPU | #1 | HIP kernels + equivalence test harness. |
 | 3 | Device GF(2^m) carry-less multiplication + cross-check | #1 | Same pattern; m ∈ {8, 16, 32}. |
 | 4 | `DFieldMatrix<F>` storage + H2D/D2H transfer | #2, #3 | |

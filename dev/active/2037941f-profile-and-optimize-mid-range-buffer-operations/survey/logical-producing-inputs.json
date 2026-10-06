@@ -475,6 +475,7 @@
     "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
     "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
     "crates/gf2-kernels-simd/src/clmul_scalar.rs",
+    "crates/gf2-kernels-simd/src/contract.rs",
     "crates/gf2-kernels-simd/src/fp65537.rs",
     "crates/gf2-kernels-simd/src/fp_generic.rs",
     "crates/gf2-kernels-simd/src/fp_medium.rs",
