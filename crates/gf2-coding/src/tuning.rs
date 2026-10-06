@@ -1,8 +1,8 @@
 //! Coding-owned tuning selectors and their process-wide typed accessor; the
 //! generic process authority is [`gf2_core::tuning`]. The section holds two
 //! selector families: `encode`, the profile half of the batch-encoding family
-//! dispatch of [`crate::bch::encode::EncodeFamily`], and `decode`, the routing
-//! values of batch decoding.
+//! dispatch of [`crate::bch::encode::EncodeFamily`], and `decode`, three
+//! batch-decoding bounds the section stores, validates and serializes.
 
 use std::fmt;
 use std::num::NonZeroUsize;
@@ -14,16 +14,16 @@ pub use crate::bch::encode::{
     TABLE_REMAINDER_MIN_REDUNDANCY,
 };
 
-/// Conservative [`DecodeSelectors::lane_min_frames`]: a wave holds fewer
-/// occupied lanes than this, so none takes the lane route.
+/// Conservative [`DecodeSelectors::lane_min_frames`]: the largest value of
+/// the field's domain.
 pub const LANE_MIN_FRAMES: usize = usize::MAX;
 
-/// Conservative [`DecodeSelectors::lane_max_edges`]: every Tanner graph with
-/// an edge exceeds it.
+/// Conservative [`DecodeSelectors::lane_max_edges`]: the smallest value of
+/// the field's domain.
 pub const LANE_MAX_EDGES: usize = 0;
 
-/// Conservative [`DecodeSelectors::granules_per_task`]: one frame group per
-/// parallel task.
+/// Conservative [`DecodeSelectors::granules_per_task`]: the smallest value of
+/// the field's domain.
 pub const GRANULES_PER_TASK: NonZeroUsize = NonZeroUsize::MIN;
 
 /// Validated selectors for batch-encoding family dispatch.
@@ -95,12 +95,13 @@ impl EncodeSelectors {
     }
 }
 
-/// Validated selectors for batch-decoding route dispatch.
+/// Validated decode selector family of the coding section.
 ///
-/// A wave of frames takes the lane route when its occupied lanes reach
-/// [`lane_min_frames`](Self::lane_min_frames) and the code's Tanner graph has
-/// at most [`lane_max_edges`](Self::lane_max_edges) edges; every other wave
-/// decodes its frames one at a time.
+/// `lane_min_frames` is a lower bound on a count of occupied lanes and
+/// `lane_max_edges` an upper bound on a Tanner-graph edge count, each over
+/// all of `usize`; `granules_per_task` is a positive count of
+/// preferred-granularity frame groups. The section stores, validates and
+/// serializes the family, and no decoder of this crate reads it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DecodeSelectors {
     lane_min_frames: usize,
@@ -109,8 +110,8 @@ pub struct DecodeSelectors {
 }
 
 impl DecodeSelectors {
-    /// The conservative decode family: the lane route is closed for every
-    /// batch and a parallel task decodes one frame group.
+    /// The conservative decode family: [`LANE_MIN_FRAMES`],
+    /// [`LANE_MAX_EDGES`] and [`GRANULES_PER_TASK`].
     pub const CONSERVATIVE: Self = Self {
         lane_min_frames: LANE_MIN_FRAMES,
         lane_max_edges: LANE_MAX_EDGES,
@@ -118,13 +119,12 @@ impl DecodeSelectors {
     };
 
     /// Builds the decode selector family. Every `lane_min_frames` and
-    /// `lane_max_edges` is admissible: a `lane_min_frames` of zero or one
-    /// admits every wave, and [`usize::MAX`] admits none.
+    /// `lane_max_edges` is admissible.
     ///
     /// # Errors
     ///
     /// Returns [`SectionError::SelectorOutOfRange`] when `granules_per_task`
-    /// is zero, because a task decodes at least one frame group.
+    /// is zero, because the group count is positive.
     pub fn try_new(
         lane_min_frames: usize,
         lane_max_edges: usize,
@@ -143,21 +143,19 @@ impl DecodeSelectors {
         })
     }
 
-    /// Returns the smallest number of occupied lanes at which a wave takes
-    /// the lane route.
+    /// Returns the lower bound on a count of occupied lanes.
     #[must_use]
     pub const fn lane_min_frames(&self) -> usize {
         self.lane_min_frames
     }
 
-    /// Returns the largest Tanner-graph edge count that takes the lane route.
+    /// Returns the upper bound on a Tanner-graph edge count.
     #[must_use]
     pub const fn lane_max_edges(&self) -> usize {
         self.lane_max_edges
     }
 
-    /// Returns the number of preferred-granularity frame groups one parallel
-    /// task decodes.
+    /// Returns the count of preferred-granularity frame groups.
     #[must_use]
     pub const fn granules_per_task(&self) -> NonZeroUsize {
         self.granules_per_task
@@ -169,7 +167,7 @@ impl DecodeSelectors {
 pub struct CodingSelectors {
     /// Batch-encoding family selectors.
     pub encode: EncodeSelectors,
-    /// Batch-decoding route selectors.
+    /// Decode selector family.
     pub decode: DecodeSelectors,
 }
 

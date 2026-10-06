@@ -15,9 +15,9 @@ use gf2_core::tuning::{
     CanonicalValue, ProfileRegistryBuilder, SectionCodec, SectionError, TuningSection,
 };
 
-/// An owner envelope whose coding section holds the encode family alone,
-/// emitted by the owner codec at `d56f08e6c`, the commit before the decode
-/// family.
+/// An owner envelope whose coding section holds the encode family alone; the
+/// codec decodes it to the conservative decode family and encodes it back to
+/// the same bytes.
 const ENCODE_FAMILY_PROFILE: &str = include_str!("data/tuning_profile_encode_family.json");
 
 fn body(text: &str) -> CanonicalValue {
@@ -139,7 +139,7 @@ fn a_body_without_the_decode_family_reads_as_the_conservative_family() {
 }
 
 #[test]
-fn the_conservative_decode_family_closes_the_lane_route() {
+fn the_conservative_decode_family_holds_the_extreme_of_each_domain() {
     let conservative = CodingTuning::CONSERVATIVE;
     let decode = conservative.decode();
     assert_eq!(decode, &DecodeSelectors::CONSERVATIVE);
