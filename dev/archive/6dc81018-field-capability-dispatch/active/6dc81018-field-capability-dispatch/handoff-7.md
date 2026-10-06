@@ -48,7 +48,7 @@
 
 ## Reference artefacts
 
-- Epic and progress: `jit issue show 6dc81018`; `dev/active/6dc81018-field-capability-dispatch/progress.json`
+- Epic and progress: `jit issue show 6dc81018`; `dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json`
 - Current issue and checklist: `jit issue show 389aa4de`; `dev/active/86b9c719-quality-documentation-tech-debt/389aa4de/receipt-notes.md`
 - Governing designs: `dev/active/220cab0b/design.md`; `dev/active/7d824b2f/design.md`; `dev/active/7d7c647c/design.md`
 - Current profile and receipt: `crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`; `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`

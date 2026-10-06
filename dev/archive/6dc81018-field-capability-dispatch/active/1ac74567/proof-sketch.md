@@ -44,7 +44,7 @@ Clause0_Clause0_Wide)`, and its body reaches the field operations through that
 dictionary only — `FiniteFieldExtInst.FiniteFieldInst.corecloneCloneInst.clone`
 at `:31` and `FiniteFieldExtInst.FiniteFieldInst.coreopsarithMulInst.mul` at
 `:32`. No `sorry` appears in the definition. It carries no axiom dependency at
-all (`dev/active/1ac74567/elaboration/elaborate.log:91`).
+all (`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:91`).
 
 One precision the spike's record does not make.
 `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:826-828` states that both targets "take the
@@ -81,7 +81,7 @@ the trait's method table for the same reason. So the specification of
 satisfies and has no dependency on the two `sorry`-carrying definitions. §6.3
 confirms this at the elaborator: deleting the whole `pow` chain leaves
 `frobenius.default` elaborating
-(`dev/active/1ac74567/elaboration/elaborate.log:81-89`).
+(`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:81-89`).
 
 All three claims hold. None of them is falsified.
 
@@ -92,7 +92,7 @@ well-formed in isolation but calls `pow.default_loop`, whose signature contains
 the two F4 `sorry` placeholders. Under the elaborator this is not a cosmetic
 defect: each `sorry` elaborates to a *distinct* opaque constant, so the
 application at `:98` does not type-check
-(`dev/active/1ac74567/elaboration/elaborate.log:70-77`). `pow` is excluded,
+(`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:70-77`). `pow` is excluded,
 matching `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md:830-831`.
 
 ---
@@ -125,8 +125,8 @@ never mentions storage.
 ## 3. Trait-level algebraic laws
 
 Every statement below elaborates. The receipt is
-`dev/active/1ac74567/elaboration/statements.lean`, run as stage 4 of the
-harness; `dev/active/1ac74567/elaboration/elaborate.log:109-119` records exit 0
+`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/statements.lean`, run as stage 4 of the
+harness; `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:109-119` records exit 0
 with nine `declaration uses 'sorry'` warnings and no error, which is exactly
 "the statements type-check, the bodies are absent". Bodies are out of scope for
 this issue.
@@ -633,8 +633,8 @@ one.
 **No.** `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/` as generated does not
 elaborate. The failure is recorded here as a finding.
 
-The harness is `dev/active/1ac74567/elaboration/elaborate.sh`; the committed
-output is `dev/active/1ac74567/elaboration/elaborate.log`. It copies the
+The harness is `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.sh`; the committed
+output is `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log`. It copies the
 generated files into a `mktemp` tree and elaborates them with `lake env` run
 from `proofs/`, which supplies the pinned Lean `v4.30.0-rc2`, Mathlib and the
 Aeneas backend without building or modifying the committed lake project. No
@@ -644,18 +644,18 @@ is unchanged.
 Command, exactly as run:
 
 ```
-./dev/active/1ac74567/elaboration/elaborate.sh \
-  > dev/active/1ac74567/elaboration/elaborate.log 2>&1
+./dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.sh \
+  > dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log 2>&1
 ```
 
 Toolchain recorded in the log header
-(`dev/active/1ac74567/elaboration/elaborate.log:4-6`):
+(`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:4-6`):
 `leanprover/lean4:v4.30.0-rc2`, `Lean (version 4.30.0-rc2, …, commit
 3dc1a08…)`, `Lake version 5.0.0-src+3dc1a08`.
 
 ### 6.1 Stage 1 — the generated files verbatim: exit 1
 
-`dev/active/1ac74567/elaboration/elaborate.log:8-15`.
+`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:8-15`.
 
 ```
 R8bGf2Core/Types.lean:94:2: error: Field `corecloneCloneInst` has already been declared
@@ -695,12 +695,12 @@ directory holds `Funs.lean` and `Types.lean` only, and unlike
 `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A2_lean/FunsExternal_Template.lean` there is no
 template to seed from. The A8b extraction declares no external function, so the
 harness supplies an empty module
-(`dev/active/1ac74567/elaboration/FunsExternal.lean`). Any elaboration of this
+(`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/FunsExternal.lean`). Any elaboration of this
 extraction has to supply it.
 
 ### 6.2 Stage 2 — after `scripts/fix-aeneas-dupes.py`: `Types.lean` exit 0, `Funs.lean` exit 1
 
-`dev/active/1ac74567/elaboration/elaborate.log:17-78`. The pass renames the
+`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:17-78`. The pass renames the
 seven redundant declarations to `…CharacteristicInst` / `…WideInst` (diff at
 `:19-42`) and adds the `warn.sorry` carve-out to `Funs.lean` (`:44-58`).
 `Types.lean` and `FunsExternal.lean` then elaborate at exit 0 (`:60-61`).
@@ -728,7 +728,7 @@ fail to type-check.
 
 ### 6.3 Stage 3 — the two targets in isolation: exit 0
 
-`dev/active/1ac74567/elaboration/elaborate.log:80-107`. Deleting the `pow`
+`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:80-107`. Deleting the `pow`
 chain from the stage-2 tree leaves `square.default`,
 `frobenius.default_loop.body`, `frobenius.default_loop` and `frobenius.default`
 (`:82-85`), and all three modules elaborate at exit 0 (`:87-89`).
@@ -740,7 +740,7 @@ Axiom dependencies (`:91-106`):
   `Quot.sound`, and one extraction-generated axiom.
 
 The extra axiom is `…frobenius.default_loop.body._native.decide.ax_3`, stated
-at `dev/active/1ac74567/elaboration/elaborate.log:104-106` as `decide
+at `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:104-106` as `decide
 ("Frobenius exponent overflow".toByteArray.size ≤ Aeneas.Std.U32.max) = true`.
 It is a `native_decide` fact about the length of the panic-message string
 literal that `toStr` introduces at
@@ -754,7 +754,7 @@ lists.
 
 ### 6.4 Stage 4 — the sketch's lemma statements: exit 0
 
-`dev/active/1ac74567/elaboration/elaborate.log:109-119`. All nine statements of
+`dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log:109-119`. All nine statements of
 §3 elaborate against the stage-3 tree, each reporting only `declaration uses
 'sorry'` for its absent body.
 
@@ -912,11 +912,11 @@ the resulting kernel-strategy surface in §2.4 and §4.3.
 
 | Path | Contents |
 |---|---|
-| `dev/active/1ac74567/proof-sketch.md` | this document |
-| `dev/active/1ac74567/elaboration/elaborate.sh` | the four-stage elaboration harness |
-| `dev/active/1ac74567/elaboration/elaborate.log` | its committed output |
-| `dev/active/1ac74567/elaboration/statements.lean` | the §3 lemma statements, `sorry` bodies, stage-4 input |
-| `dev/active/1ac74567/elaboration/FunsExternal.lean` | the empty stand-in module of §6.1 D2 |
+| `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md` | this document |
+| `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.sh` | the four-stage elaboration harness |
+| `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log` | its committed output |
+| `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/statements.lean` | the §3 lemma statements, `sorry` bodies, stage-4 input |
+| `dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/FunsExternal.lean` | the empty stand-in module of §6.1 D2 |
 
 ---
 
