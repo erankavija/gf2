@@ -8,19 +8,19 @@
 //! which now carries version 4. The receipt's digests bind both snapshot and
 //! addendum, so neither can drift away from what was measured.
 
-use std::path::Path;
 use survey_gf2_side::CachePolicy;
 use tuning_campaign_support::protocol::{sha256_hex, CellRole, FamilyAddendum};
+use tuning_campaign_support::repository::{locate_live, repository_root};
 use tuning_campaign_support::schema;
 
-const REPO: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../../..");
 const RECEIPT: &str = "dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json";
 const SCHEMA: &str =
     "dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/inputs/addendum.schema.json";
-const ADDENDUM: &str = "dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-remeasure.json";
+const ADDENDUM: &str = "addendum-dvb-t2-bit-interleave-v3-remeasure.json";
 
 fn read(path: &str) -> Vec<u8> {
-    std::fs::read(Path::new(REPO).join(path)).unwrap_or_else(|error| panic!("{path}: {error}"))
+    let root = repository_root().expect("the test runs inside the checkout");
+    std::fs::read(root.join(path)).unwrap_or_else(|error| panic!("{path}: {error}"))
 }
 
 fn pinned_sha256<'a>(receipt: &'a serde_json::Value, field: &str) -> &'a str {
@@ -39,12 +39,11 @@ fn remeasure_addendum_is_valid_exploratory_and_implemented() {
         pinned_sha256(&receipt, "addendum_schema"),
         "{SCHEMA} is not the schema snapshot the receipt pins"
     );
-    let bytes = read(ADDENDUM);
-    assert_eq!(
-        sha256_hex(&bytes),
-        pinned_sha256(&receipt, "addendum"),
-        "{ADDENDUM} is not the addendum the campaign measured"
-    );
+    let root = repository_root().expect("the test runs inside the checkout");
+    let measured = pinned_sha256(&receipt, "addendum");
+    let addendum = locate_live(&root, ADDENDUM, |bytes| sha256_hex(bytes) == measured)
+        .unwrap_or_else(|error| panic!("no {ADDENDUM} is the one the campaign measured: {error}"));
+    let bytes = read(&addendum);
 
     let schema_value: serde_json::Value =
         serde_json::from_slice(&schema_bytes).expect("schema decodes");

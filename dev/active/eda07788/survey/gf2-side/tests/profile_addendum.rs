@@ -3,7 +3,7 @@
 
 use std::collections::BTreeSet;
 use std::io::Write;
-use std::path::Path;
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use survey_gf2_side::CachePolicy;
 use tuning_campaign_support::arm::ArmRequest;
@@ -11,28 +11,36 @@ use tuning_campaign_support::protocol::{
     CellRole, FamilyAddendum, MetricKind, RunnerPlan, SharedInput, ADDENDUM_SCHEMA_ID,
 };
 use tuning_campaign_support::provenance::ProducingInputs;
+use tuning_campaign_support::repository::{locate_live, repository_root};
 use tuning_campaign_support::schema;
 use tuning_campaign_support::transport::{encode_case, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 
-const REPO: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../../..");
-const ADDENDUM: &str = "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json";
-const PRODUCING: &str =
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/dvb-producing-inputs.json";
-const PROFILE_CASES: &str =
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/profile-cases.txt";
+const ADDENDUM: &str = "dvb-profile-addendum.json";
+const PRODUCING: &str = "dvb-producing-inputs.json";
+const PROFILE_CASES: &str = "profile-cases.txt";
+const PLAN_TOOL: &str = "make-dvb-plan.py";
+
+fn repo() -> PathBuf {
+    repository_root().expect("the tests run inside the checkout")
+}
+
+/// Root-relative path of the one live file called `name`.
+fn live(name: &str) -> String {
+    locate_live(&repo(), name, |_| true).unwrap_or_else(|error| panic!("{name}: {error}"))
+}
 
 fn read(path: &str) -> Vec<u8> {
-    std::fs::read(Path::new(REPO).join(path)).unwrap_or_else(|error| panic!("{path}: {error}"))
+    std::fs::read(repo().join(path)).unwrap_or_else(|error| panic!("{path}: {error}"))
 }
 
 #[test]
 fn profile_addendum_is_frozen_valid_and_fully_exploratory() {
     let schema = SharedInput::AddendumSchema
-        .locate(Path::new(REPO), ADDENDUM_SCHEMA_ID)
+        .locate(&repo(), ADDENDUM_SCHEMA_ID)
         .expect("one live addendum schema declares the current identity");
     let schema_value: serde_json::Value =
         serde_json::from_slice(&read(&schema)).expect("schema decodes");
-    let bytes = read(ADDENDUM);
+    let bytes = read(&live(ADDENDUM));
     let instance: serde_json::Value = serde_json::from_slice(&bytes).expect("addendum decodes");
     let violations = schema::validate(&schema_value, &instance);
     assert!(violations.is_empty(), "schema violations: {violations:#?}");
@@ -50,7 +58,7 @@ fn profile_addendum_is_frozen_valid_and_fully_exploratory() {
 
 #[test]
 fn producing_input_closure_is_valid_and_complete_on_disk() {
-    ProducingInputs::read_at(Path::new(REPO), PRODUCING).expect("producing closure validates");
+    ProducingInputs::read_at(&repo(), &live(PRODUCING)).expect("producing closure validates");
 }
 
 #[test]
@@ -66,8 +74,8 @@ fn perf_case_declaration_covers_the_dynamic_ladder() {
         .iter()
         .map(|case| case["id"].as_str().expect("case has id"))
         .collect();
-    let declaration = std::fs::read_to_string(Path::new(REPO).join(PROFILE_CASES))
-        .expect("profile case declaration reads");
+    let declaration =
+        String::from_utf8(read(&live(PROFILE_CASES))).expect("profile case declaration reads");
     let declared: BTreeSet<_> = declaration
         .lines()
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
@@ -151,7 +159,7 @@ fn the_validation_role_dispatches_once_and_reports_no_window() {
     // The request is the shared smoke's own: `ArmRequest::validation` over the
     // projected plan cell and the frozen declaration, encoded by the transport
     // the runner uses, so the fixture cannot drift from the wire it mirrors.
-    let addendum = FamilyAddendum::decode(&read(ADDENDUM)).expect("typed addendum decodes");
+    let addendum = FamilyAddendum::decode(&read(&live(ADDENDUM))).expect("typed addendum decodes");
     let plan = projected_plan();
     let cell = plan
         .cells
@@ -199,7 +207,7 @@ fn the_validation_role_dispatches_once_and_reports_no_window() {
 
 #[test]
 fn profile_matrix_covers_modcod_boundaries_and_cache_states() {
-    let addendum = FamilyAddendum::decode(&read(ADDENDUM)).expect("typed addendum decodes");
+    let addendum = FamilyAddendum::decode(&read(&live(ADDENDUM))).expect("typed addendum decodes");
     let identities: BTreeSet<_> = addendum
         .cells
         .iter()
@@ -249,12 +257,12 @@ fn projected_plan() -> RunnerPlan {
     ));
     let executable = std::env::current_exe().expect("test executable resolves");
     let status = Command::new("python3")
-        .current_dir(REPO)
+        .current_dir(repo())
         .args([
             "-B",
-            "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-plan.py",
+            &live(PLAN_TOOL),
             "--addendum",
-            ADDENDUM,
+            &live(ADDENDUM),
             "--campaign-id",
             "v4-r2-9fb40c83-dvb-interleave-profile",
             "--campaign-seed",
@@ -264,7 +272,7 @@ fn projected_plan() -> RunnerPlan {
             "--executable",
         ])
         .arg(executable)
-        .args(["--producing-manifest", PRODUCING, "--output"])
+        .args(["--producing-manifest", &live(PRODUCING), "--output"])
         .arg(&plan_path)
         .args(["--max-cells-per-session", "2", "--pilot-pairs", "6"])
         .status()
@@ -278,7 +286,7 @@ fn projected_plan() -> RunnerPlan {
 
 #[test]
 fn projected_plan_is_valid_for_the_frozen_addendum() {
-    let addendum = FamilyAddendum::decode(&read(ADDENDUM)).expect("typed addendum decodes");
+    let addendum = FamilyAddendum::decode(&read(&live(ADDENDUM))).expect("typed addendum decodes");
     projected_plan()
         .validate(&addendum)
         .unwrap_or_else(|errors| panic!("plan violations: {errors:#?}"));
