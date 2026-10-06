@@ -1730,17 +1730,16 @@ pub trait IterativeSoftDecoder: SoftDecoder {
 ///
 /// # Allocation
 ///
-/// Decoded words and outcomes are caller-provided and the workspace belongs
-/// to the implementer, so an implementer decodes without allocating once its
-/// workspace is sized. The [`SoftDecoder`] path and [`IterativeBatchDecoder`]
-/// allocate what the single-frame decode they call allocates.
+/// The trait requires no steady-state allocation of an implementer: decoded
+/// words and outcomes are caller-provided and the workspace belongs to the
+/// implementer. The [`SoftDecoder`] path and [`IterativeBatchDecoder`]
+/// allocate only what the single-frame decode they call allocates.
 ///
 /// # Trait objects
 ///
-/// [`decode_batch`](Self::decode_batch) is generic over the frame type, so
-/// the trait is not dyn compatible and consumers take a type parameter
-/// bounded by it. The bound admits unsized types: `dyn SoftDecoder` is a
-/// batch decoder.
+/// The trait is dyn compatible. A `Box<dyn BatchSoftDecoder>` decodes through
+/// method calls on the box and satisfies a `D: BatchSoftDecoder + ?Sized`
+/// bound as `&mut *boxed`.
 pub trait BatchSoftDecoder {
     /// Returns the number of LLRs in one frame.
     fn frame_len(&self) -> usize;
@@ -1762,18 +1761,18 @@ pub trait BatchSoftDecoder {
     /// Panics if a frame's length differs from
     /// [`frame_len`](Self::frame_len), or if `decoded` or `outcomes` differs
     /// in length from `frames`.
-    fn decode_batch<F: AsRef<[Llr]>>(
+    fn decode_batch(
         &mut self,
-        frames: &[F],
+        frames: &[&[Llr]],
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
     );
 }
 
 /// Decodes each frame with `decode_frame`, in input order.
-fn decode_batch_per_frame<F: AsRef<[Llr]>>(
+fn decode_batch_per_frame(
     frame_len: usize,
-    frames: &[F],
+    frames: &[&[Llr]],
     decoded: &mut [BitVec],
     outcomes: &mut [DecodeOutcome],
     mut decode_frame: impl FnMut(&[Llr]) -> DecoderResult,
@@ -1788,8 +1787,7 @@ fn decode_batch_per_frame<F: AsRef<[Llr]>>(
         frames.len(),
         "a batch needs one outcome per frame"
     );
-    for (index, frame) in frames.iter().enumerate() {
-        let llrs = frame.as_ref();
+    for (index, &llrs) in frames.iter().enumerate() {
         assert_eq!(
             llrs.len(),
             frame_len,
@@ -1815,9 +1813,9 @@ impl<D: SoftDecoder + ?Sized> BatchSoftDecoder for D {
         1
     }
 
-    fn decode_batch<F: AsRef<[Llr]>>(
+    fn decode_batch(
         &mut self,
-        frames: &[F],
+        frames: &[&[Llr]],
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
     ) {
@@ -1869,9 +1867,9 @@ impl<D: IterativeSoftDecoder> BatchSoftDecoder for IterativeBatchDecoder<D> {
         1
     }
 
-    fn decode_batch<F: AsRef<[Llr]>>(
+    fn decode_batch(
         &mut self,
-        frames: &[F],
+        frames: &[&[Llr]],
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
     ) {
@@ -2542,9 +2540,15 @@ mod batch_decoder_tests {
     ) -> (Vec<BitVec>, Vec<DecodeOutcome>) {
         let mut decoded = vec![BitVec::new(); frames.len()];
         let mut outcomes = vec![DecodeOutcome::default(); frames.len()];
-        decoder.decode_batch(frames, &mut decoded, &mut outcomes);
+        decoder.decode_batch(&views(frames), &mut decoded, &mut outcomes);
         (decoded, outcomes)
     }
+
+    fn views(frames: &[Vec<Llr>]) -> Vec<&[Llr]> {
+        frames.iter().map(Vec::as_slice).collect()
+    }
+
+    fn _is_dyn_compatible(_: &mut dyn BatchSoftDecoder) {}
 
     #[test]
     fn soft_decoder_batch_matches_single_frame_decodes_in_input_order() {
@@ -2608,17 +2612,6 @@ mod batch_decoder_tests {
     }
 
     #[test]
-    fn frames_are_accepted_as_borrowed_slices() {
-        let owned = frames(2);
-        let borrowed: Vec<&[Llr]> = owned.iter().map(Vec::as_slice).collect();
-        let mut decoded = vec![BitVec::new(); 2];
-        let mut outcomes = vec![DecodeOutcome::default(); 2];
-        MockDecoder.decode_batch(&borrowed, &mut decoded, &mut outcomes);
-
-        assert_eq!((decoded, outcomes), decode(&mut MockDecoder, &owned));
-    }
-
-    #[test]
     fn decoder_result_outcome_carries_every_metadata_field() {
         let result = DecoderResult {
             queries: Some(9),
@@ -2654,7 +2647,7 @@ mod batch_decoder_tests {
         let frames = frames(2);
         let mut decoded = vec![BitVec::new(); 1];
         let mut outcomes = vec![DecodeOutcome::default(); 2];
-        MockDecoder.decode_batch(&frames, &mut decoded, &mut outcomes);
+        MockDecoder.decode_batch(&views(&frames), &mut decoded, &mut outcomes);
     }
 
     #[test]
@@ -2664,22 +2657,30 @@ mod batch_decoder_tests {
         let mut decoded = vec![BitVec::new(); 2];
         let mut outcomes = vec![DecodeOutcome::default(); 3];
         IterativeBatchDecoder::new(MockDecoder, 3).decode_batch(
-            &frames,
+            &views(&frames),
             &mut decoded,
             &mut outcomes,
         );
     }
 
-    /// A `dyn SoftDecoder` is a batch decoder through the blanket
-    /// implementation, which is the dynamically dispatched route.
     #[test]
-    fn unsized_soft_decoder_is_a_batch_decoder() {
-        let mut boxed: Box<dyn SoftDecoder> = Box::new(MockDecoder);
-        let frames = frames(3);
+    fn trait_objects_decode_as_their_concrete_decoders() {
+        let frames = frames(N);
+        let cap = 3;
+        let soft = decode(&mut MockDecoder, &frames);
+        let iterative = decode(&mut IterativeBatchDecoder::new(MockDecoder, cap), &frames);
 
-        assert_eq!(
-            decode(&mut *boxed, &frames),
-            decode(&mut MockDecoder, &frames)
-        );
+        let by_reference: &mut dyn BatchSoftDecoder = &mut MockDecoder;
+        assert_eq!(decode(by_reference, &frames), soft);
+
+        let mut boxed: Box<dyn BatchSoftDecoder> =
+            Box::new(IterativeBatchDecoder::new(MockDecoder, cap));
+        assert_eq!(boxed.frame_len(), N);
+        assert_eq!(decode(&mut *boxed, &frames), iterative);
+
+        let mut decoded = vec![BitVec::new(); frames.len()];
+        let mut outcomes = vec![DecodeOutcome::default(); frames.len()];
+        boxed.decode_batch(&views(&frames), &mut decoded, &mut outcomes);
+        assert_eq!((decoded, outcomes), iterative);
     }
 }
