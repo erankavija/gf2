@@ -96,18 +96,18 @@ holds the SHA-256 of the document.
 
 | Document | Digest at | Relative links that leave the entry and do not resolve |
 |---|---|---|
-| `dense-parity-addendum.md` | `S/survey/dense-harness/src/cells.rs:22`; `dense-campaign` reads the file and refuses a timed run on another digest | 5 |
-| `dense-parity-addendum-v1.md` | `S/survey/dense-baseline-validation.txt:6` | 5 |
+| `dense-parity-addendum.md` | `S/survey/dense-harness/src/cells.rs:22`; `dense-campaign` reads the file and refuses a timed run on another digest | 4 |
+| `dense-parity-addendum-v1.md` | `S/survey/dense-baseline-validation.txt:6` | 4 |
 | `logical-buffer-addendum.md` | `dev/bench_results/2037941f/isal-dispatch-availability.md:7` | 2 |
 | `isal-comparator.md` | `dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json:4825` | 0 |
 | `m4ri-operation-match.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9383` | 1 |
 
-The 13 links are the rows of the second table of
+The 11 links are the rows of the second table of
 `8f61d6de-baseline-findings.md`. Their targets are
 `../1a379447-zen3-cpu-performance/measurement-contract.md` (3),
-`../5cbb6545/findings.md` (2), `../../bench_results/` (5) and
-`../../../crates/` (3). The three links to `../04b85d10/findings.md`, the
-seven to `../f547c394/` and the one to `../6fb89a3c/survey/fetch-build.sh`
+`../../bench_results/` (5) and `../../../crates/` (3). The three links to
+`../04b85d10/findings.md`, the seven to `../f547c394/`, the two to
+`../5cbb6545/findings.md` and the one to `../6fb89a3c/survey/fetch-build.sh`
 resolve, because the entries lie under `E`.
 
 ## Flat paths that stay
