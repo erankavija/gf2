@@ -141,7 +141,7 @@ def pilot_history() -> dict[str, list[str]]:
     for log in sorted(RESULTS.glob("*/execution.log")):
         entries = [json.loads(line) for line in log.read_text().splitlines()]
         declared = entries[0]["details"]["addendum"]
-        if pathlib.Path(declared["path"]) == OUTPUT:
+        if pathlib.Path(declared["path"]).name == OUTPUT.name:
             continue
         snapshot = log.parent / declared["snapshot"]
         addendum = json.loads(snapshot.read_text())
@@ -171,7 +171,7 @@ def main() -> int:
             raise SystemExit(f"pilot cell {cell['cell_id']} is not an exploratory cell the arms implement")
 
     ledger_path = pilot["family_wise"]["ledger_path"]
-    ledger = [json.loads(line) for line in pathlib.Path(ledger_path).read_text().splitlines()]
+    ledger = [json.loads(line) for line in located(pathlib.Path(ledger_path).name).read_text().splitlines()]
     comparators = rebuilt_comparators(pilot["cells"], ledger)
     attempts = sum(1 for entry in ledger if entry["comparisons"] > 0)
     comparisons = sum(entry["comparisons"] for entry in ledger)
@@ -199,7 +199,8 @@ def main() -> int:
         "dev/active/eda07788/survey/source-evidence.json), so their `warm` declarations are false and every warm "
         "cell's comparison is withdrawn; the `streaming` cells applied the rotation they declared. This campaign "
         f"repeats every cell of {PILOT.name} with the repaired arms (timed_windows in "
-        f"dev/active/eda07788/survey/gf2-side/src/lib.rs), whose executable digests {VALIDATION} records, at the "
+        "dev/active/eda07788/survey/gf2-side/src/lib.rs), whose executable digests "
+        "dev/active/eda07788/survey/validation-output-v3-remeasure.txt records, at the "
         f"pilot maximum of {settings['pilot_max_pairs']} pairs per cell. "
         "Every cell is exploratory. The withdrawn v3 confirmation spent the one confirmatory attempt per candidate "
         f"identity and protocol version for {' and '.join(comparators)}, whose identities its ledger reservation "

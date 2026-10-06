@@ -38,8 +38,10 @@ LDPC_CORE = "crates/gf2-coding/src/ldpc/core.rs"
 RM = "lib/phy/upper/channel_coding/ldpc/ldpc_rate_matcher_impl.cpp"
 SURVEY = "dev/active/eda07788/survey/"
 # The arm sources the v3 DVB-T2 receipts ran, as the confirmation's producing
-# snapshot holds them, and every DVB-T2 receipt that ran those sources.
-V3_ARMS = "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/inputs/producing/" + SURVEY
+# snapshot holds them under the survey path it records, and every DVB-T2
+# receipt that ran those sources.
+V3_SURVEY = "dev/active/eda07788/survey/"
+V3_ARMS = "dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation/inputs/producing/" + V3_SURVEY
 WITHDRAWN_DVB_T2 = [
     "2026-09-08-eda07788-dvb-t2-pilot",
     "2026-09-08-eda07788-dvb-t2-confirmation",
@@ -227,7 +229,7 @@ def main():
     logs = [os.path.join(repo, "dev/bench_results/eda07788", name, "launcher.log") for name in WITHDRAWN_DVB_T2]
     for record in records:
         if record["path"].startswith(V3_ARMS):
-            listed = record["sha256"] + "  " + record["path"][len(V3_ARMS) - len(SURVEY):]
+            listed = record["sha256"] + "  " + record["path"][len(V3_ARMS) - len(V3_SURVEY):]
             for log in logs:
                 if not any(line.strip().lstrip("#").strip() == listed for line in open(log, encoding="utf-8")):
                     errors.append(f"{record['claim']}: {os.path.relpath(log, repo)} lists another digest")

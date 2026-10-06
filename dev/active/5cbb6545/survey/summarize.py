@@ -28,6 +28,8 @@ from families import bytes_per_call  # noqa: E402
 
 ISSUE = "5cbb6545"
 ACTIVE = pathlib.Path("dev/active") / ISSUE
+# The entry directory as the receipts' producing snapshots record it.
+MEASURED = pathlib.Path("dev/active") / ISSUE
 RESULTS = pathlib.Path("dev/bench_results") / ISSUE
 OUTPUT = RESULTS / "tables.md"
 CLOCK = ACTIVE / "survey" / "clock-observation.json"
@@ -163,7 +165,7 @@ def campaigns_section(lines, stages):
             family["bootstrap_resamples"] * corrected / 2.0 if corrected else None
         )
         attempt = attempt_number(stage)
-        arm_source = stage["directory"] / "inputs" / "producing" / ACTIVE / "survey" / (
+        arm_source = stage["directory"] / "inputs" / "producing" / MEASURED / "survey" / (
             "gf2-side/src/arms.rs"
         )
         rows.append(
