@@ -22,6 +22,7 @@ set -euo pipefail
 # separately under `dev/scripts/ccx1-bench-flock.sh`; the two are independent by
 # design and neither subsumes the other. Do not double-wrap.
 BUDGET="$(dirname "$0")/cargo-budget.sh"
+SCALAR_LANE="$(dirname "$0")/scalar-lane-tests.sh"
 
 # BUSY_HOST_OVERRIDE=1 selects the `ci-busy` nextest profile, whose per-test
 # kill absorbs host contention beyond what the `ci` tier budget is sized for.
@@ -164,7 +165,7 @@ plain() {
 summarize_pass() {
   local name="$1"
   case "$name" in
-    test)
+    test|scalar-lane-nextest)
       # Extract nextest summary line: "Summary [Xs] N tests run: P passed, F failed, S skipped"
       local summary_line
       summary_line=$(plain "$LOGDIR/$name.out" | grep -E "^[[:space:]]*Summary" || true)
@@ -173,10 +174,13 @@ summarize_pass() {
         p=$(echo "$summary_line" | grep -oP '\d+(?= passed)' || true)
         f=$(echo "$summary_line" | grep -oP '\d+(?= failed)' || true)
         s=$(echo "$summary_line" | grep -oP '\d+(?= skipped)' || true)
-        echo "${p:-0} passed, ${f:-0} failed, ${s:-0} skipped"
+        echo -n "${p:-0} passed, ${f:-0} failed, ${s:-0} skipped"
       else
-        echo "ok"
+        echo -n "ok"
       fi
+      # The resolved feature lists the scalar-lane script prints.
+      plain "$LOGDIR/$name.out" | sed -n 's/^scalar lane: /; /p' | tr -d '\n'
+      echo
       ;;
     *)
       echo "ok"
@@ -187,7 +191,7 @@ summarize_pass() {
 summarize_fail() {
   local name="$1"
   case "$name" in
-    test)
+    test|scalar-lane-nextest)
       # Show failure details from nextest output.
       #
       # These patterns must not anchor at column zero: nextest indents its
@@ -244,6 +248,12 @@ run_step tuning-coding-codec-only "$BUDGET" cargo check -p gf2-coding --no-defau
 run_step default-features-core-check "$BUDGET" cargo check -p gf2-core --all-targets --profile ci-test
 run_step default-features-core-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback --no-run
 run_step default-features-core-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback
+
+# The scalar lane of the two packages whose default features select `simd`:
+# their suites in a build that resolves no `simd` feature, which the script
+# verifies and whose resolved feature lists the summary carries.
+run_step scalar-lane-build "$BUDGET" "$SCALAR_LANE" --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
+run_step scalar-lane-nextest "$BUDGET" --test "$SCALAR_LANE" --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 
 # Build outside the exclusive lock, then execute inside it. The workspace
 # compile with GPU/SIMD features is the heaviest work here, and holding the
