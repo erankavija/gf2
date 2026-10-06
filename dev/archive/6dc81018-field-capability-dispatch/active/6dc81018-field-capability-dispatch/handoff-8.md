@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-01T05:01:22+03:00
 **Session number:** 8
-**Prior handoffs:** `dev/active/6dc81018-field-capability-dispatch/handoff.md`, `handoff-2.md`, `handoff-3.md`, `handoff-4.md`, `handoff-5.md`, `handoff-6.md`, `handoff-7.md`
+**Prior handoffs:** `dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md`, `handoff-2.md`, `handoff-3.md`, `handoff-4.md`, `handoff-5.md`, `handoff-6.md`, `handoff-7.md`
 
 ## Current state
 
@@ -57,7 +57,7 @@
 - Epic: `jit issue show 6dc81018`
 - Escalated issue: `jit issue show 5bdc9552`; `jit gate status 5bdc9552 doc-review --findings`
 - Designs: `dev/active/7d7c647c/design.md`, `dev/active/7d824b2f/design.md`, `dev/active/3fa7c9d0/design.md`
-- Epic execution state: `dev/active/6dc81018-field-capability-dispatch/progress.json`
+- Epic execution state: `dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json`
 - Proof-drift evidence: `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md`
 - Calibration checklist: `dev/active/86b9c719-quality-documentation-tech-debt/389aa4de/receipt-notes.md`
 - Coordination forum: `/home/vkaskivuo/Projects/forum-poc`

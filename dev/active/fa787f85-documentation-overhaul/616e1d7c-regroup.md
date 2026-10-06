@@ -40,8 +40,8 @@ status.
 |---|---|---|---|
 | REQ-01 | `preview`, `marker`, `bytes`: the plan is eligible without blocker; 401 of 401 published destinations hold the planned sha256 at the execution commit; 395 of 395 move sources are absent; 6 of 6 copy sources hold the planned sha256 | The files the plan moves are under `AR`, byte-identical to their sources at execution; `manifest` adds that the file of each of the 465 rows is at its destination, or at its path when the destination is empty | — |
 | REQ-02 | `references`: 522 of 522 relinked tracker documents on 25 issues name their archive path | The tracker of the checkout names the archive path for each reference the plan relinks | References of kept files that an issue outside the container owns; the reference of issue 389aa4de to its note, which `jit doc check-links --scope all` covers |
-| REQ-03 | `links`: 239 of 239 local links in the 60 Markdown files of `AR` resolve, and 26 of 26 in the 7 Markdown files of this issue under the active area | Each inline link outside fenced code resolves from its file's directory or, with a leading `/`, from the checkout root | Anchors, code-span paths, links in non-Markdown files |
-| REQ-04 | `excluded`: no path under `dev/active/a83583e0` or `dev/active/dbd8787d` changes, is published or is deleted | The code-pinned entries are in place | The Rust CI verdict; `cargo-ci` runs it |
+| REQ-03 | `links`: 239 of 239 local links in the 60 Markdown files of `AR` resolve, and 26 of 26 in the 11 Markdown files of this issue under the active area; `citations` | Each inline link outside fenced code resolves from its file's directory or, with a leading `/`, from the checkout root | Anchors, code-span paths, links in non-Markdown files |
+| REQ-04 | `consumers`: the 222 manifest consumers on 19 rows of the entries lie inside entries 1ac74567, 34d85cb9, 50b47eae, 7d7c647c, e6ea0dde and eb9b324c, each of which has archived rows; `excluded`: no path under `dev/active/a83583e0` or `dev/active/dbd8787d` changes, is published or is deleted | No entry has a manifest consumer outside the entries this unit moves or archives together (decision DEC-04); the code-pinned entries are in place | The Rust CI verdict; `cargo-ci` runs it |
 | REQ-05 | `manifest`: each of the 465 rows is `complete`; `python3 616e1d7c-rows.py --check` exits 0 | 431 rows archived, 33 retained in place, 1 moved under `Q` | — |
 | REQ-06 | Commit `03272e29d` | Path text only, per entry in the commit message | — |
 
@@ -84,7 +84,7 @@ Four kept files differ from their archive file by edits of other units after
 the first archive run: `6dc81018-field-capability-dispatch/{breakdown.json,classification.md,investigation.md}`
 and `eaae1b56/premeasurement-protocol.md`. The plan reports none as a
 conflict. `AR/active/7d7c647c/design.md` holds the bytes of its source
-(commit `1be94823d`): an archive file that differs both from its source and
+(commit `55fbea37a`): an archive file that differs both from its source and
 from its recorded publication blocks the plan with `destination-conflict`.
 
 ## Citations
@@ -110,16 +110,45 @@ Repointed in commit `7d18de5f4`, path and link-target text only:
 Two repointed command quotations name generated files that no commit holds
 (`34d85cb9/extraction/R2_gf2_core.llbc`, `e6ea0dde/extraction/X3_gf2_core.llbc`).
 
-Citations that keep their bytes:
+The `citations` section of the output counts, per citing file, the 3126
+citations at commit `42929def5` of a path under an entry of this unit that the
+tree lacks, found by `git grep -F` for `dev/active/<entry>` and `../<entry>/`
+outside `.jit/`: 52 repointed in commit `55fbea37a`, 3074 kept and present at
+the tip.
 
-| Location | Reason |
+Repointed in commit `55fbea37a`, path text only:
+
+| File | Cites |
 |---|---|
-| `dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-{4,5}.md` and the three receipts under `AR/benchmarks/tuning_profiles/` | Receipts |
-| 19 scripts under `AR/active/50b47eae/s{4,5,6}-session/`, three of which name their own directory | Manifest `digest_pinned`; the post-cutover receipts record their digests |
-| Logs, excerpts and Lean outputs under `AR/active/`, `progress.json` | Tool outputs and continuation JSON |
-| `67048b47-linked-pairs.txt`, `7bac1303-harness-path-trials.txt`, `96cea1b9-archive-rows.txt` | Committed script outputs |
-| `migration/manifest.toml`, `path` fields | The field names the source by schema |
-| `handoff-8.md:31,66` and `progress.json` of this epic directory | Quotations of the review finding and of the owner question on the flat path of 389aa4de; continuation JSON |
+| `dev/active/7d7c647c/design.md:12,107,110,552` and `AR/active/7d7c647c/design.md`, equal bytes | `AR/active/1ac74567/proof-sketch.md`, `progress.json` of the archived epic directory |
+| `AR/active/1ac74567/proof-sketch.md`, `AR/active/e6ea0dde/record.md` | files of 1ac74567 |
+| `AR/active/1ac74567/elaboration/elaborate.sh:8,9,30` | its own directory, in two comment lines and in `HERE` |
+| `handoff-7.md:51`, `handoff-8.md:5,60` of the archived epic directory; `handoff-12.md:114`, `handoff-13.md:84` of `dev/active/6dc81018-field-capability-dispatch` | `progress.json`, `handoff.md` of the archived epic directory |
+| `dev/active/f547c394/research-r3-sweep-resolutions.md:775,776,870,1021` and the `path` fields at `research-r3-sweeps.json:3982,3987,4457,5258` | `AR/active/2a85f728/asm-delta.md`, `progress.json`, `handoff.md` |
+| `8f61d6de-baseline-findings.md:9,10`, `d1f6b2c9-inventory-notes.md:3` | `handoff-4.md`, `handoff-17.md` of the archived epic directory |
+
+`design.md:12` cites `progress.json` without a line suffix; line 785 of the
+archived file holds other content. The words that `design.md:104-107` quotes
+differ from the wording of lines 900 to 907 of the sketch, which state the
+same fact.
+
+Citations that keep their bytes, each on one ground:
+
+| Citing file | Citations | Ground |
+|---|---|---|
+| `migration/manifest.toml` | 938 | Manifest schema fields |
+| `616e1d7c-preexec.json` | 828 | Digest pin: content hash at `.jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json:38` |
+| `67048b47-linked-pairs.txt`, `96cea1b9-archive-rows.txt`, `7bac1303-harness-path-trials.txt` | 395, 431, 3 | Tool output: listings that units 67048b47, 96cea1b9 and 7bac1303 commit beside their scripts |
+| 125 files under `AR`, the `container root` line of the output: 95 logs, 14 excerpts, 12 Lean files, `progress.json`, `breakdown.json`, two receipts | 468 | Marker-backed archive files |
+| `AR/active/6dc81018-field-capability-dispatch/handoff.md:14` | 1 | Digest pin: content hash at `.jit/issues/389aa4de-e6dc-4adb-a2e8-03153192b8cc.json:41` |
+| `dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md:136`, `2026-08-22-post-cutover-receipt-4.md:138,139` | 3 | Receipts, equal in bytes to their archive files |
+| `dev/active/6dc81018-field-capability-dispatch/breakdown.json:42,126,457,458` | 4 | Tracker state: the breakdown manifest of 6dc81018; the tree holds none of the four cited paths |
+| `handoff-8.md:31,66` and `progress.json` of this epic directory | 3 | Tracker state: session handoff and execution progress of fa787f85, quoting code-review finding F2 and the owner question that decision DEC-02 answers |
+
+The two Lean files among the 12 that a person wrote,
+`AR/active/1ac74567/elaboration/FunsExternal.lean` and
+`AR/active/e6ea0dde/elaboration/Statements.lean`, are the inputs of the
+committed elaboration logs.
 
 `git grep -F` for the six moved entry directories finds no citation in a
 README, `AGENTS.md`, `docs/` page or Rust source outside `dev/archive/` and
