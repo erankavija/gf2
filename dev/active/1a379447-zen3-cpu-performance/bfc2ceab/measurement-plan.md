@@ -30,8 +30,8 @@ Every cell is a non-regression, whole-consumer cell. The retained cells cover ea
 
 - Untimed: `survey/smoke-arms.sh pilot` drives both arms of every cell through `benchmark-ab-runner smoke` and writes [`survey/pilot-smoke.json`](survey/pilot-smoke.json).
 - Pilot: the queue line `dev/bench_results/bfc2ceab/run-entry-check.sh window pilot`, every cell exploratory.
-- Confirmation: `run-entry-check.sh freeze` derives the confirmation addendum from the committed pilot receipt with the canonical freezer; a first confirmatory attempt spends half the family alpha, and P-20's tail-support bound then admits six confirmatory cells.
+- Confirmation: `run-entry-check.sh freeze` derives the confirmation addendum [`addendum-v4-entry-check-confirmation.json`](addendum-v4-entry-check-confirmation.json) from the committed pilot receipt with the canonical freezer; a first confirmatory attempt spends half the family alpha, and P-20's tail-support bound then admits six confirmatory cells. `survey/smoke-arms.sh confirmation` writes [`survey/confirmation-smoke.json`](survey/confirmation-smoke.json), and the queue line is `dev/bench_results/bfc2ceab/run-entry-check.sh window confirmation`.
 
 ## Window estimate
 
-Estimate: 14 minutes for the pilot, the builds of both arms and of the campaign tools included, by analogy with two committed queue lines of warm campaigns (`queue-dense-product`, `queue-axpy`).
+Estimate: 14 minutes for the pilot, the builds of both arms and of the campaign tools included, by analogy with two committed queue lines of warm campaigns (`queue-dense-product`, `queue-axpy`). Estimate: 8 minutes for the confirmation, by the span between the start and finish records of the pilot's launcher log, scaled by the declared pairs of the two stages, with an allowance for the builds.

@@ -13,13 +13,17 @@ writing, when
 - a cited claim is absent from `source-evidence.json`;
 - a witness tuple does not pass the release assertions it is recorded against.
 
-`witness-runs.json` and `instruction-counts.json` are read as committed.
+`witness-runs.json` and `instruction-counts.json` are read as committed, and so
+is the pilot receipt the confirmation addendum pins: the decision table points
+each interface at its rows of that pilot's acceptance summary.
 
 Usage: make-inventory.py, with no arguments
 """
 
+import hashlib
 import importlib.util
 import json
+import os
 import re
 import sys
 
@@ -530,6 +534,24 @@ def inventory_page(record):
     return "\n".join(out)
 
 
+def pilot_cost_rows():
+    """Link to the pilot's acceptance summary and each of its cells' roles.
+
+    The pilot is the receipt the confirmation addendum pins as resolution
+    evidence, so the table points at the bytes that sized the confirmation.
+    """
+    evidence = json.loads((OUT / review.CONFIRMATION_ADDENDUM).read_text())["effect"][
+        "resolution_evidence"]
+    receipt = ROOT / evidence["receipt"]
+    if hashlib.sha256(receipt.read_bytes()).hexdigest() != evidence["sha256"]:
+        raise SystemExit(f"{evidence['receipt']} is not the receipt the confirmation pins")
+    summary = json.loads((receipt.parent / "acceptance-summary.json").read_text())
+    if summary["receipt_sha256"] != evidence["sha256"]:
+        raise SystemExit("the pilot's acceptance summary evaluates another receipt")
+    link = os.path.relpath(receipt.parent / "acceptance-summary.md", OUT)
+    return link, {cell["cell_id"]: cell["role"] for cell in summary["cells"]}
+
+
 def option_b(interface):
     """What an `unsafe fn` pointer changes for one interface."""
     entries = interface["entries"]
@@ -545,6 +567,10 @@ def option_b(interface):
 
 
 def decision_page(record):
+    summary, roles = pilot_cost_rows()
+    missing = {row["cell"] for row in record["measurement_cells"]} - set(roles)
+    if missing:
+        raise SystemExit(f"the pilot's acceptance summary lacks cells: {sorted(missing)}")
     out = [
         "# Decision table: checked or unchecked kernel entry points",
         "",
@@ -564,6 +590,11 @@ def decision_page(record):
         "`coding-denies-unsafe`), so a production call site there cannot hold that block: "
         "for such an interface option (b) keeps a checked safe entry in the kernel crate, "
         "at the same or a coarser grain, and makes only the inner kernel `unsafe`.",
+        "",
+        "The last column names, for each interface, its rows in the Cells table of the "
+        f"pilot's [acceptance summary]({summary}), each with the role the summary records: "
+        "an exploratory row sizes the confirmation and decides nothing. An interface "
+        "without a row has no cell in the family.",
         "",
     ]
     for name, description in record["classes"].items():
@@ -595,14 +626,15 @@ def decision_page(record):
                      if kernel else "no committed listing"),
                     option_b(interface),
                     f"({decision['recommended']})",
-                    ", ".join(f"`{row['cell']}`" for row in record["measurement_cells"]
+                    ", ".join(f"[`{row['cell']}`]({summary}) ({roles[row['cell']]})"
+                              for row in record["measurement_cells"]
                               if row["interface"] == interface["id"]) or "—",
                 ]
             )
         out += [
             table(
                 ["Pointer type", "Entry points", "Instructions (a) adds",
-                 "Kernel instructions", "Option (b)", "Recommended", "Cells in the plan"],
+                 "Kernel instructions", "Option (b)", "Recommended", "Pilot cost rows"],
                 rows,
             ),
             "",
@@ -674,15 +706,21 @@ def plan_page(record):
         "[`survey/pilot-smoke.json`](survey/pilot-smoke.json).",
         f"- Pilot: the queue line `{review.QUEUE_COMMAND}`, every cell exploratory.",
         "- Confirmation: `run-entry-check.sh freeze` derives the confirmation addendum "
+        f"[`{review.CONFIRMATION_ADDENDUM}`]({review.CONFIRMATION_ADDENDUM}) "
         "from the committed pilot receipt with the canonical freezer; a first "
         "confirmatory attempt spends half the family alpha, and P-20's tail-support "
-        "bound then admits six confirmatory cells.",
+        "bound then admits six confirmatory cells. `survey/smoke-arms.sh confirmation` "
+        "writes [`survey/confirmation-smoke.json`](survey/confirmation-smoke.json), and "
+        f"the queue line is `{review.CONFIRMATION_QUEUE_COMMAND}`.",
         "",
         "## Window estimate",
         "",
         f"Estimate: {review.PILOT_MINUTES} minutes for the pilot, the builds of both arms "
         "and of the campaign tools included, by analogy with two committed queue lines of "
-        "warm campaigns (`queue-dense-product`, `queue-axpy`).",
+        "warm campaigns (`queue-dense-product`, `queue-axpy`). Estimate: "
+        f"{review.CONFIRMATION_MINUTES} minutes for the confirmation, by the span between "
+        "the start and finish records of the pilot's launcher log, scaled by the declared "
+        "pairs of the two stages, with an allowance for the builds.",
         "",
     ]
     return "\n".join(out)

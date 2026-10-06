@@ -1064,6 +1064,11 @@ RETAINED_CELLS = ["spmm-small-n16", "spmm-medium-n16", "permanent-f3-n14", "ple-
 # Estimate of the pilot's window minutes, builds included.
 PILOT_MINUTES = 14
 QUEUE_COMMAND = "dev/bench_results/bfc2ceab/run-entry-check.sh window pilot"
+# The confirmation addendum pins the pilot receipt as its resolution evidence.
+CONFIRMATION_ADDENDUM = "addendum-v4-entry-check-confirmation.json"
+# Estimate of the confirmation's window minutes, builds included.
+CONFIRMATION_MINUTES = 8
+CONFIRMATION_QUEUE_COMMAND = "dev/bench_results/bfc2ceab/run-entry-check.sh window confirmation"
 
 # Text that would name one of the inventory's consumers in a measurement
 # family of the dispatch route inventory (jit:63bad95d).
