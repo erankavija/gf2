@@ -58,7 +58,8 @@ mod imp {
     }
 
     impl CpuLdpcBp {
-        /// Builds a CPU LDPC BP stage.
+        /// Builds a CPU LDPC BP stage. A cap of zero behaves as in
+        /// [`LdpcDecoder::decode_codeword_into`].
         #[must_use]
         pub fn new(code: LdpcCode, config: DecoderConfig, max_iterations: usize) -> Self {
             let decoder = std::sync::Mutex::new(LdpcDecoder::with_config(code.clone(), config));

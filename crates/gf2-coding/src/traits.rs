@@ -1855,7 +1855,8 @@ pub struct IterativeBatchDecoder<D> {
 }
 
 impl<D: IterativeSoftDecoder> IterativeBatchDecoder<D> {
-    /// Wraps `decoder` with the iteration cap of every frame.
+    /// Wraps `decoder` with the iteration cap of every frame; a cap of zero
+    /// behaves as `decoder`'s [`decode_iterative`](IterativeSoftDecoder::decode_iterative) defines.
     pub fn new(decoder: D, max_iterations: usize) -> Self {
         Self {
             decoder,
