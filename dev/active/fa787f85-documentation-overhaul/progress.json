@@ -2046,6 +2046,16 @@
    ],
    "recommendation": "the rewording",
    "resolution": ""
+  },
+  {
+   "issue": "fa787f85",
+   "question": "OPEN: epic REQ-11 (documents of non-terminal epics live under the epic directory) against the held flat entry dev/active/02b8137c/ (5ec5dcc1 DEC-01, move tracked in 5b3e7c81); option B for f6148d1e and f694f59a adds dbd8787d and a83583e0.",
+   "options": [
+    "amend REQ-11 to admit a flat entry with a tracked move issue",
+    "keep the epic open until each entry moves"
+   ],
+   "recommendation": "the amendment",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -2337,7 +2347,8 @@
   "Session 11: 616e1d7c done (gate batch at fc571c890). Review lesson repeated: link every unit record and output with jit doc add BEFORE gating (7dbcde0c, b23c364a, 5ec5dcc1 failed on it), and keep volatile counts out of records (5ec5dcc1 F2, single-source-prose). A verifier run inside a worker worktree counts that worktree's untracked target/ files and its stale .jit snapshot: regenerate committed verifier outputs on main after the merge. f6148d1e and f694f59a are blocked on owner input (declarations name siblings by flat path). Zen3 lane (worktree agent-zen3lane, unmerged): f79bcba3, b5b336e5, 602652bf done by workers; 198aafa3 running; merge to main waits for the peer's BATCH-END.",
   "Session 11: lane units f79bcba3, b5b336e5, 602652bf merged on main at d6657b90e (clean merge of 3f1433616); relink scripts ran in a tolerant copy (add failure skips the removal). 198aafa3 continues on the lane branch.",
   "Session 11: 5ec5dcc1 done. b5b336e5 passes cargo-ci, docs-mechanical and code-review at 365557a77; doc-review fails on the issue description's flat path (owner question). File move-unit descriptions without a path that the unit removes.",
-  "Session 11: the seven zen3 lane units are merged on main (merges d6657b90e, 99841ab2d, ffa978709 and the merge of db9f06677); 27 entries live under dev/active/1a379447-zen3-cpu-performance/; tracker references relinked by a generic pass (dangling unpinned reference -> counterpart under the epic directory, `--skip-scan` fallback); `jit validate` exits 0. The 63bad95d generators (make-calibration-budget.py, make-route-inventory.py) rewrite their outputs with other bytes on the moved tree: owned by open issue 63bad95d, whose lead regenerates them. Flat directories left under dev/active: 02b8137c (held, 5b3e7c81), dbd8787d and a83583e0 (blocked), and the retained or empty leftovers of 6dc81018."
+  "Session 11: the seven zen3 lane units are merged on main (merges d6657b90e, 99841ab2d, ffa978709 and the merge of db9f06677); 27 entries live under dev/active/1a379447-zen3-cpu-performance/; tracker references relinked by a generic pass (dangling unpinned reference -> counterpart under the epic directory, `--skip-scan` fallback); `jit validate` exits 0. The 63bad95d generators (make-calibration-budget.py, make-route-inventory.py) rewrite their outputs with other bytes on the moved tree: owned by open issue 63bad95d, whose lead regenerates them. Flat directories left under dev/active: 02b8137c (held, 5b3e7c81), dbd8787d and a83583e0 (blocked), and the retained or empty leftovers of 6dc81018.",
+  "Session 11 end (2026-10-07 00:55 EEST): cargo-ci and docs-mechanical pass for f79bcba3, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 on the merged tree at e230aaaa2; their review gates wait for the owner rulings of handoff-10.md. Every open unit waits on a ruling or on a unit that does."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
