@@ -66,7 +66,7 @@
 ## Reference artefacts
 
 - Epic: `jit issue show 1a379447`; [measurement contract](measurement-contract.md); [worker brief](worker-brief.md); [progress](progress.json); reviews under [reviews/](reviews/) (`1d4fd63d-r1.md`, `07ca8585-r1.md` this session); pending link tables under [pending-links/](pending-links/).
-- Protocol v4: `dev/active/1a379447-zen3-cpu-performance/f547c394/{protocol.md,amendment-v4.md,addendum.schema.json}`; canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py` (two unmerged extensions on the 53c5a8c0 and 07ca8585 branches).
+- Protocol v4: `dev/active/1a379447-zen3-cpu-performance/f547c394/{protocol.md,amendment-v4.md,addendum.schema.json}`; canonical freezer `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py` (two unmerged extensions on the 53c5a8c0 and 07ca8585 branches).
 - Window: [run-window.sh](bench-window/run-window.sh), [queue.tsv](bench-window/queue.tsv), [follow-window.sh](bench-window/follow-window.sh).
 - Story brackets: planning `8d8be934` (2037941f), `8ed3ac58` (c04dd4ac); jit-planning-lead references under `.agents/skills/jit-planning-lead/references/`.
 - Scripts: `.agents/skills/jit-execution-lead/scripts/{dispatch-worker-worktree.sh,check-leak-into-main.sh,reclaim-worker-worktree.sh}`; leak baseline `/tmp/lead-pre-dispatch-latest.txt` (session 14, taken before the 19513245 dispatch).

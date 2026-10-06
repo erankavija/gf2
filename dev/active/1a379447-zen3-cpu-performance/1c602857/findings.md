@@ -80,7 +80,7 @@ three widths without a kernel.
 
 It runs in two windows. The pilot fixes the measurement resolution at `0.02`
 ([confirmation-derivation.txt](confirmation-derivation.txt), widest relative
-half-width row). `dev/active/c7113c5a/survey/freeze-confirmation.py` derives
+half-width row). `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py` derives
 the confirmation addendum from the pilot addendum against that resolution,
 pins the pilot receipt by path and SHA-256, and writes the derivation record.
 Every one of the addendum's three `effect` margins —

@@ -59,7 +59,7 @@ Every family keeps an append-only ledger from genesis under
 `dev/bench_results/07ca8585/`. The four single-worker families carry a pilot and
 a confirmation addendum derived from the committed pilot receipt by the
 canonical freezer
-`dev/active/c7113c5a/survey/freeze-confirmation.py`, which pins the pilot by
+`dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`, which pins the pilot by
 path and digest, takes the resolution from the pilot's widest relative bootstrap
 half-width at the confirmation's corrected alpha, and sets margins strictly
 above `1 + resolution`. P-20 admits at most six confirmatory cells on a

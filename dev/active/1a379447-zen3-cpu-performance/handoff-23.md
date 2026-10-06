@@ -27,7 +27,7 @@
 - `6e87c436`: no-change verdict with a content-pinned drift record, a route comparison over the dense cell arms, new boundary tests that reach the SIMD strides, and the safety contract of the fused AND-popcount kernel. code-review F1 (reproduction anchor) closed by rework 1. Review `reviews/6e87c436-r1.md`.
 - `2ad3a3e0`: findings and generated tables for the story. doc-review F1 (unqualified production-change statement) closed by rework 1. Review `reviews/2ad3a3e0-r1.md`.
 - Story `2037941f`: seven gates pass with advisory findings only, each tracked. Review `reviews/2037941f-r1.md`.
-- `f63a2464`: three QC confirmations verified; decisions recorded; smoke converged; untimed peak-memory record added; research-review F1 to F3 closed through `dev/active/f63a2464/corrections.md` with frozen bytes preserved.
+- `f63a2464`: three QC confirmations verified; decisions recorded; smoke converged; untimed peak-memory record added; research-review F1 to F3 closed through `dev/active/1a379447-zen3-cpu-performance/f63a2464/corrections.md` with frozen bytes preserved.
 - Shared tooling changed at its source: `dev/scripts/smoke-campaign-arms.sh` derives its label from cell roles and has a test; `dev/scripts/campaign_tables.py` prints acceptance finding counts; `dev/scripts/repository_files.py` gained `live_file`; the canonical freezer gained `--resolution-decimals`.
 - Filed under the epic: `b2e09d41` (private LDPC plan checker), `6833c5b5` (dense-parity source-evidence ledger), `7d44b71f` (AVX2 safety contracts), `4337c02e` (matvec SIMD threshold against the scalar lane), `fa1d8733` (unselected XOR unroll bodies).
 - Coordinated with session gf2-b2 (epic fa787f85) on the shared main checkout; that session has closed.
@@ -67,7 +67,7 @@
   - Options: (A) rule that a family the frozen screen excludes is outside REQ-04 and that an absent admitted comparator is a recorded limit, as an explicit amendment of the criterion's reading; (B) new measurement under an amended instrument.
   - Recommendation: A, as an explicit invoker amendment of the issue text.
 - Question: `f63a2464` code-review F3 — the QC production design is unreviewed and no issue owns its scope. Review and file, or drop?
-  - Recommendation: moot under option A of the first question; under B, review the design in `dev/active/f63a2464/decision-record.md` and let the lead file its three tasks under `ed3d490e`.
+  - Recommendation: moot under option A of the first question; under B, review the design in `dev/active/1a379447-zen3-cpu-performance/f63a2464/decision-record.md` and let the lead file its three tasks under `ed3d490e`.
 - Question: may wave 4 arm overnight benchmark windows at 02:00 Europe/Helsinki as wave 3 did?
   - Context: `63bad95d` and `4337c02e` need timed campaigns.
   - Recommendation: yes, with the same nightly rule.
@@ -77,5 +77,5 @@
 - Epic: `jit issue show 1a379447`; progress: `progress.json`; worker brief `worker-brief.md`; measurement contract `measurement-contract.md`.
 - Reviews of this session: `reviews/50f0bd42-r2.md`, `reviews/ad2a6a58-r1.md`, `reviews/4c1e441f-r1.md`, `reviews/6e87c436-r1.md`, `reviews/2ad3a3e0-r1.md`, `reviews/2037941f-r1.md`.
 - Story synthesis: `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md`, `mid-range-tables.md`.
-- `f63a2464`: `dev/active/f63a2464/decision-record.md`, `findings.md`, `corrections.md`; `dev/bench_results/f63a2464/timing-tables.md`, `memory/peak-rss.json`.
+- `f63a2464`: `dev/active/1a379447-zen3-cpu-performance/f63a2464/decision-record.md`, `findings.md`, `corrections.md`; `dev/bench_results/f63a2464/timing-tables.md`, `memory/peak-rss.json`.
 - Window: `bench-window/run-window.sh`, `bench-window/queue.tsv`, state `.agents/bench-window/`.

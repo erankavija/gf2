@@ -124,7 +124,7 @@ count. No attempt of this family is voided.
 
 ## Regenerating the tables
 
-`python3 -B dev/active/4c1e441f/survey/make-tables.py` rewrites
+`python3 -B dev/active/1a379447-zen3-cpu-performance/4c1e441f/survey/make-tables.py` rewrites
 [`tables.md`](../../../bench_results/4c1e441f/tables.md) from the committed
 receipts, acceptance summaries, family ledger and receipt pin its Source section
 lists by digest. Two consecutive runs leave the file unchanged.

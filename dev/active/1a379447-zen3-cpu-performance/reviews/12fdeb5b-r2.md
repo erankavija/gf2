@@ -37,7 +37,7 @@ No deferred/TODO/follow-up/open-question markers; the `srsran-interleave-identit
 
 ### Holistic findings
 
-- The canonical freezer `dev/active/c7113c5a/survey/freeze-confirmation.py` was extended additively (cell selection, rationale, resolution override with the pilot-alpha width as a floor); existing callers reproduce byte-identical addenda (worker-verified; 1c602857 froze with it the same morning).
+- The canonical freezer `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py` was extended additively (cell selection, rationale, resolution override with the pilot-alpha width as a floor); existing callers reproduce byte-identical addenda (worker-verified; 1c602857 froze with it the same morning).
 - Protocol v4 gains the voided-attempt paragraph without a version bump (acceptance behaviour unchanged; P-22 reads no live ledger), recorded in amendment-v4.md and scoped to f547c394.
 - Scope: every changed path is under the issue's directories, `dev/active/1a379447-zen3-cpu-performance/f547c394/` (the amendment) or the shared freezer.
 - 34 artifacts linked; tables regenerate byte for byte on the merged tree.

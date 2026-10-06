@@ -323,7 +323,7 @@ dev/bench_results/12fdeb5b/run-nr-encode-baselines.sh smoke|pilot|confirmation
 ```
 
 The freezer's confirmation mode delegates to the canonical
-`dev/active/c7113c5a/survey/freeze-confirmation.py`, supplying this family's
+`dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`, supplying this family's
 cell selection, its prose and the resolution derived at the confirmation's
 corrected alpha; the survey owns no freezing logic of its own. The confirmation
 launcher refuses an addendum, or a pinned pilot receipt, whose bytes differ

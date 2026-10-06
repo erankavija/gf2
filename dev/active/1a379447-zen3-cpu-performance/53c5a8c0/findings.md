@@ -61,7 +61,7 @@ receipt's arm record, projected in the *Arm executables* table of
 
 The five operations are never averaged together and never substituted for one
 another. Their definitions are frozen once in
-`dev/active/53c5a8c0/survey/cells.py`, which both the addendum generator and the
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/cells.py`, which both the addendum generator and the
 plan generator read, so a cell's identity, workload, metric kind and arm
 assignment cannot drift between the two.
 
@@ -116,9 +116,9 @@ field product of the same pinned tree.
 Each receipt pins the complete producing-input snapshot and the exact executable
 digests under which its raw samples were collected. The *Arm executables* table
 projects those identities. The release assembly under
-`dev/active/53c5a8c0/survey/asm/` is disassembled from those pinned executable
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/asm/` is disassembled from those pinned executable
 bytes rather than from a later build: each artefact names the executable and its
-matching receipt digest in its own banner. `dev/active/53c5a8c0/survey/build-arms.sh`
+matching receipt digest in its own banner. `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/build-arms.sh`
 remains the release build command; documentation-only source changes do not
 invalidate the receipt's pinned behavioral evidence even when they change Rust
 binary metadata and therefore the digest of a later build.
@@ -170,7 +170,7 @@ softened.
 The pilot's two widest cells, at sixty-four and two hundred and fifty-six words,
 are not carried into the confirmation. The reason is the tail-support bound
 recomputed below, and the selection is recorded in
-`dev/active/53c5a8c0/resolution-polynomial.txt` before the confirmation ran.
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/resolution-polynomial.txt` before the confirmation ran.
 Their pilot values stay in the pilot receipt and appear in the same section of
 the tables.
 
@@ -188,13 +188,13 @@ column of the confirmation's *Per-arm call time and selected path* table. The
 dispatch is const-generic in the operand word count and reaches a kernel at four
 and nine words only; every other width runs the portable schoolbook. The source
 evidence for the dispatch and for the public entry point is in
-`dev/active/53c5a8c0/survey/source-evidence.json`.
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/source-evidence.json`.
 
 **The assembly carries no carry-less multiply at sixteen words.** The committed
-artefact `dev/active/53c5a8c0/survey/asm/long-product.asm.txt` disassembles the
+artefact `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/asm/long-product.asm.txt` disassembles the
 sixteen-, sixty-four- and two-hundred-and-fifty-six-word monomorphisations of
 the arm's long product beside the two wide kernels. Its derived annotation
-blocks, counted by `dev/active/53c5a8c0/survey/annotate-asm.py`, are projected
+blocks, counted by `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/annotate-asm.py`, are projected
 into the *Release assembly of the measured gf2 paths* table of
 `dev/bench_results/53c5a8c0/tables.md`: the two kernels carry vector carry-less
 multiplies and close no loop, while each width above nine carries no carry-less
@@ -203,7 +203,7 @@ clear-lowest-set-bit instructions in those bodies are the scalar bit-serial
 product's set-bit walk.
 
 Identification of a monomorphisation is not a guess from a body's size or its
-address order: `dev/active/53c5a8c0/survey/dump-asm.py` resolves each width
+address order: `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/dump-asm.py` resolves each width
 through the dispatch the executable itself performs, reading the jump table the
 width-matching code indexes and following its tail-call stub, and records that
 route in the artefact beside the body.
@@ -250,7 +250,7 @@ The dispatched dot product consults **only** its compile-time chunk extent; no
 branch consults the vector length. That extent sizes three stack scratch
 buffers, so every call reserves the same frame whatever the vector length. The
 release assembly of the dispatched consumer in
-`dev/active/53c5a8c0/survey/asm/crossover.asm.txt` shows that frame, summed
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/asm/crossover.asm.txt` shows that frame, summed
 across the page-sized reservations its stack-probe sequence performs, in the
 *Stack frame bytes* column of the *Release assembly of the measured gf2 paths*
 table; it is the largest frame of any measured body.
@@ -262,7 +262,7 @@ library's vectorised memory-set routine, which is the scratch buffers being
 zeroed on every call. Naming that routine is not a reading of the address:
 `perf` reports an offset because the routine is a local symbol the object
 publishes no dynamic entry for, and
-`dev/active/53c5a8c0/survey/resolve-symbols.py` resolves the offset against that
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/resolve-symbols.py` resolves the offset against that
 object's own symbol table, recording the object path, its digest and the covering
 symbol in `symbol-resolution.json`. The resolved routine appears in the sampled
 short and crossover dispatched rows and in no per-element row; it falls below
@@ -304,11 +304,11 @@ measurement noise at the confirmation's corrected confidence. The polynomial
 family reaches the same situation and resolves it the other way: its equivalence
 margin is replaced by the smallest two-decimal value strictly above one plus its
 resolution, recorded with its reasoning in
-`dev/active/53c5a8c0/resolution-polynomial.txt`. Both derivation records sit
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/resolution-polynomial.txt`. Both derivation records sit
 beside their addenda and are pinned into the confirmations they produced; the
-crossover family's is `dev/active/53c5a8c0/resolution-crossover.txt`.
+crossover family's is `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/resolution-crossover.txt`.
 
-The holdout declaration `dev/active/53c5a8c0/survey/holdout-cells.json` is
+The holdout declaration `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/holdout-cells.json` is
 committed before the crossover pilot runs and is carried into the confirmation
 addendum by the canonical freezer, through the freezer's own `--holdout-cells`
 argument. Its two sizes appear in no pilot cell and its fixtures use seeds no
@@ -395,9 +395,9 @@ the recommendation to retain.
 
 ## Profiler attribution of the measured paths
 
-`dev/active/53c5a8c0/survey/run-profile.sh` records the profile session in
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/run-profile.sh` records the profile session in
 `dev/bench_results/53c5a8c0/profile/`, and
-`dev/active/53c5a8c0/survey/summarize-profile.py` projects it into
+`dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/summarize-profile.py` projects it into
 `dev/bench_results/53c5a8c0/profile/profile.md`. The session answers where each
 path's cycles go; it is not an acceptance comparison and no receipt depends on it.
 Its generated `validation.json` pins every session input by digest and records the
@@ -408,7 +408,7 @@ which issues a fixed number of logical calls of one frozen cell's operation on
 that cell's frozen fixture and does nothing else, so a counter divided by the
 process's operation count is a per-operation figure of the path rather than of a
 window protocol. Every row's case is checked against the frozen cell grid before
-the session starts, by `dev/active/53c5a8c0/survey/check-profile-cases.py`. Each
+the session starts, by `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/check-profile-cases.py`. Each
 row's call count is derived by the script from its own two-point calibration,
 never typed. Each counter ratio is the median over the session's repetitions with
 the order-statistic interval of those repetitions, and each symbol's share of a
@@ -439,7 +439,7 @@ Four attributions come out of it, each with its table in `profile.md`:
   spills.
 - **Packing, extraction and reduction conversion overhead.** The receipts' own
   *Untimed conversion diagnostics* tables carry these per cell and per side, and
-  `dev/active/53c5a8c0/survey/arms/src/bin/stage-diagnostic.rs` decomposes the
+  `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/arms/src/bin/stage-diagnostic.rs` decomposes the
   dot-product consumer into packing, extraction, products, accumulation and the
   single reduction, refusing to emit a record unless the reconstructed stages
   compose to the value the consumer returns. The profile adds the cost the
@@ -462,5 +462,5 @@ here, and neither is queued as an exploratory cell.
 | REQ-01 correctness, reproducible release benchmarks, comparison validity, adoption, negative outcomes preserved | Each receipt pins the contract, protocol, addendum, producing-input snapshot and executable identities, projected on each table's Source line and *Arm executables* table; correctness is the *Correctness validation* table; every fail and not-material cell is reported above under the name the evaluator gave it. |
 | REQ-02 raw batches and dot products across the frozen grid, costs separated, pinned implementation, predicate-fix receipt retained as evidence | The crossover family's confirmation and both pilots; the *Untimed conversion diagnostics* tables; the two arms sharing one pinned executable in *Arm executables*; the selected lane in *Per-arm call time and selected path*, which is the lane `1d0da41f` establishes rather than an assumed speedup. |
 | REQ-03 operation-equivalent wide polynomial products against the pinned gf2x build with its observed basecase, raw cells without an external equivalent recorded honestly, composed costs stated | The polynomial family's confirmation and pilot; the gf2x build identity and loaded-object digest in *Arm executables*; the `-composed` cells' declarations and the sections above that state what each composes. |
-| REQ-04 release assembly and profiler attribution of dependencies, throughput, spills and conversion overhead; bounded experiments only where justified | `dev/active/53c5a8c0/survey/asm/` with its dump and annotation generators, projected in *Release assembly of the measured gf2 paths*; `dev/bench_results/53c5a8c0/profile/profile.md`; the four attributions and the experiment decision in the section above. |
+| REQ-04 release assembly and profiler attribution of dependencies, throughput, spills and conversion overhead; bounded experiments only where justified | `dev/active/1a379447-zen3-cpu-performance/53c5a8c0/survey/asm/` with its dump and annotation generators, projected in *Release assembly of the measured gf2 paths*; `dev/bench_results/53c5a8c0/profile/profile.md`; the four attributions and the experiment decision in the section above. |
 | REQ-05 qualifying selector and crossover recommendations with independent holdout measurements, established path retained in no-win domains, additional algorithm change tracked separately | The recommendation section above; the two declared holdout cells and their recorded outcomes; the retained rows named for both not-material cells. No additional production algorithm is selected or changed by this issue. |

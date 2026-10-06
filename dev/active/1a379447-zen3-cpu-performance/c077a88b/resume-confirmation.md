@@ -8,7 +8,7 @@ input archive preserves both bundles; extract it beneath `/tmp/c077a88b-ext/inpu
 on another host, and stage the pinned AFF3CT source/static build before rebuilding
 arms. The producing-input manifest selects source, archives and prepared quality.
 Refresh it before preparing a new campaign with
-`CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh env CARGO_CI_NO_LOCK=1 python3 dev/active/c077a88b/survey/snapshot-inputs.py --external /tmp/c077a88b-ext --evidence dev/bench_results/c077a88b/v3-preparation`.
+`CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh env CARGO_CI_NO_LOCK=1 python3 dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/snapshot-inputs.py --external /tmp/c077a88b-ext --evidence dev/bench_results/c077a88b/v3-preparation`.
 The outer budget wrapper owns the shared host locks while its nested Cargo
 metadata query uses the inherited lock exemption. A measured preparation
 requires a new evidence directory instead of overwriting its inputs.
@@ -48,7 +48,7 @@ exclusive full-host lock.
    launcher and `confirmation` in place of `pilot`. Its fixed sample budget
    measures both matched cells. The launcher checks publication of the exact
    confirmation addendum. Do not run a quality confirmation from this pilot.
-6. Regenerate the projection with `python3 dev/active/c077a88b/survey/summarize.py`.
+6. Regenerate the projection with `python3 dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/summarize.py`.
    Report receipt acceptance separately from a cell's qualifying outcome.
 
 The standalone harness tests use release mode. Its nextest CI settings are a

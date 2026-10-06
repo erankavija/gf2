@@ -183,7 +183,7 @@ and
 The addenda `addendum-{popcount,fused}-v4-{sweep,sweep2,pilot,confirmation}.json`
 beside this file were frozen before their campaigns. Each confirmation addendum
 was derived from its committed pilot receipt by the canonical freezer
-`dev/active/c7113c5a/survey/freeze-confirmation.py`, which pins that receipt by
+`dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`, which pins that receipt by
 path and SHA-256, sets the resolution from its widest relative half-width and
 raises a margin that does not strictly exceed one plus that resolution; the
 derivation records are
