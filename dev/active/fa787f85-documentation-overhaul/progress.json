@@ -1980,6 +1980,16 @@
    ],
    "recommendation": "the amendment",
    "resolution": ""
+  },
+  {
+   "issue": "b5b336e5 (same wording in 2e18b37c, cc060974 and the older move units)",
+   "question": "OPEN: doc-review F1 at 365557a77 (cargo-ci, docs-mechanical and code-review pass): the issue description opens with \"The flat `dev/active/bc091474/` entry holds ...\", a path the tree lacks after the move (REQ-07, active-document-layout, current-state-scope). The lead wrote that sentence when filing; a description edit is a scope change that needs the owner.",
+   "options": [
+    "reword the opening sentence of b5b336e5, 2e18b37c and cc060974 to name the entry by issue id without a path, then rerun doc-review",
+    "leave the descriptions and accept the finding"
+   ],
+   "recommendation": "the rewording",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -2264,7 +2274,8 @@
   "Session 11 (2026-10-06 evening): owner answered the six open questions of handoff-9.md (all recommendations); criteria amendments and DECs written on 616e1d7c, 7dbcde0c, b23c364a, 5ec5dcc1. Peer session gf2-ad shares the main checkout. Branches worktree-agent-4337c02e and worktree-agent-bfc2ceab (open issues of epic 1a379447) carry unmerged edits under dev/active/2037941f-*, c7113c5a, 4c1e441f, ad2a6a58 and f547c394.",
   "Session 11 owner instruction (2026-10-06): never stop to ask; a task needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when the current and the next wave finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Owner rulings this session: zen3 entries move now and the parallel session conforms (in-flight branches 4337c02e, bfc2ceab); 616e1d7c REQ-04 amended (DEC-04). Peer lead gf2-ad: no build, cargo-ci or gate from 01:55 EEST until window.log shows window end; bench-window/ and the 1a379447 progress.json stay unedited; merges and gate batches are announced both ways. Filed: b5b336e5, 2e18b37c, cc060974 (zen3 decoupling moves), 5b3e7c81 (02b8137c move, b4b4b9ee). Lane order: f79bcba3, b5b336e5, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 in worktree agent-zen3lane. Manifest rows whose source another epic removed (ad2a6a58 runner-smoke.txt, f63a2464 qc-arm-smoke.rs) need a disposition in 198aafa3.",
   "Session 11: 616e1d7c done (gate batch at fc571c890). Review lesson repeated: link every unit record and output with jit doc add BEFORE gating (7dbcde0c, b23c364a, 5ec5dcc1 failed on it), and keep volatile counts out of records (5ec5dcc1 F2, single-source-prose). A verifier run inside a worker worktree counts that worktree's untracked target/ files and its stale .jit snapshot: regenerate committed verifier outputs on main after the merge. f6148d1e and f694f59a are blocked on owner input (declarations name siblings by flat path). Zen3 lane (worktree agent-zen3lane, unmerged): f79bcba3, b5b336e5, 602652bf done by workers; 198aafa3 running; merge to main waits for the peer's BATCH-END.",
-  "Session 11: lane units f79bcba3, b5b336e5, 602652bf merged on main at d6657b90e (clean merge of 3f1433616); relink scripts ran in a tolerant copy (add failure skips the removal). 198aafa3 continues on the lane branch."
+  "Session 11: lane units f79bcba3, b5b336e5, 602652bf merged on main at d6657b90e (clean merge of 3f1433616); relink scripts ran in a tolerant copy (add failure skips the removal). 198aafa3 continues on the lane branch.",
+  "Session 11: 5ec5dcc1 done. b5b336e5 passes cargo-ci, docs-mechanical and code-review at 365557a77; doc-review fails on the issue description's flat path (owner question). File move-unit descriptions without a path that the unit removes."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
