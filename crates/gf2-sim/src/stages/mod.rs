@@ -6,6 +6,7 @@
 //! and `Scratch = ()`, except [`DvbT2Decode`], whose [`DecodeScratch`] exposes
 //! the per-frame LDPC BP iteration counts.
 
+pub mod batch_decode;
 pub mod nr_5g;
 
 use std::sync::Arc;
