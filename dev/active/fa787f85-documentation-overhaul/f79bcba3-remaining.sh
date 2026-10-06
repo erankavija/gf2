@@ -18,7 +18,8 @@ class() {
     "$epic"/bench-window/*) echo bench-window ;;
     */progress.json) echo tracker-state ;;
     "$story"/dense-parity-addendum.md|"$story"/dense-parity-addendum-v1.md|"$story"/logical-buffer-addendum.md|"$story"/isal-comparator.md|"$story"/m4ri-operation-match.md) echo frozen-document ;;
-    dev/active/c7113c5a/survey/freeze-confirmation.test.sh) echo fixture-layout ;;
+    "$epic"/c7113c5a/survey/freeze-confirmation.test.sh) echo fixture-layout ;;
+    "$epic"/handoff-*.md|"$epic"/reviews/*) echo session-record ;;
     dev/active/fa787f85-documentation-overhaul/*) echo epic-record ;;
     *.json|*.jsonl|*.txt|*.tsv|*.log) echo data-record ;;
     */route-inventory.md) echo generated-table ;;

@@ -125,11 +125,12 @@ of a class whose ground is tool output,
 | `snapshot` | 688 | receipt `inputs/` snapshots |
 | `receipt-directory` | 372 | receipts, logs and generated tables under `dev/bench_results/` |
 | `data-record` | 77 | JSON, JSON Lines, TSV, text and log files: addenda, producing manifests, derivations, ledgers, smoke and validation records; tool output at the commit the command above names |
-| `epic-record` | 10 | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the command above names |
+| `epic-record` | 11 | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the command above names |
 | `frozen-document` | 5 | digest pins of the table above |
 | `manifest` | 1 | `path`, `consumers` and `inbound` fields of the migration manifest |
 | `bench-window` | 1 | `E/bench-window/queue.tsv`; the job key hashes the command text |
 | `tracker-state` | 1 | `R/progress.json`, execution state of the epic |
+| `session-record` | 1 | `E/reviews/53b74fc2-r1.md:6`: a dated review record that quotes the flat directory `dev/active/1d4fd63d`, present nowhere in the tree |
 | `generated-table` | 1 | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
 | `fixture-layout` | 1 | `E/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
 | `snapshot-path` | 1 | `E/04b85d10/survey/summarize-receipts.py:34`, a path inside a receipt snapshot |

@@ -43,7 +43,7 @@
 - [ ] Finish `a203a23c` rework round 2 (see its row), then merge and run all four gates on the final commit.
 - [ ] Merge and gate `428f2f6b` (see its row).
 - [ ] Link the pending artifact tables under [pending-links/](pending-links/) when each issue closes; 04b85d10 also relabels `tables.md` and `run-consumer-campaigns.sh` (labels in its table).
-- [ ] Rebuild the eda07788 arms (`dev/active/eda07788/survey/nr-derate-build.sh` against `.agents/ext/c077a88b/aff3ct`) before `c04dd4ac` dispatches; the derived build was deleted (Traps).
+- [ ] Rebuild the eda07788 arms (`dev/active/1a379447-zen3-cpu-performance/eda07788/survey/nr-derate-build.sh` against `.agents/ext/c077a88b/aff3ct`) before `c04dd4ac` dispatches; the derived build was deleted (Traps).
 - [ ] Ready and unstarted: `53c5a8c0`, `c04dd4ac`, `07ca8585` (unblocked by 3be770d5), bugs `2c487595` and `706a8f93`.
 - [ ] Pass `GF2_WINDOW_UNIT` to `follow-window.sh` or update its default (it still names the 20260912b unit).
 
