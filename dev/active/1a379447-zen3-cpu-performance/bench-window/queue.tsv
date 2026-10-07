@@ -48,3 +48,5 @@ bfc2ceab	.agents/worktrees/agent-bfc2ceab	14	dev/bench_results/bfc2ceab/run-entr
 bfc2ceab	.agents/worktrees/agent-bfc2ceab	8	dev/bench_results/bfc2ceab/run-entry-check.sh window confirmation
 63bad95d	.agents/worktrees/agent-63bad95d-run	160	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/scripts/tuning-extent-campaign.sh 63bad95d
 bfc2ceab	.agents/worktrees/agent-bfc2ceab	10	dev/bench_results/bfc2ceab/run-spmm-check.sh window pilot
+63bad95d	.agents/worktrees/agent-63bad95d-fam	10	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/bench_results/63bad95d/run-profile-families.sh window 63bad95d-profile-dispatch-overhead pilot
+63bad95d	.agents/worktrees/agent-63bad95d-fam	12	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/bench_results/63bad95d/run-profile-families.sh window 63bad95d-native-ladder pilot
