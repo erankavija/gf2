@@ -1,0 +1,64 @@
+# closure generators
+dev/active/1d4fd63d/make-external-producing-inputs.py exit=0 closure-lines=0
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-producing-inputs.py exit=0 closure-lines=0
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-logical-producing-inputs.py exit=0 closure-lines=0
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-producing-inputs.py exit=0 closure-lines=0
+# relative Cargo path dependencies
+dev/active/04b85d10/survey/gf2-side/Cargo.toml:19:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "parallel"] }
+dev/active/04b85d10/survey/gf2-side/Cargo.toml:20:gf2-coding = { path = "../../../../../crates/gf2-coding", features = ["parallel"] }
+dev/active/04b85d10/survey/gf2-side/Cargo.toml:21:gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+dev/active/04b85d10/survey/gf2-side/Cargo.toml:22:tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+dev/active/07ca8585/survey/arms/Cargo.toml:33:ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
+dev/active/07ca8585/survey/arms/Cargo.toml:34:ldpc-throughput-harness = { path = "../../../3be770d5/survey/harness" }
+dev/active/07ca8585/survey/arms/Cargo.toml:35:gf2-coding = { path = "../../../../../crates/gf2-coding" }
+dev/active/07ca8585/survey/arms/Cargo.toml:36:tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml:56:gf2-core = { path = "../../../../../crates/gf2-core" }
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml:57:gf2-coding = { path = "../../../../../crates/gf2-coding" }
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml:58:tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+dev/active/1c602857/arms/Cargo.toml:27:gf2-core = { path = "../../../../crates/gf2-core", features = ["simd"] }
+dev/active/1c602857/arms/Cargo.toml:28:gf2-kernels-simd = { path = "../../../../crates/gf2-kernels-simd" }
+dev/active/1c602857/arms/Cargo.toml:29:tuning-campaign-support = { path = "../../../../dev/tools/tuning-campaign-support" }
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml:30:gf2-core = { path = "../../../../../crates/gf2-core", default-features = false, features = ["simd"] }
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml:31:gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml:32:tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+dev/active/1d4fd63d/arms/Cargo.toml:30:gf2-core = { path = "../../../../crates/gf2-core", features = ["simd"] }
+dev/active/1d4fd63d/arms/Cargo.toml:31:gf2-coding = { path = "../../../../crates/gf2-coding" }
+dev/active/1d4fd63d/arms/Cargo.toml:32:gf2-kernels-simd = { path = "../../../../crates/gf2-kernels-simd" }
+dev/active/1d4fd63d/arms/Cargo.toml:33:tuning-campaign-support = { path = "../../../../dev/tools/tuning-campaign-support" }
+dev/active/1d4fd63d/external-arms/Cargo.toml:34:gf2-kernels-simd = { path = "../../../../crates/gf2-kernels-simd" }
+dev/active/1d4fd63d/external-arms/Cargo.toml:35:tuning-campaign-support = { path = "../../../../dev/tools/tuning-campaign-support" }
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml:54:gf2-core = { path = "../../../../../crates/gf2-core" }
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml:55:gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml:56:tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml:53:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml:54:gf2-coding = { path = "../../../../../crates/gf2-coding" }
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml:55:tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+dev/active/3be770d5/survey/harness/Cargo.toml:26:ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
+dev/active/3be770d5/survey/harness/Cargo.toml:27:gf2-coding = { path = "../../../../../crates/gf2-coding" }
+dev/active/3be770d5/survey/harness/Cargo.toml:28:gf2-core = { path = "../../../../../crates/gf2-core" }
+dev/active/3be770d5/survey/harness/Cargo.toml:29:tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+dev/active/f63a2464/survey/arms/Cargo.toml:26:ldpc-throughput-harness = { path = "../../../3be770d5/survey/harness" }
+# code that counts directory levels
+dev/active/04b85d10/survey/gf2-side/tests/declared_codes.rs:21:        .join("../..")
+dev/active/04b85d10/survey/gf2-side/tests/declared_codes.rs:42:            .join("../../bench_results/04b85d10/receipt-evidence-record.json")
+dev/active/04b85d10/survey/run-profile.sh:30:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/1d0da41f/survey/build-arms.sh:51:sed -e "s#path = \"../../../../../crates/gf2-core\"#path = \"$BASELINE_TREE/crates/gf2-core\"#" \
+dev/active/1d0da41f/survey/build-arms.sh:52:    -e "s#path = \"../../../../../crates/gf2-kernels-simd\"#path = \"$BASELINE_TREE/crates/gf2-kernels-simd\"#" \
+dev/active/1d0da41f/survey/build-arms.sh:53:    -e "s#path = \"../../../../tools/tuning-campaign-support\"#path = \"$repo/dev/tools/tuning-campaign-support\"#" \
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/build.rs:15:const PROBE_RECORD: &str = "../../m4ri-probe-record.txt";
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/build.rs:17:const SHIM_SOURCE: &str = "../m4ri_matvec_arm.c";
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/tests/harness_contract.rs:1361:        .ancestors()
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/disassemble-dense.sh:5:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/disassemble-logical.sh:14:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/tests/harness_contract.rs:740:        .ancestors()
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-logical-producing-inputs.py:12:ROOT = pathlib.Path(__file__).resolve().parents[4]
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-logical-source-evidence.py:15:ROOT = pathlib.Path(__file__).resolve().parents[4]
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/render-isal-availability.py:11:ROOT = pathlib.Path(__file__).resolve().parents[4]
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/render-logical-invocations.py:18:ROOT = pathlib.Path(__file__).resolve().parents[4]
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/render-logical-tables.sh:16:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh:7:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh:20:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-profile.sh:22:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/3be770d5/survey/harness/build.rs:24:const SURVEY_SHIM_DIR: &str = "../../../c077a88b/survey/harness/cpp";
+dev/active/3be770d5/survey/run-profile.sh:27:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/3be770d5/survey/summarize-profile.py:68:REPO = pathlib.Path(__file__).resolve().parents[4]

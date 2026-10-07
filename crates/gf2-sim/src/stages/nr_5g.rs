@@ -259,7 +259,8 @@ pub struct Nr5gDecode {
 
 impl Nr5gDecode {
     /// Builds a 5G NR decode stage over a shared rate-matched code, decoding
-    /// with normalized min-sum (`alpha` = 0.75) at the given iteration cap.
+    /// with normalized min-sum (`alpha` = 0.75) at the given iteration cap. A
+    /// cap of zero behaves as in [`Nr5gRateMatchedDecoder`]'s `decode_iterative`.
     pub fn new(code: Arc<Nr5gRateMatchedCode>, max_iterations: usize) -> Self {
         Self::with_algorithm(
             code,
@@ -268,7 +269,8 @@ impl Nr5gDecode {
         )
     }
 
-    /// Builds a 5G NR decode stage with an explicit BP algorithm.
+    /// Builds a 5G NR decode stage with an explicit BP algorithm; the cap of
+    /// zero behaves as in [`new`](Self::new).
     pub fn with_algorithm(
         code: Arc<Nr5gRateMatchedCode>,
         algorithm: DecoderAlgorithm,

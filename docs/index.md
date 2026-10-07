@@ -7,7 +7,7 @@ Reproducible research workflows, placed per `@/inv/adapted-diataxis-placement`.
 | Page | Workflow |
 |---|---|
 | [Finite-field linear algebra at scale](tutorials/field-linear-algebra-at-scale.md) | Dense multiplication, PLE solving, inversion and characteristic polynomials over a prime field and its extension, with identity checks |
-| [Coded-modulation link simulation](tutorials/coded-modulation-link-simulation.md) | Checkpointed DVB-T2 BICM error-rate sweep through the `gf2-sim` preset, with frame-error-rate confidence intervals |
+| [Coded-modulation link simulation](tutorials/coded-modulation-link-simulation.md) | Checkpointed DVB-T2 (`@/citation/Etsi2015`) BICM error-rate sweep through the `gf2-sim` preset, with frame-error-rate confidence intervals |
 
 ## How-to guides
 
@@ -31,13 +31,14 @@ Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis
 
 ## Reference
 
-Supported configurations, limitations, evidence methodology and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
+Supported configurations, limits, evidence methods and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
 
 | Page | Contents |
 |---|---|
 | [Supported configurations](reference/supported-configurations.md) | Toolchain, platforms, CPU and GPU requirements, Cargo features, installation and limitations |
-| [Standards conformance](reference/standards-conformance.md) | Supported DVB-T2 and 5G NR code configurations, bit order and conformance evidence |
+| [Standards conformance](reference/standards-conformance.md) | Supported DVB-T2 and 5G NR (`@/citation/ThreeGpp2017`) code configurations, bit order and conformance evidence |
 | [Performance evidence](reference/performance-evidence.md) | Measurement methodology and commit-pinned evidence for each performance claim |
+| [LDPC decoder numerical contract](reference/ldpc-decoder-numerical-contract.md) | Floating-point rules of the flooding min-sum LDPC decoder and the clauses binding a multi-frame decoder |
 
 ## Crates
 

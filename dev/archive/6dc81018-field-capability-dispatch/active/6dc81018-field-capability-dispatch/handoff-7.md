@@ -27,7 +27,7 @@
 - [ ] For the recommended replace path, prepare the temporary migration in a fresh worktree/branch anchored to current `main`; do not reuse `.agents/worktrees/agent-389aa4de`, whose branch now carries unrelated unmerged work.
 - [ ] Build and run the calibration with Rust 1.95, features `tuning-profile,simd`, five executions, five repetitions, 250 ms windows, an absent `/tmp` output, and `dev/scripts/ccx1-bench-flock.sh`. Record separate host-idle evidence because the lock wrapper serializes but does not admit only an idle host.
 - [ ] Validate `source_dirty:false`, v2 token, route/digest/window checks, all nine Karatsuba grid rows, explicit selection/fallbacks, omission complement, successful reload, receipt path, output digest, and runtime provenance before copying the artifact byte-for-byte.
-- [ ] Apply Blocks A–D and the Block E reader/test/doc inventory from `dev/active/389aa4de/receipt-notes.md`; also supersede `dev/active/220cab0b/design.md`'s v1 example and mark `receipt-notes.md` applied. If `simd_min_words` moves, produce the required DEC-G re-pin evidence.
+- [ ] Apply Blocks A–D and the Block E reader/test/doc inventory from `dev/active/86b9c719-quality-documentation-tech-debt/389aa4de/receipt-notes.md`; also supersede `dev/active/220cab0b/design.md`'s v1 example and mark `receipt-notes.md` applied. If `simd_min_words` moves, produce the required DEC-G re-pin evidence.
 - [ ] Re-run all three `389aa4de` gates, perform the six-tier lead review including cumulative findings, then close it before proceeding to later waves.
 
 ## Traps — do not repeat these
@@ -48,8 +48,8 @@
 
 ## Reference artefacts
 
-- Epic and progress: `jit issue show 6dc81018`; `dev/active/6dc81018-field-capability-dispatch/progress.json`
-- Current issue and checklist: `jit issue show 389aa4de`; `dev/active/389aa4de/receipt-notes.md`
+- Epic and progress: `jit issue show 6dc81018`; `dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json`
+- Current issue and checklist: `jit issue show 389aa4de`; `dev/active/86b9c719-quality-documentation-tech-debt/389aa4de/receipt-notes.md`
 - Governing designs: `dev/active/220cab0b/design.md`; `dev/active/7d824b2f/design.md`; `dev/active/7d7c647c/design.md`
 - Current profile and receipt: `crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`; `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`
 - Host coordination: `/home/vkaskivuo/Projects/forum-poc/README.md`; peer mailbox `agent:claude`

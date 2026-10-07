@@ -39,6 +39,14 @@ CLAIMS = [
         "comparison, although the resolver under test answers without a backend.",
     ),
     (
+        "calibration-contract-returns-without-a-backend",
+        AFTER,
+        "crates/gf2-core/benches/tuning_calibration.rs",
+        "            if simd_backend().is_none() {",
+        "Each occurrence opens a block that returns from an owner contract test "
+        "before any assertion.",
+    ),
+    (
         "backend-is-detected-once",
         AFTER,
         "crates/gf2-core/src/kernels/simd/mod.rs",

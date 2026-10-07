@@ -144,9 +144,7 @@ mod tests {
 
     #[test]
     fn the_detected_kernels_answer_the_funnel_contract() {
-        let Some(fns) = detect() else {
-            return;
-        };
+        let fns = crate::contract::require_detected("shift_funnel::detect()", detect());
         let directions: [(&str, ShiftFunnelFn, ShiftFunnelFn); 2] = [
             ("left", fns.shift_left_funnel, left_reference),
             ("right", fns.shift_right_funnel, right_reference),

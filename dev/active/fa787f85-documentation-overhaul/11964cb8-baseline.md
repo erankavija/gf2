@@ -31,6 +31,11 @@ snapshots, not artifacts, and stay byte-identical.
 | --- | --- | --- | --- |
 | `ff34a202b` | 25 | 25 | 0 |
 | `d13d03f83` | 26 | 26 | 0 |
+| `deda5bf29` | 26 | 26 | 0 |
 
 At `d13d03f83` the 25 baseline tests pass unchanged; the added test is
 `rare_event_design_identity_is_path_independent`.
+
+At `deda5bf29`, which moves the design entry under its epic directory, the same
+command and the artifact enumeration above give the same verdicts: 26 of 26
+tests pass and the enumeration lists no file.

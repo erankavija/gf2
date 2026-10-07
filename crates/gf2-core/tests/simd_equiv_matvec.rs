@@ -2,6 +2,7 @@
 
 mod simd_equiv;
 
+use gf2_core::matrix::{matvec_route, MatvecRoute};
 use gf2_core::{BitMatrix, BitVec};
 use proptest::prelude::any;
 use proptest::strategy::{Just, Strategy};
@@ -144,6 +145,48 @@ fn matvec_boundary_shapes_index_canonically_and_keep_zero_tails() {
             }
         }
     }
+}
+
+/// Column counts whose strides are 0, 1, 63, 64 and 65 words, with a partial
+/// last word beside the 64- and 65-word strides.
+const STRIDE_BOUNDARY_COLS: [usize; 7] = [0, 64, 4032, 4095, 4096, 4097, 4160];
+
+#[test]
+fn each_route_matches_the_reference_at_stride_and_word_boundaries() {
+    for rows in [0, 1, 65] {
+        for cols in BOUNDARY_COLS.into_iter().chain(STRIDE_BOUNDARY_COLS) {
+            let mut matrix = BitMatrix::zeros(rows, cols);
+            for row in 0..rows {
+                for col in 0..cols {
+                    matrix.set(row, col, ((row * 17 + col * 31 + cols) & 3) == 1);
+                }
+            }
+            let mut vector = BitVec::with_capacity(cols);
+            for col in 0..cols {
+                vector.push_bit(((col * 13 + rows) & 1) == 0);
+            }
+            let reference = scalar_matvec_reference(&matrix, &vector);
+
+            for route in [MatvecRoute::Scalar, MatvecRoute::Simd] {
+                let context = format!("rows={rows} cols={cols} route={route:?}");
+                let product = matrix.matvec_with_route(&vector, route);
+                assert_eq!(product, reference, "{context}");
+                assert_zero_tail(&product, &context);
+            }
+            assert_eq!(
+                matrix.matvec(&vector),
+                matrix.matvec_with_route(&vector, matvec_route(cols.div_ceil(64))),
+                "rows={rows} cols={cols}"
+            );
+        }
+    }
+}
+
+#[test]
+#[should_panic(expected = "input BitVec length must equal cols")]
+fn a_pinned_route_rejects_a_vector_of_another_length() {
+    let matrix = BitMatrix::zeros(2, 65);
+    let _ = matrix.matvec_with_route(&BitVec::zeros(64), MatvecRoute::Scalar);
 }
 
 #[test]

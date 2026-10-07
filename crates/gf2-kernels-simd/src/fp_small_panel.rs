@@ -122,10 +122,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_gemm() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_small_panel::detect()", detect());
         for &p in &[7u8, 31, 127, 251] {
             for &(m, k, n) in &[
                 (1usize, 1usize, 1usize),
@@ -156,10 +153,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_handles_zero_dims() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_small_panel::detect()", detect());
         let a: Vec<u8> = vec![];
         let bt: Vec<u8> = vec![];
         let mut out: Vec<u8> = vec![];

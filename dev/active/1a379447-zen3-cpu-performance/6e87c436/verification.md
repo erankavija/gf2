@@ -64,6 +64,28 @@ issue each commit names. The differences on the dense `matvec` path:
 The remaining `code-differs` rows lie outside the dense `matvec` path and are
 listed with their commits in the record.
 
+## Tree the records describe
+
+The [production drift record](survey/production-drift.json) and the
+[assembly comparison](survey/asm-comparison.json) describe the tree that the
+[end-state record](survey/dense-verdict-end-state.json) pins by the SHA-256 of
+every file of `gf2-core` and `gf2-kernels-simd`; its commit id is informational.
+`survey/freeze-end-state.py` refuses a tree whose files disagree with the
+`current_sha256` values of the drift record.
+
+`python3 -B survey/verify-records.py` (path relative to this directory, no
+arguments) re-derives every class, digest, changed path and per-symbol row of
+both records from content: the receipts' snapshotted producing inputs, the
+anchor snapshots, and the committed blobs git holds for the digests the end
+state names. It reads no source bytes from the working tree, writes nothing,
+and exits zero on any later tree while those blobs are present.
+
+`make-production-drift.py` and `make-asm-comparison.py` refuse to write when a
+file of the working tree differs from the end-state record, and name the
+differing paths. `survey/verify_records_test.py` shows the check on the
+committed records, its failure on edited records, and the refusal on a fixture
+tree whose baselined file changed after the freeze.
+
 ## Route selection
 
 `survey/make-route-comparison.py` joins each receipt's per-pair
@@ -76,7 +98,7 @@ current tree in release mode and drives every cell through the shared runner's
 validation position with no timing window:
 
 ```sh
-S=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations
+S=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations
 D=dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/route-smoke
 for f in dense-isolated-fused-parity dense-allocated-matvec; do
   $S/survey/run-dense-harness.sh window --family 2037941f-$f \

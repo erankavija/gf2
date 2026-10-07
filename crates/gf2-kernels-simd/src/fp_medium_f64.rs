@@ -116,10 +116,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_gemm() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_medium_f64::detect()", detect());
         for &p in &[257u16, 1031, 4099, 32771, 65521] {
             for &(m, k, n) in &[
                 (1usize, 1usize, 1usize),
@@ -149,10 +146,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_handles_zero_dims() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_medium_f64::detect()", detect());
         let a: Vec<f64> = vec![];
         let bt: Vec<f64> = vec![];
         let mut out: Vec<u16> = vec![];

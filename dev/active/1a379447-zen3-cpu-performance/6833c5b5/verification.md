@@ -3,7 +3,7 @@
 > **Diátaxis Type:** Reference
 
 The dense-parity
-[source-evidence ledger](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json)
+[source-evidence ledger](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json)
 is a record pinned to the commits its rows record. Each row names a commit, a
 path, a line, the verbatim line and the digest of the whole file, and each
 citation resolves at that commit: the file there has the recorded digest and
@@ -17,7 +17,7 @@ Every command runs from the repository root.
 
 ```sh
 python3 -B dev/scripts/verify-source-evidence.py \
-    dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json \
+    dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json \
     --project gf2 --frame recorded-commits
 ```
 
@@ -34,7 +34,7 @@ classes and each refusal on this ledger.
 
 ```sh
 python3 -B dev/scripts/verify-source-evidence.py \
-    dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json \
+    dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json \
     --project gf2 --frame recorded-commits \
     --tree fcb972da393c878665b1653856d76ddf5b299731 \
     --record dev/active/1a379447-zen3-cpu-performance/6833c5b5/dense-parity-source-evidence-verification.json
@@ -51,11 +51,12 @@ and the first whose content displaces the cited line.
 
 ## Limits
 
-[`make-dense-parity-source-evidence.py`](../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py)
-reads the working tree and writes the ledger in place. On a tree whose cited
-sources differ from the recorded commits it writes a different ledger, so the
-committed ledger is verified by the check above and not by regeneration.
+[`make-dense-parity-source-evidence.py`](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py)
+reads each cited file at the commit its ledger row records and reproduces the
+committed ledger byte for byte. It refuses to write a ledger that differs, and
+`--check` compares without writing. The recorded-commits check above verifies
+the ledger independently of the generator.
 
 The documents that cite the ledger and keep their bytes carry their tree
 statement in the
-[dense-parity corrections](../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md).
+[dense-parity corrections](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-corrections.md).

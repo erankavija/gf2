@@ -1,0 +1,164 @@
+{
+  "schema": "ldpc-intrinsic-feasibility-v1",
+  "toolchain": {
+    "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+    "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+  },
+  "assembly": {
+    "path": "dev/bench_results/ed3d490e/intrinsic-feasibility/probe.s",
+    "sha256": "4c302d4f88631a0c1c6a7fdf5d82211144b6a287e5843ae67f8eff1c781aba8f",
+    "source_sha256": "2b23a25bb06091ba2fd33a6dfc2b2f9c2dd9b556d4e05ca73d8b65319537db96"
+  },
+  "behavioural_tests": {
+    "command": "cargo +1.95 test --offline --release",
+    "exit_code": 0,
+    "log": "dev/bench_results/ed3d490e/intrinsic-feasibility/tests.log"
+  },
+  "probes": [
+    {
+      "function": "accumulate_belief_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe21accumulate_belief_f3217hf892af53b085a4a4E",
+      "instructions": [
+        "vmovups",
+        "vaddps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "excluded_minimum_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe20excluded_minimum_f3217hb7b810a99fe7339eE",
+      "instructions": [
+        "vmovd",
+        "vpbroadcastd",
+        "vpcmpeqd",
+        "vmovups",
+        "vblendvps",
+        "mov",
+        "vmovaps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "flip_sign_by_comparison_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe27flip_sign_by_comparison_f3217h1db2c5c608d03e96E",
+      "instructions": [
+        "vmovups",
+        "vxorps",
+        "vcmpnge_uqps",
+        "vbroadcastss",
+        "vandps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "fold_two_minima_and_position_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe32fold_two_minima_and_position_f3217h3b10e2907d70a46aE",
+      "instructions": [
+        "vbroadcastss",
+        "vandps",
+        "vmovups",
+        "vcmplt_oqps",
+        "vblendvps",
+        "vmovdqu",
+        "vmovd",
+        "vpbroadcastd",
+        "vmaskmovps",
+        "vpblendvb",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "hard_decision_bits_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe22hard_decision_bits_f3217h211b7d29d0b12043E",
+      "instructions": [
+        "vmovups",
+        "vxorps",
+        "vcmplt_oqps",
+        "vmovmskps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "output_sign_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe15output_sign_f3217h9b7cbf4f7f0071bcE",
+      "instructions": [
+        "vmovups",
+        "vxorps",
+        "vcmpnge_uqps",
+        "vbroadcastss",
+        "mov",
+        "vandps",
+        "vmovaps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "write_extrinsic_masked_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe26write_extrinsic_masked_f3217h50f83b8cfd36f8b8E",
+      "instructions": [
+        "vmovups",
+        "vsubps",
+        "vmaskmovps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "write_normalized_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe20write_normalized_f3217h9119fa5e114f8b80E",
+      "instructions": [
+        "vpbroadcastd",
+        "vpcmpeqd",
+        "vmovups",
+        "vblendvps",
+        "vxorps",
+        "vcmpnge_uqps",
+        "vbroadcastss",
+        "vandps",
+        "vmulps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "write_offset_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe16write_offset_f3217h74b2c65d5e8d5348E",
+      "instructions": [
+        "vpbroadcastd",
+        "vpcmpeqd",
+        "vmovups",
+        "vblendvps",
+        "vbroadcastss",
+        "vsubps",
+        "vxorps",
+        "vcmpnge_uqps",
+        "vmaxps",
+        "vandps",
+        "vzeroupper"
+      ]
+    },
+    {
+      "function": "write_plain_f32",
+      "emitted": true,
+      "symbol": "_ZN21ldpc_intrinsics_probe15write_plain_f3217h97f6ca35af43155fE",
+      "instructions": [
+        "vpbroadcastd",
+        "vpcmpeqd",
+        "vmovups",
+        "vblendvps",
+        "vxorps",
+        "vcmpnge_uqps",
+        "vbroadcastss",
+        "vandps",
+        "vzeroupper"
+      ]
+    }
+  ]
+}

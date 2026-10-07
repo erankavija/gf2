@@ -5,8 +5,8 @@
 # dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/, and localises what stands in the
 # way. Regenerate the committed receipt with:
 #
-#   ./dev/active/1ac74567/elaboration/elaborate.sh \
-#     > dev/active/1ac74567/elaboration/elaborate.log 2>&1
+#   ./dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.sh \
+#     > dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log 2>&1
 #
 # Nothing here writes into proofs/, adds a lake target, or touches the closed
 # issue's record under dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/. The generated files are copied
@@ -27,7 +27,7 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 SRC="$REPO_ROOT/dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean"
-HERE="$REPO_ROOT/dev/active/1ac74567/elaboration"
+HERE="$REPO_ROOT/dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 

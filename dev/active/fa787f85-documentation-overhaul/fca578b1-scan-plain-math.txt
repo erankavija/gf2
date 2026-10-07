@@ -1,0 +1,15 @@
+crates/gf2-algebra/src/lib.rs:4: F_3: `PackedField<F>` trait, the per-prime packed types (`Bipedal3` for F_3,
+crates/gf2-algebra/src/lib.rs:5: F_5: `Packed5` for F_5, `Packed7` for F_7), and the `permanent_*` algorithm
+crates/gf2-algebra/src/lib.rs:5: F_7: `Packed5` for F_5, `Packed7` for F_7), and the `permanent_*` algorithm
+crates/gf2-core/src/lib.rs:2: GF(: ([`BitMatrix`]) and sparse ([`sparse`]) GF(2) matrices, and finite-field
+crates/gf2-kernels-hip/src/lib.rs:4: F_3: F_3/F_5/F_7 permanents.
+crates/gf2-kernels-hip/src/lib.rs:4: F_5: F_3/F_5/F_7 permanents.
+crates/gf2-kernels-hip/src/lib.rs:4: F_7: F_3/F_5/F_7 permanents.
+crates/gf2-kernels-simd/src/lib.rs:2: GF(: SIMD kernels for the gf2 workspace, among them logical bit operations, GF(p)
+crates/gf2-kernels-simd/src/lib.rs:3: GF(: and GF(2^m) arithmetic, BCH encoding, LLR and modem arithmetic, and packed
+crates/gf2-kernels-simd/src/lib.rs:3: 2^m: and GF(2^m) arithmetic, BCH encoding, LLR and modem arithmetic, and packed
+crates/gf2-kernels-simd/src/lib.rs:4: F_3: F_3/F_5/F_7 bipedal operations. Unsafe and architecture-specific code is
+crates/gf2-kernels-simd/src/lib.rs:4: F_5: F_3/F_5/F_7 bipedal operations. Unsafe and architecture-specific code is
+crates/gf2-kernels-simd/src/lib.rs:4: F_7: F_3/F_5/F_7 bipedal operations. Unsafe and architecture-specific code is
+docs/concepts/acceleration-architecture.md:74: mod: [`tests/simd_equiv/`](../../crates/gf2-core/tests/simd_equiv/mod.rs) and
+hits: 14

@@ -2729,6 +2729,8 @@ fn runner_check_validates_a_plan_and_measures_nothing() {
     let root = scratch("runner-check");
     let repo = root.join("repo");
     stage_repo(&repo);
+    stage_current(&repo);
+    git(&repo, &["init", "-q"]);
     let mut family = addendum(vec![cell(
         "first",
         CellObjective::Improvement,
@@ -2740,37 +2742,8 @@ fn runner_check_validates_a_plan_and_measures_nothing() {
     family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
     write_addendum(&repo, &family);
-    let arm = json!({
-        "build": "conservative-portable",
-        "description": "fixture arm",
-        // `check` reads no executable: it validates the declaration alone.
-        "executable": "target/release/absent-arm",
-        "arguments": [],
-        "environment": {},
-        "rustflags": null,
-        "tuning_profile": null
-    });
-    let plan = json!({
-        "schema": "zen3-benchmark-plan-v1",
-        "campaign_id": "check-contract",
-        "producing_manifest": "producing-inputs.json",
-        "issue": "f547c394",
-        "label": "pilot",
-        "campaign_seed": 11,
-        "addendum": ADDENDUM_DOC,
-        "lock_path": "/tmp/unused.lock",
-        "wrapper": "flock",
-        "timing_override": null,
-        "arms": {"baseline": arm, "candidate": arm},
-        "cells": [{
-            "cell_id": "first",
-            "baseline_arm": "baseline",
-            "candidate_arm": "candidate",
-            "case": {"words": 4096, "seed": 1},
-            "pilot_pairs": 6
-        }],
-        "max_cells_per_session": 1
-    });
+    // `check` reads no executable: the plan's arm names an absent one.
+    let plan = check_plan();
     let plan_path = root.join("plan.json");
     fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
     let runner = env!("CARGO_BIN_EXE_benchmark-ab-runner");
@@ -2815,6 +2788,112 @@ fn runner_check_validates_a_plan_and_measures_nothing() {
     assert_ne!(rejected.status.code(), Some(0));
     let stderr = String::from_utf8_lossy(&rejected.stderr);
     assert!(stderr.contains("second"), "{stderr}");
+}
+
+/// A plan of one exploratory single-core cell over the fixture arm.
+fn check_plan() -> Value {
+    let arm = json!({
+        "build": "conservative-portable",
+        "description": "fixture arm",
+        "executable": "target/release/absent-arm",
+        "arguments": [],
+        "environment": {},
+        "rustflags": null,
+        "tuning_profile": null
+    });
+    json!({
+        "schema": "zen3-benchmark-plan-v1",
+        "campaign_id": "check-contract",
+        "producing_manifest": "producing-inputs.json",
+        "issue": "f547c394",
+        "label": "pilot",
+        "campaign_seed": 11,
+        "addendum": ADDENDUM_DOC,
+        "lock_path": "/tmp/unused.lock",
+        "wrapper": "flock",
+        "timing_override": null,
+        "arms": {"baseline": arm, "candidate": arm},
+        "cells": [{
+            "cell_id": "first",
+            "baseline_arm": "baseline",
+            "candidate_arm": "candidate",
+            "case": {"words": 4096, "seed": 1},
+            "pilot_pairs": 6
+        }],
+        "max_cells_per_session": 1
+    })
+}
+
+#[test]
+fn runner_check_rejects_an_addendum_its_schema_edition_rejects() {
+    let root = scratch("runner-check-schema");
+    let repo = root.join("repo");
+    stage_repo(&repo);
+    stage_current(&repo);
+    git(&repo, &["init", "-q"]);
+    let mut family = addendum(vec![cell(
+        "first",
+        CellObjective::Improvement,
+        CellRole::Exploratory,
+        CoreArm::SingleCore,
+    )]);
+    family.protocol.version = PROTOCOL_VERSION;
+    family.schema = ADDENDUM_SCHEMA_ID.into();
+    family.family.purpose = FamilyPurpose::DecoderFamily;
+    family.cells[0].decoder = Some(decoder(DecoderArmKind::MatchedAlgorithm));
+    family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+    fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
+    let plan_path = root.join("plan.json");
+    fs::write(
+        &plan_path,
+        serde_json::to_vec_pretty(&check_plan()).unwrap(),
+    )
+    .unwrap();
+    let check = |instance: &Value| {
+        put(
+            &repo,
+            ADDENDUM_DOC,
+            &serde_json::to_vec_pretty(instance).unwrap(),
+        );
+        Command::new(env!("CARGO_BIN_EXE_benchmark-ab-runner"))
+            .arg("check")
+            .arg(&plan_path)
+            .current_dir(&repo)
+            .output()
+            .unwrap()
+    };
+
+    let valid = serde_json::to_value(&family).unwrap();
+    let accepted = check(&valid);
+    assert_eq!(
+        accepted.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&accepted.stderr)
+    );
+
+    // Each value decodes and passes the semantic rules; only the schema
+    // constrains it.
+    for (pointer, value) in [
+        ("/family/description", ""),
+        ("/cells/0/decoder/code/identity", ""),
+        ("/cells/0/decoder/input/llr_source", ""),
+        ("/cells/0/decoder/input/llr_sha256", ""),
+        ("/cells/0/decoder/input/llr_sha256", " "),
+        ("/cells/0/decoder/input/llr_sha256", "x"),
+    ] {
+        let mut mutated = valid.clone();
+        *mutated.pointer_mut(pointer).unwrap() = json!(value);
+        let decoded = FamilyAddendum::decode(&serde_json::to_vec(&mutated).unwrap()).unwrap();
+        decoded.validate().unwrap();
+        let rejected = check(&mutated);
+        let stderr = String::from_utf8_lossy(&rejected.stderr);
+        assert_ne!(rejected.status.code(), Some(0), "{pointer} = {value:?}");
+        assert!(
+            stderr.contains("schema violation"),
+            "{pointer} = {value:?}: {stderr}"
+        );
+    }
 }
 
 #[test]

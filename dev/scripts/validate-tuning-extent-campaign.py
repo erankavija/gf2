@@ -8,7 +8,9 @@ owner decisions, and composed profile wrappers.  The committed campaign
 declaration whose `issue` the run ID names, located anywhere in the repository
 by `locate_declaration`, selects the protocol, producing manifest, owner
 counts, imported owners and publication layout; the campaign's recorded
-identities name it by digest.
+identities name it by digest. `THRESHOLD_GRIDS` holds every retained-threshold
+field a campaign may sweep; `selected_thresholds` takes the fields of one
+campaign from its core inventory.
 """
 
 from __future__ import annotations
@@ -209,13 +211,15 @@ THRESHOLD_GRIDS = {
     "gemm.winograd_min_dim": [32, 64, 96, 127, 128, 129, 192, 256, 512],
     "triangular.base_case_max_dim": [2, 4, 6, 7, 8, 9, 12, 16, 32],
     "ple.scalar_base_max_cols": [2, 3, 4, 6, 8, 12, 16, 24, 32],
+    "bit_matrix.matvec_simd_min_words": [4, 7, 8, 9, 32, 63, 64, 65, 128],
 }
 # Seed tags: the retained thresholds take their declaration order, the three
-# seam thresholds take 28-30 after the extent tags 16-27.
+# seam thresholds take 28-30 after the extent tags 16-27, the matvec threshold 31.
 THRESHOLD_TAGS = {field: tag for tag, field in enumerate(list(THRESHOLD_GRIDS)[:16])} | {
     "gemm.winograd_min_dim": 28,
     "triangular.base_case_max_dim": 29,
     "ple.scalar_base_max_cols": 30,
+    "bit_matrix.matvec_simd_min_words": 31,
 }
 # Each `_max_` threshold's codec floor; absent fields are lower-bound thresholds.
 THRESHOLD_UPPER_FLOORS = {
@@ -246,6 +250,7 @@ THRESHOLD_ENUMS = {
     "gemm.winograd_min_dim": "winograd_min_dim",
     "triangular.base_case_max_dim": "triangular_base_case_max_dim",
     "ple.scalar_base_max_cols": "ple_scalar_base_max_cols",
+    "bit_matrix.matvec_simd_min_words": "matvec_simd_min_words",
 }
 THRESHOLD_DEFAULTS = {
     "bit_backend.simd_min_words": 8,
@@ -267,10 +272,22 @@ THRESHOLD_DEFAULTS = {
     "gemm.winograd_min_dim": 128,
     "triangular.base_case_max_dim": 8,
     "ple.scalar_base_max_cols": 1,
+    "bit_matrix.matvec_simd_min_words": 8,
+}
+# Row count of every matvec fixture; the grid point is the row stride in words.
+MATVEC_ROWS = 1024
+# Thresholds selected at compile time: both arms install the grid point and
+# call their backend or lane directly.
+DIRECT_ARM_THRESHOLDS = {"bit_backend.simd_min_words", "bit_matrix.matvec_simd_min_words"}
+# The prerequisite each threshold adds to the core capability report, with the
+# value a campaign sweeping it requires.
+THRESHOLD_CAPABILITIES = {
+    "gemm.winograd_min_dim": ("m31_whole_gemm", True),
+    "ple.scalar_base_max_cols": ("m31_ple_panel_lane", None),
 }
 
 
-def expected_core_retained_grid() -> list[dict[str, Any]]:
+def expected_core_retained_grid(thresholds: dict[str, list[int]]) -> list[dict[str, Any]]:
     enum_names = {
         "soa_batch.parallel_min_len": "soa_parallel_min_len",
         "m4rm.wide_tier_min_stride_words": "m4rm_wide_tier_min_stride_words",
@@ -285,14 +302,13 @@ def expected_core_retained_grid() -> list[dict[str, Any]]:
         "ple.scalar_base_max_cols": "ple_scalar_base_max_cols",
     }
     result = []
-    for path, grid in THRESHOLD_GRIDS.items():
+    for path, grid in thresholds.items():
         variants = (["generic_interpolation", "two_adic_interpolation"]
                     if path == "polynomial.interpolate_fast_min_points" else ["standard"])
         field = enum_names.get(path, path.split(".")[1])
         for variant in variants:
             result.append({"field": field, "variant": variant, "grid": grid,
                            "default": THRESHOLD_DEFAULTS[path]})
-    require(len(result) == 20, "internal retained report grid count changed")
     return result
 
 
@@ -471,7 +487,11 @@ def load_declaration(campaign: str, root: Path | None = None) -> dict[str, Any]:
     """The committed declaration the run ID names, checked in full."""
     match = RUN_ID.fullmatch(campaign) if isinstance(campaign, str) else None
     require(match is not None, f"campaign ID {campaign!r} is not gf2-<issue>-<stamp>-<pid>")
-    issue = match.group(1)
+    return issue_declaration(match.group(1), root)
+
+
+def issue_declaration(issue: str, root: Path | None = None) -> dict[str, Any]:
+    """The committed declaration naming `issue`, checked in full."""
     root = root or repository_root()
     value = load_json(root / locate_declaration(issue, root), canonical=False)
     require_keys(value, ["schema", "issue", "protocol", "producing_manifest",
@@ -617,9 +637,10 @@ def validate_process(process: Any, expected_id: str, expected_args: list[str],
             f"{expected_id} executable digest mismatch")
 
 
-def expected_core_blocks() -> list[tuple[str, str, str, list[str]]]:
+def expected_core_blocks(
+        thresholds: dict[str, list[int]]) -> list[tuple[str, str, str, list[str]]]:
     blocks = []
-    for field, grid in THRESHOLD_GRIDS.items():
+    for field, grid in thresholds.items():
         variants = ["generic", "two_adic"] if field.endswith("interpolate_fast_min_points") else ["standard"]
         for variant in variants:
             for size in grid:
@@ -644,12 +665,30 @@ def expected_core_blocks() -> list[tuple[str, str, str, list[str]]]:
     return blocks
 
 
+def selected_thresholds(measured: Any, declaration: Any) -> dict[str, list[int]]:
+    """The retained-threshold table of one campaign.
+
+    `measured` is the measured-field list of the campaign's core inventory. The
+    table holds the `THRESHOLD_GRIDS` fields it names, in their order there, and
+    its cells are exactly the core cells the declaration counts, so an
+    inventory selects fields and never a grid.
+    """
+    require(isinstance(measured, list) and all(isinstance(field, str) for field in measured),
+            "core inventory measured fields are malformed")
+    thresholds = {field: grid for field, grid in THRESHOLD_GRIDS.items() if field in measured}
+    cells = sum(len(candidates) for _, _, _, candidates in expected_core_blocks(thresholds))
+    require(cells == owner_counts(declaration, "gf2-core")["cells"],
+            "core inventory selects a field table of another size than the declared cells")
+    return thresholds
+
+
 def expected_algebra_blocks() -> list[tuple[str, str, str, list[str]]]:
     return [("algebra-extent", "permanent.gray_chunk_subsets", f"n{n}",
              [f"q{x}" for x in ALGEBRA_CANDIDATES]) for n in ALGEBRA_DIMS]
 
 
 def validate_manifest(manifest: Any, owner: str, stage: Path, protocol_sha: str,
+                      thresholds: dict[str, list[int]],
                       resolved: bool = False) -> list[dict[str, Any]]:
     require_keys(manifest, ["schema", "owner", "owner_protocol", "behavior_token",
                             "campaign_id", "phases", "candidate_blocks", "counts",
@@ -672,7 +711,7 @@ def validate_manifest(manifest: Any, owner: str, stage: Path, protocol_sha: str,
     if owner == "gf2-core":
         validate_process(manifest["processes"][0], "core-producer",
                          ["--fresh-tuning-process-child"], stage)
-        expected_blocks = expected_core_blocks()
+        expected_blocks = expected_core_blocks(thresholds)
     else:
         validate_process(manifest["processes"][0], "algebra-producer", ["--fresh-child"], stage)
         expected_blocks = expected_algebra_blocks()
@@ -832,6 +871,7 @@ def validate_retained_seeds(seeds: Any, field: str, size: int) -> None:
             "triangular.base_case_max_dim": [("unit_lower", 0xE00), ("unit_upper", 0xE01),
                                              ("rhs", 0xE02)],
             "ple.scalar_base_max_cols": [("unit_lower", 0xF00), ("unit_upper", 0xF01)],
+            "bit_matrix.matvec_simd_min_words": [("matrix", 0x1000), ("vector", 0x1001)],
         }[field]
         expected_streams = [(f"{name}[{bank}]", role + (bank << 16))
                             for bank in range(8) for name, role in roles]
@@ -873,7 +913,7 @@ def threshold_forcing(case: Any) -> list[dict[str, Any]]:
     size, conservative = spec["size"], spec["arm"] == "conservative"
     family, leaf = field.split(".")
     value = size + int(conservative)
-    if field == "bit_backend.simd_min_words":
+    if field in DIRECT_ARM_THRESHOLDS:
         value = size
     elif field == "polynomial.karatsuba_min_degree":
         value = MAX_U64 if conservative else size
@@ -972,6 +1012,7 @@ def threshold_shape(field: str, size: int) -> str:
                "polynomial.div_rem_fast_min_len": f"dividend_len={2*size} divisor_len={size}",
                "polynomial.subproduct_min_len": f"coefficients={size} points={size}",
                "bit_matrix.transpose_simple_max_blocks": f"{64*size}x{64*size}",
+               "bit_matrix.matvec_simd_min_words": f"{MATVEC_ROWS}x{64*size} * {64*size}",
                "soa_batch.parallel_min_len": f"quadratic+cubic length={size}",
                "polynomial.interpolate_fast_min_points": f"{size} distinct points"}
     if field in formats:
@@ -1007,6 +1048,7 @@ THRESHOLD_ROUTES = {
     "gemm.winograd_min_dim": ("classical", "winograd"),
     "triangular.base_case_max_dim": ("base_case", "recursive"),
     "ple.scalar_base_max_cols": ("scalar_base", "block_recursive"),
+    "bit_matrix.matvec_simd_min_words": ("scalar", "simd"),
 }
 
 
@@ -1019,6 +1061,11 @@ def validate_threshold_route(case: Any, outcome: Any) -> None:
     if field == "bit_backend.simd_min_words":
         effective = "baked_selector_direct_backend"
         capability = outcome["capability_observation"] if arm else "scalar_backend"
+        require(not arm or capability == "simd_backend=avx2",
+                "unknown concrete SIMD capability")
+    elif field == "bit_matrix.matvec_simd_min_words":
+        effective = "baked_selector_direct_lane"
+        capability = outcome["capability_observation"] if arm else "scalar_lane"
         require(not arm or capability == "simd_backend=avx2",
                 "unknown concrete SIMD capability")
     elif field in {"polynomial.karatsuba_min_degree", "polynomial.karatsuba_max_out_len",
@@ -1173,6 +1220,9 @@ def operand_identity(owner: str, field: str, shape: int, retained: bool = False)
             parts.append(m31(random_values(seed(0xE02,bank),m*m,M31)))
         elif retained and tag == 30:
             parts.append(m31(lu_product(m,seed(0xF00,bank),seed(0xF01,bank),M31)))
+        elif retained and tag == 31:
+            parts.append(bit(MATVEC_ROWS,64*shape,0x1000))
+            parts.append(values_hash(b'gf2-calibration-bit-vector-v1',[64*shape],random_values(seed(0x1001,bank),shape,1<<64)))
         elif field.startswith('bit_matrix.'):
             parts.append(bit(m,n,0x100))
         elif field.startswith('soa_batch.'):
@@ -1227,7 +1277,7 @@ def operand_identity(owner: str, field: str, shape: int, retained: bool = False)
         domain=b'gf2-extent-operands-bank-role-tuple-v1'
     else:
         domain={5:b'unary-bit',6:b'soa',7:b'binary-bit',8:b'binary-bit',9:b'unary-bit',10:b'unary-fp251',11:b'binary-fp251',12:b'unary-fp251',13:b'unary-fp251',14:b'binary-fp251',15:b'interpolation',
-                28:b'winograd-m31',29:b'solve-m31',30:b'ple-m31'}[tag]
+                28:b'winograd-m31',29:b'solve-m31',30:b'ple-m31',31:b'matvec'}[tag]
         domain=b'gf2-calibration-'+domain+b'-banks-v1'
     return tuple_hash(domain,parts)
 
@@ -2581,14 +2631,15 @@ def conservative_core_selectors() -> dict[str, Any]:
     return envelope["sections"]["gf2-core/selectors"]["selectors"]
 
 
-def validate_threshold_decisions(core_index: Any, core_decisions: Any) -> None:
+def validate_threshold_decisions(core_index: Any, core_decisions: Any,
+                                 thresholds: dict[str, list[int]]) -> None:
     selectors = conservative_core_selectors()
     actual = {(item["field"], item["variant"]): item
               for item in core_decisions["retained_thresholds"]}
     # One decision per sweep, plus the reconciled shared interpolation value.
-    require(len(actual) == len(THRESHOLD_GRIDS) + 2, "owner threshold decision count mismatch")
+    require(len(actual) == len(thresholds) + 2, "owner threshold decision count mismatch")
     computed: dict[tuple[str, str], dict[str, Any]] = {}
-    for field, grid in THRESHOLD_GRIDS.items():
+    for field, grid in thresholds.items():
         variants = [("generic", "generic_interpolation"),
                     ("two_adic", "two_adic_interpolation")] if field.endswith(
                         "interpolate_fast_min_points") else [("standard", "standard")]
@@ -2718,7 +2769,7 @@ def build_extent_series(index: dict[tuple[str, str, str, int], dict[str, Any]],
 
 def validate_decisions(core_bundle: Any, algebra_bundle: Any | None,
                        core_response: Any, algebra_response: Any | None,
-                       declaration: Any) -> dict[str, Any]:
+                       declaration: Any, thresholds: dict[str, list[int]]) -> dict[str, Any]:
     """Recomputes every measured owner's decisions; an imported algebra owner
     passes `None` for its bundle and response and has no decisions here."""
     require_keys(core_response, ["operation", "artifact", "decisions"], "core owner response")
@@ -2730,7 +2781,7 @@ def validate_decisions(core_bundle: Any, algebra_bundle: Any | None,
     require(core_decisions["schema"] == CORE_PROTOCOL
             and core_decisions["counts"] == owner_counts(declaration, "gf2-core"),
             "core decision schema/count mismatch")
-    measured = set(THRESHOLD_GRIDS) | (set(EXTENT_GRIDS) - {"gemm.tiles"}) | {
+    measured = set(thresholds) | (set(EXTENT_GRIDS) - {"gemm.tiles"}) | {
         "gemm.row_tile", "gemm.col_tile"}
     selectors = conservative_core_selectors()
     all_leaves = {f"{family}.{leaf}" for family, values in selectors.items()
@@ -2741,7 +2792,7 @@ def validate_decisions(core_bundle: Any, algebra_bundle: Any | None,
             and measured | set(core_decisions["omitted"]) == all_leaves,
             "core measured/omitted selector complement mismatch")
     core_index = result_index(core_bundle)
-    validate_threshold_decisions(core_index, core_decisions)
+    validate_threshold_decisions(core_index, core_decisions, thresholds)
     recomputed = {}
     for field, candidates in EXTENT_GRIDS.items():
         if field == "gemm.tiles":
@@ -2872,18 +2923,39 @@ def byte_artifact(value: Any, where: str, stage: Path) -> tuple[Path, bytes]:
     return path, data
 
 
-def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
+def preflight_names(declaration: Any) -> list[str]:
+    return [f"{owner}-{mode}" for owner in sorted(measured_names(declaration))
+            for mode in ["capability-report", "list-grid", "self-check"]]
+
+
+def validate_preflight_reports(stage: Path, campaign_config: Any) -> dict[str, list[int]]:
+    """Checks the staged preflight reports; returns the campaign's threshold table."""
     declaration = declaration_for_config(campaign_config)
-    expected_names = [f"{owner}-{mode}" for owner in sorted(measured_names(declaration))
-                      for mode in ["capability-report", "list-grid", "self-check"]]
+    expected_names = preflight_names(declaration)
     reports = campaign_config["preflight_reports"]
     require(isinstance(reports, dict) and list(reports) == expected_names,
             "staged CLI preflight report coverage/order mismatch")
-    core_inventory = None
+    responses = {}
     for name in expected_names:
-        owner, mode = name.split("-", 1)
-        path, response = artifact(reports[name], f"{name} preflight report", stage)
+        path, responses[name] = artifact(reports[name], f"{name} preflight report", stage)
         require(path == stage / f"{name}.json", f"{name} preflight report path mismatch")
+    return validate_preflight_responses(responses, declaration)
+
+
+def validate_preflight_responses(responses: dict[str, Any],
+                                 declaration: Any) -> dict[str, list[int]]:
+    """Checks each measured owner's preflight responses, keyed `<owner>-<mode>`,
+    and returns the threshold table the core inventory selects."""
+    inventory = responses.get("core-list-grid")
+    require(isinstance(inventory, dict), "preflight responses hold no core inventory")
+    thresholds = selected_thresholds(
+        embedded(inventory.get("evidence"), "core-list-grid preflight evidence")["measured"],
+        declaration)
+    capabilities = dict(capability for field, capability in THRESHOLD_CAPABILITIES.items()
+                        if field in thresholds)
+    core_inventory = None
+    for name, response in responses.items():
+        owner, mode = name.split("-", 1)
         require_keys(response, ["operation", "evidence"], f"{name} preflight response")
         require(response["operation"] == mode, f"{name} returned the wrong CLI report mode")
         evidence = embedded(response["evidence"], f"{name} preflight evidence")
@@ -2933,7 +3005,7 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
             require_keys(evidence, ["owner_protocol", "behavior_token", "raw_schema",
                                     "measured", "counts", "retained", "extents",
                                     "reserved_joint_cells"], f"{name} core inventory")
-            measured = sorted(set(THRESHOLD_GRIDS) | {
+            measured = sorted(set(thresholds) | {
                 "bit_matrix.transpose_macro_tile_blocks", "soa_batch.parallel_chunk_len",
                 "m4rm.default_table_bytes", "m4rm.mid_table_bytes",
                 "m4rm.wide_table_bytes", "m4rm.wide_max_k", "m4rm.small_n_max_k",
@@ -2946,7 +3018,7 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                     and evidence["measured"] == measured
                     and evidence["counts"] == owner_counts(declaration, "gf2-core")
                     and evidence["reserved_joint_cells"] == 24
-                    and evidence["retained"] == expected_core_retained_grid()
+                    and evidence["retained"] == expected_core_retained_grid(thresholds)
                     and evidence["extents"] == expected_core_extent_grid(),
                     f"{name} core inventory differs from the declared owner protocol")
             if core_inventory is None:
@@ -2956,8 +3028,7 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                         "core --self-check and --list-grid inventories differ")
         else:
             require_keys(evidence, ["scope", "full_grid_probes", "timed_children",
-                                    "fp251_whole_gemm", "m31_whole_gemm",
-                                    "m31_ple_panel_lane", "simd_backend",
+                                    "fp251_whole_gemm", *capabilities, "simd_backend",
                                     "dedicated_pool_width", "representative_dot_length", "dot",
                                     "ordinary_companions", "cpu_features", "required_features",
                                     "required_threads"], f"{name} core capability evidence")
@@ -2965,8 +3036,7 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                     and evidence["full_grid_probes"] is False
                     and evidence["timed_children"] == 0
                     and evidence["fp251_whole_gemm"] is True
-                    and evidence["m31_whole_gemm"] is True
-                    and evidence["m31_ple_panel_lane"] is None
+                    and all(evidence[key] is value for key, value in capabilities.items())
                     and evidence["simd_backend"] in {"avx2", "avx512", "neon"}
                     and evidence["dedicated_pool_width"] == 4
                     and evidence["representative_dot_length"] ==
@@ -2991,6 +3061,7 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                                 "batch_clmul_scalar_clmul_and_barrett": True,
                                 "scalar_equal": True},
                         "core dot capability did not exercise the requested chunk")
+    return thresholds
 
 
 # The staged executables of a campaign that measures both owners.
@@ -4097,6 +4168,46 @@ def check_receipt_documents(stage_arg: str) -> dict[str, Any]:
             "campaign_id": config["campaign_id"], "status": "receipt-valid"}
 
 
+def selection_summary(thresholds: dict[str, list[int]], declaration: Any) -> dict[str, int]:
+    return {"retained_fields": len(thresholds),
+            "cells": owner_counts(declaration, "gf2-core")["cells"]}
+
+
+def check_session_record(record_arg: str) -> dict[str, Any]:
+    """`--session-record`: the preflight reports of a published session record.
+
+    The directory is the `session` destination of `publication_layout`, whose
+    name carries the run ID. Its reports get exactly the checks the full
+    validation applies to the staged ones, so a record stays checkable after
+    its stage is gone.
+    """
+    record = Path(record_arg)
+    require(record.is_absolute() and record.is_dir() and record.resolve() == record,
+            "--session-record must be a canonical directory")
+    campaign = record.name.removesuffix("-session")
+    declaration = load_declaration(campaign)
+    require(record.name == Path(publication_layout(campaign)["session"]).name,
+            "session record directory does not name its campaign")
+    responses = {name: load_json(record / f"{name}.json")
+                 for name in preflight_names(declaration)}
+    thresholds = validate_preflight_responses(responses, declaration)
+    return {"schema": "tuning-extent-campaign-session-record-check-v1",
+            "campaign_id": campaign, "status": "session-record-valid",
+            **selection_summary(thresholds, declaration)}
+
+
+def check_declaration(issue: str) -> dict[str, Any]:
+    """`--declaration-check`: the declaration of a campaign that has no stage.
+
+    A producer built from the checkout sweeps every field of the table, so
+    the declared core cells are those of the complete table.
+    """
+    declaration = issue_declaration(issue)
+    thresholds = selected_thresholds(list(THRESHOLD_GRIDS), declaration)
+    return {"schema": "tuning-extent-campaign-declaration-check-v1", "issue": issue,
+            "status": "declaration-valid", **selection_summary(thresholds, declaration)}
+
+
 def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     stage = Path(stage_arg)
     require(stage.is_absolute() and stage.exists() and not stage.is_symlink()
@@ -4205,7 +4316,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     for item, (process_id, arguments) in zip(campaign_config["processes"], expected_processes):
         validate_process(item, process_id, arguments, stage)
     validate_staging(stage, campaign_config)
-    validate_preflight_reports(stage, campaign_config)
+    thresholds = validate_preflight_reports(stage, campaign_config)
     executable_map = {item["id"]: item["executable_sha256"] for item in campaign_config["processes"]}
     require(identity["executable_sha256"] == executable_map, "executable identity map mismatch")
     require(identity["lifecycle_behavior_sha256"] ==
@@ -4224,10 +4335,11 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     work_projection = [manifests[name]["ordered_units"] for name in names]
     require(identity["ordered_work_manifest_sha256"] == digest(compact(work_projection)),
             "ordered-work identity digest mismatch")
-    validate_manifest(core_manifest, "gf2-core", stage, protocol_sha, False)
+    validate_manifest(core_manifest, "gf2-core", stage, protocol_sha, thresholds, False)
     if algebra_manifest is not None:
-        validate_manifest(algebra_manifest, "gf2-algebra", stage, protocol_sha, True)
-    validate_manifest(core_resolved, "gf2-core", stage, protocol_sha, True)
+        validate_manifest(algebra_manifest, "gf2-algebra", stage, protocol_sha, thresholds,
+                          True)
+    validate_manifest(core_resolved, "gf2-core", stage, protocol_sha, thresholds, True)
     require(core_resolved["ordered_units"][:-144] == core_manifest["ordered_units"][:-144]
             and [u["identity"] for u in core_resolved["ordered_units"][-144:]] ==
                 [u["identity"] for u in core_manifest["ordered_units"][-144:]],
@@ -4247,7 +4359,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
                      preterminal)
     responses = {name: load_json(stage / f"{name}-owner-response.json") for name in names}
     decisions = validate_decisions(bundles["core"], bundles.get("algebra"), responses["core"],
-                                   responses.get("algebra"), declaration)
+                                   responses.get("algebra"), declaration, thresholds)
     validate_derivation(stage, core_manifest, core_resolved, decisions, bundles["core"])
     validate_envelopes(stage, campaign, responses["core"], responses.get("algebra"), decisions,
                        core_resolved, algebra_manifest, campaign_config, records)
@@ -4637,6 +4749,23 @@ def reconstruction_self_test() -> None:
     must_reject(lambda:validate_sample({**sample,'elapsed_ns':True},0,0,None),'boolean elapsed')
 
 
+def field_selection_self_test() -> None:
+    """An inventory selects fields in table order; the declared cells bind it."""
+    def declared(thresholds: dict[str, list[int]]) -> dict[str, Any]:
+        cells = sum(len(candidates) for *_, candidates in expected_core_blocks(thresholds))
+        return {"measured_owners": [{"owner": "gf2-core", "name": "core", "cells": cells}]}
+    fields = list(THRESHOLD_GRIDS)
+    complete = declared(THRESHOLD_GRIDS)
+    require(selected_thresholds(fields + ["gemm.row_tile"], complete) == THRESHOLD_GRIDS,
+            "complete inventory does not select the table")
+    narrower = {field: THRESHOLD_GRIDS[field] for field in fields[:-1]}
+    require(list(selected_thresholds(fields[-2::-1], declared(narrower))) == fields[:-1],
+            "selection does not keep the table order")
+    must_reject(lambda: selected_thresholds(fields[:-1], complete), "undercounted selection")
+    must_reject(lambda: selected_thresholds(fields, declared(narrower)), "overcounted selection")
+    must_reject(lambda: selected_thresholds(None, complete), "absent inventory")
+
+
 def launcher_run_id_self_test() -> None:
     """A run ID minted by the launcher's own format is a valid RUN_ID and ProfileId
     and names a committed declaration."""
@@ -4833,6 +4962,7 @@ def publication_self_test() -> None:
 
 def self_test() -> None:
     reconstruction_self_test()
+    field_selection_self_test()
     launcher_run_id_self_test()
     declaration_location_self_test()
     publication_self_test()
@@ -5004,6 +5134,10 @@ def main() -> int:
                        help="check Rust-encoding reconstructions against a fixture")
     group.add_argument("--operand-check", metavar="FIXTURE",
                        help="check operand reconstructions against owner digests")
+    group.add_argument("--session-record", metavar="DIRECTORY",
+                       help="check the preflight reports of a published session record")
+    group.add_argument("--declaration-check", metavar="ISSUE",
+                       help="check the declaration of a campaign that has no stage")
     parser.add_argument("--preterminal", action="store_true",
                         help="validate immediately before Complete/checksum publication")
     parser.add_argument("--receipt-check", action="store_true",
@@ -5028,6 +5162,13 @@ def main() -> int:
             require(not args.preterminal and args.publication is None and not args.receipt_check,
                     "--operand-check takes only its fixture")
             output = check_operands(args.operand_check)
+        elif args.session_record is not None or args.declaration_check is not None:
+            require(not args.preterminal and args.publication is None
+                    and not args.receipt_check and not args.imported_owner_check,
+                    "--session-record and --declaration-check take only their argument")
+            output = (check_session_record(args.session_record)
+                      if args.session_record is not None
+                      else check_declaration(args.declaration_check))
         elif args.imported_owner_check:
             require(not args.preterminal and args.publication is None and not args.receipt_check,
                     "--imported-owner-check checks only the imported owners")

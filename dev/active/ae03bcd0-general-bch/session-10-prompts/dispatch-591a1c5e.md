@@ -11,7 +11,7 @@ Inventory (design file group `cutover-benches`): `crates/gf2-coding/benches/bch_
 
 ## What matters here
 
-- Benchmark IDs are consumed by the non-regression comparison: `dev/bench_results/88ca7d2f/` (the pre-cutover baseline receipt, 88ca7d2f) records twelve `bch_*` Criterion IDs and its `run.sh` collects them by name; `dev/active/4e732b56/workload-selection.md` §§ 4–7 fix the workloads. Keep every ID whose measured behavior is unchanged (same code parameters, same batch sizes, same cache state) byte-identical; where the canonical model changes what is measured, say so in the bench's rustdoc and report it — do not silently rename.
+- Benchmark IDs are consumed by the non-regression comparison: `dev/bench_results/88ca7d2f/` (the pre-cutover baseline receipt, 88ca7d2f) records twelve `bch_*` Criterion IDs and its `run.sh` collects them by name; `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md` §§ 4–7 fix the workloads. Keep every ID whose measured behavior is unchanged (same code parameters, same batch sizes, same cache state) byte-identical; where the canonical model changes what is measured, say so in the bench's rustdoc and report it — do not silently rename.
 - The DVB-T2 rows use the canonical DVB-T2 code (97410c80) at the shortened lengths; the mother-length cells stay only where a dated amendment in the survey names them.
 - Run each bench once in `--release` with a short measurement (`--warm-up-time 1 --measurement-time 1` or Criterion's `--quick`/`--test` mode) to prove it runs; paste the ID list Criterion prints, and diff it against the baseline receipt's ID list.
 - Do not take or commit any measurement receipt; d1b4f85e and fd9d5416 own measurements.

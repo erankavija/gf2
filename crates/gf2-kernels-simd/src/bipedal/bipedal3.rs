@@ -335,9 +335,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l0() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(0, 0xDEAD_BEEF);
             let b = make_canonical_vec(0, 0xCAFE_F00D);
             run_parity_add(&a, &b);
@@ -345,9 +343,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_sub_matches_reference_l0() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(0, 0xDEAD_BEEF);
             let b = make_canonical_vec(0, 0xCAFE_F00D);
             run_parity_sub(&a, &b);
@@ -355,9 +351,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_mul_matches_reference_l0() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(0, 0xDEAD_BEEF);
             let b = make_canonical_vec(0, 0xCAFE_F00D);
             run_parity_mul(&a, &b);
@@ -365,18 +359,14 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_neg_matches_reference_l0() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(0, 0xDEAD_BEEF);
             run_parity_neg(&a);
         }
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l256() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(256, 1);
             let b = make_canonical_vec(256, 2);
             run_parity_add(&a, &b);
@@ -384,9 +374,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_sub_matches_reference_l256() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(256, 3);
             let b = make_canonical_vec(256, 4);
             run_parity_sub(&a, &b);
@@ -394,9 +382,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_mul_matches_reference_l256() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(256, 5);
             let b = make_canonical_vec(256, 6);
             run_parity_mul(&a, &b);
@@ -404,18 +390,14 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_neg_matches_reference_l256() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(256, 7);
             run_parity_neg(&a);
         }
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l1024() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(1024, 11);
             let b = make_canonical_vec(1024, 12);
             run_parity_add(&a, &b);
@@ -423,9 +405,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_sub_matches_reference_l1024() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(1024, 13);
             let b = make_canonical_vec(1024, 14);
             run_parity_sub(&a, &b);
@@ -433,9 +413,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_mul_matches_reference_l1024() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(1024, 15);
             let b = make_canonical_vec(1024, 16);
             run_parity_mul(&a, &b);
@@ -443,18 +421,14 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_neg_matches_reference_l1024() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(1024, 17);
             run_parity_neg(&a);
         }
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l4096() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(4096, 21);
             let b = make_canonical_vec(4096, 22);
             run_parity_add(&a, &b);
@@ -462,9 +436,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_sub_matches_reference_l4096() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(4096, 23);
             let b = make_canonical_vec(4096, 24);
             run_parity_sub(&a, &b);
@@ -472,9 +444,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_mul_matches_reference_l4096() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(4096, 25);
             let b = make_canonical_vec(4096, 26);
             run_parity_mul(&a, &b);
@@ -482,9 +452,7 @@ mod tests {
 
         #[test]
         fn test_bipedal3_avx2_neg_matches_reference_l4096() {
-            if !has_avx2() {
-                return;
-            }
+            crate::contract::require(&[("avx2", has_avx2())]);
             let a = make_canonical_vec(4096, 27);
             run_parity_neg(&a);
         }
@@ -511,9 +479,7 @@ mod tests {
             fn test_bipedal3_avx2_add_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
             ) {
-                if !has_avx2() {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", has_avx2())]);
                 let (a, b) = pair;
                 run_parity_add(&a, &b);
             }
@@ -522,9 +488,7 @@ mod tests {
             fn test_bipedal3_avx2_sub_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
             ) {
-                if !has_avx2() {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", has_avx2())]);
                 let (a, b) = pair;
                 run_parity_sub(&a, &b);
             }
@@ -533,9 +497,7 @@ mod tests {
             fn test_bipedal3_avx2_mul_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
             ) {
-                if !has_avx2() {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", has_avx2())]);
                 let (a, b) = pair;
                 run_parity_mul(&a, &b);
             }
@@ -544,9 +506,7 @@ mod tests {
             fn test_bipedal3_avx2_neg_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
             ) {
-                if !has_avx2() {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", has_avx2())]);
                 let (a, _) = pair;
                 run_parity_neg(&a);
             }

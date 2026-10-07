@@ -269,10 +269,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_mul() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_small::detect()", detect());
         for &p in &[7u8, 31, 251] {
             for &len in &[0usize, 1, 15, 16, 17, 31, 32, 33, 100, 1024] {
                 let a: Vec<u8> = (0..len as u32)
@@ -292,10 +289,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_add() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_small::detect()", detect());
         for &p in &[7u8, 31, 251] {
             for &len in &[0usize, 1, 15, 31, 32, 33, 64, 256] {
                 let a: Vec<u8> = (0..len as u32)
@@ -315,10 +309,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_sub() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_small::detect()", detect());
         for &p in &[7u8, 31, 251] {
             for &len in &[0usize, 1, 15, 31, 32, 33, 64, 256] {
                 let a: Vec<u8> = (0..len as u32)
@@ -338,10 +329,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_dot() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_small::detect()", detect());
         for &p in &[7u8, 31, 251] {
             for &len in &[0usize, 1, 7, 8, 15, 31, 32, 33, 100, 1024] {
                 let a: Vec<u8> = (0..len as u32)
@@ -379,10 +367,7 @@ mod tests {
                 seed in any::<u64>(),
                 p_idx in 0usize..3usize,
             ) {
-                let fns = match detect() {
-                    Some(f) => f,
-                    None => return Ok(()),
-                };
+                let fns = crate::contract::require_detected("fp_small::detect()", detect());
                 let primes: [u8; 3] = [7, 31, 251];
                 let p = primes[p_idx];
                 let mu = barrett_mu_u16(p);
@@ -417,10 +402,7 @@ mod tests {
     /// Deterministic boundary-length check.
     #[test]
     fn safe_wrapper_matches_scalar_sub_scaled() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_small::detect()", detect());
         for &p in &[7u8, 31, 251] {
             let mu = barrett_mu_u16(p);
             for &len in &[0usize, 1, 15, 16, 17, 63, 64, 65, 255, 256] {

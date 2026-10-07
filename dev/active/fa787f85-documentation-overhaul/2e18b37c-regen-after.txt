@@ -1,0 +1,13 @@
+dev/bench_results/19513245/r1-consumer-profile/profile-summary.md same
+a203a23c/timing/timing.json same
+a203a23c/timing/timing-tmpfs-superseded.json diff-lines=12
+make-addenda.py and freeze-confirmations.sh exit=0
+19513245/addendum-v4-control-confirmation.json same
+19513245/addendum-v4-control-pilot.json same
+19513245/addendum-v4-matrix-confirmation.json same
+19513245/addendum-v4-matrix-pilot.json same
+19513245/addendum-v4-vector-confirmation.json same
+19513245/addendum-v4-vector-pilot.json same
+19513245/confirmation-derivation-control.txt diff-lines=2
+19513245/confirmation-derivation-matrix.txt diff-lines=2
+19513245/confirmation-derivation-vector.txt diff-lines=2

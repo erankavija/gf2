@@ -3,9 +3,9 @@
 //! parallel, seeded simulation. The typestate [`presets`]
 //! ([`Pipeline::dvb_t2`], [`Pipeline::nr_5g`]) build the standard chains with
 //! the builder order checked at compile time; [`graph::Chain`] wires an
-//! arbitrary DAG of [`Stage`]s. [`Pipeline::run`] drives a DVB-T2 BICM SNR
-//! sweep and [`TopologyExecutor::run`] drives one batch through any built
-//! pipeline.
+//! arbitrary DAG of [`Stage`]s. [`Pipeline::run`] drives a DVB-T2
+//! (`@/citation/Etsi2015`) BICM SNR sweep and [`TopologyExecutor::run`] drives
+//! one batch through any built pipeline.
 //!
 //! # Examples
 //!
@@ -37,8 +37,8 @@
 //!
 //! `tests/determinism.rs` asserts that, at a fixed seed, the columns `fer`,
 //! `frames`, `errors` and `mean_iters` are byte-identical across CPU worker
-//! counts {1, 2, 4, 8, 24} and that a run resumed from a checkpoint equals an
-//! uninterrupted one. `tests/gpu_byte_identity.rs` asserts byte-identical
+//! counts and that a run resumed from a checkpoint equals an uninterrupted
+//! one. `tests/gpu_byte_identity.rs` asserts byte-identical
 //! `fer`, `frames` and `errors` between the CPU and CPU+GPU paths.
 #![deny(unsafe_code)]
 #![warn(missing_docs)]

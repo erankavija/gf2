@@ -127,6 +127,5 @@ fn main() {
     println!();
     println!("Hard-fallback bar: any encoding is preferred over A only if it");
     println!("achieves ≥1.5× speedup on a weighted mix dominated by mul (the");
-    println!("hot op in Ryser's permanent formula). See");
-    println!("dev/plans/r1_f5_encoding_decision.md for the chosen winner.");
+    println!("hot op in Ryser's permanent formula).");
 }

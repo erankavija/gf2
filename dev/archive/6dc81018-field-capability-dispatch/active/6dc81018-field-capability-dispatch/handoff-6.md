@@ -28,7 +28,7 @@
 
 ## What to do next
 
-- [ ] FIRST, SOLO: `389aa4de` measured phase (lead-run, benchmark-mode, never codex). Read `dev/active/389aa4de/receipt-notes.md` IN FULL first — it is the checklist. One change must contain: the measured calibration run's v2 profile commit, the harness token bump to `tuning-calibration-v2` (SUPPORTED + parse + :202 rustdoc), the committed-profile decision per the owner's Block E answer (see Open questions), both f35daec0 fixture tokens, both tuning_profile_committed tests, baked.rs include_str! sites + :15 rustdoc + SIMD_MIN_WORDS if the measurement moves it (DEC-G re-pin evidence obligation then applies), the three baked test binaries, receipt Blocks A–E applied. Bench discipline: host quiet, flock, no commits on main during timed phases, toolchain pinned deliberately (host is 1.97.0; 5ecc9bf8's receipt was 1.95.0).
+- [ ] FIRST, SOLO: `389aa4de` measured phase (lead-run, benchmark-mode, never codex). Read `dev/active/86b9c719-quality-documentation-tech-debt/389aa4de/receipt-notes.md` IN FULL first — it is the checklist. One change must contain: the measured calibration run's v2 profile commit, the harness token bump to `tuning-calibration-v2` (SUPPORTED + parse + :202 rustdoc), the committed-profile decision per the owner's Block E answer (see Open questions), both f35daec0 fixture tokens, both tuning_profile_committed tests, baked.rs include_str! sites + :15 rustdoc + SIMD_MIN_WORDS if the measurement moves it (DEC-G re-pin evidence obligation then applies), the three baked test binaries, receipt Blocks A–E applied. Bench discipline: host quiet, flock, no commits on main during timed phases, toolchain pinned deliberately (host is 1.97.0; 5ecc9bf8's receipt was 1.95.0).
 - [ ] Then re-run `389aa4de` full gate chain (its code-review F1/F2/F3 close with the measured phase), close it.
 - [ ] Then t12 `eaae1b56` + t13 `a83583e0` (both touch tuning_calibration.rs — SERIALIZE them, t13 after t12 or vice versa; they extend the sweep to the follow-on/seam threshold fields).
 - [ ] U8 `5bdc9552` SOLO (native opus or lead-direct; verify-lean + lake-build gates; the one surface-moving task — removes the trait selectors, regenerates the proof surface; deps all done).
@@ -62,7 +62,7 @@
 ## Reference artefacts
 
 - Epic: `jit issue show 6dc81018`; wave plan + escalations: `progress.json` beside this file
-- Measured-phase checklist: `dev/active/389aa4de/receipt-notes.md` (Blocks A–E; doc-linked)
+- Measured-phase checklist: `dev/active/86b9c719-quality-documentation-tech-debt/389aa4de/receipt-notes.md` (Blocks A–E; doc-linked)
 - Governing designs with amendments: `dev/active/7d824b2f/design.md` (A1–A4), `dev/active/7d7c647c/design.md` (A1), `dev/active/220cab0b/design.md`
 - Calibration chain: `dev/benchmarks/tuning_profiles/` (plan v1 → receipts 1–6, 2026-08-20-host-calibration.md), committed profile `crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`
 - Worktree reuse script (session-local): `/tmp/claude-1000/-home-vkaskivuo-Projects-gf2/f70cb36b-1741-4039-8c61-eda00377598b/scratchpad/reuse-worker-worktree.sh` — copy into the next session's scratchpad or recreate from the dispatch script + `git worktree move`

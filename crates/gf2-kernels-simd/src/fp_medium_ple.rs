@@ -226,10 +226,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_oracle() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_medium_ple::detect()", detect());
         for &p in &[257u16, 8191, 65521] {
             let inv_table = build_inv_table(p);
             for &(m, win) in &[(4usize, 4usize), (8, 8), (16, 16), (15, 17), (32, 16)] {

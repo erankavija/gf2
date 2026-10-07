@@ -64,3 +64,69 @@ git log --diff-filter=A --format=%H -- "$A"
 "$R/5a25717c-verdicts.sh" "$PWD/target/5a25717c-verdicts-amendment.txt"
 diff "$PWD/target/5a25717c-verdicts-amendment.txt" "$R/5a25717c-verdicts-after.txt"
 ```
+
+## Repeat at the f79bcba3 entry move
+
+The same commands at `b05286e53614b62324f985832af766423849465c`, the parent of
+the f79bcba3 commits, and at `264a453d22787531c8e021b38fad061a63592638`,
+after eight zen3 entries move under the epic directory, write the same
+listing, `f79bcba3-verdicts-before.txt`. At the second commit this command
+prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/f79bcba3-verdicts.txt"
+diff "$PWD/target/f79bcba3-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```
+
+## Repeat at the 602652bf entry move
+
+The same commands at `8fd000a700be73025bbf1c05971aa3dca18ad9d7`, the parent of
+the 602652bf commits, and at `8ec2a4abefc198d232cface645325c5266193fd1`, after
+the `f547c394` and `bdc507a3` entries move under the epic directory, write the
+listing `f79bcba3-verdicts-before.txt`: 151 receipts. At each commit this
+command prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/602652bf-verdicts.txt"
+diff "$PWD/target/602652bf-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```
+
+## Repeat at the 198aafa3 entry move
+
+The same commands at `3f1433616163ce2dc89817eca79f5f6428d58d6a`, the parent of
+the 198aafa3 commits, and at `59f56ce93e6ad38ec7e092eac6cb37729a60742d`, after
+the entries `4c1e441f`,
+`53c5a8c0`, `6c6b09b1`, `6fb89a3c`, `ad2a6a58`, `c077a88b`, `c7113c5a` and
+`f63a2464` move under the epic directory, write the listing
+`f79bcba3-verdicts-before.txt`. At each commit this command prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/198aafa3-verdicts.txt"
+diff "$PWD/target/198aafa3-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```
+
+## Repeat at the 7039d680 entry move
+
+The same commands at `47f407583eade69629253bf6794d6565d42e8206`, the parent of
+the 7039d680 commits, and at `14d3ab4438b3aea3f0a59711e16ea2e84ace613d`, after
+the entries `26465e6c`, `eda07788` and `5cbb6545` move under the epic
+directory, write the listing `f79bcba3-verdicts-before.txt`. At each commit
+this command prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/7039d680-verdicts.txt"
+diff "$PWD/target/7039d680-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```
+
+## Repeat at the cc060974 entry move
+
+The same commands at `d322f4f9762aab1a3716bdfbb31068ee5f701b69`, the lane tip
+under the cc060974 commits, and at `37391ec5cf4a395a21a89c9063f46ed3e2c60bcd`,
+after the entries `00dd43c3` and `c04dd4ac-zen3-shifts-and-permutations` move
+under the epic directory, write the listing `f79bcba3-verdicts-before.txt`. At
+each commit this command prints nothing:
+
+```
+"$R/5a25717c-verdicts.sh" "$PWD/target/cc060974-verdicts.txt"
+diff "$PWD/target/cc060974-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
+```

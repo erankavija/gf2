@@ -147,6 +147,13 @@ def main():
             }
         )
 
+    producer = (ROOT / package("gf2-core") / "benches/tuning_calibration.rs").read_text()
+    grid = re.search(r"Self::MatvecSimdMinWords => vec!\[([\d, ]+)\]", producer)
+    reserved = json.loads((HERE / "matvec-holdout-cells.json").read_text())
+    sweep_grid = [int(value) for value in grid.group(1).split(",")] if grid else []
+    if not sweep_grid or set(sweep_grid) & set(reserved["reserved_stride_words"]):
+        raise SystemExit("the producer's matvec grid is absent or holds a reserved stride")
+
     seam = repository_files.document(ROOT, *SEAM_PROTOCOL)
     session = SESSION_BUDGET.search((ROOT / seam).read_text())
     if not session:
@@ -169,6 +176,8 @@ def main():
                 sum(row["estimated_confirmation_minutes"] for row in planned),
         },
         "offline_tuning_campaign": {
+            "matvec_sweep_stride_words": sweep_grid,
+            "reserved_stride_words": reserved["reserved_stride_words"],
             "protocol": seam,
             "session_budget_minutes": int(session.group(1).replace(",", "")) / 60.0,
         },
@@ -232,6 +241,17 @@ def main():
         f"One session of the offline tuning campaign has a budget of "
         f"{record['offline_tuning_campaign']['session_budget_minutes']:g} minutes "
         f"(`{seam}`, budget section).",
+        "",
+        "## Build levels",
+        "",
+        table(["Arm identity", "RUSTFLAGS", "Selectors", "Competitor", "Definition"],
+              [[f"`{name}`", f"`{level['rustflags']}`" if level["rustflags"] else "none",
+                level["selectors"], level["external"], level.get("definition", "")]
+               for name, level in plan["builds"].items()]),
+        "",
+        "## Excluded from the plan",
+        "",
+        table(["Subject", "Reason"], [[row["id"], row["reason"]] for row in plan["excluded"]]),
         "",
         "## Planned cells",
         "",

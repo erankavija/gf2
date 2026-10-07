@@ -26,7 +26,7 @@ test-support = []
 # Shared workspace deterministic LCG lives in gf2-core::test_rng so the
 # parity tests here can use the same SSOT helper as gf2-coding without a
 # dependency cycle.
-gf2-core = { path = "../gf2-core" }
+gf2-core = { path = "../gf2-core", features = ["test-support"] }
 proptest = { workspace = true }
 # Standalone F_3 bipedal prototype — used as the SSOT scalar `Bipedal3`
 # reference for proptest cross-checks per b17bec62 success criterion 3.

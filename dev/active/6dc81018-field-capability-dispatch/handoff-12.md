@@ -111,4 +111,4 @@
 - Governing designs: `dev/active/7d824b2f/design.md`,
   `dev/active/3fa7c9d0/design.md`
 - Implementation checkpoint: `ecd85315`
-- Progress file: `dev/active/6dc81018-field-capability-dispatch/progress.json`
+- Progress file: `dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json`

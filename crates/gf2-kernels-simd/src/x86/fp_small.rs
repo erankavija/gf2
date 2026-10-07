@@ -753,9 +753,7 @@ mod tests {
     use super::*;
 
     fn run_for_primes(test: impl Fn(u8)) {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &p in &[3u8, 5, 7, 11, 13, 17, 31, 127, 251] {
             test(p);
         }
@@ -995,9 +993,7 @@ mod tests {
                 seed in any::<u64>(),
                 p_idx in 0usize..9usize,
             ) {
-                if !std::arch::is_x86_feature_detected!("avx2") {
-                    return Ok(());
-                }
+                crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
                 let primes: [u8; 9] = [3, 5, 7, 11, 13, 17, 31, 127, 251];
                 let p = primes[p_idx];
                 let mu = barrett_mu_u16(p);

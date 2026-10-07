@@ -318,10 +318,10 @@ mod tests {
     #[test]
     fn xmm_matches_scalar_reference() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            eprintln!("skipping: no PCLMULQDQ+SSE4.1");
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
         for (a, b) in sample_vectors4() {
             let mut got = [0u64; 8];
             // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
@@ -337,10 +337,10 @@ mod tests {
     #[test]
     fn ymm_matches_scalar_reference() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq")) {
-            eprintln!("skipping: no AVX2+VPCLMULQDQ");
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq",
+            is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq"),
+        )]);
         for (a, b) in sample_vectors4() {
             let mut got = [0u64; 8];
             // SAFETY: AVX2 and VPCLMULQDQ were detected above.
@@ -356,10 +356,10 @@ mod tests {
     #[test]
     fn xmm_wide9_matches_scalar_reference() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1")) {
-            eprintln!("skipping: no PCLMULQDQ+SSE4.1");
-            return;
-        }
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
         for (a, b) in sample_vectors9() {
             let mut got = [0u64; 18];
             // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
@@ -375,10 +375,10 @@ mod tests {
     #[test]
     fn ymm_wide9_matches_scalar_reference() {
         use std::arch::is_x86_feature_detected;
-        if !(is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq")) {
-            eprintln!("skipping: no AVX2+VPCLMULQDQ");
-            return;
-        }
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq",
+            is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq"),
+        )]);
         for (a, b) in sample_vectors9() {
             let mut got = [0u64; 18];
             // SAFETY: AVX2 and VPCLMULQDQ were detected above.

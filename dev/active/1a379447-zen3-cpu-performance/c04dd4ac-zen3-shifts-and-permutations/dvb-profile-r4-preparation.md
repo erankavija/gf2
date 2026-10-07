@@ -1,0 +1,69 @@
+# DVB-T2 profile interval preparation
+
+> **Diátaxis Type:** Research note
+
+The accepted protocol-v4 paired receipt at
+[`v4-r2-pilot`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json)
+continues to decide materiality. The fresh dynamic profile writes to
+`dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/`.
+Its nine repetitions each collect the declared hardware counters, hot symbols,
+and instruction samples. The attribution renderer uses the fresh perf outputs
+beside the accepted paired and across-session cost evidence. The scheduled run
+completes in the September 27 benchmark window. Its
+append-only profile log closes all nine repetitions, and its raw counter and
+sample files support the generated intervals and provenance closure.
+
+The exact queue line is in
+[`bench-window/queue.tsv`](../bench-window/queue.tsv).
+The launcher prints and appends the authoritative profile log, checks its
+runtime producing-input snapshot on resume, and preserves an interrupted
+repetition before retrying it. The snapshot covers declared producing behavior,
+the actual executable and its build record. The existing provenance renderer
+checks that snapshot against the measured tree and records the top-level and
+inner invocation.
+
+The fresh profile's generated provenance record and attribution tables
+interpret its committed raw files. All perf statuses are zero; each repetition
+contains counters, sampled reports and instruction listings for every case.
+The report cites those repeated intervals while retaining the accepted paired
+receipt for the materiality decision.
+
+## Cumulative review resolution
+
+Before editing, the cumulative audit read the supplied failed gate records,
+ran `jit doc list 9fb40c83`, scanned every linked path for deferred-item
+markers, and searched the issue's active and benchmark roots for each finding's
+smoke, provenance, single-session and `rep-01` terms. The linked-document
+deferred-marker scan found no matches. The remaining single-session statements refer to the preserved v4-r2 profile.
+The fresh profile and tables carry repeated counter and sample intervals.
+
+| Round | Finding | Resolution at this tree |
+|---|---|---|
+| R1 code F1 | Smoke invoked timed pilot executions outside the window and lock. | `survey/smoke-dvb-arms.sh` invokes shared `benchmark-ab-runner smoke`; its arm path is untimed. |
+| R1 code F2 | Narrative comments preserved task history. | `survey/smoke-dvb-arms.sh` carries one short contract and usage note. |
+| R1 research TIER1-F1 | ETSI citation label had no inline key. | `dvb-interleave-profile.md` cites `[Etsi2015]`. |
+| R1 research TIER1-F2 | xdsopl citation label had no inline key. | `dvb-interleave-profile.md` cites `[Xdsopl2026]`. |
+| R2 code F1 | Private smoke duplicated runner dispatch and wire contract. | `survey/smoke-dvb-arms.sh` calls the shared runner's smoke command; the private driver is absent. |
+| R2 code F2 | Long smoke comments repeated across files. | The shared launcher and renderer use concise contracts; the per-finding scan found no private smoke driver. |
+| R2 research F1 | Dynamic profile lacked invocation and source/build/RNG closure. | `v4-r2-dynamic-profile-provenance.md` pins the old profile; the fresh profile's runtime snapshot and `survey/make-profile-provenance.py` bind its own closure and argv. |
+| R2 research F2 | BICM scatter shares lacked intervals. | `dvb-interleave-profile-tables.md`, “Scatter share of the BICM channel across sessions,” gives nine-session intervals. |
+| R2 research F3 | Counter, symbol and instruction tables came from one session. | `survey/run-profile.sh` collects all three in every fresh repetition; `survey/make-dvb-tables.py` computes nine-session intervals. The fresh profile supplies the repeated evidence. |
+| R3 research F3 | Retained-session counters and top symbols still lacked intervals. | Fresh profile and renderer prepared as above. The fresh profile and report supply repeated intervals. |
+
+## Annotation command validation
+
+Both annotation entry points use the validated `perf annotate --stdio
+--percent-limit 1.0` command. Offline rendering of retained
+`qam16-r12-normal-sim-stage.data` succeeds; the existing instruction parser
+recognizes 148 instruction rows, including 16 with nonzero samples. The listing
+includes available source lines, which the instruction parser ignores. This
+check reads committed samples and collects no measurements.
+
+| Round | Finding | Resolution at this tree |
+|---|---|---|
+| R4 code F1 | Unsupported annotation option prevents hot-data collection. | Both annotation entry points omit the flagged option and use the validated command. |
+
+The gate reported an unsupported option after a help-only probe. Offline
+annotation of actual retained data succeeds both with and without that option;
+the command change resolves the flagged usage without claiming a reproduced
+runtime failure. The actual renderer and existing parser pass on retained data.

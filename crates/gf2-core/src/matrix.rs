@@ -1069,15 +1069,50 @@ impl BitMatrix {
         assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
 
         match matvec_route(self.stride_words) {
-            MatvecRoute::Simd => {
-                #[cfg(feature = "simd")]
-                if let Some(fns) = crate::simd::maybe_simd() {
-                    return self.matvec_simd(x, fns);
-                }
-                self.matvec_scalar(x)
-            }
+            MatvecRoute::Simd => self.matvec_simd_lane(x),
             MatvecRoute::Scalar => self.matvec_scalar(x),
         }
+    }
+
+    /// [`Self::matvec`] on a caller-chosen lane.
+    ///
+    /// [`MatvecRoute::Simd`] runs the scalar lane in a build without the
+    /// `simd` cargo feature and on a host whose kernel bundle is not
+    /// detected, as [`Self::matvec`] does, and for a matrix without columns;
+    /// both lanes return the same bits.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `x.len() != self.cols()`.
+    pub fn matvec_with_route(&self, x: &crate::BitVec, route: MatvecRoute) -> crate::BitVec {
+        // Without `simd` both routes are the scalar lane `matvec` runs;
+        // delegating keeps that lane's one inlined copy.
+        #[cfg(not(feature = "simd"))]
+        {
+            let _ = route;
+            self.matvec(x)
+        }
+        #[cfg(feature = "simd")]
+        {
+            assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
+
+            match route {
+                // The kernel lane walks rows by stride, which is zero here.
+                MatvecRoute::Simd if self.stride_words > 0 => self.matvec_simd_lane(x),
+                _ => self.matvec_scalar(x),
+            }
+        }
+    }
+
+    /// The SIMD lane of both entries: the fused kernel when the bundle is
+    /// detected, the scalar lane otherwise.
+    #[inline(always)]
+    fn matvec_simd_lane(&self, x: &crate::BitVec) -> crate::BitVec {
+        #[cfg(feature = "simd")]
+        if let Some(fns) = crate::simd::maybe_simd() {
+            return self.matvec_simd(x, fns);
+        }
+        self.matvec_scalar(x)
     }
 
     #[inline]

@@ -55,7 +55,7 @@ place you write.
   (`inputs/` trees inside receipt directories) and every manifest row with
   `digest_pinned = true`. Receipts quote old paths as provenance strings; those
   strings stay.
-- Never edit under `dev/active/fd9d5416/`.
+- Never edit under `dev/active/ae03bcd0-general-bch/fd9d5416/`.
 - Other sessions work in this repository. Before moving or editing a path, check
   that no active worker branch carries unmerged commits touching it:
   `git log --oneline main..<branch> -- <path>` for the branches of

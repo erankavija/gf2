@@ -1,0 +1,16 @@
+{
+ "issue": "54e70918",
+ "producer": "crates/gf2-core/benches/tuning_calibration.rs",
+ "features": "parallel,simd,test-support,tuning-profile",
+ "behavior_token": "tuning-calibration-v4",
+ "before": {
+  "source_sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4",
+  "binary_sha256": "ce1e17c8671b049922e8f57397de5b3a1caae582ea96d560786cf801685943e0"
+ },
+ "working_tree": {
+  "source_sha256": "2c51e6f3cc0f9a168bc06fa5521388f8c025749b2a946bfc64ca2b712bffd07b",
+  "binary_sha256": "ce1e17c8671b049922e8f57397de5b3a1caae582ea96d560786cf801685943e0"
+ },
+ "source_equal": false,
+ "binary_equal": true
+}
