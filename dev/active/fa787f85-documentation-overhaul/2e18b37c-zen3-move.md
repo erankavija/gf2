@@ -41,7 +41,7 @@ R/2e18b37c-checks.sh state|builds|root|selfchecks|ci-step|regen <file>
 Each build rewrites the tracked `E/19513245/survey/field-laws/Cargo.lock` (one
 `tempfile` line) at the baseline and at the repeat, and
 `cargo +1.95.0 metadata --locked` fails on that manifest
--> 0d1e9536 (jit issue show 0d1e9536); it exits 0 on the other two. The
+-> @/issue/0d1e9536; it exits 0 on the other two. The
 committed lockfile keeps its bytes.
 
 ## Regenerated records
@@ -60,10 +60,10 @@ committed lockfile keeps its bytes.
 
 | Id | Divergence | Tracking |
 |---|---|---|
-| D1 | `cargo +1.95.0 fmt --check` exits 1 in `E/19513245/survey/consumer` at `df7b52dd6`, in `src/bin/consumer-profile.rs`, a pure rename; it exits 0 in the other two harness crates | -> 3de8d0f3 (jit issue show 3de8d0f3) |
-| D2 | `E/a203a23c/timing/measure.py:360,766` write the path under `E`; lines 34, 40 and 330 of `timing-tmpfs-superseded.json` state the flat path | -> 7375db1e (jit issue show 7375db1e) |
-| D3 | `19513245/survey/make-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/field/vec.rs:663` lacks the fragment of the claim `axpy-signature` | -> d12e9ded (jit issue show d12e9ded) |
-| D4 | `measure.py --assess` on `timing-tmpfs-superseded.json` wraps the two withdrawn scheduling statements a second time | -> c9920dc6 (jit issue show c9920dc6) |
+| D1 | `cargo +1.95.0 fmt --check` exits 1 in `E/19513245/survey/consumer` at `df7b52dd6`, in `src/bin/consumer-profile.rs`, a pure rename; it exits 0 in the other two harness crates | -> @/issue/3de8d0f3 |
+| D2 | `E/a203a23c/timing/measure.py:360,766` write the path under `E`; lines 34, 40 and 330 of `timing-tmpfs-superseded.json` state the flat path | -> @/issue/7375db1e |
+| D3 | `19513245/survey/make-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/field/vec.rs:663` lacks the fragment of the claim `axpy-signature` | -> @/issue/d12e9ded |
+| D4 | `measure.py --assess` on `timing-tmpfs-superseded.json` wraps the two withdrawn scheduling statements a second time | -> @/issue/c9920dc6 |
 
 ## Harness crates (REQ-03)
 
@@ -132,7 +132,7 @@ class `unclassified`.
 | `bench-window` | `E/bench-window/queue.tsv:19`; the job key hashes the command text |
 | `queue-quote` | `E/19513245/findings.md:570` quotes the command of that queue line |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
-| `session-record` | `E/handoff-16.md` and files of `E/reviews/`: dated session and review-round records -> 5406d020 (jit issue show 5406d020) |
+| `session-record` | `E/handoff-16.md` and files of `E/reviews/`: dated session and review-round records -> @/issue/5406d020 |
 | `revision-path` | table "Scripts" |
 
 Tracker files under `.jit/` are outside the scan: they are tracker state.
