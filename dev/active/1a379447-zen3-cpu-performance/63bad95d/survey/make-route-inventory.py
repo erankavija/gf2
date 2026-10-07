@@ -344,8 +344,8 @@ WITNESS_CONFIGURATIONS = [
     ("core-baked", "standalone `gf2-core`, `simd`, `--cfg gf2_tuning_baked`"),
     ("coding-default", "`gf2-coding` dependency build, default features"),
     ("coding-no-default-features",
-     "`gf2-coding` test build, `--no-default-features`; its self dev-dependency keeps the "
-     "default features"),
+     "`gf2-coding` test build, `--no-default-features`; its self dev-dependency disables "
+     "the default features"),
     ("sim-default", "`gf2-sim` dependency build, default features"),
 ]
 
@@ -830,7 +830,9 @@ def render(inventory):
         "## Route witnesses",
         "",
         "Each column is one build configuration on which the shared fallback contract ran; "
-        "a cell is the route its reporter named.",
+        "a cell is the route its reporter named. The contract probes each side of the "
+        "thresholds its build compiles, so an empty cell is an input that configuration "
+        "does not probe.",
         "",
     ]
     names = [row["configuration"] for row in inventory["witness_configurations"]]
@@ -849,7 +851,8 @@ def render(inventory):
         table(
             ["Entry", "Input"] + [f"`{name}`" for name in names],
             [
-                [f"`{row['entry']}`", row["input"]] + [row["routes"][name] for name in names]
+                [f"`{row['entry']}`", row["input"]]
+                + [row["routes"].get(name, "") for name in names]
                 for row in inventory["route_witnesses"]
             ],
         ),

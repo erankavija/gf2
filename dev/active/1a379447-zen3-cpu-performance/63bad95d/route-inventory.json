@@ -3,7 +3,7 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "a41171d3fdefcb4a8fe20918cd70dd0ec475390a87172d5fd64eeebb61ae0358"
+  "sha256": "5521b13046c889aff5774c87616de857b1720ae1d792fc6c830e5d88a702eb51"
  },
  "counts": {
   "entry point groups": 9,
@@ -11,7 +11,7 @@
   "routes": 21,
   "selectors of the core tuning section": 37,
   "core selectors selected at compile time": 8,
-  "core selectors the measured owner states": 30,
+  "core selectors the measured owner states": 31,
   "scanned constants a tuning section owns": 51,
   "scanned constants outside the tuning sections": 37,
   "of those, class selector": 8,
@@ -409,12 +409,12 @@
    "configuration": "core-baked",
    "description": "standalone `gf2-core`, `simd`, `--cfg gf2_tuning_baked`",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-baked.tsv",
-   "record_sha256": "1b34395171f89fbd9d38578d45d5dd579fafaa3436fece0b0c492d4de7cdaa68",
+   "record_sha256": "ce940bc2d20c999855936852150dae9c639331532691412f8d384eefcbfbcb80",
    "simd_feature": "true",
    "baked_selectors": "true",
    "core_section_resolution": "frozen-before-install",
-   "rows": 41,
-   "kernel_rows": 24
+   "rows": 53,
+   "kernel_rows": 33
   },
   {
    "configuration": "coding-default",
@@ -429,14 +429,14 @@
   },
   {
    "configuration": "coding-no-default-features",
-   "description": "`gf2-coding` test build, `--no-default-features`; its self dev-dependency keeps the default features",
+   "description": "`gf2-coding` test build, `--no-default-features`; its self dev-dependency disables the default features",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/coding-no-default-features.tsv",
-   "record_sha256": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
-   "simd_feature": "true",
+   "record_sha256": "b78409ccfed4d1bfbac2b946f216f205e5c3690953644e9e2f78da2dcafbbc84",
+   "simd_feature": "false",
    "baked_selectors": "false",
    "core_section_resolution": "frozen-before-install",
    "rows": 41,
-   "kernel_rows": 24
+   "kernel_rows": 0
   },
   {
    "configuration": "sim-default",
@@ -562,7 +562,7 @@
     "core-default": "scalar",
     "core-simd": "scalar",
     "core-all-features": "scalar",
-    "core-baked": "scalar",
+    "core-baked": "simd",
     "coding-default": "scalar",
     "coding-no-default-features": "scalar",
     "sim-default": "scalar"
@@ -575,7 +575,7 @@
     "core-default": "scalar",
     "core-simd": "scalar",
     "core-all-features": "scalar",
-    "core-baked": "scalar",
+    "core-baked": "simd-nibble-lut",
     "coding-default": "scalar",
     "coding-no-default-features": "scalar",
     "sim-default": "scalar"
@@ -588,7 +588,7 @@
     "core-default": "scalar",
     "core-simd": "scalar",
     "core-all-features": "scalar",
-    "core-baked": "scalar",
+    "core-baked": "simd-nibble-lut",
     "coding-default": "scalar",
     "coding-no-default-features": "scalar",
     "sim-default": "scalar"
@@ -616,7 +616,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -629,7 +629,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -642,7 +642,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -655,7 +655,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -668,7 +668,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -681,7 +681,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -694,7 +694,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -707,7 +707,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -720,7 +720,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -733,7 +733,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -746,7 +746,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -759,7 +759,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -772,7 +772,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -785,7 +785,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -798,7 +798,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -811,7 +811,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -824,7 +824,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -837,7 +837,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -850,7 +850,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -863,7 +863,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -876,7 +876,7 @@
     "core-all-features": "avx2-bit-twiddle",
     "core-baked": "avx2-bit-twiddle",
     "coding-default": "avx2-bit-twiddle",
-    "coding-no-default-features": "avx2-bit-twiddle",
+    "coding-no-default-features": "scalar-bit-twiddle",
     "sim-default": "avx2-bit-twiddle"
    }
   },
@@ -889,7 +889,7 @@
     "core-all-features": "residual-bmi2-funnel",
     "core-baked": "residual-bmi2-funnel",
     "coding-default": "residual-bmi2-funnel",
-    "coding-no-default-features": "residual-bmi2-funnel",
+    "coding-no-default-features": "residual-scalar-funnel",
     "sim-default": "residual-bmi2-funnel"
    }
   },
@@ -915,7 +915,7 @@
     "core-all-features": "avx2+vpclmulqdq-ymm",
     "core-baked": "avx2+vpclmulqdq-ymm",
     "coding-default": "avx2+vpclmulqdq-ymm",
-    "coding-no-default-features": "avx2+vpclmulqdq-ymm",
+    "coding-no-default-features": "portable-scalar",
     "sim-default": "avx2+vpclmulqdq-ymm"
    }
   },
@@ -928,7 +928,7 @@
     "core-all-features": "avx2+vpclmulqdq-ymm",
     "core-baked": "avx2+vpclmulqdq-ymm",
     "coding-default": "avx2+vpclmulqdq-ymm",
-    "coding-no-default-features": "avx2+vpclmulqdq-ymm",
+    "coding-no-default-features": "portable-scalar",
     "sim-default": "avx2+vpclmulqdq-ymm"
    }
   },
@@ -943,6 +943,90 @@
     "coding-default": "portable-scalar",
     "coding-no-default-features": "portable-scalar",
     "sim-default": "portable-scalar"
+   }
+  },
+  {
+   "entry": "kernels::select_backend_for_size",
+   "input": "words=3",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "kernels::ops::popcount",
+   "input": "words=3",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "kernels::ops::and_popcount",
+   "input": "words=3",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "BitMatrix::matvec",
+   "input": "words=3",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "kernels::select_backend_for_size",
+   "input": "words=4",
+   "routes": {
+    "core-baked": "simd"
+   }
+  },
+  {
+   "entry": "kernels::ops::popcount",
+   "input": "words=4",
+   "routes": {
+    "core-baked": "simd-nibble-lut"
+   }
+  },
+  {
+   "entry": "kernels::ops::and_popcount",
+   "input": "words=4",
+   "routes": {
+    "core-baked": "simd-nibble-lut"
+   }
+  },
+  {
+   "entry": "BitMatrix::matvec",
+   "input": "words=4",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "kernels::select_backend_for_size",
+   "input": "words=5",
+   "routes": {
+    "core-baked": "simd"
+   }
+  },
+  {
+   "entry": "kernels::ops::popcount",
+   "input": "words=5",
+   "routes": {
+    "core-baked": "simd-nibble-lut"
+   }
+  },
+  {
+   "entry": "kernels::ops::and_popcount",
+   "input": "words=5",
+   "routes": {
+    "core-baked": "simd-nibble-lut"
+   }
+  },
+  {
+   "entry": "BitMatrix::matvec",
+   "input": "words=5",
+   "routes": {
+    "core-baked": "scalar"
    }
   }
  ],
@@ -1022,20 +1106,20 @@
   "core_section": "gf2-core/selectors",
   "conservative_profile": "crates/gf2-core/data/tuning-profiles/conservative.json",
   "measured_owner": {
-   "path": "crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json",
-   "sha256": "8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa",
+   "path": "crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json",
+   "sha256": "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33",
    "harness": "crates/gf2-core/benches/tuning_calibration.rs",
    "harness_schema": "tuning-calibration-v4",
-   "binary_sha256": "d68a2fc2b36e3e3b2e39e438bbd43f9d39c60e181cb52da1b26a6d84973a27ff",
-   "recorded_receipt": "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+   "binary_sha256": "d1dbabe8f4ea42e3b5b4cdbb54642addc12a1602e93233f859706a1d8e49f256",
+   "recorded_receipt": "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
   },
   "selectors": [
    {
     "selector": "bit_backend.simd_min_words",
     "conservative": 8,
     "selection": "compile-time",
-    "baked": 8,
-    "measured_owner": 8,
+    "baked": 4,
+    "measured_owner": 4,
     "read_sites": [
      "crates/gf2-core/src/kernels/backend.rs:78"
     ]
@@ -1045,7 +1129,7 @@
     "conservative": 8,
     "selection": "compile-time",
     "baked": 8,
-    "measured_owner": null,
+    "measured_owner": 8,
     "read_sites": [
      "crates/gf2-core/src/matrix.rs:18"
     ]
@@ -1272,7 +1356,7 @@
     "conservative": 1,
     "selection": "runtime-profile",
     "baked": null,
-    "measured_owner": 24,
+    "measured_owner": 1,
     "read_sites": [
      "crates/gf2-core/src/field/ple.rs:281",
      "crates/gf2-core/src/field/ple.rs:360"
@@ -2105,7 +2189,7 @@
   },
   {
    "selector": "bit_matrix.matvec_simd_min_words",
-   "measured_owner_states_it": false,
+   "measured_owner_states_it": true,
    "protocol_evidence": "exploratory",
    "families": [
     {

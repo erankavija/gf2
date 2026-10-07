@@ -115,10 +115,9 @@ profile: each arm calls its lane directly (`calibration-matvec-field`,
 - **Declaration.** [`campaign-declaration.json`](campaign-declaration.json)
   names `63bad95d`; `survey/make-producing-build-inputs.py` writes its
   producing manifest (`calibration-launcher-declaration`).
-- **Baked constant.** After publication, `tuning::baked::MATVEC_SIMD_MIN_WORDS`
-  mirrors the measured owner, the unit test that holds it at the conservative
-  value (`baked-matvec-conservative-test`) becomes a measured-owner match, and
-  the baked route witness follows. The conservative constant does not change.
+- **Baked constant.** `tuning::baked::MATVEC_SIMD_MIN_WORDS` mirrors the
+  measured owner, held by a measured-owner unit test
+  (`baked-matvec-owner-test`). The conservative constant does not change.
 
 ## 4. Relation to the protocol confirmation
 

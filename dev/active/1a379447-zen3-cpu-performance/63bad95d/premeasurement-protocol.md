@@ -2,7 +2,8 @@
 
 > **Diátaxis Type:** Reference
 
-Status: declared; no campaign of this declaration has run. Issue `63bad95d`
+Status: executed by campaign `gf2-63bad95d-20261006t230547z-2073085`, whose
+receipt pins the bytes of this document at its producing commit. Issue `63bad95d`
 supplies the success criteria, and
 [`matvec-sweep-design.md`](matvec-sweep-design.md) the design.
 

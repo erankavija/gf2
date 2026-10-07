@@ -148,7 +148,7 @@
   },
   {
    "family": "bitvec-residual-shift-profile",
-   "ledger": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
+   "ledger": "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
    "entries": 1,
    "reservations_spending_a_comparison": 0,
    "reserved_comparisons": 0,
@@ -393,22 +393,6 @@
  },
  "planned_families": [
   {
-   "family": "63bad95d-profile-holdout-matvec",
-   "purpose": "selector-calibration",
-   "non_exploratory_cells": 6,
-   "holdout_cells": 3,
-   "small_input_cells": 0,
-   "attempt": 1,
-   "attempt_alpha": 0.025,
-   "corrected_alpha": 0.004166666666666667,
-   "expected_draws_per_tail": 20.833333333333332,
-   "pilot_cells": 3,
-   "pilot_children": 72,
-   "confirmation_children": 288,
-   "estimated_pilot_minutes": 0.6983639598,
-   "estimated_confirmation_minutes": 2.789948136
-  },
-  {
    "family": "63bad95d-profile-dispatch-overhead",
    "purpose": "selector-calibration",
    "non_exploratory_cells": 6,
@@ -439,28 +423,12 @@
    "confirmation_children": 288,
    "estimated_pilot_minutes": 1.3967279196,
    "estimated_confirmation_minutes": 2.789948136
-  },
-  {
-   "family": "63bad95d-matvec-external-ladder",
-   "purpose": "consumer-family",
-   "non_exploratory_cells": 4,
-   "holdout_cells": 0,
-   "small_input_cells": 0,
-   "attempt": 1,
-   "attempt_alpha": 0.025,
-   "corrected_alpha": 0.00625,
-   "expected_draws_per_tail": 31.25,
-   "pilot_cells": 4,
-   "pilot_children": 96,
-   "confirmation_children": 192,
-   "estimated_pilot_minutes": 0.9311519464,
-   "estimated_confirmation_minutes": 1.8599654239999999
   }
  ],
  "planned_totals": {
-  "non_exploratory_cells": 22,
-  "estimated_pilot_minutes": 3.7246077856,
-  "estimated_confirmation_minutes": 10.229809832
+  "non_exploratory_cells": 12,
+  "estimated_pilot_minutes": 2.0950918794,
+  "estimated_confirmation_minutes": 5.579896272
  },
  "offline_tuning_campaign": {
   "matvec_sweep_stride_words": [

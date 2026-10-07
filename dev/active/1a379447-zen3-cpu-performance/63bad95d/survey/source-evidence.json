@@ -555,13 +555,13 @@
     {
       "id": "tuning-baked-owner-digest",
       "project": "gf2",
-      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
+      "commit": "e7a9b9fa695f9b5c0fde8836ea4b4158b9866019",
       "path": "crates/gf2-core/src/tuning/baked.rs",
       "line": 17,
       "occurrences": 1,
-      "verbatim": "/// with SHA-256 `8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa`.",
+      "verbatim": "/// with SHA-256 `1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33`.",
       "why": "The baked constants pin the measured core owner by content digest.",
-      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
+      "sha256": "8a98aa7bd3e2f53bcd04b138087ac0e7e04062e166e5068d4946539a006b2ebe"
     },
     {
       "id": "tuning-active-accessor",
@@ -729,26 +729,26 @@
       "sha256": "b30dd06de7e32adaf2abef03b8eef75399e66e9d77ef3bf9936a54ca11bca73c"
     },
     {
-      "id": "baked-matvec-conservative-test",
+      "id": "baked-matvec-owner-test",
       "project": "gf2",
-      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
+      "commit": "e7a9b9fa695f9b5c0fde8836ea4b4158b9866019",
       "path": "crates/gf2-core/src/tuning/baked.rs",
-      "line": 130,
+      "line": 128,
       "occurrences": 1,
-      "verbatim": "    fn matvec_simd_min_words_matches_conservative_section() {",
-      "why": "A unit test holds the baked matvec threshold equal to the conservative value while no measured owner states the field.",
-      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
+      "verbatim": "    fn baked_matvec_threshold_matches_the_strict_measured_owner() {",
+      "why": "A unit test holds the baked matvec threshold equal to the value the measured owner states.",
+      "sha256": "8a98aa7bd3e2f53bcd04b138087ac0e7e04062e166e5068d4946539a006b2ebe"
     },
     {
       "id": "baked-measured-owner-test",
       "project": "gf2",
-      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
+      "commit": "e7a9b9fa695f9b5c0fde8836ea4b4158b9866019",
       "path": "crates/gf2-core/src/tuning/baked.rs",
-      "line": 99,
+      "line": 100,
       "occurrences": 1,
       "verbatim": "    fn baked_simd_threshold_matches_the_strict_measured_owner() {",
       "why": "A unit test holds a measured baked constant equal to the measured owner's value.",
-      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
+      "sha256": "8a98aa7bd3e2f53bcd04b138087ac0e7e04062e166e5068d4946539a006b2ebe"
     },
     {
       "id": "codec-token-value",
