@@ -2288,6 +2288,16 @@
    ],
    "recommendation": "leave it unless main is rewritten for another reason before the push; a rewrite changes the verified commit of c852d9b2 and the commit checked of af84619e",
    "resolution": ""
+  },
+  {
+   "issue": "fa787f85",
+   "question": "OPEN: is the epic directory archived now? The container archive preview lists moves with pending deletions, copies and retained files; other epics and dev/index.md cite paths of the directory.",
+   "options": [
+    "pre-flight per handoff-8.md, then execute twice",
+    "keep the directory active until epic 1a379447 no longer cites it"
+   ],
+   "recommendation": "the pre-flight in an attended session",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -2543,6 +2553,11 @@
    "issue": "fa787f85",
    "finding": "Pre-gate audit of the twenty epic criteria at 8a2456afd: 5 high, 5 medium, 6 low.",
    "disposition": "resolved by epic DEC-02..DEC-05, d0b1545e, c423c7aa, bdf8e2e5, label removal and linking of 36 epic files; F15 (check-links classes) is in the c852d9b2 brief"
+  },
+  {
+   "issue": "c852d9b2",
+   "finding": "Three review-gate runs of c852d9b2 (docs-mechanical, code-review, doc-review; 2026-10-07T23:00:20Z to 23:05:43Z, no build) overlapped the benchmark window 23:00:04Z to 23:03:35Z that timed bfc2ceab key d84574bfa3613f71 and 63bad95d keys fc1788421f764063, 3e2cd5609ecb53ad.",
+   "disposition": "reported to the owner and in handoff-12.md for the lead of epic 1a379447"
   }
  ],
  "notes": [
@@ -2601,7 +2616,8 @@
   "Session 13 (2026-10-07 22:30 EEST): 9451498f closed after the REQ-02 amendment. d6ebc4ec (worktree agent-d6ebc4ec) and a0ec34f2 (agent-a0ec34f2) dispatched in parallel on opus at 338275ff2; both edit migration/manifest.toml (policy rows vs artifacts rows): merge row-wise. After the d6ebc4ec merge the lead re-mints the profile package(s) the worker names.",
   "Session 13: closed 9451498f, a0ec34f2, 4979271f, d6ebc4ec, d0b1545e, c423c7aa. c852d9b2 dispatched (opus, worktree agent-c852d9b2 at 4ae1773e4); af84619e follows, then the epic gates. Lead fixes before gating: commit bodies with bare ids on unmerged branches were rebuilt (soft reset to the merge base, typed message) and records corrected; a milestone reference into an archive needs a commit pin or the container preview turns ineligible (unpreservable-layout).",
   "Session 13: c852d9b2 done after one lead rework (record named a verified commit without its outputs; the jit check-links classification depended on untracked target/doc and was removed). Lesson: the commit a record names must hold every file its commands read, and an output is committed only if a clean checkout of that commit reproduces it. Guard every commit subject: [ ${#s} -le 71 ] && git commit. af84619e dispatched (opus, worktree agent-af84619e at 4ee6c377a).",
-  "Session 13: af84619e done after one lead rework (the final report committed while the checker existed counts its own two rows incomplete; the complete report is the same checker run on the tree without it). Every child of the epic is done or rejected; the epic gates run next (executable gates before holistic-review)."
+  "Session 13: af84619e done after one lead rework (the final report committed while the checker existed counts its own two rows incomplete; the complete report is the same checker run on the tree without it). Every child of the epic is done or rejected; the epic gates run next (executable gates before holistic-review).",
+  "Session 13 end (2026-10-08): the six epic gates passed on their first run; epic done. completion-report.md and handoff-12.md written. Open: the 72-character subject of 62cd9a3eb, the archival of the epic directory."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
