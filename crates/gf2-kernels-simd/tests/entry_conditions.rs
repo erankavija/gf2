@@ -1,6 +1,7 @@
 //! Violated caller conditions of the kernel entry points: each published
 //! pointer panics under its kernel's name instead of reaching an unchecked
-//! access.
+//! access, and accepts the shapes with a zero dimension that its contract
+//! admits.
 
 #![cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 
@@ -64,6 +65,22 @@ macro_rules! spmm_rejects_columns_outside_b {
             let out = run(&[0, 1, 1], &[1], &[1], &b, 16);
             assert_eq!(out[..16], [1; 16]);
             assert_eq!(out[16..], [0; 16]);
+            // A zero-width product reads no cell of `b`, whatever the indices.
+            for cols in [&[][..], &[0], &[usize::MAX]] {
+                let vals: Vec<$cell> = vec![1; cols.len()];
+                for b in [&b[..], &[]] {
+                    (fns.spmm_fn)(&[0, cols.len(), cols.len()], cols, &vals, b, 0, $p, &mut []);
+                }
+            }
+            // No row, with and without the closing row pointer.
+            for row_ptr in [&[][..], &[0]] {
+                (fns.spmm_fn)(row_ptr, &[], &[], &b, 16, $p, &mut []);
+                (fns.spmm_fn)(row_ptr, &[], &[], &[], 0, $p, &mut []);
+            }
+            // Rows without a stored index leave an empty `b` unread.
+            let mut zeroed: [$cell; 32] = [9; 32];
+            (fns.spmm_fn)(&[0, 0, 0], &[], &[], &[], 16, $p, &mut zeroed);
+            assert_eq!(zeroed, [0; 32]);
             for col in [2, usize::MAX] {
                 rejects($kernel, "column index", || {
                     run(&[0, 1, 1], &[col], &[1], &b, 16);
@@ -113,6 +130,20 @@ fn small_prime_ple_panel_rejects_window_and_table() {
         (fns.ple_panel_base_fn)(window, m, win, 7, table, &mut [0, 1], &mut Vec::new())
     };
     assert_eq!(run(&mut [1, 0, 0, 1], 2, 2, &inv_table), 2);
+    // A panel without a cell holds no pivot.
+    for (m, win) in [(0, 0), (0, 2), (2, 0)] {
+        let mut row_perm: Vec<usize> = (0..m).collect();
+        let pivots = (fns.ple_panel_base_fn)(
+            &mut [],
+            m,
+            win,
+            7,
+            &inv_table,
+            &mut row_perm,
+            &mut Vec::new(),
+        );
+        assert_eq!(pivots, 0);
+    }
     rejects(kernel, "m * win cells", || {
         run(&mut [1, 0, 0], 2, 2, &inv_table);
     });
@@ -137,6 +168,20 @@ fn medium_prime_ple_panel_rejects_window_and_table() {
         (fns.ple_panel_base_fn)(window, m, win, 257, table, &mut [0, 1], &mut Vec::new())
     };
     assert_eq!(run(&mut [1, 0, 0, 1], 2, 2, &inv_table), 2);
+    // A panel without a cell holds no pivot.
+    for (m, win) in [(0, 0), (0, 2), (2, 0)] {
+        let mut row_perm: Vec<usize> = (0..m).collect();
+        let pivots = (fns.ple_panel_base_fn)(
+            &mut [],
+            m,
+            win,
+            257,
+            &inv_table,
+            &mut row_perm,
+            &mut Vec::new(),
+        );
+        assert_eq!(pivots, 0);
+    }
     rejects(kernel, "m * win cells", || {
         run(&mut [1, 0, 0], 2, 2, &inv_table);
     });
@@ -162,6 +207,7 @@ fn bipedal_binary_kernels_reject_slice_shapes() {
     ] {
         let label = format!("bipedal {name} kernel");
         kernel(&four, &four, &four, &four, &mut [0; 4], &mut [0; 4]);
+        kernel(&[], &[], &[], &[], &mut [], &mut []);
         rejects(&label, "lengths differ", || {
             kernel(&eight, &four, &eight, &eight, &mut [0; 8], &mut [0; 8])
         });
@@ -179,6 +225,7 @@ fn bipedal_unary_kernel_rejects_slice_shapes() {
     let fns = detected!(bipedal::detect_avx2());
     let label = "bipedal neg kernel";
     (fns.neg_fn)(&[0; 4], &[0; 4], &mut [0; 4], &mut [0; 4]);
+    (fns.neg_fn)(&[], &[], &mut [], &mut []);
     rejects(label, "lengths differ", || {
         (fns.neg_fn)(&[0; 8], &[0; 4], &mut [0; 8], &mut [0; 8])
     });
@@ -201,6 +248,7 @@ fn f5_binary_kernels_reject_slice_shapes() {
         kernel(
             &four, &four, &four, &four, &four, &four, &mut o0, &mut o1, &mut o2,
         );
+        kernel(&[], &[], &[], &[], &[], &[], &mut [], &mut [], &mut []);
         rejects(&label, "lengths differ", || {
             let (mut o0, mut o1, mut o2) = ([0u64; 8], [0u64; 8], [0u64; 8]);
             kernel(
@@ -228,6 +276,7 @@ fn f5_unary_kernel_rejects_slice_shapes() {
         &mut [0; 4],
         &mut [0; 4],
     );
+    (fns.neg_fn)(&[], &[], &[], &mut [], &mut [], &mut []);
     rejects(label, "lengths differ", || {
         (fns.neg_fn)(
             &[0; 8],
@@ -260,6 +309,7 @@ fn f7_binary_kernels_reject_slice_shapes() {
     ] {
         let label = format!("F_7 {name} kernel");
         kernel(&[0; 4], &[0; 4], &mut [0; 4]);
+        kernel(&[], &[], &mut []);
         rejects(&label, "lengths differ", || {
             kernel(&[0; 8], &[0; 4], &mut [0; 8])
         });
@@ -277,6 +327,7 @@ fn f7_unary_kernel_rejects_slice_shapes() {
     let fns = detected!(packed7::detect_avx2_f7());
     let label = "F_7 neg kernel";
     (fns.neg_fn)(&[0; 4], &mut [0; 4]);
+    (fns.neg_fn)(&[], &mut []);
     rejects(label, "lengths differ", || {
         (fns.neg_fn)(&[0; 8], &mut [0; 4])
     });
@@ -292,6 +343,12 @@ fn small_prime_gemm_row_panel_rejects_wrapping_shape() {
     let mut out = [0u8; 2];
     (fns.gemm_row_panel_fn)(&[1, 2], &[1, 1, 2, 2], 2, 2, 7, &mut out);
     assert_eq!(out, [3, 6]);
+    // An empty sum is zero; a product without a column writes nothing.
+    let mut empty_sum = [9u8; 2];
+    (fns.gemm_row_panel_fn)(&[], &[], 0, 2, 7, &mut empty_sum);
+    assert_eq!(empty_sum, [0, 0]);
+    (fns.gemm_row_panel_fn)(&[1, 2], &[], 2, 0, 7, &mut []);
+    (fns.gemm_row_panel_fn)(&[], &[], 0, 0, 7, &mut []);
     rejects(kernel, "overflows", || {
         (fns.gemm_row_panel_fn)(&[1, 2], &[], 2, usize::MAX, 7, &mut [])
     });
@@ -308,6 +365,11 @@ macro_rules! whole_gemm_cases {
         let (m, k, n) = OVERFLOWING;
         let mut c = [$zero; 1];
         kernel(&[$one; 1], &[$one; 1], 1, 1, 1, $p, &mut c);
+        // Shapes with a zero dimension pass the shape checks.
+        kernel(&[], &[], 2, 0, 2, $p, &mut [$zero; 4]);
+        kernel(&[], &[$one; 4], 0, 2, 2, $p, &mut []);
+        kernel(&[$one; 4], &[], 2, 2, 0, $p, &mut []);
+        kernel(&[], &[], 0, 0, 0, $p, &mut []);
         rejects($name, "overflows", || {
             kernel(&[], &[$one; 4], m, k, n, $p, &mut [])
         });
@@ -366,12 +428,16 @@ fn pam_distance_kernels_reject_output_shape() {
     let levels32 = [-3.0f32, -1.0, 1.0, 3.0];
     let f32_fns = modem::detect_f32();
     (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels32, &mut [0.0; 4]);
+    (f32_fns.pam_sq_distances_fn)(&[], &[], &[], &levels32, &mut []);
+    (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &[], &mut []);
     assert!(refuses(&|| {
         (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels32, &mut [0.0; 3])
     }));
     let levels64 = [-3.0f64, -1.0, 1.0, 3.0];
     let f64_fns = modem::detect_f64();
     (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels64, &mut [0.0; 4]);
+    (f64_fns.pam_sq_distances_fn)(&[], &[], &[], &levels64, &mut []);
+    (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &[], &mut []);
     assert!(refuses(&|| {
         (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels64, &mut [0.0; 3])
     }));
