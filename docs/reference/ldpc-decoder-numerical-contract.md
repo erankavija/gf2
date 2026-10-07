@@ -210,3 +210,13 @@ every algorithm and both early-termination settings.
 The unit test `test_zero_cap_results_depend_only_on_the_frame` in
 [`ldpc/core.rs`](../../crates/gf2-coding/src/ldpc/core.rs) asserts the result at
 an iteration cap of zero against the frame's own channel LLRs and parity checks.
+
+The unit tests of [`ldpc/batch.rs`](../../crates/gf2-coding/src/ldpc/batch.rs)
+assert the batch clauses for `LdpcBatchDecoder` on the lane route and on the
+single-frame route:
+`frames_equal_the_single_frame_decoder_to_the_posterior_bit` holds each frame's
+posterior bit patterns, hard decisions, iteration count and flags to
+`LdpcDecoder` for each min-sum rule and both early-termination settings,
+`a_terminated_lane_keeps_its_posterior_while_its_wave_continues` asserts the
+terminated-lane clause, and the two `*_satisfy_the_batch_contract_on_each_route`
+tests run the shared batch contract over full, partial and empty waves.
