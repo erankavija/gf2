@@ -126,9 +126,9 @@ entries; `7039d680-remaining.txt` is its output and holds no line of the class
 | `tracker-state` | `R/breakdown.json` |
 | `frozen-document` | `dense-parity-addendum.md` and `dense-parity-addendum-v1.md` of the mid-range entry, with the digest pins `f79bcba3-zen3-move.md` lists |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
-| `session-record` | `E/handoff-3.md:36`: a dated session record that cites `survey/drafts/` of the shifts entry, a directory absent from the tree |
+| `session-record` | `E/handoff-3.md:36`: a dated session record that cites `survey/drafts/` of the shifts entry, a directory absent from the tree -> 5406d020 (jit issue show 5406d020) |
 | `pinned-script` | scripts of `E/26465e6c/superseded/v1/survey/`; `arm-provenance.json:43-50` beside them holds the SHA-256 of each |
-| `addendum-text` | `E/eda07788/survey/freeze-remeasure.py:199,202,203,219`: text of line 11 of `E/eda07788/addendum-dvb-t2-bit-interleave-v3-remeasure.json`, which the script reproduces byte for byte; pins: `dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json:3865` and `E/eda07788/dvb-t2-bit-interleave-baselines-trial-ledger.jsonl:5` |
+| `addendum-text` | `E/eda07788/survey/freeze-remeasure.py:199,202,203,219`: text of line 11 of `E/eda07788/addendum-dvb-t2-bit-interleave-v3-remeasure.json`, which the script reproduces byte for byte; pins: `dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json:3865` and `E/eda07788/dvb-t2-bit-interleave-baselines-trial-ledger.jsonl:5` -> dfff0e05 (jit issue show dfff0e05) |
 | `snapshot-path` | `V3_SURVEY` of `E/eda07788/survey/inspect-sources.py:43`: a path inside a receipt `inputs/` snapshot |
 | `revision-path` | `C/survey/make-profile-provenance.py:46,47,218`: paths the script reads from the tree of the revision a session's `host.txt` records |
 
