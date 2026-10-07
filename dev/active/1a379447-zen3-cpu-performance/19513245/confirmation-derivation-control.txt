@@ -13,4 +13,4 @@ widest relative half-width   0.036538
 frozen measurement resolution 0.04
 restated the family description for the confirmatory stage
 margins: equivalence 1.15, material gap None
-confirmation addendum dev/active/19513245/addendum-v4-control-confirmation.json
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/19513245/addendum-v4-control-confirmation.json

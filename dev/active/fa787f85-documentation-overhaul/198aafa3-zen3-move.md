@@ -30,8 +30,8 @@
 
 ## Baseline and repeat
 
-Baseline source: `3f1433616`. Repeat source: `59f56ce93`; the commits after it
-change Markdown records alone. Commands, run from the repository root:
+Baseline source: `3f1433616`. Repeat source: `59f56ce93`. Commands, run from
+the repository root:
 
 ```
 R/198aafa3-state.sh <state-file>
@@ -45,18 +45,17 @@ R/5a25717c-verdicts.sh <verdict-file>
 |---|---|---|---|
 | `198aafa3-state-before.txt`, `198aafa3-state-after.txt` | `--check` exit status of each live closure generator; each relative Cargo path dependency that names or leaves an entry; each line of entry code matching `parents[n]`, `../..`, `ancestors()` or a quoted `../<name>` | every generator exits 0 in both; each path dependency follows the rule of section "Harness crates"; the lines of the third section that take the repository root from `HERE/../../../..` or `parents[n]` are absent from the repeat, and `6c6b09b1/survey/arm-common/src/lib.rs:129` gains one level | the third section does not match an `os.pardir` chain or a Makefile; `2902b8b88` replaces the one chain (`53c5a8c0/survey/summarize.py`) and the one Makefile root (`6c6b09b1/survey/Makefile`) |
 | `198aafa3-builds-before.txt` | per harness manifest that lies in an entry or names one: exit status of `cargo +1.95.0 metadata`, exit status of `cargo +1.95.0 build`, first error line | the output at the repeat source is the same file: `diff` against it prints nothing | test targets: `cargo build` does not compile them |
-| `198aafa3-selfchecks-before.txt` | exit status of each script test under `dev/active/` and of `freeze-remeasure.py --self-test` | the output at `2902b8b88`, at `552a0548d` and at the repeat source is the same file | `6c6b09b1/survey/make-confirmation-addenda.test.sh` exits 2 without the untracked executable `target/6c6b09b1-analysis/release/survey-analysis`; the runs use the one this checkout holds, built on 2026-09-13 |
+| `198aafa3-selfchecks-before.txt` | exit status of each script test under `dev/active/` and of `freeze-remeasure.py --self-test` | the output at `2902b8b88`, at `552a0548d` and at the repeat source is the same file | `6c6b09b1/survey/make-confirmation-addenda.test.sh` runs a built `survey-analysis`; the runs use an executable built on 2026-09-13 |
 | `f79bcba3-verdicts-before.txt` | benchmark-acceptance verdict line and findings of each committed `zen3-benchmark-receipt-v1` receipt | the output at the baseline and at the repeat source is the same file; `5a25717c-verdict-baseline.md` states the repeat | |
 
 ## Harness crates (REQ-03)
 
-`198aafa3-builds-before.txt` holds one line per manifest: the 14 manifests of
-the eight entries and four manifests of `19513245`, `07ca8585` and `3be770d5`
-that name a moved crate. Each line reads `resolve=0 build=0` at the baseline
-and at the repeat. The build scripts of `53c5a8c0/survey/arms`,
-`c7113c5a/survey/gf2-side` and `6c6b09b1/survey/ext-side` link staged external
-libraries; `198aafa3-builds.sh` exports their locations, and without them the
-three builds stop in the build script.
+`198aafa3-builds-before.txt` holds one line per manifest of the eight entries
+and per manifest of `19513245`, `07ca8585` and `3be770d5` that names a moved
+crate; each reads `resolve=0 build=0` at the baseline and at the repeat. The
+build scripts of `53c5a8c0/survey/arms`, `c7113c5a/survey/gf2-side` and
+`6c6b09b1/survey/ext-side` link staged external libraries, whose locations
+`198aafa3-builds.sh` exports.
 
 | Path dependency of a manifest | Text in `552a0548d` |
 |---|---|
@@ -75,19 +74,22 @@ at `95ba9291f` passes for `E/4c1e441f/survey/gemm-arm` and
 `E/6c6b09b1/survey/arm-common`, the two crates of the entries whose tests read
 a path outside their crate; the run has no baseline counterpart.
 
-Each build rewrites two tracked lockfiles,
+Each build rewrites the tracked lockfiles
 `dev/active/19513245/survey/field-laws/Cargo.lock` and
-`E/6c6b09b1/survey/field-laws/Cargo.lock` (one `tempfile` line each), at the
+`E/6c6b09b1/survey/field-laws/Cargo.lock` (one `tempfile` line each) at the
 baseline and at the repeat, and `cargo +1.95.0 metadata --locked` fails on
-both -> 0d1e9536 (jit issue show 0d1e9536). The committed lockfiles keep
-their bytes.
+both -> 0d1e9536 (jit issue show 0d1e9536). The committed files keep their bytes.
 
 ## Scripts (REQ-04)
 
 The message of `552a0548d` lists each path-text edit per entry at file:line.
-Two literals of moved scripts keep the flat path; the table "Flat paths that
-stay" gives their ground. `4c1e441f` and `ad2a6a58` resolve their paths in
-`survey/locate.py` and hold no literal of their own directory.
+`4c1e441f` and `ad2a6a58` resolve their paths in `survey/locate.py` and hold
+no literal of their own directory.
+
+| Literal that keeps the flat path | Record it reproduces or compares | Pin |
+|---|---|---|
+| `E/6c6b09b1/survey/make-addenda.py:42` | line 11 of each `E/6c6b09b1/addendum-v*.json` | SHA-256 of each addendum in lines 2 to 4 of `dev/bench_results/6c6b09b1/v3-region-axpy-family-ledger.jsonl`, `v3-matrix-product-family-ledger.jsonl` and `v3-pairwise-control-family-ledger.jsonl` |
+| `V3_MANIFEST`, `E/c7113c5a/survey/summarize-v3.py:29` | `source.producing.manifest_path` of the receipts it selects | `dev/bench_results/c7113c5a/v3-r1-baselines-pilot/receipt.json:2343`, `v3-r1-baselines-confirmation/receipt.json:3106`, `v3-r1-host-targeting-pilot/receipt.json:817`, `v3-r1-host-targeting-confirmation/receipt.json:1580` |
 
 | Check | Result | Does not establish |
 |---|---|---|
@@ -95,6 +97,7 @@ stay" gives their ground. `4c1e441f` and `ad2a6a58` resolve their paths in
 | `python3 -B E/53c5a8c0/survey/summarize.py` at `2902b8b88` | writes the committed `dev/bench_results/53c5a8c0/tables.md` | |
 | `make -n -C E/6c6b09b1/survey identities` before and after `2902b8b88` | same lines | |
 | self-checks of the table above | same exit statuses | launchers, generators and `verify-*.py` scripts of the entries are not run: each needs a benchmark window, staged externals or built arms |
+| `E/53c5a8c0/survey/summarize-profile.py:520,608` against `dev/bench_results/53c5a8c0/profile/profile.md:5,125` | the script names the path under `E`, the record the flat path -> 8163dacd (jit issue show 8163dacd) | |
 
 ## Generated files and frozen documents (REQ-05)
 
@@ -109,44 +112,39 @@ stay" gives their ground. `4c1e441f` and `ad2a6a58` resolve their paths in
 their committed tables at `59f56ce93`.
 
 `git diff -M --name-status 2902b8b88 552a0548d` lists each tracked file of the
-eight flat directories as a rename, and the R100 renames keep their bytes. The
-same listing restricted to `*.json`, `*.jsonl`, `*.txt`, `*.tsv` and `*.log`
-holds one file below `R100`, the closure above: each addendum, producing
-manifest, derivation record and plan of the moved entries is a pure rename.
-No Markdown file of the moved entries has its SHA-256 or blob id in a tracked
+eight flat directories as a rename; restricted to `*.json`, `*.jsonl`, `*.txt`,
+`*.tsv` and `*.log` it holds one line other than `R100`, the closure above. No
+Markdown file of the moved entries has its SHA-256 or blob id in a tracked
 file outside the migration manifest.
 
 The link `../6fb89a3c/survey/fetch-build.sh` of the frozen
 `S/m4ri-operation-match.md` resolves, and `552a0548d` removes its row from
 the second table of `8f61d6de-baseline-findings.md`; the move adds no row.
-`python3 contrib/gates/docs-mechanical.py` prints `PASS: 0 finding(s), 17
-baselined` at `552a0548d` and at each commit after it; it checks each inline
-and reference link of `dev/active/**/*.md` and no relative path inside a JSON
-string.
+`python3 contrib/gates/docs-mechanical.py` prints `PASS` with 0 findings at
+`552a0548d`; it checks each inline and reference link of `dev/active/**/*.md`
+and no relative path inside a JSON string.
 
 ## Flat paths that stay
 
-`R/198aafa3-remaining.sh <outfile>` classifies each tracked file outside
-`.jit/` and outside the `198aafa3-` files of `R` that holds
-`dev/active/<entry>` for one of the eight entries; `198aafa3-remaining.txt`
-is its output at `b80ae85a8`, with the file and line count of each class, and
-holds no line of the class `unclassified`.
+`R/198aafa3-remaining.sh <outfile>` classifies each tracked file in the
+scope its header states that holds `dev/active/<entry>` for one of the eight
+entries; `198aafa3-remaining.txt` is its output and holds no line of the class
+`unclassified`.
 
 | Class | Ground |
 |---|---|
 | `snapshot` | receipt `inputs/` snapshots |
 | `receipt-directory` | receipts, logs, launch scripts and generated tables under `dev/bench_results/` |
 | `data-record` | JSON, JSON Lines, TSV, text and log files: addenda, producing manifests, plans, derivation and smoke records, which keep their bytes; tool output at the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
-| `epic-record` | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the same command names |
+| `epic-record` | records, scripts and raw outputs of other units of this epic: text bound to the commit the same command names |
 | `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
 | `manifest-quote` | `E/handoff-23.md:53` quotes a `path` field of the migration manifest |
-| `tracker-state` | `progress.json` of `E` and `R`; `breakdown.json` of `R`, `c04dd4ac-zen3-shifts-and-permutations` and `ed3d490e-zen3-ldpc-frame-simd` |
+| `tracker-state` | `breakdown.json` of `R` and `ed3d490e-zen3-ldpc-frame-simd` |
 | `bench-window` | `E/bench-window/queue.tsv`; the job key hashes the command text |
 | `frozen-document` | `S/dense-parity-addendum.md` and `S/dense-parity-addendum-v1.md`, with the digest pins `f79bcba3-zen3-move.md` lists |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
 | `snapshot-path` | `path` fields of `dev/scripts/receipt-input-omissions.json`: files inside receipt `inputs/` snapshots |
-| `recorded-value` | `V3_MANIFEST` of `E/c7113c5a/survey/summarize-v3.py:29` selects receipts by the value at `dev/bench_results/c7113c5a/v3-r1-baselines-confirmation/receipt.json:3106` and `v3-r1-baselines-pilot/receipt.json:2343` |
-| `addendum-text` | `E/6c6b09b1/survey/make-addenda.py:42` is text of the three committed confirmation addenda, which `make-confirmation-addenda.test.sh` regenerates and compares byte for byte; `dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/receipt.json:1576` holds the SHA-256 of one |
+| `recorded-value`, `addendum-text` | table of section "Scripts" |
 
 Tracker files under `.jit/` are outside the scan: they are tracker state.
 
@@ -154,9 +152,9 @@ Tracker files under `.jit/` are outside the scan: they are tracker state.
 
 | Check | Command | Result | Does not establish |
 |---|---|---|---|
-| Manifest | `python3 R/migration/check.py` at `95ba9291f` and after | no finding, exit 0: each row whose path is one of the eight flat directories or lies below one is `complete`, with its source at its destination under `E` or, for the five deletion rows of `264a453d2`, absent | twelve tracked files of the entries have no row of their own; the row of their directory covers them. The command exits 1 at `552a0548d` |
-| Tracker | the two commands below, on the main checkout | 308 unpinned references under the eight flat paths, 29 commit-pinned, which keep the path of their commit | the tracker changes themselves: the relink script of the unit's return makes them on the main checkout |
-| Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each of the 13 steps `ok` on the tree of `59f56ce93` | the CI verdict: the filtered run omits every cargo step |
+| Manifest | `python3 R/migration/check.py` at `95ba9291f` and after | no finding, exit 0: each row whose path is one of the eight flat directories or lies below one is `complete`, with its source at its destination under `E` or, for the deletion rows of `264a453d2`, absent | a tracked file of the entries without a row of its own is covered by the row of its directory. The command exits 1 at `552a0548d` |
+| Tracker | the two commands below | the first prints 0; the second counts the commit-pinned references, which keep the path of their commit | |
+| Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each step `ok` on the tree of `59f56ce93` | the CI verdict: the filtered run omits every cargo step |
 | Formatting | `cargo +1.95.0 fmt --check` in each harness crate whose Rust files `552a0548d` edits | exit 0 in six crates; `E/6c6b09b1/survey/ext-side/build.rs` is formatted in that commit | `S/survey/dense-harness` exits 1 at `3f1433616` and at `552a0548d`, in lines the commit leaves alone -> 3d864278 (jit issue show 3d864278) |
 
 ```
@@ -177,4 +175,4 @@ nothing for the eight entries: the flat directories hold no ignored file.
 | REQ-03 | sections "Baseline and repeat" and "Harness crates"; message of `552a0548d` |
 | REQ-04 | section "Scripts"; message of `552a0548d`, lists per entry |
 | REQ-05 | sections "Generated files and frozen documents" and "Flat paths that stay" |
-| REQ-06 | section "Manifest and tracker"; the full `cargo-ci` gate runs on the merged tree |
+| REQ-06 | section "Manifest and tracker"; gate `cargo-ci` of `jit issue show 198aafa3` |

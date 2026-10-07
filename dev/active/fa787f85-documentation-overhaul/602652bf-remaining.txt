@@ -1,12 +1,11 @@
 commit-permalink 1 1
 data-record 21 281
-epic-record 17 109
+epic-record 16 107
 frozen-document 3 3
 generated-table 2 16
 line-qualified-record 5 262
 manifest 1 166
 pinned-script 1 1
-receipt-directory 347 591
-record-text 2 4
+receipt-directory 345 589
 snapshot 490 989
-tracker-state 4 12
+tracker-state 1 3

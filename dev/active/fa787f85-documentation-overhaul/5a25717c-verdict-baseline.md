@@ -130,3 +130,16 @@ each commit this command prints nothing:
 "$R/5a25717c-verdicts.sh" "$PWD/target/cc060974-verdicts.txt"
 diff "$PWD/target/cc060974-verdicts.txt" "$R/f79bcba3-verdicts-before.txt"
 ```
+
+## Repeat at the link and literal edits
+
+The same commands at `049dcba544162982aa9f96647a9ae3a67448984b`, the parent of
+the link and literal edits of the move units, and at
+`78d74ddb378848be0c299b47fb276acfe3d4c842`, the last of them, write the
+listing `f79bcba3-verdicts-before.txt`. At each commit this command prints
+nothing:
+
+```
+"$R/5a25717c-verdicts.sh" <outfile>
+diff <outfile> "$R/f79bcba3-verdicts-before.txt"
+```

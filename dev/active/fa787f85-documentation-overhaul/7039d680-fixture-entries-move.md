@@ -2,7 +2,7 @@
 
 `E` is `dev/active/1a379447-zen3-cpu-performance`, the directory
 `jit doc dir 1a379447 dev/active` prints. `R` is this record's directory.
-`C` is `dev/active/c04dd4ac-zen3-shifts-and-permutations`.
+`C` is `E/c04dd4ac-zen3-shifts-and-permutations`.
 
 ## Entries
 
@@ -50,9 +50,8 @@ The message of `4ee6815a9` gives lines 42 and 43 for the two constants of
 
 ## Baseline and repeat
 
-Baseline source: `47f407583`. Repeat source: `14d3ab443`; the commits after it
-add or change records, raw outputs and scripts of `R` alone. Commands, run
-from the repository root:
+Baseline source: `47f407583`. Repeat source: `14d3ab443`. Commands, run from
+the repository root:
 
 ```
 R/7039d680-checks.sh state|builds|tests|selfchecks <file>
@@ -65,7 +64,7 @@ R/5a25717c-verdicts.sh <verdict-file>
 |---|---|---|---|
 | `d53cba10-baseline.md` (REQ-03) | result of the addendum schema test | passes at both commits; the record states the repeat | |
 | `7039d680-state-before.txt`, `7039d680-state-after.txt` | `--check` exit status of each live closure generator; each relative Cargo or build-script path of the entries; each line of entry code matching `parents[n]`, `../..`, `ancestors()` or `CARGO_MANIFEST_DIR` | every generator exits 0 in both; each Cargo path dependency gains one `../`; the two `REPO` lines of the harness tests are absent from the repeat; every other line differs by the epic directory in its path alone | the level-counting lines that remain resolve inside their entry or inside `E`, except `superseded/v1/survey/fetch-build.sh:12` and `observe-instructions.sh:51` of `26465e6c`, which count from the location `arm-provenance.json` records and are not run |
-| `7039d680-builds-before.txt` (REQ-04) | per harness manifest of the entries: exit status of `cargo +1.95.0 metadata`, exit status of `cargo +1.95.0 build`, first error line | the output at `a01f6ad78` and at the repeat source is the same file: five manifests, each `resolve=0 build=0` | the `aff3ct` feature of `eda07788/survey/nr-derate` is off; `cargo build` compiles no test target |
+| `7039d680-builds-before.txt` (REQ-04) | per harness manifest of the entries: exit status of `cargo +1.95.0 metadata`, exit status of `cargo +1.95.0 build`, first error line | the output at `a01f6ad78` and at the repeat source is the same file: each manifest `resolve=0 build=0` | the `aff3ct` feature of `eda07788/survey/nr-derate` is off; `cargo build` compiles no test target |
 | `7039d680-tests-before.txt` | `cargo +1.95.0 test --no-fail-fast` result lines and failed test names of the two harness crates that have tests | the output at `b52d4eaf7`, at `a01f6ad78` and at the repeat source is the same file; `producing_input_closure_is_valid_and_complete_on_disk` fails at each with `NotFound` -> 94befdc3 (jit issue show 94befdc3) | |
 | `7039d680-selfchecks-before.txt` | exit status of each script test under `dev/active/` | the output at the repeat source is the same file | the entries hold no script test and no `--self-test` |
 | `f79bcba3-verdicts-before.txt` (REQ-04) | benchmark-acceptance verdict line and findings of each committed `zen3-benchmark-receipt-v1` receipt | the output at the baseline and at the repeat source is the same file; `5a25717c-verdict-baseline.md` states the repeat | |
@@ -82,7 +81,7 @@ The message of `a01f6ad78` lists each path-text edit per entry at file:line.
 | `freeze-remeasure.py <frozen_utc of the addendum>` at `47f407583`, `4ee6815a9` and `a01f6ad78` | writes the committed `addendum-dvb-t2-bit-interleave-v3-remeasure.json` | |
 | `inspect-sources.py --ext <staged externals> --output <file>` at `47f407583`, `4ee6815a9` and `a01f6ad78` | the three registers differ in the gf2 commit and, at the third, in the epic directory of the survey paths | each run reports `source needle not found` for the claims `gf2-rate-matched-doc-filler` and `gf2-rref-column-mapping` -> e59f207c (jit issue show e59f207c) |
 | `5cbb6545/survey/summarize.py`, `26465e6c/survey/summarize-receipts.py` | write the committed `dev/bench_results/<entry>/tables.md` at `47f407583` and at `7ca6f2ba1` | launchers, the other generators and the `reevaluate.sh` script are not run: each needs a benchmark window, staged externals or a release build |
-| Python CI steps: `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each of the 13 steps `ok` on the trees of `a01f6ad78` and `14d3ab443` | the CI verdict: the filtered run omits every cargo step |
+| Python CI steps: `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each step `ok` on the trees of `a01f6ad78` and `14d3ab443` | the CI verdict: the filtered run omits every cargo step |
 
 ## Generated files and byte-fixed files (REQ-06)
 
@@ -104,36 +103,34 @@ and lockfile of the entries is a pure rename. The renames below `R100` are
 the five `Cargo.toml`, the three `findings.md` and the 18 code files the
 message of `a01f6ad78` names.
 
-`python3 contrib/gates/docs-mechanical.py` prints `PASS: 0 finding(s), 15
-baselined` at `a01f6ad78` and at each commit after it; it checks each inline
-and reference link of `dev/active/**/*.md` and no relative path inside a
-JSON string. `a01f6ad78` removes two rows of the second table of
-`8f61d6de-baseline-findings.md`, the links to `../5cbb6545/findings.md`, and
-adds none: no Markdown file of the entries keeps a link that fails.
+`python3 contrib/gates/docs-mechanical.py` prints `PASS` with 0 findings at
+`a01f6ad78`; it checks each inline and reference link of `dev/active/**/*.md`
+and no relative path inside a JSON string. `a01f6ad78` removes the rows of
+the second table of `8f61d6de-baseline-findings.md` that link to
+`../5cbb6545/findings.md` and adds none.
 
 ## Flat paths that stay
 
-`R/7039d680-remaining.sh <outfile>` classifies each tracked file outside
-`.jit/` and outside the `7039d680-` files of `R` that holds
-`dev/active/<entry>` for one of the three entries; `7039d680-remaining.txt`
-is its output at `14d3ab443`, with the file and line count of each class, and
-holds no line of the class `unclassified`.
+`R/7039d680-remaining.sh <outfile>` classifies each tracked file in the
+scope its header states that holds `dev/active/<entry>` for one of the three
+entries; `7039d680-remaining.txt` is its output and holds no line of the class
+`unclassified`.
 
 | Class | Ground |
 |---|---|
 | `snapshot` | receipt `inputs/` snapshots |
 | `receipt-directory` | receipts, logs, launch records, provenance records and compiled-tool tables under `dev/bench_results/` |
 | `data-record` | JSON, JSON Lines, text and log files: addenda, producing manifests, ledgers, source-evidence and validation records, which keep their bytes; tool output at the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
-| `epic-record` | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the same command names |
+| `epic-record` | records, scripts and raw outputs of other units of this epic: text bound to the commit the same command names |
 | `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
-| `tracker-state` | `progress.json` of `E`; `breakdown.json` of `R` and `C` |
+| `tracker-state` | `R/breakdown.json` |
 | `frozen-document` | `dense-parity-addendum.md` and `dense-parity-addendum-v1.md` of the mid-range entry, with the digest pins `f79bcba3-zen3-move.md` lists |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
-| `session-record` | `E/handoff-3.md:36`: a dated session record that cites `survey/drafts/` of the shifts entry, a directory absent from the tree |
-| `pinned-script` | eight scripts of `E/26465e6c/superseded/v1/survey/`; `arm-provenance.json:43-50` beside them holds the SHA-256 of each |
-| `addendum-text` | `E/eda07788/survey/freeze-remeasure.py:199,202,203,219`: text of the frozen re-measurement addendum, whose SHA-256 `dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json` pins and which the script reproduces byte for byte |
+| `session-record` | `E/handoff-3.md:36`: a dated session record that cites `survey/drafts/` of the shifts entry, a directory absent from the tree -> 5406d020 (jit issue show 5406d020) |
+| `pinned-script` | scripts of `E/26465e6c/superseded/v1/survey/`; `arm-provenance.json:43-50` beside them holds the SHA-256 of each |
+| `addendum-text` | `E/eda07788/survey/freeze-remeasure.py:199,202,203,219`: text of line 11 of `E/eda07788/addendum-dvb-t2-bit-interleave-v3-remeasure.json`, which the script reproduces byte for byte; pins: `dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1/receipt.json:3865` and `E/eda07788/dvb-t2-bit-interleave-baselines-trial-ledger.jsonl:5` -> dfff0e05 (jit issue show dfff0e05) |
 | `snapshot-path` | `V3_SURVEY` of `E/eda07788/survey/inspect-sources.py:43`: a path inside a receipt `inputs/` snapshot |
-| `revision-path` | `C/survey/make-profile-provenance.py:45,46,211`: paths the script reads from the tree of the revision a session's `host.txt` records |
+| `revision-path` | `C/survey/make-profile-provenance.py:46,47,218`: paths the script reads from the tree of the revision a session's `host.txt` records |
 
 `MEASURED` of `E/5cbb6545/survey/summarize.py:32` joins `dev/active` and the
 entry id and belongs to the class `snapshot-path`; the scan pattern does not
@@ -144,8 +141,8 @@ state. `E/bench-window/queue.tsv` holds no path of the three entries.
 
 | Check | Command | Result | Does not establish |
 |---|---|---|---|
-| Manifest | `python3 R/migration/check.py` at `a01f6ad78` and after | no finding, exit 0: the 168 rows whose path is one of the three flat directories or lies below one are `complete`, each tracked file of the entries has its row, and each source lies at its destination under `E` | |
-| Tracker | the two commands below, on the main checkout | 168 unpinned references under the three flat paths, no commit-pinned one | the tracker changes themselves: the relink script of the unit's return makes them on the main checkout, and the tracker refuses a path beyond its depth limit |
+| Manifest | `python3 R/migration/check.py` at `a01f6ad78` and after | no finding, exit 0: each row whose path is one of the three flat directories or lies below one is `complete`, and each source lies at its destination under `E` | |
+| Tracker | the two commands below | each prints 0: no unpinned and no commit-pinned reference under the three flat paths | |
 
 ```
 P='^dev/active/(26465e6c|eda07788|5cbb6545)(/|$)'
@@ -164,7 +161,7 @@ nothing for the three entries: the flat directories hold no ignored file.
 | REQ-02 | `git ls-files dev/active/<entry>` prints nothing for each of the three entries; `a01f6ad78` changes no line of `profile_addendum.rs`, `remeasure_addendum.rs` or `dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs`, and its code edits are path text |
 | REQ-03 | row `d53cba10-baseline.md` of "Baseline and repeat" |
 | REQ-04 | rows `7039d680-builds-before.txt` and `f79bcba3-verdicts-before.txt`; message of `a01f6ad78` |
-| REQ-05 | section "Harness crates and scripts"; message of `a01f6ad78`, lists per entry |
+| REQ-05 | section "Harness crates and scripts"; message of `a01f6ad78`, lists per entry; row `addendum-text` of "Flat paths that stay" |
 | REQ-06 | sections "Generated files and byte-fixed files" and "Flat paths that stay" |
-| REQ-07 | section "Manifest and tracker"; row "Python CI steps"; the full `cargo-ci` gate runs on the merged tree |
+| REQ-07 | section "Manifest and tracker"; row "Python CI steps"; gate `cargo-ci` of `jit issue show 7039d680` |
 | REQ-08 | section "Fixture test decoupling"; `b52d4eaf7` precedes `a01f6ad78` |

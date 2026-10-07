@@ -27,7 +27,7 @@ OUTPUT = pathlib.Path(
 )
 # The addendum path as the committed record states it.
 ADDENDUM = pathlib.Path(
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json"
+    "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json"
 )
 
 SUMMARY = (
@@ -99,8 +99,8 @@ def main():
             "campaign": plan["campaign_id"],
             "protocol_version": json.loads(addendum_bytes)["protocol"]["version"],
             "rule": (
-                "dev/active/f547c394/protocol.md, the voided-attempt paragraph of the "
-                "family-ledger section; dev/active/f547c394/amendment-v4.md records the entry."
+                "dev/active/1a379447-zen3-cpu-performance/f547c394/protocol.md, the voided-attempt paragraph of the "
+                "family-ledger section; dev/active/1a379447-zen3-cpu-performance/f547c394/amendment-v4.md records the entry."
             ),
             "stage": str(STAGE),
             "addendum": str(ADDENDUM),

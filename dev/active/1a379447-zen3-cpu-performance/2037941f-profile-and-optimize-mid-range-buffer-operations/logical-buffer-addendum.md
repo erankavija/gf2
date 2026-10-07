@@ -10,7 +10,7 @@
 
 This addendum freezes the logical-buffer questions, cells, inputs, statistical
 rules, and adoption limits for story `2037941f`. It specializes the
-[Zen 3 measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
+[Zen 3 measurement contract](../measurement-contract.md)
 and `zen3-benchmark-protocol` version 4 in
 [`dev/active/f547c394/protocol.md`](../f547c394/protocol.md). A campaign JSON
 addendum transcribes one family below into the version-4 schema; it may supply
@@ -338,7 +338,7 @@ The confirmed 64-word generic dispatch-hoist no-win remains authoritative:
 the predecessor profile records the hoist as not material on 64-word rows
 ([`dev/active/04b85d10/findings.md:100-110`](../04b85d10/findings.md#L100-L110),
 tables § `logical-v3-confirmation`, row `logical-row-xor-dispatch-64w-1core` in
-[`dev/bench_results/04b85d10/tables.md`](../../bench_results/04b85d10/tables.md)).
+[`dev/bench_results/04b85d10/tables.md`](../../../bench_results/04b85d10/tables.md)).
 This addendum therefore forbids a candidate that changes public `xor_inplace`,
 public `BitMatrix::row_xor`, or the global size threshold merely to hoist
 dispatch for a 64-word call. It also excludes already-hoisted M4RM, RREF,

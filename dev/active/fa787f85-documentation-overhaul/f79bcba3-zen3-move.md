@@ -43,7 +43,7 @@ R/5a25717c-verdicts.sh <verdict-file>
 
 | Output | Holds | Baseline against repeat |
 |---|---|---|
-| `f79bcba3-state-before.txt`, `f79bcba3-state-after.txt` | `--check` exit status of each live closure generator; each relative Cargo path dependency that names or leaves an entry; each line of entry code matching `parents[n]`, `../..`, `ancestors()` or a quoted `../<name>` | every generator exits 0 in both; each path dependency gains one `../` or the epic directory name, apart from `E/07ca8585/survey/arms/Cargo.toml:34`, which names the `3be770d5` harness beside it and keeps its text; the third section holds 23 lines at the baseline and 8 at the repeat |
+| `f79bcba3-state-before.txt`, `f79bcba3-state-after.txt` | `--check` exit status of each live closure generator; each relative Cargo path dependency that names or leaves an entry; each line of entry code matching `parents[n]`, `../..`, `ancestors()` or a quoted `../<name>` | every generator exits 0 in both; each path dependency gains one `../` or the epic directory name, apart from `E/07ca8585/survey/arms/Cargo.toml:34`, which names the `3be770d5` harness beside it and keeps its text |
 | `f79bcba3-builds-before.txt` | per harness manifest: exit status of `cargo +1.95.0 metadata`, exit status of `cargo +1.95.0 build`, first error line | the output at the repeat source is the same file: `diff` against it prints nothing |
 | `f79bcba3-verdicts-before.txt` | benchmark-acceptance verdict line and findings of each committed `zen3-benchmark-receipt-v1` receipt | the output at the repeat source is the same file: `diff` against it prints nothing; `5a25717c-verdict-baseline.md` states the repeat |
 
@@ -63,9 +63,8 @@ entries and gains one level in `05f7559c0`.
 | `dev/active/f63a2464/survey/arms/Cargo.toml`, which names the `3be770d5` harness | not recorded | `CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh cargo +1.95.0 build --manifest-path dev/active/f63a2464/survey/arms/Cargo.toml` exits 0 at `05f7559c0` |
 
 `./scripts/cargo-budget.sh --test cargo +1.95.0 test --manifest-path S/survey/<crate>/Cargo.toml`
-passes 31 tests for `harness` and 50 for `dense-harness` at `82ea39747` and
-at `05f7559c0`; the commits after it change no Rust or Cargo file. The baseline run of the same command with the filter `closure`
-passes 5 tests in each crate.
+passes for `harness` and `dense-harness` at `82ea39747` and at `05f7559c0`;
+`b6bddd40e` and `264a453d2` change no Rust or Cargo file.
 
 ## Closure generators (REQ-07)
 
@@ -87,60 +86,50 @@ at run time. Each is the output of its generator at `05f7559c0`, and its diff
 in that commit is the moved paths.
 
 `python3 dev/scripts/check-family-producing-closures.py` prints
-`4 family closures enumerate their trees` at each of the six commits.
+`4 family closures enumerate their trees` at each commit of the table "Commits".
 
 ## Frozen documents
 
-Five documents of `S` keep their bytes. Each row names where a tracked file
-holds the SHA-256 of the document.
-
-| Document | Digest at | Relative links that leave the entry and do not resolve |
+| Document of `S` | SHA-256 at | Links that leave the entry |
 |---|---|---|
-| `dense-parity-addendum.md` | `S/survey/dense-harness/src/cells.rs:22`; `dense-campaign` reads the file and refuses a timed run on another digest | 4 |
-| `dense-parity-addendum-v1.md` | `S/survey/dense-baseline-validation.txt:6` | 4 |
-| `logical-buffer-addendum.md` | `dev/bench_results/2037941f/isal-dispatch-availability.md:7` | 2 |
-| `isal-comparator.md` | `dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json:4825` | 0 |
-| `m4ri-operation-match.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9383` | 1 |
+| `dense-parity-addendum.md` | `S/survey/dense-harness/src/cells.rs:22`; `dense-campaign` refuses a timed run on another digest | rows of the second table of `8f61d6de-baseline-findings.md` -> faac6007 (jit issue show faac6007) |
+| `dense-parity-addendum-v1.md` | `S/survey/dense-baseline-validation.txt:6` | as above |
+| `m4ri-operation-match.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9383` | as above |
+| `logical-buffer-addendum.md` | `dev/bench_results/2037941f/isal-dispatch-availability.md:7`, `S/mid-range-tables.md:470` | resolve; `80a18d4c9` repoints lines 13 and 341 |
+| `isal-comparator.md` | `dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json:4825` | resolve |
 
-The 11 links are the rows of the second table of
-`8f61d6de-baseline-findings.md`. Their targets are
-`../1a379447-zen3-cpu-performance/measurement-contract.md` (3),
-`../../bench_results/` (5) and `../../../crates/` (3). The three links to
-`../04b85d10/findings.md`, the seven to `../f547c394/`, the two to
-`../5cbb6545/findings.md` and the one to `../6fb89a3c/survey/fetch-build.sh`
-resolve, because the entries lie under `E`.
+`ADDENDUM_SHA256` of `S/survey/harness/src/cells.rs:17` is the SHA-256 of
+`logical-buffer-addendum.md` at `5cbbd7ced` and differs from that of the live
+file -> d0aaf09b (jit issue show d0aaf09b).
 
 ## Flat paths that stay
 
-`R/f79bcba3-remaining.sh <outfile>` classifies each tracked file outside
-`.jit/` and outside the `f79bcba3-` files of `R` that holds
-`dev/active/<entry>` for one of the eight entries, and prints the files and
-matching lines per class; `f79bcba3-remaining.txt` is its output at
-`264a453d2`. The output holds no line of the class `unclassified`. For a file
-of a class whose ground is tool output,
-`git log -1 --follow --diff-filter=AM --format=%h -- <file>` names the commit.
+`R/f79bcba3-remaining.sh <outfile>` classifies each tracked file in the
+scope its header states that holds `dev/active/<entry>` for one of the eight
+entries; `f79bcba3-remaining.txt` is its output and holds no line of the class
+`unclassified`. `git log -1 --follow --diff-filter=AM --format=%h -- <file>`
+names the commit of a file whose ground is tool output or a named commit.
 
-| Class | Files | Ground |
-|---|---|---|
-| `snapshot` | 688 | receipt `inputs/` snapshots |
-| `receipt-directory` | 372 | receipts, logs and generated tables under `dev/bench_results/` |
-| `data-record` | 77 | JSON, JSON Lines, TSV, text and log files: addenda, producing manifests, derivations, ledgers, smoke and validation records; tool output at the commit the command above names |
-| `epic-record` | 11 | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the command above names |
-| `frozen-document` | 5 | digest pins of the table above |
-| `manifest` | 1 | `path`, `consumers` and `inbound` fields of the migration manifest |
-| `bench-window` | 1 | `E/bench-window/queue.tsv`; the job key hashes the command text |
-| `tracker-state` | 1 | `R/progress.json`, execution state of the epic |
-| `session-record` | 1 | `E/reviews/53b74fc2-r1.md:6`: a dated review record that quotes the flat directory `dev/active/1d4fd63d`, present nowhere in the tree |
-| `generated-table` | 1 | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
-| `fixture-layout` | 1 | `E/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
-| `snapshot-path` | 1 | `E/04b85d10/survey/summarize-receipts.py:34`, a path inside a receipt snapshot |
+| Class | Ground |
+|---|---|
+| `snapshot` | receipt `inputs/` snapshots |
+| `receipt-directory` | receipts, logs and generated tables under `dev/bench_results/` |
+| `data-record` | JSON, JSON Lines, TSV, text and log files: addenda, producing manifests, derivations, ledgers, smoke and validation records; tool output at the commit the command above names |
+| `epic-record` | records, scripts and raw outputs of other units of this epic: text bound to the commit the command above names |
+| `frozen-document` | link labels and command text of the documents of the table above |
+| `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
+| `bench-window` | `E/bench-window/queue.tsv`; the job key hashes the command text |
+| `session-record` | `E/reviews/53b74fc2-r1.md:6`: a dated review record that quotes the flat directory `dev/active/1d4fd63d`, present nowhere in the tree -> 5406d020 (jit issue show 5406d020) |
+| `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
+| `fixture-layout` | `E/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
+| `snapshot-path` | `E/04b85d10/survey/summarize-receipts.py:34`, a path inside a receipt snapshot |
 
 Tracker files under `.jit/` are outside the scan: they are tracker state.
 
-The nine producing manifests of the moved entries other than the three
-closures above keep their bytes (REQ-05) and list flat paths; each is in the
-`data-record` class. Three addenda of `E/12fdeb5b` in that class declare
-`family_wise.ledger_path` at the flat path, and a receipt pins each of them;
+The producing manifests of the moved entries other than the three closures
+above are `R100` renames in `05f7559c0` (REQ-05); those that list flat paths
+are in the `data-record` class, as are the receipt-pinned addenda of
+`E/12fdeb5b` that declare `family_wise.ledger_path` at the flat path;
 locating the ledger without the path -> 3514d822 (jit issue show 3514d822).
 
 ## Checks
@@ -149,19 +138,19 @@ locating the ledger without the path -> 3514d822 (jit issue show 3514d822).
 |---|---|---|---|
 | Renames | `git diff -M --name-status aad1fdc5a 05f7559c0` | 419 renames, 322 of them `R100`; 27 files changed in place | each moved file that `05f7559c0` does not name keeps its bytes |
 | Byte-fixed data | the same listing restricted to `*.json`, `*.jsonl`, `*.txt`, `*.tsv`, `*.log` | three files below `R100`: the three closures | every other data file of the moved entries is a pure rename |
-| Links | `python3 contrib/gates/docs-mechanical.py` | `PASS: 0 finding(s), 22 baselined` | each inline and reference link of `dev/active/**/*.md` resolves, apart from the baseline rows |
-| Manifest | `python3 R/migration/check.py` | no finding, exit 0 | each of the 415 complete rows has its destination and no source; the six deletion rows have no source |
-| Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each of the 13 steps `ok` at `264a453d2` | the filtered run is not the CI verdict |
+| Links | `python3 contrib/gates/docs-mechanical.py` | `PASS` with 0 findings | each inline and reference link of `dev/active/**/*.md` resolves, apart from the baseline rows |
+| Manifest | `python3 R/migration/check.py` | no finding, exit 0 | each complete row has its destination and no source; each deletion row has no source |
+| Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each step `ok` at `264a453d2` | the filtered run is not the CI verdict |
 | Digest table | `python3 -B S/survey/make-mid-range-tables.py` | writes the committed `S/mid-range-tables.md` | the table is the generator's output on the tree of `b6bddd40e` |
-| Script tests | each tracked `*_test.py`, `test-*.py`, `test_*.py`, `*.test.sh` and `verify-records.py` under `dev/active/` outside `fd9d5416` and `R` | nine of ten exit 0 at `aad1fdc5a` and at `264a453d2`; `S/survey/test-dense-profile-request.py` exits 1 at both on the absent executable `target/e1f9a78f-arms/release/dense-campaign` | the move changes no exit status of these tests |
+| Script tests | each tracked `*_test.py`, `test-*.py`, `test_*.py`, `*.test.sh` and `verify-records.py` under `dev/active/` outside `fd9d5416` and `R` | each exits 0 at `aad1fdc5a` and at `264a453d2`, except `S/survey/test-dense-profile-request.py`, which runs a built `dense-campaign` and exits 1 at both | the move changes no exit status of these tests |
 
 ## Manifest (REQ-06, REQ-08)
 
 | Rows | State |
 |---|---|
-| 415 rows of the eight directories | `status = "complete"`, destination under `E` |
+| rows of the eight directories | `status = "complete"`, destination under `E` |
 | `dev/active/3be770d5/survey/harness/src/bin/ldpc-plan-check.rs` | `disposition = "deletion"`, `evidence = "commit"`, `citation = "0e296481bd71406bc472ce2130d39b393990036b"` |
-| two rows of `dev/active/4c1e441f`, two of `dev/active/ad2a6a58`, one of `dev/active/f63a2464` | the same form, with the removing commits `7eacbd17d`, `30ea6da8f` and `e3efec549` |
+| deletion rows of `dev/active/4c1e441f`, `dev/active/ad2a6a58` and `dev/active/f63a2464` | the same form, with the removing commits `7eacbd17d`, `30ea6da8f` and `e3efec549` |
 
 `67048b47-linked-pairs.txt` and `b0b1faf5-outputs.sh` name `ldpc-plan-check`:
 the first is the pair listing of its unit, tool output at `b6899936f`; the second
@@ -172,7 +161,7 @@ builds a fixture of executable names for the source commits its record names.
 Run from the repository root. The first command lists the unpinned document
 references under a flat path of the eight entries and prints nothing; the
 second counts the commit-pinned references, which keep the path of their
-commit, and prints 31.
+commit.
 
 ```
 P='^dev/active/(04b85d10|07ca8585|12fdeb5b|1c602857|1d0da41f|1d4fd63d|2037941f-profile-and-optimize-mid-range-buffer-operations|3be770d5)(/|$)'
@@ -189,6 +178,6 @@ jq -r '.documents[]? | select(.commit != null) | .path' .jit/issues/*.json | gre
 | REQ-03 | sections "Baseline and repeat" and "Harness crates"; message of `05f7559c0` |
 | REQ-04 | message of `05f7559c0`, list per entry |
 | REQ-05 | checks "Renames", "Byte-fixed data", "Links"; section "Frozen documents" |
-| REQ-06 | sections "Tracker" and "Manifest" |
+| REQ-06 | sections "Tracker" and "Manifest"; gate `cargo-ci` of `jit issue show f79bcba3` |
 | REQ-07 | section "Closure generators" |
 | REQ-08 | section "Manifest" |
