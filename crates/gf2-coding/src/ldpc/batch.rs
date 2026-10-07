@@ -168,11 +168,7 @@ impl LdpcBatchDecoder {
     ) -> Self {
         let message_cols = match word {
             DecodedWord::Codeword => None,
-            DecodedWord::Message => {
-                let mut cols = code.systematic_cols();
-                cols.truncate(code.k());
-                Some(cols)
-            }
+            DecodedWord::Message => Some(code.systematic_cols()),
         };
         let single = LdpcDecoder::with_config(code, config);
         let layout = single.edge_layout();
@@ -537,6 +533,22 @@ mod tests {
             .collect()
     }
 
+    /// [`FRAMES`] random messages and the noiseless LLRs of their codewords.
+    fn noiseless_frames() -> (Vec<BitVec>, Vec<Vec<Llr>>) {
+        let encoder = LdpcEncoder::new(code());
+        let mut rng = StdRng::seed_from_u64(SEED);
+        (0..FRAMES)
+            .map(|_| {
+                let message = BitVec::random(encoder.k(), &mut rng);
+                let codeword = encoder.encode(&message);
+                let llrs = (0..codeword.len())
+                    .map(|i| Llr::new(if codeword.get(i) { -10.0 } else { 10.0 }))
+                    .collect();
+                (message, llrs)
+            })
+            .unzip()
+    }
+
     /// Selectors that give every wave the lane route.
     fn lane_selectors() -> DecodeSelectors {
         DecodeSelectors::try_new(1, usize::MAX, 1).unwrap()
@@ -593,6 +605,7 @@ mod tests {
     #[test]
     fn message_words_satisfy_the_batch_contract_on_each_route() {
         let frames = frames();
+        let (messages, clean) = noiseless_frames();
         for (selectors, full_wave) in routes() {
             let config = DecoderConfig::default();
             let mut decoder = batch_decoder(config, CAP, DecodedWord::Message, selectors);
@@ -606,6 +619,11 @@ mod tests {
                 &frames,
                 ConvergenceMix::EarlyLateAndNonConverging,
             );
+
+            let mut decoded = vec![BitVec::new(); FRAMES];
+            let mut outcomes = vec![DecodeOutcome::default(); FRAMES];
+            decoder.decode_batch(&views(&clean), &mut decoded, &mut outcomes);
+            assert_eq!(decoded, messages, "{:?}", decoder.selectors());
         }
     }
 
