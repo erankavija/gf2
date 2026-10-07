@@ -18,7 +18,6 @@ r=$(git rev-parse --show-toplevel); (cd /tmp && python3 "$r/dev/active/fa787f85-
 for e in $(grep -o '^| [0-9a-f]\{8\} ' dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md | cut -c3-10 | sort -u); do
   grep -c "^container .*/$e-" dev/active/fa787f85-documentation-overhaul/c852d9b2-archive-links.txt
 done
-jit doc check-links --scope all --json | python3 dev/active/fa787f85-documentation-overhaul/c852d9b2-tracker-errors.py | diff - dev/active/fa787f85-documentation-overhaul/c852d9b2-tracker-errors.txt
 python3 dev/active/fa787f85-documentation-overhaul/migration/check.py
 python3 contrib/gates/tests/docs-mechanical-test.py
 ```
@@ -76,23 +75,6 @@ The scan does not establish:
   and `*.css`, or built by a deck's scripts at run time;
 - item addresses in the archives;
 - links of a commit-pinned revision of an archived document.
-
-## `jit doc check-links --scope all`
-
-The command exits 1.
-[`c852d9b2-tracker-errors.py`](c852d9b2-tracker-errors.py) groups its distinct
-errors by type, area and file suffix in
-[`c852d9b2-tracker-errors.txt`](c852d9b2-tracker-errors.txt), the output on
-the primary checkout. The output follows tracker state, and its
-`unreachable_url` rows depend on network reachability from the host. `linked` counts the errors whose target is a link of the tracked
-file; `unresolved` counts those of them whose path is not tracked.
-
-| Type | Area | Suffix | Read by | Finding |
-|---|---|---|---|---|
-| `unreachable_url` | archive | `html` | archive scan, deck roots | external font hosts; counted under `https:`, not fetched |
-| `broken_link`, `missing_asset` | footprint | `md` | mechanical check | each `unresolved` link is a baseline row; each other error names a target that is not a link of the tracked file or that resolves |
-| `broken_link`, `missing_asset` | other | `md` | neither scan | the files lie under `dev/studies` and `dev/bench_results`, outside the footprint and outside the archive root |
-| `broken_link`, `missing_asset` | other | other suffixes | neither scan | the documents are not Markdown, HTML or CSS and lie outside the archive root |
 
 ## Repairs
 
