@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 14,
+ "current_wave": 15,
  "waves": [
   {
    "wave_number": 1,
@@ -1021,7 +1021,7 @@
      "short_id": "d6ebc4ec",
      "title": "Narrow the docs policy to post-overhaul paths",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     }
    ]
   },
@@ -1033,14 +1033,35 @@
      "short_id": "c852d9b2",
      "title": "Verify links across the permanent surface and executed archives",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "a0ec34f2-62b7-42ad-b922-44a7506ba50a",
      "short_id": "a0ec34f2",
      "title": "Bring the remaining migration manifest rows to a terminal state",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
+    },
+    {
+     "id": "4979271f",
+     "short_id": "4979271f",
+     "title": "Move the design entry of an open channel-models issue under its epic dir",
+     "classification": "implementation",
+     "status": "done"
+    },
+    {
+     "id": "d0b1545e",
+     "short_id": "d0b1545e",
+     "title": "Remove the duplicate closure deck copy from bench results",
+     "classification": "implementation",
+     "status": "done"
+    },
+    {
+     "id": "c423c7aa",
+     "short_id": "c423c7aa",
+     "title": "Close the prose findings of the pre-gate criteria read",
+     "classification": "documentation",
+     "status": "done"
     }
    ]
   },
@@ -1668,6 +1689,33 @@
    "id": "e804b8b8",
    "epic": "b4b4b9ee",
    "reason": "f63a2464 freeze-confirmations.sh globs **/repository_files.py and may load a snapshot copy (worker report, unverified)"
+  },
+  {
+   "id": "4979271f",
+   "reason": "owner ruling: move the flat design entry of an open issue (REQ-11)"
+  },
+  {
+   "id": "d0b1545e",
+   "reason": "pre-gate audit F9: duplicate deck copy (REQ-09)"
+  },
+  {
+   "id": "c423c7aa",
+   "reason": "pre-gate audit F1, F3, F7, F10: prose, brief, footprint"
+  },
+  {
+   "id": "bdf8e2e5",
+   "epic": "b4b4b9ee",
+   "reason": "tracked move of the 3eeb57f6 plan entry (owner ruling)"
+  },
+  {
+   "id": "720f5f74",
+   "epic": "b4b4b9ee",
+   "reason": "planned work removed from benchmarks/README.md by c423c7aa"
+  },
+  {
+   "id": "727677b4",
+   "epic": "b4b4b9ee",
+   "reason": "inventory drift in proofs/WORKAROUNDS.md and benchmarks/README.md (c423c7aa review, advisory); also the GF(31) lane the FFLAS tables omit"
   }
  ],
  "escalations": [
@@ -2189,6 +2237,34 @@
    ],
    "recommendation": "the amendment",
    "resolution": "Owner (2026-10-07, session 13): REQ-02 amended to \"No tracked file outside the tracker changes\" (DEC-01 on the issue); code-review passed; done."
+  },
+  {
+   "issue": "a0ec34f2",
+   "question": "REQ-03 \"named in the row\" against the three-field limit of REQ-05; two README rows of live research crates held by an ineligible archive.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): REQ-03 amended to the linked record (DEC-01); references commit-pinned, rows retained-operational (DEC-02)."
+  },
+  {
+   "issue": "fa787f85",
+   "question": "Flat entry of an open channel-models issue without a move issue (epic REQ-11).",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): move it now; 4979271f filed and done."
+  },
+  {
+   "issue": "d6ebc4ec",
+   "question": "Absent areas dev/plans, dev/presentations, dev/docs block archive reruns when unmanaged; baseline location.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-08): pin the references to archived mirrors (DEC-01, 88 references pinned at 8a2456afd); baseline at contrib/gates/docs-mechanical-baseline.md (DEC-02). jit-default re-minted 1.0.3."
+  },
+  {
+   "issue": "fa787f85",
+   "question": "Pre-gate criteria audit (scratch epic-audit.md): held entries, baselined links, pinned narrative, AGENTS.md policy drift, filter labels, deck copy, 3eeb57f6.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-08): epic DEC-02 to DEC-05; epic label removed from eleven issues outside the graph; move issue bdf8e2e5 (b4b4b9ee) for 3eeb57f6; deck copy removed by d0b1545e; prose findings closed by c423c7aa."
   }
  ],
  "rework_counts": {
@@ -2261,7 +2337,11 @@
   "cc060974": 2,
   "602652bf": 1,
   "f694f59a": 1,
-  "9451498f": 2
+  "9451498f": 2,
+  "4979271f": 1,
+  "c423c7aa": 1,
+  "a0ec34f2": 1,
+  "d6ebc4ec": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2433,6 +2513,11 @@
    "issue": "7039d680",
    "finding": "Session records of epic 1a379447 keep flat paths of moved entries: handoff-3.md:36, handoff-9.md:46 and five reviews/ files (14 lines) under dev/active/1a379447-zen3-cpu-performance/; the lane was told to leave that session's files alone on 2026-10-06.",
    "disposition": "repoint after the 1a379447 session ends (form of commit 59f56ce93); REQ-06 of 7039d680 and 198aafa3 name citations"
+  },
+  {
+   "issue": "fa787f85",
+   "finding": "Pre-gate audit of the twenty epic criteria at 8a2456afd: 5 high, 5 medium, 6 low.",
+   "disposition": "resolved by epic DEC-02..DEC-05, d0b1545e, c423c7aa, bdf8e2e5, label removal and linking of 36 epic files; F15 (check-links classes) is in the c852d9b2 brief"
   }
  ],
  "notes": [
@@ -2488,7 +2573,8 @@
   "Session 11: 5ec5dcc1 done. b5b336e5 passes cargo-ci, docs-mechanical and code-review at 365557a77; doc-review fails on the issue description's flat path (owner question). File move-unit descriptions without a path that the unit removes.",
   "Session 11: the seven zen3 lane units are merged on main (merges d6657b90e, 99841ab2d, ffa978709 and the merge of db9f06677); 27 entries live under dev/active/1a379447-zen3-cpu-performance/; tracker references relinked by a generic pass (dangling unpinned reference -> counterpart under the epic directory, `--skip-scan` fallback); `jit validate` exits 0. The 63bad95d generators (make-calibration-budget.py, make-route-inventory.py) rewrite their outputs with other bytes on the moved tree: owned by open issue 63bad95d, whose lead regenerates them. Flat directories left under dev/active: 02b8137c (held, 5b3e7c81), dbd8787d and a83583e0 (blocked), and the retained or empty leftovers of 6dc81018.",
   "Session 11 end (2026-10-07 00:55 EEST): cargo-ci and docs-mechanical pass for f79bcba3, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 on the merged tree at e230aaaa2; their review gates wait for the owner rulings of handoff-10.md. Every open unit waits on a ruling or on a unit that does.",
-  "Session 13 (2026-10-07 22:30 EEST): 9451498f closed after the REQ-02 amendment. d6ebc4ec (worktree agent-d6ebc4ec) and a0ec34f2 (agent-a0ec34f2) dispatched in parallel on opus at 338275ff2; both edit migration/manifest.toml (policy rows vs artifacts rows): merge row-wise. After the d6ebc4ec merge the lead re-mints the profile package(s) the worker names."
+  "Session 13 (2026-10-07 22:30 EEST): 9451498f closed after the REQ-02 amendment. d6ebc4ec (worktree agent-d6ebc4ec) and a0ec34f2 (agent-a0ec34f2) dispatched in parallel on opus at 338275ff2; both edit migration/manifest.toml (policy rows vs artifacts rows): merge row-wise. After the d6ebc4ec merge the lead re-mints the profile package(s) the worker names.",
+  "Session 13: closed 9451498f, a0ec34f2, 4979271f, d6ebc4ec, d0b1545e, c423c7aa. c852d9b2 dispatched (opus, worktree agent-c852d9b2 at 4ae1773e4); af84619e follows, then the epic gates. Lead fixes before gating: commit bodies with bare ids on unmerged branches were rebuilt (soft reset to the merge base, typed message) and records corrected; a milestone reference into an archive needs a commit pin or the container preview turns ineligible (unpreservable-layout)."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
