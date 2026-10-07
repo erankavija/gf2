@@ -716,15 +716,9 @@ impl LdpcDecoder {
     }
 
     fn check_node_update(&mut self) {
-        match self.config.algorithm {
-            DecoderAlgorithm::MinSum => self.check_node_update_min_sum(MinSumRule::Plain),
-            DecoderAlgorithm::NormalizedMinSum(alpha) => {
-                self.check_node_update_min_sum(MinSumRule::Normalized(alpha))
-            }
-            DecoderAlgorithm::OffsetMinSum(beta) => {
-                self.check_node_update_min_sum(MinSumRule::Offset(beta))
-            }
-            DecoderAlgorithm::SumProduct => self.check_node_update_spa(),
+        match self.config.algorithm.min_sum_rule() {
+            Some(rule) => self.check_node_update_min_sum(rule),
+            None => self.check_node_update_spa(),
         }
     }
 

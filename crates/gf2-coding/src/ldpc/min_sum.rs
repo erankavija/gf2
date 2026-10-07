@@ -1,6 +1,8 @@
 //! Shared minimum, second-minimum and sign reduction for check-node updates.
 
+use super::DecoderAlgorithm;
 use crate::llr::Llr;
+use gf2_kernels_simd::ldpc_lanes::LaneMinSumRule;
 
 /// A check-node update rule of the min-sum family.
 ///
@@ -30,16 +32,36 @@ impl MinSumRule {
     }
 }
 
+impl From<MinSumRule> for LaneMinSumRule {
+    fn from(rule: MinSumRule) -> Self {
+        match rule {
+            MinSumRule::Plain => Self::Plain,
+            MinSumRule::Normalized(alpha) => Self::Normalized(alpha),
+            MinSumRule::Offset(beta) => Self::Offset(beta),
+        }
+    }
+}
+
+impl DecoderAlgorithm {
+    /// The min-sum rule of the algorithm's check update; `None` for
+    /// [`DecoderAlgorithm::SumProduct`].
+    #[must_use]
+    pub fn min_sum_rule(self) -> Option<MinSumRule> {
+        match self {
+            Self::MinSum => Some(MinSumRule::Plain),
+            Self::NormalizedMinSum(alpha) => Some(MinSumRule::Normalized(alpha)),
+            Self::OffsetMinSum(beta) => Some(MinSumRule::Offset(beta)),
+            Self::SumProduct => None,
+        }
+    }
+}
+
 /// Writes every outgoing message of one check node from one shared reduction.
 ///
 /// `inputs[i]` is the incoming message on the check's `i`-th edge and
 /// `outputs[i]` receives the outgoing message on that same edge, computed from
 /// every input except `inputs[i]`. The two slices may not overlap; a caller
 /// that keeps one message array per direction passes the check's run of each.
-///
-/// A check of degree one has no other input for its single output, and takes
-/// the zero LLR that the degree-zero reduction of an iterative decoder means.
-/// A check of degree zero writes nothing.
 ///
 /// Each input is read exactly twice, so the work is linear in the check degree.
 ///
@@ -49,21 +71,16 @@ impl MinSumRule {
 ///
 /// # Numerical contract
 ///
-/// The reduction reproduces, bit for bit, the scalar reference for the same
-/// excluded input set: [`Llr::boxplus_minsum_n`] as it is implemented
+/// The sign, magnitude and tie, scaling and low-degree rules are the
+/// check-node update of `docs/reference/ldpc-decoder-numerical-contract.md`.
+/// Under them the reduction reproduces, bit for bit, the scalar reference for
+/// the same excluded input set: [`Llr::boxplus_minsum_n`] as it is implemented
 /// without the `simd` cargo feature, and the corresponding scalar
 /// [`Llr::boxplus_normalized_minsum_n`] and [`Llr::boxplus_offset_minsum_n`].
-/// Two rules of that reference decide the cases a reduction can disagree on:
-///
-/// - **Sign** is taken by comparison against zero, so a negative-zero input
-///   counts as positive and a NaN input counts as negative.
-/// - **Magnitude** is the [`f32::min`] fold of the input magnitudes from
-///   `f32::INFINITY`, which skips a NaN input; an all-NaN input set therefore
-///   reduces to an infinite magnitude.
 ///
 /// This function is scalar and performs no runtime dispatch. The AVX2 kernel
 /// that `Llr::boxplus_minsum_n` reaches under `simd` takes the IEEE sign bit
-/// in its vector lanes and so disagrees with this contract.
+/// in its vector lanes and so disagrees with the sign rule.
 ///
 /// Both factors of a leave-one-out result are exact. A sign is `±1.0`, so
 /// removing one input's sign from the shared product is a multiplication by
