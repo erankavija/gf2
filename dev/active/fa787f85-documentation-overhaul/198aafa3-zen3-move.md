@@ -175,4 +175,4 @@ nothing for the eight entries: the flat directories hold no ignored file.
 | REQ-03 | sections "Baseline and repeat" and "Harness crates"; message of `552a0548d` |
 | REQ-04 | section "Scripts"; message of `552a0548d`, lists per entry |
 | REQ-05 | sections "Generated files and frozen documents" and "Flat paths that stay" |
-| REQ-06 | section "Manifest and tracker"; gate `cargo-ci` of `jit issue show 198aafa3` |
+| REQ-06 | section "Manifest and tracker"; gate `cargo-ci` of @/issue/198aafa3 |
