@@ -345,16 +345,6 @@ value = "dev/studies"
 [[contribution]]
 kind = "set-string"
 target = "documentation-managed-paths"
-value = "dev/plans"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-managed-paths"
-value = "dev/presentations"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-managed-paths"
 value = "dev/benchmarks"
 
 # Living documentation, a configured item-kind source, or documented
