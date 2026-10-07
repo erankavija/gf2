@@ -1,5 +1,4 @@
-//! The arm's workloads reach the kernels they are declared for, and the build
-//! publishes the entry-point form its configuration names.
+//! The arm's workloads reach the kernels they are declared for.
 
 use entry_check_arm::{observed_entry_form, prepare, Case, MEDIUM_PRIME, SMALL_PRIME};
 
@@ -10,16 +9,6 @@ fn observed(case: Case) -> String {
     body();
     drop(body);
     (workload.observe)()
-}
-
-#[test]
-fn the_build_publishes_the_form_its_configuration_names() {
-    let expected = if cfg!(gf2_entry_checked) {
-        "checked"
-    } else {
-        "current"
-    };
-    assert_eq!(observed_entry_form().as_deref(), Ok(expected));
 }
 
 #[test]

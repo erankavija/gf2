@@ -94,8 +94,9 @@ The decision is the invoker's, recorded in [`decisions.json`](decisions.json);
 - Sparse row class. The pointer of each lane is a whole-product entry
   (`SmallPrimeSpmmFn`, `MediumPrimeSpmmFn`): it checks the output shape, the
   value and index lengths and the largest column index once, then holds the
-  row loop and the `unsafe` call of the row kernel, an `unsafe fn` whose
-  Safety section states the column bound. `gf2-core` converts the operands and
+  row loop and the `unsafe` call of the row kernel, which the bundle also
+  publishes as the `unsafe fn` pointer `spmm_row_unchecked_fn` with the column
+  bound under Safety. `gf2-core` converts the operands and
   the product between the field type and the lane type around one call. The
   sparse matrix type holds the column bound in every constructor (the
   constructor table of `decision-table.md`), so the check does not fire for a
@@ -187,9 +188,9 @@ derived from the pilot receipt by the canonical freezer with the
   projection and the launcher. The live copies of the arm package
   (`survey/entry-check-arm`), `survey/make-plan.py`, `survey/smoke-arms.sh`,
   the two smoke records, `survey/producing-inputs.json` and the launcher are
-  those producing inputs as the stages recorded them. The working tree holds
-  one form of each entry point, so its two builds of the arm do not differ and
-  the arm's form test refuses it.
+  those producing inputs as the stages recorded them, except the arm's test of
+  the form a build publishes, which is removed: the working tree holds one
+  form of each entry point, so its two builds of the arm do not differ.
 - Outcome. The confirmation records a regression for the per-row column check
   of both sparse row interfaces and no regression for the other retained
   cells; the rows are in the `Confirmation` section of the tables. Under the
@@ -198,10 +199,10 @@ derived from the pilot receipt by the canonical freezer with the
   as an accepted measured cost. The regression contradicts the non-regression
   criterion the family freezes for the per-row form; the invoker's decision
   replaces that form by the per-product entry.
-- Per-product entry. Its cost is not measured. The family ledger admits no
-  further confirmatory cell under P-20; `decision-table.md` holds the
-  arithmetic with the claims of the two rules it applies. No non-confirmatory
-  run stands in for a confirmation.
+- Per-product entry. The family above cannot price it: its ledger admits no
+  further confirmatory cell under P-20, and `decision-table.md` holds the
+  arithmetic with the claims of the two rules it applies. The family
+  `sparse-product-check-cost` prices it instead, as the next section states.
 - Plan projector. The shared `dev/scripts/campaign_plan.py` has the general
   entry `project`, which takes the two arms of each cell from the family, so a
   pair may be two executables with their own RUSTFLAGS; the lane-comparison
@@ -213,6 +214,37 @@ derived from the pilot receipt by the canonical freezer with the
   `differing_plan_count` total it.
 - Tables. `dev/scripts/campaign_tables.py` writes a family's tables with or
   without a receipt pin; a family without one gets no agreement section.
+
+## Family `sparse-product-check-cost` (REQ-04, per-product entry)
+
+The frozen pilot addendum is
+[`addendum-v4-spmm-check-pilot.json`](addendum-v4-spmm-check-pilot.json),
+written by `survey/make-spmm-addendum.py`; its family description states the
+arms, the cells, the confirmation's selection, the resolution rule and the
+decision rule. The decision table names the family's committed stages.
+
+- Arms. Both arms are the one executable of
+  [`survey/spmm-check-arm`](survey/spmm-check-arm/src/lib.rs), selected by the
+  environment. The candidate is `SparseFieldMatrix::matmat`. The baseline is
+  the dispatcher's row loop held in the arm over the kernel crate's unchecked
+  row kernel, which each lane's bundle publishes as the `unsafe fn` pointer
+  `spmm_row_unchecked_fn` with the column bound under Safety; the arm's
+  `// SAFETY:` comment discharges it from the sparse matrix type's
+  constructors. The arm's tests require both forms to equal a scalar
+  reference on both lanes.
+- Tooling. `survey/make-spmm-plan.py` projects the plan through the shared
+  `campaign_plan.py`, `survey/make-spmm-producing-inputs.py` writes the
+  producing manifest through the shared `campaign_inputs.py`,
+  `survey/smoke-spmm-arms.sh pilot` drives both arms of every cell through
+  the shared `benchmark-ab-runner smoke` and writes
+  [`survey/spmm-pilot-smoke.json`](survey/spmm-pilot-smoke.json), and
+  `dev/bench_results/bfc2ceab/run-spmm-check.sh` has the actions `build`,
+  `window pilot|confirmation` and `freeze`; `window` refuses outside a
+  benchmark window and refuses a campaign input that differs from its
+  committed bytes.
+- Admissibility. A first confirmatory attempt of this family spends half the
+  family alpha over its four cells, which P-20's tail-support bound admits;
+  the pilot addendum's family description carries the arithmetic.
 
 ## Checks run
 

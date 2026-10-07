@@ -1178,6 +1178,9 @@ GRAINS = [
     },
 ]
 
+# The family that prices the per-product grain against the unchecked row loop.
+GRAIN_FAMILY_ADDENDUM = "addendum-v4-spmm-check-pilot.json"
+
 # P-20's tail-support floor, in expected bootstrap draws per tail, and the
 # claims of the two rules the admissibility arithmetic applies.
 TAIL_DRAWS = 20

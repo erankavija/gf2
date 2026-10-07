@@ -22,5 +22,12 @@
       "option": "a",
       "cost": "measured cost recorded as accepted"
     }
-  }
+  },
+  "later_rulings": [
+    {
+      "decided_by": "invoker",
+      "decided_on": "2026-10-07",
+      "ruling": "REQ-04 for the hoisted sparse form: a new single-purpose family, pilot and then confirmation in consecutive benchmark windows; arms are the hoisted checked form of the tree against the unchecked baseline, the baseline built inside the arm crate from the kernel crate's own `unsafe` row kernel driven by the pre-change row loop, so both arms come from one tree and one closure."
+    }
+  ]
 }

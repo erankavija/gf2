@@ -365,6 +365,7 @@ def decisions():
         "decided_by": held["decided_by"],
         "decided_on": held["decided_on"],
         "ruling": held["ruling"],
+        "later_rulings": held["later_rulings"],
         "classes": {name: {**held["classes"][name], "basis": review.BASIS[name]}
                     for name in review.CLASSES},
     }
@@ -390,6 +391,27 @@ def admissibility(stages):
         "required_tail_draws": review.TAIL_DRAWS,
         "admits_a_confirmatory_cell": draws >= review.TAIL_DRAWS,
         "claims": review.ADMISSIBILITY_CLAIMS,
+    }
+
+
+def grain_family():
+    """The family that prices the per-product grain, with its committed stages."""
+    addendum = json.loads((OUT / review.GRAIN_FAMILY_ADDENDUM).read_text())
+    ledger = ROOT / addendum["family_wise"]["ledger_path"]
+    stages = [
+        (json.loads(receipt.read_text()), receipt.parent)
+        for receipt in sorted(ledger.parent.glob("*/receipt.json"))
+        if json.loads(receipt.read_text())["family_id"] == addendum["family"]["id"]
+    ]
+    return {
+        "family": addendum["family"]["id"],
+        "pilot_addendum": review.GRAIN_FAMILY_ADDENDUM,
+        "ledger": str(ledger.relative_to(ROOT)),
+        "cells": [cell["cell_id"] for cell in addendum["cells"]],
+        "committed_stages": [
+            {"label": receipt["label"], "receipt": str(directory.relative_to(ROOT))}
+            for receipt, directory in stages
+        ],
     }
 
 
@@ -466,6 +488,7 @@ def grains(interfaces):
             for grain in review.GRAINS
         ],
         "further_confirmation": admissibility(cost_rows()[1]),
+        "pricing_family": grain_family(),
         "sparse_type": {
             "name": name,
             "path": f"{package(owner)}/{relative}",
@@ -724,6 +747,10 @@ def grain_section(record, stages):
     found = record["check_grains"]
     cells, last = class_cells(record, found["class"]), list(stages)[-1]
     kind, more = found["sparse_type"], found["further_confirmation"]
+    pricing = found["pricing_family"]
+    committed = ", ".join(
+        f"{stage['label']} (`{stage['receipt']}`)" for stage in pricing["committed_stages"]
+    ) or "none"
     verdict = ("admits" if more["admits_a_confirmatory_cell"] else "admits no")
     return [
         "### Grain of the column check",
@@ -736,12 +763,19 @@ def grain_section(record, stages):
             [[f"`{grain['id']}`: {grain['title']}", grain["state"], grain["design"],
               grain["check"], "; ".join(grain["sites"]) or "—", grain["constraint"],
               cost_cell(stages, cells, last) if grain["measured"]
-              else "no cell of the family prices this grain",
+              else (f"family `{pricing['family']}`, below" if grain is found["options"][0]
+                    else "no cell prices this grain"),
               cite(grain["claims"])] for grain in found["options"]],
         ),
         "",
-        f"Cost of the `{found['options'][0]['id']}` grain: not measured. A further "
-        f"confirmatory attempt on the family ledger (`{more['ledger']}`) is attempt "
+        f"Cost of the `{found['options'][0]['id']}` grain: priced by the family "
+        f"`{pricing['family']}` ([`{pricing['pilot_addendum']}`]({pricing['pilot_addendum']})), "
+        "whose candidate is the shipped product and whose baseline is the dispatcher's row "
+        "loop over the unchecked row kernel, in cells "
+        + ", ".join(f"`{cell}`" for cell in pricing["cells"])
+        + f". Committed stages of that family: {committed}. The earlier family cannot "
+        "price it: a further "
+        f"confirmatory attempt on its ledger (`{more['ledger']}`) is attempt "
         f"{more['next_attempt']} and spends alpha {more['attempt_alpha']:.6g}; with one more "
         f"cell the ledger holds {more['comparisons_with_one_more_cell']} comparisons, which "
         f"leaves {more['expected_tail_draws']:.3g} expected bootstrap draws per tail against "
@@ -799,6 +833,9 @@ def decision_page(record):
         f"([`{review.DECISIONS_FILE}`]({review.DECISIONS_FILE})): {ruling['ruling']} The "
         "`Decision` column states it per class, and the tree holds the decided form of "
         "every entry point.",
+        "",
+        *[f"Ruling of the {later['decided_by']}, {later['decided_on']}: {later['ruling']}"
+          for later in ruling["later_rulings"]],
         "",
         "The last column names, for each interface, its rows in the family's "
         f"[tables]({tables}), which `survey/make-tables.py` writes from each stage's "
@@ -936,7 +973,9 @@ def plan_page(record):
         f"The family ledger admits {'a' if more['admits_a_confirmatory_cell'] else 'no'} "
         "further confirmatory cell under P-20; the arithmetic stands under the sparse row "
         "class of [`decision-table.md`](decision-table.md). The `per-product` grain of the "
-        "sparse row check, which the tree holds, is therefore not measured by this family.",
+        "sparse row check, which the tree holds, is therefore not measured by this family; "
+        f"the family `{record['check_grains']['pricing_family']['family']}` prices it, and "
+        "the decision table names its committed stages.",
         "",
     ]
     return "\n".join(out)

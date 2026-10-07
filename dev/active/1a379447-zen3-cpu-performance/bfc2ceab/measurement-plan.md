@@ -32,4 +32,4 @@ Committed stages: [pilot](../../../bench_results/bfc2ceab/tables.md#pilot), [con
 
 ## Further confirmation
 
-The family ledger admits no further confirmatory cell under P-20; the arithmetic stands under the sparse row class of [`decision-table.md`](decision-table.md). The `per-product` grain of the sparse row check, which the tree holds, is therefore not measured by this family.
+The family ledger admits no further confirmatory cell under P-20; the arithmetic stands under the sparse row class of [`decision-table.md`](decision-table.md). The `per-product` grain of the sparse row check, which the tree holds, is therefore not measured by this family; the family `sparse-product-check-cost` prices it, and the decision table names its committed stages.

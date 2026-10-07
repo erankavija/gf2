@@ -5,24 +5,24 @@
     {
       "id": "small-spmm-type-doc",
       "project": "gf2",
-      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
+      "commit": "1c3bf51488b46a35cb369d4b1fc2969d8aa75adb",
       "path": "crates/gf2-kernels-simd/src/fp_small.rs",
-      "line": 70,
+      "line": 87,
       "occurrences": 1,
       "verbatim": "/// `a_vals.len() == a_cols.len()`, every `a_cols[h]` names a whole row of",
       "why": "The pointer type lists the column bound under Panics.",
-      "sha256": "9cc02dd29a98edd88edc9f02d4cc1e25440f43659cb42b236204d3b8f1317154"
+      "sha256": "1734473f6c1e47ae42b93445259b9d3bbeddf609f25066a152d3607c4864adcc"
     },
     {
       "id": "small-spmm-wrapper",
       "project": "gf2",
-      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
+      "commit": "1c3bf51488b46a35cb369d4b1fc2969d8aa75adb",
       "path": "crates/gf2-kernels-simd/src/fp_small.rs",
-      "line": 191,
+      "line": 229,
       "occurrences": 1,
       "verbatim": "    crate::entry_check::assert_spmm_columns(\"fp_small_spmm\", a_cols, b.len(), n);",
       "why": "The safe entry checks every column index once per product, ahead of its row loop.",
-      "sha256": "9cc02dd29a98edd88edc9f02d4cc1e25440f43659cb42b236204d3b8f1317154"
+      "sha256": "1734473f6c1e47ae42b93445259b9d3bbeddf609f25066a152d3607c4864adcc"
     },
     {
       "id": "small-spmm-length-assert",
@@ -60,24 +60,24 @@
     {
       "id": "medium-spmm-type-doc",
       "project": "gf2",
-      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
+      "commit": "1c3bf51488b46a35cb369d4b1fc2969d8aa75adb",
       "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
-      "line": 43,
+      "line": 60,
       "occurrences": 1,
       "verbatim": "/// `a_vals.len() == a_cols.len()`, every `a_cols[h]` names a whole row of",
       "why": "The pointer type lists the column bound under Panics.",
-      "sha256": "c1e0b52d8f610cf64bfa3c21fc1c86be905539916d259527162c5ce96dd1e6d4"
+      "sha256": "eb434b982686c84b04f5662593e8b35f5663dbe11415e3eeaf04f8f1e9601d96"
     },
     {
       "id": "medium-spmm-wrapper",
       "project": "gf2",
-      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
+      "commit": "1c3bf51488b46a35cb369d4b1fc2969d8aa75adb",
       "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
-      "line": 148,
+      "line": 186,
       "occurrences": 1,
       "verbatim": "    crate::entry_check::assert_spmm_columns(\"fp_medium_spmm\", a_cols, b.len(), n);",
       "why": "The safe entry checks every column index once per product, ahead of its row loop.",
-      "sha256": "c1e0b52d8f610cf64bfa3c21fc1c86be905539916d259527162c5ce96dd1e6d4"
+      "sha256": "eb434b982686c84b04f5662593e8b35f5663dbe11415e3eeaf04f8f1e9601d96"
     },
     {
       "id": "medium-spmm-length-assert",
@@ -720,13 +720,13 @@
     {
       "id": "row-panel-check",
       "project": "gf2",
-      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
+      "commit": "1c3bf51488b46a35cb369d4b1fc2969d8aa75adb",
       "path": "crates/gf2-kernels-simd/src/fp_small.rs",
-      "line": 168,
+      "line": 188,
       "occurrences": 1,
       "verbatim": "    crate::entry_check::assert_shape(\"fp_small_gemm_row_panel\", \"bt\", bt.len(), n, k);",
       "why": "The safe entry forms `n * k` with `checked_mul` ahead of the kernel's assertion.",
-      "sha256": "9cc02dd29a98edd88edc9f02d4cc1e25440f43659cb42b236204d3b8f1317154"
+      "sha256": "1734473f6c1e47ae42b93445259b9d3bbeddf609f25066a152d3607c4864adcc"
     },
     {
       "id": "small-panel-check",
@@ -764,13 +764,13 @@
     {
       "id": "medium-panel-check",
       "project": "gf2",
-      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
+      "commit": "1c3bf51488b46a35cb369d4b1fc2969d8aa75adb",
       "path": "crates/gf2-kernels-simd/src/fp_medium.rs",
-      "line": 176,
+      "line": 204,
       "occurrences": 1,
       "verbatim": "    crate::entry_check::assert_shape(\"fp_medium_gemm_panel\", \"c\", c.len(), m, n);",
       "why": "The safe entry forms the three shape products with `checked_mul`.",
-      "sha256": "c1e0b52d8f610cf64bfa3c21fc1c86be905539916d259527162c5ce96dd1e6d4"
+      "sha256": "eb434b982686c84b04f5662593e8b35f5663dbe11415e3eeaf04f8f1e9601d96"
     },
     {
       "id": "medium-f64-check",
@@ -874,13 +874,13 @@
     {
       "id": "coding-denies-unsafe",
       "project": "gf2",
-      "commit": "4168f820ebd110c45dd41f711895819702b256e8",
+      "commit": "d861a1e12618d62321359db31ecf6ec5ae178eda",
       "path": "crates/gf2-coding/src/lib.rs",
       "line": 10,
       "occurrences": 1,
       "verbatim": "#![deny(unsafe_code)]",
       "why": "`gf2-coding` cannot hold the `unsafe` block an `unsafe fn` pointer needs.",
-      "sha256": "b744884bcfb71e1add12011bf567e16bb5dc5dd2fb4464d33e42a0df08a1c5c2"
+      "sha256": "bb80aea38df63232ff4d409473374ec0b540da28fb9e64b7d6b9b3d405ef5561"
     },
     {
       "id": "core-spmm-small-call",
@@ -1193,13 +1193,13 @@
     {
       "id": "core-spmm-row-loop",
       "project": "gf2",
-      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
+      "commit": "1c3bf51488b46a35cb369d4b1fc2969d8aa75adb",
       "path": "crates/gf2-kernels-simd/src/fp_small.rs",
-      "line": 196,
+      "line": 234,
       "occurrences": 1,
       "verbatim": "        let row = a_row_ptr[r]..a_row_ptr[r + 1];",
       "why": "The row loop stands in the kernel crate, behind the check, and holds the `unsafe` call of the row kernel; the u16 lane repeats it.",
-      "sha256": "9cc02dd29a98edd88edc9f02d4cc1e25440f43659cb42b236204d3b8f1317154"
+      "sha256": "1734473f6c1e47ae42b93445259b9d3bbeddf609f25066a152d3607c4864adcc"
     },
     {
       "id": "spmm-kernel-safety",
