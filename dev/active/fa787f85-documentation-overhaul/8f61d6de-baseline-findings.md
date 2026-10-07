@@ -40,3 +40,17 @@ location (`602652bf-protocol-inputs-move.md`, section "Frozen documents").
 | `dev/active/1a379447-zen3-cpu-performance/f547c394/amendment-v4.md:31` | `broken-link` | `../../bench_results/26465e6c/v3-and-popcnt-pilot/acceptance-summary.json` |
 | `dev/active/1a379447-zen3-cpu-performance/f547c394/protocol-v1.md:5` | `broken-link` | `../1a379447-zen3-cpu-performance/measurement-contract.md` |
 | `dev/active/1a379447-zen3-cpu-performance/f547c394/protocol.md:5` | `broken-link` | `../1a379447-zen3-cpu-performance/measurement-contract.md` |
+
+Each row of the fourth table is a relative link in the frozen lane-threshold
+addendum of the `4337c02e` entry. A harness constant and the family's receipts
+hold the SHA-256 of the file, and the link text counts directory levels to the
+flat location of the entries it names.
+
+| Location | Class | Target |
+|---|---|---|
+| `dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md:16` | `broken-link` | `../../f547c394/protocol.md` |
+| `dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md:17` | `broken-link` | `../../f547c394/amendment-v4.md` |
+| `dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md:19` | `broken-link` | `../../f547c394/addendum.schema.json` |
+| `dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md:25` | `broken-link` | `../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md` |
+| `dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md:28` | `broken-link` | `../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-harness.md` |
+| `dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md:40` | `broken-link` | `../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md` |
