@@ -96,6 +96,7 @@ which lies outside `dev/` and outside the footprint.
 | `docs/` | `markdown`: `docs/**/*.md` |
 | crate READMEs | `markdown`: `crates/*/README.md` |
 | `dev/active/` Markdown | `markdown`: `dev/active/**/*.md` |
+| the two permanent pages of `dev/` | `markdown`: `dev/index.md`, `dev/authoring-conventions.md` |
 | repository-relative links in Rustdoc | `rustdoc`: `crates/**/*.rs`, `dev/tools/tuning-campaign-support/**/*.rs` |
 | excludes `dev/archive/` | `exclude`: `dev/archive` |
 
