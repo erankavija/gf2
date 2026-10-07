@@ -220,3 +220,13 @@ posterior bit patterns, hard decisions, iteration count and flags to
 `a_terminated_lane_keeps_its_posterior_while_its_wave_continues` asserts the
 terminated-lane clause, and the two `*_satisfy_the_batch_contract_on_each_route`
 tests run the shared batch contract over full, partial and empty waves.
+
+[`ldpc_batch_contract`](../../crates/gf2-coding/tests/ldpc_batch_contract.rs)
+asserts per-frame equality on each route of `LdpcBatchDecoder` over a DVB-T2
+short code (`@/citation/Etsi2015`), 5G NR mother codes of both base graphs
+(`@/citation/ThreeGpp2017`) and hand-built codes with checks of degree one, two
+and above eight. Its frames are noisy codewords whose waves mix early, late and
+non-converging frames, frames of signed zeros, saturated, extreme finite and
+non-finite LLRs, and rate-matched 5G NR frames; each set runs at the batch
+sizes around the wave boundaries, under a permutation of its frames, and with
+the other lanes of a wave holding non-converging frames.
