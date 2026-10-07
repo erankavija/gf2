@@ -1,0 +1,114 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "bfc2ceab-r1-entry-check-confirmation",
+  "issue": "bfc2ceab",
+  "label": "confirmation",
+  "campaign_seed": 2026100511,
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/addendum-v4-entry-check-confirmation.json",
+  "producing_manifest": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "current-entry": {
+      "build": "conservative-portable",
+      "description": "entry-check-arm, conservative-portable release build without a flag: the kernel crate publishes the entry points it publishes today",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bfc2ceab/target/bfc2ceab-arm/release/entry-check-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_ENTRY_FORM": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "checked-entry": {
+      "build": "conservative-portable",
+      "description": "entry-check-arm, conservative-portable release build with RUSTFLAGS `--cfg gf2_entry_checked`: the kernel crate publishes the checked entry points",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bfc2ceab/target/bfc2ceab-arm-checked/release/entry-check-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_ENTRY_FORM": "checked"
+      },
+      "rustflags": "--cfg gf2_entry_checked",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "spmm-small-n16",
+      "baseline_arm": "current-entry",
+      "candidate_arm": "checked-entry",
+      "case": {
+        "consumer": "sparse-matmat",
+        "prime": 7,
+        "rows": 1024,
+        "nonzeros_per_row": 8,
+        "dense_cols": 16,
+        "seed": 5101
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "spmm-medium-n16",
+      "baseline_arm": "current-entry",
+      "candidate_arm": "checked-entry",
+      "case": {
+        "consumer": "sparse-matmat",
+        "prime": 65521,
+        "rows": 1024,
+        "nonzeros_per_row": 8,
+        "dense_cols": 16,
+        "seed": 5103
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "permanent-f3-n14",
+      "baseline_arm": "current-entry",
+      "candidate_arm": "checked-entry",
+      "case": {
+        "consumer": "permanent-f3",
+        "n": 14,
+        "seed": 5105
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "ple-small-n128",
+      "baseline_arm": "current-entry",
+      "candidate_arm": "checked-entry",
+      "case": {
+        "consumer": "ple",
+        "prime": 7,
+        "n": 128,
+        "seed": 5106
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "gemm-small-n32",
+      "baseline_arm": "current-entry",
+      "candidate_arm": "checked-entry",
+      "case": {
+        "consumer": "gemm",
+        "prime": 7,
+        "n": 32,
+        "seed": 5108
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "gemm-medium-n32",
+      "baseline_arm": "current-entry",
+      "candidate_arm": "checked-entry",
+      "case": {
+        "consumer": "gemm",
+        "prime": 65521,
+        "n": 32,
+        "seed": 5109
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 3
+}
