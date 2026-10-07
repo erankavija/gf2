@@ -1,0 +1,2651 @@
+{
+  "schema": "caller-trusted-entry-inventory-v1",
+  "issue": "bfc2ceab",
+  "package": "gf2-kernels-simd",
+  "source_evidence": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/source-evidence.json",
+  "instruction_counts": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/instruction-counts.json",
+  "witness_runs": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/witness-runs.json",
+  "scan_rule": "An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim.",
+  "use_rule": "In every tracked Rust file outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, and outside the condition test of the checked build, which does the same, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.",
+  "counts": {
+    "safe_functions_with_an_unsafe_block": 88,
+    "entry_points": 24,
+    "pointer_types": 17,
+    "cost_classes": 4,
+    "cleared_safe_functions": 64,
+    "cleared_by_basis": {
+      "bounds-checked": 6,
+      "fixed-size": 8,
+      "hint": 1,
+      "length-derived": 17,
+      "release-assertion": 29,
+      "values-only": 3
+    },
+    "files_and_fields_using_a_pointer": 22
+  },
+  "classes": {
+    "sparse-row-index": {
+      "title": "Sparse row kernels: one index bound per stored non-zero",
+      "check": "One pass over the stored column indices of the whole product and one division, ahead of the row loop.",
+      "granularity": "per element, once per product",
+      "hoist": "The row loop stands in the kernel crate behind the check and leaves the row kernel's loops as they are: the kernel reads each index once per 16 output columns and once per remaining column.",
+      "hot_path": "yes: one scan per sparse product"
+    },
+    "ple-panel": {
+      "title": "PLE panel base kernels: window shape and inverse-table index",
+      "check": "One checked product and one comparison per call for the window shape, one comparison for the table length and one pass that requires every window entry below `p`.",
+      "granularity": "per call, plus one comparison per window entry",
+      "hoist": "The whole check stands in the safe entry point, ahead of the elimination. The kernel keeps every entry below `p`, so each pivot indexes inside the table and the kernel's pivot read stays unchecked.",
+      "hot_path": "per panel, outside the row and lane loops"
+    },
+    "packed-lengths": {
+      "title": "Packed F_3, F_5 and F_7 batch kernels: equal lengths, a multiple of four",
+      "check": "One mask test and one length comparison per further slice, per call.",
+      "granularity": "per call",
+      "hoist": "The check stands ahead of the word loop. A caller that passes four words per call runs it once per vector iteration.",
+      "hot_path": "yes for the two F_3 kernels the single-word SIMD permanent calls once per Gray step; no tracked Rust file calls the other entry points"
+    },
+    "dense-shape-product": {
+      "title": "Dense kernels: shape products that wrap",
+      "check": "`checked_mul` in place of each wrapping product the release assertions compare.",
+      "granularity": "per call",
+      "hoist": "The comparisons exist; only their products change, ahead of every loop.",
+      "hot_path": "no: once per matrix product, per row product or per demapped axis"
+    }
+  },
+  "discharges": {
+    "by-construction": "the caller builds the operands so that the condition holds in every build",
+    "forwarded": "the caller passes its own arguments on; a debug assertion or the invariant of one upstream type is all that holds the condition",
+    "wrapping": "the caller sizes its operands from the same wrapping products, so it passes the release assertions without establishing that the products fit",
+    "test-fixture": "a test, benchmark or example builds operands of the stated shape"
+  },
+  "interfaces": [
+    {
+      "id": "small-prime-spmm-row",
+      "class": "sparse-row-index",
+      "pointer_type": "fp_small::SmallPrimeSpmmFn",
+      "bundle": "fp_small::SmallPrimeFns",
+      "fields": [
+        "spmm_fn"
+      ],
+      "contract_claims": [
+        "small-spmm-type-doc",
+        "small-spmm-wrapper"
+      ],
+      "release_checked": [
+        "small-spmm-length-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "every `a_cols[h] * n + n` is at most `b.len()`, without overflow",
+          "debug_build_check": [],
+          "unchecked_access": [
+            "small-spmm-vector-read",
+            "small-spmm-tail-read"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "small-spmm",
+          "safe_function": "spmm_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_small.rs",
+          "kernel": "x86::fp_small::fp_small_spmm_row",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "spmm_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "forwarded",
+              "claims": [
+                "core-spmm-small-call",
+                "core-spmm-medium-call",
+                "core-spmm-columns-forwarded",
+                "core-spmm-debug",
+                "core-spmm-hook",
+                "core-spmm-matmat-assert",
+                "core-sparse-triplet-assert"
+              ]
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "small-prime-spmm-row",
+        "class": "sparse-row-index",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "spmm_small_current",
+              "instructions": 20,
+              "outside_panic_blocks": 20,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "spmm_small_checked",
+              "instructions": 72,
+              "outside_panic_blocks": 64,
+              "loop_bodies": [
+                7,
+                26
+              ]
+            },
+            "added": 44,
+            "added_loop_bodies": [
+              7,
+              26
+            ]
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::fp_small::fp_small_spmm_row",
+          "instructions": 147,
+          "outside_panic_blocks": 131,
+          "loop_bodies": [
+            10,
+            14,
+            21,
+            21,
+            31,
+            48,
+            84
+          ]
+        }
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_spmm",
+        "claim": "core-spmm-hook"
+      }
+    },
+    {
+      "id": "medium-prime-spmm-row",
+      "class": "sparse-row-index",
+      "pointer_type": "fp_medium::MediumPrimeSpmmFn",
+      "bundle": "fp_medium::MediumPrimeFns",
+      "fields": [
+        "spmm_fn"
+      ],
+      "contract_claims": [
+        "medium-spmm-type-doc",
+        "medium-spmm-wrapper"
+      ],
+      "release_checked": [
+        "medium-spmm-length-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "every `a_cols[h] * n + n` is at most `b.len()`, without overflow",
+          "debug_build_check": [],
+          "unchecked_access": [
+            "medium-spmm-vector-read",
+            "medium-spmm-tail-read"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "medium-spmm",
+          "safe_function": "spmm_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
+          "kernel": "x86::fp_medium::fp_medium_spmm_row",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "spmm_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "forwarded",
+              "claims": [
+                "core-spmm-small-call",
+                "core-spmm-medium-call",
+                "core-spmm-columns-forwarded",
+                "core-spmm-debug",
+                "core-spmm-hook",
+                "core-spmm-matmat-assert",
+                "core-sparse-triplet-assert"
+              ]
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "medium-prime-spmm-row",
+        "class": "sparse-row-index",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "spmm_medium_current",
+              "instructions": 20,
+              "outside_panic_blocks": 20,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "spmm_medium_checked",
+              "instructions": 71,
+              "outside_panic_blocks": 63,
+              "loop_bodies": [
+                7,
+                25
+              ]
+            },
+            "added": 43,
+            "added_loop_bodies": [
+              7,
+              25
+            ]
+          }
+        ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_spmm",
+        "claim": "core-spmm-hook"
+      }
+    },
+    {
+      "id": "small-prime-ple-panel",
+      "class": "ple-panel",
+      "pointer_type": "fp_small_ple::SmallPrimePlePanelBaseFn",
+      "bundle": "fp_small_ple::SmallPrimePlePanelFns",
+      "fields": [
+        "ple_panel_base_fn"
+      ],
+      "contract_claims": [
+        "small-ple-type-doc",
+        "small-ple-wrapper"
+      ],
+      "release_checked": [
+        "small-ple-perm-swap",
+        "small-ple-scratch-write"
+      ],
+      "conditions": [
+        {
+          "condition": "`window.len()` is `m * win`, without overflow",
+          "debug_build_check": [
+            "small-ple-window-debug"
+          ],
+          "unchecked_access": [
+            "small-ple-window-read"
+          ]
+        },
+        {
+          "condition": "every pivot value is below `inv_table.len()`",
+          "debug_build_check": [
+            "small-ple-table-debug"
+          ],
+          "unchecked_access": [
+            "small-ple-table-read"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "small-ple",
+          "safe_function": "ple_panel_base_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
+          "kernel": "x86::fp_small_ple::ple_panel_base_canonical",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "ple_panel_base_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "by-construction",
+              "claims": [
+                "core-ple-small-window",
+                "core-ple-small-table",
+                "core-ple-medium-window",
+                "core-ple-medium-table"
+              ]
+            },
+            {
+              "package": "gf2-kernels-simd",
+              "path": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
+              "field": "ple_panel_base_fn",
+              "kind": "test",
+              "calls": 2,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": []
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 2
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "small-prime-ple-panel",
+        "class": "ple-panel",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "ple_small_current",
+              "instructions": 16,
+              "outside_panic_blocks": 16,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "ple_small_checked",
+              "instructions": 42,
+              "outside_panic_blocks": 26,
+              "loop_bodies": []
+            },
+            "added": 10,
+            "added_loop_bodies": []
+          },
+          {
+            "check": "entry scan in the safe entry point",
+            "current": {
+              "symbol": "ple_small_current",
+              "instructions": 16,
+              "outside_panic_blocks": 16,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "ple_small_scan_checked",
+              "instructions": 65,
+              "outside_panic_blocks": 45,
+              "loop_bodies": [
+                6
+              ]
+            },
+            "added": 29,
+            "added_loop_bodies": [
+              6
+            ]
+          },
+          {
+            "check": "pivot inverse read",
+            "current": {
+              "symbol": "pivot_inverse_u8_current",
+              "instructions": 3,
+              "outside_panic_blocks": 3,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "pivot_inverse_u8_checked",
+              "instructions": 9,
+              "outside_panic_blocks": 6,
+              "loop_bodies": []
+            },
+            "added": 3,
+            "added_loop_bodies": []
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/fp_small_ple.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::fp_small_ple::ple_panel_base_canonical",
+          "instructions": 356,
+          "outside_panic_blocks": 341,
+          "loop_bodies": [
+            7,
+            8,
+            8,
+            8,
+            9,
+            14,
+            15,
+            18,
+            21,
+            22,
+            29,
+            35,
+            51,
+            71,
+            91,
+            141,
+            162
+          ]
+        }
+      }
+    },
+    {
+      "id": "medium-prime-ple-panel",
+      "class": "ple-panel",
+      "pointer_type": "fp_medium_ple::MediumPrimePlePanelBaseFn",
+      "bundle": "fp_medium_ple::MediumPrimePlePanelFns",
+      "fields": [
+        "ple_panel_base_fn"
+      ],
+      "contract_claims": [
+        "medium-ple-type-doc",
+        "medium-ple-wrapper"
+      ],
+      "release_checked": [
+        "medium-ple-perm-swap",
+        "medium-ple-scratch-write"
+      ],
+      "conditions": [
+        {
+          "condition": "`window.len()` is `m * win`, without overflow",
+          "debug_build_check": [
+            "medium-ple-window-debug"
+          ],
+          "unchecked_access": [
+            "medium-ple-window-read"
+          ]
+        },
+        {
+          "condition": "every pivot value is below `inv_table.len()`",
+          "debug_build_check": [
+            "medium-ple-table-debug"
+          ],
+          "unchecked_access": [
+            "medium-ple-table-read"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "medium-ple",
+          "safe_function": "ple_panel_base_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
+          "kernel": "x86::fp_medium_ple::ple_panel_base_canonical_u16",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "ple_panel_base_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "by-construction",
+              "claims": [
+                "core-ple-small-window",
+                "core-ple-small-table",
+                "core-ple-medium-window",
+                "core-ple-medium-table"
+              ]
+            },
+            {
+              "package": "gf2-kernels-simd",
+              "path": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
+              "field": "ple_panel_base_fn",
+              "kind": "test",
+              "calls": 2,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": []
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 2
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "medium-prime-ple-panel",
+        "class": "ple-panel",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "ple_medium_current",
+              "instructions": 16,
+              "outside_panic_blocks": 16,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "ple_medium_checked",
+              "instructions": 41,
+              "outside_panic_blocks": 25,
+              "loop_bodies": []
+            },
+            "added": 9,
+            "added_loop_bodies": []
+          },
+          {
+            "check": "entry scan in the safe entry point",
+            "current": {
+              "symbol": "ple_medium_current",
+              "instructions": 16,
+              "outside_panic_blocks": 16,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "ple_medium_scan_checked",
+              "instructions": 67,
+              "outside_panic_blocks": 47,
+              "loop_bodies": [
+                6
+              ]
+            },
+            "added": 31,
+            "added_loop_bodies": [
+              6
+            ]
+          },
+          {
+            "check": "pivot inverse read",
+            "current": {
+              "symbol": "pivot_inverse_u16_current",
+              "instructions": 3,
+              "outside_panic_blocks": 3,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "pivot_inverse_u16_checked",
+              "instructions": 9,
+              "outside_panic_blocks": 6,
+              "loop_bodies": []
+            },
+            "added": 3,
+            "added_loop_bodies": []
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/fp_medium_ple.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::fp_medium_ple::ple_panel_base_canonical_u16",
+          "instructions": 373,
+          "outside_panic_blocks": 359,
+          "loop_bodies": [
+            7,
+            8,
+            8,
+            9,
+            10,
+            14,
+            15,
+            15,
+            21,
+            25,
+            27,
+            32,
+            56,
+            69,
+            95,
+            161,
+            162
+          ]
+        }
+      }
+    },
+    {
+      "id": "bipedal-binary",
+      "class": "packed-lengths",
+      "pointer_type": "bipedal::BipedalBinaryKernelFn",
+      "bundle": "bipedal::BipedalAvx2Fns",
+      "fields": [
+        "add_fn",
+        "sub_fn",
+        "mul_fn"
+      ],
+      "contract_claims": [
+        "bipedal-binary-type-doc",
+        "bipedal-binary-wrapper"
+      ],
+      "release_checked": [],
+      "conditions": [
+        {
+          "condition": "the six slices share one length that is a multiple of four",
+          "debug_build_check": [
+            "bipedal-binary-debug"
+          ],
+          "unchecked_access": [
+            "bipedal-lane-load",
+            "bipedal-lane-store"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "bipedal-add",
+          "safe_function": "add_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+          "kernel": "x86::bipedal_avx2::run_add_batch::<Config3>",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-algebra",
+              "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
+              "field": "add_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "by-construction",
+              "claims": [
+                "algebra-bipedal-buffers",
+                "algebra-bipedal-loop"
+              ]
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 0
+          }
+        },
+        {
+          "id": "bipedal-sub",
+          "safe_function": "sub_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+          "kernel": "x86::bipedal_avx2::run_sub_batch::<Config3>",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-algebra",
+              "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
+              "field": "sub_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "by-construction",
+              "claims": [
+                "algebra-bipedal-buffers",
+                "algebra-bipedal-loop"
+              ]
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 0
+          }
+        },
+        {
+          "id": "bipedal-mul",
+          "safe_function": "mul_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+          "kernel": "x86::bipedal_avx2::run_mul_batch::<Config3>",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "bipedal-binary",
+        "class": "packed-lengths",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "bipedal_binary_current",
+              "instructions": 18,
+              "outside_panic_blocks": 18,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "bipedal_binary_checked",
+              "instructions": 49,
+              "outside_panic_blocks": 33,
+              "loop_bodies": []
+            },
+            "added": 15,
+            "added_loop_bodies": []
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_add_batch",
+          "instructions": 20,
+          "outside_panic_blocks": 20,
+          "loop_bodies": [
+            14
+          ]
+        }
+      },
+      "unchecked_precedent": "bipedal-unsafe-entry"
+    },
+    {
+      "id": "bipedal-unary",
+      "class": "packed-lengths",
+      "pointer_type": "bipedal::BipedalUnaryKernelFn",
+      "bundle": "bipedal::BipedalAvx2Fns",
+      "fields": [
+        "neg_fn"
+      ],
+      "contract_claims": [
+        "bipedal-unary-type-doc",
+        "bipedal-unary-wrapper"
+      ],
+      "release_checked": [],
+      "conditions": [
+        {
+          "condition": "the four slices share one length that is a multiple of four",
+          "debug_build_check": [
+            "bipedal-unary-debug"
+          ],
+          "unchecked_access": [
+            "bipedal-lane-load",
+            "bipedal-lane-store"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "bipedal-neg",
+          "safe_function": "neg_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+          "kernel": "x86::bipedal_avx2::run_neg_batch::<Config3>",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "bipedal-unary",
+        "class": "packed-lengths",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "bipedal_unary_current",
+              "instructions": 14,
+              "outside_panic_blocks": 14,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "bipedal_unary_checked",
+              "instructions": 41,
+              "outside_panic_blocks": 25,
+              "loop_bodies": []
+            },
+            "added": 11,
+            "added_loop_bodies": []
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::bipedal_avx2::run_neg_batch",
+          "instructions": 31,
+          "outside_panic_blocks": 31,
+          "loop_bodies": [
+            6
+          ]
+        }
+      },
+      "unchecked_precedent": "bipedal-unsafe-entry"
+    },
+    {
+      "id": "f5-binary",
+      "class": "packed-lengths",
+      "pointer_type": "bipedal::packed5::F5BinaryKernelFn",
+      "bundle": "bipedal::packed5::F5AvxFns",
+      "fields": [
+        "add_fn",
+        "sub_fn",
+        "mul_fn"
+      ],
+      "contract_claims": [
+        "f5-binary-type-doc",
+        "f5-binary-wrapper"
+      ],
+      "release_checked": [],
+      "conditions": [
+        {
+          "condition": "the nine slices share one length that is a multiple of four",
+          "debug_build_check": [
+            "f5-binary-debug"
+          ],
+          "unchecked_access": [
+            "f5-load",
+            "f5-store"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "f5-add",
+          "safe_function": "add5_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+          "kernel": "x86::bipedal_avx2_packed5::run_add5_batch",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        },
+        {
+          "id": "f5-sub",
+          "safe_function": "sub5_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+          "kernel": "x86::bipedal_avx2_packed5::run_sub5_batch",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        },
+        {
+          "id": "f5-mul",
+          "safe_function": "mul5_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+          "kernel": "x86::bipedal_avx2_packed5::run_mul5_batch",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "f5-binary",
+        "class": "packed-lengths",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "f5_binary_current",
+              "instructions": 24,
+              "outside_panic_blocks": 24,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "f5_binary_checked",
+              "instructions": 61,
+              "outside_panic_blocks": 45,
+              "loop_bodies": []
+            },
+            "added": 21,
+            "added_loop_bodies": []
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_add5_batch",
+          "instructions": 82,
+          "outside_panic_blocks": 82,
+          "loop_bodies": [
+            68
+          ]
+        }
+      }
+    },
+    {
+      "id": "f5-unary",
+      "class": "packed-lengths",
+      "pointer_type": "bipedal::packed5::F5UnaryKernelFn",
+      "bundle": "bipedal::packed5::F5AvxFns",
+      "fields": [
+        "neg_fn"
+      ],
+      "contract_claims": [
+        "f5-unary-type-doc",
+        "f5-unary-wrapper"
+      ],
+      "release_checked": [],
+      "conditions": [
+        {
+          "condition": "the six slices share one length that is a multiple of four",
+          "debug_build_check": [
+            "f5-unary-debug"
+          ],
+          "unchecked_access": [
+            "f5-load",
+            "f5-store"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "f5-neg",
+          "safe_function": "neg5_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
+          "kernel": "x86::bipedal_avx2_packed5::run_neg5_batch",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "f5-unary",
+        "class": "packed-lengths",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "f5_unary_current",
+              "instructions": 18,
+              "outside_panic_blocks": 18,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "f5_unary_checked",
+              "instructions": 49,
+              "outside_panic_blocks": 33,
+              "loop_bodies": []
+            },
+            "added": 15,
+            "added_loop_bodies": []
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed5.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed5::run_neg5_batch",
+          "instructions": 22,
+          "outside_panic_blocks": 22,
+          "loop_bodies": [
+            16
+          ]
+        }
+      }
+    },
+    {
+      "id": "f7-binary",
+      "class": "packed-lengths",
+      "pointer_type": "bipedal::packed7::F7BinaryKernelFn",
+      "bundle": "bipedal::packed7::F7AvxFns",
+      "fields": [
+        "add_fn",
+        "sub_fn",
+        "mul_fn"
+      ],
+      "contract_claims": [
+        "f7-binary-type-doc",
+        "f7-binary-wrapper"
+      ],
+      "release_checked": [],
+      "conditions": [
+        {
+          "condition": "the three slices share one length that is a multiple of four",
+          "debug_build_check": [
+            "f7-debug"
+          ],
+          "unchecked_access": [
+            "f7-load",
+            "f7-store"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "f7-add",
+          "safe_function": "add7_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+          "kernel": "x86::bipedal_avx2_packed7::run_add7_batch",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        },
+        {
+          "id": "f7-sub",
+          "safe_function": "sub7_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+          "kernel": "x86::bipedal_avx2_packed7::run_sub7_batch",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        },
+        {
+          "id": "f7-mul",
+          "safe_function": "mul7_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+          "kernel": "x86::bipedal_avx2_packed7::run_mul7_batch",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "f7-binary",
+        "class": "packed-lengths",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "f7_binary_current",
+              "instructions": 9,
+              "outside_panic_blocks": 9,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "f7_binary_checked",
+              "instructions": 37,
+              "outside_panic_blocks": 21,
+              "loop_bodies": []
+            },
+            "added": 12,
+            "added_loop_bodies": []
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_add7_batch",
+          "instructions": 414,
+          "outside_panic_blocks": 414,
+          "loop_bodies": [
+            390
+          ]
+        }
+      }
+    },
+    {
+      "id": "f7-unary",
+      "class": "packed-lengths",
+      "pointer_type": "bipedal::packed7::F7UnaryKernelFn",
+      "bundle": "bipedal::packed7::F7AvxFns",
+      "fields": [
+        "neg_fn"
+      ],
+      "contract_claims": [
+        "f7-unary-type-doc",
+        "f7-unary-wrapper"
+      ],
+      "release_checked": [],
+      "conditions": [
+        {
+          "condition": "the two slices share one length that is a multiple of four",
+          "debug_build_check": [
+            "f7-debug"
+          ],
+          "unchecked_access": [
+            "f7-load",
+            "f7-store"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "f7-neg",
+          "safe_function": "neg7_safe",
+          "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+          "kernel": "x86::bipedal_avx2_packed7::run_neg7_batch",
+          "witness_call_ends": "exit status 101",
+          "callers": [],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "f7-unary",
+        "class": "packed-lengths",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "f7_unary_current",
+              "instructions": 6,
+              "outside_panic_blocks": 6,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "f7_unary_checked",
+              "instructions": 32,
+              "outside_panic_blocks": 16,
+              "loop_bodies": []
+            },
+            "added": 10,
+            "added_loop_bodies": []
+          }
+        ],
+        "kernel": {
+          "listing": "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2_packed7.asm.txt",
+          "symbol": "gf2_kernels_simd::x86::bipedal_avx2_packed7::run_neg7_batch",
+          "instructions": 202,
+          "outside_panic_blocks": 202,
+          "loop_bodies": [
+            191
+          ]
+        }
+      }
+    },
+    {
+      "id": "small-prime-gemm-row-panel",
+      "class": "dense-shape-product",
+      "pointer_type": "fp_small::SmallPrimeGemmRowPanelFn",
+      "bundle": "fp_small::SmallPrimeFns",
+      "fields": [
+        "gemm_row_panel_fn"
+      ],
+      "contract_claims": [
+        "row-panel-check"
+      ],
+      "release_checked": [
+        "row-panel-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "`n * k` does not overflow `usize`",
+          "debug_build_check": [
+            "row-panel-assert"
+          ],
+          "unchecked_access": [
+            "row-panel-read"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "gemm-row-panel",
+          "safe_function": "gemm_row_panel_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_small.rs",
+          "kernel": "x86::fp_small::fp_small_gemm_row_panel",
+          "witness_call_ends": null,
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "gemm_row_panel_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "wrapping",
+              "claims": [
+                "core-gemm-row-loop",
+                "core-gemm-row-scratch",
+                "core-gemm-small-debug"
+              ]
+            },
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "gemm_row_panel_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "forwarded",
+              "claims": [
+                "core-matvec-call",
+                "core-matvec-pack-debug"
+              ]
+            }
+          ],
+          "call_sites": {
+            "production": 2,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "small-prime-gemm-row-panel",
+        "class": "dense-shape-product",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "gemm_row_panel_current",
+              "instructions": 16,
+              "outside_panic_blocks": 16,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "gemm_row_panel_checked",
+              "instructions": 54,
+              "outside_panic_blocks": 32,
+              "loop_bodies": []
+            },
+            "added": 16,
+            "added_loop_bodies": []
+          }
+        ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
+      },
+      "witness": {
+        "dimensions": {
+          "k": "2^32",
+          "n": "2^32"
+        },
+        "operand_lengths_passing_the_assertions": {
+          "a": "2^32",
+          "bt": "0",
+          "out": "2^32"
+        },
+        "short_operand": "bt",
+        "elements_the_dimensions_describe": "2^64"
+      }
+    },
+    {
+      "id": "small-prime-panel-gemm",
+      "class": "dense-shape-product",
+      "pointer_type": "fp_small_panel::SmallPrimePanelGemmFn",
+      "bundle": "fp_small_panel::SmallPrimePanelFns",
+      "fields": [
+        "batch_gemm_fn"
+      ],
+      "contract_claims": [
+        "small-panel-check"
+      ],
+      "release_checked": [
+        "small-panel-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "`m * k`, `n * k` and `m * n` do not overflow `usize`",
+          "debug_build_check": [
+            "small-panel-assert"
+          ],
+          "unchecked_access": [
+            "small-panel-write"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "small-panel-gemm",
+          "safe_function": "batch_gemm_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
+          "kernel": "x86::fp_small_panel::fp_small_panel_gemm",
+          "witness_call_ends": null,
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "batch_gemm_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "wrapping",
+              "claims": [
+                "core-gemm-u8-scratch",
+                "core-gemm-f32-direct",
+                "core-gemm-f64-scratch",
+                "core-gemm-small-debug",
+                "core-gemm-medium-debug",
+                "core-gemm-hook"
+              ]
+            },
+            {
+              "package": "gf2-kernels-simd",
+              "path": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
+              "field": "batch_gemm_fn",
+              "kind": "test",
+              "calls": 2,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": []
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 2
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "small-prime-panel-gemm",
+        "class": "dense-shape-product",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "small_panel_gemm_current",
+              "instructions": 18,
+              "outside_panic_blocks": 18,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "small_panel_gemm_checked",
+              "instructions": 80,
+              "outside_panic_blocks": 58,
+              "loop_bodies": []
+            },
+            "added": 40,
+            "added_loop_bodies": []
+          }
+        ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
+      },
+      "witness": {
+        "dimensions": {
+          "m": "2^40",
+          "k": "1",
+          "n": "2^24"
+        },
+        "operand_lengths_passing_the_assertions": {
+          "a": "2^40",
+          "bt": "2^24",
+          "c": "0"
+        },
+        "short_operand": "c",
+        "elements_the_dimensions_describe": "2^64"
+      }
+    },
+    {
+      "id": "small-prime-f32-gemm",
+      "class": "dense-shape-product",
+      "pointer_type": "fp_small_f32::SmallPrimeF32GemmFn",
+      "bundle": "fp_small_f32::SmallPrimeF32Fns",
+      "fields": [
+        "batch_gemm_fn",
+        "batch_gemm_route_a_fn"
+      ],
+      "contract_claims": [
+        "small-f32-check",
+        "small-f32-route-a-check"
+      ],
+      "release_checked": [
+        "small-f32-assert",
+        "small-f32-route-a-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "`m * k`, `n * k` and `m * n` do not overflow `usize`",
+          "debug_build_check": [
+            "small-f32-assert",
+            "small-f32-route-a-assert"
+          ],
+          "unchecked_access": [
+            "small-f32-pack-read"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "small-f32-gemm",
+          "safe_function": "batch_gemm_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+          "kernel": "x86::fp_small_f32::fp_small_f32_gemm",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "batch_gemm_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "wrapping",
+              "claims": [
+                "core-gemm-u8-scratch",
+                "core-gemm-f32-direct",
+                "core-gemm-f64-scratch",
+                "core-gemm-small-debug",
+                "core-gemm-medium-debug",
+                "core-gemm-hook"
+              ]
+            },
+            {
+              "package": "gf2-kernels-simd",
+              "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+              "field": "batch_gemm_fn",
+              "kind": "test",
+              "calls": 2,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": []
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 2
+          }
+        },
+        {
+          "id": "small-f32-gemm-route-a",
+          "safe_function": "batch_gemm_route_a_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+          "kernel": "x86::fp_small_f32::fp_small_f32_gemm_route_a",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "batch_gemm_route_a_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "wrapping",
+              "claims": [
+                "core-gemm-f32-scratch",
+                "core-gemm-small-debug",
+                "core-gemm-hook"
+              ]
+            },
+            {
+              "package": "gf2-kernels-simd",
+              "path": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+              "field": "batch_gemm_route_a_fn",
+              "kind": "test",
+              "calls": 1,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": []
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 1
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "small-prime-f32-gemm",
+        "class": "dense-shape-product",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "small_f32_gemm_current",
+              "instructions": 18,
+              "outside_panic_blocks": 18,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "small_f32_gemm_checked",
+              "instructions": 80,
+              "outside_panic_blocks": 58,
+              "loop_bodies": []
+            },
+            "added": 40,
+            "added_loop_bodies": []
+          }
+        ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
+      },
+      "witness": {
+        "dimensions": {
+          "m": "2^63",
+          "k": "2",
+          "n": "2"
+        },
+        "operand_lengths_passing_the_assertions": {
+          "a": "0",
+          "bt": "4",
+          "c": "0"
+        },
+        "short_operand": "a",
+        "elements_the_dimensions_describe": "2^64"
+      }
+    },
+    {
+      "id": "medium-prime-gemm-panel",
+      "class": "dense-shape-product",
+      "pointer_type": "fp_medium::MediumPrimeGemmPanelFn",
+      "bundle": "fp_medium::MediumPrimeFns",
+      "fields": [
+        "gemm_panel_fn"
+      ],
+      "contract_claims": [
+        "medium-panel-check"
+      ],
+      "release_checked": [
+        "medium-panel-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "`m * k`, `n * k` and `m * n` do not overflow `usize`",
+          "debug_build_check": [
+            "medium-panel-assert"
+          ],
+          "unchecked_access": [
+            "medium-panel-pack-read"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "medium-gemm-panel",
+          "safe_function": "gemm_panel_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
+          "kernel": "x86::fp_medium::fp_medium_gemm_panel",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "gemm_panel_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "wrapping",
+              "claims": [
+                "core-gemm-u16-scratch",
+                "core-gemm-medium-debug",
+                "core-gemm-hook"
+              ]
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 0
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "medium-prime-gemm-panel",
+        "class": "dense-shape-product",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "medium_panel_gemm_current",
+              "instructions": 18,
+              "outside_panic_blocks": 18,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "medium_panel_gemm_checked",
+              "instructions": 79,
+              "outside_panic_blocks": 57,
+              "loop_bodies": []
+            },
+            "added": 39,
+            "added_loop_bodies": []
+          }
+        ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
+      },
+      "witness": {
+        "dimensions": {
+          "m": "2^63",
+          "k": "2",
+          "n": "2"
+        },
+        "operand_lengths_passing_the_assertions": {
+          "a": "0",
+          "bt": "4",
+          "c": "0"
+        },
+        "short_operand": "a",
+        "elements_the_dimensions_describe": "2^64"
+      }
+    },
+    {
+      "id": "medium-prime-f64-gemm",
+      "class": "dense-shape-product",
+      "pointer_type": "fp_medium_f64::FpMediumF64GemmFn",
+      "bundle": "fp_medium_f64::FpMediumF64Fns",
+      "fields": [
+        "batch_gemm_fn"
+      ],
+      "contract_claims": [
+        "medium-f64-check"
+      ],
+      "release_checked": [
+        "medium-f64-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "`m * k`, `n * k` and `m * n` do not overflow `usize`",
+          "debug_build_check": [
+            "medium-f64-assert"
+          ],
+          "unchecked_access": [
+            "medium-f64-pack-read"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "medium-f64-gemm",
+          "safe_function": "batch_gemm_safe",
+          "module": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
+          "kernel": "x86::fp_medium_f64::fp_medium_f64_gemm",
+          "witness_call_ends": "exit status 101",
+          "callers": [
+            {
+              "package": "gf2-core",
+              "path": "crates/gf2-core/src/gfp/simd_ops.rs",
+              "field": "batch_gemm_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "wrapping",
+              "claims": [
+                "core-gemm-u8-scratch",
+                "core-gemm-f32-direct",
+                "core-gemm-f64-scratch",
+                "core-gemm-small-debug",
+                "core-gemm-medium-debug",
+                "core-gemm-hook"
+              ]
+            },
+            {
+              "package": "gf2-kernels-simd",
+              "path": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
+              "field": "batch_gemm_fn",
+              "kind": "test",
+              "calls": 2,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": []
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 0,
+            "test": 2
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "medium-prime-f64-gemm",
+        "class": "dense-shape-product",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "medium_f64_gemm_current",
+              "instructions": 18,
+              "outside_panic_blocks": 18,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "medium_f64_gemm_checked",
+              "instructions": 79,
+              "outside_panic_blocks": 57,
+              "loop_bodies": []
+            },
+            "added": 39,
+            "added_loop_bodies": []
+          }
+        ]
+      },
+      "forwarding_hook": {
+        "hook": "FiniteField::try_simd_gemm_classical",
+        "claim": "core-gemm-hook"
+      },
+      "witness": {
+        "dimensions": {
+          "m": "2^63",
+          "k": "2",
+          "n": "2"
+        },
+        "operand_lengths_passing_the_assertions": {
+          "a": "0",
+          "bt": "4",
+          "c": "0"
+        },
+        "short_operand": "a",
+        "elements_the_dimensions_describe": "2^64"
+      }
+    },
+    {
+      "id": "pam-distances-f32",
+      "class": "dense-shape-product",
+      "pointer_type": "modem::PamSqDistancesF32Fn",
+      "bundle": "modem::GrayPamDistanceFnsF32",
+      "fields": [
+        "pam_sq_distances_fn"
+      ],
+      "contract_claims": [
+        "pam-check"
+      ],
+      "release_checked": [
+        "pam-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "`z.len() * pam_levels.len()` does not overflow `usize`",
+          "debug_build_check": [
+            "pam-assert"
+          ],
+          "unchecked_access": [
+            "pam-f32-store"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "pam-f32",
+          "safe_function": "pam_sq_distances_f32_avx2_safe",
+          "module": "crates/gf2-kernels-simd/src/modem.rs",
+          "kernel": "modem::avx2::pam_sq_distances_f32_avx2",
+          "witness_call_ends": null,
+          "callers": [
+            {
+              "package": "gf2-kernels-simd",
+              "path": "crates/gf2-kernels-simd/src/modem.rs",
+              "field": "pam_sq_distances_fn",
+              "kind": "test",
+              "calls": 4,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": []
+            }
+          ],
+          "call_sites": {
+            "production": 0,
+            "bench": 0,
+            "test": 4
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "pam-distances-f32",
+        "class": "dense-shape-product",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "pam_f32_current",
+              "instructions": 16,
+              "outside_panic_blocks": 16,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "pam_f32_checked",
+              "instructions": 56,
+              "outside_panic_blocks": 34,
+              "loop_bodies": []
+            },
+            "added": 18,
+            "added_loop_bodies": []
+          }
+        ]
+      },
+      "witness": {
+        "dimensions": {
+          "symbols": "2^32",
+          "levels": "2^32"
+        },
+        "operand_lengths_passing_the_assertions": {
+          "z": "2^32",
+          "pam_levels": "2^32",
+          "out": "0"
+        },
+        "short_operand": "out",
+        "elements_the_dimensions_describe": "2^64"
+      }
+    },
+    {
+      "id": "pam-distances-f64",
+      "class": "dense-shape-product",
+      "pointer_type": "modem::PamSqDistancesF64Fn",
+      "bundle": "modem::GrayPamDistanceFnsF64",
+      "fields": [
+        "pam_sq_distances_fn"
+      ],
+      "contract_claims": [
+        "pam-check"
+      ],
+      "release_checked": [
+        "pam-assert"
+      ],
+      "conditions": [
+        {
+          "condition": "`z.len() * pam_levels.len()` does not overflow `usize`",
+          "debug_build_check": [
+            "pam-assert"
+          ],
+          "unchecked_access": [
+            "pam-f64-store"
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "id": "pam-f64",
+          "safe_function": "pam_sq_distances_f64_avx2_safe",
+          "module": "crates/gf2-kernels-simd/src/modem.rs",
+          "kernel": "modem::avx2::pam_sq_distances_f64_avx2",
+          "witness_call_ends": null,
+          "callers": [
+            {
+              "package": "gf2-coding",
+              "path": "crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs",
+              "field": "pam_sq_distances_fn",
+              "kind": "production",
+              "calls": 1,
+              "denies_unsafe_code": true,
+              "discharge": "wrapping",
+              "claims": [
+                "coding-pam-output"
+              ]
+            },
+            {
+              "package": "gf2-coding",
+              "path": "crates/gf2-coding/benches/cpu_dispatch_probe.rs",
+              "field": "pam_sq_distances_fn",
+              "kind": "bench",
+              "calls": 1,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": [
+                "coding-pam-bench-output"
+              ]
+            },
+            {
+              "package": "gf2-kernels-simd",
+              "path": "crates/gf2-kernels-simd/src/modem.rs",
+              "field": "pam_sq_distances_fn",
+              "kind": "test",
+              "calls": 2,
+              "denies_unsafe_code": false,
+              "discharge": "test-fixture",
+              "claims": []
+            }
+          ],
+          "call_sites": {
+            "production": 1,
+            "bench": 1,
+            "test": 2
+          }
+        }
+      ],
+      "checked_form": {
+        "interface": "pam-distances-f64",
+        "class": "dense-shape-product",
+        "pairs": [
+          {
+            "check": "safe entry point",
+            "current": {
+              "symbol": "pam_f64_current",
+              "instructions": 16,
+              "outside_panic_blocks": 16,
+              "loop_bodies": []
+            },
+            "checked": {
+              "symbol": "pam_f64_checked",
+              "instructions": 56,
+              "outside_panic_blocks": 34,
+              "loop_bodies": []
+            },
+            "added": 18,
+            "added_loop_bodies": []
+          }
+        ]
+      },
+      "witness": {
+        "dimensions": {
+          "symbols": "2^32",
+          "levels": "2^32"
+        },
+        "operand_lengths_passing_the_assertions": {
+          "z": "2^32",
+          "pam_levels": "2^32",
+          "out": "0"
+        },
+        "short_operand": "out",
+        "elements_the_dimensions_describe": "2^64"
+      }
+    }
+  ],
+  "cleared": [
+    {
+      "module": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "safe_function": "bitslice_reduce_avx2_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-bch-encode-bitslice-reduce-avx2-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/bch_encode.rs",
+      "safe_function": "fold_block_pclmul_safe",
+      "basis": "bounds-checked",
+      "claim": "cleared-bch-encode-fold-block-pclmul-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
+      "safe_function": "permanent4_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-bipedal-mod-permanent4-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp65537.rs",
+      "safe_function": "batch_mul_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp65537-batch-mul-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp65537.rs",
+      "safe_function": "batch_add_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp65537-batch-add-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp65537.rs",
+      "safe_function": "batch_sub_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp65537-batch-sub-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp65537.rs",
+      "safe_function": "batch_karatsuba_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp65537-batch-karatsuba-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp65537.rs",
+      "safe_function": "batch_cubic_karatsuba_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp65537-batch-cubic-karatsuba-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_generic.rs",
+      "safe_function": "batch_mul_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-generic-batch-mul-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_generic.rs",
+      "safe_function": "batch_add_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-generic-batch-add-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_generic.rs",
+      "safe_function": "batch_sub_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-generic-batch-sub-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
+      "safe_function": "batch_mul_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-medium-batch-mul-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
+      "safe_function": "batch_add_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-medium-batch-add-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
+      "safe_function": "batch_sub_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-medium-batch-sub-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
+      "safe_function": "batch_dot_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-medium-batch-dot-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_small.rs",
+      "safe_function": "batch_mul_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-small-batch-mul-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_small.rs",
+      "safe_function": "batch_add_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-small-batch-add-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_small.rs",
+      "safe_function": "batch_sub_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-small-batch-sub-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_small.rs",
+      "safe_function": "batch_dot_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-small-batch-dot-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/fp_small.rs",
+      "safe_function": "sub_scaled_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-fp-small-sub-scaled-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "safe_function": "clmul_u64_safe",
+      "basis": "values-only",
+      "claim": "cleared-gf2m-clmul-u64-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "safe_function": "clmul_batch_safe",
+      "basis": "bounds-checked",
+      "claim": "cleared-gf2m-clmul-batch-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "safe_function": "clmul_batch_ymm_safe",
+      "basis": "bounds-checked",
+      "claim": "cleared-gf2m-clmul-batch-ymm-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "safe_function": "clmul_barrett_reduce_safe",
+      "basis": "values-only",
+      "claim": "cleared-gf2m-clmul-barrett-reduce-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "safe_function": "gf2m_mul_pclmul_safe",
+      "basis": "values-only",
+      "claim": "cleared-gf2m-gf2m-mul-pclmul-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+      "safe_function": "gf2m_batch_mul_ymm_unroll4_safe",
+      "basis": "bounds-checked",
+      "claim": "cleared-gf2m-batch-gf2m-batch-mul-ymm-unroll4-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+      "safe_function": "gf2m_batch_square_ymm_unroll4_safe",
+      "basis": "bounds-checked",
+      "claim": "cleared-gf2m-batch-gf2m-batch-square-ymm-unroll4-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m_gemm.rs",
+      "safe_function": "gf2m_gemm_panelized_safe",
+      "basis": "bounds-checked",
+      "claim": "cleared-gf2m-gemm-gf2m-gemm-panelized-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+      "safe_function": "clmul_wide4_xmm_safe",
+      "basis": "fixed-size",
+      "claim": "cleared-gf2m-wide-clmul-wide4-xmm-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+      "safe_function": "clmul_wide4_ymm_safe",
+      "basis": "fixed-size",
+      "claim": "cleared-gf2m-wide-clmul-wide4-ymm-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+      "safe_function": "clmul_wide9_xmm_safe",
+      "basis": "fixed-size",
+      "claim": "cleared-gf2m-wide-clmul-wide9-xmm-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+      "safe_function": "clmul_wide9_ymm_safe",
+      "basis": "fixed-size",
+      "claim": "cleared-gf2m-wide-clmul-wide9-ymm-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/llr.rs",
+      "safe_function": "minsum_avx2_f32_safe",
+      "basis": "length-derived",
+      "claim": "cleared-llr-minsum-avx2-f32-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/llr.rs",
+      "safe_function": "maxabs_avx2_f32_safe",
+      "basis": "length-derived",
+      "claim": "cleared-llr-maxabs-avx2-f32-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/llr.rs",
+      "safe_function": "minsum_avx2_f64_safe",
+      "basis": "length-derived",
+      "claim": "cleared-llr-minsum-avx2-f64-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/llr.rs",
+      "safe_function": "maxabs_avx2_f64_safe",
+      "basis": "length-derived",
+      "claim": "cleared-llr-maxabs-avx2-f64-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/mersenne.rs",
+      "safe_function": "m31_batch_mul_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-mersenne-m31-batch-mul-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/mersenne.rs",
+      "safe_function": "m31_batch_mul_add_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-mersenne-m31-batch-mul-add-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/mersenne.rs",
+      "safe_function": "m31_batch_dot_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-mersenne-m31-batch-dot-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/prefetch.rs",
+      "safe_function": "prefetch_read_l1",
+      "basis": "hint",
+      "claim": "cleared-prefetch-prefetch-read-l1"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/shift_funnel.rs",
+      "safe_function": "shift_left_funnel_bmi2_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-shift-funnel-shift-left-funnel-bmi2-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/shift_funnel.rs",
+      "safe_function": "shift_right_funnel_bmi2_safe",
+      "basis": "release-assertion",
+      "claim": "cleared-shift-funnel-shift-right-funnel-bmi2-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/transpose.rs",
+      "safe_function": "transpose_64x64_avx2_safe",
+      "basis": "fixed-size",
+      "claim": "cleared-transpose-transpose-64x64-avx2-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/transpose.rs",
+      "safe_function": "transpose_64x64_avx2_ymm6_safe",
+      "basis": "fixed-size",
+      "claim": "cleared-transpose-transpose-64x64-avx2-ymm6-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/transpose.rs",
+      "safe_function": "transpose_64x64_avx2_pshufb_safe",
+      "basis": "fixed-size",
+      "claim": "cleared-transpose-transpose-64x64-avx2-pshufb-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/transpose.rs",
+      "safe_function": "transpose_64x64_avx2_movemask_safe",
+      "basis": "fixed-size",
+      "claim": "cleared-transpose-transpose-64x64-avx2-movemask-safe"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "and_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-and-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "or_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-or-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "xor_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-xor-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "m4rm_gray_xor16_fn",
+      "basis": "release-assertion",
+      "claim": "cleared-x86-avx2-m4rm-gray-xor16-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "m4rm_gray_build4_fn",
+      "basis": "release-assertion",
+      "claim": "cleared-x86-avx2-m4rm-gray-build4-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "m4rm_gray_build8_fn",
+      "basis": "release-assertion",
+      "claim": "cleared-x86-avx2-m4rm-gray-build8-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "m4rm_tile8x4_fn",
+      "basis": "release-assertion",
+      "claim": "cleared-x86-avx2-m4rm-tile8x4-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "m4rm_tile8xn_fn",
+      "basis": "release-assertion",
+      "claim": "cleared-x86-avx2-m4rm-tile8xn-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "not_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-not-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "popcnt_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-popcnt-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "and_popcnt_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-and-popcnt-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "popcnt_csa_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-popcnt-csa-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "and_popcnt_csa_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-and-popcnt-csa-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "popcnt_instruction_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-popcnt-instruction-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "find_first_one_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-find-first-one-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "find_first_zero_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-find-first-zero-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "shift_left_words_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-shift-left-words-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "shift_right_words_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-shift-right-words-fn"
+    }
+  ],
+  "bases": {
+    "release-assertion": "A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
+    "length-derived": "Every access index derives from the lengths of the slices the call passes.",
+    "fixed-size": "Every operand is a value or a fixed-size array reference.",
+    "values-only": "Every argument is a value.",
+    "bounds-checked": "Every slice access is bounds-checked; the only unsafe operations take values.",
+    "hint": "The instruction is a cache hint that dereferences nothing."
+  },
+  "uses_outside_the_inventory": [
+    {
+      "path": "crates/gf2-coding/benches/cpu_dispatch_probe.rs",
+      "field": "pam_sq_distances_fn",
+      "uses": 1,
+      "reason": "`scalar_fns_f64`, the scalar implementation, which holds no `unsafe` block"
+    },
+    {
+      "path": "crates/gf2-core/src/gf2m/batch.rs",
+      "field": "mul_fn",
+      "uses": 1,
+      "reason": "`Gf2mBatchFns::mul_fn`, a GF(2^m) bundle outside the inventory"
+    },
+    {
+      "path": "crates/gf2-core/src/gf2m/field.rs",
+      "field": "mul_fn",
+      "uses": 1,
+      "reason": "`Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory"
+    },
+    {
+      "path": "crates/gf2-core/benches/gf2m_mul_strategies.rs",
+      "field": "mul_fn",
+      "uses": 1,
+      "reason": "`Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/gf2m.rs",
+      "field": "mul_fn",
+      "uses": 6,
+      "reason": "`Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory"
+    },
+    {
+      "path": "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+      "field": "mul_fn",
+      "uses": 3,
+      "reason": "`Gf2mBatchFns::mul_fn`, a GF(2^m) bundle outside the inventory"
+    }
+  ],
+  "decisions": {
+    "record": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/decisions.json",
+    "decided_by": "invoker",
+    "decided_on": "2026-10-07",
+    "ruling": "Checked safe entries (option a) for every interface whose check is recorded not-worse; for the two sparse-row interfaces (SmallPrimeSpmmRowFn, MediumPrimeSpmmRowFn) hoist the check: an `unsafe fn ..._unchecked` row kernel inside gf2-kernels-simd plus one safe entry that validates column indices once per product, or reliance on the sparse type's constructor invariant if it guarantees `col < cols`. Fallback, also approved: if the call-site analysis shows no sound coarser grain, keep the per-row check and record the measured cost as accepted under REQ-04.",
+    "later_rulings": [
+      {
+        "decided_by": "invoker",
+        "decided_on": "2026-10-07",
+        "ruling": "REQ-04 for the hoisted sparse form: a new single-purpose family, pilot and then confirmation in consecutive benchmark windows; arms are the hoisted checked form of the tree against the unchecked baseline, the baseline built inside the arm crate from the kernel crate's own `unsafe` row kernel driven by the pre-change row loop, so both arms come from one tree and one closure."
+      }
+    ],
+    "classes": {
+      "sparse-row-index": {
+        "option": "b",
+        "grain": "per-product",
+        "cost": "the per-row form's measured cost is not accepted; the per-product form replaces it",
+        "basis": "The confirmation records the per-row form of the check as a regression on both interfaces, which contradicts the family's non-regression criterion for that form. The one production caller forwards column indices from a safe public hook and cannot hold an `unsafe` block, so the row loop stands in the kernel crate behind one check per product."
+      },
+      "ple-panel": {
+        "option": "a",
+        "cost": "measured cost recorded as accepted",
+        "basis": "The shape check is one product per panel and the entry scan one pass over the window, both ahead of the elimination; the two production callers meet both conditions by construction."
+      },
+      "packed-lengths": {
+        "option": "a",
+        "cost": "measured cost recorded as accepted",
+        "basis": "The check is a handful of comparisons per call. No tracked Rust file calls the F_5, F_7, F_3 mul and F_3 neg pointers. The F_3 add and sub pointers are called once per Gray step with four words, which puts the check beside one vector iteration; the crate publishes the unchecked form of those kernels as `unsafe fn` items."
+      },
+      "dense-shape-product": {
+        "option": "a",
+        "cost": "measured cost recorded as accepted",
+        "basis": "The kernels' assertions compare with a wrapping product; `checked_mul` in the safe entry closes the gap once per call. The calling dispatchers size their operands from the same wrapping products, and no production caller can hold an `unsafe` block."
+      }
+    }
+  },
+  "check_grains": {
+    "class": "sparse-row-index",
+    "position": {
+      "text": "The safe entry of each lane checks the column indices once per product, ahead of its row loop: one pass over the whole index array and one division. The row loop stands in the kernel crate behind that check and holds the `unsafe` call of the row kernel, whose Safety section states the column bound. `gf2-core` calls the entry once per product.",
+      "claims": [
+        "small-spmm-wrapper",
+        "medium-spmm-wrapper",
+        "entry-check-row-scan",
+        "core-spmm-row-loop",
+        "spmm-kernel-safety",
+        "core-spmm-small-call",
+        "core-spmm-medium-call"
+      ]
+    },
+    "options": [
+      {
+        "id": "per-product",
+        "title": "unchecked row kernel behind one checked entry per product",
+        "state": "in the tree",
+        "design": "The row kernel is an `unsafe fn` of the kernel crate with the column bound under Safety. One safe entry per lane takes the CSR arrays and the dense operand, checks the largest index of the whole index array once against `b.len()` and `n`, and holds the row loop with its `// SAFETY:` comment. `fp_try_spmm` converts the operands and the whole product between the field type and the lane type around one call.",
+        "check": "once per product, ahead of the row loop",
+        "constraint": "none",
+        "measured": false,
+        "claims": [
+          "small-spmm-wrapper",
+          "medium-spmm-wrapper",
+          "core-spmm-row-loop",
+          "spmm-kernel-safety",
+          "core-denies-unsafe"
+        ],
+        "sites": [
+          "`spmm_safe` of `crates/gf2-kernels-simd/src/fp_small.rs`",
+          "`spmm_safe` of `crates/gf2-kernels-simd/src/fp_medium.rs`",
+          "`spmm_fn` in `crates/gf2-core/src/gfp/simd_ops.rs`: 2 calls"
+        ]
+      },
+      {
+        "id": "per-row",
+        "title": "check in a safe row entry",
+        "state": "in the tree the family measured",
+        "design": "A safe row entry runs the column check on every call: one pass over the row's indices, one subtraction and one division. The row loop stands in `gf2-core`, which calls the entry once per non-empty sparse row.",
+        "check": "once per sparse row, inside the row loop of `gf2-core`",
+        "constraint": "The confirmation records this form as a regression on both lanes.",
+        "measured": true,
+        "claims": [
+          "measured-row-check",
+          "measured-row-division",
+          "measured-row-loop"
+        ],
+        "sites": []
+      },
+      {
+        "id": "construction",
+        "title": "bound held by the sparse matrix type",
+        "state": "not built",
+        "design": "Every constructor of `SparseFieldMatrix` yields column indices below its column count (the constructor table), no method takes the matrix by `&mut self`, the index field is private, the raw parts leave as shared borrows, and `matmat` asserts the column count against the rows of the dense operand before the hook. A product that starts at `matmat` therefore meets the bound, and the per-product check never fires for it.",
+        "check": "at construction; none per product",
+        "constraint": "The bound does not reach the kernel as a type: the hook is a safe public trait method over plain slices, and the type's documentation does not state the bound. Relying on it in place of the per-product check takes a hook that receives the matrix type or is unreachable from outside the crate, the bound stated as an invariant of the type, and an `unsafe` call of the row kernel in `gf2-core`, which denies `unsafe_code`.",
+        "measured": false,
+        "claims": [
+          "core-sparse-private-fields",
+          "core-sparse-raw-parts",
+          "core-spmm-matmat-assert",
+          "core-spmm-hook-call",
+          "core-spmm-hook",
+          "core-sparse-type-doc",
+          "core-denies-unsafe"
+        ],
+        "sites": [
+          "`try_simd_spmm` in `crates/gf2-core/src/field/sparse_matrix.rs`: 1 call",
+          "`try_simd_spmm` in `crates/gf2-core/src/field/traits.rs`: 1 definition",
+          "`try_simd_spmm` in `crates/gf2-core/src/gfp/mod.rs`: 1 definition",
+          "`spmm_fn` in `crates/gf2-core/src/gfp/simd_ops.rs`: 2 calls"
+        ]
+      }
+    ],
+    "further_confirmation": {
+      "ledger": "dev/bench_results/bfc2ceab/entry-check-family-ledger.jsonl",
+      "next_attempt": 2,
+      "attempt_alpha": 0.008333333333333333,
+      "comparisons_with_one_more_cell": 7,
+      "expected_tail_draws": 5.952380952380952,
+      "required_tail_draws": 20,
+      "admits_a_confirmatory_cell": false,
+      "claims": [
+        "ledger-attempt-alpha",
+        "p20-tail-support"
+      ]
+    },
+    "pricing_family": {
+      "family": "sparse-product-check-cost",
+      "pilot_addendum": "addendum-v4-spmm-check-pilot.json",
+      "ledger": "dev/bench_results/bfc2ceab/spmm-check-family-ledger.jsonl",
+      "cells": [
+        "spmm-small-n16",
+        "spmm-small-n1024",
+        "spmm-medium-n16",
+        "spmm-medium-n1024"
+      ],
+      "committed_stages": []
+    },
+    "sparse_type": {
+      "name": "SparseFieldMatrix",
+      "path": "crates/gf2-core/src/field/sparse_matrix.rs",
+      "constructors": [
+        {
+          "function": "zeros",
+          "struct_literals": 1,
+          "bound": "stores no index",
+          "claim": "core-sparse-zeros"
+        },
+        {
+          "function": "from_triplets",
+          "struct_literals": 1,
+          "bound": "asserts each index against `cols`",
+          "claim": "core-sparse-triplet-assert"
+        },
+        {
+          "function": "from_dense",
+          "struct_literals": 1,
+          "bound": "takes each index from a loop over `cols`",
+          "claim": "core-sparse-dense-columns"
+        },
+        {
+          "function": "identity",
+          "struct_literals": 1,
+          "bound": "takes the indices from `0..n`",
+          "claim": "core-sparse-identity-columns"
+        },
+        {
+          "function": "matmul",
+          "struct_literals": 2,
+          "bound": "copies indices of its right operand, whose column count it takes",
+          "claim": "core-sparse-matmul-columns"
+        },
+        {
+          "function": "rref",
+          "struct_literals": 2,
+          "bound": "merges rows of the matrix itself",
+          "claim": "core-sparse-rref-columns"
+        },
+        {
+          "function": "to_csr",
+          "struct_literals": 1,
+          "bound": "takes each index from a loop over `cols`",
+          "claim": "core-sparse-csr-columns"
+        }
+      ]
+    }
+  },
+  "measurement_cells": [
+    {
+      "cell": "spmm-small-n16",
+      "interface": "small-prime-spmm-row",
+      "check_grain": "per row",
+      "check_form": "one column scan per sparse row, against one 16-column block per non-zero",
+      "retained_for_confirmation": true,
+      "workload": "sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols16",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "spmm-small-n1024",
+      "interface": "small-prime-spmm-row",
+      "check_grain": "per row",
+      "check_form": "one column scan per sparse row, amortized over 64 blocks per non-zero",
+      "retained_for_confirmation": false,
+      "workload": "sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols1024",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "spmm-medium-n16",
+      "interface": "medium-prime-spmm-row",
+      "check_grain": "per row",
+      "check_form": "the same scan on the u16 lane",
+      "retained_for_confirmation": true,
+      "workload": "sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols16",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "spmm-medium-n1024",
+      "interface": "medium-prime-spmm-row",
+      "check_grain": "per row",
+      "check_form": "the same scan on the u16 lane, amortized",
+      "retained_for_confirmation": false,
+      "workload": "sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols1024",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "permanent-f3-n14",
+      "interface": "bipedal-binary",
+      "check_grain": "per kernel call",
+      "check_form": "one length check per kernel call, and the consumer makes one call per Gray step",
+      "retained_for_confirmation": true,
+      "workload": "permanent-f3-n14",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "ple-small-n128",
+      "interface": "small-prime-ple-panel",
+      "check_grain": "per panel",
+      "check_form": "one shape check and one scan of the window entries per panel",
+      "retained_for_confirmation": true,
+      "workload": "ple-prime7-n128",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "ple-medium-n128",
+      "interface": "medium-prime-ple-panel",
+      "check_grain": "per panel",
+      "check_form": "the same panel check on the u16 lane",
+      "retained_for_confirmation": false,
+      "workload": "ple-prime65521-n128",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "gemm-small-n32",
+      "interface": "small-prime-gemm-row-panel",
+      "check_grain": "per row",
+      "check_form": "one checked shape product per row of the product, which the byte-lane route sends through the row kernel",
+      "retained_for_confirmation": true,
+      "workload": "gemm-prime7-n32",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    },
+    {
+      "cell": "gemm-medium-n32",
+      "interface": "medium-prime-gemm-panel",
+      "check_grain": "per whole product",
+      "check_form": "three checked shape products per product call, which the u16 panel route makes once",
+      "retained_for_confirmation": true,
+      "workload": "gemm-prime65521-n32",
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer"
+    }
+  ],
+  "family_scan": {
+    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/route-inventory.json",
+    "rule": "A family names a consumer when the JSON text of its row holds one of `tokens`.",
+    "tokens": [
+      "Fp<",
+      "gfp::",
+      "fp_small",
+      "fp_medium",
+      "SparseFieldMatrix",
+      "::ple",
+      "permanent",
+      "bipedal",
+      "pam_sq",
+      "demap"
+    ],
+    "families": 73,
+    "families_naming_a_consumer": []
+  }
+}

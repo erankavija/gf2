@@ -1,0 +1,62 @@
+{
+  "schema": "plan-projection-comparison-v1",
+  "issue": "bfc2ceab",
+  "anchor_projector": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/inputs/plan-anchor/campaign_plan.py",
+    "sha256": "da6a43444ae2da9929dafd12c2d8274823a95f32896303b505121dcc3ee58e64"
+  },
+  "current_projector": {
+    "path": "dev/scripts/campaign_plan.py",
+    "sha256": "d4317859512146844f718b5f1e30fcf19e9d1ebd682aae44e998fa7411cd4bb8"
+  },
+  "arguments": [
+    "--label",
+    "pilot",
+    "--campaign-id",
+    "plan-projection-comparison",
+    "--campaign-seed",
+    "1",
+    "--lock",
+    "/nonexistent/host.lock",
+    "--executable",
+    "/nonexistent/target/release/arm",
+    "--producing-manifest",
+    "producing-inputs.json",
+    "--max-cells-per-session",
+    "3",
+    "--pilot-pairs",
+    "12"
+  ],
+  "plan_count": 4,
+  "differing_plan_count": 0,
+  "plans": [
+    {
+      "caller": "dev/active/1a379447-zen3-cpu-performance/4c1e441f/survey/make-plan.py",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/4c1e441f/addendum-v4-dense-product-confirmation.json",
+      "anchor_plan_sha256": "9eeaee4ff97e861c6c9e6b74c0240705fd16b4c3965af9f8d8bf21a464bb04ae",
+      "current_plan_sha256": "9eeaee4ff97e861c6c9e6b74c0240705fd16b4c3965af9f8d8bf21a464bb04ae",
+      "plan_bytes": "same"
+    },
+    {
+      "caller": "dev/active/1a379447-zen3-cpu-performance/4c1e441f/survey/make-plan.py",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/4c1e441f/addendum-v4-dense-product-pilot.json",
+      "anchor_plan_sha256": "713556fcecac22a13409f5ccba93e07a907b5bf55812f7adad441ee790af2522",
+      "current_plan_sha256": "713556fcecac22a13409f5ccba93e07a907b5bf55812f7adad441ee790af2522",
+      "plan_bytes": "same"
+    },
+    {
+      "caller": "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/survey/make-plan.py",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/addendum-v4-axpy-confirmation.json",
+      "anchor_plan_sha256": "1ee0066aa1910c4530aff3be78aa1921f8cd8c90940592d75dbfe3a6a0b403ed",
+      "current_plan_sha256": "1ee0066aa1910c4530aff3be78aa1921f8cd8c90940592d75dbfe3a6a0b403ed",
+      "plan_bytes": "same"
+    },
+    {
+      "caller": "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/survey/make-plan.py",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/addendum-v4-axpy-pilot.json",
+      "anchor_plan_sha256": "e70ae9ebd5b6350051c1647529b4e4ca2e3ce895ed0cdff192d89812870807fb",
+      "current_plan_sha256": "e70ae9ebd5b6350051c1647529b4e4ca2e3ce895ed0cdff192d89812870807fb",
+      "plan_bytes": "same"
+    }
+  ]
+}

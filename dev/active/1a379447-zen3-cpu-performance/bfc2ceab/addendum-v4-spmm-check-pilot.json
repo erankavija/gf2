@@ -1,0 +1,163 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "sparse-product-check-cost",
+    "issue": "bfc2ceab",
+    "purpose": "consumer-family",
+    "description": "Exploratory pilot of issue bfc2ceab, protocol version 4: this addendum is the pilot and every cell is exploratory. Question: what does a caller of the sparse-times-dense product over a prime field pay for the column check its kernel entry makes once per product? Both arms are the one executable spmm-check-arm, built once from one tree, and the environment selects the form. The candidate is the shipped consumer SparseFieldMatrix::matmat, whose kernel entry checks the output shape and the largest column index once and then sweeps the sparse rows inside the kernel crate, writing a lane buffer of the whole product that the dispatcher converts to field elements. The baseline is the same product without the check: the arm holds the dispatcher's row loop, calls the kernel crate's unchecked row kernel once per non-empty sparse row and converts the operands and each output row between the field type and the lane type as the dispatcher does. The pair therefore differs in the check, in the crate that holds the row loop, and in the output lane buffer, which is one row in the baseline and the whole product in the candidate; the family prices the checked form as shipped against the unchecked form, not the check in isolation. Both forms take the operands a caller holds, so packing, the kernel and the output are inside the timed call and no conversion stands outside. The arm's tests require both forms to equal a scalar reference. Cells: two lanes, the byte lane at p = 7 and the u16 lane at p = 65521, each at 16 dense columns, where one 16-column block per non-zero leaves the check its largest share, and at 1024 dense columns, where 64 blocks per non-zero amortize it. Every cell is single-core and warm: both forms run on the calling thread, and a cache-resident operand exposes a per-product instruction cost most. Frozen confirmation selection: a first confirmatory attempt spends alpha/2 = 0.025, and P-20's tail-support bound, 10000 * (0.025 / m) / 2 >= 20, admits m = 6 confirmatory comparisons, so the confirmation retains all four cells. Frozen resolution rule: the canonical freezer's, the widest relative bootstrap half-width over every pilot cell, rounded up to two decimals; all cells are of one thermal class. Frozen decision rule: the per-product check is recorded as an accepted measured cost when every confirmatory cell records pass; with a cell that records fail or inconclusive the form goes back to the invoker with the measured ratio. The rule reads the acceptance summary's recorded outcomes and nothing else."
+  },
+  "frozen": {
+    "frozen_utc": "2026-10-07T14:23:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The candidate adds a check and moves the row loop, so no cell is expected to record improved; the schema requires the threshold of every non-regression family. Ten percent is the smallest apparent gain that would need an explanation other than the check, such as the whole-product lane buffer, before the family's numbers were read as the check's cost.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "The checked entry removes undefined behaviour from a safe entry point, and the caller pays for it on every product. Five percent of a whole consumer call is the largest slowdown this family records as an accepted cost, the margin of the family that measured the per-row form of the same check: below it a consumer's throughput budget is unchanged at the precision such budgets are stated, and above it the invoker decides. The confirmation freezes a pilot-derived resolution strictly below this margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell is a comparator-gap cell: every cell compares two forms of one gf2 product, so no material-gap threshold applies."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 150,
+    "maintenance_rationale": "The checked form is the tree's: one safe whole-product entry per lane over the row kernel that exists, published as well through an `unsafe fn` pointer. No new unsafe kernel is allowed, and one hundred and fifty lines is the ceiling for a change to that production source."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/bfc2ceab/spmm-check-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "spmm-small-n16",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols16",
+        "size": {
+          "prime": 7,
+          "rows": 1024,
+          "nonzeros_per_row": 8,
+          "dense_cols": 16
+        },
+        "seed": 5101
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "spmm-small-n1024",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "sparse-matmat-prime7-rows1024-nonzeros_per_row8-dense_cols1024",
+        "size": {
+          "prime": 7,
+          "rows": 1024,
+          "nonzeros_per_row": 8,
+          "dense_cols": 1024
+        },
+        "seed": 5102
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "spmm-medium-n16",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols16",
+        "size": {
+          "prime": 65521,
+          "rows": 1024,
+          "nonzeros_per_row": 8,
+          "dense_cols": 16
+        },
+        "seed": 5103
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "spmm-medium-n1024",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": {
+        "identity": "sparse-matmat-prime65521-rows1024-nonzeros_per_row8-dense_cols1024",
+        "size": {
+          "prime": 65521,
+          "rows": 1024,
+          "nonzeros_per_row": 8,
+          "dense_cols": 1024
+        },
+        "seed": 5104
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

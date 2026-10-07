@@ -3,7 +3,7 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "6f9de21787703843f9db229919fb6092beef2c0f99e2949f802c08dde41dfa77"
+  "sha256": "9547924b295007050cd40ad363a7157f41b6cfa5b2033bb9e3fa16c432a9be25"
  },
  "counts": {
   "entry point groups": 9,
@@ -17,9 +17,9 @@
   "of those, class selector": 8,
   "declared selectors outside the tuning sections": 6,
   "witness configurations": 7,
-  "committed protocol receipts": 153,
-  "core-kernel receipts": 99,
-  "core-kernel measurement families": 46
+  "committed protocol receipts": 155,
+  "core-kernel receipts": 101,
+  "core-kernel measurement families": 47
  },
  "entry_points": [
   {
@@ -1359,7 +1359,7 @@
     "baked": 512,
     "measured_owner": null,
     "read_sites": [
-     "crates/gf2-core/src/gfp/simd_ops.rs:1182"
+     "crates/gf2-core/src/gfp/simd_ops.rs:1163"
     ]
    },
    {
@@ -4756,6 +4756,113 @@
    ]
   },
   {
+   "family": "caller-trusted-entry-check-cost",
+   "issue": "bfc2ceab",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "bfc2ceab-r1-entry-check-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "bfc2ceab-r1-entry-check-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 6,
+    "exploratory/route-contrast": 9
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=current",
+     "candidate": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=current",
+     "candidate": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=current",
+     "candidate": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=current",
+     "candidate": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=current",
+     "candidate": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/FieldMatrix<Fp<65521>>::ple/n=128/panel-cols=128/entry-form=current",
+     "candidate": "gf2-core/FieldMatrix<Fp<65521>>::ple/n=128/panel-cols=128/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=current",
+     "candidate": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8163/dense-cols=1024/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8163/dense-cols=1024/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8158/dense-cols=1024/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8158/dense-cols=1024/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=current",
+     "candidate": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=current",
+     "candidate": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=checked"
+    }
+   ],
+   "builds": [
+    "conservative-portable"
+   ]
+  },
+  {
    "family": "polynomial-host-targeting",
    "issue": "c7113c5a",
    "track": "core-kernel",
@@ -5611,6 +5718,6 @@
  ],
  "workload_routes": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
-  "sha256": "d4f274cdbe662a321c49f6d892c983a2db84395405bcaddf610d02dcef9554bb"
+  "sha256": "31b2a50d649d6a33d27f913e9ab942cbdad290cb1f2a3576611c4d1ba5456e53"
  }
 }

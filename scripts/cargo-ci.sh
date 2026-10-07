@@ -279,8 +279,9 @@ run_step repository-files-self-test python3 dev/scripts/repository_files_test.py
 run_step campaign-producing-closure-self-test python3 dev/scripts/check-campaign-producing-closure.py --self-test
 run_step campaign-producing-closure python3 dev/scripts/check-campaign-producing-closure.py
 # The checker is located through the shared file locator, which git finds by
-# name; -B keeps the steps from writing bytecode into the repository.
-repository_files=$(git ls-files -- ':(glob)**/repository_files.py')
+# name outside receipt input snapshots; -B keeps the steps from writing
+# bytecode into the repository.
+repository_files=$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')
 family_closures=$(python3 -B "$repository_files" file check-family-producing-closures.py)
 run_step family-producing-closures-self-test python3 -B "$family_closures" --self-test
 run_step family-producing-closures python3 -B "$family_closures"

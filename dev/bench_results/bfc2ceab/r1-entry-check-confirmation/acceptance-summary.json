@@ -1,0 +1,208 @@
+{
+  "schema": "zen3-benchmark-acceptance-v2",
+  "receipt_sha256": "2b48f95b3dbb1d57201b542ae176a61c1c119ea57efceb139a99acf83d0550ce",
+  "campaign_id": "bfc2ceab-r1-entry-check-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "caller-trusted-entry-check-cost",
+    "comparisons": 6,
+    "family_alpha": 0.05,
+    "attempt_alpha": 0.025,
+    "corrected_alpha": 0.004166666666666667,
+    "per_comparison_confidence": 0.9958333333333333,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "spmm-small-n16",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.9322196428858401,
+        "lower": 0.9308414201619267,
+        "upper": 0.9332424362793216,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 11791795725806378088,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "spmm-medium-n16",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.9370650287014535,
+        "lower": 0.9355696128035609,
+        "upper": 0.9399277354398784,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 7067173102524941480,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "permanent-f3-n14",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.9893389271522623,
+        "lower": 0.9768595383423319,
+        "upper": 1.002533452399493,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 8497196900476409052,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "ple-small-n128",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.998234855361279,
+        "lower": 0.9957779917568207,
+        "upper": 1.002880484538704,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 11209542055552259715,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "gemm-small-n32",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.9857473285017109,
+        "lower": 0.9816623080448281,
+        "upper": 0.9891352088657166,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 16810565750650882026,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "gemm-medium-n32",
+      "role": "confirmatory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.9997333571499062,
+        "lower": 0.9988641654004842,
+        "upper": 1.0017569189569306,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 2477211293820390836,
+        "pairs": 24
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}

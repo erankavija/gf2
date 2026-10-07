@@ -1,0 +1,1719 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : caller-trusted-check-prototype
+; primary       : caller_trusted_check_prototype::spmm_small_current
+; extra symbols : caller_trusted_check_prototype::spmm_small_checked caller_trusted_check_prototype::spmm_medium_current caller_trusted_check_prototype::spmm_medium_checked caller_trusted_check_prototype::ple_small_current caller_trusted_check_prototype::ple_small_checked caller_trusted_check_prototype::ple_small_scan_checked caller_trusted_check_prototype::pivot_inverse_u8_current caller_trusted_check_prototype::pivot_inverse_u8_checked caller_trusted_check_prototype::ple_medium_current caller_trusted_check_prototype::ple_medium_checked caller_trusted_check_prototype::ple_medium_scan_checked caller_trusted_check_prototype::pivot_inverse_u16_current caller_trusted_check_prototype::pivot_inverse_u16_checked caller_trusted_check_prototype::bipedal_binary_current caller_trusted_check_prototype::bipedal_binary_checked caller_trusted_check_prototype::bipedal_unary_current caller_trusted_check_prototype::bipedal_unary_checked caller_trusted_check_prototype::f5_binary_current caller_trusted_check_prototype::f5_binary_checked caller_trusted_check_prototype::f5_unary_current caller_trusted_check_prototype::f5_unary_checked caller_trusted_check_prototype::f7_binary_current caller_trusted_check_prototype::f7_binary_checked caller_trusted_check_prototype::f7_unary_current caller_trusted_check_prototype::f7_unary_checked caller_trusted_check_prototype::gemm_row_panel_current caller_trusted_check_prototype::gemm_row_panel_checked caller_trusted_check_prototype::small_panel_gemm_current caller_trusted_check_prototype::small_panel_gemm_checked caller_trusted_check_prototype::small_f32_gemm_current caller_trusted_check_prototype::small_f32_gemm_checked caller_trusted_check_prototype::medium_panel_gemm_current caller_trusted_check_prototype::medium_panel_gemm_checked caller_trusted_check_prototype::medium_f64_gemm_current caller_trusted_check_prototype::medium_f64_gemm_checked caller_trusted_check_prototype::pam_f32_current caller_trusted_check_prototype::pam_f32_checked caller_trusted_check_prototype::pam_f64_current caller_trusted_check_prototype::pam_f64_checked
+; output        : ../check-prototype.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::spmm_small_current
+;==========================================================
+
+caller_trusted_check_prototype::spmm_small_current:
+	sub rsp, 56
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 64]
+	movups xmm0, xmmword ptr [rsp + 72]
+	mov rdi, qword ptr [rsp + 88]
+	movups xmm1, xmmword ptr [rsp + 104]
+	movups xmmword ptr [rsp + 32], xmm1
+	mov r11d, dword ptr [rsp + 96]
+	mov dword ptr [rsp + 24], r11d
+	mov qword ptr [rsp + 16], rdi
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 56
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::spmm_small_checked
+;==========================================================
+
+caller_trusted_check_prototype::spmm_small_checked:
+	push r15
+	push r14
+	push rbx
+	sub rsp, 32
+	mov rbx, rdx
+	mov r10, rdi
+	mov r14, qword ptr [rsp + 88]
+	mov r11, qword ptr [rsp + 80]
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.18]
+	mov qword ptr [rsp], rax
+	mov qword ptr [rsp + 8], 13
+	test r8, r8
+	je .LBB16_9
+	mov rdi, qword ptr [rcx]
+	cmp r8, 1
+	je .LBB16_4
+	lea rdx, [r8 - 1]
+	movabs rax, 2305843009213693951
+	and rax, rdx
+	xor edx, edx
+.LBB16_3:
+	mov r15, rdi
+	mov rdi, qword ptr [rcx + 8*rdx + 8]
+	cmp r15, rdi
+	cmova rdi, r15
+	inc rdx
+	cmp rax, rdx
+	jne .LBB16_3
+.LBB16_4:
+	test r14, r14
+	je .LBB16_9
+	mov rax, r11
+	or rax, r14
+	shr rax, 32
+	je .LBB16_6
+	mov rax, r11
+	xor edx, edx
+	div r14
+	cmp rdi, rax
+	jae .LBB16_10
+.LBB16_9:
+	movzx edx, byte ptr [rsp + 96]
+	mov rax, qword ptr [rsp + 64]
+	movzx r15d, dl
+	mov rdi, rsi
+	mov rsi, rbx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r9
+	mov r9, rax
+	push qword ptr [rsp + 112]
+	push qword ptr [rsp + 112]
+	push r15
+	push r14
+	push r11
+	push qword ptr [rsp + 112]
+	call r10
+	add rsp, 80
+	pop rbx
+	pop r14
+	pop r15
+	ret
+.LBB16_6:
+	mov eax, r11d
+	xor edx, edx
+	div r14d
+	cmp rdi, rax
+	jb .LBB16_9
+.LBB16_10:
+	mov rax, rsp
+	mov qword ptr [rsp + 16], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.19]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.20]
+	lea rsi, [rsp + 16]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::spmm_medium_current
+;==========================================================
+
+caller_trusted_check_prototype::spmm_medium_current:
+	sub rsp, 56
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 64]
+	movups xmm0, xmmword ptr [rsp + 72]
+	mov rdi, qword ptr [rsp + 88]
+	movups xmm1, xmmword ptr [rsp + 104]
+	movups xmmword ptr [rsp + 32], xmm1
+	mov r11d, dword ptr [rsp + 96]
+	mov dword ptr [rsp + 24], r11d
+	mov qword ptr [rsp + 16], rdi
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 56
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::spmm_medium_checked
+;==========================================================
+
+caller_trusted_check_prototype::spmm_medium_checked:
+	push r15
+	push r14
+	push rbx
+	sub rsp, 32
+	mov rbx, rdx
+	mov r10, rdi
+	mov r14, qword ptr [rsp + 88]
+	mov r11, qword ptr [rsp + 80]
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.21]
+	mov qword ptr [rsp], rax
+	mov qword ptr [rsp + 8], 14
+	test r8, r8
+	je .LBB18_9
+	mov rdi, qword ptr [rcx]
+	cmp r8, 1
+	je .LBB18_4
+	lea rdx, [r8 - 1]
+	movabs rax, 2305843009213693951
+	and rax, rdx
+	xor edx, edx
+.LBB18_3:
+	mov r15, rdi
+	mov rdi, qword ptr [rcx + 8*rdx + 8]
+	cmp r15, rdi
+	cmova rdi, r15
+	inc rdx
+	cmp rax, rdx
+	jne .LBB18_3
+.LBB18_4:
+	test r14, r14
+	je .LBB18_9
+	mov rax, r11
+	or rax, r14
+	shr rax, 32
+	je .LBB18_6
+	mov rax, r11
+	xor edx, edx
+	div r14
+	cmp rdi, rax
+	jae .LBB18_10
+.LBB18_9:
+	movzx r15d, word ptr [rsp + 96]
+	mov rax, qword ptr [rsp + 64]
+	mov rdi, rsi
+	mov rsi, rbx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r9
+	mov r9, rax
+	push qword ptr [rsp + 112]
+	push qword ptr [rsp + 112]
+	push r15
+	push r14
+	push r11
+	push qword ptr [rsp + 112]
+	call r10
+	add rsp, 80
+	pop rbx
+	pop r14
+	pop r15
+	ret
+.LBB18_6:
+	mov eax, r11d
+	xor edx, edx
+	div r14d
+	cmp rdi, rax
+	jb .LBB18_9
+.LBB18_10:
+	mov rax, rsp
+	mov qword ptr [rsp + 16], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.19]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.20]
+	lea rsi, [rsp + 16]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::ple_small_current
+;==========================================================
+
+caller_trusted_check_prototype::ple_small_current:
+	sub rsp, 40
+	mov r10d, r9d
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 48]
+	movups xmm0, xmmword ptr [rsp + 56]
+	movups xmm1, xmmword ptr [rsp + 72]
+	movups xmmword ptr [rsp + 16], xmm1
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8d, r10d
+	call rax
+	add rsp, 40
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::ple_small_checked
+;==========================================================
+
+caller_trusted_check_prototype::ple_small_checked:
+	sub rsp, 40
+	mov r11, rdx
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.16]
+	mov qword ptr [rsp + 24], rax
+	mov qword ptr [rsp + 32], 24
+	mov rax, rcx
+	mul r8
+	jo .LBB12_3
+	cmp r11, rax
+	jne .LBB12_4
+	mov r10, rdi
+	mov rax, qword ptr [rsp + 48]
+	movzx r9d, r9b
+	mov rdi, rsi
+	mov rsi, r11
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8d, r9d
+	mov r9, rax
+	push qword ptr [rsp + 80]
+	push qword ptr [rsp + 80]
+	push qword ptr [rsp + 80]
+	push qword ptr [rsp + 80]
+	call r10
+	add rsp, 72
+	ret
+.LBB12_3:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.10]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.13]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB12_4:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.11]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.12]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::ple_small_scan_checked
+;==========================================================
+
+caller_trusted_check_prototype::ple_small_scan_checked:
+	push r15
+	push r14
+	push r12
+	push rbx
+	sub rsp, 40
+	mov r11, rdx
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.16]
+	mov qword ptr [rsp + 24], rax
+	mov qword ptr [rsp + 32], 24
+	mov rax, rcx
+	mul r8
+	jo .LBB26_7
+	cmp r11, rax
+	jne .LBB26_8
+	mov r10, rdi
+	mov r12, qword ptr [rsp + 112]
+	mov r15, qword ptr [rsp + 104]
+	mov r14, qword ptr [rsp + 96]
+	mov rbx, qword ptr [rsp + 88]
+	mov rax, qword ptr [rsp + 80]
+	xor edx, edx
+.LBB26_3:
+	cmp r11, rdx
+	je .LBB26_6
+	movzx edi, byte ptr [rsi + rdx]
+	inc rdx
+	cmp rbx, rdi
+	ja .LBB26_3
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.30]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.31]
+	mov esi, 133
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB26_6:
+	movzx r9d, r9b
+	mov rdi, rsi
+	mov rsi, r11
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8d, r9d
+	mov r9, rax
+	push r12
+	push r15
+	push r14
+	push rbx
+	call r10
+	add rsp, 72
+	pop rbx
+	pop r12
+	pop r14
+	pop r15
+	ret
+.LBB26_7:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.10]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.13]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB26_8:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.11]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.12]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::pivot_inverse_u8_current
+;==========================================================
+
+caller_trusted_check_prototype::pivot_inverse_u8_current:
+	movzx eax, dl
+	movzx eax, byte ptr [rdi + rax]
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::pivot_inverse_u8_checked
+;==========================================================
+
+caller_trusted_check_prototype::pivot_inverse_u8_checked:
+	mov rax, rdi
+	movzx edi, dl
+	cmp rsi, rdi
+	jbe .LBB32_2
+	movzx eax, byte ptr [rax + rdi]
+	ret
+.LBB32_2:
+	push rax
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.38]
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::ple_medium_current
+;==========================================================
+
+caller_trusted_check_prototype::ple_medium_current:
+	sub rsp, 40
+	mov r10d, r9d
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 48]
+	movups xmm0, xmmword ptr [rsp + 56]
+	movups xmm1, xmmword ptr [rsp + 72]
+	movups xmmword ptr [rsp + 16], xmm1
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8d, r10d
+	call rax
+	add rsp, 40
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::ple_medium_checked
+;==========================================================
+
+caller_trusted_check_prototype::ple_medium_checked:
+	sub rsp, 40
+	mov r11, rdx
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.17]
+	mov qword ptr [rsp + 24], rax
+	mov qword ptr [rsp + 32], 28
+	mov rax, rcx
+	mul r8
+	jo .LBB14_3
+	cmp r11, rax
+	jne .LBB14_4
+	mov r10, rdi
+	mov rax, qword ptr [rsp + 48]
+	mov rdi, rsi
+	mov rsi, r11
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8d, r9d
+	mov r9, rax
+	push qword ptr [rsp + 80]
+	push qword ptr [rsp + 80]
+	push qword ptr [rsp + 80]
+	push qword ptr [rsp + 80]
+	call r10
+	add rsp, 72
+	ret
+.LBB14_3:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.10]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.13]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB14_4:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.11]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.12]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::ple_medium_scan_checked
+;==========================================================
+
+caller_trusted_check_prototype::ple_medium_scan_checked:
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 32
+	mov r11, rdx
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.17]
+	mov qword ptr [rsp + 16], rax
+	mov qword ptr [rsp + 24], 28
+	mov rax, rcx
+	mul r8
+	jo .LBB31_7
+	cmp r11, rax
+	jne .LBB31_8
+	mov r10, rdi
+	mov r12, qword ptr [rsp + 112]
+	mov r15, qword ptr [rsp + 104]
+	mov r14, qword ptr [rsp + 96]
+	mov rbx, qword ptr [rsp + 88]
+	mov rax, qword ptr [rsp + 80]
+	lea rdx, [r11 + r11]
+	xor edi, edi
+.LBB31_3:
+	cmp rdx, rdi
+	je .LBB31_6
+	movzx r13d, word ptr [rsi + rdi]
+	add rdi, 2
+	cmp rbx, r13
+	ja .LBB31_3
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.36]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.37]
+	mov esi, 141
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB31_6:
+	mov rdi, rsi
+	mov rsi, r11
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8d, r9d
+	mov r9, rax
+	push r12
+	push r15
+	push r14
+	push rbx
+	call r10
+	add rsp, 64
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	ret
+.LBB31_7:
+	lea rax, [rsp + 16]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.10]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.13]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB31_8:
+	lea rax, [rsp + 16]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.11]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.12]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::pivot_inverse_u16_current
+;==========================================================
+
+caller_trusted_check_prototype::pivot_inverse_u16_current:
+	movzx eax, dx
+	movzx eax, word ptr [rdi + 2*rax]
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::pivot_inverse_u16_checked
+;==========================================================
+
+caller_trusted_check_prototype::pivot_inverse_u16_checked:
+	mov rax, rdi
+	movzx edi, dx
+	cmp rsi, rdi
+	jbe .LBB38_2
+	movzx eax, word ptr [rax + 2*rdi]
+	ret
+.LBB38_2:
+	push rax
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.41]
+	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::bipedal_binary_current
+;==========================================================
+
+caller_trusted_check_prototype::bipedal_binary_current:
+	sub rsp, 56
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 64]
+	movups xmm0, xmmword ptr [rsp + 72]
+	movups xmm1, xmmword ptr [rsp + 88]
+	movups xmm2, xmmword ptr [rsp + 104]
+	movups xmmword ptr [rsp + 32], xmm2
+	movups xmmword ptr [rsp + 16], xmm1
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 56
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::bipedal_binary_checked
+;==========================================================
+
+caller_trusted_check_prototype::bipedal_binary_checked:
+	sub rsp, 40
+	mov r10, rdx
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.27]
+	mov qword ptr [rsp + 24], rdx
+	mov qword ptr [rsp + 32], 21
+	test r10b, 3
+	jne .LBB22_7
+	cmp r8, r10
+	jne .LBB22_8
+	cmp qword ptr [rsp + 48], r10
+	jne .LBB22_8
+	cmp qword ptr [rsp + 64], r10
+	jne .LBB22_8
+	cmp qword ptr [rsp + 80], r10
+	jne .LBB22_8
+	cmp qword ptr [rsp + 96], r10
+	jne .LBB22_8
+	mov rax, rdi
+	mov rdi, rsi
+	mov rsi, r10
+	mov rdx, rcx
+	mov rcx, r10
+	mov r8, r9
+	mov r9, r10
+	push r10
+	push qword ptr [rsp + 96]
+	push r10
+	push qword ptr [rsp + 96]
+	push r10
+	push qword ptr [rsp + 96]
+	call rax
+	add rsp, 88
+	ret
+.LBB22_7:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.22]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.24]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB22_8:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.23]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.25]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::bipedal_unary_current
+;==========================================================
+
+caller_trusted_check_prototype::bipedal_unary_current:
+	sub rsp, 24
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 32]
+	movups xmm0, xmmword ptr [rsp + 40]
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 24
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::bipedal_unary_checked
+;==========================================================
+
+caller_trusted_check_prototype::bipedal_unary_checked:
+	sub rsp, 40
+	mov r10, rdx
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.26]
+	mov qword ptr [rsp + 24], rdx
+	mov qword ptr [rsp + 32], 20
+	test r10b, 3
+	jne .LBB20_5
+	cmp r8, r10
+	jne .LBB20_6
+	cmp qword ptr [rsp + 48], r10
+	jne .LBB20_6
+	cmp qword ptr [rsp + 64], r10
+	jne .LBB20_6
+	mov rax, rdi
+	mov rdi, rsi
+	mov rsi, r10
+	mov rdx, rcx
+	mov rcx, r10
+	mov r8, r9
+	mov r9, r10
+	push r10
+	push qword ptr [rsp + 64]
+	call rax
+	add rsp, 56
+	ret
+.LBB20_5:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.22]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.24]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB20_6:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.23]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.25]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::f5_binary_current
+;==========================================================
+
+caller_trusted_check_prototype::f5_binary_current:
+	sub rsp, 104
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 112]
+	movups xmm0, xmmword ptr [rsp + 120]
+	movups xmm1, xmmword ptr [rsp + 136]
+	movups xmm2, xmmword ptr [rsp + 152]
+	movups xmm3, xmmword ptr [rsp + 168]
+	movups xmm4, xmmword ptr [rsp + 184]
+	movups xmm5, xmmword ptr [rsp + 200]
+	movups xmmword ptr [rsp + 80], xmm5
+	movups xmmword ptr [rsp + 64], xmm4
+	movups xmmword ptr [rsp + 48], xmm3
+	movups xmmword ptr [rsp + 32], xmm2
+	movups xmmword ptr [rsp + 16], xmm1
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 104
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::f5_binary_checked
+;==========================================================
+
+caller_trusted_check_prototype::f5_binary_checked:
+	sub rsp, 40
+	mov r10, rdx
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.14]
+	mov qword ptr [rsp + 24], rdx
+	mov qword ptr [rsp + 32], 17
+	test r10b, 3
+	jne .LBB8_10
+	cmp r8, r10
+	jne .LBB8_11
+	cmp qword ptr [rsp + 48], r10
+	jne .LBB8_11
+	cmp qword ptr [rsp + 64], r10
+	jne .LBB8_11
+	cmp qword ptr [rsp + 80], r10
+	jne .LBB8_11
+	cmp qword ptr [rsp + 96], r10
+	jne .LBB8_11
+	cmp qword ptr [rsp + 112], r10
+	jne .LBB8_11
+	cmp qword ptr [rsp + 128], r10
+	jne .LBB8_11
+	cmp qword ptr [rsp + 144], r10
+	jne .LBB8_11
+	mov rax, rdi
+	mov rdi, rsi
+	mov rsi, r10
+	mov rdx, rcx
+	mov rcx, r10
+	mov r8, r9
+	mov r9, r10
+	push r10
+	push qword ptr [rsp + 144]
+	push r10
+	push qword ptr [rsp + 144]
+	push r10
+	push qword ptr [rsp + 144]
+	push r10
+	push qword ptr [rsp + 144]
+	push r10
+	push qword ptr [rsp + 144]
+	push r10
+	push qword ptr [rsp + 144]
+	call rax
+	add rsp, 136
+	ret
+.LBB8_10:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.22]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.24]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB8_11:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.23]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.25]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::f5_unary_current
+;==========================================================
+
+caller_trusted_check_prototype::f5_unary_current:
+	sub rsp, 56
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 64]
+	movups xmm0, xmmword ptr [rsp + 72]
+	movups xmm1, xmmword ptr [rsp + 88]
+	movups xmm2, xmmword ptr [rsp + 104]
+	movups xmmword ptr [rsp + 32], xmm2
+	movups xmmword ptr [rsp + 16], xmm1
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 56
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::f5_unary_checked
+;==========================================================
+
+caller_trusted_check_prototype::f5_unary_checked:
+	sub rsp, 40
+	mov r10, rdx
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.8]
+	mov qword ptr [rsp + 24], rdx
+	mov qword ptr [rsp + 32], 16
+	test r10b, 3
+	jne .LBB4_7
+	cmp r8, r10
+	jne .LBB4_8
+	cmp qword ptr [rsp + 48], r10
+	jne .LBB4_8
+	cmp qword ptr [rsp + 64], r10
+	jne .LBB4_8
+	cmp qword ptr [rsp + 80], r10
+	jne .LBB4_8
+	cmp qword ptr [rsp + 96], r10
+	jne .LBB4_8
+	mov rax, rdi
+	mov rdi, rsi
+	mov rsi, r10
+	mov rdx, rcx
+	mov rcx, r10
+	mov r8, r9
+	mov r9, r10
+	push r10
+	push qword ptr [rsp + 96]
+	push r10
+	push qword ptr [rsp + 96]
+	push r10
+	push qword ptr [rsp + 96]
+	call rax
+	add rsp, 88
+	ret
+.LBB4_7:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.22]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.24]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB4_8:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.23]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.25]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::f7_binary_current
+;==========================================================
+
+caller_trusted_check_prototype::f7_binary_current:
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 8]
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	jmp rax
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::f7_binary_checked
+;==========================================================
+
+caller_trusted_check_prototype::f7_binary_checked:
+	sub rsp, 40
+	mov r10, rdx
+	mov rax, rdi
+	mov rdx, qword ptr [rsp + 48]
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.15]
+	mov qword ptr [rsp + 24], rdi
+	mov qword ptr [rsp + 32], 17
+	test r10b, 3
+	jne .LBB10_4
+	cmp r8, r10
+	jne .LBB10_5
+	cmp rdx, r10
+	jne .LBB10_5
+	mov rdi, rsi
+	mov rsi, r10
+	mov rdx, rcx
+	mov rcx, r10
+	mov r8, r9
+	mov r9, r10
+	add rsp, 40
+	jmp rax
+.LBB10_4:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.22]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.24]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB10_5:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.23]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.25]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::f7_unary_current
+;==========================================================
+
+caller_trusted_check_prototype::f7_unary_current:
+	mov rax, rdi
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	jmp rax
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::f7_unary_checked
+;==========================================================
+
+caller_trusted_check_prototype::f7_unary_checked:
+	sub rsp, 40
+	mov rax, rdx
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.9]
+	mov qword ptr [rsp + 24], rdx
+	mov qword ptr [rsp + 32], 16
+	test al, 3
+	jne .LBB6_3
+	cmp r8, rax
+	jne .LBB6_4
+	mov r9, rdi
+	mov rdi, rsi
+	mov rsi, rax
+	mov rdx, rcx
+	mov rcx, rax
+	add rsp, 40
+	jmp r9
+.LBB6_3:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.22]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.24]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB6_4:
+	lea rax, [rsp + 24]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.23]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.25]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::gemm_row_panel_current
+;==========================================================
+
+caller_trusted_check_prototype::gemm_row_panel_current:
+	sub rsp, 24
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 32]
+	movaps xmm0, xmmword ptr [rsp + 48]
+	movups xmmword ptr [rsp + 8], xmm0
+	mov edi, dword ptr [rsp + 40]
+	mov dword ptr [rsp], edi
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 24
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::gemm_row_panel_checked
+;==========================================================
+
+caller_trusted_check_prototype::gemm_row_panel_checked:
+	push rbx
+	sub rsp, 64
+	mov rbx, rdx
+	mov r11, qword ptr [rsp + 80]
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.28]
+	mov qword ptr [rsp + 32], rax
+	mov qword ptr [rsp + 40], 23
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.29]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 2
+	mov rax, r11
+	mul r9
+	jo .LBB24_3
+	cmp r8, rax
+	jne .LBB24_4
+	mov r10, rdi
+	movzx eax, byte ptr [rsp + 88]
+	sub rsp, 8
+	movzx eax, al
+	mov rdi, rsi
+	mov rsi, rbx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r9
+	mov r9, r11
+	push qword ptr [rsp + 112]
+	push qword ptr [rsp + 112]
+	push rax
+	call r10
+	add rsp, 96
+	pop rbx
+	ret
+.LBB24_3:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.0]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.4]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB24_4:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.1]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.3]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::small_panel_gemm_current
+;==========================================================
+
+caller_trusted_check_prototype::small_panel_gemm_current:
+	sub rsp, 40
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 48]
+	mov rdi, qword ptr [rsp + 56]
+	movups xmm0, xmmword ptr [rsp + 72]
+	movups xmmword ptr [rsp + 16], xmm0
+	mov r11d, dword ptr [rsp + 64]
+	mov dword ptr [rsp + 8], r11d
+	mov qword ptr [rsp], rdi
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 40
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::small_panel_gemm_checked
+;==========================================================
+
+caller_trusted_check_prototype::small_panel_gemm_checked:
+	push r15
+	push r14
+	push rbx
+	sub rsp, 64
+	mov r11, r9
+	mov rbx, rdx
+	mov r10, rdi
+	mov r9, qword ptr [rsp + 96]
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.39]
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 19
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.33]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 1
+	mov rax, r11
+	mul r9
+	jo .LBB34_7
+	cmp rbx, rax
+	jne .LBB34_6
+	mov r14, qword ptr [rsp + 104]
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 19
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.29]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 2
+	mov rax, r14
+	mul r9
+	jo .LBB34_7
+	cmp r8, rax
+	jne .LBB34_6
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 19
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.34]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 1
+	mov rax, r11
+	mul r14
+	jo .LBB34_7
+	mov r15, qword ptr [rsp + 128]
+	cmp r15, rax
+	jne .LBB34_6
+	movzx eax, byte ptr [rsp + 112]
+	movzx eax, al
+	mov rdi, rsi
+	mov rsi, rbx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r11
+	push r15
+	push qword ptr [rsp + 128]
+	push rax
+	push r14
+	call r10
+	add rsp, 96
+	pop rbx
+	pop r14
+	pop r15
+	ret
+.LBB34_7:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.0]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.4]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB34_6:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.1]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.3]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::small_f32_gemm_current
+;==========================================================
+
+caller_trusted_check_prototype::small_f32_gemm_current:
+	sub rsp, 40
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 48]
+	mov rdi, qword ptr [rsp + 56]
+	movups xmm0, xmmword ptr [rsp + 72]
+	movups xmmword ptr [rsp + 16], xmm0
+	mov r11d, dword ptr [rsp + 64]
+	mov dword ptr [rsp + 8], r11d
+	mov qword ptr [rsp], rdi
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 40
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::small_f32_gemm_checked
+;==========================================================
+
+caller_trusted_check_prototype::small_f32_gemm_checked:
+	push r15
+	push r14
+	push rbx
+	sub rsp, 64
+	mov r11, r9
+	mov rbx, rdx
+	mov r10, rdi
+	mov r9, qword ptr [rsp + 96]
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.32]
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 17
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.33]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 1
+	mov rax, r11
+	mul r9
+	jo .LBB27_7
+	cmp rbx, rax
+	jne .LBB27_6
+	mov r14, qword ptr [rsp + 104]
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 17
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.29]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 2
+	mov rax, r14
+	mul r9
+	jo .LBB27_7
+	cmp r8, rax
+	jne .LBB27_6
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 17
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.34]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 1
+	mov rax, r11
+	mul r14
+	jo .LBB27_7
+	mov r15, qword ptr [rsp + 128]
+	cmp r15, rax
+	jne .LBB27_6
+	movzx eax, byte ptr [rsp + 112]
+	movzx eax, al
+	mov rdi, rsi
+	mov rsi, rbx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r11
+	push r15
+	push qword ptr [rsp + 128]
+	push rax
+	push r14
+	call r10
+	add rsp, 96
+	pop rbx
+	pop r14
+	pop r15
+	ret
+.LBB27_7:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.0]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.4]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB27_6:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.1]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.3]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::medium_panel_gemm_current
+;==========================================================
+
+caller_trusted_check_prototype::medium_panel_gemm_current:
+	sub rsp, 40
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 48]
+	mov rdi, qword ptr [rsp + 56]
+	movups xmm0, xmmword ptr [rsp + 72]
+	movups xmmword ptr [rsp + 16], xmm0
+	mov r11d, dword ptr [rsp + 64]
+	mov dword ptr [rsp + 8], r11d
+	mov qword ptr [rsp], rdi
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 40
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::medium_panel_gemm_checked
+;==========================================================
+
+caller_trusted_check_prototype::medium_panel_gemm_checked:
+	push r15
+	push r14
+	push rbx
+	sub rsp, 64
+	mov r11, r9
+	mov rbx, rdx
+	mov r10, rdi
+	mov r9, qword ptr [rsp + 96]
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.40]
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 20
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.33]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 1
+	mov rax, r11
+	mul r9
+	jo .LBB36_7
+	cmp rbx, rax
+	jne .LBB36_6
+	mov r14, qword ptr [rsp + 104]
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 20
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.29]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 2
+	mov rax, r14
+	mul r9
+	jo .LBB36_7
+	cmp r8, rax
+	jne .LBB36_6
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 20
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.34]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 1
+	mov rax, r11
+	mul r14
+	jo .LBB36_7
+	mov r15, qword ptr [rsp + 128]
+	cmp r15, rax
+	jne .LBB36_6
+	movzx eax, word ptr [rsp + 112]
+	mov rdi, rsi
+	mov rsi, rbx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r11
+	push r15
+	push qword ptr [rsp + 128]
+	push rax
+	push r14
+	call r10
+	add rsp, 96
+	pop rbx
+	pop r14
+	pop r15
+	ret
+.LBB36_7:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.0]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.4]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB36_6:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.1]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.3]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::medium_f64_gemm_current
+;==========================================================
+
+caller_trusted_check_prototype::medium_f64_gemm_current:
+	sub rsp, 40
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 48]
+	mov rdi, qword ptr [rsp + 56]
+	movups xmm0, xmmword ptr [rsp + 72]
+	movups xmmword ptr [rsp + 16], xmm0
+	mov r11d, dword ptr [rsp + 64]
+	mov dword ptr [rsp + 8], r11d
+	mov qword ptr [rsp], rdi
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 40
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::medium_f64_gemm_checked
+;==========================================================
+
+caller_trusted_check_prototype::medium_f64_gemm_checked:
+	push r15
+	push r14
+	push rbx
+	sub rsp, 64
+	mov r11, r9
+	mov rbx, rdx
+	mov r10, rdi
+	mov r9, qword ptr [rsp + 96]
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.35]
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 18
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.33]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 1
+	mov rax, r11
+	mul r9
+	jo .LBB29_7
+	cmp rbx, rax
+	jne .LBB29_6
+	mov r14, qword ptr [rsp + 104]
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 18
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.29]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 2
+	mov rax, r14
+	mul r9
+	jo .LBB29_7
+	cmp r8, rax
+	jne .LBB29_6
+	mov qword ptr [rsp + 32], rdi
+	mov qword ptr [rsp + 40], 18
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.34]
+	mov qword ptr [rsp + 48], rax
+	mov qword ptr [rsp + 56], 1
+	mov rax, r11
+	mul r14
+	jo .LBB29_7
+	mov r15, qword ptr [rsp + 128]
+	cmp r15, rax
+	jne .LBB29_6
+	movzx eax, word ptr [rsp + 112]
+	mov rdi, rsi
+	mov rsi, rbx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r11
+	push r15
+	push qword ptr [rsp + 128]
+	push rax
+	push r14
+	call r10
+	add rsp, 96
+	pop rbx
+	pop r14
+	pop r15
+	ret
+.LBB29_7:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.0]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.4]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB29_6:
+	lea rax, [rsp + 32]
+	mov qword ptr [rsp], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 8], rax
+	lea rcx, [rsp + 48]
+	mov qword ptr [rsp + 16], rcx
+	mov qword ptr [rsp + 24], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.1]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.3]
+	mov rsi, rsp
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::pam_f32_current
+;==========================================================
+
+caller_trusted_check_prototype::pam_f32_current:
+	sub rsp, 40
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 48]
+	movups xmm0, xmmword ptr [rsp + 56]
+	movups xmm1, xmmword ptr [rsp + 72]
+	movups xmmword ptr [rsp + 16], xmm1
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 40
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::pam_f32_checked
+;==========================================================
+
+caller_trusted_check_prototype::pam_f32_checked:
+	push r14
+	push rbx
+	sub rsp, 72
+	mov r11, rdx
+	mov rbx, qword ptr [rsp + 112]
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.5]
+	mov qword ptr [rsp + 40], rax
+	mov qword ptr [rsp + 48], 25
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.6]
+	mov qword ptr [rsp + 56], rax
+	mov qword ptr [rsp + 64], 3
+	mov rax, rdx
+	mul rbx
+	jo .LBB0_3
+	mov r14, qword ptr [rsp + 128]
+	cmp r14, rax
+	jne .LBB0_4
+	mov r10, rdi
+	mov rax, qword ptr [rsp + 96]
+	mov rdi, rsi
+	mov rsi, r11
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r9
+	mov r9, rax
+	push r14
+	push qword ptr [rsp + 128]
+	push rbx
+	push qword ptr [rsp + 128]
+	call r10
+	add rsp, 104
+	pop rbx
+	pop r14
+	ret
+.LBB0_3:
+	lea rax, [rsp + 40]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rcx, [rsp + 56]
+	mov qword ptr [rsp + 24], rcx
+	mov qword ptr [rsp + 32], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.0]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.4]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB0_4:
+	lea rax, [rsp + 40]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rcx, [rsp + 56]
+	mov qword ptr [rsp + 24], rcx
+	mov qword ptr [rsp + 32], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.1]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.3]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::pam_f64_current
+;==========================================================
+
+caller_trusted_check_prototype::pam_f64_current:
+	sub rsp, 40
+	mov r10, r9
+	mov rax, rdi
+	mov r9, qword ptr [rsp + 48]
+	movups xmm0, xmmword ptr [rsp + 56]
+	movups xmm1, xmmword ptr [rsp + 72]
+	movups xmmword ptr [rsp + 16], xmm1
+	movups xmmword ptr [rsp], xmm0
+	mov rdi, rsi
+	mov rsi, rdx
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r10
+	call rax
+	add rsp, 40
+	ret
+
+;==========================================================
+; symbol: caller_trusted_check_prototype::pam_f64_checked
+;==========================================================
+
+caller_trusted_check_prototype::pam_f64_checked:
+	push r14
+	push rbx
+	sub rsp, 72
+	mov r11, rdx
+	mov rbx, qword ptr [rsp + 112]
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.7]
+	mov qword ptr [rsp + 40], rax
+	mov qword ptr [rsp + 48], 25
+	lea rax, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.6]
+	mov qword ptr [rsp + 56], rax
+	mov qword ptr [rsp + 64], 3
+	mov rax, rdx
+	mul rbx
+	jo .LBB2_3
+	mov r14, qword ptr [rsp + 128]
+	cmp r14, rax
+	jne .LBB2_4
+	mov r10, rdi
+	mov rax, qword ptr [rsp + 96]
+	mov rdi, rsi
+	mov rsi, r11
+	mov rdx, rcx
+	mov rcx, r8
+	mov r8, r9
+	mov r9, rax
+	push r14
+	push qword ptr [rsp + 128]
+	push rbx
+	push qword ptr [rsp + 128]
+	call r10
+	add rsp, 104
+	pop rbx
+	pop r14
+	ret
+.LBB2_3:
+	lea rax, [rsp + 40]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rcx, [rsp + 56]
+	mov qword ptr [rsp + 24], rcx
+	mov qword ptr [rsp + 32], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.0]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.4]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB2_4:
+	lea rax, [rsp + 40]
+	mov qword ptr [rsp + 8], rax
+	lea rax, [rip + <&T as core::fmt::Display>::fmt]
+	mov qword ptr [rsp + 16], rax
+	lea rcx, [rsp + 56]
+	mov qword ptr [rsp + 24], rcx
+	mov qword ptr [rsp + 32], rax
+	lea rdi, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.1]
+	lea rdx, [rip + .Lanon.d7fe92cb5178c70b70f146bf4e59c75f.3]
+	lea rsi, [rsp + 8]
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]

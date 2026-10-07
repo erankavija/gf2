@@ -1,0 +1,245 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "bfc2ceab-entry-check-pilot-arms-smoke",
+  "issue": "bfc2ceab",
+  "family": "caller-trusted-entry-check-cost",
+  "plan_sha256": "6a38bf968a94c75556854c0ab470f40091b4e2dedf71f0dc30ac6916fc9f632e",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/addendum-v4-entry-check-pilot.json",
+  "addendum_sha256": "438f981252175b124d2ae7a140291be911b2d0678408b35916c0f3fce8413455",
+  "cells": [
+    {
+      "cell_id": "spmm-small-n16",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-small-n1024",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8158/dense-cols=1024/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8158/dense-cols=1024/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-medium-n16",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-medium-n1024",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8163/dense-cols=1024/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8163/dense-cols=1024/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "permanent-f3-n14",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "ple-small-n128",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "ple-medium-n128",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldMatrix<Fp<65521>>::ple/n=128/panel-cols=128/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldMatrix<Fp<65521>>::ple/n=128/panel-cols=128/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "gemm-small-n32",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "gemm-medium-n32",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm/release/entry-check-arm",
+          "executable_sha256": "c352ce23ff0a8913ebb91892b4a91b0e2bf1b50c3036b58387663a5aee2409c4",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=current",
+          "windows": 0
+        },
+        {
+          "arm": "checked-entry",
+          "role": "validation",
+          "executable": "target/bfc2ceab-arm-checked/release/entry-check-arm",
+          "executable_sha256": "a0cf1d1f75c4e5b4b0742d27f9c706e2731d65b394f79ab55619003779002669",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=checked",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}

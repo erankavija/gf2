@@ -22,13 +22,13 @@ pub const PANEL_SCRATCH_COLS: usize = 256;
 /// receives the panel-relative pivot column offsets in left-to-right
 /// order.
 ///
-/// # Safety contract
+/// `p` is an odd prime in `[3, 251]`.
 ///
-/// The pointer is a safe `fn` that [`detect`] publishes only when AVX2 is
-/// available at runtime. Callers must still ensure `p ∈ [3, 251]`,
-/// `window.len() == m * win`, `inv_table.len() == p as usize`,
-/// `row_perm.len() == m`, and every byte in `window` is canonical
-/// (`< p`). These preconditions are debug-asserted by the kernel.
+/// # Panics
+///
+/// Panics unless `window.len() == m * win`, `inv_table.len() >= p as usize`
+/// and every byte of `window` is canonical (`< p`). Panics if `win` exceeds
+/// the kernel's scratch row or a row swap reaches outside `row_perm`.
 pub type SmallPrimePlePanelBaseFn = fn(
     window: &mut [u8],
     m: usize,
@@ -108,11 +108,18 @@ fn ple_panel_base_safe(
     row_perm: &mut [usize],
     pivot_cols_local: &mut Vec<usize>,
 ) -> usize {
+    crate::entry_check::assert_ple_panel(
+        "ple_panel_base_canonical",
+        window,
+        m,
+        win,
+        p,
+        inv_table.len(),
+    );
     // SAFETY: `detect_x86` only published this pointer when AVX2 is
-    // available at runtime. The other preconditions (canonical bytes,
-    // prime in [3, 251], slice lengths) are documented on
-    // `SmallPrimePlePanelBaseFn`, established by the gf2-core dispatch
-    // site and debug-asserted by the kernel.
+    // available at runtime. The assertion above gives the window shape and
+    // keeps every pivot inside `inv_table`; the kernel reaches `row_perm`
+    // and its scratch row through bounds-checked accesses.
     unsafe {
         crate::x86::fp_small_ple::ple_panel_base_canonical(
             window,

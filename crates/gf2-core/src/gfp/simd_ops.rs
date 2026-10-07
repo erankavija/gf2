@@ -677,11 +677,12 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
 /// Sparse-times-dense whole-matmat dispatcher for `Fp<P>`.
 ///
 /// Packs `b` once into a canonical-byte (`P ≤ 251`) or canonical-u16
-/// (`P ∈ (251, 65535]`) buffer and sweeps every row of the sparse left
-/// matrix through the AVX2 SpMM kernel. Returns `false` when `P` is outside
-/// the supported range, when the `simd` feature is disabled, or when AVX2
-/// is unavailable; the caller then falls back to the generic
-/// Wide-accumulator scatter path in `SparseFieldMatrix::matmat`.
+/// (`P ∈ (251, 65535]`) buffer and hands the whole product to the AVX2 SpMM
+/// entry, which checks the column indices once and sweeps the sparse rows.
+/// Returns `false` when `P` is outside the supported range, when the `simd`
+/// feature is disabled, or when AVX2 is unavailable; the caller then falls
+/// back to the generic Wide-accumulator scatter path in
+/// `SparseFieldMatrix::matmat`.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_try_spmm<const P: u64>(
     a_row_ptr: &[usize],
@@ -707,28 +708,18 @@ pub(crate) fn fp_try_spmm<const P: u64>(
         };
         let b_u8: Vec<u8> = b.iter().map(|x| x.value() as u8).collect();
         let a_vals_u8: Vec<u8> = a_values.iter().map(|x| x.value() as u8).collect();
-        let mut out_u8 = vec![0u8; n];
-        for r in 0..m {
-            let start = a_row_ptr[r];
-            let end = a_row_ptr[r + 1];
-            for slot in out_u8.iter_mut() {
-                *slot = 0;
-            }
-            if start != end {
-                (fns.spmm_row_fn)(
-                    &a_vals_u8[start..end],
-                    &a_col_idx[start..end],
-                    &b_u8,
-                    n,
-                    n,
-                    P as u8,
-                    &mut out_u8,
-                );
-            }
-            let out_row = &mut out[r * n..(r + 1) * n];
-            for (slot, &byte) in out_row.iter_mut().zip(out_u8.iter()) {
-                *slot = Fp::<P>::new(byte as u64);
-            }
+        let mut out_u8 = vec![0u8; out.len()];
+        (fns.spmm_fn)(
+            a_row_ptr,
+            a_col_idx,
+            &a_vals_u8,
+            &b_u8,
+            n,
+            P as u8,
+            &mut out_u8,
+        );
+        for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
+            *slot = Fp::<P>::new(byte as u64);
         }
         return true;
     }
@@ -739,28 +730,18 @@ pub(crate) fn fp_try_spmm<const P: u64>(
         };
         let b_u16: Vec<u16> = b.iter().map(|x| x.value() as u16).collect();
         let a_vals_u16: Vec<u16> = a_values.iter().map(|x| x.value() as u16).collect();
-        let mut out_u16 = vec![0u16; n];
-        for r in 0..m {
-            let start = a_row_ptr[r];
-            let end = a_row_ptr[r + 1];
-            for slot in out_u16.iter_mut() {
-                *slot = 0;
-            }
-            if start != end {
-                (fns.spmm_row_fn)(
-                    &a_vals_u16[start..end],
-                    &a_col_idx[start..end],
-                    &b_u16,
-                    n,
-                    n,
-                    P as u16,
-                    &mut out_u16,
-                );
-            }
-            let out_row = &mut out[r * n..(r + 1) * n];
-            for (slot, &word) in out_row.iter_mut().zip(out_u16.iter()) {
-                *slot = Fp::<P>::new(word as u64);
-            }
+        let mut out_u16 = vec![0u16; out.len()];
+        (fns.spmm_fn)(
+            a_row_ptr,
+            a_col_idx,
+            &a_vals_u16,
+            &b_u16,
+            n,
+            P as u16,
+            &mut out_u16,
+        );
+        for (slot, &word) in out.iter_mut().zip(out_u16.iter()) {
+            *slot = Fp::<P>::new(word as u64);
         }
         return true;
     }

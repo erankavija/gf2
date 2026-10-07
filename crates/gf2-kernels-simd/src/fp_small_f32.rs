@@ -65,8 +65,12 @@ fn detect_x86() -> Option<SmallPrimeF32Fns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn batch_gemm_safe(a: &[f32], bt: &[f32], m: usize, k: usize, n: usize, p: u8, c: &mut [u8]) {
-    // SAFETY: `detect_x86` only returns this pointer when AVX2 + FMA3
-    // are both available at runtime.
+    crate::entry_check::assert_shape("fp_small_f32_gemm", "a", a.len(), m, k);
+    crate::entry_check::assert_shape("fp_small_f32_gemm", "bt", bt.len(), n, k);
+    crate::entry_check::assert_shape("fp_small_f32_gemm", "c", c.len(), m, n);
+    // SAFETY: `detect_x86` only returns this pointer when AVX2 and FMA3 are available
+    // at runtime. The assertions above keep the shape products from wrapping
+    // in the kernel's own length assertions.
     unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm(a, bt, m, k, n, p, c) }
 }
 
@@ -80,8 +84,12 @@ fn batch_gemm_route_a_safe(
     p: u8,
     c: &mut [u8],
 ) {
-    // SAFETY: `detect_x86` only returns this pointer when AVX2 + FMA3
-    // are both available at runtime.
+    crate::entry_check::assert_shape("fp_small_f32_gemm_route_a", "a", a.len(), m, k);
+    crate::entry_check::assert_shape("fp_small_f32_gemm_route_a", "bt", bt.len(), n, k);
+    crate::entry_check::assert_shape("fp_small_f32_gemm_route_a", "c", c.len(), m, n);
+    // SAFETY: `detect_x86` only returns this pointer when AVX2 and FMA3 are available
+    // at runtime. The assertions above keep the shape products from wrapping
+    // in the kernel's own length assertions.
     unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm_route_a(a, bt, m, k, n, p, c) }
 }
 
