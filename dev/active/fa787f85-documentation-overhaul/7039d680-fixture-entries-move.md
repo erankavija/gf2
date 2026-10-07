@@ -105,7 +105,7 @@ the five `Cargo.toml`, the three `findings.md` and the 18 code files the
 message of `a01f6ad78` names.
 
 `python3 contrib/gates/docs-mechanical.py` prints `PASS: 0 finding(s), 15
-baselined` at `a01f6ad78` and at each commit after it; it checks each inline
+baselined` at `a01f6ad78`; it checks each inline
 and reference link of `dev/active/**/*.md` and no relative path inside a
 JSON string. `a01f6ad78` removes two rows of the second table of
 `8f61d6de-baseline-findings.md`, the links to `../5cbb6545/findings.md`, and
@@ -113,11 +113,10 @@ adds none: no Markdown file of the entries keeps a link that fails.
 
 ## Flat paths that stay
 
-`R/7039d680-remaining.sh <outfile>` classifies each tracked file outside
-`.jit/` and outside the `7039d680-` files of `R` that holds
-`dev/active/<entry>` for one of the three entries; `7039d680-remaining.txt`
-is its output at `14d3ab443`, with the file and line count of each class, and
-holds no line of the class `unclassified`.
+`R/7039d680-remaining.sh <outfile>` classifies each tracked file in the
+scope its header states that holds `dev/active/<entry>` for one of the three
+entries; `7039d680-remaining.txt` is its output, with the file and line count
+of each class, and holds no line of the class `unclassified`.
 
 | Class | Ground |
 |---|---|
@@ -126,7 +125,7 @@ holds no line of the class `unclassified`.
 | `data-record` | JSON, JSON Lines, text and log files: addenda, producing manifests, ledgers, source-evidence and validation records, which keep their bytes; tool output at the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
 | `epic-record` | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the same command names |
 | `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
-| `tracker-state` | `progress.json` of `E`; `breakdown.json` of `R` and `C` |
+| `tracker-state` | `R/breakdown.json` |
 | `frozen-document` | `dense-parity-addendum.md` and `dense-parity-addendum-v1.md` of the mid-range entry, with the digest pins `f79bcba3-zen3-move.md` lists |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
 | `session-record` | `E/handoff-3.md:36`: a dated session record that cites `survey/drafts/` of the shifts entry, a directory absent from the tree |

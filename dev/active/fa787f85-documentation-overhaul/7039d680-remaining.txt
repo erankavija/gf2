@@ -10,4 +10,4 @@ revision-path 1 3
 session-record 1 1
 snapshot 215 1186
 snapshot-path 1 1
-tracker-state 3 11
+tracker-state 1 8
