@@ -1073,7 +1073,7 @@
      "short_id": "af84619e",
      "title": "Retire the transient progress checker after the final check",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     }
    ]
   }
@@ -2365,7 +2365,8 @@
   "c423c7aa": 1,
   "a0ec34f2": 1,
   "d6ebc4ec": 1,
-  "c852d9b2": 1
+  "c852d9b2": 1,
+  "af84619e": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2599,7 +2600,8 @@
   "Session 11 end (2026-10-07 00:55 EEST): cargo-ci and docs-mechanical pass for f79bcba3, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 on the merged tree at e230aaaa2; their review gates wait for the owner rulings of handoff-10.md. Every open unit waits on a ruling or on a unit that does.",
   "Session 13 (2026-10-07 22:30 EEST): 9451498f closed after the REQ-02 amendment. d6ebc4ec (worktree agent-d6ebc4ec) and a0ec34f2 (agent-a0ec34f2) dispatched in parallel on opus at 338275ff2; both edit migration/manifest.toml (policy rows vs artifacts rows): merge row-wise. After the d6ebc4ec merge the lead re-mints the profile package(s) the worker names.",
   "Session 13: closed 9451498f, a0ec34f2, 4979271f, d6ebc4ec, d0b1545e, c423c7aa. c852d9b2 dispatched (opus, worktree agent-c852d9b2 at 4ae1773e4); af84619e follows, then the epic gates. Lead fixes before gating: commit bodies with bare ids on unmerged branches were rebuilt (soft reset to the merge base, typed message) and records corrected; a milestone reference into an archive needs a commit pin or the container preview turns ineligible (unpreservable-layout).",
-  "Session 13: c852d9b2 done after one lead rework (record named a verified commit without its outputs; the jit check-links classification depended on untracked target/doc and was removed). Lesson: the commit a record names must hold every file its commands read, and an output is committed only if a clean checkout of that commit reproduces it. Guard every commit subject: [ ${#s} -le 71 ] && git commit. af84619e dispatched (opus, worktree agent-af84619e at 4ee6c377a)."
+  "Session 13: c852d9b2 done after one lead rework (record named a verified commit without its outputs; the jit check-links classification depended on untracked target/doc and was removed). Lesson: the commit a record names must hold every file its commands read, and an output is committed only if a clean checkout of that commit reproduces it. Guard every commit subject: [ ${#s} -le 71 ] && git commit. af84619e dispatched (opus, worktree agent-af84619e at 4ee6c377a).",
+  "Session 13: af84619e done after one lead rework (the final report committed while the checker existed counts its own two rows incomplete; the complete report is the same checker run on the tree without it). Every child of the epic is done or rejected; the epic gates run next (executable gates before holistic-review)."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
