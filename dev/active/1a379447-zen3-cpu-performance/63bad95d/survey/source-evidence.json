@@ -71,35 +71,35 @@
     {
       "id": "sim-default-empty",
       "project": "gf2",
-      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
+      "commit": "01bf0f88ae6a78d2e09ac5b5e54ba3b4782618bc",
       "path": "crates/gf2-sim/Cargo.toml",
-      "line": 63,
+      "line": 62,
       "occurrences": 1,
-      "verbatim": "default = []",
-      "why": "`gf2-sim` has no default feature of its own.",
-      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
+      "verbatim": "[features]",
+      "why": "The feature table of `gf2-sim` declares no `default` feature, so its default feature set is empty.",
+      "sha256": "e8b9942404ee8ec53441f9008bbddb606c4dfeb9306264fbbb0121dc88868dc0"
     },
     {
       "id": "sim-depends-coding-defaults",
       "project": "gf2",
-      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
+      "commit": "01bf0f88ae6a78d2e09ac5b5e54ba3b4782618bc",
       "path": "crates/gf2-sim/Cargo.toml",
       "line": 15,
       "occurrences": 1,
       "verbatim": "gf2-coding = { path = \"../gf2-coding\" }",
       "why": "`gf2-sim` takes `gf2-coding` with its default features, so every `gf2-sim` build enables `gf2-core/simd`.",
-      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
+      "sha256": "e8b9942404ee8ec53441f9008bbddb606c4dfeb9306264fbbb0121dc88868dc0"
     },
     {
       "id": "sim-depends-algebra-defaults",
       "project": "gf2",
-      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
+      "commit": "01bf0f88ae6a78d2e09ac5b5e54ba3b4782618bc",
       "path": "crates/gf2-sim/Cargo.toml",
       "line": 16,
       "occurrences": 1,
       "verbatim": "gf2-algebra = { path = \"../gf2-algebra\" }",
       "why": "`gf2-sim` takes `gf2-algebra` with its default features.",
-      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
+      "sha256": "e8b9942404ee8ec53441f9008bbddb606c4dfeb9306264fbbb0121dc88868dc0"
     },
     {
       "id": "algebra-default-simd",
@@ -720,13 +720,13 @@
     {
       "id": "matvec-lane-entry-test",
       "project": "gf2",
-      "commit": "376b0ae0013ce77e177ce809b64bc0ba0bd4403c",
+      "commit": "ffb87c14a8a45065e0fbebbb100a4c4011891b38",
       "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
-      "line": 155,
+      "line": 180,
       "occurrences": 1,
       "verbatim": "fn each_route_matches_the_reference_at_stride_and_word_boundaries() {",
       "why": "Both lanes of the entry match the bit-level reference at the stride and word boundaries.",
-      "sha256": "b30dd06de7e32adaf2abef03b8eef75399e66e9d77ef3bf9936a54ca11bca73c"
+      "sha256": "91a6f3f63dbb01e83c7fb86147f0db99381a7c06584c7352f2be5928dbe36dff"
     },
     {
       "id": "baked-matvec-conservative-test",
