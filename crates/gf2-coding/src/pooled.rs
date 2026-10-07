@@ -30,7 +30,9 @@ use crate::tuning::DecodeSelectors;
 /// # Bounds and cost
 ///
 /// The inner decoder is `Send`, keeps no state between calls that changes a
-/// later result, and decodes a batch of any length. Each worker owns a full
+/// later result, decodes a batch of any length, and runs no rayon work on the
+/// calling pool inside `decode_batch`: a worker holds its decoder's lock for
+/// the whole task and could otherwise steal a task that locks it again. Each worker owns a full
 /// inner decoder, so the workspace cost is that of one inner decoder times the
 /// worker count.
 ///
