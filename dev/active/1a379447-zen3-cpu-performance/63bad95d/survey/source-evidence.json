@@ -126,7 +126,7 @@
     {
       "id": "ci-baked-step",
       "project": "gf2",
-      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
+      "commit": "9453774e19508c125d5a788141cabcbcb38807e4",
       "path": "scripts/cargo-ci.sh",
       "line": 317,
       "occurrences": 1,
@@ -137,7 +137,7 @@
     {
       "id": "ci-feature-flags",
       "project": "gf2",
-      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
+      "commit": "9453774e19508c125d5a788141cabcbcb38807e4",
       "path": "scripts/cargo-ci.sh",
       "line": 226,
       "occurrences": 1,
@@ -302,7 +302,7 @@
     {
       "id": "popcount-csa-comparator",
       "project": "gf2",
-      "commit": "e2c98226a1a34ce13e4ce9d4c78efc0fff570509",
+      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
       "line": 138,
       "occurrences": 1,
