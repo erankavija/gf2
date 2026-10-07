@@ -716,15 +716,9 @@ impl LdpcDecoder {
     }
 
     fn check_node_update(&mut self) {
-        match self.config.algorithm {
-            DecoderAlgorithm::MinSum => self.check_node_update_min_sum(MinSumRule::Plain),
-            DecoderAlgorithm::NormalizedMinSum(alpha) => {
-                self.check_node_update_min_sum(MinSumRule::Normalized(alpha))
-            }
-            DecoderAlgorithm::OffsetMinSum(beta) => {
-                self.check_node_update_min_sum(MinSumRule::Offset(beta))
-            }
-            DecoderAlgorithm::SumProduct => self.check_node_update_spa(),
+        match self.config.algorithm.min_sum_rule() {
+            Some(rule) => self.check_node_update_min_sum(rule),
+            None => self.check_node_update_spa(),
         }
     }
 
@@ -913,6 +907,14 @@ impl SoftDecoder for LdpcDecoder {
 
     fn soft_decoded_len(&self) -> usize {
         self.n()
+    }
+
+    /// Reports no iteration; `converged` and `syndrome_check_passed` are the
+    /// parity test of the returned word.
+    fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+        let decoded = self.decode_soft(llrs);
+        let is_codeword = self.code.is_valid_codeword(&decoded);
+        DecoderResult::new(decoded, 0, is_codeword, is_codeword)
     }
 }
 

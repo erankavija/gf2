@@ -86,6 +86,8 @@ def closure():
                 str(STORY / "dense-parity-addendum.md"),
                 str(STORY / "dense-parity-addendum-v1.md"),
                 str(STORY / "dense-parity-amendment-v2.md"),
+                # The lane-threshold question's frozen addendum.
+                located("matvec-lane-threshold-addendum.md"),
                 str(STORY / "m4ri-operation-match.md"),
                 str(STORY / "m4ri-probe-record.txt"),
                 str(SURVEY / "m4ri_matvec_arm.c"),

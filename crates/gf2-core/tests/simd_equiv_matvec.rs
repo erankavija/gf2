@@ -111,10 +111,35 @@ fn assert_zero_tail(vector: &BitVec, context: &str) {
     }
 }
 
+/// Row strides the lane threshold can separate: the conservative value and
+/// every value the lane-threshold confirmation of jit:4337c02e can yield.
+const THRESHOLD_STRIDES: [usize; 6] = [8, 9, 10, 64, 65, 66];
+
 #[test]
 fn matvec_boundary_shapes_index_canonically_and_keep_zero_tails() {
+    assert_boundary_shapes(BOUNDARY_COLS);
+}
+
+/// Column counts 0, 1, 63, 64 and 65 bits past the last full word below each
+/// threshold stride, so the strides on both sides of it are exercised. The
+/// build without the `simd` feature runs the scalar lane at each of them and a
+/// `simd` build runs the lane its selector takes.
+#[test]
+fn matvec_is_exact_on_both_sides_of_each_threshold_stride() {
+    for stride in THRESHOLD_STRIDES {
+        let below = 64 * (stride - 1);
+        let cols = [0, 1, 63, 64, 65].map(|bits| below + bits);
+        assert_eq!(
+            cols.map(|c| c.div_ceil(64)),
+            [stride - 1, stride, stride, stride, stride + 1]
+        );
+        assert_boundary_shapes(cols);
+    }
+}
+
+fn assert_boundary_shapes(column_counts: impl IntoIterator<Item = usize> + Clone) {
     for rows in [0, 1, 63, 64, 65] {
-        for cols in BOUNDARY_COLS {
+        for cols in column_counts.clone() {
             let context = format!("rows={rows} cols={cols}");
             let mut matrix = BitMatrix::zeros(rows, cols);
             for row in 0..rows {

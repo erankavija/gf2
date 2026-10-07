@@ -10,8 +10,8 @@
 use dense_parity_harness::cells::{Cache, Workload};
 use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
 use dense_parity_harness::routes::{
-    fused_and_popcnt, fused_bundle, observe_output, public_matvec, run_windows, verify_lane,
-    verify_shape, OutputSink, Route, WindowPlan, MAX_RETAINED_OUTPUTS,
+    fused_and_popcnt, fused_bundle, observe_output, public_matvec, route_matvec, run_windows,
+    verify_lane, verify_shape, OutputSink, Route, WindowPlan, MAX_RETAINED_OUTPUTS,
 };
 use dense_parity_harness::wire::{emit_result, read_request, require_window_unless_child};
 use std::cell::{Cell as MutCell, RefCell};
@@ -99,7 +99,7 @@ fn run() -> Result<(), String> {
             let selected = format!(
                 "gf2-core/BitMatrix::matvec/{}/stride={words}w/shape={}/rows={}/cols={}\
                  /base%64={}/retain={MAX_RETAINED_OUTPUTS}/banks={}x{}B/working-set={}B",
-                facts.lane(),
+                facts.executed_lane(route),
                 shape.id(),
                 banks.rows(),
                 banks.columns(),
@@ -111,7 +111,7 @@ fn run() -> Result<(), String> {
             let items = banks.items();
             let mut body = |bank: usize, item: usize| {
                 let item = banks.item(bank, item);
-                let output = public_matvec(&item.matrix, &item.vector);
+                let output = route_matvec(route, &item.matrix, &item.vector);
                 retained.borrow_mut().keep(output);
             };
             let setup_ns = elapsed_ns(setup_start);

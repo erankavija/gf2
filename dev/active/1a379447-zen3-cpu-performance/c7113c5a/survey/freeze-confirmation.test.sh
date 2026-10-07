@@ -18,7 +18,15 @@
 #      total, the attempt allocation and the corrected level distinctly, and
 #      never calls the attempt allocation "family-wise alpha";
 #   3. `--resolution-decimals 3` rounds the same pilot's widest half-width up
-#      to the next 0.001 in the addendum and in the record.
+#      to the next 0.001 in the addendum and in the record;
+#   4. every committed derivation record freezes again to its committed
+#      addendum and record bytes (`rederive-confirmation.py`), except a record
+#      frozen under a retained-cells floor, whose resolution lies below the
+#      whole-pilot half-width acceptance verifies under P-03 and which the
+#      freezer therefore refuses to freeze again;
+#   5. a supplied resolution that covers the selected cells and lies below
+#      the whole pilot's half-width is refused, so no addendum is written
+#      that acceptance rejects on its declared resolution.
 #
 # Usage (from the repository root): freeze-confirmation.test.sh
 set -euo pipefail
@@ -100,5 +108,53 @@ if f"frozen measurement resolution {frozen:.3f}\n" not in record:
     raise SystemExit("case three decimals: the record does not state the frozen value")
 PY
 echo "case three decimals: rounds the widest half-width up to the next 0.001"
+
+# Case 4: every committed confirmation re-derives byte for byte. A record
+# frozen under a retained-cells floor is a preserved falsified freeze: the
+# freezer must refuse it at the whole-pilot floor.
+REDERIVE="$(dirname "$FREEZER")/rederive-confirmation.py"
+RETAINED='^floor scope  *retained cells$'
+mapfile -t all_records < <(git grep -l '^frozen measurement resolution' -- 'dev/active/*.txt')
+records=() falsified=()
+for record in "${all_records[@]}"; do
+  if grep -q "$RETAINED" "$record"; then falsified+=("$record"); else records+=("$record"); fi
+done
+python3 -B "$REDERIVE" "$fixture/rederived" "${records[@]}" >"$fixture/rederived.txt" \
+  || { echo "case committed records: a committed confirmation no longer re-derives" >&2
+       grep -v '^same ' "$fixture/rederived.txt" >&2; exit 1; }
+for record in "${falsified[@]}"; do
+  if python3 -B "$REDERIVE" "$fixture/falsified" "$record" >"$fixture/falsified.txt"; then
+    echo "case committed records: $record freezes below the whole-pilot floor" >&2; exit 1
+  fi
+  grep -q 'freezer refused: supplied resolution .* is below the pilot-alpha floor' "$fixture/falsified.txt" \
+    || { echo "case committed records: unexpected refusal" >&2; cat "$fixture/falsified.txt" >&2; exit 1; }
+done
+echo "case committed records: ${#records[@]} committed confirmations re-derive byte for byte;" \
+  "${#falsified[@]} frozen below the whole-pilot floor refused"
+
+# Case 5 selects the five narrow cells of the same pilot; its sixth cell is the
+# widest, so a resolution that covers the selection lies below the whole pilot's.
+SELECTED=(clmul-wide-9w-owned clmul-wide-4w-accumulate clmul-wide-1w-dispatch-overhead
+          clmul-wide-2w-dispatch-overhead clmul-wide-16w-dispatch-overhead)
+echo 'resolution over the selected cells' >"$fixture/derivation.md"
+# freeze_selected <resolution> <prefix>
+freeze_selected() {
+  local cells=() cell
+  for cell in "${SELECTED[@]}"; do cells+=(--cell "$cell"); done
+  (cd "$fixture" && python3 "$FREEZER" \
+    --pilot-addendum "$PILOT_ADDENDUM" --pilot "$PILOT" --frozen-utc "$FROZEN" \
+    --output "$2.json" --record "$2.txt" --resolution-decimals 3 \
+    --resolution "$1" --resolution-derivation derivation.md \
+    --selection-rationale 'the narrow cells' "${cells[@]}" >/dev/null 2>"$2.err")
+}
+if freeze_selected 0.010 below; then
+  echo "case whole-pilot floor: a resolution below the whole pilot's half-width was frozen" >&2; exit 1
+fi
+grep -q 'below the pilot-alpha floor 0.018' "$fixture/below.err" && [[ ! -e "$fixture/below.json" ]] \
+  || { echo "case whole-pilot floor: unexpected refusal" >&2; cat "$fixture/below.err" >&2; exit 1; }
+freeze_selected 0.018 whole \
+  || { echo "case whole-pilot floor: the whole-pilot width was refused" >&2
+       cat "$fixture/whole.err" >&2; exit 1; }
+echo "case whole-pilot floor: a selection's resolution below the whole pilot's half-width is refused"
 
 echo 'freeze-confirmation.test.sh: every case passed'
