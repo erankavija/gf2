@@ -127,7 +127,7 @@ nothing at `b911fe67c`.
 each commit of the table "Commits"; it checks each inline and reference link
 of `dev/active/**/*.md` and no path inside a JSON string. Each Markdown file
 that `b911fe67c` or `37391ec5c` changes lies under `dev/active/`.
-`8f61d6de-baseline-findings.md` names no file of the two entries as a source.
+`contrib/gates/docs-mechanical-baseline.md` names no file of the two entries as a source.
 
 `R/cc060974-remaining.sh <outfile>` classifies each line of a tracked file
 in the scope its header states that holds

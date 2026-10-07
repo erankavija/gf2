@@ -113,7 +113,7 @@ message of `df7b52dd6` names.
 each commit of the table "Commits"; it checks each inline and reference link
 of `dev/active/**/*.md` and no relative path inside a JSON string. Each
 Markdown file that `df7b52dd6` or `2f81ba52e` changes lies under
-`dev/active/`. `8f61d6de-baseline-findings.md` names none of the three entries.
+`dev/active/`. `contrib/gates/docs-mechanical-baseline.md` names none of the three entries.
 
 ## Flat paths that stay
 

@@ -79,7 +79,7 @@ states the command and the two commits: empty `diff`. Section
 
 | Document | SHA-256 at | Links that leave the entry |
 |---|---|---|
-| `E/f547c394/protocol.md` | `dev/bench_results/00dd43c3/v4-r1-confirmation/receipt.json:2324` | row of the third table of `8f61d6de-baseline-findings.md` -> @/issue/faac6007 |
+| `E/f547c394/protocol.md` | `dev/bench_results/00dd43c3/v4-r1-confirmation/receipt.json:2324` | row of the third table of `contrib/gates/docs-mechanical-baseline.md` -> @/issue/faac6007 |
 | `E/f547c394/amendment-v4.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9659` | as above; `../bdc507a3/verdict-preservation.json` resolves |
 
 `git diff -M --name-status deb8854e5 6fdb776f7` restricted to `*.json`,

@@ -92,7 +92,7 @@ in that commit is the moved paths.
 
 | Document of `S` | SHA-256 at | Links that leave the entry |
 |---|---|---|
-| `dense-parity-addendum.md` | `S/survey/dense-harness/src/cells.rs:22`; `dense-campaign` refuses a timed run on another digest | rows of the second table of `8f61d6de-baseline-findings.md` -> faac6007 (jit issue show faac6007) |
+| `dense-parity-addendum.md` | `S/survey/dense-harness/src/cells.rs:22`; `dense-campaign` refuses a timed run on another digest | rows of the second table of `contrib/gates/docs-mechanical-baseline.md` -> faac6007 (jit issue show faac6007) |
 | `dense-parity-addendum-v1.md` | `S/survey/dense-baseline-validation.txt:6` | as above |
 | `m4ri-operation-match.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9383` | as above |
 | `logical-buffer-addendum.md` | `dev/bench_results/2037941f/isal-dispatch-availability.md:7`, `S/mid-range-tables.md:470` | resolve; `80a18d4c9` repoints lines 13 and 341 |

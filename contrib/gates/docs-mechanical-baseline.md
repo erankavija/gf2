@@ -14,7 +14,7 @@ Each row of the second table is a relative link in a frozen addendum or
 comparator specification of the mid-range entry. A harness constant, a
 validation record or a receipt holds the SHA-256 of the file,
 and the link text counts directory levels from the flat entry location
-(`f79bcba3-zen3-move.md`, section "Frozen documents").
+(record of @/issue/f79bcba3, section "Frozen documents").
 
 | Location | Class | Target |
 |---|---|---|
@@ -31,7 +31,7 @@ and the link text counts directory levels from the flat entry location
 Each row of the third table is a relative link in a protocol document of the
 `f547c394` entry that leaves the entry. A committed receipt holds the SHA-256
 of the file, and the link text counts directory levels from the flat entry
-location (`602652bf-protocol-inputs-move.md`, section "Frozen documents").
+location (record of @/issue/602652bf, section "Frozen documents").
 
 | Location | Class | Target |
 |---|---|---|
@@ -53,9 +53,9 @@ flat location of the entries it names.
 | `dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md:40` | `broken-link` | `../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-tables.md` |
 
 Each row of the fifth table is a relative link in a file that keeps its bytes:
-`616e1d7c-preexec.json` records the SHA-256 of each of the three files and the
+the pre-execution record of @/issue/616e1d7c holds the SHA-256 of each of the three files and the
 archive holds an equal copy of each. The link text counts directory levels from
-the flat location of the a83583e0 entry (`f694f59a-declaration-entry-move.md`).
+the flat location of the a83583e0 entry (record of @/issue/f694f59a).
 
 | Location | Class | Target |
 |---|---|---|

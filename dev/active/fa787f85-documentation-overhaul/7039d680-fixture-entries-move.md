@@ -106,7 +106,7 @@ message of `a01f6ad78` names.
 `python3 contrib/gates/docs-mechanical.py` prints `PASS` with 0 findings at
 `a01f6ad78`; it checks each inline and reference link of `dev/active/**/*.md`
 and no relative path inside a JSON string. `a01f6ad78` removes the rows of
-the second table of `8f61d6de-baseline-findings.md` that link to
+the second table of `contrib/gates/docs-mechanical-baseline.md` that link to
 `../5cbb6545/findings.md` and adds none.
 
 ## Flat paths that stay

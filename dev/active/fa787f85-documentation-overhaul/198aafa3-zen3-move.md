@@ -119,7 +119,7 @@ file outside the migration manifest.
 
 The link `../6fb89a3c/survey/fetch-build.sh` of the frozen
 `S/m4ri-operation-match.md` resolves, and `552a0548d` removes its row from
-the second table of `8f61d6de-baseline-findings.md`; the move adds no row.
+the second table of `contrib/gates/docs-mechanical-baseline.md`; the move adds no row.
 `python3 contrib/gates/docs-mechanical.py` prints `PASS` with 0 findings at
 `552a0548d`; it checks each inline and reference link of `dev/active/**/*.md`
 and no relative path inside a JSON string.
