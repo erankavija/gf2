@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 15,
+ "current_wave": 16,
  "waves": [
   {
    "wave_number": 1,
@@ -1033,7 +1033,7 @@
      "short_id": "c852d9b2",
      "title": "Verify links across the permanent surface and executed archives",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "a0ec34f2-62b7-42ad-b922-44a7506ba50a",
@@ -1073,7 +1073,7 @@
      "short_id": "af84619e",
      "title": "Retire the transient progress checker after the final check",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     }
    ]
   }
@@ -1716,6 +1716,11 @@
    "id": "727677b4",
    "epic": "b4b4b9ee",
    "reason": "inventory drift in proofs/WORKAROUNDS.md and benchmarks/README.md (c423c7aa review, advisory); also the GF(31) lane the FFLAS tables omit"
+  },
+  {
+   "id": "aed7e749",
+   "epic": "b4b4b9ee",
+   "reason": "five unresolved links in four digest-cited files under dev/studies and dev/bench_results (found by c852d9b2)"
   }
  ],
  "escalations": [
@@ -2265,6 +2270,24 @@
    "options": [],
    "recommendation": "",
    "resolution": "Owner (2026-10-08): epic DEC-02 to DEC-05; epic label removed from eleven issues outside the graph; move issue bdf8e2e5 (b4b4b9ee) for 3eeb57f6; deck copy removed by d0b1545e; prose findings closed by c423c7aa."
+  },
+  {
+   "issue": "fa787f85",
+   "question": "Session instruction (2026-10-08): do not stop for questions; block the task and record the question for the next session; hand off after this and the next wave or when only owner-blocked work remains; check workers every 30 minutes.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner instruction (2026-10-08)."
+  },
+  {
+   "issue": "fa787f85",
+   "question": "OPEN: commit 62cd9a3eb on unpushed main carries a 72-character subject (limit 71): \"chore(jit:fa787f85): file 720f5f74 and 727677b4 under the tech-debt epic\". It lies under the merges of c423c7aa and c852d9b2 and the af84619e branch base; records name later commit ids (c852d9b2-link-verification.md names 0b853546c as the commit verified), and gate runs record commits after it.",
+   "options": [
+    "reword by rebase -r of unpushed main and update the commit ids that records and gate runs name",
+    "leave the subject and record the exception",
+    "reword and rerun the affected review gates"
+   ],
+   "recommendation": "leave it unless main is rewritten for another reason before the push; a rewrite changes the verified commit of c852d9b2 and the commit checked of af84619e",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -2341,7 +2364,8 @@
   "4979271f": 1,
   "c423c7aa": 1,
   "a0ec34f2": 1,
-  "d6ebc4ec": 1
+  "d6ebc4ec": 1,
+  "c852d9b2": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2574,7 +2598,8 @@
   "Session 11: the seven zen3 lane units are merged on main (merges d6657b90e, 99841ab2d, ffa978709 and the merge of db9f06677); 27 entries live under dev/active/1a379447-zen3-cpu-performance/; tracker references relinked by a generic pass (dangling unpinned reference -> counterpart under the epic directory, `--skip-scan` fallback); `jit validate` exits 0. The 63bad95d generators (make-calibration-budget.py, make-route-inventory.py) rewrite their outputs with other bytes on the moved tree: owned by open issue 63bad95d, whose lead regenerates them. Flat directories left under dev/active: 02b8137c (held, 5b3e7c81), dbd8787d and a83583e0 (blocked), and the retained or empty leftovers of 6dc81018.",
   "Session 11 end (2026-10-07 00:55 EEST): cargo-ci and docs-mechanical pass for f79bcba3, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 on the merged tree at e230aaaa2; their review gates wait for the owner rulings of handoff-10.md. Every open unit waits on a ruling or on a unit that does.",
   "Session 13 (2026-10-07 22:30 EEST): 9451498f closed after the REQ-02 amendment. d6ebc4ec (worktree agent-d6ebc4ec) and a0ec34f2 (agent-a0ec34f2) dispatched in parallel on opus at 338275ff2; both edit migration/manifest.toml (policy rows vs artifacts rows): merge row-wise. After the d6ebc4ec merge the lead re-mints the profile package(s) the worker names.",
-  "Session 13: closed 9451498f, a0ec34f2, 4979271f, d6ebc4ec, d0b1545e, c423c7aa. c852d9b2 dispatched (opus, worktree agent-c852d9b2 at 4ae1773e4); af84619e follows, then the epic gates. Lead fixes before gating: commit bodies with bare ids on unmerged branches were rebuilt (soft reset to the merge base, typed message) and records corrected; a milestone reference into an archive needs a commit pin or the container preview turns ineligible (unpreservable-layout)."
+  "Session 13: closed 9451498f, a0ec34f2, 4979271f, d6ebc4ec, d0b1545e, c423c7aa. c852d9b2 dispatched (opus, worktree agent-c852d9b2 at 4ae1773e4); af84619e follows, then the epic gates. Lead fixes before gating: commit bodies with bare ids on unmerged branches were rebuilt (soft reset to the merge base, typed message) and records corrected; a milestone reference into an archive needs a commit pin or the container preview turns ineligible (unpreservable-layout).",
+  "Session 13: c852d9b2 done after one lead rework (record named a verified commit without its outputs; the jit check-links classification depended on untracked target/doc and was removed). Lesson: the commit a record names must hold every file its commands read, and an output is committed only if a clean checkout of that commit reproduces it. Guard every commit subject: [ ${#s} -le 71 ] && git commit. af84619e dispatched (opus, worktree agent-af84619e at 4ee6c377a)."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
