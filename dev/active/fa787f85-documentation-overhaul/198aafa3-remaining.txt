@@ -1,13 +1,12 @@
 addendum-text 1 1
 bench-window 1 1
-data-record 93 639
+data-record 92 636
 epic-record 15 277
 frozen-document 2 2
-generated-table 1 2
 manifest 1 397
 manifest-quote 1 1
 receipt-directory 396 2989
 recorded-value 1 1
-snapshot 698 3943
+snapshot 706 3951
 snapshot-path 1 5
 tracker-state 2 33

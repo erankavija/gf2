@@ -1,7 +1,6 @@
 bench-window 1 1
-data-record 11 77
+data-record 10 76
 epic-record 9 96
-generated-table 1 1
 manifest 1 223
 queue-quote 1 1
 receipt-directory 32 275

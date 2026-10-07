@@ -6,6 +6,6 @@ generated-table 2 16
 line-qualified-record 5 262
 manifest 1 166
 pinned-script 1 1
-receipt-directory 345 589
-snapshot 490 989
+receipt-directory 353 607
+snapshot 506 1018
 tracker-state 1 3
