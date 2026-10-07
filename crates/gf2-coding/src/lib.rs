@@ -26,6 +26,7 @@ pub mod linear;
 pub mod llr;
 pub mod modem;
 pub mod osd;
+pub mod pooled;
 pub mod product;
 
 pub mod simulation;
