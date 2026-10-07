@@ -9,17 +9,21 @@ and fails on a gap or a stale row.
 
 SIMD, CORE, ALGEBRA, CODING = "gf2-kernels-simd", "gf2-core", "gf2-algebra", "gf2-coding"
 PROTOTYPE = "caller-trusted-check-prototype"
+# Owner of a claim about the tree the family measured: its path is relative to
+# the producing snapshot of the confirmation receipt.
+MEASURED = "measured-tree"
+TOOL = "tuning-campaign-support"
 PROTOTYPE_CRATE = "caller_trusted_check_prototype"
 
 # (claim id, package or None for a unique tracked file name, path, fragment, occurrences, why)
 CLAIMS = [
     # Sparse row kernels.
     ("small-spmm-type-doc", SIMD, "src/fp_small.rs",
-     "/// Each index must satisfy `a_cols[h] * b_stride + n <= b.len()`, and", 1,
-     "The column bound is prose on the safe pointer type, outside its Panics section."),
+     '/// `a_vals.len() == a_cols.len()`, every `a_cols[h]` names a whole row of', 1,
+     'The pointer type lists the column bound under Panics.'),
     ("small-spmm-wrapper", SIMD, "src/fp_small.rs",
-     "// The column bound is the caller's, as `SmallPrimeSpmmRowFn` documents; the", 1,
-     "The safe wrapper leaves the column bound to its caller."),
+     'crate::entry_check::assert_spmm_columns("fp_small_spmm", a_cols, b.len(), n);', 1,
+     'The safe entry checks every column index once per product, ahead of its row loop.'),
     ("small-spmm-length-assert", SIMD, "src/x86/fp_small.rs",
      '"fp_small_spmm_row: a_vals/a_cols length mismatch"', 1,
      "The kernel asserts its other two length conditions in release builds."),
@@ -30,11 +34,11 @@ CLAIMS = [
      "let b_kj = *b.get_unchecked(col * b_stride + j) as u64;", 1,
      "The scalar tail reads `b` without a bounds check."),
     ("medium-spmm-type-doc", SIMD, "src/fp_medium.rs",
-     "/// Each index must satisfy `a_cols[h] * b_stride + n <= b.len()`.", 1,
-     "The column bound is prose on the safe pointer type, outside its Panics section."),
+     '/// `a_vals.len() == a_cols.len()`, every `a_cols[h]` names a whole row of', 1,
+     'The pointer type lists the column bound under Panics.'),
     ("medium-spmm-wrapper", SIMD, "src/fp_medium.rs",
-     "// The column bound is the caller's, as `MediumPrimeSpmmRowFn` documents;", 1,
-     "The safe wrapper leaves the column bound to its caller."),
+     'crate::entry_check::assert_spmm_columns("fp_medium_spmm", a_cols, b.len(), n);', 1,
+     'The safe entry checks every column index once per product, ahead of its row loop.'),
     ("medium-spmm-length-assert", SIMD, "src/x86/fp_medium.rs",
      '"fp_medium_spmm_row: a_vals/a_cols length mismatch"', 1,
      "The kernel asserts its other two length conditions in release builds."),
@@ -46,11 +50,11 @@ CLAIMS = [
      "The scalar tail reads `b` without a bounds check."),
     # PLE panel base kernels.
     ("small-ple-type-doc", SIMD, "src/fp_small_ple.rs",
-     "/// (`< p`). These preconditions are debug-asserted by the kernel.", 1,
-     "The safe pointer type states its caller conditions as debug-asserted."),
+     '/// Panics unless `window.len() == m * win`, `inv_table.len() >= p as usize`', 1,
+     'The pointer type lists the window shape, the table length and the canonical window under Panics.'),
     ("small-ple-wrapper", SIMD, "src/fp_small_ple.rs",
-     "// `SmallPrimePlePanelBaseFn`, established by the gf2-core dispatch", 1,
-     "The safe wrapper attributes the conditions to one calling crate."),
+     'crate::entry_check::assert_ple_panel(', 1,
+     'The safe entry checks the window shape, the table length and every window entry ahead of the kernel.'),
     ("small-ple-window-debug", SIMD, "src/x86/fp_small_ple.rs",
      '"ple_panel_base_canonical: window shape"', 1,
      "The window shape is a `debug_assert_eq!`."),
@@ -72,11 +76,11 @@ CLAIMS = [
      "The fixed scratch row is written through a bounds-checked index, so a window wider "
      "than the scratch panics."),
     ("medium-ple-type-doc", SIMD, "src/fp_medium_ple.rs",
-     "/// (`< p`). These preconditions are debug-asserted by the kernel.", 1,
-     "The safe pointer type states its caller conditions as debug-asserted."),
+     '/// Panics unless `window.len() == m * win`, `inv_table.len() >= p as usize`', 1,
+     'The pointer type lists the window shape, the table length and the canonical window under Panics.'),
     ("medium-ple-wrapper", SIMD, "src/fp_medium_ple.rs",
-     "// `MediumPrimePlePanelBaseFn`, established by the gf2-core dispatch", 1,
-     "The safe wrapper attributes the conditions to one calling crate."),
+     'crate::entry_check::assert_ple_panel(', 1,
+     'The safe entry checks the window shape, the table length and every window entry ahead of the kernel.'),
     ("medium-ple-window-debug", SIMD, "src/x86/fp_medium_ple.rs",
      '"ple_panel_base_canonical_u16: window shape"', 1,
      "The window shape is a `debug_assert_eq!`."),
@@ -98,17 +102,17 @@ CLAIMS = [
      "The fixed scratch row is written through a bounds-checked index."),
     # Packed batch kernels.
     ("bipedal-binary-type-doc", SIMD, "src/bipedal/mod.rs",
-     "/// [`BipedalAvx2Fns::mul_fn`]. All six slices share length divisible by 4.", 1,
-     "The slice shape is prose on the safe pointer type."),
+     '/// Panics unless all six slices share one length that is a multiple of 4.', 1,
+     'The pointer type lists the slice shape under Panics.'),
     ("bipedal-unary-type-doc", SIMD, "src/bipedal/mod.rs",
-     "/// Used by [`BipedalAvx2Fns::neg_fn`]. All four slices share length", 1,
-     "The slice shape is prose on the safe pointer type."),
+     '/// Panics unless all four slices share one length that is a multiple of 4.', 1,
+     'The pointer type lists the slice shape under Panics.'),
     ("bipedal-binary-wrapper", SIMD, "src/bipedal/mod.rs",
-     "// The slice shape is the caller's, as `BipedalBinaryKernelFn` documents.", 3,
-     "The three binary wrappers leave the slice shape to their caller."),
+     '[m1.len(), s1.len(), m2.len(), s2.len(), om.len(), os.len()],', 3,
+     'Each of the three binary entries checks the slice shape ahead of the kernel.'),
     ("bipedal-unary-wrapper", SIMD, "src/bipedal/mod.rs",
-     "// The slice shape is the caller's, as `BipedalUnaryKernelFn` documents.", 1,
-     "The unary wrapper leaves the slice shape to its caller."),
+     '[m.len(), s.len(), om.len(), os.len()],', 1,
+     'The unary entry checks the slice shape ahead of the kernel.'),
     ("bipedal-binary-debug", SIMD, "src/x86/bipedal_avx2.rs",
      "debug_assert_eq!(mag1.len() % 4, 0);", 3,
      "Each binary kernel opens with debug assertions of the slice shape."),
@@ -126,17 +130,17 @@ CLAIMS = [
      "The crate publishes the same kernels as `unsafe fn` items as well, with the slice "
      "shape under Safety."),
     ("f5-binary-type-doc", SIMD, "src/bipedal/packed5.rs",
-     "/// All nine slices must have the same length (a multiple of 4 for the AVX2 path).", 1,
-     "The slice shape is prose on the safe pointer type."),
+     '/// The AVX2 kernels panic unless all nine slices share one length that is a', 1,
+     'The pointer type lists the slice shape under Panics.'),
     ("f5-unary-type-doc", SIMD, "src/bipedal/packed5.rs",
-     "/// All six slices must have the same length (a multiple of 4 for the AVX2 path).", 1,
-     "The slice shape is prose on the safe pointer type."),
+     '/// The AVX2 kernel panics unless all six slices share one length that is a', 1,
+     'The pointer type lists the slice shape under Panics.'),
     ("f5-binary-wrapper", SIMD, "src/bipedal/packed5.rs",
-     "// The slice shape is the caller's, as `F5BinaryKernelFn` documents.", 3,
-     "The three binary wrappers leave the slice shape to their caller."),
+     'b2b.len(),', 3,
+     'Each of the three binary entries checks the slice shape ahead of the kernel.'),
     ("f5-unary-wrapper", SIMD, "src/bipedal/packed5.rs",
-     "// The slice shape is the caller's, as `F5UnaryKernelFn` documents.", 1,
-     "The unary wrapper leaves the slice shape to its caller."),
+     '"F_5 neg kernel",', 1,
+     'The unary entry checks the slice shape ahead of the kernel.'),
     ("f5-binary-debug", SIMD, "src/x86/bipedal_avx2_packed5.rs",
      "debug_assert_eq!(b0a.len() % 4, 0);", 3,
      "Each binary kernel opens with debug assertions of the slice shape."),
@@ -150,17 +154,19 @@ CLAIMS = [
      "_mm256_storeu_si256(dst.as_mut_ptr().add(offset) as *mut __m256i, v);", 1,
      "A plane store writes four words through a raw pointer."),
     ("f7-binary-type-doc", SIMD, "src/bipedal/packed7.rs",
-     "/// All three slices must have the same length (a multiple of 4 for AVX2).", 1,
-     "The slice shape is prose on the safe pointer type."),
+     '/// The AVX2 kernels panic unless all three slices share one length that is a', 1,
+     'The pointer type lists the slice shape under Panics.'),
     ("f7-unary-type-doc", SIMD, "src/bipedal/packed7.rs",
-     "/// Both slices must have the same length (a multiple of 4 for AVX2).", 1,
-     "The slice shape is prose on the safe pointer type."),
+     '/// The AVX2 kernel panics unless both slices share one length that is a', 1,
+     'The pointer type lists the slice shape under Panics.'),
     ("f7-binary-wrapper", SIMD, "src/bipedal/packed7.rs",
-     "// The slice shape is the caller's, as `F7BinaryKernelFn` documents.", 3,
-     "The three binary wrappers leave the slice shape to their caller."),
+     'crate::entry_check::assert_packed_lengths("F_7 add kernel", [a.len(), b.len(), out.len()]);',
+     1,
+     "The add entry checks the slice shape ahead of the kernel; the sub and mul entries hold "
+     "the same call under their own names."),
     ("f7-unary-wrapper", SIMD, "src/bipedal/packed7.rs",
-     "// The slice shape is the caller's, as `F7UnaryKernelFn` documents.", 1,
-     "The unary wrapper leaves the slice shape to its caller."),
+     'crate::entry_check::assert_packed_lengths("F_7 neg kernel", [a.len(), out.len()]);', 1,
+     'The unary entry checks the slice shape ahead of the kernel.'),
     ("f7-debug", SIMD, "src/x86/bipedal_avx2_packed7.rs",
      "debug_assert_eq!(a.len() % 4, 0);", 4,
      "Each kernel opens with debug assertions of the slice shape."),
@@ -216,6 +222,27 @@ CLAIMS = [
     ("pam-f64-store", SIMD, "src/modem.rs",
      "_mm256_storeu_pd(out_ptr.add(c * 4), v_d);", 1,
      "The f64 kernel stores through a raw pointer into `out`."),
+    ("row-panel-check", SIMD, "src/fp_small.rs",
+     'crate::entry_check::assert_shape("fp_small_gemm_row_panel", "bt", bt.len(), n, k);', 1,
+     "The safe entry forms `n * k` with `checked_mul` ahead of the kernel's assertion."),
+    ("small-panel-check", SIMD, "src/fp_small_panel.rs",
+     'crate::entry_check::assert_shape("fp_small_panel_gemm", "c", c.len(), m, n);', 1,
+     "The safe entry forms the three shape products with `checked_mul`."),
+    ("small-f32-check", SIMD, "src/fp_small_f32.rs",
+     'crate::entry_check::assert_shape("fp_small_f32_gemm", "c", c.len(), m, n);', 1,
+     "The safe entry forms the three shape products with `checked_mul`."),
+    ("small-f32-route-a-check", SIMD, "src/fp_small_f32.rs",
+     'crate::entry_check::assert_shape("fp_small_f32_gemm_route_a", "c", c.len(), m, n);', 1,
+     "The safe entry forms the three shape products with `checked_mul`."),
+    ("medium-panel-check", SIMD, "src/fp_medium.rs",
+     'crate::entry_check::assert_shape("fp_medium_gemm_panel", "c", c.len(), m, n);', 1,
+     "The safe entry forms the three shape products with `checked_mul`."),
+    ("medium-f64-check", SIMD, "src/fp_medium_f64.rs",
+     'crate::entry_check::assert_shape("fp_medium_f64_gemm", "c", c.len(), m, n);', 1,
+     "The safe entry forms the three shape products with `checked_mul`."),
+    ("pam-check", SIMD, "src/modem.rs", "crate::entry_check::checked_cells(", 2,
+     "Both wrappers form the product of the two slice lengths with `checked_mul` ahead of "
+     "the length assertion that compares with it."),
     # The checked precedent.
     ("gray-check-products", SIMD, "src/m4rm.rs",
      "let Some(table_words) = table_size.checked_mul(stride_words) else {", 1,
@@ -242,12 +269,14 @@ CLAIMS = [
      "`gf2-algebra` cannot hold the `unsafe` block an `unsafe fn` pointer needs."),
     ("coding-denies-unsafe", CODING, "src/lib.rs", "#![deny(unsafe_code)]", 1,
      "`gf2-coding` cannot hold the `unsafe` block an `unsafe fn` pointer needs."),
-    ("core-spmm-small-call", CORE, "src/gfp/simd_ops.rs", "&a_vals_u8[start..end],", 1,
-     "`fp_try_spmm` calls the byte-lane kernel once per sparse row."),
-    ("core-spmm-medium-call", CORE, "src/gfp/simd_ops.rs", "&a_vals_u16[start..end],", 1,
-     "`fp_try_spmm` calls the u16-lane kernel once per sparse row."),
+    ("core-spmm-small-call", CORE, "src/gfp/simd_ops.rs",
+     '&a_vals_u8,', 1,
+     '`fp_try_spmm` calls the byte-lane entry once per product.'),
+    ("core-spmm-medium-call", CORE, "src/gfp/simd_ops.rs",
+     '&a_vals_u16,', 1,
+     '`fp_try_spmm` calls the u16-lane entry once per product.'),
     ("core-spmm-columns-forwarded", CORE, "src/gfp/simd_ops.rs",
-     "&a_col_idx[start..end],", 2,
+     '            a_col_idx,', 2,
      "Both calls pass the caller's column indices on without comparing them with `b_rows`."),
     ("core-spmm-debug", CORE, "src/gfp/simd_ops.rs",
      "debug_assert_eq!(b.len(), b_rows * n);", 1,
@@ -330,28 +359,35 @@ CLAIMS = [
      "let mut out = vec![0.0f64; batch * pam.len()];", 1,
      "The benchmark sizes the slab from the product of two small counts."),
     # Grain of the sparse row check.
-    ("small-spmm-checked-call", SIMD, "src/fp_small.rs",
+    ("entry-check-row-scan", SIMD, "src/entry_check.rs",
+     'let Some(largest) = a_cols.iter().copied().max() else {', 1,
+     'The column check takes the largest index of the array it is handed: one pass over the stored indices.'),
+    ("core-spmm-row-loop", SIMD, "src/fp_small.rs",
+     'let row = a_row_ptr[r]..a_row_ptr[r + 1];', 1,
+     'The row loop stands in the kernel crate, behind the check, and holds the `unsafe` call of the row kernel; the u16 lane repeats it.'),
+    ("spmm-kernel-safety", SIMD, "src/x86/fp_small.rs",
+     "/// - every `a_cols[h] * b_stride + n` is within `b.len()`,", 1,
+     "The row kernel is an `unsafe fn` whose Safety section states the column bound; the "
+     "u16 kernel states it in its own words."),
+    ("measured-row-check", MEASURED, "crates/gf2-kernels-simd/src/fp_small.rs",
      'crate::entry_check::assert_spmm_row_columns("fp_small_spmm_row", a_cols, b.len(), '
      'b_stride, n);', 1,
-     "The checked byte-lane wrapper runs the column check on every call, ahead of the kernel."),
-    ("medium-spmm-checked-call", SIMD, "src/fp_medium.rs",
-     'crate::entry_check::assert_spmm_row_columns("fp_medium_spmm_row", a_cols, b.len(), '
-     'b_stride, n);', 1,
-     "The checked u16-lane wrapper runs the column check on every call, ahead of the kernel."),
-    ("entry-check-row-scan", SIMD, "src/entry_check.rs",
-     "let Some(largest) = a_cols.iter().copied().max() else {", 1,
-     "The column check takes the largest index of the row it is handed: one pass over the "
-     "row's stored indices."),
-    ("entry-check-row-division", SIMD, "src/entry_check.rs",
+     "In the measured tree the checked row wrapper runs the column check on every call."),
+    ("measured-row-division", MEASURED, "crates/gf2-kernels-simd/src/entry_check.rs",
      "let Some(max_col) = last_start.checked_div(b_stride) else {", 1,
-     "The column check forms the largest admissible index with one division per call."),
-    ("core-spmm-row-loop", CORE, "src/gfp/simd_ops.rs", "let end = a_row_ptr[r + 1];", 2,
-     "The row loop of `fp_try_spmm` stands in `gf2-core`: each lane cuts one row out of the "
-     "CSR arrays per iteration and calls the row pointer for it."),
-    ("core-spmm-row-output", CORE, "src/gfp/simd_ops.rs",
-     "let out_row = &mut out[r * n..(r + 1) * n];", 2,
-     "Inside the same loop each lane converts one output row from its lane type, so the loop "
-     "holds more than the kernel call."),
+     "In the measured tree the check divides once per row call."),
+    ("measured-row-loop", MEASURED, "crates/gf2-core/src/gfp/simd_ops.rs",
+     "let end = a_row_ptr[r + 1];", 2,
+     "In the measured tree the row loop stands in `gf2-core` and calls the row pointer once "
+     "per non-empty sparse row."),
+    ("p20-tail-support", TOOL, "src/receipt.rs",
+     "|| f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;", 1,
+     "P-20 records a non-exploratory cell as not confirmatory when a bootstrap tail holds "
+     "fewer than twenty expected draws at the corrected alpha."),
+    ("ledger-attempt-alpha", TOOL, "src/trial_ledger.rs",
+     "Ok(family.family_wise.alpha / (attempts * (attempts + 1.0)))", 1,
+     "Attempt `t` of a family spends `alpha / (t (t + 1))`, counted from the ledger's "
+     "non-exploratory reservations."),
     ("core-spmm-hook-call", CORE, "src/field/sparse_matrix.rs", "if F::try_simd_spmm(", 1,
      "`SparseFieldMatrix::matmat` passes its own CSR arrays to the hook."),
     ("core-sparse-type-doc", CORE, "src/field/sparse_matrix.rs",
@@ -384,12 +420,6 @@ CLAIMS = [
      "for c in 0..self.cols {", 1,
      "`SparseFieldMatrixCsc::to_csr` takes each index from a loop over the column count."),
     # Measurement plan references.
-    ("queue-dense-product", None, "queue.tsv",
-     "dev/bench_results/4c1e441f/run-dense-product-confirmation.sh window confirmation", 1,
-     "The queue line of a six-cell warm confirmation states its estimate in minutes."),
-    ("queue-axpy", None, "queue.tsv",
-     "dev/bench_results/ad2a6a58/run-axpy-confirmation.sh window confirmation", 1,
-     "The queue line of a second warm confirmation states its estimate in minutes."),
     ("bench-sparse-matmat", CORE, "benches/sparse_field_matmul.rs",
      "fn bench_fp65521(c: &mut Criterion) {", 1,
      "A criterion bench names the sparse-times-dense consumer over a medium prime; it is "
@@ -574,24 +604,24 @@ CLEARED = [
 CLASSES = {
     "sparse-row-index": {
         "title": "Sparse row kernels: one index bound per stored non-zero",
-        "check": "After one subtraction and one division per call, one comparison per "
-                 "non-zero of the row ahead of the kernel.",
-        "granularity": "per element, once per call",
-        "hoist": "The scan runs once per row call and leaves the kernel's loops as they "
-                 "are: the kernel reads each index once per 16 output columns and once "
-                 "per remaining column. A check that sits beside a whole matrix needs "
-                 "the row loop inside the kernel crate.",
-        "hot_path": "yes: one scan per sparse row of every product",
+        "check": "One pass over the stored column indices of the whole product and one "
+                 "division, ahead of the row loop.",
+        "granularity": "per element, once per product",
+        "hoist": "The row loop stands in the kernel crate behind the check and leaves the "
+                 "row kernel's loops as they are: the kernel reads each index once per 16 "
+                 "output columns and once per remaining column.",
+        "hot_path": "yes: one scan per sparse product",
     },
     "ple-panel": {
         "title": "PLE panel base kernels: window shape and inverse-table index",
-        "check": "One checked product and one comparison per call for the window shape; "
-                 "a bounds-checked inverse-table read in place of the unchecked one.",
-        "granularity": "per call, plus one comparison per pivot",
-        "hoist": "The shape check stands ahead of the elimination. The index check "
-                 "stands at the pivot read, outside the Schur update loops; a check held "
-                 "wholly in the safe entry point scans every window entry.",
-        "hot_path": "per pivot column, outside the row and lane loops",
+        "check": "One checked product and one comparison per call for the window shape, "
+                 "one comparison for the table length and one pass that requires every "
+                 "window entry below `p`.",
+        "granularity": "per call, plus one comparison per window entry",
+        "hoist": "The whole check stands in the safe entry point, ahead of the "
+                 "elimination. The kernel keeps every entry below `p`, so each pivot "
+                 "indexes inside the table and the kernel's pivot read stays unchecked.",
+        "hot_path": "per panel, outside the row and lane loops",
     },
     "packed-lengths": {
         "title": "Packed F_3, F_5 and F_7 batch kernels: equal lengths, a multiple of four",
@@ -614,22 +644,24 @@ CLASSES = {
     },
 }
 
-# The safe entry points whose soundness depends on an unchecked caller
-# condition, grouped by published pointer type.
+# The safe entry points whose kernel reaches an unchecked access when a caller
+# condition fails, grouped by published pointer type.
 #
-# `conditions`: (text, claims that show where a debug build checks it, claims
-# of the unchecked access it guards). `release_checked`: claims of what a
-# release build does check. `witness`: an argument tuple that passes every
-# release check with an operand shorter than the kernel reads or writes.
+# `conditions`: (text, claims that show where the kernel checks it in a debug
+# build, claims of the unchecked access it guards). `contract_claims`: the
+# Panics text of the pointer type and the release check of the safe entry.
+# `release_checked`: claims of what the kernel itself checks in a release
+# build. `witness`: an argument tuple that passes the kernel's own release
+# assertions with an operand shorter than the kernel reads or writes.
 INTERFACES = [
     {
         "id": "small-prime-spmm-row", "class": "sparse-row-index",
-        "type": "fp_small::SmallPrimeSpmmRowFn", "field": "spmm_row_fn",
+        "type": "fp_small::SmallPrimeSpmmFn", "field": "spmm_fn",
         "bundle": "fp_small::SmallPrimeFns",
-        "entries": [("small-spmm", "src/fp_small.rs", "spmm_row_safe",
+        "entries": [("small-spmm", "src/fp_small.rs", "spmm_safe",
                      "x86::fp_small::fp_small_spmm_row")],
         "conditions": [
-            ("every `a_cols[h] * b_stride + n` is at most `b.len()`, without overflow",
+            ("every `a_cols[h] * n + n` is at most `b.len()`, without overflow",
              [], ["small-spmm-vector-read", "small-spmm-tail-read"]),
         ],
         "contract_claims": ["small-spmm-type-doc", "small-spmm-wrapper"],
@@ -640,12 +672,12 @@ INTERFACES = [
     },
     {
         "id": "medium-prime-spmm-row", "class": "sparse-row-index",
-        "type": "fp_medium::MediumPrimeSpmmRowFn", "field": "spmm_row_fn",
+        "type": "fp_medium::MediumPrimeSpmmFn", "field": "spmm_fn",
         "bundle": "fp_medium::MediumPrimeFns",
-        "entries": [("medium-spmm", "src/fp_medium.rs", "spmm_row_safe",
+        "entries": [("medium-spmm", "src/fp_medium.rs", "spmm_safe",
                      "x86::fp_medium::fp_medium_spmm_row")],
         "conditions": [
-            ("every `a_cols[h] * b_stride + n` is at most `b.len()`, without overflow",
+            ("every `a_cols[h] * n + n` is at most `b.len()`, without overflow",
              [], ["medium-spmm-vector-read", "medium-spmm-tail-read"]),
         ],
         "contract_claims": ["medium-spmm-type-doc", "medium-spmm-wrapper"],
@@ -824,7 +856,7 @@ INTERFACES = [
         "conditions": [
             ("`n * k` does not overflow `usize`", ["row-panel-assert"], ["row-panel-read"]),
         ],
-        "contract_claims": [],
+        "contract_claims": ["row-panel-check"],
         "release_checked": ["row-panel-assert"],
         "prototype": ("gemm_row_panel_current", "gemm_row_panel_checked"),
         "witness": {"dimensions": {"k": 2**32, "n": 2**32},
@@ -841,7 +873,7 @@ INTERFACES = [
             ("`m * k`, `n * k` and `m * n` do not overflow `usize`",
              ["small-panel-assert"], ["small-panel-write"]),
         ],
-        "contract_claims": [],
+        "contract_claims": ["small-panel-check"],
         "release_checked": ["small-panel-assert"],
         "prototype": ("small_panel_gemm_current", "small_panel_gemm_checked"),
         "witness": {"dimensions": {"m": 2**40, "k": 1, "n": 2**24},
@@ -863,7 +895,7 @@ INTERFACES = [
             ("`m * k`, `n * k` and `m * n` do not overflow `usize`",
              ["small-f32-assert", "small-f32-route-a-assert"], ["small-f32-pack-read"]),
         ],
-        "contract_claims": [],
+        "contract_claims": ["small-f32-check", "small-f32-route-a-check"],
         "release_checked": ["small-f32-assert", "small-f32-route-a-assert"],
         "prototype": ("small_f32_gemm_current", "small_f32_gemm_checked"),
         "witness": {"dimensions": {"m": 2**63, "k": 2, "n": 2},
@@ -880,7 +912,7 @@ INTERFACES = [
             ("`m * k`, `n * k` and `m * n` do not overflow `usize`",
              ["medium-panel-assert"], ["medium-panel-pack-read"]),
         ],
-        "contract_claims": [],
+        "contract_claims": ["medium-panel-check"],
         "release_checked": ["medium-panel-assert"],
         "prototype": ("medium_panel_gemm_current", "medium_panel_gemm_checked"),
         "witness": {"dimensions": {"m": 2**63, "k": 2, "n": 2},
@@ -897,7 +929,7 @@ INTERFACES = [
             ("`m * k`, `n * k` and `m * n` do not overflow `usize`",
              ["medium-f64-assert"], ["medium-f64-pack-read"]),
         ],
-        "contract_claims": [],
+        "contract_claims": ["medium-f64-check"],
         "release_checked": ["medium-f64-assert"],
         "prototype": ("medium_f64_gemm_current", "medium_f64_gemm_checked"),
         "witness": {"dimensions": {"m": 2**63, "k": 2, "n": 2},
@@ -914,7 +946,7 @@ INTERFACES = [
             ("`z.len() * pam_levels.len()` does not overflow `usize`",
              ["pam-assert"], ["pam-f32-store"]),
         ],
-        "contract_claims": [],
+        "contract_claims": ["pam-check"],
         "release_checked": ["pam-assert"],
         "prototype": ("pam_f32_current", "pam_f32_checked"),
         "witness": {"dimensions": {"symbols": 2**32, "levels": 2**32},
@@ -932,7 +964,7 @@ INTERFACES = [
             ("`z.len() * pam_levels.len()` does not overflow `usize`",
              ["pam-assert"], ["pam-f64-store"]),
         ],
-        "contract_claims": [],
+        "contract_claims": ["pam-check"],
         "release_checked": ["pam-assert"],
         "prototype": ("pam_f64_current", "pam_f64_checked"),
         "witness": {"dimensions": {"symbols": 2**32, "levels": 2**32},
@@ -942,16 +974,8 @@ INTERFACES = [
     },
 ]
 
-# The checked form of an entry point, which its detection function publishes
-# under `--cfg gf2_entry_checked`: the wrapper's name with `_safe` replaced.
-# The two Gray-PAM wrappers hold their checked product as a statement under
-# the cfg.
-CHECKED_SUFFIX = ("_safe", "_checked")
-CHECKED_IN_PLACE = {"pam-f32", "pam-f64"}
-CHECKED_CFG = "gf2_entry_checked"
-
-# The contract test of the checked build calls every pointer with arguments
-# that break its condition; it is outside the caller scan.
+# The contract test calls every pointer with arguments that break its
+# condition; it is outside the caller scan.
 CONDITION_TEST = (SIMD, "tests/entry_conditions.rs")
 
 # How a call site meets the entry point's conditions.
@@ -971,7 +995,7 @@ DISCHARGES = {
 # [(entry id or None, count)], discharge key or the reason the use is outside
 # the inventory, claims).
 USES = [
-    (CORE, "src/gfp/simd_ops.rs", "spmm_row_fn", "production",
+    (CORE, "src/gfp/simd_ops.rs", "spmm_fn", "production",
      [("small-spmm", 1), ("medium-spmm", 1)], "forwarded",
      ["core-spmm-small-call", "core-spmm-medium-call", "core-spmm-columns-forwarded",
       "core-spmm-debug", "core-spmm-hook", "core-spmm-matmat-assert",
@@ -1051,114 +1075,113 @@ FORWARDING_HOOKS = {
     "medium-prime-f64-gemm": ("FiniteField::try_simd_gemm_classical", "core-gemm-hook"),
 }
 
-# Per class: the recommended option and the reason. A class without a
-# recommended option is one whose measured form the confirmation records as a
-# regression; `GRAINS` states its alternatives.
-DECISIONS = {
-    "dense-shape-product": (
-        "a",
-        "The assertions exist and compare with a wrapping product; `checked_mul` closes "
-        "the gap once per call. The calling dispatchers size their operands from the "
-        "same wrapping products, and no production caller can hold an `unsafe` block.",
-    ),
-    "ple-panel": (
-        "a",
-        "The shape check is one product per panel and the index check one comparison "
-        "per pivot, both outside the update loops; the two production callers "
-        "meet both conditions by construction.",
-    ),
-    "sparse-row-index": (
-        None,
-        "The confirmation records the per-row form of option (a) as a regression on both "
-        "interfaces (the confirmation rows of the cost column), which contradicts the "
-        "family's non-regression criterion for that form. The one production caller "
-        "forwards column indices from a safe public hook and cannot hold an `unsafe` "
-        "block, so an unchecked row kernel needs the row loop inside the kernel crate. "
-        "The grains at which the check can stand follow; the choice among them is the "
-        "invoker's.",
-    ),
-    "packed-lengths": (
-        "a",
+# The invoker's dated decisions, which `make-inventory.py` reads from the file
+# beside the documents.
+DECISIONS_FILE = "decisions.json"
+
+# Per class: the reviewer's basis for the decided form.
+BASIS = {
+    "dense-shape-product":
+        "The kernels' assertions compare with a wrapping product; `checked_mul` in the safe "
+        "entry closes the gap once per call. The calling dispatchers size their operands "
+        "from the same wrapping products, and no production caller can hold an `unsafe` "
+        "block.",
+    "ple-panel":
+        "The shape check is one product per panel and the entry scan one pass over the "
+        "window, both ahead of the elimination; the two production callers meet both "
+        "conditions by construction.",
+    "sparse-row-index":
+        "The confirmation records the per-row form of the check as a regression on both "
+        "interfaces, which contradicts the family's non-regression criterion for that "
+        "form. The one production caller forwards column indices from a safe public hook "
+        "and cannot hold an `unsafe` block, so the row loop stands in the kernel crate "
+        "behind one check per product.",
+    "packed-lengths":
         "The check is a handful of comparisons per call. No tracked Rust file calls the "
         "F_5, F_7, F_3 mul and F_3 neg pointers. The F_3 add and sub pointers are "
         "called once per Gray step with four words, which puts the check beside one "
         "vector iteration; the crate publishes the unchecked form of those "
         "kernels as `unsafe fn` items.",
-    ),
 }
 
-# Where the measured check of the sparse row class stands, and the claims.
+# Where the check of the sparse row class stands, and the claims.
 GRAIN_CLASS = "sparse-row-index"
 GRAIN_POSITION = (
-    "The checked wrapper of each lane runs the column check on every call, ahead of the "
-    "kernel: one pass over the stored indices of the row it is handed and one division. "
-    "The row loop stands in `gf2-core`, which calls the row pointer once per non-empty "
-    "sparse row, so the check runs inside the row loop, once per row of every product.",
-    ["small-spmm-checked-call", "medium-spmm-checked-call", "entry-check-row-scan",
-     "entry-check-row-division", "core-spmm-row-loop"],
+    "The safe entry of each lane checks the column indices once per product, ahead of its "
+    "row loop: one pass over the whole index array and one division. The row loop stands "
+    "in the kernel crate behind that check and holds the `unsafe` call of the row kernel, "
+    "whose Safety section states the column bound. `gf2-core` calls the entry once per "
+    "product.",
+    ["small-spmm-wrapper", "medium-spmm-wrapper", "entry-check-row-scan", "core-spmm-row-loop",
+     "spmm-kernel-safety", "core-spmm-small-call", "core-spmm-medium-call"],
 )
 
 # The grains at which the column bound can be established. `sites` names what
-# an option changes: `wrappers` the kernel crate's entry points of the class,
-# `row-calls` the production call sites of their pointers, `hook` every tracked
-# line that defines or calls the forwarding hook. `measured` is whether the
-# family's cells price the option.
+# holds a grain in the tree: `wrappers` the kernel crate's entry points of the
+# class, `entry-calls` the production call sites of their pointers, `hook`
+# every tracked line that defines or calls the forwarding hook. `measured` is
+# whether the family's cells price the grain.
 GRAINS = [
-    {
-        "id": "per-row",
-        "title": "check in the safe row entry",
-        "design": "`spmm_row_safe` takes the body of `spmm_row_checked`; the pointer type and "
-                  "every caller stay as they are.",
-        "check": "once per sparse row, inside the row loop of `gf2-core`",
-        "constraint": "none",
-        "sites": ["wrappers"],
-        "measured": True,
-        "claims": ["small-spmm-checked-call", "medium-spmm-checked-call"],
-    },
     {
         "id": "per-product",
         "title": "unchecked row kernel behind one checked entry per product",
-        "design": "The row kernel becomes an `unsafe fn ..._unchecked` item of the kernel "
-                  "crate with the column bound under Safety. One safe entry per lane takes "
-                  "the CSR arrays and the dense operand, checks the largest index of the "
-                  "whole index array once against `b.len()`, `b_stride` and `n`, and holds "
-                  "the row loop with its `// SAFETY:` comment. The scan reads every stored "
-                  "index once, as the per-row form does; the call, the subtraction and the "
-                  "division happen once per product.",
+        "state": "in the tree",
+        "design": "The row kernel is an `unsafe fn` of the kernel crate with the column "
+                  "bound under Safety. One safe entry per lane takes the CSR arrays and the "
+                  "dense operand, checks the largest index of the whole index array once "
+                  "against `b.len()` and `n`, and holds the row loop with its `// SAFETY:` "
+                  "comment. `fp_try_spmm` converts the operands and the whole product "
+                  "between the field type and the lane type around one call.",
         "check": "once per product, ahead of the row loop",
-        "constraint": "The row loop moves out of `fp_try_spmm` into the kernel crate, since "
-                      "`gf2-core` cannot hold the `unsafe` call; that loop also converts each "
-                      "output row from its lane type, so the entry writes a lane buffer of "
-                      "the whole product or the conversion moves behind it.",
-        "sites": ["wrappers", "row-calls"],
+        "constraint": "none",
+        "sites": ["wrappers", "entry-calls"],
         "measured": False,
-        "claims": ["core-denies-unsafe", "core-spmm-row-loop", "core-spmm-row-output"],
+        "claims": ["small-spmm-wrapper", "medium-spmm-wrapper", "core-spmm-row-loop",
+                   "spmm-kernel-safety", "core-denies-unsafe"],
+    },
+    {
+        "id": "per-row",
+        "title": "check in a safe row entry",
+        "state": "in the tree the family measured",
+        "design": "A safe row entry runs the column check on every call: one pass over the "
+                  "row's indices, one subtraction and one division. The row loop stands in "
+                  "`gf2-core`, which calls the entry once per non-empty sparse row.",
+        "check": "once per sparse row, inside the row loop of `gf2-core`",
+        "constraint": "The confirmation records this form as a regression on both lanes.",
+        "sites": [],
+        "measured": True,
+        "claims": ["measured-row-check", "measured-row-division", "measured-row-loop"],
     },
     {
         "id": "construction",
         "title": "bound held by the sparse matrix type",
+        "state": "not built",
         "design": "Every constructor of `SparseFieldMatrix` yields column indices below its "
                   "column count (the constructor table), no method takes the matrix by "
                   "`&mut self`, the index field is private, the raw parts leave as shared "
                   "borrows, and `matmat` asserts the column count against the rows of the "
                   "dense operand before the hook. A product that starts at `matmat` "
-                  "therefore meets the bound with no check added.",
+                  "therefore meets the bound, and the per-product check never fires for it.",
         "check": "at construction; none per product",
         "constraint": "The bound does not reach the kernel as a type: the hook is a safe "
                       "public trait method over plain slices, and the type's documentation "
-                      "does not state the bound. Relying on it takes a hook that receives "
-                      "the matrix type or is unreachable from outside the crate, the bound "
-                      "stated as an invariant of the type, and an `unsafe` call of the "
-                      "unchecked row kernel in `gf2-core`, which denies `unsafe_code`. Held "
-                      "behind the safe entry of `per-product` instead, it leaves that "
-                      "entry's one check in place.",
-        "sites": ["hook", "row-calls"],
+                      "does not state the bound. Relying on it in place of the per-product "
+                      "check takes a hook that receives the matrix type or is unreachable "
+                      "from outside the crate, the bound stated as an invariant of the "
+                      "type, and an `unsafe` call of the row kernel in `gf2-core`, which "
+                      "denies `unsafe_code`.",
+        "sites": ["hook", "entry-calls"],
         "measured": False,
         "claims": ["core-sparse-private-fields", "core-sparse-raw-parts",
                    "core-spmm-matmat-assert", "core-spmm-hook-call", "core-spmm-hook",
                    "core-sparse-type-doc", "core-denies-unsafe"],
     },
 ]
+
+# P-20's tail-support floor, in expected bootstrap draws per tail, and the
+# claims of the two rules the admissibility arithmetic applies.
+TAIL_DRAWS = 20
+ADMISSIBILITY_CLAIMS = ["ledger-attempt-alpha", "p20-tail-support"]
 
 # The forwarding hook of the sparse row class, and the file and type whose
 # constructors `SPARSE_CONSTRUCTORS` covers.
@@ -1208,16 +1231,10 @@ PILOT_CELLS = {
 # The cells the confirmation retains: one per check grain of each cost class.
 RETAINED_CELLS = ["spmm-small-n16", "spmm-medium-n16", "permanent-f3-n14", "ple-small-n128",
                   "gemm-small-n32", "gemm-medium-n32"]
-# Estimate of the pilot's window minutes, builds included.
-PILOT_MINUTES = 14
-QUEUE_COMMAND = "dev/bench_results/bfc2ceab/run-entry-check.sh window pilot"
 # The confirmation addendum pins the pilot receipt as its resolution evidence.
 CONFIRMATION_ADDENDUM = "addendum-v4-entry-check-confirmation.json"
 # The family's result tables, written beside its ledger by `make-tables.py`.
 TABLES = "tables.md"
-# Estimate of the confirmation's window minutes, builds included.
-CONFIRMATION_MINUTES = 8
-CONFIRMATION_QUEUE_COMMAND = "dev/bench_results/bfc2ceab/run-entry-check.sh window confirmation"
 
 # Text that would name one of the inventory's consumers in a measurement
 # family of the dispatch route inventory (jit:63bad95d).

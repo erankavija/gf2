@@ -45,8 +45,7 @@ SCAN_RULE = (
     "a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest "
     "preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe "
     "function with a block outside test code is either an entry point of the inventory "
-    "or cleared with a basis and a source claim. The checked form of an entry point, "
-    "compiled under `cfg(gf2_entry_checked)` alone, is counted with its entry point."
+    "or cleared with a basis and a source claim."
 )
 USE_RULE = (
     "In every tracked Rust file outside receipt input snapshots and outside this "
@@ -204,16 +203,9 @@ def build():
         for identifier, path, wrapper, kernel in interface["entries"]:
             entry_of[(path, wrapper)] = identifier
     cleared = {(path, function): basis for path, function, basis, *_ in review.CLEARED}
-    checked = {
-        (path, wrapper.replace(*review.CHECKED_SUFFIX)): identifier
-        for (path, wrapper), identifier in entry_of.items()
-        if identifier not in review.CHECKED_IN_PLACE
-    }
     for key in sorted(set(entry_of) & set(cleared)):
         problems.append(f"{key}: both an entry point and cleared")
-    for key in sorted(set(checked) - set(scanned)):
-        problems.append(f"{key}: the checked form of {checked[key]} is absent")
-    for key in sorted(set(scanned) - set(entry_of) - set(cleared) - set(checked)):
+    for key in sorted(set(scanned) - set(entry_of) - set(cleared)):
         problems.append(f"{key}: a safe function with an unsafe block has no verdict")
     for key in sorted((set(entry_of) | set(cleared)) - set(scanned)):
         problems.append(f"{key}: the verdict names no safe function with an unsafe block")
@@ -266,11 +258,6 @@ def build():
                     "safe_function": wrapper,
                     "module": f"{package(KERNEL_PACKAGE)}/{path}",
                     "kernel": kernel,
-                    "checked_form": (
-                        f"a statement of `{wrapper}` under `cfg({review.CHECKED_CFG})`"
-                        if identifier in review.CHECKED_IN_PLACE
-                        else f"`{wrapper.replace(*review.CHECKED_SUFFIX)}`"
-                    ),
                     "witness_call_ends": ended.get(identifier),
                     "callers": sites,
                     "call_sites": {
@@ -306,6 +293,7 @@ def build():
     for grain in review.GRAINS:
         need(grain["claims"], f"grain {grain['id']}")
     need([claim for *_, claim in review.SPARSE_CONSTRUCTORS], "sparse constructors")
+    need(review.ADMISSIBILITY_CLAIMS, "admissibility")
     problems.extend(constructor_problems())
 
     if problems:
@@ -325,8 +313,7 @@ def build():
         "scan_rule": SCAN_RULE,
         "use_rule": USE_RULE,
         "counts": {
-            "safe_functions_with_an_unsafe_block": len(scanned) - len(checked),
-            "checked_forms_under_the_cfg": len(checked),
+            "safe_functions_with_an_unsafe_block": len(scanned),
             "entry_points": entry_count,
             "pointer_types": len(interfaces),
             "cost_classes": len(review.CLASSES),
@@ -354,10 +341,7 @@ def build():
             for entry, count in reach
             if entry is None
         ],
-        "decisions": {
-            name: {"recommended": option, "reason": reason}
-            for name, (option, reason) in review.DECISIONS.items()
-        },
+        "decisions": decisions(),
         "check_grains": grains(interfaces),
         "measurement_cells": pilot_cells(),
         "family_scan": family_scan(),
@@ -368,6 +352,45 @@ def build():
     if unknown:
         raise SystemExit(f"measurement cells name unknown interfaces: {sorted(unknown)}")
     return record
+
+
+def decisions():
+    """The invoker's decision per class, with the reviewer's basis."""
+    path = OUT / review.DECISIONS_FILE
+    held = json.loads(path.read_text())
+    if set(held["classes"]) != set(review.CLASSES):
+        raise SystemExit(f"{review.DECISIONS_FILE} does not decide exactly the cost classes")
+    return {
+        "record": str(path.relative_to(ROOT)),
+        "decided_by": held["decided_by"],
+        "decided_on": held["decided_on"],
+        "ruling": held["ruling"],
+        "classes": {name: {**held["classes"][name], "basis": review.BASIS[name]}
+                    for name in review.CLASSES},
+    }
+
+
+def admissibility(stages):
+    """Whether the family ledger admits one more confirmatory cell under P-20."""
+    last = list(stages.values())[-1]
+    receipt = json.loads((last["directory"] / "receipt.json").read_text())
+    family = json.loads((last["directory"] / "acceptance-summary.json").read_text())["family"]
+    ledger = ROOT / receipt["trial_ledger"]["path"]
+    entries = [json.loads(line) for line in ledger.read_text().splitlines() if line.strip()]
+    attempt = sum(1 for entry in entries if entry["comparisons"] > 0) + 1
+    comparisons = sum(entry["comparisons"] for entry in entries) + 1
+    attempt_alpha = family["family_alpha"] / (attempt * (attempt + 1))
+    draws = family["bootstrap_resamples"] * attempt_alpha / comparisons / 2
+    return {
+        "ledger": str(ledger.relative_to(ROOT)),
+        "next_attempt": attempt,
+        "attempt_alpha": attempt_alpha,
+        "comparisons_with_one_more_cell": comparisons,
+        "expected_tail_draws": draws,
+        "required_tail_draws": review.TAIL_DRAWS,
+        "admits_a_confirmatory_cell": draws >= review.TAIL_DRAWS,
+        "claims": review.ADMISSIBILITY_CLAIMS,
+    }
 
 
 def constructor_problems():
@@ -424,7 +447,7 @@ def grains(interfaces):
                 calls[key] = calls.get(key, 0) + site["calls"]
     sites = {
         "wrappers": [f"`{entry['safe_function']}` of `{entry['module']}`" for entry in entries],
-        "row-calls": [f"`{field}` in `{path}`: {plural(count, 'call')}"
+        "entry-calls": [f"`{field}` in `{path}`: {plural(count, 'call')}"
                       for (path, field), count in sorted(calls.items())],
         "hook": [
             f"`{review.GRAIN_HOOK}` in `{path}`: "
@@ -437,11 +460,12 @@ def grains(interfaces):
         "class": review.GRAIN_CLASS,
         "position": {"text": review.GRAIN_POSITION[0], "claims": review.GRAIN_POSITION[1]},
         "options": [
-            {**{key: grain[key] for key in ("id", "title", "design", "check", "constraint",
-                                             "measured", "claims")},
-             "changes": [site for key in grain["sites"] for site in sites[key]]}
+            {**{key: grain[key] for key in ("id", "title", "state", "design", "check",
+                                             "constraint", "measured", "claims")},
+             "sites": [site for key in grain["sites"] for site in sites[key]]}
             for grain in review.GRAINS
         ],
+        "further_confirmation": admissibility(cost_rows()[1]),
         "sparse_type": {
             "name": name,
             "path": f"{package(owner)}/{relative}",
@@ -475,9 +499,11 @@ def pilot_cells():
 
 
 def family_scan():
-    """Which measurement families of the dispatch route inventory name a consumer."""
+    """Which measurement families of other issues in the route inventory name a consumer."""
     path = repository_files.live_file(ROOT, review.FAMILY_RECORD)
-    families = json.loads((ROOT / path).read_text())["measurement_families"]
+    families = [family for family in
+                json.loads((ROOT / path).read_text())["measurement_families"]
+                if family["issue"] != ISSUE]
     naming = sorted(
         family["family"]
         for family in families
@@ -514,12 +540,15 @@ def inventory_page(record):
         "identifiers resolve in [`survey/source-evidence.json`](survey/source-evidence.json).",
         "",
         "An entry point is a safe function of `gf2-kernels-simd`, published through a safe "
-        "`fn` pointer type, that reaches an unchecked memory access when its caller breaks "
-        "a condition no release build checks. The `Witness call` column states how a "
+        "`fn` pointer type, whose kernel reaches an unchecked memory access when a caller "
+        "condition fails and does not check that condition itself in a release build. "
+        "Each entry point checks its conditions ahead of the kernel and panics under the "
+        "kernel's name; the `Contract and release check` line of each pointer type cites "
+        "the Panics text and the check. The `Witness call` column states how a "
         "release-build process ends when it calls the entry point through its published "
         "pointer with arguments that break the condition "
-        "([`survey/witness-runs.json`](survey/witness-runs.json)); such a call has "
-        "undefined behaviour, so the column records one build on one host.",
+        "([`survey/witness-runs.json`](survey/witness-runs.json)): exit status 101 is a "
+        "panic.",
         "",
         "## Counts",
         "",
@@ -529,8 +558,6 @@ def inventory_page(record):
                 ["safe functions holding an `unsafe` block outside test code",
                  counts["safe_functions_with_an_unsafe_block"]],
                 ["entry points of the inventory", counts["entry_points"]],
-                ["checked forms compiled under `cfg(gf2_entry_checked)`",
-                 counts["checked_forms_under_the_cfg"]],
                 ["safe pointer types they are published through", counts["pointer_types"]],
                 ["cost classes", counts["cost_classes"]],
                 ["safe functions cleared", counts["cleared_safe_functions"]],
@@ -558,7 +585,7 @@ def inventory_page(record):
         "panics under the builder's name (`gray-check-products`), and one contract of "
         "cases runs over every builder (`gray-check-contract`). The M4RM tile wrappers "
         "check eight table indices per call in the same form (`tile-index-check`). The "
-        "prototypes under `survey/check-prototype` follow that shape.",
+        "entry points of this inventory follow that shape.",
         "",
     ]
     for name, description in record["classes"].items():
@@ -568,30 +595,30 @@ def inventory_page(record):
             out.append(
                 table(
                     ["Entry point", "Module", "Kernel", "Production calls", "Bench calls",
-                     "Test calls", "Witness call", "Checked form"],
+                     "Test calls", "Witness call"],
                     [[f"`{entry['safe_function']}`", f"`{entry['module']}`",
                       f"`{entry['kernel']}`", sites(entry, "production"),
                       sites(entry, "bench"), sites(entry, "test"),
-                      entry["witness_call_ends"] or "not run", entry["checked_form"]]
+                      entry["witness_call_ends"] or "not run"]
                      for entry in interface["entries"]],
                 )
             )
             out += ["", table(
-                ["Condition no release build checks", "Checked in a debug build at",
-                 "Unchecked access"],
+                ["Condition the entry point checks", "Kernel's debug-build check",
+                 "Unchecked access it guards"],
                 [[row["condition"], cite(row["debug_build_check"]),
                   cite(row["unchecked_access"])] for row in interface["conditions"]],
             ), ""]
             out.append(
-                f"Contract text: {cite(interface['contract_claims'])}. Checked in release "
-                f"builds: {cite(interface['release_checked'])}."
+                f"Contract and release check: {cite(interface['contract_claims'])}. Checked "
+                f"by the kernel in release builds: {cite(interface['release_checked'])}."
             )
             if "witness" in interface:
                 found = interface["witness"]
                 out += ["", (
                     "Witness: dimensions "
                     + ", ".join(f"`{key}` = {value}" for key, value in found["dimensions"].items())
-                    + " pass the release assertions with operand lengths "
+                    + " pass the kernel's own release assertions with operand lengths "
                     + ", ".join(f"`{key}` = {value}" for key, value in
                                 found["operand_lengths_passing_the_assertions"].items())
                     + f", while the dimensions describe {found['elements_the_dimensions_describe']} "
@@ -648,6 +675,7 @@ def cost_rows():
     for label, directory in stages.items():
         summary = json.loads((directory / "acceptance-summary.json").read_text())
         found[label] = {
+            "directory": directory,
             "link": f"{link}#{label}",
             "verdict": summary["verdict"],
             "cells": {
@@ -668,7 +696,7 @@ def rule_line(stages, cells):
     if not outcomes:
         return "No confirmatory cell of the class is committed."
     recorded = ", ".join(f"`{outcome}`" for outcome in outcomes)
-    verdict = ("the checked form is recorded as an accepted measured cost"
+    verdict = ("the measured form of the check is recorded as an accepted measured cost"
                if outcomes == ["pass"] else "the class goes back to the invoker")
     return (f"Frozen decision rule (the family description of "
             f"[`{review.CONFIRMATION_ADDENDUM}`]({review.CONFIRMATION_ADDENDUM})): the "
@@ -686,27 +714,40 @@ def cost_cell(stages, cells, only=None):
     return "; ".join(groups) or "—"
 
 
+def class_cells(record, name):
+    members = {interface["id"] for interface in record["interfaces"] if interface["class"] == name}
+    return [row["cell"] for row in record["measurement_cells"] if row["interface"] in members]
+
+
 def grain_section(record, stages):
-    """The grains at which the measured class's check can stand."""
+    """The grains at which the sparse row class's check can stand."""
     found = record["check_grains"]
-    cells = [row["cell"] for row in record["measurement_cells"]
-             if row["interface"] in {interface["id"] for interface in record["interfaces"]
-                                     if interface["class"] == found["class"]}]
-    last = list(stages)[-1]
-    kind = found["sparse_type"]
+    cells, last = class_cells(record, found["class"]), list(stages)[-1]
+    kind, more = found["sparse_type"], found["further_confirmation"]
+    verdict = ("admits" if more["admits_a_confirmatory_cell"] else "admits no")
     return [
         "### Grain of the column check",
         "",
         f"{found['position']['text']} Claims: {cite(found['position']['claims'])}.",
         "",
         table(
-            ["Grain", "Design", "Check runs", "Changes", "Constraint", "Cost rows", "Claims"],
-            [[f"`{grain['id']}`: {grain['title']}", grain["design"], grain["check"],
-              "; ".join(grain["changes"]), grain["constraint"],
+            ["Grain", "State", "Design", "Check runs", "Sites", "Constraint", "Cost rows",
+             "Claims"],
+            [[f"`{grain['id']}`: {grain['title']}", grain["state"], grain["design"],
+              grain["check"], "; ".join(grain["sites"]) or "—", grain["constraint"],
               cost_cell(stages, cells, last) if grain["measured"]
-              else "no cell of the family prices this form",
+              else "no cell of the family prices this grain",
               cite(grain["claims"])] for grain in found["options"]],
         ),
+        "",
+        f"Cost of the `{found['options'][0]['id']}` grain: not measured. A further "
+        f"confirmatory attempt on the family ledger (`{more['ledger']}`) is attempt "
+        f"{more['next_attempt']} and spends alpha {more['attempt_alpha']:.6g}; with one more "
+        f"cell the ledger holds {more['comparisons_with_one_more_cell']} comparisons, which "
+        f"leaves {more['expected_tail_draws']:.3g} expected bootstrap draws per tail against "
+        f"the {more['required_tail_draws']} P-20 requires, so the ledger {verdict} further "
+        f"confirmatory cell ({cite(more['claims'])}). The figures are protocol arithmetic "
+        "over the ledger and the family's frozen settings, not measurements.",
         "",
         f"Constructors of `{kind['name']}` (`{kind['path']}`): the functions that hold a "
         "struct literal of the type outside test code, which the generator scans for "
@@ -721,18 +762,11 @@ def grain_section(record, stages):
     ]
 
 
-def option_b(interface):
-    """What an `unsafe fn` pointer changes for one interface."""
-    entries = interface["entries"]
-    denied = sum(site["calls"] for entry in entries for site in entry["callers"]
-                 if site["denies_unsafe_code"])
-    other = sum(sites(entry, kind) for entry in entries for kind in ("bench", "test"))
-    other += sum(sites(entry, "production") for entry in entries) - denied
-    return (
-        f"{len(interface['fields'])} bundle field(s) and table entr"
-        f"{'y' if len(entries) == 1 else 'ies'}; `// SAFETY:` sites: {denied} production "
-        f"in a crate that denies `unsafe_code`, {other} in benches and tests"
-    )
+def decided(record, name):
+    """The decision cell of class `name`."""
+    held = record["decisions"]["classes"][name]
+    grain = f" at the `{held['grain']}` grain" if "grain" in held else ""
+    return f"({held['option']}){grain}"
 
 
 def decision_page(record):
@@ -740,6 +774,7 @@ def decision_page(record):
     missing = {row["cell"] for row in record["measurement_cells"]} - set(stages["pilot"]["cells"])
     if missing:
         raise SystemExit(f"the pilot's acceptance summary lacks cells: {sorted(missing)}")
+    ruling = record["decisions"]
     out = [
         "# Decision table: checked or unchecked kernel entry points",
         "",
@@ -749,16 +784,21 @@ def decision_page(record):
         "[`inventory.md`](inventory.md), the instruction counts those of "
         "[`survey/instruction-counts.json`](survey/instruction-counts.json) under its "
         "`rule`. An instruction count is no timing: it states what the prototype of the "
-        "check adds outside panic blocks, with each loop body counted once.",
+        "check holds outside panic blocks, with each loop body counted once.",
         "",
         "Option (a) puts a release-mode check in the safe entry point, in the form of "
-        "the M4RM Gray-table builders. Option (b) makes the pointer an `unsafe fn` with "
+        "the M4RM Gray-table builders. Option (b) makes the kernel an `unsafe fn` with "
         "the condition under Safety, so each caller holds an `unsafe` block with a "
         "`// SAFETY:` comment. `gf2-core`, `gf2-algebra` and `gf2-coding` deny "
         "`unsafe_code` (`core-denies-unsafe`, `algebra-denies-unsafe`, "
         "`coding-denies-unsafe`), so a production call site there cannot hold that block: "
         "for such an interface option (b) keeps a checked safe entry in the kernel crate, "
         "at the same or a coarser grain, and makes only the inner kernel `unsafe`.",
+        "",
+        f"Decision of the {ruling['decided_by']}, {ruling['decided_on']} "
+        f"([`{review.DECISIONS_FILE}`]({review.DECISIONS_FILE})): {ruling['ruling']} The "
+        "`Decision` column states it per class, and the tree holds the decided form of "
+        "every entry point.",
         "",
         "The last column names, for each interface, its rows in the family's "
         f"[tables]({tables}), which `survey/make-tables.py` writes from each stage's "
@@ -772,11 +812,11 @@ def decision_page(record):
         "",
     ]
     for name, description in record["classes"].items():
-        decision = record["decisions"][name]
+        held = ruling["classes"][name]
         out += [
             f"## {description['title']}",
             "",
-            f"Check (a): {description['check']} Granularity: {description['granularity']}. "
+            f"Check: {description['check']} Granularity: {description['granularity']}. "
             f"{description['hoist']} On a hot path: {description['hot_path']}.",
             "",
         ]
@@ -798,26 +838,21 @@ def decision_page(record):
                     f"+{first['added']}{loop}" + (f"; {extra}" if extra else ""),
                     (f"{kernel['outside_panic_blocks']}, loop bodies {kernel['loop_bodies']}"
                      if kernel else "no committed listing"),
-                    option_b(interface),
-                    f"({decision['recommended']})" if decision["recommended"] else "none",
+                    decided(record, name),
                     cost_cell(stages, [row["cell"] for row in record["measurement_cells"]
                                        if row["interface"] == interface["id"]]),
                 ]
             )
         out += [
             table(
-                ["Pointer type", "Entry points", "Instructions (a) adds",
-                 "Kernel instructions", "Option (b)", "Recommended", "Cost rows"],
+                ["Pointer type", "Entry points", "Instructions of the check",
+                 "Kernel instructions", "Decision", "Cost rows"],
                 rows,
             ),
             "",
-            (f"Reason for option ({decision['recommended']}): " if decision["recommended"]
-             else "No option is recommended: ") + decision["reason"],
+            f"Decision {decided(record, name)}: {held['cost']}. Basis: {held['basis']}",
             "",
-            rule_line(stages, {row["cell"] for row in record["measurement_cells"]
-                               if row["interface"] in {interface["id"] for interface in
-                                                       record["interfaces"]
-                                                       if interface["class"] == name}}),
+            rule_line(stages, class_cells(record, name)),
             "",
         ]
         if name == record["check_grains"]["class"]:
@@ -830,20 +865,23 @@ def plan_page(record):
     measured = {row["interface"] for row in cells}
     unmeasured = [row["id"] for row in record["interfaces"] if row["id"] not in measured]
     addendum = json.loads((OUT / review.PILOT_ADDENDUM).read_text())
+    stages = cost_rows()[1]
+    more = record["check_grains"]["further_confirmation"]
     out = [
-        "# Measurement plan for the cost of the entry checks",
+        "# Measurement record of the cost of the entry checks",
         "",
         "> **Diátaxis Type:** Explanation",
         "",
-        "Generated by `survey/make-inventory.py` from `survey/review.py` and the frozen "
-        f"pilot addendum [`{review.PILOT_ADDENDUM}`]({review.PILOT_ADDENDUM}). The plan "
-        "follows the [measurement contract](../measurement-contract.md).",
+        "Generated by `survey/make-inventory.py` from `survey/review.py`, the frozen "
+        f"pilot addendum [`{review.PILOT_ADDENDUM}`]({review.PILOT_ADDENDUM}) and the "
+        "family's committed receipts. The family follows the "
+        "[measurement contract](../measurement-contract.md).",
         "",
         "## Existing families",
         "",
         f"The dispatch route inventory (jit:63bad95d, `{scan['record']}`) lists "
-        f"{scan['families']} measurement families. {len(scan['families_naming_a_consumer'])} "
-        "of them name a consumer of the inventory's entry points under the `family_scan` "
+        f"{scan['families']} measurement families of other issues. "
+        f"{len(scan['families_naming_a_consumer'])} of them name a consumer of the inventory's entry points under the `family_scan` "
         "rule of [`inventory.json`](inventory.json), whose tokens stand for the prime "
         "fields, the sparse field matrix, the PLE, the permanents and the Gray-PAM "
         "demapper. Criterion benches name three of the consumers (`bench-sparse-matmat`, "
@@ -852,15 +890,18 @@ def plan_page(record):
         "",
         f"## Family `{addendum['family']['id']}`",
         "",
-        "Both arms are the arm package `survey/entry-check-arm` built twice from one "
-        "tree: the baseline with no flag and the candidate with RUSTFLAGS "
+        "The family measures a tree that holds every entry point in two forms: the "
+        "baseline arm is built with no flag and publishes the entry points without their "
+        "checks, and the candidate arm is the same arm package built with RUSTFLAGS "
         "`--cfg gf2_entry_checked`, under which the kernel crate's detection functions "
-        "publish the checked wrappers. The plan records each arm's RUSTFLAGS and "
-        "executable digest, and each execution reports the entry-point form its build "
-        "publishes, observed from the linked kernel crate. The addendum's family "
+        "publish checked wrappers. That tree, the arm package, the plan projection and the "
+        "launcher are the producing snapshot of each receipt (`inputs/producing` beside "
+        "it); the plan records each arm's RUSTFLAGS and executable digest, and each "
+        "execution reports the entry-point form its build publishes. The addendum's family "
         "description states the check each cell measures, the selection of the "
         "confirmation's cells and the decision rule; its `effect` object states the "
-        "margins and their rationale.",
+        "margins and their rationale. The sparse row cells measure the `per-row` grain of "
+        "[`decision-table.md`](decision-table.md), the other cells the form the tree holds.",
         "",
         table(
             ["Cell", "Interface", "Workload", "Check grain", "Checked form the cell measures",
@@ -871,8 +912,8 @@ def plan_page(record):
         ),
         "",
         "Every cell is a non-regression, whole-consumer cell. The retained cells cover "
-        "each grain at which a check runs: per sparse row, per kernel call of the F_3 "
-        "permanent, per PLE panel, per row of a dense product and per whole dense "
+        "each grain at which a measured check runs: per sparse row, per kernel call of the "
+        "F_3 permanent, per PLE panel, per row of a dense product and per whole dense "
         "product. Interfaces without a cell: "
         + ", ".join(f"`{name}`" for name in unmeasured)
         + ". The three whole-product kernels among them hold the check form "
@@ -882,33 +923,20 @@ def plan_page(record):
         "",
         "## Stages",
         "",
-        "- Untimed: `survey/smoke-arms.sh pilot` drives both arms of every cell through "
-        "`benchmark-ab-runner smoke` and writes "
-        "[`survey/pilot-smoke.json`](survey/pilot-smoke.json).",
-        f"- Pilot: the queue line `{review.QUEUE_COMMAND}`, every cell exploratory.",
-        "- Confirmation: `run-entry-check.sh freeze` derives the confirmation addendum "
-        f"[`{review.CONFIRMATION_ADDENDUM}`]({review.CONFIRMATION_ADDENDUM}) "
-        "from the committed pilot receipt with the canonical freezer; a first "
-        "confirmatory attempt spends half the family alpha, and P-20's tail-support "
-        "bound then admits six confirmatory cells. `survey/smoke-arms.sh confirmation` "
-        "writes [`survey/confirmation-smoke.json`](survey/confirmation-smoke.json), and "
-        f"the queue line is `{review.CONFIRMATION_QUEUE_COMMAND}`.",
-        "",
-        "## Results",
-        "",
         "Committed stages: "
-        + ", ".join(f"[{label}]({stage['link']})" for label, stage in cost_rows()[1].items())
-        + ". `survey/make-tables.py` writes the tables from each stage's acceptance summary, "
-        "and [`decision-table.md`](decision-table.md) names each interface's rows.",
+        + ", ".join(f"[{label}]({stage['link']})" for label, stage in stages.items())
+        + ". The confirmation addendum "
+        f"[`{review.CONFIRMATION_ADDENDUM}`]({review.CONFIRMATION_ADDENDUM}) is derived "
+        "from the committed pilot receipt by the canonical freezer. `survey/make-tables.py` "
+        "writes the tables from each stage's acceptance summary, and "
+        "[`decision-table.md`](decision-table.md) names each interface's rows.",
         "",
-        "## Window estimate",
+        "## Further confirmation",
         "",
-        f"Estimate: {review.PILOT_MINUTES} minutes for the pilot, the builds of both arms "
-        "and of the campaign tools included, by analogy with two committed queue lines of "
-        "warm campaigns (`queue-dense-product`, `queue-axpy`). Estimate: "
-        f"{review.CONFIRMATION_MINUTES} minutes for the confirmation, by the span between "
-        "the start and finish records of the pilot's launcher log, scaled by the declared "
-        "pairs of the two stages, with an allowance for the builds.",
+        f"The family ledger admits {'a' if more['admits_a_confirmatory_cell'] else 'no'} "
+        "further confirmatory cell under P-20; the arithmetic stands under the sparse row "
+        "class of [`decision-table.md`](decision-table.md). The `per-product` grain of the "
+        "sparse row check, which the tree holds, is therefore not measured by this family.",
         "",
     ]
     return "\n".join(out)

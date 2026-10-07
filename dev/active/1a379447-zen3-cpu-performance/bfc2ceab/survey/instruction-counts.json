@@ -4,7 +4,7 @@
   "rule": "Per symbol, the instruction text `asm_listing.RULE` defines. A line ending in `:` is a label; every other line is an instruction. A block is a maximal run of instructions that no label interrupts and that ends at a jump, a `ret` or the end of the symbol. A panic block is a block whose last instruction calls a `core::panicking` function. `instructions` counts every instruction; `outside_panic_blocks` leaves the panic blocks out, so it counts each loop body once and both sides of a branch. A loop is a jump to a label that stands earlier in the symbol; its body is the instructions outside panic blocks from that label through the jump. `added` is `outside_panic_blocks` of the checked form minus that of the current form.",
   "prototype_listing": {
     "path": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/check-prototype.asm.txt",
-    "instruction_text_sha256": "cf20368472d14ae0f4708b48aa0f8d9ae2208b49976d9fd25a43c538eb4e7547"
+    "instruction_text_sha256": "f559b56668209bfc32b9a789e2b2d74193e4f16682b714c7fa203402197536e4"
   },
   "kernel_listings": [
     {
@@ -41,21 +41,23 @@
           "check": "safe entry point",
           "current": {
             "symbol": "spmm_small_current",
-            "instructions": 18,
-            "outside_panic_blocks": 18,
+            "instructions": 20,
+            "outside_panic_blocks": 20,
             "loop_bodies": []
           },
           "checked": {
             "symbol": "spmm_small_checked",
-            "instructions": 71,
-            "outside_panic_blocks": 55,
+            "instructions": 72,
+            "outside_panic_blocks": 64,
             "loop_bodies": [
-              5
+              7,
+              26
             ]
           },
-          "added": 37,
+          "added": 44,
           "added_loop_bodies": [
-            5
+            7,
+            26
           ]
         }
       ],
@@ -83,21 +85,23 @@
           "check": "safe entry point",
           "current": {
             "symbol": "spmm_medium_current",
-            "instructions": 18,
-            "outside_panic_blocks": 18,
+            "instructions": 20,
+            "outside_panic_blocks": 20,
             "loop_bodies": []
           },
           "checked": {
             "symbol": "spmm_medium_checked",
-            "instructions": 70,
-            "outside_panic_blocks": 54,
+            "instructions": 71,
+            "outside_panic_blocks": 63,
             "loop_bodies": [
-              5
+              7,
+              25
             ]
           },
-          "added": 36,
+          "added": 43,
           "added_loop_bodies": [
-            5
+            7,
+            25
           ]
         }
       ]

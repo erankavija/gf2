@@ -4,8 +4,8 @@
 Builds the `witness` example of the `check-prototype` crate in release mode
 under Rust 1.95, runs it once per entry it covers, each in its own process,
 and writes `witness-runs.json` beside itself: how each process ends. A witness
-passes arguments that break the entry point's unchecked condition, so its
-behaviour is undefined; the record states what one build on one host does.
+passes arguments that break the entry point's condition, which the entry point
+checks, so the process ends in a panic: exit status 101.
 
 Usage: run-witnesses.py, with no arguments
 """

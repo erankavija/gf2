@@ -3,7 +3,9 @@
 
 `review.py` holds the claims: an identifier the inventory cites, a file named
 by Cargo package and package-relative path (by its unique tracked file name,
-or at the repository root), a fragment of one line, how many lines hold it and
+at the repository root, or in the producing snapshot of the confirmation
+receipt for a claim about the tree the family measured), a fragment of one
+line, how many lines hold it and
 why it matters. `CLEARED` rows carry one claim each, named after the function
 they clear. The script writes `source-evidence.json` beside itself with the
 first line holding the fragment, that line verbatim, the file digest and the
@@ -18,7 +20,7 @@ import json
 import subprocess
 
 import review
-from locate import HERE, ISSUE, ROOT, package, repository_files
+from locate import HERE, ISSUE, ROOT, family_stages, package, repository_files
 
 ROOT_FILE = "Cargo.toml"
 
@@ -42,6 +44,9 @@ def claims():
 
 def resolve(owner, relative):
     """Root-relative path of a claim's file."""
+    if owner == review.MEASURED:
+        stage = family_stages(HERE.parent / review.CONFIRMATION_ADDENDUM)["confirmation"]
+        return str((stage / "inputs" / "producing" / relative).relative_to(ROOT))
     if owner is not None:
         return f"{package(owner)}/{relative}"
     if relative == ROOT_FILE:

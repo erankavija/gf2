@@ -1,5 +1,5 @@
-//! Calls one caller-trusted entry point through its published safe pointer
-//! with arguments that break its unchecked condition (jit:bfc2ceab). The
+//! Calls one kernel entry point through its published safe pointer with
+//! arguments that break its condition (jit:bfc2ceab). The
 //! argument names the inventory entry; `../../run-witnesses.py` runs each in
 //! a process of its own and records how it ends.
 
@@ -21,12 +21,12 @@ fn main() {
         "small-spmm" => {
             let fns = fp_small::detect().expect("AVX2");
             let (b, mut out) = (vec![1u8; 16], vec![0u8; 16]);
-            (fns.spmm_row_fn)(&[1], &[1 << 40], &b, 16, 16, 7, &mut out);
+            (fns.spmm_fn)(&[0, 1], &[1 << 40], &[1], &b, 16, 7, &mut out);
         }
         "medium-spmm" => {
             let fns = fp_medium::detect().expect("AVX2");
             let (b, mut out) = (vec![1u16; 16], vec![0u16; 16]);
-            (fns.spmm_row_fn)(&[1], &[1 << 40], &b, 16, 16, 65521, &mut out);
+            (fns.spmm_fn)(&[0, 1], &[1 << 40], &[1], &b, 16, 65521, &mut out);
         }
         "small-ple" => {
             let fns = fp_small_ple::detect().expect("AVX2");

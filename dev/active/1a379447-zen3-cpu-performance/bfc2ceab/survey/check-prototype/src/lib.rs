@@ -1,47 +1,34 @@
-//! Checked-form prototypes of the caller-trusted kernel entry points of
-//! `gf2-kernels-simd` (jit:bfc2ceab). For each interface `*_current` forwards
-//! its arguments to the published pointer and `*_checked` runs first the
-//! release-mode check a safe entry point would hold, in the shape of
+//! Check prototypes for the kernel entry points of `gf2-kernels-simd`
+//! (jit:bfc2ceab). For each interface `*_current` forwards its arguments to
+//! the published pointer and `*_checked` runs first the release-mode check
+//! of that interface, in the shape of
 //! `gf2_kernels_simd::m4rm::assert_gray_build_lengths`: a named assertion
-//! with checked products. Nothing here is on a production path.
+//! with checked products. The pair's listings differ by the instructions of
+//! the check alone. Nothing here is on a production path.
 
 #![allow(clippy::too_many_arguments)]
 
 use gf2_kernels_simd::bipedal::packed5::{F5BinaryKernelFn, F5UnaryKernelFn};
 use gf2_kernels_simd::bipedal::packed7::{F7BinaryKernelFn, F7UnaryKernelFn};
 use gf2_kernels_simd::bipedal::{BipedalBinaryKernelFn, BipedalUnaryKernelFn};
-use gf2_kernels_simd::fp_medium::{MediumPrimeGemmPanelFn, MediumPrimeSpmmRowFn};
+use gf2_kernels_simd::fp_medium::{MediumPrimeGemmPanelFn, MediumPrimeSpmmFn};
 use gf2_kernels_simd::fp_medium_f64::FpMediumF64GemmFn;
 use gf2_kernels_simd::fp_medium_ple::MediumPrimePlePanelBaseFn;
-use gf2_kernels_simd::fp_small::{SmallPrimeGemmRowPanelFn, SmallPrimeSpmmRowFn};
+use gf2_kernels_simd::fp_small::{SmallPrimeGemmRowPanelFn, SmallPrimeSpmmFn};
 use gf2_kernels_simd::fp_small_f32::SmallPrimeF32GemmFn;
 use gf2_kernels_simd::fp_small_panel::SmallPrimePanelGemmFn;
 use gf2_kernels_simd::fp_small_ple::SmallPrimePlePanelBaseFn;
 use gf2_kernels_simd::modem::{PamSqDistancesF32Fn, PamSqDistancesF64Fn};
 
-/// Panics unless every `a_cols[h] * b_stride + n` stays inside a `b` of
-/// `b_len` elements. One division per call hoists the product out of the
-/// scan, which compares each index once.
+/// Panics unless every index of `a_cols` names a whole row of `n` cells in a
+/// `b` of `b_len` cells: one division and one pass over the indices per call.
 #[inline]
-fn assert_spmm_row_columns(
-    kernel: &str,
-    a_cols: &[usize],
-    b_len: usize,
-    b_stride: usize,
-    n: usize,
-) {
-    if a_cols.is_empty() {
-        return;
-    }
-    let Some(last_start) = b_len.checked_sub(n) else {
-        panic!("{kernel}: b is shorter than one output row");
-    };
-    // A zero stride starts every row at element 0.
-    let Some(max_col) = last_start.checked_div(b_stride) else {
+fn assert_spmm_columns(kernel: &str, a_cols: &[usize], b_len: usize, n: usize) {
+    let Some(largest) = a_cols.iter().copied().max() else {
         return;
     };
     assert!(
-        a_cols.iter().all(|&col| col <= max_col),
+        b_len.checked_div(n).is_none_or(|rows| largest < rows),
         "{kernel}: a column index reaches outside b"
     );
 }
@@ -81,60 +68,60 @@ fn assert_shape(kernel: &str, operand: &str, length: usize, rows: usize, cols: u
 
 #[inline(never)]
 pub fn spmm_small_current(
-    kernel: SmallPrimeSpmmRowFn,
-    a_vals: &[u8],
+    kernel: SmallPrimeSpmmFn,
+    a_row_ptr: &[usize],
     a_cols: &[usize],
+    a_vals: &[u8],
     b: &[u8],
-    b_stride: usize,
     n: usize,
     p: u8,
     out: &mut [u8],
 ) {
-    kernel(a_vals, a_cols, b, b_stride, n, p, out)
+    kernel(a_row_ptr, a_cols, a_vals, b, n, p, out)
 }
 
 #[inline(never)]
 pub fn spmm_small_checked(
-    kernel: SmallPrimeSpmmRowFn,
-    a_vals: &[u8],
+    kernel: SmallPrimeSpmmFn,
+    a_row_ptr: &[usize],
     a_cols: &[usize],
+    a_vals: &[u8],
     b: &[u8],
-    b_stride: usize,
     n: usize,
     p: u8,
     out: &mut [u8],
 ) {
-    assert_spmm_row_columns("fp_small_spmm_row", a_cols, b.len(), b_stride, n);
-    kernel(a_vals, a_cols, b, b_stride, n, p, out)
+    assert_spmm_columns("fp_small_spmm", a_cols, b.len(), n);
+    kernel(a_row_ptr, a_cols, a_vals, b, n, p, out)
 }
 
 #[inline(never)]
 pub fn spmm_medium_current(
-    kernel: MediumPrimeSpmmRowFn,
-    a_vals: &[u16],
+    kernel: MediumPrimeSpmmFn,
+    a_row_ptr: &[usize],
     a_cols: &[usize],
+    a_vals: &[u16],
     b: &[u16],
-    b_stride: usize,
     n: usize,
     p: u16,
     out: &mut [u16],
 ) {
-    kernel(a_vals, a_cols, b, b_stride, n, p, out)
+    kernel(a_row_ptr, a_cols, a_vals, b, n, p, out)
 }
 
 #[inline(never)]
 pub fn spmm_medium_checked(
-    kernel: MediumPrimeSpmmRowFn,
-    a_vals: &[u16],
+    kernel: MediumPrimeSpmmFn,
+    a_row_ptr: &[usize],
     a_cols: &[usize],
+    a_vals: &[u16],
     b: &[u16],
-    b_stride: usize,
     n: usize,
     p: u16,
     out: &mut [u16],
 ) {
-    assert_spmm_row_columns("fp_medium_spmm_row", a_cols, b.len(), b_stride, n);
-    kernel(a_vals, a_cols, b, b_stride, n, p, out)
+    assert_spmm_columns("fp_medium_spmm", a_cols, b.len(), n);
+    kernel(a_row_ptr, a_cols, a_vals, b, n, p, out)
 }
 
 #[inline(never)]

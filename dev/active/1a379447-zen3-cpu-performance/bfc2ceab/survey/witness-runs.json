@@ -12,102 +12,102 @@
   "runs": [
     {
       "entry": "small-spmm",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "medium-spmm",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "small-ple",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "medium-ple",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "bipedal-add",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "bipedal-sub",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "bipedal-mul",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "bipedal-neg",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "f5-add",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "f5-sub",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "f5-mul",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "f5-neg",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "f7-add",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "f7-sub",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "f7-mul",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "f7-neg",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "medium-gemm-panel",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "medium-f64-gemm",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "small-f32-gemm",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {
       "entry": "small-f32-gemm-route-a",
-      "outcome": "killed by SIGSEGV",
+      "outcome": "exit status 101",
       "returned": false
     },
     {

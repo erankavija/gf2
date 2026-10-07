@@ -1,0 +1,26 @@
+{
+  "schema": "entry-point-decisions-v1",
+  "issue": "bfc2ceab",
+  "decided_by": "invoker",
+  "decided_on": "2026-10-07",
+  "ruling": "Checked safe entries (option a) for every interface whose check is recorded not-worse; for the two sparse-row interfaces (SmallPrimeSpmmRowFn, MediumPrimeSpmmRowFn) hoist the check: an `unsafe fn ..._unchecked` row kernel inside gf2-kernels-simd plus one safe entry that validates column indices once per product, or reliance on the sparse type's constructor invariant if it guarantees `col < cols`. Fallback, also approved: if the call-site analysis shows no sound coarser grain, keep the per-row check and record the measured cost as accepted under REQ-04.",
+  "classes": {
+    "sparse-row-index": {
+      "option": "b",
+      "grain": "per-product",
+      "cost": "the per-row form's measured cost is not accepted; the per-product form replaces it"
+    },
+    "ple-panel": {
+      "option": "a",
+      "cost": "measured cost recorded as accepted"
+    },
+    "packed-lengths": {
+      "option": "a",
+      "cost": "measured cost recorded as accepted"
+    },
+    "dense-shape-product": {
+      "option": "a",
+      "cost": "measured cost recorded as accepted"
+    }
+  }
+}

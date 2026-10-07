@@ -5,11 +5,10 @@
   "source_evidence": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/source-evidence.json",
   "instruction_counts": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/instruction-counts.json",
   "witness_runs": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/witness-runs.json",
-  "scan_rule": "An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim. The checked form of an entry point, compiled under `cfg(gf2_entry_checked)` alone, is counted with its entry point.",
+  "scan_rule": "An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim.",
   "use_rule": "In every tracked Rust file outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, and outside the condition test of the checked build, which does the same, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.",
   "counts": {
     "safe_functions_with_an_unsafe_block": 88,
-    "checked_forms_under_the_cfg": 22,
     "entry_points": 24,
     "pointer_types": 17,
     "cost_classes": 4,
@@ -27,17 +26,17 @@
   "classes": {
     "sparse-row-index": {
       "title": "Sparse row kernels: one index bound per stored non-zero",
-      "check": "After one subtraction and one division per call, one comparison per non-zero of the row ahead of the kernel.",
-      "granularity": "per element, once per call",
-      "hoist": "The scan runs once per row call and leaves the kernel's loops as they are: the kernel reads each index once per 16 output columns and once per remaining column. A check that sits beside a whole matrix needs the row loop inside the kernel crate.",
-      "hot_path": "yes: one scan per sparse row of every product"
+      "check": "One pass over the stored column indices of the whole product and one division, ahead of the row loop.",
+      "granularity": "per element, once per product",
+      "hoist": "The row loop stands in the kernel crate behind the check and leaves the row kernel's loops as they are: the kernel reads each index once per 16 output columns and once per remaining column.",
+      "hot_path": "yes: one scan per sparse product"
     },
     "ple-panel": {
       "title": "PLE panel base kernels: window shape and inverse-table index",
-      "check": "One checked product and one comparison per call for the window shape; a bounds-checked inverse-table read in place of the unchecked one.",
-      "granularity": "per call, plus one comparison per pivot",
-      "hoist": "The shape check stands ahead of the elimination. The index check stands at the pivot read, outside the Schur update loops; a check held wholly in the safe entry point scans every window entry.",
-      "hot_path": "per pivot column, outside the row and lane loops"
+      "check": "One checked product and one comparison per call for the window shape, one comparison for the table length and one pass that requires every window entry below `p`.",
+      "granularity": "per call, plus one comparison per window entry",
+      "hoist": "The whole check stands in the safe entry point, ahead of the elimination. The kernel keeps every entry below `p`, so each pivot indexes inside the table and the kernel's pivot read stays unchecked.",
+      "hot_path": "per panel, outside the row and lane loops"
     },
     "packed-lengths": {
       "title": "Packed F_3, F_5 and F_7 batch kernels: equal lengths, a multiple of four",
@@ -64,10 +63,10 @@
     {
       "id": "small-prime-spmm-row",
       "class": "sparse-row-index",
-      "pointer_type": "fp_small::SmallPrimeSpmmRowFn",
+      "pointer_type": "fp_small::SmallPrimeSpmmFn",
       "bundle": "fp_small::SmallPrimeFns",
       "fields": [
-        "spmm_row_fn"
+        "spmm_fn"
       ],
       "contract_claims": [
         "small-spmm-type-doc",
@@ -78,7 +77,7 @@
       ],
       "conditions": [
         {
-          "condition": "every `a_cols[h] * b_stride + n` is at most `b.len()`, without overflow",
+          "condition": "every `a_cols[h] * n + n` is at most `b.len()`, without overflow",
           "debug_build_check": [],
           "unchecked_access": [
             "small-spmm-vector-read",
@@ -89,16 +88,15 @@
       "entries": [
         {
           "id": "small-spmm",
-          "safe_function": "spmm_row_safe",
+          "safe_function": "spmm_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small.rs",
           "kernel": "x86::fp_small::fp_small_spmm_row",
-          "checked_form": "`spmm_row_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-core",
               "path": "crates/gf2-core/src/gfp/simd_ops.rs",
-              "field": "spmm_row_fn",
+              "field": "spmm_fn",
               "kind": "production",
               "calls": 1,
               "denies_unsafe_code": true,
@@ -129,21 +127,23 @@
             "check": "safe entry point",
             "current": {
               "symbol": "spmm_small_current",
-              "instructions": 18,
-              "outside_panic_blocks": 18,
+              "instructions": 20,
+              "outside_panic_blocks": 20,
               "loop_bodies": []
             },
             "checked": {
               "symbol": "spmm_small_checked",
-              "instructions": 71,
-              "outside_panic_blocks": 55,
+              "instructions": 72,
+              "outside_panic_blocks": 64,
               "loop_bodies": [
-                5
+                7,
+                26
               ]
             },
-            "added": 37,
+            "added": 44,
             "added_loop_bodies": [
-              5
+              7,
+              26
             ]
           }
         ],
@@ -171,10 +171,10 @@
     {
       "id": "medium-prime-spmm-row",
       "class": "sparse-row-index",
-      "pointer_type": "fp_medium::MediumPrimeSpmmRowFn",
+      "pointer_type": "fp_medium::MediumPrimeSpmmFn",
       "bundle": "fp_medium::MediumPrimeFns",
       "fields": [
-        "spmm_row_fn"
+        "spmm_fn"
       ],
       "contract_claims": [
         "medium-spmm-type-doc",
@@ -185,7 +185,7 @@
       ],
       "conditions": [
         {
-          "condition": "every `a_cols[h] * b_stride + n` is at most `b.len()`, without overflow",
+          "condition": "every `a_cols[h] * n + n` is at most `b.len()`, without overflow",
           "debug_build_check": [],
           "unchecked_access": [
             "medium-spmm-vector-read",
@@ -196,16 +196,15 @@
       "entries": [
         {
           "id": "medium-spmm",
-          "safe_function": "spmm_row_safe",
+          "safe_function": "spmm_safe",
           "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
           "kernel": "x86::fp_medium::fp_medium_spmm_row",
-          "checked_form": "`spmm_row_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-core",
               "path": "crates/gf2-core/src/gfp/simd_ops.rs",
-              "field": "spmm_row_fn",
+              "field": "spmm_fn",
               "kind": "production",
               "calls": 1,
               "denies_unsafe_code": true,
@@ -236,21 +235,23 @@
             "check": "safe entry point",
             "current": {
               "symbol": "spmm_medium_current",
-              "instructions": 18,
-              "outside_panic_blocks": 18,
+              "instructions": 20,
+              "outside_panic_blocks": 20,
               "loop_bodies": []
             },
             "checked": {
               "symbol": "spmm_medium_checked",
-              "instructions": 70,
-              "outside_panic_blocks": 54,
+              "instructions": 71,
+              "outside_panic_blocks": 63,
               "loop_bodies": [
-                5
+                7,
+                25
               ]
             },
-            "added": 36,
+            "added": 43,
             "added_loop_bodies": [
-              5
+              7,
+              25
             ]
           }
         ]
@@ -302,8 +303,7 @@
           "safe_function": "ple_panel_base_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small_ple.rs",
           "kernel": "x86::fp_small_ple::ple_panel_base_canonical",
-          "checked_form": "`ple_panel_base_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-core",
@@ -467,8 +467,7 @@
           "safe_function": "ple_panel_base_safe",
           "module": "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
           "kernel": "x86::fp_medium_ple::ple_panel_base_canonical_u16",
-          "checked_form": "`ple_panel_base_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-core",
@@ -623,8 +622,7 @@
           "safe_function": "add_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
           "kernel": "x86::bipedal_avx2::run_add_batch::<Config3>",
-          "checked_form": "`add_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-algebra",
@@ -651,8 +649,7 @@
           "safe_function": "sub_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
           "kernel": "x86::bipedal_avx2::run_sub_batch::<Config3>",
-          "checked_form": "`sub_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-algebra",
@@ -679,8 +676,7 @@
           "safe_function": "mul_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
           "kernel": "x86::bipedal_avx2::run_mul_batch::<Config3>",
-          "checked_form": "`mul_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -754,8 +750,7 @@
           "safe_function": "neg_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/mod.rs",
           "kernel": "x86::bipedal_avx2::run_neg_batch::<Config3>",
-          "checked_form": "`neg_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -831,8 +826,7 @@
           "safe_function": "add5_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
           "kernel": "x86::bipedal_avx2_packed5::run_add5_batch",
-          "checked_form": "`add5_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -845,8 +839,7 @@
           "safe_function": "sub5_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
           "kernel": "x86::bipedal_avx2_packed5::run_sub5_batch",
-          "checked_form": "`sub5_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -859,8 +852,7 @@
           "safe_function": "mul5_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
           "kernel": "x86::bipedal_avx2_packed5::run_mul5_batch",
-          "checked_form": "`mul5_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -933,8 +925,7 @@
           "safe_function": "neg5_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed5.rs",
           "kernel": "x86::bipedal_avx2_packed5::run_neg5_batch",
-          "checked_form": "`neg5_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -1009,8 +1000,7 @@
           "safe_function": "add7_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
           "kernel": "x86::bipedal_avx2_packed7::run_add7_batch",
-          "checked_form": "`add7_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -1023,8 +1013,7 @@
           "safe_function": "sub7_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
           "kernel": "x86::bipedal_avx2_packed7::run_sub7_batch",
-          "checked_form": "`sub7_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -1037,8 +1026,7 @@
           "safe_function": "mul7_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
           "kernel": "x86::bipedal_avx2_packed7::run_mul7_batch",
-          "checked_form": "`mul7_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -1111,8 +1099,7 @@
           "safe_function": "neg7_safe",
           "module": "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
           "kernel": "x86::bipedal_avx2_packed7::run_neg7_batch",
-          "checked_form": "`neg7_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [],
           "call_sites": {
             "production": 0,
@@ -1162,7 +1149,9 @@
       "fields": [
         "gemm_row_panel_fn"
       ],
-      "contract_claims": [],
+      "contract_claims": [
+        "row-panel-check"
+      ],
       "release_checked": [
         "row-panel-assert"
       ],
@@ -1183,7 +1172,6 @@
           "safe_function": "gemm_row_panel_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small.rs",
           "kernel": "x86::fp_small::fp_small_gemm_row_panel",
-          "checked_form": "`gemm_row_panel_checked`",
           "witness_call_ends": null,
           "callers": [
             {
@@ -1270,7 +1258,9 @@
       "fields": [
         "batch_gemm_fn"
       ],
-      "contract_claims": [],
+      "contract_claims": [
+        "small-panel-check"
+      ],
       "release_checked": [
         "small-panel-assert"
       ],
@@ -1291,7 +1281,6 @@
           "safe_function": "batch_gemm_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small_panel.rs",
           "kernel": "x86::fp_small_panel::fp_small_panel_gemm",
-          "checked_form": "`batch_gemm_checked`",
           "witness_call_ends": null,
           "callers": [
             {
@@ -1380,7 +1369,10 @@
         "batch_gemm_fn",
         "batch_gemm_route_a_fn"
       ],
-      "contract_claims": [],
+      "contract_claims": [
+        "small-f32-check",
+        "small-f32-route-a-check"
+      ],
       "release_checked": [
         "small-f32-assert",
         "small-f32-route-a-assert"
@@ -1403,8 +1395,7 @@
           "safe_function": "batch_gemm_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
           "kernel": "x86::fp_small_f32::fp_small_f32_gemm",
-          "checked_form": "`batch_gemm_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-core",
@@ -1445,8 +1436,7 @@
           "safe_function": "batch_gemm_route_a_safe",
           "module": "crates/gf2-kernels-simd/src/fp_small_f32.rs",
           "kernel": "x86::fp_small_f32::fp_small_f32_gemm_route_a",
-          "checked_form": "`batch_gemm_route_a_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-core",
@@ -1530,7 +1520,9 @@
       "fields": [
         "gemm_panel_fn"
       ],
-      "contract_claims": [],
+      "contract_claims": [
+        "medium-panel-check"
+      ],
       "release_checked": [
         "medium-panel-assert"
       ],
@@ -1551,8 +1543,7 @@
           "safe_function": "gemm_panel_safe",
           "module": "crates/gf2-kernels-simd/src/fp_medium.rs",
           "kernel": "x86::fp_medium::fp_medium_gemm_panel",
-          "checked_form": "`gemm_panel_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-core",
@@ -1626,7 +1617,9 @@
       "fields": [
         "batch_gemm_fn"
       ],
-      "contract_claims": [],
+      "contract_claims": [
+        "medium-f64-check"
+      ],
       "release_checked": [
         "medium-f64-assert"
       ],
@@ -1647,8 +1640,7 @@
           "safe_function": "batch_gemm_safe",
           "module": "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
           "kernel": "x86::fp_medium_f64::fp_medium_f64_gemm",
-          "checked_form": "`batch_gemm_checked`",
-          "witness_call_ends": "killed by SIGSEGV",
+          "witness_call_ends": "exit status 101",
           "callers": [
             {
               "package": "gf2-core",
@@ -1735,7 +1727,9 @@
       "fields": [
         "pam_sq_distances_fn"
       ],
-      "contract_claims": [],
+      "contract_claims": [
+        "pam-check"
+      ],
       "release_checked": [
         "pam-assert"
       ],
@@ -1756,7 +1750,6 @@
           "safe_function": "pam_sq_distances_f32_avx2_safe",
           "module": "crates/gf2-kernels-simd/src/modem.rs",
           "kernel": "modem::avx2::pam_sq_distances_f32_avx2",
-          "checked_form": "a statement of `pam_sq_distances_f32_avx2_safe` under `cfg(gf2_entry_checked)`",
           "witness_call_ends": null,
           "callers": [
             {
@@ -1822,7 +1815,9 @@
       "fields": [
         "pam_sq_distances_fn"
       ],
-      "contract_claims": [],
+      "contract_claims": [
+        "pam-check"
+      ],
       "release_checked": [
         "pam-assert"
       ],
@@ -1843,7 +1838,6 @@
           "safe_function": "pam_sq_distances_f64_avx2_safe",
           "module": "crates/gf2-kernels-simd/src/modem.rs",
           "kernel": "modem::avx2::pam_sq_distances_f64_avx2",
-          "checked_form": "a statement of `pam_sq_distances_f64_avx2_safe` under `cfg(gf2_entry_checked)`",
           "witness_call_ends": null,
           "callers": [
             {
@@ -2359,76 +2353,92 @@
     }
   ],
   "decisions": {
-    "dense-shape-product": {
-      "recommended": "a",
-      "reason": "The assertions exist and compare with a wrapping product; `checked_mul` closes the gap once per call. The calling dispatchers size their operands from the same wrapping products, and no production caller can hold an `unsafe` block."
-    },
-    "ple-panel": {
-      "recommended": "a",
-      "reason": "The shape check is one product per panel and the index check one comparison per pivot, both outside the update loops; the two production callers meet both conditions by construction."
-    },
-    "sparse-row-index": {
-      "recommended": null,
-      "reason": "The confirmation records the per-row form of option (a) as a regression on both interfaces (the confirmation rows of the cost column), which contradicts the family's non-regression criterion for that form. The one production caller forwards column indices from a safe public hook and cannot hold an `unsafe` block, so an unchecked row kernel needs the row loop inside the kernel crate. The grains at which the check can stand follow; the choice among them is the invoker's."
-    },
-    "packed-lengths": {
-      "recommended": "a",
-      "reason": "The check is a handful of comparisons per call. No tracked Rust file calls the F_5, F_7, F_3 mul and F_3 neg pointers. The F_3 add and sub pointers are called once per Gray step with four words, which puts the check beside one vector iteration; the crate publishes the unchecked form of those kernels as `unsafe fn` items."
+    "record": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/decisions.json",
+    "decided_by": "invoker",
+    "decided_on": "2026-10-07",
+    "ruling": "Checked safe entries (option a) for every interface whose check is recorded not-worse; for the two sparse-row interfaces (SmallPrimeSpmmRowFn, MediumPrimeSpmmRowFn) hoist the check: an `unsafe fn ..._unchecked` row kernel inside gf2-kernels-simd plus one safe entry that validates column indices once per product, or reliance on the sparse type's constructor invariant if it guarantees `col < cols`. Fallback, also approved: if the call-site analysis shows no sound coarser grain, keep the per-row check and record the measured cost as accepted under REQ-04.",
+    "classes": {
+      "sparse-row-index": {
+        "option": "b",
+        "grain": "per-product",
+        "cost": "the per-row form's measured cost is not accepted; the per-product form replaces it",
+        "basis": "The confirmation records the per-row form of the check as a regression on both interfaces, which contradicts the family's non-regression criterion for that form. The one production caller forwards column indices from a safe public hook and cannot hold an `unsafe` block, so the row loop stands in the kernel crate behind one check per product."
+      },
+      "ple-panel": {
+        "option": "a",
+        "cost": "measured cost recorded as accepted",
+        "basis": "The shape check is one product per panel and the entry scan one pass over the window, both ahead of the elimination; the two production callers meet both conditions by construction."
+      },
+      "packed-lengths": {
+        "option": "a",
+        "cost": "measured cost recorded as accepted",
+        "basis": "The check is a handful of comparisons per call. No tracked Rust file calls the F_5, F_7, F_3 mul and F_3 neg pointers. The F_3 add and sub pointers are called once per Gray step with four words, which puts the check beside one vector iteration; the crate publishes the unchecked form of those kernels as `unsafe fn` items."
+      },
+      "dense-shape-product": {
+        "option": "a",
+        "cost": "measured cost recorded as accepted",
+        "basis": "The kernels' assertions compare with a wrapping product; `checked_mul` in the safe entry closes the gap once per call. The calling dispatchers size their operands from the same wrapping products, and no production caller can hold an `unsafe` block."
+      }
     }
   },
   "check_grains": {
     "class": "sparse-row-index",
     "position": {
-      "text": "The checked wrapper of each lane runs the column check on every call, ahead of the kernel: one pass over the stored indices of the row it is handed and one division. The row loop stands in `gf2-core`, which calls the row pointer once per non-empty sparse row, so the check runs inside the row loop, once per row of every product.",
+      "text": "The safe entry of each lane checks the column indices once per product, ahead of its row loop: one pass over the whole index array and one division. The row loop stands in the kernel crate behind that check and holds the `unsafe` call of the row kernel, whose Safety section states the column bound. `gf2-core` calls the entry once per product.",
       "claims": [
-        "small-spmm-checked-call",
-        "medium-spmm-checked-call",
+        "small-spmm-wrapper",
+        "medium-spmm-wrapper",
         "entry-check-row-scan",
-        "entry-check-row-division",
-        "core-spmm-row-loop"
+        "core-spmm-row-loop",
+        "spmm-kernel-safety",
+        "core-spmm-small-call",
+        "core-spmm-medium-call"
       ]
     },
     "options": [
       {
-        "id": "per-row",
-        "title": "check in the safe row entry",
-        "design": "`spmm_row_safe` takes the body of `spmm_row_checked`; the pointer type and every caller stay as they are.",
-        "check": "once per sparse row, inside the row loop of `gf2-core`",
+        "id": "per-product",
+        "title": "unchecked row kernel behind one checked entry per product",
+        "state": "in the tree",
+        "design": "The row kernel is an `unsafe fn` of the kernel crate with the column bound under Safety. One safe entry per lane takes the CSR arrays and the dense operand, checks the largest index of the whole index array once against `b.len()` and `n`, and holds the row loop with its `// SAFETY:` comment. `fp_try_spmm` converts the operands and the whole product between the field type and the lane type around one call.",
+        "check": "once per product, ahead of the row loop",
         "constraint": "none",
-        "measured": true,
+        "measured": false,
         "claims": [
-          "small-spmm-checked-call",
-          "medium-spmm-checked-call"
+          "small-spmm-wrapper",
+          "medium-spmm-wrapper",
+          "core-spmm-row-loop",
+          "spmm-kernel-safety",
+          "core-denies-unsafe"
         ],
-        "changes": [
-          "`spmm_row_safe` of `crates/gf2-kernels-simd/src/fp_small.rs`",
-          "`spmm_row_safe` of `crates/gf2-kernels-simd/src/fp_medium.rs`"
+        "sites": [
+          "`spmm_safe` of `crates/gf2-kernels-simd/src/fp_small.rs`",
+          "`spmm_safe` of `crates/gf2-kernels-simd/src/fp_medium.rs`",
+          "`spmm_fn` in `crates/gf2-core/src/gfp/simd_ops.rs`: 2 calls"
         ]
       },
       {
-        "id": "per-product",
-        "title": "unchecked row kernel behind one checked entry per product",
-        "design": "The row kernel becomes an `unsafe fn ..._unchecked` item of the kernel crate with the column bound under Safety. One safe entry per lane takes the CSR arrays and the dense operand, checks the largest index of the whole index array once against `b.len()`, `b_stride` and `n`, and holds the row loop with its `// SAFETY:` comment. The scan reads every stored index once, as the per-row form does; the call, the subtraction and the division happen once per product.",
-        "check": "once per product, ahead of the row loop",
-        "constraint": "The row loop moves out of `fp_try_spmm` into the kernel crate, since `gf2-core` cannot hold the `unsafe` call; that loop also converts each output row from its lane type, so the entry writes a lane buffer of the whole product or the conversion moves behind it.",
-        "measured": false,
+        "id": "per-row",
+        "title": "check in a safe row entry",
+        "state": "in the tree the family measured",
+        "design": "A safe row entry runs the column check on every call: one pass over the row's indices, one subtraction and one division. The row loop stands in `gf2-core`, which calls the entry once per non-empty sparse row.",
+        "check": "once per sparse row, inside the row loop of `gf2-core`",
+        "constraint": "The confirmation records this form as a regression on both lanes.",
+        "measured": true,
         "claims": [
-          "core-denies-unsafe",
-          "core-spmm-row-loop",
-          "core-spmm-row-output"
+          "measured-row-check",
+          "measured-row-division",
+          "measured-row-loop"
         ],
-        "changes": [
-          "`spmm_row_safe` of `crates/gf2-kernels-simd/src/fp_small.rs`",
-          "`spmm_row_safe` of `crates/gf2-kernels-simd/src/fp_medium.rs`",
-          "`spmm_row_fn` in `crates/gf2-core/src/gfp/simd_ops.rs`: 2 calls"
-        ]
+        "sites": []
       },
       {
         "id": "construction",
         "title": "bound held by the sparse matrix type",
-        "design": "Every constructor of `SparseFieldMatrix` yields column indices below its column count (the constructor table), no method takes the matrix by `&mut self`, the index field is private, the raw parts leave as shared borrows, and `matmat` asserts the column count against the rows of the dense operand before the hook. A product that starts at `matmat` therefore meets the bound with no check added.",
+        "state": "not built",
+        "design": "Every constructor of `SparseFieldMatrix` yields column indices below its column count (the constructor table), no method takes the matrix by `&mut self`, the index field is private, the raw parts leave as shared borrows, and `matmat` asserts the column count against the rows of the dense operand before the hook. A product that starts at `matmat` therefore meets the bound, and the per-product check never fires for it.",
         "check": "at construction; none per product",
-        "constraint": "The bound does not reach the kernel as a type: the hook is a safe public trait method over plain slices, and the type's documentation does not state the bound. Relying on it takes a hook that receives the matrix type or is unreachable from outside the crate, the bound stated as an invariant of the type, and an `unsafe` call of the unchecked row kernel in `gf2-core`, which denies `unsafe_code`. Held behind the safe entry of `per-product` instead, it leaves that entry's one check in place.",
+        "constraint": "The bound does not reach the kernel as a type: the hook is a safe public trait method over plain slices, and the type's documentation does not state the bound. Relying on it in place of the per-product check takes a hook that receives the matrix type or is unreachable from outside the crate, the bound stated as an invariant of the type, and an `unsafe` call of the row kernel in `gf2-core`, which denies `unsafe_code`.",
         "measured": false,
         "claims": [
           "core-sparse-private-fields",
@@ -2439,14 +2449,27 @@
           "core-sparse-type-doc",
           "core-denies-unsafe"
         ],
-        "changes": [
+        "sites": [
           "`try_simd_spmm` in `crates/gf2-core/src/field/sparse_matrix.rs`: 1 call",
           "`try_simd_spmm` in `crates/gf2-core/src/field/traits.rs`: 1 definition",
           "`try_simd_spmm` in `crates/gf2-core/src/gfp/mod.rs`: 1 definition",
-          "`spmm_row_fn` in `crates/gf2-core/src/gfp/simd_ops.rs`: 2 calls"
+          "`spmm_fn` in `crates/gf2-core/src/gfp/simd_ops.rs`: 2 calls"
         ]
       }
     ],
+    "further_confirmation": {
+      "ledger": "dev/bench_results/bfc2ceab/entry-check-family-ledger.jsonl",
+      "next_attempt": 2,
+      "attempt_alpha": 0.008333333333333333,
+      "comparisons_with_one_more_cell": 7,
+      "expected_tail_draws": 5.952380952380952,
+      "required_tail_draws": 20,
+      "admits_a_confirmatory_cell": false,
+      "claims": [
+        "ledger-attempt-alpha",
+        "p20-tail-support"
+      ]
+    },
     "sparse_type": {
       "name": "SparseFieldMatrix",
       "path": "crates/gf2-core/src/field/sparse_matrix.rs",
