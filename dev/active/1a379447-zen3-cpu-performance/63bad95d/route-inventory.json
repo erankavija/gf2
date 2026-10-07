@@ -3,7 +3,7 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "a41171d3fdefcb4a8fe20918cd70dd0ec475390a87172d5fd64eeebb61ae0358"
+  "sha256": "6f9de21787703843f9db229919fb6092beef2c0f99e2949f802c08dde41dfa77"
  },
  "counts": {
   "entry point groups": 9,
@@ -17,9 +17,9 @@
   "of those, class selector": 8,
   "declared selectors outside the tuning sections": 6,
   "witness configurations": 7,
-  "committed protocol receipts": 151,
-  "core-kernel receipts": 97,
-  "core-kernel measurement families": 45
+  "committed protocol receipts": 153,
+  "core-kernel receipts": 99,
+  "core-kernel measurement families": 46
  },
  "entry_points": [
   {
@@ -2095,10 +2095,10 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/04b85d10/findings.md",
-    "dev/active/26465e6c/findings.md",
-    "dev/active/5cbb6545/findings.md",
-    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/04b85d10/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/26465e6c/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/5cbb6545/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
     "dev/active/1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md",
     "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
    ]
@@ -2118,7 +2118,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
     "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md"
    ]
   },
@@ -2188,8 +2188,8 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/1d4fd63d/findings.md",
-    "dev/active/04b85d10/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/1d4fd63d/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/04b85d10/findings.md"
    ]
   },
   {
@@ -2231,7 +2231,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/5cbb6545/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/5cbb6545/findings.md"
    ]
   },
   {
@@ -2257,7 +2257,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/1c602857/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/1c602857/findings.md"
    ]
   },
   {
@@ -2289,7 +2289,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/1d0da41f/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/1d0da41f/findings.md"
    ]
   },
   {
@@ -2316,7 +2316,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/53c5a8c0/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/53c5a8c0/findings.md"
    ]
   },
   {
@@ -2390,9 +2390,9 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/19513245/findings.md",
-    "dev/active/ad2a6a58/outcome.md",
-    "dev/active/4c1e441f/outcome.md"
+    "dev/active/1a379447-zen3-cpu-performance/19513245/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/outcome.md",
+    "dev/active/1a379447-zen3-cpu-performance/4c1e441f/outcome.md"
    ]
   },
   {
@@ -2418,8 +2418,8 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-findings.md",
-    "dev/active/00dd43c3/confirmation-outcome.md"
+    "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/publication-findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/00dd43c3/confirmation-outcome.md"
    ]
   }
  ],
@@ -3805,6 +3805,143 @@
     "conservative-portable",
     "external",
     "native"
+   ]
+  },
+  {
+   "family": "4337c02e-matvec-simd-threshold",
+   "issue": "4337c02e",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "v4-r1-4337c02e-matvec-simd-threshold",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "v4-r1-confirmation-4337c02e-matvec-simd-threshold",
+     "label": "confirmation",
+     "verdict": "rejected",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 6,
+    "exploratory/route-contrast": 17
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/scalar-lane/stride=7w/shape=full/rows=1024/cols=448/base%64=0/retain=289262/banks=1x57400B/working-set=57400B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=7w/shape=full/rows=1024/cols=448/base%64=0/retain=289262/banks=1x57400B/working-set=57400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=10w/shape=full/rows=1024/cols=640/base%64=0/retain=289262/banks=1x82000B/working-set=82000B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=10w/shape=full/rows=1024/cols=640/base%64=0/retain=289262/banks=1x82000B/working-set=82000B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=62w/shape=full/rows=1024/cols=3968/base%64=16/retain=289262/banks=1x508400B/working-set=508400B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=62w/shape=full/rows=1024/cols=3968/base%64=16/retain=289262/banks=1x508400B/working-set=508400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=8x8782200B/working-set=70257600B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=8x8782200B/working-set=70257600B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=8x8528000B/working-set=68224000B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=8x8528000B/working-set=68224000B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=8w/shape=full/rows=1024/cols=512/base%64=16/retain=289262/banks=8x8396800B/working-set=67174400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=32/retain=289262/banks=8x8413200B/working-set=67305600B",
+     "candidate": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=9w/shape=full/rows=1024/cols=576/base%64=32/retain=289262/banks=8x8413200B/working-set=67305600B"
+    }
+   ],
+   "builds": [
+    "conservative-portable"
    ]
   },
   {
@@ -5474,6 +5611,6 @@
  ],
  "workload_routes": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
-  "sha256": "195737766abfe301862b14b1dc17ceedcc52e656944f3776fb2094307111db51"
+  "sha256": "d4f274cdbe662a321c49f6d892c983a2db84395405bcaddf610d02dcef9554bb"
  }
 }

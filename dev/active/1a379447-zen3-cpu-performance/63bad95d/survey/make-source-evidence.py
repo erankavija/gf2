@@ -47,8 +47,9 @@ CLAIMS = [
      "A default `gf2-coding` build enables its `simd` feature."),
     ("coding-simd-forwards", CODING, "Cargo.toml", 'simd = ["gf2-core/simd"]', 1,
      "`gf2-coding/simd` is the edge that enables `gf2-core/simd`."),
-    ("sim-default-empty", SIM, "Cargo.toml", "default = []", 1,
-     "`gf2-sim` has no default feature of its own."),
+    ("sim-default-empty", SIM, "Cargo.toml", "[features]", 1,
+     "The feature table of `gf2-sim` declares no `default` feature, so its default feature "
+     "set is empty."),
     ("sim-depends-coding-defaults", SIM, "Cargo.toml",
      'gf2-coding = { path = "../gf2-coding" }', 1,
      "`gf2-sim` takes `gf2-coding` with its default features, so every `gf2-sim` build "

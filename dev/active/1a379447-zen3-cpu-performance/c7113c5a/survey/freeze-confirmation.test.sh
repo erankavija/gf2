@@ -26,7 +26,12 @@
 #      freezer therefore refuses to freeze again;
 #   5. a supplied resolution that covers the selected cells and lies below
 #      the whole pilot's half-width is refused, so no addendum is written
-#      that acceptance rejects on its declared resolution.
+#      that acceptance rejects on its declared resolution;
+#   6. `rederive-confirmation.py` takes its inputs by content identity: in a
+#      scratch repository it re-derives a record whose files all lie at other
+#      paths than the record names, ignores same-named files with other bytes
+#      at the recorded paths, and refuses, naming the digest, once no file
+#      holds the recorded receipt.
 #
 # Usage (from the repository root): freeze-confirmation.test.sh
 set -euo pipefail
@@ -40,8 +45,9 @@ CONFIRMATION_ADDENDUM=dev/active/1c602857/addendum-v4-public-clmul-confirmation.
 RECORD=dev/active/1c602857/confirmation-derivation.txt
 FROZEN=2026-09-13T06:35:49Z
 # The three paths above are the ones the committed bytes record. The fixture
-# keeps that layout; the files lie beside the one live pilot addendum.
-live=$(dirname "$(git ls-files -- ":(glob)**/${PILOT_ADDENDUM##*/}" ':(exclude,glob)**/inputs/**')")
+# keeps that layout; the files lie beside the one record that names the
+# confirmation addendum.
+live=$(dirname "$(git grep -l -F -e "confirmation addendum $CONFIRMATION_ADDENDUM" -- '*.txt' ':(exclude,glob)**/inputs/**')")
 
 fixture=$(mktemp -d)
 trap 'rm -rf "$fixture"' EXIT
@@ -114,7 +120,7 @@ echo "case three decimals: rounds the widest half-width up to the next 0.001"
 # freezer must refuse it at the whole-pilot floor.
 REDERIVE="$(dirname "$FREEZER")/rederive-confirmation.py"
 RETAINED='^floor scope  *retained cells$'
-mapfile -t all_records < <(git grep -l '^frozen measurement resolution' -- 'dev/active/*.txt')
+mapfile -t all_records < <(git grep -l '^frozen measurement resolution' -- '*.txt' ':(exclude,glob)**/inputs/**')
 records=() falsified=()
 for record in "${all_records[@]}"; do
   if grep -q "$RETAINED" "$record"; then falsified+=("$record"); else records+=("$record"); fi
@@ -157,4 +163,39 @@ freeze_selected 0.018 whole \
        cat "$fixture/whole.err" >&2; exit 1; }
 echo "case whole-pilot floor: a selection's resolution below the whole pilot's half-width is refused"
 
+# Case 6: a scratch repository holds the 1c602857 confirmation's files under
+# `moved/`, so no recorded path exists in it.
+scratch="$fixture/scratch"
+mkdir -p "$scratch/tools" "$scratch/moved/pilot"
+git -C "$scratch" init -q
+cp "$FREEZER" "$REDERIVE" "$scratch/tools/"
+cp "$PILOT/receipt.json" "$PILOT/acceptance-summary.json" "$scratch/moved/pilot/"
+cp "$live/${PILOT_ADDENDUM##*/}" "$live/${CONFIRMATION_ADDENDUM##*/}" "$live/${RECORD##*/}" "$scratch/moved/"
+git -C "$scratch" add -A
+# rederive_scratch <label>
+rederive_scratch() {
+  (cd "$scratch" && python3 -B tools/rederive-confirmation.py "$fixture/scratch-$1" \
+    "moved/${RECORD##*/}" >"$fixture/scratch-$1.txt")
+}
+rederive_scratch relocated && grep -q '^same ' "$fixture/scratch-relocated.txt" \
+  || { echo "case content identity: relocated inputs were not found by digest" >&2
+       cat "$fixture/scratch-relocated.txt" >&2; exit 1; }
+mkdir -p "$scratch/$PILOT" "$scratch/$(dirname "$PILOT_ADDENDUM")"
+for decoy in "$PILOT/receipt.json" "$PILOT/acceptance-summary.json" "$PILOT_ADDENDUM" "$CONFIRMATION_ADDENDUM"; do
+  echo '{"decoy": true}' >"$scratch/$decoy"
+done
+git -C "$scratch" add -A
+rederive_scratch decoy && grep -q '^same ' "$fixture/scratch-decoy.txt" \
+  || { echo "case content identity: a same-named file with other bytes was read" >&2
+       cat "$fixture/scratch-decoy.txt" >&2; exit 1; }
+git -C "$scratch" rm -q --cached moved/pilot/receipt.json
+if rederive_scratch missing; then
+  echo "case content identity: re-derived without the recorded receipt" >&2; exit 1
+fi
+grep -q "no committed file has sha256 $(sha256sum "$PILOT/receipt.json" | cut -d' ' -f1) (pilot receipt)" \
+  "$fixture/scratch-missing.txt" \
+  || { echo "case content identity: unexpected refusal" >&2; cat "$fixture/scratch-missing.txt" >&2; exit 1; }
+echo "case content identity: relocated inputs found by digest, decoys ignored, a missing receipt refused"
+
 echo 'freeze-confirmation.test.sh: every case passed'
+

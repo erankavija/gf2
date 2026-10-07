@@ -5,8 +5,12 @@ The rule is the *Resolution rule* section of the lane-threshold addendum. It
 reads the confirmation's acceptance summary and the confirmation addendum that
 receipt pins, and writes `outcome.json` and `outcome-record.md` beside the
 addendum document. The record also states what P-20's tail rule admits for a
-further confirmation on the family ledger as committed. `--self-test` checks
-the rule on constructed summaries and writes nothing.
+further confirmation on the family ledger as committed. The outcome reaches
+the selector's owner as a citation: `selector-outcomes.json` beside the
+campaign declaration of `63bad95d` names `outcome.json` by path, SHA-256 and
+outcome, and the tuning-campaign records check holds the committed profiles
+to it. `--self-test` checks the rule on constructed summaries and writes
+nothing.
 """
 
 import argparse
@@ -17,9 +21,16 @@ import sys
 sys.dont_write_bytecode = True
 
 from budget import budget  # noqa: E402
-from locate import CONFIRMATION, FAMILY, HERE, ROOT, SELECTOR, repo_artifacts  # noqa: E402
+from locate import (  # noqa: E402
+    CONFIRMATION, FAMILY, HERE, ROOT, SELECTOR, repo_artifacts, repository_files,
+)
 
 OUTPUT = HERE.parent / "outcome.json"
+# The issue that owns the selector's value, and the claim of its source ledger
+# that quotes the selector's conservative definition.
+OWNER = "63bad95d"
+CONSERVATIVE_CLAIM = "matvec-threshold-conservative"
+CITATIONS = "selector-outcomes.json"
 RENDERED = HERE.parent / "outcome-record.md"
 
 
@@ -72,6 +83,38 @@ def self_test():
 
 def sha256(path):
     return hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+
+
+def owner_file(name):
+    """The one live file called `name` whose JSON names the owner's issue."""
+    found = [path for path in repository_files.tracked_files(ROOT, name)
+             if json.loads((ROOT / path).read_bytes()).get("issue") == OWNER]
+    if len(found) != 1:
+        raise SystemExit(f"{len(found)} files called {name} belong to {OWNER}; exactly one must")
+    return ROOT / found[0]
+
+
+def cite(document):
+    """Writes the owner's citation of `outcome.json`, keeping its other citations."""
+    path = owner_file("campaign-declaration.json").with_name(CITATIONS)
+    record = (json.loads(path.read_bytes()) if path.exists()
+              else {"schema": "tuning-selector-outcomes-v1", "issue": OWNER, "outcomes": []})
+    citation = {
+        "selector": document["selector"],
+        "issue": document["issue"],
+        "record": str(OUTPUT.relative_to(ROOT)),
+        "sha256": hashlib.sha256(OUTPUT.read_bytes()).hexdigest(),
+        "outcome": document["outcome"],
+        "conservative_definition": {
+            "ledger": str(owner_file("source-evidence.json").relative_to(ROOT)),
+            "claim": CONSERVATIVE_CLAIM,
+        },
+    }
+    record["outcomes"] = sorted(
+        [item for item in record["outcomes"] if item["record"] != citation["record"]]
+        + [citation], key=lambda item: item["record"])
+    path.write_text(json.dumps(record, indent=2) + "\n")
+    return path
 
 
 def main():
@@ -149,6 +192,7 @@ def main():
         },
     }
     OUTPUT.write_text(json.dumps(document, indent=2) + "\n")
+    citations = cite(document)
 
     admitted = document["further_confirmation"]
     lines = [
@@ -205,7 +249,8 @@ def main():
         f"| Further confirmatory cells admitted | {admitted['admissible_cells']} |",
     ]
     RENDERED.write_text("\n".join(lines) + "\n")
-    print(f"{OUTPUT.relative_to(ROOT)}: {document['outcome']}")
+    print(f"{OUTPUT.relative_to(ROOT)}: {document['outcome']}; cited by "
+          f"{citations.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
