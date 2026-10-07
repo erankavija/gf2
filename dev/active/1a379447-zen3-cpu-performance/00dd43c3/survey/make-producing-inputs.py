@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 """Declare the content closure of the residual-route A/B family."""
 
-import os
 import subprocess
 import sys
 from pathlib import Path
 
-ROOT = subprocess.run(
-    ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True
-).stdout.strip()
-sys.path.insert(0, os.path.join(ROOT, "dev/scripts"))
+SURVEY = Path(__file__).resolve().parent
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
+sys.path.insert(0, str(ROOT / "dev/scripts"))
 import campaign_inputs
 import repository_files
 
-ACTIVE = os.path.relpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ROOT)
+ACTIVE = SURVEY.parent.relative_to(ROOT).as_posix()
 SURVEY = f"{ACTIVE}/survey"
 TOOL = "dev/tools/tuning-campaign-support"
 LAUNCHER = f"{SURVEY}/run-campaign.sh"
@@ -35,7 +38,7 @@ LIFECYCLE = [
 
 
 def main():
-    output = sys.argv[1] if len(sys.argv) > 1 else f"{SURVEY}/producing-inputs.json"
+    output = sys.argv[1] if len(sys.argv) > 1 else f"{ROOT}/{SURVEY}/producing-inputs.json"
     campaign_inputs.write_manifest(
         ROOT,
         output,
@@ -55,7 +58,7 @@ def main():
             f"{SURVEY}/freeze-confirmation.py",
             f"{SURVEY}/make-producing-inputs.py",
             f"{SURVEY}/verify-smoke.py",
-            repository_files.live_file(Path(ROOT), "find-shift-executable.py"),
+            repository_files.live_file(ROOT, "find-shift-executable.py"),
             "dev/scripts/campaign_inputs.py",
             "dev/scripts/verify-campaign-log.py",
             "dev/scripts/check-campaign-producing-closure.py",

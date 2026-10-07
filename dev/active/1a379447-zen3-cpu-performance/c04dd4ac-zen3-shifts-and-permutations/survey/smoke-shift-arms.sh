@@ -5,7 +5,8 @@
 # Contract: `benchmark-ab-runner smoke`, stated at
 # `tuning_campaign_support::arm::smoke`.
 set -euo pipefail
-repo=$(git rev-parse --show-toplevel)
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+repo=$(git -C "$here" rev-parse --show-toplevel)
 [[ "$(pwd -P)" == "$(cd "$repo" && pwd -P)" ]] || {
   echo 'invoke from the worker worktree root' >&2
   exit 2
@@ -19,8 +20,8 @@ case "$mode" in
   *) echo "usage: $0 [--check]" >&2; exit 2 ;;
 esac
 
-active=$(dirname "$(realpath --relative-to="$repo" "$(dirname "${BASH_SOURCE[0]}")")")
-survey="$active/survey"
+survey=$(realpath --relative-to="$repo" "$here")
+active=$(dirname "$survey")
 record="$active/shift-profile-smoke.json"
 smoke=target/85fc5ff4-arm-smoke
 rm -rf "$smoke"

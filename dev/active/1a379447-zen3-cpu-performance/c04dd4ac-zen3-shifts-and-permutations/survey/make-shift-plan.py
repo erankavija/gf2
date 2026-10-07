@@ -65,7 +65,7 @@ def main():
     parser.add_argument("--max-cells-per-session", type=int, default=2)
     args = parser.parse_args()
 
-    with open(args.addendum) as source:
+    with open(ROOT / args.addendum) as source:
         addendum = json.load(source)
     cells = [cell(declared) for declared in addendum["cells"]]
     plan = {

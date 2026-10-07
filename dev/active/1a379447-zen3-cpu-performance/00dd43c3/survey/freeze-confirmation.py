@@ -36,12 +36,12 @@ TRIAL_LEDGER_SOURCE = Path("dev/tools/tuning-campaign-support/src/trial_ledger.r
 
 def committed(path):
     subprocess.run(["git", "ls-files", "--error-unmatch", str(path)],
-                   check=True, stdout=subprocess.DEVNULL)
-    subprocess.run(["git", "diff", "--quiet", "HEAD", "--", str(path)], check=True)
+                   cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(["git", "diff", "--quiet", "HEAD", "--", str(path)], cwd=ROOT, check=True)
 
 
 def tail_requirement():
-    source = RECEIPT_SOURCE.read_text()
+    source = (ROOT / RECEIPT_SOURCE).read_text()
     match = re.search(r"bootstrap_resamples\) \* corrected_alpha / 2\.0 < ([0-9]+)\.0", source)
     if not match:
         raise SystemExit("cannot locate the P-20 tail-support condition in receipt.rs")
@@ -59,12 +59,12 @@ def main():
     for path in (PILOT / "receipt.json", PILOT / "acceptance-summary.json", ADDENDUM,
                  LEDGER, FREEZER, RECEIPT_SOURCE, TRIAL_LEDGER_SOURCE):
         committed(path)
-    receipt = json.loads((PILOT / "receipt.json").read_text())
-    summary = json.loads((PILOT / "acceptance-summary.json").read_text())
-    addendum = json.loads(ADDENDUM.read_text())
+    receipt = json.loads((ROOT / PILOT / "receipt.json").read_text())
+    summary = json.loads((ROOT / PILOT / "acceptance-summary.json").read_text())
+    addendum = json.loads((ROOT / ADDENDUM).read_text())
     if summary["verdict"] != "accepted" or summary["label"] != "pilot":
         raise SystemExit("confirmation needs an accepted committed pilot")
-    entries = [json.loads(line) for line in LEDGER.read_text().splitlines() if line]
+    entries = [json.loads(line) for line in (ROOT / LEDGER).read_text().splitlines() if line]
     if not entries or any(entry["family"] != addendum["family"]["id"] for entry in entries):
         raise SystemExit("the family ledger has no matching pilot reservation")
     if any(entry["comparisons"] > 0 for entry in entries):
@@ -97,7 +97,7 @@ def main():
         + "."
     )
     if not retained:
-        (ACTIVE / "no-confirmatory-budget.txt").write_text(arithmetic + "\n")
+        (ROOT / ACTIVE / "no-confirmatory-budget.txt").write_text(arithmetic + "\n")
         print("no confirmatory cell fits the family ledger; arithmetic recorded")
         return
 
@@ -123,7 +123,7 @@ def main():
         "no cell may record fail or not-confirmatory, and at least one cell in "
         "each direction must record pass; otherwise the gated route is removed."
     ]
-    subprocess.run(command, check=True)
+    subprocess.run(command, cwd=ROOT, check=True)
 
 
 if __name__ == "__main__":
