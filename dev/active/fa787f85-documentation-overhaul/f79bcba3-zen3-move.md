@@ -91,49 +91,42 @@ in that commit is the moved paths.
 
 ## Frozen documents
 
-Five documents of `S` keep their bytes. Each row names where a tracked file
-holds the SHA-256 of the document.
+Each row names where a tracked file holds the SHA-256 of a frozen document
+of `S`.
 
-| Document | Digest at | Relative links that leave the entry and do not resolve |
-|---|---|---|
-| `dense-parity-addendum.md` | `S/survey/dense-harness/src/cells.rs:22`; `dense-campaign` reads the file and refuses a timed run on another digest | 4 |
-| `dense-parity-addendum-v1.md` | `S/survey/dense-baseline-validation.txt:6` | 4 |
-| `logical-buffer-addendum.md` | `dev/bench_results/2037941f/isal-dispatch-availability.md:7` | 2 |
-| `isal-comparator.md` | `dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json:4825` | 0 |
-| `m4ri-operation-match.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9383` | 1 |
+| Document | Digest at |
+|---|---|
+| `dense-parity-addendum.md` | `S/survey/dense-harness/src/cells.rs:22`; `dense-campaign` reads the file and refuses a timed run on another digest |
+| `dense-parity-addendum-v1.md` | `S/survey/dense-baseline-validation.txt:6` |
+| `logical-buffer-addendum.md` | `dev/bench_results/2037941f/isal-dispatch-availability.md:7` |
+| `isal-comparator.md` | `dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json:4825` |
+| `m4ri-operation-match.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9383` |
 
-The 11 links are the rows of the second table of
-`8f61d6de-baseline-findings.md`. Their targets are
-`../1a379447-zen3-cpu-performance/measurement-contract.md` (3),
-`../../bench_results/` (5) and `../../../crates/` (3). The three links to
-`../04b85d10/findings.md`, the seven to `../f547c394/`, the two to
-`../5cbb6545/findings.md` and the one to `../6fb89a3c/survey/fetch-build.sh`
-resolve, because the entries lie under `E`.
+The relative links of these documents that leave the entry and do not
+resolve are the rows of the second table of `8f61d6de-baseline-findings.md`.
 
 ## Flat paths that stay
 
-`R/f79bcba3-remaining.sh <outfile>` classifies each tracked file outside
-`.jit/` and outside the `f79bcba3-` files of `R` that holds
-`dev/active/<entry>` for one of the eight entries, and prints the files and
-matching lines per class; `f79bcba3-remaining.txt` is its output at
-`264a453d2`. The output holds no line of the class `unclassified`. For a file
+`R/f79bcba3-remaining.sh <outfile>` classifies each tracked file in the
+scope its header states that holds `dev/active/<entry>` for one of the eight
+entries; `f79bcba3-remaining.txt` is its output, with the file and line count
+of each class, and holds no line of the class `unclassified`. For a file
 of a class whose ground is tool output,
 `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names the commit.
 
-| Class | Files | Ground |
-|---|---|---|
-| `snapshot` | 688 | receipt `inputs/` snapshots |
-| `receipt-directory` | 372 | receipts, logs and generated tables under `dev/bench_results/` |
-| `data-record` | 77 | JSON, JSON Lines, TSV, text and log files: addenda, producing manifests, derivations, ledgers, smoke and validation records; tool output at the commit the command above names |
-| `epic-record` | 11 | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the command above names |
-| `frozen-document` | 5 | digest pins of the table above |
-| `manifest` | 1 | `path`, `consumers` and `inbound` fields of the migration manifest |
-| `bench-window` | 1 | `E/bench-window/queue.tsv`; the job key hashes the command text |
-| `tracker-state` | 1 | `R/progress.json`, execution state of the epic |
-| `session-record` | 1 | `E/reviews/53b74fc2-r1.md:6`: a dated review record that quotes the flat directory `dev/active/1d4fd63d`, present nowhere in the tree |
-| `generated-table` | 1 | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
-| `fixture-layout` | 1 | `E/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
-| `snapshot-path` | 1 | `E/04b85d10/survey/summarize-receipts.py:34`, a path inside a receipt snapshot |
+| Class | Ground |
+|---|---|
+| `snapshot` | receipt `inputs/` snapshots |
+| `receipt-directory` | receipts, logs and generated tables under `dev/bench_results/` |
+| `data-record` | JSON, JSON Lines, TSV, text and log files: addenda, producing manifests, derivations, ledgers, smoke and validation records; tool output at the commit the command above names |
+| `epic-record` | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the command above names |
+| `frozen-document` | link labels and command text of the documents of the table above |
+| `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
+| `bench-window` | `E/bench-window/queue.tsv`; the job key hashes the command text |
+| `session-record` | `E/reviews/53b74fc2-r1.md:6`: a dated review record that quotes the flat directory `dev/active/1d4fd63d`, present nowhere in the tree |
+| `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
+| `fixture-layout` | `E/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
+| `snapshot-path` | `E/04b85d10/survey/summarize-receipts.py:34`, a path inside a receipt snapshot |
 
 Tracker files under `.jit/` are outside the scan: they are tracker state.
 
