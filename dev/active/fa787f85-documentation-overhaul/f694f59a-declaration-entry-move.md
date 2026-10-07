@@ -37,11 +37,11 @@ path `dev/active/a83583e0`.
 | `dev/archive/**` | marker-backed archive |
 | `E/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/execution.log` | failed-attempt log |
 | `616e1d7c-preexec.json` | digest pin: content hash in `.jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json` |
-| `616e1d7c-verify.txt` | output of `616e1d7c-verify.py` |
-| `67048b47-linked-pairs.txt`, `96cea1b9-archive-rows.txt`, `fa4939c3-comment-read.txt` | tool output at `d5b3d8b4b`, `bedcd932f`, `d70c2e883` |
+| `616e1d7c-verify.txt`, `67048b47-linked-pairs.txt`, `96cea1b9-archive-rows.txt`, `fa4939c3-comment-read.txt` | tool output at `fc571c890`, `d5b3d8b4b`, `bedcd932f`, `d70c2e883` |
 | `616e1d7c-regroup.md:44,61` | quotes the `excluded` section of `616e1d7c-verify.txt` and the commit-pinned references of a83583e0 |
 | `investigation.md:119` | investigation of the tree at `fca6df53d`, the commit its header names |
 | `migration/manifest.toml` | `path`, `bundle`, `consumers` and `inbound` fields name the source by schema |
 | `breakdown.json`, `progress.json` | tracker state: an issue description, a touched-path list and escalation questions |
 | `../6dc81018-field-capability-dispatch/handoff-12.md:41` | tracker state: the reference of a83583e0 to its producing manifest is pinned at `ecd8531` |
-| `findings.md`, `research-r3-sweep-resolutions.md`, `research-r3-sweeps.json`, `rework-validation.md` under `../1a379447-zen3-cpu-performance/f547c394/`; `handoff.md` and `reviews/f547c394-r2.md` of that epic directory | no ground: another session edits that epic directory |
+| `findings.md`, `research-r3-sweep-resolutions.md`, `research-r3-sweeps.json`, `rework-validation.md` under `../1a379447-zen3-cpu-performance/f547c394/` | line-qualified tables and data of the tree at the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
+| `handoff.md` and `reviews/f547c394-r2.md` of `../1a379447-zen3-cpu-performance/` | session records of a running session; 5406d020 (`jit issue show 5406d020`) tracks their repointing |
