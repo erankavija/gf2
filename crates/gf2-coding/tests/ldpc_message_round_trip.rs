@@ -1,10 +1,11 @@
 //! `decode_iterative` on the noiseless LLRs of an encoded message returns that
-//! message, for every LDPC code family the crate constructs.
+//! message, for every LDPC code family the crate constructs, and the generator
+//! matrix of a code is the encoder's.
 
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc};
 use gf2_coding::llr::Llr;
-use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
+use gf2_coding::traits::{BlockEncoder, GeneratorMatrixAccess, IterativeSoftDecoder};
 use gf2_coding::CodeRate;
 use gf2_core::alg::rref::rref;
 use gf2_core::BitVec;
@@ -185,5 +186,31 @@ fn nr_5g_rate_matched_codes_decode_the_encoded_message() {
             &mut decoder,
             4,
         );
+    }
+}
+
+#[test]
+fn generator_matrix_rows_are_the_encoded_unit_messages() {
+    let codes = [
+        ("qc (96, 48)", quasi_cyclic_96_48()),
+        ("regular (3, 6)", regular_3_6(24)),
+        ("random column weight 3", random_column_weight_3(20, 48)),
+        (
+            "nr bg2 z = 2",
+            LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(2, 2)),
+        ),
+    ];
+    for (label, code) in codes {
+        let generator = code.generator_matrix();
+        let encoder = LdpcEncoder::new(code);
+        for i in 0..encoder.k() {
+            let mut unit = BitVec::zeros(encoder.k());
+            unit.set(i, true);
+            assert_eq!(
+                generator.row_as_bitvec(i),
+                encoder.encode(&unit),
+                "{label}, row {i}"
+            );
+        }
     }
 }

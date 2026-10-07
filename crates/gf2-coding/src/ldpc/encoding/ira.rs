@@ -16,7 +16,7 @@ use gf2_core::BitVec;
 /// ```
 ///
 /// [`IraEncoder::new`] checks only `m + k == n`; the dual-diagonal parity part
-/// is the caller's precondition.
+/// ([`has_dual_diagonal_parity`]) is the caller's precondition.
 #[derive(Debug, Clone)]
 pub struct IraEncoder {
     /// Codeword length n.
@@ -28,6 +28,31 @@ pub struct IraEncoder {
     /// `check_info_vars[p]`: the information columns (`< k`) of check row `p`,
     /// whose XOR over `info` is `s[p]`.
     check_info_vars: Vec<Vec<usize>>,
+}
+
+/// Whether the parity part of `h`, its columns from `k` on, is dual-diagonal:
+/// row 0 holds exactly column `k` there and row `p > 0` exactly columns
+/// `k+p-1` and `k+p`. O(nnz).
+pub(crate) fn has_dual_diagonal_parity(h: &SpBitMatrixDual, k: usize) -> bool {
+    let m = h.rows();
+    if m == 0 {
+        return false;
+    }
+
+    let row0_parity: Vec<usize> = h.row_iter(0).filter(|&c| c >= k).collect();
+    if row0_parity != [k] {
+        return false;
+    }
+
+    for p in 1..m {
+        let mut parity_cols: Vec<usize> = h.row_iter(p).filter(|&c| c >= k).collect();
+        parity_cols.sort_unstable();
+        if parity_cols != [k + p - 1, k + p] {
+            return false;
+        }
+    }
+
+    true
 }
 
 impl IraEncoder {
