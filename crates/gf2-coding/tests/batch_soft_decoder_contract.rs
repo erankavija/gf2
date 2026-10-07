@@ -255,3 +255,49 @@ fn gldpc_default_path_is_the_hard_decision_and_the_adapter_iterates() {
         code.systematic_positions(),
     );
 }
+
+/// Asserts that the per-frame path reports no iteration and the parity test
+/// of the hard decisions of every frame, over a set holding frames on both
+/// sides of the test.
+fn assert_default_outcome_is_the_parity_test<D: SoftDecoder>(
+    encoder: &impl BlockEncoder,
+    decoder: impl Fn() -> D,
+    is_codeword: impl Fn(&BitVec) -> bool,
+    n: usize,
+) {
+    let positions: Vec<usize> = (0..n).collect();
+    let mut frames = frame_set(encoder);
+    frames.push(noiseless_frame(&random_codewords(encoder, 1)[0]));
+    let mut verdicts = Vec::new();
+    for frame in &frames {
+        let expected = is_codeword(&hard_decisions(frame, &positions));
+        let (_, outcome) = decode_one(&mut decoder(), frame);
+        assert_eq!(outcome.iterations, 0);
+        assert_eq!(outcome.converged, expected);
+        assert_eq!(outcome.syndrome_check_passed, expected);
+        verdicts.push(expected);
+    }
+    assert!(verdicts.contains(&true) && verdicts.contains(&false));
+}
+
+#[test]
+fn ldpc_default_path_outcome_is_the_parity_test_of_the_hard_decision() {
+    let code = ldpc_code();
+    assert_default_outcome_is_the_parity_test(
+        &LdpcEncoder::new(code.clone()),
+        || LdpcDecoder::new(code.clone()),
+        |word| code.is_valid_codeword(word),
+        code.n(),
+    );
+}
+
+#[test]
+fn gldpc_default_path_outcome_is_the_parity_test_of_the_hard_decision() {
+    let code = gldpc_code();
+    assert_default_outcome_is_the_parity_test(
+        &code,
+        || GldpcDecoder::new(gldpc_code()),
+        |word| code.is_valid_codeword(word),
+        code.n(),
+    );
+}

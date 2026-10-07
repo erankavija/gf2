@@ -9,10 +9,13 @@
 //! and cannot serve as a pilot.
 
 use crate::cells::{
-    Cache, MatvecShape, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, MATVEC_ROWS,
+    Cache, MatvecShape, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, LANE_CONTROL_WORDS,
+    LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS,
 };
 use crate::fixture::MatvecBanks;
-use crate::routes::{fused_and_popcnt, fused_bundle, public_matvec, verify_lane, verify_shape, Route};
+use crate::routes::{
+    fused_and_popcnt, fused_bundle, public_matvec, route_matvec, verify_lane, verify_shape, Route,
+};
 use gf2_core::{BitMatrix, BitVec};
 
 /// Rows of the oracle's word-count matrices; 65 exercises a partial output word.
@@ -156,12 +159,19 @@ fn shape_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
     Ok(())
 }
 
-/// Checks the frozen allocated geometry and the lane it resolves.
+/// Checks the frozen allocated geometry and the lane it resolves, for the
+/// dense-parity anchors and for every lane-threshold stride.
 fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
     let route = if cfg!(feature = "simd") { Route::MatvecA } else { Route::MatvecScalarReference };
-    for words in ANCHOR_WORDS {
+    let anchors = ANCHOR_WORDS.map(|words| ("anchor", words));
+    let lanes = LANE_WORDS
+        .into_iter()
+        .chain([LANE_CONTROL_WORDS])
+        .chain(LANE_NEIGHBOR_WORDS)
+        .map(|words| ("lane", words));
+    for (group, words) in anchors.into_iter().chain(lanes) {
         let columns = MatvecShape::Full.columns(words);
-        let name = format!("matvec-anchor-{words}w");
+        let name = format!("matvec-{group}-{words}w");
         let banks = MatvecBanks::allocated(words, MatvecShape::Full, Cache::Warm, CAMPAIGN_SEED);
         let item = banks.item(0, 0);
         let facts = verify_shape(&item.matrix, &item.vector, MATVEC_ROWS, columns)
@@ -176,7 +186,15 @@ fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
                 return Err(fail(&name, format!("row {row} differs from the parity oracle")));
             }
         }
-        report.push(OracleCase { name, checks: MATVEC_ROWS + 3 });
+        let mut checks = MATVEC_ROWS + 3;
+        if group == "lane" {
+            // The pinned scalar lane returns the bits the selected lane returns.
+            if route_matvec(Route::MatvecLaneScalar, &item.matrix, &item.vector) != output {
+                return Err(fail(&name, "the pinned scalar lane differs from the public call"));
+            }
+            checks += 1;
+        }
+        report.push(OracleCase { name, checks });
     }
     Ok(())
 }

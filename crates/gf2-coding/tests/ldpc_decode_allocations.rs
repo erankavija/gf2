@@ -5,9 +5,13 @@
 //! buffer allocate; later decodes through the same decoder and prepared buffer
 //! allocate nothing.
 
-use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
+use gf2_coding::ldpc::{
+    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDecoder, LdpcCode,
+    LdpcDecoder, QuasiCyclicLdpc,
+};
 use gf2_coding::llr::Llr;
-use gf2_coding::traits::IterativeSoftDecoder;
+use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome, IterativeSoftDecoder};
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
@@ -246,6 +250,74 @@ fn decoding_after_reset_allocates_nothing() {
     });
     report("steady-state-after-reset", "nr-bg2-z8, MinSum", counts);
     assert!(counts.is_zero(), "decode after reset requested {counts:?}");
+}
+
+/// A batch of one full wave and a final wave of one frame, decoded into words
+/// and a posterior buffer that an earlier decode has sized, on the lane route
+/// and on the single-frame route.
+#[test]
+fn steady_state_batch_decoding_allocates_nothing() {
+    const FRAMES: usize = 9;
+    let routes = [
+        DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
+        DecodeSelectors::CONSERVATIVE,
+    ];
+    for (label, code) in codes() {
+        let frames: Vec<Vec<Llr>> = (0..FRAMES as u64)
+            .map(|frame| channel_llrs(code.n(), 41 + frame))
+            .collect();
+        let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+        let mut outcomes = vec![DecodeOutcome::default(); FRAMES];
+        let mut posteriors = vec![Llr::zero(); FRAMES * code.n()];
+
+        for algorithm in ALGORITHMS {
+            for word in [DecodedWord::Codeword, DecodedWord::Message] {
+                for selectors in &routes {
+                    let config = DecoderConfig::new(algorithm, true);
+                    let mut decoder = LdpcBatchDecoder::with_selectors(
+                        code.clone(),
+                        config,
+                        2,
+                        word,
+                        selectors.clone(),
+                    );
+                    let route = decoder.batch_route(FRAMES);
+                    let lane_family = algorithm != DecoderAlgorithm::SumProduct;
+                    assert_eq!(
+                        route == BatchRoute::Lane,
+                        lane_family && selectors != &DecodeSelectors::CONSERVATIVE
+                    );
+                    let mut decoded = vec![BitVec::new(); FRAMES];
+
+                    // Prepare the outputs: one decode grows each word.
+                    decoder.decode_batch(&views, &mut decoded, &mut outcomes);
+
+                    let context = format!("{label}, {algorithm:?}, {word:?}, {route:?}");
+                    let (_, counts) =
+                        count(|| decoder.decode_batch(&views, &mut decoded, &mut outcomes));
+                    report("batch-steady-state", &context, counts);
+                    assert!(
+                        counts.is_zero(),
+                        "batch decode of {context} requested {counts:?}"
+                    );
+
+                    let (_, counts) = count(|| {
+                        decoder.decode_batch_with_posteriors(
+                            &views,
+                            &mut decoded,
+                            &mut outcomes,
+                            &mut posteriors,
+                        );
+                    });
+                    report("batch-steady-state-posteriors", &context, counts);
+                    assert!(
+                        counts.is_zero(),
+                        "batch decode with posteriors of {context} requested {counts:?}"
+                    );
+                }
+            }
+        }
+    }
 }
 
 /// The owning entry points allocate the vectors they return, which is why the

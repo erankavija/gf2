@@ -1,0 +1,117 @@
+{
+  "schema": "matvec-lane-threshold-outcome-v1",
+  "issue": "4337c02e",
+  "family": "4337c02e-matvec-simd-threshold",
+  "selector": "bit_matrix.matvec_simd_min_words",
+  "outcome": "no-change",
+  "threshold_words": null,
+  "decided_by": "validity: the acceptance summary's verdict is not accepted",
+  "confirmation": {
+    "campaign": "v4-r1-confirmation-4337c02e-matvec-simd-threshold",
+    "summary": "dev/bench_results/4337c02e/4337c02e-matvec-simd-threshold/v4-r1-confirmation/acceptance-summary.json",
+    "summary_sha256": "86ec5c5934ca6c92461270f04f5b6e747b56020205eef88a3ce3e08ce6c8dd80",
+    "receipt_sha256": "d9c3919d493f8433f88227b9778e1279615a355fcefbb0bee41789c0f1a8cce9",
+    "addendum": "dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold-confirmation.json",
+    "addendum_sha256": "d2f89e51918e4ffbddbee662b1dac4b04f0df0971cf0a132aff1ca56049677f5",
+    "verdict": "rejected",
+    "qualifies": false,
+    "findings": [
+      {
+        "rule": "P-03",
+        "severity": "error",
+        "cell": null,
+        "message": "declared measurement resolution is below the verified pilot half-width 0.22779674714617634"
+      }
+    ],
+    "equivalence_margin": 1.05,
+    "worthwhile_speedup": 1.08
+  },
+  "cells_confirmatory": false,
+  "cells": [
+    {
+      "cell_id": "lane-r1024-8w-warm",
+      "stride": 8,
+      "objective": "improvement",
+      "pairs": 24,
+      "estimate": 1.068150165840313,
+      "lower": 1.0635432994190315,
+      "upper": 1.0738770496109435,
+      "confidence": 0.9958333333333333,
+      "decision": "not-worse",
+      "outcome": "not-material"
+    },
+    {
+      "cell_id": "lane-r1024-9w-warm",
+      "stride": 9,
+      "objective": "improvement",
+      "pairs": 24,
+      "estimate": 1.3448746155564137,
+      "lower": 1.3390605869779348,
+      "upper": 1.3471887224216215,
+      "confidence": 0.9958333333333333,
+      "decision": "improved",
+      "outcome": "pass"
+    },
+    {
+      "cell_id": "lane-r1024-32w-warm",
+      "stride": 32,
+      "objective": "improvement",
+      "pairs": 24,
+      "estimate": 0.8041803494504811,
+      "lower": 0.7999776907461008,
+      "upper": 0.8079270346678376,
+      "confidence": 0.9958333333333333,
+      "decision": "regressed",
+      "outcome": "fail"
+    },
+    {
+      "cell_id": "lane-r1024-63w-warm",
+      "stride": 63,
+      "objective": "improvement",
+      "pairs": 24,
+      "estimate": 1.1621966453599222,
+      "lower": 1.0948113831164519,
+      "upper": 1.194396769467189,
+      "confidence": 0.9958333333333333,
+      "decision": "improved",
+      "outcome": "pass"
+    },
+    {
+      "cell_id": "lane-r1024-64w-warm",
+      "stride": 64,
+      "objective": "improvement",
+      "pairs": 24,
+      "estimate": 1.0016530255206957,
+      "lower": 0.982472726783464,
+      "upper": 1.039941407741095,
+      "confidence": 0.9958333333333333,
+      "decision": "not-worse",
+      "outcome": "not-material"
+    },
+    {
+      "cell_id": "lane-r1024-65w-warm",
+      "stride": 65,
+      "objective": "improvement",
+      "pairs": 24,
+      "estimate": 1.0677867022868017,
+      "lower": 1.050443839204566,
+      "upper": 1.1067924749693538,
+      "confidence": 0.9958333333333333,
+      "decision": "not-worse",
+      "outcome": "not-material"
+    }
+  ],
+  "further_confirmation": {
+    "ledger": "dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl",
+    "ledger_entries": 2,
+    "spending_reservations": 1,
+    "attempt": 2,
+    "attempt_alpha": 0.008333333333333333,
+    "reserved_comparisons": 6,
+    "bootstrap_resamples": 10000,
+    "required_draws_per_tail": 20,
+    "one_cell_corrected_alpha": 0.0011904761904761904,
+    "one_cell_draws_per_tail": 5.952380952380952,
+    "admissible_cells": 0
+  }
+}

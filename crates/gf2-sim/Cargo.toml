@@ -60,7 +60,6 @@ tempfile = "3"
 gf2-sim = { path = ".", features = ["test-support"] }
 
 [features]
-default = []
 hip = ["dep:gf2-kernels-hip", "gf2-coding/hip", "gf2-algebra/hip"]
 
 # Exposes the canonical test/bench-only deterministic AWGN channel-LLR source

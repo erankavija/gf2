@@ -543,9 +543,8 @@ ctrlc            = "3"        # for SIGINT handler in 5f12e7ff
 blake3           = "1"        # for v2 checkpoint config_hash
 
 [features]
-default = []
-hip     = ["dep:gf2-kernels-hip"]
-llr-f64 = []
+hip          = ["dep:gf2-kernels-hip", "gf2-coding/hip", "gf2-algebra/hip"]
+test-support = []
 ```
 
 Workspace member pattern (matches the existing `gf2-coding ↔
@@ -795,7 +794,7 @@ stay internal.
 
 | Quantity | Default | Configurable |
 |---|---|---|
-| LLR storage | f32 | `--features llr-f64` (cfg-gated `type Llr = f64`) |
+| LLR storage | f32 | not configurable |
 | AWGN noise samples | f32 | not configurable |
 | BP messages | f32 | not configurable in v1 |
 | BER reductions | f32, non-associative | excluded from byte-identity (status quo) |
@@ -812,12 +811,7 @@ pub trait Numeric: Copy + Send + Sync + 'static {
 }
 
 impl Numeric for f32 { /* v1 impl */ }
-// f64 impl behind `feature = "llr-f64"` or future work.
 ```
-
-Mixed precision (f32 storage + f64 accumulation for BP check nodes)
-is deferred. Adding `Numeric for f64` + a feature flag is a single
-trait impl.
 
 ---
 
