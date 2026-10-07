@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# usage: cc060974-baseline.sh <outfile> [<commit>]
+# usage: cc060974-baseline.sh <outfile> [<commit> [<directory>]]
 # Runs the script tests and each Python generator of the entries 00dd43c3 and
 # c04dd4ac that needs no build, in a scratch clone of <commit> (default HEAD) under target/, from
-# the clone's root. Entry directories are located by file name. The table
+# the clone's root or, with each script and input path made absolute, from
+# <directory>. Entry directories are located by file name. The table
 # projection runs before the generators that rewrite its inputs.
 #   stdout line       the command's standard output and error, scratch prefix
 #                     removed, test durations removed.
-#   out <name>        a file the command writes outside the tree: SHA-256 of
+#   out <name>        a file the command writes outside the tree, scratch
+#                     prefix removed: SHA-256 of
 #                     its bytes (raw) and of its lines, sorted, without trailing
 #                     commas, each entry path under the epic directory
 #                     rewritten to dev/active/<entry> (flat).
@@ -22,6 +24,7 @@ s=$top/target/cc060974-scratch
 rm -rf "$s"; git clone -q --shared --no-checkout "$top" "$s"; cd "$s" || exit 1
 git reset -q --hard "${2:-HEAD}"
 t=$s/.git/cc060974; mkdir -p "$t"
+w=${3:-$s}; a=${3:+$s/}
 Z=$(dirname "$(git ls-files -- ':(glob)dev/active/**/test_pilot_freeze.py')")
 C=$(dirname "$(git ls-files -- ':(glob)dev/active/**/test-profile-intervals.py')")
 ZA=$(dirname "$Z"); CA=$(dirname "$C")
@@ -30,15 +33,15 @@ flat() { sed -E 's#dev/active/1a379447-zen3-cpu-performance/(00dd43c3|c04dd4ac-z
 sums() { echo "raw=$(sha256sum "$1" | cut -d' ' -f1) flat=$(flat "$1")"; }
 run() { # run <script> [args]: output and exit status
   echo "## ${*//$t\//}"
-  python3 -B "$@" 2>&1 | sed -E "s#$s/##g; s#$t/##g; s/ in [0-9.]+s\$//"
+  (cd "$w" && python3 -B "${@/#dev\//${a}dev/}" 2>&1) | sed -E "s#$s/##g; s#$t/##g; s/ in [0-9.]+s\$//"
   echo "exit=${PIPESTATUS[0]}"
 }
-written() { echo "out $(basename "$1") $(sums "$1")"; }
+written() { sed -i "s#$s/##g" "$1"; echo "out $(basename "$1") $(sums "$1")"; }
 against() { # against <committed> <script> [args]: stdout compared with a file
   local committed=$1 n; shift
   echo "## $* > $committed"
-  python3 -B "$@" > "$t/stdout" 2> "$t/stderr"
-  echo "exit=$? $(tail -n 1 "$t/stderr")"
+  (cd "$w" && python3 -B "${@/#dev\//${a}dev/}") 2> "$t/stderr" | sed "s#$s/##g" > "$t/stdout"
+  echo "exit=${PIPESTATUS[0]} $(tail -n 1 "$t/stderr")"
   n=$(diff "$t/stdout" "$committed" | grep -c '^[<>]')
   echo "against $committed $([ "$n" = 0 ] && echo same || echo "diff-lines=$n") $(sums "$t/stdout")"
 }

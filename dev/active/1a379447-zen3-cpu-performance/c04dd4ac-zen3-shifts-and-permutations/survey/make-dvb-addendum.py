@@ -160,7 +160,7 @@ def main():
         "holdout": {"required": False, "cells": []},
         "cells": cells,
     }
-    output.write_text(json.dumps(document, indent=2) + "\n")
+    (ROOT / output).write_text(json.dumps(document, indent=2) + "\n")
     print(f"{output}: {len(cells)} exploratory cells")
 
 

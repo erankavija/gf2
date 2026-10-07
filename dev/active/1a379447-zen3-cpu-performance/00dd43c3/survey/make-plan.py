@@ -42,7 +42,7 @@ def main():
     parser.add_argument("--campaign-seed", type=int, default=2026092600)
     args = parser.parse_args()
 
-    with open(args.addendum) as source:
+    with open(ROOT / args.addendum) as source:
         addendum = json.load(source)
     cells = []
     for declared in addendum["cells"]:

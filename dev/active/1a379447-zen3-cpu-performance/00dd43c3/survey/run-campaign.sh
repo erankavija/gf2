@@ -2,8 +2,9 @@
 # Prepare or resume the protocol-v4 residual-route A/B campaign.
 set -euo pipefail
 
-repo=$(git rev-parse --show-toplevel)
-survey=$(realpath --relative-to="$repo" "$(dirname "${BASH_SOURCE[0]}")")
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+repo=$(git -C "$here" rev-parse --show-toplevel)
+survey=$(realpath --relative-to="$repo" "$here")
 cd "$repo"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1

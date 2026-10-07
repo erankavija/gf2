@@ -16,16 +16,17 @@
 | Commit | Content |
 |---|---|
 | `ef15dadc9`, `88227cc19` | baseline script and output |
-| `b47e9ebfa` | 23 scripts resolve the root and their entry at run time; its message lists each edit per entry |
+| `b47e9ebfa` | entry scripts resolve path literals and depth counts at run time; its message lists each edit per entry |
 | `b911fe67c` | `git mv`, link targets, three generated files, manifest rows |
 | `37391ec5c` | path text in eight Markdown files |
 | the commit that adds this record | the baseline script with its commit argument and order-free digest, its two outputs, the listing of flat paths, the verdict repeat |
+| `5ef8fba75`, `277806d89` | entry scripts take the root from git run in their own directory and join default paths to it; each message lists the scripts |
 
 ## Baseline and repeat (REQ-02)
 
 Command, run from the repository root:
-`R/cc060974-baseline.sh <outfile> [<commit>]`. Its header states each line
-form. It runs in a scratch clone of the commit: the two script tests,
+`R/cc060974-baseline.sh <outfile> [<commit> [<directory>]]`. Its header states
+each line form. It runs in a scratch clone of the commit: the two script tests,
 `make-shift-producing-inputs.py --check`, and the generators of the table
 "Generators".
 
@@ -34,6 +35,7 @@ form. It runs in a scratch clone of the commit: the two script tests,
 | `88227cc19`, the parent of the decoupling | `cc060974-baseline-before.txt` |
 | `b47e9ebfa`, after the decoupling | `diff` against `cc060974-baseline-before.txt` prints nothing |
 | `37391ec5c`, after the move | `cc060974-baseline-after.txt` |
+| `277806d89`, from the root and with `/tmp` as `<directory>` | `diff` of each against the output at its parent `fd6b3bf71` prints nothing |
 
 This command prints the three differences of the table below and nothing
 else:
@@ -65,32 +67,36 @@ diff <(sed "$F" R/cc060974-baseline-before.txt) <(sed "$F" R/cc060974-baseline-a
 | `C/survey/make-shift-source-evidence.py` | yes; exits 1 at each commit (V1) | |
 | `C/survey/find-shift-executable.py` | no | reads the message stream of a `cargo build` |
 | `C/survey/summarize-arm-smoke.py`, `Z/survey/verify-smoke.py` | no | read the smoke record and plan of a built arm |
-| each `.sh` of `Z/survey` and `C/survey` | no | builds, or runs in a benchmark window; `bash -n` passes for each at `b47e9ebfa` |
+| each `.sh` of `Z/survey` and `C/survey` | no | builds, or runs in a benchmark window; `bash -n` passes for each at `277806d89` |
 
 ## Scripts (REQ-01)
 
-Root: `git rev-parse --show-toplevel`. Entry directory: the script location.
-The message of `b47e9ebfa` names the lookup of each file of another entry:
-`repository_files.live_file` by name, `repository_files.document` by opening
-line, in shell `dev/scripts/repository_files.py file <name>`.
+`R/cc060974-scripts.sh <outfile>` lists each line of an entry script that
+names the script location, the root, a directory step, the working directory,
+a `repository_files` lookup or an active path, with the scripts that hold it;
+`cc060974-scripts.txt` is its output at `277806d89`.
 
-This command lists each line of an entry script that names `dev/active`,
-counts levels or holds `../`:
-
-```
-git grep -nE 'dev/active|parents\[|\.\./|pardir' -- 'Z/survey/*.py' 'Z/survey/*.sh' 'C/survey/*.py' 'C/survey/*.sh'
-```
-
-At `78d74ddb3` it prints the lines of this table and no line of `Z`.
-
-| Lines of `C/survey` | Record text | Path, with its pin where flat |
+| Aspect | Lines of the listing | Form |
 |---|---|---|
-| `freeze-shift-addendum.py:19` | `family_wise.ledger_path`, `C/shift-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/shift-profile-trial-ledger.jsonl:1`, `C/shift-profile-smoke.json:8` and `dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json:3865` -> @/issue/dfff0e05 |
-| `make-dvb-addendum.py:28` | `family_wise.ledger_path`, `C/dvb-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/dvb-profile-trial-ledger.jsonl:1`, `C/survey/runner-smoke.txt:5` and `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json:3865` -> @/issue/dfff0e05 |
-| `make-profile-provenance.py:39-47,218` | paths in the `v4-r2` and `v4-r3` provenance records of `dev/bench_results/c04dd4ac/dvb-interleave-profile/` | path at the revision the `host.txt` of the profile session records, read with `git show <revision>:<path>`: flat except the queue of line 44 |
-| `make-voided-attempt.py:30,102,103`, `make-voided-attempt-record.py:18,43,49,50` | `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json`, `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json` | under `E`; records written in `78d74ddb3` |
-| `summarize-shift-receipt.py:32` | `dev/bench_results/c04dd4ac/residual-shift-tables.md` | as above |
-| `summarize-profile.py:49` | a relative link in the text of `profile-summary.md`; it locates no file | |
+| Root | `show-toplevel` | git runs with `-C` on the script directory, taken from `__file__` or `BASH_SOURCE` |
+| Entry directory | `SURVEY.parent`, `os.path.dirname(HERE)`, `dirname "$survey"`, `dirname "${SURVEY}"` | the parent of the script directory |
+| Directory levels | `dirname`, `.parent`, `../` | one level per `dirname` or `.parent`, each on a named path; no `parents[`, no `pardir`; the `../` is link text of `profile-summary.md` |
+| File of another entry | `repository_files` | `live_file` and `file` by name, `document` by opening line |
+| Default paths, `.py` | `cwd=ROOT` | joined to the root: section "Baseline and repeat", row of `277806d89` |
+| Default paths, `.sh` | `cd`, `pwd -P` | the script changes to the root, or exits unless the working directory is the root |
+
+A script without a `show-toplevel` line opens what its arguments name, a
+temporary directory, a sibling through `with_name` or, in `capture-asm.sh`,
+its own directory. Each `dev/active` line of the listing belongs to a row of
+the table below; no script of `Z` holds one.
+
+| Script of `C/survey` | Record text | Path, with its pin where flat |
+|---|---|---|
+| `freeze-shift-addendum.py`, `LEDGER` | `family_wise.ledger_path`, `C/shift-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/shift-profile-trial-ledger.jsonl:1`, `C/shift-profile-smoke.json:8` and `dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json:3865` -> @/issue/dfff0e05 |
+| `make-dvb-addendum.py`, `LEDGER` | `family_wise.ledger_path`, `C/dvb-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/dvb-profile-trial-ledger.jsonl:1`, `C/survey/runner-smoke.txt:5` and `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json:3865` -> @/issue/dfff0e05 |
+| `make-profile-provenance.py` | paths in the `v4-r2` and `v4-r3` provenance records of `dev/bench_results/c04dd4ac/dvb-interleave-profile/` | path at the revision the `host.txt` of the profile session records, read with `git show <revision>:<path>`: flat except `QUEUE` |
+| `make-voided-attempt.py`, `make-voided-attempt-record.py` | `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json`, `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json` | under `E`; records written in `78d74ddb3` |
+| `summarize-shift-receipt.py`, `ACTIVE` | `dev/bench_results/c04dd4ac/residual-shift-tables.md` | as above |
 
 ## Move (REQ-03, REQ-04, REQ-06)
 
@@ -174,7 +180,7 @@ nothing for the two entries: the flat directories hold no ignored file.
 
 | Criterion | Evidence | Does not establish |
 |---|---|---|
-| REQ-01 | section "Scripts"; messages of `b47e9ebfa` and `78d74ddb3` | |
+| REQ-01 | section "Scripts" | a run of a `.sh` script, or of the lines after the exit of the two generators that exit 1; a script without a `show-toplevel` line resolves no root |
 | REQ-02 | section "Baseline and repeat" | the launchers and the smoke comparisons |
 | REQ-03 | section "Move"; table "Entries" | |
 | REQ-04 | row 1 of the generated files; closure check | the closure-freshness of other families, which the same check covers |

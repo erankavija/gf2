@@ -21,11 +21,11 @@ OUTPUT = SURVEY.parent.relative_to(ROOT) / "shift-profile-consumer-audit.json"
 
 
 def report():
-    sources = sorted(Path("crates").glob("*/src/**/*.rs"))
+    sources = sorted(path.relative_to(ROOT) for path in (ROOT / "crates").glob("*/src/**/*.rs"))
     digest = hashlib.sha256()
     downstream = []
     for path in sources:
-        data = path.read_bytes()
+        data = (ROOT / path).read_bytes()
         digest.update(str(path).encode())
         digest.update(b"\0")
         digest.update(data)
@@ -62,7 +62,7 @@ def main():
     args = parser.parse_args()
     expected = encoded()
     if args.check:
-        observed = OUTPUT.read_text()
+        observed = (ROOT / OUTPUT).read_text()
         if observed != expected:
             raise SystemExit(f"{OUTPUT} differs from the current production-source sweep")
         value = json.loads(observed)
@@ -73,7 +73,7 @@ def main():
             f"{value['downstream_production_call_count']} downstream calls"
         )
     else:
-        OUTPUT.write_text(expected)
+        (ROOT / OUTPUT).write_text(expected)
         value = report()
         print(
             f"{OUTPUT}: {value['files_scanned']} files, "
