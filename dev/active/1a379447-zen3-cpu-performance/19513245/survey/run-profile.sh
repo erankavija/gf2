@@ -21,7 +21,7 @@
 # refuses to resume when the executable a session runs differs from the first
 # session's record.
 #
-# Usage: dev/active/1a379447-zen3-cpu-performance/19513245/survey/run-profile.sh <output-dir>
+# Usage: run-profile.sh <output-dir>
 #
 # Everything written is produced by this run.
 set -euo pipefail
@@ -118,7 +118,7 @@ else
     done
     echo
     echo "## harness sources"
-    (cd "${REPO}" && find "dev/active/1a379447-zen3-cpu-performance/${ISSUE}/survey" -type f \
+    (cd "${REPO}" && find "$(realpath --relative-to="${REPO}" "${HERE}")" -type f \
         \( -name '*.rs' -o -name '*.toml' -o -name '*.lock' -o -name '*.py' -o -name '*.sh' -o -name '*.txt' -o -name '*.json' \) \
         | sort | xargs sha256sum)
     echo

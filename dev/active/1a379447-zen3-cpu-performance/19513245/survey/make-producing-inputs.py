@@ -2,7 +2,7 @@
 """Write the producing-input manifest of this assessment's campaigns (jit:19513245).
 
 Usage: make-producing-inputs.py [output]
-       (default dev/active/1a379447-zen3-cpu-performance/19513245/survey/producing-inputs.json)
+       (default producing-inputs.json beside this script)
 
 The manifest selects every repository file whose bytes can change what a
 campaign measures or how it runs: the gf2 production crates the arm compiles,
@@ -19,14 +19,21 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 
-ISSUE = "dev/active/1a379447-zen3-cpu-performance/19513245"
-SURVEY = f"{ISSUE}/survey"
-REUSED = "dev/active/1a379447-zen3-cpu-performance/6c6b09b1/survey"
+HERE = Path(__file__).resolve().parent
+ROOT = Path(subprocess.run(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
+                           check=True, capture_output=True, text=True).stdout.strip())
+sys.path.insert(0, str(ROOT / "dev/scripts"))
+import repository_files  # noqa: E402
+
+SURVEY = HERE.relative_to(ROOT).as_posix()
+ARM_COMMON = repository_files.package_directory(ROOT, "byte-field-arm-common")
+GF2_SIDE = repository_files.package_directory(ROOT, "byte-field-gf2-side")
 TOOL = "dev/tools/tuning-campaign-support"
 LOCK_WRAPPER = "dev/scripts/ccx1-bench-flock.sh"
 LAUNCHER = "dev/bench_results/19513245/run-consumer-bytefield.sh"
-EVIDENCE = f"{ISSUE}/conformance"
+EVIDENCE = f"{HERE.parent.relative_to(ROOT).as_posix()}/conformance"
 
 LIFECYCLE = [
     LOCK_WRAPPER,
@@ -66,9 +73,9 @@ BUILD_EXTRA = [
     f"{SURVEY}/make-source-evidence.py",
     f"{SURVEY}/smoke-arms.sh",
     f"{SURVEY}/source-evidence.json",
-    f"{REUSED}/arm-common/Cargo.toml",
-    f"{REUSED}/gf2-side/Cargo.lock",
-    f"{REUSED}/gf2-side/Cargo.toml",
+    f"{ARM_COMMON}/Cargo.toml",
+    f"{GF2_SIDE}/Cargo.lock",
+    f"{GF2_SIDE}/Cargo.toml",
 ]
 
 EVIDENCE_FILES = [
@@ -90,15 +97,13 @@ def rust_sources(root, directory):
 
 
 def main():
-    root = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-    ).stdout.strip()
+    root = str(ROOT)
     output = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
         root, SURVEY, "producing-inputs.json")
     behavior = set(BEHAVIOR_EXTRA)
     for directory in ("crates/gf2-core/src", "crates/gf2-kernels-simd/src",
                       f"{SURVEY}/consumer/src", f"{SURVEY}/field-laws/src",
-                      f"{REUSED}/arm-common/src", f"{REUSED}/gf2-side/src", f"{TOOL}/src"):
+                      f"{ARM_COMMON}/src", f"{GF2_SIDE}/src", f"{TOOL}/src"):
         behavior.update(rust_sources(root, directory))
     build = behavior | set(BUILD_EXTRA) | {
         f"{EVIDENCE}/{name}" for name in EVIDENCE_FILES}

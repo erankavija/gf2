@@ -16,15 +16,15 @@
 # evaluated and is listed under the record's `skipped` section instead.
 set -euo pipefail
 
-listed=(git ls-files --cached --others --exclude-standard)
-self=$("${listed[@]}" --full-name -- "${BASH_SOURCE[0]}")
-entry=$(dirname "$self")
-root=$(git rev-parse --show-toplevel)
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+root=$(git -C "$HERE" rev-parse --show-toplevel)
 cd "$root"
+entry=$(realpath --relative-to="$root" "$HERE")
+self=$entry/${BASH_SOURCE[0]##*/}
 head=$(git rev-parse --verify HEAD)
 evidence=$(git rev-parse --verify "${1:-HEAD}^{commit}")
 output=${2:-$entry/receipt-reevaluation.json}
-files=$("${listed[@]}" -- ':(glob)**/repository_files.py')
+files=dev/scripts/repository_files.py
 crate=$(python3 -B "$files" package-directory tuning-campaign-support)
 manifest=$(python3 -B "$files" shared-producing-manifest)
 git diff --quiet HEAD -- "$crate" Cargo.toml Cargo.lock .cargo || {
