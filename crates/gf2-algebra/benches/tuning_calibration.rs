@@ -3,7 +3,8 @@
 //! evidence as opaque bytes. Only a guarded fresh child installs tuning.
 //! Reporting, validation, analysis, and owner emission never resolve
 //! process-global tuning.
-//! Protocol: the permanent extent premeasurement protocol, §3, 6, 8, 8.1, 10.
+//! Protocol: "Crate-owned extent calibration: premeasurement protocol", §3, 6,
+//! 8, 8.1, 10.
 
 use std::collections::BTreeSet;
 use std::env;
