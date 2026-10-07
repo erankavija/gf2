@@ -82,15 +82,14 @@ The scan does not establish:
 The command exits 1.
 [`c852d9b2-tracker-errors.py`](c852d9b2-tracker-errors.py) groups its distinct
 errors by type, area and file suffix in
-[`c852d9b2-tracker-errors.txt`](c852d9b2-tracker-errors.txt), the output at the
-commit verified. The `unreachable_url` rows depend on network reachability
-from the host. `linked` counts the errors whose target is a link of the tracked
+[`c852d9b2-tracker-errors.txt`](c852d9b2-tracker-errors.txt), the output on
+the primary checkout. The output follows tracker state, and its
+`unreachable_url` rows depend on network reachability from the host. `linked` counts the errors whose target is a link of the tracked
 file; `unresolved` counts those of them whose path is not tracked.
 
 | Type | Area | Suffix | Read by | Finding |
 |---|---|---|---|---|
 | `unreachable_url` | archive | `html` | archive scan, deck roots | external font hosts; counted under `https:`, not fetched |
-| `missing_asset` | archive | `md` | archive scan, `b7157be6` container root | `linked` is zero: the target is the `original_path` of an asset entry in the tracker record of the document, and the tracked file links `aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md`, which resolves |
 | `broken_link`, `missing_asset` | footprint | `md` | mechanical check | each `unresolved` link is a baseline row; each other error names a target that is not a link of the tracked file or that resolves |
 | `broken_link`, `missing_asset` | other | `md` | neither scan | the files lie under `dev/studies` and `dev/bench_results`, outside the footprint and outside the archive root |
 | `broken_link`, `missing_asset` | other | other suffixes | neither scan | the documents are not Markdown, HTML or CSS and lie outside the archive root |
