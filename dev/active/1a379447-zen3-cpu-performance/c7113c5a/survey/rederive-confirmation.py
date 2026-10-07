@@ -8,6 +8,11 @@ freeze took, and the addendum carries the restated prose. Each record is frozen
 again by `freeze-confirmation.py` in a fixture tree holding only the files the
 freeze reads; the addendum and the record must equal the committed bytes. The
 command writes nothing outside the fixture and exits non-zero on a difference.
+
+A record names its files by the paths its freeze recorded. A recorded path that
+no longer exists is read from the one live file of that name whose directories
+match the recorded ones furthest back from the name; the fixture keeps the
+recorded layout, so the frozen bytes name the recorded paths.
 """
 
 import json
@@ -17,7 +22,32 @@ import shutil
 import subprocess
 import sys
 
-FREEZER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "freeze-confirmation.py")
+HERE = os.path.dirname(os.path.abspath(__file__))
+FREEZER = os.path.join(HERE, "freeze-confirmation.py")
+ROOT = subprocess.run(["git", "-C", HERE, "rev-parse", "--show-toplevel"],
+                      capture_output=True, check=True, text=True).stdout.strip()
+
+
+def live(recorded):
+    """The existing path holding the file a record names as `recorded`."""
+    if os.path.exists(recorded):
+        return recorded
+    listing = subprocess.run(
+        ["git", "-C", ROOT, "ls-files", "--", f":(glob)**/{os.path.basename(recorded)}"],
+        capture_output=True, check=True, text=True).stdout.splitlines()
+    wanted = recorded.split("/")[::-1]
+
+    def shared(path):
+        return len(os.path.commonprefix([wanted, path.split("/")[::-1]]))
+
+    # Receipt input snapshots hold byte copies under an `inputs` directory.
+    ranked = sorted((shared(path) for path in listing if "inputs" not in path.split("/")[:-1]),
+                    reverse=True)
+    if not ranked or ranked[1:2] == ranked[:1]:
+        raise OSError(f"no single live file for {recorded}")
+    return next(path for path in listing
+                if "inputs" not in path.split("/")[:-1] and shared(path) == ranked[0])
+
 
 RATIONALE = {"worthwhile_speedup": ("--worthwhile-speedup", "--worthwhile-rationale", "rationale"),
              "equivalence_margin": ("--equivalence-margin", "--equivalence-rationale", "equivalence_rationale"),
@@ -30,11 +60,11 @@ def arguments(record_path):
         return found.group(1) if found else None
     receipt = line("pilot receipt")
     output = line("confirmation addendum")
-    if not receipt or not output or not os.path.exists(output):
+    if not receipt or not output:
         return None, "not a freezer record with a committed addendum"
     pilot = os.path.dirname(receipt)
-    addendum = json.load(open(output))
-    pilot_addendum = json.load(open(receipt))["addendum"]["path"]
+    addendum = json.load(open(live(output)))
+    pilot_addendum = json.load(open(live(receipt)))["addendum"]["path"]
     inputs = [receipt, f"{pilot}/acceptance-summary.json", pilot_addendum]
     args = ["--pilot-addendum", pilot_addendum, "--pilot", pilot,
             "--frozen-utc", addendum["frozen"]["frozen_utc"], "--output", output, "--record", record_path]
@@ -61,10 +91,6 @@ def arguments(record_path):
             args += ["--cell", cell]
     if line("restated purpose"):
         args += ["--purpose", addendum["family"]["purpose"]]
-    rule = re.search(r"^frozen rule {18}(\S+)$", text, re.M)
-    if rule:
-        args += ["--frozen-rule", rule.group(1)]
-        inputs.append(rule.group(1))
     if line("holdout declaration"):
         args += ["--holdout-cells", line("holdout declaration")]
         inputs.append(line("holdout declaration"))
@@ -86,15 +112,16 @@ def main():
             continue
         args, inputs, output = plan
         root = os.path.join(fixture, re.sub(r"\W", "_", record))
-        missing = [path for path in inputs if not os.path.exists(path)]
-        if missing:
-            print(f"differs {record}: missing {missing}")
+        try:
+            sources = {path: live(path) for path in inputs + [output]}
+        except OSError as error:
+            print(f"differs {record}: {error}")
             failed = True
             continue
         for path in inputs + [output, record]:
             os.makedirs(os.path.join(root, os.path.dirname(path)), exist_ok=True)
         for path in inputs:
-            shutil.copy(path, os.path.join(root, path))
+            shutil.copy(sources[path], os.path.join(root, path))
         run = subprocess.run(
             [sys.executable, "-B", FREEZER, *args], cwd=root, capture_output=True, text=True
         )
@@ -103,8 +130,8 @@ def main():
             failed = True
             continue
         same = all(
-            open(path, "rb").read() == open(os.path.join(root, path), "rb").read()
-            for path in (output, record)
+            open(committed, "rb").read() == open(os.path.join(root, path), "rb").read()
+            for committed, path in ((sources[output], output), (record, record))
         )
         print(f"{'same' if same else 'differs'} {record}")
         failed |= not same
