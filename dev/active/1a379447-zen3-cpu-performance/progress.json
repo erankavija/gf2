@@ -554,7 +554,7 @@
      "short_id": "63bad95d",
      "title": "Calibrate production dispatch for the 5900X",
      "classification": "implementation",
-     "status": "in_progress: validator stage merged at f94f90c8b (ledgers regenerated); producer campaign queued for the 2026-10-07 window from agent-63bad95d-run; protocol families wait for 4337c02e",
+     "status": "in_progress: producer campaign gf2-63bad95d-20261006t230547z-2073085 complete-valid and published (run branch d808af2f3; stage backup in the run worktree target/campaign-stage-backup); interpretation, baked cutover (bit_backend.simd_min_words 8 to 4 on the branch only) and two pilot families on worktree-agent-63bad95d-fam at 347b5e2b6 (pinned, unmerged); pilots queued for 2026-10-08; confirmations after. REQ-11 exception issue 817fc47d filed.",
      "tracker_state": "in_progress"
     },
     {
@@ -657,14 +657,14 @@
      "id": "4337c02e",
      "short_id": "4337c02e",
      "classification": "implementation",
-     "status": "in_progress: pilot accepted (17 cells, verified from its log); six-cell confirmation frozen on the branch and queued for the 2026-10-07 window; branch merges after the confirmation",
+     "status": "rejected (superseded by 7dbe1393, invoker ruling 2026-10-07). Confirmation rejected by acceptance on P-03; rework 1 closed code-review R1 (digest-located rederive, selector-outcomes record); code-review R2 rules REQ-01 unmet; family admits no further confirmatory cell. Evidence and freezer repair stay on main; review reviews/4337c02e-r2.md.",
      "tracker_state": "in_progress"
     },
     {
      "id": "bfc2ceab",
      "short_id": "bfc2ceab",
      "classification": "implementation",
-     "status": "in_progress: pilot accepted (9 cells, verified from its log); six-cell confirmation frozen (resolution 0.02, margin 1.05) and queued for the 2026-10-07 window; per-interface choice returns to the invoker with the confirmation",
+     "status": "in_progress: confirmation accepted (two spmm cells regressed, four not-worse); invoker ruled checked entries everywhere and a per-product hoisted check for sparse-row; production change merged at cc9bfe66b, cargo-ci pass; code-review R1: F1 zero-width product rejected (fresh worker w31b-bfc2ceab-f1 in the pinned worktree), F2 REQ-04 waits on the new family sparse-product-check-cost (pilot queued for 2026-10-08, confirmation the night after).",
      "tracker_state": "in_progress"
     },
     {
@@ -686,7 +686,31 @@
      "short_id": "e6fe64c9",
      "title": "Make the llr-f64 cargo feature select f64 LLRs or remove it",
      "classification": "implementation",
-     "status": "blocked on the invoker: removal merged at 42015c6b3, cargo-ci passes; code-review F1 names dev/active/fa787f85-documentation-overhaul/2596b143-doctest.txt:15, a frozen tool transcript of the other epic that records the old command; see escalations."
+     "status": "done. Session 31: invoker amended REQ-01 (current documents; run records at a named commit exempt); rework 1 (design page, empty default feature, feature-effect check) merged at 2726f000f; gates pass; review reviews/e6fe64c9-r2.md."
+    },
+    {
+     "short_id": "07ae376c",
+     "title": "Report hard-decision outcomes of the default soft decode truthfully",
+     "classification": "implementation",
+     "status": "done. Session 31: merged at 2b44dda8c; cargo-ci and code-review pass first round; review reviews/07ae376c-r1.md."
+    },
+    {
+     "short_id": "95ca83aa",
+     "title": "Return the encoded message from LDPC decode_iterative on QC codes",
+     "classification": "implementation",
+     "status": "in_progress: filed and dispatched session 31 (opus, w31b-95ca83aa, agent-95ca83aa); gates cargo-ci, code-review"
+    },
+    {
+     "short_id": "556eb4fa",
+     "title": "Report the iterative outcome of the rate-matched 5G NR soft decode",
+     "classification": "implementation",
+     "status": "in_progress: filed and dispatched session 31 (sonnet, w31b-556eb4fa, agent-556eb4fa); gates cargo-ci, code-review"
+    },
+    {
+     "short_id": "7dbe1393",
+     "title": "Close the matvec SIMD lane gap at ragged strides",
+     "classification": "implementation",
+     "status": "pending: filed session 31; under the epic by the invoker ruling on 4337c02e; gates cargo-ci, code-review, research-review, asm-artefact-present; needs a new family (two windows)"
     }
    ]
   },
@@ -833,6 +857,24 @@
       "session": 26
      },
      "worktree_reclaimed": true
+    },
+    {
+     "short_id": "5cb74f81",
+     "title": "Decode LDPC frame batches in lanes behind the batch decoder trait",
+     "classification": "implementation",
+     "status": "done. Session 31: merged at c77ee049d; doc-review F1 (contract page evidence) fixed by the lead; three gates pass; review reviews/5cb74f81-r1.md."
+    },
+    {
+     "short_id": "1d4b05d5",
+     "title": "Decode batches across workers through one pooled batch decoder",
+     "classification": "implementation",
+     "status": "done. Session 31: merged at 4ef008e36; doc-review F1-F4 (rustdoc bounds, panics, evidence; poisoned decoder panics) fixed by the lead; three gates pass; review reviews/1d4b05d5-r1.md."
+    },
+    {
+     "short_id": "941ac609",
+     "title": "Assert LDPC batch decoding at the posterior level across codes",
+     "classification": "implementation",
+     "status": "in_progress: dispatched session 31 (opus, w31b-941ac609, agent-941ac609)"
     }
    ]
   },
@@ -1080,6 +1122,30 @@
    "type": "bug",
    "in_epic": true,
    "reason": "session 30: reported by the batch decoder contract suite worker"
+  },
+  {
+   "id": "556eb4fa",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "session 31: reported by the 07ae376c worker"
+  },
+  {
+   "id": "95ca83aa",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "session 31: reported by the 5cb74f81 worker; decode_iterative returns a word other than the encoded message on a QC code"
+  },
+  {
+   "id": "7dbe1393",
+   "type": "task",
+   "in_epic": true,
+   "reason": "session 31: SIMD lane of allocated matvec trails the scalar lane at ragged strides (4337c02e rows, 63bad95d producer sweep); moved under the epic by the invoker ruling on 4337c02e"
+  },
+  {
+   "id": "817fc47d",
+   "type": "task",
+   "in_epic": false,
+   "reason": "session 31: named tracked convergence exception for the eight private selector constants (63bad95d REQ-11); depends on 63bad95d"
   }
  ],
  "escalations": [
@@ -1709,9 +1775,33 @@
    "issue": "e6fe64c9",
    "question": "code-review F1: REQ-01 says the feature is removed from every document and command that names it; dev/active/fa787f85-documentation-overhaul/2596b143-doctest.txt:15 records the ci-form doctest command with llr-f64. The fa787f85 lead states the file is frozen tool output at commit cac8fa20e, cited by line number from the census record of done issue 2596b143. Options: (A) amend REQ-01 to exempt records of runs at a named earlier commit; (B) the fa787f85 epic regenerates the census transcript and its line citations.",
    "recommendation": "A",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-06T20:30Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-07: amend REQ-01 (option A). Applied at 96039cebf."
+  },
+  {
+   "category": "design decision (bfc2ceab)",
+   "issue": "bfc2ceab",
+   "question": "checked or unchecked per kernel interface",
+   "status": "resolved",
+   "raised_at": "2026-10-07T04:30Z",
+   "resolution": "Invoker 2026-10-07: checked safe entries where the check is not-worse; hoist the sparse-row check to one per product with an unsafe row kernel inside gf2-kernels-simd."
+  },
+  {
+   "category": "criterion evidence (bfc2ceab REQ-04) and shared infrastructure (scripts/cargo-ci.sh)",
+   "issue": "bfc2ceab",
+   "question": "before/after evidence for the hoisted form; cargo-ci.sh pathspec exclusion of receipt input snapshots",
+   "status": "resolved",
+   "raised_at": "2026-10-07T05:30Z",
+   "resolution": "Invoker 2026-10-07: new single-purpose family over two windows; cargo-ci.sh change approved."
+  },
+  {
+   "category": "issue disposition (4337c02e)",
+   "issue": "4337c02e",
+   "question": "code-review R2: REQ-01 unmet, no further confirmatory cell admissible",
+   "status": "resolved",
+   "raised_at": "2026-10-07T15:20Z",
+   "resolution": "Invoker 2026-10-07: reject as superseded; 7dbe1393 owns the lane question under this epic."
   }
  ],
  "rework_counts": {
@@ -1760,7 +1850,12 @@
   "8840b0ff": 1,
   "f6df53a9": 2,
   "dcfe8386": 1,
-  "e6fe64c9": 0
+  "e6fe64c9": 1,
+  "4337c02e": 1,
+  "5cb74f81": 1,
+  "1d4b05d5": 1,
+  "bfc2ceab": 1,
+  "07ae376c": 0
  },
  "surfaced_pitfalls": [
   {
@@ -2383,7 +2478,13 @@
   "Session 30: unfiled defects reported by session-29 workers: full-stage re-validation of a tuning campaign fails once its producing worktree is removed (keep agent-63bad95d-run until 63bad95d closes); a gated LDPC test asserts AVX2 NaN divergence whenever simd is on and would fail on a host without AVX2; the SIMD early-return search record lists 20 tests in probe and bench crates outside the workspace members.",
   "Invoker ruling 2026-10-06 (confirmed to this session): the flat zen3 dev/active entries move under dev/active/1a379447-zen3-cpu-performance/ on main, executed by the fa787f85 lead (session gf2-14). After the 2026-10-07 window: merge main into worktree-agent-4337c02e and worktree-agent-bfc2ceab, relocate their added files, regenerate closure JSON files (no textual merge), regenerate the 63bad95d ledger and route inventory, run the four family closure checks. New queue lines use the new paths. The two leads announce merge and gate batches to each other.",
   "Session 30: second wave closed (2438c16f, 441fbd5c) and f6df53a9 closed after two reworks; handoff-26.md written. The permission classifier denied a forced cargo-ci re-run of 8840b0ff without BUSY_HOST_OVERRIDE; later runs used no override.",
-  "Session 30: the zen3 dev/active entries moved under this directory in three merges of the fa787f85 lead (97ce2d18d and later); handoff and review files here still cite flat paths of moved entries and the fa787f85 lead repoints them in its next session. A gate list is read from the issue JSON field gates_required, which is populated; f6df53a9 carried doc-review that the dispatch omitted."
+  "Session 30: the zen3 dev/active entries moved under this directory in three merges of the fa787f85 lead (97ce2d18d and later); handoff and review files here still cite flat paths of moved entries and the fa787f85 lead repoints them in its next session. A gate list is read from the issue JSON field gates_required, which is populated; f6df53a9 carried doc-review that the dispatch omitted.",
+  "Session 31: 2026-10-07 window collected from each campaign's own log: 4337c02e confirmation complete but rejected by acceptance (P-03, freezer floor at confirmation cells against the whole-pilot half-width acceptance verifies); bfc2ceab confirmation accepted; 63bad95d producer campaign complete-valid (4644 results). Lead decision under the standing rule: no second 4337c02e attempt, no threshold change there.",
+  "Invoker 2026-10-07 (session 31): do not reuse existing subagents (their cache is invalidated): follow-up work goes to a fresh agent with a self-contained brief. No questions while working: a task that needs the invoker is blocked and recorded; handoff when this and the next wave finish; check workers every 30 minutes.",
+  "Session 31: the 4337c02e direction is baseline = SIMD lane, candidate = scalar lane; a ratio above 1 favours the scalar lane. The lead's first brief had it reversed and corrected it by message.",
+  "Session 31: three tuning-campaign-support::driver_launcher tests failed in one merged-tree cargo-ci run and passed in the runs before and after on the same tree; unexplained, not filed.",
+  "Session 31: the 4c1e441f and ad2a6a58 survey/producing-inputs.json closures no longer reproduce from their generators after the layout move (flat paths recorded); kept as recorded evidence of measured, closed campaigns. Committed tables.md of older families differ from regeneration on main for the same reason (bfc2ceab worker report); unfiled.",
+  "Session 31: a host suspend of about nine hours (05:35Z to 14:30Z) interrupted nothing; the gate chain resumed."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -2411,37 +2512,41 @@
   "handoff-22.md",
   "handoff-23.md",
   "handoff-24.md",
-  "handoff-25.md"
+  "handoff-25.md",
+  "handoff-26.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
  },
  "benchmark_window": {
-  "unit": "gf2-bench-window-20261007",
-  "armed_for": "2026-10-07T02:00:00+03:00",
+  "unit": "gf2-bench-window-20261008",
+  "armed_for": "2026-10-08T02:00:00+03:00",
   "state_dir": ".agents/bench-window",
   "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
   "pending_jobs": {
-   "4337c02e": [
-    "confirmation v4-r1, 15 min, worktree agent-4337c02e"
-   ],
    "bfc2ceab": [
-    "confirmation, 8 min, worktree agent-bfc2ceab"
+    "sparse-product-check-cost pilot, 10 min, worktree agent-bfc2ceab"
    ],
    "63bad95d": [
-    "producer calibration campaign, 160 min, worktree agent-63bad95d-run; a paused run exits 0 and needs a new queue line with its run identifier; its stage lives in /tmp"
+    "63bad95d-profile-dispatch-overhead pilot, 10 min, worktree agent-63bad95d-fam",
+    "63bad95d-native-ladder pilot, 12 min, worktree agent-63bad95d-fam"
    ]
   },
-  "note": "Verify each campaign from its own execution log, never the job rc. Invoker confirmed the armed timer on 2026-10-06."
+  "note": "Verify each campaign from its own execution log, never the job rc. The 4337c02e confirmation job (key ae13fbd8b6c8b708, rc 1 on the acceptance verdict) was marked done by the lead after verifying its log. Nightly windows are authorized (handoff-25); the invoker approved these pilots on 2026-10-07."
  },
  "session_scope": {
-  "session": 30,
-  "date": "2026-10-06 evening",
-  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Session 29 ended without a handoff (interrupted); its state was rebuilt from git, the tracker and its transcript.",
+  "session": 31,
+  "date": "2026-10-07",
+  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Mid-session: no reuse of existing subagents; no questions while working; handoff after this and the next wave.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "disk": "100 GB free after reclaiming thirteen merged worktrees (no harvest).",
-  "peer_session": "A session of epic fa787f85 commits on main concurrently (63b197337 at 21:32 EEST). Stage tracker files by name, never `git add -A .jit`.",
-  "active_workers": {},
+  "peer_session": "A session of epic fa787f85 commits on main concurrently and leaves tracker files dirty between its commits; the dispatch script refuses a dirty main, so wait for its commit. Stage tracker files by name.",
+  "active_workers": {
+   "w31b-bfc2ceab-f1": "bfc2ceab F1 fix in the pinned worktree",
+   "w31b-941ac609": "agent-941ac609",
+   "w31b-95ca83aa": "agent-95ca83aa",
+   "w31b-556eb4fa": "agent-556eb4fa"
+  },
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes."
  }
