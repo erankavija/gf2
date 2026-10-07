@@ -22,11 +22,19 @@ set -euo pipefail
 # separately under `dev/scripts/ccx1-bench-flock.sh`; the two are independent by
 # design and neither subsumes the other. Do not double-wrap.
 BUDGET="$(dirname "$0")/cargo-budget.sh"
+SCALAR_LANE="$(dirname "$0")/scalar-lane-tests.sh"
 
 # BUSY_HOST_OVERRIDE=1 selects the `ci-busy` nextest profile, whose per-test
 # kill absorbs host contention beyond what the `ci` tier budget is sized for.
 NEXTEST_CI_PROFILE=ci
 [ -n "${BUSY_HOST_OVERRIDE:-}" ] && NEXTEST_CI_PROFILE=ci-busy
+
+# CARGO_CI_STEPS is a PCRE over step names; only the matching steps run, so
+# `CARGO_CI_STEPS='^doc$' ./scripts/cargo-ci.sh` re-runs the doc step. A
+# filtered run is a focused re-run: its summary states the filter and the
+# skipped steps, and it is not the CI contract's verdict. The summary lists
+# every step with its status, so `CARGO_CI_STEPS='^$'`, which matches no step,
+# prints the step names without running any.
 
 # Resolve the real cargo binary. Some local setups place a debugging shim
 # at ~/.cargo/bin/cargo (or its rustup proxy target) that exits 0 for every
@@ -109,11 +117,18 @@ fixture_inventory() {
 fixtures_before=$(fixture_inventory)
 
 failed=0
+skipped=0
 summary=""
 
 run_step() {
   local name="$1"
   shift
+
+  if [ -n "${CARGO_CI_STEPS:-}" ] && ! grep -qP -- "$CARGO_CI_STEPS" <<<"$name"; then
+    skipped=$((skipped + 1))
+    summary+="  - $name: skipped by CARGO_CI_STEPS"$'\n'
+    return 0
+  fi
 
   local started=$SECONDS
 
@@ -150,7 +165,7 @@ plain() {
 summarize_pass() {
   local name="$1"
   case "$name" in
-    test)
+    test|scalar-lane-nextest)
       # Extract nextest summary line: "Summary [Xs] N tests run: P passed, F failed, S skipped"
       local summary_line
       summary_line=$(plain "$LOGDIR/$name.out" | grep -E "^[[:space:]]*Summary" || true)
@@ -159,10 +174,13 @@ summarize_pass() {
         p=$(echo "$summary_line" | grep -oP '\d+(?= passed)' || true)
         f=$(echo "$summary_line" | grep -oP '\d+(?= failed)' || true)
         s=$(echo "$summary_line" | grep -oP '\d+(?= skipped)' || true)
-        echo "${p:-0} passed, ${f:-0} failed, ${s:-0} skipped"
+        echo -n "${p:-0} passed, ${f:-0} failed, ${s:-0} skipped"
       else
-        echo "ok"
+        echo -n "ok"
       fi
+      # The resolved feature lists the scalar-lane script prints.
+      plain "$LOGDIR/$name.out" | sed -n 's/^scalar lane: /; /p' | tr -d '\n'
+      echo
       ;;
     *)
       echo "ok"
@@ -173,7 +191,7 @@ summarize_pass() {
 summarize_fail() {
   local name="$1"
   case "$name" in
-    test)
+    test|scalar-lane-nextest)
       # Show failure details from nextest output.
       #
       # These patterns must not anchor at column zero: nextest indents its
@@ -205,7 +223,7 @@ summarize_fail() {
 if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
   FEAT_FLAGS="--all-features"
 else
-  FEAT_FLAGS="--features simd,parallel,visualization,llr-f64"
+  FEAT_FLAGS="--features simd,parallel,visualization"
 fi
 
 # Run all steps in order; continue through failures to report all of them.
@@ -220,6 +238,22 @@ run_step tuning-algebra-no-default "$BUDGET" cargo check -p gf2-algebra --no-def
 run_step tuning-algebra-codec-only "$BUDGET" cargo check -p gf2-algebra --no-default-features --features tuning-profile
 run_step tuning-coding-no-default "$BUDGET" cargo check -p gf2-coding --no-default-features
 run_step tuning-coding-codec-only "$BUDGET" cargo check -p gf2-coding --no-default-features --features tuning-profile
+
+# One package configuration without --all-features: default features, no
+# `simd`, the build a bare `cargo nextest run -p <package>` selects. The check
+# compiles every target, so a test or bench that needs a feature it does not
+# name fails here. The execution step runs the target of the kernel-dispatch
+# fallback contract (`gf2_core::dispatch_contract`) in the build that has no
+# kernel route to select.
+run_step default-features-core-check "$BUDGET" cargo check -p gf2-core --all-targets --profile ci-test
+run_step default-features-core-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback --no-run
+run_step default-features-core-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback
+
+# The scalar lane of the two packages whose default features select `simd`:
+# their suites in a build that resolves no `simd` feature, which the script
+# verifies and whose resolved feature lists the summary carries.
+run_step scalar-lane-build "$BUDGET" "$SCALAR_LANE" --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
+run_step scalar-lane-nextest "$BUDGET" --test "$SCALAR_LANE" --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 
 # Build outside the exclusive lock, then execute inside it. The workspace
 # compile with GPU/SIMD features is the heaviest work here, and holding the
@@ -250,6 +284,8 @@ repository_files=$(git ls-files -- ':(glob)**/repository_files.py')
 family_closures=$(python3 -B "$repository_files" file check-family-producing-closures.py)
 run_step family-producing-closures-self-test python3 -B "$family_closures" --self-test
 run_step family-producing-closures python3 -B "$family_closures"
+campaign_records=$(python3 -B "$repository_files" file validate_tuning_extent_campaign_test.py)
+run_step tuning-campaign-records python3 -B "$campaign_records"
 run_step receipt-input-snapshots-self-test python3 dev/scripts/check-receipt-input-snapshots.py --self-test
 run_step receipt-input-snapshots python3 dev/scripts/check-receipt-input-snapshots.py
 run_step addendum-schema-versions-self-test python3 dev/scripts/check-addendum-schema-versions.py --self-test
@@ -266,7 +302,7 @@ run_step fmt    "$BUDGET" cargo fmt --all -- --check
 
 # Fixed rather than host-dependent: matches the doc and doctest steps of
 # .github/workflows/ci.yml.
-DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand,llr-f64"
+DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand"
 run_step doc     env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc --workspace --release --no-deps $DOC_FEAT_FLAGS
 run_step doctest "$BUDGET" --test cargo test --doc --workspace --release $DOC_FEAT_FLAGS
 
@@ -300,6 +336,10 @@ else
 fi
 
 echo "$summary"
+
+if [ -n "${CARGO_CI_STEPS:-}" ]; then
+  echo "FILTERED RUN: CARGO_CI_STEPS='$CARGO_CI_STEPS' skipped $skipped steps; this is not the CI contract's verdict."
+fi
 
 if [ "$failed" -ne 0 ]; then
   exit 1

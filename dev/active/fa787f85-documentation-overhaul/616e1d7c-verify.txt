@@ -10,7 +10,9 @@ destinations at 50de04a6b with the planned sha256: ok 401/401
 move sources absent at the execution commit and in the working tree: ok 395/395
 copy sources present with the planned sha256: ok 6/6
 destinations differing from the plan are files changed after execution: ok 112 differ, 289 hold the planned sha256
-copy sources under the active area: 35 present, 33 equal to their archive file
+copy sources under the active area: 35 present, 31 equal to their archive file
+  differs from its archive file dev/active/6dc81018-field-capability-dispatch/breakdown.json
+  differs from its archive file dev/active/6dc81018-field-capability-dispatch/classification.md
   differs from its archive file dev/active/6dc81018-field-capability-dispatch/investigation.md
   differs from its archive file dev/active/eaae1b56/premeasurement-protocol.md
 == excluded
@@ -22,14 +24,48 @@ pinned sources of the excluded entries present: ok 8
 == rerun
 fresh preview eligible, no blocker, nothing to publish or delete: ok {"already_archived": 525, "block": 0, "copy": 78, "move": 443, "pending_deletions": 0, "retain": 25}
 == links
-dev/archive/6dc81018-field-capability-dispatch: Markdown files 60, local links 239: ok unresolved 0, resolving from the plan source path only 3
-files of this issue under the active area: Markdown files 3, local links 10: ok unresolved 0
-  source path only dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-11.md:140 ../../../.agents/skills/jit-execution-lead/SKILL.md
-  source path only dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:82 ../../../crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json
-  source path only dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:98 ../../../crates/gf2-algebra/data/tuning-profiles/conservative.json
+dev/archive/6dc81018-field-capability-dispatch: Markdown files 60, local links 239: ok unresolved 0
+files of this issue under the active area: Markdown files 11, local links 26: ok unresolved 0
 == manifest
-   431 jit-container-archive / complete / in plan
-    33 retained-operational / complete / in plan
-     1 retained-operational / pending / not in plan
-  not complete dev/active/389aa4de/receipt-notes.md
-rows of plan sources complete: ok
+     5 1ac74567 / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 220cab0b / retained-operational / complete / dev/active
+     1 2a85f728 / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+   181 34d85cb9 / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 389aa4de / retained-operational / complete / dev/active/86b9c719-quality-documentation-tech-debt
+     1 3fa7c9d0 / retained-operational / complete / dev/active
+    57 50b47eae / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     6 50b47eae / retained-operational / complete / dev/active
+    15 6dc81018-field-capability-dispatch / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     6 6dc81018-field-capability-dispatch / retained-operational / complete / dev/active
+    87 7d7c647c / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 7d7c647c / retained-operational / complete / dev/active
+     1 7d824b2f / retained-operational / complete / dev/active
+    14 9162956b / retained-operational / complete / dev/active
+     1 972e2b88 / retained-operational / complete / dev/active
+    67 e6ea0dde / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 eaae1b56 / retained-operational / complete / dev/active
+    18 eb9b324c / jit-container-archive / complete / dev/archive/6dc81018-field-capability-dispatch/active
+     1 fc976a80 / retained-operational / complete / dev/active
+rows complete, each file at its destination: ok 465 rows of 16 entries
+== consumers
+     4 consumers of 1ac74567 in 1ac74567
+     1 consumers of 34d85cb9 in 1ac74567
+   105 consumers of 34d85cb9 in 34d85cb9
+     3 consumers of 50b47eae in 50b47eae
+     4 consumers of 50b47eae in eb9b324c
+    60 consumers of 7d7c647c in 7d7c647c
+    40 consumers of e6ea0dde in e6ea0dde
+     5 consumers of eb9b324c in eb9b324c
+each consumer lies in an entry with a moved or archived row: ok 222 consumers on 19 rows, entries 1ac74567 2a85f728 34d85cb9 389aa4de 50b47eae 6dc81018-field-capability-dispatch 7d7c647c e6ea0dde eb9b324c
+== citations
+   412 container root dev/archive/6dc81018-field-capability-dispatch
+   828 digest pin: .jit/issues/616e1d7c-1e65-45f0-91d4-2eb194746882.json dev/active/fa787f85-documentation-overhaul/616e1d7c-preexec.json
+     1 equal bytes with dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md
+     2 equal bytes with dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md
+     4 file suffix .json dev/active/6dc81018-field-capability-dispatch/breakdown.json
+     3 file suffix .txt dev/active/fa787f85-documentation-overhaul/7bac1303-harness-path-trials.txt
+   938 manifest file dev/active/fa787f85-documentation-overhaul/migration/manifest.toml
+   395 tracker document of 67048b47: data dev/active/fa787f85-documentation-overhaul/67048b47-linked-pairs.txt
+   431 tracker document of 96cea1b9: report dev/active/fa787f85-documentation-overhaul/96cea1b9-archive-rows.txt
+       tracker documents of fa787f85
+each citation of an absent entry path is kept on a ground: ok 3014 citations outside the tracker documents of fa787f85

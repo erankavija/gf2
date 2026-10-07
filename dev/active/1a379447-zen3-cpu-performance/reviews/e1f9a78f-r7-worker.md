@@ -6,7 +6,7 @@ The `window` launcher captures argv before dispatch and prints a shell-quoted co
 
 ## Cumulative resolution
 
-Paths in this table are relative to `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/`.
+Paths in this table are relative to `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/`.
 
 | Round | Source | Finding (verbatim) | Closure at this tree |
 |---|---|---|---|

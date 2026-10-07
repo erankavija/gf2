@@ -1,9 +1,11 @@
 //! Coding-owned tuning selectors and their process-wide typed accessor; the
-//! generic process authority is [`gf2_core::tuning`]. The one selector family
-//! is `encode`, the profile half of the batch-encoding family dispatch of
-//! [`crate::bch::encode::EncodeFamily`].
+//! generic process authority is [`gf2_core::tuning`]. The section holds two
+//! selector families: `encode`, the profile half of the batch-encoding family
+//! dispatch of [`crate::bch::encode::EncodeFamily`], and `decode`, three
+//! batch-decoding bounds the section stores, validates and serializes.
 
 use std::fmt;
+use std::num::NonZeroUsize;
 
 use gf2_core::tuning::{active_section, ActiveSection, SectionError, SectionId, TuningSection};
 
@@ -11,6 +13,18 @@ pub use crate::bch::encode::{
     BITSLICE_INTERLEAVED_MIN_BATCH, CLMUL_FOLD_MIN_BATCH, TABLE_REMAINDER_MIN_BATCH,
     TABLE_REMAINDER_MIN_REDUNDANCY,
 };
+
+/// Conservative [`DecodeSelectors::lane_min_frames`]: the largest value of
+/// the field's domain.
+pub const LANE_MIN_FRAMES: usize = usize::MAX;
+
+/// Conservative [`DecodeSelectors::lane_max_edges`]: the smallest value of
+/// the field's domain.
+pub const LANE_MAX_EDGES: usize = 0;
+
+/// Conservative [`DecodeSelectors::granules_per_task`]: the smallest value of
+/// the field's domain.
+pub const GRANULES_PER_TASK: NonZeroUsize = NonZeroUsize::MIN;
 
 /// Validated selectors for batch-encoding family dispatch.
 ///
@@ -81,6 +95,100 @@ impl EncodeSelectors {
     }
 }
 
+/// Validated decode selector family of the coding section.
+///
+/// `lane_min_frames` is a lower bound on a count of occupied lanes and
+/// `lane_max_edges` an upper bound on a Tanner-graph edge count, each over
+/// all of `usize`; `granules_per_task` is a positive count of
+/// preferred-granularity frame groups. The section stores, validates and
+/// serializes the family, and
+/// [`decide_batch_route`](crate::ldpc::decide_batch_route) reads it to decide
+/// the LDPC batch route.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DecodeSelectors {
+    lane_min_frames: usize,
+    lane_max_edges: usize,
+    granules_per_task: NonZeroUsize,
+}
+
+impl DecodeSelectors {
+    /// The conservative decode family: [`LANE_MIN_FRAMES`],
+    /// [`LANE_MAX_EDGES`] and [`GRANULES_PER_TASK`].
+    pub const CONSERVATIVE: Self = Self {
+        lane_min_frames: LANE_MIN_FRAMES,
+        lane_max_edges: LANE_MAX_EDGES,
+        granules_per_task: GRANULES_PER_TASK,
+    };
+
+    /// Builds the decode selector family. Every `lane_min_frames` and
+    /// `lane_max_edges` is admissible.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SectionError::SelectorOutOfRange`] when `granules_per_task`
+    /// is zero, because the group count is positive.
+    pub fn try_new(
+        lane_min_frames: usize,
+        lane_max_edges: usize,
+        granules_per_task: usize,
+    ) -> Result<Self, SectionError> {
+        let granules_per_task =
+            NonZeroUsize::new(granules_per_task).ok_or(SectionError::SelectorOutOfRange {
+                family: "decode",
+                field: "granules_per_task",
+                value: 0,
+            })?;
+        Ok(Self {
+            lane_min_frames,
+            lane_max_edges,
+            granules_per_task,
+        })
+    }
+
+    /// Returns the lower bound on a count of occupied lanes.
+    #[must_use]
+    pub const fn lane_min_frames(&self) -> usize {
+        self.lane_min_frames
+    }
+
+    /// Returns the upper bound on a Tanner-graph edge count.
+    #[must_use]
+    pub const fn lane_max_edges(&self) -> usize {
+        self.lane_max_edges
+    }
+
+    /// Returns the count of preferred-granularity frame groups.
+    #[must_use]
+    pub const fn granules_per_task(&self) -> NonZeroUsize {
+        self.granules_per_task
+    }
+}
+
+/// The complete set of selector families the coding section carries.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CodingSelectors {
+    /// Batch-encoding family selectors.
+    pub encode: EncodeSelectors,
+    /// Decode selector family.
+    pub decode: DecodeSelectors,
+}
+
+impl CodingSelectors {
+    /// The parser-free conservative selector families: every encode bound is
+    /// the corresponding [`crate::bch::encode`] constant, which selects the
+    /// scalar reference for every code, and the decode family is
+    /// [`DecodeSelectors::CONSERVATIVE`].
+    pub const CONSERVATIVE: Self = Self {
+        encode: EncodeSelectors {
+            table_remainder_min_redundancy: TABLE_REMAINDER_MIN_REDUNDANCY,
+            table_remainder_min_batch: TABLE_REMAINDER_MIN_BATCH,
+            bitslice_interleaved_min_batch: BITSLICE_INTERLEAVED_MIN_BATCH,
+            clmul_fold_min_batch: CLMUL_FOLD_MIN_BATCH,
+        },
+        decode: DecodeSelectors::CONSERVATIVE,
+    };
+}
+
 #[cfg(feature = "tuning-profile")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct CodingPresence {
@@ -89,6 +197,10 @@ struct CodingPresence {
     table_remainder_min_batch: bool,
     bitslice_interleaved_min_batch: bool,
     clmul_fold_min_batch: bool,
+    decode: bool,
+    lane_min_frames: bool,
+    lane_max_edges: bool,
+    granules_per_task: bool,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -99,60 +211,75 @@ impl CodingPresence {
         table_remainder_min_batch: true,
         bitslice_interleaved_min_batch: true,
         clmul_fold_min_batch: true,
+        decode: true,
+        lane_min_frames: true,
+        lane_max_edges: true,
+        granules_per_task: true,
     };
 }
 
-/// Coding-owned tuning section carried by `gf2-coding/encode`.
+/// Coding-owned tuning section carried by `gf2-coding/encode`, the one wire
+/// identity of every coding selector family.
 #[derive(Clone, PartialEq, Eq)]
 pub struct CodingTuning {
-    encode: EncodeSelectors,
+    selectors: CodingSelectors,
     #[cfg(feature = "tuning-profile")]
     presence: CodingPresence,
 }
 
 impl CodingTuning {
-    /// Complete parser-free conservative coding section: every bound is the
-    /// corresponding [`crate::bch::encode`] constant, which selects the scalar
-    /// reference for every code.
+    /// The parser-free conservative coding section.
     pub const CONSERVATIVE: Self = Self {
-        encode: EncodeSelectors {
-            table_remainder_min_redundancy: TABLE_REMAINDER_MIN_REDUNDANCY,
-            table_remainder_min_batch: TABLE_REMAINDER_MIN_BATCH,
-            bitslice_interleaved_min_batch: BITSLICE_INTERLEAVED_MIN_BATCH,
-            clmul_fold_min_batch: CLMUL_FOLD_MIN_BATCH,
-        },
+        selectors: CodingSelectors::CONSERVATIVE,
         #[cfg(feature = "tuning-profile")]
         presence: CodingPresence::COMPLETE,
     };
 
     /// Builds a complete programmatic coding section.
     #[must_use]
-    pub const fn from_selectors(encode: EncodeSelectors) -> Self {
+    pub const fn from_selectors(selectors: CodingSelectors) -> Self {
         Self {
-            encode,
+            selectors,
             #[cfg(feature = "tuning-profile")]
             presence: CodingPresence::COMPLETE,
         }
     }
 
-    /// Returns the encode selector view consumed by the batch entry points.
+    /// Returns the complete coding selector view.
+    #[must_use]
+    pub const fn selectors(&self) -> &CodingSelectors {
+        &self.selectors
+    }
+
+    /// Returns the encode selector family consumed by the batch entry points.
     #[must_use]
     pub const fn encode(&self) -> &EncodeSelectors {
-        &self.encode
+        &self.selectors.encode
+    }
+
+    /// Returns the decode selector family read by
+    /// [`decide_batch_route`](crate::ldpc::decide_batch_route).
+    #[must_use]
+    pub const fn decode(&self) -> &DecodeSelectors {
+        &self.selectors.decode
     }
 }
 
 impl fmt::Debug for CodingTuning {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut debug = formatter.debug_struct("CodingTuning");
-        debug.field("encode", &self.encode);
+        debug.field("selectors", &self.selectors);
         #[cfg(feature = "tuning-profile")]
         {
-            let declared_families = usize::from(self.presence.encode);
+            let declared_families =
+                usize::from(self.presence.encode) + usize::from(self.presence.decode);
             let declared_fields = usize::from(self.presence.table_remainder_min_redundancy)
                 + usize::from(self.presence.table_remainder_min_batch)
                 + usize::from(self.presence.bitslice_interleaved_min_batch)
-                + usize::from(self.presence.clmul_fold_min_batch);
+                + usize::from(self.presence.clmul_fold_min_batch)
+                + usize::from(self.presence.lane_min_frames)
+                + usize::from(self.presence.lane_max_edges)
+                + usize::from(self.presence.granules_per_task);
             debug
                 .field("declared_families", &declared_families)
                 .field("declared_fields", &declared_fields);
@@ -163,18 +290,19 @@ impl fmt::Debug for CodingTuning {
 
 impl TuningSection for CodingTuning {
     const ID: SectionId = SectionId::from_static("gf2-coding/encode");
-    type Selectors = EncodeSelectors;
+    type Selectors = CodingSelectors;
 
     fn conservative() -> &'static Self {
         &Self::CONSERVATIVE
     }
 
     fn selectors(&self) -> &Self::Selectors {
-        &self.encode
+        &self.selectors
     }
 }
 
-/// Returns the process-wide coding tuning section and resolution provenance.
+/// Returns the process-wide coding tuning section and resolution provenance;
+/// the returned section holds every selector family.
 ///
 /// This wrapper performs the generic accessor's one `O(log s)` installed
 /// section lookup (`s` is the number of installed sections) and does not
@@ -227,64 +355,61 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
 
     fn decode_body(body: gf2_core::tuning::CanonicalValue) -> Result<CodingTuning, SectionError> {
         let selectors: JsonCodingSelectors = body.deserialize()?;
-        let (encode_present, encode) = match selectors.encode {
-            Present::Missing => (false, JsonEncode::default()),
-            Present::Value(Some(encode)) => (true, encode),
-            Present::Value(None) => {
-                return Err(SectionError::InvalidBody("null encode family".to_owned()))
-            }
-        };
-        let (redundancy_present, table_remainder_min_redundancy) =
-            match encode.table_remainder_min_redundancy {
-                Present::Missing => (false, TABLE_REMAINDER_MIN_REDUNDANCY),
-                Present::Value(Some(value)) => (true, value),
-                Present::Value(None) => {
-                    return Err(SectionError::InvalidBody(
-                        "null table_remainder_min_redundancy selector".to_owned(),
-                    ))
-                }
-            };
-        let (batch_present, table_remainder_min_batch) = match encode.table_remainder_min_batch {
-            Present::Missing => (false, TABLE_REMAINDER_MIN_BATCH),
-            Present::Value(Some(value)) => (true, value),
-            Present::Value(None) => {
-                return Err(SectionError::InvalidBody(
-                    "null table_remainder_min_batch selector".to_owned(),
-                ))
-            }
-        };
-        let (bitslice_present, bitslice_interleaved_min_batch) =
-            match encode.bitslice_interleaved_min_batch {
-                Present::Missing => (false, BITSLICE_INTERLEAVED_MIN_BATCH),
-                Present::Value(Some(value)) => (true, value),
-                Present::Value(None) => {
-                    return Err(SectionError::InvalidBody(
-                        "null bitslice_interleaved_min_batch selector".to_owned(),
-                    ))
-                }
-            };
-        let (fold_present, clmul_fold_min_batch) = match encode.clmul_fold_min_batch {
-            Present::Missing => (false, CLMUL_FOLD_MIN_BATCH),
-            Present::Value(Some(value)) => (true, value),
-            Present::Value(None) => {
-                return Err(SectionError::InvalidBody(
-                    "null clmul_fold_min_batch selector".to_owned(),
-                ))
-            }
-        };
+        let (encode_present, encode) = family_or_default(selectors.encode, "encode")?;
+        let (decode_present, decode) = family_or_default(selectors.decode, "decode")?;
+        let (redundancy_present, table_remainder_min_redundancy) = selector_or(
+            encode.table_remainder_min_redundancy,
+            TABLE_REMAINDER_MIN_REDUNDANCY,
+            "table_remainder_min_redundancy",
+        )?;
+        let (batch_present, table_remainder_min_batch) = selector_or(
+            encode.table_remainder_min_batch,
+            TABLE_REMAINDER_MIN_BATCH,
+            "table_remainder_min_batch",
+        )?;
+        let (bitslice_present, bitslice_interleaved_min_batch) = selector_or(
+            encode.bitslice_interleaved_min_batch,
+            BITSLICE_INTERLEAVED_MIN_BATCH,
+            "bitslice_interleaved_min_batch",
+        )?;
+        let (fold_present, clmul_fold_min_batch) = selector_or(
+            encode.clmul_fold_min_batch,
+            CLMUL_FOLD_MIN_BATCH,
+            "clmul_fold_min_batch",
+        )?;
+        let (lane_frames_present, lane_min_frames) =
+            selector_or(decode.lane_min_frames, LANE_MIN_FRAMES, "lane_min_frames")?;
+        let (lane_edges_present, lane_max_edges) =
+            selector_or(decode.lane_max_edges, LANE_MAX_EDGES, "lane_max_edges")?;
+        let (granules_present, granules_per_task) = selector_or(
+            decode.granules_per_task,
+            GRANULES_PER_TASK.get(),
+            "granules_per_task",
+        )?;
         Ok(CodingTuning {
-            encode: EncodeSelectors::try_new(
-                table_remainder_min_redundancy,
-                table_remainder_min_batch,
-                bitslice_interleaved_min_batch,
-                clmul_fold_min_batch,
-            )?,
+            selectors: CodingSelectors {
+                encode: EncodeSelectors::try_new(
+                    table_remainder_min_redundancy,
+                    table_remainder_min_batch,
+                    bitslice_interleaved_min_batch,
+                    clmul_fold_min_batch,
+                )?,
+                decode: DecodeSelectors::try_new(
+                    lane_min_frames,
+                    lane_max_edges,
+                    granules_per_task,
+                )?,
+            },
             presence: CodingPresence {
                 encode: encode_present,
                 table_remainder_min_redundancy: redundancy_present,
                 table_remainder_min_batch: batch_present,
                 bitslice_interleaved_min_batch: bitslice_present,
                 clmul_fold_min_batch: fold_present,
+                decode: decode_present,
+                lane_min_frames: lane_frames_present,
+                lane_max_edges: lane_edges_present,
+                granules_per_task: granules_present,
             },
         })
     }
@@ -296,32 +421,44 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
 
         let mut selectors = BTreeMap::<&str, BTreeMap<&str, usize>>::new();
         if section.presence.encode {
+            let family = section.encode();
             let mut encode = BTreeMap::new();
             if section.presence.table_remainder_min_redundancy {
                 encode.insert(
                     "table_remainder_min_redundancy",
-                    section.encode.table_remainder_min_redundancy(),
+                    family.table_remainder_min_redundancy(),
                 );
             }
             if section.presence.table_remainder_min_batch {
                 encode.insert(
                     "table_remainder_min_batch",
-                    section.encode.table_remainder_min_batch(),
+                    family.table_remainder_min_batch(),
                 );
             }
             if section.presence.bitslice_interleaved_min_batch {
                 encode.insert(
                     "bitslice_interleaved_min_batch",
-                    section.encode.bitslice_interleaved_min_batch(),
+                    family.bitslice_interleaved_min_batch(),
                 );
             }
             if section.presence.clmul_fold_min_batch {
-                encode.insert(
-                    "clmul_fold_min_batch",
-                    section.encode.clmul_fold_min_batch(),
-                );
+                encode.insert("clmul_fold_min_batch", family.clmul_fold_min_batch());
             }
             selectors.insert("encode", encode);
+        }
+        if section.presence.decode {
+            let family = section.decode();
+            let mut decode = BTreeMap::new();
+            if section.presence.lane_min_frames {
+                decode.insert("lane_min_frames", family.lane_min_frames());
+            }
+            if section.presence.lane_max_edges {
+                decode.insert("lane_max_edges", family.lane_max_edges());
+            }
+            if section.presence.granules_per_task {
+                decode.insert("granules_per_task", family.granules_per_task().get());
+            }
+            selectors.insert("decode", decode);
         }
         gf2_core::tuning::CanonicalValue::serialize(&selectors)
     }
@@ -333,6 +470,8 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
 struct JsonCodingSelectors {
     #[serde(default)]
     encode: Present<JsonEncode>,
+    #[serde(default)]
+    decode: Present<JsonDecode>,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -347,6 +486,47 @@ struct JsonEncode {
     bitslice_interleaved_min_batch: Present<usize>,
     #[serde(default)]
     clmul_fold_min_batch: Present<usize>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonDecode {
+    #[serde(default)]
+    lane_min_frames: Present<usize>,
+    #[serde(default)]
+    lane_max_edges: Present<usize>,
+    #[serde(default)]
+    granules_per_task: Present<usize>,
+}
+
+/// Returns whether `family` is present and its fields, all missing for an
+/// absent family.
+#[cfg(feature = "tuning-profile")]
+fn family_or_default<T: Default>(
+    family: Present<T>,
+    name: &str,
+) -> Result<(bool, T), SectionError> {
+    match family {
+        Present::Missing => Ok((false, T::default())),
+        Present::Value(Some(family)) => Ok((true, family)),
+        Present::Value(None) => Err(SectionError::InvalidBody(format!("null {name} family"))),
+    }
+}
+
+/// Returns whether `selector` is present and its value, `conservative` for an
+/// absent selector.
+#[cfg(feature = "tuning-profile")]
+fn selector_or(
+    selector: Present<usize>,
+    conservative: usize,
+    name: &str,
+) -> Result<(bool, usize), SectionError> {
+    match selector {
+        Present::Missing => Ok((false, conservative)),
+        Present::Value(Some(value)) => Ok((true, value)),
+        Present::Value(None) => Err(SectionError::InvalidBody(format!("null {name} selector"))),
+    }
 }
 
 #[cfg(feature = "tuning-profile")]

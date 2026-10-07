@@ -6,10 +6,9 @@ this file.
 
 ## Mission
 
-Build a research-grade, high-performance finite-field and coding-theory toolkit
-with composable APIs, standards-backed correctness, reproducible research, and
-production-safe acceleration. Optimization never relaxes mathematical or
-standards conformance.
+Build a research-grade finite-field and coding-theory toolkit with composable
+APIs, standards-backed correctness, reproducible research, and production-safe
+acceleration. Optimization never relaxes mathematical or standards conformance.
 
 ## Supported toolchain and commands
 
@@ -25,8 +24,7 @@ execution with `./scripts/cargo-budget.sh --test`.
 - For focused work, keep the `ci-test` profile and select a package or test
   expression, for example
   `cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci`.
-- Build benchmarks and receipts under `--release`; `ci-test` drops LTO and
-  understates the permanent kernels by roughly 30%.
+- Build benchmarks and receipts under `--release`; `ci-test` drops LTO.
 - Check formatting with `cargo fmt --all -- --check` and lint with
   `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
 - Build API documentation with `cargo doc --workspace --all-features --no-deps`.
@@ -44,11 +42,11 @@ release mode.
 - The host is never locked during a working session. Every timed measurement
   is a queue line for the overnight benchmark window (`GF2_BENCH_WINDOW=1`,
   exported by the window runner); outside it `dev/scripts/ccx1-bench-flock.sh`
-  refuses to run and `scripts/cargo-budget.sh` applies no budget and takes no
-  lock.
+  refuses to run and `scripts/cargo-budget.sh` applies no budget or lock.
 - `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
-- A `dev/scripts/ccx1-bench-flock.sh --full-host` run sets `CARGO_CI_NO_LOCK=1`
-  for its own cargo work; the script's header states the lock protocol.
+  `CARGO_CI_STEPS=<pcre>` runs matching steps only, no CI verdict; `^$` lists them.
+- A command run under `dev/scripts/ccx1-bench-flock.sh` must set
+  `CARGO_CI_NO_LOCK=1` for its own cargo work; the script's header states why.
 - `RAYON_NUM_THREADS` in `.cargo/config.toml` pairs with `threads-required` in
   `.config/nextest.toml`; change one and change the other. A binary run directly
   from `target/` inherits neither.
@@ -56,12 +54,13 @@ release mode.
 ## Architecture boundaries
 
 - `gf2-core` owns low-level bit storage, dense and sparse linear algebra,
-  finite-field abstractions and arithmetic, and safe runtime dispatch. It has
-  no production dependency on another gf2 workspace crate.
+  finite-field abstractions and arithmetic, and safe runtime dispatch. Its only
+  production dependency inside the workspace is `gf2-kernels-simd`.
 - `gf2-coding` owns codes, modems, channels, and coding-domain composition and
   depends inward on `gf2-core`.
-- `gf2-algebra` owns packed F_3/F_5/F_7 arithmetic and permanent algorithms; it
-  may dispatch to isolated kernels without becoming a kernel layer itself.
+- `gf2-algebra` owns packed $\mathbb{F}_3$, $\mathbb{F}_5$ and $\mathbb{F}_7$
+  arithmetic and permanent algorithms; it may dispatch to isolated kernels
+  without becoming a kernel layer itself.
 - `gf2-sim` owns the CPU/GPU simulation pipeline and orchestration. Its design
   source of truth is linked through JIT item `@/issue/ec530af9`.
 - `gf2-kernels-simd` and `gf2-kernels-hip` are the only production crates that
@@ -94,10 +93,10 @@ contract is mathematical or implemented by several backends.
 - Public APIs need rustdoc stating purpose, panics, safety conditions, and
   non-obvious complexity.
 
-The ordinary fast tier has a fifteen-second per-test kill (sixty under
+The ordinary fast tier has a default fifteen-second per-test kill (sixty under
 `BUSY_HOST_OVERRIDE=1`) and a sixty-second suite budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`
 or `#[ignore = "sim: ..."]`; normal agent work never opts into ignored tests.
-The nightly slow tier uses
+The slow tier uses
 `cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only`
 and has a 600-second budget. Tests too heavy for that tier must self-gate on
 required host data or benchmark mode, or use the configured `slow-serial` group.
@@ -117,7 +116,8 @@ checkout reproduces its acceptance verdict; CI enforces it through
 
 Keep permanent documentation under `README.md`, crate-level rustdoc, or
 `docs/`. Prefer citations or generated projections over copied facts. See
-`@/inv/single-source-prose`.
+`@/inv/single-source-prose`. Prose and Rustdoc reference a JIT issue as
+`@/issue/<short-id>`, the form the mechanical documentation check resolves.
 
 ## Planning, proof, and change discipline
 

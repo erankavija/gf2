@@ -94,7 +94,7 @@ ENTRY_POINTS = [
     {
         "id": "dense-matvec",
         "package": CORE,
-        "entries": ["BitMatrix::matvec"],
+        "entries": ["BitMatrix::matvec", "BitMatrix::matvec_with_route"],
         "routes": [
             ("scalar row parity", "stride below the threshold, no `simd` feature, or no bundle"),
             ("AVX2 fused AND-popcount per row",
@@ -106,7 +106,8 @@ ENTRY_POINTS = [
         "private": [],
         "witness": "BitMatrix::matvec",
         "claims": ["matvec-threshold-conservative", "matvec-threshold-baked-alias",
-                   "matvec-threshold-read", "matvec-bundle-check", "matvec-fused-kernel"],
+                   "matvec-threshold-read", "matvec-bundle-check", "matvec-fused-kernel",
+                   "matvec-lane-entry"],
     },
     {
         "id": "bit-transpose",

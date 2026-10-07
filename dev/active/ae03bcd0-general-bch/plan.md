@@ -9,7 +9,7 @@
 |---|---|---|
 | REQ-01 | One approved extension design, then a gf2-core trait with validation certificates, plus exact-order and minimal-polynomial-over-subfield operations on it | [Investigation](investigation.md) claims 5, 7 |
 | REQ-02 | Runtime quotient extension defines the pair's semantics; compile-time form proves observable equivalence; deterministic Conway/search selection extends the existing registry | Investigation claims 6, 8 |
-| REQ-03 | `BchSpec` variants carry only independent inputs; one construct path derives closure, generator, $k$, bound, radius; convenience constructors delegate | Investigation claim 1; [brief](../../plans/ae03bcd0-general-bch/planning-brief.md) API shape |
+| REQ-03 | `BchSpec` variants carry only independent inputs; one construct path derives closure, generator, $k$, bound, radius; convenience constructors delegate | Investigation claim 1; [brief](plans/planning-brief.md) API shape |
 | REQ-04 | Validation set plus the layered `error-surface` contract: core-owned IO errors, coding-general code/transform errors, BCH errors composing them | Investigation claim 1 |
 | REQ-05 | Coordinate-map abstraction first; shorten/puncture derive dimension by rank; extension is the zero-sum coordinate | Investigation claim 14 |
 | REQ-06 | Trait surface fixed in the API design, implemented once with binary specializations and a named compatibility boundary; erased handles layered on top | Investigation claims 3, consumer inventory |
@@ -433,7 +433,7 @@ The manifest's `source_refs` resolve in this declared universe:
   verification", `INV-ARCH` = "Architecture fit", `INV-UNKNOWNS` = "Open
   unknowns". Exhaustive consumer and file inventories live there.
 - `BRIEF-*` — sections of the
-  [planning brief](../../plans/ae03bcd0-general-bch/planning-brief.md):
+  [planning brief](plans/planning-brief.md):
   `BRIEF-API` = "API shape", `BRIEF-DISPATCH` = "Encoding architecture",
   `BRIEF-DIAGNOSTIC` = the decoder-diagnostic bullet of "API shape",
   `BRIEF-HELPERS` = the count-based-conveniences bullet of "API shape",

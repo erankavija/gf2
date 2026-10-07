@@ -8,11 +8,11 @@ planner relocates it.
 
 The conventions apply to documents under this repository's development root,
 `dev/`. What archival does with an artifact follows from the class of the area
-holding it; the [development documentation index](index.md) lists the areas and
-their classes, and covers where a new document goes. Permanent documentation
-under `README.md`, rustdoc, and `docs/` lies outside the reach of a plan, so it
-is retained where it is rather than relocated, even when a development document
-links it.
+holding it, declared in the `[documentation]` table of `.jit/config.toml`; the
+[development directory index](index.md) covers where a new document goes.
+Permanent documentation under `README.md`, rustdoc, and `docs/` lies outside
+the reach of a plan, so it is retained where it is rather than relocated, even
+when a development document links it.
 
 ## Link Validation
 
@@ -71,8 +71,8 @@ same plan, preserving their arrangement relative to the document, so the links
 resolve at the destination. Preview, then execute:
 
 ```bash
-jit archive document dev/active/<issue>/encoder-timing-closure.md
-jit archive document dev/active/<issue>/encoder-timing-closure.md --execute
+jit archive document dev/active/<epic-short-id>-<slug>/encoder-timing-closure.md
+jit archive document dev/active/<epic-short-id>-<slug>/encoder-timing-closure.md --execute
 ```
 
 ### Pattern 2: Shared Assets (Use Sparingly)
@@ -85,8 +85,7 @@ root-relative:
 ```
 
 Shared assets need coordination during archival, so reserve them for reference
-curves and comparison data that outlive any one issue — which is why
-`reference_data/` and `simulation_results/` are permanent areas.
+curves and comparison data that outlive any one issue.
 
 ### Pattern 3: External Assets
 

@@ -30,7 +30,7 @@
 //
 // `--smoke` runs every operation at n=16 with single warmup/iter and
 // performs an internal correctness oracle for each new operation
-// row (per `dev/plans/sota_reference_acceptance_protocol.md` § 6):
+// row (per `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6):
 // minpoly is verified monic and divides charpoly. Smoke output is
 // still emitted as CSV; the protocol's gf2-core cross-check runs in
 // the parent process (`benchmarks/smoke.sh`).

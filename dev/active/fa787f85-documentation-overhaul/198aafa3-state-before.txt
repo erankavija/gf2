@@ -1,0 +1,71 @@
+# closure generators
+dev/active/1a379447-zen3-cpu-performance/1d4fd63d/make-external-producing-inputs.py exit=0 closure-lines=0
+dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-producing-inputs.py exit=0 closure-lines=0
+dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-logical-producing-inputs.py exit=0 closure-lines=0
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-shift-producing-inputs.py exit=0 closure-lines=0
+# relative Cargo path dependencies
+dev/active/19513245/survey/consumer/Cargo.toml:25:byte-field-arm-common = { path = "../../../6c6b09b1/survey/arm-common" }
+dev/active/19513245/survey/consumer/Cargo.toml:26:byte-field-gf2-side = { path = "../../../6c6b09b1/survey/gf2-side" }
+dev/active/19513245/survey/field-laws/Cargo.toml:18:byte-field-gf2-side = { path = "../../../6c6b09b1/survey/gf2-side" }
+dev/active/1a379447-zen3-cpu-performance/07ca8585/survey/arms/Cargo.toml:33:ldpc-survey-harness = { path = "../../../../c077a88b/survey/harness" }
+dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.toml:26:ldpc-survey-harness = { path = "../../../../c077a88b/survey/harness" }
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml:24:byte-field-arm-common = { path = "../../../6c6b09b1/survey/arm-common" }
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml:25:byte-field-gf2-side = { path = "../../../6c6b09b1/survey/gf2-side" }
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml:26:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "test-support"] }
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml:29:gf256-axpy-arm = { path = "../../../ad2a6a58/survey/axpy-arm" }
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml:32:tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+dev/active/53c5a8c0/survey/arms/Cargo.toml:19:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+dev/active/53c5a8c0/survey/arms/Cargo.toml:20:gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+dev/active/53c5a8c0/survey/arms/Cargo.toml:21:tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+dev/active/6c6b09b1/survey/analysis/Cargo.toml:20:tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+dev/active/6c6b09b1/survey/arm-common/Cargo.toml:21:tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+dev/active/6c6b09b1/survey/ext-side/Cargo.toml:19:byte-field-arm-common = { path = "../arm-common" }
+dev/active/6c6b09b1/survey/field-laws/Cargo.toml:18:byte-field-gf2-side = { path = "../gf2-side" }
+dev/active/6c6b09b1/survey/field-laws/Cargo.toml:19:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "test-support"] }
+dev/active/6c6b09b1/survey/gf2-side/Cargo.toml:19:byte-field-arm-common = { path = "../arm-common" }
+dev/active/6c6b09b1/survey/gf2-side/Cargo.toml:20:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml:18:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml:19:gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml:20:gf2-coding = { path = "../../../../../crates/gf2-coding", features = ["test-support"] }
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml:21:tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml:21:byte-field-arm-common = { path = "../../../6c6b09b1/survey/arm-common" }
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml:22:byte-field-gf2-side = { path = "../../../6c6b09b1/survey/gf2-side" }
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml:23:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "test-support"] }
+dev/active/c077a88b/survey/harness/Cargo.toml:26:gf2-coding = { path = "../../../../../crates/gf2-coding" }
+dev/active/c077a88b/survey/harness/Cargo.toml:27:tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+dev/active/c077a88b/survey/harness/Cargo.toml:28:gf2-core = { path = "../../../../../crates/gf2-core" }
+dev/active/c077a88b/survey/harness/Cargo.toml:29:gf2-sim = { path = "../../../../../crates/gf2-sim", features = ["test-support"] }
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml:19:gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd"] }
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml:20:gf2-kernels-simd = { path = "../../../../../crates/gf2-kernels-simd" }
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml:21:tuning-campaign-support = { path = "../../../../../dev/tools/tuning-campaign-support" }
+dev/active/f63a2464/survey/arms/Cargo.toml:25:ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
+dev/active/f63a2464/survey/arms/Cargo.toml:26:ldpc-throughput-harness = { path = "../../../1a379447-zen3-cpu-performance/3be770d5/survey/harness" }
+dev/active/f63a2464/survey/arms/Cargo.toml:27:ldpc-candidate-prototypes = { path = "../prototypes" }
+dev/active/f63a2464/survey/arms/Cargo.toml:28:gf2-coding = { path = "../../../../../crates/gf2-coding" }
+dev/active/f63a2464/survey/arms/Cargo.toml:29:tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+dev/active/f63a2464/survey/prototypes/Cargo.toml:21:gf2-coding = { path = "../../../../../crates/gf2-coding" }
+dev/active/f63a2464/survey/prototypes/Cargo.toml:22:gf2-core = { path = "../../../../../crates/gf2-core" }
+dev/active/f63a2464/survey/prototypes/Cargo.toml:25:ldpc-survey-harness = { path = "../../../c077a88b/survey/harness" }
+# code that counts directory levels
+dev/active/4c1e441f/survey/gemm-arm/tests/request_mirror.rs:16:        .ancestors()
+dev/active/53c5a8c0/survey/arms/src/bin/crossover-validate.rs:20:#[path = "../gf2x_backend.rs"]
+dev/active/53c5a8c0/survey/arms/src/bin/gf2x-poly-arm.rs:8:#[path = "../gf2x_backend.rs"]
+dev/active/53c5a8c0/survey/arms/src/bin/profile-arm.rs:36:#[path = "../gf2x_backend.rs"]
+dev/active/53c5a8c0/survey/run-profile.sh:58:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/6c6b09b1/survey/arm-common/src/lib.rs:129:    const RUNNER: &str = include_str!("../../../../../tools/tuning-campaign-support/src/arm.rs");
+dev/active/6c6b09b1/survey/fetch-build.sh:37:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/6fb89a3c/survey/summarize.py:366:        "an external arm those campaigns support is withdrawn ([findings](../../active/6fb89a3c/findings.md) §4 and §5). "
+dev/active/6fb89a3c/survey/verify-arm-framing.py:55:            capture_output=True, cwd=ROOT.parents[3], env=env,
+dev/active/6fb89a3c/survey/verify-bit-mapping.py:26:GENERATORS_PATH = ROOT.parents[2] / "bench_results" / "4e732b56" / "generators.txt"
+dev/active/6fb89a3c/survey/verify-bit-mapping.py:78:        cwd=ROOT.parents[3], text=True, capture_output=True, env=env,
+dev/active/6fb89a3c/survey/verify-bit-mapping.py:161:        [str(GF2_DUMP_CHECK), "bch-genmatrix", name, route], cwd=ROOT.parents[3],
+dev/active/6fb89a3c/survey/verify-bit-mapping.py:166:        cwd=ROOT.parents[3], text=True, capture_output=True,
+dev/active/6fb89a3c/survey/verify-warm-pass.py:42:REPO = ROOT.parents[3]
+dev/active/c077a88b/survey/fetch-build.sh:21:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/c077a88b/survey/make-inputs.sh:17:REPO="$(cd "${HERE}/../../../.." && pwd)"
+dev/active/c7113c5a/survey/gf2-side/src/bin/dot-reduction-probe.rs:40:#[path = "../gf2x_backend.rs"]
+dev/active/c7113c5a/survey/gf2-side/src/bin/gf2x-poly-arm.rs:9:#[path = "../gf2x_backend.rs"]
+dev/active/c7113c5a/survey/gf2-side/src/bin/poly-validate.rs:28:#[path = "../gf2x_backend.rs"]
+dev/active/c7113c5a/survey/inspect-sources.py:170:     "../../lowlevel/mul1cl.c", 1,
+dev/active/c7113c5a/survey/inspect-sources.py:176:     "../../lowlevel/mul4clk.c", 1,
+dev/active/c7113c5a/survey/inspect-sources.py:182:     "../../lowlevel/mul9cl.c", 1,

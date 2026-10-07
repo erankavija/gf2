@@ -8,13 +8,14 @@
 | CI compilers | stable Rust for the build, test, lint and doc battery; Rust 1.95.0 for the `gf2-sim` compile-fail guard | [`ci.yml`](../../.github/workflows/ci.yml) |
 | Lean proofs | the toolchain pinned in [`lean-toolchain`](../../proofs/lean-toolchain), installed through elan | [formal verification how-to](../how-to/formal-verification.md) |
 | Lean regeneration | patched Charon and Aeneas with a pinned Rust nightly | [formal verification how-to](../how-to/formal-verification.md) |
-| GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`); tested with ROCm 7.2 | [`build.rs`](../../crates/gf2-kernels-hip/build.rs), [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs) |
+| GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`) | [`build.rs`](../../crates/gf2-kernels-hip/build.rs), [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs) |
 
 ## Operating systems
 
 CI builds and tests on GitHub's `ubuntu-latest` runner, so Linux on x86_64 is
-the tested platform. `gf2-core`, `gf2-coding`, `gf2-algebra`, `gf2-stats` and
-`gf2-kernels-simd` contain no operating-system-specific code. `gf2-sim` uses
+the tested platform. The library sources of `gf2-core`, `gf2-coding`,
+`gf2-algebra`, `gf2-stats` and `gf2-kernels-simd` contain no
+operating-system-specific code. `gf2-sim` uses
 `std::os::fd` and builds only on Unix targets. Off Linux, its campaign
 filesystem layer opens paths with `O_NOFOLLOW` in place of `openat2`
 no-symlink resolution, and permanent-campaign provenance emission refuses with
@@ -24,13 +25,14 @@ links `libamdhip64`.
 
 ## CPU
 
-Every SIMD kernel bundle has a scalar fallback. With the `simd` feature, the
-first call probes the CPU and binds a kernel bundle for the life of the
-process:
+Every SIMD kernel bundle has a scalar fallback. The first call probes the CPU
+and binds a kernel bundle for the life of the process;
+[Select the instruction set](../how-to/select-acceleration.md#select-the-instruction-set)
+states which detection the `simd` feature gates:
 
-- x86 and x86_64 hosts with AVX2 select the `gf2-kernels-simd` kernels; individual
-  bundles additionally require FMA, BMI2, PCLMULQDQ, VPCLMULQDQ, SSE4.1 or
-  POPCNT and fall back to scalar code when a required extension is absent.
+- On x86 and x86_64, a bundle binds when the host reports the extensions it
+  requires, drawn from AVX2, FMA, BMI2, PCLMULQDQ, VPCLMULQDQ, SSE4.1 and
+  POPCNT, and otherwise falls back to scalar code.
 - AVX-512 hosts run the AVX2 kernels; no AVX-512 kernel is dispatched.
 - AArch64 and other architectures run the scalar path.
 
@@ -42,7 +44,7 @@ objects for the targets listed in its `GFX_TARGETS`; gfx1030 is mandatory and
 the others are best-effort. `gf2_kernels_hip::host::GfxTarget::detect` returns
 `HipError::UnsupportedArch` for a device without a compiled object, and the
 `gf2-sim` dispatcher falls back to the CPU stage; a host without a visible
-device yields `HipError::NoDevice`, which `gf2-sim` reports as
+device yields `HipError::NoDevice`, which that dispatcher reports as
 `FatalError::DeviceUnavailable`. The kernel set is listed in the
 [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs).
 
@@ -57,7 +59,7 @@ features in other crates.
 | [`gf2-core`](../../crates/gf2-core/Cargo.toml) | `rand`, `io` | none |
 | [`gf2-coding`](../../crates/gf2-coding/Cargo.toml) | `simd`, `sim-observability` | `simd`, `parallel`, `visualization`, `tuning-profile` enable the same `gf2-core` feature; `bench-csv` enables `gf2-core/test-support`; `hip` enables `gf2-kernels-hip/hip` |
 | [`gf2-algebra`](../../crates/gf2-algebra/Cargo.toml) | `simd`, `parallel`, `f5`, `f7` | `simd`, `parallel`, `tuning-profile` enable the same `gf2-core` feature; `hip` enables `gf2-kernels-hip/hip` |
-| [`gf2-sim`](../../crates/gf2-sim/Cargo.toml) | none | `hip` enables `gf2-coding/hip` and `gf2-algebra/hip`; `llr-f64` enables `gf2-coding/llr-f64` |
+| [`gf2-sim`](../../crates/gf2-sim/Cargo.toml) | none | `hip` enables `gf2-coding/hip` and `gf2-algebra/hip` |
 | [`gf2-kernels-simd`](../../crates/gf2-kernels-simd/Cargo.toml) | none | none; `avx2` and `avx512` gate no code |
 | [`gf2-kernels-hip`](../../crates/gf2-kernels-hip/Cargo.toml) | none | none |
 | [`gf2-stats`](../../crates/gf2-stats/Cargo.toml) | no features | none |

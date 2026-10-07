@@ -17,9 +17,6 @@
 //!
 //! Correctness equivalence between the strategies is enforced by the
 //! `correctness_*` tests in this file.
-//!
-//! See `dev/plans/r4_simd_batching_decision.md` for the decision document
-//! produced from running this bench.
 
 #![allow(clippy::missing_safety_doc, unused_unsafe)]
 

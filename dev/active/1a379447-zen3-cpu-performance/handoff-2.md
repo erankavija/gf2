@@ -48,7 +48,7 @@
 
 ## Traps — do not repeat these
 
-- **The prior handoff's Git-object/ancestry demands are superseded.** Its F1/F2 instructions and matching traps conflict with the user's explicit amendment, recorded in [provenance clarification](../f547c394/provenance-clarification.md). Content snapshots and the premeasurement execution record establish provenance. Git IDs, availability, ancestry and whole-repository dirty status never control acceptance or resume. Missing content and distinct-pilot requirements remain.
+- **The prior handoff's Git-object/ancestry demands are superseded.** Its F1/F2 instructions and matching traps conflict with the user's explicit amendment, recorded in [provenance clarification](f547c394/provenance-clarification.md). Content snapshots and the premeasurement execution record establish provenance. Git IDs, availability, ancestry and whole-repository dirty status never control acceptance or resume. Missing content and distinct-pilot requirements remain.
 - **Do not treat a single checked addendum as complete freezing.** R2 F1 demonstrates that protocol, contract, schema, producing inputs, plan, toolchain, settings and executable identities must correspond to the same recorded premeasurement facts. Reuse canonical typed comparisons and cover the category behaviorally.
 - **Do not assume artifact files are tracked because local acceptance passes.** `.gitignore` ignores nested `Cargo.lock` files. Both producing snapshots initially omitted required locks from publication. Force-add exact required snapshot files and validate exported committed artifact trees.
 - **Do not invoke `nextest` directly through the budget wrapper.** Luna omitted `cargo` and got `ionice: failed to execute nextest`; `cargo-nextest` was already installed. Correct command starts `./scripts/cargo-budget.sh --test cargo nextest`.
@@ -65,7 +65,7 @@ None. The immediate stop is explicit; further work needs a resumed invocation, n
 ## Reference artefacts
 
 - Epic: `jit issue show 1a379447`; protocol task: `jit issue show f547c394`.
-- [Approved plan review](plan-review.md), [measurement contract](measurement-contract.md), [protocol](../f547c394/protocol.md), [schema](../f547c394/addendum.schema.json), [design](../f547c394/design.md), [producing inputs](../f547c394/producing-inputs.json).
+- [Approved plan review](plan-review.md), [measurement contract](measurement-contract.md), [protocol](f547c394/protocol.md), [schema](f547c394/addendum.schema.json), [design](f547c394/design.md), [producing inputs](f547c394/producing-inputs.json).
 - [Prior code-review R1](reviews/f547c394-r1.md), [R2](reviews/f547c394-r2.md), latest formal verdict. There is no passing final review yet.
 - [Pilot receipt](../../bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json), [confirmation receipt](../../bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json), [launcher](../../bench_results/f547c394/run-smoke.sh). Each receipt directory contains raw checkpoints, execution/launcher logs, acceptance projections and portable input snapshots.
 - [Canonical invariant registry](../../../.jit/invariants.toml); projection: [AGENTS.md](../../../AGENTS.md).

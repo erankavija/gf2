@@ -2,7 +2,7 @@
 
 This is a read-only investigation of the checkout at HEAD `c7834d96`. The epic
 contract is in `.jit/issues/ae03bcd0-8881-4308-99f5-cad2b3c717d1.json:1-45`;
-the planning brief is in `dev/plans/ae03bcd0-general-bch/planning-brief.md:10-66`.
+the planning brief is in `dev/active/ae03bcd0-general-bch/plans/planning-brief.md:10-66`.
 The brief is planning input, not evidence of implementation. No Cargo build,
 test suite, JIT command, source edit, or `.jit` mutation was performed.
 
@@ -127,7 +127,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
 
 12. **`already-done` for the existing pipeline, qualified for GF(2^m).** The
    documented pipeline verifies `gfp/` and `gfpn/` arithmetic and extracts
-   field-trait declarations with opaque bodies (`docs/lean4-verification-pipeline.md:18-25`).
+   field-trait declarations with opaque bodies (`dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md:18-25`).
    The current extraction surface makes `gfp/` and `gfpn/` transparent, starts
    from raw GF(2^m) multiplication, and marks runtime `gf2m::field`,
    `gf2m::generation`, `field`, `matrix`, `primitive_polys`, and related
@@ -137,7 +137,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
    inverse progress obligations (`proofs/Gf2Core/Proofs/Gf2mDefs.lean:1-27`;
    `Gf2mProgress.lean:1-15,69-114`). `scripts/verify-lean.sh` feeds the Charon /
    Aeneas extraction and then the Lean build; the committed build gate is
-   `cd proofs && lake build` (`docs/lean4-verification-pipeline.md:73-85,180-191`).
+   `cd proofs && lake build` (`dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md:73-85,180-191`).
    Therefore “binary-extension arithmetic is proven/extracted” is true for the
    raw bounded path, not for the runtime field-carrying implementation or
    `FieldPoly`; the latter remains behind the opaque `field` surface.
@@ -179,12 +179,12 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
 
 ## Prior art
 
-- `dev/plans/ae03bcd0-general-bch/planning-brief.md:22-47` fixes the intended
+- `dev/active/ae03bcd0-general-bch/plans/planning-brief.md:22-47` fixes the intended
   semantic shape: `BchSpec` as the independent-input model, one
   `BchCode::construct` path, generic derived wrappers, a diagnostic decoder,
   and separate algorithm-family versus AVX2 dispatch. It also explicitly keeps
   stronger Hartmann–Tzeng/Roos bounds out of scope (`brief.md:10-18`).
-- `dev/plans/field_poly_module_overview.md:14-26,37-59` is the current reader
+- `dev/archive/legacy/dev/plans/field_poly_module_overview.md:14-26,37-59` is the current reader
   map for `FieldPoly`, `FieldVec`, batch polynomial operations, and the shared
   axiom-test harness. It identifies `FieldPoly` as the single source of truth
   and records the existing generic division/GCD/evaluation/product surface.
@@ -202,7 +202,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
   CPU BM/Chien, exact small fixtures, simulation identity tests, and a manual
   throughput executable. It should be treated as prior implementation evidence,
   not as a plan to rediscover.
-- `dev/plans/sota_target_matrix.md:9-24,126-145,170-182` establishes the
+- `dev/archive/97bf0879-gf2-core-sota-performance/plans/sota_target_matrix.md:9-24,126-145,170-182` establishes the
   benchmark-receipt convention and the pinned external-library landscape. It
   also records that GF(2^m) external reference coverage is incomplete for many
   matrix operations (`sota_target_matrix.md:226-244`). The FLINT and NTL
@@ -281,7 +281,7 @@ Documentation, campaign, data, presentation, and development references:
 
 Historical JIT/development references are also present in
 `.jit/events.jsonl`, the BCH-related `.jit/issues/*.json` records, and these
-tracked development documents: `dev/active/DOCUMENTATION_AUDIT.md`,
+tracked development documents: `dev/archive/legacy/dev/active/DOCUMENTATION_AUDIT.md`,
 `dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md`,
 `dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv`,
 the `dev/archive/6efb756b-grand/active/` handoffs/completions, the
@@ -460,7 +460,7 @@ matches are through BCH/eBCH consumers listed above.
   `None`, with safe scalar selection above it (`gf2-kernels-simd/src/x86/mod.rs:37-43`;
   `src/lib.rs:80-108`).
 - **Research evidence.** Use the SOTA target matrix’s pinned reference and
-  receipt convention (`dev/plans/sota_target_matrix.md:9-24,155-170`) and the
+  receipt convention (`dev/archive/97bf0879-gf2-core-sota-performance/plans/sota_target_matrix.md:9-24,155-170`) and the
   existing Criterion/CSV benchmark harnesses rather than embedding hand-written
   performance claims. Existing BCH benches are a baseline, while the current
   HIP benchmark is a manually invoked simulation executable
@@ -482,7 +482,7 @@ matches are through BCH/eBCH consumers listed above.
 - It is not yet verified which external libraries can serve as independent
   *BCH encoder* and *generator-materialization* oracles; the SOTA matrix mostly
   covers linear algebra and explicitly records GF(2^m) oracle gaps
-  (`dev/plans/sota_target_matrix.md:226-244`).
+  (`dev/archive/97bf0879-gf2-core-sota-performance/plans/sota_target_matrix.md:226-244`).
 - The current HIP path is binary GF(2^m), table-backed, and CPU-completes the
   decoder. Equivalence after a future typed decoder result and canonical
   construction cutover is not yet demonstrated; current tests establish only

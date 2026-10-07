@@ -436,6 +436,7 @@ mod tests {
     use crate::permanent::ryser::permanent_ryser;
     use crate::testutil::random_matrix;
     use gf2_core::gfp::Fp;
+    use gf2_core::kernels::backend::contract::{assert_each, Implementation};
 
     fn to_bipedal3_matrix(row_major: &[Fp<3>], n: usize) -> Bipedal3Matrix {
         Bipedal3Matrix::from_row_major(row_major, n, n)
@@ -565,17 +566,17 @@ mod tests {
     /// empty/identity/all-ones/zero-row contract.
     #[test]
     fn test_shared_permanent_backend_behavioral_suite() {
-        let mut backends: Vec<(&str, BatchBackend)> = vec![
+        let backends: Vec<(&str, BatchBackend)> = vec![
             ("generic Ryser", ryser_batch_backend),
             ("paper reference", reference_batch_backend),
             ("scalar bipedal", scalar_batch_backend),
             ("public dispatcher", dispatcher_batch_backend),
             ("four-lane batch", permanent_bipedal3_batch),
+            #[cfg(feature = "parallel")]
+            ("parallel bipedal", parallel_batch_backend),
+            #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+            ("singleword SIMD", singleword_simd_batch_backend),
         ];
-        #[cfg(feature = "parallel")]
-        backends.push(("parallel bipedal", parallel_batch_backend));
-        #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
-        backends.push(("singleword SIMD", singleword_simd_batch_backend));
 
         for (name, backend) in backends {
             shared_permanent_behavioral_suite(name, backend);
@@ -694,44 +695,72 @@ mod tests {
         }
     }
 
-    /// Cross-check SIMD vs scalar for `trials` random `n × n` matrices;
-    /// returns without checking when AVX2 is not detected.
-    #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
-    fn simd_vs_scalar_cross_check(n: usize, trials: u64, seed_base: u64) {
-        let fns = match super::maybe_bipedal_avx2() {
-            Some(fns) => fns,
-            None => {
-                eprintln!(
-                    "simd_vs_scalar_cross_check: AVX2 not detected; skipping n={n} cross-check"
-                );
-                return;
-            }
-        };
-        for trial in 0u64..trials {
-            let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-            let row_major = random_matrix::<3>(n, seed);
-            let mat = to_bipedal3_matrix(&row_major, n);
-            let simd_result = permanent_bipedal3_singleword_simd(&mat, &fns);
-            let scalar_result = permanent_bipedal3_singleword(&mat);
-            assert_eq!(
-                simd_result, scalar_result,
-                "T13 SIMD/scalar mismatch: n={n}, trial={trial}, seed={seed:#018x}"
-            );
+    type Kernel = Box<dyn Fn(&Bipedal3Matrix) -> Fp<3>>;
+
+    /// The single-matrix kernels of this build: the portable one on every
+    /// host, and the AVX2 one when the `simd` feature is on and detected.
+    fn singleword_kernels() -> Vec<Implementation<Kernel>> {
+        let scalar: Kernel = Box::new(permanent_bipedal3_singleword);
+        #[allow(unused_mut)]
+        let mut kernels = vec![Implementation::new("bipedal3 singleword scalar", scalar)];
+        #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+        if let Some(fns) = maybe_bipedal_avx2() {
+            let simd: Kernel = Box::new(move |mat| permanent_bipedal3_singleword_simd(mat, &fns));
+            kernels.push(Implementation::new("bipedal3 singleword avx2", simd));
         }
+        kernels
     }
 
-    /// Stub without a SIMD path: compares the scalar kernel with itself.
-    #[cfg(not(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64"))))]
+    /// Row-major `n x n` matrix whose diagonal blocks of order 8 are random
+    /// and whose other entries are zero, with its permanent: the product of
+    /// the blocks' permanents, each from the reference definition.
+    fn block_diagonal_case(n: usize, seed: u64) -> (Vec<Fp<3>>, Fp<3>) {
+        const BLOCK: usize = 8;
+        assert_eq!(n % BLOCK, 0);
+        let mut entries = vec![Fp::<3>::new(0); n * n];
+        let mut permanent = Fp::<3>::new(1);
+        for block in 0..n / BLOCK {
+            let sub = random_matrix::<3>(BLOCK, seed.wrapping_add(block as u64));
+            permanent = permanent * permanent_mod3_reference(&sub, BLOCK);
+            for i in 0..BLOCK {
+                for j in 0..BLOCK {
+                    entries[(block * BLOCK + i) * n + block * BLOCK + j] = sub[i * BLOCK + j];
+                }
+            }
+        }
+        (entries, permanent)
+    }
+
+    /// Every kernel of this build agrees with the reference definition on
+    /// `trials` random `n x n` matrices (`n <= 16`) or block-diagonal ones
+    /// (larger `n`, where the reference is out of reach for a dense matrix),
+    /// and on dense random matrices with each other.
     fn simd_vs_scalar_cross_check(n: usize, trials: u64, seed_base: u64) {
+        let kernels = singleword_kernels();
+        assert_each(&kernels, |kernel| {
+            for trial in 0u64..trials {
+                let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
+                let (entries, expected) = if n <= 16 {
+                    let entries = random_matrix::<3>(n, seed);
+                    let expected = permanent_mod3_reference(&entries, n);
+                    (entries, expected)
+                } else {
+                    block_diagonal_case(n, seed)
+                };
+                assert_eq!(
+                    kernel(&to_bipedal3_matrix(&entries, n)),
+                    expected,
+                    "T13 kernel/reference mismatch: n={n}, trial={trial}, seed={seed:#018x}"
+                );
+            }
+        });
         for trial in 0u64..trials {
             let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-            let row_major = random_matrix::<3>(n, seed);
-            let mat = to_bipedal3_matrix(&row_major, n);
-            let a = permanent_bipedal3_singleword(&mat);
-            let b = permanent_bipedal3_singleword(&mat);
-            assert_eq!(
-                a, b,
-                "T13 scalar-vs-scalar mismatch (should be impossible): n={n}, trial={trial}, seed={seed:#018x}"
+            let mat = to_bipedal3_matrix(&random_matrix::<3>(n, seed ^ 0x5eed), n);
+            let results: Vec<_> = kernels.iter().map(|k| (k.subject)(&mat)).collect();
+            assert!(
+                results.windows(2).all(|pair| pair[0] == pair[1]),
+                "T13 kernels disagree: n={n}, trial={trial}, seed={seed:#018x}, results={results:?}"
             );
         }
     }
@@ -754,13 +783,13 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "sim: T13 SIMD/scalar cross-check n=24, 100 matrices (≈ 5 s)"]
+    #[ignore = "sim: T13 SIMD/scalar cross-check n=24, 100 matrices (2^24 steps each)"]
     fn test_simd_vs_scalar_n24_slow() {
         simd_vs_scalar_cross_check(24, 100, 0x686e_e1b5_1000_0018_u64);
     }
 
     #[test]
-    #[ignore = "slow: T13 SIMD/scalar cross-check n=32 (2^32 steps ≈ 6 s/matrix)"]
+    #[ignore = "slow: T13 SIMD/scalar cross-check n=32 (2^32 steps per kernel and matrix)"]
     fn test_simd_vs_scalar_n32() {
         simd_vs_scalar_cross_check(32, 1, 0x686e_e1b5_0000_0020_u64);
     }

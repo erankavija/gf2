@@ -70,10 +70,10 @@ None. Settled at session end (recorded in `progress.json` `notes`): `AGENTS.md` 
 
 - Epic: `jit issue show 1a379447`; measurement contract `measurement-contract.md`; worker brief `worker-brief.md`.
 - Shared smoke: `dev/tools/tuning-campaign-support/src/arm.rs`, `src/bin/benchmark-ab-runner.rs` (`smoke`, `check`), `tests/protocol_contracts.rs`; issue `d45aff82`.
-- Shift story: `dev/active/c04dd4ac-zen3-shifts-and-permutations/` (`plan.md`, `breakdown.json`, `shift-feasibility-record.md`); kernel `crates/gf2-kernels-simd/src/x86/shift_funnel.rs`, dispatch `crates/gf2-core/src/residual_shift.rs`, `dev/active/f8dd4dde/`.
-- Dense harness: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/` (`dense-parity-conformance.md`, `dense-parity-harness.md`, `survey/run-dense-harness.sh`).
+- Shift story: `dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/` (`plan.md`, `breakdown.json`, `shift-feasibility-record.md`); kernel `crates/gf2-kernels-simd/src/x86/shift_funnel.rs`, dispatch `crates/gf2-core/src/residual_shift.rs`, `dev/active/f8dd4dde/`.
+- Dense harness: `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/` (`dense-parity-conformance.md`, `dense-parity-harness.md`, `survey/run-dense-harness.sh`).
 - DVB profile: `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md`, `dvb-interleave-profile-tables.md`.
-- A/B families: `dev/active/ad2a6a58/`, `dev/active/4c1e441f/`, shared generators `dev/scripts/campaign_*.py`, `verify-campaign-log.py`, `smoke-campaign-arms.sh`.
+- A/B families: `dev/active/1a379447-zen3-cpu-performance/ad2a6a58/`, `dev/active/1a379447-zen3-cpu-performance/4c1e441f/`, shared generators `dev/scripts/campaign_*.py`, `verify-campaign-log.py`, `smoke-campaign-arms.sh`.
 - Window: `bench-window/run-window.sh`, `bench-window/queue.tsv`, state `.agents/bench-window/`.
 - History rewrite: `subject-rewrite-sha-map.tsv`, tag `archive/main-before-subject-rewrite`.
 - Reviews: `reviews/85fc5ff4-r1.md`, `reviews/f8dd4dde-r1.md`.

@@ -7,12 +7,12 @@ layer; application code calls the safe APIs of `gf2-core`, `gf2-algebra` and
 
 ## Role
 
-Each kernel family exports a safe `detect` function that returns a bundle of
-function pointers. All families except `modem` return `Option` and yield `None`
-when the host lacks a required CPU extension; consuming crates cache the bundle
-and run scalar code on `None`. The `modem` detectors always return a bundle
-that holds scalar or AVX2 entries. The families
-cover logical bit operations and population counts, $\mathrm{GF}(p)$ and
+The kernel families export safe `detect` functions that return bundles of
+function pointers. Most return `Option` and yield `None` when the host lacks a
+required CPU extension, and consuming crates run scalar code on `None`. The
+`modem` and `transpose` detectors return a bundle on every host, with scalar
+entries where no vector kernel applies. The families
+include logical bit operations and population counts, $\mathrm{GF}(p)$ and
 $\mathrm{GF}(2^m)$ arithmetic, BCH encoding, LLR and modem arithmetic, and
 packed $\mathbb{F}_3$/$\mathbb{F}_5$/$\mathbb{F}_7$ operations. The
 architecture is described in
@@ -20,16 +20,16 @@ architecture is described in
 
 ## Supported targets
 
-- x86 and x86_64 with AVX2; individual bundles also require FMA, BMI2,
-  PCLMULQDQ, VPCLMULQDQ, SSE4.1 or POPCNT.
+- x86 and x86_64; a bundle requires extensions drawn from AVX2, FMA, BMI2,
+  PCLMULQDQ, VPCLMULQDQ, SSE4.1 and POPCNT.
 - AVX-512 hosts run the AVX2 kernels.
-- AArch64 and other architectures expose no SIMD bundle and run scalar code.
+- AArch64 and other architectures run scalar code.
 
 ## Enabling
 
 The crate declares no enabling features: the `avx2` and `avx512` entries in
 [`Cargo.toml`](Cargo.toml) gate no code, and backend selection is runtime
-detection. Adopting crates enable it through their own `simd` feature, which
+detection. Adopting crates gate most detection behind their own `simd` feature, which
 `gf2-core`, `gf2-coding` and `gf2-algebra` declare; see
 [supported configurations](../../docs/reference/supported-configurations.md#cargo-features)
 and [installation](../../docs/reference/supported-configurations.md#installation).

@@ -472,9 +472,7 @@ mod tests {
     }
 
     fn run_for_primes(test: impl Fn(u8)) {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         for &p in &[3u8, 5, 7, 11, 13, 17, 31, 127, 251] {
             test(p);
         }
@@ -548,9 +546,7 @@ mod tests {
 
     #[test]
     fn panel_gemm_handles_zero_dims() {
-        if !std::arch::is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", std::arch::is_x86_feature_detected!("avx2"))]);
         let a: Vec<u8> = vec![];
         let bt: Vec<u8> = vec![];
         let mut out: Vec<u8> = vec![];

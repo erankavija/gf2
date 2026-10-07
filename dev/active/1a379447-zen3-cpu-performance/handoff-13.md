@@ -109,14 +109,14 @@
 
 - Epic: `jit issue show 1a379447`
 - Design docs:
-  `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md`,
-  `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md`,
-  `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md`
+  `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md`,
+  `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md`,
+  `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md`
 - Planning docs:
   `dev/active/1a379447-zen3-cpu-performance/progress.json`,
   `dev/active/1a379447-zen3-cpu-performance/handoff-12.md`
 - Benchmark/result artefacts:
-  `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt`,
+  `dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt`,
   `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`
 - Reviews:
   `dev/active/1a379447-zen3-cpu-performance/reviews/92385645-r2.md`,

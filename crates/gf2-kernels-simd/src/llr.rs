@@ -357,10 +357,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_empty() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            eprintln!("Skipping: AVX2 not available");
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let result = (fns.minsum_fn)(&[]);
@@ -371,9 +368,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_single_positive() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![5.0];
@@ -386,9 +381,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_single_negative() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![-3.0];
@@ -401,9 +394,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_all_positive() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![1.0, 2.0, 3.0, 4.0];
@@ -416,9 +407,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_all_negative() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![-1.0, -2.0, -3.0, -4.0];
@@ -431,9 +420,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_mixed_signs() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![1.0, -2.0, 3.0, -4.0];
@@ -446,9 +433,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_odd_negatives() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![2.0, -3.0, 4.0];
@@ -461,9 +446,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_large_vector() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         // More than 8 elements: AVX2 vector path plus remainder.
@@ -479,9 +462,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_exact_8_elements() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![1.0, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0];
@@ -494,9 +475,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_maxabs_empty() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let result = (fns.maxabs_fn)(&[]);
@@ -507,9 +486,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_maxabs_single() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![-7.5];
@@ -522,9 +499,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_maxabs_multiple() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs = vec![1.0, -5.0, 3.0, -2.0];
@@ -537,9 +512,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_maxabs_large_vector() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
         let inputs: Vec<f32> = (1..=25)
@@ -554,9 +527,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_minsum_vs_scalar_random() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
 
@@ -586,9 +557,7 @@ mod tests {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_maxabs_vs_scalar_random() {
         use std::arch::is_x86_feature_detected;
-        if !is_x86_feature_detected!("avx2") {
-            return;
-        }
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
 
         let fns = detect().unwrap();
 

@@ -60,7 +60,7 @@ named source file, which the README reaches through its Rustdoc link; a
 | 5G NR coverage: base graphs BG1 and BG2 at every lifting size, rate matching | [5G NR LDPC](../../../docs/reference/standards-conformance.md#5g-nr-ldpc) |
 | 5G NR evidence: shift tables compared with external reference tables of recorded provenance | [external evidence](../../../docs/reference/standards-conformance.md#external-evidence) |
 | Default features; `simd`, `visualization` and `bench-csv` enable `gf2-core` features | [Cargo features](../../../docs/reference/supported-configurations.md#cargo-features) |
-| Effect of `sim-observability`, `llr-f64`, `tuning-profile` and `test-support` | comments of the `[features]` table in [`Cargo.toml`](../../../crates/gf2-coding/Cargo.toml) |
+| Effect of `sim-observability`, `tuning-profile` and `test-support` | comments of the `[features]` table in [`Cargo.toml`](../../../crates/gf2-coding/Cargo.toml) |
 | Effect of `parallel` | [thread parallelism](../../../docs/how-to/select-acceleration.md#thread-parallelism) |
 | Effect of `hip`: batched BCJR, Gray-QAM soft demapping and BCH syndrome evaluation | [GPU offload](../../../docs/how-to/select-acceleration.md#gpu-offload) |
 | `gf2-core` owns runtime SIMD dispatch for bit-level and elimination operations | [SIMD dispatch](../../../docs/concepts/acceleration-architecture.md#simd-dispatch) |

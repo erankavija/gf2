@@ -56,7 +56,7 @@ final freeze)
    tags, determinant_companion Evaluate on all cells per the protocol,
    provenance fields with the RNG identity — algorithm ChaCha20, crate
    rand_chacha, resolved version 0.9.0 per the registry derivation in
-   `dev/studies/0dffa759/rng-provenance-addendum.md` §4 and
+   `dev/active/b8206228-permanent-statistics/studies/0dffa759/rng-provenance-addendum.md` §4 and
    `@/citation/RustRandom2025`). Backends: fill cells whose selection is
    dischargeable now; mark undischargeable cells explicitly in the
    accompanying document (the draft may carry a placeholder backend but the

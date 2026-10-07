@@ -5,145 +5,145 @@
     {
       "id": "core-default-features",
       "project": "gf2",
-      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+      "commit": "a96c12dbb8940fb78b48230caf98953786919fb7",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 53,
       "occurrences": 1,
       "verbatim": "default = [\"rand\", \"io\"]",
       "why": "A standalone `gf2-core` build enables neither `simd` nor `tuning-profile`.",
-      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
+      "sha256": "92039e84f35a42aa559f3e27c3cc86235ccc88a0e3a3ceaddf1672355ba5ed0e"
     },
     {
       "id": "core-simd-optional",
       "project": "gf2",
-      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+      "commit": "a96c12dbb8940fb78b48230caf98953786919fb7",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 57,
       "occurrences": 1,
       "verbatim": "simd = []",
       "why": "Kernel dispatch is the opt-in `simd` cargo feature.",
-      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
+      "sha256": "92039e84f35a42aa559f3e27c3cc86235ccc88a0e3a3ceaddf1672355ba5ed0e"
     },
     {
       "id": "core-tuning-profile-feature",
       "project": "gf2",
-      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+      "commit": "a96c12dbb8940fb78b48230caf98953786919fb7",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 67,
       "occurrences": 1,
       "verbatim": "tuning-profile = [\"dep:serde\", \"dep:serde_json\", \"dep:sha2\"]",
       "why": "`tuning-profile` adds profile parsing only; it selects no profile.",
-      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
+      "sha256": "92039e84f35a42aa559f3e27c3cc86235ccc88a0e3a3ceaddf1672355ba5ed0e"
     },
     {
       "id": "core-baked-cfg-declared",
       "project": "gf2",
-      "commit": "45527d869770744f18e4d3fa24bf60744b6e79cd",
+      "commit": "a96c12dbb8940fb78b48230caf98953786919fb7",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 13,
       "occurrences": 1,
       "verbatim": "unexpected_cfgs = { level = \"warn\", check-cfg = ['cfg(kani)', 'cfg(verify_lean)', 'cfg(gf2_tuning_baked)'] }",
       "why": "`gf2_tuning_baked` is a declared compiler configuration and no cargo feature, so `--all-features` does not set it.",
-      "sha256": "bcf1d1da3951f8f52d60c8f91ad618d1ef9188e27203fce39ff74d5ca106a578"
+      "sha256": "92039e84f35a42aa559f3e27c3cc86235ccc88a0e3a3ceaddf1672355ba5ed0e"
     },
     {
       "id": "coding-default-simd",
       "project": "gf2",
-      "commit": "9eb76a8d608dc31dea0eaf386f9d820b51e7643e",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-coding/Cargo.toml",
-      "line": 53,
+      "line": 55,
       "occurrences": 1,
       "verbatim": "default = [\"simd\", \"sim-observability\"]",
       "why": "A default `gf2-coding` build enables its `simd` feature.",
-      "sha256": "eaf5f97a2a5f9d423d9c805ffab2d301a7042b7364727b026ffe43667777d754"
+      "sha256": "1f0a0d25c54db942ff09005f55bc57db0ebd9ec3aa51443c8061ace7cd6e3621"
     },
     {
       "id": "coding-simd-forwards",
       "project": "gf2",
-      "commit": "9eb76a8d608dc31dea0eaf386f9d820b51e7643e",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-coding/Cargo.toml",
-      "line": 54,
+      "line": 56,
       "occurrences": 1,
       "verbatim": "simd = [\"gf2-core/simd\"]",
       "why": "`gf2-coding/simd` is the edge that enables `gf2-core/simd`.",
-      "sha256": "eaf5f97a2a5f9d423d9c805ffab2d301a7042b7364727b026ffe43667777d754"
+      "sha256": "1f0a0d25c54db942ff09005f55bc57db0ebd9ec3aa51443c8061ace7cd6e3621"
     },
     {
       "id": "sim-default-empty",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-sim/Cargo.toml",
       "line": 63,
       "occurrences": 1,
       "verbatim": "default = []",
       "why": "`gf2-sim` has no default feature of its own.",
-      "sha256": "c86b45932622e602288863faa735b4a41c0ccf274141c7b08bdb5d056c66b68a"
+      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
     },
     {
       "id": "sim-depends-coding-defaults",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-sim/Cargo.toml",
       "line": 15,
       "occurrences": 1,
       "verbatim": "gf2-coding = { path = \"../gf2-coding\" }",
       "why": "`gf2-sim` takes `gf2-coding` with its default features, so every `gf2-sim` build enables `gf2-core/simd`.",
-      "sha256": "c86b45932622e602288863faa735b4a41c0ccf274141c7b08bdb5d056c66b68a"
+      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
     },
     {
       "id": "sim-depends-algebra-defaults",
       "project": "gf2",
-      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "crates/gf2-sim/Cargo.toml",
       "line": 16,
       "occurrences": 1,
       "verbatim": "gf2-algebra = { path = \"../gf2-algebra\" }",
       "why": "`gf2-sim` takes `gf2-algebra` with its default features.",
-      "sha256": "c86b45932622e602288863faa735b4a41c0ccf274141c7b08bdb5d056c66b68a"
+      "sha256": "133de900a0cb6f4e2c06ab14b4cf532fa4246d5e067e64d53f1ee03b532aacf5"
     },
     {
       "id": "algebra-default-simd",
       "project": "gf2",
-      "commit": "c1203721ef82b9071862c1b18258e23a8f329ffb",
+      "commit": "1ec0ce4b2d420ba94267222ecaa42ac819812f18",
       "path": "crates/gf2-algebra/Cargo.toml",
-      "line": 113,
+      "line": 115,
       "occurrences": 1,
       "verbatim": "default = [\"simd\", \"parallel\", \"f5\", \"f7\"]",
       "why": "A default `gf2-algebra` build enables `simd` and `parallel`.",
-      "sha256": "7211d57e5803dab9dff6fb5ea19ff408124d89118655f807a4537d912a4698e2"
+      "sha256": "14c465b68d682b400e78962b963e1336dbff64393c899babac2bdbbdad4518b3"
     },
     {
       "id": "algebra-simd-forwards",
       "project": "gf2",
-      "commit": "c1203721ef82b9071862c1b18258e23a8f329ffb",
+      "commit": "1ec0ce4b2d420ba94267222ecaa42ac819812f18",
       "path": "crates/gf2-algebra/Cargo.toml",
-      "line": 122,
+      "line": 124,
       "occurrences": 1,
       "verbatim": "simd = [\"gf2-core/simd\", \"dep:gf2-kernels-simd\"]",
       "why": "`gf2-algebra/simd` enables `gf2-core/simd`.",
-      "sha256": "7211d57e5803dab9dff6fb5ea19ff408124d89118655f807a4537d912a4698e2"
+      "sha256": "14c465b68d682b400e78962b963e1336dbff64393c899babac2bdbbdad4518b3"
     },
     {
       "id": "ci-baked-step",
       "project": "gf2",
-      "commit": "18d31dec9769b78625393130c08b698a79c32af2",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "scripts/cargo-ci.sh",
-      "line": 274,
+      "line": 316,
       "occurrences": 1,
       "verbatim": "run_step baked-core env RUSTFLAGS=\"--cfg gf2_tuning_baked\" \"$BUDGET\" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable",
       "why": "CI builds the baked configuration in one scoped step; every other step keeps the conservative constants.",
-      "sha256": "7cb646b32f291f8c6b838f3fa01f5b3d0558791e16df1e7cae62dafbd4f6124a"
+      "sha256": "f204d752a3c415fc8684473bbcb1e880e6d62b60dbb727662a1333db5ebaaf0d"
     },
     {
       "id": "ci-feature-flags",
       "project": "gf2",
-      "commit": "18d31dec9769b78625393130c08b698a79c32af2",
+      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
       "path": "scripts/cargo-ci.sh",
-      "line": 208,
+      "line": 226,
       "occurrences": 1,
-      "verbatim": "  FEAT_FLAGS=\"--features simd,parallel,visualization,llr-f64\"",
+      "verbatim": "  FEAT_FLAGS=\"--features simd,parallel,visualization\"",
       "why": "The workspace test step of CI enables `simd`, so it runs the shared fallback contract on the kernel build only.",
-      "sha256": "7cb646b32f291f8c6b838f3fa01f5b3d0558791e16df1e7cae62dafbd4f6124a"
+      "sha256": "f204d752a3c415fc8684473bbcb1e880e6d62b60dbb727662a1333db5ebaaf0d"
     },
     {
       "id": "logical-bundle-detect",
@@ -159,57 +159,57 @@
     {
       "id": "core-logical-bundle-once",
       "project": "gf2",
-      "commit": "fccfcc6e48ce8b629c2b131dd0ed1f54184d2544",
+      "commit": "6baf3db24795756d69ead8f32aadf6bbea71ff35",
       "path": "crates/gf2-core/src/lib.rs",
-      "line": 96,
+      "line": 94,
       "occurrences": 1,
       "verbatim": "        FNS.get_or_init(gf2_kernels_simd::detect).as_ref()",
       "why": "`gf2-core` detects the logical bundle once per process.",
-      "sha256": "5b5a52e2872617707cb18df5995a9c0770a039f26c84c372c6fcecf0fa60748f"
+      "sha256": "68efd39084600f3175bb32fe8ecff8cc2c5904abac69c37b73cc920394ffba0f"
     },
     {
       "id": "core-transpose-bundle-once",
       "project": "gf2",
-      "commit": "fccfcc6e48ce8b629c2b131dd0ed1f54184d2544",
+      "commit": "6baf3db24795756d69ead8f32aadf6bbea71ff35",
       "path": "crates/gf2-core/src/lib.rs",
-      "line": 115,
+      "line": 113,
       "occurrences": 1,
       "verbatim": "            .get_or_init(gf2_kernels_simd::transpose::detect)",
       "why": "`gf2-core` resolves the transpose lane once per process.",
-      "sha256": "5b5a52e2872617707cb18df5995a9c0770a039f26c84c372c6fcecf0fa60748f"
+      "sha256": "68efd39084600f3175bb32fe8ecff8cc2c5904abac69c37b73cc920394ffba0f"
     },
     {
       "id": "core-shift-bundle-once",
       "project": "gf2",
-      "commit": "fccfcc6e48ce8b629c2b131dd0ed1f54184d2544",
+      "commit": "6baf3db24795756d69ead8f32aadf6bbea71ff35",
       "path": "crates/gf2-core/src/lib.rs",
-      "line": 106,
+      "line": 104,
       "occurrences": 1,
       "verbatim": "            .get_or_init(gf2_kernels_simd::shift_funnel::detect)",
       "why": "`gf2-core` detects the shift funnel once per process.",
-      "sha256": "5b5a52e2872617707cb18df5995a9c0770a039f26c84c372c6fcecf0fa60748f"
+      "sha256": "68efd39084600f3175bb32fe8ecff8cc2c5904abac69c37b73cc920394ffba0f"
     },
     {
       "id": "core-wide-bundle-once",
       "project": "gf2",
-      "commit": "fccfcc6e48ce8b629c2b131dd0ed1f54184d2544",
+      "commit": "6baf3db24795756d69ead8f32aadf6bbea71ff35",
       "path": "crates/gf2-core/src/lib.rs",
-      "line": 280,
+      "line": 278,
       "occurrences": 1,
       "verbatim": "            .get_or_init(gf2_kernels_simd::gf2m_wide::detect_wide)",
       "why": "`gf2-core` detects the wide carry-less kernels once per process.",
-      "sha256": "5b5a52e2872617707cb18df5995a9c0770a039f26c84c372c6fcecf0fa60748f"
+      "sha256": "68efd39084600f3175bb32fe8ecff8cc2c5904abac69c37b73cc920394ffba0f"
     },
     {
       "id": "core-gf2m-bundle-once",
       "project": "gf2",
-      "commit": "fccfcc6e48ce8b629c2b131dd0ed1f54184d2544",
+      "commit": "6baf3db24795756d69ead8f32aadf6bbea71ff35",
       "path": "crates/gf2-core/src/lib.rs",
-      "line": 123,
+      "line": 121,
       "occurrences": 1,
       "verbatim": "            .get_or_init(gf2_kernels_simd::gf2m::detect)",
       "why": "`gf2-core` detects the GF(2^m) bundle through the default preference.",
-      "sha256": "5b5a52e2872617707cb18df5995a9c0770a039f26c84c372c6fcecf0fa60748f"
+      "sha256": "68efd39084600f3175bb32fe8ecff8cc2c5904abac69c37b73cc920394ffba0f"
     },
     {
       "id": "bit-threshold-conservative",
@@ -302,101 +302,101 @@
     {
       "id": "popcount-csa-comparator",
       "project": "gf2",
-      "commit": "6d03804a2a6e329f00879b676537125479916660",
+      "commit": "e2c98226a1a34ce13e4ce9d4c78efc0fff570509",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
-      "line": 135,
+      "line": 137,
       "occurrences": 1,
       "verbatim": "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,",
       "why": "The carry-save kernels are direct bundle fields that no resolver selects.",
-      "sha256": "0282f83b6e5ca8232497f4f62404fe107e7575a0b664a4523eb00a7b3c1326ec"
+      "sha256": "75351c56a3296aa9c952e3d801ed9f5a259242413e55eadf4b647ce538e5f9c4"
     },
     {
       "id": "matvec-threshold-conservative",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 15,
       "occurrences": 1,
       "verbatim": "pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;",
       "why": "The conservative definition of `bit_matrix.matvec_simd_min_words`.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
     },
     {
       "id": "matvec-threshold-baked-alias",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 18,
       "occurrences": 1,
       "verbatim": "const MATVEC_SIMD_MIN_WORDS_SELECTED: usize = crate::tuning::baked::MATVEC_SIMD_MIN_WORDS;",
       "why": "A `gf2_tuning_baked` build substitutes the baked matvec threshold.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
     },
     {
       "id": "matvec-threshold-read",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 47,
       "occurrences": 1,
       "verbatim": "        if stride_words >= MATVEC_SIMD_MIN_WORDS_SELECTED {",
       "why": "One compile-time comparison of the row stride selects the SIMD lane.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
     },
     {
       "id": "matvec-bundle-check",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
-      "line": 1074,
+      "line": 1112,
       "occurrences": 1,
-      "verbatim": "                if let Some(fns) = crate::simd::maybe_simd() {",
+      "verbatim": "        if let Some(fns) = crate::simd::maybe_simd() {",
       "why": "The SIMD lane runs only when the logical bundle is detected.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
     },
     {
       "id": "matvec-fused-kernel",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
-      "line": 1133,
+      "line": 1168,
       "occurrences": 1,
       "verbatim": "            y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);",
       "why": "The SIMD lane folds each row through the fused nibble-lookup kernel.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
     },
     {
       "id": "transpose-lane-selection",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 170,
       "occurrences": 1,
       "verbatim": "    if let Some(fns) = crate::simd::maybe_transpose() {",
       "why": "`BitMatrix::transpose` takes the detected lane under `simd` and the portable kernel otherwise.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
     },
     {
       "id": "transpose-lane-reporter",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 179,
       "occurrences": 1,
       "verbatim": "pub fn transpose_block_lane() -> gf2_kernels_simd::transpose::TransposeLane {",
       "why": "The public reporter of the block lane reads the selection `transpose` uses.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
     },
     {
       "id": "transpose-outer-route",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
       "line": 190,
       "occurrences": 1,
       "verbatim": "    if n_row_blocks <= transpose_simple_max_blocks && n_col_blocks <= transpose_simple_max_blocks {",
       "why": "The outer loop is chosen from two runtime profile fields.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
     },
     {
       "id": "transpose-preference",
@@ -445,13 +445,13 @@
     {
       "id": "shift-feature-gate",
       "project": "gf2",
-      "commit": "51c447e88e17d6c5d6206d319becd3b459a404fe",
+      "commit": "c8d6e2543d9732b6dffdcd871d9d762dfe30c37a",
       "path": "crates/gf2-kernels-simd/src/shift_funnel.rs",
       "line": 64,
       "occurrences": 1,
       "verbatim": "        if is_x86_feature_detected!(\"bmi2\") {",
       "why": "The funnel kernel is published only after runtime BMI2 detection; no size threshold takes part.",
-      "sha256": "486d45ea9f111d76cf344fecf239933056d95c75599619b942de3ad4aca3df23"
+      "sha256": "62c9411f3d003b5ae2b80e0da74abd97600b8be387586a9b9657988905bcd973"
     },
     {
       "id": "clmul-wide-width-4",
@@ -478,35 +478,35 @@
     {
       "id": "clmul-wide-ymm-predicate",
       "project": "gf2",
-      "commit": "51c447e88e17d6c5d6206d319becd3b459a404fe",
+      "commit": "c8d6e2543d9732b6dffdcd871d9d762dfe30c37a",
       "path": "crates/gf2-kernels-simd/src/gf2m_wide.rs",
       "line": 83,
       "occurrences": 1,
       "verbatim": "        && is_x86_feature_detected!(\"vpclmulqdq\")",
       "why": "The preferred wide lane needs AVX2, VPCLMULQDQ and SSE4.1.",
-      "sha256": "943d4b376f8e9b5631119f9761bf727f538f059b8b22c918efe9ed8342f68153"
+      "sha256": "58cce3da6ab894080f21c60478e7b83746bc39b3f79f33a1c174f3d595e24f77"
     },
     {
       "id": "clmul-batch-default-lane",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "c8d6e2543d9732b6dffdcd871d9d762dfe30c37a",
       "path": "crates/gf2-kernels-simd/src/gf2m.rs",
       "line": 60,
       "occurrences": 1,
       "verbatim": "    detect_with_clmul_batch_preference(ClmulBatchLane::Sequential)",
       "why": "The default raw-batch lane is sequential PCLMULQDQ; the YMM lane needs an explicit preference.",
-      "sha256": "04c9bb29cfcf3b172ecbd622e977a4953e0ffe94af317f9ad4640f0037241c32"
+      "sha256": "dc199cfe51cf8e91fbe2f731e1aa5efb41ac54db1b036014f55d8e2691c35c81"
     },
     {
       "id": "clmul-batch-feature-gate",
       "project": "gf2",
-      "commit": "94a6804ea11f9851c4f434d8a82a467aa8811906",
+      "commit": "c8d6e2543d9732b6dffdcd871d9d762dfe30c37a",
       "path": "crates/gf2-kernels-simd/src/gf2m.rs",
       "line": 86,
       "occurrences": 2,
       "verbatim": "    if is_x86_feature_detected!(\"pclmulqdq\") && is_x86_feature_detected!(\"sse4.1\") {",
       "why": "The GF(2^m) bundle exists only with PCLMULQDQ and SSE4.1.",
-      "sha256": "04c9bb29cfcf3b172ecbd622e977a4953e0ffe94af317f9ad4640f0037241c32"
+      "sha256": "dc199cfe51cf8e91fbe2f731e1aa5efb41ac54db1b036014f55d8e2691c35c81"
     },
     {
       "id": "dot-batch-kernel",
@@ -555,13 +555,13 @@
     {
       "id": "tuning-baked-owner-digest",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
       "path": "crates/gf2-core/src/tuning/baked.rs",
-      "line": 11,
+      "line": 17,
       "occurrences": 1,
       "verbatim": "/// with SHA-256 `8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa`.",
       "why": "The baked constants pin the measured core owner by content digest.",
-      "sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb"
+      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
     },
     {
       "id": "tuning-active-accessor",
@@ -599,35 +599,35 @@
     {
       "id": "coding-tuning-section",
       "project": "gf2",
-      "commit": "783f522a4e4c59bf8971a2d70fd2c1ed1ad7d243",
+      "commit": "b5b5ca1c17e8408ce7447ba0495c98fcd1e40094",
       "path": "crates/gf2-coding/src/tuning.rs",
-      "line": 27,
+      "line": 41,
       "occurrences": 1,
       "verbatim": "pub struct EncodeSelectors {",
       "why": "The BCH encode selectors are a coding-owned section outside this issue's calibration.",
-      "sha256": "5b7ddafe86583061318c2b0b3a295399033fd7b9488a9ba56a84548bff13fb0f"
+      "sha256": "e9f7c05f748f813d218883019e507c010a3a583378a092a03463c4464e34f546"
     },
     {
       "id": "calibration-fields",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
-      "line": 377,
+      "line": 382,
       "occurrences": 1,
-      "verbatim": "    const ALL: [Self; 19] = [",
+      "verbatim": "    const ALL: [Self; 20] = [",
       "why": "The core producer sweeps a closed list of retained threshold fields.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
     },
     {
       "id": "calibration-bit-arm",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
-      "line": 2323,
+      "line": 2404,
       "occurrences": 1,
       "verbatim": "                Arm::Conservative => &ScalarBackend,",
       "why": "The producer calibrates `bit_backend.simd_min_words` on the XOR of the two backends called directly.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
     },
     {
       "id": "calibration-launcher-declaration",
@@ -652,136 +652,224 @@
       "sha256": "ce331dcde91a0e496874a0ea66a9ddb448e83a132dfbde4f4ddfb32e1b4c186e"
     },
     {
+      "id": "calibration-matvec-field",
+      "project": "gf2",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "path": "crates/gf2-core/benches/tuning_calibration.rs",
+      "line": 667,
+      "occurrences": 1,
+      "verbatim": "            Self::MatvecSimdMinWords => vec![4, 7, 8, 9, 32, 63, 64, 65, 128],",
+      "why": "The producer sweeps the matvec threshold over nine strides.",
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+    },
+    {
+      "id": "calibration-matvec-arms",
+      "project": "gf2",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "path": "crates/gf2-core/benches/tuning_calibration.rs",
+      "line": 2680,
+      "occurrences": 1,
+      "verbatim": "            let result = matrix.matvec_with_route(vector, matvec_lane(spec.arm));",
+      "why": "Each arm of the matvec sweep pins its lane through the public entry.",
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+    },
+    {
+      "id": "validator-matvec-grid",
+      "project": "gf2",
+      "commit": "1e39094a0ea68c3de49fc3d06daba73e06704bd9",
+      "path": "dev/scripts/validate-tuning-extent-campaign.py",
+      "line": 214,
+      "occurrences": 1,
+      "verbatim": "    \"bit_matrix.matvec_simd_min_words\": [4, 7, 8, 9, 32, 63, 64, 65, 128],",
+      "why": "The independent validator carries the same grid.",
+      "sha256": "eb80ddac9d95bc53faab0f03292e5b3c33a9329ce0d439cc865d1402df62ebea"
+    },
+    {
       "id": "calibration-inventory-closed",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 217,
       "occurrences": 1,
       "verbatim": "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;",
       "why": "The producer publishes only when its measured and omitted fields partition a fixed codec inventory.",
-      "sha256": "0f8a0e96e85d0d41280a4f5d899a9680b15d01e60df7f0bdbcb50bdc3ddeebf4"
+      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
     },
     {
       "id": "calibration-validator-behavior",
       "project": "gf2",
-      "commit": "fb8620a819fb34d85d2e8dd73a3b99549296c351",
+      "commit": "1e39094a0ea68c3de49fc3d06daba73e06704bd9",
       "path": "dev/scripts/validate-tuning-extent-campaign.py",
-      "line": 72,
+      "line": 74,
       "occurrences": 1,
       "verbatim": "CORE_BEHAVIOR = \"tuning-calibration-v4\"",
       "why": "The independent validator pins the producer's behavior token.",
-      "sha256": "34521bdd1d136442d47d9294198408675d18da7a95be5d9d3fa2c4224af87d1d"
+      "sha256": "eb80ddac9d95bc53faab0f03292e5b3c33a9329ce0d439cc865d1402df62ebea"
     },
     {
-      "id": "matvec-scalar-lane-private",
+      "id": "matvec-lane-entry",
       "project": "gf2",
-      "commit": "4d4a01d43d09011c6b34525e5eb05ff8dcd2a65d",
+      "commit": "0a3ca70e4bbc33512e3595dabb3607ec7f9a5c2a",
       "path": "crates/gf2-core/src/matrix.rs",
-      "line": 1084,
+      "line": 1087,
       "occurrences": 1,
-      "verbatim": "    fn matvec_scalar(&self, x: &crate::BitVec) -> crate::BitVec {",
-      "why": "The scalar lane has no public entry, so one build cannot time both lanes at a stride the selector sends to the SIMD lane.",
-      "sha256": "080debcffeda14650a4d6683db9ba685268a59eaab37a6ea52b8b9fe90193f5a"
+      "verbatim": "    pub fn matvec_with_route(&self, x: &crate::BitVec, route: MatvecRoute) -> crate::BitVec {",
+      "why": "One public entry runs the dense product on a caller-chosen lane, so one build times both lanes at one stride.",
+      "sha256": "d881b54ad13c113b5cbdfad973f719d4e49940aede39ee2c85df1d06f6ff9106"
+    },
+    {
+      "id": "matvec-lane-entry-test",
+      "project": "gf2",
+      "commit": "376b0ae0013ce77e177ce809b64bc0ba0bd4403c",
+      "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
+      "line": 155,
+      "occurrences": 1,
+      "verbatim": "fn each_route_matches_the_reference_at_stride_and_word_boundaries() {",
+      "why": "Both lanes of the entry match the bit-level reference at the stride and word boundaries.",
+      "sha256": "b30dd06de7e32adaf2abef03b8eef75399e66e9d77ef3bf9936a54ca11bca73c"
     },
     {
       "id": "baked-matvec-conservative-test",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
       "path": "crates/gf2-core/src/tuning/baked.rs",
-      "line": 124,
+      "line": 130,
       "occurrences": 1,
       "verbatim": "    fn matvec_simd_min_words_matches_conservative_section() {",
       "why": "A unit test holds the baked matvec threshold equal to the conservative value while no measured owner states the field.",
-      "sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb"
+      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
     },
     {
       "id": "baked-measured-owner-test",
       "project": "gf2",
-      "commit": "1f6b86bd9af366365d7e806304657b36d3270cc8",
+      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
       "path": "crates/gf2-core/src/tuning/baked.rs",
-      "line": 93,
+      "line": 99,
       "occurrences": 1,
       "verbatim": "    fn baked_simd_threshold_matches_the_strict_measured_owner() {",
       "why": "A unit test holds a measured baked constant equal to the measured owner's value.",
-      "sha256": "809001341e10116b4813b0d1e1f5eda946a0eb2ad804baefc472504bded926cb"
+      "sha256": "6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f"
+    },
+    {
+      "id": "codec-token-value",
+      "project": "gf2",
+      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "path": "crates/gf2-core/src/tuning/mod.rs",
+      "line": 1474,
+      "occurrences": 1,
+      "verbatim": "const CORE_HARNESS_SCHEMA: &str = \"tuning-calibration-v4\";",
+      "why": "The core codec names one producer behavior token.",
+      "sha256": "3d3710f291ffe3c9921cf46f22ad18be35e0eeb36da3767da6f79b01bcd14f87"
+    },
+    {
+      "id": "codec-accepts-one-token",
+      "project": "gf2",
+      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "path": "crates/gf2-core/src/tuning/mod.rs",
+      "line": 1494,
+      "occurrences": 1,
+      "verbatim": "                if harness_schema.as_str() == CORE_HARNESS_SCHEMA =>",
+      "why": "A calibrated core section reopens only under that token, so a new token would reject every committed measured owner.",
+      "sha256": "3d3710f291ffe3c9921cf46f22ad18be35e0eeb36da3767da6f79b01bcd14f87"
+    },
+    {
+      "id": "seam-token-unchanged",
+      "project": "gf2",
+      "commit": "2399b5cc7326580d37960f9323bd55dad344ad55",
+      "path": "dev/active/dbd8787d/premeasurement-protocol.md",
+      "line": 25,
+      "occurrences": 1,
+      "verbatim": "The core behaviour token stays `tuning-calibration-v4` and the owner protocol",
+      "why": "The seam campaign added three swept fields under the unchanged token because case and result wire shapes did not change.",
+      "sha256": "8bbcd98006d8429609d620cedfc596a55b253f31f6e772f7d0fb9ab6030fcdfa"
+    },
+    {
+      "id": "seam-identity-in-manifest",
+      "project": "gf2",
+      "commit": "2399b5cc7326580d37960f9323bd55dad344ad55",
+      "path": "dev/active/dbd8787d/premeasurement-protocol.md",
+      "line": 28,
+      "occurrences": 1,
+      "verbatim": "[`producing-build-inputs.json`](producing-build-inputs.json) carries the",
+      "why": "A campaign's identity is its producing manifest, not the token.",
+      "sha256": "8bbcd98006d8429609d620cedfc596a55b253f31f6e772f7d0fb9ab6030fcdfa"
     },
     {
       "id": "protocol-family-alpha",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 75,
       "occurrences": 1,
       "verbatim": "    family_alpha: 0.05,",
       "why": "The frozen family-wise alpha.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-bootstrap-resamples",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 76,
       "occurrences": 1,
       "verbatim": "    bootstrap_resamples: 10_000,",
       "why": "The frozen bootstrap resample count.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-confirmatory-pairs",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 77,
       "occurrences": 1,
       "verbatim": "    confirmatory_pairs: 24,",
       "why": "The frozen pair count of a confirmatory or holdout cell.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-pilot-min-pairs",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 78,
       "occurrences": 1,
       "verbatim": "    pilot_min_pairs: 6,",
       "why": "The frozen minimum pair count of an exploratory cell.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-windows-per-execution",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 80,
       "occurrences": 1,
       "verbatim": "    windows_per_execution: 5,",
       "why": "The frozen window count of one execution.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-window-target",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 81,
       "occurrences": 1,
       "verbatim": "    window_target_ms: 100,",
       "why": "The frozen window target length.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "protocol-holdout-required",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
-      "line": 973,
+      "line": 1003,
       "occurrences": 1,
       "verbatim": "                \"selector-calibration and final-integration families require holdout cells\".into(),",
       "why": "A selector-calibration addendum without holdout cells is rejected.",
-      "sha256": "8c7322fb72de3c3cc78db936642efe0ffe9e716643cf8436ac0b48345581c1f8"
+      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
     },
     {
       "id": "ledger-attempt-alpha",

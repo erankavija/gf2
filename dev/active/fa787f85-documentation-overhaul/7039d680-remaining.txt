@@ -1,0 +1,13 @@
+addendum-text 1 4
+data-record 38 262
+epic-record 6 178
+frozen-document 2 4
+generated-table 1 2
+manifest 1 201
+pinned-script 8 15
+receipt-directory 142 1027
+revision-path 1 3
+session-record 1 1
+snapshot 215 1186
+snapshot-path 1 1
+tracker-state 3 11

@@ -137,4 +137,4 @@
   [raw startup output](../../benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.log),
   [checksums](../../benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.sha256).
 - Escalation rule:
-  [execution-lead skill](../../../.agents/skills/jit-execution-lead/SKILL.md).
+  [execution-lead skill](/.agents/skills/jit-execution-lead/SKILL.md).

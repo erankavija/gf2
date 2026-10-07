@@ -166,10 +166,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_mul() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_medium::detect()", detect());
         let p = 65521u16;
         let m = barrett_m32(p);
         let a: Vec<u16> = (0..200)
@@ -188,10 +185,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_dot() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp_medium::detect()", detect());
         let p = 65521u16;
         for &len in &[0usize, 1, 7, 15, 16, 17, 100, 1024] {
             let a: Vec<u16> = (0..len)

@@ -188,13 +188,7 @@ mod tests {
 
     #[test]
     fn batch_mul_matches_scalar_for_each_supported_m() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => {
-                eprintln!("skipping: AVX2+VPCLMULQDQ not available");
-                return;
-            }
-        };
+        let fns = crate::contract::require_detected("gf2m_batch::detect()", detect());
 
         for &(m, poly) in primitive_polys() {
             let mu = compute_mu(poly, m);
@@ -226,13 +220,7 @@ mod tests {
 
     #[test]
     fn batch_square_matches_scalar_for_each_supported_m() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => {
-                eprintln!("skipping: AVX2+VPCLMULQDQ not available");
-                return;
-            }
-        };
+        let fns = crate::contract::require_detected("gf2m_batch::detect()", detect());
 
         for &(m, poly) in primitive_polys() {
             let mu = compute_mu(poly, m);
@@ -255,13 +243,7 @@ mod tests {
 
     #[test]
     fn batch_mul_word_boundary_lengths() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => {
-                eprintln!("skipping: AVX2+VPCLMULQDQ not available");
-                return;
-            }
-        };
+        let fns = crate::contract::require_detected("gf2m_batch::detect()", detect());
 
         // Lengths around the 4-element YMM-lane unroll.
         let lengths = [0usize, 1, 3, 4, 5, 7, 8, 9, 15, 16, 17, 31, 32, 33];
@@ -290,10 +272,7 @@ mod tests {
 
     #[test]
     fn batch_mul_handles_zero_inputs() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("gf2m_batch::detect()", detect());
 
         let m: u32 = 8;
         let poly: u64 = 0b100011101;

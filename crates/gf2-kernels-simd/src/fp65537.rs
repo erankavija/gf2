@@ -188,10 +188,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_mul() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp65537::detect()", detect());
         let a: Vec<u32> = (0..50u32).map(|i| (i * 12345) % 65537).collect();
         let b: Vec<u32> = (0..50u32).map(|i| (i * 67890 + 7) % 65537).collect();
         let mut out = vec![0u32; 50];
@@ -204,10 +201,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_add() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp65537::detect()", detect());
         let a: Vec<u32> = (0..50u32).map(|i| (i * 12345) % 65537).collect();
         let b: Vec<u32> = (0..50u32).map(|i| (i * 67890 + 7) % 65537).collect();
         let mut out = vec![0u32; 50];
@@ -220,10 +214,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_sub() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp65537::detect()", detect());
         let a: Vec<u32> = (0..50u32).map(|i| (i * 12345) % 65537).collect();
         let b: Vec<u32> = (0..50u32).map(|i| (i * 67890 + 7) % 65537).collect();
         let mut out = vec![0u32; 50];
@@ -236,10 +227,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_karatsuba() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp65537::detect()", detect());
         for &n in &[0usize, 1, 7, 8, 9, 16, 17, 100, 1000] {
             let a0: Vec<u32> = (0..n as u32).map(|i| (i * 17) % 65537).collect();
             let a1: Vec<u32> = (0..n as u32).map(|i| (i * 23 + 5) % 65537).collect();
@@ -268,10 +256,7 @@ mod tests {
 
     #[test]
     fn safe_wrapper_matches_scalar_batch_cubic_karatsuba() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp65537::detect()", detect());
         for &n in &[0usize, 1, 7, 8, 9, 16, 17, 100, 1000] {
             let a0: Vec<u32> = (0..n as u32).map(|i| (i * 17) % 65537).collect();
             let a1: Vec<u32> = (0..n as u32).map(|i| (i * 23 + 5) % 65537).collect();
@@ -321,10 +306,7 @@ mod tests {
 
     #[test]
     fn batch_mul_lengths_cover_tail() {
-        let fns = match detect() {
-            Some(f) => f,
-            None => return,
-        };
+        let fns = crate::contract::require_detected("fp65537::detect()", detect());
         for &len in &[0usize, 1, 7, 8, 9, 15, 16, 17, 256, 1024] {
             let a: Vec<u32> = (0..len as u32).map(|i| (i * 17) % 65537).collect();
             let b: Vec<u32> = (0..len as u32).map(|i| (i * 23 + 5) % 65537).collect();

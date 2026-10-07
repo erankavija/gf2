@@ -14,7 +14,7 @@ use gf2_coding::bch::encode::{
 };
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::test_support;
-use gf2_coding::tuning::{self, CodingTuning, EncodeSelectors};
+use gf2_coding::tuning::{self, CodingSelectors, CodingTuning, DecodeSelectors, EncodeSelectors};
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::gf2m::Gf2mField;
 use gf2_core::tuning::{CompiledProfileProvenance, PreparedEnvelope, ProfileId, SectionResolution};
@@ -40,6 +40,11 @@ const BATCH: usize = 16;
 /// of a bit-sliced family, so a partition of it crosses lane groups at every
 /// worker count.
 const LANE_GROUP_BATCH: usize = 257;
+
+/// The decode family the decode cases install, as `lane_min_frames`,
+/// `lane_max_edges` and `granules_per_task`; every value differs from its
+/// conservative one.
+pub const INSTALLED_DECODE: (usize, usize, usize) = (4, 1 << 20, 3);
 
 /// One named scenario of the protocol.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -68,6 +73,13 @@ pub enum FreshProcessCase {
     /// through the owner codec's canonical JSON.
     #[cfg(feature = "tuning-profile")]
     ClmulFoldEncoded,
+    /// A compiled envelope carrying a decode family beside selectors
+    /// admitting the table family.
+    DecodeFamilyCompiled,
+    /// The same two families carried through the owner codec's canonical
+    /// JSON.
+    #[cfg(feature = "tuning-profile")]
+    DecodeFamilyEncoded,
 }
 
 impl FreshProcessCase {
@@ -84,6 +96,9 @@ impl FreshProcessCase {
             Self::ClmulFoldAllocation => "clmul-fold-allocation",
             #[cfg(feature = "tuning-profile")]
             Self::ClmulFoldEncoded => "clmul-fold-encoded",
+            Self::DecodeFamilyCompiled => "decode-family-compiled",
+            #[cfg(feature = "tuning-profile")]
+            Self::DecodeFamilyEncoded => "decode-family-encoded",
         }
     }
 
@@ -110,6 +125,9 @@ impl FreshProcessCase {
             Some("clmul-fold-allocation") => Ok(Self::ClmulFoldAllocation),
             #[cfg(feature = "tuning-profile")]
             Some("clmul-fold-encoded") => Ok(Self::ClmulFoldEncoded),
+            Some("decode-family-compiled") => Ok(Self::DecodeFamilyCompiled),
+            #[cfg(feature = "tuning-profile")]
+            Some("decode-family-encoded") => Ok(Self::DecodeFamilyEncoded),
             _ => Err("fresh-process case has an unknown case name".to_owned()),
         }
     }
@@ -192,43 +210,77 @@ fn corpus_row_b3() -> BinaryBchCode {
     .expect("a narrow-sense construction over GF(2^8)")
 }
 
+/// `encode` beside the conservative decode family.
+fn with_conservative_decode(encode: EncodeSelectors) -> CodingSelectors {
+    CodingSelectors {
+        encode,
+        decode: DecodeSelectors::CONSERVATIVE,
+    }
+}
+
 /// Selectors admitting the table family, with the bit-sliced family left on
 /// its conservative exclusion so the table arm is the one the seam reaches.
-fn selectors_admitting_the_table_family() -> EncodeSelectors {
-    EncodeSelectors::try_new(
-        TABLE_REMAINDER_BLOCK_BITS,
-        BATCH,
-        BITSLICE_INTERLEAVED_MIN_BATCH,
-        CLMUL_FOLD_MIN_BATCH,
+fn selectors_admitting_the_table_family() -> CodingSelectors {
+    with_conservative_decode(
+        EncodeSelectors::try_new(
+            TABLE_REMAINDER_BLOCK_BITS,
+            BATCH,
+            BITSLICE_INTERLEAVED_MIN_BATCH,
+            CLMUL_FOLD_MIN_BATCH,
+        )
+        .expect("every selector bound is admissible"),
     )
-    .expect("every selector bound is admissible")
+}
+
+/// The table-family selectors beside [`INSTALLED_DECODE`], so one installed
+/// section moves both families off their conservative values.
+fn selectors_carrying_a_decode_family() -> CodingSelectors {
+    let (lane_min_frames, lane_max_edges, granules_per_task) = INSTALLED_DECODE;
+    CodingSelectors {
+        decode: DecodeSelectors::try_new(lane_min_frames, lane_max_edges, granules_per_task)
+            .expect("a positive group count"),
+        ..selectors_admitting_the_table_family()
+    }
+}
+
+/// The decode family as the child reports it and the parent compares it.
+pub fn decode_report(decode: &DecodeSelectors) -> serde_json::Value {
+    serde_json::json!({
+        "lane_min_frames": decode.lane_min_frames(),
+        "lane_max_edges": decode.lane_max_edges(),
+        "granules_per_task": decode.granules_per_task().get(),
+    })
 }
 
 /// Selectors admitting the bit-sliced interleaved family, with the others
 /// left on their conservative exclusions.
-fn selectors_admitting_the_bitslice_family() -> EncodeSelectors {
-    EncodeSelectors::try_new(
-        TABLE_REMAINDER_MIN_REDUNDANCY,
-        TABLE_REMAINDER_MIN_BATCH,
-        BATCH,
-        CLMUL_FOLD_MIN_BATCH,
+fn selectors_admitting_the_bitslice_family() -> CodingSelectors {
+    with_conservative_decode(
+        EncodeSelectors::try_new(
+            TABLE_REMAINDER_MIN_REDUNDANCY,
+            TABLE_REMAINDER_MIN_BATCH,
+            BATCH,
+            CLMUL_FOLD_MIN_BATCH,
+        )
+        .expect("every selector bound is admissible"),
     )
-    .expect("every selector bound is admissible")
 }
 
 /// Selectors admitting the carry-less-multiply fold family, with the others
 /// left on their conservative exclusions.
-fn selectors_admitting_the_clmul_family() -> EncodeSelectors {
-    EncodeSelectors::try_new(
-        TABLE_REMAINDER_MIN_REDUNDANCY,
-        TABLE_REMAINDER_MIN_BATCH,
-        BITSLICE_INTERLEAVED_MIN_BATCH,
-        BATCH,
+fn selectors_admitting_the_clmul_family() -> CodingSelectors {
+    with_conservative_decode(
+        EncodeSelectors::try_new(
+            TABLE_REMAINDER_MIN_REDUNDANCY,
+            TABLE_REMAINDER_MIN_BATCH,
+            BITSLICE_INTERLEAVED_MIN_BATCH,
+            BATCH,
+        )
+        .expect("every selector bound is admissible"),
     )
-    .expect("every selector bound is admissible")
 }
 
-fn compiled_envelope(selectors: EncodeSelectors) -> PreparedEnvelope {
+fn compiled_envelope(selectors: CodingSelectors) -> PreparedEnvelope {
     let id = ProfileId::parse("encode-dispatch-test").unwrap();
     PreparedEnvelope::compiled(
         id.clone(),
@@ -243,7 +295,7 @@ fn compiled_envelope(selectors: EncodeSelectors) -> PreparedEnvelope {
 }
 
 #[cfg(feature = "tuning-profile")]
-fn encoded_envelope(selectors: EncodeSelectors) -> PreparedEnvelope {
+fn encoded_envelope(selectors: CodingSelectors) -> PreparedEnvelope {
     let typed = compiled_envelope(selectors);
     let registry = ProfileRegistryBuilder::new()
         .register::<CodingTuning, CodingTuningCodec>()
@@ -299,6 +351,13 @@ pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
         #[cfg(feature = "tuning-profile")]
         FreshProcessCase::ClmulFoldEncoded => {
             execute_install_child(encoded_envelope(selectors_admitting_the_clmul_family()))
+        }
+        FreshProcessCase::DecodeFamilyCompiled => {
+            execute_install_child(compiled_envelope(selectors_carrying_a_decode_family()))
+        }
+        #[cfg(feature = "tuning-profile")]
+        FreshProcessCase::DecodeFamilyEncoded => {
+            execute_install_child(encoded_envelope(selectors_carrying_a_decode_family()))
         }
     }
 }
@@ -369,6 +428,7 @@ fn execute_conservative_child() -> serde_json::Value {
     serde_json::json!({
         "family": selected.name(),
         "agrees_with_reference": agrees,
+        "decode": decode_report(active.section.decode()),
         "resolution": "frozen-before-install",
     })
 }
@@ -385,6 +445,7 @@ fn execute_install_child(prepared: PreparedEnvelope) -> serde_json::Value {
     serde_json::json!({
         "family": selected.name(),
         "agrees_with_reference": agrees,
+        "decode": decode_report(active.section.decode()),
         "resolution": "installed",
     })
 }
@@ -399,7 +460,7 @@ fn execute_install_child(prepared: PreparedEnvelope) -> serde_json::Value {
 /// result, so its claim is steady state: it sizes on the first batch in this
 /// family and reuses that sizing afterwards.
 fn execute_allocation_child(
-    selectors: EncodeSelectors,
+    selectors: CodingSelectors,
     expected: EncodeFamily,
 ) -> serde_json::Value {
     gf2_core::tuning::install(compiled_envelope(selectors)).unwrap();

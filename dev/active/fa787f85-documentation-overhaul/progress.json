@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 11,
+ "current_wave": 12,
  "waves": [
   {
    "wave_number": 1,
@@ -782,7 +782,7 @@
      "short_id": "2596b143",
      "title": "Record the final Rustdoc example census and doctest timing",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "3759f995-edc4-4061-8b45-0ec30078a691",
@@ -810,7 +810,7 @@
      "short_id": "616e1d7c",
      "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
      "classification": "implementation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "83f9ce69-6d18-4767-ac9c-6b2f00485581",
@@ -850,14 +850,14 @@
      "short_id": "0a0ece44",
      "title": "Resolve stray and ownerless dev entries",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "0c5aa3b7-4846-4ec8-a578-14e6b35e78dd",
      "short_id": "0c5aa3b7",
      "title": "Relocate loose narrative Markdown out of simulation_results and studies",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "198aafa3-0553-4a93-8dab-6e971fe3048b",
@@ -871,77 +871,119 @@
      "short_id": "5ec5dcc1",
      "title": "Move the 02b8137c validation journal under its epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "602652bf-0388-4604-882b-f874efff83c2",
      "short_id": "602652bf",
      "title": "Move the f547c394 protocol inputs under their epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "7039d680-06da-481e-b000-5f9bba44e9ee",
      "short_id": "7039d680",
      "title": "Move the addendum fixture entries under the zen3 epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "7dbcde0c-3a5c-472e-8c41-e5e1e8d71bfa",
      "short_id": "7dbcde0c",
      "title": "Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "b2bb1065-a8aa-4af7-a7d8-4f800ec8cf5a",
      "short_id": "b2bb1065",
      "title": "Relocate loose narrative reports out of dev/bench_results",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "e1f262a7-668d-421f-9bea-13f80fdb81e0",
      "short_id": "e1f262a7",
      "title": "Move the 3f664839 design entry under its epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "ec655592-d647-4fbc-90de-ef44ed313067",
      "short_id": "ec655592",
      "title": "Empty dev/plans through archival or legacy moves",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "f6148d1e-d151-4c21-8507-7efd39044548",
      "short_id": "f6148d1e",
      "title": "Move the dbd8787d campaign declaration entry under its epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "f694f59a-bf27-42d5-8197-b68b60b5bf37",
      "short_id": "f694f59a",
      "title": "Move the a83583e0 campaign declaration entry under its epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "f79bcba3-ec86-49c2-82a1-1689a67e6015",
      "short_id": "f79bcba3",
      "title": "Move zen3 survey-harness entries 04b85d10 to 3be770d5 under the epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "fdb998ec-6042-4112-8bf9-1f179128d62b",
      "short_id": "fdb998ec",
      "title": "Rewrite README for research adoption",
      "classification": "documentation",
-     "status": "pending"
+     "status": "done"
+    },
+    {
+     "id": "8466f5ae-a90f-45b8-a322-3e702c31cfbd",
+     "short_id": "8466f5ae",
+     "title": "Accept repeated archive events in the 6dc81018 row reconciliation",
+     "classification": "implementation",
+     "status": "done"
+    },
+    {
+     "id": "0b8f09f3-eac1-4bc5-9380-5219e64f9cd5",
+     "short_id": "0b8f09f3",
+     "title": "Repoint Lean pipeline guide citations in active investigations",
+     "classification": "documentation",
+     "status": "done"
+    },
+    {
+     "id": "b23c364a-b92a-4824-8377-1965244cf80b",
+     "short_id": "b23c364a",
+     "title": "Decouple and move the 4e732b56 baseline survey under the BCH epic dir",
+     "classification": "implementation",
+     "status": "done"
+    },
+    {
+     "id": "b5b336e5-5eab-4877-8a48-256e6bf97bee",
+     "short_id": "b5b336e5",
+     "title": "Decouple the candidate scripts and move bc091474 under the zen3 epic dir",
+     "classification": "implementation",
+     "status": "blocked"
+    },
+    {
+     "id": "2e18b37c-22c7-46fa-bb57-42eee5353c0e",
+     "short_id": "2e18b37c",
+     "title": "Move entries f8dd4dde, a203a23c and 19513245 under the zen3 epic dir",
+     "classification": "implementation",
+     "status": "blocked"
+    },
+    {
+     "id": "cc060974-b76c-4ca0-8a59-c326e2043f23",
+     "short_id": "cc060974",
+     "title": "Decouple and move the residual-shift entries 00dd43c3 and c04dd4ac",
+     "classification": "implementation",
+     "status": "blocked"
     }
    ]
   },
@@ -960,14 +1002,14 @@
      "short_id": "b959ffe8",
      "title": "Rewrite dev/index.md for the final dev layout",
      "classification": "documentation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "fca578b1-2593-4bc4-8f08-8a425f3b237f",
      "short_id": "fca578b1",
      "title": "Audit the permanent surface against the docs invariants",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     }
    ]
   },
@@ -1421,6 +1463,159 @@
    "id": "9c7e6369",
    "epic": "b4b4b9ee",
    "reason": "fa4939c3 read: HipStream Sync safety comment attributes thread safety of hipStreamSynchronize to HIP documentation that states it for hipStreamQuery only"
+  },
+  {
+   "id": "8466f5ae",
+   "reason": "96cea1b9-archive-rows.py --check stops on several archive events of 6dc81018 (found by 616e1d7c)"
+  },
+  {
+   "id": "0b8f09f3",
+   "reason": "active investigations cite the moved Lean pipeline guide (found by 1ca94ec2)"
+  },
+  {
+   "id": "b23c364a",
+   "reason": "decoupling task T1 of decoupling-findings.md (owner ruling 2026-10-04: decoupling tasks in this epic)"
+  },
+  {
+   "id": "51f299d2",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Reconcile the --all-features commands of AGENTS.md with hipcc"
+  },
+  {
+   "id": "578adb63",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Declare rust-version in the gf2-kernels-simd manifest"
+  },
+  {
+   "id": "20f5343b",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Route the cargo test steps of cargo-ci.sh through the test budget"
+  },
+  {
+   "id": "75a71fab",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Deny unsafe code in the binary crate roots"
+  },
+  {
+   "id": "774f2de4",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Enforce or restate the sixty-second fast-tier suite budget"
+  },
+  {
+   "id": "0407aca8",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Give the bare ignore in gf2-core axiom tests a tier reason"
+  },
+  {
+   "id": "37235fd6",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Flush checkpoints on SIGTERM or state SIGINT alone"
+  },
+  {
+   "id": "3a5894ed",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Check the Table 6a and 6b attribution in the DVB-T2 BCH parameters"
+  },
+  {
+   "id": "c7c11e7e",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: State the tested ROCm version at its source"
+  },
+  {
+   "id": "84b67272",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Remove the dev/active path literal from the benchmark lock wrapper"
+  },
+  {
+   "id": "b9238d44",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Remove or implement the AVX-512 bipedal entry points"
+  },
+  {
+   "id": "299132b7",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Locate the rank-event receipt without a dev path literal"
+  },
+  {
+   "id": "16fee10f",
+   "epic": "b4b4b9ee",
+   "reason": "found by the permanent-surface audit fca578b1: Verify that each performance claim measures the shipped code path"
+  },
+  {
+   "id": "c73aa593",
+   "epic": "b4b4b9ee",
+   "reason": "gf2-side harness port (b23c364a DEC-01)"
+  },
+  {
+   "id": "b5b336e5",
+   "reason": "zen3 decoupling move (owner option A)"
+  },
+  {
+   "id": "2e18b37c",
+   "reason": "zen3 decoupling move (owner option A)"
+  },
+  {
+   "id": "cc060974",
+   "reason": "zen3 decoupling move (owner option A)"
+  },
+  {
+   "id": "5b3e7c81",
+   "reason": "move of the held 02b8137c entry (5ec5dcc1 DEC-01)"
+  },
+  {
+   "id": "7ff06801",
+   "epic": "b4b4b9ee",
+   "reason": "04b85d10 gf2-side harness port (found by f79bcba3)"
+  },
+  {
+   "id": "3514d822",
+   "epic": "b4b4b9ee",
+   "reason": "12fdeb5b addenda declare the family-wise ledger at the flat path (found by f79bcba3)"
+  },
+  {
+   "id": "94befdc3",
+   "epic": "b4b4b9ee",
+   "reason": "failing frozen-closure test of the eda07788 harness (found by 602652bf)"
+  },
+  {
+   "id": "3d864278",
+   "epic": "b4b4b9ee",
+   "reason": "2037941f dense-harness fails cargo fmt --check (found by 198aafa3)"
+  },
+  {
+   "id": "f63ad8dd",
+   "epic": "b4b4b9ee",
+   "reason": "5cbb6545 gf2-side fails cargo fmt --check (found by 7039d680)"
+  },
+  {
+   "id": "e59f207c",
+   "epic": "b4b4b9ee",
+   "reason": "eda07788 inspect-sources.py needles not found (found by 7039d680)"
+  },
+  {
+   "id": "3de8d0f3",
+   "epic": "b4b4b9ee",
+   "reason": "19513245 consumer crate fails cargo fmt --check (found by 2e18b37c)"
+  },
+  {
+   "id": "8163dacd",
+   "epic": "b4b4b9ee",
+   "reason": "moved-script literals do not reproduce committed records (19513245 freeze-confirmations.sh, 53c5a8c0 summarize-profile.py) (found by 2e18b37c)"
+  },
+  {
+   "id": "d12e9ded",
+   "epic": "b4b4b9ee",
+   "reason": "19513245 make-source-evidence.py exits 1 (found by 2e18b37c)"
+  },
+  {
+   "id": "c9920dc6",
+   "epic": "b4b4b9ee",
+   "reason": "a203a23c measure.py --assess not idempotent (found by 2e18b37c)"
+  },
+  {
+   "id": "c3ef9ee7",
+   "epic": "b4b4b9ee",
+   "reason": "c04dd4ac make-shift-source-evidence.py exits 1 (found by cc060974)"
   }
  ],
  "escalations": [
@@ -1688,7 +1883,7 @@
     "amend REQ-01 as for f79bcba3 so the five entries with done owners move"
    ],
    "recommendation": "second option, so 198aafa3 does not hold the epic open for the wait",
-   "resolution": ""
+   "resolution": "Moot: 4c1e441f, ad2a6a58, f63a2464 and 2037941f are done in the tracker on 2026-10-06; REQ-01 holds as written."
   },
   {
    "issue": "decoupling",
@@ -1704,6 +1899,162 @@
     "amend REQ-01 to leave it flat"
    ],
    "recommendation": "first option",
+   "resolution": "Owner: move under dev/active/86b9c719-quality-documentation-tech-debt/389aa4de/ and amend the plan tie row; DEC-02 on the issue (2026-10-06)."
+  },
+  {
+   "issue": "5ec5dcc1",
+   "question": "OPEN: REQ-01 forbids any move until 02b8137c is done or rejected; 02b8137c (epic b8206228) is in_progress and branch worktree-agent-02b8137c-run carries one unmerged commit on dev/active/02b8137c/ (fa8a9d9cd, 2026-08-31).",
+   "options": [
+    "wait for 02b8137c",
+    "amend REQ-01 as for f79bcba3 so the entry of an open owner stays in place and is reported"
+   ],
+   "recommendation": "second option",
+   "resolution": "Owner (2026-10-06): amend REQ-01 and REQ-02 so the entry of an open owner stays in place and is reported; DEC-01 on the issue."
+  },
+  {
+   "issue": "7dbcde0c",
+   "question": "OPEN: REQ-04 cannot hold as written: after the move the renderer test results are identical but the synthetic receipt differs on two lines where the renderer prints its own path, its protocol path and the mapping document path as observed at run time; the diff is empty with the directory level removed from those three paths (3fd3db5e-baseline.md on branch worktree-agent-7dbcde0c, tip 48795ea3d, unmerged). Commit 2191bcaba changes d1b4f85e/run.sh:28 from `../../..` to `git rev-parse --show-toplevel`, beyond the path text of REQ-05. The committed fd9d5416 receipt keeps its bytes and differs from a fresh render on the same paths.",
+   "options": [
+    "amend REQ-04 to identity apart from the three run-time-observed paths and accept the run.sh edit under REQ-05",
+    "drop the branch"
+   ],
+   "recommendation": "first option",
+   "resolution": "Owner (2026-10-06): amend REQ-04 to identity apart from the three run-time-observed paths and accept the run.sh edit under REQ-05; DEC-02 on the issue."
+  },
+  {
+   "issue": "616e1d7c",
+   "question": "OPEN: rework 2 of 2 returned partial (branch worktree-agent-616e1d7c, tip f29db982d, unmerged). dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md:82,98 stay unresolved: the file is the archive plan copy of the live receipt dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md; editing the copy alone makes the preview ineligible (destination-conflict, unpreservable-layout).",
+   "options": [
+    "A: apply target/616e1d7c-receipt-links.patch in the worker worktree, which gives both files root-relative targets; no digest pins the receipt; preview stays eligible",
+    "B: amend REQ-03 to exempt byte copies of receipts"
+   ],
+   "recommendation": "A",
+   "resolution": "Owner (2026-10-06): option A, both files take root-relative link targets; DEC-03 on the issue."
+  },
+  {
+   "issue": "zen3-cluster",
+   "question": "OPEN: decoupling-findings.md: the eight flat entries can move (no CI step recomputes a digest against a live dev/active file), but cargo-ci runs --check on two producing-closure generators that name these directories, so f79bcba3 and 602652bf fail CI unless the generators change and closures are regenerated, against their REQ that producing manifests keep their bytes; bdc507a3 must move with f547c394; 198aafa3 and 7039d680 break named paths in sibling entries. Owner decisions D1 to D5 are listed in the findings.",
+   "options": [
+    "A: file tasks T1 to T4, amend 602652bf to carry bdc507a3, amend f79bcba3, 198aafa3, 7039d680, 602652bf for regenerated closures and decoupling edits of receipt-pinned scripts",
+    "B: named exception: zen3 survey-harness entries stay flat until epic 1a379447 is terminal; reject the move units; amend epic REQ-11"
+   ],
+   "recommendation": "A",
+   "resolution": "Owner (2026-10-06): option A, file T2 to T4 and amend the four move units; D3 and D4 by regeneration where no build is needed, D5 keeps the literal."
+  },
+  {
+   "issue": "b23c364a",
+   "question": "OPEN: REQ-04 (the gf2-side crate builds on Rust 1.95 after the move) cannot hold: the crate fails with E0432 unresolved import gf2_coding::bch::BchEncoder at the baseline commit and after the move alike; commit 9591b0674 removed that API. Path dependencies resolve (cargo metadata). Branch worktree-agent-b23c364a (tip 0a8712dd8) is unmerged. dev/active/fd9d5416/receipt-protocol.md:7,154 link ../4e732b56/, so b23c364a and 7dbcde0c land together or docs-mechanical fails between them.",
+   "options": [
+    "amend REQ-04 to path-dependency resolution with the build result unchanged from the baseline, and file a debt issue for the port",
+    "port the harness to the current BCH API first"
+   ],
+   "recommendation": "first option",
+   "resolution": "Owner (2026-10-06): amend REQ-04 to path-dependency resolution with the build result of the baseline; port tracked in c73aa593 (b4b4b9ee); DEC-01 on the issue."
+  },
+  {
+   "issue": "fca578b1",
+   "question": "OPEN: AGENTS.md mission sentence lost \"high-performance\" under @/inv/no-marketing in the audit; restoring it adds a line to a 200-line file.",
+   "options": [
+    "keep the edit",
+    "restore the wording and cut a line elsewhere"
+   ],
+   "recommendation": "no strong preference",
+   "resolution": "Owner (2026-10-06): keep the audit edit of the AGENTS.md mission sentence."
+  },
+  {
+   "issue": "616e1d7c",
+   "question": "code-review F1 (run at 9281ed8fc): REQ-04 read literally fails on archived entries whose manifest consumers are scripts of the same archived set.",
+   "resolution": "Owner (2026-10-06): amend REQ-04 to consumers outside the moved-or-archived set; DEC-04 on the issue."
+  },
+  {
+   "issue": "f79bcba3",
+   "question": "OPEN: REQ-05 holds two clauses that conflict for five frozen documents of entry 2037941f (dense-parity-addendum.md, dense-parity-addendum-v1.md, logical-buffer-addendum.md, isal-comparator.md, m4ri-operation-match.md): they keep their bytes (digests at cells.rs:22, dense-baseline-validation.txt:6, isal-dispatch-availability.md:7 and two receipts), so 21 relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md. Eleven resolve again once f547c394, 5cbb6545 and 6fb89a3c sit under the epic directory; ten (measurement-contract.md, dev/bench_results, crates) never do. Epic REQ-19 names unresolved links.",
+   "options": [
+    "A: amend the link clause of REQ-05 to exempt byte-fixed documents and keep the baseline rows",
+    "B: repoint the links and update ADDENDUM_SHA256 and the citing digests, which changes a frozen addendum's identity"
+   ],
+   "recommendation": "A",
+   "resolution": ""
+  },
+  {
+   "issue": "f79bcba3",
+   "question": "OPEN: REQ-03 (each harness crate in a moved entry builds after the move) cannot hold for 04b85d10/survey/gf2-side: E0432 on gf2_coding::bch::BchEncoder before and after the move alike (9 of 10 crates build). Port tracked in 7ff06801 (b4b4b9ee).",
+   "options": [
+    "amend REQ-03 to an unchanged build result for that crate, as b23c364a DEC-01",
+    "port the harness first"
+   ],
+   "recommendation": "the amendment",
+   "resolution": ""
+  },
+  {
+   "issue": "602652bf",
+   "question": "OPEN: same conflict as f79bcba3 REQ-05: digest-pinned protocol.md:5, protocol-v1.md:5 and amendment-v4.md:31 of f547c394 keep their bytes, so three relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md (18 baselined rows in total at the lane tip).",
+   "options": [
+    "baseline the rows and amend the link clause of REQ-06",
+    "change pinned bytes"
+   ],
+   "recommendation": "baseline",
+   "resolution": ""
+  },
+  {
+   "issue": "f6148d1e, f694f59a",
+   "question": "OPEN: REQ-03 cannot hold: the byte-fixed campaign-declaration.json of dbd8787d and a83583e0 names its protocol and producing manifest by flat path (lines 4-5; dbd8787d/producing-build-inputs.json:102,120,293 names its own declaration), and dev/scripts/validate-tuning-extent-campaign.py:580,4850,5026 and tuning-extent-campaign-driver.rs (579..3958), provenance.rs validate_at join those strings to the root. Trial move (reverted): cargo-ci step tuning-campaign-validator fails with ENOENT on dev/active/dbd8787d/premeasurement-protocol.md; nextest tuning-campaign-support 213/213 before, producing_input_manifest_rejects_authority_and_path_mutations fails after. No commit exists; evidence in agent-b23c364a/target/decl-return.md.",
+   "options": [
+    "A: file a decoupling task in this epic (successor of 8bd873f7): driver and validator resolve a declaration's protocol, producing manifest and manifest self-entries relative to the located declaration or by content, with a relocated-entry test and verdict baseline; both moves depend on it. It changes shared measurement tooling that epic 1a379447 campaigns run.",
+    "B: hold both entries flat in the 5ec5dcc1 form (rows retained-operational, complete) with REQ-02 amended and a tracked move issue"
+   ],
+   "recommendation": "A when no extent campaign is in flight; B to close the epic first",
+   "resolution": ""
+  },
+  {
+   "issue": "f6148d1e, f694f59a",
+   "question": "OPEN: REQ-07 (each tracker document reference names the new path) conflicts with the tracker: dbd8787d references name archive copies (unpinned); a83583e0 documents 2 and 5-11 are commit-pinned to the flat path by 616e1d7c DEC-01 so the 6dc81018 archive plan retains the entry. Relinking to the active path may make a rerun collect the entries.",
+   "options": [
+    "a: amend REQ-07 to references keep their archive path or pin",
+    "b: relink and accept re-collection"
+   ],
+   "recommendation": "a",
+   "resolution": ""
+  },
+  {
+   "issue": "f79bcba3, b5b336e5, 602652bf (and the remaining zen3 units)",
+   "question": "`jit doc add` (jit 1.0.0) refuses a document or a captured asset whose path exceeds its depth budget (\"capture path ... exceeds the depth budget\"; a nine-component path such as dev/active/1a379447-zen3-cpu-performance/04b85d10/survey/gf2-side/src/bin/consumer-arm.rs fails), and one binary document (1d0da41f/survey/baseline-source.tar.gz, \"is not UTF-8\"). After the lane merge d6657b90e the relink scripts repointed every other reference; the references listed in depth-budget-rejected.txt (owner issue, new path) keep their flat path, which the tree lacks. The criterion \"each tracker document reference names the new path\" cannot hold for them.",
+   "options": [
+    "A: raise or make configurable the depth budget in jit, then rerun the three relink scripts (idempotent; in agent-zen3lane/target)",
+    "B: remove the rejected references from their issues",
+    "C: amend the criterion to exempt paths jit rejects"
+   ],
+   "recommendation": "A",
+   "resolution": "Lead (2026-10-06): no owner input needed. `jit doc add --skip-scan` accepts the deep paths and the binary document; the depth budget binds the asset scan. The 58 refused references and 16 that the aborted relink scripts had left name the new paths (commit after 4a23fb49e); `jit validate` exits 0. Their asset metadata is unscanned."
+  },
+  {
+   "issue": "198aafa3, 7039d680, 2e18b37c, cc060974",
+   "question": "OPEN: REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3). Same class in 7039d680: eda07788/survey/freeze-remeasure.py:199,202,203,219 are text of the frozen addendum the script reproduces byte for byte (lane tip 7fd76c6b3). Same class in 2e18b37c (lane tip d322f4f97): 19513245/survey/make-addenda.py:37 (commit 06fe749d3 reverts the 552a0548d edit of 198aafa3, which broke six frozen addenda), 19513245/survey/summarize-profile.py:67,176 and a203a23c/timing/measure.py:360,766 keep the flat path. The converse defect, scripts whose updated literal no longer reproduces a committed record, is tracked in 8163dacd. Same class in cc060974 against its REQ-01 (no literal names dev/active/): in the c04dd4ac entry survey/freeze-shift-addendum.py:19 and make-dvb-addendum.py:28 (ledger_path of frozen addenda), make-profile-provenance.py:39-47,218 (paths of the measured revision), make-voided-attempt.py:30,102,103, make-voided-attempt-record.py:18,43,49,50 and summarize-shift-receipt.py:32 keep flat paths as record text. The c04dd4ac breakdown.json keeps 14 flat paths (class breakdown-manifest in cc060974-remaining.txt; four name files that never existed).",
+   "options": [
+    "amend the literal criteria of the four units (198aafa3 REQ-04, 7039d680 REQ-05, 2e18b37c REQ-04, cc060974 REQ-01) to exempt text a script reproduces from a frozen document or committed record, and accept breakdown.json as kept",
+    "change the literals and regenerate the committed bytes"
+   ],
+   "recommendation": "the amendment",
+   "resolution": ""
+  },
+  {
+   "issue": "b5b336e5 (same wording in 2e18b37c, cc060974 and the older move units)",
+   "question": "OPEN: doc-review F1 at 365557a77 (cargo-ci, docs-mechanical and code-review pass): the issue description opens with \"The flat `dev/active/bc091474/` entry holds ...\", a path the tree lacks after the move (REQ-07, active-document-layout, current-state-scope). The lead wrote that sentence when filing; a description edit is a scope change that needs the owner.",
+   "options": [
+    "reword the opening sentence of b5b336e5, 2e18b37c and cc060974 to name the entry by issue id without a path, then rerun doc-review",
+    "leave the descriptions and accept the finding"
+   ],
+   "recommendation": "the rewording",
+   "resolution": ""
+  },
+  {
+   "issue": "fa787f85",
+   "question": "OPEN: epic REQ-11 (documents of non-terminal epics live under the epic directory) against the held flat entry dev/active/02b8137c/ (5ec5dcc1 DEC-01, move tracked in 5b3e7c81); option B for f6148d1e and f694f59a adds dbd8787d and a83583e0.",
+   "options": [
+    "amend REQ-11 to admit a flat entry with a tracked move issue",
+    "keep the epic open until each entry moves"
+   ],
+   "recommendation": "the amendment",
    "resolution": ""
   }
  ],
@@ -1767,7 +2118,11 @@
   "3759f995": 1,
   "f902240f": 2,
   "f29a9225": 2,
-  "616e1d7c": 1
+  "616e1d7c": 1,
+  "0c5aa3b7": 2,
+  "0a0ece44": 1,
+  "fca578b1": 1,
+  "e1f262a7": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1904,6 +2259,41 @@
    "issue": "4f161183",
    "finding": "Descriptions of 77c21ecd and b64dc9c4 cite dev/active/613574db/.",
    "disposition": "kept: owner ruling on terminal-issue descriptions (check their state before relying on it)"
+  },
+  {
+   "issue": "fdb998ec",
+   "finding": "crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs holds four avx512f entry points that panic unconditionally (unimplemented!), compiled only under cfg(target_feature = \"avx512f\").",
+   "disposition": "filed b9238d44 (b4b4b9ee)"
+  },
+  {
+   "issue": "b2bb1065",
+   "finding": "crates/gf2-algebra/tests/rank_event_rates.rs:19,292 writes dev/bench_results/e0251af3-rank-event-rates.md by path literal (no-dev-path-coupling); the report stays at the top level of dev/bench_results as a test-written receipt.",
+   "disposition": "filed 299132b7 (b4b4b9ee); check against epic REQ-14 before the epic gate"
+  },
+  {
+   "issue": "f79bcba3",
+   "finding": "jit:b2e09d41 (epic 1a379447) removed dev/active/3be770d5/survey/harness/src/bin/ldpc-plan-check.rs; migration/check.py reports six pending rows whose source is missing, and 67048b47-linked-pairs.txt and b0b1faf5-outputs.sh name the file.",
+   "disposition": "f79bcba3 (moves 3be770d5) sets the rows; af84619e needs a clean check"
+  },
+  {
+   "issue": "ec655592",
+   "finding": "REQ-02 one copy per owner adds second copies of small_prime_kernel_strategy.md and sota_target_matrix.md (about 1,200 lines) in the 97bf0879 archive.",
+   "disposition": "literal criterion; reported to owner"
+  },
+  {
+   "issue": "8466f5ae",
+   "finding": "96cea1b9-archive-rows.txt is the --check output over every archive event of 6dc81018; a further archive execution of 6dc81018 (616e1d7c) changes it.",
+   "disposition": "regenerate after the 616e1d7c archive reruns"
+  },
+  {
+   "issue": "fca578b1",
+   "finding": "AGENTS.md policy statements the tree does not meet (all-features vs hipcc, MSRV in gf2-kernels-simd manifest, --test rule in cargo-ci.sh, deny unsafe in bin roots, sixty-second suite budget, bare ignore) and the mission sentence edited under no-marketing.",
+   "disposition": "filed 51f299d2, 578adb63, 20f5343b, 75a71fab, 774f2de4, 0407aca8 (b4b4b9ee); mission wording reported to owner; epic REQ-02 and REQ-17 name AGENTS.md and permanent text: reconcile before the epic gate"
+  },
+  {
+   "issue": "7039d680",
+   "finding": "Session records of epic 1a379447 keep flat paths of moved entries: handoff-3.md:36, handoff-9.md:46 and five reviews/ files (14 lines) under dev/active/1a379447-zen3-cpu-performance/; the lane was told to leave that session's files alone on 2026-10-06.",
+   "disposition": "repoint after the 1a379447 session ends (form of commit 59f56ce93); REQ-06 of 7039d680 and 198aafa3 name citations"
   }
  ],
  "notes": [
@@ -1945,7 +2335,20 @@
   "Session 9: six stale worktrees of other epics removed with owner approval (agent-8bd873f7, agent-c73ffa25, agent-dbd8787d-publish, agent-dbd8787d-run, two under .claude/worktrees); the unmerged branches worktree-agent-aa4df2631e461c6ae and worktree-agent-ab61dd5f4d07bfb81 remain.",
   "Session 9 wave 11 dispatch (base 98e238917): 83f9ce69, f29a9225, 3759f995, f902240f run in two phases (worker pre-flight, lead executes the archive on main in the order 97bf0879, 026fc832, babcf05e, f9717e7e, b7157be6, worker repoints after a SendMessage naming the commit); 4f161183, eace5009, 616e1d7c, 103a792a are single-phase worktree workers. 2596b143 runs after they merge. 1ca94ec2 and 42037c91 wait on the dev/docs policy question. Worktrees were created without cache seeding (LEAD_CACHE_POOL unset to a missing path); the workers build nothing.",
   "Session 9: gf2-53 leads epic 1a379447 and commits on main from the same checkout. Both leads announce gate evaluations and cargo-ci runs to each other before starting; stage by explicit path; .jit/events.jsonl is shared and carries the other session's events.",
-  "Session 9 close: owner asked for the handoff once running tasks finished. Wave 11 open items: 616e1d7c (rework, owner question), 2596b143 (not dispatched), 198aafa3 (wave 12, blocked). Benchmark window of gf2-53 armed for 02:00 on 2026-10-05; no build or gate from 01:55 until window.log shows window end."
+  "Session 9 close: owner asked for the handoff once running tasks finished. Wave 11 open items: 616e1d7c (rework, owner question), 2596b143 (not dispatched), 198aafa3 (wave 12, blocked). Benchmark window of gf2-53 armed for 02:00 on 2026-10-05; no build or gate from 01:55 until window.log shows window end.",
+  "Session 10 (2026-10-06): owner instruction: subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Batch 1 dispatched 00:58 EEST at 412b3cd49 in worktrees created by `git worktree add` (no cache seeding, no builds): 616e1d7c rework 2, 7dbcde0c, 0a0ece44, b2bb1065, ec655592, 0c5aa3b7 (sonnet), fdb998ec; fix lane agent-fixlane7 (sonnet) for 8466f5ae and 0b8f09f3 at b68598fc6. Read-only explorer writes decoupling facts for the eight flat entries to the session scratchpad. Bench window timer gf2-bench-window-20261006 armed for 02:00 EEST: no build or gate from 01:55 until window.log shows window end. Build units for after the window: e1f262a7, 7039d680, 602652bf, f79bcba3 (2037941f is done, its entry moves), 198aafa3, then 2596b143.",
+  "Session 10 gate batch 1 at 6a38cc8b6 (cargo-ci 4 min warm): fdb998ec, 0b8f09f3, 8466f5ae, b2bb1065 done. 0c5aa3b7 doc-review F1 and 0a0ece44 code-review F1 fail on one class: citations of a moved path left in non-pinned active documents under a \"historical\" or \"copy of descriptions\" ground. Accepted grounds for a remaining old path: digest pin at file:line, marker-backed archive, receipts and inputs/ snapshots, tool output at a named commit, manifest schema fields, tracker state. Brief every move unit with this. Pinned tracker references stay untouched (old path at pinned commit). 0a0ece44 cargo-ci failed once on gf2-sim GPU AWGN tests (SIGABRT, 15 s timeout) in the evaluate-many rerun: infrastructure, rerun.",
+  "Session 10 gate batch 2 at c1dd3218c: 0c5aa3b7 (two reworks), 0a0ece44 (one rework), ec655592 (first run, after a pre-gate fix of the retained-citation class) done. Lessons: a move unit scopes Markdown by `git ls-files -- <dir> | grep` at any depth and leaves no manifest row of its directories pending; a dataset README that Rustdoc cites stays beside its dataset (0c5aa3b7, as the OSD READMEs); after repointing links inside a tracker-referenced document, rescan the reference with `jit doc add` (asset metadata), pinned references excepted.",
+  "Session 10 after the window (ended 02:09 EEST): b959ffe8 done on the first gate run. fca578b1 failed code-review and doc-review on one finding (deferred divergences neither fixed nor tracked); thirteen issues filed under b4b4b9ee and rework 1 sent. The session hit its usage limit at 02:29 and resumed at 04:01. e1f262a7 (sonnet) and b23c364a (opus) dispatched at 4dfbab9ce in cache-seeded worktrees. Blocked on owner rulings: 5ec5dcc1, 7dbcde0c, 616e1d7c, and the zen3 cluster (f79bcba3, 198aafa3, 7039d680, 602652bf, decoupling tasks T2 to T4). After fca578b1 merges: 2596b143.",
+  "Session 10: fca578b1 done after rework 1 (thirteen b4b4b9ee issues cited in its record). e1f262a7 done after one lead record fix: a record must not name an uncommitted relink script or describe the tracker relink as outstanding; state the committed tracker reference. A preregistration keeps its bytes even when no digest of it is committed (the lead wrongly had e1f262a7 repoint design.md:517 and reverted it before merge). 2596b143 dispatched at cac8fa20e (opus, cache-seeded worktree). Unmerged branches awaiting owner rulings: worktree-agent-7dbcde0c, worktree-agent-616e1d7c, worktree-agent-b23c364a.",
+  "Session 10 end: 2596b143 done on the first gate run. Every open unit waits on an owner ruling or on a unit that does; handoff-9.md lists the questions and the next actions.",
+  "Session 11 (2026-10-06 evening): owner answered the six open questions of handoff-9.md (all recommendations); criteria amendments and DECs written on 616e1d7c, 7dbcde0c, b23c364a, 5ec5dcc1. Peer session gf2-ad shares the main checkout. Branches worktree-agent-4337c02e and worktree-agent-bfc2ceab (open issues of epic 1a379447) carry unmerged edits under dev/active/2037941f-*, c7113c5a, 4c1e441f, ad2a6a58 and f547c394.",
+  "Session 11 owner instruction (2026-10-06): never stop to ask; a task needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when the current and the next wave finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty, Fable excluded; reviews weigh net-negative line change and the documentation invariants. Owner rulings this session: zen3 entries move now and the parallel session conforms (in-flight branches 4337c02e, bfc2ceab); 616e1d7c REQ-04 amended (DEC-04). Peer lead gf2-ad: no build, cargo-ci or gate from 01:55 EEST until window.log shows window end; bench-window/ and the 1a379447 progress.json stay unedited; merges and gate batches are announced both ways. Filed: b5b336e5, 2e18b37c, cc060974 (zen3 decoupling moves), 5b3e7c81 (02b8137c move, b4b4b9ee). Lane order: f79bcba3, b5b336e5, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 in worktree agent-zen3lane. Manifest rows whose source another epic removed (ad2a6a58 runner-smoke.txt, f63a2464 qc-arm-smoke.rs) need a disposition in 198aafa3.",
+  "Session 11: 616e1d7c done (gate batch at fc571c890). Review lesson repeated: link every unit record and output with jit doc add BEFORE gating (7dbcde0c, b23c364a, 5ec5dcc1 failed on it), and keep volatile counts out of records (5ec5dcc1 F2, single-source-prose). A verifier run inside a worker worktree counts that worktree's untracked target/ files and its stale .jit snapshot: regenerate committed verifier outputs on main after the merge. f6148d1e and f694f59a are blocked on owner input (declarations name siblings by flat path). Zen3 lane (worktree agent-zen3lane, unmerged): f79bcba3, b5b336e5, 602652bf done by workers; 198aafa3 running; merge to main waits for the peer's BATCH-END.",
+  "Session 11: lane units f79bcba3, b5b336e5, 602652bf merged on main at d6657b90e (clean merge of 3f1433616); relink scripts ran in a tolerant copy (add failure skips the removal). 198aafa3 continues on the lane branch.",
+  "Session 11: 5ec5dcc1 done. b5b336e5 passes cargo-ci, docs-mechanical and code-review at 365557a77; doc-review fails on the issue description's flat path (owner question). File move-unit descriptions without a path that the unit removes.",
+  "Session 11: the seven zen3 lane units are merged on main (merges d6657b90e, 99841ab2d, ffa978709 and the merge of db9f06677); 27 entries live under dev/active/1a379447-zen3-cpu-performance/; tracker references relinked by a generic pass (dangling unpinned reference -> counterpart under the epic directory, `--skip-scan` fallback); `jit validate` exits 0. The 63bad95d generators (make-calibration-budget.py, make-route-inventory.py) rewrite their outputs with other bytes on the moved tree: owned by open issue 63bad95d, whose lead regenerates them. Flat directories left under dev/active: 02b8137c (held, 5b3e7c81), dbd8787d and a83583e0 (blocked), and the retained or empty leftovers of 6dc81018.",
+  "Session 11 end (2026-10-07 00:55 EEST): cargo-ci and docs-mechanical pass for f79bcba3, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 on the merged tree at e230aaaa2; their review gates wait for the owner rulings of handoff-10.md. Every open unit waits on a ruling or on a unit that does."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
@@ -1975,6 +2378,7 @@
   "A unit that deletes Rustdoc from pub items fails REQ-04 (72768e37, aa0558c1), and a unit that restores a doc paraphrasing the body fails REQ-01 (13dfe1a5 code-review at 4293afd8d). Brief both rules together; gf2-core, gf2-sim and gf2-algebra set #![warn(missing_docs)], so a pub item's doc cannot be deleted there.",
   "Reviewers read every hunk of every tagged commit for removed planned-work statements; 'planned work: none' in a body failed four units. Run the deleted-line audit before the first gate and name each id as '<statement> (<file>) -> <id> (jit issue show <id>)'.",
   "A dev/active path in a module doc fails no-dev-path-coupling in review (13dfe1a5) while an @/issue address is classed as planned work: state what the artifact is and name no path.",
-  "A commit subject measured with awk on '%h %s' includes the hash; count ${#s} of the subject string before committing (a 72-character subject needed an amend)."
+  "A commit subject measured with awk on '%h %s' includes the hash; count ${#s} of the subject string before committing (a 72-character subject needed an amend).",
+  "`jit doc add` refuses a path or captured asset beyond its depth budget and a non-UTF-8 document; `--skip-scan` accepts them. A relink script must fall back to `--skip-scan` and must not abort midway: a reference left at an absent path fails `jit validate` and the repo-validate gate for every epic. Run `jit validate` after every relink."
  ]
 }

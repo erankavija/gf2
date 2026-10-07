@@ -1,0 +1,377 @@
+# Workload-selection contract (ae03bcd0)
+
+| Field | Value |
+|---|---|
+| JIT issue | `4e732b56` (Reproducible external-baseline survey and workload selection) |
+| Epic | `ae03bcd0` (Harden and generalize BCH codes over finite fields) |
+| Contract slot | `workload-selection` of [plan.md](../plan.md) § *Shared architectural contracts* |
+| Evidence | [findings.md](findings.md) |
+| Consumers | `encode-dispatch`, `avx2-batch-kernels`, `genmatrix-perf`, `bench-extension`, `perf-receipts` |
+
+This document is the `workload-selection` contract: the concrete completion of
+the plan's `evidence-protocol`. It fixes the codes, batch sizes, matrix
+dimensions, cache state, worker counts, algorithm families, and selected
+external baseline per workload. It is predeclared — no optimization task has
+consumed it yet — and a consumer that needs a cell this document does not name
+amends it here first.
+
+The statistical acceptance rule, the conformance corpus, and the host
+conventions are not restated here; they are the `evidence-protocol` section of
+[plan.md](../plan.md), which this document completes rather than replaces.
+
+## 1. Workloads
+
+**W1 — large-batch binary BCH systematic encoding.** Encode a batch of $B$
+messages of $k$ information bits each into $B$ systematic codewords of $n$
+bits, in the repository's default `[message | parity]` layout. Reported in
+information bits per second: $B k / T$.
+
+**W2 — GF(2) generator-matrix materialization.** Produce the $k \times n$
+systematic generator matrix $G$ of a binary BCH code as a packed GF(2) bit
+matrix. Reported in matrix bits per second: $k n / T$.
+
+The two workloads are the pair the plan names for REQ-13, and they are
+measured with the same code rows so a consumer can reason about the crossover
+between encoding a batch directly and encoding it through a materialized $G$.
+
+## 2. Benchmark codes
+
+Every row is a binary, narrow-sense ($b = 1$), systematic BCH code. `prim` is
+the primitive polynomial of the mother field, matching
+`crates/gf2-core/src/primitive_polys.rs::standard(m)`, so the generator
+polynomial is fixed rather than left to a library's default field choice.
+
+| Row | $n$ | $k$ | $t$ | $\delta$ | $\deg g$ | Mother field | `prim` | Provenance |
+|---|---|---|---|---|---|---|---|---|
+| B1 | 15 | 5 | 3 | 7 | 10 | $\mathrm{GF}(2^4)$ | $x^4 + x + 1$ | plan corpus row B1 |
+| B2 | 127 | 64 | 10 | 21 | 63 | $\mathrm{GF}(2^7)$ | $x^7 + x + 1$ | plan corpus row B2 |
+| B3 | 255 | 223 | 4 | 9 | 32 | $\mathrm{GF}(2^8)$ | $x^8 + x^4 + x^3 + x^2 + 1$ | plan corpus row B3 |
+| T2S | 7200 | 7032 | 12 | 25 | 168 | $\mathrm{GF}(2^{14})$ | $x^{14} + x^5 + x^3 + x + 1$ | DVB-T2 short frame, rate 1/2 |
+| T2N | 32400 | 32208 | 12 | 25 | 192 | $\mathrm{GF}(2^{16})$ | $x^{16} + x^5 + x^3 + x^2 + 1$ | plan corpus row B4 |
+
+B1, B2 and B3 are the plan's binary conformance-corpus rows carried over
+unchanged, so a performance cell and a conformance cell name the same code.
+T2N realizes corpus row B4: the DVB-T2 normal-frame parameters as pinned by
+the in-tree table at `crates/gf2-coding/src/bch/dvb_t2/params.rs:69`.
+
+T2S is the one row this contract adds beyond the corpus. It is a shortened
+code over a *different* mother field ($m = 14$) whose message fits in 879
+bytes rather than 4026, so at a fixed batch size its working set sits a factor
+of 4.5 below T2N's — L2-resident at $B = 256$ where T2N is already L3-resident.
+Without it, every large-code cell would share one mother field and one
+working-set regime.
+
+T2S and T2N are shortened codes: $n < 2^m - 1$. Their generator polynomials
+are those of the mother codes of length $2^m - 1$, and their $\delta = 25$ is
+the designed distance of that mother code.
+
+## 3. Batch sizes
+
+$B \in \{1,\ 16,\ 256,\ 4096\}$.
+
+| $B$ | What the cell resolves |
+|---|---|
+| 1 | Per-call cost: construction, dispatch, and allocation that does not amortize. A SIMD-interleaved family cannot fill a wave here, which is itself the measurement. |
+| 16 | One full SIMD wave at 16 lanes and two at 8, so a lane-parallel family is exercised at its minimum useful width. |
+| 256 | Steady state with the working set L2-resident on every row but T2N, which is L3-resident. |
+| 4096 | The largest working sets the ladder reaches: 31.5 MiB on T2N, against a 32 MiB L3. Memory traffic competes with the LFSR recurrence here in a way it does not at $B = 256$. |
+
+Derived working sets, message plus codeword packed ($B(k+n)/8$ bytes),
+against this host's 512 KiB L2 per core and 32 MiB L3 per CCX:
+
+| Row | $B = 1$ | $B = 16$ | $B = 256$ | $B = 4096$ |
+|---|---|---|---|---|
+| B1 | 2 B | 40 B | 640 B | 10 KiB |
+| B2 | 24 B | 382 B | 6 KiB | 96 KiB |
+| B3 | 60 B | 956 B | 15 KiB | 239 KiB |
+| T2S | 2 KiB | 28 KiB | 445 KiB | 6.9 MiB |
+| T2N | 8 KiB | 126 KiB | 2.0 MiB | 31.5 MiB |
+
+These sizes describe the packed representation the contract's throughput unit
+counts, which is the working set of the packed-byte implementations (bchlib,
+the gf2 side, and the packed W2 matrices). For them, every row through
+$B = 256$ is L2-resident except T2N, which is L3-resident there, and at
+$B = 4096$ only T2N approaches the L3 capacity boundary, at 31.5 MiB against
+32 MiB. An implementation with a wider storage representation scales this
+table by its own factor: AFF3CT stores one 32-bit word per bit, so its
+working sets are 32× these figures — its T2N rows leave L3 at $B = 256$
+(64 MiB), its T2S rows stay L3-resident through $B = 256$ (13.9 MiB), and
+both are DRAM-backed at $B = 4096$ (222 MiB and 1008 MiB). Residency claims in this
+document are therefore per-representation: the packed ladder supports no
+reliably DRAM-bound cell, while the AFF3CT large-frame cells at high $B$ are
+DRAM-backed by size, and any conclusion drawn from them must account for
+that. A consumer that needs a packed DRAM-bound cell extends the ladder here
+rather than in its own bench; this document records that as an open gap
+rather than claiming coverage the sizes do not support.
+
+## 4. Matrix dimensions (W2)
+
+$G$ is $k \times n$ for each row of § 2: $5 \times 15$, $64 \times 127$,
+$223 \times 255$, $7032 \times 7200$, and $32208 \times 32400$. The last is
+1.04 Gbit, 124 MiB packed, and is the row that decides whether materialization
+is viable at DVB-T2 normal-frame scale at all.
+
+Materialization output is the systematic $G = [\,I_k \mid P\,]$ in the
+repository's `[message | parity]` layout, packed little-endian per
+`@/inv/canonical-bit-indexing`. A family that produces $P$ alone records the
+$k \times (n-k)$ shape it produced; it is not a substitute for $G$ unless the
+consumer only needs $P$.
+
+## 5. Cache state
+
+Two declared states. Which one a cell is in follows from the API it measures,
+not from a per-cell choice:
+
+* **`warm-reuse`** — input and output buffers are allocated once outside the
+  timed region and reused by every repetition. Steady-state throughput;
+  first-touch page faults and allocator work are excluded. This is the state
+  of every workspace-style API: the bchlib, AFF3CT and M4RI W1 cells, and
+  M4RI's `matmul-m4rm`.
+* **`fresh-alloc`** — the measured call allocates its own result, so allocation
+  is inside the timed region. This is the state of every W2 materialization
+  and of any W1 API returning an owned collection, which includes the current
+  `BchEncoder::encode_batch` and `GeneratorMatrixAccess::generator_matrix`.
+  A like-for-like non-regression comparison against the pre-cutover receipt
+  uses it.
+
+A consumer that adds an allocation-free encoding path measures it as
+`warm-reuse` and keeps the allocating path's `fresh-alloc` cell alongside, so
+the pre-cutover comparison stays like-for-like.
+
+No cell flushes the cache between repetitions. A family whose advantage
+depends on a cold cache declares that as an amendment here before measuring
+it.
+
+## 6. Worker counts
+
+$W \in \{1,\ 6\}$.
+
+* $W = 1$ — every external-baseline comparison. The SOTA reference acceptance
+  protocol requires single-thread references, and every selected baseline is
+  single-threaded, so a multi-threaded gf2 figure has nothing to compare
+  against.
+* $W = 6$ — the parallel batch-encoding path. Six is the width of the CCX1
+  core pin (`taskset -c 6-11`) that `dev/scripts/ccx1-bench-flock.sh` applies,
+  so a receipt taken through the wrapper cannot use more.
+
+A benchmark process sets `RAYON_NUM_THREADS` explicitly. The repository-wide
+value in `.cargo/config.toml` reaches processes Cargo launches, and a binary
+run directly from `target/` inherits none of it, so a receipt that depends on
+the launch path is not reproducible.
+
+Determinism across $W \in \{1, 6\}$ is a hard requirement of
+`@/inv/deterministic-seeded-execution`, not a performance question: the same
+seed produces the same codewords at both worker counts.
+
+## 7. Encoding algorithm families to register
+
+Decision D-04 requires the dispatch seam to carry at least one scalar
+reference and at least two registered families. The table below fixes each
+family's name and contract; where the survey measured a candidate of a
+family's shape, its evidence is in [findings.md](findings.md) § 6.
+
+| Family | Description | Role |
+|---|---|---|
+| `poly-remainder-scalar` | One message at a time, remainder of $x^{r} m(x)$ modulo $g(x)$ by the bit-serial LFSR recurrence. | **Required scalar reference.** Every other family is checked bit-identical against it. |
+| `table-remainder` | Consumes 32 message bits per step through four 256-entry remainder tables over packed bytes. | Registered. The strongest measured single-frame family. |
+| `bitslice-interleaved` | Transposes a batch into bit-slices and advances the LFSR across lanes, one register bit per frame. | Registered. Scales with register width rather than with $\deg g$. |
+| `clmul-fold` | Consumes 64 message bits per step of one frame: one Barrett quotient by carry-less multiplication with $\mu = \lfloor x^{r+64}/g \rfloor$, then $\lceil r/64 \rceil$ carry-less products with the generator's words. | Registered. Its per-step cost follows the carry-less multiplier width rather than the tap count or a table's index width, and it reduces one frame at a time, so a batch amortizes only its Barrett constant. The survey measured no candidate of this shape. |
+| `genmatrix-multiply` | Materializes $G$ (or $P$) once and encodes by dense GF(2) matrix product. | Registered. Amortizes only when one code encodes many batches; `genmatrix-perf` owns its materialization cost. |
+
+Registering a family fixes its name and its contract, not its selection: the
+crossovers among them are `encode-dispatch`'s measurement to make, over the
+cells this document fixes.
+
+## 8. Selected external baseline per workload
+
+Selection rationale, per-cell numbers, and the rejected candidates are in
+[findings.md](findings.md) § 5 and § 7.
+
+| Workload | Role | Library | Version | Commit / checksum | Build configuration |
+|---|---|---|---|---|---|
+| W1 | Primary | bchlib (userspace `lib/bch.c`, Ivan Djelic / Parrot S.A.) | v2.1.3 | `8d0656ab8f37e734428635501738d360ad80eebd` | `gcc -std=c11 -O3 -march=native`, `bch_init(m, t, prim, swap_bits=false)` |
+| W1 | Secondary | AFF3CT `Encoder_BCH_inter<int>` | v4.7.0 | `e8a65c5047262d97a15563b9edc961f69b2792cc` | `g++ -std=gnu++11 -O3 -march=native -funroll-loops`, `-DAFF3CT_MULTI_PREC -DAFF3CT_EXT_STRINGS -DAFF3CT_POLAR_BIT_PACKING -DMIPP_ENABLE_BACKTRACE -DSPU_COLORS -DSPU_STACKTRACE -DNDEBUG` |
+| W2 | Primary | M4RI `mzd_echelonize_m4ri` over the repository-column-order generator matrix | 20260122 | tarball sha256 `7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404` | `./configure --disable-static`, `CFLAGS="-O3 -march=native -fPIC"` |
+| W2 | Secondary | AFF3CT `Encoder_BCH<int>`, basis-vector materialization | v4.7.0 | `e8a65c5047262d97a15563b9edc961f69b2792cc` | as above |
+
+The two W1 entries measure different representations and are both retained:
+bchlib encodes packed bytes, which is the representation `BitVec` uses, while
+AFF3CT stores one 32-bit word per bit. Comparing gf2 against bchlib alone
+would credit gf2 for a representation advantage it does not have; comparing
+against AFF3CT alone would credit it for one it does not need.
+
+The two W2 entries are independent materialization routes — one Gaussian
+elimination of the repository-column-order generator matrix versus one encode
+per basis vector. The timed-route check shares M4RI's dump helper with the timed
+route; the dump is the timed route's output verbatim, and the verifier compares
+it with no normalization against the repository's row-major `[message | parity]`
+convention. For B2, B3, and T2S, the [generator-matrix agreement
+receipt](../../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt)
+records matching dimensions, `bit_exact_identical=True`, and `same_code=True`.
+This gives a consumer an independent check on the shape of the cost curve.
+The elimination route is primary because it is measurably faster at every row
+above B1, by 28.2× at T2S; the basis-vector route is retained as secondary
+because it is the route the current gf2 implementation takes, which makes it
+the like-for-like comparison point for a non-regression receipt.
+
+**Amendment, 2026-08-31 (`4e732b56`).** This document predeclared the
+basis-vector route as the W2 primary and the elimination route as secondary.
+The survey's measurement reversed that ordering and the table above records
+the corrected selection; the original is preserved in
+[findings.md](findings.md) § 8.1 rather than silently replaced.
+
+## 9. Amendment
+
+A consumer that finds a cell here unworkable amends this document before
+measuring against a different one, and records the amendment as a dated
+subsection naming the JIT issue that triggered it. Silently measuring a cell
+this contract does not name leaves the resulting receipt outside the
+`evidence-protocol`.
+
+### Amendment, 2026-09-01 (`177bdc85`) — differential corpus at mother length
+
+`encode-dispatch` registers the families of § 7 on the canonical construction
+model (`crates/gf2-coding/src/bch/spec.rs`, reached through
+`crates/gf2-coding/src/bch/encode.rs`). That model constructs a cyclic code
+whose length divides its splitting field's unit group, so it expresses B1, B2
+and B3 at exactly the lengths § 2 fixes, and T2S and T2N, whose lengths 7200
+and 32400 are shortened from $2^{14}-1$ and $2^{16}-1$, reach it through
+`Shortened<DvbT2MotherCode>` (the binary BCH mother under the standard's
+declared descending layout) and its systematic restriction. `97410c80`
+(*Migrate the DVB-T2 BCH consumers to the canonical model*) supplies that
+presentation, and is sequenced after this consumer.
+
+The differential equivalence evidence for the two DVB-T2 rows therefore runs
+on their **mother codes**: the primitive narrow-sense codes over the same
+mother fields and the same `prim` column at $\delta = 25$, of lengths 16383
+and 65535. § 2 already states that T2S and T2N carry their mother codes'
+generator polynomials, so the generator, its degree (168 and 192), and the
+reduction each family performs per message coefficient are the row's, and
+only $n$ and $k$ are the mother's. The witness is
+`crates/gf2-coding/tests/bch_encode_dispatch.rs`, whose row table cites this
+subsection.
+
+Two further points this amendment records rather than leaves implicit:
+
+* **Which families this consumer registers.** `poly-remainder-scalar`,
+  `table-remainder`, `bitslice-interleaved`, and `clmul-fold`, all through
+  the seam's registration surface and all under the § 7 spellings.
+  `genmatrix-multiply` belongs to `genmatrix-perf`, and § 7 fixes its name
+  and contract ahead of that.
+* **No selection is fixed here.** The conservative tuning section admits only
+  `poly-remainder-scalar`, so the crossover § 7 leaves to `encode-dispatch`
+  remains an unmeasured cell of this contract until `perf-receipts` measures
+  it and a calibrated profile carries the result.
+
+Nothing in §§ 2–8 is superseded: this subsection names where the
+conformance-shaped evidence for two rows is taken, and changes no measurement
+cell.
+
+### Amendment, 2026-09-02 (`bd0edfa2`) — W2 improvement evidence at mother length
+
+`genmatrix-perf` measures the W2 workload on the canonical construction model
+(`crates/gf2-coding/src/bch/matrix.rs`, reached through the
+`GeneratorMatrixAccess` and `ParityCheckMatrixAccess` contracts of
+`crates/gf2-coding/src/traits.rs`). Two of § 2's rows are unworkable cells for
+that consumer:
+
+* The canonical model constructs a cyclic code whose length divides its
+  splitting field's unit group, so T2S at 7200 and T2N at 32400 reach it
+  through `Shortened<DvbT2MotherCode>` (the binary BCH mother under the
+  standard's declared layout) and its systematic restriction, the
+  presentation `97410c80` (*Migrate the DVB-T2 BCH consumers to the canonical
+  model*) supplies. That issue is sequenced after this consumer.
+* `Shortened<C>` (`crates/gf2-coding/src/transform/mod.rs`) reaches those two
+  lengths generically, and its generator is a rank-derived dense matrix built
+  by row reduction at construction. That is a different materialization from
+  the one § 1's W2 workload names, so its cost answers a different question.
+
+`genmatrix-perf`'s REQ-02 improvement evidence therefore measures the two
+DVB-T2 rows on their **mother codes**: the primitive narrow-sense codes over
+the same mother fields and the same `prim` column at $\delta = 25$, of
+dimensions $16215 \times 16383$ and $65343 \times 65535$. § 2 already states
+that T2S and T2N carry their mother codes' generator polynomials, so the
+generator and its degree (168 and 192) are the row's, and only $n$ and $k$ are
+the mother's. The witness is
+`crates/gf2-coding/benches/bch_genmatrix.rs`, whose row table cites this
+subsection, and its receipt is `dev/bench_results/bd0edfa2/`.
+
+The measurement cells of §§ 2–8 are unchanged. `perf-receipts` (`fd9d5416`)
+and the external-baseline comparison of § 8 keep $7032 \times 7200$ and
+$32208 \times 32400$ as the W2 cells for the two DVB-T2 rows, at the shortened
+lengths § 2 fixes, on the presentation `97410c80` supplies. This subsection
+names where one consumer's improvement evidence is taken and adds no cell to
+§ 4.
+
+### Amendment, 2026-10-01 (`d1b4f85e`) — Criterion cells for W1 and W2
+
+`bench-extension` registers the Criterion cells `perf-receipts` (`fd9d5416`)
+consumes. The witnesses are `crates/gf2-coding/benches/bch_encode_w1.rs` (W1)
+and `crates/gf2-coding/benches/bch_genmatrix.rs` (W2), which share the § 2
+row table through `crates/gf2-coding/benches/bch_workloads.rs`; the window
+runner is `dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`. The cells this subsection adds beyond
+§§ 2–6:
+
+* **Nonbinary rows.** The evidence protocol's corpus rows N1–N4
+  ([plan.md](../plan.md) § `evidence-protocol`), built by
+  `gf2_coding::test_support::visit_bch_corpus` and measured in the
+  field-generic representation on both workloads. § 1 defines W1 and W2 over
+  binary codes; on these rows the throughput unit counts base-field symbols:
+  information symbols per second for W1, matrix symbols per second for W2.
+  No external baseline of § 8 covers them.
+* **The DVB-T2 rows at both lengths in W1.** T2S and T2N run at the shortened
+  lengths § 2 fixes through `dvb_t2_bch_code`, which is
+  `Shortened<DvbT2MotherCode>` under the systematic-restriction derivation
+  (`ShortenedDerivation::SystematicRestriction`,
+  `crates/gf2-coding/src/transform/mod.rs`): each encode writes the message
+  into a mother-length buffer, encodes it through the mother one message at
+  a time, and drops the removed coordinates. That route has no batch entry
+  point and therefore no family seam, so the per-family cells of these two
+  rows run on `T2S-mother` and `T2N-mother`, the mother codes the `177bdc85`
+  amendment fixes for the differential evidence.
+* **The DVB-T2 rows at the shortened lengths in W2.** The same presentation's
+  generator follows the systematic-restriction derivation: it materializes
+  the mother's generator and copies the kept rows and columns out of it, so
+  the T2S and T2N W2 cells measure the mother's materialization plus an
+  $O(kn)$ restriction. The `bd0edfa2` amendment's second bullet describes
+  this generator as rank-derived; the derivation stated here is the one
+  `Shortened::derivation` reports for both rows, and the bench asserts it.
+* **Per-family and per-kernel-arm cells.** At $W = 1$ in `warm-reuse`, every
+  family the row's representation makes available is measured by name, and
+  each family that runs the `gf2_kernels_simd::bch_encode` bundle on both its
+  detected and its portable arm. The `fresh-alloc` cells and the $W = 6$
+  cells measure the family the active profile selects, because the parallel
+  entry points select their family from the profile and take no family
+  argument; under the conservative profile that is the reference.
+
+**Benchmark IDs.** W1 cells are
+`bch_encode_w1/<path>/W<workers>/<cache>/<row>/B=<batch>`, where `<path>`
+names the dispatch path the measured call takes:
+
+* `family=<name>[<kernel>]` — `encode_batch_family_into` over one workspace
+  under the named family; the bracket names the kernel bundle (`avx2-pclmul`
+  or `scalar`) for the families that run one.
+* `selected=<name>[<kernel>]` — the entry points that select the family from
+  the active profile: `encode_batch` (`W1`, `fresh-alloc`),
+  `encode_batch_parallel_into` (`W6`, `warm-reuse`), and
+  `encode_batch_parallel` (`W6`, `fresh-alloc`); the name is the family
+  `selected_encode_family` reports for the batch length.
+* `route=shortened-restriction` — the DVB-T2 rows' `BlockEncoder`, one message
+  at a time: `encode` per message (`fresh-alloc`) and `encode_into` into
+  reused codeword buffers (`warm-reuse`).
+
+W2 cells are `bch_genmatrix_w2/<materialize|reference>/<cache>/<row>` and
+`bch_paritycheck/<materialize|reference>/warm-reuse/<row>`: `materialize` is
+the canonical path (`generator_matrix`, `generator_matrix_into`,
+`parity_check_matrix_into`), `reference` the basis-vector oracle of
+`gf2_coding::test_support`.
+
+**Dispatch record.** With `GF2_BCH_DISPATCH_RECORD` naming a file, every
+W1 and W2 cell appends one JSON line before it is timed: `id`, `workload`,
+`row`, its dimensions, `cache`, the measured `entry` point, the dispatch path
+(`family` and `kernel` for W1, `path` and `matrix` representation for W2),
+`workers`, the observed `rayon_pool_width`, and `output_fnv1a`, a digest of the
+cell's output computed outside the timed loop. Every path of one W1 row and
+batch, and every path of one W2 row, writes the same output: the benches
+assert it before timing, and the window runner checks it again over the
+record.

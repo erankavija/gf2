@@ -18,7 +18,7 @@ rests on three generated records and one ledger:
   identifiers appear in backticks.
 
 The [measurement contract](../measurement-contract.md) and
-[protocol version 4](../../f547c394/protocol.md) govern every timed cell. The
+[protocol version 4](../f547c394/protocol.md) govern every timed cell. The
 external comparator is M4RI [AlbrechtBard2026].
 
 ## 1. Selectors and their disposition
@@ -78,33 +78,33 @@ The mapping this plan uses:
 | Independently reconfirm the resulting profile | The holdout families of §6, whose cells no calibration family measured. |
 | Commit the versioned profile with producing-tool behavioral identity and linked receipts | An owner envelope of the offline tuning system and the baked constants that pin it. |
 
-What this issue can do with the offline tuning system as it stands:
+What the offline tuning system does for this issue:
 
-- Run a complete core campaign under its own run-identifier prefix by
-  committing a campaign declaration that names `63bad95d`, with a producing
-  manifest and a protocol document that amends the executed one by reference.
-  The launcher, driver and validator need no change. The campaign re-measures
-  every field the producer sweeps and publishes a new owner envelope, a
-  complete envelope and a receipt; one session's budget is in the
+- **The matvec threshold is a swept field.** The producer sweeps
+  `bit_matrix.matvec_simd_min_words` as a retained threshold
+  (`calibration-matvec-field`). The field is selected at compile time, so its
+  arms pin the two lanes through `BitMatrix::matvec_with_route`
+  (`calibration-matvec-arms`, `matvec-lane-entry`), as the bit-backend sweep
+  calls the two backends (`calibration-bit-arm`). The producer publishes only
+  when measured and omitted fields partition its fixed inventory
+  (`calibration-inventory-closed`), and the independent validator carries the
+  field (`validator-matvec-grid`). [`matvec-sweep-design.md`](matvec-sweep-design.md)
+  states the design.
+- **A campaign is declared.** [`campaign-declaration.json`](campaign-declaration.json)
+  names `63bad95d`; [`premeasurement-protocol.md`](premeasurement-protocol.md)
+  amends the executed seam protocol by reference, and the producing manifest
+  is generated. The launcher and driver are unchanged
+  (`calibration-launcher-declaration`). The campaign re-measures every field
+  the producer sweeps and publishes a new owner envelope, a complete envelope
+  and a receipt; one session's budget is in the
   [budget record](calibration-budget.md#planned-families).
-- Pin the new owner from the baked constants and the committed-profile tests.
+- **The baked constant follows the owner.** The baked matvec threshold is held
+  equal to the conservative value while no measured owner states the field
+  (`baked-matvec-conservative-test`); it mirrors the published owner under the
+  adoption rule of §7.
 
-What requires a change to that system:
+What stays outside that system:
 
-- **A matvec threshold in the profile.** The codec has the field, and the
-  producer does not sweep it: its field list is closed (`calibration-fields`),
-  it publishes only when measured and omitted fields partition a fixed
-  inventory (`calibration-inventory-closed`), and the owner codec admits a
-  stated value only with its measurement. The baked value is held equal to the
-  conservative one while no measured owner states it
-  (`baked-matvec-conservative-test`). Installing a host-specific threshold
-  therefore needs a new retained-threshold sweep in the producer. The field is
-  selected at compile time, so its arms call the two lanes directly, as the
-  bit-backend sweep calls the two backends (`calibration-bit-arm`); the scalar
-  lane has no public entry today (`matvec-scalar-lane-private`). The change
-  touches the producer's behavior token and counts, the independent validator
-  (`calibration-validator-behavior`), a protocol amendment and the campaign
-  declaration.
 - **A transpose lane in the profile.** No codec field exists. The kernel crate
   cannot read a `gf2-core` selector (crate dependency direction), so ownership
   by the core section needs a preference argument on the kernel crate's
@@ -114,8 +114,7 @@ What requires a change to that system:
   crossover rule is its own; it does not produce protocol receipts. This plan
   does not ask it to.
 
-This issue makes the first change, the matvec sweep (§8); the transpose lane
-stays outside the profile.
+The transpose lane stays outside the profile (§8).
 
 ## 3. Build configurations (REQ-09)
 
@@ -133,7 +132,7 @@ one arm. A selector's effect is a `tuned-portable` candidate against a
 level and differ in selectors alone. The native ladder compares `native`
 against `tuned-portable`. Each comparator-gap cell pairs gf2 and the external
 library at one level; the conservative level is committed evidence (the M4RI
-confirmation the [mid-range synthesis](../../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md)
+confirmation the [mid-range synthesis](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md)
 cites).
 
 `tuned-portable` here is defined by the profile's selectors at the portable
@@ -210,7 +209,7 @@ Rules common to the families:
 
 - **Pilot.** Each family has one exploratory pilot of its non-holdout cells at
   the pair count `planned-families.json` declares; the canonical freezer
-  `dev/active/c7113c5a/survey/freeze-confirmation.py` derives the confirmation
+  `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py` derives the confirmation
   addendum from the committed pilot receipt.
 - **Holdout.** Holdout cells are declared in a holdout record before the
   pilot runs and attached by the freezer; no sample of a holdout workload
