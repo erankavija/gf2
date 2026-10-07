@@ -52,7 +52,7 @@ current surface.
 `Question` has one ledger-owning variant per question of the addendum, in the
 order the addendum lists them: `isolated-fused-parity`, `allocated-matvec`,
 `matvec-vs-m4ri`. A further variant, `matvec-lane-threshold`, belongs to the
-[lane-threshold addendum](../1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md)
+[lane-threshold addendum](../4337c02e/matvec-lane-threshold-addendum.md)
 of issue `4337c02e`, identity `4337c02e-matvec-lane-threshold-v1`: it is
 measured at the `allocated-matvec` boundary by the same arms and cases, and
 `Question::addendum` names the frozen document each variant transcribes.

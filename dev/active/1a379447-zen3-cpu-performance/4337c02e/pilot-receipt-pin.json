@@ -1,0 +1,31 @@
+{
+  "role": "direction agreement only; the confirmation inherits no sample from it",
+  "issue": "4337c02e",
+  "family_id": "4337c02e-matvec-simd-threshold",
+  "campaign_id": "v4-r1-4337c02e-matvec-simd-threshold",
+  "label": "pilot",
+  "verdict": "accepted",
+  "receipt": "dev/bench_results/4337c02e/4337c02e-matvec-simd-threshold/v4-r1-pilot/receipt.json",
+  "receipt_sha256": "f054c74c060db141226a90ad4332dd167464c6432f404c424f5f9ef44ebbc790",
+  "acceptance_summary": "dev/bench_results/4337c02e/4337c02e-matvec-simd-threshold/v4-r1-pilot/acceptance-summary.json",
+  "acceptance_summary_sha256": "f1a3cd7ade15c73e702b102ce0674c47e54764038011d1b8277f700ed40e064f",
+  "cells": [
+    "lane-r1024-8w-warm",
+    "lane-r1024-9w-warm",
+    "lane-r1024-32w-warm",
+    "lane-r1024-63w-warm",
+    "lane-r1024-64w-warm",
+    "lane-r1024-65w-warm",
+    "lane-r1024-7w-control-warm",
+    "lane-r1024-10w-warm",
+    "lane-r1024-62w-warm",
+    "lane-r1024-66w-warm",
+    "lane-r1024-8w-streaming",
+    "lane-r1024-9w-streaming",
+    "lane-r1024-63w-streaming",
+    "lane-r1024-64w-streaming",
+    "lane-r1024-65w-streaming",
+    "lane-r1024-8w-cold",
+    "lane-r1024-64w-cold"
+  ]
+}
