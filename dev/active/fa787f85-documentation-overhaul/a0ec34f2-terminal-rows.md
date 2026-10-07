@@ -1,8 +1,8 @@
 # Terminal state of the remaining manifest rows (a0ec34f2)
 
-Record of `@/issue/a0ec34f2`. Commit checked: `ee5494344d5c62075622a7f60f45d161328b4752`.
+Record of `@/issue/a0ec34f2`. Commit checked: `d1420f0a596a8acb1b723d89c40451286d38a7e3`.
 Base: `338275ff25cf19b275e844894401edef4257f007`, the constant `BASE` of the
-script. Tracker state is read on main at `3f6521789`.
+script. Tracker state is read on main at `d8a50ae4e`.
 
 | File | Content |
 |---|---|
@@ -20,12 +20,11 @@ The `ground` column of the table takes these values.
 | `preregistration` | A preregistration states that the file stays at its committed path. | The holder at line 10 of the v5 preregistration is document 0 of `@/issue/ec22205e`, pinned to commit `ac550959`; the issue is done under the open epic `@/issue/b8206228`. |
 | `receipt-link` | Receipts whose manifest rows are digest-pinned link the file by relative path. | Documents of `@/issue/047b62ed`, `@/issue/0dffa759`, `@/issue/6c7fcb38` and `@/issue/91605d4d` capture the file as an asset with its SHA-256. |
 | `archive-link` | Files of the marker-backed archive of `@/issue/ae82bd73` link the file by relative path as the live provenance record. | `jit archive container ae82bd73 --json` gives the source action `block` with blocker `destination-conflict`: the archive holds another file at the plan destination. |
-| `container-plan` | The archive plan of `@/issue/ae82bd73` moves the file; execution belongs to the lead on main. | The same preview gives action `move` with a done, unpinned owner (`@/issue/b293af5a`, `@/issue/a9e461de`) and `eligible` false: blockers `destination-conflict` (the `archive-link` row) and `repository-escape` (`dev/plans/a9e461de/s5_gpu_crossover.md`). |
+| `pinned-reference` | A tracker reference of the owning issue names the file at a commit pin, so the issue document keeps the committed path. | Document entries of `@/issue/b293af5a` (`dev/research/perm_uniformity_gpu/README.md`) and `@/issue/a9e461de` (`dev/research/permanent_gpu_crossover/README.md`) carry commit `65acf0aaed712cf13003113eb37ed52bd0cebeb9`; both issues are done. The files are READMEs of research crates that `scripts/perm-uniformity-gpu-repro.sh` and `scripts/permanent-repro.sh` build. The table holder `file@COMMIT:line` is read at the tracker commit `d8a50ae4e`. |
 
 A `retained` row carries disposition `retained-operational`, an empty
 destination and status `complete`, the encoding of
-[83f9ce69-rearchive.md](83f9ce69-rearchive.md); the table names its holder. A
-`container-plan` row keeps its base fields.
+[83f9ce69-rearchive.md](83f9ce69-rearchive.md); the table names its holder.
 
 ## Criteria
 
@@ -33,7 +32,7 @@ destination and status `complete`, the encoding of
 |---|---|---|---|
 | REQ-01 | `[decisions]`, lines `retained-operational: in place` and `in place, destination cleared`; list `in place, destination cleared` | Each `retained-operational` row that has status `pending` at base names a path that exists at the commit checked and has status `complete` with an empty destination. The script stops on an absent path, so no such row names a moved or removed path. | Why no commit moves a listed file to its base destination. |
 | REQ-02 | lines `rewritten <destination>` | Each `rewritten-topic` destination exists and carries a commit of a breakdown issue; the rewrite tasks are the keys `entry-page-*`, `backend-crate-readmes` and `rewrite-dev-index`. | The content of the pages. |
-| REQ-03 | lines `moved`, `retained` and `held` with their holder lines | The moved file has the blob of its base path. Each holder line exists and reads as printed; `[digest-pinned row]` marks a holder whose own row is digest-pinned. | Tracker state: the script reads git objects only; the table above states it. |
+| REQ-03 | lines `moved` and `retained` with their holder lines | The moved file has the blob of its base path. Each holder line exists and reads as printed; `[digest-pinned row]` marks a holder whose own row is digest-pinned. | Tracker state: the script reads git objects only; the table above states it. |
 | REQ-04 | `[pending at checked]`; list `left pending` | The rows with status `pending` at the commit checked, per disposition and by path. | — |
 | REQ-05 | `[row changes base -> checked, by base disposition]` | Per base disposition the changed rows and the count per field; no artifact row is added or removed, no other field differs, and each manifest line equals its base line outside the three fields. | Rows of the `policy` table beyond their `pending` count. |
 
@@ -54,7 +53,7 @@ The moved file holds no link.
 ## Commands
 
 ```
-python3 dev/active/fa787f85-documentation-overhaul/a0ec34f2-rows.py ee5494344d5c62075622a7f60f45d161328b4752 | diff - dev/active/fa787f85-documentation-overhaul/a0ec34f2-rows.txt
+python3 dev/active/fa787f85-documentation-overhaul/a0ec34f2-rows.py d1420f0a596a8acb1b723d89c40451286d38a7e3 | diff - dev/active/fa787f85-documentation-overhaul/a0ec34f2-rows.txt
 python3 dev/active/fa787f85-documentation-overhaul/migration/check.py
 python3 contrib/gates/docs-mechanical.py
 ```
