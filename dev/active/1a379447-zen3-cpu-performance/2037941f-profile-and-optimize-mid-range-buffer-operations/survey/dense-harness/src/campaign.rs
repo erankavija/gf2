@@ -48,6 +48,7 @@ struct FamilyRules {
     max_new_unsafe_kernels: u32,
     max_added_source_lines: u32,
     maintenance_rationale: &'static str,
+    max_pilot_trials_per_cell: u32,
 }
 
 fn rules(question: Question) -> FamilyRules {
@@ -74,6 +75,7 @@ fn rules(question: Question) -> FamilyRules {
                                     contract in crates/gf2-kernels-simd/src/x86/, 96 added \
                                     nonblank production lines, and no allocation, dependency, \
                                     public API, semantic type or second dispatcher.",
+            max_pilot_trials_per_cell: 4,
         },
         Question::AllocatedMatvec => FamilyRules {
             purpose: FamilyPurpose::ConsumerFamily,
@@ -97,6 +99,7 @@ fn rules(question: Question) -> FamilyRules {
             maintenance_rationale: "The same single candidate and the same 96-line budget as the \
                                     isolated family; the selector keeps its one threshold \
                                     constant and gains no second arm.",
+            max_pilot_trials_per_cell: 4,
         },
         Question::MatvecVsM4ri => FamilyRules {
             purpose: FamilyPurpose::ConsumerFamily,
@@ -118,6 +121,31 @@ fn rules(question: Question) -> FamilyRules {
             max_added_source_lines: 0,
             maintenance_rationale: "Zero production lines and zero unsafe kernels; no production \
                                     change is selected from an external comparator.",
+            max_pilot_trials_per_cell: 4,
+        },
+        Question::MatvecLaneThreshold => FamilyRules {
+            purpose: FamilyPurpose::ConsumerFamily,
+            description: "Allocated BitMatrix::matvec including its output allocation and \
+                          appends, pinned to the scalar four-accumulator lane through \
+                          matvec_with_route as candidate against the public call on its selected \
+                          lane in the same build, at the frozen lane strides, the seven-word \
+                          control and the exploratory strides and cache states. This addendum is \
+                          the pilot: every cell is exploratory and no cell decides a threshold.",
+            worthwhile_speedup: Some(1.08),
+            rationale: "The allocated consumer's bar of the dense-parity addendum, held for a \
+                        lane change on the same boundary.",
+            equivalence_margin: 1.05,
+            equivalence_rationale: "A non-inferiority statement finer than five percent is not \
+                                    available at the allocated consumer's resolution.",
+            material_gap_threshold: None,
+            material_gap_rationale: "The lane-threshold family holds no comparator-gap cell and \
+                                     declares no external gap.",
+            max_new_unsafe_kernels: 0,
+            max_added_source_lines: 0,
+            maintenance_rationale: "Zero production lines and zero unsafe kernels: the outcome \
+                                    is one value of the existing threshold selector, installed \
+                                    through the offline tuning system by its owning issue.",
+            max_pilot_trials_per_cell: 2,
         },
     }
 }
@@ -239,9 +267,7 @@ pub fn addendum(question: Question, issue: &str, frozen_utc: &str) -> FamilyAdde
             ledger_path: Some(question.ledger_path().to_owned()),
         },
         search_budget: SearchBudget {
-            // The frozen addendum admits at most four exploratory pilot trials
-            // per cell and exactly one confirmatory attempt per identity.
-            max_pilot_trials_per_cell: 4,
+            max_pilot_trials_per_cell: rules.max_pilot_trials_per_cell,
             max_confirmatory_attempts_per_candidate: 1,
         },
         holdout: Holdout { required: false, cells: Vec::new() },
@@ -258,6 +284,9 @@ pub fn cell_arms(cell: &Cell) -> (&'static str, &'static str) {
         }
         Question::AllocatedMatvec => (Route::MatvecA.id(), Route::MatvecB.id()),
         Question::MatvecVsM4ri => (Route::M4riPeerGf2.id(), M4RI_ARM),
+        // The selected route is the baseline, so a speedup above one favours
+        // the scalar lane a raised threshold would select.
+        Question::MatvecLaneThreshold => (Route::MatvecA.id(), Route::MatvecLaneScalar.id()),
     }
 }
 
@@ -283,6 +312,11 @@ fn arm_description(route: Route) -> &'static str {
         Route::MatvecScalarReference => {
             "The same public route from an executable built without the simd feature, which \
              reaches the four-accumulator scalar row-parity route"
+        }
+        Route::MatvecLaneScalar => {
+            "One public BitMatrix::matvec_with_route pinned to the scalar lane in the same build \
+             as the public route, with the output allocation and every output append inside the \
+             measured call"
         }
         Route::M4riPeerGf2 => {
             "One public BitMatrix::matvec on a fresh gf2 matrix and vector, with the returned \

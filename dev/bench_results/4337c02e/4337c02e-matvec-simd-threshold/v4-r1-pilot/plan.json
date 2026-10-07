@@ -1,0 +1,243 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "v4-r1-4337c02e-matvec-simd-threshold",
+  "issue": "4337c02e",
+  "label": "pilot",
+  "campaign_seed": 20260917,
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json",
+  "producing_manifest": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "matvec-a": {
+      "build": "conservative-portable",
+      "description": "One public BitMatrix::matvec returning a fresh BitVec, with route selection, the per-row bundle call, the parity fold, the output allocation and every output append inside the measured call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4337c02e/target/e1f9a78f-arms/release/dense-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DENSE_ROUTE": "matvec-a"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    },
+    "matvec-lane-scalar": {
+      "build": "conservative-portable",
+      "description": "One public BitMatrix::matvec_with_route pinned to the scalar lane in the same build as the public route, with the output allocation and every output append inside the measured call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4337c02e/target/e1f9a78f-arms/release/dense-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DENSE_ROUTE": "matvec-lane-scalar"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "lane-r1024-8w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 12648515098981064796,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-9w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 5021283998818678245,
+        "shape": "full",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-32w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 16796321352183190978,
+        "shape": "full",
+        "words": 32
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-63w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 7853332388584294086,
+        "shape": "full",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-64w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 17646653668858466141,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-65w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 18007595829725884186,
+        "shape": "full",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-7w-control-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 1286265030805450969,
+        "shape": "full",
+        "words": 7
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-10w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 14462899862535391801,
+        "shape": "full",
+        "words": 10
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-62w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 9943242655895909558,
+        "shape": "full",
+        "words": 62
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-66w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 15928534749216509732,
+        "shape": "full",
+        "words": 66
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-8w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 7749379611429190400,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-9w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 15175416710337516128,
+        "shape": "full",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-63w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 12811103516179566968,
+        "shape": "full",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-64w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 4973446482803456889,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-65w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 3918656663368403482,
+        "shape": "full",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-8w-cold",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 8106451528656394979,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "lane-r1024-64w-cold",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-lane-scalar",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 12314752866932148147,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}

@@ -1,0 +1,167 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "v4-r1-confirmation-4337c02e-matvec-simd-threshold",
+  "issue": "4337c02e",
+  "family": "4337c02e-matvec-simd-threshold",
+  "plan_sha256": "55fe114cb53ed9479dfd7797bd403c6a1ec70eb0a93b7359fa0002b00430d070",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold-confirmation.json",
+  "addendum_sha256": "d2f89e51918e4ffbddbee662b1dac4b04f0df0971cf0a132aff1ca56049677f5",
+  "cells": [
+    {
+      "cell_id": "lane-r1024-8w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "matvec-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "windows": 0
+        },
+        {
+          "arm": "matvec-lane-scalar",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=8w/shape=full/rows=1024/cols=512/base%64=0/retain=289262/banks=1x65600B/working-set=65600B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "lane-r1024-9w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "matvec-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+          "windows": 0
+        },
+        {
+          "arm": "matvec-lane-scalar",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "lane-r1024-32w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "matvec-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B",
+          "windows": 0
+        },
+        {
+          "arm": "matvec-lane-scalar",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "lane-r1024-63w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "matvec-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+          "windows": 0
+        },
+        {
+          "arm": "matvec-lane-scalar",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "lane-r1024-64w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "matvec-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "windows": 0
+        },
+        {
+          "arm": "matvec-lane-scalar",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=64w/shape=full/rows=1024/cols=4096/base%64=16/retain=289262/banks=1x524800B/working-set=524800B",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "lane-r1024-65w-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "matvec-a",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/simd-lane/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+          "windows": 0
+        },
+        {
+          "arm": "matvec-lane-scalar",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec/scalar-lane-pinned/stride=65w/shape=full/rows=1024/cols=4160/base%64=16/retain=289262/banks=1x533000B/working-set=533000B",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}

@@ -2,10 +2,12 @@
 //!
 //! The harness implements the frozen addendum `2037941f-dense-parity-v2`: its
 //! questions, their exact cell matrices, its seeding rule, its cache policies
-//! and its untimed correctness oracle. It changes no production code and no
-//! production selection.
+//! and its untimed correctness oracle. It also carries the lane-threshold
+//! question of addendum `4337c02e-matvec-lane-threshold-v1`, measured at the
+//! allocated `matvec` boundary by the same arms. It changes no production code
+//! and no production selection.
 //!
-//! Every numeric setting reaches the harness from the frozen addendum
+//! Every numeric setting reaches the harness from a frozen addendum
 //! ([`cells`]) or from `tuning_campaign_support::protocol::SHARED_SETTINGS`.
 //! The launcher adds none.
 //!
