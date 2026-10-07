@@ -3,7 +3,7 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "a41171d3fdefcb4a8fe20918cd70dd0ec475390a87172d5fd64eeebb61ae0358"
+  "sha256": "4d6780ef8ab6763f9a4fbcfd7b0ef858772d4e59df7ddf17b9c414a811bcfe29"
  },
  "counts": {
   "entry point groups": 9,
@@ -17,9 +17,9 @@
   "of those, class selector": 8,
   "declared selectors outside the tuning sections": 6,
   "witness configurations": 7,
-  "committed protocol receipts": 151,
-  "core-kernel receipts": 97,
-  "core-kernel measurement families": 45
+  "committed protocol receipts": 153,
+  "core-kernel receipts": 99,
+  "core-kernel measurement families": 46
  },
  "entry_points": [
   {
@@ -1359,7 +1359,7 @@
     "baked": 512,
     "measured_owner": null,
     "read_sites": [
-     "crates/gf2-core/src/gfp/simd_ops.rs:1182"
+     "crates/gf2-core/src/gfp/simd_ops.rs:1163"
     ]
    },
    {
@@ -2095,10 +2095,10 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/04b85d10/findings.md",
-    "dev/active/26465e6c/findings.md",
-    "dev/active/5cbb6545/findings.md",
-    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/04b85d10/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/26465e6c/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/5cbb6545/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
     "dev/active/1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md",
     "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
    ]
@@ -2118,7 +2118,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
     "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md"
    ]
   },
@@ -2188,8 +2188,8 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/1d4fd63d/findings.md",
-    "dev/active/04b85d10/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/1d4fd63d/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/04b85d10/findings.md"
    ]
   },
   {
@@ -2231,7 +2231,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/5cbb6545/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/5cbb6545/findings.md"
    ]
   },
   {
@@ -2257,7 +2257,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/1c602857/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/1c602857/findings.md"
    ]
   },
   {
@@ -2289,7 +2289,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/1d0da41f/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/1d0da41f/findings.md"
    ]
   },
   {
@@ -2316,7 +2316,7 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/53c5a8c0/findings.md"
+    "dev/active/1a379447-zen3-cpu-performance/53c5a8c0/findings.md"
    ]
   },
   {
@@ -2390,9 +2390,9 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/19513245/findings.md",
-    "dev/active/ad2a6a58/outcome.md",
-    "dev/active/4c1e441f/outcome.md"
+    "dev/active/1a379447-zen3-cpu-performance/19513245/findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/outcome.md",
+    "dev/active/1a379447-zen3-cpu-performance/4c1e441f/outcome.md"
    ]
   },
   {
@@ -2418,8 +2418,8 @@
     }
    ],
    "outcome_documents": [
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-findings.md",
-    "dev/active/00dd43c3/confirmation-outcome.md"
+    "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/publication-findings.md",
+    "dev/active/1a379447-zen3-cpu-performance/00dd43c3/confirmation-outcome.md"
    ]
   }
  ],
@@ -4619,6 +4619,113 @@
    ]
   },
   {
+   "family": "caller-trusted-entry-check-cost",
+   "issue": "bfc2ceab",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "bfc2ceab-r1-entry-check-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "bfc2ceab-r1-entry-check-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 6,
+    "exploratory/route-contrast": 9
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=current",
+     "candidate": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=current",
+     "candidate": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=current",
+     "candidate": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=checked"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=current",
+     "candidate": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=current",
+     "candidate": "gf2-algebra/permanent_bipedal3_singleword_simd/n=14/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/FieldMatrix<Fp<65521>>::ple/n=128/panel-cols=128/entry-form=current",
+     "candidate": "gf2-core/FieldMatrix<Fp<65521>>::ple/n=128/panel-cols=128/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=current",
+     "candidate": "gf2-core/FieldMatrix<Fp<7>>::ple/n=128/panel-cols=128/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8163/dense-cols=1024/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8163/dense-cols=1024/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<65521>>::matmat/rows=1024/nnz=8167/dense-cols=16/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8152/dense-cols=16/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8158/dense-cols=1024/entry-form=current",
+     "candidate": "gf2-core/SparseFieldMatrix<Fp<7>>::matmat/rows=1024/nnz=8158/dense-cols=1024/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=current",
+     "candidate": "gf2-core/gemm<Fp<65521>>/n=32/route=U16Panel/entry-form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=current",
+     "candidate": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=checked"
+    }
+   ],
+   "builds": [
+    "conservative-portable"
+   ]
+  },
+  {
    "family": "polynomial-host-targeting",
    "issue": "c7113c5a",
    "track": "core-kernel",
@@ -5474,6 +5581,6 @@
  ],
  "workload_routes": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
-  "sha256": "195737766abfe301862b14b1dc17ceedcc52e656944f3776fb2094307111db51"
+  "sha256": "b4dd1a4e438489f54d2232cdd69ca3a9b9f72b8f9f428bcdf1e60d4191faf4cf"
  }
 }

@@ -126,24 +126,24 @@
     {
       "id": "ci-baked-step",
       "project": "gf2",
-      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
+      "commit": "9453774e19508c125d5a788141cabcbcb38807e4",
       "path": "scripts/cargo-ci.sh",
-      "line": 316,
+      "line": 317,
       "occurrences": 1,
       "verbatim": "run_step baked-core env RUSTFLAGS=\"--cfg gf2_tuning_baked\" \"$BUDGET\" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable",
       "why": "CI builds the baked configuration in one scoped step; every other step keeps the conservative constants.",
-      "sha256": "f204d752a3c415fc8684473bbcb1e880e6d62b60dbb727662a1333db5ebaaf0d"
+      "sha256": "abc6d2942af56c6ee5e60328ef5e0f21fabbe24c5844e6264032086558d42fc1"
     },
     {
       "id": "ci-feature-flags",
       "project": "gf2",
-      "commit": "283195e3f22d12945157dabd986fbdff8ab65d0c",
+      "commit": "9453774e19508c125d5a788141cabcbcb38807e4",
       "path": "scripts/cargo-ci.sh",
       "line": 226,
       "occurrences": 1,
       "verbatim": "  FEAT_FLAGS=\"--features simd,parallel,visualization\"",
       "why": "The workspace test step of CI enables `simd`, so it runs the shared fallback contract on the kernel build only.",
-      "sha256": "f204d752a3c415fc8684473bbcb1e880e6d62b60dbb727662a1333db5ebaaf0d"
+      "sha256": "abc6d2942af56c6ee5e60328ef5e0f21fabbe24c5844e6264032086558d42fc1"
     },
     {
       "id": "logical-bundle-detect",
@@ -302,13 +302,13 @@
     {
       "id": "popcount-csa-comparator",
       "project": "gf2",
-      "commit": "e2c98226a1a34ce13e4ce9d4c78efc0fff570509",
+      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
-      "line": 137,
+      "line": 138,
       "occurrences": 1,
       "verbatim": "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,",
       "why": "The carry-save kernels are direct bundle fields that no resolver selects.",
-      "sha256": "75351c56a3296aa9c952e3d801ed9f5a259242413e55eadf4b647ce538e5f9c4"
+      "sha256": "0fc5f4316b2a9b75de6efb476febaa0bb09fe8f9b58b185a95ded9d308c12393"
     },
     {
       "id": "matvec-threshold-conservative",
