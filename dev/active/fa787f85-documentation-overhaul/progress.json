@@ -1628,6 +1628,21 @@
    "id": "a0ec34f2",
    "epic": "fa787f85",
    "reason": "pending retained-operational, rewritten-topic and held archive rows have no executing task; af84619e REQ-01 needs every row terminal"
+  },
+  {
+   "id": "82ffd7b8",
+   "epic": "b4b4b9ee",
+   "reason": "held move of entry dbd8787d (f6148d1e DEC-02)"
+  },
+  {
+   "id": "faac6007",
+   "epic": "b4b4b9ee",
+   "reason": "links of five frozen documents pinned by 4337c02e"
+  },
+  {
+   "id": "d0aaf09b",
+   "epic": "b4b4b9ee",
+   "reason": "ADDENDUM_SHA256 of the dense harness matches no live file (worker report, unverified)"
   }
  ],
  "escalations": [
@@ -2068,6 +2083,48 @@
    ],
    "recommendation": "the amendment",
    "resolution": "Owner (2026-10-07): the amendment; fa787f85 DEC-01."
+  },
+  {
+   "issue": "f79bcba3, 602652bf",
+   "question": "Five frozen documents keep eleven baselined links: the queued 4337c02e confirmation (epic 1a379447) pins their digests in its checkpoint identity and receipt.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): baseline, repointing tracked in faac6007; f79bcba3 DEC-04, 602652bf DEC-03."
+  },
+  {
+   "issue": "198aafa3, 7039d680, cc060974",
+   "question": "Regenerating the records of four script groups fails digest comparisons against ledgers and receipts without snapshot copies.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): a literal stays where a receipt or ledger digest pins the record it reproduces; DEC on each unit."
+  },
+  {
+   "issue": "f6148d1e",
+   "question": "Entry dbd8787d cannot take the path-string edit: the validator counts byte-distinct declarations across live and archive copies and compares the live digest with the published stage's behavior identity.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): hold flat; move tracked in 82ffd7b8; f6148d1e DEC-02."
+  },
+  {
+   "issue": "f694f59a, f6148d1e",
+   "question": "Ten links stay unresolved in three files whose digests campaign declarations pin.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): amend REQ-06, keep the baseline rows."
+  },
+  {
+   "issue": "zen3 units",
+   "question": "Listing classes line-qualified-record, epic-record and commit-permalink keep flat paths outside the accepted grounds.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): accepted; text bound to a named commit keeps the path of that commit."
+  },
+  {
+   "issue": "fa787f85",
+   "question": "Lead dispatch: follow-up work goes to fresh agents; an existing agent's cache is invalid.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner instruction (2026-10-07)."
   }
  ],
  "rework_counts": {
