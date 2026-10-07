@@ -30,7 +30,7 @@ Four series run in the fixed order the sampling plan declares:
    stages them. They therefore run against a scratch `git clone --shared` of
    this repository checked out at 8cfc015de59f8e3accc51bca46d13d94b0bee267, the
    revision whose snapshots are missing the files the tool restores and the
-   `base_revision` recorded in `dev/active/1a379447-zen3-cpu-performance/a203a23c/restored-inputs.json`. The
+   `base_revision` recorded in this entry's `restored-inputs.json`. The
    clone is reset with `git reset --hard` and `git clean -fdx` before every
    repetition, so every repetition performs the whole restoration, and the
    form's two source files are placed into the clone afterwards, outside the
@@ -66,13 +66,13 @@ re-derived without measuring anything again; the observed fields cannot be
 back-filled, and a record written before they existed simply lacks them.
 
 Usage:
-  dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py --scratch <directory> [--repetitions N]
-  dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py --assess <record.json>
+  measure.py --scratch <directory> [--repetitions N]
+  measure.py --assess <record.json>
 
 Measuring prints one JSON record to stdout; `--assess` rewrites the named
-record in place. Run from the repository root, and run a measurement under
+record in place. Run a measurement under
 `dev/scripts/ccx1-bench-flock.sh --full-host` so host contention does not
-distort the wall times; see dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/README.md.
+distort the wall times; see README.md beside this script.
 """
 
 from __future__ import annotations
@@ -93,6 +93,10 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 
+HERE = Path(__file__).resolve().parent
+ROOT = Path(subprocess.run(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
+                           check=True, capture_output=True, text=True).stdout.strip())
+TIMING = HERE.relative_to(ROOT).as_posix()
 BATCH_REVISION = "76812a4e6a0dd6ecf499dc98e8d3a3b052c50a31"
 RESTORE_BASE_REVISION = "8cfc015de59f8e3accc51bca46d13d94b0bee267"
 CHECKER_PATH = "dev/scripts/check-receipt-input-snapshots.py"
@@ -110,7 +114,7 @@ SERIES_ORDER = (
 # than observed from one. Every other figure a record carries is observed at
 # run time, derived from the record's own samples, or an identity citation.
 SAMPLING_PLAN = {
-    "declared_in": "dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/README.md",
+    "declared_in": f"{TIMING}/README.md",
     "repetitions_per_series": 5,
     "statistic_of_record": ["min_s", "median_s"],
     "early_stopping": (
@@ -357,7 +361,7 @@ def scan_for_randomness(sources: dict) -> dict:
 def randomness_report(root: Path, revisions: dict) -> dict:
     """Reports what a scan of every source this run executes or times found."""
     sources = {
-        "harness:dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py": Path(__file__).read_text()
+        f"harness:{TIMING}/measure.py": Path(__file__).read_text()
     }
     for form, revision in revisions.items():
         for path in (CHECKER_PATH, RESTORE_PATH):
@@ -406,10 +410,6 @@ def run(*arguments: str) -> str:
     return subprocess.run(
         list(arguments), capture_output=True, text=True, check=True
     ).stdout
-
-
-def repo_root() -> Path:
-    return Path(run("git", "rev-parse", "--show-toplevel").strip())
 
 
 def source_of(root: Path, revision: str, path: str, destination: Path) -> None:
@@ -763,7 +763,7 @@ def published_claim(root: Path, series: dict) -> dict:
             "read from that commit's own message at assessment time and "
             "matched with the pattern "
             f"{PUBLISHED_SENTENCE.pattern!r}; "
-            "dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py carries no figure of its own"
+            f"{TIMING}/measure.py carries no figure of its own"
         ),
         "tolerance": (
             f"a figure counts as confirmed when the measured median is "
@@ -848,7 +848,7 @@ def sanitized_command(scratch_flag: str) -> str:
             parts.append(f"{scratch_flag}=<scratch-directory>")
         else:
             parts.append(argument)
-    return "python3 -B dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py " + " ".join(parts)
+    return f"python3 -B {TIMING}/measure.py " + " ".join(parts)
 
 
 def main() -> int:
@@ -873,7 +873,7 @@ def main() -> int:
     )
     arguments = parser.parse_args()
 
-    root = repo_root()
+    root = ROOT
     if arguments.assess is not None:
         return assess(root, Path(arguments.assess))
     if arguments.scratch is None:
@@ -947,7 +947,7 @@ def main() -> int:
             "form committed at 76812a4e's parent and the batch form committed at "
             "76812a4e, against one fixed workload."
         ),
-        "generator": "dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py",
+        "generator": f"{TIMING}/measure.py",
         "declaration_note": DECLARATION_NOTE,
         "command": sanitized_command("--scratch"),
         "repetitions": repetitions,

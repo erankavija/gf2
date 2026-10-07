@@ -7,7 +7,7 @@
 # Disassembly reads a file and times nothing, so it runs outside the benchmark
 # mutex.
 #
-# Usage: dev/active/1a379447-zen3-cpu-performance/19513245/survey/disassemble.sh <bin-dir> [<asm-dir>]
+# Usage: disassemble.sh <bin-dir> [<asm-dir>]
 #
 # `<bin-dir>` is the release directory the profile was measured from, so the
 # disassembled bytes are the measured executable's bytes; its digest is

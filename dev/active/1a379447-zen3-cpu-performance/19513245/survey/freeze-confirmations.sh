@@ -2,10 +2,10 @@
 # Freeze the three confirmation addenda from the committed pilot receipts
 # (jit:19513245).
 #
-# Usage: dev/active/1a379447-zen3-cpu-performance/19513245/survey/freeze-confirmations.sh <frozen-utc>
+# Usage: freeze-confirmations.sh <frozen-utc>
 #
 # Every argument this script passes is the frozen design; the arithmetic is the
-# canonical freezer's, `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py`,
+# canonical freezer's, `freeze-confirmation.py` of `c7113c5a`,
 # which pins the pilot receipt by path and SHA-256, derives the measurement
 # resolution from that pilot's widest relative bootstrap half-width, refuses an
 # addendum whose margins do not strictly exceed one plus that resolution, and
@@ -19,13 +19,15 @@
 # confirmatory stage, because a pilot's "every cell is exploratory" sentence
 # inside a frozen confirmation would describe the wrong stage.
 set -euo pipefail
-repo=$(git rev-parse --show-toplevel)
-[[ "$PWD" == "$repo" ]] || { echo 'invoke from the repository root' >&2; exit 2; }
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo=$(git -C "$HERE" rev-parse --show-toplevel)
+cd "$repo"
 FROZEN=${1:?usage: freeze-confirmations.sh <YYYY-MM-DDTHH:MM:SSZ>}
 ISSUE=19513245
-ACTIVE=dev/active/1a379447-zen3-cpu-performance/$ISSUE
+ACTIVE=$(dirname "$(realpath --relative-to="$repo" "$HERE")")
 RECEIPTS=dev/bench_results/$ISSUE
-FREEZER=dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py
+FREEZER=$(python3 -B dev/scripts/repository_files.py document freeze-confirmation.py \
+  $'#!/usr/bin/env python3\n"""Freeze a confirmation addendum from its accepted pilot.')
 
 # The confirmatory-stage preamble every family description opens with.
 STAGE="Confirmatory stage of issue $ISSUE, protocol version 4: every cell of this addendum is \

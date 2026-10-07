@@ -19,6 +19,7 @@
 | `06fe749d3` | `19513245/survey/run-profile.sh:30` takes the root from git; `make-addenda.py:37` states the path text of the frozen addenda; `msrv-intrinsics.rs:24` names its file as `<this file>` |
 | `df7b52dd6` | `git mv`, path text in manifests and code, link targets, one digest table, manifest rows; its message lists each edit at file:line |
 | `2f81ba52e` | path citations in two Markdown files of the entries and in `dev/scripts/` |
+| `981e0f480` | each script of the entries takes the root and its entry directory from its own location; its message states each script's form, each check and each literal that stays |
 
 ## Baseline and repeat
 
@@ -26,7 +27,7 @@ Baseline source: `6e05ccb79`. Repeat source: `2f81ba52e`. Command, run from
 the repository root:
 
 ```
-R/2e18b37c-checks.sh state|builds|root|selfchecks|ci-step|regen <file>
+R/2e18b37c-checks.sh state|builds|root|selfchecks|ci-step|regen|manifest <file> [<dir>]
 ```
 
 | Output | Holds | Baseline against repeat | Does not establish |
@@ -36,7 +37,8 @@ R/2e18b37c-checks.sh state|builds|root|selfchecks|ci-step|regen <file>
 | `2e18b37c-builds-before.txt` (REQ-03) | per harness manifest of the entries: exit status of `cargo +1.95.0 metadata`, exit status of `cargo +1.95.0 build`, first error line | the output at the repeat source is the same file: each manifest `resolve=0 build=0` | `cargo build` compiles no test target; `--locked` resolution, see below |
 | `2e18b37c-selfchecks-before.txt` (REQ-06) | exit status of each script test under `dev/active/` and of `a203a23c/select-receipts.py --self-test` | the output at the repeat source is the same file; the self-test exits 0 | |
 | `2e18b37c-ci-step-before.txt` (REQ-06) | verdict line of the `receipt-input-snapshots` CI step without its duration; summary line of `dev/scripts/check-receipt-input-snapshots.py` | the output at the repeat source is the same file | the CI verdict: the filtered run omits every other step |
-| `2e18b37c-regen-before.txt`, `2e18b37c-regen-after.txt` | per committed record that an entry script writes without a build or a benchmark window: `same` or the count of differing lines | table "Regenerated records" | the other scripts of the entries are not run; `make-producing-inputs.py` lists the tree it runs on, and D3 covers `make-source-evidence.py` |
+| `2e18b37c-regen-before.txt`, `2e18b37c-regen-after.txt` | per committed record that an entry script writes without a build or a benchmark window: `same` or the count of differing lines | table "Regenerated records" | the other scripts of the entries are not run; D3 covers `make-source-evidence.py` |
+| `2e18b37c-manifest-before.txt` (REQ-04) | SHA-256 of the manifest `19513245/survey/make-producing-inputs.py` writes for the tree of `26e31ae94` | the output at `981e0f480`, run from the root and with `/tmp` as `<dir>`, is the same file | the committed `producing-inputs.json`, a data record of the flat tree |
 
 Each build rewrites the tracked `E/19513245/survey/field-laws/Cargo.lock` (one
 `tempfile` line) at the baseline and at the repeat, and
@@ -46,9 +48,9 @@ committed lockfile keeps its bytes.
 
 ## Regenerated records
 
-`2e18b37c-regen-after.txt` is the listing on the tree of `78d74ddb3`.
+`2e18b37c-regen-after.txt` lists the tree of `981e0f480`, from the root and `/tmp`.
 
-| Committed record | Writer | Baseline | Tree of `78d74ddb3` |
+| Committed record | Writer | Baseline | Tree of `981e0f480` |
 |---|---|---|---|
 | `dev/bench_results/19513245/r1-consumer-profile/profile-summary.md` | `19513245/survey/summarize-profile.py` | `same` | `same` |
 | `a203a23c/timing/timing.json` | `a203a23c/timing/measure.py --assess` | `same` | `same` |
@@ -61,7 +63,7 @@ committed lockfile keeps its bytes.
 | Id | Divergence | Tracking |
 |---|---|---|
 | D1 | `cargo +1.95.0 fmt --check` exits 1 in `E/19513245/survey/consumer` at `df7b52dd6`, in `src/bin/consumer-profile.rs`, a pure rename; it exits 0 in the other two harness crates | -> @/issue/3de8d0f3 |
-| D2 | `E/a203a23c/timing/measure.py:360,766` write the path under `E`; lines 34, 40 and 330 of `timing-tmpfs-superseded.json` state the flat path | -> @/issue/7375db1e |
+| D2 | `E/a203a23c/timing/measure.py:364,766` write the path under `E`; lines 34, 40 and 330 of `timing-tmpfs-superseded.json` state the flat path | -> @/issue/7375db1e |
 | D3 | `19513245/survey/make-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/field/vec.rs:663` lacks the fragment of the claim `axpy-signature` | -> @/issue/d12e9ded |
 | D4 | `measure.py --assess` on `timing-tmpfs-superseded.json` wraps the two withdrawn scheduling statements a second time | -> @/issue/c9920dc6 |
 
@@ -75,18 +77,16 @@ committed lockfile keeps its bytes.
 
 ## Scripts (REQ-04, REQ-05)
 
-The message of `df7b52dd6` lists each path-text edit per entry at file:line
-and states that `RESTORE_PATH` keeps its text. The lines of the `19513245`
-scripts that name the `6c6b09b1` and `c7113c5a` entries carry the path under
-`E`.
-
-| Check | Result | Does not establish |
-|---|---|---|
-| `bash -n` and `python3 -m py_compile` of each shell and Python script of the three entries at `df7b52dd6` | pass | behaviour of the scripts the regeneration listing omits |
+`R/2e18b37c-scripts.sh <outfile>` prints, per shell and Python script of the
+three entries, each line that takes the script's own location, asks git for
+the root, names `repository_files` or names `dev/active/`;
+`2e18b37c-scripts.txt` is its output at `981e0f480`: each root comes from `git -C`
+on the script's own directory, and `measure.py` alone names `dev/active/`.
+`bash -n` and `ast.parse` pass on each script; neither runs one.
 
 | Literal that keeps the flat path | Class | Ground |
 |---|---|---|
-| `E/a203a23c/timing/measure.py:99` (`RESTORE_PATH`), `:7`, `:946`; `E/a203a23c/timing/README.md:6` | `revision-path` | path of the restoration tool at commit `76812a4e6` and its parent, which `measure.py` reads with `git show <revision>:<path>` |
+| `E/a203a23c/timing/measure.py:103` (`RESTORE_PATH`), `:7`, `:946`; `E/a203a23c/timing/README.md:6` | `revision-path` | path of the restoration tool at commit `76812a4e6` and its parent, which `measure.py` reads with `git show <revision>:<path>` |
 
 ## Generated files and byte-fixed files (REQ-07)
 
@@ -142,7 +142,7 @@ Tracker files under `.jit/` are outside the scan: they are tracker state.
 | Check | Command | Result | Does not establish |
 |---|---|---|---|
 | Manifest | `python3 R/migration/check.py` at `df7b52dd6` and after | no finding, exit 0: each row whose path is one of the three flat directories or lies below one is `complete`, and each source lies at its destination under `E` | |
-| Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each step `ok` on the tree of `2f81ba52e` | the CI verdict: the filtered run omits every cargo step |
+| Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each step `ok` on the tree of `981e0f480` | the CI verdict: the filtered run omits every cargo step |
 | Tracker | the two commands below | the first prints 0; the second counts the commit-pinned references, which keep the path of their commit | |
 
 ```
@@ -161,8 +161,8 @@ nothing for the three entries: the flat directories hold no ignored file.
 | REQ-01 | table "Entries"; `git ls-files dev/active/<entry>` prints nothing for each entry at `df7b52dd6` | |
 | REQ-02 | row `2e18b37c-root-before.txt`; `06fe749d3` | a profile session |
 | REQ-03 | row `2e18b37c-builds-before.txt`; section "Harness crates"; message of `df7b52dd6` | test targets, `--locked` resolution, formatting (D1) |
-| REQ-04 | section "Scripts"; message of `df7b52dd6`, lists per entry | |
-| REQ-05 | `E/a203a23c/timing/measure.py:99`; message of `df7b52dd6` | |
+| REQ-04 | section "Scripts"; rows `2e18b37c-state-after.txt`, `2e18b37c-regen-after.txt` and `2e18b37c-manifest-before.txt`; message of `981e0f480` | a run of the scripts that build or need a benchmark window |
+| REQ-05 | `E/a203a23c/timing/measure.py:103`; messages of `df7b52dd6` and `981e0f480` | |
 | REQ-06 | rows `2e18b37c-selfchecks-before.txt` and `2e18b37c-ci-step-before.txt` | |
 | REQ-07 | sections "Generated files and byte-fixed files" and "Flat paths that stay"; message of `2f81ba52e` | the citations of the class `session-record` |
 | REQ-08 | section "Manifest and tracker"; gate `cargo-ci` of @/issue/2e18b37c | |

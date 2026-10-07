@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# usage: 2e18b37c-checks.sh state|builds|root|selfchecks|ci-step|regen <outfile>
+# usage: 2e18b37c-checks.sh state|builds|root|selfchecks|ci-step|regen|manifest <outfile> [<dir>]
 # Checks of the entries f8dd4dde, a203a23c and 19513245 wherever they live
 # under dev/active/; inputs/ snapshot directories are outside every listing.
 # builds and selfchecks print a path without dev/active/ and the epic
@@ -22,6 +22,10 @@
 #               times of the addenda, run in a scratch repository under
 #               target/ that holds the tracked files of dev/active/,
 #               dev/scripts/ and dev/bench_results/19513245/.
+#   manifest    SHA-256 of the manifest `make-producing-inputs.py` of
+#               19513245 writes for the tree it runs on.
+# regen and manifest run each generator from <dir>; without it, from the
+# checkout root and, for the addenda, from the scratch repository.
 # The 6c6b09b1 crates the consumer harness links read the byte-field prefix
 # and C shim staged under target/.
 set -u
@@ -79,20 +83,23 @@ regen)
   git ls-files -z -- dev/active dev/scripts dev/bench_results/19513245 | tar --null -T - -cf - | tar -xf - -C "$scratch"
   compare() { local n; n=$(diff "$1" "$2" | grep -c '^[<>]'); echo "$(name "$2") $([ "$n" = 0 ] && echo same || echo "diff-lines=$n")"; }
   {
-    python3 -B "$e/survey/summarize-profile.py" "$p" > "$scratch/profile-summary.md"
+    ( cd "${3:-.}" && python3 -B "$OLDPWD/$e/survey/summarize-profile.py" "$OLDPWD/$p" ) > "$scratch/profile-summary.md"
     compare "$scratch/profile-summary.md" "$p/profile-summary.md"
     for r in timing.json timing-tmpfs-superseded.json; do
       cp "$a/timing/$r" "$scratch/$r"
-      python3 -B "$a/timing/measure.py" --assess "$scratch/$r" >/dev/null 2>&1
+      ( cd "${3:-.}" && python3 -B "$OLDPWD/$a/timing/measure.py" --assess "$scratch/$r" ) >/dev/null 2>&1
       compare "$scratch/$r" "$a/timing/$r"
     done
-    ( cd "$scratch" && git init -q . &&
-      python3 -B "$e/survey/make-addenda.py" 4 "$(sed -n 's/.*"frozen_utc": "\(.*\)".*/\1/p' "$e/addendum-v4-control-pilot.json")" &&
-      bash "$e/survey/freeze-confirmations.sh" "$(sed -n 's/.*"frozen_utc": "\(.*\)".*/\1/p' "$e/addendum-v4-control-confirmation.json")"
+    ( cd "$scratch" && git init -q . && cd "${3:-.}" &&
+      python3 -B "$scratch/$e/survey/make-addenda.py" 4 "$(sed -n 's/.*"frozen_utc": "\(.*\)".*/\1/p' "$scratch/$e/addendum-v4-control-pilot.json")" &&
+      bash "$scratch/$e/survey/freeze-confirmations.sh" "$(sed -n 's/.*"frozen_utc": "\(.*\)".*/\1/p' "$scratch/$e/addendum-v4-control-confirmation.json")"
     ) >/dev/null 2>&1
     echo "make-addenda.py and freeze-confirmations.sh exit=$?"
     for f in "$e"/addendum-v4-*.json "$e"/confirmation-derivation-*.txt; do compare "$scratch/$f" "$f"; done
   } > "$out"
   rm -rf "$scratch"
   exit ;;
+manifest)
+  s=$(git ls-files -- ':(glob)dev/active/**/19513245/survey/make-producing-inputs.py')
+  ( cd "${3:-.}" && python3 -B "$OLDPWD/$s" /dev/stdout | head -n -1 | sha256sum ) ;;
 esac > "$2"

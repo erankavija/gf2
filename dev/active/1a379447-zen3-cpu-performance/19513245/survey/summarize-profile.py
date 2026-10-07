@@ -19,7 +19,13 @@ file, carry the intervals that decide anything.
 
 import json
 import pathlib
+import subprocess
 import sys
+
+HERE = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(subprocess.run(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
+                                   check=True, capture_output=True, text=True).stdout.strip())
+SURVEY = HERE.relative_to(ROOT).as_posix()
 
 # Order-statistic interval of the median of nine independent sessions: the
 # second and eighth order statistics, coverage 1 - 2 * P(Binomial(9, 1/2) <= 1).
@@ -64,7 +70,7 @@ def main():
     print()
     print("> **Diátaxis Type:** Reference")
     print()
-    print(f"Source: `dev/active/1a379447-zen3-cpu-performance/19513245/survey/summarize-profile.py` over "
+    print(f"Source: `{SURVEY}/summarize-profile.py` over "
           f"{len(sessions)} session records under this directory, "
           f"{len(completed)} of them logged complete in `repetitions.log`, "
           f"and `ladder.json`, the case ladder the sessions measured.")
@@ -173,7 +179,7 @@ def main():
 
     print("## Generated code")
     print()
-    print("`dev/active/1a379447-zen3-cpu-performance/19513245/survey/asm/` holds the annotated release disassembly of the "
+    print(f"`{SURVEY}/asm/` holds the annotated release disassembly of the "
           "measured routes and their instruction mix, written by `disassemble.sh` from the arm "
           "executable of the same build these sessions ran; `asm/index.txt` names each file, the "
           "symbols it covers and the pattern that selected them.")

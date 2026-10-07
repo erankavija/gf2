@@ -10,12 +10,17 @@ checkable at its location and the findings carry no line numbers of their own.
 The `path` of a claim is repository-relative. The gf2 revision is navigation
 metadata; the campaigns' producing manifests pin the source bytes.
 
-Usage: make-source-evidence.py > dev/active/1a379447-zen3-cpu-performance/19513245/survey/source-evidence.json
+Usage: make-source-evidence.py > source-evidence.json
 """
 
 import json
 import subprocess
 import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+ROOT = Path(subprocess.run(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
+                           check=True, capture_output=True, text=True).stdout.strip())
 
 VEC = "crates/gf2-core/src/field/vec.rs"
 TRAITS = "crates/gf2-core/src/field/traits.rs"
@@ -24,9 +29,9 @@ FIELD = "crates/gf2-core/src/gf2m/field.rs"
 WIDE = "crates/gf2-core/src/gf2m/wide.rs"
 BATCH = "crates/gf2-core/src/gf2m/batch.rs"
 GFP = "crates/gf2-core/src/gfp/mod.rs"
-SURVEY = "dev/active/1a379447-zen3-cpu-performance/19513245/survey/consumer/src"
-PROTO_LIB = f"{SURVEY}/lib.rs"
-PROTO_TABLE = f"{SURVEY}/table.rs"
+SURVEY = HERE.relative_to(ROOT).as_posix()
+PROTO_LIB = f"{SURVEY}/consumer/src/lib.rs"
+PROTO_TABLE = f"{SURVEY}/consumer/src/table.rs"
 
 # (claim id, path, line, fragment, why)
 CLAIMS = [
@@ -129,7 +134,7 @@ CLAIMS = [
 
 def main():
     revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"], check=True, capture_output=True, text=True
+        ["git", "-C", str(ROOT), "rev-parse", "HEAD"], check=True, capture_output=True, text=True
     ).stdout.strip()
     seen = set()
     claims = []
@@ -137,7 +142,7 @@ def main():
         if claim_id in seen:
             raise SystemExit(f"duplicate claim id {claim_id}")
         seen.add(claim_id)
-        with open(path, encoding="utf-8") as handle:
+        with open(ROOT / path, encoding="utf-8") as handle:
             lines = handle.read().splitlines()
         if line > len(lines):
             raise SystemExit(f"{path} has {len(lines)} lines; claim {claim_id} names {line}")
@@ -150,7 +155,7 @@ def main():
     json.dump({"schema": "bytefield-consumer-source-evidence-v1",
                "note": ("The gf2 revision is navigation metadata; each campaign's producing "
                         "manifest pins the source bytes it measured. Claims whose path is under "
-                        "dev/active/1a379447-zen3-cpu-performance/19513245/survey are the prototype's own source."),
+                        f"{SURVEY} are the prototype's own source."),
                "claims": claims}, sys.stdout, indent=2)
     print()
 
