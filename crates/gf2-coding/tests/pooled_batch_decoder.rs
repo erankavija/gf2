@@ -129,11 +129,21 @@ fn pool_satisfies_the_batch_contract() {
     }
 }
 
+#[test]
+fn results_equal_the_inner_decoder_under_the_default_pool() {
+    let frames = frames();
+    for granules in [1, 2, 3, 5] {
+        let sizes = Sizes::default();
+        let mut pool = PooledBatchDecoder::with_selectors(|| grouped(&sizes), &selectors(granules));
+        assert_equals_inner(&mut pool, &frames[..11]);
+        assert_equals_inner(&mut pool, &frames);
+    }
+}
+
 #[cfg(feature = "parallel")]
 #[test]
-fn results_equal_the_inner_decoder_for_one_two_and_default_workers() {
+fn results_equal_the_inner_decoder_for_one_and_two_workers() {
     let frames = frames();
-    assert_eq!(frames.len() % (2 * GROUP), 0);
     for granules in [1, 2, 3, 5] {
         for workers in [1, 2] {
             let rayon_pool = rayon::ThreadPoolBuilder::new()
@@ -144,13 +154,11 @@ fn results_equal_the_inner_decoder_for_one_two_and_default_workers() {
                 let sizes = Sizes::default();
                 let mut pool =
                     PooledBatchDecoder::with_selectors(|| grouped(&sizes), &selectors(granules));
+                assert_eq!(pool.workers(), workers);
                 assert_equals_inner(&mut pool, &frames[..11]);
                 assert_equals_inner(&mut pool, &frames);
             });
         }
-        let sizes = Sizes::default();
-        let mut pool = PooledBatchDecoder::with_selectors(|| grouped(&sizes), &selectors(granules));
-        assert_equals_inner(&mut pool, &frames[..11]);
     }
 }
 
