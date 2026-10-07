@@ -67,16 +67,21 @@ pub enum DecodedWord {
 /// use gf2_coding::tuning::DecodeSelectors;
 /// use gf2_core::BitVec;
 ///
-/// let base = vec![vec![0, 3, 7, 1, 0, -1], vec![5, 0, 11, -1, 2, 9], vec![9, 13, 0, 6, -1, 4]];
+/// let base = vec![
+///     vec![0, 3, 7, 1, 0, -1],
+///     vec![5, 0, 11, -1, 2, 9],
+///     vec![9, 13, 0, 6, -1, 4],
+/// ];
 /// let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::new(base, 16));
 /// let encoder = LdpcEncoder::new(code.clone());
 ///
 /// // Eleven frames: one full wave and a final wave of three.
-/// let messages: Vec<BitVec> = (0..11).map(|seed| BitVec::random_seeded(encoder.k(), seed)).collect();
-/// let frames: Vec<Vec<Llr>> = messages
+/// let codewords: Vec<BitVec> = (0..11)
+///     .map(|seed| encoder.encode(&BitVec::random_seeded(encoder.k(), seed)))
+///     .collect();
+/// let frames: Vec<Vec<Llr>> = codewords
 ///     .iter()
-///     .map(|message| {
-///         let codeword = encoder.encode(message);
+///     .map(|codeword| {
 ///         (0..codeword.len())
 ///             .map(|i| Llr::new(if codeword.get(i) { -2.0 } else { 2.0 }))
 ///             .collect()
@@ -84,17 +89,22 @@ pub enum DecodedWord {
 ///     .collect();
 ///
 /// let selectors = DecodeSelectors::try_new(1, usize::MAX, 1).unwrap();
-/// let decoder =
-///     LdpcBatchDecoder::with_selectors(code, DecoderConfig::default(), 20, DecodedWord::Message, selectors);
+/// let decoder = LdpcBatchDecoder::with_selectors(
+///     code,
+///     DecoderConfig::default(),
+///     20,
+///     DecodedWord::Codeword,
+///     selectors,
+/// );
 /// assert_eq!(decoder.batch_route(frames.len()), BatchRoute::Lane);
 ///
 /// let mut decoder: Box<dyn BatchSoftDecoder> = Box::new(decoder);
 /// let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
-/// let mut decoded = vec![BitVec::with_capacity(decoder.decoded_len()); views.len()];
+/// let mut decoded = vec![BitVec::new(); views.len()];
 /// let mut outcomes = vec![DecodeOutcome::default(); views.len()];
 /// decoder.decode_batch(&views, &mut decoded, &mut outcomes);
 ///
-/// assert_eq!(decoded, messages);
+/// assert_eq!(decoded, codewords);
 /// assert!(outcomes.iter().all(|outcome| outcome.converged));
 /// ```
 pub struct LdpcBatchDecoder {
@@ -230,8 +240,8 @@ impl LdpcBatchDecoder {
     /// frame length.
     ///
     /// A posterior is the frame's beliefs at its own last iteration, the
-    /// slice [`LdpcDecoder::posterior_llrs`] holds after decoding that frame,
-    /// whenever the frame stops within its wave.
+    /// slice [`LdpcDecoder::posterior_llrs`] holds after decoding that frame;
+    /// a frame that stops before its wave ends keeps them.
     ///
     /// # Panics
     ///
