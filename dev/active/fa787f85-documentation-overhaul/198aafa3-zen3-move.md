@@ -120,17 +120,16 @@ The link `../6fb89a3c/survey/fetch-build.sh` of the frozen
 `S/m4ri-operation-match.md` resolves, and `552a0548d` removes its row from
 the second table of `8f61d6de-baseline-findings.md`; the move adds no row.
 `python3 contrib/gates/docs-mechanical.py` prints `PASS: 0 finding(s), 17
-baselined` at `552a0548d` and at each commit after it; it checks each inline
+baselined` at `552a0548d`; it checks each inline
 and reference link of `dev/active/**/*.md` and no relative path inside a JSON
 string.
 
 ## Flat paths that stay
 
-`R/198aafa3-remaining.sh <outfile>` classifies each tracked file outside
-`.jit/` and outside the `198aafa3-` files of `R` that holds
-`dev/active/<entry>` for one of the eight entries; `198aafa3-remaining.txt`
-is its output at `b80ae85a8`, with the file and line count of each class, and
-holds no line of the class `unclassified`.
+`R/198aafa3-remaining.sh <outfile>` classifies each tracked file in the
+scope its header states that holds `dev/active/<entry>` for one of the eight
+entries; `198aafa3-remaining.txt` is its output, with the file and line count
+of each class, and holds no line of the class `unclassified`.
 
 | Class | Ground |
 |---|---|
@@ -140,7 +139,7 @@ holds no line of the class `unclassified`.
 | `epic-record` | records and raw outputs of other units of this epic; each states its source commit or is tool output at the commit the same command names |
 | `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
 | `manifest-quote` | `E/handoff-23.md:53` quotes a `path` field of the migration manifest |
-| `tracker-state` | `progress.json` of `E` and `R`; `breakdown.json` of `R`, `c04dd4ac-zen3-shifts-and-permutations` and `ed3d490e-zen3-ldpc-frame-simd` |
+| `tracker-state` | `breakdown.json` of `R` and `ed3d490e-zen3-ldpc-frame-simd` |
 | `bench-window` | `E/bench-window/queue.tsv`; the job key hashes the command text |
 | `frozen-document` | `S/dense-parity-addendum.md` and `S/dense-parity-addendum-v1.md`, with the digest pins `f79bcba3-zen3-move.md` lists |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
