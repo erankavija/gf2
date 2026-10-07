@@ -1700,8 +1700,11 @@ pub trait SoftDecoder {
     /// `decode_soft` does not find a codeword reports its own metadata:
     /// [`LdpcDecoder`](crate::ldpc::LdpcDecoder) and
     /// [`GldpcDecoder`](crate::gldpc::GldpcDecoder) report zero iterations and
-    /// the parity test of the hard decisions, and the OSD and OrbGrand
-    /// decoders report their search outcome.
+    /// the parity test of the hard decisions, the OSD and OrbGrand decoders
+    /// report their search outcome, and
+    /// [`Nr5gRateMatchedCode`](crate::ldpc::nr_5g::Nr5gRateMatchedCode) and
+    /// [`Nr5gRateMatchedDecoder`](crate::ldpc::nr_5g::Nr5gRateMatchedDecoder)
+    /// report the iterative decode that produced the word.
     ///
     /// # Panics
     ///
