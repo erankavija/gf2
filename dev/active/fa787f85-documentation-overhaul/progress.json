@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 12,
+ "current_wave": 13,
  "waves": [
   {
    "wave_number": 1,
@@ -976,14 +976,14 @@
      "short_id": "2e18b37c",
      "title": "Move entries f8dd4dde, a203a23c and 19513245 under the zen3 epic dir",
      "classification": "implementation",
-     "status": "in_rework"
+     "status": "done"
     },
     {
      "id": "cc060974-b76c-4ca0-8a59-c326e2043f23",
      "short_id": "cc060974",
      "title": "Decouple and move the residual-shift entries 00dd43c3 and c04dd4ac",
      "classification": "implementation",
-     "status": "in_rework"
+     "status": "done"
     }
    ]
   },
@@ -995,7 +995,7 @@
      "short_id": "9451498f",
      "title": "Clear empty leftover dirs under dev/active",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "b959ffe8-5a4a-406c-91fa-acc6a01a3167",
@@ -1658,6 +1658,16 @@
    "id": "7375db1e",
    "epic": "b4b4b9ee",
    "reason": "a203a23c timing assessment does not reproduce its superseded record"
+  },
+  {
+   "id": "954537d9",
+   "epic": "b4b4b9ee",
+   "reason": "inspect-shift-consumers.py --check fails against the committed audit (worker report, unverified)"
+  },
+  {
+   "id": "e804b8b8",
+   "epic": "b4b4b9ee",
+   "reason": "f63a2464 freeze-confirmations.sh globs **/repository_files.py and may load a snapshot copy (worker report, unverified)"
   }
  ],
  "escalations": [
@@ -2168,6 +2178,17 @@
    "options": [],
    "recommendation": "",
    "resolution": "Owner instruction (2026-10-07)."
+  },
+  {
+   "issue": "9451498f",
+   "question": "OPEN: REQ-02 (\"No tracked file changes\") cannot hold as code-review reads it. Run 1 (f0a64ade6): both reviews failed on the unit's record, a tracked file. The record is removed (net tracked diff outside .jit/ is empty); run 2: cargo-ci, docs-mechanical and doc-review pass, code-review fails on .jit/issues/9451498f-*.json:19, the tracker state that claiming, linking and gate runs write under commits tagged jit:9451498f. REQ-01 and REQ-03 hold: find dev/active -type d -empty and -name __pycache__ print nothing in the primary checkout; migration/check.py exits 0 with the deletion rows of the directories complete.",
+   "options": [
+    "amend REQ-02 to \"No tracked file outside the tracker changes\" and rerun code-review",
+    "record a DEC that tracker state is outside REQ-02",
+    "reject the finding by owner ruling and close"
+   ],
+   "recommendation": "the amendment",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -2239,7 +2260,8 @@
   "2e18b37c": 3,
   "cc060974": 2,
   "602652bf": 1,
-  "f694f59a": 1
+  "f694f59a": 1,
+  "9451498f": 2
  },
  "surfaced_pitfalls": [
   {
