@@ -22,7 +22,6 @@ pub mod bipedal;
 pub mod clmul_scalar;
 #[cfg(test)]
 mod contract;
-#[cfg(gf2_entry_checked)]
 mod entry_check;
 pub mod fp65537;
 pub mod fp_generic;

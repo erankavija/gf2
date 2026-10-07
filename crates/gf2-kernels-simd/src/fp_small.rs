@@ -54,19 +54,23 @@ pub type SmallPrimeBatchDotFn = fn(&[u8], &[u8], u8) -> u8;
 /// Panics unless `a.len() == k`, `bt.len() == n * k` and `out.len() == n`.
 pub type SmallPrimeGemmRowPanelFn = fn(&[u8], &[u8], usize, usize, u8, &mut [u8]);
 
-/// Sparse-times-dense row kernel for `Fp<P>` with `P <= 251`.
+/// Sparse-times-dense product for `Fp<P>` with `P <= 251`.
 ///
-/// Writes `out[j] = (∑_h a_vals[h] * b[a_cols[h] * b_stride + j]) mod p`
-/// for `j ∈ [0, n)`. The sparse left row is given as `(a_vals, a_cols)`
-/// and `b` is a row-major dense byte matrix with row stride `b_stride`.
-///
-/// Each index must satisfy `a_cols[h] * b_stride + n <= b.len()`, and
-/// `n <= b_stride`.
+/// Invoked as `f(a_row_ptr, a_cols, a_vals, b, n, p, out)`. The left operand
+/// is in CSR form: row `r` owns `a_row_ptr[r]..a_row_ptr[r + 1]` of `a_cols`
+/// and `a_vals`, and `a_row_ptr` has one entry more than there are rows. `b`
+/// is a row-major dense u8 matrix with rows of `n` cells and `out` the
+/// row-major product, `n` cells per sparse row. Writes
+/// `out[r * n + j] = (∑_h a_vals[h] * b[a_cols[h] * n + j]) mod p` over the
+/// non-zeros `h` of row `r`. Values are canonical bytes.
 ///
 /// # Panics
 ///
-/// Panics if `a_vals.len() != a_cols.len()` or `out.len() != n`.
-pub type SmallPrimeSpmmRowFn = fn(&[u8], &[usize], &[u8], usize, usize, u8, &mut [u8]);
+/// Panics unless `out.len()` is the row count times `n`,
+/// `a_vals.len() == a_cols.len()`, every `a_cols[h]` names a whole row of
+/// `b`, and each row range lies inside `a_cols`. The column indices are
+/// checked once per call, ahead of the row loop.
+pub type SmallPrimeSpmmFn = fn(&[usize], &[usize], &[u8], &[u8], usize, u8, &mut [u8]);
 
 /// Fused in-place `buf := (buf − α · chain_j) mod p` for `Fp<P>`
 /// with `P <= 251`.
@@ -97,8 +101,8 @@ pub struct SmallPrimeFns {
     pub batch_dot_fn: SmallPrimeBatchDotFn,
     /// Whole-row gemm panel for `Fp<P>` with `P <= 251`.
     pub gemm_row_panel_fn: SmallPrimeGemmRowPanelFn,
-    /// Sparse-times-dense row kernel for `Fp<P>` with `P <= 251`.
-    pub spmm_row_fn: SmallPrimeSpmmRowFn,
+    /// Sparse-times-dense product, column indices checked once per call.
+    pub spmm_fn: SmallPrimeSpmmFn,
     /// Fused in-place `buf := (buf − α · chain_j) mod p` for `Fp<P>`
     /// with `P <= 251`.
     pub sub_scaled_fn: SmallPrimeSubScaledFn,
@@ -126,14 +130,8 @@ fn detect_x86() -> Option<SmallPrimeFns> {
             batch_add_fn: batch_add_safe,
             batch_sub_fn: batch_sub_safe,
             batch_dot_fn: batch_dot_safe,
-            #[cfg(not(gf2_entry_checked))]
             gemm_row_panel_fn: gemm_row_panel_safe,
-            #[cfg(gf2_entry_checked)]
-            gemm_row_panel_fn: gemm_row_panel_checked,
-            #[cfg(not(gf2_entry_checked))]
-            spmm_row_fn: spmm_row_safe,
-            #[cfg(gf2_entry_checked)]
-            spmm_row_fn: spmm_row_checked,
+            spmm_fn: spmm_safe,
             sub_scaled_fn: sub_scaled_safe,
         })
     } else {
@@ -166,15 +164,7 @@ fn batch_dot_safe(a: &[u8], b: &[u8], p: u8) -> u8 {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
 fn gemm_row_panel_safe(a: &[u8], bt: &[u8], k: usize, n: usize, p: u8, out: &mut [u8]) {
-    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
-    unsafe { crate::x86::fp_small::fp_small_gemm_row_panel(a, bt, k, n, p, out) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn gemm_row_panel_checked(a: &[u8], bt: &[u8], k: usize, n: usize, p: u8, out: &mut [u8]) {
     crate::entry_check::assert_shape("fp_small_gemm_row_panel", "bt", bt.len(), n, k);
     // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
     // The assertion above keeps `n * k` from wrapping in the kernel's own
@@ -183,38 +173,43 @@ fn gemm_row_panel_checked(a: &[u8], bt: &[u8], k: usize, n: usize, p: u8, out: &
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
-fn spmm_row_safe(
-    a_vals: &[u8],
+fn spmm_safe(
+    a_row_ptr: &[usize],
     a_cols: &[usize],
+    a_vals: &[u8],
     b: &[u8],
-    b_stride: usize,
     n: usize,
     p: u8,
     out: &mut [u8],
 ) {
-    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
-    // The column bound is the caller's, as `SmallPrimeSpmmRowFn` documents; the
-    // kernel asserts the other lengths.
-    unsafe { crate::x86::fp_small::fp_small_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn spmm_row_checked(
-    a_vals: &[u8],
-    a_cols: &[usize],
-    b: &[u8],
-    b_stride: usize,
-    n: usize,
-    p: u8,
-    out: &mut [u8],
-) {
-    crate::entry_check::assert_spmm_row_columns("fp_small_spmm_row", a_cols, b.len(), b_stride, n);
-    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
-    // The assertion above bounds every column, and the kernel asserts the
-    // other lengths.
-    unsafe { crate::x86::fp_small::fp_small_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
+    let rows = a_row_ptr.len().saturating_sub(1);
+    crate::entry_check::assert_shape("fp_small_spmm", "out", out.len(), rows, n);
+    assert!(
+        a_vals.len() == a_cols.len(),
+        "fp_small_spmm: a_vals/a_cols length mismatch"
+    );
+    crate::entry_check::assert_spmm_columns("fp_small_spmm", a_cols, b.len(), n);
+    if n == 0 {
+        return;
+    }
+    for (r, out_row) in out.chunks_exact_mut(n).enumerate() {
+        let row = a_row_ptr[r]..a_row_ptr[r + 1];
+        // SAFETY: `detect_x86` only returns this pointer when AVX2 is
+        // available. The assertion above bounds every index of `a_cols`, so
+        // every index of this row; the two row slices share one range and
+        // `out_row` is `n` cells.
+        unsafe {
+            crate::x86::fp_small::fp_small_spmm_row(
+                &a_vals[row.clone()],
+                &a_cols[row],
+                b,
+                n,
+                n,
+                p,
+                out_row,
+            )
+        }
+    }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

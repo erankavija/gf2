@@ -27,26 +27,33 @@ pub type MediumPrimeBatchSubFn = fn(&[u16], &[u16], u16, &mut [u16]);
 /// reduced sum.
 pub type MediumPrimeBatchDotFn = fn(&[u16], &[u16], u16) -> u32;
 
-/// Sparse-times-dense row kernel for medium-prime `Fp<P>` with
-/// `P ∈ (251, 65535]`.
+/// Sparse-times-dense product for medium-prime `Fp<P>` with `P ∈ (251, 65535]`.
 ///
-/// Writes `out[j] = (∑_h a_vals[h] * b[a_cols[h] * b_stride + j]) mod p`
-/// for `j ∈ [0, n)`. The sparse left row is given as `(a_vals,
-/// a_cols)` with canonical u16 lanes; `b` is a row-major dense u16
-/// matrix with row stride `b_stride`. `out` is the dense output row of
-/// length `n`.
-///
-/// Each index must satisfy `a_cols[h] * b_stride + n <= b.len()`.
+/// Invoked as `f(a_row_ptr, a_cols, a_vals, b, n, p, out)`. The left operand
+/// is in CSR form: row `r` owns `a_row_ptr[r]..a_row_ptr[r + 1]` of `a_cols`
+/// and `a_vals`, and `a_row_ptr` has one entry more than there are rows. `b`
+/// is a row-major dense u16 matrix with rows of `n` cells and `out` the
+/// row-major product, `n` cells per sparse row. Writes
+/// `out[r * n + j] = (∑_h a_vals[h] * b[a_cols[h] * n + j]) mod p` over the
+/// non-zeros `h` of row `r`. Values are canonical u16 lanes.
 ///
 /// # Panics
 ///
-/// Panics if `a_vals.len() != a_cols.len()` or `out.len() != n`.
-pub type MediumPrimeSpmmRowFn = fn(&[u16], &[usize], &[u16], usize, usize, u16, &mut [u16]);
+/// Panics unless `out.len()` is the row count times `n`,
+/// `a_vals.len() == a_cols.len()`, every `a_cols[h]` names a whole row of
+/// `b`, and each row range lies inside `a_cols`. The column indices are
+/// checked once per call, ahead of the row loop.
+pub type MediumPrimeSpmmFn = fn(&[usize], &[usize], &[u16], &[u16], usize, u16, &mut [u16]);
 
 /// Whole-GEMM panel kernel for medium-prime `Fp<P>` with `P ∈ (251,
 /// 65535]`. Computes `c[i*n + j] = (∑_t a[i*k + t] * bt[j*k + t]) mod p`
 /// for every `(i, j) ∈ [0, m) × [0, n)`. Inputs are canonical u16
 /// residues. The transpose `bt` is `n × k` row-major.
+///
+/// # Panics
+///
+/// Panics unless `a.len() == m * k`, `bt.len() == n * k` and
+/// `c.len() == m * n`.
 pub type MediumPrimeGemmPanelFn = fn(&[u16], &[u16], usize, usize, usize, u16, &mut [u16]);
 
 /// Bundle of AVX2 batch operations for medium-prime `Fp<P>`.
@@ -62,8 +69,8 @@ pub struct MediumPrimeFns {
     pub batch_sub_fn: MediumPrimeBatchSubFn,
     /// Batch dot product reduced to a canonical scalar.
     pub batch_dot_fn: MediumPrimeBatchDotFn,
-    /// Sparse-times-dense row kernel.
-    pub spmm_row_fn: MediumPrimeSpmmRowFn,
+    /// Sparse-times-dense product, column indices checked once per call.
+    pub spmm_fn: MediumPrimeSpmmFn,
     /// Whole-GEMM panel kernel.
     pub gemm_panel_fn: MediumPrimeGemmPanelFn,
 }
@@ -90,14 +97,8 @@ fn detect_x86() -> Option<MediumPrimeFns> {
             batch_add_fn: batch_add_safe,
             batch_sub_fn: batch_sub_safe,
             batch_dot_fn: batch_dot_safe,
-            #[cfg(not(gf2_entry_checked))]
-            spmm_row_fn: spmm_row_safe,
-            #[cfg(gf2_entry_checked)]
-            spmm_row_fn: spmm_row_checked,
-            #[cfg(not(gf2_entry_checked))]
+            spmm_fn: spmm_safe,
             gemm_panel_fn: gemm_panel_safe,
-            #[cfg(gf2_entry_checked)]
-            gemm_panel_fn: gemm_panel_checked,
         })
     } else {
         None
@@ -129,50 +130,47 @@ fn batch_dot_safe(a: &[u16], b: &[u16], p: u16) -> u32 {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
-fn spmm_row_safe(
-    a_vals: &[u16],
+fn spmm_safe(
+    a_row_ptr: &[usize],
     a_cols: &[usize],
+    a_vals: &[u16],
     b: &[u16],
-    b_stride: usize,
     n: usize,
     p: u16,
     out: &mut [u16],
 ) {
-    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
-    // The column bound is the caller's, as `MediumPrimeSpmmRowFn` documents;
-    // the kernel asserts the other lengths.
-    unsafe { crate::x86::fp_medium::fp_medium_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
+    let rows = a_row_ptr.len().saturating_sub(1);
+    crate::entry_check::assert_shape("fp_medium_spmm", "out", out.len(), rows, n);
+    assert!(
+        a_vals.len() == a_cols.len(),
+        "fp_medium_spmm: a_vals/a_cols length mismatch"
+    );
+    crate::entry_check::assert_spmm_columns("fp_medium_spmm", a_cols, b.len(), n);
+    if n == 0 {
+        return;
+    }
+    for (r, out_row) in out.chunks_exact_mut(n).enumerate() {
+        let row = a_row_ptr[r]..a_row_ptr[r + 1];
+        // SAFETY: `detect_x86` only returns this pointer when AVX2 is
+        // available. The assertion above bounds every index of `a_cols`, so
+        // every index of this row; the two row slices share one range and
+        // `out_row` is `n` cells.
+        unsafe {
+            crate::x86::fp_medium::fp_medium_spmm_row(
+                &a_vals[row.clone()],
+                &a_cols[row],
+                b,
+                n,
+                n,
+                p,
+                out_row,
+            )
+        }
+    }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn spmm_row_checked(
-    a_vals: &[u16],
-    a_cols: &[usize],
-    b: &[u16],
-    b_stride: usize,
-    n: usize,
-    p: u16,
-    out: &mut [u16],
-) {
-    crate::entry_check::assert_spmm_row_columns("fp_medium_spmm_row", a_cols, b.len(), b_stride, n);
-    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
-    // The assertion above bounds every column, and the kernel asserts the
-    // other lengths.
-    unsafe { crate::x86::fp_medium::fp_medium_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
 fn gemm_panel_safe(a: &[u16], bt: &[u16], m: usize, k: usize, n: usize, p: u16, c: &mut [u16]) {
-    // SAFETY: `detect_x86` only returns these pointers when AVX2 is available.
-    unsafe { crate::x86::fp_medium::fp_medium_gemm_panel(a, bt, m, k, n, p, c) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn gemm_panel_checked(a: &[u16], bt: &[u16], m: usize, k: usize, n: usize, p: u16, c: &mut [u16]) {
     crate::entry_check::assert_shape("fp_medium_gemm_panel", "a", a.len(), m, k);
     crate::entry_check::assert_shape("fp_medium_gemm_panel", "bt", bt.len(), n, k);
     crate::entry_check::assert_shape("fp_medium_gemm_panel", "c", c.len(), m, n);

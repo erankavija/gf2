@@ -56,10 +56,7 @@ fn detect_x86() -> Option<SmallPrimePanelFns> {
     use std::arch::is_x86_feature_detected;
     if is_x86_feature_detected!("avx2") {
         Some(SmallPrimePanelFns {
-            #[cfg(not(gf2_entry_checked))]
             batch_gemm_fn: batch_gemm_safe,
-            #[cfg(gf2_entry_checked)]
-            batch_gemm_fn: batch_gemm_checked,
         })
     } else {
         None
@@ -67,16 +64,7 @@ fn detect_x86() -> Option<SmallPrimePanelFns> {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
 fn batch_gemm_safe(a: &[u8], bt: &[u8], m: usize, k: usize, n: usize, p: u8, c: &mut [u8]) {
-    // SAFETY: `detect_x86` only returns this pointer when AVX2 is
-    // available at runtime.
-    unsafe { crate::x86::fp_small_panel::fp_small_panel_gemm(a, bt, m, k, n, p, c) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn batch_gemm_checked(a: &[u8], bt: &[u8], m: usize, k: usize, n: usize, p: u8, c: &mut [u8]) {
     crate::entry_check::assert_shape("fp_small_panel_gemm", "a", a.len(), m, k);
     crate::entry_check::assert_shape("fp_small_panel_gemm", "bt", bt.len(), n, k);
     crate::entry_check::assert_shape("fp_small_panel_gemm", "c", c.len(), m, n);

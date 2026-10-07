@@ -181,13 +181,19 @@ pub fn has_avx2_f7() -> bool {
 
 /// Binary batch kernel for F_7: `a_words op b_words -> out_words`.
 ///
-/// All three slices must have the same length (a multiple of 4 for AVX2).
+/// # Panics
+///
+/// The AVX2 kernels panic unless all three slices share one length that is a
+/// multiple of 4.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type F7BinaryKernelFn = fn(&[u64], &[u64], &mut [u64]);
 
 /// Unary batch kernel for F_7: `a_words -> out_words`.
 ///
-/// Both slices must have the same length (a multiple of 4 for AVX2).
+/// # Panics
+///
+/// The AVX2 kernel panics unless both slices share one length that is a
+/// multiple of 4.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type F7UnaryKernelFn = fn(&[u64], &mut [u64]);
 
@@ -224,22 +230,10 @@ fn detect_avx2_f7_uncached() -> Option<F7AvxFns> {
     use std::arch::is_x86_feature_detected;
     if is_x86_feature_detected!("avx2") {
         Some(F7AvxFns {
-            #[cfg(not(gf2_entry_checked))]
             add_fn: add7_safe,
-            #[cfg(gf2_entry_checked)]
-            add_fn: add7_checked,
-            #[cfg(not(gf2_entry_checked))]
             sub_fn: sub7_safe,
-            #[cfg(gf2_entry_checked)]
-            sub_fn: sub7_checked,
-            #[cfg(not(gf2_entry_checked))]
             mul_fn: mul7_safe,
-            #[cfg(gf2_entry_checked)]
-            mul_fn: mul7_checked,
-            #[cfg(not(gf2_entry_checked))]
             neg_fn: neg7_safe,
-            #[cfg(gf2_entry_checked)]
-            neg_fn: neg7_checked,
         })
     } else {
         None
@@ -247,16 +241,7 @@ fn detect_avx2_f7_uncached() -> Option<F7AvxFns> {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
 fn add7_safe(a: &[u64], b: &[u64], out: &mut [u64]) {
-    // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
-    // The slice shape is the caller's, as `F7BinaryKernelFn` documents.
-    unsafe { crate::x86::bipedal_avx2_packed7::run_add7_batch(a, b, out) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn add7_checked(a: &[u64], b: &[u64], out: &mut [u64]) {
     crate::entry_check::assert_packed_lengths("F_7 add kernel", [a.len(), b.len(), out.len()]);
     // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
     // The assertion above gives the slice shape.
@@ -264,16 +249,7 @@ fn add7_checked(a: &[u64], b: &[u64], out: &mut [u64]) {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
 fn sub7_safe(a: &[u64], b: &[u64], out: &mut [u64]) {
-    // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
-    // The slice shape is the caller's, as `F7BinaryKernelFn` documents.
-    unsafe { crate::x86::bipedal_avx2_packed7::run_sub7_batch(a, b, out) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn sub7_checked(a: &[u64], b: &[u64], out: &mut [u64]) {
     crate::entry_check::assert_packed_lengths("F_7 sub kernel", [a.len(), b.len(), out.len()]);
     // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
     // The assertion above gives the slice shape.
@@ -281,16 +257,7 @@ fn sub7_checked(a: &[u64], b: &[u64], out: &mut [u64]) {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
 fn mul7_safe(a: &[u64], b: &[u64], out: &mut [u64]) {
-    // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
-    // The slice shape is the caller's, as `F7BinaryKernelFn` documents.
-    unsafe { crate::x86::bipedal_avx2_packed7::run_mul7_batch(a, b, out) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn mul7_checked(a: &[u64], b: &[u64], out: &mut [u64]) {
     crate::entry_check::assert_packed_lengths("F_7 mul kernel", [a.len(), b.len(), out.len()]);
     // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
     // The assertion above gives the slice shape.
@@ -298,16 +265,7 @@ fn mul7_checked(a: &[u64], b: &[u64], out: &mut [u64]) {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
 fn neg7_safe(a: &[u64], out: &mut [u64]) {
-    // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
-    // The slice shape is the caller's, as `F7UnaryKernelFn` documents.
-    unsafe { crate::x86::bipedal_avx2_packed7::run_neg7_batch(a, out) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn neg7_checked(a: &[u64], out: &mut [u64]) {
     crate::entry_check::assert_packed_lengths("F_7 neg kernel", [a.len(), out.len()]);
     // SAFETY: `detect_avx2_f7` only sets this fn ptr when AVX2 is available.
     // The assertion above gives the slice shape.

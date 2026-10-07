@@ -2,28 +2,17 @@
 //! index without one, in the form of [`crate::m4rm::assert_gray_build_lengths`]:
 //! a panic under the kernel's name, with checked products.
 
-/// Panics unless every `a_cols[h] * b_stride + n` stays inside a `b` of
-/// `b_len` elements. A row without non-zeros reads nothing and passes.
+/// Panics unless every index of `a_cols` names a whole row of `n` cells in a
+/// `b` of `b_len` cells. Without an index, or with `n == 0`, the row kernel
+/// reads nothing and the check passes.
 #[inline]
-pub(crate) fn assert_spmm_row_columns(
-    kernel: &str,
-    a_cols: &[usize],
-    b_len: usize,
-    b_stride: usize,
-    n: usize,
-) {
+pub(crate) fn assert_spmm_columns(kernel: &str, a_cols: &[usize], b_len: usize, n: usize) {
     let Some(largest) = a_cols.iter().copied().max() else {
         return;
     };
-    let Some(last_start) = b_len.checked_sub(n) else {
-        panic!("{kernel}: b is shorter than one output row");
-    };
-    // A zero stride starts every row at element 0.
-    let Some(max_col) = last_start.checked_div(b_stride) else {
-        return;
-    };
+    // `largest < b_len / n` gives `largest * n + n <= b_len` without overflow.
     assert!(
-        largest <= max_col,
+        b_len.checked_div(n).is_none_or(|rows| largest < rows),
         "{kernel}: a column index reaches outside b"
     );
 }

@@ -241,7 +241,6 @@ mod avx2 {
             "inv_n0_eq.len() must equal z.len()"
         );
         // The length assertion below compares with this product.
-        #[cfg(gf2_entry_checked)]
         crate::entry_check::checked_cells(
             "pam_sq_distances_f32_avx2",
             "out",
@@ -281,7 +280,6 @@ mod avx2 {
             "inv_n0_eq.len() must equal z.len()"
         );
         // The length assertion below compares with this product.
-        #[cfg(gf2_entry_checked)]
         crate::entry_check::checked_cells(
             "pam_sq_distances_f64_avx2",
             "out",

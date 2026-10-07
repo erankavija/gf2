@@ -252,14 +252,20 @@ pub fn has_avx2_f5() -> bool {
 
 /// Binary batch kernel for F_5: `(b0a,b1a,b2a) op (b0b,b1b,b2b) -> (out0,out1,out2)`.
 ///
-/// All nine slices must have the same length (a multiple of 4 for the AVX2 path).
+/// # Panics
+///
+/// The AVX2 kernels panic unless all nine slices share one length that is a
+/// multiple of 4.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type F5BinaryKernelFn =
     fn(&[u64], &[u64], &[u64], &[u64], &[u64], &[u64], &mut [u64], &mut [u64], &mut [u64]);
 
 /// Unary batch kernel for F_5: `(b0, b1, b2) -> (out0, out1, out2)`.
 ///
-/// All six slices must have the same length (a multiple of 4 for the AVX2 path).
+/// # Panics
+///
+/// The AVX2 kernel panics unless all six slices share one length that is a
+/// multiple of 4.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type F5UnaryKernelFn = fn(&[u64], &[u64], &[u64], &mut [u64], &mut [u64], &mut [u64]);
 
@@ -297,22 +303,10 @@ fn detect_avx2_f5_uncached() -> Option<F5AvxFns> {
     use std::arch::is_x86_feature_detected;
     if is_x86_feature_detected!("avx2") {
         Some(F5AvxFns {
-            #[cfg(not(gf2_entry_checked))]
             add_fn: add5_safe,
-            #[cfg(gf2_entry_checked)]
-            add_fn: add5_checked,
-            #[cfg(not(gf2_entry_checked))]
             sub_fn: sub5_safe,
-            #[cfg(gf2_entry_checked)]
-            sub_fn: sub5_checked,
-            #[cfg(not(gf2_entry_checked))]
             mul_fn: mul5_safe,
-            #[cfg(gf2_entry_checked)]
-            mul_fn: mul5_checked,
-            #[cfg(not(gf2_entry_checked))]
             neg_fn: neg5_safe,
-            #[cfg(gf2_entry_checked)]
-            neg_fn: neg5_checked,
         })
     } else {
         None
@@ -321,31 +315,7 @@ fn detect_avx2_f5_uncached() -> Option<F5AvxFns> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[allow(clippy::too_many_arguments)]
-#[cfg(not(gf2_entry_checked))]
 fn add5_safe(
-    b0a: &[u64],
-    b1a: &[u64],
-    b2a: &[u64],
-    b0b: &[u64],
-    b1b: &[u64],
-    b2b: &[u64],
-    out_b0: &mut [u64],
-    out_b1: &mut [u64],
-    out_b2: &mut [u64],
-) {
-    // SAFETY: `detect_avx2_f5` only sets this fn ptr when AVX2 is available.
-    // The slice shape is the caller's, as `F5BinaryKernelFn` documents.
-    unsafe {
-        crate::x86::bipedal_avx2_packed5::run_add5_batch(
-            b0a, b1a, b2a, b0b, b1b, b2b, out_b0, out_b1, out_b2,
-        )
-    }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-#[allow(clippy::too_many_arguments)]
-fn add5_checked(
     b0a: &[u64],
     b1a: &[u64],
     b2a: &[u64],
@@ -381,31 +351,7 @@ fn add5_checked(
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[allow(clippy::too_many_arguments)]
-#[cfg(not(gf2_entry_checked))]
 fn sub5_safe(
-    b0a: &[u64],
-    b1a: &[u64],
-    b2a: &[u64],
-    b0b: &[u64],
-    b1b: &[u64],
-    b2b: &[u64],
-    out_b0: &mut [u64],
-    out_b1: &mut [u64],
-    out_b2: &mut [u64],
-) {
-    // SAFETY: `detect_avx2_f5` only sets this fn ptr when AVX2 is available.
-    // The slice shape is the caller's, as `F5BinaryKernelFn` documents.
-    unsafe {
-        crate::x86::bipedal_avx2_packed5::run_sub5_batch(
-            b0a, b1a, b2a, b0b, b1b, b2b, out_b0, out_b1, out_b2,
-        )
-    }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-#[allow(clippy::too_many_arguments)]
-fn sub5_checked(
     b0a: &[u64],
     b1a: &[u64],
     b2a: &[u64],
@@ -441,31 +387,7 @@ fn sub5_checked(
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[allow(clippy::too_many_arguments)]
-#[cfg(not(gf2_entry_checked))]
 fn mul5_safe(
-    b0a: &[u64],
-    b1a: &[u64],
-    b2a: &[u64],
-    b0b: &[u64],
-    b1b: &[u64],
-    b2b: &[u64],
-    out_b0: &mut [u64],
-    out_b1: &mut [u64],
-    out_b2: &mut [u64],
-) {
-    // SAFETY: `detect_avx2_f5` only sets this fn ptr when AVX2 is available.
-    // The slice shape is the caller's, as `F5BinaryKernelFn` documents.
-    unsafe {
-        crate::x86::bipedal_avx2_packed5::run_mul5_batch(
-            b0a, b1a, b2a, b0b, b1b, b2b, out_b0, out_b1, out_b2,
-        )
-    }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-#[allow(clippy::too_many_arguments)]
-fn mul5_checked(
     b0a: &[u64],
     b1a: &[u64],
     b2a: &[u64],
@@ -500,23 +422,7 @@ fn mul5_checked(
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(not(gf2_entry_checked))]
 fn neg5_safe(
-    b0: &[u64],
-    b1: &[u64],
-    b2: &[u64],
-    out_b0: &mut [u64],
-    out_b1: &mut [u64],
-    out_b2: &mut [u64],
-) {
-    // SAFETY: `detect_avx2_f5` only sets this fn ptr when AVX2 is available.
-    // The slice shape is the caller's, as `F5UnaryKernelFn` documents.
-    unsafe { crate::x86::bipedal_avx2_packed5::run_neg5_batch(b0, b1, b2, out_b0, out_b1, out_b2) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[cfg(gf2_entry_checked)]
-fn neg5_checked(
     b0: &[u64],
     b1: &[u64],
     b2: &[u64],

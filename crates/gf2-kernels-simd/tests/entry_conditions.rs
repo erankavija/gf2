@@ -1,9 +1,7 @@
-//! Violated caller conditions of the checked kernel entry points: each
-//! published pointer panics under its kernel's name instead of reaching an
-//! unchecked access. Compiled under `--cfg gf2_entry_checked`, the build
-//! whose detection functions publish the checked wrappers.
+//! Violated caller conditions of the kernel entry points: each published
+//! pointer panics under its kernel's name instead of reaching an unchecked
+//! access.
 
-#![cfg(gf2_entry_checked)]
 #![cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -50,42 +48,61 @@ macro_rules! detected {
     };
 }
 
-#[test]
-fn small_prime_spmm_row_rejects_columns_outside_b() {
-    let fns = detected!(fp_small::detect());
-    let kernel = "fp_small_spmm_row";
-    let b = [1u8; 32];
-    let mut out = [0u8; 16];
-    (fns.spmm_row_fn)(&[1], &[1], &b, 16, 16, 7, &mut out);
-    assert_eq!(out, [1u8; 16]);
-    (fns.spmm_row_fn)(&[], &[], &[], 16, 16, 7, &mut out);
-    for col in [2, usize::MAX] {
-        rejects(kernel, "column index", || {
-            (fns.spmm_row_fn)(&[1], &[col], &b, 16, 16, 7, &mut [0u8; 16])
-        });
-    }
-    rejects(kernel, "shorter than one output row", || {
-        (fns.spmm_row_fn)(&[1], &[0], &b[..8], 16, 16, 7, &mut [0u8; 16])
-    });
+/// One contract for both sparse product lanes: two rows over a two-row `b`,
+/// the second row empty.
+macro_rules! spmm_rejects_columns_outside_b {
+    ($test:ident, $detect:expr, $kernel:literal, $cell:ty, $p:literal) => {
+        #[test]
+        fn $test() {
+            let fns = detected!($detect);
+            let b: [$cell; 32] = [1; 32];
+            let run = |row_ptr: &[usize], cols: &[usize], vals: &[$cell], b: &[$cell], n| {
+                let mut out: Vec<$cell> = vec![9; 32];
+                (fns.spmm_fn)(row_ptr, cols, vals, b, n, $p, &mut out);
+                out
+            };
+            let out = run(&[0, 1, 1], &[1], &[1], &b, 16);
+            assert_eq!(out[..16], [1; 16]);
+            assert_eq!(out[16..], [0; 16]);
+            for col in [2, usize::MAX] {
+                rejects($kernel, "column index", || {
+                    run(&[0, 1, 1], &[col], &[1], &b, 16);
+                });
+            }
+            rejects($kernel, "column index", || {
+                run(&[0, 1, 1], &[0], &[1], &b[..8], 16);
+            });
+            // An index no row range names is checked as well.
+            rejects($kernel, "column index", || {
+                run(&[0, 1, 1], &[0, 2], &[1, 1], &b, 16);
+            });
+            rejects($kernel, "a_vals/a_cols length mismatch", || {
+                run(&[0, 1, 1], &[0], &[1, 1], &b, 16);
+            });
+            rejects($kernel, "out shape", || {
+                run(&[0, 1, 1], &[0], &[1], &b, 8);
+            });
+            rejects($kernel, "shape of out overflows", || {
+                (fns.spmm_fn)(&[0, 0, 0], &[], &[], &b, usize::MAX, $p, &mut []);
+            });
+        }
+    };
 }
 
-#[test]
-fn medium_prime_spmm_row_rejects_columns_outside_b() {
-    let fns = detected!(fp_medium::detect());
-    let kernel = "fp_medium_spmm_row";
-    let b = [1u16; 32];
-    let mut out = [0u16; 16];
-    (fns.spmm_row_fn)(&[1], &[1], &b, 16, 16, 257, &mut out);
-    assert_eq!(out, [1u16; 16]);
-    for col in [2, usize::MAX] {
-        rejects(kernel, "column index", || {
-            (fns.spmm_row_fn)(&[1], &[col], &b, 16, 16, 257, &mut [0u16; 16])
-        });
-    }
-    rejects(kernel, "shorter than one output row", || {
-        (fns.spmm_row_fn)(&[1], &[0], &b[..8], 16, 16, 257, &mut [0u16; 16])
-    });
-}
+spmm_rejects_columns_outside_b!(
+    small_prime_spmm_rejects_columns_outside_b,
+    fp_small::detect(),
+    "fp_small_spmm",
+    u8,
+    7
+);
+spmm_rejects_columns_outside_b!(
+    medium_prime_spmm_rejects_columns_outside_b,
+    fp_medium::detect(),
+    "fp_medium_spmm",
+    u16,
+    257
+);
 
 #[test]
 fn small_prime_ple_panel_rejects_window_and_table() {
