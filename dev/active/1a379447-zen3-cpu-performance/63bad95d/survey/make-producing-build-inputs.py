@@ -40,6 +40,9 @@ ADDED = {
         "src/kernels/test_utils.rs": "excluded",
     },
     "gf2-kernels-simd": {
+        "src/contract.rs": "excluded",
+        "src/entry_check.rs": "behavior",
+        "src/ldpc_lanes.rs": "behavior",
         "src/m4rm.rs": "behavior",
         "src/shift_funnel.rs": "behavior",
         "src/x86/popcount.rs": "behavior",
