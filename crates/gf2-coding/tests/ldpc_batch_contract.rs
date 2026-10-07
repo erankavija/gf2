@@ -385,11 +385,7 @@ const CAP: usize = 20;
 fn dvb_t2_short(set: fn(&LdpcCode, f64) -> FrameSet) -> Case {
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let sets = vec![set(&code, 0.6)];
-    Case {
-        code,
-        cap: 8,
-        sets,
-    }
+    Case { code, cap: 8, sets }
 }
 
 fn nr_mother(base_graph: u8, lifting_size: usize, sigma: f64, special_values: bool) -> Case {
