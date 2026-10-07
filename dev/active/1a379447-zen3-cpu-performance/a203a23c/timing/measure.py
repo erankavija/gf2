@@ -357,7 +357,7 @@ def scan_for_randomness(sources: dict) -> dict:
 def randomness_report(root: Path, revisions: dict) -> dict:
     """Reports what a scan of every source this run executes or times found."""
     sources = {
-        "harness:dev/active/a203a23c/timing/measure.py": Path(__file__).read_text()
+        "harness:dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py": Path(__file__).read_text()
     }
     for form, revision in revisions.items():
         for path in (CHECKER_PATH, RESTORE_PATH):
@@ -763,7 +763,7 @@ def published_claim(root: Path, series: dict) -> dict:
             "read from that commit's own message at assessment time and "
             "matched with the pattern "
             f"{PUBLISHED_SENTENCE.pattern!r}; "
-            "dev/active/a203a23c/timing/measure.py carries no figure of its own"
+            "dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/measure.py carries no figure of its own"
         ),
         "tolerance": (
             f"a figure counts as confirmed when the measured median is "

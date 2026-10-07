@@ -2,7 +2,7 @@
 
 > **Diátaxis Type:** Reference
 
-Source: `dev/active/19513245/survey/summarize-profile.py` over 9 session records under this directory, 9 of them logged complete in `repetitions.log`, and `ladder.json`, the case ladder the sessions measured.
+Source: `dev/active/1a379447-zen3-cpu-performance/19513245/survey/summarize-profile.py` over 9 session records under this directory, 9 of them logged complete in `repetitions.log`, and `ladder.json`, the case ladder the sessions measured.
 
 Every wall time is nanoseconds per call. A session's value is the median of its five 40 ms windows; the value below is the median over the sessions, and the interval is the order-statistic interval [x(2), x(8)] of 9 sessions, coverage 0.961. Allocation counts and reuse counts are exact integers observed in one call and are identical across sessions unless the table says otherwise. The counting allocator adds two relaxed atomic increments per allocation, so a route's wall time here carries the cost of counting its own allocations; the A/B receipts carry the timing that decides anything.
 
@@ -143,5 +143,5 @@ Counters of the first session only, over a one-second repetition of each case in
 
 ## Generated code
 
-`dev/active/19513245/survey/asm/` holds the annotated release disassembly of the measured routes and their instruction mix, written by `disassemble.sh` from the arm executable of the same build these sessions ran; `asm/index.txt` names each file, the symbols it covers and the pattern that selected them.
+`dev/active/1a379447-zen3-cpu-performance/19513245/survey/asm/` holds the annotated release disassembly of the measured routes and their instruction mix, written by `disassemble.sh` from the arm executable of the same build these sessions ran; `asm/index.txt` names each file, the symbols it covers and the pattern that selected them.
 
