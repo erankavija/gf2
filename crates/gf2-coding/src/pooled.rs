@@ -1,6 +1,6 @@
 //! Parallel batch decoding over one inner decoder per worker.
 
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::{Mutex, MutexGuard};
 
 use gf2_core::BitVec;
 
@@ -19,8 +19,11 @@ use crate::tuning::DecodeSelectors;
 /// [`batch_granularity`](BatchSoftDecoder::batch_granularity) frames, the last
 /// task taking the remainder, and runs the tasks on the caller's pool; it
 /// opens no pool of its own. A task decodes on the inner decoder of the worker
-/// that runs it, and results land in input order. A frame's result depends on
-/// its own LLRs alone, so results do not depend on worker count or scheduling.
+/// that runs it, and results land in input order. With inner decoders that
+/// meet the bounds below, results do not depend on worker count or
+/// scheduling; the integration test `pooled_batch_decoder` holds them to the
+/// shared batch contract and to the inner decoder's own results under one
+/// worker, two workers and the default pool.
 ///
 /// A `decode_batch` under a pool of another width, or outside any pool, stays
 /// correct: workers beyond the inner decoders share them by index, and a
@@ -32,9 +35,11 @@ use crate::tuning::DecodeSelectors;
 /// The inner decoder is `Send`, keeps no state between calls that changes a
 /// later result, decodes a batch of any length, and runs no rayon work on the
 /// calling pool inside `decode_batch`: a worker holds its decoder's lock for
-/// the whole task and could otherwise steal a task that locks it again. Each worker owns a full
-/// inner decoder, so the workspace cost is that of one inner decoder times the
-/// worker count.
+/// the whole task and could otherwise steal a task that locks it again. Every
+/// decoder the factory builds gives the same result for the same frame; the
+/// trait does not state this, and the pool does not check it. Each worker
+/// owns a full inner decoder, so the workspace cost is that of one inner
+/// decoder times the worker count.
 ///
 /// # Example
 ///
@@ -68,7 +73,8 @@ impl<D: BatchSoftDecoder + Send> PooledBatchDecoder<D> {
     ///
     /// # Panics
     ///
-    /// Panics as [`with_selectors`](Self::with_selectors) does.
+    /// Panics as [`with_selectors`](Self::with_selectors) does, and as
+    /// [`tuning::active`](crate::tuning::active) does.
     pub fn new(factory: impl FnMut() -> D) -> Self {
         Self::with_selectors(factory, crate::tuning::active().decode())
     }
@@ -83,7 +89,9 @@ impl<D: BatchSoftDecoder + Send> PooledBatchDecoder<D> {
     /// # Panics
     ///
     /// Panics if the decoders disagree in shape, if the granularity is zero,
-    /// or if a task size overflows `usize`.
+    /// or if a task size overflows `usize`. A panic of the factory or of an
+    /// inner decoder's `frame_len`, `decoded_len` or `batch_granularity`
+    /// propagates.
     pub fn with_selectors(mut factory: impl FnMut() -> D, selectors: &DecodeSelectors) -> Self {
         let decoders: Vec<D> = (0..worker_count()).map(|_| factory()).collect();
         let first = &decoders[0];
@@ -138,10 +146,10 @@ fn worker_count() -> usize {
     1
 }
 
-/// Locks a decoder; a panic in an earlier task leaves it usable because an
-/// inner decoder keeps no state between batches.
 fn lock<D>(decoder: &Mutex<D>) -> MutexGuard<'_, D> {
-    decoder.lock().unwrap_or_else(PoisonError::into_inner)
+    decoder
+        .lock()
+        .expect("an inner decoder panicked in an earlier batch")
 }
 
 impl<D: BatchSoftDecoder + Send> BatchSoftDecoder for PooledBatchDecoder<D> {
@@ -164,7 +172,8 @@ impl<D: BatchSoftDecoder + Send> BatchSoftDecoder for PooledBatchDecoder<D> {
     /// # Panics
     ///
     /// Panics as [`BatchSoftDecoder::decode_batch`] does; a length mismatch of
-    /// `decoded` or `outcomes` panics before any frame decodes.
+    /// `decoded` or `outcomes` panics before any frame decodes. Panics if an
+    /// inner decoder panicked in an earlier batch.
     fn decode_batch(
         &mut self,
         frames: &[&[Llr]],
