@@ -27,6 +27,23 @@ pub type MediumPrimeBatchSubFn = fn(&[u16], &[u16], u16, &mut [u16]);
 /// reduced sum.
 pub type MediumPrimeBatchDotFn = fn(&[u16], &[u16], u16) -> u32;
 
+/// Sparse-times-dense row kernel without the column check, the kernel
+/// [`MediumPrimeSpmmFn`] sweeps.
+///
+/// Invoked as `f(a_vals, a_cols, b, b_stride, n, p, out)`: writes
+/// `out[j] = (∑_h a_vals[h] * b[a_cols[h] * b_stride + j]) mod p` for
+/// `j ∈ [0, n)`.
+///
+/// # Safety
+///
+/// Every `a_cols[h] * b_stride + n` is at most `b.len()`, without overflow.
+///
+/// # Panics
+///
+/// Panics if `a_vals.len() != a_cols.len()` or `out.len() != n`.
+pub type MediumPrimeSpmmRowUncheckedFn =
+    unsafe fn(&[u16], &[usize], &[u16], usize, usize, u16, &mut [u16]);
+
 /// Sparse-times-dense product for medium-prime `Fp<P>` with `P ∈ (251, 65535]`.
 ///
 /// Invoked as `f(a_row_ptr, a_cols, a_vals, b, n, p, out)`. The left operand
@@ -71,6 +88,8 @@ pub struct MediumPrimeFns {
     pub batch_dot_fn: MediumPrimeBatchDotFn,
     /// Sparse-times-dense product, column indices checked once per call.
     pub spmm_fn: MediumPrimeSpmmFn,
+    /// The row kernel of `spmm_fn`, column indices unchecked.
+    pub spmm_row_unchecked_fn: MediumPrimeSpmmRowUncheckedFn,
     /// Whole-GEMM panel kernel.
     pub gemm_panel_fn: MediumPrimeGemmPanelFn,
 }
@@ -98,6 +117,7 @@ fn detect_x86() -> Option<MediumPrimeFns> {
             batch_sub_fn: batch_sub_safe,
             batch_dot_fn: batch_dot_safe,
             spmm_fn: spmm_safe,
+            spmm_row_unchecked_fn: spmm_row_unchecked,
             gemm_panel_fn: gemm_panel_safe,
         })
     } else {
@@ -129,6 +149,24 @@ fn batch_dot_safe(a: &[u16], b: &[u16], p: u16) -> u32 {
     unsafe { crate::x86::fp_medium::fp_medium_batch_dot(a, b, p) }
 }
 
+/// # Safety
+///
+/// As [`MediumPrimeSpmmRowUncheckedFn`]; `detect_x86` publishes this pointer only when AVX2 is
+/// available.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+unsafe fn spmm_row_unchecked(
+    a_vals: &[u16],
+    a_cols: &[usize],
+    b: &[u16],
+    b_stride: usize,
+    n: usize,
+    p: u16,
+    out: &mut [u16],
+) {
+    // SAFETY: AVX2 is available, and the caller upholds the column bound.
+    unsafe { crate::x86::fp_medium::fp_medium_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
+}
+
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn spmm_safe(
     a_row_ptr: &[usize],
@@ -155,17 +193,7 @@ fn spmm_safe(
         // available. The assertion above bounds every index of `a_cols`, so
         // every index of this row; the two row slices share one range and
         // `out_row` is `n` cells.
-        unsafe {
-            crate::x86::fp_medium::fp_medium_spmm_row(
-                &a_vals[row.clone()],
-                &a_cols[row],
-                b,
-                n,
-                n,
-                p,
-                out_row,
-            )
-        }
+        unsafe { spmm_row_unchecked(&a_vals[row.clone()], &a_cols[row], b, n, n, p, out_row) }
     }
 }
 
