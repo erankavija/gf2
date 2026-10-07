@@ -85,8 +85,8 @@ At `78d74ddb3` it prints the lines of this table and no line of `Z`.
 
 | Lines of `C/survey` | Record text | Path, with its pin where flat |
 |---|---|---|
-| `freeze-shift-addendum.py:19` | `family_wise.ledger_path`, `C/shift-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/shift-profile-trial-ledger.jsonl:1`, `C/shift-profile-smoke.json:8` and `dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json:3865` -> dfff0e05 (jit issue show dfff0e05) |
-| `make-dvb-addendum.py:28` | `family_wise.ledger_path`, `C/dvb-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/dvb-profile-trial-ledger.jsonl:1`, `C/survey/runner-smoke.txt:5` and `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json:3865` -> dfff0e05 (jit issue show dfff0e05) |
+| `freeze-shift-addendum.py:19` | `family_wise.ledger_path`, `C/shift-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/shift-profile-trial-ledger.jsonl:1`, `C/shift-profile-smoke.json:8` and `dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json:3865` -> @/issue/dfff0e05 |
+| `make-dvb-addendum.py:28` | `family_wise.ledger_path`, `C/dvb-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/dvb-profile-trial-ledger.jsonl:1`, `C/survey/runner-smoke.txt:5` and `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json:3865` -> @/issue/dfff0e05 |
 | `make-profile-provenance.py:39-47,218` | paths in the `v4-r2` and `v4-r3` provenance records of `dev/bench_results/c04dd4ac/dvb-interleave-profile/` | path at the revision the `host.txt` of the profile session records, read with `git show <revision>:<path>`: flat except the queue of line 44 |
 | `make-voided-attempt.py:30,102,103`, `make-voided-attempt-record.py:18,43,49,50` | `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json`, `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json` | under `E`; records written in `78d74ddb3` |
 | `summarize-shift-receipt.py:32` | `dev/bench_results/c04dd4ac/residual-shift-tables.md` | as above |
@@ -143,8 +143,8 @@ its output and holds no line of the class `unclassified`.
 
 | Id | Divergence | Tracking |
 |---|---|---|
-| V1 | `C/survey/make-shift-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/bitvec.rs` lacks the fragment `self.data[i] = (self.data[i - word_shift] << bit_shift)` | -> c3ef9ee7 (`jit issue show c3ef9ee7`) |
-| V2 | `E/63bad95d/survey/make-calibration-budget.py` and `make-route-inventory.py` list tracked paths; on a clone of `37391ec5c` they rewrite `calibration-budget.json`, `calibration-budget.md`, `route-inventory.json` and `route-inventory.md` with other bytes, and the committed lines `:151`, `:104`, `:2421,2422` and `:386` of those files state the flat path of the two entries | -> 63bad95d (`jit issue show 63bad95d`), the open issue that owns both generators |
+| V1 | `C/survey/make-shift-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/bitvec.rs` lacks the fragment `self.data[i] = (self.data[i - word_shift] << bit_shift)` | -> @/issue/c3ef9ee7 |
+| V2 | `E/63bad95d/survey/make-calibration-budget.py` and `make-route-inventory.py` list tracked paths; on a clone of `37391ec5c` they rewrite `calibration-budget.json`, `calibration-budget.md`, `route-inventory.json` and `route-inventory.md` with other bytes, and the committed lines `:151`, `:104`, `:2421,2422` and `:386` of those files state the flat path of the two entries | -> @/issue/63bad95d, the open issue that owns both generators |
 
 ## Verdicts (REQ-07)
 

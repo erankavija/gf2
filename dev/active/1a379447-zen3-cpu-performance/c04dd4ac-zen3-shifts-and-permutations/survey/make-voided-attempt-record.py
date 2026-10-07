@@ -10,7 +10,15 @@ typed.
 import argparse
 import collections
 import json
+import subprocess
 from pathlib import Path
+
+ROOT = Path(
+    subprocess.run(
+        ["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "--show-toplevel"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+)
 
 STAGE = "dev/bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned"
 OUTPUT = "dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json"
@@ -58,17 +66,18 @@ def main():
     args = parser.parse_args()
 
     stage = Path(args.stage)
+    base = ROOT / stage
     events = [
         json.loads(line)
-        for line in (stage / "execution.log").read_text().splitlines()
+        for line in (base / "execution.log").read_text().splitlines()
         if line
     ]
     counts = collections.Counter(event["event"] for event in events)
     start = events[0]
-    addendum = json.loads((stage / "inputs/family-addendum.json").read_text())
+    addendum = json.loads((base / "inputs/family-addendum.json").read_text())
     reservation = [
         json.loads(line)
-        for line in (stage / "inputs/trial-ledger.jsonl").read_text().splitlines()
+        for line in (base / "inputs/trial-ledger.jsonl").read_text().splitlines()
         if line
     ]
     declared = [cell["cell_id"] for cell in addendum["cells"]]
@@ -87,7 +96,7 @@ def main():
     terminal = [
         event for event in events if event["event"] in ("complete", "failed", "paused")
     ]
-    units = sorted((stage / "checkpoints/units").glob("*.json"))
+    units = sorted((base / "checkpoints/units").glob("*.json"))
 
     record = {
         "kind": "voided-family-ledger-attempt",
@@ -152,7 +161,7 @@ def main():
             ),
         },
     }
-    Path(args.output).write_text(json.dumps(record, indent=2) + "\n")
+    (ROOT / args.output).write_text(json.dumps(record, indent=2) + "\n")
     print(
         f"{args.output}: {record['attempt']['cells_measured']} of "
         f"{record['attempt']['cells_declared']} cells measured, "
