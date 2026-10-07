@@ -864,7 +864,7 @@
      "short_id": "198aafa3",
      "title": "Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "5ec5dcc1-5344-4754-ad35-3e6ce3a327e7",
@@ -878,14 +878,14 @@
      "short_id": "602652bf",
      "title": "Move the f547c394 protocol inputs under their epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "7039d680-06da-481e-b000-5f9bba44e9ee",
      "short_id": "7039d680",
      "title": "Move the addendum fixture entries under the zen3 epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "7dbcde0c-3a5c-472e-8c41-e5e1e8d71bfa",
@@ -920,21 +920,21 @@
      "short_id": "f6148d1e",
      "title": "Move the dbd8787d campaign declaration entry under its epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "f694f59a-bf27-42d5-8197-b68b60b5bf37",
      "short_id": "f694f59a",
      "title": "Move the a83583e0 campaign declaration entry under its epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "f79bcba3-ec86-49c2-82a1-1689a67e6015",
      "short_id": "f79bcba3",
      "title": "Move zen3 survey-harness entries 04b85d10 to 3be770d5 under the epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "fdb998ec-6042-4112-8bf9-1f179128d62b",
@@ -969,21 +969,21 @@
      "short_id": "b5b336e5",
      "title": "Decouple the candidate scripts and move bc091474 under the zen3 epic dir",
      "classification": "implementation",
-     "status": "review_passed"
+     "status": "done"
     },
     {
      "id": "2e18b37c-22c7-46fa-bb57-42eee5353c0e",
      "short_id": "2e18b37c",
      "title": "Move entries f8dd4dde, a203a23c and 19513245 under the zen3 epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "in_rework"
     },
     {
      "id": "cc060974-b76c-4ca0-8a59-c326e2043f23",
      "short_id": "cc060974",
      "title": "Decouple and move the residual-shift entries 00dd43c3 and c04dd4ac",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "in_rework"
     }
    ]
   },
@@ -1643,6 +1643,21 @@
    "id": "d0aaf09b",
    "epic": "b4b4b9ee",
    "reason": "ADDENDUM_SHA256 of the dense harness matches no live file (worker report, unverified)"
+  },
+  {
+   "id": "5406d020",
+   "epic": "b4b4b9ee",
+   "reason": "moved-entry citations in session records of the running zen3 session"
+  },
+  {
+   "id": "dfff0e05",
+   "epic": "b4b4b9ee",
+   "reason": "flat ledger_path in three frozen addenda"
+  },
+  {
+   "id": "7375db1e",
+   "epic": "b4b4b9ee",
+   "reason": "a203a23c timing assessment does not reproduce its superseded record"
   }
  ],
  "escalations": [
@@ -2125,6 +2140,34 @@
    "options": [],
    "recommendation": "",
    "resolution": "Owner instruction (2026-10-07)."
+  },
+  {
+   "issue": "f79bcba3, 7039d680, 2e18b37c",
+   "question": "Session and review records of the running epic 1a379447 session keep flat paths of moved entries.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): amend, repointing tracked in 5406d020."
+  },
+  {
+   "issue": "cc060974, 7039d680",
+   "question": "Paths read at a named revision (make-profile-provenance.py) and scripts pinned by arm-provenance.json keep the flat path.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): accepted as grounds; DEC on each unit."
+  },
+  {
+   "issue": "2e18b37c",
+   "question": "Code-review failed a third time: 19513245/survey/make-producing-inputs.py:23 keeps dev/active literals that REQ-04 prescribed.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner (2026-10-07): decouple now; REQ-04 amended (DEC-04); rework dispatched in worktree agent-2e18b37cr."
+  },
+  {
+   "issue": "fa787f85",
+   "question": "Session instruction: do not stop for questions; block the task, record the escalation for the next session; hand off after waves 12 and 13 or when blocked; check workers every 30 minutes.",
+   "options": [],
+   "recommendation": "",
+   "resolution": "Owner instruction (2026-10-07)."
   }
  ],
  "rework_counts": {
@@ -2191,7 +2234,12 @@
   "0c5aa3b7": 2,
   "0a0ece44": 1,
   "fca578b1": 1,
-  "e1f262a7": 1
+  "e1f262a7": 1,
+  "198aafa3": 2,
+  "2e18b37c": 3,
+  "cc060974": 2,
+  "602652bf": 1,
+  "f694f59a": 1
  },
  "surfaced_pitfalls": [
   {
