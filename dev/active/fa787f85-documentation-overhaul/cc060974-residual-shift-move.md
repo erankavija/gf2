@@ -181,4 +181,4 @@ nothing for the two entries: the flat directories hold no ignored file.
 | REQ-05 | section "Citations"; `git diff -M --name-status b47e9ebfa 37391ec5c` shows each addendum, ledger, smoke record and pinned producing manifest as `R100` | the records of `E/63bad95d` keep their citations |
 | REQ-06 | row 2 of the generated files | |
 | REQ-07 | section "Verdicts" | |
-| REQ-08 | section "Manifest and tracker"; gate `cargo-ci` of `jit issue show cc060974` | |
+| REQ-08 | section "Manifest and tracker"; gate `cargo-ci` of @/issue/cc060974 | |
