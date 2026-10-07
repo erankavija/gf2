@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 13,
+ "current_wave": 14,
  "waves": [
   {
    "wave_number": 1,
@@ -995,7 +995,7 @@
      "short_id": "9451498f",
      "title": "Clear empty leftover dirs under dev/active",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "done"
     },
     {
      "id": "b959ffe8-5a4a-406c-91fa-acc6a01a3167",
@@ -1021,7 +1021,7 @@
      "short_id": "d6ebc4ec",
      "title": "Narrow the docs policy to post-overhaul paths",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     }
    ]
   },
@@ -1040,7 +1040,7 @@
      "short_id": "a0ec34f2",
      "title": "Bring the remaining migration manifest rows to a terminal state",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     }
    ]
   },
@@ -2181,14 +2181,14 @@
   },
   {
    "issue": "9451498f",
-   "question": "OPEN: REQ-02 (\"No tracked file changes\") cannot hold as code-review reads it. Run 1 (f0a64ade6): both reviews failed on the unit's record, a tracked file. The record is removed (net tracked diff outside .jit/ is empty); run 2: cargo-ci, docs-mechanical and doc-review pass, code-review fails on .jit/issues/9451498f-*.json:19, the tracker state that claiming, linking and gate runs write under commits tagged jit:9451498f. REQ-01 and REQ-03 hold: find dev/active -type d -empty and -name __pycache__ print nothing in the primary checkout; migration/check.py exits 0 with the deletion rows of the directories complete.",
+   "question": "REQ-02 (\"No tracked file changes\") cannot hold as code-review reads it. Run 1 (f0a64ade6): both reviews failed on the unit's record, a tracked file. The record is removed (net tracked diff outside .jit/ is empty); run 2: cargo-ci, docs-mechanical and doc-review pass, code-review fails on .jit/issues/9451498f-*.json:19, the tracker state that claiming, linking and gate runs write under commits tagged jit:9451498f. REQ-01 and REQ-03 hold: find dev/active -type d -empty and -name __pycache__ print nothing in the primary checkout; migration/check.py exits 0 with the deletion rows of the directories complete.",
    "options": [
     "amend REQ-02 to \"No tracked file outside the tracker changes\" and rerun code-review",
     "record a DEC that tracker state is outside REQ-02",
     "reject the finding by owner ruling and close"
    ],
    "recommendation": "the amendment",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07, session 13): REQ-02 amended to \"No tracked file outside the tracker changes\" (DEC-01 on the issue); code-review passed; done."
   }
  ],
  "rework_counts": {
@@ -2271,7 +2271,7 @@
   },
   {
    "issue": "56378e82",
-   "finding": "~40 source comments and crate docs cite 'CLAUDE.md \u00a7<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
+   "finding": "~40 source comments and crate docs cite 'CLAUDE.md §<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
    "disposition": "resolved: no CLAUDE.md or AGENTS.md section citation remains in Rust sources (scan 2026-10-04)"
   },
   {
@@ -2281,7 +2281,7 @@
   },
   {
    "issue": "12907582",
-   "finding": "Uncited feasibility/timing text not added by 12907582 remains in gf2-algebra: '~600 years'/'infeasible' (bipedal3_multiword.rs, bipedal5.rs:450, reference.rs:28), permanent_demo.rs:5 'headline speedup numbers' + dev/ CSV path, #[ignore ... (\u2248 5 s)] in bipedal3.rs, narrowing narration bipedal3.rs:21,118.",
+   "finding": "Uncited feasibility/timing text not added by 12907582 remains in gf2-algebra: '~600 years'/'infeasible' (bipedal3_multiword.rs, bipedal5.rs:450, reference.rs:28), permanent_demo.rs:5 'headline speedup numbers' + dev/ CSV path, #[ignore ... (≈ 5 s)] in bipedal3.rs, narrowing narration bipedal3.rs:21,118.",
    "disposition": "resolved: the feasibility and timing text is absent from Rust comments (scan 2026-10-04)"
   },
   {
@@ -2332,7 +2332,7 @@
   {
    "issue": "1fca3739",
    "finding": "perf-evidence-catalog.md read comparator ratios inverted.",
-   "disposition": "resolved: \u00a76 correction appended (falsification-preserved)"
+   "disposition": "resolved: §6 correction appended (falsification-preserved)"
   },
   {
    "issue": "629e0ff0",
@@ -2447,7 +2447,7 @@
   "Session 3 (2026-10-03): session 2 ended without a handoff; progress reconciled against JIT. Wave 6 = remaining decoupling tasks plus the 14 page/move tasks pulled forward from wave 7 (no deps between them); 5a25717c runs after 112f23c6 (shared root resolver). 153297cf (after 12907582) and 3fd3db5e (fd9d5416 still in progress, hard REQ-01) moved to wave 7.",
   "Owner instruction 2026-10-03: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff after waves 6 and 7 finish, or when only owner-blocked work remains. Check workers every 30 min.",
   "Worker-prompt lessons (binding for dispatch prompts):- Mathematical notation in prose uses LaTeX per `.jit/reference/content-standards.md` (`$\\mathrm{GF}(2^m)$`, `$O(n^2)$`, `$r < 1$`); code identifiers stay in code spans. - Every command uses the AGENTS.md forms: `./scripts/cargo-budget.sh cargo ...`; tests `./scripts/cargo-budget.sh --test cargo nextest run ...`. - External works and standards cite registry keys `@/citation/<key>` from `.jit/references.toml` (resolve with `jit item show`). - No timing, speed or feasibility statement without a commit-pinned receipt; performance figures appear only on `docs/reference/performance-evidence.md`, and other pages link its anchors. - State exactly what a check or guarantee establishes (probabilistic vs exact; which binary flushes on which signal); verify each behavioral claim against code or by running it. - A universal statement (\"every claim\", \"all paths\") must hold for every case on the page. - Records hold no hand-copied counts: commit raw outputs as files and cite them with the exact commands; show equality with a `diff` whose empty output the record states. - Facts owned by another page are linked, not restated (installation and per-crate features: `docs/reference/supported-configurations.md`; architecture: `docs/concepts/acceleration-architecture.md`; field families: `docs/concepts/finite-field-arithmetic.md`). - Crate READMEs follow the rules in `the README rules note below` and state capabilities per area naming at most public modules, never type or function inventories. - Index rows in `docs/index.md` go into the section's existing `| Page | ... |` table. - Digest-pinned inputs (protocols, preregistrations, addenda, schemas, receipts, `inputs/` snapshots) keep their bytes. - Never commit `__pycache__` or build output.",
-  "README rules: R1 Rendered Rustdoc link: `[Rustdoc](../../target/doc/<crate_underscored>/index.html)` next to `./scripts/cargo-budget.sh cargo doc -p <crate> --no-deps`. A `src/lib.rs` link alone fails REQ-03. R2 Feature table: keep one line per feature, but state its authority right above it: \"The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.\" (@/inv/single-source-prose; an uncited manual inventory fails). R3 Module/identifier names: name only public paths (`gf2_core::BitVec`, public modules). Private modules re-exported at the root (e.g. gf2-core `bitvec`, `bitslice`) are not \"modules\" to an adopter; check `pub mod` vs `mod` in src/lib.rs. R4 Installation: no layout-dependent `path = \"crates/<crate>\"` snippet. Link the single installation source instead: `[installation](../../docs/reference/supported-configurations.md#installation)` (the page lands on main from branch worktree-agent-2ff9953a; docs-mechanical may flag the link until it merges \u2014 expected). R5 Commands in AGENTS.md form only (`./scripts/cargo-budget.sh cargo ...`, tests `./scripts/cargo-budget.sh --test cargo nextest run -p <crate> --cargo-profile ci-test --profile ci`). R6 External works and standards cite `@/citation/<key>` from .jit/references.toml.",
+  "README rules: R1 Rendered Rustdoc link: `[Rustdoc](../../target/doc/<crate_underscored>/index.html)` next to `./scripts/cargo-budget.sh cargo doc -p <crate> --no-deps`. A `src/lib.rs` link alone fails REQ-03. R2 Feature table: keep one line per feature, but state its authority right above it: \"The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.\" (@/inv/single-source-prose; an uncited manual inventory fails). R3 Module/identifier names: name only public paths (`gf2_core::BitVec`, public modules). Private modules re-exported at the root (e.g. gf2-core `bitvec`, `bitslice`) are not \"modules\" to an adopter; check `pub mod` vs `mod` in src/lib.rs. R4 Installation: no layout-dependent `path = \"crates/<crate>\"` snippet. Link the single installation source instead: `[installation](../../docs/reference/supported-configurations.md#installation)` (the page lands on main from branch worktree-agent-2ff9953a; docs-mechanical may flag the link until it merges — expected). R5 Commands in AGENTS.md form only (`./scripts/cargo-budget.sh cargo ...`, tests `./scripts/cargo-budget.sh --test cargo nextest run -p <crate> --cargo-profile ci-test --profile ci`). R6 External works and standards cite `@/citation/<key>` from .jit/references.toml.",
   "Session 4 (2026-10-03): owner interviewed on all ten open questions; rulings are in escalations. Standing rules: sweep units must be net-negative in lines per unit unless each added line is a missing panic, safety or contract statement listed in the unit's record; models: opus for Rust, scripts, permanent prose and reworks, sonnet for moves, inventories and records, no fable; the lead never pushes.",
   "README rules superseded 2026-10-03: a crate README states purpose and when to choose the crate, plus links (docs/index.md, owning reference/concepts pages, generated Rustdoc link with its cargo doc command). No capability list, feature table or module inventory (R2 and R3 lapse; R1, R4, R5, R6 stand).",
   "Sweep dispatch: per-unit briefs are generated from the session scratchpad template (hard net-negative rule, token-diff proof, planned-work matching). Wave A (67b5d1d8, ee2b0c0c, f46046f0, 3aef9e33, 9f47bb94) removed about 7,750 net lines; each unit's commit body lists justified pattern lines, planned-work issue ids and added contracts. Sweep follow-ups filed under b4b4b9ee: c04d3f1c, 02ed3c51, 8342487d, ebd26779, 7c8ab1e2, bb64ee0e, bc4eb125, 1fe6e218, a44566c0, 2a9cc72c, 3464c241, a1e02780, d436dd5f, de0528d2.",
@@ -2487,7 +2487,8 @@
   "Session 11: lane units f79bcba3, b5b336e5, 602652bf merged on main at d6657b90e (clean merge of 3f1433616); relink scripts ran in a tolerant copy (add failure skips the removal). 198aafa3 continues on the lane branch.",
   "Session 11: 5ec5dcc1 done. b5b336e5 passes cargo-ci, docs-mechanical and code-review at 365557a77; doc-review fails on the issue description's flat path (owner question). File move-unit descriptions without a path that the unit removes.",
   "Session 11: the seven zen3 lane units are merged on main (merges d6657b90e, 99841ab2d, ffa978709 and the merge of db9f06677); 27 entries live under dev/active/1a379447-zen3-cpu-performance/; tracker references relinked by a generic pass (dangling unpinned reference -> counterpart under the epic directory, `--skip-scan` fallback); `jit validate` exits 0. The 63bad95d generators (make-calibration-budget.py, make-route-inventory.py) rewrite their outputs with other bytes on the moved tree: owned by open issue 63bad95d, whose lead regenerates them. Flat directories left under dev/active: 02b8137c (held, 5b3e7c81), dbd8787d and a83583e0 (blocked), and the retained or empty leftovers of 6dc81018.",
-  "Session 11 end (2026-10-07 00:55 EEST): cargo-ci and docs-mechanical pass for f79bcba3, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 on the merged tree at e230aaaa2; their review gates wait for the owner rulings of handoff-10.md. Every open unit waits on a ruling or on a unit that does."
+  "Session 11 end (2026-10-07 00:55 EEST): cargo-ci and docs-mechanical pass for f79bcba3, 602652bf, 198aafa3, 7039d680, 2e18b37c, cc060974 on the merged tree at e230aaaa2; their review gates wait for the owner rulings of handoff-10.md. Every open unit waits on a ruling or on a unit that does.",
+  "Session 13 (2026-10-07 22:30 EEST): 9451498f closed after the REQ-02 amendment. d6ebc4ec (worktree agent-d6ebc4ec) and a0ec34f2 (agent-a0ec34f2) dispatched in parallel on opus at 338275ff2; both edit migration/manifest.toml (policy rows vs artifacts rows): merge row-wise. After the d6ebc4ec merge the lead re-mints the profile package(s) the worker names."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
