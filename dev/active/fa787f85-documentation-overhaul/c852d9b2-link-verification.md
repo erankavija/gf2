@@ -1,6 +1,6 @@
 # Link verification (`@/issue/c852d9b2`)
 
-Commit verified: `64b26f58f561d77abab39b8f7a0f90b408805ac4`. The scripts
+Commit verified: `0b853546c50f0e86d91092b6dbb19c796aa1ca86`. The scripts
 read tracked files of the working tree and take no commit argument.
 
 ## Commands
