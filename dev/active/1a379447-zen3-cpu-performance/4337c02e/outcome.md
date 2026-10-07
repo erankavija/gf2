@@ -68,10 +68,10 @@ No further confirmation is run. The outcome record's *A further confirmation
 under P-20* table computes the next attempt's allocation from the committed
 ledger: P-20's tail rule admits no further confirmatory cell for this family.
 
-`@/issue/63bad95d` owns the value of `bit_matrix.matvec_simd_min_words`. The
-per-stride rows of both stages reach it as descriptive input through
-`outcome.json` and the tables; its own campaign settles the value through the
-offline tuning system.
+`@/issue/63bad95d` owns the value of `bit_matrix.matvec_simd_min_words`. Its
+[`selector-outcomes.json`](../63bad95d/selector-outcomes.json) cites
+`outcome.json` by path, SHA-256 and outcome, and the per-stride rows of both
+stages reach it as descriptive input through `outcome.json` and the tables.
 
 ## Boundary suites and toolchain
 
@@ -99,8 +99,15 @@ without it.
 The selector reads one definition: the conservative constant of
 `crates/gf2-core/src/matrix.rs`, which the conservative tuning profile names as
 its default, and the baked counterpart of `crates/gf2-core/src/tuning/baked.rs`
-that a `gf2_tuning_baked` build substitutes and that a unit test holds equal to
-the conservative section (claims `matvec-threshold-read`,
+that a `gf2_tuning_baked` build substitutes (claims `matvec-threshold-read`,
 `matvec-threshold-conservative` and `matvec-threshold-baked-alias` of the
 [source ledger of `63bad95d`](../63bad95d/survey/source-evidence.json)). This
 issue adds no constant and no second source.
+
+The outcome is an input of the offline tuning system through the citation
+above. The `tuning-campaign-records` step of `scripts/cargo-ci.sh`
+(`dev/scripts/validate_tuning_extent_campaign_test.py`, `SelectorOutcomes`)
+fails when the citation's digest or outcome differs from `outcome.json`, when
+the conservative profile differs from the constant the ledger's claim quotes,
+or when a committed profile that states the selector holds another value
+after a `no-change` outcome.
