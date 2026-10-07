@@ -914,6 +914,14 @@ impl SoftDecoder for LdpcDecoder {
     fn soft_decoded_len(&self) -> usize {
         self.n()
     }
+
+    /// Reports no iteration; `converged` and `syndrome_check_passed` are the
+    /// parity test of the returned word.
+    fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+        let decoded = self.decode_soft(llrs);
+        let is_codeword = self.code.is_valid_codeword(&decoded);
+        DecoderResult::new(decoded, 0, is_codeword, is_codeword)
+    }
 }
 
 impl IterativeSoftDecoder for LdpcDecoder {

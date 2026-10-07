@@ -794,6 +794,19 @@ impl SoftDecoder for GldpcDecoder {
         }
         decoded
     }
+
+    /// Reports no iteration; `converged` and `syndrome_check_passed` are the
+    /// parity test of the hard decisions of all `n` LLRs, of which the
+    /// returned word holds the systematic positions.
+    fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+        let decoded = self.decode_soft(llrs);
+        let mut hard = BitVec::with_capacity(self.n());
+        for &llr in llrs {
+            hard.push_bit(llr.hard_decision());
+        }
+        let is_codeword = self.code.is_valid_codeword(&hard);
+        DecoderResult::new(decoded, 0, is_codeword, is_codeword)
+    }
 }
 
 impl IterativeSoftDecoder for GldpcDecoder {
