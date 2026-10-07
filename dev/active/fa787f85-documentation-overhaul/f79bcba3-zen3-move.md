@@ -119,7 +119,7 @@ names the commit of a file whose ground is tool output or a named commit.
 | `frozen-document` | link labels and command text of the documents of the table above |
 | `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
 | `bench-window` | `E/bench-window/queue.tsv`; the job key hashes the command text |
-| `session-record` | `E/reviews/53b74fc2-r1.md:6`: a dated review record that quotes the flat directory `dev/active/1d4fd63d`, present nowhere in the tree |
+| `session-record` | `E/reviews/53b74fc2-r1.md:6`: a dated review record that quotes the flat directory `dev/active/1d4fd63d`, present nowhere in the tree -> 5406d020 (jit issue show 5406d020) |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
 | `fixture-layout` | `E/c7113c5a/survey/freeze-confirmation.test.sh:30-32`: the layout that `E/1c602857/confirmation-derivation.txt:18` states; the test compares that record and the confirmation addendum, whose digest `dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation/receipt.json:2339` holds, byte for byte |
 | `snapshot-path` | `E/04b85d10/survey/summarize-receipts.py:34`, a path inside a receipt snapshot |
