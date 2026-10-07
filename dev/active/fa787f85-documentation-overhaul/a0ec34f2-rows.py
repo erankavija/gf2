@@ -17,8 +17,8 @@ tracker are not read. The decision of an artifact row that is pending at BASE:
   `destination` holds the blob `path` has at BASE; status `complete`.
   `retained`: `path` exists; disposition `retained-operational`, empty
   destination, status `complete`; the report prints each holder line the table
-  names and whether the holder file is a digest-pinned row. `held`: `path`
-  exists; the row keeps its fields.
+  names and whether the holder file is a digest-pinned row. A holder
+  `file@COMMIT:line` is read at COMMIT, the pin of a tracker reference.
 - `deletion`: the row keeps its fields.
 
 Any other state stops the run. The report exits 1 when a row of REV differs
@@ -93,14 +93,14 @@ def decide(rev, rows):
         elif path in table and (entry := table[path])["decision"] == "moved" and not present and blob(rev, dest) == blob(BASE, path):
             targets[path], labels[path] = {**keep, "status": "complete"}, "moved"
             detail.append(f"moved {path} -> {dest} ({entry['ground']}, blob of BASE)")
-        elif path in table and entry["decision"] in ("retained", "held") and present:
-            held = entry["decision"] == "held"
-            targets[path] = keep if held else {"disposition": "retained-operational", "destination": "", "status": "complete"}
-            labels[path] = "left pending" if held else "retained in place"
-            detail.append(f"{entry['decision']} {path} ({entry['ground']})")
+        elif path in table and entry["decision"] == "retained" and present:
+            targets[path] = {"disposition": "retained-operational", "destination": "", "status": "complete"}
+            labels[path] = "retained in place"
+            detail.append(f"retained {path} ({entry['ground']})")
             for holder in entry["holders"].split():
                 name, number = holder.rsplit(":", 1)
-                text = show(rev, name).splitlines()[int(number) - 1].strip()
+                name, _, pin = name.partition("@")
+                text = show(pin or rev, name).splitlines()[int(number) - 1].strip()
                 detail.append(f"  {holder}{' [digest-pinned row]' if name in pinned else ''}: {text[:110]}")
         else:
             sys.exit(f"{path}: no decision for a pending {disp} row")
