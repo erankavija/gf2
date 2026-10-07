@@ -36,7 +36,7 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 ## Decisions
 
 - D-01: The overhaul epic is a direct dependency of the `gf2 1.0 release` milestone rather than a child of the narrower technical-debt epic.
-- D-02: Existing documentation-remediation tasks join the overhaul DAG and retain their technical-debt grouping. Their titles, descriptions, gates, and disposition may be adapted to the new contract.
+- D-02: Existing documentation-remediation tasks join the overhaul DAG. Their titles, descriptions, gates, and disposition may be adapted to the new contract.
 - D-03: An obsolete deliverable may be rejected with `resolution:obsolete` after every still-relevant obligation is preserved by an overhaul requirement or replacement issue.
 - D-04: Source-level Rustdoc remains in scope. Crate- and module-level documentation and user-facing examples are rewritten where needed; technically correct item-level comments remain unless they violate the new invariants.
 - D-05: Trivial Rustdoc examples are removed. Accessors, constants, direct mappings, and simple constructors do not receive examples merely to satisfy a coverage convention. Retained examples demonstrate non-obvious behavior or material contracts.
@@ -47,7 +47,7 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 - D-10: The permanent format is repository Markdown plus Rustdoc. A documentation-site generator is not part of this epic.
 - D-11: Permanent prose states only current supported behavior. It contains no speculation, future promises, migration narration, implementation history, or comparisons framed as “now A rather than former B.”
 - D-12: Experimental or incomplete capabilities appear only when they provide usable current behavior. Limitations belong in reference material; planned work remains in JIT.
-- D-13: `CONTRIBUTING.md` is removed. Root `AGENTS.md` becomes the authoritative operational guide, and `CLAUDE.md` becomes a symlink to it.
+- D-13: `CONTRIBUTING.md` is removed. Root `AGENTS.md` is the authoritative operational guide, and `CLAUDE.md` is a symlink to it.
 - D-14: Every `AGENTS.md` has an absolute hard limit of 200 lines. Crate-local files exist only for genuinely crate-specific recursively scoped constraints and do not restate root policy.
 - D-15: The root README is a concise researcher-facing landing page with a brief statement of what gf2 strives to be, a supported capability map, crate-selection guidance, current installation constraints, and links into permanent documentation. Performance claims live on a `docs/reference/` evidence page, not in the README.
 - D-16: Installation documentation follows the current-state rule without exception. It describes only dependency and publishing mechanisms available at overhaul completion.
@@ -57,29 +57,29 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 - D-20: Presentation decks are valuable historical artifacts. They move with their owning terminal epics, retain their asset bundles, and remain outside permanent documentation navigation.
 - D-21: Archival is performed by terminal epic using JIT's dependency-aware container archival. The archive directory is marker-backed and named with the epic short ID and human-readable slug.
 - D-22: Completed leaf documents inside a non-terminal epic remain managed with that epic until the epic becomes terminal. The epic is the archival unit.
-- D-23: Active documents live beneath `dev/active/<epic-short-id>-<slug>/`. Descendant artifacts are individually linked to their owning issues. This convention is stated in `AGENTS.md`.
+- D-23: Active documents live beneath `dev/active/<epic-short-id>-<slug>/`, apart from the entries D-57 and D-58 admit. Descendant artifacts are individually linked to their owning issues. This convention is stated in `AGENTS.md`.
 - D-24: A document is associated with an issue only through an existing JIT document reference, an unambiguous issue ID, or unique `jit:<short-id>` commit provenance. Ambiguous association is never guessed.
 - D-25: Unassociated historical material moves to `dev/archive/legacy/<original-relative-path>`, preserving its original hierarchy beneath `legacy/` for provenance and collision avoidance.
 - D-26: JIT `managed_paths` may be expanded temporarily to cover legacy buckets needed for archival. The final policy contains no obsolete managed path.
 - D-27: Operational research directories consumed by scripts, CI or code remain under `dev/`: `benchmarks`, `bench_results`, `campaigns`, `reference_data`, `research`, `scripts`, `simulation_results`, `studies`, and `tools`. Their loose narrative Markdown is archived or relocated.
 - D-28: `dev/plans`, `dev/presentations` and `dev/sessions` (session notes; planner default during epic planning) are eliminated through JIT archives, legacy archival, or purpose-specific relocation. The final `dev/` top level contains no obsolete documentation bucket.
 - D-29: A complete migration manifest records every pre-overhaul artifact and its disposition. A script monitors migration progress against that manifest.
-- D-30: The progress script is transient. It is removed after the final complete migration check; lasting enforcement comes from invariants and review gates rather than a frozen migration inventory.
+- D-30: The progress script is transient. Its removal after the final complete migration check is the work of `af84619e`; lasting enforcement comes from invariants and review gates rather than a frozen migration inventory.
 - D-31: Durable documentation rules live as project-scoped JIT invariants. One-time migration outcomes live as addressable epic requirements.
 - D-32: gf2 follows just-in-time's enforcement architecture: a registry-first invariant source, deterministic projection into `AGENTS.md`, a documentation-impact review grounded in canonical policy, and mechanical checks for links, citations, and projection freshness.
-- D-33: The documentation review becomes automated rather than remaining the current manual placeholder. It applies an issue-scoped impact cone and a holistic container review.
+- D-33: The documentation review is automated. It applies an issue-scoped impact cone and a holistic container review.
 - D-34: Markdown-mechanical checks and Rust compilation remain distinct. Link, citation, and projection failures come from the documentation gate; Rustdoc and retained-example failures come from Rust CI.
 - D-35: Initial issue gates are `cargo-ci`, `code-review`, and the existing `doc-review`. The prerequisite story replaces the placeholder review and defines `docs-mechanical`; the new gate becomes mandatory before overhaul completion.
 - D-36: The epic has high priority. It is release-significant but does not displace correctness work assigned critical priority.
 - D-37: The prerequisite story defines, projects, tests, and obtains approval for the documentation contract before rewrite and archival tasks become available.
-- D-38: The full implementation breakdown is deferred until this epic and prerequisite contract story exist. Breakdown must cover every epic requirement and preserve the story-as-checkpoint dependency shape.
+- D-38: The implementation breakdown must cover every epic requirement and preserve the story-as-checkpoint dependency shape.
 - D-39: This planning brief is a linked epic artifact and records the full outcome of the investigation and interview.
 - D-40: The prerequisite story registers three invariant groups: comment concision, current-capability-only scope, and examples plus document layout. Researcher-audience, Diátaxis-placement and no-marketing invariants are registered with the permanent-documentation rewrite (`9b2886a7`). Story decisions DEC-01 to DEC-06 on `3f29e945` record the details.
 - D-41: The migration-manifest schema and progress checker are epic migration work (`a24b2af7`), gated on the prerequisite story.
 - D-42: A workspace-wide source documentation tersification sweep (`ffc35b8c`) runs after the prerequisite story and takes over narration and designator removal from `12907582`.
-- D-43: Documentation issues outside the epic are triaged case by case: an issue whose requirement overlaps the sweep or rewrite has that requirement preserved in an overhaul child and is then rejected as subsumed; item-level API documentation fixes stay in their epics with an `epic:documentation-overhaul` filter label. Rejected: absorbing every issue (bloats the epic with unrelated item fixes) and leaving every issue (leaves REQ-18 unmet).
+- D-43: Documentation issues outside the epic are triaged case by case: an issue whose requirement overlaps the sweep or rewrite has that requirement preserved in an overhaul child and is then rejected as subsumed; item-level API documentation fixes stay outside the overhaul's graph. Rejected: absorbing every issue (bloats the epic with unrelated item fixes) and leaving every issue (leaves REQ-18 unmet).
 - D-44: The tersification sweep is broken down inside this epic's plan into worker-sized module units. Rejected: separate later planning.
-- D-45: The permanent corpus has exactly two tutorials: a standards-based coded-modulation link simulation with `gf2-sim`, and finite-field linear algebra at scale with `gf2-core`. The second needs a new runnable FieldMatrix example in the library crate first. Rejected: short-code benchmarking and algebra/permanent workflows.
+- D-45: The permanent corpus has exactly two tutorials: a standards-based coded-modulation link simulation with `gf2-sim`, and finite-field linear algebra at scale with `gf2-core`. The second runs the FieldMatrix example program of the library crate. Rejected: short-code benchmarking and algebra/permanent workflows.
 - D-46: Crate-local guides of gf2-core and gf2-coding serve as fact sources for rewrite work and live under `dev/archive/legacy/<original path>`. Rejected: deletion (loses provenance) and keeping them in place (duplicates `docs/`).
 - D-47: The roadmaps deleted before planning are checked retroactively: each planned item maps to a JIT issue or current code, and genuine gaps are filed. Rejected: accepting the deletion as complete.
 - D-48: Performance claims live only on a `docs/reference/` evidence page; the README carries none. Rejected: a README summary and receipts-only evidence.
@@ -87,10 +87,15 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 - D-50: Crate `README.md` files are the four crate entry pages. Rejected: separate pages under `docs/reference/crates/`.
 - D-51: Link targets inside moved historical decks are repaired so every link resolves, including links broken before the move; deck prose and claims are not edited. Rejected: recording pre-existing broken links instead of repairing them.
 - D-52: `dev/active/f547c394` moves under its epic directory after the tuning-campaign tooling that reads it is decoupled from its path per D-56, verified by every committed receipt still verifying. Rejected: retaining it as an operational exception to the active-document-layout invariant, and a historical-path allow-list in the tooling.
-- D-53: Every `dev/active` entry whose path production code, tooling, tests or harness crates read or check moves only after that consumer is decoupled per D-56; digest-pinned inputs keep their bytes, and an entry never moves while its owning issue is in progress. Rejected: keeping code-pinned entries in place as operational exceptions.
+- D-53: Every `dev/active` entry whose path production code, tooling, tests or harness crates read or check moves only after that consumer is decoupled per D-56; digest-pinned inputs keep their bytes, and an entry never moves while its owning issue is in progress. An entry held this way stays at its path under a tracked move issue, per D-57 and D-58. Rejected: keeping code-pinned entries in place without a tracked move issue.
 - D-54: A survey-harness `Cargo.toml` that is a digest-pinned producing input may have its dependency declaration on `dev/tools/tuning-campaign-support` changed once, to the depth-independent form D-56 requires; committed receipts keep verifying through their byte-identical snapshot copies, and the change records and re-verifies receipt verdicts. Rejected: keeping harness entries in place, and a symlink shim at the old depth.
 - D-55: Moving a historical entry also updates the path literals in its scripts that name the entry's own directory, changing path text only, and records each update. Rejected: leaving them stale.
 - D-56: Development artifacts are decoupled from code by the invariant `no-dev-path-coupling`, approved 2026-10-01: "Production code, tooling, tests, receipts, and harness crates locate development artifacts by content identity or through one configured repository root resolved at runtime; hard-coded `dev/` paths, historical-path allow-lists, and depth-dependent relative paths are a defect." It is enforced by code review. The epic registers it and decouples each consumer family (tuning-campaign tooling and receipt rule P-02, `gf2-sim` permanent-campaign validation and rare-event artifacts, survey-harness crates, scripts naming their own directories) before any coupled entry moves. Rejected: per-consumer historical-path tolerance lists, because each list is itself a drift vector.
+- D-57: `dev/active` admits the flat entry of an open owning issue that a tracked move issue names, per `@/issue/fa787f85/decision/DEC-01`.
+- D-58: `dev/active` admits three further forms, per `@/issue/fa787f85/decision/DEC-02`: files of an archived epic that a commit-pinned tracker reference or a link from a byte-fixed receipt or protocol holds at their path; the flat entry of a done task that the extent validator holds and a move issue names; and a directory that the session of another running epic places, whose file links stay with that epic.
+- D-59: The requirement of no unresolved link, anchor, local citation or item reference admits the rows of the mechanical check's baseline, per `@/issue/fa787f85/decision/DEC-03`.
+- D-60: "Loose narrative Markdown" in D-27 and D-49 excludes a file that a digest pin, a receipt link or a code consumer holds at its path, per `@/issue/fa787f85/decision/DEC-04`.
+- D-61: `AGENTS.md` states policy, and a divergence of the tree from a stated policy lies outside the current-state requirement on permanent documentation when an issue tracks it, per `@/issue/fa787f85/decision/DEC-05`.
 
 ## Target Structure
 
@@ -154,11 +159,9 @@ The registry is the source of truth. A deterministic projection renders it into 
 ## Inherited Issue Disposition
 
 - `44c98235` is rejected with `resolution:obsolete`; `fdb998ec` **Rewrite README for research adoption** carries the complete root-README contract.
-- `12907582` is retitled **Correct surviving source-level documentation drift**. It covers code-adjacent Rustdoc and operational comments that remain after migration; findings located only in removed or archived prose are classified rather than patched.
+- `12907582` **Correct surviving source-level documentation drift** covers code-adjacent Rustdoc and operational comments that remain after migration; findings located only in removed or archived prose are classified rather than patched.
 - `84db2984`, which requested a correction to a presentation slide, is rejected with `resolution:obsolete`. The deck is preserved as a historical artifact, and the relevant obligation not to migrate the false API claim into current documentation is covered by this epic.
-- D-43 dispositions, with reasons, are in `41e1d47d-disposition.md`. Class A issues are rejected with `resolution:obsolete`, each naming the overhaul issue that carries its requirement: `e2c649cd`, `35007c4c` and `be331e20` (`13dfe1a5`); `9b3452e9` (`a0a29512`, `2596b143`); `0056e853` (`698fa793`); `315f4de5` and `5f3d0ff9` (`cdba4e71`); `68189a0a` (`fdb998ec`, `fca578b1`); `807ddab2` (`ffc35b8c`); `049a89af` (`ec655592`). Class B issues stay in their epics: `2d65e37f`, `99c92597`, `5deee377`, `23f22f53`, `3d34f504`, `54278d0c`, `aabc528a`, `ad978596`, `cdaf5da9`, `157c305c`, `835f34f0`, `c2663ce9`. `2c668046` is tracker hygiene and stays unchanged.
-
-The inherited tasks retain their technical-debt grouping and also carry `epic:documentation-overhaul` for filtering. DAG edges, not labels, define their delivery relationship.
+- D-43 dispositions, with reasons, are in `41e1d47d-disposition.md`. Class A issues are rejected with `resolution:obsolete`, each naming the overhaul issue that carries its requirement: `e2c649cd`, `35007c4c` and `be331e20` (`13dfe1a5`); `9b3452e9` (`a0a29512`, `2596b143`); `0056e853` (`698fa793`); `315f4de5` and `5f3d0ff9` (`cdba4e71`); `68189a0a` (`fdb998ec`, `fca578b1`); `807ddab2` (`ffc35b8c`); `049a89af` (`ec655592`). Class B issues lie outside the overhaul's graph, each in a technical-debt epic: `2d65e37f`, `99c92597`, `5deee377`, `23f22f53`, `3d34f504`, `54278d0c`, `aabc528a`, `ad978596`, `cdaf5da9`, `835f34f0`, `c2663ce9`; `157c305c` is a dependency of the overhaul. `2c668046` is tracker hygiene and stays unchanged.
 
 ## Implementation Steps
 
@@ -194,10 +197,9 @@ The inherited tasks retain their technical-debt grouping and also carry `epic:do
 
 - Existing files may not yet be linked in JIT even when ownership is apparent. The inventory must distinguish defensible provenance from guesswork.
 - A terminal epic archive may be blocked by non-terminal document owners, unsupported artifact types, shared relative assets, destination conflicts, or broken embedded links. Preview findings must be resolved rather than bypassed.
-- Some benchmark and simulation outputs are consumed by scripts. The breakdown must identify path consumers before moving operational assets.
+- Some benchmark and simulation outputs are consumed by scripts. Path consumers are identified before an operational asset moves.
 - Existing documentation may contain the only record of relevant planned work. Roadmap and plan removal requires a deliberate JIT coverage check.
 - The final set of crate-local `AGENTS.md` files is not predetermined. They are created only where a local recursive constraint exists.
-- Advanced workflow selection requires a coverage review across supported algebra, coding, simulation, acceleration, standards, benchmarking, and formal-verification capabilities.
 - A before-and-after timing comparison can be noisy. The measurement protocol must control toolchain, feature set, build-cache state, and host load sufficiently to support the conclusion.
 
 ## Non-Goals
