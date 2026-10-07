@@ -125,26 +125,24 @@ inside a JSON string. Each Markdown file the unit changes lies under
 entries as a source: the unit removes 0 rows and adds 0.
 
 `R/cc060974-remaining.sh <outfile>` classifies each line of a tracked file
-outside `.jit/` and outside the `cc060974-` files of `R` that holds
+in the scope its header states that holds
 `dev/active/<entry>` for one of the two entries; `cc060974-remaining.txt` is
-its output at `37391ec5c`, with the file and line count of each class, and
-holds no line of the class `unclassified`.
+its output, with the file and line count of each class, and holds no line of
+the class `unclassified`.
 
 | Class | Ground |
 |---|---|
 | `snapshot` | receipt `inputs/` snapshots |
 | `receipt-directory` | receipts, logs, plans, checkpoints, ledgers and tables under `dev/bench_results/` |
 | `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
-| `tracker-state` | `E/progress.json` |
 | `bench-window` | `E/bench-window/queue.tsv`; the job key hashes the command text |
 | `data-record` in `Z` and `C` | receipt-pinned inputs (the two producing manifests, two addenda) and output of the freezer and of built tools at the commit that adds each file (the derivation record, three smoke records, `harness-validation.txt`, `runner-smoke.txt`) |
 | `data-record` and `generated-table` in `E/63bad95d` | tool output at `2d9fdf471`: `calibration-budget.json`, `route-inventory.json` and the tables their generators write beside them (V2) |
-| `breakdown-manifest` | `C/breakdown.json`, the manifest the tracker instantiated; four of its paths name files the tree never held |
 | `record-text` | table "Scripts" |
 | `epic-record` | records, scripts and raw outputs of other units in `R`; each describes the tree of the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
 
-The classes `breakdown-manifest` and `epic-record` are outside the grounds
-the unit's assignment lists; the return of the unit raises both.
+The class `epic-record` is outside the grounds the unit's assignment lists;
+the return of the unit raises it.
 
 ## Divergences
 
@@ -186,7 +184,7 @@ under the two flat directories:
 | REQ-02 | section "Baseline and repeat" | the launchers and the smoke comparisons |
 | REQ-03 | section "Move"; table "Entries" | |
 | REQ-04 | row 1 of the generated files; closure check | the closure-freshness of other families, which the same check covers |
-| REQ-05 | section "Citations"; `git diff -M --name-status b47e9ebfa 37391ec5c` shows each addendum, ledger, smoke record and pinned producing manifest as `R100` | `C/breakdown.json` and the records of `E/63bad95d` keep their citations |
+| REQ-05 | section "Citations"; `git diff -M --name-status b47e9ebfa 37391ec5c` shows each addendum, ledger, smoke record and pinned producing manifest as `R100` | the records of `E/63bad95d` keep their citations |
 | REQ-06 | row 2 of the generated files | |
 | REQ-07 | section "Verdicts" | |
 | REQ-08 | section "Manifest and tracker" | the tracker references and the `cargo-ci` gate, which belong to the main checkout |

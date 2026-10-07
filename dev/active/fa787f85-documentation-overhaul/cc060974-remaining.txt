@@ -1,14 +1,11 @@
 bench-window 1 5
-breakdown-manifest 1 14
 data-record 12 44
-epic-record 15 31
+epic-record 14 30
 generated-table 2 2
 manifest 1 116
-receipt-directory 37 193
-record-text 6 12
+receipt-directory 35 180
+record-text 3 8
 snapshot 69 208
-tracker-state 1 1
-breakdown-manifest c04dd4ac-zen3-shifts-and-permutations/breakdown.json:54,55,56,69,138,185,186,188,257,258,259,337,338,339
 data-record 00dd43c3/confirmation-derivation.txt:30
 data-record 00dd43c3/confirmation-smoke.json:7
 data-record 00dd43c3/pilot-smoke.json:7
@@ -26,6 +23,3 @@ generated-table 63bad95d/route-inventory.md:386
 record-text c04dd4ac-zen3-shifts-and-permutations/survey/freeze-shift-addendum.py:19
 record-text c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-addendum.py:28
 record-text c04dd4ac-zen3-shifts-and-permutations/survey/make-profile-provenance.py:39,40,41,42,43,45
-record-text c04dd4ac-zen3-shifts-and-permutations/survey/make-voided-attempt.py:30
-record-text c04dd4ac-zen3-shifts-and-permutations/survey/make-voided-attempt-record.py:18,43
-record-text c04dd4ac-zen3-shifts-and-permutations/survey/summarize-shift-receipt.py:32
