@@ -1968,53 +1968,53 @@
   },
   {
    "issue": "f79bcba3",
-   "question": "OPEN: REQ-05 holds two clauses that conflict for five frozen documents of entry 2037941f (dense-parity-addendum.md, dense-parity-addendum-v1.md, logical-buffer-addendum.md, isal-comparator.md, m4ri-operation-match.md): they keep their bytes (digests at cells.rs:22, dense-baseline-validation.txt:6, isal-dispatch-availability.md:7 and two receipts), so 21 relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md. Eleven resolve again once f547c394, 5cbb6545 and 6fb89a3c sit under the epic directory; ten (measurement-contract.md, dev/bench_results, crates) never do. Epic REQ-19 names unresolved links.",
+   "question": "REQ-05 holds two clauses that conflict for five frozen documents of entry 2037941f (dense-parity-addendum.md, dense-parity-addendum-v1.md, logical-buffer-addendum.md, isal-comparator.md, m4ri-operation-match.md): they keep their bytes (digests at cells.rs:22, dense-baseline-validation.txt:6, isal-dispatch-availability.md:7 and two receipts), so 21 relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md. Eleven resolve again once f547c394, 5cbb6545 and 6fb89a3c sit under the epic directory; ten (measurement-contract.md, dev/bench_results, crates) never do. Epic REQ-19 names unresolved links.",
    "options": [
     "A: amend the link clause of REQ-05 to exempt byte-fixed documents and keep the baseline rows",
     "B: repoint the links and update ADDENDUM_SHA256 and the citing digests, which changes a frozen addendum's identity"
    ],
    "recommendation": "A",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07): option B. The links are repointed and each digest that pins an edited live file is updated; f79bcba3 DEC-03."
   },
   {
    "issue": "f79bcba3",
-   "question": "OPEN: REQ-03 (each harness crate in a moved entry builds after the move) cannot hold for 04b85d10/survey/gf2-side: E0432 on gf2_coding::bch::BchEncoder before and after the move alike (9 of 10 crates build). Port tracked in 7ff06801 (b4b4b9ee).",
+   "question": "REQ-03 (each harness crate in a moved entry builds after the move) cannot hold for 04b85d10/survey/gf2-side: E0432 on gf2_coding::bch::BchEncoder before and after the move alike (9 of 10 crates build). Port tracked in 7ff06801 (b4b4b9ee).",
    "options": [
     "amend REQ-03 to an unchanged build result for that crate, as b23c364a DEC-01",
     "port the harness first"
    ],
    "recommendation": "the amendment",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07): the amendment; f79bcba3 DEC-03."
   },
   {
    "issue": "602652bf",
-   "question": "OPEN: same conflict as f79bcba3 REQ-05: digest-pinned protocol.md:5, protocol-v1.md:5 and amendment-v4.md:31 of f547c394 keep their bytes, so three relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md (18 baselined rows in total at the lane tip).",
+   "question": "same conflict as f79bcba3 REQ-05: digest-pinned protocol.md:5, protocol-v1.md:5 and amendment-v4.md:31 of f547c394 keep their bytes, so three relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md (18 baselined rows in total at the lane tip).",
    "options": [
     "baseline the rows and amend the link clause of REQ-06",
     "change pinned bytes"
    ],
    "recommendation": "baseline",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07): change pinned bytes; 602652bf DEC-02."
   },
   {
    "issue": "f6148d1e, f694f59a",
-   "question": "OPEN: REQ-03 cannot hold: the byte-fixed campaign-declaration.json of dbd8787d and a83583e0 names its protocol and producing manifest by flat path (lines 4-5; dbd8787d/producing-build-inputs.json:102,120,293 names its own declaration), and dev/scripts/validate-tuning-extent-campaign.py:580,4850,5026 and tuning-extent-campaign-driver.rs (579..3958), provenance.rs validate_at join those strings to the root. Trial move (reverted): cargo-ci step tuning-campaign-validator fails with ENOENT on dev/active/dbd8787d/premeasurement-protocol.md; nextest tuning-campaign-support 213/213 before, producing_input_manifest_rejects_authority_and_path_mutations fails after. No commit exists; evidence in agent-b23c364a/target/decl-return.md.",
+   "question": "REQ-03 cannot hold: the byte-fixed campaign-declaration.json of dbd8787d and a83583e0 names its protocol and producing manifest by flat path (lines 4-5; dbd8787d/producing-build-inputs.json:102,120,293 names its own declaration), and dev/scripts/validate-tuning-extent-campaign.py:580,4850,5026 and tuning-extent-campaign-driver.rs (579..3958), provenance.rs validate_at join those strings to the root. Trial move (reverted): cargo-ci step tuning-campaign-validator fails with ENOENT on dev/active/dbd8787d/premeasurement-protocol.md; nextest tuning-campaign-support 213/213 before, producing_input_manifest_rejects_authority_and_path_mutations fails after. No commit exists; evidence in agent-b23c364a/target/decl-return.md.",
    "options": [
     "A: file a decoupling task in this epic (successor of 8bd873f7): driver and validator resolve a declaration's protocol, producing manifest and manifest self-entries relative to the located declaration or by content, with a relocated-entry test and verdict baseline; both moves depend on it. It changes shared measurement tooling that epic 1a379447 campaigns run.",
     "B: hold both entries flat in the 5ec5dcc1 form (rows retained-operational, complete) with REQ-02 amended and a tracked move issue"
    ],
    "recommendation": "A when no extent campaign is in flight; B to close the epic first",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07): a third option. The path strings inside the declarations and producing manifests are edited to the new location with every digest that pins them; no tooling change. DEC-01 on f6148d1e and f694f59a."
   },
   {
    "issue": "f6148d1e, f694f59a",
-   "question": "OPEN: REQ-07 (each tracker document reference names the new path) conflicts with the tracker: dbd8787d references name archive copies (unpinned); a83583e0 documents 2 and 5-11 are commit-pinned to the flat path by 616e1d7c DEC-01 so the 6dc81018 archive plan retains the entry. Relinking to the active path may make a rerun collect the entries.",
+   "question": "REQ-07 (each tracker document reference names the new path) conflicts with the tracker: dbd8787d references name archive copies (unpinned); a83583e0 documents 2 and 5-11 are commit-pinned to the flat path by 616e1d7c DEC-01 so the 6dc81018 archive plan retains the entry. Relinking to the active path may make a rerun collect the entries.",
    "options": [
     "a: amend REQ-07 to references keep their archive path or pin",
     "b: relink and accept re-collection"
    ],
    "recommendation": "a",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07): option a; DEC-01 on f6148d1e and f694f59a."
   },
   {
    "issue": "f79bcba3, b5b336e5, 602652bf (and the remaining zen3 units)",
@@ -2029,33 +2029,33 @@
   },
   {
    "issue": "198aafa3, 7039d680, 2e18b37c, cc060974",
-   "question": "OPEN: REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3). Same class in 7039d680: eda07788/survey/freeze-remeasure.py:199,202,203,219 are text of the frozen addendum the script reproduces byte for byte (lane tip 7fd76c6b3). Same class in 2e18b37c (lane tip d322f4f97): 19513245/survey/make-addenda.py:37 (commit 06fe749d3 reverts the 552a0548d edit of 198aafa3, which broke six frozen addenda), 19513245/survey/summarize-profile.py:67,176 and a203a23c/timing/measure.py:360,766 keep the flat path. The converse defect, scripts whose updated literal no longer reproduces a committed record, is tracked in 8163dacd. Same class in cc060974 against its REQ-01 (no literal names dev/active/): in the c04dd4ac entry survey/freeze-shift-addendum.py:19 and make-dvb-addendum.py:28 (ledger_path of frozen addenda), make-profile-provenance.py:39-47,218 (paths of the measured revision), make-voided-attempt.py:30,102,103, make-voided-attempt-record.py:18,43,49,50 and summarize-shift-receipt.py:32 keep flat paths as record text. The c04dd4ac breakdown.json keeps 14 flat paths (class breakdown-manifest in cc060974-remaining.txt; four name files that never existed).",
+   "question": "REQ-04 (path literals naming a moved entry are updated to the new path) cannot hold for two literals that committed bytes are compared against: c7113c5a/survey/summarize-v3.py:29 (the manifest path that receipts record) and 6c6b09b1/survey/make-addenda.py:42 (text of committed addenda that a test compares byte for byte). Both keep the flat path on the lane branch (tip 3326568a3). Same class in 7039d680: eda07788/survey/freeze-remeasure.py:199,202,203,219 are text of the frozen addendum the script reproduces byte for byte (lane tip 7fd76c6b3). Same class in 2e18b37c (lane tip d322f4f97): 19513245/survey/make-addenda.py:37 (commit 06fe749d3 reverts the 552a0548d edit of 198aafa3, which broke six frozen addenda), 19513245/survey/summarize-profile.py:67,176 and a203a23c/timing/measure.py:360,766 keep the flat path. The converse defect, scripts whose updated literal no longer reproduces a committed record, is tracked in 8163dacd. Same class in cc060974 against its REQ-01 (no literal names dev/active/): in the c04dd4ac entry survey/freeze-shift-addendum.py:19 and make-dvb-addendum.py:28 (ledger_path of frozen addenda), make-profile-provenance.py:39-47,218 (paths of the measured revision), make-voided-attempt.py:30,102,103, make-voided-attempt-record.py:18,43,49,50 and summarize-shift-receipt.py:32 keep flat paths as record text. The c04dd4ac breakdown.json keeps 14 flat paths (class breakdown-manifest in cc060974-remaining.txt; four name files that never existed).",
    "options": [
     "amend the literal criteria of the four units (198aafa3 REQ-04, 7039d680 REQ-05, 2e18b37c REQ-04, cc060974 REQ-01) to exempt text a script reproduces from a frozen document or committed record, and accept breakdown.json as kept",
     "change the literals and regenerate the committed bytes"
    ],
    "recommendation": "the amendment",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07): change the literals and regenerate the committed bytes; DEC on 198aafa3, 7039d680, 2e18b37c, cc060974."
   },
   {
    "issue": "b5b336e5 (same wording in 2e18b37c, cc060974 and the older move units)",
-   "question": "OPEN: doc-review F1 at 365557a77 (cargo-ci, docs-mechanical and code-review pass): the issue description opens with \"The flat `dev/active/bc091474/` entry holds ...\", a path the tree lacks after the move (REQ-07, active-document-layout, current-state-scope). The lead wrote that sentence when filing; a description edit is a scope change that needs the owner.",
+   "question": "doc-review F1 at 365557a77 (cargo-ci, docs-mechanical and code-review pass): the issue description opens with \"The flat `dev/active/bc091474/` entry holds ...\", a path the tree lacks after the move (REQ-07, active-document-layout, current-state-scope). The lead wrote that sentence when filing; a description edit is a scope change that needs the owner.",
    "options": [
     "reword the opening sentence of b5b336e5, 2e18b37c and cc060974 to name the entry by issue id without a path, then rerun doc-review",
     "leave the descriptions and accept the finding"
    ],
    "recommendation": "the rewording",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07): reword; applied to b5b336e5, 2e18b37c, cc060974, and by a second ruling of the same day to 602652bf, f6148d1e, f694f59a."
   },
   {
    "issue": "fa787f85",
-   "question": "OPEN: epic REQ-11 (documents of non-terminal epics live under the epic directory) against the held flat entry dev/active/02b8137c/ (5ec5dcc1 DEC-01, move tracked in 5b3e7c81); option B for f6148d1e and f694f59a adds dbd8787d and a83583e0.",
+   "question": "epic REQ-11 (documents of non-terminal epics live under the epic directory) against the held flat entry dev/active/02b8137c/ (5ec5dcc1 DEC-01, move tracked in 5b3e7c81); option B for f6148d1e and f694f59a adds dbd8787d and a83583e0.",
    "options": [
     "amend REQ-11 to admit a flat entry with a tracked move issue",
     "keep the epic open until each entry moves"
    ],
    "recommendation": "the amendment",
-   "resolution": ""
+   "resolution": "Owner (2026-10-07): the amendment; fa787f85 DEC-01."
   }
  ],
  "rework_counts": {
