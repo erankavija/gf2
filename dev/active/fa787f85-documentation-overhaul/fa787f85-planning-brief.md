@@ -36,7 +36,7 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 ## Decisions
 
 - D-01: The overhaul epic is a direct dependency of the `gf2 1.0 release` milestone rather than a child of the narrower technical-debt epic.
-- D-02: Existing documentation-remediation tasks join the overhaul DAG. Their titles, descriptions, gates, and disposition may be adapted to the new contract.
+- D-02: An existing documentation-remediation task whose requirement overlaps the sweep or a rewrite has that requirement carried by an issue of the overhaul DAG, and its title, description, gates and disposition may be adapted to the new contract; an item-level API documentation fix lies outside that graph, per D-43.
 - D-03: An obsolete deliverable may be rejected with `resolution:obsolete` after every still-relevant obligation is preserved by an overhaul requirement or replacement issue.
 - D-04: Source-level Rustdoc remains in scope. Crate- and module-level documentation and user-facing examples are rewritten where needed; technically correct item-level comments remain unless they violate the new invariants.
 - D-05: Trivial Rustdoc examples are removed. Accessors, constants, direct mappings, and simple constructors do not receive examples merely to satisfy a coverage convention. Retained examples demonstrate non-obvious behavior or material contracts.
