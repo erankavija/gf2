@@ -5,7 +5,10 @@
 use std::sync::{Arc, Mutex};
 
 use gf2_coding::channel::AwgnChannel;
-use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc};
+use gf2_coding::ldpc::{
+    BatchRoute, DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode, LdpcDecoder, LdpcEncoder,
+    QuasiCyclicLdpc,
+};
 use gf2_coding::llr::Llr;
 use gf2_coding::pooled::PooledBatchDecoder;
 use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
@@ -34,11 +37,16 @@ fn code() -> LdpcCode {
 }
 
 fn frames() -> Vec<Vec<Llr>> {
+    frames_of(SIGMAS.len())
+}
+
+/// `count` frames, the noise deviations cycling through [`SIGMAS`].
+fn frames_of(count: usize) -> Vec<Vec<Llr>> {
     let encoder = LdpcEncoder::new(code());
     let mut rng = StdRng::seed_from_u64(SEED);
-    SIGMAS
-        .iter()
-        .map(|&sigma| {
+    (0..count)
+        .map(|f| SIGMAS[f % SIGMAS.len()])
+        .map(|sigma| {
             let codeword = encoder.encode(&BitVec::random(encoder.k(), &mut rng));
             let channel = AwgnChannel::from_variance(sigma * sigma);
             let scale = 2.0 / channel.variance();
@@ -197,4 +205,33 @@ fn a_decoded_slice_of_another_length_panics() {
     let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
     let mut outcomes = vec![DecodeOutcome::default(); views.len()];
     pool.decode_batch(&views, &mut [], &mut outcomes);
+}
+
+/// Wave-batching LDPC decoder, granularity eight, with the lane route open.
+fn lane_decoder() -> LdpcBatchDecoder {
+    LdpcBatchDecoder::with_selectors(
+        code(),
+        DecoderConfig::default(),
+        CAP,
+        DecodedWord::Codeword,
+        DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
+    )
+}
+
+#[test]
+fn pooled_ldpc_batch_decoder_satisfies_the_contract_and_equals_the_single_decoder() {
+    let frames = frames_of(21);
+    assert_eq!(lane_decoder().batch_route(21), BatchRoute::Lane);
+    let mut reference = LdpcDecoder::new(code());
+    for granules in [1, 2] {
+        let mut pool = PooledBatchDecoder::with_selectors(lane_decoder, &selectors(granules));
+        assert_eq!(pool.batch_granularity(), 8);
+        assert_eq!(pool.task_frames(), 8 * granules);
+        batch_soft_decoder_contract(
+            &mut pool,
+            |llrs| reference.decode_to_codeword(llrs, CAP),
+            &frames,
+            ConvergenceMix::EarlyLateAndNonConverging,
+        );
+    }
 }
