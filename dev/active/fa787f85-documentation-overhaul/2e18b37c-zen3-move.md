@@ -165,4 +165,4 @@ nothing for the three entries: the flat directories hold no ignored file.
 | REQ-05 | `E/a203a23c/timing/measure.py:99`; message of `df7b52dd6` | |
 | REQ-06 | rows `2e18b37c-selfchecks-before.txt` and `2e18b37c-ci-step-before.txt` | |
 | REQ-07 | sections "Generated files and byte-fixed files" and "Flat paths that stay"; message of `2f81ba52e` | the citations of the class `session-record` |
-| REQ-08 | section "Manifest and tracker"; gate `cargo-ci` of `jit issue show 2e18b37c` | |
+| REQ-08 | section "Manifest and tracker"; gate `cargo-ci` of @/issue/2e18b37c | |
