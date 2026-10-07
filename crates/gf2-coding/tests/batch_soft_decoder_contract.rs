@@ -5,7 +5,9 @@
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::gldpc::{GldpcDecoder, QcGldpcCode};
 use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
-use gf2_coding::ldpc::nr_5g::{Nr5gRateMatchedCode, Nr5gRateMatchedDecoder};
+use gf2_coding::ldpc::nr_5g::{
+    Nr5gRateMatchedCode, Nr5gRateMatchedDecoder, SOFT_DECODE_MAX_ITERATIONS,
+};
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc};
 use gf2_coding::linear::LinearBlockCode;
 use gf2_coding::llr::Llr;
@@ -164,6 +166,49 @@ fn rate_matched_nr_default_path_satisfies_the_batch_contract() {
     assert_default_path(code.clone(), code.clone(), &frames);
     let decoder = || Nr5gRateMatchedDecoder::new(code.clone());
     assert_default_path(decoder(), decoder(), &frames);
+}
+
+/// Asserts that the per-frame path of `decoder` reports the metadata and word
+/// of the iterative decode of `code`, over one converging and one capped frame.
+fn assert_nr_default_outcome_is_the_iterative_result<D: BatchSoftDecoder>(
+    code: &Nr5gRateMatchedCode,
+    mut decoder: D,
+) {
+    let codewords = random_codewords(code, 2);
+    let frames = noisy_frames(&codewords, &[0.5, 3.0]);
+    let mut verdicts = Vec::new();
+    for frame in &frames {
+        let expected = Nr5gRateMatchedDecoder::new(code.clone())
+            .decode_iterative(frame, SOFT_DECODE_MAX_ITERATIONS);
+        let (word, outcome) = decode_one(&mut decoder, frame);
+        assert_eq!(word, expected.decoded_bits);
+        assert_eq!(outcome.iterations, expected.iterations);
+        assert_eq!(outcome.converged, expected.converged);
+        assert_eq!(
+            outcome.syndrome_check_passed,
+            expected.syndrome_check_passed
+        );
+        if !expected.converged {
+            assert_eq!(expected.iterations, SOFT_DECODE_MAX_ITERATIONS);
+        }
+        verdicts.push(expected.converged);
+    }
+    assert_eq!(verdicts, [true, false]);
+}
+
+#[test]
+fn rate_matched_nr_code_default_path_outcome_is_the_iterative_result() {
+    let code = nr_code();
+    assert_nr_default_outcome_is_the_iterative_result(&code, code.clone());
+}
+
+#[test]
+fn rate_matched_nr_decoder_default_path_outcome_is_the_iterative_result() {
+    let code = nr_code();
+    assert_nr_default_outcome_is_the_iterative_result(
+        &code,
+        Nr5gRateMatchedDecoder::new(code.clone()),
+    );
 }
 
 #[test]

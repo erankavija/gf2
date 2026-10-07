@@ -822,17 +822,19 @@ impl SoftDecoder for Nr5gRateMatchedCode {
     }
 
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-        assert_eq!(
-            llrs.len(),
-            self.params.target_n,
-            "LLR length must equal target_n = {}",
-            self.params.target_n
-        );
-        // Use the full BP decoder — decode_iterative handles prepare_llrs internally
-        let mut decoder = Nr5gRateMatchedDecoder::new((*self).clone());
-        decoder.decode_iterative(llrs, 50).decoded_bits
+        self.decode_soft_with_result(llrs).decoded_bits
+    }
+
+    /// Reports the [`Nr5gRateMatchedDecoder::decode_iterative`] result at
+    /// [`SOFT_DECODE_MAX_ITERATIONS`].
+    fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+        Nr5gRateMatchedDecoder::new(self.clone()).decode_iterative(llrs, SOFT_DECODE_MAX_ITERATIONS)
     }
 }
+
+/// Iteration cap of `decode_soft` and `decode_soft_with_result` on the
+/// rate-matched types.
+pub const SOFT_DECODE_MAX_ITERATIONS: usize = 50;
 
 /// Default normalized min-sum scaling factor for check-to-variable messages.
 const DEFAULT_NMS_SCALE: f32 = 0.75;
@@ -917,6 +919,10 @@ impl SoftDecoder for Nr5gRateMatchedDecoder {
 
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
         self.rm_code.decode_soft(llrs)
+    }
+
+    fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+        self.rm_code.decode_soft_with_result(llrs)
     }
 }
 
