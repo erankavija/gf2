@@ -55,7 +55,7 @@ Traps of `handoff.md` to `handoff-9.md` remain in force. New this session:
 ## Open questions needing invoker input
 
 1. Question: do byte-fixed documents keep unresolved relative links after a move?
-   - Context: `f79bcba3` REQ-05 and `602652bf` REQ-06 require both unchanged bytes and no unresolved link. Frozen addenda and protocols of 2037941f and f547c394 keep their bytes; their unresolved links are the rows of `8f61d6de-baseline-findings.md`. Epic REQ-19 names unresolved links.
+   - Context: `f79bcba3` REQ-05 and `602652bf` REQ-06 require both unchanged bytes and no unresolved link. Frozen addenda and protocols of 2037941f and f547c394 keep their bytes; their unresolved links are the rows of `contrib/gates/docs-mechanical-baseline.md`. Epic REQ-19 names unresolved links.
    - Options: amend the link clause to exempt byte-fixed documents and keep the baseline rows; change pinned bytes and the digests that cite them.
    - Recommendation: the amendment.
 2. Question: is `f79bcba3` REQ-03 amended for `04b85d10/survey/gf2-side`?
@@ -90,5 +90,5 @@ Traps of `handoff.md` to `handoff-9.md` remain in force. New this session:
 - Progress: `progress.json` (escalations, surfaced_pitfalls, notes, rework_counts, created_during_execution)
 - Worker brief for move units: `wave11-worker-brief.md`; decoupling facts: `decoupling-findings.md`
 - Records of the completed units: `616e1d7c-regroup.md`, `7dbcde0c-bch-entries-move.md`, `b23c364a-baseline-survey-move.md`, `5ec5dcc1-held-entry.md`
-- Archive evidence: `archive-rerun-results.md`; link baseline: `8f61d6de-baseline-findings.md`
+- Archive evidence: `archive-rerun-results.md`; link baseline: `contrib/gates/docs-mechanical-baseline.md`
 - Evidence of the stopped declaration move: worktree `agent-b23c364a`, `target/decl-return.md`

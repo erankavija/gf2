@@ -66,5 +66,5 @@ Traps of `handoff.md` to `handoff-10.md` remain in force. New this session:
 - Progress: `progress.json` (escalations, surfaced_pitfalls, notes, rework_counts, created_during_execution)
 - Worker brief for move units: `wave11-worker-brief.md`
 - Unit records of this session: `f79bcba3-zen3-move.md`, `602652bf-protocol-inputs-move.md`, `198aafa3-zen3-move.md`, `7039d680-fixture-entries-move.md`, `2e18b37c-zen3-move.md`, `cc060974-residual-shift-move.md`, `f6148d1e-held-entry.md`, `f694f59a-declaration-entry-move.md`
-- Link baseline: `8f61d6de-baseline-findings.md`; archive evidence: `archive-rerun-results.md`
+- Link baseline: `contrib/gates/docs-mechanical-baseline.md`; archive evidence: `archive-rerun-results.md`
 - Migration manifest and checker: `migration/manifest.toml`, `migration/check.py`

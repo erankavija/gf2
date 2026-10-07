@@ -2020,7 +2020,7 @@
   },
   {
    "issue": "f79bcba3",
-   "question": "REQ-05 holds two clauses that conflict for five frozen documents of entry 2037941f (dense-parity-addendum.md, dense-parity-addendum-v1.md, logical-buffer-addendum.md, isal-comparator.md, m4ri-operation-match.md): they keep their bytes (digests at cells.rs:22, dense-baseline-validation.txt:6, isal-dispatch-availability.md:7 and two receipts), so 21 relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md. Eleven resolve again once f547c394, 5cbb6545 and 6fb89a3c sit under the epic directory; ten (measurement-contract.md, dev/bench_results, crates) never do. Epic REQ-19 names unresolved links.",
+   "question": "REQ-05 holds two clauses that conflict for five frozen documents of entry 2037941f (dense-parity-addendum.md, dense-parity-addendum-v1.md, logical-buffer-addendum.md, isal-comparator.md, m4ri-operation-match.md): they keep their bytes (digests at cells.rs:22, dense-baseline-validation.txt:6, isal-dispatch-availability.md:7 and two receipts), so 21 relative links that leave the entry do not resolve after the move; the worker baselined them in contrib/gates/docs-mechanical-baseline.md. Eleven resolve again once f547c394, 5cbb6545 and 6fb89a3c sit under the epic directory; ten (measurement-contract.md, dev/bench_results, crates) never do. Epic REQ-19 names unresolved links.",
    "options": [
     "A: amend the link clause of REQ-05 to exempt byte-fixed documents and keep the baseline rows",
     "B: repoint the links and update ADDENDUM_SHA256 and the citing digests, which changes a frozen addendum's identity"
@@ -2040,7 +2040,7 @@
   },
   {
    "issue": "602652bf",
-   "question": "same conflict as f79bcba3 REQ-05: digest-pinned protocol.md:5, protocol-v1.md:5 and amendment-v4.md:31 of f547c394 keep their bytes, so three relative links that leave the entry do not resolve after the move; the worker baselined them in 8f61d6de-baseline-findings.md (18 baselined rows in total at the lane tip).",
+   "question": "same conflict as f79bcba3 REQ-05: digest-pinned protocol.md:5, protocol-v1.md:5 and amendment-v4.md:31 of f547c394 keep their bytes, so three relative links that leave the entry do not resolve after the move; the worker baselined them in contrib/gates/docs-mechanical-baseline.md (18 baselined rows in total at the lane tip).",
    "options": [
     "baseline the rows and amend the link clause of REQ-06",
     "change pinned bytes"
