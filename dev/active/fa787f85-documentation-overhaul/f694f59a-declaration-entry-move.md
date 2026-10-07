@@ -28,7 +28,7 @@ path `dev/active/a83583e0`.
 
 ## Files that keep the flat path
 
-`git grep -lF F` outside `.jit/` hits these files only.
+`git grep -lF F` outside `.jit/` hits this record and these files only.
 
 | File | Ground |
 |---|---|
@@ -44,4 +44,4 @@ path `dev/active/a83583e0`.
 | `breakdown.json`, `progress.json` | tracker state: an issue description, a touched-path list and escalation questions |
 | `../6dc81018-field-capability-dispatch/handoff-12.md:41` | tracker state: the reference of a83583e0 to its producing manifest is pinned at `ecd8531` |
 | `findings.md`, `research-r3-sweep-resolutions.md`, `research-r3-sweeps.json`, `rework-validation.md` under `../1a379447-zen3-cpu-performance/f547c394/` | line-qualified tables and data of the tree at the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
-| `handoff.md` and `reviews/f547c394-r2.md` of `../1a379447-zen3-cpu-performance/` | session records of a running session; 5406d020 (`jit issue show 5406d020`) tracks their repointing |
+| `handoff.md` and `reviews/f547c394-r2.md` of `../1a379447-zen3-cpu-performance/` | session records of a running session; @/issue/5406d020 tracks their repointing |
