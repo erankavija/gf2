@@ -140,6 +140,7 @@ listing `f79bcba3-verdicts-before.txt`. At each commit this command prints
 nothing:
 
 ```
-"$R/5a25717c-verdicts.sh" <outfile>
-diff <outfile> "$R/f79bcba3-verdicts-before.txt"
+out=$(mktemp)
+"$R/5a25717c-verdicts.sh" "$out"
+diff "$out" "$R/f79bcba3-verdicts-before.txt"
 ```
