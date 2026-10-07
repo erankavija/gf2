@@ -238,9 +238,8 @@ CLAIMS = [
     # Callers.
     ("core-denies-unsafe", CORE, "src/lib.rs", "#![deny(unsafe_code)]", 1,
      "`gf2-core` cannot hold the `unsafe` block an `unsafe fn` pointer needs."),
-    ("algebra-denies-unsafe", ALGEBRA, "src/lib.rs", "#![deny(unsafe_code)]", 2,
-     "`gf2-algebra` cannot hold the `unsafe` block an `unsafe fn` pointer needs; its "
-     "crate documentation repeats the attribute."),
+    ("algebra-denies-unsafe", ALGEBRA, "src/lib.rs", "#![deny(unsafe_code)]", 1,
+     "`gf2-algebra` cannot hold the `unsafe` block an `unsafe fn` pointer needs."),
     ("coding-denies-unsafe", CODING, "src/lib.rs", "#![deny(unsafe_code)]", 1,
      "`gf2-coding` cannot hold the `unsafe` block an `unsafe fn` pointer needs."),
     ("core-spmm-small-call", CORE, "src/gfp/simd_ops.rs", "&a_vals_u8[start..end],", 1,
@@ -330,6 +329,60 @@ CLAIMS = [
     ("coding-pam-bench-output", CODING, "benches/cpu_dispatch_probe.rs",
      "let mut out = vec![0.0f64; batch * pam.len()];", 1,
      "The benchmark sizes the slab from the product of two small counts."),
+    # Grain of the sparse row check.
+    ("small-spmm-checked-call", SIMD, "src/fp_small.rs",
+     'crate::entry_check::assert_spmm_row_columns("fp_small_spmm_row", a_cols, b.len(), '
+     'b_stride, n);', 1,
+     "The checked byte-lane wrapper runs the column check on every call, ahead of the kernel."),
+    ("medium-spmm-checked-call", SIMD, "src/fp_medium.rs",
+     'crate::entry_check::assert_spmm_row_columns("fp_medium_spmm_row", a_cols, b.len(), '
+     'b_stride, n);', 1,
+     "The checked u16-lane wrapper runs the column check on every call, ahead of the kernel."),
+    ("entry-check-row-scan", SIMD, "src/entry_check.rs",
+     "let Some(largest) = a_cols.iter().copied().max() else {", 1,
+     "The column check takes the largest index of the row it is handed: one pass over the "
+     "row's stored indices."),
+    ("entry-check-row-division", SIMD, "src/entry_check.rs",
+     "let Some(max_col) = last_start.checked_div(b_stride) else {", 1,
+     "The column check forms the largest admissible index with one division per call."),
+    ("core-spmm-row-loop", CORE, "src/gfp/simd_ops.rs", "let end = a_row_ptr[r + 1];", 2,
+     "The row loop of `fp_try_spmm` stands in `gf2-core`: each lane cuts one row out of the "
+     "CSR arrays per iteration and calls the row pointer for it."),
+    ("core-spmm-row-output", CORE, "src/gfp/simd_ops.rs",
+     "let out_row = &mut out[r * n..(r + 1) * n];", 2,
+     "Inside the same loop each lane converts one output row from its lane type, so the loop "
+     "holds more than the kernel call."),
+    ("core-spmm-hook-call", CORE, "src/field/sparse_matrix.rs", "if F::try_simd_spmm(", 1,
+     "`SparseFieldMatrix::matmat` passes its own CSR arrays to the hook."),
+    ("core-sparse-type-doc", CORE, "src/field/sparse_matrix.rs",
+     "/// All stored values are non-zero (constructors canonicalise) and per-row", 1,
+     "The documented invariants of the type are non-zero values and ascending columns; the "
+     "column bound is not among them."),
+    ("core-sparse-private-fields", CORE, "src/field/sparse_matrix.rs",
+     "col_idx: Vec<usize>,", 1,
+     "The column indices are a private field, so only the type's own constructors write them."),
+    ("core-sparse-raw-parts", CORE, "src/field/sparse_matrix.rs",
+     "pub fn as_raw_parts(&self) -> (&[usize], &[usize], &[F]) {", 2,
+     "The raw parts leave the type as shared borrows; the CSC type repeats the signature."),
+    ("core-sparse-zeros", CORE, "src/field/sparse_matrix.rs", "col_idx: Vec::new(),", 2,
+     "A matrix without stored entries holds no column index; `zeros` and the empty case of "
+     "`rref` build one."),
+    ("core-sparse-dense-columns", CORE, "src/field/sparse_matrix.rs", "for c in 0..cols {", 3,
+     "`from_dense` takes each index from a loop over the column count; two tests repeat "
+     "the loop header."),
+    ("core-sparse-identity-columns", CORE, "src/field/sparse_matrix.rs",
+     "let col_idx: Vec<usize> = (0..n).collect();", 1,
+     "`identity` takes its indices from the range of its dimension."),
+    ("core-sparse-matmul-columns", CORE, "src/field/sparse_matrix.rs",
+     "let c = other.col_idx[kb];", 1,
+     "`matmul` stores indices read from its right operand, whose column count the result "
+     "takes."),
+    ("core-sparse-rref-columns", CORE, "src/field/sparse_matrix.rs", "self.col_idx[s..e]", 1,
+     "`rref` starts from the matrix's own indices and merges rows of that matrix, so it "
+     "stores no index the input does not hold."),
+    ("core-sparse-csr-columns", CORE, "src/field/sparse_matrix.rs",
+     "for c in 0..self.cols {", 1,
+     "`SparseFieldMatrixCsc::to_csr` takes each index from a loop over the column count."),
     # Measurement plan references.
     ("queue-dense-product", None, "queue.tsv",
      "dev/bench_results/4c1e441f/run-dense-product-confirmation.sh window confirmation", 1,
@@ -998,7 +1051,9 @@ FORWARDING_HOOKS = {
     "medium-prime-f64-gemm": ("FiniteField::try_simd_gemm_classical", "core-gemm-hook"),
 }
 
-# Per class: the recommended option and the reason.
+# Per class: the recommended option and the reason. A class without a
+# recommended option is one whose measured form the confirmation records as a
+# regression; `GRAINS` states its alternatives.
 DECISIONS = {
     "dense-shape-product": (
         "a",
@@ -1013,12 +1068,14 @@ DECISIONS = {
         "meet both conditions by construction.",
     ),
     "sparse-row-index": (
-        "a",
-        "The one production caller forwards column indices from a safe public hook and "
-        "cannot hold an `unsafe` block, so an unchecked row kernel needs the row loop "
-        "inside the kernel crate. The scan is one comparison per non-zero per row, on a "
-        "hot path, and the M4RM tile wrappers set the precedent of an index check per "
-        "call.",
+        None,
+        "The confirmation records the per-row form of option (a) as a regression on both "
+        "interfaces (the confirmation rows of the cost column), which contradicts the "
+        "family's non-regression criterion for that form. The one production caller "
+        "forwards column indices from a safe public hook and cannot hold an `unsafe` "
+        "block, so an unchecked row kernel needs the row loop inside the kernel crate. "
+        "The grains at which the check can stand follow; the choice among them is the "
+        "invoker's.",
     ),
     "packed-lengths": (
         "a",
@@ -1029,6 +1086,96 @@ DECISIONS = {
         "kernels as `unsafe fn` items.",
     ),
 }
+
+# Where the measured check of the sparse row class stands, and the claims.
+GRAIN_CLASS = "sparse-row-index"
+GRAIN_POSITION = (
+    "The checked wrapper of each lane runs the column check on every call, ahead of the "
+    "kernel: one pass over the stored indices of the row it is handed and one division. "
+    "The row loop stands in `gf2-core`, which calls the row pointer once per non-empty "
+    "sparse row, so the check runs inside the row loop, once per row of every product.",
+    ["small-spmm-checked-call", "medium-spmm-checked-call", "entry-check-row-scan",
+     "entry-check-row-division", "core-spmm-row-loop"],
+)
+
+# The grains at which the column bound can be established. `sites` names what
+# an option changes: `wrappers` the kernel crate's entry points of the class,
+# `row-calls` the production call sites of their pointers, `hook` every tracked
+# line that defines or calls the forwarding hook. `measured` is whether the
+# family's cells price the option.
+GRAINS = [
+    {
+        "id": "per-row",
+        "title": "check in the safe row entry",
+        "design": "`spmm_row_safe` takes the body of `spmm_row_checked`; the pointer type and "
+                  "every caller stay as they are.",
+        "check": "once per sparse row, inside the row loop of `gf2-core`",
+        "constraint": "none",
+        "sites": ["wrappers"],
+        "measured": True,
+        "claims": ["small-spmm-checked-call", "medium-spmm-checked-call"],
+    },
+    {
+        "id": "per-product",
+        "title": "unchecked row kernel behind one checked entry per product",
+        "design": "The row kernel becomes an `unsafe fn ..._unchecked` item of the kernel "
+                  "crate with the column bound under Safety. One safe entry per lane takes "
+                  "the CSR arrays and the dense operand, checks the largest index of the "
+                  "whole index array once against `b.len()`, `b_stride` and `n`, and holds "
+                  "the row loop with its `// SAFETY:` comment. The scan reads every stored "
+                  "index once, as the per-row form does; the call, the subtraction and the "
+                  "division happen once per product.",
+        "check": "once per product, ahead of the row loop",
+        "constraint": "The row loop moves out of `fp_try_spmm` into the kernel crate, since "
+                      "`gf2-core` cannot hold the `unsafe` call; that loop also converts each "
+                      "output row from its lane type, so the entry writes a lane buffer of "
+                      "the whole product or the conversion moves behind it.",
+        "sites": ["wrappers", "row-calls"],
+        "measured": False,
+        "claims": ["core-denies-unsafe", "core-spmm-row-loop", "core-spmm-row-output"],
+    },
+    {
+        "id": "construction",
+        "title": "bound held by the sparse matrix type",
+        "design": "Every constructor of `SparseFieldMatrix` yields column indices below its "
+                  "column count (the constructor table), no method takes the matrix by "
+                  "`&mut self`, the index field is private, the raw parts leave as shared "
+                  "borrows, and `matmat` asserts the column count against the rows of the "
+                  "dense operand before the hook. A product that starts at `matmat` "
+                  "therefore meets the bound with no check added.",
+        "check": "at construction; none per product",
+        "constraint": "The bound does not reach the kernel as a type: the hook is a safe "
+                      "public trait method over plain slices, and the type's documentation "
+                      "does not state the bound. Relying on it takes a hook that receives "
+                      "the matrix type or is unreachable from outside the crate, the bound "
+                      "stated as an invariant of the type, and an `unsafe` call of the "
+                      "unchecked row kernel in `gf2-core`, which denies `unsafe_code`. Held "
+                      "behind the safe entry of `per-product` instead, it leaves that "
+                      "entry's one check in place.",
+        "sites": ["hook", "row-calls"],
+        "measured": False,
+        "claims": ["core-sparse-private-fields", "core-sparse-raw-parts",
+                   "core-spmm-matmat-assert", "core-spmm-hook-call", "core-spmm-hook",
+                   "core-sparse-type-doc", "core-denies-unsafe"],
+    },
+]
+
+# The forwarding hook of the sparse row class, and the file and type whose
+# constructors `SPARSE_CONSTRUCTORS` covers.
+GRAIN_HOOK = "try_simd_spmm"
+SPARSE_TYPE = (CORE, "src/field/sparse_matrix.rs", "SparseFieldMatrix")
+# Every function that builds the type: (function, struct literals it holds,
+# why each stored column index is below the column count, claim).
+SPARSE_CONSTRUCTORS = [
+    ("zeros", 1, "stores no index", "core-sparse-zeros"),
+    ("from_triplets", 1, "asserts each index against `cols`", "core-sparse-triplet-assert"),
+    ("from_dense", 1, "takes each index from a loop over `cols`", "core-sparse-dense-columns"),
+    ("identity", 1, "takes the indices from `0..n`", "core-sparse-identity-columns"),
+    ("matmul", 2, "copies indices of its right operand, whose column count it takes",
+     "core-sparse-matmul-columns"),
+    ("rref", 2, "merges rows of the matrix itself", "core-sparse-rref-columns"),
+    ("to_csr", 1, "takes each index from a loop over `cols`", "core-sparse-csr-columns"),
+]
 
 # The pilot cells of the entry-check cost family, by the interface whose
 # checked form each measures; the frozen pilot addendum holds the cells.
@@ -1066,6 +1213,8 @@ PILOT_MINUTES = 14
 QUEUE_COMMAND = "dev/bench_results/bfc2ceab/run-entry-check.sh window pilot"
 # The confirmation addendum pins the pilot receipt as its resolution evidence.
 CONFIRMATION_ADDENDUM = "addendum-v4-entry-check-confirmation.json"
+# The family's result tables, written beside its ledger by `make-tables.py`.
+TABLES = "tables.md"
 # Estimate of the confirmation's window minutes, builds included.
 CONFIRMATION_MINUTES = 8
 CONFIRMATION_QUEUE_COMMAND = "dev/bench_results/bfc2ceab/run-entry-check.sh window confirmation"

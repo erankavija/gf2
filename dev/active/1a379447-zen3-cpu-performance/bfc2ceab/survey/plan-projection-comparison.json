@@ -31,31 +31,31 @@
   "differing_plan_count": 0,
   "plans": [
     {
-      "caller": "dev/active/4c1e441f/survey/make-plan.py",
-      "addendum": "dev/active/4c1e441f/addendum-v4-dense-product-confirmation.json",
-      "anchor_plan_sha256": "c3022414cabca4259201262f7d702a7b709a599eac015f7a89d43cf7332955cc",
-      "current_plan_sha256": "c3022414cabca4259201262f7d702a7b709a599eac015f7a89d43cf7332955cc",
+      "caller": "dev/active/1a379447-zen3-cpu-performance/4c1e441f/survey/make-plan.py",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/4c1e441f/addendum-v4-dense-product-confirmation.json",
+      "anchor_plan_sha256": "9eeaee4ff97e861c6c9e6b74c0240705fd16b4c3965af9f8d8bf21a464bb04ae",
+      "current_plan_sha256": "9eeaee4ff97e861c6c9e6b74c0240705fd16b4c3965af9f8d8bf21a464bb04ae",
       "plan_bytes": "same"
     },
     {
-      "caller": "dev/active/4c1e441f/survey/make-plan.py",
-      "addendum": "dev/active/4c1e441f/addendum-v4-dense-product-pilot.json",
-      "anchor_plan_sha256": "76b415e8381a755e03cbfb56bcca8aecbfad845e67a9fd8c9906aee0f7e0c9ae",
-      "current_plan_sha256": "76b415e8381a755e03cbfb56bcca8aecbfad845e67a9fd8c9906aee0f7e0c9ae",
+      "caller": "dev/active/1a379447-zen3-cpu-performance/4c1e441f/survey/make-plan.py",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/4c1e441f/addendum-v4-dense-product-pilot.json",
+      "anchor_plan_sha256": "713556fcecac22a13409f5ccba93e07a907b5bf55812f7adad441ee790af2522",
+      "current_plan_sha256": "713556fcecac22a13409f5ccba93e07a907b5bf55812f7adad441ee790af2522",
       "plan_bytes": "same"
     },
     {
-      "caller": "dev/active/ad2a6a58/survey/make-plan.py",
-      "addendum": "dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json",
-      "anchor_plan_sha256": "d95e4644c5beed7c92d283f92b67bbe19dafe422d0358b6093eccde26bf5b4e6",
-      "current_plan_sha256": "d95e4644c5beed7c92d283f92b67bbe19dafe422d0358b6093eccde26bf5b4e6",
+      "caller": "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/survey/make-plan.py",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/addendum-v4-axpy-confirmation.json",
+      "anchor_plan_sha256": "1ee0066aa1910c4530aff3be78aa1921f8cd8c90940592d75dbfe3a6a0b403ed",
+      "current_plan_sha256": "1ee0066aa1910c4530aff3be78aa1921f8cd8c90940592d75dbfe3a6a0b403ed",
       "plan_bytes": "same"
     },
     {
-      "caller": "dev/active/ad2a6a58/survey/make-plan.py",
-      "addendum": "dev/active/ad2a6a58/addendum-v4-axpy-pilot.json",
-      "anchor_plan_sha256": "683c6e229f89128507078c6928b767c0186c1bc72c5291eff647a0b32205f0f2",
-      "current_plan_sha256": "683c6e229f89128507078c6928b767c0186c1bc72c5291eff647a0b32205f0f2",
+      "caller": "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/survey/make-plan.py",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/addendum-v4-axpy-pilot.json",
+      "anchor_plan_sha256": "e70ae9ebd5b6350051c1647529b4e4ca2e3ce895ed0cdff192d89812870807fb",
+      "current_plan_sha256": "e70ae9ebd5b6350051c1647529b4e4ca2e3ce895ed0cdff192d89812870807fb",
       "plan_bytes": "same"
     }
   ]

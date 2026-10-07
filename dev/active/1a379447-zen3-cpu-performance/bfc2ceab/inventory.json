@@ -2368,12 +2368,132 @@
       "reason": "The shape check is one product per panel and the index check one comparison per pivot, both outside the update loops; the two production callers meet both conditions by construction."
     },
     "sparse-row-index": {
-      "recommended": "a",
-      "reason": "The one production caller forwards column indices from a safe public hook and cannot hold an `unsafe` block, so an unchecked row kernel needs the row loop inside the kernel crate. The scan is one comparison per non-zero per row, on a hot path, and the M4RM tile wrappers set the precedent of an index check per call."
+      "recommended": null,
+      "reason": "The confirmation records the per-row form of option (a) as a regression on both interfaces (the confirmation rows of the cost column), which contradicts the family's non-regression criterion for that form. The one production caller forwards column indices from a safe public hook and cannot hold an `unsafe` block, so an unchecked row kernel needs the row loop inside the kernel crate. The grains at which the check can stand follow; the choice among them is the invoker's."
     },
     "packed-lengths": {
       "recommended": "a",
       "reason": "The check is a handful of comparisons per call. No tracked Rust file calls the F_5, F_7, F_3 mul and F_3 neg pointers. The F_3 add and sub pointers are called once per Gray step with four words, which puts the check beside one vector iteration; the crate publishes the unchecked form of those kernels as `unsafe fn` items."
+    }
+  },
+  "check_grains": {
+    "class": "sparse-row-index",
+    "position": {
+      "text": "The checked wrapper of each lane runs the column check on every call, ahead of the kernel: one pass over the stored indices of the row it is handed and one division. The row loop stands in `gf2-core`, which calls the row pointer once per non-empty sparse row, so the check runs inside the row loop, once per row of every product.",
+      "claims": [
+        "small-spmm-checked-call",
+        "medium-spmm-checked-call",
+        "entry-check-row-scan",
+        "entry-check-row-division",
+        "core-spmm-row-loop"
+      ]
+    },
+    "options": [
+      {
+        "id": "per-row",
+        "title": "check in the safe row entry",
+        "design": "`spmm_row_safe` takes the body of `spmm_row_checked`; the pointer type and every caller stay as they are.",
+        "check": "once per sparse row, inside the row loop of `gf2-core`",
+        "constraint": "none",
+        "measured": true,
+        "claims": [
+          "small-spmm-checked-call",
+          "medium-spmm-checked-call"
+        ],
+        "changes": [
+          "`spmm_row_safe` of `crates/gf2-kernels-simd/src/fp_small.rs`",
+          "`spmm_row_safe` of `crates/gf2-kernels-simd/src/fp_medium.rs`"
+        ]
+      },
+      {
+        "id": "per-product",
+        "title": "unchecked row kernel behind one checked entry per product",
+        "design": "The row kernel becomes an `unsafe fn ..._unchecked` item of the kernel crate with the column bound under Safety. One safe entry per lane takes the CSR arrays and the dense operand, checks the largest index of the whole index array once against `b.len()`, `b_stride` and `n`, and holds the row loop with its `// SAFETY:` comment. The scan reads every stored index once, as the per-row form does; the call, the subtraction and the division happen once per product.",
+        "check": "once per product, ahead of the row loop",
+        "constraint": "The row loop moves out of `fp_try_spmm` into the kernel crate, since `gf2-core` cannot hold the `unsafe` call; that loop also converts each output row from its lane type, so the entry writes a lane buffer of the whole product or the conversion moves behind it.",
+        "measured": false,
+        "claims": [
+          "core-denies-unsafe",
+          "core-spmm-row-loop",
+          "core-spmm-row-output"
+        ],
+        "changes": [
+          "`spmm_row_safe` of `crates/gf2-kernels-simd/src/fp_small.rs`",
+          "`spmm_row_safe` of `crates/gf2-kernels-simd/src/fp_medium.rs`",
+          "`spmm_row_fn` in `crates/gf2-core/src/gfp/simd_ops.rs`: 2 calls"
+        ]
+      },
+      {
+        "id": "construction",
+        "title": "bound held by the sparse matrix type",
+        "design": "Every constructor of `SparseFieldMatrix` yields column indices below its column count (the constructor table), no method takes the matrix by `&mut self`, the index field is private, the raw parts leave as shared borrows, and `matmat` asserts the column count against the rows of the dense operand before the hook. A product that starts at `matmat` therefore meets the bound with no check added.",
+        "check": "at construction; none per product",
+        "constraint": "The bound does not reach the kernel as a type: the hook is a safe public trait method over plain slices, and the type's documentation does not state the bound. Relying on it takes a hook that receives the matrix type or is unreachable from outside the crate, the bound stated as an invariant of the type, and an `unsafe` call of the unchecked row kernel in `gf2-core`, which denies `unsafe_code`. Held behind the safe entry of `per-product` instead, it leaves that entry's one check in place.",
+        "measured": false,
+        "claims": [
+          "core-sparse-private-fields",
+          "core-sparse-raw-parts",
+          "core-spmm-matmat-assert",
+          "core-spmm-hook-call",
+          "core-spmm-hook",
+          "core-sparse-type-doc",
+          "core-denies-unsafe"
+        ],
+        "changes": [
+          "`try_simd_spmm` in `crates/gf2-core/src/field/sparse_matrix.rs`: 1 call",
+          "`try_simd_spmm` in `crates/gf2-core/src/field/traits.rs`: 1 definition",
+          "`try_simd_spmm` in `crates/gf2-core/src/gfp/mod.rs`: 1 definition",
+          "`spmm_row_fn` in `crates/gf2-core/src/gfp/simd_ops.rs`: 2 calls"
+        ]
+      }
+    ],
+    "sparse_type": {
+      "name": "SparseFieldMatrix",
+      "path": "crates/gf2-core/src/field/sparse_matrix.rs",
+      "constructors": [
+        {
+          "function": "zeros",
+          "struct_literals": 1,
+          "bound": "stores no index",
+          "claim": "core-sparse-zeros"
+        },
+        {
+          "function": "from_triplets",
+          "struct_literals": 1,
+          "bound": "asserts each index against `cols`",
+          "claim": "core-sparse-triplet-assert"
+        },
+        {
+          "function": "from_dense",
+          "struct_literals": 1,
+          "bound": "takes each index from a loop over `cols`",
+          "claim": "core-sparse-dense-columns"
+        },
+        {
+          "function": "identity",
+          "struct_literals": 1,
+          "bound": "takes the indices from `0..n`",
+          "claim": "core-sparse-identity-columns"
+        },
+        {
+          "function": "matmul",
+          "struct_literals": 2,
+          "bound": "copies indices of its right operand, whose column count it takes",
+          "claim": "core-sparse-matmul-columns"
+        },
+        {
+          "function": "rref",
+          "struct_literals": 2,
+          "bound": "merges rows of the matrix itself",
+          "claim": "core-sparse-rref-columns"
+        },
+        {
+          "function": "to_csr",
+          "struct_literals": 1,
+          "bound": "takes each index from a loop over `cols`",
+          "claim": "core-sparse-csr-columns"
+        }
+      ]
     }
   },
   "measurement_cells": [

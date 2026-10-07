@@ -11,16 +11,19 @@ writing, when
 - a use of a published pointer field in a tracked Rust file is unassigned, or
   an assignment counts differently;
 - a cited claim is absent from `source-evidence.json`;
-- a witness tuple does not pass the release assertions it is recorded against.
+- a witness tuple does not pass the release assertions it is recorded against;
+- the struct literals that build the sparse matrix type are not those the
+  review assigns to its constructors, or a method of that file takes
+  `&mut self`.
 
 `witness-runs.json` and `instruction-counts.json` are read as committed, and so
-is the pilot receipt the confirmation addendum pins: the decision table points
-each interface at its rows of that pilot's acceptance summary.
+are the family's receipts: the decision table names each interface's rows of
+the family tables with the role, outcome and decision each stage's acceptance
+summary records.
 
 Usage: make-inventory.py, with no arguments
 """
 
-import hashlib
 import importlib.util
 import json
 import os
@@ -28,7 +31,10 @@ import re
 import sys
 
 import review
-from locate import HERE, ISSUE, KERNEL_PACKAGE, ROOT, package, repository_files, rust_code_text, tracked
+from locate import (
+    HERE, ISSUE, KERNEL_PACKAGE, ROOT, family_stages, package, repository_files, rust_code_text,
+    tracked,
+)
 
 OUT = HERE.parent
 WORD = 2**64
@@ -51,6 +57,8 @@ USE_RULE = (
     "call parenthesis follows. Each file and field is assigned in the review with the "
     "entry points its uses reach and their counts."
 )
+STRUCT_LITERAL_FIELD = re.compile(r"^\s*col_idx(,|: Vec::new\(\),)\s*$")
+METHOD = re.compile(r"^    (?:pub(?:\([a-z]+\))? )?fn (\w+)")
 TEST_MODULE = re.compile(r"#\[cfg\(test\)\]\s*(?:#\[[^\]]*\]\s*)*(?:pub(?:\([a-z]+\))?\s+)?mod\s+\w+\s*\{")
 
 
@@ -160,6 +168,10 @@ def power(value):
     if value > 4096 and value & (value - 1) == 0:
         return f"2^{value.bit_length() - 1}"
     return str(value)
+
+
+def plural(count, noun):
+    return f"{count} {noun}{'' if count == 1 else 's'}"
 
 
 def cite(claims):
@@ -290,6 +302,11 @@ def build():
             row["unchecked_precedent"] = interface["unchecked_precedent"]
         interfaces.append(row)
     need(list(review.DENYING.values()), "denying crates")
+    need(review.GRAIN_POSITION[1], "grain position")
+    for grain in review.GRAINS:
+        need(grain["claims"], f"grain {grain['id']}")
+    need([claim for *_, claim in review.SPARSE_CONSTRUCTORS], "sparse constructors")
+    problems.extend(constructor_problems())
 
     if problems:
         raise SystemExit("\n".join(problems))
@@ -341,6 +358,7 @@ def build():
             name: {"recommended": option, "reason": reason}
             for name, (option, reason) in review.DECISIONS.items()
         },
+        "check_grains": grains(interfaces),
         "measurement_cells": pilot_cells(),
         "family_scan": family_scan(),
     }
@@ -350,6 +368,89 @@ def build():
     if unknown:
         raise SystemExit(f"measurement cells name unknown interfaces: {sorted(unknown)}")
     return record
+
+
+def constructor_problems():
+    """Mismatches between the sparse type's struct literals and the review."""
+    owner, relative, _ = review.SPARSE_TYPE
+    masked = rust_code_text.masked((ROOT / package(owner) / relative).read_text())
+    tests, found, method, problems = test_lines(masked), {}, None, []
+    for number, line in enumerate(masked.splitlines(), start=1):
+        if number in tests:
+            continue
+        if named := METHOD.match(line):
+            method = named[1]
+        if STRUCT_LITERAL_FIELD.match(line):
+            found[method] = found.get(method, 0) + 1
+        if "&mut self" in line:
+            problems.append(f"{relative}:{number}: a method takes `&mut self`")
+    assigned = {function: count for function, count, *_ in review.SPARSE_CONSTRUCTORS}
+    for function in sorted(set(found) | set(assigned)):
+        if found.get(function, 0) != assigned.get(function, 0):
+            problems.append(
+                f"{relative}: {function} holds {found.get(function, 0)} struct literals, "
+                f"{assigned.get(function, 0)} assigned"
+            )
+    return problems
+
+
+def hook_lines():
+    """Per tracked Rust file, the definitions and calls of the forwarding hook."""
+    name, found = review.GRAIN_HOOK, {}
+    for path in tracked("**/*.rs"):
+        source = (ROOT / path).read_text()
+        if name not in source:
+            continue
+        for line in rust_code_text.masked(source).splitlines():
+            if re.search(rf"\bfn\s+{name}\b", line):
+                kind = "definition"
+            elif re.search(rf"\b{name}\s*\(", line):
+                kind = "call"
+            else:
+                continue
+            found.setdefault(path, {"definition": 0, "call": 0})[kind] += 1
+    return found
+
+
+def grains(interfaces):
+    """The grains of the sparse row check, each with the sites it changes."""
+    entries = [entry for row in interfaces if row["class"] == review.GRAIN_CLASS
+               for entry in row["entries"]]
+    calls = {}
+    for entry in entries:
+        for site in entry["callers"]:
+            if site["kind"] == "production":
+                key = (site["path"], site["field"])
+                calls[key] = calls.get(key, 0) + site["calls"]
+    sites = {
+        "wrappers": [f"`{entry['safe_function']}` of `{entry['module']}`" for entry in entries],
+        "row-calls": [f"`{field}` in `{path}`: {plural(count, 'call')}"
+                      for (path, field), count in sorted(calls.items())],
+        "hook": [
+            f"`{review.GRAIN_HOOK}` in `{path}`: "
+            + ", ".join(plural(count[kind], kind) for kind in count if count[kind])
+            for path, count in sorted(hook_lines().items())
+        ],
+    }
+    owner, relative, name = review.SPARSE_TYPE
+    return {
+        "class": review.GRAIN_CLASS,
+        "position": {"text": review.GRAIN_POSITION[0], "claims": review.GRAIN_POSITION[1]},
+        "options": [
+            {**{key: grain[key] for key in ("id", "title", "design", "check", "constraint",
+                                             "measured", "claims")},
+             "changes": [site for key in grain["sites"] for site in sites[key]]}
+            for grain in review.GRAINS
+        ],
+        "sparse_type": {
+            "name": name,
+            "path": f"{package(owner)}/{relative}",
+            "constructors": [
+                {"function": function, "struct_literals": count, "bound": bound, "claim": claim}
+                for function, count, bound, claim in review.SPARSE_CONSTRUCTORS
+            ],
+        },
+    }
 
 
 def pilot_cells():
@@ -534,22 +635,90 @@ def inventory_page(record):
     return "\n".join(out)
 
 
-def pilot_cost_rows():
-    """Link to the pilot's acceptance summary and each of its cells' roles.
+def cost_rows():
+    """Per committed stage: its section of the family tables, its verdict and its cells.
 
-    The pilot is the receipt the confirmation addendum pins as resolution
-    evidence, so the table points at the bytes that sized the confirmation.
+    A cell maps to the role, outcome and decision the stage's acceptance
+    summary records.
     """
-    evidence = json.loads((OUT / review.CONFIRMATION_ADDENDUM).read_text())["effect"][
-        "resolution_evidence"]
-    receipt = ROOT / evidence["receipt"]
-    if hashlib.sha256(receipt.read_bytes()).hexdigest() != evidence["sha256"]:
-        raise SystemExit(f"{evidence['receipt']} is not the receipt the confirmation pins")
-    summary = json.loads((receipt.parent / "acceptance-summary.json").read_text())
-    if summary["receipt_sha256"] != evidence["sha256"]:
-        raise SystemExit("the pilot's acceptance summary evaluates another receipt")
-    link = os.path.relpath(receipt.parent / "acceptance-summary.md", OUT)
-    return link, {cell["cell_id"]: cell["role"] for cell in summary["cells"]}
+    stages = family_stages(OUT / review.CONFIRMATION_ADDENDUM)
+    pilot = json.loads((stages["pilot"] / "receipt.json").read_text())
+    tables = (ROOT / pilot["trial_ledger"]["path"]).parent / review.TABLES
+    link, found = os.path.relpath(tables, OUT), {}
+    for label, directory in stages.items():
+        summary = json.loads((directory / "acceptance-summary.json").read_text())
+        found[label] = {
+            "link": f"{link}#{label}",
+            "verdict": summary["verdict"],
+            "cells": {
+                cell["cell_id"]: f"{cell['role']}, outcome {cell['outcome']}, "
+                                 f"decision {cell['decision']}"
+                for cell in summary["cells"]
+            },
+            "outcomes": {cell["cell_id"]: cell["outcome"] for cell in summary["cells"]
+                         if cell["role"] == "confirmatory"},
+        }
+    return link, found
+
+
+def rule_line(stages, cells):
+    """What the family's frozen decision rule records for a class with `cells`."""
+    outcomes = sorted({outcome for stage in stages.values()
+                       for cell, outcome in stage["outcomes"].items() if cell in cells})
+    if not outcomes:
+        return "No confirmatory cell of the class is committed."
+    recorded = ", ".join(f"`{outcome}`" for outcome in outcomes)
+    verdict = ("the checked form is recorded as an accepted measured cost"
+               if outcomes == ["pass"] else "the class goes back to the invoker")
+    return (f"Frozen decision rule (the family description of "
+            f"[`{review.CONFIRMATION_ADDENDUM}`]({review.CONFIRMATION_ADDENDUM})): the "
+            f"confirmatory cells of the class record {recorded}, so {verdict}.")
+
+
+def cost_cell(stages, cells, only=None):
+    """The cost rows of `cells`, grouped by stage."""
+    groups = []
+    for label, stage in stages.items():
+        rows = [f"[`{cell}`]({stage['link']}) ({stage['cells'][cell]})"
+                for cell in cells if cell in stage["cells"]]
+        if rows and only in (None, label):
+            groups.append(f"{label}: " + ", ".join(rows))
+    return "; ".join(groups) or "—"
+
+
+def grain_section(record, stages):
+    """The grains at which the measured class's check can stand."""
+    found = record["check_grains"]
+    cells = [row["cell"] for row in record["measurement_cells"]
+             if row["interface"] in {interface["id"] for interface in record["interfaces"]
+                                     if interface["class"] == found["class"]}]
+    last = list(stages)[-1]
+    kind = found["sparse_type"]
+    return [
+        "### Grain of the column check",
+        "",
+        f"{found['position']['text']} Claims: {cite(found['position']['claims'])}.",
+        "",
+        table(
+            ["Grain", "Design", "Check runs", "Changes", "Constraint", "Cost rows", "Claims"],
+            [[f"`{grain['id']}`: {grain['title']}", grain["design"], grain["check"],
+              "; ".join(grain["changes"]), grain["constraint"],
+              cost_cell(stages, cells, last) if grain["measured"]
+              else "no cell of the family prices this form",
+              cite(grain["claims"])] for grain in found["options"]],
+        ),
+        "",
+        f"Constructors of `{kind['name']}` (`{kind['path']}`): the functions that hold a "
+        "struct literal of the type outside test code, which the generator scans for "
+        "together with the absence of a method that takes `&mut self`.",
+        "",
+        table(
+            ["Function", "Struct literals", "Each stored column index", "Claim"],
+            [[f"`{row['function']}`", row["struct_literals"], row["bound"], f"`{row['claim']}`"]
+             for row in kind["constructors"]],
+        ),
+        "",
+    ]
 
 
 def option_b(interface):
@@ -567,8 +736,8 @@ def option_b(interface):
 
 
 def decision_page(record):
-    summary, roles = pilot_cost_rows()
-    missing = {row["cell"] for row in record["measurement_cells"]} - set(roles)
+    tables, stages = cost_rows()
+    missing = {row["cell"] for row in record["measurement_cells"]} - set(stages["pilot"]["cells"])
     if missing:
         raise SystemExit(f"the pilot's acceptance summary lacks cells: {sorted(missing)}")
     out = [
@@ -591,10 +760,15 @@ def decision_page(record):
         "for such an interface option (b) keeps a checked safe entry in the kernel crate, "
         "at the same or a coarser grain, and makes only the inner kernel `unsafe`.",
         "",
-        "The last column names, for each interface, its rows in the Cells table of the "
-        f"pilot's [acceptance summary]({summary}), each with the role the summary records: "
-        "an exploratory row sizes the confirmation and decides nothing. An interface "
-        "without a row has no cell in the family.",
+        "The last column names, for each interface, its rows in the family's "
+        f"[tables]({tables}), which `survey/make-tables.py` writes from each stage's "
+        "acceptance summary with the pair count, interval and outcome of every cell. Each "
+        "row carries the role, outcome and decision its summary records: an exploratory row "
+        "sizes the confirmation and decides nothing, and a confirmatory row is the "
+        "family's recorded cost of the check. Verdicts: "
+        + ", ".join(f"{label} `{stage['verdict']}`" for label, stage in stages.items())
+        + "; the finding counts stand on the tables' Source lines. An interface without a "
+        "row has no cell in the family.",
         "",
     ]
     for name, description in record["classes"].items():
@@ -625,22 +799,29 @@ def decision_page(record):
                     (f"{kernel['outside_panic_blocks']}, loop bodies {kernel['loop_bodies']}"
                      if kernel else "no committed listing"),
                     option_b(interface),
-                    f"({decision['recommended']})",
-                    ", ".join(f"[`{row['cell']}`]({summary}) ({roles[row['cell']]})"
-                              for row in record["measurement_cells"]
-                              if row["interface"] == interface["id"]) or "—",
+                    f"({decision['recommended']})" if decision["recommended"] else "none",
+                    cost_cell(stages, [row["cell"] for row in record["measurement_cells"]
+                                       if row["interface"] == interface["id"]]),
                 ]
             )
         out += [
             table(
                 ["Pointer type", "Entry points", "Instructions (a) adds",
-                 "Kernel instructions", "Option (b)", "Recommended", "Pilot cost rows"],
+                 "Kernel instructions", "Option (b)", "Recommended", "Cost rows"],
                 rows,
             ),
             "",
-            f"Reason for option ({decision['recommended']}): {decision['reason']}",
+            (f"Reason for option ({decision['recommended']}): " if decision["recommended"]
+             else "No option is recommended: ") + decision["reason"],
+            "",
+            rule_line(stages, {row["cell"] for row in record["measurement_cells"]
+                               if row["interface"] in {interface["id"] for interface in
+                                                       record["interfaces"]
+                                                       if interface["class"] == name}}),
             "",
         ]
+        if name == record["check_grains"]["class"]:
+            out += grain_section(record, stages)
     return "\n".join(out)
 
 
@@ -712,6 +893,13 @@ def plan_page(record):
         "bound then admits six confirmatory cells. `survey/smoke-arms.sh confirmation` "
         "writes [`survey/confirmation-smoke.json`](survey/confirmation-smoke.json), and "
         f"the queue line is `{review.CONFIRMATION_QUEUE_COMMAND}`.",
+        "",
+        "## Results",
+        "",
+        "Committed stages: "
+        + ", ".join(f"[{label}]({stage['link']})" for label, stage in cost_rows()[1].items())
+        + ". `survey/make-tables.py` writes the tables from each stage's acceptance summary, "
+        "and [`decision-table.md`](decision-table.md) names each interface's rows.",
         "",
         "## Window estimate",
         "",

@@ -5,8 +5,9 @@
 This record covers the inventory of REQ-01, the material for the choice REQ-02
 and REQ-04 depend on, the checked form of every entry point compiled under
 `--cfg gf2_entry_checked`, its contract test (REQ-03) and the measurement
-family that prices it. A build without the cfg emits the instruction text it
-emitted before the checked form existed. Every command runs from the worktree
+family that prices it, with its committed pilot and confirmation (REQ-04). A
+build without the cfg emits the instruction text it emitted before the checked
+form existed. Every command runs from the worktree
 root; script paths are relative to this directory. No command here takes a
 timing window, the host lock or an ignored test; the family's timed stages are
 queue lines of the benchmark window.
@@ -18,10 +19,15 @@ queue lines of the benchmark window.
   unchecked access each guards, and every caller with how it meets the
   condition.
 - [`decision-table.md`](decision-table.md): one row per pointer type, grouped
-  by cost class, with both options, the instruction counts and the
-  recommendation.
-- [`measurement-plan.md`](measurement-plan.md): the candidate before/after
-  cells for the checks that stay on a hot path.
+  by cost class, with both options, the instruction counts, the recommendation
+  and the interface's cost rows of both stages; for the sparse row class, whose
+  check the confirmation records as a regression, the grains at which the check
+  can stand.
+- [`measurement-plan.md`](measurement-plan.md): the before/after cells for the
+  checks that stay on a hot path.
+- [`tables.md`](../../../bench_results/bfc2ceab/tables.md): each stage's cells
+  with pair count, interval and outcome, the lane witness, the family ledger
+  and the source digests with the acceptance finding counts.
 
 ## Review record and generators
 
@@ -36,11 +42,12 @@ every use of a published pointer field, and the recommendations.
 | `python3 -B survey/regen-prototype-listing.py` | [`survey/check-prototype.asm.txt`](survey/check-prototype.asm.txt) |
 | `python3 -B survey/make-instruction-counts.py` | [`survey/instruction-counts.json`](survey/instruction-counts.json) |
 | `python3 -B survey/run-witnesses.py` | [`survey/witness-runs.json`](survey/witness-runs.json) |
-| `python3 -B survey/make-inventory.py` | the three documents above and `inventory.json` |
+| `python3 -B survey/make-tables.py` | `tables.md` beside the family ledger, through the shared `campaign_tables.py` |
+| `python3 -B survey/make-inventory.py` | the first three documents above and `inventory.json` |
 
 `make-inventory.py` states under which conditions it fails before writing; its
 `scan_rule` and `use_rule` fields state what the coverage means. Two
-consecutive runs of the four record generators leave `git diff --exit-code`
+consecutive runs of the record generators leave `git diff --exit-code`
 clean, and so do two runs of `regen-prototype-listing.py`, which removes the
 banner lines that carry the commit and time of a run.
 `make-instruction-counts.py --self-test` checks the counting rule on a
@@ -161,8 +168,31 @@ beside the logs states the flags.
 [`measurement-plan.md`](measurement-plan.md) states the family; its frozen
 pilot addendum is
 [`addendum-v4-entry-check-pilot.json`](addendum-v4-entry-check-pilot.json),
-written by `survey/make-addendum.py`.
+written by `survey/make-addendum.py`, and its frozen confirmation addendum
+[`addendum-v4-entry-check-confirmation.json`](addendum-v4-entry-check-confirmation.json),
+derived from the pilot receipt by the canonical freezer with the
+[derivation record](confirmation-derivation-entry-check.txt) beside it.
 
+- Evidence. Both stages are committed receipts under
+  `dev/bench_results/bfc2ceab/`, and the family ledger beside them holds one
+  line per stage. `python3 -B dev/scripts/verify-campaign-log.py --log
+  <stage>/execution.log --receipt <stage>/receipt.json --plan
+  <stage>/plan.json` exits 0 for the confirmation: every declared cell starts,
+  is checkpointed and completes once at its declared pairs, and the journal
+  ends in `complete`. The verdict, the outcome of each cell and the finding
+  count are those of the stage's acceptance summary, which
+  [`tables.md`](../../../bench_results/bfc2ceab/tables.md) projects.
+- Outcome. The confirmation records a regression for the per-row column check
+  of both sparse row interfaces and no regression for the other retained
+  cells; the rows are in the `Confirmation` section of the tables. Under the
+  decision rule the confirmation addendum freezes, the sparse row class goes
+  back to the invoker and the checked form of each other class is recorded as
+  an accepted measured cost; [`decision-table.md`](decision-table.md) states
+  the rule's result per class and, for the sparse row class, the grains at
+  which the check can stand. The regression contradicts the non-regression
+  criterion the family freezes for the per-row form. The choice between a
+  checked entry and an unchecked item stays the invoker's for every interface
+  (REQ-02, REQ-04).
 - Arms. Both arms are `survey/entry-check-arm` built from one tree with one
   command line; the candidate adds `RUSTFLAGS="--cfg gf2_entry_checked"` and a
   target directory of its own. `survey/make-plan.py` records the flags in each
@@ -203,18 +233,26 @@ written by `survey/make-addendum.py`.
 
 ## Checks run
 
+On the tree merged with `main`:
+
+- `python3 dev/scripts/check-family-producing-closures.py`,
+  `python3 dev/scripts/check-receipt-input-snapshots.py`,
+  `python3 dev/scripts/check-campaign-producing-closure.py` and
+  `python3 dev/scripts/check-addendum-schema-versions.py`: exit 0.
+- `survey/smoke-arms.sh pilot confirmation`: exit 0, every arm of every cell
+  dispatched once. The committed smoke records stay those of the executables
+  the two stages measured, whose digests the launcher logs repeat.
+- `survey/run-suites.sh`: the four logs above, each closing with `# exit: 0`.
+- `cargo clippy -p gf2-kernels-simd --all-targets --all-features -- -D warnings`
+  without the cfg and with it, and `cargo fmt --all -- --check`: exit 0.
 - `python3 -B survey/make-instruction-counts.py --self-test`: exit 0.
+- `python3 dev/scripts/verify-source-evidence.py survey/source-evidence.json
+  --project gf2 --frame tree`: exit 0.
+
+On the tree the two stages measured:
+
 - `cargo clippy --release --all-targets -- -D warnings` and `cargo fmt --check`
   in `survey/check-prototype` under `RUSTUP_TOOLCHAIN=1.95.0`: exit 0.
-- `python3 dev/scripts/check-receipt-input-snapshots.py`: exit 0.
-- `python3 dev/scripts/check-campaign-producing-closure.py`: exit 0.
-
-- `cargo clippy -p gf2-kernels-simd --all-targets --all-features -- -D warnings`
-  without the cfg and with it: exit 0.
-- Both `--check` modes of the mid-range story's producing closures: exit 0
-  after regeneration for the new kernel-crate files.
-- `survey/smoke-arms.sh pilot` and `run-entry-check.sh build`: exit 0.
-- `cargo fmt --all -- --check` and `./scripts/asm-artefact-present.sh`: exit 0.
+- `./scripts/asm-artefact-present.sh`: exit 0.
 - `CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-ci.sh`: exit 0 with every step
-  reported `ok`, on the tree before the plan projector's generalisation; the
-  merged tree's run covers the generalisation.
+  reported `ok`, on the tree ahead of the plan projector's generalisation.

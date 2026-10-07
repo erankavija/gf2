@@ -32,6 +32,10 @@ Every cell is a non-regression, whole-consumer cell. The retained cells cover ea
 - Pilot: the queue line `dev/bench_results/bfc2ceab/run-entry-check.sh window pilot`, every cell exploratory.
 - Confirmation: `run-entry-check.sh freeze` derives the confirmation addendum [`addendum-v4-entry-check-confirmation.json`](addendum-v4-entry-check-confirmation.json) from the committed pilot receipt with the canonical freezer; a first confirmatory attempt spends half the family alpha, and P-20's tail-support bound then admits six confirmatory cells. `survey/smoke-arms.sh confirmation` writes [`survey/confirmation-smoke.json`](survey/confirmation-smoke.json), and the queue line is `dev/bench_results/bfc2ceab/run-entry-check.sh window confirmation`.
 
+## Results
+
+Committed stages: [pilot](../../../bench_results/bfc2ceab/tables.md#pilot), [confirmation](../../../bench_results/bfc2ceab/tables.md#confirmation). `survey/make-tables.py` writes the tables from each stage's acceptance summary, and [`decision-table.md`](decision-table.md) names each interface's rows.
+
 ## Window estimate
 
 Estimate: 14 minutes for the pilot, the builds of both arms and of the campaign tools included, by analogy with two committed queue lines of warm campaigns (`queue-dense-product`, `queue-axpy`). Estimate: 8 minutes for the confirmation, by the span between the start and finish records of the pilot's launcher log, scaled by the declared pairs of the two stages, with an allowance for the builds.

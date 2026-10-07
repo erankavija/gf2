@@ -5,6 +5,8 @@ files under the root git reports.
 """
 
 import functools
+import hashlib
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -59,3 +61,32 @@ def _tracked(pattern):
 def tracked(pattern):
     """Sorted root-relative tracked paths matching the glob `pattern`, outside receipt snapshots."""
     return list(_tracked(pattern))
+
+
+def family_stages(confirmation_addendum):
+    """Receipt directory of each committed stage of the family, by label.
+
+    The pilot is the receipt the confirmation addendum pins as its resolution
+    evidence, and the confirmation the receipt beside it that pins that
+    addendum; each acceptance summary must evaluate its receipt's bytes.
+    """
+    pinned = hashlib.sha256(confirmation_addendum.read_bytes()).hexdigest()
+    evidence = json.loads(confirmation_addendum.read_text())["effect"]["resolution_evidence"]
+    pilot = ROOT / evidence["receipt"]
+    if hashlib.sha256(pilot.read_bytes()).hexdigest() != evidence["sha256"]:
+        raise SystemExit(f"{evidence['receipt']} is not the receipt the confirmation pins")
+    stages = {"pilot": pilot.parent}
+    confirmations = [
+        receipt.parent for receipt in sorted(pilot.parent.parent.glob("*/receipt.json"))
+        if json.loads(receipt.read_text())["addendum"]["sha256"] == pinned
+    ]
+    if len(confirmations) > 1:
+        raise SystemExit(f"{len(confirmations)} receipts pin {confirmation_addendum.name}")
+    if confirmations:
+        stages["confirmation"] = confirmations[0]
+    for label, directory in stages.items():
+        receipt = hashlib.sha256((directory / "receipt.json").read_bytes()).hexdigest()
+        summary = json.loads((directory / "acceptance-summary.json").read_text())
+        if summary["receipt_sha256"] != receipt:
+            raise SystemExit(f"the {label}'s acceptance summary evaluates another receipt")
+    return stages
