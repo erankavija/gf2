@@ -31,7 +31,7 @@
 
 ## What to do next
 
-- [ ] Amend `dev/active/a83583e0/premeasurement-protocol.md` section 7 so exact
+- [ ] Amend `dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md` section 7 so exact
   static policy binding is the complete host-admission contract. Remove the
   requirements for lead-observed live load/memory/competing-work evidence and
   driver-recorded live observations.
@@ -74,8 +74,8 @@
 
 - Epic: `jit issue show 6dc81018`
 - Current issue: `jit issue show a83583e0`
-- Protocol: `dev/active/a83583e0/premeasurement-protocol.md`
-- Producing manifest: `dev/active/a83583e0/producing-build-inputs.json`
+- Protocol: `dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md`
+- Producing manifest: `dev/active/6dc81018-field-capability-dispatch/a83583e0/producing-build-inputs.json`
 - Driver: `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs`
 - Validator: `dev/scripts/validate-tuning-extent-campaign.py`
 - Governing design: `dev/active/7d824b2f/design.md`

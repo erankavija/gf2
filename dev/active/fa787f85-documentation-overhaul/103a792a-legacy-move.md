@@ -53,7 +53,7 @@ trees, with the ground for keeping each:
 
 | File:line | Ground |
 | --- | --- |
-| `dev/active/a83583e0/premeasurement-protocol.md:1031` | digest-pinned machine input (REQ-02): the campaign driver hashes the file (`dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:84-89`) and rejects a changed digest (`:682-684`); `dev/active/a83583e0/campaign-declaration.json:4` names the file |
+| `dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md:1031` | digest-pinned machine input (REQ-02): the campaign driver hashes the file (`dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:84-89`) and rejects a changed digest (`:682-684`); `dev/active/6dc81018-field-capability-dispatch/a83583e0/campaign-declaration.json:4` names the file |
 | `dev/active/fa787f85-documentation-overhaul/breakdown.json:4396,4484,5089,5133` | lines 4396, 4484 and 5089 copy descriptions of terminal tracker issues, which keep their text (DEC-01); line 5133 is the footprint of issue 103a792a, whose contract names the pre-move location |
 | `dev/active/fa787f85-documentation-overhaul/migration/manifest.toml` (rows 23-51 and `inbound` fields) | rows key on the `crates/gf2-core/` paths |
 | `dev/active/fa787f85-documentation-overhaul/103a792a-legacy-move.md` | this record names the moved paths |
