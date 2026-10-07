@@ -40,7 +40,7 @@ python3 contrib/gates/docs-mechanical.py
 
 | Holder | Disposition |
 | --- | --- |
-| Document reference of `@/issue/b117c95e` (no commit pin) | Names the archived `talk.html`, `presentation`, label `gf2-core SOTA closure deck (epic 97bf0879)` |
+| Document reference of `@/issue/b117c95e` | Names the archived `talk.html` at a commit pin, `presentation`, label `gf2-core SOTA closure deck (epic 97bf0879)`; the pin keeps the preview of `jit archive container 97bf0879 --json` eligible |
 | Asset digests inside that reference | Follow the reference to the archived file; the archive holds the same bytes for `base.css` and `themes/rust.css` |
 | Digest pins, code and script consumers | None names the copy path (command 7) |
 | Manifest | One `deletion` row per removed file, status `complete` |
