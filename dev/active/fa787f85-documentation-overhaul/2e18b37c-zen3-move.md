@@ -22,9 +22,8 @@
 
 ## Baseline and repeat
 
-Baseline source: `6e05ccb79`. Repeat source: `2f81ba52e`; the commit after it
-adds records, raw outputs and scripts of `R` alone. Command, run from the
-repository root:
+Baseline source: `6e05ccb79`. Repeat source: `2f81ba52e`. Command, run from
+the repository root:
 
 ```
 R/2e18b37c-checks.sh state|builds|root|selfchecks|ci-step|regen <file>
@@ -47,20 +46,21 @@ committed lockfile keeps its bytes.
 
 ## Regenerated records
 
-| Committed record | Writer | Baseline | Repeat |
+`2e18b37c-regen-after.txt` is the listing on the tree of `78d74ddb3`.
+
+| Committed record | Writer | Baseline | Tree of `78d74ddb3` |
 |---|---|---|---|
 | `dev/bench_results/19513245/r1-consumer-profile/profile-summary.md` | `19513245/survey/summarize-profile.py` | `same` | `same` |
 | `a203a23c/timing/timing.json` | `a203a23c/timing/measure.py --assess` | `same` | `same` |
-| `a203a23c/timing/timing-tmpfs-superseded.json` | `measure.py --assess` | 12 lines differ | 12 lines differ (D4) |
-| six `19513245/addendum-v4-*.json` | `make-addenda.py`, `freeze-confirmations.sh`, at the frozen times the addenda state | 2 lines differ in each: line 37 of `make-addenda.py` in the form of `552a0548d` | `same` since `06fe749d3` |
-| three `19513245/confirmation-derivation-*.txt` | `freeze-confirmations.sh` | `same` | 2 lines differ in each (D2) |
+| `a203a23c/timing/timing-tmpfs-superseded.json` | `measure.py --assess` | 12 lines differ | 18 lines differ: D4 and the harness path of `measure.py:360,766` |
+| six `19513245/addendum-v4-*.json` | `make-addenda.py`, `freeze-confirmations.sh`, at the frozen times the addenda state | 2 lines differ in each: line 37 of `make-addenda.py` in the form of `552a0548d` | `same` |
+| three `19513245/confirmation-derivation-*.txt` | `freeze-confirmations.sh` | `same` | `same` |
 
 ## Divergences
 
 | Id | Divergence | Tracking |
 |---|---|---|
 | D1 | `cargo +1.95.0 fmt --check` exits 1 in `E/19513245/survey/consumer` at `df7b52dd6`, in `src/bin/consumer-profile.rs`, a pure rename; it exits 0 in the other two harness crates | -> 3de8d0f3 (jit issue show 3de8d0f3) |
-| D2 | `freeze-confirmations.sh` passes the addendum path under `E` to the `c7113c5a` freezer, which writes it into the line `confirmation addendum <path>` of each derivation record; the three committed records state the flat path and keep their bytes | -> 8163dacd (jit issue show 8163dacd) |
 | D3 | `19513245/survey/make-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/field/vec.rs:663` lacks the fragment of the claim `axpy-signature` | -> d12e9ded (jit issue show d12e9ded) |
 | D4 | `measure.py --assess` on `timing-tmpfs-superseded.json` wraps the two withdrawn scheduling statements a second time | -> c9920dc6 (jit issue show c9920dc6) |
 
@@ -77,19 +77,16 @@ committed lockfile keeps its bytes.
 The message of `df7b52dd6` lists each path-text edit per entry at file:line
 and states that `RESTORE_PATH` keeps its text. The lines of the `19513245`
 scripts that name the `6c6b09b1` and `c7113c5a` entries carry the path under
-`E` since `552a0548d`, except `make-addenda.py:37`.
+`E`.
 
 | Check | Result | Does not establish |
 |---|---|---|
 | `bash -n` and `python3 -m py_compile` of each shell and Python script of the three entries at `df7b52dd6` | pass | behaviour of the scripts the regeneration listing omits |
-| table "Regenerated records" | each record that is `same` at the baseline is `same` at the repeat, except the three of D2 | |
+| table "Regenerated records" | each record that is `same` at the baseline is `same` on the tree of `78d74ddb3` | |
 
 | Literal that keeps the flat path | Class | Ground |
 |---|---|---|
 | `E/a203a23c/timing/measure.py:99` (`RESTORE_PATH`), `:7`, `:946`; `E/a203a23c/timing/README.md:6` | `revision-path` | path of the restoration tool at commit `76812a4e6` and its parent, which `measure.py` reads with `git show <revision>:<path>` |
-| `E/a203a23c/timing/measure.py:360,766` | `record-text` | text of `timing.json`: with the path under `E` in line 360, `--assess` writes a record that differs in lines 30 and 36 |
-| `E/19513245/survey/summarize-profile.py:67,176` | `record-text` | text of `profile-summary.md`, whose SHA-256 `E/reviews/19513245-r2.md` holds |
-| `E/19513245/survey/make-addenda.py:37` | text of the six frozen addenda | each receipt of `dev/bench_results/19513245/` pins its addendum; the line names the `6c6b09b1` entry and lies outside the scan of "Flat paths that stay" |
 
 ## Generated files and byte-fixed files (REQ-07)
 
@@ -121,11 +118,10 @@ adds none: that file names none of the three entries.
 
 ## Flat paths that stay
 
-`R/2e18b37c-remaining.sh <outfile>` classifies each line of a tracked file
-outside `.jit/` and outside the `2e18b37c-` files of `R` that holds
-`dev/active/<entry>` for one of the three entries; `2e18b37c-remaining.txt`
-is its output at `2f81ba52e`, with the file and line count of each class, and
-holds no line of the class `unclassified`.
+`R/2e18b37c-remaining.sh <outfile>` classifies each line of a tracked file in
+the scope its header states that holds `dev/active/<entry>` for one of the
+three entries; `2e18b37c-remaining.txt` is its output, with the file and line
+count of each class, and holds no line of the class `unclassified`.
 
 | Class | Ground |
 |---|---|
@@ -134,12 +130,11 @@ holds no line of the class `unclassified`.
 | `data-record` | JSON and text files: producing manifest, source evidence, derivation, conformance, timing, restoration, re-evaluation and validation records of the entries, `E/428f2f6b/inventory-c077a88b.json` and `E/63bad95d/route-inventory.json`, which keep their bytes |
 | `epic-record` | records and raw outputs of other units in `R`; each describes the tree of the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
 | `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
-| `tracker-state` | `E/progress.json` |
 | `bench-window` | `E/bench-window/queue.tsv:19`; the job key hashes the command text |
 | `queue-quote` | `E/19513245/findings.md:570` quotes the command of that queue line |
 | `generated-table` | `E/63bad95d/route-inventory.md`, output of `survey/make-route-inventory.py` beside `route-inventory.json` |
 | `session-record` | `E/handoff-16.md` and four files of `E/reviews/`: dated session and review-round records, which the dispatch of this unit excludes from editing |
-| `revision-path`, `record-text` | table "Scripts" |
+| `revision-path` | table "Scripts" |
 
 Tracker files under `.jit/` are outside the scan: they are tracker state.
 
@@ -167,7 +162,7 @@ nothing for the three entries: the flat directories hold no ignored file.
 | REQ-01 | table "Entries"; `git ls-files dev/active/<entry>` prints nothing for each entry at `df7b52dd6` | |
 | REQ-02 | row `2e18b37c-root-before.txt`; `06fe749d3` | a profile session |
 | REQ-03 | row `2e18b37c-builds-before.txt`; section "Harness crates"; message of `df7b52dd6` | test targets, `--locked` resolution, formatting (D1) |
-| REQ-04 | section "Scripts"; message of `df7b52dd6`, lists per entry | four literals keep the flat path as record text, and D2 follows from the path text of `freeze-confirmations.sh:26` |
+| REQ-04 | section "Scripts"; message of `df7b52dd6`, lists per entry | |
 | REQ-05 | `E/a203a23c/timing/measure.py:99`; message of `df7b52dd6` | |
 | REQ-06 | rows `2e18b37c-selfchecks-before.txt` and `2e18b37c-ci-step-before.txt` | |
 | REQ-07 | sections "Generated files and byte-fixed files" and "Flat paths that stay"; message of `2f81ba52e` | the session records of `E` keep their citations |
