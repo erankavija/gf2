@@ -73,21 +73,20 @@ dev/active/f547c394 dev/active/bdc507a3` prints nothing.
 ## Verdicts (REQ-04)
 
 `5a25717c-verdict-baseline.md`, section "Repeat at the 602652bf entry move",
-states the command and the two commits: 151 receipts, empty `diff`.
+states the command and the two commits: 151 receipts, empty `diff`. Section
+"Repeat at the link and literal edits" states the repeat at `78d74ddb3`.
 
 ## Frozen documents (REQ-06)
 
-| Document | Digest at | Relative links that leave the entry and do not resolve |
-|---|---|---|
-| `E/f547c394/protocol.md` | `dev/bench_results/00dd43c3/v4-r1-confirmation/receipt.json:2324` | 1 |
-| `E/f547c394/protocol-v1.md` | `dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot/receipt.json:27` | 1 |
-| `E/f547c394/amendment-v4.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9659` | 1 |
+| Document | Digest at |
+|---|---|
+| `E/f547c394/protocol.md` | `dev/bench_results/00dd43c3/v4-r1-confirmation/receipt.json:2324` |
+| `E/f547c394/amendment-v4.md` | `dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json:9659` |
 
-The three links are the rows of the third table of
-`8f61d6de-baseline-findings.md`. The link
-`../bdc507a3/verdict-preservation.json` of `amendment-v4.md` resolves. The
-second table of that record holds 11 rows: the seven rows with a target
-below `../f547c394/` are removed in `6fdb776f7`.
+The relative links of these documents that leave the entry and do not
+resolve are the rows of the third table of `8f61d6de-baseline-findings.md`.
+The link `../bdc507a3/verdict-preservation.json` of `amendment-v4.md`
+resolves.
 
 `git diff -M --name-status deb8854e5 6fdb776f7` restricted to `*.json`,
 `*.jsonl`, `*.txt`, `*.tsv` and `*.log` lists three files below `R100`: the
@@ -106,30 +105,29 @@ two closures and `schema-versions.json`.
 `dev/active/**/*.md`. The gate does not check a relative path inside a JSON
 string.
 
-`R/602652bf-remaining.sh <outfile>` classifies each tracked file outside
-`.jit/` and outside the `602652bf-` files of `R` that holds
-`dev/active/f547c394` or `dev/active/bdc507a3`; `602652bf-remaining.txt` is
-its output at `8ec2a4abe` and holds no line of the class `unclassified`.
+`R/602652bf-remaining.sh <outfile>` classifies each tracked file in the
+scope its header states that holds `dev/active/f547c394` or
+`dev/active/bdc507a3`; `602652bf-remaining.txt` is its output, with the file
+and line count of each class, and holds no line of the class `unclassified`.
 
-| Class | Files | Lines | Ground |
-|---|---|---|---|
-| `snapshot` | 490 | 989 | receipt `inputs/` snapshots |
-| `receipt-directory` | 347 | 591 | receipts, logs, launch scripts and records under `dev/bench_results/` |
-| `data-record` | 21 | 281 | JSON, TSV, text and log files: seven plans of the entry, the receipt-pinned `dvb-producing-inputs.json`, and tool output at the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
-| `line-qualified-record` | 5 | 262 | `findings.md`, two `research-r3-*-resolutions.md` and two `rework-validation*.md` files of the entry: command transcripts and tables whose header reads "file:line at HEAD" or "committed tree"; the same `git log` command names the commit |
-| `manifest` | 1 | 166 | `path`, `consumers` and `inbound` fields of the migration manifest |
-| `epic-record` | 18 | 111 | records and raw outputs of other units of this epic; the same `git log` command names the commit each describes |
-| `generated-table` | 2 | 16 | `S/mid-range-tables.md`, `publication-tables.md`: the source path a receipt records for its protocol pin |
-| `tracker-state` | 4 | 12 | `progress.json` of `E` and `R`; `breakdown.json` of `R` and of `c04dd4ac-zen3-shifts-and-permutations` |
-| `record-text` | 2 | 4 | `make-voided-attempt.py:94-95`, `make-voided-attempt-record.py:49-50` of `c04dd4ac-zen3-shifts-and-permutations/survey`: the `rule` text of `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json` and `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json` |
-| `frozen-document` | 3 | 3 | link text in the three addenda of `S` that `f79bcba3-zen3-move.md` lists with their digest pins |
-| `pinned-script` | 1 | 1 | comment at `E/26465e6c/superseded/v1/survey/record-provenance.sh:6`; digest at `E/26465e6c/superseded/v1/survey/arm-provenance.json:45` |
-| `commit-permalink` | 1 | 1 | `docs/reference/performance-evidence.md:19`: URL of the protocol at commit `6776fe30e` |
+| Class | Ground |
+|---|---|
+| `snapshot` | receipt `inputs/` snapshots |
+| `receipt-directory` | receipts, logs, launch scripts and records under `dev/bench_results/` |
+| `data-record` | JSON, TSV, text and log files: seven plans of the entry, the receipt-pinned `dvb-producing-inputs.json`, and tool output at the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
+| `line-qualified-record` | `findings.md`, two `research-r3-*-resolutions.md` and two `rework-validation*.md` files of the entry: command transcripts and tables whose header reads "file:line at HEAD" or "committed tree"; the same `git log` command names the commit |
+| `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
+| `epic-record` | records and raw outputs of other units of this epic; the same `git log` command names the commit each describes |
+| `generated-table` | `S/mid-range-tables.md`, `publication-tables.md`: the source path a receipt records for its protocol pin |
+| `tracker-state` | `R/breakdown.json` |
+| `frozen-document` | link labels in the three addenda of `S` that `f79bcba3-zen3-move.md` lists with their digest pins |
+| `pinned-script` | comment at `E/26465e6c/superseded/v1/survey/record-provenance.sh:6`; digest at `E/26465e6c/superseded/v1/survey/arm-provenance.json:45` |
+| `commit-permalink` | `docs/reference/performance-evidence.md:19`: URL of the protocol at commit `6776fe30e` |
 
 Tracker files under `.jit/` are outside the scan: they are tracker state.
-The classes `line-qualified-record`, `epic-record`, `record-text` and
-`commit-permalink` are outside the grounds the unit's assignment lists; the
-return of the unit raises them for a ruling.
+The classes `line-qualified-record`, `epic-record` and `commit-permalink`
+are outside the grounds the unit's assignment lists; the return of the unit
+raises them for a ruling.
 
 ## Manifest and tracker (REQ-02, REQ-05, REQ-07)
 
