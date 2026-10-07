@@ -63,8 +63,8 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 - D-26: JIT `managed_paths` may be expanded temporarily to cover legacy buckets needed for archival. The final policy contains no obsolete managed path.
 - D-27: Operational research directories consumed by scripts, CI or code remain under `dev/`: `benchmarks`, `bench_results`, `campaigns`, `reference_data`, `research`, `scripts`, `simulation_results`, `studies`, and `tools`. Their loose narrative Markdown is archived or relocated.
 - D-28: `dev/plans`, `dev/presentations` and `dev/sessions` (session notes; planner default during epic planning) are eliminated through JIT archives, legacy archival, or purpose-specific relocation. The final `dev/` top level contains no obsolete documentation bucket.
-- D-29: A complete migration manifest records every pre-overhaul artifact and its disposition. A script monitors migration progress against that manifest.
-- D-30: The progress script is transient. Its removal after the final complete migration check is the work of `af84619e`; lasting enforcement comes from invariants and review gates rather than a frozen migration inventory.
+- D-29: A complete migration manifest, [migration/manifest.toml](migration/manifest.toml), records every pre-overhaul artifact and its disposition.
+- D-30: The progress script is transient: the tree holds none, and [af84619e-final-check.txt](af84619e-final-check.txt) is its final report. Lasting enforcement comes from invariants and review gates rather than a frozen migration inventory.
 - D-31: Durable documentation rules live as project-scoped JIT invariants. One-time migration outcomes live as addressable epic requirements.
 - D-32: gf2 follows just-in-time's enforcement architecture: a registry-first invariant source, deterministic projection into `AGENTS.md`, a documentation-impact review grounded in canonical policy, and mechanical checks for links, citations, and projection freshness.
 - D-33: The documentation review is automated. It applies an issue-scoped impact cone and a holistic container review.
