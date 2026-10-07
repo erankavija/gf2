@@ -1,0 +1,10 @@
+path	decision	ground	holders
+dev/benchmarks/gf2-sim/gpu-bch-syndrome-receipt.md	moved	unheld	
+dev/benchmarks/gf2_algebra_permanent/README.md	retained	archive-link	dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/gf2_algebra_permanent/README.md:97 dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:124 dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:162 dev/archive/ae82bd73-gf2-algebra-permanent/plans/a9e461de/s5_gpu_crossover.md:154
+dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.md	retained	preregistration	dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md:10
+dev/benchmarks/permanent_campaign/determinant-cost-all-cells.md	retained	preregistration	dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v4.md:10 dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md:10
+dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v3.md	retained	preregistration	dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v4.md:10 dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md:10
+dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v4.md	retained	preregistration	dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md:10
+dev/research/perm_uniformity_gpu/README.md	held	container-plan	
+dev/research/permanent_gpu_crossover/README.md	held	container-plan	
+dev/research/permanent_wave_gpu/README.md	retained	receipt-link	dev/studies/047b62ed/receipts.md:735 dev/studies/6c7fcb38/receipts.md:916 dev/studies/6c7fcb38/receipts.md:1571 dev/studies/91605d4d/receipts.md:868
