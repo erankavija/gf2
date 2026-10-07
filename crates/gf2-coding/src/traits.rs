@@ -1695,7 +1695,13 @@ pub trait SoftDecoder {
     }
 
     /// Decodes and returns the bits with decoder metadata; the default
-    /// reports [`DecoderResult::success`].
+    /// reports [`DecoderResult::success`]: one iteration, convergence and a
+    /// passed syndrome check, whatever the word. An implementer whose
+    /// `decode_soft` does not find a codeword reports its own metadata:
+    /// [`LdpcDecoder`](crate::ldpc::LdpcDecoder) and
+    /// [`GldpcDecoder`](crate::gldpc::GldpcDecoder) report zero iterations and
+    /// the parity test of the hard decisions, and the OSD and OrbGrand
+    /// decoders report their search outcome.
     ///
     /// # Panics
     ///
