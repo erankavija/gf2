@@ -36,22 +36,27 @@ rows from the conservative threshold upward), while the production selector
 sends those strides to the SIMD lane (`matvec-lane-entry`). The largest
 deficit of the SIMD lane is the row one word below the conservative threshold.
 
-Two records bear on the same boundary and do not agree with this sweep
-stride for stride:
+Two records under the frozen protocol bear on the same boundary:
 
-- the pilot of `4337c02e` (allocated whole-`matvec`, protocol version 4) is
-  exploratory, and its confirmation receipt is rejected by acceptance, so the
-  protocol confirms neither lane at any stride;
+- `4337c02e` (allocated whole-`matvec`, protocol version 4). Its confirmation
+  receipt is rejected by acceptance, so no row is confirmatory; its rows are
+  descriptive estimates
+  (`dev/active/1a379447-zen3-cpu-performance/4337c02e/outcome.md`, *Recorded
+  cell outcomes*, with the figures in `tables.md` beside it). They agree with
+  this sweep in direction at the ragged strides that record names for the
+  scalar lane, record no material difference at the strides it lists as such,
+  and contradict this sweep at the one stride where that record has the SIMD
+  lane ahead and this sweep's row has the scalar lane ahead;
 - the exploratory rows of `2037941f-dense-allocated-matvec`, which the
   [route inventory](route-inventory.md#evidence-in-hand-per-selector) lists
   for this selector.
 
-The contradiction is recorded here and not resolved: the threshold grid ends
-at its largest swept stride, a retained threshold cannot express "scalar at
-every stride", and no accepted protocol confirmation exists. The selector
-keeps its value. Whether the SIMD row-parity lane should remain on the
-`matvec` route at all is outside this issue's selector ownership (REQ-12
-limits it to calibrating selectors) and is reported to the lead.
+The contradiction is recorded and not resolved here. The recorded strides of
+neither measurement form one interval above the threshold, a retained
+threshold cannot express "scalar at every stride", and no accepted protocol
+confirmation exists, so the selector keeps its value. The remaining gap of the
+SIMD lane at ragged strides is a kernel matter outside this issue's selector
+ownership (REQ-12) and is reported to the lead.
 
 ## F-03: the bit-backend threshold is the profile's one changed baked selector
 
