@@ -15,7 +15,7 @@ from pathlib import Path
 STAGE = "dev/bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned"
 OUTPUT = "dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json"
 LEDGER = (
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/"
+    "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/"
     "shift-profile-trial-ledger.jsonl"
 )
 SUMMARY = (
@@ -40,14 +40,14 @@ DEFECT = (
     "not in the runner, the transport or the plan."
 )
 RESOLUTION = (
-    "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json records "
+    "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json records "
     "the arm, rebuilt from the corrected request mirror, completing the canonical "
     "child-v2 handshake and the result framing under the runner's own encoder, parser "
     "and child environment, in the untimed validation role on every frozen cell."
 )
 RULE = (
-    "dev/active/f547c394/protocol.md, the voided-attempt paragraph of the "
-    "family-ledger section; dev/active/f547c394/amendment-v4.md records the entry."
+    "dev/active/1a379447-zen3-cpu-performance/f547c394/protocol.md, the voided-attempt paragraph of the "
+    "family-ledger section; dev/active/1a379447-zen3-cpu-performance/f547c394/amendment-v4.md records the entry."
 )
 
 

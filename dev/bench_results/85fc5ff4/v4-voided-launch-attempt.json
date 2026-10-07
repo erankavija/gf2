@@ -5,7 +5,7 @@
     "family": "bitvec-residual-shift-profile",
     "campaign": "residual-shift-profile-85fc5ff4-v4",
     "protocol_version": 4,
-    "rule": "dev/active/f547c394/protocol.md, the voided-attempt paragraph of the family-ledger section; dev/active/f547c394/amendment-v4.md records the entry.",
+    "rule": "dev/active/1a379447-zen3-cpu-performance/f547c394/protocol.md, the voided-attempt paragraph of the family-ledger section; dev/active/1a379447-zen3-cpu-performance/f547c394/amendment-v4.md records the entry.",
     "rule_reading": "The family is exploratory-only, so its reservation spends zero comparisons under the ledger section's ordinary rule as well. Voiding changes only the chain the replacement attempt reserves on.",
     "stage": "dev/bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned",
     "addendum": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-addendum.json",
@@ -14,7 +14,7 @@
     "defect_diagnostics": [
       "shifts: fresh tuning stdin is not canonical compact JSON\n"
     ],
-    "resolution": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json records the arm, rebuilt from the corrected request mirror, completing the canonical child-v2 handshake and the result framing under the runner's own encoder, parser and child environment, in the untimed validation role on every frozen cell.",
+    "resolution": "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/shift-profile-smoke.json records the arm, rebuilt from the corrected request mirror, completing the canonical child-v2 handshake and the result framing under the runner's own encoder, parser and child environment, in the untimed validation role on every frozen cell.",
     "results_read": false,
     "results_read_detail": "No cell reached a checkpoint and no execution produced a window: the first child of the first cell failed the handshake. No interval, decision or outcome of this attempt exists to be read, and none is quoted anywhere in this profile.",
     "abort": {
@@ -28,7 +28,7 @@
       "comparisons": 0,
       "candidates": [],
       "in_family_ledger": false,
-      "family_ledger": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
+      "family_ledger": "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
       "snapshot": "dev/bench_results/85fc5ff4/2026-09-16-85fc5ff4-residual-shift-profile-abandoned/inputs/trial-ledger.jsonl",
       "spends": "nothing: no comparison and no candidate attempt. Every cell of this family is exploratory, so the family's confirmatory budget is untouched and the replacement attempt reserves at sequence 0 on an empty chain."
     },
