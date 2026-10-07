@@ -969,7 +969,7 @@
      "short_id": "b5b336e5",
      "title": "Decouple the candidate scripts and move bc091474 under the zen3 epic dir",
      "classification": "implementation",
-     "status": "blocked"
+     "status": "review_passed"
     },
     {
      "id": "2e18b37c-22c7-46fa-bb57-42eee5353c0e",
@@ -1032,6 +1032,13 @@
      "id": "c852d9b2-3251-44c2-917f-00be035bbd07",
      "short_id": "c852d9b2",
      "title": "Verify links across the permanent surface and executed archives",
+     "classification": "implementation",
+     "status": "pending"
+    },
+    {
+     "id": "a0ec34f2-62b7-42ad-b922-44a7506ba50a",
+     "short_id": "a0ec34f2",
+     "title": "Bring the remaining migration manifest rows to a terminal state",
      "classification": "implementation",
      "status": "pending"
     }
@@ -1616,6 +1623,11 @@
    "id": "c3ef9ee7",
    "epic": "b4b4b9ee",
    "reason": "c04dd4ac make-shift-source-evidence.py exits 1 (found by cc060974)"
+  },
+  {
+   "id": "a0ec34f2",
+   "epic": "fa787f85",
+   "reason": "pending retained-operational, rewritten-topic and held archive rows have no executing task; af84619e REQ-01 needs every row terminal"
   }
  ],
  "escalations": [
@@ -2132,7 +2144,7 @@
   },
   {
    "issue": "56378e82",
-   "finding": "~40 source comments and crate docs cite 'CLAUDE.md §<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
+   "finding": "~40 source comments and crate docs cite 'CLAUDE.md \u00a7<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
    "disposition": "resolved: no CLAUDE.md or AGENTS.md section citation remains in Rust sources (scan 2026-10-04)"
   },
   {
@@ -2142,7 +2154,7 @@
   },
   {
    "issue": "12907582",
-   "finding": "Uncited feasibility/timing text not added by 12907582 remains in gf2-algebra: '~600 years'/'infeasible' (bipedal3_multiword.rs, bipedal5.rs:450, reference.rs:28), permanent_demo.rs:5 'headline speedup numbers' + dev/ CSV path, #[ignore ... (≈ 5 s)] in bipedal3.rs, narrowing narration bipedal3.rs:21,118.",
+   "finding": "Uncited feasibility/timing text not added by 12907582 remains in gf2-algebra: '~600 years'/'infeasible' (bipedal3_multiword.rs, bipedal5.rs:450, reference.rs:28), permanent_demo.rs:5 'headline speedup numbers' + dev/ CSV path, #[ignore ... (\u2248 5 s)] in bipedal3.rs, narrowing narration bipedal3.rs:21,118.",
    "disposition": "resolved: the feasibility and timing text is absent from Rust comments (scan 2026-10-04)"
   },
   {
@@ -2193,7 +2205,7 @@
   {
    "issue": "1fca3739",
    "finding": "perf-evidence-catalog.md read comparator ratios inverted.",
-   "disposition": "resolved: §6 correction appended (falsification-preserved)"
+   "disposition": "resolved: \u00a76 correction appended (falsification-preserved)"
   },
   {
    "issue": "629e0ff0",
@@ -2308,7 +2320,7 @@
   "Session 3 (2026-10-03): session 2 ended without a handoff; progress reconciled against JIT. Wave 6 = remaining decoupling tasks plus the 14 page/move tasks pulled forward from wave 7 (no deps between them); 5a25717c runs after 112f23c6 (shared root resolver). 153297cf (after 12907582) and 3fd3db5e (fd9d5416 still in progress, hard REQ-01) moved to wave 7.",
   "Owner instruction 2026-10-03: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff after waves 6 and 7 finish, or when only owner-blocked work remains. Check workers every 30 min.",
   "Worker-prompt lessons (binding for dispatch prompts):- Mathematical notation in prose uses LaTeX per `.jit/reference/content-standards.md` (`$\\mathrm{GF}(2^m)$`, `$O(n^2)$`, `$r < 1$`); code identifiers stay in code spans. - Every command uses the AGENTS.md forms: `./scripts/cargo-budget.sh cargo ...`; tests `./scripts/cargo-budget.sh --test cargo nextest run ...`. - External works and standards cite registry keys `@/citation/<key>` from `.jit/references.toml` (resolve with `jit item show`). - No timing, speed or feasibility statement without a commit-pinned receipt; performance figures appear only on `docs/reference/performance-evidence.md`, and other pages link its anchors. - State exactly what a check or guarantee establishes (probabilistic vs exact; which binary flushes on which signal); verify each behavioral claim against code or by running it. - A universal statement (\"every claim\", \"all paths\") must hold for every case on the page. - Records hold no hand-copied counts: commit raw outputs as files and cite them with the exact commands; show equality with a `diff` whose empty output the record states. - Facts owned by another page are linked, not restated (installation and per-crate features: `docs/reference/supported-configurations.md`; architecture: `docs/concepts/acceleration-architecture.md`; field families: `docs/concepts/finite-field-arithmetic.md`). - Crate READMEs follow the rules in `the README rules note below` and state capabilities per area naming at most public modules, never type or function inventories. - Index rows in `docs/index.md` go into the section's existing `| Page | ... |` table. - Digest-pinned inputs (protocols, preregistrations, addenda, schemas, receipts, `inputs/` snapshots) keep their bytes. - Never commit `__pycache__` or build output.",
-  "README rules: R1 Rendered Rustdoc link: `[Rustdoc](../../target/doc/<crate_underscored>/index.html)` next to `./scripts/cargo-budget.sh cargo doc -p <crate> --no-deps`. A `src/lib.rs` link alone fails REQ-03. R2 Feature table: keep one line per feature, but state its authority right above it: \"The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.\" (@/inv/single-source-prose; an uncited manual inventory fails). R3 Module/identifier names: name only public paths (`gf2_core::BitVec`, public modules). Private modules re-exported at the root (e.g. gf2-core `bitvec`, `bitslice`) are not \"modules\" to an adopter; check `pub mod` vs `mod` in src/lib.rs. R4 Installation: no layout-dependent `path = \"crates/<crate>\"` snippet. Link the single installation source instead: `[installation](../../docs/reference/supported-configurations.md#installation)` (the page lands on main from branch worktree-agent-2ff9953a; docs-mechanical may flag the link until it merges — expected). R5 Commands in AGENTS.md form only (`./scripts/cargo-budget.sh cargo ...`, tests `./scripts/cargo-budget.sh --test cargo nextest run -p <crate> --cargo-profile ci-test --profile ci`). R6 External works and standards cite `@/citation/<key>` from .jit/references.toml.",
+  "README rules: R1 Rendered Rustdoc link: `[Rustdoc](../../target/doc/<crate_underscored>/index.html)` next to `./scripts/cargo-budget.sh cargo doc -p <crate> --no-deps`. A `src/lib.rs` link alone fails REQ-03. R2 Feature table: keep one line per feature, but state its authority right above it: \"The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.\" (@/inv/single-source-prose; an uncited manual inventory fails). R3 Module/identifier names: name only public paths (`gf2_core::BitVec`, public modules). Private modules re-exported at the root (e.g. gf2-core `bitvec`, `bitslice`) are not \"modules\" to an adopter; check `pub mod` vs `mod` in src/lib.rs. R4 Installation: no layout-dependent `path = \"crates/<crate>\"` snippet. Link the single installation source instead: `[installation](../../docs/reference/supported-configurations.md#installation)` (the page lands on main from branch worktree-agent-2ff9953a; docs-mechanical may flag the link until it merges \u2014 expected). R5 Commands in AGENTS.md form only (`./scripts/cargo-budget.sh cargo ...`, tests `./scripts/cargo-budget.sh --test cargo nextest run -p <crate> --cargo-profile ci-test --profile ci`). R6 External works and standards cite `@/citation/<key>` from .jit/references.toml.",
   "Session 4 (2026-10-03): owner interviewed on all ten open questions; rulings are in escalations. Standing rules: sweep units must be net-negative in lines per unit unless each added line is a missing panic, safety or contract statement listed in the unit's record; models: opus for Rust, scripts, permanent prose and reworks, sonnet for moves, inventories and records, no fable; the lead never pushes.",
   "README rules superseded 2026-10-03: a crate README states purpose and when to choose the crate, plus links (docs/index.md, owning reference/concepts pages, generated Rustdoc link with its cargo doc command). No capability list, feature table or module inventory (R2 and R3 lapse; R1, R4, R5, R6 stand).",
   "Sweep dispatch: per-unit briefs are generated from the session scratchpad template (hard net-negative rule, token-diff proof, planned-work matching). Wave A (67b5d1d8, ee2b0c0c, f46046f0, 3aef9e33, 9f47bb94) removed about 7,750 net lines; each unit's commit body lists justified pattern lines, planned-work issue ids and added contracts. Sweep follow-ups filed under b4b4b9ee: c04d3f1c, 02ed3c51, 8342487d, ebd26779, 7c8ab1e2, bb64ee0e, bc4eb125, 1fe6e218, a44566c0, 2a9cc72c, 3464c241, a1e02780, d436dd5f, de0528d2.",
