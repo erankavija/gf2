@@ -22,10 +22,6 @@ use gf2_core::BitVec;
 
 use crate::parallel::{FrameOutcome, WorkerCtx};
 
-/// BP iteration count recorded for a frame whose decode returns no BBFRAME
-/// estimate.
-const DECODE_HARD_FAIL_ITERS: u64 = 50;
-
 /// A DVB-T2 BICM-AWGN single-frame simulator for one MODCOD and Es/N0 point.
 ///
 /// [`DvbT2Concat`] holds its LDPC decoder behind a `Mutex`, so a simulator
@@ -216,8 +212,9 @@ impl DvbT2BicmFrameSim {
     /// because the dispatcher has already positioned that RNG. A frame is
     /// errored iff any information bit differs. A non-converged LDPC decode
     /// keeps its best-effort BBFRAME estimate, and `iterations` is the BP
-    /// iteration count on both the converged and the non-converged arm. A
-    /// decode that yields no estimate counts all `k` bits as errors.
+    /// iteration count on both the converged and the non-converged arm. The
+    /// bit-error count is the Hamming distance between the transmitted
+    /// BBFRAME and that estimate.
     ///
     /// # Complexity
     ///
@@ -241,26 +238,20 @@ impl DvbT2BicmFrameSim {
             },
         );
 
-        self.outcome_from_decode(&message, self.codec.decode_soft_counted(&llrs))
-    }
-
-    /// Scores `message` against a decode result. A result carrying no BBFRAME
-    /// estimate (an error other than [`ConcatError::LdpcDecodeFailed`]) counts
-    /// every information bit as errored and records
-    /// [`DECODE_HARD_FAIL_ITERS`] iterations.
-    fn outcome_from_decode(
-        &self,
-        message: &BitVec,
-        result: Result<(BitVec, usize), ConcatError>,
-    ) -> FrameOutcome {
-        let (bit_errors, iterations) = match result {
+        let (decoded, iterations) = match self.codec.decode_soft_counted(&llrs) {
             Ok((bbframe, iters))
             | Err(ConcatError::LdpcDecodeFailed {
                 bbframe,
                 iterations: iters,
-            }) => (count_bit_errors(message, &bbframe) as u64, iters as u64),
-            Err(_) => (self.k as u64, DECODE_HARD_FAIL_ITERS),
+            }) => (bbframe, iters as u64),
+            // `DvbT2Concat::decode_soft_counted` returns only the two arms
+            // above; `Unsupported` is produced by `DvbT2Concat::new` alone.
+            Err(ConcatError::Unsupported { .. }) => {
+                unreachable!("decode_soft_counted does not return Unsupported")
+            }
         };
+
+        let bit_errors = count_bit_errors(&message, &decoded) as u64;
         FrameOutcome {
             errored: bit_errors > 0,
             iterations,
@@ -363,26 +354,35 @@ mod tests {
     use std::num::NonZeroUsize;
 
     #[test]
-    fn decode_without_estimate_counts_all_info_bits_as_errors() {
+    fn simulate_frame_scores_a_non_converged_decode_by_hamming_distance() {
         let sim = DvbT2BicmFrameSim::new(
             CodeRate::Rate1_2,
             DvbT2Modulation::Qam16,
-            6.25,
+            -5.0,
             DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
             DemapMethod::ExactLogMap,
         );
-        // An all-zero message makes any nonzero count attributable to the
-        // failure policy rather than to bit agreement with the empty vector.
-        let message = BitVec::zeros(sim.k());
-        let failure = ConcatError::Unsupported {
-            frame_size: FrameSize::Normal,
-            code_rate: CodeRate::Rate1_2,
+        let outcome = sim.simulate_frame(0, &mut WorkerCtx::new(11, 0, 0));
+
+        // Replay the same RNG stream through the preparation half and the
+        // codec, which reports the failure explicitly.
+        let prep = sim.prepare_frame(0, &mut WorkerCtx::new(11, 0, 0));
+        let Err(ConcatError::LdpcDecodeFailed {
+            bbframe,
+            iterations,
+        }) = sim.codec.decode_soft_counted(&prep.llrs)
+        else {
+            panic!("a frame at -5 dB Es/N0 must not converge");
         };
-        let outcome = sim.outcome_from_decode(&message, Err(failure));
+        let expected = (0..sim.k())
+            .filter(|&i| prep.message.get(i) != bbframe.get(i))
+            .count() as u64;
+
         assert!(outcome.errored);
-        assert_eq!(outcome.bit_errors, sim.k() as u64);
+        assert!(outcome.bit_errors > 0);
+        assert_eq!(outcome.bit_errors, expected);
+        assert_eq!(outcome.iterations, iterations as u64);
         assert_eq!(outcome.info_bits, sim.k() as u64);
-        assert_eq!(outcome.iterations, DECODE_HARD_FAIL_ITERS);
     }
 
     #[test]
