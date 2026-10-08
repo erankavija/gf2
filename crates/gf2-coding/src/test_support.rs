@@ -1765,3 +1765,42 @@ fn assert_padding_is_zero(words: &[u64], length: usize, what: &str) {
         }
     }
 }
+
+/// Decodes `blocks` through a pooled [`LdpcBatchDecoder`](crate::ldpc::LdpcBatchDecoder)
+/// of message words with `cap` frames per wave, mapping each trait outcome to
+/// a [`DecoderResult`](crate::DecoderResult).
+pub fn pooled_decode(
+    code: &crate::ldpc::LdpcCode,
+    blocks: &[Vec<crate::llr::Llr>],
+    cap: usize,
+) -> Vec<crate::DecoderResult> {
+    use crate::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder};
+    use crate::llr::Llr;
+    use crate::pooled::PooledBatchDecoder;
+    use crate::traits::{BatchSoftDecoder, DecodeOutcome};
+    use gf2_core::BitVec;
+
+    let mut pool = PooledBatchDecoder::new(|| {
+        LdpcBatchDecoder::new(
+            code.clone(),
+            DecoderConfig::default(),
+            cap,
+            DecodedWord::Message,
+        )
+    });
+    let views: Vec<&[Llr]> = blocks.iter().map(Vec::as_slice).collect();
+    let mut decoded = vec![BitVec::new(); blocks.len()];
+    let mut outcomes = vec![DecodeOutcome::default(); blocks.len()];
+    pool.decode_batch(&views, &mut decoded, &mut outcomes);
+    decoded
+        .into_iter()
+        .zip(outcomes)
+        .map(|(decoded_bits, outcome)| crate::DecoderResult {
+            decoded_bits,
+            iterations: outcome.iterations,
+            converged: outcome.converged,
+            syndrome_check_passed: outcome.syndrome_check_passed,
+            queries: outcome.queries,
+        })
+        .collect()
+}

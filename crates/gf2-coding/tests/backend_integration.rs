@@ -2,44 +2,14 @@
 
 use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
 use gf2_coding::bch::SystematicLayout;
-use gf2_coding::ldpc::{
-    DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode, LdpcDecoder, LdpcEncoder,
-};
+use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder};
 use gf2_coding::llr::Llr;
-use gf2_coding::pooled::PooledBatchDecoder;
+use gf2_coding::test_support::pooled_decode;
 use gf2_coding::traits::block::BlockEncoder as CanonicalBlockEncoder;
-use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeSoftDecoder};
-use gf2_coding::DecoderResult;
+use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::gf2m::Gf2mField;
 use gf2_core::BitVec;
-
-/// Decodes `blocks` through a pooled LDPC batch decoder of message words.
-fn pooled_decode(code: &LdpcCode, blocks: &[Vec<Llr>], cap: usize) -> Vec<DecoderResult> {
-    let mut pool = PooledBatchDecoder::new(|| {
-        LdpcBatchDecoder::new(
-            code.clone(),
-            DecoderConfig::default(),
-            cap,
-            DecodedWord::Message,
-        )
-    });
-    let views: Vec<&[Llr]> = blocks.iter().map(Vec::as_slice).collect();
-    let mut decoded = vec![BitVec::new(); blocks.len()];
-    let mut outcomes = vec![DecodeOutcome::default(); blocks.len()];
-    pool.decode_batch(&views, &mut decoded, &mut outcomes);
-    decoded
-        .into_iter()
-        .zip(outcomes)
-        .map(|(decoded_bits, outcome)| DecoderResult {
-            decoded_bits,
-            iterations: outcome.iterations,
-            converged: outcome.converged,
-            syndrome_check_passed: outcome.syndrome_check_passed,
-            queries: outcome.queries,
-        })
-        .collect()
-}
 
 #[test]
 fn test_ldpc_encoder_uses_backend_for_batch() {
