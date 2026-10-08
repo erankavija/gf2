@@ -610,6 +610,10 @@ impl Default for GldpcDecoderConfig {
     }
 }
 
+/// Iteration cap of `decode_soft` and `decode_soft_with_result` on
+/// [`GldpcDecoder`].
+pub const SOFT_DECODE_MAX_ITERATIONS: usize = 50;
+
 /// Belief-propagation decoder for QC-GLDPC codes with component SISO check nodes.
 ///
 /// Unlike standard LDPC BP decoding (where check nodes compute box-plus), GLDPC
@@ -619,6 +623,9 @@ impl Default for GldpcDecoderConfig {
 pub struct GldpcDecoder {
     code: QcGldpcCode,
     config: GldpcDecoderConfig,
+    /// Configuration of `component_sogrand`, from which `decode_soft` builds
+    /// its own decoder.
+    orbgrand_config: OrbGrandConfig,
     /// Current posterior beliefs for each variable node.
     beliefs: Vec<Llr>,
     /// Check-to-variable messages: check_to_var[check][position] -> Llr.
@@ -684,7 +691,7 @@ impl GldpcDecoder {
         let n = code.code_n();
 
         let h_matrix = code.component().h_matrix();
-        let orbgrand = OrbGrand::new(h_matrix, orbgrand_config);
+        let orbgrand = OrbGrand::new(h_matrix, orbgrand_config.clone());
         let component_sogrand = SoGrand::new(orbgrand);
 
         let check_to_var: Vec<Vec<Llr>> = code
@@ -714,6 +721,7 @@ impl GldpcDecoder {
         Self {
             code,
             config: decoder_config,
+            orbgrand_config,
             beliefs: vec![Llr::zero(); n],
             check_to_var,
             var_to_check,
@@ -787,25 +795,23 @@ impl SoftDecoder for GldpcDecoder {
     }
 
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-        assert_eq!(llrs.len(), self.n());
-        let mut decoded = BitVec::with_capacity(self.k());
-        for &sys_col in self.code.systematic_positions() {
-            decoded.push_bit(llrs[sys_col].hard_decision());
-        }
-        decoded
+        self.decode_soft_with_result(llrs).decoded_bits
     }
 
-    /// Reports no iteration; `converged` and `syndrome_check_passed` are the
-    /// parity test of the hard decisions of all `n` LLRs, of which the
-    /// returned word holds the systematic positions.
+    /// Reports the [`Self::decode_iterative`] result at
+    /// [`SOFT_DECODE_MAX_ITERATIONS`] of an equally configured decoder built
+    /// for the call.
+    ///
+    /// # Panics
+    ///
+    /// Panics as [`Self::decode_iterative`] does.
     fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
-        let decoded = self.decode_soft(llrs);
-        let mut hard = BitVec::with_capacity(self.n());
-        for &llr in llrs {
-            hard.push_bit(llr.hard_decision());
-        }
-        let is_codeword = self.code.is_valid_codeword(&hard);
-        DecoderResult::new(decoded, 0, is_codeword, is_codeword)
+        Self::with_config(
+            self.code.clone(),
+            self.orbgrand_config.clone(),
+            self.config.clone(),
+        )
+        .decode_iterative(llrs, SOFT_DECODE_MAX_ITERATIONS)
     }
 }
 

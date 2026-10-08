@@ -1698,10 +1698,10 @@ pub trait SoftDecoder {
     /// reports [`DecoderResult::success`]: one iteration, convergence and a
     /// passed syndrome check, whatever the word. An implementer whose
     /// `decode_soft` does not find a codeword reports its own metadata:
-    /// [`LdpcDecoder`](crate::ldpc::LdpcDecoder) and
-    /// [`GldpcDecoder`](crate::gldpc::GldpcDecoder) report zero iterations and
+    /// [`LdpcDecoder`](crate::ldpc::LdpcDecoder) reports zero iterations and
     /// the parity test of the hard decisions, the OSD and OrbGrand decoders
     /// report their search outcome, and
+    /// [`GldpcDecoder`](crate::gldpc::GldpcDecoder),
     /// [`Nr5gRateMatchedCode`](crate::ldpc::nr_5g::Nr5gRateMatchedCode) and
     /// [`Nr5gRateMatchedDecoder`](crate::ldpc::nr_5g::Nr5gRateMatchedDecoder)
     /// report the iterative decode that produced the word.
@@ -1748,11 +1748,10 @@ pub trait IterativeSoftDecoder: SoftDecoder {
 /// Every [`SoftDecoder`] is a batch decoder of granularity one that decodes
 /// each frame with [`SoftDecoder::decode_soft_with_result`], into words of
 /// [`SoftDecoder::soft_decoded_len`] bits. For
-/// [`LdpcDecoder`](crate::ldpc::LdpcDecoder) and
-/// [`GldpcDecoder`](crate::gldpc::GldpcDecoder) that path is their
-/// hard-decision `decode_soft`, which for `LdpcDecoder` returns all `n`
-/// codeword bits; [`IterativeBatchDecoder`] reaches their iterative decoding,
-/// into words of [`IterativeSoftDecoder::iterative_decoded_len`] bits.
+/// [`LdpcDecoder`](crate::ldpc::LdpcDecoder) that path is its hard-decision
+/// `decode_soft`, which returns all `n` codeword bits;
+/// [`IterativeBatchDecoder`] reaches its iterative decoding, into words of
+/// [`IterativeSoftDecoder::iterative_decoded_len`] bits.
 ///
 /// # Allocation
 ///

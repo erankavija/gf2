@@ -3,11 +3,9 @@
 //! `IterativeBatchDecoder` for the iterative ones.
 
 use gf2_coding::channel::AwgnChannel;
-use gf2_coding::gldpc::{GldpcDecoder, QcGldpcCode};
+use gf2_coding::gldpc::{self, GldpcDecoder, QcGldpcCode};
 use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
-use gf2_coding::ldpc::nr_5g::{
-    Nr5gRateMatchedCode, Nr5gRateMatchedDecoder, SOFT_DECODE_MAX_ITERATIONS,
-};
+use gf2_coding::ldpc::nr_5g::{self, Nr5gRateMatchedCode, Nr5gRateMatchedDecoder};
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc};
 use gf2_coding::linear::LinearBlockCode;
 use gf2_coding::llr::Llr;
@@ -168,18 +166,20 @@ fn rate_matched_nr_default_path_satisfies_the_batch_contract() {
     assert_default_path(decoder(), decoder(), &frames);
 }
 
-/// Asserts that the per-frame path of `decoder` reports the metadata and word
-/// of the iterative decode of `code`, over one converging and one capped frame.
-fn assert_nr_default_outcome_is_the_iterative_result<D: BatchSoftDecoder>(
-    code: &Nr5gRateMatchedCode,
+/// Asserts that the per-frame path of `decoder` reports the word and metadata
+/// of `iterative` at `cap`, over the frames of `encoder` at one converging and
+/// one capped noise deviation.
+fn assert_default_outcome_is_the_iterative_result<D: BatchSoftDecoder, I: IterativeSoftDecoder>(
+    encoder: &impl BlockEncoder,
     mut decoder: D,
+    mut iterative: I,
+    cap: usize,
 ) {
-    let codewords = random_codewords(code, 2);
+    let codewords = random_codewords(encoder, 2);
     let frames = noisy_frames(&codewords, &[0.5, 3.0]);
     let mut verdicts = Vec::new();
     for frame in &frames {
-        let expected = Nr5gRateMatchedDecoder::new(code.clone())
-            .decode_iterative(frame, SOFT_DECODE_MAX_ITERATIONS);
+        let expected = iterative.decode_iterative(frame, cap);
         let (word, outcome) = decode_one(&mut decoder, frame);
         assert_eq!(word, expected.decoded_bits);
         assert_eq!(outcome.iterations, expected.iterations);
@@ -189,7 +189,7 @@ fn assert_nr_default_outcome_is_the_iterative_result<D: BatchSoftDecoder>(
             expected.syndrome_check_passed
         );
         if !expected.converged {
-            assert_eq!(expected.iterations, SOFT_DECODE_MAX_ITERATIONS);
+            assert_eq!(expected.iterations, cap);
         }
         verdicts.push(expected.converged);
     }
@@ -199,16 +199,57 @@ fn assert_nr_default_outcome_is_the_iterative_result<D: BatchSoftDecoder>(
 #[test]
 fn rate_matched_nr_code_default_path_outcome_is_the_iterative_result() {
     let code = nr_code();
-    assert_nr_default_outcome_is_the_iterative_result(&code, code.clone());
+    assert_default_outcome_is_the_iterative_result(
+        &code,
+        code.clone(),
+        Nr5gRateMatchedDecoder::new(code.clone()),
+        nr_5g::SOFT_DECODE_MAX_ITERATIONS,
+    );
 }
 
 #[test]
 fn rate_matched_nr_decoder_default_path_outcome_is_the_iterative_result() {
     let code = nr_code();
-    assert_nr_default_outcome_is_the_iterative_result(
+    let decoder = || Nr5gRateMatchedDecoder::new(code.clone());
+    assert_default_outcome_is_the_iterative_result(
         &code,
-        Nr5gRateMatchedDecoder::new(code.clone()),
+        decoder(),
+        decoder(),
+        nr_5g::SOFT_DECODE_MAX_ITERATIONS,
     );
+}
+
+#[test]
+fn gldpc_default_path_outcome_is_the_iterative_result() {
+    let decoder = || GldpcDecoder::new(gldpc_code());
+    assert_default_outcome_is_the_iterative_result(
+        &gldpc_code(),
+        decoder(),
+        decoder(),
+        gldpc::SOFT_DECODE_MAX_ITERATIONS,
+    );
+}
+
+/// The per-frame path returns the sent message of a frame whose hard decision
+/// at the systematic positions is another word.
+#[test]
+fn gldpc_default_path_corrects_a_frame_its_hard_decision_gets_wrong() {
+    let code = gldpc_code();
+    let positions = code.systematic_positions();
+    let codewords = random_codewords(&code, SIGMAS.len());
+    let corrected = noisy_frames(&codewords, &SIGMAS)
+        .iter()
+        .zip(&codewords)
+        .filter(|(frame, codeword)| {
+            let sent = hard_decisions(&noiseless_frame(codeword), positions);
+            let (word, outcome) = decode_one(&mut GldpcDecoder::new(gldpc_code()), frame);
+            hard_decisions(frame, positions) != sent
+                && word == sent
+                && outcome.converged
+                && outcome.iterations > 0
+        })
+        .count();
+    assert!(corrected > 0);
 }
 
 #[test]
@@ -291,16 +332,6 @@ fn ldpc_default_path_is_the_hard_decision_and_the_adapter_iterates() {
     );
 }
 
-#[test]
-fn gldpc_default_path_is_the_hard_decision_and_the_adapter_iterates() {
-    let code = gldpc_code();
-    assert_default_path_is_the_hard_decision(
-        &code,
-        || GldpcDecoder::new(gldpc_code()),
-        code.systematic_positions(),
-    );
-}
-
 /// Asserts that the per-frame path reports no iteration and the parity test
 /// of the hard decisions of every frame, over a set holding frames on both
 /// sides of the test.
@@ -331,17 +362,6 @@ fn ldpc_default_path_outcome_is_the_parity_test_of_the_hard_decision() {
     assert_default_outcome_is_the_parity_test(
         &LdpcEncoder::new(code.clone()),
         || LdpcDecoder::new(code.clone()),
-        |word| code.is_valid_codeword(word),
-        code.n(),
-    );
-}
-
-#[test]
-fn gldpc_default_path_outcome_is_the_parity_test_of_the_hard_decision() {
-    let code = gldpc_code();
-    assert_default_outcome_is_the_parity_test(
-        &code,
-        || GldpcDecoder::new(gldpc_code()),
         |word| code.is_valid_codeword(word),
         code.n(),
     );
