@@ -899,6 +899,60 @@
      "title": "Route LDPC batch decoding to the AVX2 lanes by capability",
      "classification": "implementation",
      "status": "done. Session 32: merged at bb4e110da; cargo-ci, code-review, doc-review passed first round; review reviews/c317f5ac-r1.md"
+    },
+    {
+     "short_id": "391f5419",
+     "title": "Decode DVB-T2 stage batches through the batch decode stage",
+     "classification": "implementation",
+     "status": "in_progress: dispatched session 32 (opus) in agent-391f5419 from 2f6bf1b69"
+    },
+    {
+     "short_id": "9e0cd346",
+     "title": "Decode NR stage batches through the batch decode stage",
+     "classification": "implementation",
+     "status": "in_progress: dispatched session 32 (opus) in agent-9e0cd346 from 2f6bf1b69"
+    },
+    {
+     "short_id": "86d9260e",
+     "title": "Decode CPU LDPC stage batches through the batch decode stage",
+     "classification": "implementation",
+     "status": "in_progress: dispatched session 32 (opus) in agent-86d9260e from 2f6bf1b69"
+    },
+    {
+     "short_id": "e918a8ee",
+     "title": "Move the tests of the inherent LDPC batch functions to the batch trait",
+     "classification": "implementation",
+     "status": "in_progress: dispatched session 32 (sonnet) in agent-e918a8ee from 2f6bf1b69"
+    },
+    {
+     "short_id": "83ed701d",
+     "title": "Move the benchmarks of the inherent LDPC batch functions to the batch trait",
+     "classification": "implementation",
+     "status": "in_progress: dispatched session 32 (sonnet) in agent-83ed701d from 2f6bf1b69"
+    },
+    {
+     "short_id": "f5ae4c49",
+     "title": "Show parallel LDPC decoding through the batch trait in the how-to page",
+     "classification": "documentation",
+     "status": "in_progress: dispatched session 32 (sonnet) in agent-f5ae4c49 from 2f6bf1b69"
+    },
+    {
+     "short_id": "4de9d983",
+     "title": "Decode BLER sweep slices through the batch decoder trait",
+     "classification": "implementation",
+     "status": "pending: ready since c317f5ac closed; held for a second sub-wave (disk: about 100 GB free with six worktrees)"
+    },
+    {
+     "short_id": "feb60d0d",
+     "title": "Build the gf2 batch decoder benchmark arms",
+     "classification": "implementation",
+     "status": "pending: ready since c317f5ac closed; held for a second sub-wave (disk: about 100 GB free with six worktrees)"
+    },
+    {
+     "short_id": "aff59c3c",
+     "title": "Produce decode selector measurements from a coding owner harness",
+     "classification": "implementation",
+     "status": "pending: ready since c317f5ac closed; held for a second sub-wave (disk: about 100 GB free with six worktrees)"
     }
    ]
   },
@@ -2660,9 +2714,16 @@
   "date": "2026-10-08",
   "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Standing from session 31: no reuse of existing subagents; no questions while working; handoff after this and the next wave.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
-  "disk": "136 GB free at session start.",
+  "disk": "101 GB free after six new worktrees; three reclaimed without harvest.",
   "peer_session": "None: epic fa787f85 closed at 95c86a865.",
-  "active_workers": {},
+  "active_workers": {
+   "w32-391f5419": "opus; agent-391f5419 from 2f6bf1b69",
+   "w32-9e0cd346": "opus; agent-9e0cd346 from 2f6bf1b69",
+   "w32-86d9260e": "opus; agent-86d9260e from 2f6bf1b69",
+   "w32-e918a8ee": "sonnet; agent-e918a8ee from 2f6bf1b69",
+   "w32-83ed701d": "sonnet; agent-83ed701d from 2f6bf1b69",
+   "w32-f5ae4c49": "sonnet; agent-f5ae4c49 from 2f6bf1b69"
+  },
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes."
  }
