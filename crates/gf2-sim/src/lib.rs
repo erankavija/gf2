@@ -97,8 +97,9 @@ pub use parallel::{
 pub use pipeline::{BatchHandle, Pipeline};
 #[doc(inline)]
 pub use snr_checkpoint::{
-    config_hash, run_snr_point_checkpointed, run_sweep_checkpointed, CheckpointReader,
-    CheckpointV2, CheckpointWriter, CheckpointedRun, SweepError, SweepRun, WorkerState,
+    config_hash, pipeline_config_hash, run_snr_point_checkpointed, run_sweep_checkpointed,
+    CheckpointReader, CheckpointV2, CheckpointWriter, CheckpointedRun, SweepError, SweepRun,
+    WorkerState,
 };
 #[doc(inline)]
 pub use stage::{

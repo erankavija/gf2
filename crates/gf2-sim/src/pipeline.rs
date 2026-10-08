@@ -131,7 +131,10 @@ impl Pipeline {
     /// ([`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint))
     /// before every flush. With `resume`, existing checkpoints in
     /// `config.checkpoint_dir` are loaded: completed points contribute their
-    /// saved counters and a partial point continues. A recoverable GPU fault
+    /// saved counters and a partial point continues. A checkpoint written
+    /// under another
+    /// [`pipeline_config_hash`](crate::snr_checkpoint::pipeline_config_hash)
+    /// fails the sweep. A recoverable GPU fault
     /// aborts the sweep and leaves the last committed checkpoint, where
     /// [`run`](Pipeline::run) substitutes the CPU fallback.
     ///
