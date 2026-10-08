@@ -1,0 +1,115 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "bfc2ceab-spmm-check-pilot2-arms-smoke",
+  "issue": "bfc2ceab",
+  "family": "sparse-product-check-cost",
+  "plan_sha256": "f65fce5842d4a1f73b0afabb01fd8fe599a98cd621dacbcd059318c7644e3e24",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/addendum-v4-spmm-check-pilot.json",
+  "addendum_sha256": "a6b08b4f65630a859e732f739af91ccbc5a0cc196b8a22ca0091abb0f36aedaf",
+  "cells": [
+    {
+      "cell_id": "spmm-small-n16",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "unchecked-rows",
+          "role": "validation",
+          "executable": "target/bfc2ceab-spmm-arm/release/spmm-check-arm",
+          "executable_sha256": "52ed6d535bef296a3a979e6dbe82ceffbbb9f5a1f09af24f285b74bdc757566d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "sparse product Fp<7>/rows=1024/nnz=8152/dense-cols=16/form=unchecked",
+          "windows": 0
+        },
+        {
+          "arm": "checked-product",
+          "role": "validation",
+          "executable": "target/bfc2ceab-spmm-arm/release/spmm-check-arm",
+          "executable_sha256": "52ed6d535bef296a3a979e6dbe82ceffbbb9f5a1f09af24f285b74bdc757566d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "sparse product Fp<7>/rows=1024/nnz=8152/dense-cols=16/form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-small-n1024",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "unchecked-rows",
+          "role": "validation",
+          "executable": "target/bfc2ceab-spmm-arm/release/spmm-check-arm",
+          "executable_sha256": "52ed6d535bef296a3a979e6dbe82ceffbbb9f5a1f09af24f285b74bdc757566d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "sparse product Fp<7>/rows=1024/nnz=8158/dense-cols=1024/form=unchecked",
+          "windows": 0
+        },
+        {
+          "arm": "checked-product",
+          "role": "validation",
+          "executable": "target/bfc2ceab-spmm-arm/release/spmm-check-arm",
+          "executable_sha256": "52ed6d535bef296a3a979e6dbe82ceffbbb9f5a1f09af24f285b74bdc757566d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "sparse product Fp<7>/rows=1024/nnz=8158/dense-cols=1024/form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-medium-n16",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "unchecked-rows",
+          "role": "validation",
+          "executable": "target/bfc2ceab-spmm-arm/release/spmm-check-arm",
+          "executable_sha256": "52ed6d535bef296a3a979e6dbe82ceffbbb9f5a1f09af24f285b74bdc757566d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "sparse product Fp<65521>/rows=1024/nnz=8167/dense-cols=16/form=unchecked",
+          "windows": 0
+        },
+        {
+          "arm": "checked-product",
+          "role": "validation",
+          "executable": "target/bfc2ceab-spmm-arm/release/spmm-check-arm",
+          "executable_sha256": "52ed6d535bef296a3a979e6dbe82ceffbbb9f5a1f09af24f285b74bdc757566d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "sparse product Fp<65521>/rows=1024/nnz=8167/dense-cols=16/form=checked",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "spmm-medium-n1024",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "unchecked-rows",
+          "role": "validation",
+          "executable": "target/bfc2ceab-spmm-arm/release/spmm-check-arm",
+          "executable_sha256": "52ed6d535bef296a3a979e6dbe82ceffbbb9f5a1f09af24f285b74bdc757566d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "sparse product Fp<65521>/rows=1024/nnz=8163/dense-cols=1024/form=unchecked",
+          "windows": 0
+        },
+        {
+          "arm": "checked-product",
+          "role": "validation",
+          "executable": "target/bfc2ceab-spmm-arm/release/spmm-check-arm",
+          "executable_sha256": "52ed6d535bef296a3a979e6dbe82ceffbbb9f5a1f09af24f285b74bdc757566d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "sparse product Fp<65521>/rows=1024/nnz=8163/dense-cols=1024/form=checked",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
