@@ -1,8 +1,7 @@
 //! Throughput demo: times `permanent_bipedal3` at `n = N_BIPEDAL` and
 //! `permanent_mod3_reference` at `n = N_REF` over `BATCH` seeded random
-//! matrices each, prints permanents/sec for both, and reports whether the
-//! bipedal3 mean lies within ±5% of `S1_MEAN_US_BIPEDAL3_N24`. The matrix
-//! generator is inline, so the command needs no feature flags.
+//! matrices each and prints permanents/sec for both. The matrix generator is
+//! inline, so the command needs no feature flags.
 
 #![allow(clippy::cast_precision_loss)]
 
@@ -33,9 +32,6 @@ const N_BIPEDAL: usize = 24;
 const N_REF: usize = 20;
 const BATCH: usize = 64;
 const SEED_BASE: u64 = 0x16f0373400000000;
-
-const S1_MEAN_US_BIPEDAL3_N24: f64 = 213_970.0;
-const S1_TOLERANCE: f64 = 0.05;
 
 fn mean(xs: &[f64]) -> f64 {
     xs.iter().sum::<f64>() / xs.len() as f64
@@ -124,39 +120,6 @@ fn main() {
     println!(
         "  permanent_mod3_reference n={N_REF}: {ref_mean_us:>10.0} µs/matrix  ({ref_perm_per_sec:.3} perm/s)"
     );
-    println!();
-
-    println!(
-        "  Same-n speedup at n=24 (from S1 CSV, 2026-05-11): 6.888x  \
-         (bipedal3_simd=213 970 µs vs reference=1 473 800 µs)"
-    );
-    println!();
-
-    let lo = S1_MEAN_US_BIPEDAL3_N24 * (1.0 - S1_TOLERANCE);
-    let hi = S1_MEAN_US_BIPEDAL3_N24 * (1.0 + S1_TOLERANCE);
-
-    println!("=== Criterion 12 check (±5% of S1 headline at n={N_BIPEDAL}) ===");
-    println!(
-        "  S1 target: {S1_MEAN_US_BIPEDAL3_N24:.0} µs  \
-         window: [{lo:.0}, {hi:.0}] µs"
-    );
-    println!(
-        "  Measured:  {bipedal_mean_us:.0} µs  \
-         (source: dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv)"
-    );
-
-    if bipedal_mean_us >= lo && bipedal_mean_us <= hi {
-        println!("  PASS — within ±5% of S1 headline.");
-    } else {
-        let pct =
-            (bipedal_mean_us - S1_MEAN_US_BIPEDAL3_N24).abs() / S1_MEAN_US_BIPEDAL3_N24 * 100.0;
-        println!(
-            "  NOTE — measured {pct:.1}% outside the ±5% window. \
-             This is expected on hardware other than AMD Ryzen 9 5900X / Zen 3 / AVX2=yes. \
-             The ±5% criterion applies specifically to the S1 dev host. \
-             See dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv."
-        );
-    }
     println!();
 
     let seed0 = SEED_BASE ^ (N_BIPEDAL as u64).wrapping_shl(8);

@@ -13,10 +13,11 @@
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel;
-use gf2_algebra::testutil::{random_matrix, today_yyyy_mm_dd};
+use gf2_algebra::testutil::{host_fingerprint, random_matrix, today_yyyy_mm_dd};
 use std::fs::{self, File};
 use std::io::Write;
 use std::time::Instant;
+use tuning_campaign_support::host::CpuTopology;
 
 const THREAD_COUNTS: &[usize] = &[1, 2, 4, 8, 12];
 
@@ -34,14 +35,6 @@ const SEED_BASES: &[(usize, u64)] = &[
     (32, 0x4513_209c_0000_0020),
     (36, 0x4513_209c_0000_0024),
 ];
-
-const RAYON_VERSION: &str = "1.11.0";
-
-const HW_MODEL: &str = "AMD Ryzen 9 5900X 12-Core Processor";
-const HW_PHYSICAL_CORES: usize = 12;
-const HW_SMT: &str = "2x (24 logical CPUs)";
-const HW_AVX2: &str = "yes";
-const HW_AVX512: &str = "no";
 
 fn k_for_n(n: usize) -> usize {
     match n {
@@ -70,8 +63,23 @@ fn t_critical_95(df: usize) -> f64 {
     }
 }
 
+/// Physical-core and logical-CPU counts read from sysfs, or the reason the
+/// topology is unreadable on this host.
+fn observed_topology() -> String {
+    match CpuTopology::observe() {
+        Ok(topology) => format!(
+            "physical_cores: {}, logical_cpus: {}",
+            topology.physical_cores().len(),
+            topology.cpus.len()
+        ),
+        Err(error) => format!("topology: unavailable ({error})"),
+    }
+}
+
 fn main() {
     let date = today_yyyy_mm_dd();
+    let host = host_fingerprint();
+    let topology = observed_topology();
     let csv_dir = "dev/benchmarks/gf2_algebra_permanent";
     let csv_path = format!("{csv_dir}/s2_parallel_scaling-{date}.csv");
 
@@ -80,10 +88,8 @@ fn main() {
 
     writeln!(csv, "# S2 (jit:4513209c) parallel scaling sweep").unwrap();
     writeln!(csv, "# date: {date}").unwrap();
-    writeln!(csv, "# host: {HW_MODEL}").unwrap();
-    writeln!(csv, "# physical_cores: {HW_PHYSICAL_CORES}, smt: {HW_SMT}").unwrap();
-    writeln!(csv, "# avx2: {HW_AVX2}, avx512: {HW_AVX512}").unwrap();
-    writeln!(csv, "# rayon: {RAYON_VERSION}").unwrap();
+    writeln!(csv, "# host: {host}").unwrap();
+    writeln!(csv, "# {topology}").unwrap();
     writeln!(
         csv,
         "# rng: gf2_core::rng::Lcg (per-matrix seed = base ^ k)"
@@ -101,8 +107,8 @@ fn main() {
     .unwrap();
 
     println!("S2 (jit:4513209c) — parallel permanent scaling sweep");
-    println!("Host: {HW_MODEL}");
-    println!("Physical cores: {HW_PHYSICAL_CORES}, SMT: {HW_SMT}");
+    println!("Host: {host}");
+    println!("{topology}");
     println!("Thread counts: {THREAD_COUNTS:?}");
     println!("n values: {N_VALUES:?}");
     println!();

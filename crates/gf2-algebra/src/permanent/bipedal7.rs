@@ -209,33 +209,29 @@ mod tests {
         let _ = permanent_bipedal7(&m);
     }
 
+    #[test]
+    #[should_panic(expected = "permanent_bipedal7_singleword: matrix must be square")]
+    fn test_permanent_bipedal7_singleword_panics_on_non_square() {
+        let data = vec![Fp::<7>::new(0); 3 * 5];
+        let m = Packed7Matrix::from_row_major(&data, 3, 5);
+        let _ = permanent_bipedal7_singleword(&m);
+    }
+
+    #[test]
+    #[should_panic(expected = "permanent_bipedal7_singleword: single-word path requires n <=")]
+    fn test_permanent_bipedal7_singleword_panics_above_word_capacity() {
+        let n = LANES + 1;
+        let data = vec![Fp::<7>::new(0); n * n];
+        let m = Packed7Matrix::from_row_major(&data, n, n);
+        let _ = permanent_bipedal7_singleword(&m);
+    }
+
     macro_rules! cross_check_n {
         ($name:ident, $n:expr) => {
             #[test]
             fn $name() {
                 let n = $n;
-                let seed_base: u64 =
-                    0xf7b1_9d3e_0000_0000_u64.wrapping_add(n as u64);
-                for trial in 0u64..1000 {
-                    let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-                    let row_major = random_matrix::<7>(n, seed);
-                    let mat = to_packed7_matrix(&row_major, n);
-                    let expected = permanent_ryser::<Fp<7>>(&row_major, n);
-                    let actual = permanent_bipedal7(&mat);
-                    assert_eq!(
-                        actual, expected,
-                        "permanent mismatch: n={n}, trial={trial}, seed={seed:#018x}"
-                    );
-                }
-            }
-        };
-        ($name:ident, $n:expr, slow) => {
-            #[test]
-            #[ignore = "sim: per-n cross-check (n>=13, 1000 matrices) — slow oracle, multi-second runtime"]
-            fn $name() {
-                let n = $n;
-                let seed_base: u64 =
-                    0xf7b1_9d3e_0000_0000_u64.wrapping_add(n as u64);
+                let seed_base: u64 = 0xf7b1_9d3e_0000_0000_u64.wrapping_add(n as u64);
                 for trial in 0u64..1000 {
                     let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
                     let row_major = random_matrix::<7>(n, seed);

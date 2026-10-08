@@ -8,7 +8,7 @@ use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::bipedal3::{
     permanent_bipedal3_singleword, permanent_bipedal3_singleword_simd,
 };
-use gf2_algebra::testutil::{random_matrix, today_yyyy_mm_dd};
+use gf2_algebra::testutil::{host_fingerprint, random_matrix, today_yyyy_mm_dd};
 use std::io::Write;
 use std::time::Instant;
 
@@ -18,11 +18,9 @@ const SAMPLES: usize = 5;
 
 const SEED_BASE: u64 = 0x363556e600000000;
 
-// Per-row fingerprint; AVX-512 status is recorded in the CSV header.
-const HW_FINGERPRINT: &str = "AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes";
-
 fn main() {
     let date = today_yyyy_mm_dd();
+    let hw_tag = host_fingerprint();
 
     #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
     let avx2_fns = gf2_kernels_simd::bipedal::detect_avx2();
@@ -31,7 +29,7 @@ fn main() {
     let avx2_fns: Option<()> = None;
 
     println!("S3 (jit:363556e6) — direct scalar-vs-AVX2 single-word sanity sweep");
-    println!("Host: {HW_FINGERPRINT}");
+    println!("Host: {hw_tag}");
     println!("date: {date}");
     println!("seed_base: {SEED_BASE:#018x}");
     println!("samples per cell: {SAMPLES}");
@@ -47,13 +45,9 @@ fn main() {
         }
     }
 
-    println!(
-        "# S3 (jit:363556e6) direct scalar-vs-AVX2 single-word sanity sweep — fresh measurements"
-    );
+    println!("# S3 (jit:363556e6) direct scalar-vs-AVX2 single-word sanity sweep");
     println!("# date: {date}");
-    println!("# host: AMD Ryzen 9 5900X 12-Core Processor");
-    println!("# arch: Zen 3");
-    println!("# avx2: yes, avx512: no");
+    println!("# host: {hw_tag}");
     println!("# seed_base: {SEED_BASE:#018x}");
     println!("# scope: direct scalar and single-matrix AVX2 kernels at n in {{16, 20, 24}}; public dispatch and four-matrix batching are not timed");
     println!("# samples: {SAMPLES} per cell");
@@ -123,11 +117,11 @@ fn main() {
 
         // Scalar row: ratio_vs_avx2 = scalar_mean / avx2_mean.
         println!(
-            "{n},permanent_bipedal3_scalar,{scalar_mean:.3},{scalar_std:.3},{SAMPLES},{ratio:.4},{HW_FINGERPRINT}"
+            "{n},permanent_bipedal3_scalar,{scalar_mean:.3},{scalar_std:.3},{SAMPLES},{ratio:.4},{hw_tag}"
         );
         // AVX2 sanity row: ratio = 1.000 by definition.
         println!(
-            "{n},permanent_bipedal3_avx2_sanity,{avx2_mean:.3},{avx2_std:.3},{SAMPLES},1.0000,{HW_FINGERPRINT}"
+            "{n},permanent_bipedal3_avx2_sanity,{avx2_mean:.3},{avx2_std:.3},{SAMPLES},1.0000,{hw_tag}"
         );
     }
 
