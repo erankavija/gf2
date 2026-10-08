@@ -11,8 +11,8 @@ use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel, SimulationConfig, Si
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
-/// The frame budget gives thousands of samples per bit position within the
-/// fast-tier time limit.
+/// The frame budget gives thousands of samples per bit position; tests using
+/// it carry the `sim` ignore tier.
 fn bpsk_config() -> SimulationConfig {
     SimulationConfig {
         eb_n0_range_db: vec![6.0],
@@ -44,6 +44,7 @@ fn qam16_config() -> SimulationConfig {
 }
 
 #[test]
+#[ignore = "sim: per-bit LLR capture through the uncoded BPSK runner, 8 000 frames"]
 fn test_analysis_capture_integrates_with_uncoded_runner_bpsk() {
     let channel = BpskAwgnChannel;
     let config = bpsk_config();
@@ -74,6 +75,7 @@ fn test_analysis_capture_integrates_with_uncoded_runner_bpsk() {
 }
 
 #[test]
+#[ignore = "sim: per-bit LLR capture through the 16-QAM runner, 7 680 frames"]
 fn test_analysis_capture_integrates_with_qam16_runner() {
     let spec = ModemSpec::<f32>::gray_square_qam(16);
     let mapper = GrayQamMapper::<f32>::from_preset_order(16);
@@ -192,6 +194,7 @@ fn test_analysis_capture_preserves_msb_first_bit_position_mapping_qam16() {
 }
 
 #[test]
+#[ignore = "sim: disabled capture equals the plain runner, 2 x 8 000 frames"]
 fn test_analysis_capture_disabled_matches_unaugmented_path() {
     let channel = BpskAwgnChannel;
     let config = bpsk_config();
@@ -231,6 +234,7 @@ fn test_analysis_capture_mismatched_demap_method_panics() {
 }
 
 #[test]
+#[ignore = "sim: report carries the demap method after a BPSK run, 8 000 frames"]
 fn test_analysis_report_carries_demap_method_provenance() {
     let channel = BpskAwgnChannel;
     let config = bpsk_config();
@@ -303,6 +307,7 @@ fn test_analysis_capture_mismatched_bits_per_symbol_panics() {
 }
 
 #[test]
+#[ignore = "sim: multi-SNR aggregation equals single-point sweeps, 4 x 4 000 frames"]
 fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweeps() {
     let channel = BpskAwgnChannel;
     let make_config = |points: Vec<f64>| SimulationConfig {
