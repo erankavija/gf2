@@ -71,6 +71,10 @@ stride. Its outcome is *adopt* or *no change*.
 | *no change* on a `fail` (regressed) cell | The same removal; the regressed cell is reported as recorded. |
 | *no change* on validity, or `resolution-insufficient` | Production keeps its kernel and the candidate stays unselected; the outcome record states the deciding step and whether P-20 admits a further attempt. |
 
+The addendum's complexity budget counts the adopted state: the kernel, its
+bundle entry and its bundle field. The public entry and the lane body exist
+for the measurement and either outcome removes them.
+
 A pilot that places the candidate behind the baseline is a recorded no-win
 without a confirmation: the family spends no reservation on a candidate its
 own pilot does not favour, and the removal of the second row applies.
