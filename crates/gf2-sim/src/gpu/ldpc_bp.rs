@@ -458,7 +458,17 @@ mod imp {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use gf2_coding::ldpc::DecoderAlgorithm;
+        use gf2_coding::ldpc::{DecoderAlgorithm, LdpcEncoder, QuasiCyclicLdpc};
+        use gf2_coding::traits::BlockEncoder;
+
+        fn qc_code() -> LdpcCode {
+            let base = vec![
+                vec![0, 3, 7, 1, 0, -1],
+                vec![5, 0, 11, -1, 2, 9],
+                vec![9, 13, 0, 6, -1, 4],
+            ];
+            LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::new(base, 16))
+        }
 
         /// An n=6, m=3 LDPC code given as (check, var) edges.
         fn small_code() -> LdpcCode {
@@ -546,6 +556,73 @@ mod imp {
             let fb = stage.cpu_fallback().expect("GPU stage has a CPU fallback");
             assert_eq!(fb.n(), 6);
             assert_eq!(fb.max_iterations(), 50);
+        }
+
+        /// Frame `f` is a codeword with every `(f % 6 + 3)`-th LLR weakly
+        /// wrong, so the frames differ in how hard they are to decode.
+        fn noisy_frames(code: &LdpcCode, count: usize) -> Vec<Vec<Llr>> {
+            let encoder = LdpcEncoder::new(code.clone());
+            (0..count)
+                .map(|f| {
+                    let codeword = encoder.encode(&BitVec::random_seeded(encoder.k(), f as u64));
+                    (0..codeword.len())
+                        .map(|i| {
+                            let sent = if codeword.get(i) { -2.0 } else { 2.0 };
+                            Llr::new(if (i + f) % (f % 6 + 3) == 0 {
+                                -0.75 * sent
+                            } else {
+                                sent
+                            })
+                        })
+                        .collect()
+                })
+                .collect()
+        }
+
+        /// Asserts `stage` output equal to per-frame `decode_to_codeword` for
+        /// an empty batch, one frame, and batches below, at and above one
+        /// wave, the last two with an incomplete final wave.
+        fn assert_matches_per_frame_decoding(
+            stage: &CpuLdpcBp,
+            code: &LdpcCode,
+            config: DecoderConfig,
+            cap: usize,
+        ) {
+            const WAVE: usize = 8;
+            let mut reference = LdpcDecoder::with_config(code.clone(), config);
+            for count in [0, 1, WAVE - 1, WAVE, WAVE + 1, 2 * WAVE + 3] {
+                let frames = noisy_frames(code, count);
+                let results: Vec<_> = frames
+                    .iter()
+                    .map(|llrs| reference.decode_to_codeword(llrs, cap))
+                    .collect();
+                if count > WAVE {
+                    let converged = results.iter().filter(|r| r.converged).count();
+                    assert!(
+                        converged > 0 && converged < count,
+                        "{count} frames must mix convergence, {converged} converged"
+                    );
+                }
+
+                let out = stage.process(&LlrBatch::new(frames), &mut ()).unwrap();
+
+                let expected: Vec<BitVec> = results.into_iter().map(|r| r.decoded_bits).collect();
+                assert_eq!(out.frames, expected, "{count} frames");
+            }
+        }
+
+        #[test]
+        fn cpu_stage_matches_per_frame_decode_to_codeword() {
+            let code = qc_code();
+            let cap = 20;
+            for algorithm in [
+                DecoderAlgorithm::NormalizedMinSum(0.75),
+                DecoderAlgorithm::SumProduct,
+            ] {
+                let config = DecoderConfig::new(algorithm, true);
+                let stage = CpuLdpcBp::new(code.clone(), config, cap);
+                assert_matches_per_frame_decoding(&stage, &code, config, cap);
+            }
         }
 
         #[test]
