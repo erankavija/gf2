@@ -904,55 +904,55 @@
      "short_id": "391f5419",
      "title": "Decode DVB-T2 stage batches through the batch decode stage",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 32 (opus) in agent-391f5419 from 2f6bf1b69"
+     "status": "done. Session 32: merged at 92e0cd689; cargo-ci and code-review passed first round"
     },
     {
      "short_id": "9e0cd346",
      "title": "Decode NR stage batches through the batch decode stage",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 32 (opus) in agent-9e0cd346 from 2f6bf1b69"
+     "status": "in_progress: merged at d15a0436d; cargo-ci passed; code-review R1 F1 (REQ-03: no NR preset-versus-graph byte-identity suite); rework 1 dispatched (opus)"
     },
     {
      "short_id": "86d9260e",
      "title": "Decode CPU LDPC stage batches through the batch decode stage",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 32 (opus) in agent-86d9260e from 2f6bf1b69"
+     "status": "done. Session 32: merged at 912ae2ad2; cargo-ci and code-review passed first round"
     },
     {
      "short_id": "e918a8ee",
      "title": "Move the tests of the inherent LDPC batch functions to the batch trait",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 32 (sonnet) in agent-e918a8ee from 2f6bf1b69"
+     "status": "in_progress: merged at 8702a88ac; cargo-ci passed; code-review R1 F1 (duplicated test adapter); rework 1 dispatched (sonnet)"
     },
     {
      "short_id": "83ed701d",
      "title": "Move the benchmarks of the inherent LDPC batch functions to the batch trait",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 32 (sonnet) in agent-83ed701d from 2f6bf1b69"
+     "status": "done. Session 32: merged at 1b375873a; cargo-ci and code-review passed first round"
     },
     {
      "short_id": "f5ae4c49",
      "title": "Show parallel LDPC decoding through the batch trait in the how-to page",
      "classification": "documentation",
-     "status": "in_progress: dispatched session 32 (sonnet) in agent-f5ae4c49 from 2f6bf1b69"
+     "status": "done. Session 32: merged at eb91991a1; cargo-ci and doc-review passed first round"
     },
     {
      "short_id": "4de9d983",
      "title": "Decode BLER sweep slices through the batch decoder trait",
      "classification": "implementation",
-     "status": "pending: ready since c317f5ac closed; held for a second sub-wave (disk: about 100 GB free with six worktrees)"
+     "status": "in_progress: dispatched session 32 (sonnet)"
     },
     {
      "short_id": "feb60d0d",
      "title": "Build the gf2 batch decoder benchmark arms",
      "classification": "implementation",
-     "status": "pending: ready since c317f5ac closed; held for a second sub-wave (disk: about 100 GB free with six worktrees)"
+     "status": "in_progress: dispatched session 32 (opus)"
     },
     {
      "short_id": "aff59c3c",
      "title": "Produce decode selector measurements from a coding owner harness",
      "classification": "implementation",
-     "status": "pending: ready since c317f5ac closed; held for a second sub-wave (disk: about 100 GB free with six worktrees)"
+     "status": "in_progress: dispatched session 32 (opus)"
     }
    ]
   },
@@ -1260,6 +1260,12 @@
    "type": "bug",
    "in_epic": false,
    "reason": "session 32: benchmark window starts its first job on a loaded host; depends on bfc2ceab"
+  },
+  {
+   "id": "N",
+   "type": "task",
+   "in_epic": false,
+   "reason": "session 32: CpuLdpcBp rebuilds its batch decoder per call (unit-scratch guard of the erased CPU fallback); depends on 86d9260e"
   }
  ],
  "escalations": [
@@ -2007,7 +2013,9 @@
   "bfc2ceab": 1,
   "07ae376c": 0,
   "13728e1a": 2,
-  "4767d936": 1
+  "4767d936": 1,
+  "e918a8ee": 1,
+  "9e0cd346": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2653,7 +2661,8 @@
   "Session 32: 2026-10-08 window collected: three pilots complete and accepted per their job outputs. Claimed 13728e1a, 4767d936, 4e68f9b2, 7dbe1393 (d0342bf64) and dispatched six fresh workers; common rules in the session scratchpad. The two open 63bad95d questions of handoff-27 stay open; the worker keeps the branch value of ple.scalar_base_max_cols.",
   "Session 32: the host was loaded at the start of the 2026-10-08 window (launcher logs of the three pilots); one disturbed stretch set the resolution of the bfc2ceab pilot and of the 63bad95d dispatch-overhead pilot. Keep the host idle from 01:30 local before a window. P-03 and the freezer use the pilot corrected alpha, not the confirmation alpha (receipt.rs verified_pilot_alpha).",
   "Session 32: a merge that adds a source file under crates/ fails cargo-ci family-producing-closures; regenerate with the family make-*-producing-inputs.py generators inside the merge or directly after it (done for 4e68f9b2 and 4767d936; 13728e1a carried its own).",
-  "Session 32: merge order for the dense harness cell table: worktree-agent-7dbe1393 first, worktree-agent-63bad95d-m4ri after it (textual conflicts in cells.rs, Question::ALL, tests, closure; neither family takes seeds from the other). Unfiled worker reports: dense-harness manifest fails clippy -D warnings at tests/harness_contract.rs:147 and :972 and cargo fmt --check at build.rs:33; sibling x86 kernel modules import core::arch::x86_64 unconditionally."
+  "Session 32: merge order for the dense harness cell table: worktree-agent-7dbe1393 first, worktree-agent-63bad95d-m4ri after it (textual conflicts in cells.rs, Question::ALL, tests, closure; neither family takes seeds from the other). Unfiled worker reports: dense-harness manifest fails clippy -D warnings at tests/harness_contract.rs:147 and :972 and cargo fmt --check at build.rs:33; sibling x86 kernel modules import core::arch::x86_64 unconditionally.",
+  "Session 32: common-rules told every worker to use the Opus co-author trailer; sonnet workers followed it. Wrong trailers on main: 99f1ade19 (13728e1a rework), 9d1ca38a2 (f5ae4c49), b9340fbec (83ed701d); on the pinned bfc2ceab branch: 222b02396. The rule now tells a worker to use its own session attribution."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
