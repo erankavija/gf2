@@ -258,8 +258,57 @@ pub fn dvb_vectors_path() -> PathBuf {
         })
 }
 
-/// Parses a CSP test-point file of `@/citation/DvbVerification2010` into
-/// `BitVec` blocks.
+/// Streams the first `max_blocks` non-empty blocks of a CSP test-point file
+/// of `@/citation/DvbVerification2010` without reading past them.
+///
+/// Each `%`- or `#`-prefixed line begins a new block and `push_line` folds
+/// one data line into the open block. Blocks left empty are dropped.
+///
+/// # Panics
+///
+/// Panics if the file cannot be read.
+fn fold_tp_blocks<B>(
+    path: &Path,
+    max_blocks: usize,
+    new_block: fn() -> B,
+    is_empty: fn(&B) -> bool,
+    mut push_line: impl FnMut(&mut B, &str),
+) -> Vec<B> {
+    use std::io::BufRead;
+
+    let file = std::fs::File::open(path)
+        .unwrap_or_else(|e| panic!("cannot read {}: {}", path.display(), e));
+    let mut blocks: Vec<B> = Vec::new();
+    let mut current: Option<B> = None;
+    for line in std::io::BufReader::new(file).lines() {
+        if blocks.len() >= max_blocks {
+            return blocks;
+        }
+        let line = line.unwrap_or_else(|e| panic!("cannot read {}: {}", path.display(), e));
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if line.starts_with('%') || line.starts_with('#') {
+            if let Some(block) = current.replace(new_block()) {
+                if !is_empty(&block) {
+                    blocks.push(block);
+                }
+            }
+            continue;
+        }
+        push_line(current.get_or_insert_with(new_block), line);
+    }
+    if let Some(block) = current {
+        if blocks.len() < max_blocks && !is_empty(&block) {
+            blocks.push(block);
+        }
+    }
+    blocks
+}
+
+/// Parses a bit-data CSP test-point file of
+/// `@/citation/DvbVerification2010` into `BitVec` blocks.
 ///
 /// Each `%`- or `#`-prefixed line begins a new block. Within a block,
 /// `'0'` and `'1'` characters become bits; all other characters are
@@ -269,39 +318,49 @@ pub fn dvb_vectors_path() -> PathBuf {
 ///
 /// Panics if the file cannot be read.
 pub fn parse_tp_blocks(path: &Path) -> Vec<BitVec> {
-    let text = std::fs::read_to_string(path)
-        .unwrap_or_else(|e| panic!("cannot read {}: {}", path.display(), e));
-    let mut blocks: Vec<BitVec> = Vec::new();
-    let mut current: Option<BitVec> = None;
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-        if line.starts_with('%') || line.starts_with('#') {
-            if let Some(bv) = current.take() {
-                if !bv.is_empty() {
-                    blocks.push(bv);
+    parse_tp_block_prefix(path, usize::MAX)
+}
+
+/// The first `max_blocks` blocks [`parse_tp_blocks`] returns, read without
+/// scanning the rest of the file.
+///
+/// # Panics
+///
+/// Panics if the file cannot be read.
+pub fn parse_tp_block_prefix(path: &Path, max_blocks: usize) -> Vec<BitVec> {
+    fold_tp_blocks(
+        path,
+        max_blocks,
+        BitVec::new,
+        BitVec::is_empty,
+        |bv, line| {
+            for ch in line.chars() {
+                match ch {
+                    '0' => bv.push_bit(false),
+                    '1' => bv.push_bit(true),
+                    _ => {}
                 }
             }
-            current = Some(BitVec::new());
-            continue;
+        },
+    )
+}
+
+/// Parses the first `max_blocks` blocks of a complex-data CSP test-point
+/// file of `@/citation/DvbVerification2010` into `(re, im)` cells, one per
+/// data line, with the block delimiters of [`parse_tp_blocks`].
+///
+/// # Panics
+///
+/// Panics if the file cannot be read or a data line is not two
+/// whitespace-separated decimal numbers.
+pub fn parse_tp_complex_block_prefix(path: &Path, max_blocks: usize) -> Vec<Vec<(f64, f64)>> {
+    fold_tp_blocks(path, max_blocks, Vec::new, Vec::is_empty, |cells, line| {
+        let mut fields = line.split_whitespace().map(str::parse::<f64>);
+        match (fields.next(), fields.next(), fields.next()) {
+            (Some(Ok(re)), Some(Ok(im)), None) => cells.push((re, im)),
+            _ => panic!("{}: not a complex data line: {line:?}", path.display()),
         }
-        let bv = current.get_or_insert_with(BitVec::new);
-        for ch in line.chars() {
-            match ch {
-                '0' => bv.push_bit(false),
-                '1' => bv.push_bit(true),
-                _ => {}
-            }
-        }
-    }
-    if let Some(bv) = current {
-        if !bv.is_empty() {
-            blocks.push(bv);
-        }
-    }
-    blocks
+    })
 }
 
 /// Builds the canonical path to a VV001-CR35 test-point file under
