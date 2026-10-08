@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 495023fc7
-; regenerated   : 2026-10-08T11:32:03Z
+; commit        : 490747582
+; regenerated   : 2026-10-08T11:48:47Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 

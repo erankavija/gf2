@@ -82,7 +82,7 @@
   {
    "id": "popcnt-kernel-signature",
    "project": "gf2",
-   "commit": "495023fc7084c4fe72db06f68edc0a8408abe198",
+   "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
    "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
    "line": 365,
    "occurrences": 1,
@@ -93,7 +93,7 @@
   {
    "id": "popcnt-tail-word-count",
    "project": "gf2",
-   "commit": "495023fc7084c4fe72db06f68edc0a8408abe198",
+   "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
    "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
    "line": 407,
    "occurrences": 1,
@@ -104,7 +104,7 @@
   {
    "id": "parity-masked-tail",
    "project": "gf2",
-   "commit": "495023fc7084c4fe72db06f68edc0a8408abe198",
+   "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
    "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
    "line": 458,
    "occurrences": 1,
@@ -115,7 +115,7 @@
   {
    "id": "parity-fold",
    "project": "gf2",
-   "commit": "495023fc7084c4fe72db06f68edc0a8408abe198",
+   "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
    "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
    "line": 471,
    "occurrences": 1,
@@ -159,7 +159,7 @@
   {
    "id": "ragged-cell-arms",
    "project": "gf2",
-   "commit": "8740a80e39e5851e440d655084952dba125bf917",
+   "commit": "7bbb5be8c3b30a8540799acb4d06756f4e9294a2",
    "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs",
    "line": 319,
    "occurrences": 1,
@@ -170,7 +170,7 @@
   {
    "id": "ragged-route-call",
    "project": "gf2",
-   "commit": "aa2426adabbcaeca7fd74ef5b9c6d053336b32fb",
+   "commit": "50c0217311fb5d64c0e3dc1a53e78fa9a80862f4",
    "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/routes.rs",
    "line": 185,
    "occurrences": 1,
@@ -181,7 +181,7 @@
   {
    "id": "ragged-resolution-ceiling",
    "project": "gf2",
-   "commit": "8740a80e39e5851e440d655084952dba125bf917",
+   "commit": "7bbb5be8c3b30a8540799acb4d06756f4e9294a2",
    "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs",
    "line": 351,
    "occurrences": 1,
