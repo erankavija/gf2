@@ -1,0 +1,15 @@
+# command: cargo run --release --manifest-path dev/active/1a379447-zen3-cpu-performance/eda07788/survey/analysis/Cargo.toml --bin bootstrap-resolution -- dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead/r1-pilot/receipt.json 0.004166666666666667
+# The confirmation's corrected alpha, 0.05 / (1 * 2) / 6 for three confirmatory and three holdout cells on attempt 1.
+# receipt sha256 09e1f1dcbd9e768e5fc8b639d015aca8e5b1b7f61fbdacd3958e9a1236b1c5ea
+receipt dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead/r1-pilot/receipt.json
+campaign 63bad95d-r1-profile-dispatch-overhead-pilot seed 2026100710
+alpha 0.004166666666666667 confidence 0.995833 resamples 10000
+
+cell                                                 estimate    lower    upper  rel_half     shift
+xor-inplace-4w                                         1.3049   1.2579   1.3235    0.0360    0.0006
+and-popcount-7w                                        1.0064   0.6100   1.0729    0.3939    0.0045
+xor-inplace-8w                                         1.0024   0.9759   1.0387    0.0362    0.0000
+
+widest relative half-width: 0.393880 (and-popcount-7w)
+largest endpoint shift:     0.004476 (and-popcount-7w)
+larger of the two rounded up to two decimals: 0.40
