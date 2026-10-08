@@ -203,7 +203,7 @@ summarize_fail() {
       plain "$LOGDIR/$name.out" | grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" || true
       plain "$LOGDIR/$name.out" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
       ;;
-    clippy|doc)
+    clippy|doc|doc-coding)
       echo "--- $name diagnostics ---"
       # Show warning/error lines with context
       plain "$LOGDIR/$name.out" | grep -E "^(warning|error)" || true
@@ -308,6 +308,16 @@ run_step fmt    "$BUDGET" cargo fmt --all -- --check
 DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand"
 run_step doc     env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc --workspace --release --no-deps $DOC_FEAT_FLAGS
 run_step doctest "$BUDGET" --test cargo test --doc --workspace --release $DOC_FEAT_FLAGS
+
+# Documents every gf2-coding item the workspace feature selection above leaves
+# out. The `hip` feature compiles only where hipcc exists, so hosts without it
+# document the remaining features.
+if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
+  CODING_DOC_FEAT_FLAGS="--all-features"
+else
+  CODING_DOC_FEAT_FLAGS="--features simd,parallel,visualization,bench-csv,sim-observability,tuning-profile,test-support"
+fi
+run_step doc-coding env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc -p gf2-coding --release --no-deps $CODING_DOC_FEAT_FLAGS
 
 # Baked selector fields (DEC-G, and the follow-on families of
 # dev/active/7d824b2f/design.md §2.2): the gf2_tuning_baked cfg is not a Cargo
