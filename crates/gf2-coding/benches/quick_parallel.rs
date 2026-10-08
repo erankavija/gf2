@@ -8,13 +8,17 @@ use criterion::{black_box, BenchmarkId, Throughput};
 #[cfg(feature = "parallel")]
 use gf2_coding::ldpc::encoding::EncodingCache;
 #[cfg(feature = "parallel")]
-use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder};
+use gf2_coding::ldpc::{DecodedWord, LdpcBatchDecoder, LdpcCode, LdpcEncoder};
 #[cfg(feature = "parallel")]
 use gf2_coding::llr::Llr;
 #[cfg(feature = "parallel")]
-use gf2_coding::traits::BlockEncoder;
+use gf2_coding::pooled::PooledBatchDecoder;
+#[cfg(feature = "parallel")]
+use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome};
 #[cfg(feature = "parallel")]
 use gf2_coding::CodeRate;
+#[cfg(feature = "parallel")]
+use gf2_coding::DecoderConfig;
 #[cfg(feature = "parallel")]
 use gf2_core::BitVec;
 #[cfg(feature = "parallel")]
@@ -53,6 +57,20 @@ fn bench_ldpc_encode_quick(c: &mut Criterion) {
     group.finish();
 }
 
+/// Pool of LDPC batch decoders returning message bits, built once outside the
+/// timed closures.
+#[cfg(feature = "parallel")]
+fn message_pool(code: &LdpcCode, max_iterations: usize) -> PooledBatchDecoder<LdpcBatchDecoder> {
+    PooledBatchDecoder::new(|| {
+        LdpcBatchDecoder::new(
+            code.clone(),
+            DecoderConfig::default(),
+            max_iterations,
+            DecodedWord::Message,
+        )
+    })
+}
+
 #[cfg(feature = "parallel")]
 fn bench_ldpc_decode_quick(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
@@ -60,16 +78,18 @@ fn bench_ldpc_decode_quick(c: &mut Criterion) {
     let batch_size = 10;
     let llr_blocks: Vec<Vec<Llr>> = (0..batch_size).map(|_| llrs.clone()).collect();
 
+    let frames: Vec<&[Llr]> = llr_blocks.iter().map(Vec::as_slice).collect();
+    let mut decoder = message_pool(&code, 20);
+    let mut decoded = vec![BitVec::new(); batch_size];
+    let mut outcomes = vec![DecodeOutcome::default(); batch_size];
+
     let mut group = c.benchmark_group("ldpc_decode_quick");
     group.throughput(Throughput::Bytes((code.k() * batch_size) as u64 / 8));
 
     group.bench_function("decode_batch_10", |b| {
         b.iter(|| {
-            black_box(LdpcDecoder::decode_batch(
-                black_box(&code),
-                black_box(&llr_blocks),
-                20,
-            ))
+            decoder.decode_batch(black_box(&frames), &mut decoded, &mut outcomes);
+            black_box((&decoded, &outcomes));
         });
     });
 
@@ -81,10 +101,15 @@ fn bench_batch_sizes(c: &mut Criterion) {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
 
+    let mut decoder = message_pool(&code, 20);
+
     let mut group = c.benchmark_group("batch_size_scaling");
 
     for batch_size in [1, 5, 10, 20].iter() {
         let llr_blocks: Vec<Vec<Llr>> = (0..*batch_size).map(|_| llrs.clone()).collect();
+        let frames: Vec<&[Llr]> = llr_blocks.iter().map(Vec::as_slice).collect();
+        let mut decoded = vec![BitVec::new(); *batch_size];
+        let mut outcomes = vec![DecodeOutcome::default(); *batch_size];
         group.throughput(Throughput::Bytes((code.k() * batch_size) as u64 / 8));
 
         group.bench_with_input(
@@ -92,11 +117,8 @@ fn bench_batch_sizes(c: &mut Criterion) {
             batch_size,
             |b, _| {
                 b.iter(|| {
-                    black_box(LdpcDecoder::decode_batch(
-                        black_box(&code),
-                        black_box(&llr_blocks),
-                        20,
-                    ))
+                    decoder.decode_batch(black_box(&frames), &mut decoded, &mut outcomes);
+                    black_box((&decoded, &outcomes));
                 });
             },
         );

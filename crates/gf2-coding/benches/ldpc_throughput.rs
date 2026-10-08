@@ -2,10 +2,11 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::ldpc::encoding::EncodingCache;
-use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder};
+use gf2_coding::ldpc::{DecodedWord, LdpcBatchDecoder, LdpcCode, LdpcDecoder, LdpcEncoder};
 use gf2_coding::llr::Llr;
-use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
-use gf2_coding::CodeRate;
+use gf2_coding::pooled::PooledBatchDecoder;
+use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeSoftDecoder};
+use gf2_coding::{CodeRate, DecoderConfig};
 use gf2_core::BitVec;
 use std::path::PathBuf;
 
@@ -90,10 +91,23 @@ fn bench_ldpc_decode_batch(c: &mut Criterion) {
 
     let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0f32)).collect();
 
+    let mut decoder = PooledBatchDecoder::new(|| {
+        LdpcBatchDecoder::new(
+            code.clone(),
+            DecoderConfig::default(),
+            50,
+            DecodedWord::Message,
+        )
+    });
+
     let mut group = c.benchmark_group("ldpc_decode_batch");
 
     for batch_size in [10, 50, 100, 202].iter() {
         let llr_blocks: Vec<Vec<Llr>> = (0..*batch_size).map(|_| llrs.clone()).collect();
+
+        let frames: Vec<&[Llr]> = llr_blocks.iter().map(Vec::as_slice).collect();
+        let mut decoded = vec![BitVec::new(); *batch_size];
+        let mut outcomes = vec![DecodeOutcome::default(); *batch_size];
 
         group.throughput(Throughput::Bytes((code.k() * batch_size) as u64 / 8));
         group.bench_with_input(
@@ -101,11 +115,8 @@ fn bench_ldpc_decode_batch(c: &mut Criterion) {
             batch_size,
             |b, _| {
                 b.iter(|| {
-                    black_box(LdpcDecoder::decode_batch(
-                        black_box(&code),
-                        black_box(&llr_blocks),
-                        50,
-                    ))
+                    decoder.decode_batch(black_box(&frames), &mut decoded, &mut outcomes);
+                    black_box((&decoded, &outcomes));
                 });
             },
         );
