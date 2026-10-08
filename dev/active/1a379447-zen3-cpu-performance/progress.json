@@ -1862,36 +1862,36 @@
    "issue": "63bad95d",
    "question": "is the committed M4RI confirmation of 50f0bd42 sufficient competitor evidence with the matvec external ladder excluded, or is a native-level M4RI family required",
    "recommendation": "the committed confirmation stands",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-07T18:00Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-08: add the native M4RI family; use the next benchmark window."
   },
   {
    "category": "design decision (63bad95d)",
    "issue": "63bad95d",
    "question": "the new owner publishes ple.scalar_base_max_cols 1 (earlier owner 24) and no family of this epic measures FieldMatrix::ple: accept as recorded or keep the earlier value in the baked constants until measured",
    "recommendation": "keep the earlier value until measured",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-07T18:00Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-08: restore 24 in the baked constants."
   },
   {
    "category": "issue criterion premise (4767d936 REQ-04)",
    "issue": "4767d936",
    "question": "code-review R1 F1: REQ-04 names external 5G NR conformance vectors that decode to expected messages; the crate's only external NR evidence is the Sionna base-graph tables, and no external NR encoder builds on this host. Options: (A) amend REQ-04 to the configurations of the external base-graph suite round-tripping through the batch decoder on both routes, equal to the single-frame decoder; (B) obtain external NR message vectors with provenance (new scope).",
    "recommendation": "A, with B filed as a separate conformance task",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-08T11:40Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-08: obtain external NR message vectors now; be mindful of the licence."
   },
   {
    "category": "issue criterion against crate convention (13728e1a REQ-04)",
    "issue": "13728e1a",
    "question": "code-review R1 F1: REQ-04 says AVX2 assertions are reported as not run on a host without AVX2; the crate's host-precondition contract (crate::contract, issue 6605cac2) fails such a test because libtest has no run-time skip. Options: (A) amend REQ-04 to 'are not reported as passed: the crate's host-precondition contract fails them and names the missing instruction set'; (B) change crate::contract at its source to a build-time ignore for every kernel test of the crate.",
    "recommendation": "A",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-08T12:10Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-08: amend REQ-04 to the crate convention (not reported as passed; the host-precondition contract fails them and names the missing instruction set). Applied to the issue."
   }
  ],
  "rework_counts": {
