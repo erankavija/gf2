@@ -28,7 +28,7 @@
      "title": "Generic GF(2^m) kernel reduction returns wrong products for degrees above 33",
      "classification": "implementation",
      "priority": "high",
-     "status": "merged; gates running"
+     "status": "done"
     },
     {
      "id": "9600eb56-53ce-448c-bcc5-44d85f7aa06c",
@@ -36,7 +36,7 @@
      "title": "GldpcDecoder::decode_soft returns hard decisions without decoding",
      "classification": "implementation",
      "priority": "high",
-     "status": "rework 1 running"
+     "status": "done"
     },
     {
      "id": "df144ecf-bc47-4581-961c-c0f317952c7b",
@@ -44,7 +44,7 @@
      "title": "Gray-QAM preset labels differ from EN 302 755 Table 14 above order 4",
      "classification": "implementation",
      "priority": "high",
-     "status": "merged; gates running"
+     "status": "done"
     },
     {
      "id": "45a962da-b51a-4bf5-b147-9c5ffec18634",
@@ -60,7 +60,7 @@
      "title": "Safe HIP functions rely on unstated caller obligations",
      "classification": "implementation",
      "priority": "high",
-     "status": "merged; gates running"
+     "status": "done"
     },
     {
      "id": "1ffa72fc-c47f-4f12-80d6-4130dc056ab9",
@@ -84,7 +84,7 @@
      "title": "AWGN channel bounds its per-call noise draw only in debug builds",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "dispatched with 5c62bb1c"
     },
     {
      "id": "e1ff915f-c119-45a1-a177-a80bc3782869",
@@ -140,7 +140,7 @@
      "title": "Channel apply stride-margin assertion disagrees with the shared word margin",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "3a5894ed-85cb-4259-8e84-e75e93295645",
@@ -388,7 +388,7 @@
      "title": "LdpcCode::is_systematic always returns false",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "merged; gates running"
     },
     {
      "id": "8966d8da-0247-4d46-b39b-de75fcf06d58",
@@ -460,7 +460,7 @@
      "title": "NR rate-matched iterative decoding reads the message from the first target_k positions",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "c9022d14-350b-4236-a802-e206e159ad7b",
@@ -508,7 +508,7 @@
      "title": "Permanent module contract, test and provenance defects",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "069e3c33-b6f1-4f97-8961-bfbe3f6a883f",
@@ -532,7 +532,7 @@
      "title": "Primitive polynomial generation is unsound above degree 16 and ignores its thread count",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "0657c9fa-0f07-4175-addf-9baf7aefdfa9",
@@ -540,7 +540,7 @@
      "title": "PrimitivePolynomialDatabase::trinomials(8) returns a reducible polynomial",
      "classification": "implementation",
      "priority": "normal",
-     "status": "rework 1 merged; gates pending"
+     "status": "done"
     },
     {
      "id": "63cc5518-ecc6-40ef-b0c8-a4b6688bab37",
@@ -556,7 +556,7 @@
      "title": "ProfileRegistry::from_json rejects committed core tuning profiles",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "dfd9e0c5-3368-4389-a4bd-a2195f7514c6",
@@ -748,7 +748,7 @@
      "title": "SNR checkpoint config hash omits rate, modulation, decoder and demapper",
      "classification": "implementation",
      "priority": "normal",
-     "status": "merged; doc-review findings fixed by lead; gates pending"
+     "status": "done"
     },
     {
      "id": "8342487d-9899-42c7-a30c-f5618bb0ee74",
@@ -756,7 +756,7 @@
      "title": "Scheduler::run and run_instrumented ignore their batch parameter",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "afbe89f5-ba5b-44cf-870c-00b3d8509a45",
@@ -772,7 +772,7 @@
      "title": "State the tested ROCm version at its source",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "rework 1 running (shared finding with f0228940)"
     },
     {
      "id": "697b9178-6b19-4946-9001-f2475df71321",
@@ -900,7 +900,7 @@
      "title": "frame_sim substitutes an empty BitVec on hard decode failure",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "rework 1 running (REQ-01 evidence)"
     },
     {
      "id": "d1bfe986-f73a-4d5e-a7a4-7baa8a1aaa7a",
@@ -908,7 +908,7 @@
      "title": "gf2-coding all-features rustdoc fails with warnings denied",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "22bb2dcd-9c84-4b13-a96b-9a30d0a6385d",
@@ -940,7 +940,7 @@
      "title": "mersenne_reduce is wrong outside its tested exponents",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "worker done; lead-requested touch-up running (keep unrolled N=31 path)"
     },
     {
      "id": "fd1f39e0-c77e-48c5-abc3-6d48cfb25ffa",
@@ -1260,7 +1260,7 @@
      "title": "checkpoint_sweep leaves the channel model out of its checkpoint identity",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "c318a817-d6df-4ad0-8b62-ab5e3f4f5c9b",
@@ -1284,7 +1284,7 @@
      "title": "compute_lut_checksum_gpu states an error condition as a safety obligation",
      "classification": "implementation",
      "priority": "low",
-     "status": "pending"
+     "status": "rework 1 running (safety contract vs null test)"
     }
    ]
   },
@@ -1447,12 +1447,23 @@
  ],
  "rework_counts": {
   "0657c9fa": 1,
-  "9600eb56": 1
+  "9600eb56": 1,
+  "fbcadf17": 1,
+  "f0228940": 1,
+  "c7c11e7e": 1
  },
  "surfaced_pitfalls": [
   {
    "from": "33057520",
    "note": "receipts under dev/bench_results/3be770d5 list snr_checkpoint.rs and executor/drain.rs as producing inputs by source digest; both files changed. Snapshot checks pass. Invoker to confirm no revalidation is wanted."
+  },
+  {
+   "from": "8342487d",
+   "note": "doc-review advisory (pre-existing): Scheduler rustdoc at executor/scheduler.rs:287 attributes seed, parallelism and GPU settings ambiguously to the pipeline configuration."
+  },
+  {
+   "from": "0657c9fa",
+   "note": "advisory: REQ-02 of 0657c9fa asks for a doctest that unrelated work removed; rustdoc and a focused test state the degree-8 fact instead."
   }
  ],
  "notes": [
@@ -1477,6 +1488,30 @@
     "79a62102",
     "33057520",
     "0657c9fa"
+   ]
+  },
+  {
+   "batch": 3,
+   "issues": [
+    "1fe6e218",
+    "b2520e0f",
+    "2a9cc72c",
+    "3464c241",
+    "fbcadf17",
+    "8342487d",
+    "f556d663",
+    "c7c11e7e",
+    "f0228940"
+   ]
+  },
+  {
+   "batch": 4,
+   "issues": [
+    "5c62bb1c",
+    "dd493649",
+    "dfb8820b",
+    "9d474049",
+    "d1bfe986"
    ]
   }
  ],
