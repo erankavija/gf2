@@ -6,10 +6,14 @@
 //! selects BG2 only for R <= 0.67.
 
 use gf2_coding::ldpc::nr_5g::lifting::LIFTING_SIZE_SETS;
-use gf2_coding::ldpc::nr_5g::{lifting_set_index, shift_table, Nr5gRateMatchedDecoder};
-use gf2_coding::ldpc::QuasiCyclicLdpc;
+use gf2_coding::ldpc::nr_5g::{
+    lifting_set_index, shift_table, Nr5gRateMatchedBatchDecoder, Nr5gRateMatchedCode,
+    Nr5gRateMatchedDecoder,
+};
+use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, QuasiCyclicLdpc};
 use gf2_coding::llr::Llr;
-use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
+use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeSoftDecoder};
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use std::path::PathBuf;
 
@@ -226,11 +230,67 @@ fn test_per_ils_tables_pairwise_distinct() {
 }
 
 fn deterministic_message(k: usize) -> BitVec {
+    stepped_message(k, 3)
+}
+
+/// The `k`-bit message with every `step`-th bit set, from bit zero.
+fn stepped_message(k: usize, step: usize) -> BitVec {
     let mut msg = BitVec::zeros(k);
-    for i in (0..k).step_by(3) {
+    for i in (0..k).step_by(step) {
         msg.set(i, true);
     }
     msg
+}
+
+fn noiseless_llrs(codeword: &BitVec) -> Vec<Llr> {
+    (0..codeword.len())
+        .map(|i| Llr::new(if codeword.get(i) { -4.0 } else { 4.0 }))
+        .collect()
+}
+
+/// Decodes one full wave and a final wave of one frame through
+/// [`Nr5gRateMatchedBatchDecoder`] on the lane route and on the single-frame
+/// route; the first message is [`deterministic_message`].
+fn check_batch_roundtrip(rm: &Nr5gRateMatchedCode, label: &str) {
+    const FRAMES: usize = 9;
+    let messages: Vec<BitVec> = (0..FRAMES)
+        .map(|f| stepped_message(rm.k(), 3 + f))
+        .collect();
+    let frames: Vec<Vec<Llr>> = messages
+        .iter()
+        .map(|msg| noiseless_llrs(&rm.encode(msg)))
+        .collect();
+    let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+
+    let routes = [
+        (
+            DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
+            BatchRoute::Lane,
+        ),
+        (DecodeSelectors::CONSERVATIVE, BatchRoute::SingleFrame),
+    ];
+    for (selectors, route) in routes {
+        let mut decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
+            rm.clone(),
+            DecoderAlgorithm::NormalizedMinSum(0.75),
+            50,
+            selectors,
+        );
+        assert_eq!(decoder.batch_route(FRAMES), route, "{label}");
+        let mut decoded = vec![BitVec::new(); FRAMES];
+        let mut outcomes = vec![DecodeOutcome::default(); FRAMES];
+        decoder.decode_batch(&views, &mut decoded, &mut outcomes);
+        for (f, outcome) in outcomes.iter().enumerate() {
+            assert!(
+                outcome.syndrome_check_passed,
+                "{label}, {route:?}: noiseless batch decode of frame {f} must converge"
+            );
+        }
+        assert_eq!(
+            decoded, messages,
+            "{label}, {route:?}: noiseless batch roundtrip must be bit-exact"
+        );
+    }
 }
 
 fn check_rate_tuple(bg: u8, target_n: usize, target_k: usize, expect_z: usize, expect_ils: usize) {
@@ -261,9 +321,8 @@ fn check_rate_tuple(bg: u8, target_n: usize, target_k: usize, expect_z: usize, e
     let msg = deterministic_message(target_k);
     let codeword = rm.encode(&msg);
     assert_eq!(codeword.len(), target_n);
-    let llrs: Vec<Llr> = (0..target_n)
-        .map(|i| Llr::new(if codeword.get(i) { -4.0 } else { 4.0 }))
-        .collect();
+    let llrs = noiseless_llrs(&codeword);
+    check_batch_roundtrip(&rm, &format!("BG{bg} (n={target_n}, k={target_k})"));
     let mut decoder = Nr5gRateMatchedDecoder::new(rm);
     let result = decoder.decode_iterative(&llrs, 50);
     assert!(
