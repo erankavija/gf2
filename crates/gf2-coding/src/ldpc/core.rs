@@ -1061,38 +1061,8 @@ impl crate::traits::BlockEncoder for LdpcEncoder {
 #[cfg(test)]
 mod decoder_tests {
     use super::*;
-    use crate::ldpc::{DecodedWord, LdpcBatchDecoder};
-    use crate::pooled::PooledBatchDecoder;
-    use crate::traits::BatchSoftDecoder;
+    use crate::test_support::pooled_decode;
     use crate::traits::BlockEncoder;
-
-    /// Decodes `blocks` through a pooled LDPC batch decoder of message words
-    /// and returns the results in the form of [`DecoderResult`].
-    fn pooled_decode(code: &LdpcCode, blocks: &[Vec<Llr>], cap: usize) -> Vec<DecoderResult> {
-        let mut pool = PooledBatchDecoder::new(|| {
-            LdpcBatchDecoder::new(
-                code.clone(),
-                DecoderConfig::default(),
-                cap,
-                DecodedWord::Message,
-            )
-        });
-        let views: Vec<&[Llr]> = blocks.iter().map(Vec::as_slice).collect();
-        let mut decoded = vec![BitVec::new(); blocks.len()];
-        let mut outcomes = vec![DecodeOutcome::default(); blocks.len()];
-        pool.decode_batch(&views, &mut decoded, &mut outcomes);
-        decoded
-            .into_iter()
-            .zip(outcomes)
-            .map(|(decoded_bits, outcome)| DecoderResult {
-                decoded_bits,
-                iterations: outcome.iterations,
-                converged: outcome.converged,
-                syndrome_check_passed: outcome.syndrome_check_passed,
-                queries: outcome.queries,
-            })
-            .collect()
-    }
 
     #[test]
     fn test_decoder_creation() {
