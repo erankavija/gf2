@@ -32,6 +32,7 @@ pub(crate) mod gf2m_batch;
 pub(crate) mod gf2m_common;
 pub(crate) mod gf2m_gemm;
 pub(crate) mod gf2m_wide;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(crate) mod ldpc_lanes;
 pub(crate) mod mersenne;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
