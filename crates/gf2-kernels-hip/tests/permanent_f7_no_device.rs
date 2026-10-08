@@ -45,8 +45,9 @@ fn test_init_permanent_gf7_from_slices_without_device_returns_status() {
 #[test]
 fn test_compute_lut_checksum_gpu_without_device_returns_status() {
     if in_no_device_child("test_compute_lut_checksum_gpu_without_device_returns_status") {
-        // SAFETY: no kernel runs without a device, so the null output pointer
-        // is never dereferenced.
+        // SAFETY: with every device hidden the launch fails before the kernel
+        // runs, and only the kernel dereferences the output pointer, so null
+        // satisfies the contract's no-visible-device case.
         let rc = unsafe { compute_lut_checksum_gpu(std::ptr::null_mut()) };
         assert_ne!(rc, 0, "a launch with no visible device must fail");
     }
