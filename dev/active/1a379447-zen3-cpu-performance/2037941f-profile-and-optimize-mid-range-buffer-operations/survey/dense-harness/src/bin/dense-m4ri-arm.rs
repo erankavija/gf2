@@ -18,7 +18,8 @@
 //! peer. With no argument the executable is a child-v2 campaign arm.
 
 use dense_parity_harness::cells::{
-    Cache, Workload, COMPARATOR_LIBRARY_STEM, M4RI_SHAPES, QUALIFICATION_RECORD,
+    family_cells, Cache, M4riShape, Question, Workload, COMPARATOR_LIBRARY_STEM, M4RI_SHAPES,
+    QUALIFICATION_RECORD,
 };
 use dense_parity_harness::external::{self, LibraryIdentity};
 use dense_parity_harness::fixture::MatvecBanks;
@@ -145,74 +146,85 @@ fn backend_record(library: &LibraryIdentity) -> String {
     )
 }
 
-/// The comparator's semantic cases against the gf2 peer.
+/// The comparator's semantic cases against the gf2 peer: every qualified
+/// shape, then each native comparator cell's own fixture.
 fn oracle() -> Result<Vec<OracleCase>, String> {
     let mut report = Vec::new();
     for shape in M4RI_SHAPES {
         let name = format!("m4ri-{}x{}", shape.rows, shape.cols);
         let seed = dense_parity_harness::cells::CAMPAIGN_SEED ^ ((shape.cols as u64) << 24);
-        let banks = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, seed);
-        let item = banks.item(0, 0);
-        let rows_words = row_major_words(&item.matrix);
-        let x_words = item.vector.words().to_vec();
-        let mut checks = 0;
-
-        // The shim sets bits into a zeroed buffer, so every set word it
-        // leaves behind came from an `mzd_read_bit` of the product.
-        let mut y_words = vec![0_u64; shape.rows.div_ceil(64)];
-        // SAFETY: as `fresh_operation`.
-        let status = unsafe {
-            gf2_m4ri_fresh_call(
-                rows_words.as_ptr(),
-                x_words.as_ptr(),
-                shape.rows as i32,
-                shape.cols as i32,
-                y_words.as_mut_ptr(),
-            )
-        };
-        if status != 0 {
-            return Err(format!("FAIL {name}: gf2_m4ri_fresh_call returned {status}"));
+        report.push(oracle_case(name, shape, seed)?);
+    }
+    for cell in family_cells(Question::NativeMatvecVsM4ri) {
+        if let Workload::M4riGap { shape, .. } = cell.workload {
+            report.push(oracle_case(format!("m4ri-cell-{}", cell.cell_id), shape, cell.seed)?);
         }
-        checks += 1;
-
-        let peer = item.matrix.matvec(&item.vector);
-        let external = BitVec::from_words(y_words.clone(), shape.rows);
-        for row in 0..shape.rows {
-            if external.get(row) != peer.get(row) {
-                return Err(format!("FAIL {name}: row {row} differs from the gf2 peer"));
-            }
-            checks += 1;
-        }
-        let tail = shape.rows % 64;
-        if tail != 0 && y_words[y_words.len() - 1] >> tail != 0 {
-            return Err(format!("FAIL {name}: the unpacked output carries tail padding"));
-        }
-        checks += 1;
-
-        // The retained arm converts once and still produces the same product.
-        let retained = RetainedState::new(&rows_words, &x_words, shape.rows, shape.cols)
-            .ok_or_else(|| format!("FAIL {name}: retained conversion failed"))?;
-        let first = retained
-            .call()
-            .ok_or_else(|| format!("FAIL {name}: the retained call failed"))?;
-        let second = retained
-            .call()
-            .ok_or_else(|| format!("FAIL {name}: the retained call failed twice"))?;
-        if first != second || first != observe_output(&peer) {
-            return Err(format!("FAIL {name}: the retained arm differs from the gf2 peer"));
-        }
-        checks += 2;
-
-        let fresh = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, seed);
-        if row_major_words(&fresh.item(0, 0).matrix) != rows_words
-            || fresh.item(0, 0).vector.words() != x_words
-        {
-            return Err(format!("FAIL {name}: an input changed"));
-        }
-        checks += 2;
-        report.push(OracleCase { name, checks });
     }
     Ok(report)
+}
+
+/// Checks the fresh and the retained product of one fixture against the peer.
+fn oracle_case(name: String, shape: M4riShape, seed: u64) -> Result<OracleCase, String> {
+    let banks = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, seed);
+    let item = banks.item(0, 0);
+    let rows_words = row_major_words(&item.matrix);
+    let x_words = item.vector.words().to_vec();
+    let mut checks = 0;
+
+    // The shim sets bits into a zeroed buffer, so every set word it
+    // leaves behind came from an `mzd_read_bit` of the product.
+    let mut y_words = vec![0_u64; shape.rows.div_ceil(64)];
+    // SAFETY: as `fresh_operation`.
+    let status = unsafe {
+        gf2_m4ri_fresh_call(
+            rows_words.as_ptr(),
+            x_words.as_ptr(),
+            shape.rows as i32,
+            shape.cols as i32,
+            y_words.as_mut_ptr(),
+        )
+    };
+    if status != 0 {
+        return Err(format!("FAIL {name}: gf2_m4ri_fresh_call returned {status}"));
+    }
+    checks += 1;
+
+    let peer = item.matrix.matvec(&item.vector);
+    let external = BitVec::from_words(y_words.clone(), shape.rows);
+    for row in 0..shape.rows {
+        if external.get(row) != peer.get(row) {
+            return Err(format!("FAIL {name}: row {row} differs from the gf2 peer"));
+        }
+        checks += 1;
+    }
+    let tail = shape.rows % 64;
+    if tail != 0 && y_words[y_words.len() - 1] >> tail != 0 {
+        return Err(format!("FAIL {name}: the unpacked output carries tail padding"));
+    }
+    checks += 1;
+
+    // The retained arm converts once and still produces the same product.
+    let retained = RetainedState::new(&rows_words, &x_words, shape.rows, shape.cols)
+        .ok_or_else(|| format!("FAIL {name}: retained conversion failed"))?;
+    let first = retained
+        .call()
+        .ok_or_else(|| format!("FAIL {name}: the retained call failed"))?;
+    let second = retained
+        .call()
+        .ok_or_else(|| format!("FAIL {name}: the retained call failed twice"))?;
+    if first != second || first != observe_output(&peer) {
+        return Err(format!("FAIL {name}: the retained arm differs from the gf2 peer"));
+    }
+    checks += 2;
+
+    let fresh = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, seed);
+    if row_major_words(&fresh.item(0, 0).matrix) != rows_words
+        || fresh.item(0, 0).vector.words() != x_words
+    {
+        return Err(format!("FAIL {name}: an input changed"));
+    }
+    checks += 2;
+    Ok(OracleCase { name, checks })
 }
 
 fn main() {

@@ -4,8 +4,10 @@
 //! plan selects a route through `GF2_DENSE_ROUTE`. The executable is built
 //! `conservative-portable`: Rust 1.95 release with the workspace's ordinary
 //! feature configuration and no `target-cpu` override. The addendum's reference
-//! arm is the same executable built without the `simd` feature, and a route
-//! refuses the build that cannot serve it.
+//! arm is the same executable built without the `simd` feature, the native
+//! comparator's gf2 arm is the same executable built with
+//! `routes::NATIVE_RUSTFLAGS`, and a route refuses the build that cannot serve
+//! it.
 
 use dense_parity_harness::cells::{Cache, Workload};
 use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
