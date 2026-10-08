@@ -410,16 +410,24 @@ unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {
     total
 }
 
+/// Lane masks of a 256-bit masked load that select the first zero to three
+/// words.
+const TAIL_WORD_MASKS: [[i64; 4]; 4] =
+    [[0, 0, 0, 0], [-1, 0, 0, 0], [-1, -1, 0, 0], [-1, -1, -1, 0]];
+
 /// Parity of the set bits of the word-wise AND over the common prefix of two
 /// slices. The intersection is XOR-folded into one word, whose count is taken
-/// once; no vector or tail word is counted on its own.
+/// once; the one to three words past the last whole vector enter the fold
+/// through one masked load of each operand.
 ///
 /// # Safety
 ///
 /// The host supports AVX2; `super::detect_x86` establishes that before
 /// building the bundle that calls this function, and other hosts keep the
 /// scalar route. Both slices are only read, so they may alias. Every
-/// unaligned 32-byte load and every tail word lies inside the common prefix.
+/// unaligned 32-byte load lies inside the common prefix, and the masked load
+/// starts at its last whole vector's end and reads only the words the mask
+/// selects, which are the prefix's remaining words.
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_and_parity(lhs: &[u64], rhs: &[u64]) -> bool {
     let len = lhs.len().min(rhs.len());
@@ -442,17 +450,23 @@ unsafe fn avx2_and_parity(lhs: &[u64], rhs: &[u64]) -> bool {
         let v = _mm256_and_si256(loadu(lhs_ptr.add(off)), loadu(rhs_ptr.add(off)));
         acc0 = _mm256_xor_si256(acc0, v);
     }
+    let tail_words = len % 4;
+    if tail_words != 0 {
+        let mask = loadu(TAIL_WORD_MASKS[tail_words].as_ptr() as *const u8);
+        let tail = nvec * 32;
+        let v = _mm256_and_si256(
+            _mm256_maskload_epi64(lhs_ptr.add(tail) as *const i64, mask),
+            _mm256_maskload_epi64(rhs_ptr.add(tail) as *const i64, mask),
+        );
+        acc1 = _mm256_xor_si256(acc1, v);
+    }
 
     let acc = _mm256_xor_si256(acc0, acc1);
     let acc128 = _mm_xor_si128(
         _mm256_castsi256_si128(acc),
         _mm256_extracti128_si256(acc, 1),
     );
-    let mut folded =
-        (_mm_cvtsi128_si64(acc128) ^ _mm_cvtsi128_si64(_mm_srli_si128(acc128, 8))) as u64;
-    for j in (nvec * 4)..len {
-        folded ^= *lhs.get_unchecked(j) & *rhs.get_unchecked(j);
-    }
+    let folded = (_mm_cvtsi128_si64(acc128) ^ _mm_cvtsi128_si64(_mm_srli_si128(acc128, 8))) as u64;
 
     folded.count_ones() & 1 == 1
 }
