@@ -1580,8 +1580,9 @@ fn factor_u64_rec(value: u64, factors: &mut Vec<u64>) -> bool {
     factor_u64_rec(factor, factors) && factor_u64_rec(value / factor, factors)
 }
 
-/// Factors a supported order into distinct ascending prime factors.
-fn factor_order(order: u64) -> Option<Vec<u64>> {
+/// Factors a supported order into distinct ascending prime factors; `None`
+/// when `order` is zero or the bounded Pollard-rho search gives up.
+pub(crate) fn factor_order(order: u64) -> Option<Vec<u64>> {
     if order == 0 {
         return None;
     }

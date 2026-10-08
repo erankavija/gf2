@@ -87,9 +87,7 @@ impl PrimitivePolynomialDatabase {
             14 => Some(0b100000000101011),   // x^14 + x^5 + x^3 + x + 1 (DVB-T2)
             15 => Some(0b1000000000000011),  // x^15 + x + 1
             16 => Some(0b10000000000101101), // x^16 + x^5 + x^3 + x^2 + 1 (DVB-T2)
-            // Conway polynomial `f_{2,32}` of `@/citation/Lubeck2024`, hence
-            // primitive; `test_standard_m32_is_irreducible` checks
-            // irreducibility only.
+            // Conway polynomial `f_{2,32}` of `@/citation/Lubeck2024`.
             32 => Some(0x1_0000_8299u64), // x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1
             _ => None,
         }
@@ -133,7 +131,7 @@ impl PrimitivePolynomialDatabase {
     ///
     /// # Strength of the guarantee
     ///
-    /// - For `m <= 16` the polynomial is **primitive**, checked by
+    /// - For `m <= 63` the polynomial is **primitive**, checked by
     ///   `test_all_database_entries_are_primitive` in `gf2m/field.rs`.
     /// - For `m = 64..=127` the polynomial is verified only **irreducible
     ///   over GF(2)**, by `test_standard_u128_entries_are_irreducible`.

@@ -297,7 +297,8 @@ impl<V: UintExt> Gf2mField_<V> {
         let p = self.params.primitive_poly;
 
         let mut result = V::ONE; // x^0 = 1
-        let mut base = V::ONE << 1; // x (value 2)
+                                 // x mod p(x): for m = 1 the residue of x is the constant term of p.
+        let mut base = if m == 1 { p & V::ONE } else { V::ONE << 1 };
         let mut exp = k;
 
         while exp > 0 {
@@ -457,38 +458,33 @@ impl Gf2mField_ {
     /// `x` of multiplicative order 2^m - 1.
     ///
     /// Uses the irreducibility test of `@/citation/Rabin1980`, then checks
-    /// x^((2^m-1)/q) ≠ 1 for each prime factor q of 2^m - 1 found by trial
-    /// division.
+    /// x^((2^m-1)/q) ≠ 1 for each prime factor q of 2^m - 1.
     ///
     /// # Complexity
     ///
-    /// O(m³) for degree-m polynomial using fast exponentiation.
+    /// O(m) polynomial gcds of degree m for the irreducibility test, O(m)
+    /// field multiplications per prime factor of 2^m - 1, and one bounded
+    /// Pollard-rho factorization of 2^m - 1.
     pub fn verify_primitive(&self) -> bool {
-        if !self.is_irreducible_rabin() {
-            return false;
-        }
+        self.is_irreducible_rabin()
+            && self.x_has_full_order(&Self::order_prime_factors(self.params.m))
+    }
 
-        let m = self.params.m;
-        let order = (1u64 << m) - 1;
+    /// [`Self::verify_primitive`] with `order_prime_factors` supplied by the
+    /// caller, which must be [`Self::order_prime_factors`] of this field's
+    /// degree; a search over many candidates of one degree factors once.
+    pub(crate) fn verify_primitive_with_factors(&self, order_prime_factors: &[u64]) -> bool {
+        self.is_irreducible_rabin() && self.x_has_full_order(order_prime_factors)
+    }
 
-        // Step 1: Verify x^(2^m-1) = 1 (Fermat's little theorem)
-        let x_to_order = self.compute_x_power_value(order);
-        if x_to_order != 1u64 {
-            return false;
-        }
-
-        // Step 2: For each prime factor q of (2^m-1), verify x^((2^m-1)/q) ≠ 1
-        let prime_factors = Self::prime_factors_of_order_static(m);
-
-        for q in prime_factors {
-            let exp = order / q;
-            let result = self.compute_x_power_value(exp);
-            if result == 1u64 {
-                return false;
-            }
-        }
-
-        true
+    /// Whether `x` has multiplicative order 2^m - 1, given every prime factor
+    /// of 2^m - 1.
+    fn x_has_full_order(&self, order_prime_factors: &[u64]) -> bool {
+        let order = (1u64 << self.params.m) - 1;
+        self.compute_x_power_value(order) == 1u64
+            && order_prime_factors
+                .iter()
+                .all(|q| self.compute_x_power_value(order / q) != 1u64)
     }
 
     /// Tests irreducibility using the test of `@/citation/Rabin1980`.
@@ -524,42 +520,19 @@ impl Gf2mField_ {
         }
 
         // Test 2: x^(2^m) ≡ x (mod p(x))
-        let exp = 1u64 << m;
-        let x_power_mod_p = self.compute_x_power_value(exp);
-
-        x_power_mod_p == 2u64
+        self.compute_x_power_value(1u64 << m) == self.compute_x_power_value(1)
     }
 
-    /// Returns prime factors of 2^m - 1 by trial division with the primes up to
-    /// 229; the remaining cofactor is taken as prime, which holds for m ≤ 16.
-    fn prime_factors_of_order_static(m: usize) -> Vec<u64> {
-        let order = (1u64 << m) - 1;
-        let mut factors = Vec::new();
-        let mut n = order;
-
-        let small_primes = [
-            2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83,
-            89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179,
-            181, 191, 193, 197, 199, 211, 223, 227, 229,
-        ];
-
-        for &p in &small_primes {
-            if p * p > n {
-                break;
-            }
-            if n.is_multiple_of(p) {
-                factors.push(p);
-                while n.is_multiple_of(p) {
-                    n /= p;
-                }
-            }
-        }
-
-        if n > 1 {
-            factors.push(n);
-        }
-
-        factors
+    /// Returns the distinct prime factors of 2^m - 1 in ascending order.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bounded factorization gives up, which happens for no
+    /// degree a `u64` field supports
+    /// (`test_order_prime_factors_cover_every_supported_degree`).
+    pub(crate) fn order_prime_factors(m: usize) -> Vec<u64> {
+        crate::field::extension::factor_order((1u64 << m) - 1)
+            .expect("2^m - 1 factors within the bounded search for every m < 64")
     }
 
     /// Creates a new GF(2^m) field with database verification.
@@ -1635,14 +1608,110 @@ mod tests {
         assert!(!field.verify_primitive());
     }
 
-    #[test]
-    fn test_is_irreducible_rabin_small_cases() {
-        let field = Gf2mField::new(2, 0b111);
-        assert!(field.is_irreducible_rabin());
+    /// Multiplicative order of `x` modulo `poly` of degree `m`, found by
+    /// repeated multiplication by `x`; `None` when no power of `x` is 1.
+    /// The order is 2^m - 1 exactly when `poly` is primitive.
+    fn stepped_order_of_x(m: usize, poly: u64) -> Option<u64> {
+        let top = 1u64 << m;
+        let mut current = 1u64;
+        for exponent in 1..top {
+            current <<= 1;
+            if current & top != 0 {
+                current ^= poly;
+            }
+            if current == 1 {
+                return Some(exponent);
+            }
+        }
+        None
+    }
 
-        // x^2 + 1 = (x + 1)^2 is reducible
-        let field = Gf2mField::new(2, 0b101);
-        assert!(!field.is_irreducible_rabin());
+    #[test]
+    fn test_verify_primitive_matches_stepped_order_of_x() {
+        for m in 1usize..=12 {
+            let full_order = (1u64 << m) - 1;
+            for low in 0..(1u64 << m) {
+                let poly = (1u64 << m) | low;
+                assert_eq!(
+                    Gf2mField::new(m, poly).verify_primitive(),
+                    stepped_order_of_x(m, poly) == Some(full_order),
+                    "m={m}: wrong verdict for {poly:#b}"
+                );
+            }
+        }
+    }
+
+    /// For α a root of an irreducible polynomial of degree m and a prime q
+    /// dividing 2^m - 1, the minimal polynomial g of α^q is irreducible and
+    /// (α^q)^((2^m - 1)/q) = 1, so g of degree m is not primitive. Covers each
+    /// prime q below 2^16.
+    #[test]
+    fn test_verify_primitive_rejects_minimal_polynomials_of_proper_powers() {
+        use crate::field::FiniteFieldExt;
+        use crate::gf2m::generation::{GenerationStrategy, PrimitiveGenerator};
+
+        let mut cases = 0;
+        for m in 17usize..=63 {
+            let full_order = (1u64 << m) - 1;
+            let base_poly = [
+                GenerationStrategy::Trinomial,
+                GenerationStrategy::Pentanomial,
+            ]
+            .into_iter()
+            .find_map(|strategy| {
+                PrimitiveGenerator::new(m)
+                    .with_strategy(strategy)
+                    .find_first()
+            })
+            .unwrap_or_else(|| panic!("m={m}: no sparse irreducible polynomial found"));
+            let base_field = Gf2mField::new(m, base_poly);
+            assert!(base_field.is_irreducible_rabin(), "m={m}: {base_poly:#x}");
+            let alpha = base_field.element(2);
+
+            let mut remaining = full_order;
+            for q in 2u64..(1 << 16) {
+                if !remaining.is_multiple_of(q) {
+                    continue;
+                }
+                while remaining.is_multiple_of(q) {
+                    remaining /= q;
+                }
+                let minimal = alpha.pow(q).minimal_polynomial();
+                assert_eq!(minimal.degree(), Some(m), "m={m} q={q}");
+                let poly = (0..=m).fold(0u64, |bits, i| bits | (minimal.coeff(i).value() << i));
+                let field = Gf2mField::new(m, poly);
+                assert!(
+                    field.element(2).pow(full_order / q).is_one(),
+                    "m={m} q={q}: order of x modulo {poly:#x} does not divide (2^m - 1)/q"
+                );
+                assert!(
+                    !field.verify_primitive(),
+                    "m={m} q={q}: {poly:#x} is not primitive"
+                );
+                cases += 1;
+            }
+        }
+        assert!(cases > 0);
+    }
+
+    #[test]
+    fn test_order_prime_factors_cover_every_supported_degree() {
+        for m in 1usize..=63 {
+            let mut remaining = (1u64 << m) - 1;
+            let factors = Gf2mField::order_prime_factors(m);
+            assert!(factors.windows(2).all(|pair| pair[0] < pair[1]), "m={m}");
+            for q in factors {
+                assert!(q > 1 && remaining.is_multiple_of(q), "m={m} q={q}");
+                assert!(
+                    (2..q.min(1 << 16)).all(|d| !q.is_multiple_of(d)),
+                    "m={m}: factor {q} is composite"
+                );
+                while remaining.is_multiple_of(q) {
+                    remaining /= q;
+                }
+            }
+            assert_eq!(remaining, 1, "m={m}: incomplete factorization");
+        }
     }
 
     #[test]
@@ -3026,60 +3095,6 @@ mod poly_tests {
     }
 
     #[test]
-    fn test_verify_primitive_gf4() {
-        let field = Gf2mField::new(2, 0b111);
-        assert!(field.verify_primitive());
-    }
-
-    #[test]
-    fn test_verify_primitive_gf8() {
-        let field = Gf2mField::new(3, 0b1011);
-        assert!(field.verify_primitive());
-    }
-
-    #[test]
-    fn test_verify_primitive_gf16() {
-        let field = Gf2mField::new(4, 0b10011);
-        assert!(field.verify_primitive());
-    }
-
-    #[test]
-    fn test_verify_primitive_gf256() {
-        let field = Gf2mField::new(8, 0b100011101);
-        assert!(field.verify_primitive());
-    }
-
-    #[test]
-    fn test_verify_primitive_dvb_t2_gf14() {
-        // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for short frames
-        let field = Gf2mField::new(14, 0b100000000101011);
-        assert!(field.verify_primitive());
-    }
-
-    #[test]
-    fn test_verify_primitive_dvb_t2_gf16() {
-        // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for normal frames
-        let field = Gf2mField::new(16, 0b10000000000101101);
-        assert!(field.verify_primitive());
-    }
-
-    #[test]
-    fn test_verify_not_primitive_wrong_dvb_t2() {
-        let field = Gf2mField::new(14, 0b100000000100001);
-        assert!(
-            !field.verify_primitive(),
-            "This polynomial caused the BCH bug"
-        );
-    }
-
-    #[test]
-    fn test_verify_not_primitive_reducible() {
-        // (x + 1)^2 = x^2 + 1 is reducible
-        let field = Gf2mField::new(2, 0b101);
-        assert!(!field.verify_primitive());
-    }
-
-    #[test]
     fn test_is_irreducible_rabin_small_cases() {
         let field = Gf2mField::new(2, 0b111);
         assert!(field.is_irreducible_rabin());
@@ -3102,7 +3117,7 @@ mod poly_tests {
     #[test]
     fn test_all_database_entries_are_primitive() {
         use crate::primitive_polys::PrimitivePolynomialDatabase;
-        for m in 2..=16 {
+        for m in 1..(u64::BITS as usize) {
             if let Some(poly) = PrimitivePolynomialDatabase::standard(m) {
                 let field = Gf2mField::new(m, poly);
                 assert!(
@@ -3111,22 +3126,6 @@ mod poly_tests {
                     m,
                     poly
                 );
-            }
-        }
-    }
-
-    #[cfg(test)]
-    mod primitive_verification_proptests {
-        use super::*;
-
-        proptest! {
-            #[test]
-            fn prop_all_database_entries_verify(m in 2u32..=16) {
-                use crate::primitive_polys::PrimitivePolynomialDatabase;
-                if let Some(poly) = PrimitivePolynomialDatabase::standard(m as usize) {
-                    let field = Gf2mField::new(m as usize, poly);
-                    prop_assert!(field.verify_primitive());
-                }
             }
         }
     }
