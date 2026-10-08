@@ -103,22 +103,23 @@ fn and_routes(len: usize) -> Vec<(String, AndPopcountFn)> {
 }
 
 /// Parity of `lhs & rhs` over the shorter slice.
-type AndParityFn = fn(&[u64], &[u64]) -> bool;
+type AndParity = Box<dyn Fn(&[u64], &[u64]) -> bool>;
 
 /// Every route to the parity of an intersection: the low bit of each fused
 /// count and the detected bundle's fused parity entry.
-fn parity_routes(len: usize) -> Vec<(String, Box<dyn Fn(&[u64], &[u64]) -> bool>)> {
-    let mut routes: Vec<(String, Box<dyn Fn(&[u64], &[u64]) -> bool>)> = and_routes(len)
+fn parity_routes(len: usize) -> Vec<(String, AndParity)> {
+    let mut routes: Vec<(String, AndParity)> = and_routes(len)
         .into_iter()
         .map(|(route, and_count)| {
-            let parity: Box<dyn Fn(&[u64], &[u64]) -> bool> =
-                Box::new(move |lhs, rhs| and_count(lhs, rhs) & 1 == 1);
+            let parity: AndParity = Box::new(move |lhs, rhs| and_count(lhs, rhs) & 1 == 1);
             (format!("{route} low bit"), parity)
         })
         .collect();
     if let Some(fns) = gf2_kernels_simd::detect() {
-        let entry: AndParityFn = fns.and_parity_fn;
-        routes.push(("bundle and_parity_fn".to_owned(), Box::new(entry)));
+        routes.push((
+            "bundle and_parity_fn".to_owned(),
+            Box::new(fns.and_parity_fn),
+        ));
     }
     routes
 }
