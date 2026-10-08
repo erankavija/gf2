@@ -588,14 +588,17 @@ unsafe fn compute_permanent_gf7_batch_on_stream_with_kernel_start_event(
 /// Sums all 65 536 bytes of the device `d_MUL_LUT` into `*out_ptr` and
 /// returns the HIP status code (`0` = `hipSuccess`).
 ///
+/// The launch initialises the HIP runtime implicitly and returns a non-zero
+/// code when no device is usable. The sum is meaningful only after
+/// [`init_permanent_gf7`] has succeeded.
+///
 /// # Safety
 ///
-/// - `out_ptr` must be a valid device allocation of at least 8 bytes.
-/// - The HIP runtime must be initialised and a device context must be active.
-/// - [`init_permanent_gf7`] must have succeeded so that `d_MUL_LUT` is
-///   populated.
+/// `out_ptr` must be a valid device allocation of at least 8 bytes.
 pub unsafe fn compute_lut_checksum_gpu(out_ptr: *mut u64) -> c_int {
-    // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
+    // SAFETY: the caller guarantees `out_ptr` is a valid device allocation; the
+    // launch needs no prior runtime state and reports an unusable device as a
+    // status.
     unsafe { permanent_bipedal7_hip_lut_checksum(out_ptr) }
 }
 
