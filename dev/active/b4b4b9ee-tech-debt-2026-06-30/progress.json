@@ -36,7 +36,7 @@
      "title": "GldpcDecoder::decode_soft returns hard decisions without decoding",
      "classification": "implementation",
      "priority": "high",
-     "status": "merged; gates running"
+     "status": "rework 1 running"
     },
     {
      "id": "df144ecf-bc47-4581-961c-c0f317952c7b",
@@ -52,7 +52,7 @@
      "title": "Mark SimulationRunner modem-analysis integration tests as ignored",
      "classification": "implementation",
      "priority": "high",
-     "status": "merged; gates running"
+     "status": "rejected: finding does not hold (tests run in 6 ms); tags reverted"
     },
     {
      "id": "79a62102-0a4a-4f8c-a261-dc474d09593e",
@@ -540,7 +540,7 @@
      "title": "PrimitivePolynomialDatabase::trinomials(8) returns a reducible polynomial",
      "classification": "implementation",
      "priority": "normal",
-     "status": "merged; gates running"
+     "status": "rework 1 merged; gates pending"
     },
     {
      "id": "63cc5518-ecc6-40ef-b0c8-a4b6688bab37",
@@ -748,7 +748,7 @@
      "title": "SNR checkpoint config hash omits rate, modulation, decoder and demapper",
      "classification": "implementation",
      "priority": "normal",
-     "status": "merged; gates running"
+     "status": "merged; doc-review findings fixed by lead; gates pending"
     },
     {
      "id": "8342487d-9899-42c7-a30c-f5618bb0ee74",
@@ -1435,9 +1435,20 @@
   {
    "topic": "reviewer models",
    "decision": "code/doc/plan/breakdown review on gpt-6.1-sol, research/holistic on gpt-6-astra; codex-cli upgraded to 0.162.0"
+  },
+  {
+   "topic": "45a962da premise false",
+   "decision": "invoker: reject and revert"
+  },
+  {
+   "topic": "convergence",
+   "decision": "invoker: do not file more follow-ups than issues closed; fix small things immediately"
   }
  ],
- "rework_counts": {},
+ "rework_counts": {
+  "0657c9fa": 1,
+  "9600eb56": 1
+ },
  "surfaced_pitfalls": [
   {
    "from": "33057520",
@@ -1446,7 +1457,8 @@
  ],
  "notes": [
   "Each wave is dispatched in batches; at most eight worktree workers run at once (invoker decision), merges and gates run one at a time.",
-  "Finished branches are merged together and cargo-ci runs on the combined tree; code and doc review gates run per issue in parallel."
+  "Finished branches are merged together and cargo-ci runs on the combined tree; code and doc review gates run per issue in parallel.",
+  "Gate order: cargo-ci first, then code-review and doc-review; reviewers fail an issue whose cargo-ci is pending."
  ],
  "batches": [
   {
