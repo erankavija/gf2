@@ -84,7 +84,7 @@
      "title": "AWGN channel bounds its per-call noise draw only in debug builds",
      "classification": "implementation",
      "priority": "normal",
-     "status": "dispatched with 5c62bb1c"
+     "status": "in_progress: merged; cargo-ci passed; code-review failed (F1 multi-frame calls cross the stride, F2 test runs with debug assertions); rework 1 due"
     },
     {
      "id": "e1ff915f-c119-45a1-a177-a80bc3782869",
@@ -140,7 +140,7 @@
      "title": "Channel apply stride-margin assertion disagrees with the shared word margin",
      "classification": "implementation",
      "priority": "normal",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "3a5894ed-85cb-4259-8e84-e75e93295645",
@@ -388,7 +388,7 @@
      "title": "LdpcCode::is_systematic always returns false",
      "classification": "implementation",
      "priority": "normal",
-     "status": "merged; gates running"
+     "status": "done"
     },
     {
      "id": "8966d8da-0247-4d46-b39b-de75fcf06d58",
@@ -460,7 +460,7 @@
      "title": "NR rate-matched iterative decoding reads the message from the first target_k positions",
      "classification": "implementation",
      "priority": "normal",
-     "status": "dispatched"
+     "status": "in_progress: worker partial, branch worktree-agent-3464c241 at 35480688f NOT merged; REQ-01 unmet literally; open question for invoker"
     },
     {
      "id": "c9022d14-350b-4236-a802-e206e159ad7b",
@@ -508,7 +508,7 @@
      "title": "Permanent module contract, test and provenance defects",
      "classification": "implementation",
      "priority": "normal",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "069e3c33-b6f1-4f97-8961-bfbe3f6a883f",
@@ -532,7 +532,7 @@
      "title": "Primitive polynomial generation is unsound above degree 16 and ignores its thread count",
      "classification": "implementation",
      "priority": "normal",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "0657c9fa-0f07-4175-addf-9baf7aefdfa9",
@@ -556,7 +556,7 @@
      "title": "ProfileRegistry::from_json rejects committed core tuning profiles",
      "classification": "implementation",
      "priority": "normal",
-     "status": "dispatched"
+     "status": "in_progress: merge reverted on main (fix(jit:dfb8820b)); code-review and doc-review failed, deleted profiles are receipt-pinned; open question for invoker"
     },
     {
      "id": "dfd9e0c5-3368-4389-a4bd-a2195f7514c6",
@@ -772,7 +772,7 @@
      "title": "State the tested ROCm version at its source",
      "classification": "implementation",
      "priority": "normal",
-     "status": "rework 1 running (shared finding with f0228940)"
+     "status": "done"
     },
     {
      "id": "697b9178-6b19-4946-9001-f2475df71321",
@@ -900,7 +900,7 @@
      "title": "frame_sim substitutes an empty BitVec on hard decode failure",
      "classification": "implementation",
      "priority": "normal",
-     "status": "rework 1 running (REQ-01 evidence)"
+     "status": "in_progress: merged; cargo-ci passed; code-review failed twice on REQ-01; open question for invoker (reject with evidence)"
     },
     {
      "id": "d1bfe986-f73a-4d5e-a7a4-7baa8a1aaa7a",
@@ -908,7 +908,7 @@
      "title": "gf2-coding all-features rustdoc fails with warnings denied",
      "classification": "implementation",
      "priority": "normal",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "22bb2dcd-9c84-4b13-a96b-9a30d0a6385d",
@@ -940,7 +940,7 @@
      "title": "mersenne_reduce is wrong outside its tested exponents",
      "classification": "implementation",
      "priority": "normal",
-     "status": "worker done; lead-requested touch-up running (keep unrolled N=31 path)"
+     "status": "done"
     },
     {
      "id": "fd1f39e0-c77e-48c5-abc3-6d48cfb25ffa",
@@ -1260,7 +1260,7 @@
      "title": "checkpoint_sweep leaves the channel model out of its checkpoint identity",
      "classification": "implementation",
      "priority": "normal",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "c318a817-d6df-4ad0-8b62-ab5e3f4f5c9b",
@@ -1284,7 +1284,7 @@
      "title": "compute_lut_checksum_gpu states an error condition as a safety obligation",
      "classification": "implementation",
      "priority": "low",
-     "status": "rework 1 running (safety contract vs null test)"
+     "status": "done"
     }
    ]
   },
@@ -1443,14 +1443,32 @@
   {
    "topic": "convergence",
    "decision": "invoker: do not file more follow-ups than issues closed; fix small things immediately"
+  },
+  {
+   "topic": "dfb8820b REQ-02 vs receipt pins",
+   "decision": "open"
+  },
+  {
+   "topic": "fbcadf17 REQ-01: reject with evidence or third attempt",
+   "decision": "open"
+  },
+  {
+   "topic": "3464c241 REQ-01 wording (no NR code with non-identity systematic columns found up to Z=176)",
+   "decision": "open"
+  },
+  {
+   "topic": "33057520 changed snr_checkpoint.rs and executor/drain.rs, listed by source digest in dev/bench_results/3be770d5 receipts",
+   "decision": "open: revalidate or not"
   }
  ],
  "rework_counts": {
   "0657c9fa": 1,
   "9600eb56": 1,
-  "fbcadf17": 1,
+  "fbcadf17": 2,
   "f0228940": 1,
-  "c7c11e7e": 1
+  "c7c11e7e": 1,
+  "dd493649": 0,
+  "dfb8820b": 0
  },
  "surfaced_pitfalls": [
   {
@@ -1464,12 +1482,42 @@
   {
    "from": "0657c9fa",
    "note": "advisory: REQ-02 of 0657c9fa asks for a doctest that unrelated work removed; rustdoc and a focused test state the degree-8 fact instead."
+  },
+  {
+   "from": "d1bfe986",
+   "note": "CI doc step leaves features of gf2-algebra, gf2-core, gf2-sim, gf2-kernels-simd undocumented under denied warnings; .github/workflows/ci.yml lacks the doc-coding step."
+  },
+  {
+   "from": "f556d663",
+   "note": "Four benches keep private /proc/cpuinfo readers beside gf2_algebra::testutil::host_fingerprint; F_3 dispatch at n>=64 is tested through the selector only; hard-coded dev/benchmarks paths remain in the S1 bench and scaling example (code-review advisories F1, F2)."
+  },
+  {
+   "from": "5c62bb1c",
+   "note": "DEBUG_ASSERT_WORD_MARGIN now backs a release check and is misnamed; WorkerCtx::debug_assert_frame_budget and OsdBlockStream::debug_assert_block_budget are still debug-only."
+  },
+  {
+   "from": "f0228940",
+   "note": "code-review advisory: compute_lut_checksum_gpu Safety section omits that the output allocation must stay valid until the asynchronous kernel completes."
+  },
+  {
+   "from": "3464c241",
+   "note": "gf2-sim GpuNr5gDecoder::extract_message keeps a private prefix-slice extraction parallel to the shared mapping; the second pivot pass of compute_mother_encoding is unexercised by any probed NR code."
+  },
+  {
+   "from": "b2520e0f",
+   "note": "Mersenne-31 reduction path was restructured (shared final subtraction, + for wrapping_add); timing unmeasured, needs a bench-window line for crates/gf2-core/benches/fp_specialized.rs."
+  },
+  {
+   "from": "1fe6e218",
+   "note": "run_in_dedicated_parallel_pool is compiled under the parallel feature alone and panics if the pool cannot be built."
   }
  ],
  "notes": [
   "Each wave is dispatched in batches; at most eight worktree workers run at once (invoker decision), merges and gates run one at a time.",
   "Finished branches are merged together and cargo-ci runs on the combined tree; code and doc review gates run per issue in parallel.",
-  "Gate order: cargo-ci first, then code-review and doc-review; reviewers fail an issue whose cargo-ci is pending."
+  "Gate order: cargo-ci first, then code-review and doc-review; reviewers fail an issue whose cargo-ci is pending.",
+  "Worktrees are reclaimed as soon as their branch merges, with target/ deleted first; the cache pool was deleted on the invoker's instruction and must stay deleted or be rebuilt from a clean build.",
+  "A disk watchdog (free < 30 GB or /tmp inodes > 80%) ran as a background loop in session 1; restart one each session."
  ],
  "batches": [
   {
