@@ -11,6 +11,7 @@
 
 use std::ffi::c_void;
 
+use crate::host::streams::StreamDrainOnError;
 use crate::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
 use crate::{check_hip, ffi, HipError};
 
@@ -296,9 +297,14 @@ impl GpuChaChaAwgn {
         if n_samples == 0 {
             return Ok(());
         }
+        let mut drain = StreamDrainOnError::armed(stream);
         self.enqueue_noise_samples(base_word_pos, n_samples, stream)?;
-        self.d_out.copy_to_pinned_async(&mut scratch.out, stream)?;
+        // SAFETY: `scratch.out` and `self.d_out` are borrowed for this call and
+        // `scratch.out` is first read after the synchronize below; on an error
+        // return `drain` synchronizes `stream` before the borrows end.
+        unsafe { self.d_out.copy_to_pinned_async(&mut scratch.out, stream) }?;
         stream.synchronize()?;
+        drain.disarm();
         // The device lanes are IEEE-754 f32 bit patterns stored in raw 4-byte
         // lanes; `from_bits` is the exact, bit-preserving reinterpretation.
         for (dst, &bits) in out.iter_mut().zip(scratch.out.as_slice()) {

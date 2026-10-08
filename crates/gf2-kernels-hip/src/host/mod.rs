@@ -2,8 +2,9 @@
 //! ([`streams`]), [`HipEvent`] and [`HipEventSpan`] timing resources
 //! ([`events`]), [`DeviceBuffer<T>`] and [`PinnedHostBuffer<T>`] ([`alloc`]),
 //! fixed launch geometry ([`launch`]), and [`GfxTarget`] detection ([`arch`]).
-//! Every `unsafe` FFI call sits behind a safe wrapper with a `// SAFETY:`
-//! comment.
+//! Every `unsafe` FFI call sits behind a wrapper with a `// SAFETY:` comment;
+//! the wrappers are safe except the asynchronous pinned copies, whose
+//! `# Safety` sections state what the caller owes until the stream drains.
 //!
 //! [`HipStream`]: streams::HipStream
 //! [`HipStreamPool`]: streams::HipStreamPool

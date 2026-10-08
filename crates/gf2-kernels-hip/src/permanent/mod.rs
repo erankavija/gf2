@@ -6,6 +6,7 @@ use std::ffi::c_void;
 use std::os::raw::c_int;
 use std::time::{Duration, Instant};
 
+use crate::host::streams::StreamDrainOnError;
 use crate::host::{DeviceBuffer, HipEvent, HipEventSpan, HipStream, PinnedHostBuffer};
 use crate::HipError;
 
@@ -434,9 +435,8 @@ unsafe fn compute_permanent_gf5_batch_on_stream_with_kernel_start_event(
 ///
 /// # Safety
 ///
-/// - All three pointers must be valid host pointers to exactly 65 536 bytes
-///   of F_7 LUT data.
-/// - The HIP runtime must be initialised and a device context must be active.
+/// All three pointers must be valid host pointers to exactly 65 536 bytes of
+/// F_7 LUT data.
 pub unsafe fn init_permanent_gf7(
     host_add_lut: *const u8,
     host_sub_lut: *const u8,
@@ -600,17 +600,18 @@ pub unsafe fn compute_lut_checksum_gpu(out_ptr: *mut u64) -> c_int {
 }
 
 /// [`init_permanent_gf7`] over typed references to the three 65 536-byte F_7
-/// LUTs; returns the HIP status code (`0` = `hipSuccess`). The HIP runtime
-/// must be initialised.
+/// LUTs; returns the HIP status code (`0` = `hipSuccess`). The call
+/// initialises the HIP runtime implicitly and returns a non-zero code when no
+/// device is usable.
 pub fn init_permanent_gf7_from_slices(
     add_lut: &[u8; 65536],
     sub_lut: &[u8; 65536],
     mul_lut: &[u8; 65536],
 ) -> i32 {
     // SAFETY: add_lut, sub_lut, mul_lut are valid host references of exactly
-    // 65536 bytes each. The `as_ptr()` calls return non-null pointers into
-    // the referenced data. The HIP runtime must be initialised (a device
-    // context must be active).
+    // 65536 bytes each, borrowed across the synchronous `hipMemcpyToSymbol`
+    // uploads that read them. The uploads need no prior runtime state: they
+    // initialise HIP implicitly and report an unusable device as a status.
     let rc = unsafe {
         permanent_bipedal7_hip_init(add_lut.as_ptr(), sub_lut.as_ptr(), mul_lut.as_ptr())
     };
@@ -739,14 +740,18 @@ pub fn measure_gray_update_kernel(
             let mut staging = PinnedHostBuffer::<u64>::new(2, device_id)?;
             staging.as_mut_slice().copy_from_slice(&[mag, sgn]);
             let input = DeviceBuffer::<u64>::new(2, device_id)?;
-            input.copy_from_pinned_async(&staging, &stream)?;
+            // SAFETY: as for the `Bytes` arm below.
+            unsafe { input.copy_from_pinned_async(&staging, &stream) }?;
             (None, Some((input, staging)), true)
         }
         GrayUpdateOperand::Bytes(column) => {
             let mut staging = PinnedHostBuffer::<u8>::new(n, device_id)?;
             staging.as_mut_slice().copy_from_slice(column);
             let input = DeviceBuffer::<u8>::new(n, device_id)?;
-            input.copy_from_pinned_async(&staging, &stream)?;
+            // SAFETY: `staging` is not written again. It and `input` are locals
+            // dropped on this thread, whose current device is the one `stream`
+            // was created on, so their frees complete a pending copy.
+            unsafe { input.copy_from_pinned_async(&staging, &stream) }?;
             (Some((input, staging)), None, false)
         }
     };
@@ -800,7 +805,11 @@ pub fn measure_gray_update_kernel(
     }
     compiler_barrier_baseline.record_stop(&stream)?;
     let mut update_staging = PinnedHostBuffer::<u64>::new(2, device_id)?;
-    update_checksum.copy_to_pinned_async(&mut update_staging, &stream)?;
+    // SAFETY: `update_staging` is first read after the synchronize below. It
+    // and `update_checksum` are locals dropped on this thread, whose current
+    // device is the one `stream` was created on, so their frees complete a
+    // pending copy.
+    unsafe { update_checksum.copy_to_pinned_async(&mut update_staging, &stream) }?;
     stream.synchronize()?;
     let update_checksum = if is_bipedal3 {
         GrayUpdateChecksum::Bipedal3 {
@@ -978,14 +987,20 @@ pub fn measure_horizontal_product_kernel(
         .as_mut_slice()
         .copy_from_slice(&baseline_iterations);
     let iteration_input = DeviceBuffer::<u8>::new(sample_count, device_id)?;
-    iteration_input.copy_from_pinned_async(&iteration_staging, &stream)?;
+    // SAFETY: no staging buffer of this function is written after its copy
+    // is enqueued. Each is a local dropped, like its device buffer, on this
+    // thread, whose current device is the one `stream` was created on, so
+    // their frees complete a pending copy. The two enqueues below share this
+    // justification.
+    unsafe { iteration_input.copy_from_pinned_async(&iteration_staging, &stream) }?;
 
     let (byte_input, plane_input) = match circuit {
         HorizontalProductCircuit::F5Byte | HorizontalProductCircuit::F7Lookup => {
             let mut staging = PinnedHostBuffer::<u8>::new(values.len(), device_id)?;
             staging.as_mut_slice().copy_from_slice(values);
             let input = DeviceBuffer::<u8>::new(values.len(), device_id)?;
-            input.copy_from_pinned_async(&staging, &stream)?;
+            // SAFETY: as for `iteration_staging` above.
+            unsafe { input.copy_from_pinned_async(&staging, &stream) }?;
             (Some((input, staging)), None)
         }
         HorizontalProductCircuit::Bipedal3Halving
@@ -996,7 +1011,8 @@ pub fn measure_horizontal_product_kernel(
             let mut staging = PinnedHostBuffer::<u64>::new(planes.len(), device_id)?;
             staging.as_mut_slice().copy_from_slice(&planes);
             let input = DeviceBuffer::<u64>::new(planes.len(), device_id)?;
-            input.copy_from_pinned_async(&staging, &stream)?;
+            // SAFETY: as for `iteration_staging` above.
+            unsafe { input.copy_from_pinned_async(&staging, &stream) }?;
             (None, Some((input, staging)))
         }
     };
@@ -1056,7 +1072,10 @@ pub fn measure_horizontal_product_kernel(
     }
     compiler_barrier_baseline.record_stop(&stream)?;
     let mut output_staging = PinnedHostBuffer::<u64>::new(sample_count, device_id)?;
-    output.copy_to_pinned_async(&mut output_staging, &stream)?;
+    // SAFETY: `output_staging` is first read after the synchronize below. It
+    // and `output` are locals dropped on this thread, whose current device is
+    // the one `stream` was created on, so their frees complete a pending copy.
+    unsafe { output.copy_to_pinned_async(&mut output_staging, &stream) }?;
     stream.synchronize()?;
     Ok(HorizontalProductTimings {
         product: product.elapsed()?,
@@ -1554,46 +1573,6 @@ impl Drop for InstrumentedPermanentDispatch<'_> {
     }
 }
 
-/// Drains a stream before locally owned asynchronous-dispatch storage drops.
-///
-/// Construction code arms this guard immediately before the first async copy.
-/// Any later error return drops it before the local pinned and device buffers
-/// (which were declared first), keeping those allocations alive until HIP no
-/// longer references them. The fully constructed dispatch owns the same
-/// lifetime responsibility, so the guard is disarmed only after that ownership
-/// transfer succeeds.
-struct StreamDrainOnError<'a> {
-    stream: &'a HipStream,
-    armed: bool,
-}
-
-impl<'a> StreamDrainOnError<'a> {
-    fn new(stream: &'a HipStream) -> Self {
-        Self {
-            stream,
-            armed: false,
-        }
-    }
-
-    fn arm(&mut self) {
-        self.armed = true;
-    }
-
-    fn disarm(&mut self) {
-        self.armed = false;
-    }
-}
-
-impl Drop for StreamDrainOnError<'_> {
-    fn drop(&mut self) {
-        if self.armed {
-            // A stream-local wait establishes the lifetime condition documented
-            // by the async-copy APIs before Rust drops the local allocations.
-            let _ = self.stream.synchronize();
-        }
-    }
-}
-
 /// Starts a full H2D/kernel/D2H permanent dispatch with event timing.
 ///
 /// Input and output staging are pinned and owned by the returned handle, so
@@ -1636,18 +1615,20 @@ pub fn dispatch_permanent_batch_instrumented<'a>(
     let mut output_staging = PinnedHostBuffer::<u64>::new(m, device_id)?;
     let matrices = DeviceBuffer::<u8>::new(host_matrices.len(), device_id)?;
     let output = DeviceBuffer::<u64>::new(m, device_id)?;
-    // Declared after the storage it protects, so its Drop runs first on every
-    // post-arm error path and drains the caller stream before these allocations
-    // can be released.
-    let mut drain_on_error = StreamDrainOnError::new(stream);
 
     let h2d = HipEventSpan::new_on_device(device_id)?;
     h2d.record_start(stream)?;
-    // Arm before the HIP submission: even an unusual runtime error reported by
-    // the async-copy call itself cannot leave queued work referring to storage
-    // that is subsequently dropped on this error path.
-    drain_on_error.arm();
-    matrices.copy_from_pinned_async(&input_staging, stream)?;
+    // Declared after the storage it protects and before the first async copy,
+    // so its Drop runs first on every later error path and drains the caller
+    // stream before these allocations can be released, even when the
+    // async-copy call itself reports the error.
+    let mut drain_on_error = StreamDrainOnError::armed(stream);
+    // SAFETY: `input_staging` is never written again. On an error return
+    // `drain_on_error` synchronizes `stream` before `matrices` and
+    // `input_staging` drop; otherwise the returned handle owns both and
+    // synchronizes `stream` in `finish` or in its `Drop`, before its fields
+    // drop.
+    unsafe { matrices.copy_from_pinned_async(&input_staging, stream) }?;
     h2d.record_stop(stream)?;
 
     // SAFETY: `matrices` and `output` are live device buffers of exactly the
@@ -1667,7 +1648,10 @@ pub fn dispatch_permanent_batch_instrumented<'a>(
 
     let d2h = HipEventSpan::new_on_device(device_id)?;
     d2h.record_start(stream)?;
-    output.copy_to_pinned_async(&mut output_staging, stream)?;
+    // SAFETY: `output_staging` is read only by `finish`, after it
+    // synchronizes `stream`. The guard and the returned handle keep it and
+    // `output` allocated until `stream` drains, as for the H2D copy above.
+    unsafe { output.copy_to_pinned_async(&mut output_staging, stream) }?;
     d2h.record_stop(stream)?;
 
     let dispatch = InstrumentedPermanentDispatch {

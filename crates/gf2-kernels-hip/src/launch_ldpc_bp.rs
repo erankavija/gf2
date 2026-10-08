@@ -11,6 +11,7 @@
 use std::ffi::c_void;
 use std::ptr;
 
+use crate::host::streams::StreamDrainOnError;
 use crate::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
 use crate::{check_hip, ffi, HipError};
 
@@ -462,11 +463,21 @@ impl GpuLdpcBp {
         for blk in llr_blocks {
             flat.extend_from_slice(blk);
         }
+        // The stream path's async-copy contract, cited by each enqueue below:
+        // the device buffers and the pinned `scratch` buffers are borrowed for
+        // this call; the host touches a pinned buffer only before its first
+        // enqueue or after a later `stream.synchronize()`; and `drain`
+        // synchronizes `stream` on an error return, before the borrows end.
+        let mut drain = stream.map(StreamDrainOnError::armed);
         match (stream, staging.as_deref_mut()) {
             (Some(stream), Some(scratch)) => {
                 scratch.channel.as_mut_slice()[..flat.len()].copy_from_slice(&flat);
-                self.d_channel
-                    .copy_from_pinned_async(&scratch.channel, stream)?;
+                // SAFETY: the stream path's async-copy contract above;
+                // `scratch.channel` is not written again in this call.
+                unsafe {
+                    self.d_channel
+                        .copy_from_pinned_async(&scratch.channel, stream)
+                }?;
             }
             _ => self.d_channel.copy_from_host(&flat)?,
         }
@@ -483,8 +494,13 @@ impl GpuLdpcBp {
             match (stream, staging.as_deref_mut()) {
                 (Some(stream), Some(scratch)) => {
                     scratch.done.as_mut_slice()[..batch].copy_from_slice(&frame_done_host);
-                    self.d_frame_done
-                        .copy_from_pinned_async(&scratch.done, stream)?;
+                    // SAFETY: the stream path's async-copy contract above;
+                    // `scratch.done` is next written after a per-iteration
+                    // synchronize.
+                    unsafe {
+                        self.d_frame_done
+                            .copy_from_pinned_async(&scratch.done, stream)
+                    }?;
                 }
                 _ => self.d_frame_done.copy_from_host(&frame_done_host)?,
             }
@@ -575,8 +591,13 @@ impl GpuLdpcBp {
                 match (stream, staging.as_deref_mut()) {
                     (Some(stream), Some(scratch)) => {
                         scratch.unsat.as_mut_slice()[..batch].fill(0);
-                        self.d_unsatisfied
-                            .copy_from_pinned_async(&scratch.unsat, stream)?;
+                        // SAFETY: the stream path's async-copy contract above;
+                        // the host next touches `scratch.unsat` after the
+                        // synchronize that follows the D2H below.
+                        unsafe {
+                            self.d_unsatisfied
+                                .copy_from_pinned_async(&scratch.unsat, stream)
+                        }?;
                     }
                     _ => self.clear_unsatisfied(batch)?,
                 }
@@ -603,8 +624,12 @@ impl GpuLdpcBp {
                 let mut flags = vec![0u8; batch];
                 match (stream, staging.as_deref_mut()) {
                     (Some(stream), Some(scratch)) => {
-                        self.d_unsatisfied
-                            .copy_to_pinned_async(&mut scratch.unsat, stream)?;
+                        // SAFETY: the stream path's async-copy contract above;
+                        // `scratch.unsat` is read after the synchronize below.
+                        unsafe {
+                            self.d_unsatisfied
+                                .copy_to_pinned_async(&mut scratch.unsat, stream)
+                        }?;
                         stream.synchronize()?;
                         flags.copy_from_slice(&scratch.unsat.as_slice()[..batch]);
                     }
@@ -637,8 +662,13 @@ impl GpuLdpcBp {
                 match (stream, staging.as_deref_mut()) {
                     (Some(stream), Some(scratch)) => {
                         scratch.done.as_mut_slice()[..batch].copy_from_slice(&frame_done_host);
-                        self.d_frame_done
-                            .copy_from_pinned_async(&scratch.done, stream)?;
+                        // SAFETY: the stream path's async-copy contract above;
+                        // `scratch.done` is next written after the following
+                        // iteration's synchronize.
+                        unsafe {
+                            self.d_frame_done
+                                .copy_from_pinned_async(&scratch.done, stream)
+                        }?;
                     }
                     _ => self.d_frame_done.copy_from_host(&frame_done_host)?,
                 }
@@ -649,10 +679,14 @@ impl GpuLdpcBp {
         let mut hard = vec![0u8; batch * self.n];
         match (stream, staging) {
             (Some(stream), Some(scratch)) => {
-                self.d_hard
-                    .copy_to_pinned_async(&mut scratch.hard, stream)?;
+                // SAFETY: the stream path's async-copy contract above;
+                // `scratch.hard` is read after the synchronize below.
+                unsafe { self.d_hard.copy_to_pinned_async(&mut scratch.hard, stream) }?;
                 stream.synchronize()?;
                 hard.copy_from_slice(&scratch.hard.as_slice()[..batch * self.n]);
+                if let Some(drain) = drain.as_mut() {
+                    drain.disarm();
+                }
             }
             _ => {
                 // SAFETY: blocks until all preceding default-stream work completes.
