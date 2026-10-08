@@ -31,9 +31,7 @@ use gf2_core::BitVec;
 ///
 /// The decoder owns the LDPC lane workspace and one codeword per lane and
 /// takes no lock. The BCH outer decode allocates per frame as
-/// [`DvbT2Concat::decode_bch_from_ldpc_codeword`] does. The type is `Send`, so
-/// a [`PooledBatchDecoder`](crate::pooled::PooledBatchDecoder) spreads batches
-/// over one decoder per worker.
+/// [`DvbT2Concat::decode_bch_from_ldpc_codeword`] does.
 ///
 /// # Examples
 ///
