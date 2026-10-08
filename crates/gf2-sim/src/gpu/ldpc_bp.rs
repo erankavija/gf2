@@ -16,7 +16,10 @@
 
 #[cfg(feature = "hip")]
 mod imp {
-    use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, EdgeLayout, LdpcCode, LdpcDecoder};
+    use gf2_coding::ldpc::{
+        DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LdpcBatchDecoder, LdpcCode,
+        LdpcDecoder,
+    };
     use gf2_coding::Llr;
     use gf2_core::BitVec;
     use gf2_kernels_hip::host::HipStream;
@@ -27,6 +30,7 @@ mod imp {
     use crate::error::StageError;
     use crate::gpu::map_hip_error;
     use crate::stage::{ExecutionClass, Stage};
+    use crate::stages::batch_decode::{BatchDecode, BatchDecodeScratch};
 
     /// Builds the device CSR/CSC [`LdpcGraphLayout`] from the code's canonical
     /// [`EdgeLayout`], widened to the `i32` the kernel consumes.
@@ -44,30 +48,57 @@ mod imp {
         }
     }
 
-    /// CPU LDPC BP decode stage wrapping [`LdpcDecoder`]: the
-    /// [`Stage::CpuFallback`](crate::Stage) of [`GpuLdpcBp`].
+    type DecoderFactory = Box<dyn Fn() -> LdpcBatchDecoder + Send + Sync>;
+
+    /// CPU LDPC BP decode stage: the [`Stage::CpuFallback`](crate::Stage) of
+    /// [`GpuLdpcBp`].
     ///
-    /// The orphan rule forbids implementing [`Stage`] on the `gf2-coding`
-    /// `LdpcDecoder`, so this wrapper carries the impl. It emits the `n`-bit
-    /// hard-decision codeword of [`LdpcDecoder::decode_to_codeword`].
+    /// A [`BatchDecode`] stage over an [`LdpcBatchDecoder`] that writes
+    /// codewords, so each output frame is the `n`-bit hard-decision codeword
+    /// of [`LdpcDecoder::decode_to_codeword`] on the same LLRs.
+    ///
+    /// The scratch is `()`, as the erased fallback boundary requires of a CPU
+    /// fallback, so each `process` call on a non-empty batch builds its
+    /// decoder.
     pub struct CpuLdpcBp {
-        code: LdpcCode,
+        n: usize,
         config: DecoderConfig,
         max_iterations: usize,
-        decoder: std::sync::Mutex<LdpcDecoder>,
+        stage: BatchDecode<DecoderFactory>,
     }
 
     impl CpuLdpcBp {
-        /// Builds a CPU LDPC BP stage. A cap of zero behaves as in
-        /// [`LdpcDecoder::decode_codeword_into`].
+        /// Builds a CPU LDPC BP stage whose decoders take the decode selectors
+        /// of the process-wide coding tuning section. A cap of zero behaves as
+        /// in [`LdpcDecoder::decode_codeword_into`].
         #[must_use]
         pub fn new(code: LdpcCode, config: DecoderConfig, max_iterations: usize) -> Self {
-            let decoder = std::sync::Mutex::new(LdpcDecoder::with_config(code.clone(), config));
-            Self {
-                code,
+            Self::from_factory(
+                code.n(),
                 config,
                 max_iterations,
-                decoder,
+                Box::new(move || {
+                    LdpcBatchDecoder::new(
+                        code.clone(),
+                        config,
+                        max_iterations,
+                        DecodedWord::Codeword,
+                    )
+                }),
+            )
+        }
+
+        fn from_factory(
+            n: usize,
+            config: DecoderConfig,
+            max_iterations: usize,
+            factory: DecoderFactory,
+        ) -> Self {
+            Self {
+                n,
+                config,
+                max_iterations,
+                stage: BatchDecode::new(factory),
             }
         }
 
@@ -75,7 +106,7 @@ mod imp {
         #[inline]
         #[must_use]
         pub fn n(&self) -> usize {
-            self.code.n()
+            self.n
         }
 
         /// The BP iteration cap.
@@ -91,36 +122,26 @@ mod imp {
         pub fn config(&self) -> DecoderConfig {
             self.config
         }
-
-        /// Locks and returns the owned [`LdpcDecoder`].
-        ///
-        /// # Panics
-        ///
-        /// Panics if the internal mutex is poisoned.
-        pub fn decoder(&self) -> std::sync::MutexGuard<'_, LdpcDecoder> {
-            self.decoder.lock().expect("CpuLdpcBp decoder mutex")
-        }
     }
 
     impl Stage<LlrBatch, HardDecisionBatch> for CpuLdpcBp {
         type Scratch = ();
         type CpuFallback = Self;
 
+        /// # Panics
+        ///
+        /// Panics as [`BatchDecode`]'s `process` does, and as
+        /// [`LdpcBatchDecoder::new`].
         fn process(
             &self,
             input: &LlrBatch,
             _scratch: &mut (),
         ) -> Result<HardDecisionBatch, StageError> {
-            let mut dec = self.decoder.lock().expect("CpuLdpcBp decoder mutex");
-            let frames: Vec<BitVec> = input
-                .frames
-                .iter()
-                .map(|llrs| {
-                    dec.decode_to_codeword(llrs, self.max_iterations)
-                        .decoded_bits
-                })
-                .collect();
-            Ok(HardDecisionBatch::new(frames))
+            if input.frames.is_empty() {
+                return Ok(HardDecisionBatch::new(Vec::new()));
+            }
+            self.stage
+                .process(input, &mut BatchDecodeScratch::default())
         }
 
         fn execution_class(&self) -> ExecutionClass {
@@ -458,8 +479,9 @@ mod imp {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use gf2_coding::ldpc::{DecoderAlgorithm, LdpcEncoder, QuasiCyclicLdpc};
+        use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, LdpcEncoder, QuasiCyclicLdpc};
         use gf2_coding::traits::BlockEncoder;
+        use gf2_coding::tuning::DecodeSelectors;
 
         fn qc_code() -> LdpcCode {
             let base = vec![
@@ -621,6 +643,37 @@ mod imp {
             ] {
                 let config = DecoderConfig::new(algorithm, true);
                 let stage = CpuLdpcBp::new(code.clone(), config, cap);
+                assert_matches_per_frame_decoding(&stage, &code, config, cap);
+            }
+        }
+
+        #[test]
+        fn cpu_stage_matches_per_frame_decode_on_the_lane_route() {
+            let code = qc_code();
+            let cap = 20;
+            let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+            let every_wave = DecodeSelectors::try_new(1, usize::MAX, 1).unwrap();
+            for portable in [false, true] {
+                let factory = {
+                    let (code, selectors) = (code.clone(), every_wave.clone());
+                    move || {
+                        let decoder = LdpcBatchDecoder::with_selectors(
+                            code.clone(),
+                            config,
+                            cap,
+                            DecodedWord::Codeword,
+                            selectors.clone(),
+                        );
+                        let decoder = if portable {
+                            decoder.with_portable_lanes()
+                        } else {
+                            decoder
+                        };
+                        assert!(matches!(decoder.batch_route(1), BatchRoute::Lane(_)));
+                        decoder
+                    }
+                };
+                let stage = CpuLdpcBp::from_factory(code.n(), config, cap, Box::new(factory));
                 assert_matches_per_frame_decoding(&stage, &code, config, cap);
             }
         }
