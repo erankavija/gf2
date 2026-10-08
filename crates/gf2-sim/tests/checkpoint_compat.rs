@@ -483,6 +483,87 @@ fn test_sweep_sigint_resume_byte_identical_rician_subprocess() {
     assert_sweep_resume_byte_identical("rician", 2_000);
 }
 
+const SWEEP_CHANNELS: [&str; 3] = ["awgn", "rayleigh", "rician"];
+
+fn sweep_args<'a>(dir: &'a str, channel: &'a str, resume: bool) -> Vec<&'a str> {
+    let mut args = vec![
+        "--checkpoint-dir",
+        dir,
+        "--channel",
+        channel,
+        "--snr-points",
+        "2",
+        "--seed",
+        "7",
+        "--max-frames",
+        "8",
+        "--heartbeat",
+        "4",
+    ];
+    if resume {
+        args.push("--resume");
+    }
+    args
+}
+
+fn sweep_checkpoint_identity(channel: &str) -> String {
+    let dir = tempdir(&format!("sweep-identity-{channel}"));
+    run_full_sweep(dir.path(), channel, 2, 8, 4);
+    let bytes = std::fs::read(dir.path().join("snr_0000.json")).unwrap();
+    checkpoint_payload(&bytes).unwrap().config_hash
+}
+
+#[test]
+fn test_sweep_checkpoint_identity_differs_per_channel_pair() {
+    let identities: Vec<String> = SWEEP_CHANNELS
+        .iter()
+        .map(|c| sweep_checkpoint_identity(c))
+        .collect();
+    for a in 0..identities.len() {
+        for b in a + 1..identities.len() {
+            assert_ne!(
+                identities[a], identities[b],
+                "{} and {} sweeps must have distinct checkpoint identities",
+                SWEEP_CHANNELS[a], SWEEP_CHANNELS[b]
+            );
+        }
+    }
+}
+
+#[test]
+fn test_sweep_resume_rejects_checkpoints_of_another_channel() {
+    for written in SWEEP_CHANNELS {
+        for resumed in SWEEP_CHANNELS.into_iter().filter(|c| *c != written) {
+            let dir = tempdir(&format!("sweep-xchannel-{written}-{resumed}"));
+            let dir_str = dir.path().to_str().unwrap();
+            run_full_sweep(dir.path(), written, 2, 8, 4);
+            let before = load_all_normalized(dir.path());
+
+            let out = std::process::Command::new(env!("CARGO_BIN_EXE_checkpoint_sweep"))
+                .args(sweep_args(dir_str, resumed, true))
+                .output()
+                .expect("checkpoint_sweep must spawn");
+
+            let ctx = format!("{written} checkpoints resumed as {resumed}");
+            assert!(!out.status.success(), "{ctx}: resume must fail");
+            assert!(
+                String::from_utf8_lossy(&out.stderr).contains("ConfigHashMismatch"),
+                "{ctx}: stderr must report the mismatch, got {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            assert!(
+                !String::from_utf8_lossy(&out.stdout).contains("FLUSHED"),
+                "{ctx}: no point may be completed or reused"
+            );
+            assert_eq!(
+                load_all_normalized(dir.path()),
+                before,
+                "{ctx}: checkpoints must be left untouched"
+            );
+        }
+    }
+}
+
 /// Returns whether the canonical `snr_0000.json` is present.
 fn assert_canonical_complete_or_absent(dir: &Path, ctx: &str) -> bool {
     let canon = dir.join("snr_0000.json");
