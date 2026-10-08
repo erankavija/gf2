@@ -6,6 +6,9 @@
 
 #![deny(unsafe_op_in_unsafe_fn)]
 
+#[cfg(target_arch = "x86")]
+use core::arch::x86::*;
+#[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 use std::arch::is_x86_feature_detected;
 
@@ -35,9 +38,9 @@ fn lane_check_step_avx2(
         var_to_check.len(),
         check_to_var.len(),
     );
-    // SAFETY: `detect` publishes this entry only on a host with AVX2, and the
-    // assertion leaves nondecreasing offsets that end at the length of both
-    // message arrays.
+    // SAFETY: `detect` publishes this entry only on a host with AVX2.
+    // `assert_check_step_lengths` makes the message arrays one length and the
+    // offsets nondecreasing, ending at that length.
     unsafe { lane_check_step_avx2_unchecked(rule, check_offsets, var_to_check, check_to_var) }
 }
 
@@ -63,9 +66,9 @@ fn lane_variable_step_avx2(
         var_to_check.len(),
         hard.len(),
     );
-    // SAFETY: `detect` publishes this entry only on a host with AVX2, and the
-    // assertion leaves nondecreasing offsets that end at the length of the
-    // slot map and two message arrays of one length.
+    // SAFETY: `detect` publishes this entry only on a host with AVX2.
+    // `assert_variable_step_lengths` makes the message arrays one length and
+    // the offsets nondecreasing, ending at the slot map length.
     let slots_in_range = unsafe {
         lane_variable_step_avx2_unchecked(
             active,
@@ -87,14 +90,16 @@ fn lane_variable_step_avx2(
 #[inline]
 #[target_feature(enable = "avx2")]
 fn load(lanes: &F32x8) -> __m256 {
-    // SAFETY: an `F32x8` is 32 readable bytes at 32-byte alignment.
+    // SAFETY: the caller has AVX2, and an `F32x8` is 32 readable bytes at
+    // 32-byte alignment.
     unsafe { _mm256_load_ps(lanes.0.as_ptr()) }
 }
 
 #[inline]
 #[target_feature(enable = "avx2")]
 fn store(lanes: &mut F32x8, value: __m256) {
-    // SAFETY: an `F32x8` is 32 writable bytes at 32-byte alignment.
+    // SAFETY: the caller has AVX2, and an `F32x8` is 32 writable bytes at
+    // 32-byte alignment.
     unsafe { _mm256_store_ps(lanes.0.as_mut_ptr(), value) }
 }
 
@@ -112,8 +117,8 @@ fn negative_sign(value: __m256) -> __m256 {
 ///
 /// # Safety
 ///
-/// The host has AVX2. `check_offsets` never decreases, and its last entry is
-/// at most the length of each message array.
+/// The host has AVX2. `var_to_check` and `check_to_var` have one length, and
+/// `check_offsets` never decreases and ends at most at that length.
 #[target_feature(enable = "avx2")]
 unsafe fn lane_check_step_avx2_unchecked(
     rule: LaneMinSumRule,
@@ -123,7 +128,8 @@ unsafe fn lane_check_step_avx2_unchecked(
 ) {
     for bounds in check_offsets.windows(2) {
         let range = bounds[0] as usize..bounds[1] as usize;
-        // SAFETY: the offsets never decrease and stay within both arrays.
+        // SAFETY: the offsets never decrease and end within both arrays, which
+        // have one length.
         let (inputs, outputs) = unsafe {
             (
                 var_to_check.get_unchecked(range.clone()),
@@ -202,9 +208,11 @@ fn check_row(inputs: &[F32x8], outputs: &mut [F32x8], finish: impl Fn(__m256, __
 ///
 /// # Safety
 ///
-/// The host has AVX2. `var_offsets` never decreases, and its last entry is at
-/// most the length of `var_edge_to_check_edge`. `check_to_var` and
-/// `var_to_check` have one length.
+/// The host has AVX2. `check_to_var` and `var_to_check` have one length, and
+/// `var_offsets` never decreases and ends at most at the length of
+/// `var_edge_to_check_edge`. Soundness does not depend on the lengths of
+/// `channel`, `beliefs` and `hard`, which are zipped, nor on a slot's edge,
+/// which is checked.
 #[allow(clippy::too_many_arguments)]
 #[target_feature(enable = "avx2")]
 unsafe fn lane_variable_step_avx2_unchecked(
@@ -224,7 +232,7 @@ unsafe fn lane_variable_step_avx2_unchecked(
 
     let variables = channel.iter().zip(beliefs).zip(hard);
     for (bounds, ((channel, posterior), hard)) in var_offsets.windows(2).zip(variables) {
-        // SAFETY: the offsets never decrease and stay within the slot map.
+        // SAFETY: the offsets never decrease and end within the slot map.
         let slots =
             unsafe { var_edge_to_check_edge.get_unchecked(bounds[0] as usize..bounds[1] as usize) };
 
@@ -242,8 +250,8 @@ unsafe fn lane_variable_step_avx2_unchecked(
         store(posterior, _mm256_blendv_ps(load(posterior), belief, mask));
 
         for &edge in slots {
-            // SAFETY: the loop above found `edge` inside `check_to_var`,
-            // whose length `var_to_check` shares.
+            // SAFETY: the loop above found `edge` inside `check_to_var`, whose
+            // length `var_to_check` shares.
             let (incoming, outgoing) = unsafe {
                 (
                     check_to_var.get_unchecked(edge as usize),
