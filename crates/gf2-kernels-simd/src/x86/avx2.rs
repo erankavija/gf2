@@ -410,6 +410,54 @@ unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {
     total
 }
 
+/// Parity of the set bits of the word-wise AND over the common prefix of two
+/// slices. The intersection is XOR-folded into one word, whose count is taken
+/// once; no vector or tail word is counted on its own.
+///
+/// # Safety
+///
+/// The host supports AVX2; `super::detect_x86` establishes that before
+/// building the bundle that calls this function, and other hosts keep the
+/// scalar route. Both slices are only read, so they may alias. Every
+/// unaligned 32-byte load and every tail word lies inside the common prefix.
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_and_parity(lhs: &[u64], rhs: &[u64]) -> bool {
+    let len = lhs.len().min(rhs.len());
+    let lhs_ptr = lhs.as_ptr() as *const u8;
+    let rhs_ptr = rhs.as_ptr() as *const u8;
+    let nvec = len / 4;
+
+    let mut acc0 = _mm256_setzero_si256();
+    let mut acc1 = _mm256_setzero_si256();
+    let mut i = 0usize;
+    while i + 2 <= nvec {
+        let off = i * 32;
+        let v0 = _mm256_and_si256(loadu(lhs_ptr.add(off)), loadu(rhs_ptr.add(off)));
+        let v1 = _mm256_and_si256(loadu(lhs_ptr.add(off + 32)), loadu(rhs_ptr.add(off + 32)));
+        acc0 = _mm256_xor_si256(acc0, v0);
+        acc1 = _mm256_xor_si256(acc1, v1);
+        i += 2;
+    }
+    if i < nvec {
+        let off = i * 32;
+        let v = _mm256_and_si256(loadu(lhs_ptr.add(off)), loadu(rhs_ptr.add(off)));
+        acc0 = _mm256_xor_si256(acc0, v);
+    }
+
+    let acc = _mm256_xor_si256(acc0, acc1);
+    let acc128 = _mm_xor_si128(
+        _mm256_castsi256_si128(acc),
+        _mm256_extracti128_si256(acc, 1),
+    );
+    let mut folded =
+        (_mm_cvtsi128_si64(acc128) ^ _mm_cvtsi128_si64(_mm_srli_si128(acc128, 8))) as u64;
+    for j in (nvec * 4)..len {
+        folded ^= *lhs.get_unchecked(j) & *rhs.get_unchecked(j);
+    }
+
+    folded.count_ones() & 1 == 1
+}
+
 /// Finds the index of the first set bit using AVX2.
 ///
 /// # Safety
@@ -750,6 +798,10 @@ pub(crate) fn fns() -> LogicalFns {
         // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { avx2_and_popcnt(lhs, rhs) }
     }
+    fn and_parity_fn(lhs: &[u64], rhs: &[u64]) -> bool {
+        // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
+        unsafe { avx2_and_parity(lhs, rhs) }
+    }
     fn popcnt_csa_fn(src: &[u64]) -> u64 {
         // SAFETY: `detect_x86` returns this bundle only after detecting AVX2.
         unsafe { super::popcount::avx2_popcnt_csa(src) }
@@ -796,6 +848,7 @@ pub(crate) fn fns() -> LogicalFns {
         not_fn,
         popcnt_fn,
         and_popcnt_fn,
+        and_parity_fn,
         // POPCNT is a capability of its own: AVX2 hosts carry it in practice,
         // but the bundle is built from what this host reports, not from what
         // AVX2 implies.

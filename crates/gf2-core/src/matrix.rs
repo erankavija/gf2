@@ -1104,6 +1104,31 @@ impl BitMatrix {
         }
     }
 
+    /// [`Self::matvec`] with each row reduced by the detected bundle's fused
+    /// AND-parity kernel, which XOR-folds the row's intersection with `x` and
+    /// counts the folded word once.
+    ///
+    /// A comparator that [`Self::matvec`] does not select. The kernel needs
+    /// the `simd` cargo feature and a host whose kernel bundle is detected;
+    /// otherwise, and for a matrix without columns, the scalar lane runs.
+    /// Every lane returns the same bits.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `x.len() != self.cols()`.
+    pub fn matvec_parity_kernel(&self, x: &crate::BitVec) -> crate::BitVec {
+        assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
+
+        // The kernel lane walks rows by stride, which is zero without columns.
+        #[cfg(feature = "simd")]
+        if self.stride_words > 0 {
+            if let Some(fns) = crate::simd::maybe_simd() {
+                return self.matvec_simd_parity(x, fns);
+            }
+        }
+        self.matvec_scalar(x)
+    }
+
     /// The SIMD lane of both entries: the fused kernel when the bundle is
     /// detected, the scalar lane otherwise.
     #[inline(always)]
@@ -1166,6 +1191,28 @@ impl BitMatrix {
 
         for row in self.data.chunks_exact(self.stride_words).take(self.rows) {
             y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);
+        }
+
+        y
+    }
+
+    /// Row parities through the detected bundle's fused AND-parity kernel,
+    /// with the row loop, the per-row bundle call and the appends of
+    /// [`Self::matvec_simd`].
+    #[cfg(feature = "simd")]
+    #[inline(never)]
+    fn matvec_simd_parity(
+        &self,
+        x: &crate::BitVec,
+        fns: &gf2_kernels_simd::LogicalFns,
+    ) -> crate::BitVec {
+        let x_words = x.words();
+        debug_assert_eq!(x_words.len(), self.stride_words);
+
+        let mut y = crate::BitVec::with_capacity(self.rows);
+
+        for row in self.data.chunks_exact(self.stride_words).take(self.rows) {
+            y.push_bit((fns.and_parity_fn)(row, x_words));
         }
 
         y

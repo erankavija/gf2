@@ -115,6 +115,14 @@ pub struct LogicalFns {
     pub not_fn: fn(&mut [u64]),
     pub popcnt_fn: fn(&[u64]) -> u64,
     pub and_popcnt_fn: fn(&[u64], &[u64]) -> u64,
+    /// Reports the parity of the set bits of `lhs & rhs` over the shorter
+    /// slice by XOR-folding the intersection into one word and counting that
+    /// word once.
+    ///
+    /// A comparator that `gf2-core`'s automatic dispatch does not select.
+    /// `gf2-core`'s `tests/popcount_routes.rs` holds it to the low bit of
+    /// every fused count.
+    pub and_parity_fn: fn(&[u64], &[u64]) -> bool,
     /// Counts set bits one word at a time with the scalar `POPCNT`
     /// instruction when the host reports it, and with the portable
     /// `u64::count_ones` lowering otherwise.
