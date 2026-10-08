@@ -1,7 +1,8 @@
-//! Posterior-level contract of [`LdpcBatchDecoder`]: on each route a frame's
-//! posterior bit patterns, hard decisions, iteration count and flags equal
-//! [`LdpcDecoder`]'s on the same LLRs, under the batch clauses of
-//! `docs/reference/ldpc-decoder-numerical-contract.md`. The codes are a DVB-T2
+//! Posterior-level contract of [`LdpcBatchDecoder`]: on each route and lane
+//! backend a frame's posterior bit patterns, hard decisions, iteration count
+//! and flags equal [`LdpcDecoder`]'s on the same LLRs, under the batch clauses
+//! of `docs/reference/ldpc-decoder-numerical-contract.md`. The AVX2 backend is
+//! under test in a build with the `simd` cargo feature. The codes are a DVB-T2
 //! short code (`@/citation/Etsi2015`), 5G NR mother codes
 //! (`@/citation/ThreeGpp2017`) and hand-built codes with low-degree and
 //! high-degree checks.
@@ -10,10 +11,12 @@ use gf2_coding::bch::CodeRate;
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::nr_5g::FILLER_LLR;
 use gf2_coding::ldpc::{
-    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LdpcBatchDecoder,
-    LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc,
+    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LaneBackend,
+    LdpcBatchDecoder, LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
+use gf2_coding::test_support::ldpc_lane_backends;
+use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
 use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome};
 use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
@@ -40,14 +43,15 @@ const FRAMES: usize = 17;
 /// kind.
 const SIGMA_LADDER: [f64; 6] = [0.5, 1.0, 2.2, 0.9, 1.7, 1.1];
 
-/// A route of [`LdpcBatchDecoder`] under test, opened by its selectors.
+/// A route of [`LdpcBatchDecoder`] under test, opened by its selectors and
+/// its lane backend.
 #[derive(Clone, Copy, Debug)]
 enum Route {
-    /// Every wave decodes in the portable lane kernels.
-    Lane,
-    /// A wave of at least four frames decodes in the portable lane kernels
-    /// and a shorter one on the single-frame decoder.
-    LaneFromFourFrames,
+    /// Every wave decodes in the lane kernels of the backend.
+    Lane(LaneBackend),
+    /// A wave of at least four frames decodes in the lane kernels of the
+    /// backend and a shorter one on the single-frame decoder.
+    LaneFromFourFrames(LaneBackend),
     /// Every wave decodes on the single-frame decoder.
     SingleFrame,
 }
@@ -55,8 +59,8 @@ enum Route {
 impl Route {
     fn selectors(self) -> DecodeSelectors {
         let lane_min_frames = match self {
-            Route::Lane => 1,
-            Route::LaneFromFourFrames => 4,
+            Route::Lane(_) => 1,
+            Route::LaneFromFourFrames(_) => 4,
             Route::SingleFrame => usize::MAX,
         };
         DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1).unwrap()
@@ -65,9 +69,34 @@ impl Route {
     /// The route of a wave of `frames` frames under a min-sum rule.
     fn of_wave(self, frames: usize) -> BatchRoute {
         match self {
-            Route::Lane => BatchRoute::Lane,
-            Route::LaneFromFourFrames if frames >= 4 => BatchRoute::Lane,
-            Route::LaneFromFourFrames | Route::SingleFrame => BatchRoute::SingleFrame,
+            Route::Lane(backend) => BatchRoute::Lane(backend),
+            Route::LaneFromFourFrames(backend) if frames >= 4 => BatchRoute::Lane(backend),
+            Route::LaneFromFourFrames(_) | Route::SingleFrame => BatchRoute::SingleFrame,
+        }
+    }
+
+    /// A decoder of `code` on this route.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the build or the host lacks the backend of the route.
+    fn decoder(self, code: &LdpcCode, config: DecoderConfig, cap: usize) -> LdpcBatchDecoder {
+        let decoder = LdpcBatchDecoder::with_selectors(
+            code.clone(),
+            config,
+            cap,
+            DecodedWord::Codeword,
+            self.selectors(),
+        );
+        match self {
+            Route::Lane(backend) | Route::LaneFromFourFrames(backend) => {
+                assert!(ldpc_lane_backends().contains(&backend));
+                match backend {
+                    LaneBackend::Portable => decoder.with_portable_lanes(),
+                    LaneBackend::Avx2 => decoder,
+                }
+            }
+            Route::SingleFrame => decoder,
         }
     }
 }
@@ -183,13 +212,7 @@ fn assert_route_equals_single_frame(route: Route, case: &Case) {
             let config = DecoderConfig::new(algorithm, early_termination);
             let label = format!("{} under {config:?} on {route:?}", set.name);
             let expected = single_frame_results(code, config, *cap, &set.frames);
-            let mut decoder = LdpcBatchDecoder::with_selectors(
-                code.clone(),
-                config,
-                *cap,
-                DecodedWord::Codeword,
-                route.selectors(),
-            );
+            let mut decoder = route.decoder(code, config, *cap);
             let lanes = decoder.batch_granularity();
             for size in 1..=lanes {
                 assert_eq!(decoder.batch_route(size), route.of_wave(size), "{label}");
@@ -242,6 +265,23 @@ fn assert_route_equals_single_frame(route: Route, case: &Case) {
                 );
             }
         }
+    }
+}
+
+/// Asserts the shared batch contract on `route` over the first frame set of
+/// `case`, for every rule with early termination.
+fn assert_route_satisfies_the_batch_contract(route: Route, case: &Case) {
+    let Case { code, cap, sets } = case;
+    for algorithm in RULES {
+        let config = DecoderConfig::new(algorithm, true);
+        let mut decoder = route.decoder(code, config, *cap);
+        let mut single = LdpcDecoder::with_config(code.clone(), config);
+        batch_soft_decoder_contract(
+            &mut decoder,
+            |llrs| single.decode_to_codeword(llrs, *cap),
+            &sets[0].frames,
+            ConvergenceMix::EarlyLateAndNonConverging,
+        );
     }
 }
 
@@ -547,10 +587,79 @@ macro_rules! route_suite {
             fn hand_built_high_degree_checks() {
                 assert_case(high_degree_checks());
             }
+
+            #[test]
+            fn shared_batch_contract_on_nr_base_graph_2() {
+                assert_route_satisfies_the_batch_contract($value, &nr_mother(2, 6, 1.2, false));
+            }
+
+            #[test]
+            fn shared_batch_contract_on_high_degree_checks() {
+                assert_route_satisfies_the_batch_contract($value, &high_degree_checks());
+            }
         }
     };
 }
 
-route_suite!(lane_route, Route::Lane);
-route_suite!(lane_route_from_four_frames, Route::LaneFromFourFrames);
+#[cfg(feature = "simd")]
+route_suite!(avx2_lane_route, Route::Lane(LaneBackend::Avx2));
+#[cfg(feature = "simd")]
+route_suite!(
+    avx2_lane_route_from_four_frames,
+    Route::LaneFromFourFrames(LaneBackend::Avx2)
+);
+route_suite!(portable_lane_route, Route::Lane(LaneBackend::Portable));
+route_suite!(
+    portable_lane_route_from_four_frames,
+    Route::LaneFromFourFrames(LaneBackend::Portable)
+);
 route_suite!(single_frame_route, Route::SingleFrame);
+
+/// A decoder of the (96, 48) code of [`regular_edges`] under selectors that
+/// open the lane route for every wave, on the backend of the build and host.
+fn detected_lane_decoder() -> LdpcBatchDecoder {
+    LdpcBatchDecoder::with_selectors(
+        LdpcCode::from_edges(48, 96, &regular_edges()),
+        DecoderConfig::default(),
+        CAP,
+        DecodedWord::Codeword,
+        Route::Lane(LaneBackend::detected()).selectors(),
+    )
+}
+
+#[cfg(feature = "simd")]
+#[test]
+fn a_build_with_simd_runs_the_avx2_lane_backend_where_avx2_is_detected() {
+    assert!(ldpc_lane_backends().contains(&LaneBackend::Avx2));
+    let decoder = detected_lane_decoder();
+    for frames in 1..=decoder.batch_granularity() {
+        assert_eq!(
+            decoder.batch_route(frames),
+            BatchRoute::Lane(LaneBackend::Avx2)
+        );
+    }
+}
+
+#[cfg(not(feature = "simd"))]
+#[test]
+fn a_build_without_simd_runs_the_portable_lane_backend() {
+    assert_eq!(ldpc_lane_backends(), [LaneBackend::Portable]);
+    let decoder = detected_lane_decoder();
+    for frames in 1..=decoder.batch_granularity() {
+        assert_eq!(
+            decoder.batch_route(frames),
+            BatchRoute::Lane(LaneBackend::Portable)
+        );
+    }
+}
+
+#[test]
+fn a_decoder_held_on_the_portable_lanes_reports_the_portable_backend() {
+    let decoder = detected_lane_decoder().with_portable_lanes();
+    for frames in 1..=decoder.batch_granularity() {
+        assert_eq!(
+            decoder.batch_route(frames),
+            BatchRoute::Lane(LaneBackend::Portable)
+        );
+    }
+}

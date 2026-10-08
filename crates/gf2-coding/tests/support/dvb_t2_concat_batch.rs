@@ -5,8 +5,9 @@
 #![allow(dead_code)] // each test binary uses only the helpers it needs
 
 use gf2_coding::ldpc::dvb_t2::concat::{ConcatError, DvbT2Concat, DvbT2ConcatBatchDecoder};
-use gf2_coding::ldpc::BatchRoute;
+use gf2_coding::ldpc::LaneBackend;
 use gf2_coding::llr::Llr;
+pub use gf2_coding::test_support::ldpc_batch_routes as routes;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome, DecoderResult};
 use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
@@ -17,14 +18,18 @@ pub fn selectors(lane_min_frames: usize) -> DecodeSelectors {
     DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1).unwrap()
 }
 
-/// The selector families under test with the route each gives a full wave
-/// under a min-sum rule.
-pub fn routes() -> [(DecodeSelectors, BatchRoute); 3] {
-    [
-        (selectors(1), BatchRoute::Lane),
-        (selectors(4), BatchRoute::Lane),
-        (selectors(usize::MAX), BatchRoute::SingleFrame),
-    ]
+/// The batch decoder of `codec` under `selectors` whose lane route runs
+/// `backend`, one of the backends of [`routes`].
+pub fn decoder_on(
+    backend: LaneBackend,
+    codec: &DvbT2Concat,
+    selectors: DecodeSelectors,
+) -> DvbT2ConcatBatchDecoder {
+    let decoder = DvbT2ConcatBatchDecoder::with_selectors(codec, selectors);
+    match backend {
+        LaneBackend::Portable => decoder.with_portable_lanes(),
+        LaneBackend::Avx2 => decoder,
+    }
 }
 
 /// The result of [`DvbT2Concat::decode_soft_counted`] in the form the batch
@@ -77,8 +82,8 @@ pub fn assert_batch_decodes_as_single_frame(
         .iter()
         .map(|llrs| single_frame_result(codec, llrs))
         .collect();
-    for (selectors, full_wave) in routes() {
-        let mut decoder = DvbT2ConcatBatchDecoder::with_selectors(codec, selectors);
+    for (selectors, backend, full_wave) in routes() {
+        let mut decoder = decoder_on(backend, codec, selectors);
         let lanes = decoder.batch_granularity();
         assert_eq!(decoder.ldpc().batch_route(lanes), full_wave);
         let got = batch_results(&mut decoder, frames);
@@ -86,7 +91,7 @@ pub fn assert_batch_decodes_as_single_frame(
             assert_eq!(
                 got,
                 expected,
-                "frame {f} under {:?}",
+                "frame {f} under {:?} on {full_wave:?}",
                 decoder.ldpc().selectors()
             );
         }

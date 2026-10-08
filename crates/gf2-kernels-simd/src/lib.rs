@@ -20,8 +20,8 @@ mod x86;
 pub mod bch_encode;
 pub mod bipedal;
 pub mod clmul_scalar;
-#[cfg(test)]
-mod contract;
+#[cfg(any(test, feature = "test-support"))]
+pub mod contract;
 mod entry_check;
 pub mod fp65537;
 pub mod fp_generic;

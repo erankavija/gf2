@@ -5,16 +5,17 @@
 //! buffer allocate; later decodes through the same decoder and prepared buffer
 //! allocate nothing. The rate-matched 5G NR batch decoder
 //! (`@/citation/ThreeGpp2017`) is counted over preparation and decoding
-//! together.
+//! together. The batch decoders are counted on each lane backend of the build
+//! and on the single-frame route.
 
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedBatchDecoder;
 use gf2_coding::ldpc::{
-    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDecoder, LdpcCode,
-    LdpcDecoder, QuasiCyclicLdpc,
+    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcBatchDecoder,
+    LdpcCode, LdpcDecoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
+use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome, IterativeSoftDecoder};
-use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
@@ -256,15 +257,12 @@ fn decoding_after_reset_allocates_nothing() {
 }
 
 /// A batch of one full wave and a final wave of one frame, decoded into words
-/// and a posterior buffer that an earlier decode has sized, on the lane route
-/// and on the single-frame route.
+/// and a posterior buffer that an earlier decode has sized, under each setup
+/// of [`ldpc_batch_routes`].
 #[test]
 fn steady_state_batch_decoding_allocates_nothing() {
     const FRAMES: usize = 9;
-    let routes = [
-        DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
-        DecodeSelectors::CONSERVATIVE,
-    ];
+    let routes = ldpc_batch_routes();
     for (label, code) in codes() {
         let frames: Vec<Vec<Llr>> = (0..FRAMES as u64)
             .map(|frame| channel_llrs(code.n(), 41 + frame))
@@ -275,7 +273,7 @@ fn steady_state_batch_decoding_allocates_nothing() {
 
         for algorithm in ALGORITHMS {
             for word in [DecodedWord::Codeword, DecodedWord::Message] {
-                for selectors in &routes {
+                for (selectors, backend, full_wave) in &routes {
                     let config = DecoderConfig::new(algorithm, true);
                     let mut decoder = LdpcBatchDecoder::with_selectors(
                         code.clone(),
@@ -284,18 +282,22 @@ fn steady_state_batch_decoding_allocates_nothing() {
                         word,
                         selectors.clone(),
                     );
+                    if *backend == LaneBackend::Portable {
+                        decoder = decoder.with_portable_lanes();
+                    }
                     let route = decoder.batch_route(FRAMES);
-                    let lane_family = algorithm != DecoderAlgorithm::SumProduct;
-                    assert_eq!(
-                        route == BatchRoute::Lane,
-                        lane_family && selectors != &DecodeSelectors::CONSERVATIVE
-                    );
+                    if algorithm == DecoderAlgorithm::SumProduct {
+                        assert_eq!(route, BatchRoute::SingleFrame);
+                    } else {
+                        assert_eq!(route, *full_wave);
+                    }
                     let mut decoded = vec![BitVec::new(); FRAMES];
 
                     // Prepare the outputs: one decode grows each word.
                     decoder.decode_batch(&views, &mut decoded, &mut outcomes);
 
-                    let context = format!("{label}, {algorithm:?}, {word:?}, {route:?}");
+                    let context =
+                        format!("{label}, {algorithm:?}, {word:?}, {selectors:?}, {route:?}");
                     let (_, counts) =
                         count(|| decoder.decode_batch(&views, &mut decoded, &mut outcomes));
                     report("batch-steady-state", &context, counts);
@@ -325,14 +327,11 @@ fn steady_state_batch_decoding_allocates_nothing() {
 
 /// Rate-matched frames of one full wave and a final wave of one frame, each
 /// prepared onto the mother code and decoded into message words that an
-/// earlier decode has sized, on the lane route and on the single-frame route.
+/// earlier decode has sized, under each setup of [`ldpc_batch_routes`].
 #[test]
 fn steady_state_rate_matched_batch_decoding_allocates_nothing() {
     const FRAMES: usize = 9;
-    let routes = [
-        DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
-        DecodeSelectors::CONSERVATIVE,
-    ];
+    let routes = ldpc_batch_routes();
     for (base_graph, n, k) in [(1, 600, 200), (2, 256, 49)] {
         let code = QuasiCyclicLdpc::nr_5g_rate_matched(base_graph, n, k);
         let params = code.params();
@@ -348,20 +347,29 @@ fn steady_state_rate_matched_batch_decoding_allocates_nothing() {
         let mut outcomes = vec![DecodeOutcome::default(); FRAMES];
 
         for algorithm in ALGORITHMS {
-            for selectors in &routes {
+            for (selectors, backend, full_wave) in &routes {
                 let mut decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
                     code.clone(),
                     algorithm,
                     2,
                     selectors.clone(),
                 );
+                if *backend == LaneBackend::Portable {
+                    decoder = decoder.with_portable_lanes();
+                }
                 let route = decoder.batch_route(FRAMES);
+                if algorithm == DecoderAlgorithm::SumProduct {
+                    assert_eq!(route, BatchRoute::SingleFrame);
+                } else {
+                    assert_eq!(route, *full_wave);
+                }
                 let mut decoded = vec![BitVec::new(); FRAMES];
 
                 // Prepare the outputs: one decode grows each word.
                 decoder.decode_batch(&views, &mut decoded, &mut outcomes);
 
-                let context = format!("nr-bg{base_graph}-n{n}-k{k}, {algorithm:?}, {route:?}");
+                let context =
+                    format!("nr-bg{base_graph}-n{n}-k{k}, {algorithm:?}, {selectors:?}, {route:?}");
                 for repeat in 0..2 {
                     let (_, counts) =
                         count(|| decoder.decode_batch(&views, &mut decoded, &mut outcomes));

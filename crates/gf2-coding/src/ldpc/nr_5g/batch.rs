@@ -151,6 +151,14 @@ impl Nr5gRateMatchedBatchDecoder {
         self.inner.selectors()
     }
 
+    /// Holds the lane route on the portable backend, as
+    /// [`LdpcBatchDecoder::with_portable_lanes`] does.
+    #[must_use]
+    pub fn with_portable_lanes(mut self) -> Self {
+        self.inner = self.inner.with_portable_lanes();
+        self
+    }
+
     /// The route of a wave of `frames` frames on the mother code, as
     /// [`LdpcBatchDecoder::batch_route`] gives it.
     #[must_use]
@@ -236,7 +244,8 @@ mod tests {
     use super::*;
     use crate::channel::AwgnChannel;
     use crate::ldpc::nr_5g::Nr5gRateMatchedDecoder;
-    use crate::ldpc::QuasiCyclicLdpc;
+    use crate::ldpc::{LaneBackend, QuasiCyclicLdpc};
+    use crate::test_support::ldpc_batch_routes as routes;
     use crate::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
     use crate::traits::{BlockEncoder, IterativeSoftDecoder};
     use rand::rngs::StdRng;
@@ -304,37 +313,36 @@ mod tests {
             .unzip()
     }
 
-    /// The selector families under test with the route each gives a full
-    /// wave of a min-sum rule.
-    fn routes() -> [(DecodeSelectors, BatchRoute); 3] {
-        [
-            (
-                DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
-                BatchRoute::Lane,
-            ),
-            (
-                DecodeSelectors::try_new(4, usize::MAX, 1).unwrap(),
-                BatchRoute::Lane,
-            ),
-            (DecodeSelectors::CONSERVATIVE, BatchRoute::SingleFrame),
-        ]
+    /// A decoder of `case` whose lane route runs `backend`, one of the
+    /// backends of [`routes`].
+    fn decoder_on(
+        backend: LaneBackend,
+        case: &Case,
+        algorithm: DecoderAlgorithm,
+        cap: usize,
+        selectors: DecodeSelectors,
+    ) -> Nr5gRateMatchedBatchDecoder {
+        let decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
+            case.code.clone(),
+            algorithm,
+            cap,
+            selectors,
+        );
+        match backend {
+            LaneBackend::Portable => decoder.with_portable_lanes(),
+            LaneBackend::Avx2 => decoder,
+        }
     }
 
-    /// Runs the shared contract for `algorithm` under `selectors`, against
-    /// the single-frame decoder of the same algorithm.
+    /// Runs the shared contract for `algorithm` under `selectors` on
+    /// `backend`, against the single-frame decoder of the same algorithm.
     fn assert_batch_contract(
         case: &Case,
         frames: &[Vec<Llr>],
         algorithm: DecoderAlgorithm,
-        selectors: DecodeSelectors,
-        full_wave: BatchRoute,
+        (selectors, backend, full_wave): (DecodeSelectors, LaneBackend, BatchRoute),
     ) {
-        let mut decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
-            case.code.clone(),
-            algorithm,
-            CAP,
-            selectors,
-        );
+        let mut decoder = decoder_on(backend, case, algorithm, CAP, selectors);
         assert_eq!(decoder.frame_len(), case.code.n());
         assert_eq!(decoder.decoded_len(), case.code.k());
         assert_eq!(decoder.batch_granularity(), LANES);
@@ -353,8 +361,8 @@ mod tests {
     fn assert_min_sum_batch_contract(case: &Case) {
         let (_, frames) = noisy_frames(case);
         for algorithm in MIN_SUM_FAMILY {
-            for (selectors, full_wave) in routes() {
-                assert_batch_contract(case, &frames, algorithm, selectors, full_wave);
+            for route in routes() {
+                assert_batch_contract(case, &frames, algorithm, route);
             }
         }
     }
@@ -373,13 +381,12 @@ mod tests {
     fn sum_product_batches_satisfy_the_batch_contract_on_the_single_frame_route() {
         for case in cases() {
             let (_, frames) = noisy_frames(&case);
-            let (lane_selectors, _) = routes()[0].clone();
+            let (lane_selectors, backend, _) = routes().swap_remove(0);
             assert_batch_contract(
                 &case,
                 &frames,
                 DecoderAlgorithm::SumProduct,
-                lane_selectors,
-                BatchRoute::SingleFrame,
+                (lane_selectors, backend, BatchRoute::SingleFrame),
             );
         }
     }
@@ -388,14 +395,9 @@ mod tests {
     fn a_zero_cap_equals_the_single_frame_decoder() {
         for case in cases() {
             let (_, frames) = noisy_frames(&case);
-            for (selectors, _) in routes() {
+            for (selectors, backend, _) in routes() {
                 let algorithm = DecoderAlgorithm::NormalizedMinSum(0.75);
-                let mut decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
-                    case.code.clone(),
-                    algorithm,
-                    0,
-                    selectors,
-                );
+                let mut decoder = decoder_on(backend, &case, algorithm, 0, selectors);
                 let mut single =
                     Nr5gRateMatchedDecoder::with_algorithm(case.code.clone(), algorithm);
                 batch_soft_decoder_contract(
@@ -425,13 +427,9 @@ mod tests {
                 })
                 .collect();
             let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
-            for (selectors, _) in routes() {
-                let mut decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
-                    case.code.clone(),
-                    DecoderAlgorithm::NormalizedMinSum(0.75),
-                    CAP,
-                    selectors,
-                );
+            for (selectors, backend, _) in routes() {
+                let algorithm = DecoderAlgorithm::NormalizedMinSum(0.75);
+                let mut decoder = decoder_on(backend, &case, algorithm, CAP, selectors);
                 let mut decoded = vec![BitVec::new(); FRAMES];
                 let mut outcomes = vec![DecodeOutcome::default(); FRAMES];
                 decoder.decode_batch(&views, &mut decoded, &mut outcomes);

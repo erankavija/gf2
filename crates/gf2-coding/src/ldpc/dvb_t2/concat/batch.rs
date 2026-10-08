@@ -113,6 +113,14 @@ impl DvbT2ConcatBatchDecoder {
         }
     }
 
+    /// Holds the lane route of the LDPC inner decoder on the portable
+    /// backend, as [`LdpcBatchDecoder::with_portable_lanes`] does.
+    #[must_use]
+    pub fn with_portable_lanes(mut self) -> Self {
+        self.ldpc = self.ldpc.with_portable_lanes();
+        self
+    }
+
     /// The LDPC inner batch decoder, for its selectors, iteration cap and
     /// [`batch_route`](LdpcBatchDecoder::batch_route).
     #[must_use]
