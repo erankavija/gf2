@@ -1,0 +1,1346 @@
+{
+ "epic_id": "b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e",
+ "epic_short_id": "b4b4b9ee",
+ "current_wave": 1,
+ "waves": [
+  {
+   "wave_number": 1,
+   "issues": [
+    {
+     "id": "6bb13c31-2d0c-4091-aed5-439e681abb22",
+     "short_id": "6bb13c31",
+     "title": "BitVec mutators leave the rank/select index stale",
+     "classification": "implementation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "ad978596-08fd-415a-963f-cfd21fa2d481",
+     "short_id": "ad978596",
+     "title": "Document safety contracts and restore clippy enforcement in gf2-kernels-simd",
+     "classification": "documentation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "6b5f4f3c-6d75-4efa-a987-80eec7de3843",
+     "short_id": "6b5f4f3c",
+     "title": "Generic GF(2^m) kernel reduction returns wrong products for degrees above 33",
+     "classification": "implementation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "9600eb56-53ce-448c-bcc5-44d85f7aa06c",
+     "short_id": "9600eb56",
+     "title": "GldpcDecoder::decode_soft returns hard decisions without decoding",
+     "classification": "implementation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "df144ecf-bc47-4581-961c-c0f317952c7b",
+     "short_id": "df144ecf",
+     "title": "Gray-QAM preset labels differ from EN 302 755 Table 14 above order 4",
+     "classification": "implementation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "45a962da-b51a-4bf5-b147-9c5ffec18634",
+     "short_id": "45a962da",
+     "title": "Mark SimulationRunner modem-analysis integration tests as ignored",
+     "classification": "implementation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "79a62102-0a4a-4f8c-a261-dc474d09593e",
+     "short_id": "79a62102",
+     "title": "Safe HIP functions rely on unstated caller obligations",
+     "classification": "implementation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "1ffa72fc-c47f-4f12-80d6-4130dc056ab9",
+     "short_id": "1ffa72fc",
+     "title": "Safe kernel wrappers rely on debug-only shape checks",
+     "classification": "implementation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "bb64ee0e-3e03-47b7-8640-518574108eed",
+     "short_id": "bb64ee0e",
+     "title": "AVX2-native nibble-LUT path for the packed F_7 bipedal kernel",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "dd493649-27ec-49c0-8183-d2d81da68f77",
+     "short_id": "dd493649",
+     "title": "AWGN channel bounds its per-call noise draw only in debug builds",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "e1ff915f-c119-45a1-a177-a80bc3782869",
+     "short_id": "e1ff915f",
+     "title": "Add SIMD kernels for LLR batch saturation and hard decision",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "0ecf6fcd-8733-4e97-a70e-7b5eaa9f1940",
+     "short_id": "0ecf6fcd",
+     "title": "Adopt or remove the unused HIP blob loader and LaunchDims",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "1015ae73-ce41-4004-bc2d-d57ee8c3c881",
+     "short_id": "1015ae73",
+     "title": "Benchmark lock wrapper pins to a fixed CPU list",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "17559b23-09b5-46f0-91bb-a1e640771447",
+     "short_id": "17559b23",
+     "title": "Binary sparse reader panics on malformed input; FieldMatrix::zeros multiplies unchecked",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "c0bb2ab1-b25e-48d6-a0fb-ebc5ab6b318a",
+     "short_id": "c0bb2ab1",
+     "title": "Blocked schedule for ordered-column elimination",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "4d0ae96f-d2d2-46a4-b1a1-0b30a92800e4",
+     "short_id": "4d0ae96f",
+     "title": "Bring gf2-core test names and ignore annotations to convention",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "5c62bb1c-684b-4d6e-b128-c5f44735dd2d",
+     "short_id": "5c62bb1c",
+     "title": "Channel apply stride-margin assertion disagrees with the shared word margin",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "3a5894ed-85cb-4259-8e84-e75e93295645",
+     "short_id": "3a5894ed",
+     "title": "Check the Table 6a and 6b attribution in the DVB-T2 BCH parameters",
+     "classification": "research",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "3d34f504-4adb-453c-b5a6-3d4e6d2dc223",
+     "short_id": "3d34f504",
+     "title": "Complete doc sections and make gf2-coding examples compile",
+     "classification": "documentation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "23f22f53-2c4a-489c-bc85-52ff4ccc6629",
+     "short_id": "23f22f53",
+     "title": "Complete the missing doc sections on gf2-core matrix and bit-vector APIs",
+     "classification": "documentation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "90a88fa9-5ec5-4203-9631-a5e6118360a8",
+     "short_id": "90a88fa9",
+     "title": "Converge campaign orchestration onto shared deterministic-parallelism and scheduling primitives",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "58a4bb51-72ee-4cdb-92dc-a5303726b0a7",
+     "short_id": "58a4bb51",
+     "title": "Converge survey harness path dependencies on a depth-independent form",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "10f23a84-788b-4fcd-a977-84838160e19f",
+     "short_id": "10f23a84",
+     "title": "Converge survey-script evidence paths on runtime-resolved locations",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "02a26b83-86d0-409f-8dc6-8f1c3e4100a0",
+     "short_id": "02a26b83",
+     "title": "DVB-T2 BICM chain tests carry a stale slow-tier ignore reason",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "7c8ab1e2-7da6-48dd-bebb-5bb73922bd01",
+     "short_id": "7c8ab1e2",
+     "title": "Dead extract_quad_hi helper in the GF(2^m) batch kernel",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "578adb63-922c-4bd2-866f-b0db24048f71",
+     "short_id": "578adb63",
+     "title": "Declare rust-version in the gf2-kernels-simd manifest",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "82ffd7b8-d0cd-48fe-af9b-03b8a698e78a",
+     "short_id": "82ffd7b8",
+     "title": "Decouple the extent validator from declaration paths and move entry dbd8787d",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "75a71fab-2aa0-453e-8fc0-6914afa114bb",
+     "short_id": "75a71fab",
+     "title": "Deny unsafe code in the binary crate roots",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "727677b4-3480-4f7f-8394-607700ee9bd5",
+     "short_id": "727677b4",
+     "title": "Derive the opaque-module and reference-harness inventories from their sources",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "c04d3f1c-89b6-4983-a1f3-0aedb9a6651b",
+     "short_id": "c04d3f1c",
+     "title": "Deterministic CPU fallback for a recoverable GPU fault in a checkpointed sweep",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "10a729d3-4d97-4bea-8227-e6a2be852023",
+     "short_id": "10a729d3",
+     "title": "Divide-and-conquer batch GCD for FieldPoly",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "54278d0c-8fe8-4022-b560-584c26e6d41d",
+     "short_id": "54278d0c",
+     "title": "Document the individual LogicalFns dispatch fields",
+     "classification": "documentation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "774f2de4-1213-4079-bca3-f3cc2d5e88f9",
+     "short_id": "774f2de4",
+     "title": "Enforce or restate the sixty-second fast-tier suite budget",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "ef5b75f4-657b-45ea-a167-cd79ea26fb30",
+     "short_id": "ef5b75f4",
+     "title": "Extract the repeated RREF column pass in 5G NR mother encoding",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "5a3abee1-eafb-48f3-b245-ac8671f2e254",
+     "short_id": "5a3abee1",
+     "title": "Field charpoly and minpoly contract gaps reported by the comment sweep",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "174295c9-674a-426a-90ce-96f34eee2bf1",
+     "short_id": "174295c9",
+     "title": "Flaky: symlinked-writer-ancestor coordinator test failed once (61ms assertion) in a merged-tree CI run",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "f21b25ac-eb3a-4255-817e-c24f8dbf1f19",
+     "short_id": "f21b25ac",
+     "title": "Flaky: two GPU tests and one allocation-count test failed once under load",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "37235fd6-00fb-4a21-9bfd-8fd796b754cc",
+     "short_id": "37235fd6",
+     "title": "Flush checkpoints on SIGTERM or state SIGINT alone",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "a44566c0-ddb2-4c18-91f6-6697e41d056f",
+     "short_id": "a44566c0",
+     "title": "GF(2^m) constructors and constants without effect",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "9ff05f12-7e08-4a8c-b298-3de575f51a9d",
+     "short_id": "9ff05f12",
+     "title": "GPU decoders panic on recoverable HIP failures",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "3ea744cf-6d0b-41e7-834d-efffac55f5c0",
+     "short_id": "3ea744cf",
+     "title": "Gate the device-dependent gf2-kernels-hip tests correctly",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "b9539134-d320-44f0-abf9-a5c27243a1ec",
+     "short_id": "b9539134",
+     "title": "Give every ignored gf2-coding test a tagged reason string",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "18db6e3d-7657-4b94-8662-06e989e6deb0",
+     "short_id": "18db6e3d",
+     "title": "Give every ignored gf2-coding test a tier-vocabulary ignore reason",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "0407aca8-745e-4616-a41f-a1cc8856f434",
+     "short_id": "0407aca8",
+     "title": "Give the bare ignore in gf2-core axiom tests a tier reason",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "9c7e6369-5bef-4453-a6da-d2f7538c61be",
+     "short_id": "9c7e6369",
+     "title": "Ground the HipStream Sync contract in documented HIP behavior",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "f258468e-a973-4b07-a663-99b18e1e8713",
+     "short_id": "f258468e",
+     "title": "Hoist the Barrett reducer out of scalar Gf2mWide multiply",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "01877f76-f4a1-4ce5-9e7a-c473b0ba6544",
+     "short_id": "01877f76",
+     "title": "Lazy field expressions skip writes and shape checks on empty operands",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "2a9cc72c-b841-4539-a920-6ceab13afbd4",
+     "short_id": "2a9cc72c",
+     "title": "LdpcCode::is_systematic always returns false",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "8966d8da-0247-4d46-b39b-de75fcf06d58",
+     "short_id": "8966d8da",
+     "title": "Lean proof comments cite stale line numbers in axiom_tests.rs",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "32a8bc0e-8e17-4eec-80a8-92ea6f8fa54a",
+     "short_id": "32a8bc0e",
+     "title": "Lift the index-ordered parallel dispatch primitive from gf2-sim into gf2-core compute",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "299132b7-aee0-4828-afc4-aa9de39388a0",
+     "short_id": "299132b7",
+     "title": "Locate the rank-event receipt without a dev path literal",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "5c65e724-a1a7-49ed-ad0a-878ca3bfb23c",
+     "short_id": "5c65e724",
+     "title": "Make the SIMD kernel crate the single source for F_7 nibble LUTs",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "7375db1e-dc80-4e52-b76a-758ac42fc235",
+     "short_id": "7375db1e",
+     "title": "Make the a203a23c timing assessment reproduce its superseded record",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "e804b8b8-985f-4fa9-a3cb-3d38285972ac",
+     "short_id": "e804b8b8",
+     "title": "Make the f63a2464 confirmation freeze load the live repository helper",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "720f5f74-fdef-4ad5-940d-9c5003314ed7",
+     "short_id": "720f5f74",
+     "title": "Measure or exclude the n = 4096 and rectangular reference-harness cells",
+     "classification": "research",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "bdf8e2e5-7ab1-432f-b6d3-f9ea41518db4",
+     "short_id": "bdf8e2e5",
+     "title": "Move the 3eeb57f6 plan entry when its task joins an epic or closes",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "3464c241-ceed-44fd-8f1f-b84c1d3a364a",
+     "short_id": "3464c241",
+     "title": "NR rate-matched iterative decoding reads the message from the first target_k positions",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "c9022d14-350b-4236-a802-e206e159ad7b",
+     "short_id": "c9022d14",
+     "title": "Name or wrap the validation-skipping ConstExt::new per caller-trusted-fast-paths",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "de0528d2-2ac1-412d-89ce-6a328d795256",
+     "short_id": "de0528d2",
+     "title": "Narration and placeholders in string literals, test names and ignore reasons",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "2c109c8d-5f48-43f1-86d5-7b67ad04de9e",
+     "short_id": "2c109c8d",
+     "title": "Parallel permanent for F_5 and F_7",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "c11640f2-7ebc-4167-94c4-bd781df1452a",
+     "short_id": "c11640f2",
+     "title": "Parallelize CpuBackend matmul under the parallel feature",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "f6603b37-0835-4735-97ca-2df5dcd6522b",
+     "short_id": "f6603b37",
+     "title": "Per-device HIP stream pools for multi-GPU simulation",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "f556d663-e4cf-4da7-b36e-8d726286a848",
+     "short_id": "f556d663",
+     "title": "Permanent module contract, test and provenance defects",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "069e3c33-b6f1-4f97-8961-bfbe3f6a883f",
+     "short_id": "069e3c33",
+     "title": "Persist the message columns in the LDPC encoding directory cache",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "37811f80-25ab-45a1-bad0-366081f22409",
+     "short_id": "37811f80",
+     "title": "Pin MSRV 1.95 across all workspace crates",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "1fe6e218-b0c9-4d78-b267-fe29e50399db",
+     "short_id": "1fe6e218",
+     "title": "Primitive polynomial generation is unsound above degree 16 and ignores its thread count",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "0657c9fa-0f07-4175-addf-9baf7aefdfa9",
+     "short_id": "0657c9fa",
+     "title": "PrimitivePolynomialDatabase::trinomials(8) returns a reducible polynomial",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "63cc5518-ecc6-40ef-b0c8-a4b6688bab37",
+     "short_id": "63cc5518",
+     "title": "Producing-closure check requires protocol documents in one directory",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "dfb8820b-93a9-40f0-bf90-1d29ea22d48e",
+     "short_id": "dfb8820b",
+     "title": "ProfileRegistry::from_json rejects committed core tuning profiles",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "dfd9e0c5-3368-4389-a4bd-a2195f7514c6",
+     "short_id": "dfd9e0c5",
+     "title": "Promote integer gcd and the cyclic polynomial x^n-1 helper to gf2-core",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "d0aaf09b-79dd-4f41-8692-c5ab8eb3ee43",
+     "short_id": "d0aaf09b",
+     "title": "Reconcile ADDENDUM_SHA256 of the logical survey harness with its addendum",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "51f299d2-86ae-4592-9da3-9df900fa6c83",
+     "short_id": "51f299d2",
+     "title": "Reconcile the --all-features commands of AGENTS.md with hipcc",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "954537d9-7009-4b15-9aec-0016d580ff6f",
+     "short_id": "954537d9",
+     "title": "Reconcile the c04dd4ac shift consumer audit with its check",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "a1c801cb-5fc1-4094-83a1-6c16d0fb41b4",
+     "short_id": "a1c801cb",
+     "title": "Reference dataset does not record what the Fossorier1994 union-bound rows bound",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "b9238d44-2ec7-4c73-9a81-bc8a1e6c4523",
+     "short_id": "b9238d44",
+     "title": "Remove or implement the AVX-512 bipedal entry points",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "02ed3c51-204e-4adf-af3c-1a6dcd36267c",
+     "short_id": "02ed3c51",
+     "title": "Remove producer-0 continuation admission from permanent campaign validation",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "bd5a401d-3e6a-41d0-a0f5-ef5ee26d8857",
+     "short_id": "bd5a401d",
+     "title": "Remove the LlrFns and detect compatibility aliases from the LLR kernels",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "84b67272-0094-46bf-a74a-eb0ea24830ac",
+     "short_id": "84b67272",
+     "title": "Remove the dev/active path literal from the benchmark lock wrapper",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "595415c8-f396-4c5b-a5b8-c5f1000e644c",
+     "short_id": "595415c8",
+     "title": "Remove the unused x86 detection stubs from gf2-core",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "cdb951cc-325d-4e65-897f-295a691bf6e3",
+     "short_id": "cdb951cc",
+     "title": "Rename polar_transform to hadamard_butterfly in gf2-core",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "704c90b8-6fdc-4584-ba78-f2bbee136917",
+     "short_id": "704c90b8",
+     "title": "Replace raw HIP FFI in test helpers with the crate's RAII buffers",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "b53a6036-ed6c-41ea-8c7c-51b491775e69",
+     "short_id": "b53a6036",
+     "title": "Replace the Keller-Gehrig inverse solve with a Strassen-amenable inversion",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "5406d020-1d9e-44d5-9368-59397ce4458c",
+     "short_id": "5406d020",
+     "title": "Repoint moved-entry citations in session records of the zen3 epic",
+     "classification": "documentation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "faac6007-a291-480b-89f4-28c669473fe6",
+     "short_id": "faac6007",
+     "title": "Repoint the links of five frozen zen3 documents when 4337c02e closes",
+     "classification": "documentation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "1c29a70e-36d4-4dc9-bf83-6f6f97f4f72d",
+     "short_id": "1c29a70e",
+     "title": "Resolve reversed dev-dependency edges and core fixture naming",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "dfff0e05-017b-4236-9859-9260596eb8f7",
+     "short_id": "dfff0e05",
+     "title": "Resolve the flat ledger paths recorded in three frozen addenda",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "aed7e749-d56c-4b0b-b87f-cfa994b4e5a9",
+     "short_id": "aed7e749",
+     "title": "Resolve the links of four digest-cited study and bench-result files",
+     "classification": "documentation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "69ff9f3c-8886-4d18-8b80-fa412739946c",
+     "short_id": "69ff9f3c",
+     "title": "Route DrmCode::systematic_form through the core RREF routine",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "20f5343b-8aa9-48f0-b2ea-7cf8f7ad2861",
+     "short_id": "20f5343b",
+     "title": "Route the cargo test steps of cargo-ci.sh through the test budget",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "cfc2e9a9-24f4-4c0a-a7d3-bca1f89a9241",
+     "short_id": "cfc2e9a9",
+     "title": "Row-panel matvec for the medium-prime packed kernel",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "d436dd5f-f0f7-4243-9727-d00a1830f61b",
+     "short_id": "d436dd5f",
+     "title": "RuEncodingMatrices names an algorithm the encoder does not implement",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "d5afe5aa-9261-432f-81bb-2f33bd90e786",
+     "short_id": "d5afe5aa",
+     "title": "Runtime extension descent guard cannot reject a non-base element",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "33057520-37ef-4340-83bf-f11dd26b8125",
+     "short_id": "33057520",
+     "title": "SNR checkpoint config hash omits rate, modulation, decoder and demapper",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "8342487d-9899-42c7-a30c-f5618bb0ee74",
+     "short_id": "8342487d",
+     "title": "Scheduler::run and run_instrumented ignore their batch parameter",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "afbe89f5-ba5b-44cf-870c-00b3d8509a45",
+     "short_id": "afbe89f5",
+     "title": "Share the mean/sigma and Es/N0 conversion helpers across gf2-sim binaries",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "c7c11e7e-7437-4435-9fd1-c4baf7a4935f",
+     "short_id": "c7c11e7e",
+     "title": "State the tested ROCm version at its source",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "697b9178-6b19-4946-9001-f2475df71321",
+     "short_id": "697b9178",
+     "title": "Strengthen vacuous and weak tests reported by the comment sweep",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "54a483a3-220e-42e7-b2af-440eaed04a8a",
+     "short_id": "54a483a3",
+     "title": "Sweep-level Pipeline::run for the 5G NR preset",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "0d1e9536-a858-494d-b204-1f47a7aacc76",
+     "short_id": "0d1e9536",
+     "title": "Three tracked harness lockfiles fail --locked resolution",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "ebd26779-46fb-4103-acdf-c2197d6dd8dc",
+     "short_id": "ebd26779",
+     "title": "Tile-of-tiles outer loop for the 64x64 bit-matrix transpose kernel",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "bc4eb125-12a6-4470-86ca-e6031edc9b6b",
+     "short_id": "bc4eb125",
+     "title": "Undocumented limits and a duplicated helper in the small-prime panel kernels",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "a1e02780-1f25-49f7-9e59-7dbaa70db3b6",
+     "short_id": "a1e02780",
+     "title": "Vacuous and misnamed tests found by the comment sweep",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "16fee10f-3aad-49a3-a265-211b684bb81f",
+     "short_id": "16fee10f",
+     "title": "Verify that each performance claim measures the shipped code path",
+     "classification": "research",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "7a5ee7c7-27ff-40dd-854f-82fe70145899",
+     "short_id": "7a5ee7c7",
+     "title": "Verify the J-function fit in modem analysis against its cited source",
+     "classification": "research",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "c3f92efa-d904-45bd-99e3-269a1d935bf6",
+     "short_id": "c3f92efa",
+     "title": "Weak tests and unattributed measured constants in gf2-coding and gf2-sim targets",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "d1e5db10-c150-4ef2-94ee-cf584c482bbb",
+     "short_id": "d1e5db10",
+     "title": "Widen verify_primitive to u128 polynomial storage",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "0afbd34a-17c3-4f9a-9871-27a6aa7a3f96",
+     "short_id": "0afbd34a",
+     "title": "Window follower defaults to a host-specific systemd unit",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "6705a134-d327-4026-b6af-39252d35e59a",
+     "short_id": "6705a134",
+     "title": "alg/gauss.rs duplicates the rref block-pivot and elimination helpers",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "c2663ce9-636a-416b-bb14-9d0e01b1e7ab",
+     "short_id": "c2663ce9",
+     "title": "binary_v1 is_systematic documents the canonical layout but delegates the recorded order",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "e250b5bb-c5b7-4e9a-937d-6ffb519f1f6f",
+     "short_id": "e250b5bb",
+     "title": "cargo-ci leaves an sccache server bound to its deleted scratch TMPDIR",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "f7844d2d-fed4-4333-bdc6-36be23a8bc62",
+     "short_id": "f7844d2d",
+     "title": "cell resume replays the entire durable prefix",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "fbcadf17-4017-4f62-b45a-2e4f9de8c44d",
+     "short_id": "fbcadf17",
+     "title": "frame_sim substitutes an empty BitVec on hard decode failure",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "d1bfe986-f73a-4d5e-a7a4-7baa8a1aaa7a",
+     "short_id": "d1bfe986",
+     "title": "gf2-coding all-features rustdoc fails with warnings denied",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "22bb2dcd-9c84-4b13-a96b-9a30d0a6385d",
+     "short_id": "22bb2dcd",
+     "title": "gf2-coding constructor-bound and simulation-runner defects reported by the comment sweep",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "ee3bf65e-c23e-4fab-ba12-651058d94e8e",
+     "short_id": "ee3bf65e",
+     "title": "gf2-coding tests: dead TP07a loader branch and dev paths in string literals",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "d73ac633-da5d-46ee-a2fb-0f4fb9a3a8a6",
+     "short_id": "d73ac633",
+     "title": "gf2-core loader, seed-stream and field-kernel defects reported by the comment sweep",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "b2520e0f-76b1-4cfa-b9ce-0859c0823eb7",
+     "short_id": "b2520e0f",
+     "title": "mersenne_reduce is wrong outside its tested exponents",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "fd1f39e0-c77e-48c5-abc3-6d48cfb25ffa",
+     "short_id": "fd1f39e0",
+     "title": "pinned grid blocks internal-control cells behind the hardest target cell",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "9af52659-1615-453b-aef0-8cff2714cdd6",
+     "short_id": "9af52659",
+     "title": "resumption hash conflates provenance context with campaign identity",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "8d5b7ad7-fbbb-4f41-8e85-ac9cfe55aa8c",
+     "short_id": "8d5b7ad7",
+     "title": "sim_runner ignores SIGINT and parallel product curves skip the resume cache",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "b43158dc-91d0-42d8-a3aa-a62a042486d8",
+     "short_id": "b43158dc",
+     "title": "Add direct algebraic property tests for the packed F_5 and F_7 types",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "fe26dc9a-be55-4be6-a911-c5328cd7b1d8",
+     "short_id": "fe26dc9a",
+     "title": "Add the required test prefix to the SIMD kernel module tests",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "b60de44f-ed6d-4c73-a759-6643391b94c0",
+     "short_id": "b60de44f",
+     "title": "Add the required test prefix to the gf2-sim campaign binary tests",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "34ae7a3a-0f0e-45db-af06-f2650e62233c",
+     "short_id": "34ae7a3a",
+     "title": "Apply branchless GF(2) bitwise idioms",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "81c7d370-bc41-419f-9f4f-ef77c7b7f2e7",
+     "short_id": "81c7d370",
+     "title": "CPU LDPC fallback stage rebuilds its batch decoder on every call",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "ca9a5194-206b-4665-bb60-223a7a207738",
+     "short_id": "ca9a5194",
+     "title": "Decide a GPU ComputeBackend for gf2-core",
+     "classification": "research",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "252814d8-afdb-480e-b5bd-3c9d5993add1",
+     "short_id": "252814d8",
+     "title": "Decide the GF(2^8) classical SIMD GEMM probe from a receipt",
+     "classification": "research",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "eb5cae22-5cb6-47fc-84fd-98a87c8a27c5",
+     "short_id": "eb5cae22",
+     "title": "Derive the 5G NR mother encoding from the shared systematic reduction",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "cdaf5da9-280b-4d74-bd95-653e900adf10",
+     "short_id": "cdaf5da9",
+     "title": "Document Packed5Matrix equality and debug formatting",
+     "classification": "documentation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "835f34f0-9d99-4d92-a17a-3b3f91db1ee9",
+     "short_id": "835f34f0",
+     "title": "Document the GF(2^8) polynomial that gf256() builds",
+     "classification": "documentation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "f6ee400a-666d-4ef5-a6c7-5ce434366f4d",
+     "short_id": "f6ee400a",
+     "title": "Evaluate a gather-based AVX2 lookup for the F_7 packed kernels",
+     "classification": "research",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "94befdc3-1997-414c-9d73-d053d5b5d433",
+     "short_id": "94befdc3",
+     "title": "Fix the frozen-closure completeness test of the eda07788 harness",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "3de8d0f3-f484-4dec-aefb-c789ec3c403a",
+     "short_id": "3de8d0f3",
+     "title": "Format the 19513245 consumer harness crate",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "3d864278-7c66-4247-bc5d-4bf9e9d05c85",
+     "short_id": "3d864278",
+     "title": "Format the 2037941f dense-harness crate",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "f63ad8dd-d695-4839-979a-09e4d60dc0e4",
+     "short_id": "f63ad8dd",
+     "title": "Format the 5cbb6545 gf2-side harness crate",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "94ab019f-cc91-4081-b787-39037d14fc86",
+     "short_id": "94ab019f",
+     "title": "Gate the conservative tuning test on every feature it needs",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "1e272575-ef32-4e41-a55b-e4ce32619750",
+     "short_id": "1e272575",
+     "title": "Harness the not-yet-harnessed sparse comparison cells",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "726bfeee-2960-45d8-a6ba-852bff385eaf",
+     "short_id": "726bfeee",
+     "title": "Implement or retire the compression and checksum flags of the binary format",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "3514d822-57e1-49a7-a4db-32a130b206a7",
+     "short_id": "3514d822",
+     "title": "Locate the 12fdeb5b family-wise ledger without a path literal",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "c9920dc6-65a8-47dc-bc51-344334cf9cc6",
+     "short_id": "c9920dc6",
+     "title": "Make measure.py --assess idempotent on the superseded timing record",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "8163dacd-3fd6-4f09-9ca8-2f59e8069411",
+     "short_id": "8163dacd",
+     "title": "Make zen3 survey scripts reproduce their committed records after the move",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "e046803d-ef49-4ae3-ae6c-29251d5c2598",
+     "short_id": "e046803d",
+     "title": "Measure or retire the deferred gf2-core benchmark cells",
+     "classification": "research",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "b9a352b4-7286-4644-8101-3c747c8c593b",
+     "short_id": "b9a352b4",
+     "title": "Measure the gf2-coding tuning crossovers",
+     "classification": "research",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "5b3e7c81-d3a4-4ee1-b5e6-94e66a0cf0b4",
+     "short_id": "5b3e7c81",
+     "title": "Move the 02b8137c validation journal under its epic dir when 02b8137c closes",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "7ff06801-4e2e-451b-8781-74aed66a32cd",
+     "short_id": "7ff06801",
+     "title": "Port the 04b85d10 gf2-side survey harness to the current BCH API",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "c73aa593-7c32-4e76-a301-648b3c2dc09c",
+     "short_id": "c73aa593",
+     "title": "Port the 4e732b56 gf2-side baseline harness to the current BCH API",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "879b52bd-c41d-4489-9518-6b3fc1eef632",
+     "short_id": "879b52bd",
+     "title": "Remove dead code and bare aliases reported by the comment sweep",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "f40a1c8d-8a85-425e-a19b-562ab3e37fde",
+     "short_id": "f40a1c8d",
+     "title": "Remove gf2-core dead code under partial feature configurations",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "598d8057-af2a-48b1-837c-bc011c6afd8a",
+     "short_id": "598d8057",
+     "title": "Remove or gate the dead choose_k_block helper in m4rm",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "c3ef9ee7-883e-45b7-8941-c3ad31cdc51a",
+     "short_id": "c3ef9ee7",
+     "title": "Repair make-shift-source-evidence.py of entry c04dd4ac",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "d12e9ded-4a95-43c6-b9ef-66caef0434c5",
+     "short_id": "d12e9ded",
+     "title": "Repair make-source-evidence.py of entry 19513245",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "e59f207c-7b77-406b-be6a-e3201482f348",
+     "short_id": "e59f207c",
+     "title": "Repair the source needles of the eda07788 inspect-sources script",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "39cbde20-91a6-423a-b3c0-ac9e01939cc7",
+     "short_id": "39cbde20",
+     "title": "Treat negative-zero LLRs consistently in the min-sum sign product",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 2,
+   "issues": [
+    {
+     "id": "07a1813a-bcfc-4fd0-9611-6d3c6928776e",
+     "short_id": "07a1813a",
+     "title": "Add word-level fast path to hadamard_butterfly_into for stride>=64",
+     "classification": "implementation",
+     "priority": "high",
+     "status": "pending"
+    },
+    {
+     "id": "799af6fe-985b-430b-9a7f-1dffac8a2528",
+     "short_id": "799af6fe",
+     "title": "Add property tests for BitVec structural invariants",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "07fe99b8-18f8-4515-b197-c7d122273eca",
+     "short_id": "07fe99b8",
+     "title": "Benchmark window starts its first job on a loaded host",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "aabc528a-ac5c-4c4f-961b-d3b3abb3eade",
+     "short_id": "aabc528a",
+     "title": "Fill public-API doc-completeness gaps",
+     "classification": "documentation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "6d2ab2bd-2af6-4b29-b640-f5411140d1ac",
+     "short_id": "6d2ab2bd",
+     "title": "Resolve the Packed5 and Packed7 matrix API asymmetry",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "b146e998-e8a2-418c-a2cb-63debc4e6df4",
+     "short_id": "b146e998",
+     "title": "Add property tests to the SIMD polynomial-multiply kernel modules",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "493a5330-be91-41a6-b83d-eb5201394724",
+     "short_id": "493a5330",
+     "title": "Add property tests to the SIMD prime-field kernel modules",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    },
+    {
+     "id": "a57cb8d0-29fc-4f05-a3a3-58142532b5bf",
+     "short_id": "a57cb8d0",
+     "title": "Define the zero inner dimension of the prime-field GEMM kernel entries",
+     "classification": "implementation",
+     "priority": "low",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 3,
+   "issues": [
+    {
+     "id": "8b3fe657-586c-4191-813e-6ab7799a28ab",
+     "short_id": "8b3fe657",
+     "title": "Eliminate SSOT duplication across the workspace",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    },
+    {
+     "id": "3d522ba0-818c-4788-a0bc-180b254e1566",
+     "short_id": "3d522ba0",
+     "title": "Fix test-convention violations and add missing proptest coverage",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending"
+    }
+   ]
+  }
+ ],
+ "external_blockers": [
+  {
+   "short_id": "bfc2ceab",
+   "title": "Make caller-trusted safe kernel entry points checked or unchecked by name",
+   "state": "in_progress",
+   "blocks": [
+    "07fe99b8",
+    "a57cb8d0"
+   ]
+  }
+ ],
+ "created_during_execution": [],
+ "escalations": [],
+ "rework_counts": {},
+ "surfaced_pitfalls": [],
+ "notes": [
+  "Each wave is dispatched in batches of at most four worktree workers, ordered by priority; the batch log is appended under batches."
+ ],
+ "batches": [],
+ "started_at": "2026-10-08T21:14:08+00:00"
+}
