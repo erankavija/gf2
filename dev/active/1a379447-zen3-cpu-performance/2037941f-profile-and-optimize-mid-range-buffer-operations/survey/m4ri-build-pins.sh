@@ -11,11 +11,32 @@ command -v readelf >/dev/null || {
     exit 1
 }
 
-m4ri_generation=qualified-v3
+# `M4RI_BUILD_LEVEL` selects the targeting level of the build. `host` is the
+# qualified build, compiled for the build host. `portable` is the same source,
+# compiler and configuration with the host-targeting flag removed, so the
+# compiler emits the default instruction set of its target. Each level has its
+# own generation, hence its own source, install and probe directories.
+m4ri_build_level="${M4RI_BUILD_LEVEL:-host}"
+case "${m4ri_build_level}" in
+    host)
+        m4ri_generation=qualified-v3
+        m4ri_targeting_flags='-march=native'
+        ;;
+    portable)
+        m4ri_generation=portable-v1
+        m4ri_targeting_flags=''
+        ;;
+    *)
+        printf 'unknown M4RI_BUILD_LEVEL %s\n' "${m4ri_build_level}" >&2
+        exit 1
+        ;;
+esac
 m4ri_version=20260122
 m4ri_archive="m4ri-${m4ri_version}.tar.gz"
 m4ri_archive_sha256=7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404
-m4ri_build_flags='-O3 -march=native -fPIC'
+m4ri_build_flags="-O3${m4ri_targeting_flags:+ ${m4ri_targeting_flags}} -fPIC"
+# Compiler options that select an instruction set or tune for a processor.
+m4ri_targeting_pattern=' -m(arch|tune|cpu)=| -m(mmx|sse|ssse|avx|bmi|popcnt|lzcnt|fma|pclmul|aes|sha|f16c|adx|vpclmulqdq|gfni)'
 m4ri_configure_args='--disable-static'
 m4ri_cppflags='<empty>'
 m4ri_ldflags='<empty>'
@@ -87,5 +108,12 @@ m4ri_verify_build_log() {
             "${flagged}" "${count}" "${m4ri_build_flags}" >&2
         return 1
     }
+    # A portable build carries no targeting option on any compile line,
+    # including one configure might add from a probe of the build host.
+    if [[ -z "${m4ri_targeting_flags}" ]] &&
+        m4ri_compile_lines "${log}" | grep -Eq -- "${m4ri_targeting_pattern}"; then
+        printf 'a portable M4RI compile invocation carries a targeting option\n' >&2
+        return 1
+    fi
     printf '%s\n' "${count}"
 }

@@ -1,5 +1,5 @@
 # Dense-parity harness non-timed validation (jit:e1f9a78f)
-# command: dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh build --m4ri --native
+# command: dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh build --m4ri --native --m4ri-portable
 # timing: none; the command builds release binaries and runs semantic validators only
 # rustc: 1.95.0 (59807616e 2026-04-14); LLVM 22.1.2; x86_64-unknown-linux-gnu
 # addendum=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md
@@ -12,12 +12,14 @@
 # family=2037941f-dense-matvec-vs-m4ri ledger=dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl cells=8
 # family=4337c02e-matvec-simd-threshold ledger=dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl cells=17
 # family=63bad95d-native-matvec-vs-m4ri ledger=dev/bench_results/63bad95d/native-matvec-vs-m4ri-ledger.jsonl cells=6
+# family=63bad95d-portable-matvec-vs-m4ri ledger=dev/bench_results/63bad95d/portable-matvec-vs-m4ri-ledger.jsonl cells=6
 # unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
 # family_addendum=4337c02e-matvec-simd-threshold path=dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md sha256=e95dbb382c70a0498973f6909c899657657f7b95bb22d25cce76bc2367be1047 identity=4337c02e-matvec-lane-threshold-v1 frozen_utc=2026-10-05T19:34:54Z
 # family_addendum=63bad95d-native-matvec-vs-m4ri path=dev/active/1a379447-zen3-cpu-performance/63bad95d/native-m4ri-addendum.md sha256=3caa8d5388449800444068a2489ff399dd64d6f995cfb0d63923f3e1c51bd208 identity=63bad95d-native-matvec-vs-m4ri-v1 frozen_utc=2026-10-08T12:43:56Z
-PASS harness contract: 54 tests pass
+# family_addendum=63bad95d-portable-matvec-vs-m4ri path=dev/active/1a379447-zen3-cpu-performance/63bad95d/portable-m4ri-addendum.md sha256=308c83b13369f5aa2a86371d977fa51f65a17f0b3d6b0c1dc421ad0fb38770fd identity=63bad95d-portable-matvec-vs-m4ri-v1 frozen_utc=2026-10-08T16:12:25Z
+PASS harness contract: 55 tests pass
 PASS matvec-cols-0-rows-0: 6 checks
 PASS matvec-cols-0-rows-1: 9 checks
 PASS matvec-cols-0-rows-63: 195 checks
@@ -78,6 +80,12 @@ PASS comparator-native-m4ri-gap-65x512-retained-warm: 135 checks
 PASS comparator-native-m4ri-gap-65x4096-retained-warm: 135 checks
 PASS comparator-native-m4ri-gap-1x1-warm: 7 checks
 PASS comparator-native-m4ri-gap-64x64-warm: 133 checks
+PASS comparator-portable-m4ri-gap-65x512-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x4096-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x512-retained-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x4096-retained-warm: 135 checks
+PASS comparator-portable-m4ri-gap-1x1-warm: 7 checks
+PASS comparator-portable-m4ri-gap-64x64-warm: 133 checks
 PASS and-popcnt-7w: 3 checks
 PASS and-popcnt-8w: 3 checks
 PASS and-popcnt-9w: 3 checks
@@ -146,6 +154,12 @@ PASS comparator-native-m4ri-gap-65x512-retained-warm: 135 checks
 PASS comparator-native-m4ri-gap-65x4096-retained-warm: 135 checks
 PASS comparator-native-m4ri-gap-1x1-warm: 7 checks
 PASS comparator-native-m4ri-gap-64x64-warm: 133 checks
+PASS comparator-portable-m4ri-gap-65x512-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x4096-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x512-retained-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x4096-retained-warm: 135 checks
+PASS comparator-portable-m4ri-gap-1x1-warm: 7 checks
+PASS comparator-portable-m4ri-gap-64x64-warm: 133 checks
 PASS and-popcnt-7w: 3 checks
 PASS and-popcnt-8w: 3 checks
 PASS and-popcnt-9w: 3 checks
@@ -154,7 +168,7 @@ PASS and-popcnt-64w: 3 checks
 PASS and-popcnt-65w: 3 checks
 PASS and-popcnt-66w: 3 checks
 # m4ri prefix: /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3
-# {"library":"m4ri","entrypoint":"mzd_mul","matched_operation":"mzd_mul(y, A, x, 0)","coordinates":"mzd_write_bit/mzd_read_bit","qualified_shapes":"65x512,65x4096,1x1,63x63,64x64,65x65","comparator":"dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md","loaded_library":"/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1","loaded_sha256":"1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"}
+# {"library":"m4ri","entrypoint":"mzd_mul","matched_operation":"mzd_mul(y, A, x, 0)","coordinates":"mzd_write_bit/mzd_read_bit","qualified_shapes":"65x512,65x4096,1x1,63x63,64x64,65x65","comparator":"dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md","build_level":"host","build_record":"dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt","shim_command":"/usr/bin/gcc -O3 -ffunction-sections -fdata-sections -fPIC -m64 -I /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/include -Wall -Wextra -std=c11 -O3 -march=native -Wall -Wextra -Werror","loaded_library":"/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1","loaded_sha256":"1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"}
 PASS m4ri-65x512: 71 checks
 PASS m4ri-65x4096: 71 checks
 PASS m4ri-1x1: 7 checks
@@ -167,7 +181,7 @@ PASS m4ri-cell-native-m4ri-gap-65x512-retained-warm: 71 checks
 PASS m4ri-cell-native-m4ri-gap-65x4096-retained-warm: 71 checks
 PASS m4ri-cell-native-m4ri-gap-1x1-warm: 7 checks
 PASS m4ri-cell-native-m4ri-gap-64x64-warm: 70 checks
-# dense-m4ri-arm sha256: 196689e3b4f53619c3ca8b86eb3095ed96aceeb15932bf754d8d513484b3d15b
+# dense-m4ri-arm sha256: 4cc9c051fc416a527ae2542e3ac5fc4ce709f82e2567de4004338a68813ce37d
 # libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
 # native build: the same sources under RUSTFLAGS=-C target-cpu=native --cfg gf2_tuning_baked
 PASS matvec-cols-0-rows-0: 6 checks
@@ -230,6 +244,12 @@ PASS comparator-native-m4ri-gap-65x512-retained-warm: 135 checks
 PASS comparator-native-m4ri-gap-65x4096-retained-warm: 135 checks
 PASS comparator-native-m4ri-gap-1x1-warm: 7 checks
 PASS comparator-native-m4ri-gap-64x64-warm: 133 checks
+PASS comparator-portable-m4ri-gap-65x512-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x4096-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x512-retained-warm: 135 checks
+PASS comparator-portable-m4ri-gap-65x4096-retained-warm: 135 checks
+PASS comparator-portable-m4ri-gap-1x1-warm: 7 checks
+PASS comparator-portable-m4ri-gap-64x64-warm: 133 checks
 PASS and-popcnt-7w: 3 checks
 PASS and-popcnt-8w: 3 checks
 PASS and-popcnt-9w: 3 checks
@@ -237,8 +257,24 @@ PASS and-popcnt-63w: 3 checks
 PASS and-popcnt-64w: 3 checks
 PASS and-popcnt-65w: 3 checks
 PASS and-popcnt-66w: 3 checks
-# dense-arm (native) sha256: 90d1142b97d88f6f8f1e65e9696b7fb1da1b5b70ad6dfd5258ef495cfafadd2d
-# dense-arm sha256: 552bbbdb9cd8ff437597738e252aa5d3b2028ae62afa74fd5208378520ee4710
-# dense-campaign sha256: 267158079466c84ec36aef74f1dfd6fd535841251a333eae26b92c40716400e9
-# dense-oracle sha256: 1b833db2558730f505a317821dd113a6465948ae42fa43a1add74b20e2132486
-# dense-arm (scalar-reference) sha256: 4f2205c1f83dc49774a43138c97579964b4d13bc344e90507b2411319b5a3516
+# dense-arm (native) sha256: 74e1dca6a043ae878610419f86c496ab84c10defad1823167da0f2dbcc76e739
+# m4ri portable prefix: /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1
+# {"library":"m4ri","entrypoint":"mzd_mul","matched_operation":"mzd_mul(y, A, x, 0)","coordinates":"mzd_write_bit/mzd_read_bit","qualified_shapes":"65x512,65x4096,1x1,63x63,64x64,65x65","comparator":"dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md","build_level":"portable","build_record":"dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-portable-build-record.txt","shim_command":"/usr/bin/gcc -O3 -ffunction-sections -fdata-sections -fPIC -m64 -I /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1/include -Wall -Wextra -std=c11 -O3 -Wall -Wextra -Werror","loaded_library":"/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1/lib/libm4ri.so.2.0.1","loaded_sha256":"535d54b0a8becd450a85718cd85f5bbce96446e8e5a22533de920f932efefb81"}
+PASS m4ri-65x512: 71 checks
+PASS m4ri-65x4096: 71 checks
+PASS m4ri-1x1: 7 checks
+PASS m4ri-63x63: 69 checks
+PASS m4ri-64x64: 70 checks
+PASS m4ri-65x65: 71 checks
+PASS m4ri-cell-portable-m4ri-gap-65x512-warm: 71 checks
+PASS m4ri-cell-portable-m4ri-gap-65x4096-warm: 71 checks
+PASS m4ri-cell-portable-m4ri-gap-65x512-retained-warm: 71 checks
+PASS m4ri-cell-portable-m4ri-gap-65x4096-retained-warm: 71 checks
+PASS m4ri-cell-portable-m4ri-gap-1x1-warm: 7 checks
+PASS m4ri-cell-portable-m4ri-gap-64x64-warm: 70 checks
+# dense-m4ri-arm (portable) sha256: 6e5e0e739f132db8a3d14a2cef2fbef5afcd453a60fa2d2ce891dea9cd72646a
+# libm4ri.so (portable) sha256: 535d54b0a8becd450a85718cd85f5bbce96446e8e5a22533de920f932efefb81
+# dense-arm sha256: 011e2a4857fa8ebca7d6244b4c26383ee45611f43fdcdea9733fbf4d20d33c80
+# dense-campaign sha256: 03b94883ff1600cf2ad1696ac2e5efa716e099150bbc58e229def1a6d43e275e
+# dense-oracle sha256: f03913f2f15df21899648c78a287afb24205efe4adea8020b2a2cb6bc95fbb7d
+# dense-arm (scalar-reference) sha256: 7cfdb036a7788fa31c08cc23f9784ff7a90586edcbb64866b8b47a4998ff18ca

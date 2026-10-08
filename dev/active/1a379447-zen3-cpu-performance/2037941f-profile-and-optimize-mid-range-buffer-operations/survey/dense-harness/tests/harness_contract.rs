@@ -4,15 +4,17 @@
 //! never reaches it: these tests and the launcher's `build` subcommand are the
 //! only thing that runs it.
 
-use dense_parity_harness::campaign::{self, PlanInputs, M4RI_ARM, PILOT_PAIRS};
+use dense_parity_harness::campaign::{
+    self, PlanInputs, M4RI_ARM, M4RI_PORTABLE_ARM, PILOT_PAIRS,
+};
 use dense_parity_harness::cells::{
     cells, family_cells, Cache, Cell, MatvecShape, Question, Workload, ADDENDUM_FROZEN_UTC,
     ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, LANE_CONTROL_WORDS,
-    LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS, M4RI_SHAPES, NATIVE_CELL_PREFIX,
-    NATIVE_SMALL_SHAPES, SIMD_LANE_MIN_WORDS, STREAMING_BANKS, STREAMING_BANK_BYTES,
-    UNAVAILABLE_ROWS,
+    LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS, M4RI_SHAPES, MIRRORED_SMALL_SHAPES,
+    NATIVE_CELL_PREFIX, PORTABLE_CELL_PREFIX, SIMD_LANE_MIN_WORDS, STREAMING_BANKS,
+    STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
 };
-use dense_parity_harness::external::{self, LibraryIdentity};
+use dense_parity_harness::external::{self, ComparatorBuild, LibraryIdentity};
 use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
 use dense_parity_harness::inputs;
 use dense_parity_harness::oracle;
@@ -53,6 +55,7 @@ fn plan_inputs<'a>(
         scalar_executable: scalar,
         m4ri_executable: m4ri,
         native_executable: Some("/nonexistent/dense-arm-native"),
+        m4ri_portable_executable: Some("/nonexistent/dense-m4ri-arm-portable"),
         max_cells_per_session: max_cells,
     }
 }
@@ -86,7 +89,8 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
     // 6 qualified shapes plus 2 retained-state cells. Lane threshold: 6 lane
     // strides, the control, 3 exploratory strides, 5 streaming, 2 cold.
     // Native comparator: 2 mid-range shapes fresh and retained, 2 small.
-    assert_eq!(counts, vec![12, 24, 8, 17, 6]);
+    // Portable comparator: the same mirrors.
+    assert_eq!(counts, vec![12, 24, 8, 17, 6, 6]);
     assert_eq!(table.len(), counts.iter().sum::<usize>());
 
     let ids: Vec<&str> = table.iter().map(|cell| cell.cell_id.as_str()).collect();
@@ -108,13 +112,15 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
     assert_eq!(ids[59], "lane-r1024-8w-cold");
     assert_eq!(ids[61], "native-m4ri-gap-65x512-warm");
     assert_eq!(ids[65], "native-m4ri-gap-1x1-warm");
+    assert_eq!(ids[67], "portable-m4ri-gap-65x512-warm");
+    assert_eq!(ids[71], "portable-m4ri-gap-1x1-warm");
 
     // Anchors are the confirmatory family of each question and are warm.
     let anchors: Vec<usize> = Question::ALL
         .iter()
         .map(|question| family_cells(*question).iter().filter(|cell| cell.anchor).count())
         .collect();
-    assert_eq!(anchors, vec![5, 5, 2, 6, 6]);
+    assert_eq!(anchors, vec![5, 5, 2, 6, 6, 6]);
     assert!(table.iter().all(|cell| !cell.anchor || cell.cache == Cache::Warm));
 
     // The scalar-reference rows are exploratory cells of the allocated family.
@@ -254,7 +260,7 @@ fn the_native_comparator_family_mirrors_comparator_cells_at_the_native_level() {
             small.insert(shape.suffix);
         }
     }
-    assert_eq!(small, BTreeSet::from(NATIVE_SMALL_SHAPES));
+    assert_eq!(small, BTreeSet::from(MIRRORED_SMALL_SHAPES));
     // Both boundaries of both confirmatory shapes of the mirrored family.
     for original in originals.iter().filter(|cell| {
         matches!(cell.workload, Workload::M4riGap { shape, .. } if shape.confirmatory)
@@ -297,6 +303,95 @@ fn the_native_comparator_family_mirrors_comparator_cells_at_the_native_level() {
     assert!(tail_draws(corrected * table.len() as f64 / (table.len() + 1) as f64) < 20.0);
 }
 
+/// The portable comparator family mirrors the cells the native comparator
+/// family mirrors, with the gf2 arm of the mirrored family and the comparator
+/// arm linked at the portable level, so the three families measure one fixture
+/// per cell at three pairings of build levels.
+#[test]
+fn the_portable_comparator_family_mirrors_comparator_cells_at_the_portable_level() {
+    let question = Question::PortableMatvecVsM4ri;
+    assert_eq!(question.boundary(), Question::MatvecVsM4ri);
+    let originals = family_cells(Question::MatvecVsM4ri);
+    let native = family_cells(Question::NativeMatvecVsM4ri);
+    let table = family_cells(question);
+    assert_eq!(table.len(), native.len());
+    for (cell, sibling) in table.iter().zip(&native) {
+        let mirrored = cell.cell_id.strip_prefix(PORTABLE_CELL_PREFIX).expect("a mirror");
+        assert_eq!(sibling.cell_id.strip_prefix(NATIVE_CELL_PREFIX), Some(mirrored));
+        let original = originals
+            .iter()
+            .find(|original| original.cell_id == mirrored)
+            .unwrap_or_else(|| panic!("{} mirrors no comparator cell", cell.cell_id));
+        assert_eq!(
+            (cell.workload, cell.cache, cell.seed),
+            (original.workload, original.cache, original.seed),
+            "{}",
+            cell.cell_id
+        );
+        assert!(cell.anchor, "{}", cell.cell_id);
+        assert_eq!(cell.cache, Cache::Warm, "{}", cell.cell_id);
+        assert_eq!(cell.objective(), "comparator-gap", "{}", cell.cell_id);
+        assert_eq!(
+            campaign::cell_arms(cell),
+            (Route::M4riPeerGf2.id(), M4RI_PORTABLE_ARM),
+            "{}",
+            cell.cell_id
+        );
+    }
+
+    // One arm name per level, and each comparator question names its level.
+    assert_eq!(ComparatorBuild::Host.arm(), M4RI_ARM);
+    assert_eq!(ComparatorBuild::Portable.arm(), M4RI_PORTABLE_ARM);
+    for level in ComparatorBuild::ALL {
+        assert_eq!(ComparatorBuild::parse(level.id()), Ok(level));
+        assert_eq!(ComparatorBuild::of_arm(level.arm()), Some(level));
+        assert_eq!(level.flags().contains("-march=native"), level == ComparatorBuild::Host);
+    }
+    assert!(ComparatorBuild::parse("native").is_err());
+    assert_ne!(ComparatorBuild::Host.record(), ComparatorBuild::Portable.record());
+    for candidate in Question::ALL {
+        assert_eq!(
+            ComparatorBuild::of_question(candidate).is_some(),
+            candidate.boundary() == Question::MatvecVsM4ri,
+            "{}",
+            candidate.id()
+        );
+    }
+    assert_eq!(ComparatorBuild::of_question(question), Some(ComparatorBuild::Portable));
+
+    let addendum = campaign::addendum(question, ISSUE, FROZEN);
+    let mirrored = campaign::addendum(Question::MatvecVsM4ri, ISSUE, FROZEN);
+    assert_eq!(addendum.effect.worthwhile_speedup, None);
+    assert_eq!(addendum.effect.equivalence_margin, mirrored.effect.equivalence_margin);
+    assert_eq!(addendum.effect.material_gap_threshold, mirrored.effect.material_gap_threshold);
+    assert_eq!(addendum.complexity_budget, mirrored.complexity_budget);
+    for declaration in &addendum.cells {
+        assert_eq!(
+            declaration.builds.baseline,
+            BuildIdentity::ConservativePortable,
+            "{}",
+            declaration.cell_id
+        );
+        assert_eq!(declaration.builds.candidate, BuildIdentity::External, "{}", declaration.cell_id);
+    }
+    let plan = projected(question, &addendum);
+    let peer = plan.arms.get(Route::M4riPeerGf2.id()).expect("the gf2 peer arm");
+    assert_eq!(peer.build, BuildIdentity::ConservativePortable);
+    assert_eq!(peer.executable, "/nonexistent/dense-arm");
+    assert_eq!(peer.rustflags.as_deref(), Some(""));
+    let external = plan.arms.get(M4RI_PORTABLE_ARM).expect("the portable comparator arm");
+    assert_eq!(external.build, BuildIdentity::External);
+    assert_eq!(external.executable, "/nonexistent/dense-m4ri-arm-portable");
+    assert_eq!(external.rustflags.as_deref(), Some(ComparatorBuild::Portable.flags()));
+    assert!(!plan.arms.contains_key(M4RI_ARM));
+
+    // P-20, as for the native comparator family.
+    let corrected = SHARED_SETTINGS.family_alpha / 2.0 / table.len() as f64;
+    let tail_draws = |alpha: f64| f64::from(SHARED_SETTINGS.bootstrap_resamples) * alpha / 2.0;
+    assert!(tail_draws(corrected) >= 20.0);
+    assert!(tail_draws(corrected * table.len() as f64 / (table.len() + 1) as f64) < 20.0);
+}
+
 #[test]
 fn the_unavailable_comparator_rows_take_no_ordinal() {
     let table = cells();
@@ -312,13 +407,15 @@ fn the_unavailable_comparator_rows_take_no_ordinal() {
 #[test]
 fn seeds_follow_one_campaign_splitmix_stream() {
     let table = cells();
-    // The native comparator mirrors come last and draw nothing from the stream.
+    // The mirroring families come last and draw nothing from the stream.
+    let mirrors: Vec<Question> = Question::MIRRORS.iter().map(|(question, _)| *question).collect();
     let stream: Vec<&Cell> = table
         .iter()
-        .take_while(|cell| cell.question != Question::NativeMatvecVsM4ri)
+        .take_while(|cell| !mirrors.contains(&cell.question))
         .collect();
     assert_eq!(
-        stream.len() + family_cells(Question::NativeMatvecVsM4ri).len(),
+        stream.len()
+            + mirrors.iter().map(|question| family_cells(*question).len()).sum::<usize>(),
         table.len()
     );
     let mut mixer = SplitMix64::new(CAMPAIGN_SEED);
@@ -1053,7 +1150,7 @@ fn the_oracle_covers_every_frozen_boundary_and_passes() {
         let words = cell.workload.stride_words();
         assert!(names.contains(format!("matvec-lane-{words}w").as_str()), "{words}");
     }
-    for cell in family_cells(Question::NativeMatvecVsM4ri) {
+    for cell in Question::MIRRORS.into_iter().flat_map(|(question, _)| family_cells(question)) {
         assert!(
             names.contains(format!("comparator-{}", cell.cell_id).as_str()),
             "{}",
@@ -1123,7 +1220,7 @@ fn a_cell_workload_names_the_question_every_arm_of_that_cell_serves() {
         for arm in [baseline, candidate] {
             match Route::parse(arm) {
                 Ok(route) => assert_eq!(route.question(), boundary, "{}", cell.cell_id),
-                Err(_) => assert_eq!(arm, M4RI_ARM, "{}", cell.cell_id),
+                Err(_) => assert!(ComparatorBuild::of_arm(arm).is_some(), "{}", cell.cell_id),
             }
         }
     }
@@ -1217,6 +1314,7 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
         (Question::MatvecVsM4ri, 2),
         (Question::MatvecLaneThreshold, 2),
         (Question::NativeMatvecVsM4ri, 2),
+        (Question::PortableMatvecVsM4ri, 2),
     ];
     for (question, arms) in expected_arms {
         let addendum = campaign::addendum(question, ISSUE, FROZEN);
@@ -1316,6 +1414,12 @@ fn the_comparator_arm_is_the_external_build_and_the_gf2_arms_are_not() {
     let mut inputs = plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None);
     inputs.native_executable = None;
     assert!(campaign::plan(question, &native, &inputs).is_err());
+
+    let question = Question::PortableMatvecVsM4ri;
+    let portable = campaign::addendum(question, ISSUE, FROZEN);
+    let mut inputs = plan_inputs(None, Some("/nonexistent/dense-m4ri-arm"), None);
+    inputs.m4ri_portable_executable = None;
+    assert!(campaign::plan(question, &portable, &inputs).is_err());
 }
 
 #[test]
@@ -1594,7 +1698,7 @@ fn the_carried_pins_are_the_frozen_addendums_own_identity() {
         .iter()
         .map(|question| question.addendum().path)
         .collect();
-    assert_eq!(pins.len(), 3);
+    assert_eq!(pins.len(), 4);
     for question in Question::ALL {
         let pin = question.addendum();
         let bytes = std::fs::read(root.join(pin.path)).expect("the frozen addendum is committed");
@@ -1612,6 +1716,7 @@ fn the_carried_pins_are_the_frozen_addendums_own_identity() {
     for cited in [
         dense_parity_harness::cells::COMPARATOR_PATH,
         dense_parity_harness::cells::QUALIFICATION_RECORD,
+        dense_parity_harness::cells::PORTABLE_BUILD_RECORD,
     ] {
         assert!(root.join(cited).is_file(), "{cited}");
     }
