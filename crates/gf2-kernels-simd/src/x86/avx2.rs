@@ -426,20 +426,19 @@ unsafe fn avx2_and_parity(lhs: &[u64], rhs: &[u64]) -> bool {
     let lhs_ptr = lhs.as_ptr() as *const u8;
     let rhs_ptr = rhs.as_ptr() as *const u8;
     let nvec = len / 4;
+    let paired_bytes = (nvec / 2) * 64;
 
     let mut acc0 = _mm256_setzero_si256();
     let mut acc1 = _mm256_setzero_si256();
-    let mut i = 0usize;
-    while i + 2 <= nvec {
-        let off = i * 32;
+    let mut off = 0usize;
+    while off < paired_bytes {
         let v0 = _mm256_and_si256(loadu(lhs_ptr.add(off)), loadu(rhs_ptr.add(off)));
         let v1 = _mm256_and_si256(loadu(lhs_ptr.add(off + 32)), loadu(rhs_ptr.add(off + 32)));
         acc0 = _mm256_xor_si256(acc0, v0);
         acc1 = _mm256_xor_si256(acc1, v1);
-        i += 2;
+        off += 64;
     }
-    if i < nvec {
-        let off = i * 32;
+    if nvec % 2 == 1 {
         let v = _mm256_and_si256(loadu(lhs_ptr.add(off)), loadu(rhs_ptr.add(off)));
         acc0 = _mm256_xor_si256(acc0, v);
     }
