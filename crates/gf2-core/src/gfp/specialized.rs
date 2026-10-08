@@ -92,8 +92,8 @@ pub const fn classify(p: u64) -> PrimeShape {
 /// `x % (2^N - 1)` for every `u128` input.
 ///
 /// Uses `2^N ≡ 1 (mod 2^N - 1)`: folding the `N`-bit chunks of `x` together
-/// preserves the residue. For `N ≥ 61` two straight-line folds suffice; for
-/// smaller `N` the fold repeats until the sum fits in `N` bits, which takes
+/// preserves the residue. For `22 ≤ N ≤ 31` and `N ≥ 61` a fixed number of
+/// straight-line folds suffices; for other `N` the fold repeats until the sum fits in `N` bits, which takes
 /// at most `⌈128 / N⌉` iterations.
 ///
 /// # Panics
@@ -110,6 +110,18 @@ pub const fn mersenne_reduce<const N: u32>(x: u128) -> u64 {
         let hi = (x >> (2 * N)) as u64; // at most 6 bits for N = 61
         let s1 = lo + mid + hi; // < 2^(N+1) + 64, no u64 overflow for N ≤ 62
         (s1 & p) + (s1 >> N)
+    } else if N >= 22 && N <= 31 {
+        // 22 <= N <= 31: the five chunks c0..c3 (N bits) and c4 = x >> 4N
+        // (< 2^(128-4N), a valid shift since 4N <= 124) sum to
+        // s < 2^(N+2) + 2^(128-4N), so s >> N <= 4 + 2^(128-5N) < p and one
+        // fold plus one subtraction canonicalise.
+        let c0 = (x as u64) & p;
+        let c1 = ((x >> N) as u64) & p;
+        let c2 = ((x >> (2 * N)) as u64) & p;
+        let c3 = ((x >> (3 * N)) as u64) & p;
+        let c4 = (x >> (4 * N)) as u64;
+        let s = c0 + c1 + c2 + c3 + c4;
+        (s & p) + (s >> N)
     } else {
         // Each fold maps `s` to `(s mod 2^N) + (s >> N)`; the u128 sum cannot
         // overflow because `s >> N < 2^(128 - N)` and `s mod 2^N < 2^N`.
@@ -779,6 +791,7 @@ mod tests {
         mersenne_reduce_n13_matches_percent_reference: 13,
         mersenne_reduce_n17_matches_percent_reference: 17,
         mersenne_reduce_n19_matches_percent_reference: 19,
+        mersenne_reduce_n22_matches_percent_reference: 22,
         mersenne_reduce_n25_matches_percent_reference: 25,
         mersenne_reduce_n26_matches_percent_reference: 26,
         mersenne_reduce_n31_matches_percent_reference: 31,
