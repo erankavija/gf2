@@ -30,6 +30,7 @@ tracing-subscriber = { version = "0.3", optional = true, features = ["json", "en
 
 [dev-dependencies]
 gf2-core = { path = "../gf2-core", features = ["test-support"] }
+gf2-kernels-simd = { path = "../gf2-kernels-simd", features = ["test-support"] }
 proptest = { workspace = true }
 rand = { workspace = true }
 criterion = { workspace = true }
@@ -84,7 +85,7 @@ tuning-profile = ["gf2-core/tuning-profile"]
 # test-point parser used by both `concat.rs` and the bit-interleaver
 # integration test). Default-off; integration tests enable it via the
 # self-referenced dev-dependency.
-test-support = []
+test-support = ["gf2-kernels-simd/test-support"]
 
 # Binaries are auto-discovered in src/bin/
 # - generate_ldpc_cache: Generate DVB-T2 LDPC encoding cache files

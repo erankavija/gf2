@@ -12,7 +12,7 @@ use gf2_coding::ldpc::nr_5g::{
     lifting_set_index, shift_table, Nr5gRateMatchedBatchDecoder, Nr5gRateMatchedCode,
     Nr5gRateMatchedDecoder,
 };
-use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, QuasiCyclicLdpc};
+use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, LaneBackend, QuasiCyclicLdpc};
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeSoftDecoder};
 use gf2_coding::tuning::DecodeSelectors;
@@ -353,7 +353,7 @@ fn check_batch_decodes(
     let routes = [
         (
             DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
-            BatchRoute::Lane,
+            BatchRoute::Lane(LaneBackend::detected()),
         ),
         (DecodeSelectors::CONSERVATIVE, BatchRoute::SingleFrame),
     ];

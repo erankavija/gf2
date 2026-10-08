@@ -1,6 +1,7 @@
 //! Test helpers shared by crate unit tests, the integration tests under
 //! `tests/`, and the bench targets: allocation witnesses over the encoding
-//! workspaces, kernel-selection controls, basis-vector matrix oracles, the
+//! workspaces, kernel-selection controls, the LDPC lane backends of a build,
+//! basis-vector matrix oracles, the
 //! predeclared BCH conformance corpus with its seeded messages, the BCH and
 //! derived-code conformance cases, and a reader for the DVB-T2 reference
 //! streams (`@/citation/DvbVerification2010`).
@@ -16,12 +17,14 @@ use crate::bch::spec::{
     BchCode, BchLength, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent, RootSelection,
 };
 use crate::error::CodeError;
+use crate::ldpc::{BatchRoute, LaneBackend};
 use crate::product::ExtendedBchComponent;
 use crate::traits::block::{
     BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
     SymbolSequence,
 };
 use crate::transform::{CoordinateMap, Extended, Punctured, Shortened, ShortenedDerivation};
+use crate::tuning::DecodeSelectors;
 use crate::CodeRate;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension, FieldIdentity, TrivialExt};
 use gf2_core::field::matrix::FieldMatrix;
@@ -124,6 +127,49 @@ pub fn force_scalar_encode_kernels(forced: bool) -> bool {
 /// `"avx2-pclmul"` or `"scalar"`.
 pub fn selected_encode_kernel() -> &'static str {
     crate::bch::encode::selected_encode_kernels()
+}
+
+/// The lane backends an LDPC batch suite pins: [`LaneBackend::Portable`]
+/// and, in a build with the `simd` cargo feature, [`LaneBackend::Avx2`].
+///
+/// # Panics
+///
+/// Panics in a build with `simd` on a host without AVX2, so an AVX2 case
+/// fails there instead of passing on the portable kernels.
+pub fn ldpc_lane_backends() -> Vec<LaneBackend> {
+    let mut backends = vec![LaneBackend::Portable];
+    if cfg!(feature = "simd") {
+        gf2_kernels_simd::contract::require_detected(
+            "avx2",
+            gf2_kernels_simd::ldpc_lanes::detect(),
+        );
+        backends.push(LaneBackend::Avx2);
+    }
+    backends
+}
+
+/// The decoder setups an LDPC batch suite runs, each with the route it gives
+/// a full wave under a min-sum rule: per backend of [`ldpc_lane_backends`],
+/// selectors that give every wave the lane route and selectors that give it
+/// to a wave of at least four frames, then the conservative selectors, which
+/// give every wave the single-frame route.
+///
+/// # Panics
+///
+/// As [`ldpc_lane_backends`].
+pub fn ldpc_batch_routes() -> Vec<(DecodeSelectors, LaneBackend, BatchRoute)> {
+    let lane_from = |frames| DecodeSelectors::try_new(frames, usize::MAX, 1).unwrap();
+    let mut routes = Vec::new();
+    for backend in ldpc_lane_backends() {
+        routes.push((lane_from(1), backend, BatchRoute::Lane(backend)));
+        routes.push((lane_from(4), backend, BatchRoute::Lane(backend)));
+    }
+    routes.push((
+        DecodeSelectors::CONSERVATIVE,
+        LaneBackend::Portable,
+        BatchRoute::SingleFrame,
+    ));
+    routes
 }
 
 /// Builds the generic eBCH(16,11) fixture used by library tests.

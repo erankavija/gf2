@@ -7,7 +7,9 @@
 mod concat_batch;
 mod test_vectors;
 
-use concat_batch::{assert_batch_decodes_as_single_frame, routes, selectors, single_frame_result};
+use concat_batch::{
+    assert_batch_decodes_as_single_frame, decoder_on, routes, selectors, single_frame_result,
+};
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::dvb_t2::concat::{DvbT2Concat, DvbT2ConcatBatchDecoder};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
@@ -15,7 +17,7 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
-use gf2_coding::tuning;
+use gf2_coding::tuning::{self, DecodeSelectors};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 use rand::rngs::StdRng;
@@ -62,37 +64,44 @@ fn noiseless_frame(fecframe: &BitVec) -> Vec<Llr> {
         .collect()
 }
 
-/// Runs the shared batch contract under the selector family `route` of
-/// [`routes`], over two full waves and the start of a third.
-fn assert_batch_contract(route: usize) {
+/// Runs the shared batch contract under each setup of [`routes`] whose
+/// selectors open the lane route at `lane_min_frames` frames, over two full
+/// waves and the start of a third.
+fn assert_batch_contract(lane_min_frames: usize) {
     let codec = codec();
-    let (selectors, full_wave) = routes()[route].clone();
-    let mut decoder = DvbT2ConcatBatchDecoder::with_selectors(&codec, selectors);
-    let lanes = decoder.batch_granularity();
-    assert_eq!(decoder.ldpc().batch_route(lanes), full_wave);
+    let setups: Vec<_> = routes()
+        .into_iter()
+        .filter(|(selectors, ..)| selectors.lane_min_frames() == lane_min_frames)
+        .collect();
+    assert!(!setups.is_empty());
+    for (selectors, backend, full_wave) in setups {
+        let mut decoder = decoder_on(backend, &codec, selectors);
+        let lanes = decoder.batch_granularity();
+        assert_eq!(decoder.ldpc().batch_route(lanes), full_wave);
 
-    let frames = noisy_frames(&codec, 2 * lanes + 1);
-    batch_soft_decoder_contract(
-        &mut decoder,
-        |llrs| single_frame_result(&codec, llrs),
-        &frames,
-        ConvergenceMix::EarlyLateAndNonConverging,
-    );
+        let frames = noisy_frames(&codec, 2 * lanes + 1);
+        batch_soft_decoder_contract(
+            &mut decoder,
+            |llrs| single_frame_result(&codec, llrs),
+            &frames,
+            ConvergenceMix::EarlyLateAndNonConverging,
+        );
+    }
 }
 
 #[test]
-fn the_batch_contract_holds_on_the_lane_route() {
-    assert_batch_contract(0);
-}
-
-#[test]
-fn the_batch_contract_holds_with_short_waves_on_the_single_frame_route() {
+fn the_batch_contract_holds_on_the_lane_route_of_each_backend() {
     assert_batch_contract(1);
 }
 
 #[test]
+fn the_batch_contract_holds_with_short_waves_on_the_single_frame_route() {
+    assert_batch_contract(4);
+}
+
+#[test]
 fn the_batch_contract_holds_on_the_single_frame_route() {
-    assert_batch_contract(2);
+    assert_batch_contract(DecodeSelectors::CONSERVATIVE.lane_min_frames());
 }
 
 #[test]
