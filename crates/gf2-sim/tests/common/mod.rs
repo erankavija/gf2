@@ -148,7 +148,73 @@ pub fn build_dvb_t2_graph_chain(
             .expect("each consecutive BICM hop is type-compatible");
     }
 
-    let config = gf2_sim::PipelineConfig {
+    chain
+        .with_config(graph_chain_config(seed, parallelism))
+        .build()
+        .expect("the full BICM chain is a valid DAG")
+}
+
+/// Builds the 5G NR LDPC BICM chain of the rate-matched `(target_n, target_k)`
+/// code on `base_graph` through the [`gf2_sim::graph::Chain`] API.
+/// `demap_n0` must equal [`gf2_sim::channels::es_n0_db_to_n0`]`(es_n0_db)`.
+///
+/// # Panics
+///
+/// Panics as `QuasiCyclicLdpc::nr_5g_rate_matched` and the stage constructors
+/// do, and if the chain fails to build.
+#[allow(clippy::too_many_arguments)]
+pub fn build_nr_5g_graph_chain(
+    base_graph: u8,
+    target_n: usize,
+    target_k: usize,
+    q_m: usize,
+    algorithm: gf2_coding::ldpc::DecoderAlgorithm,
+    max_iterations: usize,
+    demap: gf2_coding::modem::DemapMethod,
+    es_n0_db: f32,
+    demap_n0: f32,
+    seed: u64,
+    parallelism: std::num::NonZeroUsize,
+) -> gf2_sim::pipeline::Pipeline {
+    use gf2_sim::stage::erase;
+    use gf2_sim::stages::nr_5g::{
+        Nr5gBitInterleave, Nr5gDecode, Nr5gEncode, Nr5gLlrDeinterleave, NrGrayQamDemap,
+        NrGrayQamMap,
+    };
+
+    let code = Arc::new(gf2_coding::ldpc::QuasiCyclicLdpc::nr_5g_rate_matched(
+        base_graph, target_n, target_k,
+    ));
+
+    let mut chain = gf2_sim::graph::Chain::new();
+    let ids = [
+        chain.add(erase(Nr5gEncode::new(code.clone()))),
+        chain.add(erase(Nr5gBitInterleave::new(q_m))),
+        chain.add(erase(NrGrayQamMap::new(q_m))),
+        chain.add(erase(gf2_sim::channels::Awgn::new(es_n0_db, q_m))),
+        chain.add(erase(NrGrayQamDemap::with_noise_var(q_m, demap, demap_n0))),
+        chain.add(erase(Nr5gLlrDeinterleave::new(q_m))),
+        chain.add(erase(Nr5gDecode::with_algorithm(
+            code,
+            algorithm,
+            max_iterations,
+        ))),
+    ];
+    for pair in ids.windows(2) {
+        chain
+            .connect(pair[0], pair[1])
+            .expect("each consecutive 5G NR hop is type-compatible");
+    }
+
+    chain
+        .with_config(graph_chain_config(seed, parallelism))
+        .build()
+        .expect("the full 5G NR chain is a valid DAG")
+}
+
+/// The CPU-only config of a hand-wired chain: no run plan, no checkpointing.
+fn graph_chain_config(seed: u64, parallelism: std::num::NonZeroUsize) -> gf2_sim::PipelineConfig {
+    gf2_sim::PipelineConfig {
         seed,
         esn0_db_points: Vec::new(),
         target_errors: 0,
@@ -161,12 +227,7 @@ pub fn build_dvb_t2_graph_chain(
         strict_gpu: false,
         diagnostic_dump_dir: None,
         inject_gpu_oom_modulus: None,
-    };
-
-    chain
-        .with_config(config)
-        .build()
-        .expect("the full BICM chain is a valid DAG")
+    }
 }
 
 /// Creates a unique, empty temporary directory for use by a single test.
