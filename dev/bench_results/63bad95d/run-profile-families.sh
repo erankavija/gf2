@@ -3,9 +3,14 @@
 #
 # Usage (from the worker worktree root):
 #   run-profile-families.sh build
-#   run-profile-families.sh smoke <family> pilot|confirmation
-#   run-profile-families.sh window <family> pilot|confirmation
-#   run-profile-families.sh freeze <family> [freezer margin options]
+#   run-profile-families.sh smoke <family> <stage>
+#   run-profile-families.sh window <family> <stage>
+#   run-profile-families.sh freeze <family> [<pilot stage>] [freezer margin options]
+#
+# A stage is `pilot` or `confirmation`. From the second pilot trial of a family
+# on, the trial number follows the name: `pilot2` is the second trial of the
+# frozen pilot addendum and `confirmation2` the confirmation frozen from it.
+# The pilot addendum's search budget bounds the trial number.
 #
 # `build` builds the harness executable once per build level, runs the harness
 # contract in each level and builds the runner and the acceptance tool.
@@ -22,8 +27,12 @@
 # complete campaign once. Re-running it on a finalized campaign re-evaluates
 # and measures nothing.
 #
-# `freeze` derives the confirmation addendum from the committed pilot receipt
-# with the repository's canonical freezer.
+# `freeze` derives the confirmation addendum from the committed receipt of the
+# named pilot stage, `pilot` when none is named, with the repository's
+# canonical freezer. It refuses to replace a committed addendum.
+#
+# A confirmation whose addendum has a `-superseded.md` record beside it is
+# neither smoked nor measured.
 #
 # Every numeric setting comes from the frozen addendum, the plan record and the
 # protocol's shared settings; this script fixes campaign identities, seeds and
@@ -132,12 +141,43 @@ if sys.argv[2] not in [family["id"] for family in json.load(open(sys.argv[1]))["
 SHORT=${FAMILY#"${ISSUE}"-}
 LEDGER=${RESULTS}/${FAMILY}-ledger.jsonl
 PILOT_ADDENDUM=${ACTIVE}/campaigns/${FAMILY}-pilot.json
-CONFIRMATION_ADDENDUM=${ACTIVE}/campaigns/${FAMILY}-confirmation.json
-DERIVATION=${ACTIVE}/campaigns/${FAMILY}-confirmation-derivation.txt
+
+# Sets KIND and TRIAL from a stage, and the confirmation addendum of that
+# trial; refuses a trial beyond the pilot addendum's search budget.
+resolve_stage() {
+    local infix=
+    case "$1" in
+        pilot | confirmation) KIND=$1 TRIAL=1 ;;
+        pilot[2-9] | confirmation[2-9]) KIND=${1%?} TRIAL=${1: -1} infix=r${1: -1}- ;;
+        *) echo "stage must be pilot or confirmation, with a trial number from 2 on" >&2; exit 2 ;;
+    esac
+    python3 -B -c 'import json, sys
+budget = json.load(open(sys.argv[1]))["search_budget"]["max_pilot_trials_per_cell"]
+if int(sys.argv[2]) > budget:
+    raise SystemExit(f"{sys.argv[1]} admits {budget} pilot trials per cell")' \
+        "${PILOT_ADDENDUM}" "${TRIAL}"
+    CONFIRMATION_ADDENDUM=${ACTIVE}/campaigns/${FAMILY}-${infix}confirmation.json
+    DERIVATION=${ACTIVE}/campaigns/${FAMILY}-${infix}confirmation-derivation.txt
+}
 
 if [[ "${ACTION}" == freeze ]]; then
     shift 2
-    for frozen in "${PILOT_ADDENDUM}" "${RESULTS}/${FAMILY}/r1-pilot/receipt.json"; do
+    PILOT_STAGE=pilot
+    if [[ "${1:-}" == pilot* ]]; then
+        PILOT_STAGE=$1
+        shift
+    fi
+    resolve_stage "${PILOT_STAGE}"
+    [[ "${KIND}" == pilot ]] || {
+        echo "freeze names a pilot stage" >&2
+        exit 2
+    }
+    if git ls-files --error-unmatch "${CONFIRMATION_ADDENDUM}" >/dev/null 2>&1; then
+        echo "${CONFIRMATION_ADDENDUM} is committed; a frozen addendum is not replaced" >&2
+        exit 2
+    fi
+    PILOT=${RESULTS}/${FAMILY}/r${TRIAL}-pilot
+    for frozen in "${PILOT_ADDENDUM}" "${PILOT}/receipt.json"; do
         git ls-files --error-unmatch "${frozen}" >/dev/null
         git diff --quiet HEAD -- "${frozen}" || {
             echo "${frozen} differs from the committed bytes" >&2
@@ -159,7 +199,7 @@ for family in json.load(open(sys.argv[1]))["families"]:
     [[ -z "${DECLARATION}" ]] || HOLDOUT=(--holdout-cells "${SURVEY}/${DECLARATION}")
     python3 -B "${FREEZER}" \
         --pilot-addendum "${PILOT_ADDENDUM}" \
-        --pilot "${RESULTS}/${FAMILY}/r1-pilot" \
+        --pilot "${PILOT}" \
         --frozen-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         --output "${CONFIRMATION_ADDENDUM}" \
         --record "${DERIVATION}" \
@@ -169,15 +209,19 @@ for family in json.load(open(sys.argv[1]))["families"]:
     exit 0
 fi
 
-STAGE_NAME=${3:?pilot or confirmation}
-case "${STAGE_NAME}" in
+STAGE_NAME=${3:?stage}
+resolve_stage "${STAGE_NAME}"
+case "${KIND}" in
     pilot) ADDENDUM=${PILOT_ADDENDUM} SEED_BASE=2026100710 ;;
     confirmation) ADDENDUM=${CONFIRMATION_ADDENDUM} SEED_BASE=2026100720 ;;
-    *) echo "stage must be pilot or confirmation" >&2; exit 2 ;;
 esac
-# One seed per family and stage: the base plus the family's position in the
-# plan record.
-SEED=$((SEED_BASE + $(python3 -B -c 'import json, sys
+if [[ -e "${ADDENDUM%.json}-superseded.md" ]]; then
+    echo "${ADDENDUM} is superseded: ${ADDENDUM%.json}-superseded.md" >&2
+    exit 2
+fi
+# One seed per family, stage and trial: the base, a step per trial, plus the
+# family's position in the plan record.
+SEED=$((SEED_BASE + 20 * (TRIAL - 1) + $(python3 -B -c 'import json, sys
 print([family["id"] for family in json.load(open(sys.argv[1]))["families"]].index(sys.argv[2]))' \
     "${RECORD}" "${FAMILY}")))
 MAX_CELLS=3
@@ -188,7 +232,7 @@ project_plan() {
     mapfile -t arms < <(arm_arguments)
     python3 -B "${SURVEY}/make-family-plan.py" \
         --addendum "${ADDENDUM}" \
-        --label "${STAGE_NAME}" \
+        --label "${KIND}" \
         --campaign-id "${campaign}" \
         --campaign-seed "${seed}" \
         --lock "${lock}" \
@@ -224,10 +268,10 @@ the benchmark-window queue" >&2
     exit 2
 }
 
-CAMPAIGN=${ISSUE}-r1-${SHORT}-${STAGE_NAME}
+CAMPAIGN=${ISSUE}-r${TRIAL}-${SHORT}-${KIND}
 STAGE="${STAGES}/${CAMPAIGN}"
 PLAN="${STAGE}.plan.json"
-OUT=${RESULTS}/${FAMILY}/r1-${STAGE_NAME}
+OUT=${RESULTS}/${FAMILY}/r${TRIAL}-${KIND}
 
 evaluate() {
     set +e
