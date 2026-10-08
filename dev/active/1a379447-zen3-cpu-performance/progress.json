@@ -554,7 +554,7 @@
      "short_id": "63bad95d",
      "title": "Calibrate production dispatch for the 5900X",
      "classification": "implementation",
-     "status": "in_progress: both pilots committed; native-ladder confirmation frozen (2b844a89a) and queued for 2026-10-09; dispatch-overhead confirmation of pilot 1 superseded (margin 1.41 from a disturbed cell), second pilot queued for 2026-10-09; worktree agent-63bad95d-fam at 345f7a6aa (pinned). The branch bakes ple.scalar_base_max_cols 1 (crates/gf2-core/src/field/ple.rs:17): open question, lead recommendation is to restore 24 before the merge. Invoker 2026-10-08: native M4RI family this window; restore ple.scalar_base_max_cols 24 before the merge. Family 63bad95d-native-matvec-vs-m4ri (6 cells, gf2 native against the pinned M4RI, which is already -march=native) frozen and smoked on worktree-agent-63bad95d-m4ri at ec5ab3404 (pinned), pilot queued for 2026-10-09. calibration-plan.md section 3 and planned-families.json call the 50f0bd42 comparison a portable comparator: correct them in the post-confirmation stage.",
+     "status": "in_progress: both pilots committed; native-ladder confirmation frozen (2b844a89a) and queued for 2026-10-09; dispatch-overhead confirmation of pilot 1 superseded (margin 1.41 from a disturbed cell), second pilot queued for 2026-10-09; worktree agent-63bad95d-fam at 345f7a6aa (pinned). The branch bakes ple.scalar_base_max_cols 1 (crates/gf2-core/src/field/ple.rs:17): open question, lead recommendation is to restore 24 before the merge. Invoker 2026-10-08: native M4RI family this window; restore ple.scalar_base_max_cols 24 before the merge. Family 63bad95d-native-matvec-vs-m4ri (6 cells, gf2 native against the pinned M4RI, which is already -march=native) frozen and smoked on worktree-agent-63bad95d-m4ri at ec5ab3404 (pinned), pilot queued for 2026-10-09. calibration-plan.md section 3 and planned-families.json call the 50f0bd42 comparison a portable comparator: correct them in the post-confirmation stage. Invoker 2026-10-08 (second ruling): add a portable-level M4RI family too. Family 63bad95d-portable-matvec-vs-m4ri (6 cells, gf2 conservative-portable against M4RI built -O3 without targeting) frozen and smoked on worktree-agent-63bad95d-pm4ri at 90dbb0482 (pinned; contains the native-family branch, so native merges first as it stands), pilot queued for 2026-10-09.",
      "tracker_state": "in_progress"
     },
     {
@@ -751,7 +751,7 @@
      "short_id": "ed3d490e",
      "title": "Vectorize LDPC decoding across frames",
      "classification": "implementation",
-     "status": "in_progress: 7 of 66 tasks done (c79d60f9, 6818f1b6, 8840b0ff, 53b74fc2, ee12b09e, 2438c16f, 441fbd5c; reviews under reviews/). Ready: 5cb74f81 (LDPC lane batch decoder) and 1d4b05d5 (pooled batch decoder). Layers computed from breakdown.json depends_on.",
+     "status": "in_progress: 24 story issues done, 2 in progress (feb60d0d, aff59c3c), 3 ready (a96a4cd6, 395fe4e2, e4e2ba52), 41 backlog at the end of session 32",
      "tracker_state": "backlog"
     },
     {
@@ -910,7 +910,7 @@
      "short_id": "9e0cd346",
      "title": "Decode NR stage batches through the batch decode stage",
      "classification": "implementation",
-     "status": "in_progress: merged at d15a0436d; cargo-ci passed; code-review R1 F1 (REQ-03: no NR preset-versus-graph byte-identity suite); rework 1 dispatched (opus)"
+     "status": "done. Session 32: merged at d15a0436d, rework 1 at d63891b7b (NR preset-versus-graph byte identity); cargo-ci and code-review pass; review reviews/9e0cd346-r2.md"
     },
     {
      "short_id": "86d9260e",
@@ -922,7 +922,7 @@
      "short_id": "e918a8ee",
      "title": "Move the tests of the inherent LDPC batch functions to the batch trait",
      "classification": "implementation",
-     "status": "in_progress: merged at 8702a88ac; cargo-ci passed; code-review R1 F1 (duplicated test adapter); rework 1 dispatched (sonnet)"
+     "status": "done. Session 32: merged at 8702a88ac, rework 1 at 7ee112158 (shared test adapter); cargo-ci and code-review pass; review reviews/e918a8ee-r2.md"
     },
     {
      "short_id": "83ed701d",
@@ -940,19 +940,19 @@
      "short_id": "4de9d983",
      "title": "Decode BLER sweep slices through the batch decoder trait",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 32 (sonnet)"
+     "status": "done. Session 32: merged at 339dc19b6; cargo-ci and code-review passed first round; review reviews/4de9d983-r1.md"
     },
     {
      "short_id": "feb60d0d",
      "title": "Build the gf2 batch decoder benchmark arms",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 32 (opus)"
+     "status": "in_progress: merged at 1c1866770; research-review passed; code-review R1 F1 (depth-dependent paths in survey/arms/Cargo.toml, no-dev-path-coupling); cargo-ci gate failed once on a flaky allocation test (f21b25ac); REQ-05 partly evidenced; review reviews/feb60d0d-r1.md; worktree reclaimed, branch worktree-agent-feb60d0d kept"
     },
     {
      "short_id": "aff59c3c",
      "title": "Produce decode selector measurements from a coding owner harness",
      "classification": "implementation",
-     "status": "in_progress: dispatched session 32 (opus)"
+     "status": "blocked: merged at 184ba648e (cargo-ci.sh steps approved by the invoker); cargo-ci and doc-review passed; code-review R1 F1 (crates/gf2-coding/Cargo.toml names dev/tools/tuning-campaign-support by a depth-dependent path, as gf2-core and gf2-algebra do); open escalation on the form; review reviews/aff59c3c-r1.md; worktree reclaimed"
     }
    ]
   },
@@ -1266,6 +1266,18 @@
    "type": "task",
    "in_epic": false,
    "reason": "session 32: CpuLdpcBp rebuilds its batch decoder per call (unit-scratch guard of the erased CPU fallback); depends on 86d9260e"
+  },
+  {
+   "id": "dd493649",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: Awgn::apply bounds its per-call noise draw by a debug assertion only; depends on 9e0cd346"
+  },
+  {
+   "id": "f21b25ac",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: two GPU tests and one allocation-count test failed once each under load; depends on 86d9260e"
   }
  ],
  "escalations": [
@@ -1958,6 +1970,31 @@
    "status": "resolved",
    "raised_at": "2026-10-08T12:10Z",
    "resolution": "Invoker 2026-10-08: amend REQ-04 to the crate convention (not reported as passed; the host-precondition contract fails them and names the missing instruction set). Applied to the issue."
+  },
+  {
+   "category": "shared infrastructure (scripts/cargo-ci.sh)",
+   "issue": "aff59c3c",
+   "question": "two tuning-coding-calibration steps copied from the algebra pair",
+   "status": "resolved",
+   "raised_at": "2026-10-08T16:00Z",
+   "resolution": "Invoker 2026-10-08: approved."
+  },
+  {
+   "category": "criterion reading (63bad95d REQ-09)",
+   "issue": "63bad95d",
+   "question": "portable-level M4RI comparator",
+   "status": "resolved",
+   "raised_at": "2026-10-08T16:00Z",
+   "resolution": "Invoker 2026-10-08: add a portable M4RI family."
+  },
+  {
+   "category": "shared build layout (no-dev-path-coupling)",
+   "issue": "aff59c3c",
+   "question": "code-review R1 F1: crates/gf2-coding/Cargo.toml declares tuning-campaign-support by ../../dev/tools/tuning-campaign-support, as gf2-core and gf2-algebra already do; the harness-path-dependencies exception covers survey harness manifests under dev/active only. Options: (A) one [workspace.dependencies] entry at the repository root and `workspace = true` in the three owner crates; (B) move tuning-campaign-support under crates/; (C) extend the named exception to owner-producer dev-dependencies of workspace crates.",
+   "recommendation": "A if the reviewer's reading admits a root-relative path in the workspace manifest, otherwise C; B moves a crate that committed campaigns pin by path",
+   "status": "open",
+   "raised_at": "2026-10-08T16:40Z",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -2015,7 +2052,9 @@
   "13728e1a": 2,
   "4767d936": 1,
   "e918a8ee": 1,
-  "9e0cd346": 1
+  "9e0cd346": 1,
+  "feb60d0d": 0,
+  "aff59c3c": 0
  },
  "surfaced_pitfalls": [
   {
@@ -2662,7 +2701,8 @@
   "Session 32: the host was loaded at the start of the 2026-10-08 window (launcher logs of the three pilots); one disturbed stretch set the resolution of the bfc2ceab pilot and of the 63bad95d dispatch-overhead pilot. Keep the host idle from 01:30 local before a window. P-03 and the freezer use the pilot corrected alpha, not the confirmation alpha (receipt.rs verified_pilot_alpha).",
   "Session 32: a merge that adds a source file under crates/ fails cargo-ci family-producing-closures; regenerate with the family make-*-producing-inputs.py generators inside the merge or directly after it (done for 4e68f9b2 and 4767d936; 13728e1a carried its own).",
   "Session 32: merge order for the dense harness cell table: worktree-agent-7dbe1393 first, worktree-agent-63bad95d-m4ri after it (textual conflicts in cells.rs, Question::ALL, tests, closure; neither family takes seeds from the other). Unfiled worker reports: dense-harness manifest fails clippy -D warnings at tests/harness_contract.rs:147 and :972 and cargo fmt --check at build.rs:33; sibling x86 kernel modules import core::arch::x86_64 unconditionally.",
-  "Session 32: common-rules told every worker to use the Opus co-author trailer; sonnet workers followed it. Wrong trailers on main: 99f1ade19 (13728e1a rework), 9d1ca38a2 (f5ae4c49), b9340fbec (83ed701d); on the pinned bfc2ceab branch: 222b02396. The rule now tells a worker to use its own session attribution."
+  "Session 32: common-rules told every worker to use the Opus co-author trailer; sonnet workers followed it. Wrong trailers on main: 99f1ade19 (13728e1a rework), 9d1ca38a2 (f5ae4c49), b9340fbec (83ed701d); on the pinned bfc2ceab branch: 222b02396. The rule now tells a worker to use its own session attribution.",
+  "Session 32 end: 11 story issues closed (4e68f9b2, 4767d936, 13728e1a, c317f5ac, f5ae4c49, 83ed701d, 391f5419, 86d9260e, e918a8ee, 9e0cd346, 4de9d983). feb60d0d batch_size decision for the later addendum leaf: lane cells declare batching.batch_size 1 (P-19), the wave size is in selected_path; batch_fill_ns is a zero-iteration-cap probe. aff59c3c grid accepted as baked (74 cells). Unfiled: dense-harness manifest clippy and fmt failures; sibling x86 modules import core::arch::x86_64 unconditionally; regen-asm reading hard-linked target/release (unverified)."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -2692,7 +2732,8 @@
   "handoff-24.md",
   "handoff-25.md",
   "handoff-26.md",
-  "handoff-27.md"
+  "handoff-27.md",
+  "handoff-28.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -2706,7 +2747,8 @@
    "63bad95d": [
     "63bad95d-native-ladder confirmation, 15 min",
     "63bad95d-profile-dispatch-overhead pilot2, 10 min",
-    "63bad95d-native-matvec-vs-m4ri pilot, 25 min, worktree agent-63bad95d-m4ri"
+    "63bad95d-native-matvec-vs-m4ri pilot, 25 min, worktree agent-63bad95d-m4ri",
+    "63bad95d-portable-matvec-vs-m4ri pilot, 25 min, worktree agent-63bad95d-pm4ri"
    ],
    "bfc2ceab": [
     "sparse-product-check-cost pilot2, 10 min"
@@ -2716,23 +2758,16 @@
     "7dbe1393-matvec-ragged-tail pilot, 10 min"
    ]
   },
-  "note": "Verify each campaign from its own execution log, never the job rc. The 4337c02e confirmation job (key ae13fbd8b6c8b708, rc 1 on the acceptance verdict) was marked done by the lead after verifying its log. Nightly windows are authorized (handoff-25); the invoker approved these pilots on 2026-10-07. 2026-10-08 window (23:00Z on 10-07): the three pilots (bfc2ceab sparse-product-check-cost, 63bad95d profile-dispatch-overhead and native-ladder) each report a complete execution log at declared cells and acceptance Accepted qualifies=false findings=0; workers re-verify from the logs before committing."
+  "note": "Verify each campaign from its own execution log, never the job rc. The 4337c02e confirmation job (key ae13fbd8b6c8b708, rc 1 on the acceptance verdict) was marked done by the lead after verifying its log. Nightly windows are authorized (handoff-25); the invoker approved these pilots on 2026-10-07. 2026-10-08 window (23:00Z on 10-07): the three pilots (bfc2ceab sparse-product-check-cost, 63bad95d profile-dispatch-overhead and native-ladder) each report a complete execution log at declared cells and acceptance Accepted qualifies=false findings=0; workers re-verify from the logs before committing. 2026-10-09 window: seven jobs; each family that runs a pilot needs its confirmation the night after."
  },
  "session_scope": {
   "session": 32,
   "date": "2026-10-08",
   "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Standing from session 31: no reuse of existing subagents; no questions while working; handoff after this and the next wave.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
-  "disk": "101 GB free after six new worktrees; three reclaimed without harvest.",
+  "disk": "120 GB free at the end of session 32; five pinned worktrees remain (bfc2ceab, 63bad95d-fam, 63bad95d-run, 63bad95d-m4ri, 63bad95d-pm4ri, 7dbe1393 makes six).",
   "peer_session": "None: epic fa787f85 closed at 95c86a865.",
-  "active_workers": {
-   "w32-391f5419": "opus; agent-391f5419 from 2f6bf1b69",
-   "w32-9e0cd346": "opus; agent-9e0cd346 from 2f6bf1b69",
-   "w32-86d9260e": "opus; agent-86d9260e from 2f6bf1b69",
-   "w32-e918a8ee": "sonnet; agent-e918a8ee from 2f6bf1b69",
-   "w32-83ed701d": "sonnet; agent-83ed701d from 2f6bf1b69",
-   "w32-f5ae4c49": "sonnet; agent-f5ae4c49 from 2f6bf1b69"
-  },
+  "active_workers": {},
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes."
  }
