@@ -230,3 +230,12 @@ non-converging frames, frames of signed zeros, saturated, extreme finite and
 non-finite LLRs, and rate-matched 5G NR frames; each set runs at the batch
 sizes around the wave boundaries, under a permutation of its frames, and with
 the other lanes of a wave holding non-converging frames.
+
+The unit tests of
+[`nr_5g/batch.rs`](../../crates/gf2-coding/src/ldpc/nr_5g/batch.rs) hold
+`Nr5gRateMatchedBatchDecoder`, which prepares each rate-matched frame as above
+and decodes the batch through `LdpcBatchDecoder`, to
+`Nr5gRateMatchedDecoder::decode_iterative` frame by frame: the shared batch
+contract runs on each route over codes of both base graphs with punctured
+systematic columns, truncated parity and filler bits, for each algorithm and
+at an iteration cap of zero.

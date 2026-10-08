@@ -741,20 +741,7 @@ impl Nr5gRateMatchedCode {
         output
     }
 
-    /// Constructs the full-length LLR vector from target_n channel LLRs, as
-    /// [`Self::prepare_llrs_into`] writes it.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `channel_llrs.len() != target_n`.
-    pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {
-        let mut full_llrs = vec![Llr::zero(); self.params.full_n];
-        self.prepare_llrs_into(channel_llrs, &mut full_llrs);
-        full_llrs
-    }
-
-    /// Writes the full-length LLR vector of target_n channel LLRs to
-    /// `full_llrs`, replacing every element.
+    /// Constructs the full-length LLR vector from target_n channel LLRs.
     ///
     /// Maps channel LLRs back to the full mother code positions using the
     /// precomputed `transmitted_cols` list. This ensures consistency with
@@ -767,16 +754,21 @@ impl Nr5gRateMatchedCode {
     ///
     /// # Panics
     ///
+    /// Panics if `channel_llrs.len() != target_n`.
+    pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {
+        let mut full_llrs = vec![Llr::zero(); self.params.full_n];
+        self.write_known_llrs(channel_llrs, &mut full_llrs);
+        full_llrs
+    }
+
+    /// Writes the vector of [`Self::prepare_llrs`] to `full_llrs`, replacing
+    /// every element.
+    ///
+    /// # Panics
+    ///
     /// Panics if `channel_llrs.len() != target_n` or
     /// `full_llrs.len() != full_n`.
     pub fn prepare_llrs_into(&self, channel_llrs: &[Llr], full_llrs: &mut [Llr]) {
-        assert_eq!(
-            channel_llrs.len(),
-            self.params.target_n,
-            "Channel LLR length {} must equal target_n = {}",
-            channel_llrs.len(),
-            self.params.target_n
-        );
         assert_eq!(
             full_llrs.len(),
             self.params.full_n,
@@ -784,9 +776,22 @@ impl Nr5gRateMatchedCode {
             full_llrs.len(),
             self.params.full_n
         );
+        full_llrs.fill(Llr::zero());
+        self.write_known_llrs(channel_llrs, full_llrs);
+    }
+
+    /// Writes the transmitted and filler positions of `full_llrs`, leaving
+    /// the punctured and untransmitted positions to the caller's zeros.
+    fn write_known_llrs(&self, channel_llrs: &[Llr], full_llrs: &mut [Llr]) {
+        assert_eq!(
+            channel_llrs.len(),
+            self.params.target_n,
+            "Channel LLR length {} must equal target_n = {}",
+            channel_llrs.len(),
+            self.params.target_n
+        );
 
         let enc = &self.encoding;
-        full_llrs.fill(Llr::zero());
 
         for (ch_idx, &col) in enc.transmitted_cols.iter().enumerate() {
             full_llrs[col] = channel_llrs[ch_idx];
@@ -1389,6 +1394,15 @@ mod tests {
         let count = |value: Llr| full_llrs.iter().filter(|&&llr| llr == value).count();
         assert_eq!(count(Llr::new(FILLER_LLR)), rm_code.params().num_shortened);
         assert_eq!(count(channel), 256);
+    }
+
+    #[test]
+    fn test_prepare_llrs_into_replaces_every_element() {
+        let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+        let channel: Vec<Llr> = (0..256).map(|i| Llr::new(i as f32 - 100.5)).collect();
+        let mut full_llrs = vec![Llr::new(f32::NAN); rm_code.params().full_n];
+        rm_code.prepare_llrs_into(&channel, &mut full_llrs);
+        assert_eq!(full_llrs, rm_code.prepare_llrs(&channel));
     }
 
     fn assert_bp_converges_rate_matched(bg: u8, target_n: usize, target_k: usize, label: &str) {

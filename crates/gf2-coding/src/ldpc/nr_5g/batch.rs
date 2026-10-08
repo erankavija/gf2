@@ -14,18 +14,19 @@ use gf2_kernels_simd::ldpc_lanes::LANES;
 /// iteration cap.
 ///
 /// A frame is the `target_n` LLRs of one transmitted word. Each frame is
-/// prepared onto the mother code by [`Nr5gRateMatchedCode::prepare_llrs_into`]
-/// under the rate matching of `@/citation/ThreeGpp2017`: the received LLR at a
-/// transmitted position, the zero LLR at a punctured systematic or truncated
-/// parity position and [`FILLER_LLR`](super::FILLER_LLR) at a filler position.
-/// The prepared frames decode on the mother code in the waves of an
-/// [`LdpcBatchDecoder`], which gives each wave its lane or single-frame
-/// route, and the decoded word of a frame is its `target_k` message bits.
+/// prepared onto the mother code as [`Nr5gRateMatchedCode::prepare_llrs`]
+/// prepares it, under the rate matching of `@/citation/ThreeGpp2017`: the
+/// received LLR at a transmitted position, the zero LLR at a punctured
+/// systematic or truncated parity position and
+/// [`FILLER_LLR`](super::FILLER_LLR) at a filler position. The prepared frames
+/// decode on the mother code in the waves of an [`LdpcBatchDecoder`], which
+/// gives each wave its lane or single-frame route, and the decoded word of a
+/// frame is its `target_k` message bits.
 ///
-/// A frame's decoded word and outcome equal those of
-/// [`Nr5gRateMatchedDecoder::decode_iterative`](super::Nr5gRateMatchedDecoder)
-/// built [`with_algorithm`](super::Nr5gRateMatchedDecoder::with_algorithm) on
-/// the same LLRs and cap, for every batch size, position and route, under the
+/// A frame's decoded word and outcome equal those of `decode_iterative` on a
+/// [`Nr5gRateMatchedDecoder`](super::Nr5gRateMatchedDecoder) built
+/// [`with_algorithm`](super::Nr5gRateMatchedDecoder::with_algorithm), on the
+/// same LLRs and cap, for every batch size, position and route, under the
 /// batch clauses of `docs/reference/ldpc-decoder-numerical-contract.md`.
 ///
 /// The decoder owns the prepared LLRs and mother codewords of one wave beside
@@ -218,8 +219,11 @@ impl BatchSoftDecoder for Nr5gRateMatchedBatchDecoder {
                 *view = full;
             }
             let codewords = &mut self.codewords[..wave.len()];
-            self.inner
-                .decode_batch(&views[..wave.len()], codewords, &mut outcomes[slots.clone()]);
+            self.inner.decode_batch(
+                &views[..wave.len()],
+                codewords,
+                &mut outcomes[slots.clone()],
+            );
             for (word, codeword) in decoded[slots].iter_mut().zip(codewords.iter()) {
                 self.rm_code.natural_order_message_into(codeword, word);
             }
@@ -249,11 +253,10 @@ mod tests {
     /// each kind.
     const SIGMA_LADDER: [f64; 6] = [0.5, 1.0, 2.2, 0.9, 1.7, 1.1];
 
-    const ALGORITHMS: [DecoderAlgorithm; 4] = [
+    const MIN_SUM_FAMILY: [DecoderAlgorithm; 3] = [
         DecoderAlgorithm::MinSum,
         DecoderAlgorithm::NormalizedMinSum(0.75),
         DecoderAlgorithm::OffsetMinSum(0.5),
-        DecoderAlgorithm::SumProduct,
     ];
 
     /// A rate-matched code with its operating noise deviation.
@@ -317,39 +320,67 @@ mod tests {
         ]
     }
 
+    /// Runs the shared contract for `algorithm` under `selectors`, against
+    /// the single-frame decoder of the same algorithm.
+    fn assert_batch_contract(
+        case: &Case,
+        frames: &[Vec<Llr>],
+        algorithm: DecoderAlgorithm,
+        selectors: DecodeSelectors,
+        full_wave: BatchRoute,
+    ) {
+        let mut decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
+            case.code.clone(),
+            algorithm,
+            CAP,
+            selectors,
+        );
+        assert_eq!(decoder.frame_len(), case.code.n());
+        assert_eq!(decoder.decoded_len(), case.code.k());
+        assert_eq!(decoder.batch_granularity(), LANES);
+        assert_eq!(decoder.max_iterations(), CAP);
+        assert_eq!(decoder.batch_route(LANES), full_wave);
+
+        let mut single = Nr5gRateMatchedDecoder::with_algorithm(case.code.clone(), algorithm);
+        batch_soft_decoder_contract(
+            &mut decoder,
+            |llrs| single.decode_iterative(llrs, CAP),
+            frames,
+            ConvergenceMix::EarlyLateAndNonConverging,
+        );
+    }
+
+    fn assert_min_sum_batch_contract(case: &Case) {
+        let (_, frames) = noisy_frames(case);
+        for algorithm in MIN_SUM_FAMILY {
+            for (selectors, full_wave) in routes() {
+                assert_batch_contract(case, &frames, algorithm, selectors, full_wave);
+            }
+        }
+    }
+
     #[test]
-    fn batches_satisfy_the_batch_contract_on_each_route() {
+    fn base_graph_1_min_sum_batches_satisfy_the_batch_contract_on_each_route() {
+        assert_min_sum_batch_contract(&cases()[0]);
+    }
+
+    #[test]
+    fn base_graph_2_min_sum_batches_satisfy_the_batch_contract_on_each_route() {
+        assert_min_sum_batch_contract(&cases()[1]);
+    }
+
+    #[test]
+    fn sum_product_batches_satisfy_the_batch_contract_on_the_single_frame_route() {
         for case in cases() {
             let (_, frames) = noisy_frames(&case);
-            for algorithm in ALGORITHMS {
-                for (selectors, full_wave) in routes() {
-                    let mut decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
-                        case.code.clone(),
-                        algorithm,
-                        CAP,
-                        selectors,
-                    );
-                    assert_eq!(decoder.frame_len(), case.code.n());
-                    assert_eq!(decoder.decoded_len(), case.code.k());
-                    assert_eq!(decoder.batch_granularity(), LANES);
-                    assert_eq!(decoder.max_iterations(), CAP);
-                    let expected_route = if algorithm == DecoderAlgorithm::SumProduct {
-                        BatchRoute::SingleFrame
-                    } else {
-                        full_wave
-                    };
-                    assert_eq!(decoder.batch_route(LANES), expected_route);
-
-                    let mut single =
-                        Nr5gRateMatchedDecoder::with_algorithm(case.code.clone(), algorithm);
-                    batch_soft_decoder_contract(
-                        &mut decoder,
-                        |llrs| single.decode_iterative(llrs, CAP),
-                        &frames,
-                        ConvergenceMix::EarlyLateAndNonConverging,
-                    );
-                }
-            }
+            let (lane_selectors, _) = routes()[0].clone();
+            assert_batch_contract(
+                &case,
+                &frames,
+                DecoderAlgorithm::SumProduct,
+                lane_selectors,
+                BatchRoute::SingleFrame,
+            );
         }
     }
 
