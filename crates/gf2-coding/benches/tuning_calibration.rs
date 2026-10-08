@@ -49,7 +49,7 @@ use tuning_campaign_support::seed::{bank_role, fixture_seed, EXTENT_SEED_ROOT, S
 use tuning_campaign_support::statistics::{
     analyze_extent, execution_median, CandidateSeries, DecisionReason, ExtentDecision,
 };
-use tuning_campaign_support::timing::{EXECUTIONS, FIXTURE_BANKS, WINDOWS};
+use tuning_campaign_support::timing::{TimingSample, EXECUTIONS, FIXTURE_BANKS, WINDOWS};
 use tuning_campaign_support::transport::{read_guarded_case, write_result_line, FRESH_CASE_VAR};
 
 const OWNER: &str = "gf2-coding";
@@ -82,9 +82,8 @@ const POOLED_CODES: [usize; 2] = [0, 1];
 /// so that the frames of one wave stop at different iterations.
 const SIGMA_SCALE_MILLI: [u32; 8] = [940, 1000, 880, 1030, 970, 910, 1060, 850];
 
-/// A code of the calibration inventory. Frames are the all-zero codeword
-/// through AWGN: the decoder's min-sum rules are sign-symmetric, so the
-/// transmitted codeword does not change the work of a decode.
+/// A code of the calibration inventory. Its frames are the all-zero codeword,
+/// a codeword of every linear code, through AWGN.
 struct CodeSpec {
     name: &'static str,
     build: fn() -> LdpcCode,
@@ -97,17 +96,17 @@ const CODES: [CodeSpec; 3] = [
     CodeSpec {
         name: "nr5g-bg2-z16",
         build: || LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(2, 16)),
-        noise_sigma_milli: 1050,
+        noise_sigma_milli: 1200,
     },
     CodeSpec {
         name: "dvb-t2-short-r1-2",
         build: || LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
-        noise_sigma_milli: 860,
+        noise_sigma_milli: 800,
     },
     CodeSpec {
         name: "dvb-t2-normal-r1-2",
         build: || LdpcCode::dvb_t2_normal(CodeRate::Rate1_2),
-        noise_sigma_milli: 860,
+        noise_sigma_milli: 750,
     },
 ];
 
@@ -203,6 +202,11 @@ impl Field {
         Ok(candidates)
     }
 
+    /// The batch shapes a field is decided over, one grid axis per field:
+    /// one-wave batches of each occupied-lane count on the smallest code,
+    /// one full wave on each code, and pooled batches on [`POOLED_CODES`]
+    /// with the lane route open and closed, so that a selected task size
+    /// holds on either route.
     fn strata(self) -> Vec<Stratum> {
         match self {
             Self::LaneMinFrames => OCCUPIED_LANES
@@ -1006,7 +1010,7 @@ fn require_measurement_environment() -> Result<(), String> {
 
 /// The public batch entry point of a case, built under the installed section.
 enum Entry {
-    Direct(LdpcBatchDecoder),
+    Direct(Box<LdpcBatchDecoder>),
     Pooled(PooledBatchDecoder<LdpcBatchDecoder>),
 }
 
@@ -1028,7 +1032,7 @@ struct Observed {
     schedule: Schedule,
     workspace_bytes: usize,
     batch: Vec<(BitVec, DecodeOutcome)>,
-    samples: Vec<tuning_campaign_support::timing::TimingSample>,
+    samples: Vec<TimingSample>,
 }
 
 /// Installs the case's selectors, holds each batch result to the single-frame
@@ -1100,7 +1104,9 @@ fn execute_case(case: CodingCase, case_json: CanonicalJson) -> Result<ChildResul
                 let task_frames = pool.task_frames();
                 (Entry::Pooled(pool), task_frames)
             }
-            Field::LaneMinFrames | Field::LaneMaxEdges => (Entry::Direct(direct), stratum.frames),
+            Field::LaneMinFrames | Field::LaneMaxEdges => {
+                (Entry::Direct(Box::new(direct)), stratum.frames)
+            }
         };
         let schedule = Schedule::new(route, task_frames, stratum.frames);
         if schedule != expected {
@@ -1357,20 +1363,31 @@ fn analyze_results(bundle: &AcceptedResultsBundle) -> Result<AnalysisOutput, Str
     })
 }
 
-/// The section an analysis emits: it states the emitted fields and nothing
-/// else, so every other selector of the coding section stays conservative.
-fn emitted_section(analysis: &AnalysisOutput) -> Result<CodingTuning, String> {
-    let mut family = BTreeMap::new();
-    for field in Field::ALL {
-        let decided = analysis
-            .fields
-            .iter()
-            .find(|decided| decided.field == field.name())
-            .ok_or("coding analysis lacks a decode field")?;
-        if decided.emitted {
-            family.insert(field.key(), decided.selected);
+impl AnalysisOutput {
+    /// The fields the emitted section states, with their selected values.
+    fn stated(&self) -> Result<Vec<(Field, usize)>, String> {
+        let mut stated = Vec::new();
+        for field in Field::ALL {
+            let decided = self
+                .fields
+                .iter()
+                .find(|decided| decided.field == field.name())
+                .ok_or("coding analysis lacks a decode field")?;
+            if decided.emitted {
+                stated.push((field, decided.selected));
+            }
         }
+        Ok(stated)
     }
+}
+
+/// The section that states `stated` and nothing else, so every other
+/// selector of the coding section keeps its conservative value.
+fn emitted_section(stated: &[(Field, usize)]) -> Result<CodingTuning, String> {
+    let family: BTreeMap<_, _> = stated
+        .iter()
+        .map(|(field, selected)| (field.key(), *selected))
+        .collect();
     let mut body = BTreeMap::new();
     if !family.is_empty() {
         body.insert(Field::FAMILY, family);
@@ -1562,7 +1579,7 @@ fn emit_owner(request: EmitOwnerRequest) -> Result<(ArtifactIdentity, AnalysisOu
     let analysis = analyze_results(&bundle)?;
     validate_observed_provenance(&request, &bundle)?;
     let registry = coding_registry()?;
-    let section = emitted_section(&analysis)?;
+    let section = emitted_section(&analysis.stated()?)?;
     let measurement = measurement_provenance(&request)?;
     let assembly = assembly_provenance(&request)?;
     let document = measured_owner_document(
@@ -1682,39 +1699,24 @@ fn self_check() -> Result<ReportOutput, String> {
         }
     }
     let registry = coding_registry()?;
+    let mut nonconservative = Vec::with_capacity(Field::ALL.len());
+    for field in Field::ALL {
+        let candidate = field
+            .candidates()?
+            .into_iter()
+            .find(|candidate| *candidate != field.conservative())
+            .ok_or("a field has no candidate beside its conservative value")?;
+        nonconservative.push((field, candidate));
+    }
     let subsets = 1_usize << Field::ALL.len();
     for subset in 0..subsets {
-        let analysis = AnalysisOutput {
-            schema: String::new(),
-            fields: Field::ALL
-                .iter()
-                .enumerate()
-                .map(|(bit, field)| -> Result<_, String> {
-                    let selected = field
-                        .candidates()?
-                        .into_iter()
-                        .find(|candidate| *candidate != field.conservative())
-                        .ok_or("a field has no candidate beside its conservative value")?;
-                    Ok(FieldAnalysis {
-                        field: field.name(),
-                        selected,
-                        emitted: subset >> bit & 1 == 1,
-                        decision: ExtentDecision {
-                            selected,
-                            reason: DecisionReason::MeasuredDefault,
-                            grid_boundary_limited: false,
-                            scores: Vec::new(),
-                            schedule_classes: Vec::new(),
-                            aggregate_curve:
-                                tuning_campaign_support::statistics::CurveShape::Unimodal,
-                            stratum_curves: Vec::new(),
-                        },
-                    })
-                })
-                .collect::<Result<_, _>>()?,
-            accepted_result_count: 0,
-        };
-        let section = emitted_section(&analysis)?;
+        let stated: Vec<_> = nonconservative
+            .iter()
+            .enumerate()
+            .filter(|(bit, _)| subset >> bit & 1 == 1)
+            .map(|(_, stated)| *stated)
+            .collect();
+        let section = emitted_section(&stated)?;
         let id = ProfileId::parse(FORCED_PROFILE_ID).map_err(|error| error.to_string())?;
         let prepared =
             PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
@@ -1901,7 +1903,9 @@ fn main() {
     }
 }
 
+// A `harness = false` bench target compiles this module without running it.
 #[cfg(test)]
+#[allow(dead_code, unused_imports)]
 mod tests {
     use super::*;
     use gf2_core::test_scratch::{scratch, Scratch};
@@ -1910,13 +1914,12 @@ mod tests {
         ObservedProvenance, ProcessDescriptor, SessionChannels,
     };
     use tuning_campaign_support::journal::ResumeIdentity;
-    use tuning_campaign_support::timing::TimingSample;
     use tuning_campaign_support::transport::{parse_result, retain_libtest_result_lines};
 
     const ZERO_SHA: &str = "0000000000000000000000000000000000000000000000000000000000000000";
     const ZERO_REV: &str = "0000000000000000000000000000000000000000";
     /// A campaign ID in the form the extent-campaign launcher mints.
-    const LAUNCHER_CAMPAIGN_ID: &str = "gf2-aff59c3c-20261008t000000z-1";
+    const LAUNCHER_CAMPAIGN_ID: &str = "gf2-00000000-19700101t000000z-1";
     const PROBE_VAR: &str = "GF2_CODING_TUNING_PROBE";
 
     fn test_process() -> ProcessDescriptor {
@@ -2272,7 +2275,7 @@ mod tests {
     fn a_campaign_id_the_profile_loader_rejects_is_refused() {
         let (_scratch, request) = manifest_request("uppercase-id");
         let error = campaign_manifest(ManifestRequest {
-            campaign_id: token("gf2-aff59c3c-20261008T000000Z-1").unwrap(),
+            campaign_id: token("gf2-00000000-19700101T000000Z-1").unwrap(),
             ..request
         })
         .unwrap_err();
