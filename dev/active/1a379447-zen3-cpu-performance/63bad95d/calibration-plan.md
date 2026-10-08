@@ -209,10 +209,14 @@ and freezes the campaigns.
 
 Rules common to the families:
 
-- **Pilot.** Each family has one exploratory pilot of its non-holdout cells at
-  the pair count `planned-families.json` declares; the canonical freezer
+- **Pilot.** Each family pilots its non-holdout cells at the pair count
+  `planned-families.json` declares, within the pilot trials per cell its
+  pilot addendum's search budget declares; the canonical freezer
   `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py` derives the confirmation
-  addendum from the committed pilot receipt.
+  addendum from the committed receipt of the pilot trial it names. The
+  dispatch-overhead family takes a second trial; the
+  [supersession record](campaigns/63bad95d-profile-dispatch-overhead-confirmation-superseded.md)
+  of the confirmation frozen from its first states why.
 - **Holdout.** Holdout cells are declared in a holdout record before the
   pilot runs and attached by the freezer; no sample of a holdout workload
   exists before the confirmation.
