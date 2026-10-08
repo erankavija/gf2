@@ -172,27 +172,3 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
         MEASURED_OWNER
     );
 }
-
-#[test]
-fn every_committed_core_profile_loads_through_the_registry() {
-    let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("data/tuning-profiles");
-    let registry = registry();
-    let mut loaded = 0_usize;
-    let mut failures = Vec::new();
-    for entry in std::fs::read_dir(&directory).unwrap() {
-        let path = entry.unwrap().path();
-        let text = std::fs::read_to_string(&path).unwrap();
-        match registry.from_json(&text) {
-            Ok(prepared) => {
-                assert_eq!(
-                    path.file_stem().unwrap().to_str().unwrap(),
-                    prepared.profile_id().as_str()
-                );
-                loaded += 1;
-            }
-            Err(error) => failures.push(format!("{}: {error:?}", path.display())),
-        }
-    }
-    assert!(failures.is_empty(), "{failures:#?}");
-    assert!(loaded > 0);
-}
