@@ -1,11 +1,13 @@
-//! The frozen cell tables of addendum `2037941f-dense-parity-v2` and of the
-//! lane-threshold addendum `4337c02e-matvec-lane-threshold-v1`.
+//! The frozen cell tables of addendum `2037941f-dense-parity-v2`, of the
+//! lane-threshold addendum `4337c02e-matvec-lane-threshold-v1` and of the
+//! ragged-tail addendum `7dbe1393-matvec-ragged-tail-v1`.
 //!
 //! [`cells`] returns every cell the dense-parity addendum declares, in that
 //! addendum's own order: the cell-matrix sections in document order, and within
 //! each section the normative primary Cartesian product followed by the exact
-//! exploratory additions in listed order. The lane-threshold cells follow in
-//! their addendum's order. Ordinal zero carries the campaign seed; ordinal `i`
+//! exploratory additions in listed order. The lane-threshold cells and then
+//! the ragged-tail cells follow, each in their addendum's order. Ordinal zero
+//! carries the campaign seed; ordinal `i`
 //! carries the `i`-th subsequent output of one canonical SplitMix64 stream
 //! started at the campaign seed.
 //!
@@ -62,6 +64,14 @@ pub const LANE_THRESHOLD_ADDENDUM: FrozenAddendum = FrozenAddendum {
     frozen_utc: "2026-10-05T19:34:54Z",
 };
 
+/// The ragged-tail addendum, which freezes [`Question::MatvecRaggedTail`].
+pub const RAGGED_TAIL_ADDENDUM: FrozenAddendum = FrozenAddendum {
+    path: "dev/active/1a379447-zen3-cpu-performance/7dbe1393/matvec-ragged-tail-addendum.md",
+    sha256: "1161c4c81148cdfa50c9adb3c81f6ea5b3a7f14cbc5f9b5939e05bdc488c847b",
+    identity: "7dbe1393-matvec-ragged-tail-v1",
+    frozen_utc: "2026-10-08T11:39:41Z",
+};
+
 /// Name stem of the external shared object a comparator arm loads.
 pub const COMPARATOR_LIBRARY_STEM: &str = "m4ri";
 
@@ -84,6 +94,10 @@ pub const LANE_CONTROL_WORDS: usize = 7;
 pub const LANE_NEIGHBOR_WORDS: [usize; 3] = [10, 62, 66];
 /// Lane-threshold strides measured in the streaming cache state.
 pub const LANE_STREAMING_WORDS: [usize; 5] = [8, 9, 63, 64, 65];
+/// Ragged-tail strides, each one to three words past a whole 256-bit vector.
+pub const RAGGED_WORDS: [usize; 5] = [9, 10, 62, 63, 66];
+/// Ragged-tail control stride, a whole number of 256-bit vectors.
+pub const RAGGED_CONTROL_WORDS: usize = 32;
 /// Rows in every gf2-only allocated cell.
 pub const MATVEC_ROWS: usize = 1024;
 /// Word count at and above which the production selector takes the SIMD lane.
@@ -104,22 +118,26 @@ pub enum Question {
     MatvecVsM4ri,
     /// `BitMatrix::matvec` pinned to the scalar lane against the selected lane.
     MatvecLaneThreshold,
+    /// `BitMatrix::matvec_parity_kernel` against the selected SIMD lane.
+    MatvecRaggedTail,
 }
 
 impl Question {
     /// Every question: the dense-parity addendum's in document order, then the
-    /// lane-threshold addendum's.
-    pub const ALL: [Self; 4] = [
+    /// lane-threshold addendum's and the ragged-tail addendum's.
+    pub const ALL: [Self; 5] = [
         Self::IsolatedFusedParity,
         Self::AllocatedMatvec,
         Self::MatvecVsM4ri,
         Self::MatvecLaneThreshold,
+        Self::MatvecRaggedTail,
     ];
 
     /// The frozen prose addendum that declares this question.
     pub fn addendum(self) -> &'static FrozenAddendum {
         match self {
             Self::MatvecLaneThreshold => &LANE_THRESHOLD_ADDENDUM,
+            Self::MatvecRaggedTail => &RAGGED_TAIL_ADDENDUM,
             _ => &DENSE_PARITY_ADDENDUM,
         }
     }
@@ -127,7 +145,7 @@ impl Question {
     /// The question whose cost boundary, cases and arms serve this one's cells.
     pub fn boundary(self) -> Self {
         match self {
-            Self::MatvecLaneThreshold => Self::AllocatedMatvec,
+            Self::MatvecLaneThreshold | Self::MatvecRaggedTail => Self::AllocatedMatvec,
             other => other,
         }
     }
@@ -139,6 +157,7 @@ impl Question {
             Self::AllocatedMatvec => "allocated-matvec",
             Self::MatvecVsM4ri => "matvec-vs-m4ri",
             Self::MatvecLaneThreshold => "matvec-lane-threshold",
+            Self::MatvecRaggedTail => "matvec-ragged-tail",
         }
     }
 
@@ -149,6 +168,7 @@ impl Question {
             Self::AllocatedMatvec => "2037941f-dense-allocated-matvec",
             Self::MatvecVsM4ri => "2037941f-dense-matvec-vs-m4ri",
             Self::MatvecLaneThreshold => "4337c02e-matvec-simd-threshold",
+            Self::MatvecRaggedTail => "7dbe1393-matvec-ragged-tail",
         }
     }
 
@@ -164,6 +184,9 @@ impl Question {
             Self::MatvecVsM4ri => "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl",
             Self::MatvecLaneThreshold => {
                 "dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl"
+            }
+            Self::MatvecRaggedTail => {
+                "dev/bench_results/7dbe1393/matvec-ragged-tail-ledger.jsonl"
             }
         }
     }
@@ -399,11 +422,18 @@ impl Cell {
             && self.workload.stride_words() < SIMD_LANE_MIN_WORDS
     }
 
+    /// True for the ragged-tail control, whose stride leaves no partial
+    /// vector.
+    pub fn aligned_control(&self) -> bool {
+        self.question == Question::MatvecRaggedTail
+            && self.workload.stride_words() == RAGGED_CONTROL_WORDS
+    }
+
     /// The addendum's objective for this cell.
     pub fn objective(&self) -> &'static str {
         match self.workload {
             Workload::M4riGap { .. } => "comparator-gap",
-            _ if self.lane_control() => "non-regression",
+            _ if self.lane_control() || self.aligned_control() => "non-regression",
             _ => "improvement",
         }
     }
@@ -518,6 +548,20 @@ pub fn cells() -> Vec<Cell> {
     table.extend(LANE_NEIGHBOR_WORDS.map(|w| lane(w, Cache::Warm, false)));
     table.extend(LANE_STREAMING_WORDS.map(|w| lane(w, Cache::Streaming, false)));
     table.extend([8, 64].map(|w| lane(w, Cache::Cold, false)));
+
+    // Ragged tail: the ragged strides, then the aligned control.
+    let ragged = |words: usize| {
+        let control = if words == RAGGED_CONTROL_WORDS { "-control" } else { "" };
+        spec(
+            Question::MatvecRaggedTail,
+            format!("ragged-r{MATVEC_ROWS}-{words}w{control}-{}", Cache::Warm.id()),
+            Workload::Matvec { words, shape: MatvecShape::Full },
+            Cache::Warm,
+            true,
+        )
+    };
+    table.extend(RAGGED_WORDS.map(ragged));
+    table.push(ragged(RAGGED_CONTROL_WORDS));
 
     // Ordinal zero uses the campaign seed; ordinal i the i-th subsequent
     // output of one canonical SplitMix64 stream started at that seed.

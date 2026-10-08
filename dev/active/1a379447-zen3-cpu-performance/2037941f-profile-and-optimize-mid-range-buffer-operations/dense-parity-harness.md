@@ -54,8 +54,12 @@ order the addendum lists them: `isolated-fused-parity`, `allocated-matvec`,
 `matvec-vs-m4ri`. A further variant, `matvec-lane-threshold`, belongs to the
 [lane-threshold addendum](../4337c02e/matvec-lane-threshold-addendum.md)
 of issue `4337c02e`, identity `4337c02e-matvec-lane-threshold-v1`: it is
-measured at the `allocated-matvec` boundary by the same arms and cases, and
-`Question::addendum` names the frozen document each variant transcribes.
+measured at the `allocated-matvec` boundary by the same arms and cases. The
+variant `matvec-ragged-tail` belongs to the
+[ragged-tail addendum](../7dbe1393/matvec-ragged-tail-addendum.md) of issue
+`7dbe1393`, identity `7dbe1393-matvec-ragged-tail-v1`, and is measured at the
+same boundary. `Question::addendum` names the frozen document each variant
+transcribes.
 `dense_parity_harness::cells()` returns the complete cell table in that order,
 then in each question's listed axis order: the normative primary product first,
 then the exact exploratory additions in document order.
@@ -66,10 +70,13 @@ then the exact exploratory additions in document order.
 | `allocated-matvec` | 24 | `matvec-r1024-{W}w[-tail1][-scalar-reference]-{warm,cold,streaming}` |
 | `matvec-vs-m4ri` | 8 | `m4ri-gap-{R}x{C}[-retained]-warm` |
 | `matvec-lane-threshold` | 17 | `lane-r1024-{W}w[-control]-{warm,cold,streaming}` |
+| `matvec-ragged-tail` | 6 | `ragged-r1024-{W}w[-control]-warm` |
 
 A lane-threshold cell's baseline arm is `matvec-a` and its compared arm is
 `matvec-lane-scalar` in the same executable, so a speedup above one favours
-the scalar lane.
+the scalar lane. A ragged-tail cell's baseline arm is `matvec-a` and its
+compared arm is `matvec-lane-parity` in the same executable, so a speedup
+above one favours the parity kernel.
 
 The addendum's fourth question, `scalar-reference`, owns no ledger. Its cells
 are the five `matvec-r1024-{W}w-scalar-reference-warm` rows of the allocated
@@ -140,6 +147,7 @@ bundle exactly as the public `matvec` does.
 | `matvec-scalar-reference` | the same public call from the build without `simd`, which reaches the four-accumulator scalar row parity | `conservative-portable` |
 | `m4ri-peer-gf2` | one public `BitMatrix::matvec` whose returned `BitVec` is also released inside the call | `conservative-portable` |
 | `matvec-lane-scalar` | one public `BitMatrix::matvec_with_route` pinned to the scalar lane, at the allocated boundary of `matvec-a` | `conservative-portable` |
+| `matvec-lane-parity` | one public `BitMatrix::matvec_parity_kernel`, at the allocated boundary of `matvec-a` | `conservative-portable` |
 | `m4ri-mzd-mul` | `mzd_init` for `A`, `x`, `y`, packing, `mzd_mul(y, A, x, 0)`, unpacking into a gf2 `BitVec`, disposal | `external` |
 
 `Route::check_build` refuses a route the running executable cannot serve: the
@@ -237,6 +245,7 @@ matrix and the vector, so the oracle shares no code with the measured route.
 | `matvec-{W}w-{full,tail1}` | all seven word counts in both column shapes: the same product checks plus the zero padding bit of every `tail1` row and of the vector |
 | `matvec-anchor-{W}w` | the five anchors at the frozen 1024-row geometry: observed rows, columns, stride, the lane the build resolves, and every output bit |
 | `matvec-lane-{W}w` | every lane-threshold stride at the same geometry, with the same checks and the pinned scalar lane's output against the public call's |
+| `matvec-ragged-{W}w` | every ragged-tail stride at the same geometry, with the same checks and the parity-kernel entry's output against the public call's |
 | `and-popcnt-{W}w` | all seven word counts: the bundle entry's count against an independent per-word count, its low bit against the row parity, and purity across two calls |
 | `m4ri-{R}x{C}` | in `dense-m4ri-arm --oracle`: every unpacked output bit against the gf2 peer, zero tail padding, the retained arm against the fresh arm, and input immutability |
 
@@ -357,6 +366,7 @@ because the benchmark-window unit has no login shell.
 ```
 STORY=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations
 $STORY/survey/run-dense-harness.sh build [--m4ri]
+$STORY/survey/run-dense-harness.sh arms
 $STORY/survey/run-dense-harness.sh cells --family <family-id> --issue <8-hex> \
     --frozen-utc <YYYY-MM-DDTHH:MM:SSZ> --output <path>
 $STORY/survey/run-dense-harness.sh smoke [--m4ri]
@@ -373,14 +383,19 @@ window, lock, ledger reservation, or receipt.
 
 The launcher drives one Rust tool, `dense-campaign`, which a leaf may also call
 directly: `pins` prints the frozen addendum's path, pinned digest, identity,
-freeze time, every family ledger, the declared unavailable rows and the
-lane-threshold addendum's pin, and fails when either document's bytes differ
+freeze time, every family ledger, the declared unavailable rows and the pin
+of each further family addendum, and fails when a document's bytes differ
 from its pin; `list` prints one family's
 cells with their ordinals, arms and seeds; `cells`, `verify`,
 `verify-confirmation` and `plan` are the transcription, the two comparisons and
 the plan projection; `inputs` is the
 producing-input closure guard. The untimed smoke and the timed run are
 `benchmark-ab-runner` subcommands over a projected plan.
+
+`arms` compiles the gf2 arms and writes no record; the profile launcher calls
+it inside the window. `dense-campaign validation-request` prints the
+zero-window request of one frozen cell and arm, which an arm answers with its
+untimed arrangement pass.
 
 `build` compiles the gf2 arms `conservative-portable` into
 `target/e1f9a78f-arms` and the reference arm into `target/e1f9a78f-scalar-arm`,
@@ -390,7 +405,8 @@ runs the crate's own contract tests and both builds' semantic oracle, and writes
 
 `cells` writes one family's campaign JSON addendum. `--family` is one of
 `2037941f-dense-isolated-fused-parity`, `2037941f-dense-allocated-matvec`,
-`2037941f-dense-matvec-vs-m4ri`, `4337c02e-matvec-simd-threshold`.
+`2037941f-dense-matvec-vs-m4ri`, `4337c02e-matvec-simd-threshold`,
+`7dbe1393-matvec-ragged-tail`.
 
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
 SHA-256 equals the pin the harness carries, and the campaign JSON matches

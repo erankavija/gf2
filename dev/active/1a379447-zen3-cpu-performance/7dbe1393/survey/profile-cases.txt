@@ -1,0 +1,22 @@
+# Profile session of the three matvec lanes at the ragged strides and the
+# aligned control (jit:7dbe1393): family|campaign addendum|cell|route|build.
+out=dev/bench_results/7dbe1393/ragged-tail-profile
+title=Matvec lane profile attribution at ragged strides
+4337c02e-matvec-simd-threshold|dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json|lane-r1024-9w-warm|matvec-lane-scalar|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-9w-warm|matvec-a|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-9w-warm|matvec-lane-parity|simd
+4337c02e-matvec-simd-threshold|dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json|lane-r1024-10w-warm|matvec-lane-scalar|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-10w-warm|matvec-a|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-10w-warm|matvec-lane-parity|simd
+4337c02e-matvec-simd-threshold|dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json|lane-r1024-62w-warm|matvec-lane-scalar|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-62w-warm|matvec-a|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-62w-warm|matvec-lane-parity|simd
+4337c02e-matvec-simd-threshold|dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json|lane-r1024-63w-warm|matvec-lane-scalar|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-63w-warm|matvec-a|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-63w-warm|matvec-lane-parity|simd
+4337c02e-matvec-simd-threshold|dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json|lane-r1024-66w-warm|matvec-lane-scalar|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-66w-warm|matvec-a|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-66w-warm|matvec-lane-parity|simd
+4337c02e-matvec-simd-threshold|dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json|lane-r1024-32w-warm|matvec-lane-scalar|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-32w-control-warm|matvec-a|simd
+7dbe1393-matvec-ragged-tail|dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json|ragged-r1024-32w-control-warm|matvec-lane-parity|simd

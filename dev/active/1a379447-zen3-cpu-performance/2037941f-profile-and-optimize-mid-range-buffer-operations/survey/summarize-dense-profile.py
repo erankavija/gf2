@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Render dense baseline profile counters with intervals over repeated passes."""
+"""Render dense profile counters with intervals over repeated passes.
+
+Usage: summarize-dense-profile.py <session directory> [<title>]
+"""
 
 import json
 from pathlib import Path
@@ -54,7 +57,7 @@ def interval(values):
     return f"{statistics.median(ordered):.2f} [{ordered[1]:.2f}, {ordered[7]:.2f}]"
 
 
-def main(root):
+def main(root, title="Dense baseline profile attribution"):
     log = (root / "execution.log").read_text()
     done = {}
     for line in log.splitlines():
@@ -63,7 +66,7 @@ def main(root):
             done[fields[1]] = int(fields[-1].removeprefix("attempt="))
     if not done:
         raise ValueError("the profile has no completed cell")
-    print("# Dense baseline profile attribution")
+    print(f"# {title}")
     print()
     print(
         "Each bracket is the 96.1% order-statistic interval for the median of "
@@ -135,4 +138,4 @@ def main(root):
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]))
+    main(Path(sys.argv[1]), *sys.argv[2:3])

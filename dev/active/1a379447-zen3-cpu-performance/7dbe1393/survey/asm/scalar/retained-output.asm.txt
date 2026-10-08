@@ -1,0 +1,251 @@
+# retained-output: dense_parity_harness::routes::OutputSink
+# binary sha256: 0d76ba9c161c3b3aaeb8a20cd161c4ee49baf2eb199ce6707a6081e249d6178c
+
+## dense_parity_harness::routes::OutputSink::release_window at 00000000000416b0, 0x00000000000000ef bytes
+00000000000416b0 <dense_parity_harness::routes::OutputSink::release_window>:
+   416b0:	push   %r15
+   416b2:	push   %r14
+   416b4:	push   %r13
+   416b6:	push   %r12
+   416b8:	push   %rbx
+   416b9:	sub    $0x30,%rsp
+   416bd:	mov    %rdi,%rbx
+   416c0:	mov    %rdx,(%rsp)
+   416c4:	mov    0x10(%rsi),%rax
+   416c8:	mov    %rax,0x8(%rsp)
+   416cd:	cmp    %rdx,%rax
+   416d0:	jne    41751 <dense_parity_harness::routes::OutputSink::release_window+0xa1>
+   416d2:	mov    %rdx,%r14
+   416d5:	movabs $0x8000000000000000,%r15
+   416df:	mov    0x8(%rsi),%r12
+   416e3:	movq   $0x0,0x10(%rsi)
+   416eb:	test   %rdx,%rdx
+   416ee:	je     4178b <dense_parity_harness::routes::OutputSink::release_window+0xdb>
+   416f4:	add    $0x48,%r12
+   416f8:	mov    0x674f1(%rip),%r13        # a8bf0 <free@GLIBC_2.2.5>
+   416ff:	jmp    41719 <dense_parity_harness::routes::OutputSink::release_window+0x69>
+   41701:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   41710:	add    $0x58,%r12
+   41714:	dec    %r14
+   41717:	je     4178b <dense_parity_harness::routes::OutputSink::release_window+0xdb>
+   41719:	cmpq   $0x0,-0x48(%r12)
+   4171f:	je     41729 <dense_parity_harness::routes::OutputSink::release_window+0x79>
+   41721:	mov    -0x40(%r12),%rdi
+   41726:	call   *%r13
+   41729:	mov    -0x20(%r12),%rax
+   4172e:	cmp    %r15,%rax
+   41731:	je     41710 <dense_parity_harness::routes::OutputSink::release_window+0x60>
+   41733:	test   %rax,%rax
+   41736:	je     41740 <dense_parity_harness::routes::OutputSink::release_window+0x90>
+   41738:	mov    -0x18(%r12),%rdi
+   4173d:	call   *%r13
+   41740:	cmpq   $0x0,-0x8(%r12)
+   41746:	je     41710 <dense_parity_harness::routes::OutputSink::release_window+0x60>
+   41748:	mov    (%r12),%rdi
+   4174c:	call   *%r13
+   4174f:	jmp    41710 <dense_parity_harness::routes::OutputSink::release_window+0x60>
+   41751:	mov    %rsp,%rax
+   41754:	mov    %rax,0x10(%rsp)
+   41759:	mov    0x67638(%rip),%rax        # a8d98 <_DYNAMIC+0x3a0>
+   41760:	mov    %rax,0x18(%rsp)
+   41765:	lea    0x8(%rsp),%rcx
+   4176a:	mov    %rcx,0x20(%rsp)
+   4176f:	mov    %rax,0x28(%rsp)
+   41774:	lea    -0x37e62(%rip),%rsi        # 9919 <anon.9280614c449cb9b9b9c37bb19fc73e88.217.llvm.5078353620608399005>
+   4177b:	lea    0x10(%rsp),%rdx
+   41780:	mov    %rbx,%rdi
+   41783:	call   *0x6750f(%rip)        # a8c98 <_DYNAMIC+0x2a0>
+   41789:	jmp    4178e <dense_parity_harness::routes::OutputSink::release_window+0xde>
+   4178b:	mov    %r15,(%rbx)
+   4178e:	mov    %rbx,%rax
+   41791:	add    $0x30,%rsp
+   41795:	pop    %rbx
+   41796:	pop    %r12
+   41798:	pop    %r13
+   4179a:	pop    %r14
+   4179c:	pop    %r15
+   4179e:	ret
+
+## dense_parity_harness::routes::OutputSink::admit at 00000000000417a0, 0x0000000000000172 bytes
+00000000000417a0 <dense_parity_harness::routes::OutputSink::admit>:
+   417a0:	push   %rbp
+   417a1:	push   %r15
+   417a3:	push   %r14
+   417a5:	push   %r13
+   417a7:	push   %r12
+   417a9:	push   %rbx
+   417aa:	sub    $0x68,%rsp
+   417ae:	mov    %rdi,%rbx
+   417b1:	mov    %rdx,0x58(%rsp)
+   417b6:	mov    %rcx,0x60(%rsp)
+   417bb:	mov    %r8,0x10(%rsp)
+   417c0:	cmp    $0x469ee,%r8
+   417c7:	jbe    41831 <dense_parity_harness::routes::OutputSink::admit+0x91>
+   417c9:	lea    0x58(%rsp),%rax
+   417ce:	mov    %rax,0x18(%rsp)
+   417d3:	lea    0x8806(%rip),%rax        # 49fe0 <<&T as core::fmt::Display>::fmt>
+   417da:	mov    %rax,0x20(%rsp)
+   417df:	lea    0x10(%rsp),%rax
+   417e4:	mov    %rax,0x28(%rsp)
+   417e9:	mov    0x676b8(%rip),%rax        # a8ea8 <_DYNAMIC+0x4b0>
+   417f0:	mov    %rax,0x30(%rsp)
+   417f5:	lea    -0x359f4(%rip),%rcx        # be08 <anon.100ca4bca8b0a358b028e9f084257e4a.1356.llvm.4564967864104887217+0x10>
+   417fc:	mov    %rcx,0x38(%rsp)
+   41801:	mov    %rax,0x40(%rsp)
+   41806:	lea    -0x359ad(%rip),%rcx        # be60 <anon.100ca4bca8b0a358b028e9f084257e4a.1561.llvm.4564967864104887217+0x8>
+   4180d:	mov    %rcx,0x48(%rsp)
+   41812:	mov    %rax,0x50(%rsp)
+   41817:	lea    -0x38a7c(%rip),%rsi        # 8da2 <anon.eb89d4395b0ead844ef0b45b8b54da85.165.llvm.3643936799275306673+0x77>
+   4181e:	lea    0x18(%rsp),%rdx
+   41823:	mov    %rbx,%rdi
+   41826:	call   *0x6746c(%rip)        # a8c98 <_DYNAMIC+0x2a0>
+   4182c:	jmp    418be <dense_parity_harness::routes::OutputSink::admit+0x11e>
+   41831:	mov    %r8,%r14
+   41834:	mov    %rsi,%r15
+   41837:	mov    %rbx,0x8(%rsp)
+   4183c:	movabs $0x8000000000000000,%r13
+   41846:	mov    0x8(%rsi),%rax
+   4184a:	mov    %rax,(%rsp)
+   4184e:	mov    0x10(%rsi),%rbp
+   41852:	movq   $0x0,0x10(%rsi)
+   4185a:	test   %rbp,%rbp
+   4185d:	je     418ae <dense_parity_harness::routes::OutputSink::admit+0x10e>
+   4185f:	mov    (%rsp),%rax
+   41863:	lea    0x48(%rax),%r12
+   41867:	mov    0x67382(%rip),%rbx        # a8bf0 <free@GLIBC_2.2.5>
+   4186e:	jmp    41879 <dense_parity_harness::routes::OutputSink::admit+0xd9>
+   41870:	add    $0x58,%r12
+   41874:	dec    %rbp
+   41877:	je     418ae <dense_parity_harness::routes::OutputSink::admit+0x10e>
+   41879:	cmpq   $0x0,-0x48(%r12)
+   4187f:	je     41888 <dense_parity_harness::routes::OutputSink::admit+0xe8>
+   41881:	mov    -0x40(%r12),%rdi
+   41886:	call   *%rbx
+   41888:	mov    -0x20(%r12),%rax
+   4188d:	cmp    %r13,%rax
+   41890:	je     41870 <dense_parity_harness::routes::OutputSink::admit+0xd0>
+   41892:	test   %rax,%rax
+   41895:	je     4189e <dense_parity_harness::routes::OutputSink::admit+0xfe>
+   41897:	mov    -0x18(%r12),%rdi
+   4189c:	call   *%rbx
+   4189e:	cmpq   $0x0,-0x8(%r12)
+   418a4:	je     41870 <dense_parity_harness::routes::OutputSink::admit+0xd0>
+   418a6:	mov    (%r12),%rdi
+   418aa:	call   *%rbx
+   418ac:	jmp    41870 <dense_parity_harness::routes::OutputSink::admit+0xd0>
+   418ae:	mov    (%r15),%rsi
+   418b1:	cmp    %rsi,%r14
+   418b4:	ja     418d0 <dense_parity_harness::routes::OutputSink::admit+0x130>
+   418b6:	mov    0x8(%rsp),%rbx
+   418bb:	mov    %r13,(%rbx)
+   418be:	mov    %rbx,%rax
+   418c1:	add    $0x68,%rsp
+   418c5:	pop    %rbx
+   418c6:	pop    %r12
+   418c8:	pop    %r13
+   418ca:	pop    %r14
+   418cc:	pop    %r15
+   418ce:	pop    %rbp
+   418cf:	ret
+   418d0:	lea    0x18(%rsp),%rdi
+   418d5:	mov    $0x8,%r8d
+   418db:	mov    $0x58,%r9d
+   418e1:	mov    (%rsp),%rdx
+   418e5:	mov    %r14,%rcx
+   418e8:	call   4d540 <alloc::raw_vec::RawVecInner<A>::finish_grow>
+   418ed:	cmpb   $0x0,0x18(%rsp)
+   418f2:	jne    41902 <dense_parity_harness::routes::OutputSink::admit+0x162>
+   418f4:	mov    0x20(%rsp),%rax
+   418f9:	mov    %rax,0x8(%r15)
+   418fd:	mov    %r14,(%r15)
+   41900:	jmp    418b6 <dense_parity_harness::routes::OutputSink::admit+0x116>
+   41902:	mov    0x20(%rsp),%rdi
+   41907:	mov    0x28(%rsp),%rsi
+   4190c:	call   *0x67316(%rip)        # a8c28 <_DYNAMIC+0x230>
+
+## dense_parity_harness::routes::OutputSink::release at 0000000000041920, 0x000000000000006e bytes
+0000000000041920 <dense_parity_harness::routes::OutputSink::release>:
+   41920:	push   %r15
+   41922:	push   %r14
+   41924:	push   %rbx
+   41925:	mov    0x8(%rdi),%rbx
+   41929:	mov    0x10(%rdi),%r14
+   4192d:	movq   $0x0,0x10(%rdi)
+   41935:	test   %r14,%r14
+   41938:	je     41988 <dense_parity_harness::routes::OutputSink::release+0x68>
+   4193a:	add    $0x48,%rbx
+   4193e:	mov    0x672ab(%rip),%r15        # a8bf0 <free@GLIBC_2.2.5>
+   41945:	jmp    41959 <dense_parity_harness::routes::OutputSink::release+0x39>
+   41947:	nopw   0x0(%rax,%rax,1)
+   41950:	add    $0x58,%rbx
+   41954:	dec    %r14
+   41957:	je     41988 <dense_parity_harness::routes::OutputSink::release+0x68>
+   41959:	cmpq   $0x0,-0x48(%rbx)
+   4195e:	je     41967 <dense_parity_harness::routes::OutputSink::release+0x47>
+   41960:	mov    -0x40(%rbx),%rdi
+   41964:	call   *%r15
+   41967:	mov    -0x20(%rbx),%rax
+   4196b:	neg    %rax
+   4196e:	jo     41950 <dense_parity_harness::routes::OutputSink::release+0x30>
+   41970:	jae    41979 <dense_parity_harness::routes::OutputSink::release+0x59>
+   41972:	mov    -0x18(%rbx),%rdi
+   41976:	call   *%r15
+   41979:	cmpq   $0x0,-0x8(%rbx)
+   4197e:	je     41950 <dense_parity_harness::routes::OutputSink::release+0x30>
+   41980:	mov    (%rbx),%rdi
+   41983:	call   *%r15
+   41986:	jmp    41950 <dense_parity_harness::routes::OutputSink::release+0x30>
+   41988:	pop    %rbx
+   41989:	pop    %r14
+   4198b:	pop    %r15
+   4198d:	ret
+
+## core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>> at 0000000000032620, 0x0000000000000091 bytes
+0000000000032620 <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>>:
+   32620:	push   %r15
+   32622:	push   %r14
+   32624:	push   %r13
+   32626:	push   %r12
+   32628:	push   %rbx
+   32629:	mov    %rdi,%r14
+   3262c:	mov    0x10(%rdi),%rbx
+   32630:	mov    0x18(%rdi),%r15
+   32634:	test   %r15,%r15
+   32637:	je     3268e <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x6e>
+   32639:	lea    0x48(%rbx),%r12
+   3263d:	mov    0x765ac(%rip),%r13        # a8bf0 <free@GLIBC_2.2.5>
+   32644:	jmp    32659 <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x39>
+   32646:	cs nopw 0x0(%rax,%rax,1)
+   32650:	add    $0x58,%r12
+   32654:	dec    %r15
+   32657:	je     3268e <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x6e>
+   32659:	cmpq   $0x0,-0x48(%r12)
+   3265f:	je     32669 <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x49>
+   32661:	mov    -0x40(%r12),%rdi
+   32666:	call   *%r13
+   32669:	mov    -0x20(%r12),%rax
+   3266e:	neg    %rax
+   32671:	jo     32650 <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x30>
+   32673:	jae    3267d <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x5d>
+   32675:	mov    -0x18(%r12),%rdi
+   3267a:	call   *%r13
+   3267d:	cmpq   $0x0,-0x8(%r12)
+   32683:	je     32650 <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x30>
+   32685:	mov    (%r12),%rdi
+   32689:	call   *%r13
+   3268c:	jmp    32650 <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x30>
+   3268e:	cmpq   $0x0,0x8(%r14)
+   32693:	je     326a7 <core::ptr::drop_in_place<core::cell::RefCell<dense_parity_harness::routes::OutputSink>>+0x87>
+   32695:	mov    %rbx,%rdi
+   32698:	pop    %rbx
+   32699:	pop    %r12
+   3269b:	pop    %r13
+   3269d:	pop    %r14
+   3269f:	pop    %r15
+   326a1:	jmp    *0x76549(%rip)        # a8bf0 <free@GLIBC_2.2.5>
+   326a7:	pop    %rbx
+   326a8:	pop    %r12
+   326aa:	pop    %r13
+   326ac:	pop    %r14
+   326ae:	pop    %r15
+   326b0:	ret

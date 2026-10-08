@@ -1,0 +1,56 @@
+# pinned-entry: gf2_core::matrix::BitMatrix::matvec_with_route
+# binary sha256: 0e2ef163e5ccc2254a694c824142a39b6c5769976cab2e7fd567659e01042e88
+
+## gf2_core::matrix::BitMatrix::matvec_with_route at 000000000005c0b0, 0x00000000000000a8 bytes
+000000000005c0b0 <gf2_core::matrix::BitMatrix::matvec_with_route>:
+   5c0b0:	push   %r15
+   5c0b2:	push   %r14
+   5c0b4:	push   %r12
+   5c0b6:	push   %rbx
+   5c0b7:	push   %rax
+   5c0b8:	mov    0x18(%rdx),%rax
+   5c0bc:	mov    %rax,(%rsp)
+   5c0c0:	cmp    0x20(%rsi),%rax
+   5c0c4:	jne    5c101 <gf2_core::matrix::BitMatrix::matvec_with_route+0x51>
+   5c0c6:	mov    %rdi,%rbx
+   5c0c9:	test   %cl,%cl
+   5c0cb:	je     5c141 <gf2_core::matrix::BitMatrix::matvec_with_route+0x91>
+   5c0cd:	cmpq   $0x0,0x28(%rsi)
+   5c0d2:	je     5c141 <gf2_core::matrix::BitMatrix::matvec_with_route+0x91>
+   5c0d4:	mov    0x4db2d(%rip),%r14        # a9c08 <_DYNAMIC+0x4d0>
+   5c0db:	mov    0x98(%r14),%eax
+   5c0e2:	test   %eax,%eax
+   5c0e4:	jne    5c12a <gf2_core::matrix::BitMatrix::matvec_with_route+0x7a>
+   5c0e6:	cmpq   $0x0,(%r14)
+   5c0ea:	je     5c141 <gf2_core::matrix::BitMatrix::matvec_with_route+0x91>
+   5c0ec:	mov    0x8(%rdx),%rax
+   5c0f0:	mov    0x10(%rdx),%rcx
+   5c0f4:	mov    %rbx,%rdi
+   5c0f7:	mov    %rax,%rdx
+   5c0fa:	call   5ba50 <gf2_core::matrix::BitMatrix::matvec_simd>
+   5c0ff:	jmp    5c149 <gf2_core::matrix::BitMatrix::matvec_with_route+0x99>
+   5c101:	add    $0x20,%rsi
+   5c105:	lea    -0x4eb51(%rip),%rcx        # d5bb <anon.229579301b8481c92d2776dc7c4a3443.596.llvm.8545422325330379486>
+   5c10c:	lea    0x4b3ed(%rip),%r9        # a7500 <anon.229579301b8481c92d2776dc7c4a3443.597.llvm.8545422325330379486>
+   5c113:	mov    %rsp,%rax
+   5c116:	mov    $0x47,%r8d
+   5c11c:	xor    %edi,%edi
+   5c11e:	mov    %rsi,%rdx
+   5c121:	mov    %rax,%rsi
+   5c124:	call   *0x4d8de(%rip)        # a9a08 <_DYNAMIC+0x2d0>
+   5c12a:	mov    %rsi,%r15
+   5c12d:	mov    %rdx,%r12
+   5c130:	call   5b852 <std::sync::once_lock::OnceLock<T>::initialize>
+   5c135:	mov    %r12,%rdx
+   5c138:	mov    %r15,%rsi
+   5c13b:	cmpq   $0x0,(%r14)
+   5c13f:	jne    5c0ec <gf2_core::matrix::BitMatrix::matvec_with_route+0x3c>
+   5c141:	mov    %rbx,%rdi
+   5c144:	call   5bc90 <gf2_core::matrix::BitMatrix::matvec_scalar>
+   5c149:	mov    %rbx,%rax
+   5c14c:	add    $0x8,%rsp
+   5c150:	pop    %rbx
+   5c151:	pop    %r12
+   5c153:	pop    %r14
+   5c155:	pop    %r15
+   5c157:	ret
