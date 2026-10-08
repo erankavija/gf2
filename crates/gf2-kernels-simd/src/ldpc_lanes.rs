@@ -3,7 +3,8 @@
 //! step updates every lane by the per-frame rules of
 //! `docs/reference/ldpc-decoder-numerical-contract.md`. [`LdpcLaneFns`]
 //! bundles the check and variable steps; [`LdpcLaneFns::portable`] is the
-//! safe scalar reference, available on every host.
+//! safe scalar reference, available on every host, and [`detect`] publishes
+//! the AVX2 bundle on a host with AVX2.
 
 #![forbid(unsafe_code)]
 
@@ -141,6 +142,14 @@ impl LdpcLaneFns {
             variable_step_fn: lane_variable_step_portable,
         }
     }
+}
+
+/// The AVX2 bundle, bit-identical to [`LdpcLaneFns::portable`].
+///
+/// Returns `None` on a non-x86 target and on a host without AVX2.
+#[must_use]
+pub fn detect() -> Option<LdpcLaneFns> {
+    None
 }
 
 /// Requires `offsets` to be the prefix offsets of `total` entries.
@@ -834,6 +843,55 @@ pub mod contract {
         });
     }
 
+    /// One check per row of `rows`, every lane of an edge holding the row's
+    /// value, stepped under the plain rule.
+    fn uniform_check_outputs(fns: &LdpcLaneFns, rows: &[&[f32]]) -> Vec<F32x8> {
+        let mut offsets = vec![0u32];
+        let mut inputs = Vec::new();
+        for row in rows {
+            inputs.extend(row.iter().map(|&value| F32x8([value; LANES])));
+            offsets.push(inputs.len() as u32);
+        }
+        let mut outputs = vec![F32x8([99.0; LANES]); inputs.len()];
+        (fns.check_step_fn)(LaneMinSumRule::Plain, &offsets, &inputs, &mut outputs);
+        outputs
+    }
+
+    /// Asserts that a negative-zero message counts as positive in every lane.
+    ///
+    /// A lane that takes the IEEE sign bit of `-0.0` negates the outputs of
+    /// the check's other edges.
+    ///
+    /// # Panics
+    ///
+    /// Panics naming `label` when an output differs from the comparison rule.
+    pub fn assert_negative_zero_counts_positive(label: &str, fns: &LdpcLaneFns) {
+        let rows: [&[f32]; 3] = [&[-0.0, 2.0, 3.0], &[2.0, -0.0, 3.0], &[2.0, 3.0, -0.0]];
+        let want: Vec<F32x8> = [2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 2.0]
+            .map(|value| F32x8([value; LANES]))
+            .to_vec();
+        let got = uniform_check_outputs(fns, &rows);
+        assert_same_bits(label, "check_to_var beside a negative zero", &got, &want);
+    }
+
+    /// Asserts that a NaN magnitude enters no minimum in any lane.
+    ///
+    /// The NaN counts as a negative sign, so the other edges carry the
+    /// negated minimum of the finite magnitudes.
+    ///
+    /// # Panics
+    ///
+    /// Panics naming `label` when an output differs from that minimum.
+    pub fn assert_nan_enters_no_minimum(label: &str, fns: &LdpcLaneFns) {
+        let nan = f32::NAN;
+        let rows: [&[f32]; 3] = [&[nan, 2.0, 3.0], &[2.0, nan, 3.0], &[2.0, 3.0, nan]];
+        let want: Vec<F32x8> = [2.0, -3.0, -2.0, -3.0, 2.0, -2.0, -3.0, -2.0, 2.0]
+            .map(|value| F32x8([value; LANES]))
+            .to_vec();
+        let got = uniform_check_outputs(fns, &rows);
+        assert_same_bits(label, "check_to_var beside a NaN", &got, &want);
+    }
+
     /// Asserts the whole lane-kernel contract for one bundle.
     ///
     /// The check step is held, for each rule and bit for bit in every lane,
@@ -852,6 +910,8 @@ pub mod contract {
     /// Panics naming `label` and the failing case when the bundle breaks any
     /// of them.
     pub fn assert_lane_contract(label: &str, fns: &LdpcLaneFns) {
+        assert_negative_zero_counts_positive(label, fns);
+        assert_nan_enters_no_minimum(label, fns);
         assert_check_step(label, fns);
         assert_variable_step(label, fns);
     }
@@ -859,12 +919,42 @@ pub mod contract {
 
 #[cfg(test)]
 mod tests {
-    use super::contract::assert_lane_contract;
-    use super::{F32x8, LdpcLaneFns};
+    use super::contract::{
+        assert_lane_contract, assert_nan_enters_no_minimum, assert_negative_zero_counts_positive,
+    };
+    use super::{detect, F32x8, LdpcLaneFns};
+    use crate::contract::require_detected;
 
     #[test]
     fn the_portable_bundle_answers_the_lane_contract() {
         assert_lane_contract("portable", &LdpcLaneFns::portable());
+    }
+
+    #[test]
+    fn detect_publishes_a_bundle_exactly_on_an_avx2_host() {
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        let avx2 = std::arch::is_x86_feature_detected!("avx2");
+        #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+        let avx2 = false;
+        assert_eq!(detect().is_some(), avx2);
+    }
+
+    #[test]
+    fn the_avx2_bundle_answers_the_lane_contract() {
+        let fns = require_detected("ldpc_lanes::detect()", detect());
+        assert_lane_contract("avx2", &fns);
+    }
+
+    #[test]
+    fn an_avx2_lane_counts_a_negative_zero_message_as_positive() {
+        let fns = require_detected("ldpc_lanes::detect()", detect());
+        assert_negative_zero_counts_positive("avx2", &fns);
+    }
+
+    #[test]
+    fn an_avx2_lane_keeps_a_nan_magnitude_out_of_the_minimum() {
+        let fns = require_detected("ldpc_lanes::detect()", detect());
+        assert_nan_enters_no_minimum("avx2", &fns);
     }
 
     #[test]
