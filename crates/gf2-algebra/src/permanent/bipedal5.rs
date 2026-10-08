@@ -48,9 +48,7 @@ pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
     );
     assert!(
         n <= 63,
-        "permanent_bipedal5: single-word path requires n <= 63; got n = {}. \
-         For n > 63 use permanent_ryser::<Fp<5>>.",
-        n,
+        "permanent_bipedal5: single-word path requires n <= 63; got n = {n}"
     );
 
     permanent_bipedal5_singleword(mat)
@@ -230,6 +228,23 @@ mod tests {
         let data = vec![Fp::<5>::new(0); 64 * 64];
         let m = Packed5Matrix::from_row_major(&data, 64, 64);
         let _ = permanent_bipedal5(&m);
+    }
+
+    #[test]
+    #[should_panic(expected = "permanent_bipedal5_singleword: matrix must be square")]
+    fn test_permanent_bipedal5_singleword_panics_on_non_square() {
+        let data = vec![Fp::<5>::new(0); 3 * 5];
+        let m = Packed5Matrix::from_row_major(&data, 3, 5);
+        let _ = permanent_bipedal5_singleword(&m);
+    }
+
+    #[test]
+    #[should_panic(expected = "permanent_bipedal5_singleword: single-word path requires n <=")]
+    fn test_permanent_bipedal5_singleword_panics_above_word_capacity() {
+        let n = 64;
+        let data = vec![Fp::<5>::new(0); n * n];
+        let m = Packed5Matrix::from_row_major(&data, n, n);
+        let _ = permanent_bipedal5_singleword(&m);
     }
 
     macro_rules! cross_check_n {

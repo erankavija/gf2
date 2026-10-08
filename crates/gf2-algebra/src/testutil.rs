@@ -182,3 +182,57 @@ pub fn today_yyyy_mm_dd() -> String {
     let (y, m, d) = unix_secs_to_ymd(secs);
     format!("{y:04}-{m:02}-{d:02}")
 }
+
+/// The `model name` field of `/proc/cpuinfo` text, as the first processor
+/// entry reports it.
+fn cpu_model(cpuinfo: &str) -> Option<&str> {
+    cpuinfo
+        .lines()
+        .find_map(|line| line.strip_prefix("model name"))
+        .and_then(|rest| rest.split_once(':'))
+        .map(|(_, model)| model.trim())
+}
+
+/// Host tag for one benchmark output field, observed when called: the CPU
+/// model `/proc/cpuinfo` reports (`unknown` where the file or its
+/// `model name` field is absent), the target architecture, and whether AVX2
+/// is detected. Commas in the model become semicolons, so the tag is one CSV
+/// field.
+pub fn host_fingerprint() -> String {
+    let cpuinfo = std::fs::read_to_string("/proc/cpuinfo").unwrap_or_default();
+    let model = cpu_model(&cpuinfo).unwrap_or("unknown").replace(',', ";");
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    let avx2 = gf2_core::kernels::x86::has_avx2();
+    #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+    let avx2 = false;
+    format!(
+        "{model}/{}/AVX2={}",
+        std::env::consts::ARCH,
+        if avx2 { "yes" } else { "no" }
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cpu_model_reads_first_model_name_field() {
+        let cpuinfo = "processor\t: 0\nmodel\t\t: 33\nmodel name\t: Example CPU, rev 2\n\
+                       processor\t: 1\nmodel name\t: Other CPU\n";
+        assert_eq!(cpu_model(cpuinfo), Some("Example CPU, rev 2"));
+        assert_eq!(cpu_model("processor\t: 0\n"), None);
+    }
+
+    #[test]
+    fn test_host_fingerprint_is_one_csv_field_naming_the_target() {
+        let tag = host_fingerprint();
+        assert!(!tag.contains(',') && !tag.contains('\n'), "{tag}");
+        let suffix_yes = format!("/{}/AVX2=yes", std::env::consts::ARCH);
+        let suffix_no = format!("/{}/AVX2=no", std::env::consts::ARCH);
+        assert!(
+            tag.ends_with(&suffix_yes) || tag.ends_with(&suffix_no),
+            "{tag}"
+        );
+    }
+}

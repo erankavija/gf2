@@ -52,9 +52,7 @@ use crate::gray::gray_code_iter;
 pub fn permanent_ryser<F: FiniteField>(matrix: &[F], n: usize) -> F {
     assert!(
         n <= 63,
-        "permanent_ryser: n = {} exceeds the single-u64 Gray-code register's n <= 63 bound; \
-         use multi-word streaming (W3-T14) for n > 63",
-        n,
+        "permanent_ryser: n = {n} exceeds the single-u64 Gray-code register's n <= 63 bound"
     );
     assert_eq!(
         matrix.len(),
@@ -179,6 +177,13 @@ mod tests {
     fn test_permanent_ryser_panics_on_n_exceeding_63() {
         let matrix: Vec<Fp<3>> = vec![Fp::<3>::new(0); 64 * 64];
         let _ = permanent_ryser::<Fp<3>>(&matrix, 64);
+    }
+
+    #[test]
+    #[should_panic(expected = "matrix.len() (8) must equal n * n (9)")]
+    fn test_permanent_ryser_panics_on_shape_mismatch() {
+        let matrix: Vec<Fp<3>> = vec![Fp::<3>::new(0); 8];
+        let _ = permanent_ryser::<Fp<3>>(&matrix, 3);
     }
 
     /// The 0×0 matrix has permanent = 1 (vacuous product over the empty permutation).
