@@ -52,3 +52,4 @@ bfc2ceab	.agents/worktrees/agent-bfc2ceab	10	dev/bench_results/bfc2ceab/run-spmm
 63bad95d	.agents/worktrees/agent-63bad95d-fam	12	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/bench_results/63bad95d/run-profile-families.sh window 63bad95d-native-ladder pilot
 63bad95d	.agents/worktrees/agent-63bad95d-fam	15	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/bench_results/63bad95d/run-profile-families.sh window 63bad95d-native-ladder confirmation
 bfc2ceab	.agents/worktrees/agent-bfc2ceab	10	dev/bench_results/bfc2ceab/run-spmm-check.sh window pilot2
+63bad95d	.agents/worktrees/agent-63bad95d-fam	10	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/bench_results/63bad95d/run-profile-families.sh window 63bad95d-profile-dispatch-overhead pilot2
