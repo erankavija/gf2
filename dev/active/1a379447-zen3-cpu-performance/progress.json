@@ -1182,6 +1182,24 @@
    "type": "bug",
    "in_epic": false,
    "reason": "session 31: EncodingCache directory reload assumes message columns 0..k; depends on 95ca83aa"
+  },
+  {
+   "id": "02a26b83",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: six Normal-frame dvb_t2_bicm_chain tests carry a stale slow-tier ignore reason; depends on 4e68f9b2"
+  },
+  {
+   "id": "d1bfe986",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: gf2-coding all-features rustdoc fails with warnings denied; depends on 4e68f9b2"
+  },
+  {
+   "id": "07fe99b8",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: benchmark window starts its first job on a loaded host; depends on bfc2ceab"
   }
  ],
  "escalations": [
@@ -2371,6 +2389,18 @@
    "subject": "Research gate 45bac0a3 advisory F1: unroll profile tables need exact invocation and RNG/version provenance links.",
    "disposition": "Resolved in profile-provenance.md and source-evidence ledger at c5393116e; exact runtime logs linked, source-derived seed/RNG declarations distinguished. Final merged CI passes; no timing/raw-data edits.",
    "criterion_named_by": "2037941f REQ05/REQ06"
+  },
+  {
+   "issue": "13728e1a",
+   "subject": "Worker report: target/release is hard-linked across pool-seeded worktrees, so an assembly regeneration read another worker's .s output; the worker generated under CARGO_TARGET_DIR=target/asm-lanes.",
+   "disposition": "Unverified by the lead and unfiled; verify against dev/scripts/regen-asm.sh and the dispatch script's seeding before filing.",
+   "criterion_named_by": null
+  },
+  {
+   "issue": "13728e1a",
+   "subject": "Worker report: LLVM lowers the masked writes of the AVX2 variable step to vmaskmovps stores; cost on Zen 3 unmeasured.",
+   "disposition": "For the routing issue c317f5ac and the story's measurement leaves; ed3d490e REQ-10 and REQ-13 name the measurement.",
+   "criterion_named_by": "ed3d490e/REQ-10"
   }
  ],
  "notes": [
