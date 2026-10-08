@@ -893,6 +893,12 @@
      "title": "Decode DVB-T2 concatenated frame batches in lanes",
      "classification": "implementation",
      "status": "done. Session 32: merged at 7f30c65cc (closure fix f. logical family after it); cargo-ci, code-review, doc-review passed first round; review reviews/4e68f9b2-r1.md"
+    },
+    {
+     "short_id": "c317f5ac",
+     "title": "Route LDPC batch decoding to the AVX2 lanes by capability",
+     "classification": "implementation",
+     "status": "done. Session 32: merged at bb4e110da; cargo-ci, code-review, doc-review passed first round; review reviews/c317f5ac-r1.md"
     }
    ]
   },
