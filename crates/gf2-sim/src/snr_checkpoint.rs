@@ -135,8 +135,8 @@ mod u128_string {
 ///
 /// The hash identifies the sweep schedule only. A caller of
 /// [`run_sweep_checkpointed`] whose frame kernel has its own configuration
-/// supplies an `expected_hash` that covers it; [`pipeline_config_hash`] is that
-/// identity for a [`Pipeline`].
+/// supplies an `expected_hash` that covers it: [`kernel_config_hash`] for an
+/// arbitrary frame closure, [`pipeline_config_hash`] for a [`Pipeline`].
 ///
 /// `gpu_enabled` is hashed because the CPU executor and the hybrid executor
 /// record differently shaped `worker_states[]` and path-specific
@@ -146,6 +146,21 @@ mod u128_string {
 pub fn config_hash(config: &PipelineConfig) -> String {
     let mut hasher = blake3::Hasher::new();
     hash_run_config(&mut hasher, config);
+    finish_hash(&hasher)
+}
+
+/// Computes the checkpoint identity of a sweep whose frame closure is described
+/// by `kernel_identity`: the fields [`config_hash`] covers, followed by the
+/// identity bytes. Distinct identities give distinct hashes for the same
+/// configuration; the caller encodes every parameter of the closure that
+/// affects its results (a channel model and its parameters, for example).
+#[must_use]
+pub fn kernel_config_hash(config: &PipelineConfig, kernel_identity: &str) -> String {
+    let mut hasher = blake3::Hasher::new();
+    hash_run_config(&mut hasher, config);
+    hasher.update(b"frame-kernel:");
+    hasher.update(&(kernel_identity.len() as u64).to_le_bytes());
+    hasher.update(kernel_identity.as_bytes());
     finish_hash(&hasher)
 }
 
@@ -874,6 +889,15 @@ mod tests {
             ..cfg.clone()
         };
         assert_ne!(config_hash(&cfg), config_hash(&diff_seed));
+    }
+
+    #[test]
+    fn test_kernel_config_hash_separates_identities() {
+        let cfg = test_config(4);
+        let a = kernel_config_hash(&cfg, "awgn");
+        assert_eq!(a, kernel_config_hash(&cfg, "awgn"));
+        assert_ne!(a, kernel_config_hash(&cfg, "rayleigh"));
+        assert_ne!(a, config_hash(&cfg));
     }
 
     #[test]
