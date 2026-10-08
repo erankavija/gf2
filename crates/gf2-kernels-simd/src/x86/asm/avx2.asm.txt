@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : ed24da6e5
-; regenerated   : 2026-10-08T11:26:13Z
+; commit        : 495023fc7
+; regenerated   : 2026-10-08T11:32:03Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -300,48 +300,49 @@ gf2_kernels_simd::x86::avx2::avx2_and_popcnt:
 gf2_kernels_simd::x86::avx2::avx2_and_parity:
 	cmp rcx, rsi
 	cmovb rsi, rcx
-	movabs rax, 1152921504606846972
-	lea rcx, [8*rsi]
-	movabs r8, 9223372036854775744
-	and r8, rcx
+	movabs rcx, 9223372036854775744
+	lea rax, [8*rsi]
+	mov r9, rax
+	and r9, rcx
 	je .LBB81_1
 	vpxor xmm0, xmm0, xmm0
-	xor ecx, ecx
+	xor r8d, r8d
 	vpxor xmm1, xmm1, xmm1
 .LBB81_8:
-	vmovdqu ymm2, ymmword ptr [rdx + rcx]
-	vmovdqu ymm3, ymmword ptr [rdx + rcx + 32]
-	vpand ymm2, ymm2, ymmword ptr [rdi + rcx]
-	vpand ymm3, ymm3, ymmword ptr [rdi + rcx + 32]
-	vpxor ymm1, ymm2, ymm1
-	vpxor ymm0, ymm3, ymm0
-	add rcx, 64
-	cmp rcx, r8
+	vmovdqu ymm2, ymmword ptr [rdx + r8]
+	vmovdqu ymm3, ymmword ptr [rdx + r8 + 32]
+	vpand ymm2, ymm2, ymmword ptr [rdi + r8]
+	vpand ymm3, ymm3, ymmword ptr [rdi + r8 + 32]
+	vpxor ymm0, ymm2, ymm0
+	vpxor ymm1, ymm3, ymm1
+	add r8, 64
+	cmp r8, r9
 	jb .LBB81_8
-	and rax, rsi
 	test sil, 4
 	je .LBB81_4
 .LBB81_3:
-	vmovdqu ymm2, ymmword ptr [rdx + rcx]
-	vpand ymm2, ymm2, ymmword ptr [rdi + rcx]
-	vpxor ymm1, ymm2, ymm1
+	vmovdqu ymm2, ymmword ptr [rdx + r8]
+	vpand ymm2, ymm2, ymmword ptr [rdi + r8]
+	vpxor ymm0, ymm2, ymm0
 .LBB81_4:
+	and rsi, 3
+	je .LBB81_6
+	shl esi, 5
+	lea r8, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.214]
+	vmovdqu ymm2, ymmword ptr [rsi + r8]
+	add rcx, 32
+	and rax, rcx
+	vpmaskmovq ymm3, ymm2, ymmword ptr [rdi + rax]
+	vpmaskmovq ymm2, ymm2, ymmword ptr [rdx + rax]
+	vpand ymm2, ymm2, ymm3
+	vpxor ymm1, ymm2, ymm1
+.LBB81_6:
 	vpxor ymm0, ymm1, ymm0
 	vextracti128 xmm1, ymm0, 1
 	vpxor xmm0, xmm1, xmm0
-	vmovq r8, xmm0
+	vmovq rax, xmm0
 	vpextrq rcx, xmm0, 1
-	xor rcx, r8
-	cmp rax, rsi
-	je .LBB81_6
-.LBB81_5:
-	mov r8, qword ptr [rdx + 8*rax]
-	and r8, qword ptr [rdi + 8*rax]
-	inc rax
-	xor rcx, r8
-	cmp rax, rsi
-	jb .LBB81_5
-.LBB81_6:
+	xor rcx, rax
 	mov eax, ecx
 	shr rcx, 32
 	xor ecx, eax
@@ -353,10 +354,9 @@ gf2_kernels_simd::x86::avx2::avx2_and_parity:
 	vzeroupper
 	ret
 .LBB81_1:
-	xor ecx, ecx
+	xor r8d, r8d
 	vpxor xmm1, xmm1, xmm1
 	vpxor xmm0, xmm0, xmm0
-	and rax, rsi
 	test sil, 4
 	jne .LBB81_3
 	jmp .LBB81_4
@@ -447,7 +447,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_one:
 	mov r8d, 4
 	sub r8, rax
 	neg rax
-	lea rcx, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.214]
+	lea rcx, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.215]
 	mov rdi, rax
 	mov rdx, rsi
 	mov rsi, r8
@@ -543,7 +543,7 @@ gf2_kernels_simd::x86::avx2::avx2_find_first_zero:
 	mov r8d, 4
 	sub r8, rax
 	neg rax
-	lea rcx, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.215]
+	lea rcx, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.216]
 	mov rdi, rax
 	mov rdx, rsi
 	mov rsi, r8
@@ -647,14 +647,14 @@ gf2_kernels_simd::x86::avx2::avx2_shift_left_words:
 	pop r15
 	jmp qword ptr [rip + memset@GOTPCREL]
 .LBB90_16:
-	lea rdx, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.217]
+	lea rdx, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.218]
 	mov rdi, rax
 	mov rsi, rbx
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
 .LBB90_15:
 	not rdx
 	add rdx, r10
-	lea rax, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.216]
+	lea rax, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.217]
 	mov rdi, rdx
 	mov rsi, rbx
 	mov rdx, rax
@@ -749,7 +749,7 @@ gf2_kernels_simd::x86::avx2::avx2_shift_right_words:
 	vzeroupper
 	ret
 .LBB92_20:
-	lea rdx, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.218]
+	lea rdx, [rip + .Lanon.6b73408ca62bd4f6851a874b170b82f7.219]
 	mov rdi, rax
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
