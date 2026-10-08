@@ -215,7 +215,7 @@ impl crate::traits::GeneratorMatrixAccess for LdpcCode {
     /// # Complexity
     ///
     /// First call: O(nnz + k) for a dual-diagonal parity part, else
-    /// O(m·n·min(m, n)) for the m × n matrix H; later calls O(k).
+    /// O(k + m·n·min(m, n)) for the m × n matrix H; later calls O(k).
     fn is_systematic(&self) -> bool {
         self.systematic_cols()
             .iter()
