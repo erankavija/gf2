@@ -19,7 +19,7 @@ use gf2_sim::error::{RecoverableError, StageError};
 use gf2_sim::executor::SnrPointResult;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::snr_checkpoint::{
-    clear_interrupt, config_hash, request_interrupt, CheckpointReader, SweepError,
+    clear_interrupt, pipeline_config_hash, request_interrupt, CheckpointReader, SweepError,
 };
 use gf2_sim::{Pipeline, Scheduler};
 
@@ -188,7 +188,7 @@ fn assert_hybrid_resume_parity(cfg: ResumeConfig) {
         "{label}: point 0 completed before the interrupt"
     );
 
-    let hash = config_hash(pipeline.config());
+    let hash = pipeline_config_hash(&pipeline);
     let reader = CheckpointReader::new(dir.path(), hash);
     let ck = reader
         .load(trip_snr)
@@ -309,7 +309,7 @@ fn hybrid_drain_resume_smoke() {
         .expect("interrupted hybrid sweep");
     assert!(interrupted.interrupted, "the SIGINT must stop the sweep");
 
-    let hash = config_hash(pipeline.config());
+    let hash = pipeline_config_hash(&pipeline);
     let ck = CheckpointReader::new(dir.path(), hash)
         .load(0)
         .expect("point-0 checkpoint loads")
@@ -392,7 +392,7 @@ fn hybrid_partial_point_restore() {
         .expect("interrupted hybrid sweep");
     assert!(interrupted.interrupted, "SIGINT must stop the sweep");
 
-    let hash = config_hash(pipeline.config());
+    let hash = pipeline_config_hash(&pipeline);
     let ck = CheckpointReader::new(dir.path(), hash)
         .load(0)
         .expect("checkpoint loads")
@@ -451,7 +451,7 @@ fn hybrid_partial_point_restore() {
 
 /// A recoverable GPU fault in a checkpointed sweep propagates instead of
 /// taking the CPU fallback, and the last committed checkpoint stays
-/// resumable. `inject_gpu_oom_modulus` is excluded from `config_hash`, so the
+/// resumable. `inject_gpu_oom_modulus` is excluded from the checkpoint identity, so the
 /// faulting resume loads the same checkpoint; frame 0 is a multiple of every
 /// modulus, so the checkpoint is built without injection and the first
 /// injected batch starts at frame 32.
@@ -496,7 +496,7 @@ fn hybrid_checkpointed_recoverable_fault_aborts_resumably() {
         .expect("step 1 interrupted sweep");
     assert!(interrupted.interrupted, "the SIGINT must stop the sweep");
 
-    let hash = config_hash(pipeline.config());
+    let hash = pipeline_config_hash(&pipeline);
     let ck = CheckpointReader::new(dir.path(), hash.clone())
         .load(0)
         .expect("step-1 checkpoint loads")
