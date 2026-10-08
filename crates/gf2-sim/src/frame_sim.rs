@@ -216,7 +216,8 @@ impl DvbT2BicmFrameSim {
     /// because the dispatcher has already positioned that RNG. A frame is
     /// errored iff any information bit differs. A non-converged LDPC decode
     /// keeps its best-effort BBFRAME estimate, and `iterations` is the BP
-    /// iteration count on both the converged and the non-converged arm.
+    /// iteration count on both the converged and the non-converged arm. A
+    /// decode that yields no estimate counts all `k` bits as errors.
     ///
     /// # Complexity
     ///
@@ -240,16 +241,26 @@ impl DvbT2BicmFrameSim {
             },
         );
 
-        let (decoded, iterations) = match self.codec.decode_soft_counted(&llrs) {
-            Ok((bbframe, iters)) => (bbframe, iters as u64),
-            Err(ConcatError::LdpcDecodeFailed {
-                bbframe,
-                iterations,
-            }) => (bbframe, iterations as u64),
-            Err(_) => (BitVec::with_capacity(self.k), DECODE_HARD_FAIL_ITERS),
-        };
+        self.outcome_from_decode(&message, self.codec.decode_soft_counted(&llrs))
+    }
 
-        let bit_errors = count_bit_errors(&message, &decoded) as u64;
+    /// Scores `message` against a decode result. A result carrying no BBFRAME
+    /// estimate (an error other than [`ConcatError::LdpcDecodeFailed`]) counts
+    /// every information bit as errored and records
+    /// [`DECODE_HARD_FAIL_ITERS`] iterations.
+    fn outcome_from_decode(
+        &self,
+        message: &BitVec,
+        result: Result<(BitVec, usize), ConcatError>,
+    ) -> FrameOutcome {
+        let (bit_errors, iterations) = match result {
+            Ok((bbframe, iters))
+            | Err(ConcatError::LdpcDecodeFailed {
+                bbframe,
+                iterations: iters,
+            }) => (count_bit_errors(message, &bbframe) as u64, iters as u64),
+            Err(_) => (self.k as u64, DECODE_HARD_FAIL_ITERS),
+        };
         FrameOutcome {
             errored: bit_errors > 0,
             iterations,
@@ -350,6 +361,29 @@ mod tests {
     use super::*;
     use gf2_coding::ldpc::DecoderAlgorithm;
     use std::num::NonZeroUsize;
+
+    #[test]
+    fn decode_without_estimate_counts_all_info_bits_as_errors() {
+        let sim = DvbT2BicmFrameSim::new(
+            CodeRate::Rate1_2,
+            DvbT2Modulation::Qam16,
+            6.25,
+            DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
+            DemapMethod::ExactLogMap,
+        );
+        // An all-zero message makes any nonzero count attributable to the
+        // failure policy rather than to bit agreement with the empty vector.
+        let message = BitVec::zeros(sim.k());
+        let failure = ConcatError::Unsupported {
+            frame_size: FrameSize::Normal,
+            code_rate: CodeRate::Rate1_2,
+        };
+        let outcome = sim.outcome_from_decode(&message, Err(failure));
+        assert!(outcome.errored);
+        assert_eq!(outcome.bit_errors, sim.k() as u64);
+        assert_eq!(outcome.info_bits, sim.k() as u64);
+        assert_eq!(outcome.iterations, DECODE_HARD_FAIL_ITERS);
+    }
 
     #[test]
     fn test_frame_sim_constructs_normal_frame() {
