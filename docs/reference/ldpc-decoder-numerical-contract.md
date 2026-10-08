@@ -230,3 +230,9 @@ non-converging frames, frames of signed zeros, saturated, extreme finite and
 non-finite LLRs, and rate-matched 5G NR frames; each set runs at the batch
 sizes around the wave boundaries, under a permutation of its frames, and with
 the other lanes of a wave holding non-converging frames.
+
+[`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs)
+runs the shared batch contract on `DvbT2ConcatBatchDecoder`, whose LDPC inner
+code decodes on `LdpcBatchDecoder`, against `DvbT2Concat::decode_soft_counted`
+on each route: a frame's BBFRAME, LDPC iteration count and flags equal the
+single-frame codec's, for converging and non-converging frames.

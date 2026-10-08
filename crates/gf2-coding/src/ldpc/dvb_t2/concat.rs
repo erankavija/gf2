@@ -1,5 +1,10 @@
 //! DVB-T2 BCH+LDPC concatenated codec (`@/citation/Etsi2015` §6):
-//! [`DvbT2Concat`] wraps the BCH outer code and the LDPC inner code.
+//! [`DvbT2Concat`] wraps the BCH outer code and the LDPC inner code, and
+//! [`DvbT2ConcatBatchDecoder`] decodes batches of its frames.
+
+mod batch;
+
+pub use batch::DvbT2ConcatBatchDecoder;
 
 use crate::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, DvbT2BchDecoder};
 use crate::ldpc::{DecoderConfig, LdpcCode, LdpcDecoder, LdpcEncoder};
@@ -80,6 +85,8 @@ pub struct DvbT2Concat {
     /// LDPC decoder (belief propagation, with early termination).
     /// Wrapped in a Mutex so decode_soft can take &self.
     ldpc_decoder: Mutex<LdpcDecoder>,
+    /// Configuration of `ldpc_decoder`.
+    decoder_config: DecoderConfig,
     /// BCH information block size (BBFRAME bits).
     k_bch: usize,
     /// BCH codeword length = LDPC input length.
@@ -137,6 +144,7 @@ impl DvbT2Concat {
             ldpc_code,
             ldpc_encoder: OnceCell::new(),
             ldpc_decoder: Mutex::new(ldpc_decoder),
+            decoder_config: DecoderConfig::default(),
             k_bch,
             k_ldpc,
             n_ldpc,
@@ -204,6 +212,7 @@ impl DvbT2Concat {
     /// [`DecoderAlgorithm::MinSum`](crate::ldpc::DecoderAlgorithm::MinSum).
     pub fn set_decoder_config(&mut self, config: DecoderConfig) {
         self.ldpc_decoder = Mutex::new(LdpcDecoder::with_config(self.ldpc_code.clone(), config));
+        self.decoder_config = config;
     }
 
     /// Encode a BBFRAME into a FECFRAME (BCH → LDPC).
@@ -340,18 +349,25 @@ impl DvbT2Concat {
             self.n_ldpc
         );
 
-        let mut bch_codeword = BitVec::with_capacity(self.k_ldpc);
-        for i in 0..self.k_ldpc {
-            bch_codeword.push_bit(full_codeword.get(i));
-        }
-
-        let decoder = DvbT2BchDecoder::new(&self.bch_code);
-        let (_outcome, bbframe) = decoder
-            .decode(&bch_codeword)
-            .expect("a BCH codeword of the extracted length decodes");
-        debug_assert_eq!(bbframe.len(), self.k_bch);
-        bbframe
+        bch_decode_ldpc_codeword(&self.bch_code, full_codeword)
     }
+}
+
+/// BCH-decodes the BBFRAME from the leading bits of `full_codeword`, the BCH
+/// codeword of a systematic DVB-T2 LDPC codeword of at least that length.
+fn bch_decode_ldpc_codeword(bch_code: &DvbT2BchCode, full_codeword: &BitVec) -> BitVec {
+    let k_ldpc = BlockCode::n(bch_code);
+    let mut bch_codeword = BitVec::with_capacity(k_ldpc);
+    for i in 0..k_ldpc {
+        bch_codeword.push_bit(full_codeword.get(i));
+    }
+
+    let decoder = DvbT2BchDecoder::new(bch_code);
+    let (_outcome, bbframe) = decoder
+        .decode(&bch_codeword)
+        .expect("a BCH codeword of the extracted length decodes");
+    debug_assert_eq!(bbframe.len(), BlockCode::k(bch_code));
+    bbframe
 }
 
 #[cfg(test)]

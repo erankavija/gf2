@@ -13,7 +13,7 @@ codeword bit order and the external evidence each conformance test consumes.
 |---|---|---|
 | BCH outer code | `bch::dvb_t2::dvb_t2_bch_code`, `DvbT2BchDecoder` | every `FrameSize` × `CodeRate`; parameters of EN 302 755 Tables 6a and 6b in [`params.rs`](../../crates/gf2-coding/src/bch/dvb_t2/params.rs) |
 | LDPC inner code | `LdpcCode::dvb_t2_normal`, `LdpcCode::dvb_t2_short` | every `FrameSize` × `CodeRate`; `(N_ldpc, K_ldpc, Q_ldpc)` in `DvbParams::for_code`, parity address tables beside it in [`ldpc/dvb_t2/`](../../crates/gf2-coding/src/ldpc/dvb_t2/) |
-| BCH + LDPC chain | `ldpc::dvb_t2::concat::DvbT2Concat` | every `FrameSize` × `CodeRate` |
+| BCH + LDPC chain | `ldpc::dvb_t2::concat::DvbT2Concat`; `DvbT2ConcatBatchDecoder` beside it for batches of FECFRAMEs | every `FrameSize` × `CodeRate` |
 | Bit interleaver (§6.1.3) | `ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver` | QPSK, 16-QAM, 64-QAM at rates 1/2, 2/3, 3/4 on both frame sizes and rate 3/5 on normal frames; QPSK is the identity, as §6.1.3 prescribes |
 
 The bit interleaver panics on other rates and has no 256-QAM mode. The cell-word
@@ -45,18 +45,19 @@ FECFRAME).
 |---|---|---|
 | [`dvb_t2_bch_verification`](../../crates/gf2-coding/tests/dvb_t2_bch_verification.rs) | VV001-CR35 | `encode(TP04) = TP05` and error-free `decode(TP05) = TP04` on every block of the first frame; TP05 begins with TP04; seeded error correction within `t` |
 | [`dvb_t2_ldpc_verification_suite`](../../crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs) | VV001-CR35 | `encode(TP05) = TP06` and error-free decode on every block of the first frame; TP06 begins with TP05; `H·c = 0`; round trip |
+| [`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs) | VV001-CR35 | error-free `decode(TP06) = TP04` on every block of the first frame, through `DvbT2Concat::decode_soft_counted` and through `DvbT2ConcatBatchDecoder` on each route |
 | [`dvb_t2_chain_tp07a`](../../crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs) | VV020-FEF, VV009-4KFFT, VV014-64QAM34 | `interleave(TP06) = TP07a` and `deinterleave(TP07a) = TP06` bit-exact (16-QAM 1/2, 64-QAM 2/3, 64-QAM 3/4, normal frame) |
 
 The `dvb_t2_bch_verification` tests outside its slow error-correction case run
 in the fast tier and pass without assertion when the vectors are absent; the
-other tests of this table are ignored by default. The BCH generator construction is
+other vector tests of this table are ignored by default. The BCH generator construction is
 checked against the standard's minimal polynomials `g₁`…`g₁₂` by unit tests in
 `bch::dvb_t2`.
 
 ```bash
 DVB_TEST_VECTORS_PATH=/path/to/streams ./scripts/cargo-budget.sh --test \
   cargo nextest run -p gf2-coding --release --profile slow --run-ignored all \
-  -E 'binary(dvb_t2_bch_verification) | binary(dvb_t2_ldpc_verification_suite) | binary(dvb_t2_chain_tp07a)'
+  -E 'binary(dvb_t2_bch_verification) | binary(dvb_t2_ldpc_verification_suite) | binary(dvb_t2_concat_batch_decoder) | binary(dvb_t2_chain_tp07a)'
 ```
 
 ## 5G NR LDPC

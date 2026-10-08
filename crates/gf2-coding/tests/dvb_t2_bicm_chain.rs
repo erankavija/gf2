@@ -1,5 +1,9 @@
 //! DVB-T2 BICM chain round trips: BCH and LDPC encode, bit interleave, QAM
-//! map, soft demap at noise variance 1e-6, deinterleave, soft decode.
+//! map, soft demap at noise variance 1e-6, deinterleave, soft decode on the
+//! single-frame codec and on its batch decoder.
+
+#[path = "support/dvb_t2_concat_batch.rs"]
+mod concat_batch;
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
@@ -273,6 +277,9 @@ fn run_full_bicm_roundtrip_fs(
         "BICM roundtrip mismatch for {:?} x {:?} x {:?}",
         frame_size, code_rate, modulation
     );
+
+    let batch = concat_batch::assert_batch_decodes_as_single_frame(&concat, &[fecframe_llrs]);
+    assert_eq!(batch[0].decoded_bits, bbframe_in);
 }
 
 fn run_full_bicm_roundtrip(code_rate: CodeRate, modulation: DvbT2Modulation, seed: u64) {
