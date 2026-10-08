@@ -149,6 +149,11 @@ impl LdpcLaneFns {
 /// Returns `None` on a non-x86 target and on a host without AVX2.
 #[must_use]
 pub fn detect() -> Option<LdpcLaneFns> {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        return crate::x86::ldpc_lanes::detect();
+    }
+    #[allow(unreachable_code)]
     None
 }
 
