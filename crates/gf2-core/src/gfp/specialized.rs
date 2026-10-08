@@ -88,56 +88,44 @@ pub const fn classify(p: u64) -> PrimeShape {
     PrimeShape::Generic
 }
 
-/// Reduces a 128-bit product modulo a Mersenne prime `P = 2^n - 1`.
+/// Reduces a `u128` modulo the Mersenne number `2^N - 1`, returning
+/// `x % (2^N - 1)` for every `u128` input.
 ///
-/// Uses the identity `2^n ≡ 1 (mod 2^n - 1)` so that splitting the input
-/// into `n`-bit chunks and adding them produces the same residue; one more
-/// fold and a conditional subtraction give a `u64` in `[0, 2^N - 1)`.
+/// Uses `2^N ≡ 1 (mod 2^N - 1)`: folding the `N`-bit chunks of `x` together
+/// preserves the residue. For `N ≥ 61` two straight-line folds suffice; for
+/// smaller `N` the fold repeats until the sum fits in `N` bits, which takes
+/// at most `⌈128 / N⌉` iterations.
 ///
 /// # Panics
 ///
-/// Panics if `N` is outside `4..=62`.
+/// Panics if `N` is outside `4..=62`, the range [`classify`] accepts.
 #[inline]
 pub const fn mersenne_reduce<const N: u32>(x: u128) -> u64 {
     debug_assert_n_in_range::<N>();
     let p: u64 = (1u64 << N) - 1;
-    let mask64: u64 = p; // mask = 2^N - 1
 
-    if N >= 61 {
-        // Fast path: two folds suffice for 128-bit input when N ≥ 61.
-        let lo = (x as u64) & mask64;
-        let mid = ((x >> N) as u64) & mask64;
-        let hi = (x >> (2 * N)) as u64; // ≤ 6 bits for N = 61
-        let s1 = lo.wrapping_add(mid).wrapping_add(hi);
-        // s1 ≤ 2^N - 1 + 2^N - 1 + 63 = 2^(N+1) + 61; at most 1 fold left.
-        let r = (s1 & mask64).wrapping_add(s1 >> N);
-        let (sub, borrow) = r.overflowing_sub(p);
-        if borrow {
-            r
-        } else {
-            sub
-        }
+    let r = if N >= 61 {
+        let lo = (x as u64) & p;
+        let mid = ((x >> N) as u64) & p;
+        let hi = (x >> (2 * N)) as u64; // at most 6 bits for N = 61
+        let s1 = lo + mid + hi; // < 2^(N+1) + 64, no u64 overflow for N ≤ 62
+        (s1 & p) + (s1 >> N)
     } else {
-        // Generic path for 31 ≤ N < 61: unroll four N-bit chunk folds
-        // followed by one canonicalising step.
-        let c0 = (x as u64) & mask64;
-        let c1 = ((x >> N) as u64) & mask64;
-        let c2 = ((x >> (2 * N)) as u64) & mask64;
-        let c3 = ((x >> (3 * N)) as u64) & mask64;
-        let c4 = (x >> (4 * N)) as u64; // remainder; for N=31 this is 4 bits
-        let s = c0
-            .wrapping_add(c1)
-            .wrapping_add(c2)
-            .wrapping_add(c3)
-            .wrapping_add(c4);
-        // `s` can exceed 2^N; fold once more.
-        let r = (s & mask64).wrapping_add(s >> N);
-        let (sub, borrow) = r.overflowing_sub(p);
-        if borrow {
-            r
-        } else {
-            sub
+        // Each fold maps `s` to `(s mod 2^N) + (s >> N)`; the u128 sum cannot
+        // overflow because `s >> N < 2^(128 - N)` and `s mod 2^N < 2^N`.
+        let p128 = p as u128;
+        let mut s = x;
+        while (s >> N) != 0 {
+            s = (s & p128) + (s >> N);
         }
+        s as u64
+    };
+    // r ≤ 2p, so one conditional subtraction canonicalises.
+    let (sub, borrow) = r.overflowing_sub(p);
+    if borrow {
+        r
+    } else {
+        sub
     }
 }
 
@@ -720,7 +708,7 @@ mod tests {
     }
 
     #[test]
-    fn mersenne_reduce_matches_naive_small() {
+    fn mersenne_reduce_31_matches_percent_reference_small() {
         const N: u32 = 31;
         const P: u64 = (1u64 << N) - 1;
         for x in [
@@ -740,13 +728,66 @@ mod tests {
     }
 
     #[test]
-    fn mersenne_reduce_max_u128() {
+    fn mersenne_reduce_61_matches_percent_reference_max_u128() {
         const N: u32 = 61;
         const P: u64 = (1u64 << N) - 1;
         let x = u128::MAX;
         let got = mersenne_reduce::<N>(x);
         let expected = (x % P as u128) as u64;
         assert_eq!(got, expected);
+    }
+
+    /// Checks `mersenne_reduce::<N>` against `%` on boundary and pseudo-random
+    /// `u128` inputs for each listed exponent.
+    macro_rules! mersenne_reduce_percent_reference_cases {
+        ($($name:ident: $n:literal),* $(,)?) => {$(
+            #[test]
+            fn $name() {
+                const N: u32 = $n;
+                const P: u128 = (1u128 << N) - 1;
+                let mut inputs = vec![
+                    0u128, 1, P - 1, P, P + 1, 2 * P, 2 * P + 1, 1u128 << N,
+                    (1u128 << N) + 1, P * P, (P - 1) * (P - 1),
+                    u64::MAX as u128, 1u128 << 64, (1u128 << 64) + 1,
+                    (1u128 << 127) - 1, 1u128 << 127, u128::MAX - 1, u128::MAX,
+                ];
+                for shift in [N, 2 * N, 3 * N, 4 * N, 5 * N] {
+                    if shift < 128 {
+                        inputs.push(1u128 << shift);
+                        inputs.push((1u128 << shift) - 1);
+                    }
+                }
+                let mut state = 0x9E37_79B9_7F4A_7C15u128 ^ N as u128;
+                for _ in 0..256 {
+                    state = state
+                        .wrapping_mul(0x2360_ED05_1FC6_5DA4_4385_DF64_9FCC_F645)
+                        .wrapping_add(0x5851_F42D_4C95_7F2D);
+                    inputs.push(state);
+                    inputs.push(state >> (state as u32 % 128));
+                }
+                for x in inputs {
+                    assert_eq!(mersenne_reduce::<N>(x) as u128, x % P, "N={N} x={x}");
+                }
+            }
+        )*};
+    }
+
+    mersenne_reduce_percent_reference_cases! {
+        mersenne_reduce_n4_matches_percent_reference: 4,
+        mersenne_reduce_n5_matches_percent_reference: 5,
+        mersenne_reduce_n7_matches_percent_reference: 7,
+        mersenne_reduce_n13_matches_percent_reference: 13,
+        mersenne_reduce_n17_matches_percent_reference: 17,
+        mersenne_reduce_n19_matches_percent_reference: 19,
+        mersenne_reduce_n25_matches_percent_reference: 25,
+        mersenne_reduce_n26_matches_percent_reference: 26,
+        mersenne_reduce_n31_matches_percent_reference: 31,
+        mersenne_reduce_n32_matches_percent_reference: 32,
+        mersenne_reduce_n42_matches_percent_reference: 42,
+        mersenne_reduce_n43_matches_percent_reference: 43,
+        mersenne_reduce_n60_matches_percent_reference: 60,
+        mersenne_reduce_n61_matches_percent_reference: 61,
+        mersenne_reduce_n62_matches_percent_reference: 62,
     }
 
     #[test]
@@ -863,7 +904,7 @@ mod tests {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(500))]
 
         #[test]
-        fn proptest_mersenne31_reduce_matches_naive(x_lo in any::<u64>(), x_hi in any::<u64>()) {
+        fn proptest_mersenne31_reduce_matches_percent_reference(x_lo in any::<u64>(), x_hi in any::<u64>()) {
             const N: u32 = 31;
             const P: u64 = (1u64 << N) - 1;
             let x = (x_hi as u128) << 64 | (x_lo as u128);
@@ -873,7 +914,7 @@ mod tests {
         }
 
         #[test]
-        fn proptest_mersenne61_reduce_matches_naive(x_lo in any::<u64>(), x_hi in any::<u64>()) {
+        fn proptest_mersenne61_reduce_matches_percent_reference(x_lo in any::<u64>(), x_hi in any::<u64>()) {
             const N: u32 = 61;
             const P: u64 = (1u64 << N) - 1;
             let x = (x_hi as u128) << 64 | (x_lo as u128);
@@ -1090,14 +1131,14 @@ mod tests {
         }
 
         #[test]
-        fn proptest_fp_mersenne31_add_matches_montgomery(a in 0..M31, b in 0..M31) {
+        fn proptest_fp_mersenne31_add_matches_percent_reference(a in 0..M31, b in 0..M31) {
             let specialized = (Fp::<M31>::new(a) + Fp::<M31>::new(b)).value();
             let reference = ref_canonical_add(a, b, M31);
             prop_assert_eq!(specialized, reference);
         }
 
         #[test]
-        fn proptest_fp_mersenne31_sub_matches_montgomery(a in 0..M31, b in 0..M31) {
+        fn proptest_fp_mersenne31_sub_matches_percent_reference(a in 0..M31, b in 0..M31) {
             let specialized = (Fp::<M31>::new(a) - Fp::<M31>::new(b)).value();
             let reference = ref_canonical_sub(a, b, M31);
             prop_assert_eq!(specialized, reference);
@@ -1111,14 +1152,14 @@ mod tests {
         }
 
         #[test]
-        fn proptest_fp_mersenne61_add_matches_montgomery(a in 0..M61, b in 0..M61) {
+        fn proptest_fp_mersenne61_add_matches_percent_reference(a in 0..M61, b in 0..M61) {
             let specialized = (Fp::<M61>::new(a) + Fp::<M61>::new(b)).value();
             let reference = ref_canonical_add(a, b, M61);
             prop_assert_eq!(specialized, reference);
         }
 
         #[test]
-        fn proptest_fp_mersenne61_sub_matches_montgomery(a in 0..M61, b in 0..M61) {
+        fn proptest_fp_mersenne61_sub_matches_percent_reference(a in 0..M61, b in 0..M61) {
             let specialized = (Fp::<M61>::new(a) - Fp::<M61>::new(b)).value();
             let reference = ref_canonical_sub(a, b, M61);
             prop_assert_eq!(specialized, reference);
@@ -1132,14 +1173,14 @@ mod tests {
         }
 
         #[test]
-        fn proptest_fp_proth_add_matches_montgomery(a in 0..PROTH, b in 0..PROTH) {
+        fn proptest_fp_proth_add_matches_percent_reference(a in 0..PROTH, b in 0..PROTH) {
             let specialized = (Fp::<PROTH>::new(a) + Fp::<PROTH>::new(b)).value();
             let reference = ref_canonical_add(a, b, PROTH);
             prop_assert_eq!(specialized, reference);
         }
 
         #[test]
-        fn proptest_fp_proth_sub_matches_montgomery(a in 0..PROTH, b in 0..PROTH) {
+        fn proptest_fp_proth_sub_matches_percent_reference(a in 0..PROTH, b in 0..PROTH) {
             let specialized = (Fp::<PROTH>::new(a) - Fp::<PROTH>::new(b)).value();
             let reference = ref_canonical_sub(a, b, PROTH);
             prop_assert_eq!(specialized, reference);
