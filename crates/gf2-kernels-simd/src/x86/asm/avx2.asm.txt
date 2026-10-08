@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 5c0f21d29
-; regenerated   : 2026-10-08T11:21:58Z
+; commit        : ed24da6e5
+; regenerated   : 2026-10-08T11:26:13Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -300,68 +300,66 @@ gf2_kernels_simd::x86::avx2::avx2_and_popcnt:
 gf2_kernels_simd::x86::avx2::avx2_and_parity:
 	cmp rcx, rsi
 	cmovb rsi, rcx
-	mov rax, rsi
-	shr rax, 2
-	cmp rsi, 8
-	jae .LBB81_7
-	vpxor xmm1, xmm1, xmm1
-	xor r8d, r8d
+	movabs rax, 1152921504606846972
+	lea rcx, [8*rsi]
+	movabs r8, 9223372036854775744
+	and r8, rcx
+	je .LBB81_1
 	vpxor xmm0, xmm0, xmm0
-	jmp .LBB81_2
-.LBB81_7:
-	vpxor xmm0, xmm0, xmm0
-	mov ecx, 32
-	xor r9d, r9d
+	xor ecx, ecx
 	vpxor xmm1, xmm1, xmm1
 .LBB81_8:
-	vmovdqu ymm2, ymmword ptr [rdx + rcx - 32]
-	vmovdqu ymm3, ymmword ptr [rdx + rcx]
-	vpand ymm2, ymm2, ymmword ptr [rdi + rcx - 32]
+	vmovdqu ymm2, ymmword ptr [rdx + rcx]
+	vmovdqu ymm3, ymmword ptr [rdx + rcx + 32]
+	vpand ymm2, ymm2, ymmword ptr [rdi + rcx]
+	vpand ymm3, ymm3, ymmword ptr [rdi + rcx + 32]
 	vpxor ymm1, ymm2, ymm1
-	vpand ymm2, ymm3, ymmword ptr [rdi + rcx]
-	vpxor ymm0, ymm2, ymm0
-	lea r8, [r9 + 2]
+	vpxor ymm0, ymm3, ymm0
 	add rcx, 64
-	add r9, 4
-	cmp r9, rax
-	mov r9, r8
-	jbe .LBB81_8
-.LBB81_2:
-	cmp r8, rax
-	jae .LBB81_4
-	shl r8, 5
-	vmovdqu ymm2, ymmword ptr [rdx + r8]
-	vpand ymm2, ymm2, ymmword ptr [rdi + r8]
+	cmp rcx, r8
+	jb .LBB81_8
+	and rax, rsi
+	test sil, 4
+	je .LBB81_4
+.LBB81_3:
+	vmovdqu ymm2, ymmword ptr [rdx + rcx]
+	vpand ymm2, ymm2, ymmword ptr [rdi + rcx]
 	vpxor ymm1, ymm2, ymm1
 .LBB81_4:
 	vpxor ymm0, ymm1, ymm0
 	vextracti128 xmm1, ymm0, 1
 	vpxor xmm0, xmm1, xmm0
-	vmovq rcx, xmm0
-	vpextrq rax, xmm0, 1
-	xor rax, rcx
-	movabs rcx, 1152921504606846972
-	and rcx, rsi
-	cmp rcx, rsi
+	vmovq r8, xmm0
+	vpextrq rcx, xmm0, 1
+	xor rcx, r8
+	cmp rax, rsi
 	je .LBB81_6
 .LBB81_5:
-	mov r8, qword ptr [rdx + 8*rcx]
-	and r8, qword ptr [rdi + 8*rcx]
-	inc rcx
-	xor rax, r8
-	cmp rcx, rsi
+	mov r8, qword ptr [rdx + 8*rax]
+	and r8, qword ptr [rdi + 8*rax]
+	inc rax
+	xor rcx, r8
+	cmp rax, rsi
 	jb .LBB81_5
 .LBB81_6:
-	mov ecx, eax
-	shr rax, 32
-	xor eax, ecx
-	mov ecx, eax
-	shr ecx, 16
+	mov eax, ecx
+	shr rcx, 32
 	xor ecx, eax
-	xor cl, ch
+	mov eax, ecx
+	shr eax, 16
+	xor eax, ecx
+	xor al, ah
 	setnp al
 	vzeroupper
 	ret
+.LBB81_1:
+	xor ecx, ecx
+	vpxor xmm1, xmm1, xmm1
+	vpxor xmm0, xmm0, xmm0
+	and rax, rsi
+	test sil, 4
+	jne .LBB81_3
+	jmp .LBB81_4
 
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::avx2::avx2_find_first_one
