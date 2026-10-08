@@ -3,8 +3,11 @@
 //! thread-local flag is set, so each count is exact for its section while other
 //! tests run in parallel. Construction and the first decode into a caller's
 //! buffer allocate; later decodes through the same decoder and prepared buffer
-//! allocate nothing.
+//! allocate nothing. The rate-matched 5G NR batch decoder
+//! (`@/citation/ThreeGpp2017`) is counted over preparation and decoding
+//! together.
 
+use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedBatchDecoder;
 use gf2_coding::ldpc::{
     BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDecoder, LdpcCode,
     LdpcDecoder, QuasiCyclicLdpc,
@@ -313,6 +316,63 @@ fn steady_state_batch_decoding_allocates_nothing() {
                     assert!(
                         counts.is_zero(),
                         "batch decode with posteriors of {context} requested {counts:?}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// Rate-matched frames of one full wave and a final wave of one frame, each
+/// prepared onto the mother code and decoded into message words that an
+/// earlier decode has sized, on the lane route and on the single-frame route.
+#[test]
+fn steady_state_rate_matched_batch_decoding_allocates_nothing() {
+    const FRAMES: usize = 9;
+    let routes = [
+        DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
+        DecodeSelectors::CONSERVATIVE,
+    ];
+    for (base_graph, n, k) in [(1, 600, 200), (2, 256, 49)] {
+        let code = QuasiCyclicLdpc::nr_5g_rate_matched(base_graph, n, k);
+        let params = code.params();
+        assert!(
+            params.num_punctured_systematic > 0
+                && params.num_punctured_parity > 0
+                && params.num_shortened > 0
+        );
+        let frames: Vec<Vec<Llr>> = (0..FRAMES as u64)
+            .map(|frame| channel_llrs(n, 53 + frame))
+            .collect();
+        let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+        let mut outcomes = vec![DecodeOutcome::default(); FRAMES];
+
+        for algorithm in ALGORITHMS {
+            for selectors in &routes {
+                let mut decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
+                    code.clone(),
+                    algorithm,
+                    2,
+                    selectors.clone(),
+                );
+                let route = decoder.batch_route(FRAMES);
+                let mut decoded = vec![BitVec::new(); FRAMES];
+
+                // Prepare the outputs: one decode grows each word.
+                decoder.decode_batch(&views, &mut decoded, &mut outcomes);
+
+                let context = format!("nr-bg{base_graph}-n{n}-k{k}, {algorithm:?}, {route:?}");
+                for repeat in 0..2 {
+                    let (_, counts) =
+                        count(|| decoder.decode_batch(&views, &mut decoded, &mut outcomes));
+                    report(
+                        "rate-matched-batch-steady-state",
+                        &format!("{context}, decode {repeat}"),
+                        counts,
+                    );
+                    assert!(
+                        counts.is_zero(),
+                        "rate-matched batch decode {repeat} of {context} requested {counts:?}"
                     );
                 }
             }

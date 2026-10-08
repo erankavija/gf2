@@ -236,3 +236,12 @@ runs the shared batch contract on `DvbT2ConcatBatchDecoder`, whose LDPC inner
 code decodes on `LdpcBatchDecoder`, against `DvbT2Concat::decode_soft_counted`
 on each route: a frame's BBFRAME, LDPC iteration count and flags equal the
 single-frame codec's, for converging and non-converging frames.
+
+The unit tests of
+[`nr_5g/batch.rs`](../../crates/gf2-coding/src/ldpc/nr_5g/batch.rs) hold
+`Nr5gRateMatchedBatchDecoder`, which prepares each rate-matched frame as above
+and decodes the batch through `LdpcBatchDecoder`, to
+`Nr5gRateMatchedDecoder::decode_iterative` frame by frame: the shared batch
+contract runs on each route over codes of both base graphs with punctured
+systematic columns, truncated parity and filler bits, for each algorithm and
+at an iteration cap of zero.
