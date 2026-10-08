@@ -11,8 +11,7 @@ use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel, SimulationConfig, Si
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
-/// The frame budget gives thousands of samples per bit position; tests using
-/// it carry the `sim` ignore tier.
+/// The frame budget gives thousands of samples per bit position.
 fn bpsk_config() -> SimulationConfig {
     SimulationConfig {
         eb_n0_range_db: vec![6.0],
@@ -307,7 +306,7 @@ fn test_analysis_capture_mismatched_bits_per_symbol_panics() {
 }
 
 #[test]
-#[ignore = "sim: multi-SNR aggregation equals single-point sweeps, 4 x 4 000 frames"]
+#[ignore = "sim: multi-SNR aggregation equals single-point sweeps, 5 x 4 000 frames"]
 fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweeps() {
     let channel = BpskAwgnChannel;
     let make_config = |points: Vec<f64>| SimulationConfig {
