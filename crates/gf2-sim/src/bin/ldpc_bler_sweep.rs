@@ -1,5 +1,5 @@
 //! LDPC-only AWGN-BPSK BLER sweep for comparison against aff3ct
-//! (`@/citation/Cassagne2019`). The isolated LDPC decoder (normalized min-sum,
+//! (`@/citation/Cassagne2019`). The LDPC batch decoder (normalized min-sum,
 //! early termination) decodes noisy all-zero codewords of the `--code`
 //! [`ComparisonCode`] drawn from [`gf2_sim::testutil::AwgnLlrSource`]; a frame
 //! error is a nonzero bit among the K message bits. The output CSV has header
@@ -9,14 +9,9 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use rayon::prelude::*;
-
-use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcDecoder};
-use gf2_coding::traits::IterativeSoftDecoder;
 use gf2_coding::LdpcCode;
-use gf2_sim::testutil::{AwgnLlrSource, ComparisonCode};
-
-const NMS_SCALE: f32 = 0.75;
+use gf2_sim::bler_sweep;
+use gf2_sim::testutil::ComparisonCode;
 
 struct Cfg {
     code: ComparisonCode,
@@ -116,12 +111,7 @@ fn esn0_db_to_sigma(esn0_db: f64) -> f64 {
     (1.0 / (2.0 * esn0_lin)).sqrt()
 }
 
-/// Runs one Es/N0 point: decodes frames until `target_errors` frame errors or
-/// `max_frames` frames, whichever first. Returns `(bler, frames, errors, fps)`.
-///
-/// Each `chunk`-frame slice owns an `AwgnLlrSource` seeded from `point_seed`
-/// and the slice's first frame index. The error budget is checked between
-/// waves of `chunk · workers` frames.
+/// Times [`bler_sweep::run_point`] and returns `(bler, frames, errors, fps)`.
 fn run_point(
     code: &LdpcCode,
     point_seed: u64,
@@ -130,48 +120,9 @@ fn run_point(
     target_errors: u64,
     max_iter: usize,
 ) -> (f64, u64, u64, f64) {
-    let n = code.n();
-    let k = code.k();
-    // Small slices bound the overshoot past `target_errors` to one wave.
-    let chunk: u64 = 32;
-
     let start = Instant::now();
-    let mut frames_done: u64 = 0;
-    let mut errors: u64 = 0;
-
-    let workers = rayon::current_num_threads().max(1) as u64;
-    let wave = chunk * workers;
-
-    while frames_done < max_frames && errors < target_errors {
-        let wave_start = frames_done;
-        let wave_end = (wave_start + wave).min(max_frames);
-        let wave_len = wave_end - wave_start;
-
-        let slice_starts: Vec<u64> = (wave_start..wave_end).step_by(chunk as usize).collect();
-        let wave_errors: u64 = slice_starts
-            .par_iter()
-            .map(|&slice_start| {
-                let slice_end = (slice_start + chunk).min(wave_end);
-                let mut src = AwgnLlrSource::new(point_seed ^ slice_start.wrapping_mul(0x9E37));
-                let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(NMS_SCALE), true);
-                let mut dec = LdpcDecoder::with_config(code.clone(), cfg);
-                let mut local_err = 0u64;
-                for _ in slice_start..slice_end {
-                    let llrs = src.frame_all_zero(n, sigma);
-                    let res = dec.decode_iterative(&llrs, max_iter);
-                    debug_assert_eq!(res.decoded_bits.len(), k);
-                    if (0..k).any(|i| res.decoded_bits.get(i)) {
-                        local_err += 1;
-                    }
-                }
-                local_err
-            })
-            .sum();
-
-        frames_done += wave_len;
-        errors += wave_errors;
-    }
-
+    let (frames_done, errors) =
+        bler_sweep::run_point(code, point_seed, sigma, max_frames, target_errors, max_iter);
     let secs = start.elapsed().as_secs_f64();
     let fps = if secs > 0.0 {
         frames_done as f64 / secs
