@@ -121,21 +121,52 @@ tuning::install(prepared)?;
 
 With `parallel`, batch entry points distribute independent items over rayon,
 for example `CpuBackend::batch_matvec` and `BatchExtField` multiplication in
-`gf2-core`, and `LdpcDecoder::decode_batch_with_config` and BCH batch encoding
-in `gf2-coding`; without it they process the same items on the calling thread.
+`gf2-core` and BCH batch encoding in `gf2-coding`; without it they process the
+same items on the calling thread.
 `BatchExtField` batches fan out only from `soa_batch.parallel_min_len`
 elements, which `gf2_core::compute::field::soa_parallel_route` reports.
 Results do not depend on the thread count
 ([parallelism](../concepts/acceleration-architecture.md#parallelism)).
 
 Library calls use the rayon pool of the calling context: the global pool,
-sized by `RAYON_NUM_THREADS`, or a pool the caller installs:
+sized by `RAYON_NUM_THREADS`, or a pool the caller installs.
+
+### Decode LDPC frames in parallel
+
+`PooledBatchDecoder` implements `BatchSoftDecoder` over one inner decoder per
+worker of the rayon pool current at construction and returns decoded words and
+`DecodeOutcome`s in input order. With `LdpcBatchDecoder` as the inner decoder,
+each worker decodes waves of eight frames. A wave runs on the lane kernels or
+frame by frame on `LdpcDecoder`, as the decode selectors of the coding tuning
+section choose. The lane kernels are the AVX2 ones when `gf2-coding` is built
+with `simd` and the host reports AVX2, and the portable ones otherwise.
+`parallel` spreads the waves over the workers; without it the pool decodes on
+the calling thread. Each frame's word and outcome equal those of the
+single-frame decoder
+([numerical contract](../reference/ldpc-decoder-numerical-contract.md)).
+
+Construct the pool and decode inside the installed rayon pool
+([`ldpc_parallel_batch.rs`](../../crates/gf2-coding/examples/ldpc_parallel_batch.rs)
+builds the code and frames and runs this under `cargo run -p gf2-coding
+--features parallel --example ldpc_parallel_batch`):
 
 ```rust
-let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build()?;
-let results = pool.install(|| {
-    LdpcDecoder::decode_batch_with_config(&code, &frames, 50, config)
+let rayon_pool = rayon::ThreadPoolBuilder::new().num_threads(8).build()?;
+let mut decoder = rayon_pool.install(|| {
+    PooledBatchDecoder::new(|| {
+        LdpcBatchDecoder::new(
+            code.clone(),
+            DecoderConfig::default(),
+            50,
+            DecodedWord::Message,
+        )
+    })
 });
+
+let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+let mut decoded = vec![BitVec::new(); views.len()];
+let mut outcomes = vec![DecodeOutcome::default(); views.len()];
+rayon_pool.install(|| decoder.decode_batch(&views, &mut decoded, &mut outcomes));
 ```
 
 The repository's `.cargo/config.toml` sets `RAYON_NUM_THREADS` for every

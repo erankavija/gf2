@@ -190,3 +190,7 @@ harness = false
 [[bench]]
 name = "simulation_no_analysis_overhead"
 harness = false
+
+[[example]]
+name = "ldpc_parallel_batch"
+required-features = ["parallel"]
