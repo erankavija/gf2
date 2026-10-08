@@ -38,6 +38,8 @@ tempfile = "3.8"
 thiserror = "1.0"
 num_cpus = "1.17.0"
 serde_json = "1.0"
+# Campaign mechanics of the `tuning_calibration` owner producer.
+tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
 # Digests the ETSI verification streams the oracle-agreement suite reads, so
 # the run receipt carries the identity of the exact bytes that were compared.
 sha2 = "0.10"
@@ -194,3 +196,16 @@ harness = false
 [[example]]
 name = "ldpc_parallel_batch"
 required-features = ["parallel"]
+
+# Owner producer of the offline tuning campaign; its features are the
+# campaign's feature contract.
+[[bench]]
+name = "tuning_calibration"
+harness = false
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
+
+# Runs the `#[cfg(test)]` module of the `tuning_calibration` bench, which a
+# `harness = false` target does not execute.
+[[test]]
+name = "tuning_calibration_harness"
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
