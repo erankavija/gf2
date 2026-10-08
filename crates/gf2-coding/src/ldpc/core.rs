@@ -1061,7 +1061,38 @@ impl crate::traits::BlockEncoder for LdpcEncoder {
 #[cfg(test)]
 mod decoder_tests {
     use super::*;
+    use crate::ldpc::{DecodedWord, LdpcBatchDecoder};
+    use crate::pooled::PooledBatchDecoder;
+    use crate::traits::BatchSoftDecoder;
     use crate::traits::BlockEncoder;
+
+    /// Decodes `blocks` through a pooled LDPC batch decoder of message words
+    /// and returns the results in the form of [`DecoderResult`].
+    fn pooled_decode(code: &LdpcCode, blocks: &[Vec<Llr>], cap: usize) -> Vec<DecoderResult> {
+        let mut pool = PooledBatchDecoder::new(|| {
+            LdpcBatchDecoder::new(
+                code.clone(),
+                DecoderConfig::default(),
+                cap,
+                DecodedWord::Message,
+            )
+        });
+        let views: Vec<&[Llr]> = blocks.iter().map(Vec::as_slice).collect();
+        let mut decoded = vec![BitVec::new(); blocks.len()];
+        let mut outcomes = vec![DecodeOutcome::default(); blocks.len()];
+        pool.decode_batch(&views, &mut decoded, &mut outcomes);
+        decoded
+            .into_iter()
+            .zip(outcomes)
+            .map(|(decoded_bits, outcome)| DecoderResult {
+                decoded_bits,
+                iterations: outcome.iterations,
+                converged: outcome.converged,
+                syndrome_check_passed: outcome.syndrome_check_passed,
+                queries: outcome.queries,
+            })
+            .collect()
+    }
 
     #[test]
     fn test_decoder_creation() {
@@ -1349,8 +1380,12 @@ mod decoder_tests {
             vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)], // [0,0,0]
         ];
 
-        let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
+        let results = pooled_decode(&code, &llr_blocks, 10);
 
+        let mut single = LdpcDecoder::new(code.clone());
+        for (llrs, result) in llr_blocks.iter().zip(&results) {
+            assert_eq!(result, &single.decode_iterative(llrs, 10));
+        }
         assert_eq!(results.len(), 3);
         assert!(results[0].converged);
         assert_eq!(results[0].decoded_bits.count_ones(), 0);
@@ -1371,7 +1406,7 @@ mod decoder_tests {
         assert_eq!(codewords.len(), 0);
 
         let empty_llrs: Vec<Vec<Llr>> = vec![];
-        let results = LdpcDecoder::decode_batch(&code, &empty_llrs, 10);
+        let results = pooled_decode(&code, &empty_llrs, 10);
         assert_eq!(results.len(), 0);
     }
 
@@ -1415,7 +1450,6 @@ mod decoder_tests {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn test_ldpc_code_creation() {
         let edges = vec![(0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 2)];
