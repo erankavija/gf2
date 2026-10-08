@@ -184,7 +184,7 @@ pub fn generic_ebch_16_11() -> Extended<BinaryBchCode> {
 /// A mother-code wrapper whose only difference is that it reports no
 /// systematic layout.
 ///
-/// [`Shortened`](crate::transform::Shortened) reads the mother's
+/// [`Shortened`] reads the mother's
 /// [`is_systematic`](GeneratorMatrixAccess::is_systematic) report to select
 /// [`SystematicRestriction`](crate::transform::ShortenedDerivation::SystematicRestriction),
 /// so wrapping a systematic mother in this forces the same coordinate set

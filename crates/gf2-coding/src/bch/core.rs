@@ -767,11 +767,9 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// code with an empty defining set yields empty rows.
     ///
     /// Rows the device cannot produce come from the CPU evaluator instead: a
-    /// presentation
-    /// [the device does not support](Self::device_syndromes_supported) and a
-    /// recoverable device failure both fall back to
-    /// [`evaluate_syndromes`](Self::evaluate_syndromes), which is the value the
-    /// device reproduces anyway.
+    /// presentation the device does not support and a recoverable device
+    /// failure both fall back to it, and it yields the value the device
+    /// reproduces anyway.
     ///
     /// # Errors
     ///
@@ -842,8 +840,7 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// anyway. No path leaves an altered, unverified word behind, so a caller
     /// that retries decodes the words it started with.
     ///
-    /// A presentation
-    /// [the device does not support](Self::device_syndromes_supported) takes
+    /// A presentation the device does not support takes
     /// the same CPU path before any device work, so a valid code the kernel
     /// cannot carry decodes rather than failing.
     ///
