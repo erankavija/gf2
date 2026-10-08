@@ -291,10 +291,20 @@ impl<T> DeviceBuffer<T> {
         crate::check_hip(code, "hipMemcpy D2H")
     }
 
-    /// Enqueues a stream-ordered H2D copy from a pinned host buffer.
+    /// Enqueues a stream-ordered H2D copy from a pinned host buffer and
+    /// returns without waiting for it.
     ///
-    /// Returns as soon as the copy is enqueued. The caller must keep `src`
-    /// alive and unmodified until `stream` is synchronized.
+    /// # Safety
+    ///
+    /// The HIP runtime reads `src` and writes this buffer until the copy
+    /// completes, which a later [`HipStream::synchronize`] on `stream`
+    /// establishes. Until then:
+    ///
+    /// - the host does not write `src`;
+    /// - `src` and `self` are dropped only on a thread whose current HIP
+    ///   device is `stream.device_id()`. `hipHostFree` and `hipFree` are
+    ///   documented to perform an implicit `hipDeviceSynchronize`, which then
+    ///   completes the copy before the memory is released.
     ///
     /// # Panics
     ///
@@ -303,7 +313,7 @@ impl<T> DeviceBuffer<T> {
     /// # Errors
     ///
     /// Returns [`HipError::Hip`] if the async memcpy fails to enqueue.
-    pub fn copy_from_pinned_async(
+    pub unsafe fn copy_from_pinned_async(
         &self,
         src: &PinnedHostBuffer<T>,
         stream: &HipStream,
@@ -323,17 +333,27 @@ impl<T> DeviceBuffer<T> {
         let bytes = src.len() * std::mem::size_of::<T>();
         // SAFETY: `self.ptr` is a valid device allocation of at least `bytes`;
         // `src` is pinned host memory of exactly `src.len()` elements; `stream`
-        // is a live HIP stream. The HIP runtime owns the async copy until the
-        // stream is synchronized.
+        // is a live HIP stream. The caller keeps both allocations valid and
+        // `src` unwritten until the copy completes.
         let code =
             unsafe { ffi::hip_memcpy_h2d_async(self.ptr, src.as_ptr(), bytes, stream.as_raw()) };
         crate::check_hip(code, "hipMemcpyAsync H2D")
     }
 
-    /// Enqueues a stream-ordered D2H copy into a pinned host buffer.
+    /// Enqueues a stream-ordered D2H copy into a pinned host buffer and
+    /// returns without waiting for it.
     ///
-    /// The destination data is valid only after `stream.synchronize()`
-    /// returns.
+    /// # Safety
+    ///
+    /// The HIP runtime reads this buffer and writes `dst` until the copy
+    /// completes, which a later [`HipStream::synchronize`] on `stream`
+    /// establishes. Until then:
+    ///
+    /// - the host neither reads nor writes `dst`;
+    /// - `dst` and `self` are dropped only on a thread whose current HIP
+    ///   device is `stream.device_id()`. `hipHostFree` and `hipFree` are
+    ///   documented to perform an implicit `hipDeviceSynchronize`, which then
+    ///   completes the copy before the memory is released.
     ///
     /// # Panics
     ///
@@ -342,7 +362,7 @@ impl<T> DeviceBuffer<T> {
     /// # Errors
     ///
     /// Returns [`HipError::Hip`] if the async memcpy fails to enqueue.
-    pub fn copy_to_pinned_async(
+    pub unsafe fn copy_to_pinned_async(
         &self,
         dst: &mut PinnedHostBuffer<T>,
         stream: &HipStream,
@@ -362,8 +382,8 @@ impl<T> DeviceBuffer<T> {
         let bytes = dst.len() * std::mem::size_of::<T>();
         // SAFETY: `self.ptr` is a valid device allocation of at least `bytes`;
         // `dst` is pinned host memory of exactly `dst.len()` elements; `stream`
-        // is a live HIP stream. The destination is valid once the stream is
-        // synchronized.
+        // is a live HIP stream. The caller keeps both allocations valid and
+        // `dst` untouched until the copy completes.
         let code = unsafe {
             ffi::hip_memcpy_d2h_async(
                 dst.as_mut_ptr(),
@@ -512,6 +532,33 @@ impl<T> Drop for PinnedHostBuffer<T> {
 // and owned per worker.
 unsafe impl<T: Send> Send for PinnedHostBuffer<T> {}
 
+/// Safe code cannot enqueue an asynchronous pinned copy: the sequences below
+/// free or read a staging buffer while the stream still owns the transfer, and
+/// each is rejected for calling an `unsafe` method outside an `unsafe` block.
+///
+/// ```compile_fail,E0133
+/// use gf2_kernels_hip::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
+/// let stream = HipStream::new().unwrap();
+/// let dev = DeviceBuffer::<f32>::new(32, 0).unwrap();
+/// let src = PinnedHostBuffer::<f32>::new(32, 0).unwrap();
+/// dev.copy_from_pinned_async(&src, &stream).unwrap();
+/// drop(src);
+/// stream.synchronize().unwrap();
+/// ```
+///
+/// ```compile_fail,E0133
+/// use gf2_kernels_hip::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
+/// let stream = HipStream::new().unwrap();
+/// let dev = DeviceBuffer::<f32>::new(32, 0).unwrap();
+/// let mut dst = PinnedHostBuffer::<f32>::new(32, 0).unwrap();
+/// dev.copy_to_pinned_async(&mut dst, &stream).unwrap();
+/// let _unsynchronized = dst.as_slice()[0];
+/// drop(dst);
+/// stream.synchronize().unwrap();
+/// ```
+#[cfg(doctest)]
+struct AsyncPinnedCopiesAreUnsafe;
+
 #[cfg(all(test, feature = "hip"))]
 mod tests {
     use super::*;
@@ -544,11 +591,16 @@ mod tests {
             *slot = i as f32 - 7.0;
         }
         let dev = DeviceBuffer::<f32>::new(n, 0).expect("device buffer");
-        dev.copy_from_pinned_async(&h2d, &stream)
-            .expect("async H2D");
         let mut d2h = PinnedHostBuffer::<f32>::new(n, 0).expect("pinned out");
-        dev.copy_to_pinned_async(&mut d2h, &stream)
-            .expect("async D2H");
+        // SAFETY: neither staging buffer is touched before the synchronize
+        // below, and every buffer is dropped on this thread, whose current
+        // device is the one `stream` was created on.
+        unsafe {
+            dev.copy_from_pinned_async(&h2d, &stream)
+                .expect("async H2D");
+            dev.copy_to_pinned_async(&mut d2h, &stream)
+                .expect("async D2H");
+        }
         stream.synchronize().expect("drain stream");
         assert_eq!(
             h2d.as_slice(),
