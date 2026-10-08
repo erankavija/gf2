@@ -4,9 +4,9 @@ use rand::SeedableRng as _;
 use rand_chacha::ChaCha20Rng;
 
 use crate::batch::SymbolBatch;
-use crate::channels::draw_standard_normal;
+use crate::channels::{assert_frame_budget, draw_standard_normal, max_frame_symbols};
 use crate::error::StageError;
-use crate::parallel::{WorkerCtx, FRAME_STRIDE};
+use crate::parallel::WorkerCtx;
 use crate::stage::{ExecutionClass, Stage};
 
 /// Per-stage scratch of the channel stages: a [`ChaCha20Rng`].
@@ -29,6 +29,10 @@ impl Default for ChannelScratch {
 /// every symbol in a [`SymbolBatch`].
 ///
 /// The noise variance is `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))` per axis.
+///
+/// A frame holds at most [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS)
+/// symbols; the stage panics on a larger one. The frame count of a batch is
+/// unbounded.
 #[derive(Debug, Clone)]
 pub struct Awgn {
     /// Channel Es/N0 in dB.
@@ -40,6 +44,14 @@ pub struct Awgn {
 }
 
 impl Awgn {
+    /// The largest symbol count of one frame, whose draw fits the per-frame
+    /// budget of [`FRAME_STRIDE`]` - `[`DEBUG_ASSERT_WORD_MARGIN`] ChaCha20
+    /// words.
+    ///
+    /// [`FRAME_STRIDE`]: crate::parallel::FRAME_STRIDE
+    /// [`DEBUG_ASSERT_WORD_MARGIN`]: crate::parallel::DEBUG_ASSERT_WORD_MARGIN
+    pub const MAX_FRAME_SYMBOLS: usize = max_frame_symbols(2);
+
     /// Constructs an AWGN channel stage; `bits_per_symbol` does not enter the
     /// noise variance.
     #[must_use]
@@ -74,6 +86,10 @@ impl Awgn {
     }
 
     /// Seeks `ctx`'s RNG to frame `frame_idx_in_worker` and applies AWGN noise.
+    ///
+    /// # Panics
+    ///
+    /// As [`apply`](Self::apply).
     pub fn apply_for_frame(
         &self,
         batch: &mut SymbolBatch,
@@ -91,13 +107,15 @@ impl Awgn {
     /// sample, the draw order of
     /// [`BicmAwgnChannel::transmit_and_demodulate_with_noise`](gf2_coding::dvb_t2_bicm_harness::BicmAwgnChannel::transmit_and_demodulate_with_noise).
     /// Each sample consumes 4 ChaCha20 32-bit words.
+    /// Frames draw consecutively, so a batch of `n` frames stays within `n`
+    /// frame strides of the starting position.
     ///
     /// # Panics
     ///
-    /// In debug builds, if the call draws more than `FRAME_STRIDE - 256`
-    /// ChaCha20 words.
+    /// Panics before drawing if a frame of `batch` has more than
+    /// [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS) symbols.
     pub fn apply(&self, batch: &mut SymbolBatch, rng: &mut ChaCha20Rng) {
-        let pos_before = rng.get_word_pos();
+        assert_frame_budget("AWGN", batch, Self::MAX_FRAME_SYMBOLS);
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
             for xi in i_frame.iter_mut() {
                 *xi += draw_standard_normal(rng) * self.sigma;
@@ -106,12 +124,6 @@ impl Awgn {
                 *xq += draw_standard_normal(rng) * self.sigma;
             }
         }
-        let noise_words_drawn = rng.get_word_pos().saturating_sub(pos_before);
-        debug_assert!(
-            noise_words_drawn <= FRAME_STRIDE - 256,
-            "AWGN noise draw {noise_words_drawn} words exceeded FRAME_STRIDE - 256 = {}",
-            FRAME_STRIDE - 256
-        );
     }
 }
 
@@ -121,6 +133,10 @@ impl Stage<SymbolBatch, SymbolBatch> for Awgn {
 
     /// Adds AWGN noise to a copy of `input`, drawing from `scratch.rng`; never
     /// returns `Err`.
+    ///
+    /// # Panics
+    ///
+    /// As [`apply`](Self::apply).
     fn process(
         &self,
         input: &SymbolBatch,

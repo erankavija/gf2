@@ -4,9 +4,9 @@ use rand_chacha::ChaCha20Rng;
 
 use crate::batch::SymbolBatch;
 use crate::channels::awgn::ChannelScratch;
-use crate::channels::{draw_cn01, draw_standard_normal};
+use crate::channels::{assert_frame_budget, draw_cn01, draw_standard_normal, max_frame_symbols};
 use crate::error::StageError;
-use crate::parallel::{WorkerCtx, FRAME_STRIDE};
+use crate::parallel::WorkerCtx;
 use crate::stage::{ExecutionClass, Stage};
 
 /// Rician flat-fading channel stage.
@@ -22,6 +22,10 @@ use crate::stage::{ExecutionClass, Stage};
 /// where `los_mag = sqrt(K/(K+1))` and `scatter = sqrt(1/(K+1))`, so
 /// `E[|h|^2] = 1` for all K, and `n` is complex AWGN of per-axis variance
 /// `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))`. `K = 0` is Rayleigh fading.
+///
+/// A frame holds at most [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS)
+/// symbols; the stage panics on a larger one. The frame count of a batch is
+/// unbounded.
 #[derive(Debug, Clone)]
 pub struct Rician {
     /// Channel Es/N0 in dB.
@@ -39,6 +43,14 @@ pub struct Rician {
 }
 
 impl Rician {
+    /// The largest symbol count of one frame, whose draw fits the per-frame
+    /// budget of [`FRAME_STRIDE`]` - `[`DEBUG_ASSERT_WORD_MARGIN`] ChaCha20
+    /// words.
+    ///
+    /// [`FRAME_STRIDE`]: crate::parallel::FRAME_STRIDE
+    /// [`DEBUG_ASSERT_WORD_MARGIN`]: crate::parallel::DEBUG_ASSERT_WORD_MARGIN
+    pub const MAX_FRAME_SYMBOLS: usize = max_frame_symbols(4);
+
     /// Constructs a Rician fading channel stage; `bits_per_symbol` does not
     /// enter the channel model.
     ///
@@ -93,6 +105,10 @@ impl Rician {
     }
 
     /// Seeks `ctx`'s RNG to frame `frame_idx_in_worker` and applies the channel.
+    ///
+    /// # Panics
+    ///
+    /// As [`apply`](Self::apply).
     pub fn apply_for_frame(
         &self,
         batch: &mut SymbolBatch,
@@ -108,13 +124,15 @@ impl Rician {
     ///
     /// Per symbol, the `CN(0, 1)` scatter draw comes first and then `n`,
     /// consuming 16 ChaCha20 32-bit words (8 each).
+    /// Frames draw consecutively, so a batch of `n` frames stays within `n`
+    /// frame strides of the starting position.
     ///
     /// # Panics
     ///
-    /// In debug builds, if the call draws more than `FRAME_STRIDE - 256`
-    /// ChaCha20 words.
+    /// Panics before drawing if a frame of `batch` has more than
+    /// [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS) symbols.
     pub fn apply(&self, batch: &mut SymbolBatch, rng: &mut ChaCha20Rng) {
-        let pos_before = rng.get_word_pos();
+        assert_frame_budget("Rician", batch, Self::MAX_FRAME_SYMBOLS);
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
             for (xi, xq) in i_frame.iter_mut().zip(q_frame.iter_mut()) {
                 let (v_r, v_i) = draw_cn01(rng);
@@ -134,12 +152,6 @@ impl Rician {
                 *xq = r_q + n_q;
             }
         }
-        let noise_words_drawn = rng.get_word_pos().saturating_sub(pos_before);
-        debug_assert!(
-            noise_words_drawn <= FRAME_STRIDE - 256,
-            "Rician draw {noise_words_drawn} words exceeded FRAME_STRIDE - 256 = {}",
-            FRAME_STRIDE - 256
-        );
     }
 }
 
@@ -149,6 +161,10 @@ impl Stage<SymbolBatch, SymbolBatch> for Rician {
 
     /// Applies Rician fading and AWGN to a copy of `input`, drawing from
     /// `scratch.rng`; never returns `Err`.
+    ///
+    /// # Panics
+    ///
+    /// As [`apply`](Self::apply).
     fn process(
         &self,
         input: &SymbolBatch,
