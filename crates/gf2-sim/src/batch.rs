@@ -44,6 +44,13 @@ pub struct SymbolBatch {
 impl SymbolBatch {
     /// Wraps parallel per-frame I/Q lanes into a batch.
     ///
+    /// The channel stages take any number of frames and bound the symbols of
+    /// one frame: [`Awgn::MAX_FRAME_SYMBOLS`](crate::channels::Awgn::MAX_FRAME_SYMBOLS),
+    /// [`Rayleigh::MAX_FRAME_SYMBOLS`](crate::channels::Rayleigh::MAX_FRAME_SYMBOLS)
+    /// and [`Rician::MAX_FRAME_SYMBOLS`](crate::channels::Rician::MAX_FRAME_SYMBOLS).
+    /// This constructor accepts longer frames; the channel stage panics on
+    /// them.
+    ///
     /// # Panics
     ///
     /// Panics if `i.len() != q.len()` or if any frame `f` has

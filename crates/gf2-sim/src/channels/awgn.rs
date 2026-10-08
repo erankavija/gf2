@@ -4,7 +4,7 @@ use rand::SeedableRng as _;
 use rand_chacha::ChaCha20Rng;
 
 use crate::batch::SymbolBatch;
-use crate::channels::{debug_assert_frame_budget, draw_standard_normal, max_frame_symbols};
+use crate::channels::{assert_frame_budget, draw_standard_normal, max_frame_symbols};
 use crate::error::StageError;
 use crate::parallel::WorkerCtx;
 use crate::stage::{ExecutionClass, Stage};
@@ -29,6 +29,10 @@ impl Default for ChannelScratch {
 /// every symbol in a [`SymbolBatch`].
 ///
 /// The noise variance is `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))` per axis.
+///
+/// A frame holds at most [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS)
+/// symbols; the stage panics on a larger one. The frame count of a batch is
+/// unbounded.
 #[derive(Debug, Clone)]
 pub struct Awgn {
     /// Channel Es/N0 in dB.
@@ -82,6 +86,10 @@ impl Awgn {
     }
 
     /// Seeks `ctx`'s RNG to frame `frame_idx_in_worker` and applies AWGN noise.
+    ///
+    /// # Panics
+    ///
+    /// As [`apply`](Self::apply).
     pub fn apply_for_frame(
         &self,
         batch: &mut SymbolBatch,
@@ -104,10 +112,10 @@ impl Awgn {
     ///
     /// # Panics
     ///
-    /// In debug builds, if a frame of `batch` has more than
+    /// Panics before drawing if a frame of `batch` has more than
     /// [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS) symbols.
     pub fn apply(&self, batch: &mut SymbolBatch, rng: &mut ChaCha20Rng) {
-        debug_assert_frame_budget("AWGN", batch, Self::MAX_FRAME_SYMBOLS);
+        assert_frame_budget("AWGN", batch, Self::MAX_FRAME_SYMBOLS);
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
             for xi in i_frame.iter_mut() {
                 *xi += draw_standard_normal(rng) * self.sigma;
@@ -125,6 +133,10 @@ impl Stage<SymbolBatch, SymbolBatch> for Awgn {
 
     /// Adds AWGN noise to a copy of `input`, drawing from `scratch.rng`; never
     /// returns `Err`.
+    ///
+    /// # Panics
+    ///
+    /// As [`apply`](Self::apply).
     fn process(
         &self,
         input: &SymbolBatch,

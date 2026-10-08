@@ -1,7 +1,6 @@
 //! CPU channel stages: AWGN, Rayleigh flat-fading, Rician flat-fading. Each
-//! stage maps a [`SymbolBatch`](crate::SymbolBatch) to a
-//! [`SymbolBatch`](crate::SymbolBatch), drawing from the RNG of its
-//! [`ChannelScratch`](awgn::ChannelScratch).
+//! stage maps a [`SymbolBatch`] to a [`SymbolBatch`], drawing from the RNG of
+//! its [`ChannelScratch`](awgn::ChannelScratch).
 
 use rand::Rng as _;
 use rand_chacha::ChaCha20Rng;
@@ -29,12 +28,12 @@ pub(crate) const fn max_frame_symbols(normals_per_symbol: u128) -> usize {
     ((FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN) / (normals_per_symbol * WORDS_PER_NORMAL)) as usize
 }
 
-/// Debug-asserts that every frame of `batch` has at most `max_symbols`
-/// symbols. `channel` names the stage in the message.
-pub(crate) fn debug_assert_frame_budget(channel: &str, batch: &SymbolBatch, max_symbols: usize) {
+/// Panics unless every frame of `batch` has at most `max_symbols` symbols.
+/// `channel` names the stage in the message.
+pub(crate) fn assert_frame_budget(channel: &str, batch: &SymbolBatch, max_symbols: usize) {
     for (f, (i_frame, q_frame)) in batch.i.iter().zip(batch.q.iter()).enumerate() {
         let symbols = i_frame.len().max(q_frame.len());
-        debug_assert!(
+        assert!(
             symbols <= max_symbols,
             "{channel} frame {f} has {symbols} symbols; a frame holds at most {max_symbols} \
              symbols, which draw FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN = {} ChaCha20 words",

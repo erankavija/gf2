@@ -274,13 +274,18 @@ fn test_frame_at_symbol_limit_fills_the_shared_word_budget() {
     }
 }
 
-#[cfg(debug_assertions)]
 #[test]
-fn test_frame_above_symbol_limit_is_refused() {
+fn test_frame_above_symbol_limit_is_refused_before_drawing() {
     for (label, channel) in channels(6.25) {
         let limit = channel.measured_symbol_limit();
-        let refused = std::panic::catch_unwind(|| channel.words_drawn(1, limit + 1))
-            .expect_err(&format!("{label}: {} symbols must be refused", limit + 1));
+        let lanes = vec![vec![1.0_f32; limit], vec![1.0_f32; limit + 1]];
+        let mut batch = SymbolBatch::new(lanes.clone(), lanes);
+        let untouched = batch.clone();
+        let mut rng = ChaCha20Rng::seed_from_u64(0xBEEF_CAFE);
+        let refused = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            channel.apply(&mut batch, &mut rng);
+        }))
+        .expect_err(&format!("{label}: {} symbols must be refused", limit + 1));
         let message = refused
             .downcast_ref::<String>()
             .unwrap_or_else(|| panic!("{label}: the refusal carries a formatted message"));
@@ -288,6 +293,12 @@ fn test_frame_above_symbol_limit_is_refused() {
             message.contains(&limit.to_string()),
             "{label}: the refusal must state the limit {limit}, got: {message}"
         );
+        assert_eq!(
+            rng.get_word_pos(),
+            0,
+            "{label}: a refused call draws nothing"
+        );
+        assert_eq!(batch, untouched, "{label}: a refused call leaves the batch");
     }
 }
 

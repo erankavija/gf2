@@ -4,9 +4,7 @@ use rand_chacha::ChaCha20Rng;
 
 use crate::batch::SymbolBatch;
 use crate::channels::awgn::ChannelScratch;
-use crate::channels::{
-    debug_assert_frame_budget, draw_cn01, draw_standard_normal, max_frame_symbols,
-};
+use crate::channels::{assert_frame_budget, draw_cn01, draw_standard_normal, max_frame_symbols};
 use crate::error::StageError;
 use crate::parallel::WorkerCtx;
 use crate::stage::{ExecutionClass, Stage};
@@ -24,6 +22,10 @@ use crate::stage::{ExecutionClass, Stage};
 /// where `los_mag = sqrt(K/(K+1))` and `scatter = sqrt(1/(K+1))`, so
 /// `E[|h|^2] = 1` for all K, and `n` is complex AWGN of per-axis variance
 /// `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))`. `K = 0` is Rayleigh fading.
+///
+/// A frame holds at most [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS)
+/// symbols; the stage panics on a larger one. The frame count of a batch is
+/// unbounded.
 #[derive(Debug, Clone)]
 pub struct Rician {
     /// Channel Es/N0 in dB.
@@ -103,6 +105,10 @@ impl Rician {
     }
 
     /// Seeks `ctx`'s RNG to frame `frame_idx_in_worker` and applies the channel.
+    ///
+    /// # Panics
+    ///
+    /// As [`apply`](Self::apply).
     pub fn apply_for_frame(
         &self,
         batch: &mut SymbolBatch,
@@ -123,10 +129,10 @@ impl Rician {
     ///
     /// # Panics
     ///
-    /// In debug builds, if a frame of `batch` has more than
+    /// Panics before drawing if a frame of `batch` has more than
     /// [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS) symbols.
     pub fn apply(&self, batch: &mut SymbolBatch, rng: &mut ChaCha20Rng) {
-        debug_assert_frame_budget("Rician", batch, Self::MAX_FRAME_SYMBOLS);
+        assert_frame_budget("Rician", batch, Self::MAX_FRAME_SYMBOLS);
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
             for (xi, xq) in i_frame.iter_mut().zip(q_frame.iter_mut()) {
                 let (v_r, v_i) = draw_cn01(rng);
@@ -155,6 +161,10 @@ impl Stage<SymbolBatch, SymbolBatch> for Rician {
 
     /// Applies Rician fading and AWGN to a copy of `input`, drawing from
     /// `scratch.rng`; never returns `Err`.
+    ///
+    /// # Panics
+    ///
+    /// As [`apply`](Self::apply).
     fn process(
         &self,
         input: &SymbolBatch,
