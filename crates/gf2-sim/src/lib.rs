@@ -44,6 +44,8 @@
 #![warn(missing_docs)]
 
 pub mod batch;
+#[cfg(any(test, feature = "test-support"))]
+pub mod bler_sweep;
 pub mod channels;
 pub mod checkpoint;
 pub mod config;
