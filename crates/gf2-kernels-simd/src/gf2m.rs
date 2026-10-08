@@ -2,7 +2,13 @@
 //! multiplication.
 
 /// GF(2^m) field multiplication: `(a, b, m, primitive_poly)` to
-/// `a * b mod primitive_poly`.
+/// `a * b mod primitive_poly`, for `1 <= m <= 64` and `a`, `b` below `2^m`.
+///
+/// `primitive_poly` holds the generator's coefficients of `x^0..x^63`. The
+/// leading coefficient `x^m` is implied; for `m <= 63` it may also be set.
+///
+/// # Panics
+/// Panics if `m` is outside `1..=64`.
 pub type Gf2mMulFn = fn(u64, u64, usize, u64) -> u64;
 
 /// Raw carry-less multiplication: the full 128-bit product of two 64-bit
@@ -36,7 +42,7 @@ pub enum ClmulBatchLane {
 
 /// Bundle of GF(2^m) multiplication functions for different field sizes.
 pub struct Gf2mFns {
-    /// General multiplication (PCLMULQDQ + shift-and-XOR reduction).
+    /// General multiplication (PCLMULQDQ product, then reduction).
     pub mul_fn: Gf2mMulFn,
     /// Raw carry-less multiply (no reduction). Available when PCLMULQDQ is present.
     pub clmul_fn: Option<ClmulFn>,
@@ -132,6 +138,10 @@ fn clmul_barrett_reduce_safe(a: u64, b: u64, mu: u64, modulus: u64, degree: u32)
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn gf2m_mul_pclmul_safe(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
+    assert!(
+        (1..=64).contains(&m),
+        "gf2m mul kernel: degree m must be in 1..=64"
+    );
     // SAFETY: detect_x86 publishes this pointer only with PCLMULQDQ + SSE4.1.
     unsafe { gf2m_mul_pclmul(a, b, m, primitive_poly) }
 }
@@ -226,39 +236,40 @@ unsafe fn reduce_gf65536(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
     result & 0xFFFF
 }
 
-/// Generic reduction for arbitrary `m`.
+/// Reduction of the product `hi:lo` for `1 <= m <= 64`: each step cancels
+/// the leading term at or above `x^m` with a shifted copy of the generator.
 ///
 /// # Safety
 ///
 /// No target feature, pointer, length or aliasing condition applies: the body
 /// is integer arithmetic on values.
 #[inline(always)]
-unsafe fn reduce_generic(mut lo: u64, hi: u64, m: usize, primitive_poly: u64) -> u64 {
-    if hi != 0 {
-        for i in (0..64).rev() {
-            if (hi >> i) & 1 == 1 {
-                let bit_pos = i + 64;
-                if bit_pos >= m {
-                    let shift = bit_pos - m;
-                    if shift < 64 {
-                        lo ^= primitive_poly << shift;
-                    }
-                }
-            }
-        }
-    }
+unsafe fn reduce_generic(lo: u64, hi: u64, m: usize, primitive_poly: u64) -> u64 {
+    let generator = (1u128 << m) | u128::from(primitive_poly);
+    let mut product = (u128::from(hi) << 64) | u128::from(lo);
 
-    for i in (m..64).rev() {
-        if (lo >> i) & 1 == 1 {
-            lo ^= primitive_poly << (i - m);
+    loop {
+        let excess = product >> m;
+        if excess == 0 {
+            // `product` is below `2^m`, so it fits in 64 bits.
+            return product as u64;
         }
+        // The generator's `x^m` lands on the leading term of `product`, at
+        // most bit 127.
+        product ^= generator << excess.ilog2();
     }
-
-    lo & ((1u64 << m) - 1)
 }
 
 #[cfg(test)]
 mod tests {
+    use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
+
+    use gf2_core::field::axiom_tests::test_field_axioms_with_cases;
+    use gf2_core::field::{prove_irreducible, FieldPoly, FiniteField};
+    use gf2_core::gf2m::Gf2mField_;
+    use gf2_core::gfp::Fp;
+    use proptest::prelude::*;
+
     use super::*;
 
     #[test]
@@ -387,6 +398,223 @@ mod tests {
         let result = (fns.mul_fn)(a, b, m, p);
         let expected = scalar_mul(a, b, m, p);
         assert_eq!(result, expected);
+    }
+
+    /// Whether `x^m` plus the polynomial with coefficient word `low` is
+    /// irreducible over GF(2).
+    fn is_irreducible(m: usize, low: u64) -> bool {
+        let one = Fp::<2>::new(1);
+        let coeffs = (0..m)
+            .map(|i| Fp::<2>::new((low >> i) & 1))
+            .chain([one])
+            .collect();
+        prove_irreducible(&FieldPoly::new(coeffs), &one).is_ok()
+    }
+
+    fn low_mask(m: usize) -> u64 {
+        u64::MAX >> (64 - m)
+    }
+
+    /// The irreducible degree-`m` generators with the smallest and the
+    /// largest coefficient word below `x^m`: a sparse one and a dense one.
+    fn generators(m: usize) -> [u64; 2] {
+        let odd = || (0..=low_mask(m) >> 1).map(|k| 2 * k + 1);
+        let pick = |found: Option<u64>| found.expect("an irreducible polynomial of every degree");
+        [
+            pick(odd().find(|&low| is_irreducible(m, low))),
+            pick(odd().rev().find(|&low| is_irreducible(m, low))),
+        ]
+    }
+
+    fn kernel_mul() -> Gf2mMulFn {
+        crate::contract::require_detected("gf2m::detect()", detect()).mul_fn
+    }
+
+    /// `mul_fn` against schoolbook multiplication in `u128` storage, which
+    /// takes no kernel, with the leading coefficient both implied and given.
+    #[test]
+    fn mul_fn_matches_the_scalar_reference_at_every_degree() {
+        let mul = kernel_mul();
+        for m in 1..=64 {
+            let mask = low_mask(m);
+            for low in generators(m) {
+                let field = Gf2mField_::<u128>::new(m, (1u128 << m) | u128::from(low));
+                let mut rng = gf2_core::rng::Lcg::new(m as u64);
+                let mut operand = || rng.next_u64() >> (64 - m);
+                let edges = [1, mask, mask ^ 1, 1 << (m - 1)];
+                let pairs = edges
+                    .iter()
+                    .flat_map(|&a| edges.iter().map(move |&b| (a, b)))
+                    .chain((0..256).map(|_| (operand(), operand())));
+                for (a, b) in pairs {
+                    let expected =
+                        (&field.element(a.into()) * &field.element(b.into())).value() as u64;
+                    assert_eq!(
+                        mul(a, b, m, low),
+                        expected,
+                        "m={m} generator={low:#x} a={a:#x} b={b:#x}"
+                    );
+                    if m < 64 {
+                        assert_eq!(
+                            mul(a, b, m, low | (1 << m)),
+                            expected,
+                            "m={m} generator={low:#x} with x^m given, a={a:#x} b={b:#x}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /// GF(2^m) element whose product is the detected `mul_fn`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    struct KernelElement {
+        value: u64,
+        m: usize,
+        low: u64,
+    }
+
+    impl KernelElement {
+        fn with_value(self, value: u64) -> Self {
+            Self { value, ..self }
+        }
+    }
+
+    #[allow(clippy::suspicious_arithmetic_impl)]
+    impl Add for KernelElement {
+        type Output = Self;
+        fn add(self, rhs: Self) -> Self {
+            self.with_value(self.value ^ rhs.value)
+        }
+    }
+
+    impl Mul for KernelElement {
+        type Output = Self;
+        fn mul(self, rhs: Self) -> Self {
+            self.with_value(kernel_mul()(self.value, rhs.value, self.m, self.low))
+        }
+    }
+
+    #[allow(clippy::suspicious_arithmetic_impl)]
+    impl Sub for KernelElement {
+        type Output = Self;
+        fn sub(self, rhs: Self) -> Self {
+            self + rhs
+        }
+    }
+
+    #[allow(clippy::suspicious_arithmetic_impl)]
+    impl Div for KernelElement {
+        type Output = Self;
+        fn div(self, rhs: Self) -> Self {
+            self * rhs.inv().expect("division by zero")
+        }
+    }
+
+    impl Neg for KernelElement {
+        type Output = Self;
+        fn neg(self) -> Self {
+            self
+        }
+    }
+
+    impl AddAssign for KernelElement {
+        fn add_assign(&mut self, rhs: Self) {
+            *self = *self + rhs;
+        }
+    }
+
+    macro_rules! by_reference {
+        ($($op:ident :: $method:ident),*) => {$(
+            impl $op<&KernelElement> for KernelElement {
+                type Output = Self;
+                fn $method(self, rhs: &Self) -> Self {
+                    $op::$method(self, *rhs)
+                }
+            }
+        )*};
+    }
+    by_reference!(Add::add, Sub::sub, Mul::mul, Div::div);
+
+    impl AddAssign<&KernelElement> for KernelElement {
+        fn add_assign(&mut self, rhs: &Self) {
+            *self += *rhs;
+        }
+    }
+
+    impl FiniteField for KernelElement {
+        type Characteristic = u64;
+        type Wide = Self;
+
+        fn characteristic(&self) -> u64 {
+            2
+        }
+
+        fn extension_degree(&self) -> usize {
+            self.m
+        }
+
+        fn is_zero(&self) -> bool {
+            self.value == 0
+        }
+
+        fn is_one(&self) -> bool {
+            self.value == 1
+        }
+
+        /// `a^(2^m - 2)`, the product of `a^(2^i)` over `1 <= i < m`.
+        fn inv(&self) -> Option<Self> {
+            if self.is_zero() {
+                return None;
+            }
+            let mut power = *self;
+            let mut inverse = self.one_like();
+            for _ in 1..self.m {
+                power = power * power;
+                inverse = inverse * power;
+            }
+            Some(inverse)
+        }
+
+        fn zero_like(&self) -> Self {
+            self.with_value(0)
+        }
+
+        fn one_like(&self) -> Self {
+            self.with_value(1)
+        }
+
+        fn to_wide(&self) -> Self {
+            *self
+        }
+
+        fn mul_to_wide(&self, rhs: &Self) -> Self {
+            *self * *rhs
+        }
+
+        fn reduce_wide(wide: &Self) -> Self {
+            *wide
+        }
+
+        fn max_unreduced_additions() -> usize {
+            usize::MAX
+        }
+    }
+
+    #[test]
+    fn mul_fn_satisfies_the_field_laws_at_every_degree() {
+        for m in 1..=64 {
+            for low in generators(m) {
+                let strategy = any::<u64>()
+                    .prop_map(move |word| KernelElement {
+                        value: word & low_mask(m),
+                        m,
+                        low,
+                    })
+                    .boxed();
+                test_field_axioms_with_cases(strategy, 2, 64);
+            }
+        }
     }
 
     fn scalar_mul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
