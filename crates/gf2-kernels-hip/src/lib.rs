@@ -5,7 +5,7 @@
 //!
 //! # Requirements
 //!
-//! - ROCm with `hipcc`.
+//! - ROCm with `hipcc`; the tests run against ROCm 7.2.4 (HIP 7.2.53211).
 //! - An AMD GPU with the gfx1030 ISA for the linked kernels, which `build.rs`
 //!   compiles for gfx1030 only. [`host::GfxTarget::detect`] returns
 //!   [`HipError::UnsupportedArch`] for a device whose arch has no compiled
