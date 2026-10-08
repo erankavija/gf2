@@ -29,7 +29,7 @@ use crate::error::StageError;
 use crate::executor::results::{SimulationResults, SnrPointResult};
 use crate::frame_sim::DvbT2BicmFrameSim;
 use crate::parallel::{run_snr_point, WorkerCounters};
-use crate::pipeline::{BatchHandle, Pipeline};
+use crate::pipeline::Pipeline;
 
 /// The kind of activity an [`OverlapTimeline`] interval records.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -284,8 +284,8 @@ impl Scheduler {
     /// Runs `pipeline` over its configured SNR sweep, driving the stages through
     /// the worker pool with double-buffered async CPU/GPU overlap.
     ///
-    /// `batch` is unused: the full sweep is taken from the
-    /// pipeline's [`PipelineConfig`](crate::PipelineConfig) (`esn0_db_points`,
+    /// The whole sweep is processed; its extent comes from the pipeline's
+    /// [`PipelineConfig`](crate::PipelineConfig) (`esn0_db_points`,
     /// `max_frames`, `seed`, `parallelism`, `gpu_enabled`, `strict_gpu`).
     ///
     /// GPU stage errors are handled via
@@ -305,16 +305,13 @@ impl Scheduler {
     ///
     /// `O(sum over points of max_frames)` frame kernels across `parallelism`
     /// workers.
-    pub fn run(
-        &self,
-        pipeline: &Pipeline,
-        batch: BatchHandle,
-    ) -> Result<SimulationResults, StageError> {
-        let (results, _timeline) = self.run_instrumented(pipeline, batch)?;
+    pub fn run(&self, pipeline: &Pipeline) -> Result<SimulationResults, StageError> {
+        let (results, _timeline) = self.run_instrumented(pipeline)?;
         Ok(results)
     }
 
-    /// Like [`run`](Self::run) but also returns the [`OverlapTimeline`].
+    /// Like [`run`](Self::run) but also returns the [`OverlapTimeline`] of the
+    /// CPU-prep and GPU-decode activity recorded during the sweep.
     ///
     /// # Errors
     ///
@@ -322,7 +319,6 @@ impl Scheduler {
     pub fn run_instrumented(
         &self,
         pipeline: &Pipeline,
-        _batch: BatchHandle,
     ) -> Result<(SimulationResults, OverlapTimeline), StageError> {
         let plan = pipeline.run_plan().ok_or_else(|| {
             StageError::Fatal(crate::error::FatalError::BuildError(

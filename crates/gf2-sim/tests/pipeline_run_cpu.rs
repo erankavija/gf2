@@ -11,7 +11,7 @@ use gf2_coding::CodeRate;
 use gf2_sim::frame_sim::DvbT2BicmFrameSim;
 use gf2_sim::parallel::run_snr_point;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
-use gf2_sim::Pipeline;
+use gf2_sim::{Pipeline, Scheduler};
 
 mod common;
 use common::{assert_four_columns_byte_identical, snr_point_to_counters};
@@ -75,5 +75,52 @@ fn pipeline_run_cpu_matches_run_snr_point_ssot() {
         &snr_point_to_counters(&via_pipeline),
         &direct,
         "Pipeline::run vs run_snr_point SSOT",
+    );
+}
+
+#[test]
+fn scheduler_run_matches_run_snr_point_ssot() {
+    let frames = 4u64;
+    let p = build(4, frames);
+    let via_scheduler = Scheduler::from_pipeline(&p)
+        .run(&p)
+        .expect("scheduler run")
+        .per_point[0];
+
+    let template = DvbT2BicmFrameSim::new(
+        CodeRate::Rate1_2,
+        DvbT2Modulation::Qam16,
+        ES_N0,
+        DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
+        DemapMethod::ExactLogMap,
+    );
+    let direct = run_snr_point(
+        SEED,
+        0,
+        frames as usize,
+        NonZeroUsize::new(4).unwrap(),
+        || template.clone(),
+        |g, ctx, sim| sim.simulate_frame(g, ctx),
+    );
+
+    assert_four_columns_byte_identical(
+        &snr_point_to_counters(&via_scheduler),
+        &direct,
+        "Scheduler::run vs run_snr_point SSOT",
+    );
+}
+
+#[test]
+fn scheduler_run_instrumented_matches_run() {
+    let p = build(2, 3);
+    let scheduler = Scheduler::from_pipeline(&p);
+    let plain = scheduler.run(&p).expect("scheduler run").per_point[0];
+    let (instrumented, _timeline) = scheduler.run_instrumented(&p).expect("instrumented run");
+
+    assert_eq!(instrumented.per_point.len(), 1);
+    assert_four_columns_byte_identical(
+        &snr_point_to_counters(&instrumented.per_point[0]),
+        &snr_point_to_counters(&plain),
+        "Scheduler::run_instrumented vs Scheduler::run",
     );
 }

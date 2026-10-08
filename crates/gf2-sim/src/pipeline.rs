@@ -100,8 +100,7 @@ impl Pipeline {
     /// the graph API without a preset) or a GPU stage faults fatally.
     pub fn run(&self) -> Result<SimulationResults, StageError> {
         let scheduler = Scheduler::from_pipeline(self);
-        let handle = BatchHandle::new(0, 0);
-        scheduler.run(self, handle)
+        scheduler.run(self)
     }
 
     /// Alias for [`run`](Pipeline::run).
