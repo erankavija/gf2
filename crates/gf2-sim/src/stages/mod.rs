@@ -571,7 +571,77 @@ pub fn dvb_t2_bicm_stages(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testutil::AwgnLlrSource;
+    use gf2_coding::ldpc::dvb_t2::concat::{ConcatError, DvbT2ConcatBatchDecoder};
     use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+    use gf2_coding::traits::BatchSoftDecoder;
+
+    /// Noise deviations of consecutive frames, from clean to undecodable, so
+    /// that a wave holds frames of each kind.
+    const SIGMAS: [f64; 6] = [0.3, 0.6, 1.3, 0.55, 1.0, 0.66];
+
+    /// The short-frame rate-1/2 codec (`@/citation/Etsi2015`) with a low
+    /// iteration cap.
+    fn short_codec() -> Arc<DvbT2Concat> {
+        let mut codec = DvbT2Concat::new(FrameSize::Short, CodeRate::Rate1_2).unwrap();
+        codec.set_max_ldpc_iterations(12);
+        Arc::new(codec)
+    }
+
+    /// `count` FECFRAMEs of random BBFRAMEs through BPSK and AWGN, frame `f`
+    /// at the deviation [`SIGMAS`] gives its index.
+    fn noisy_frames(codec: &DvbT2Concat, count: usize) -> Vec<Vec<Llr>> {
+        let mut source = AwgnLlrSource::new(0x391f_5419);
+        (0..count)
+            .map(|f| {
+                let fecframe = codec.encode(&BitVec::random_seeded(codec.k_bch(), f as u64));
+                source.frame_for_codeword(&fecframe, SIGMAS[f % SIGMAS.len()])
+            })
+            .collect()
+    }
+
+    /// BBFRAME, LDPC iteration count and convergence of
+    /// [`DvbT2Concat::decode_soft_counted`], from either arm of its result.
+    fn per_frame(codec: &DvbT2Concat, llrs: &[Llr]) -> (BitVec, u64, bool) {
+        match codec.decode_soft_counted(llrs) {
+            Ok((bbframe, iterations)) => (bbframe, iterations as u64, true),
+            Err(ConcatError::LdpcDecodeFailed {
+                bbframe,
+                iterations,
+            }) => (bbframe, iterations as u64, false),
+            Err(error) => panic!("{error}"),
+        }
+    }
+
+    #[test]
+    fn decode_stage_matches_per_frame_decoding_at_each_batch_size() {
+        let codec = short_codec();
+        let lanes = DvbT2ConcatBatchDecoder::new(&codec).batch_granularity();
+        let frames = noisy_frames(&codec, lanes + 3);
+        let expected: Vec<_> = frames.iter().map(|llrs| per_frame(&codec, llrs)).collect();
+
+        let stage = DvbT2Decode::new(codec.clone());
+        let mut scratch = DecodeScratch::default();
+        for count in [0, 1, lanes - 3, lanes, lanes + 3] {
+            let out = stage
+                .process(&LlrBatch::new(frames[..count].to_vec()), &mut scratch)
+                .unwrap();
+
+            assert_eq!(out.frames.len(), count);
+            assert_eq!(scratch.iterations.len(), count);
+            for (f, (bbframe, iterations, _)) in expected[..count].iter().enumerate() {
+                assert_eq!(&out.frames[f], bbframe, "{count} frames, frame {f}");
+                assert_eq!(
+                    scratch.iterations[f], *iterations,
+                    "{count} frames, frame {f}"
+                );
+            }
+            if count >= lanes - 3 {
+                let converged = expected[..count].iter().filter(|e| e.2).count();
+                assert!(converged > 0 && converged < count, "{count} frames");
+            }
+        }
+    }
 
     #[test]
     fn test_bits_per_symbol() {
