@@ -1,5 +1,6 @@
-//! The frozen cell tables of addendum `2037941f-dense-parity-v2` and of the
-//! lane-threshold addendum `4337c02e-matvec-lane-threshold-v1`.
+//! The frozen cell tables of addendum `2037941f-dense-parity-v2`, of the
+//! lane-threshold addendum `4337c02e-matvec-lane-threshold-v1` and of the
+//! native comparator addendum `63bad95d-native-matvec-vs-m4ri-v1`.
 //!
 //! [`cells`] returns every cell the dense-parity addendum declares, in that
 //! addendum's own order: the cell-matrix sections in document order, and within
@@ -7,7 +8,9 @@
 //! exploratory additions in listed order. The lane-threshold cells follow in
 //! their addendum's order. Ordinal zero carries the campaign seed; ordinal `i`
 //! carries the `i`-th subsequent output of one canonical SplitMix64 stream
-//! started at the campaign seed.
+//! started at the campaign seed. The native comparator cells come last and
+//! draw nothing from that stream: each carries the seed of the comparator cell
+//! it mirrors.
 //!
 //! The addendum's `scalar-reference` question owns no ledger: its cells are the
 //! allocated family's `scalar-reference` exploratory rows, whose baseline arm is
@@ -62,6 +65,15 @@ pub const LANE_THRESHOLD_ADDENDUM: FrozenAddendum = FrozenAddendum {
     frozen_utc: "2026-10-05T19:34:54Z",
 };
 
+/// The native comparator addendum, which freezes
+/// [`Question::NativeMatvecVsM4ri`].
+pub const NATIVE_COMPARATOR_ADDENDUM: FrozenAddendum = FrozenAddendum {
+    path: "dev/active/1a379447-zen3-cpu-performance/63bad95d/native-m4ri-addendum.md",
+    sha256: "3caa8d5388449800444068a2489ff399dd64d6f995cfb0d63923f3e1c51bd208",
+    identity: "63bad95d-native-matvec-vs-m4ri-v1",
+    frozen_utc: "2026-10-08T12:43:56Z",
+};
+
 /// Name stem of the external shared object a comparator arm loads.
 pub const COMPARATOR_LIBRARY_STEM: &str = "m4ri";
 
@@ -104,22 +116,27 @@ pub enum Question {
     MatvecVsM4ri,
     /// `BitMatrix::matvec` pinned to the scalar lane against the selected lane.
     MatvecLaneThreshold,
+    /// Whole-consumer gap of the `native` gf2 build against the external M4RI
+    /// product.
+    NativeMatvecVsM4ri,
 }
 
 impl Question {
     /// Every question: the dense-parity addendum's in document order, then the
-    /// lane-threshold addendum's.
-    pub const ALL: [Self; 4] = [
+    /// lane-threshold addendum's and the native comparator addendum's.
+    pub const ALL: [Self; 5] = [
         Self::IsolatedFusedParity,
         Self::AllocatedMatvec,
         Self::MatvecVsM4ri,
         Self::MatvecLaneThreshold,
+        Self::NativeMatvecVsM4ri,
     ];
 
     /// The frozen prose addendum that declares this question.
     pub fn addendum(self) -> &'static FrozenAddendum {
         match self {
             Self::MatvecLaneThreshold => &LANE_THRESHOLD_ADDENDUM,
+            Self::NativeMatvecVsM4ri => &NATIVE_COMPARATOR_ADDENDUM,
             _ => &DENSE_PARITY_ADDENDUM,
         }
     }
@@ -128,6 +145,7 @@ impl Question {
     pub fn boundary(self) -> Self {
         match self {
             Self::MatvecLaneThreshold => Self::AllocatedMatvec,
+            Self::NativeMatvecVsM4ri => Self::MatvecVsM4ri,
             other => other,
         }
     }
@@ -139,6 +157,7 @@ impl Question {
             Self::AllocatedMatvec => "allocated-matvec",
             Self::MatvecVsM4ri => "matvec-vs-m4ri",
             Self::MatvecLaneThreshold => "matvec-lane-threshold",
+            Self::NativeMatvecVsM4ri => "native-matvec-vs-m4ri",
         }
     }
 
@@ -149,6 +168,7 @@ impl Question {
             Self::AllocatedMatvec => "2037941f-dense-allocated-matvec",
             Self::MatvecVsM4ri => "2037941f-dense-matvec-vs-m4ri",
             Self::MatvecLaneThreshold => "4337c02e-matvec-simd-threshold",
+            Self::NativeMatvecVsM4ri => "63bad95d-native-matvec-vs-m4ri",
         }
     }
 
@@ -164,6 +184,9 @@ impl Question {
             Self::MatvecVsM4ri => "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl",
             Self::MatvecLaneThreshold => {
                 "dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl"
+            }
+            Self::NativeMatvecVsM4ri => {
+                "dev/bench_results/63bad95d/native-matvec-vs-m4ri-ledger.jsonl"
             }
         }
     }
@@ -269,6 +292,14 @@ pub struct M4riShape {
     /// True for the two confirmatory mid-range shapes.
     pub confirmatory: bool,
 }
+
+/// Cell-identifier prefix of a native comparator cell, before the identifier
+/// of the comparator cell it mirrors.
+pub const NATIVE_CELL_PREFIX: &str = "native-";
+
+/// Small-input shapes the native comparator family measures beside the two
+/// mid-range shapes: the one-bit product and the full single word.
+pub const NATIVE_SMALL_SHAPES: [&str; 2] = ["1x1", "64x64"];
 
 impl M4riShape {
     /// gf2 row stride in words.
@@ -522,7 +553,7 @@ pub fn cells() -> Vec<Cell> {
     // Ordinal zero uses the campaign seed; ordinal i the i-th subsequent
     // output of one canonical SplitMix64 stream started at that seed.
     let mut mixer = SplitMix64::new(CAMPAIGN_SEED);
-    table
+    let mut seeded: Vec<Cell> = table
         .into_iter()
         .enumerate()
         .map(|(ordinal, spec)| Cell {
@@ -535,7 +566,34 @@ pub fn cells() -> Vec<Cell> {
             scalar_reference: spec.scalar_reference,
             seed: if ordinal == 0 { CAMPAIGN_SEED } else { mixer.next_u64() },
         })
-        .collect()
+        .collect();
+
+    // Native comparator: the mid-range shapes fresh and retained, then the
+    // small-input shapes. Each mirror keeps its original's workload and seed,
+    // so both families measure the same fixture, and every mirror is
+    // confirmatory.
+    let mirrored = |cell: &Cell| match cell.workload {
+        Workload::M4riGap { shape, retained } if cell.question == Question::MatvecVsM4ri => {
+            shape.confirmatory || (!retained && NATIVE_SMALL_SHAPES.contains(&shape.suffix))
+        }
+        _ => false,
+    };
+    let mut mirrors: Vec<Cell> = seeded.iter().filter(|cell| mirrored(cell)).cloned().collect();
+    mirrors.sort_by_key(|cell| match cell.workload {
+        Workload::M4riGap { shape, .. } => !shape.confirmatory,
+        _ => false,
+    });
+    for original in mirrors {
+        let ordinal = seeded.len();
+        seeded.push(Cell {
+            ordinal,
+            question: Question::NativeMatvecVsM4ri,
+            cell_id: format!("{NATIVE_CELL_PREFIX}{}", original.cell_id),
+            anchor: true,
+            ..original
+        });
+    }
+    seeded
 }
 
 /// The frozen cells of one question, in ordinal order.

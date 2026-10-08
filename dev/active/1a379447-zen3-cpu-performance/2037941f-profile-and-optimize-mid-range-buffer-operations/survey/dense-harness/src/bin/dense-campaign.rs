@@ -2,6 +2,7 @@
 //!
 //! ```text
 //! dense-campaign pins
+//! dense-campaign native-rustflags
 //! dense-campaign list    --family <id>
 //! dense-campaign cells   --family <id> --issue <8-hex> --frozen-utc <t> --output <path>
 //! dense-campaign verify  --family <id> --addendum <path>
@@ -11,7 +12,8 @@
 //!                        --campaign-seed <n> --lock <absolute> --gf2-executable <path>
 //!                        --producing-manifest <path> --output <path>
 //!                        [--candidate-executable <path>] [--scalar-executable <path>]
-//!                        [--m4ri-executable <path>] [--label pilot|smoke|confirmation]
+//!                        [--m4ri-executable <path>] [--native-executable <path>]
+//!                        [--label pilot|smoke|confirmation]
 //!                        [--max-cells-per-session <n>]
 //! dense-campaign inputs  --producing-manifest <path> [--also <path>]...
 //! dense-campaign profile-request --family <id> --addendum <path>
@@ -140,11 +142,15 @@ fn transcribe(arguments: &Arguments) -> Result<FamilyAddendum, String> {
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     let (command, rest) = raw.split_first().ok_or(
-        "usage: dense-campaign <pins|list|cells|verify|verify-confirmation|unavailable|plan|inputs|profile-request> --flag value ...",
+        "usage: dense-campaign <pins|native-rustflags|list|cells|verify|verify-confirmation|unavailable|plan|inputs|profile-request> --flag value ...",
     )?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
         "pins" => pins(),
+        "native-rustflags" => {
+            println!("{}", dense_parity_harness::routes::NATIVE_RUSTFLAGS);
+            Ok(())
+        }
         "list" => {
             for cell in family_cells(question(&arguments)?) {
                 let (baseline, candidate) = campaign::cell_arms(&cell);
@@ -236,16 +242,17 @@ fn pins() -> Result<(), String> {
             row.row_id, row.stride_words, row.reason
         );
     }
-    let lane = Question::MatvecLaneThreshold;
-    let pin = lane.addendum();
-    println!(
-        "family_addendum={} path={} sha256={} identity={} frozen_utc={}",
-        lane.family_id(),
-        pin.path,
-        pinned_addendum_digest(lane)?,
-        pin.identity,
-        pin.frozen_utc
-    );
+    for question in [Question::MatvecLaneThreshold, Question::NativeMatvecVsM4ri] {
+        let pin = question.addendum();
+        println!(
+            "family_addendum={} path={} sha256={} identity={} frozen_utc={}",
+            question.family_id(),
+            pin.path,
+            pinned_addendum_digest(question)?,
+            pin.identity,
+            pin.frozen_utc
+        );
+    }
     Ok(())
 }
 
@@ -343,7 +350,7 @@ fn resolution_ceiling(question: Question) -> f64 {
     match question {
         Question::IsolatedFusedParity => 0.020,
         Question::AllocatedMatvec => 0.035,
-        Question::MatvecVsM4ri => 0.040,
+        Question::MatvecVsM4ri | Question::NativeMatvecVsM4ri => 0.040,
         Question::MatvecLaneThreshold => 0.035,
     }
 }
@@ -452,6 +459,7 @@ fn project(arguments: &Arguments) -> Result<(), String> {
             candidate_executable: arguments.optional("candidate-executable"),
             scalar_executable: arguments.optional("scalar-executable"),
             m4ri_executable: arguments.optional("m4ri-executable"),
+            native_executable: arguments.optional("native-executable"),
             max_cells_per_session: arguments
                 .number("max-cells-per-session")?
                 .map(|value| value as u32),

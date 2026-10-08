@@ -4,8 +4,10 @@
 //! questions, their exact cell matrices, its seeding rule, its cache policies
 //! and its untimed correctness oracle. It also carries the lane-threshold
 //! question of addendum `4337c02e-matvec-lane-threshold-v1`, measured at the
-//! allocated `matvec` boundary by the same arms. It changes no production code
-//! and no production selection.
+//! allocated `matvec` boundary by the same arms, and the native comparator
+//! question of addendum `63bad95d-native-matvec-vs-m4ri-v1`, measured at the
+//! comparator boundary with the gf2 arm built at the `native` level. It
+//! changes no production code and no production selection.
 //!
 //! Every numeric setting reaches the harness from a frozen addendum
 //! ([`cells`]) or from `tuning_campaign_support::protocol::SHARED_SETTINGS`.
