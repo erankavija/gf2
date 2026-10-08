@@ -230,8 +230,42 @@ fn gldpc_default_path_outcome_is_the_iterative_result() {
     );
 }
 
-/// The per-frame path returns the sent message of a frame whose hard decision
-/// at the systematic positions is another word.
+/// Asserts that `SoftDecoder::decode_soft` of a decoder contracted to decode
+/// agrees with `decode_soft_with_result` on every frame of `encoder`, and
+/// returns the word decoded from the noiseless frame of the codeword for at
+/// least one frame whose hard decision (the word at an iteration cap of zero)
+/// is another word.
+fn assert_decode_soft_decodes<D: SoftDecoder + IterativeSoftDecoder>(
+    encoder: &impl BlockEncoder,
+    decoder: impl Fn() -> D,
+) {
+    let codewords = random_codewords(encoder, SIGMAS.len());
+    let mut corrected = 0;
+    for (frame, codeword) in noisy_frames(&codewords, &SIGMAS).iter().zip(&codewords) {
+        let word = decoder().decode_soft(frame);
+        assert_eq!(word, decoder().decode_soft_with_result(frame).decoded_bits);
+        let sent = decoder().decode_soft(&noiseless_frame(codeword));
+        let hard = decoder().decode_iterative(frame, 0);
+        if hard.decoded_bits != sent && word == sent {
+            corrected += 1;
+        }
+    }
+    assert!(corrected > 0);
+}
+
+#[test]
+fn gldpc_decode_soft_corrects_a_frame_its_hard_decision_gets_wrong() {
+    assert_decode_soft_decodes(&gldpc_code(), || GldpcDecoder::new(gldpc_code()));
+}
+
+#[test]
+fn rate_matched_nr_decode_soft_corrects_a_frame_its_hard_decision_gets_wrong() {
+    let code = nr_code();
+    assert_decode_soft_decodes(&code, || Nr5gRateMatchedDecoder::new(code.clone()));
+}
+
+/// The per-frame batch path returns the sent message of a frame whose hard
+/// decision at the systematic positions is another word.
 #[test]
 fn gldpc_default_path_corrects_a_frame_its_hard_decision_gets_wrong() {
     let code = gldpc_code();
