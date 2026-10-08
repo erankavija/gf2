@@ -244,6 +244,7 @@ impl PrimitivePolynomialDatabase {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::gf2m::Gf2mField;
 
     fn mul_mod_u128(a: u128, b: u128, m: u32, p: u128) -> u128 {
         assert!((1..=127).contains(&m));
@@ -415,50 +416,6 @@ mod tests {
         assert_eq!(result, VerificationResult::Unknown);
     }
 
-    fn pow_x_mod_u128(e: u128, m: u32, p: u128) -> u128 {
-        let (mut acc, mut base, mut e) = (1u128, 2u128, e);
-        while e > 0 {
-            if e & 1 == 1 {
-                acc = mul_mod_u128(acc, base, m, p);
-            }
-            base = mul_mod_u128(base, base, m, p);
-            e >>= 1;
-        }
-        acc
-    }
-
-    /// `p` is irreducible of degree `m` and `x` has order `2^m - 1` modulo `p`.
-    fn is_primitive_u128(p: u128, m: u32) -> bool {
-        if !is_irreducible_u128(p, m) {
-            return false;
-        }
-        let order = (1u128 << m) - 1;
-        if pow_x_mod_u128(order, m, p) != 1 {
-            return false;
-        }
-        let (mut n, mut q) = (order, 2u128);
-        while q * q <= n {
-            if n % q == 0 {
-                if pow_x_mod_u128(order / q, m, p) == 1 {
-                    return false;
-                }
-                while n % q == 0 {
-                    n /= q;
-                }
-            }
-            q += 1;
-        }
-        n == 1 || pow_x_mod_u128(order / n, m, p) != 1
-    }
-
-    #[test]
-    fn test_primitive_helper_self_check() {
-        assert!(is_primitive_u128(0b100011101, 8));
-        assert!(!is_primitive_u128(0b100010001, 8));
-        // Irreducible, x has order 5 rather than 15.
-        assert!(!is_primitive_u128(0b11111, 4));
-    }
-
     #[test]
     fn test_trinomials_are_primitive() {
         for m in 1usize..=40 {
@@ -467,7 +424,7 @@ mod tests {
                 assert_eq!(poly.count_ones(), 3, "m={m}: {poly:#b} is not a trinomial");
                 assert_eq!(poly & 1, 1, "m={m}: {poly:#b} has no constant term");
                 assert!(
-                    is_primitive_u128(poly as u128, m as u32),
+                    Gf2mField::new_unchecked(m, poly).verify_primitive(),
                     "m={m}: trinomial {poly:#b} is not primitive"
                 );
             }
