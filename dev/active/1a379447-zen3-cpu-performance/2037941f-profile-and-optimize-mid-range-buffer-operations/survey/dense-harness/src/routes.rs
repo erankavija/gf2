@@ -367,7 +367,8 @@ pub fn verify_lane(facts: ShapeFacts, route: Route) -> Result<(), String> {
     }
     // Without the bundle the parity-kernel entry runs the scalar lane.
     if route == Route::MatvecLaneParity && !facts.bundle {
-        return Err("the host detected no kernel bundle, so the parity kernel is unavailable".into());
+        return Err("the host detected no kernel bundle, so the parity kernel is unavailable"
+            .into());
     }
     Ok(())
 }
