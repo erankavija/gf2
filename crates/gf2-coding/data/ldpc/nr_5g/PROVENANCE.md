@@ -1,8 +1,11 @@
-# 5G NR LDPC base-graph reference tables — provenance
+# 5G NR LDPC external reference data — provenance
 
-External reference data used to validate the compiled-in 3GPP TS 38.212
-base-graph shift tables in `crates/gf2-coding/src/ldpc/nr_5g/{bg1.rs,bg2.rs}`
-(consumed by `crates/gf2-coding/tests/nr5g_external_vectors.rs`).
+External reference data consumed by
+`crates/gf2-coding/tests/nr5g_external_vectors.rs`: the base-graph tables
+validate the compiled-in 3GPP TS 38.212 shift tables in
+`crates/gf2-coding/src/ldpc/nr_5g/{bg1.rs,bg2.rs}`, and the
+[encoder vectors](#encoder-message-and-codeword-vectors) validate rate-matched
+encoding and decoding.
 
 ## Files
 
@@ -48,6 +51,83 @@ Row index;Column index;Set index ;;;;;;;
   are `-1` (no connection / zero circulant block).
 
 The actual circulant shift applied for a lifting size `Z` is `V mod Z`.
+
+## Encoder message and codeword vectors
+
+| File | Contents | SHA-256 |
+|------|----------|---------|
+| `sionna_ldpc5g_vectors.txt` | messages and the rate-matched codewords of Sionna's `LDPC5GEncoder`, per rate-matched configuration | `d4ffb6851cee743085ecb9f51d785f6785df9a7ecbb975b48c54d888428b76b1` |
+| `generate_sionna_vectors.py` | the generator; gf2 code under the repository licence | — |
+
+### Upstream source
+
+- Project: NVIDIA Sionna (`@/citation/Sionna2026`), class
+  `sionna.phy.fec.ldpc.encoding.LDPC5GEncoder`.
+- Repository: <https://github.com/NVlabs/sionna>, tag `v2.0.1`, commit
+  `04ddb9312116b408093b9d3ad363a3df355093a6`.
+- Distribution executed: PyPI wheel `sionna_no_rt-2.0.1-py3-none-any.whl`
+  (SHA-256 `62e919c8db9e6c046ba2abb96345bbb3ff0385318c4a54d5b1a413a6b8da8b01`),
+  the same release without the ray-tracing dependency.
+- Generated: 2026-10-08.
+- License: Apache-2.0 (the repository `LICENSE` at `v2.0.1`, SHA-256
+  `78d4571703b4ae47d96f32d678896a76749fbf0799db83c177f40be1c721375e`, also
+  shipped in the wheel; copyright (c) 2021-2026 NVIDIA CORPORATION &
+  AFFILIATES). The repository has no `NOTICE` file at that tag. Apache-2.0
+  section 4 conditions redistribution of the Work and of Derivative Works on
+  a copy of the licence, retained notices and a statement of changes. The
+  vector file contains no Sionna source or data file: it is the output of
+  executing the unmodified encoder on messages chosen here. This section is
+  the attribution.
+- Transformation applied: the encoder output bits are written as hexadecimal
+  text; nothing else.
+
+### Generation
+
+`generate_sionna_vectors.py` reproduces the file byte for byte, and with
+`--check` compares instead of writing. Environment: CPython 3.12.12 with
+
+```
+sionna-no-rt==2.0.1
+torch==2.9.1+cpu        # https://download.pytorch.org/whl/cpu
+numpy==2.5.3
+scipy==1.18.1
+h5py==3.16.0
+matplotlib==3.11.2
+importlib-resources==7.1.0
+```
+
+The messages are the leading bits of a SHA-256 counter stream keyed by the
+configuration and frame index (`message_bits` in the generator), so they do
+not depend on a random-number library.
+
+### Correspondence to `Nr5gRateMatchedCode`
+
+The encoder is constructed as `LDPC5GEncoder(k, n, num_bits_per_symbol=None,
+bg=...)` and called without `rv`. In that mode it appends zero filler bits to
+`K_b·Z`, encodes with the mother code, removes the filler columns and the
+first `2Z` systematic columns, and returns the first `n` remaining bits in
+ascending column order, with no output interleaver and no redundancy-version
+offset. That is the transmitted word of
+`QuasiCyclicLdpc::nr_5g_rate_matched(bg, n, k)`. The base graph is an explicit
+argument on both sides; the lifting size is selected by each implementation
+and compared by the test.
+
+### Format
+
+ASCII text. Lines starting with `#` are comments; the third names the Sionna
+distribution version observed at generation.
+
+```
+config bg=<1|2> n=<n> k=<k> z=<Z> k_filler=<K_b·Z − k>
+frame <message> <codeword>
+```
+
+A `config` line opens a configuration with the lifting size and filler count
+Sionna reports; the `frame` lines up to the next `config` line belong to it.
+`<message>` holds `k` bits and `<codeword>` `n` bits as lowercase hexadecimal:
+digit `j` holds bits `4j..4j+3` with the lowest index in the most significant
+position, and the final digit is zero-padded. Each configuration holds enough
+frames for one full wave of the batch decoder and an incomplete final wave.
 
 ## §5.4.2.2 bit-interleaver external validation
 
