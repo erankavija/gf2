@@ -245,3 +245,8 @@ and decodes the batch through `LdpcBatchDecoder`, to
 contract runs on each route over codes of both base graphs with punctured
 systematic columns, truncated parity and filler bits, for each algorithm and
 at an iteration cap of zero.
+[`nr5g_external_vectors`](../../crates/gf2-coding/tests/nr5g_external_vectors.rs)
+decodes the rate-matched codewords of `@/citation/Sionna2026` to their messages
+through the same decoder on each route and through
+`Nr5gRateMatchedDecoder::decode_iterative`; the vectors are described in
+[Standards conformance](standards-conformance.md#5g-nr-ldpc).
