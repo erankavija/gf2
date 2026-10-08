@@ -946,19 +946,19 @@ mod tests {
 
     #[test]
     fn the_avx2_bundle_answers_the_lane_contract() {
-        let fns = require_detected("ldpc_lanes::detect()", detect());
+        let fns = require_detected("avx2", detect());
         assert_lane_contract("avx2", &fns);
     }
 
     #[test]
     fn an_avx2_lane_counts_a_negative_zero_message_as_positive() {
-        let fns = require_detected("ldpc_lanes::detect()", detect());
+        let fns = require_detected("avx2", detect());
         assert_negative_zero_counts_positive("avx2", &fns);
     }
 
     #[test]
     fn an_avx2_lane_keeps_a_nan_magnitude_out_of_the_minimum() {
-        let fns = require_detected("ldpc_lanes::detect()", detect());
+        let fns = require_detected("avx2", detect());
         assert_nan_enters_no_minimum("avx2", &fns);
     }
 
