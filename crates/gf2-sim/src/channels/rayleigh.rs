@@ -4,9 +4,11 @@ use rand_chacha::ChaCha20Rng;
 
 use crate::batch::SymbolBatch;
 use crate::channels::awgn::ChannelScratch;
-use crate::channels::{draw_cn01, draw_standard_normal};
+use crate::channels::{
+    debug_assert_frame_budget, draw_cn01, draw_standard_normal, max_frame_symbols,
+};
 use crate::error::StageError;
-use crate::parallel::{WorkerCtx, FRAME_STRIDE};
+use crate::parallel::WorkerCtx;
 use crate::stage::{ExecutionClass, Stage};
 
 /// Rayleigh flat-fading channel stage.
@@ -25,6 +27,14 @@ pub struct Rayleigh {
 }
 
 impl Rayleigh {
+    /// The largest symbol count of one frame, whose draw fits the per-frame
+    /// budget of [`FRAME_STRIDE`]` - `[`DEBUG_ASSERT_WORD_MARGIN`] ChaCha20
+    /// words.
+    ///
+    /// [`FRAME_STRIDE`]: crate::parallel::FRAME_STRIDE
+    /// [`DEBUG_ASSERT_WORD_MARGIN`]: crate::parallel::DEBUG_ASSERT_WORD_MARGIN
+    pub const MAX_FRAME_SYMBOLS: usize = max_frame_symbols(4);
+
     /// Constructs a Rayleigh fading channel stage; `bits_per_symbol` does not
     /// enter the channel model.
     #[must_use]
@@ -74,13 +84,15 @@ impl Rayleigh {
     ///
     /// Per symbol, `h` is drawn first and then `n`, consuming 16 ChaCha20
     /// 32-bit words (8 for `h`, 8 for `n`).
+    /// Frames draw consecutively, so a batch of `n` frames stays within `n`
+    /// frame strides of the starting position.
     ///
     /// # Panics
     ///
-    /// In debug builds, if the call draws more than `FRAME_STRIDE - 256`
-    /// ChaCha20 words.
+    /// In debug builds, if a frame of `batch` has more than
+    /// [`MAX_FRAME_SYMBOLS`](Self::MAX_FRAME_SYMBOLS) symbols.
     pub fn apply(&self, batch: &mut SymbolBatch, rng: &mut ChaCha20Rng) {
-        let pos_before = rng.get_word_pos();
+        debug_assert_frame_budget("Rayleigh", batch, Self::MAX_FRAME_SYMBOLS);
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
             for (xi, xq) in i_frame.iter_mut().zip(q_frame.iter_mut()) {
                 let (h_r, h_i) = draw_cn01(rng);
@@ -97,12 +109,6 @@ impl Rayleigh {
                 *xq = r_q + n_q;
             }
         }
-        let noise_words_drawn = rng.get_word_pos().saturating_sub(pos_before);
-        debug_assert!(
-            noise_words_drawn <= FRAME_STRIDE - 256,
-            "Rayleigh draw {noise_words_drawn} words exceeded FRAME_STRIDE - 256 = {}",
-            FRAME_STRIDE - 256
-        );
     }
 }
 

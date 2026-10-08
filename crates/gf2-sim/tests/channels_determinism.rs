@@ -2,11 +2,12 @@
 //! input frame and seed is f32 bit-identical across worker counts `{1, 4, 24}`.
 //! Each channel's `apply_for_frame` reseeks the worker RNG to the global frame
 //! index, and frames are distributed over workers with the strided assignment
-//! `run_snr_point` uses.
+//! `run_snr_point` uses. The per-frame draw budget of each channel is checked
+//! at its boundary.
 
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
-use gf2_sim::parallel::{worker_offset, WorkerCtx, FRAME_STRIDE};
+use gf2_sim::parallel::{worker_offset, WorkerCtx, DEBUG_ASSERT_WORD_MARGIN, FRAME_STRIDE};
 use proptest::prelude::*;
 use rand::SeedableRng as _;
 use rand_chacha::ChaCha20Rng;
@@ -26,6 +27,39 @@ impl Channel {
             Channel::Rayleigh(c) => c.apply_for_frame(batch, ctx, g),
             Channel::Rician(c) => c.apply_for_frame(batch, ctx, g),
         }
+    }
+
+    fn apply(&self, batch: &mut SymbolBatch, rng: &mut ChaCha20Rng) {
+        match self {
+            Channel::Awgn(c) => c.apply(batch, rng),
+            Channel::Rayleigh(c) => c.apply(batch, rng),
+            Channel::Rician(c) => c.apply(batch, rng),
+        }
+    }
+
+    fn max_frame_symbols(&self) -> usize {
+        match self {
+            Channel::Awgn(_) => Awgn::MAX_FRAME_SYMBOLS,
+            Channel::Rayleigh(_) => Rayleigh::MAX_FRAME_SYMBOLS,
+            Channel::Rician(_) => Rician::MAX_FRAME_SYMBOLS,
+        }
+    }
+
+    /// ChaCha20 words `apply` draws for a batch of `frames` frames of `syms`
+    /// symbols each, read off the stream position.
+    fn words_drawn(&self, frames: usize, syms: usize) -> u128 {
+        let mut batch =
+            SymbolBatch::new(vec![vec![1.0; syms]; frames], vec![vec![0.0; syms]; frames]);
+        let mut rng = ChaCha20Rng::seed_from_u64(0xBEEF_CAFE);
+        self.apply(&mut batch, &mut rng);
+        rng.get_word_pos()
+    }
+
+    /// The largest symbol count whose measured draw fits one frame's budget
+    /// `FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN`.
+    fn measured_symbol_limit(&self) -> usize {
+        let limit = (FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN) / self.words_drawn(1, 1);
+        usize::try_from(limit).expect("symbol limit fits usize")
     }
 }
 
@@ -203,7 +237,7 @@ fn test_distinct_frames_differ() {
 }
 
 #[test]
-fn test_fading_draw_within_frame_budget() {
+fn test_rayleigh_draws_sixteen_words_per_symbol() {
     let ch = Rayleigh::new(6.25, 4);
     let seed = 0xBEEF_CAFE;
     let g = 0;
@@ -214,9 +248,58 @@ fn test_fading_draw_within_frame_budget() {
     ch.apply(&mut batch, ctx.rng_mut());
     let drawn = ctx.current_word_pos() - start;
     assert_eq!(drawn, 16_000, "Rayleigh must draw 16 words/symbol");
-    assert!(
-        drawn <= FRAME_STRIDE - 256,
-        "Rayleigh draw {drawn} exceeded FRAME_STRIDE - 256 = {}",
-        FRAME_STRIDE - 256
-    );
+}
+
+#[test]
+fn test_frame_at_symbol_limit_fills_the_shared_word_budget() {
+    let budget = FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN;
+    for (label, channel) in channels(6.25) {
+        let limit = channel.measured_symbol_limit();
+        assert_eq!(
+            channel.max_frame_symbols(),
+            limit,
+            "{label}: the declared symbol limit must match the measured draw"
+        );
+        let per_symbol = channel.words_drawn(1, 1);
+        let drawn = channel.words_drawn(1, limit);
+        assert_eq!(
+            drawn,
+            limit as u128 * per_symbol,
+            "{label}: the draw must be linear in the symbol count"
+        );
+        assert!(
+            drawn <= budget && drawn + per_symbol > budget,
+            "{label}: {limit} symbols draw {drawn} words against a budget of {budget}"
+        );
+    }
+}
+
+#[cfg(debug_assertions)]
+#[test]
+fn test_frame_above_symbol_limit_is_refused() {
+    for (label, channel) in channels(6.25) {
+        let limit = channel.measured_symbol_limit();
+        let refused = std::panic::catch_unwind(|| channel.words_drawn(1, limit + 1))
+            .expect_err(&format!("{label}: {} symbols must be refused", limit + 1));
+        let message = refused
+            .downcast_ref::<String>()
+            .unwrap_or_else(|| panic!("{label}: the refusal carries a formatted message"));
+        assert!(
+            message.contains(&limit.to_string()),
+            "{label}: the refusal must state the limit {limit}, got: {message}"
+        );
+    }
+}
+
+#[test]
+fn test_batch_budget_is_per_frame() {
+    for (label, channel) in channels(6.25) {
+        let limit = channel.measured_symbol_limit();
+        let frames = 3;
+        assert_eq!(
+            channel.words_drawn(frames, limit),
+            frames as u128 * channel.words_drawn(1, limit),
+            "{label}: {frames} frames at the symbol limit draw {frames} frame budgets"
+        );
+    }
 }
