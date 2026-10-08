@@ -3,8 +3,9 @@
 //! [`DvbT2BitInterleaver`]; [`dvb_t2_bicm_stages`] wires them in BICM order:
 //! encode → bit-interleave → QAM-map → (channel) → QAM-demap → bit-deinterleave
 //! → decode. Every stage is `ExecutionClass::CpuOnly` with `CpuFallback = Self`
-//! and `Scratch = ()`, except [`DvbT2Decode`], whose [`DecodeScratch`] exposes
-//! the per-frame LDPC BP iteration counts.
+//! and `Scratch = ()`, except [`DvbT2Decode`], which decodes through
+//! [`BatchDecode`] and whose [`DecodeScratch`] exposes the per-frame LDPC BP
+//! iteration counts.
 
 pub mod batch_decode;
 pub mod nr_5g;
@@ -14,7 +15,7 @@ use std::sync::Arc;
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
-use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
+use gf2_coding::ldpc::dvb_t2::concat::{DvbT2Concat, DvbT2ConcatBatchDecoder};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::DecoderConfig;
 use gf2_coding::modem::{
@@ -27,6 +28,7 @@ use gf2_core::BitVec;
 use crate::batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 use crate::error::StageError;
 use crate::stage::{erase, AnyStage, ExecutionClass, Stage};
+use batch_decode::{BatchDecode, BatchDecodeScratch};
 
 /// Default per-symbol total noise variance (`N0 = 2 sigma^2`) used by
 /// [`GrayQamDemap`] when none is supplied.
@@ -382,40 +384,42 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
     }
 }
 
-/// Per-stage scratch for [`DvbT2Decode`]: the per-frame LDPC BP iteration
-/// counts of the most recent `process` call.
-///
-/// [`DvbT2Decode::process`] clears [`iterations`](Self::iterations) and pushes
-/// one entry per input frame, in frame order: the BP depth reported by
-/// [`DvbT2Concat::decode_soft_counted`] on both the converged and
-/// non-converged arms. The erased
-/// [`process_any`](crate::stage::AnyStage::process_any) signature cannot carry
-/// the counts, so they travel in the scratch.
-#[derive(Debug, Clone, Default)]
-pub struct DecodeScratch {
-    /// Per-frame LDPC BP iteration counts of the most recent
-    /// [`DvbT2Decode::process`] call, in input-frame order.
-    pub iterations: Vec<u64>,
-}
+/// Scratch of [`DvbT2Decode`]: the [`BatchDecodeScratch`] of the
+/// [`BatchDecode`] stage it decodes through, whose
+/// [`iterations`](BatchDecodeScratch::iterations) are the per-frame LDPC BP
+/// iteration counts of the most recent `process` call.
+pub type DecodeScratch = BatchDecodeScratch;
+
+type ConcatDecoderFactory = Box<dyn Fn() -> DvbT2ConcatBatchDecoder + Send + Sync>;
 
 /// FEC-decode stage: FECFRAME-order soft LLRs → recovered BBFRAME bits.
 ///
-/// Wraps [`DvbT2Concat::decode_soft_counted`] (LDPC belief-propagation + BCH
-/// hard-decision). Each input frame is `n_ldpc` LLRs; each output frame is
-/// `k_bch` recovered BBFRAME bits. The per-frame BP iteration counts are
-/// recorded into the [`DecodeScratch`] (see its docs).
+/// Decodes a batch through [`BatchDecode`] over a [`DvbT2ConcatBatchDecoder`]
+/// of the codec (`@/citation/Etsi2015` §6: LDPC belief propagation, then BCH
+/// hard decision). Each input frame is `n_ldpc` LLRs; each output frame is
+/// `k_bch` recovered BBFRAME bits. A frame's BBFRAME and its BP iteration
+/// count in the [`DecodeScratch`] equal those of
+/// [`DvbT2Concat::decode_soft_counted`] on the same LLRs.
 ///
 /// A frame whose LDPC belief propagation does not converge yields the
 /// `bbframe` payload of the `Err(LdpcDecodeFailed { bbframe, .. })` returned by
 /// [`DvbT2Concat::decode_soft_counted`], and no stage error.
+///
+/// # Panics
+///
+/// `process` panics as [`BatchDecode`] does, and on the first call with a
+/// scratch as [`DvbT2ConcatBatchDecoder::new`] does.
 pub struct DvbT2Decode {
-    codec: Arc<DvbT2Concat>,
+    batch: BatchDecode<ConcatDecoderFactory>,
 }
 
 impl DvbT2Decode {
     /// Builds a decode stage over a shared [`DvbT2Concat`] codec.
     pub fn new(codec: Arc<DvbT2Concat>) -> Self {
-        Self { codec }
+        let factory: ConcatDecoderFactory = Box::new(move || DvbT2ConcatBatchDecoder::new(&codec));
+        Self {
+            batch: BatchDecode::new(factory),
+        }
     }
 }
 
@@ -428,27 +432,7 @@ impl Stage<LlrBatch, HardDecisionBatch> for DvbT2Decode {
         input: &LlrBatch,
         scratch: &mut DecodeScratch,
     ) -> Result<HardDecisionBatch, StageError> {
-        scratch.iterations.clear();
-        let mut frames: Vec<BitVec> = Vec::with_capacity(input.frames.len());
-        for llrs in &input.frames {
-            let (bbframe, iterations) = match self.codec.decode_soft_counted(llrs) {
-                Ok((bbframe, iterations)) => (bbframe, iterations as u64),
-                // Non-convergence is not a stage error (see stage doc).
-                Err(gf2_coding::ldpc::dvb_t2::concat::ConcatError::LdpcDecodeFailed {
-                    bbframe,
-                    iterations,
-                }) => (bbframe, iterations as u64),
-                // `decode_soft_counted` returns no other variant.
-                Err(other) => {
-                    return Err(StageError::Recoverable(
-                        crate::error::RecoverableError::Transient(Box::new(other)),
-                    ))
-                }
-            };
-            scratch.iterations.push(iterations);
-            frames.push(bbframe);
-        }
-        Ok(HardDecisionBatch::new(frames))
+        self.batch.process(input, scratch)
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -572,7 +556,7 @@ pub fn dvb_t2_bicm_stages(
 mod tests {
     use super::*;
     use crate::testutil::AwgnLlrSource;
-    use gf2_coding::ldpc::dvb_t2::concat::{ConcatError, DvbT2ConcatBatchDecoder};
+    use gf2_coding::ldpc::dvb_t2::concat::ConcatError;
     use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
     use gf2_coding::traits::BatchSoftDecoder;
 
