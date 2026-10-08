@@ -205,9 +205,22 @@ impl crate::traits::GeneratorMatrixAccess for LdpcCode {
         }
     }
 
+    /// Reports whether the message bits sit at codeword positions `0..k`,
+    /// that is, whether the generator's first `k` columns are the identity.
+    ///
+    /// # Panics
+    ///
+    /// Panics if H is rank deficient.
+    ///
+    /// # Complexity
+    ///
+    /// First call: O(nnz) for a dual-diagonal parity part, else O(m·n·min(m, n))
+    /// for the m × n matrix H; later calls O(k).
     fn is_systematic(&self) -> bool {
-        // Conservative: the generator matrix is not analysed.
-        false
+        self.systematic_cols()
+            .iter()
+            .enumerate()
+            .all(|(i, &col)| i == col)
     }
 }
 
@@ -1420,6 +1433,38 @@ mod decoder_tests {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::traits::GeneratorMatrixAccess;
+
+    fn first_k_columns_are_identity(code: &LdpcCode) -> bool {
+        let g = GeneratorMatrixAccess::generator_matrix(code);
+        (0..code.k()).all(|i| (0..code.k()).all(|j| g.get(i, j) == (i == j)))
+    }
+
+    #[test]
+    fn test_is_systematic_message_bits_at_leading_positions() {
+        // H = [1 1 1]: right-to-left pivoting gives column 2 the parity.
+        let code = LdpcCode::from_edges(1, 3, &[(0, 0), (0, 1), (0, 2)]);
+        assert!(GeneratorMatrixAccess::is_systematic(&code));
+        assert!(first_k_columns_are_identity(&code));
+    }
+
+    #[test]
+    fn test_is_systematic_false_when_message_bits_are_displaced() {
+        // Column 3 of H carries no parity, so message bit 1 sits at position 3.
+        let code = LdpcCode::from_edges(2, 4, &[(0, 0), (0, 1), (1, 1), (1, 2)]);
+        assert_eq!(code.systematic_cols(), vec![0, 3]);
+        assert!(!GeneratorMatrixAccess::is_systematic(&code));
+        assert!(!first_k_columns_are_identity(&code));
+    }
+
+    #[test]
+    fn test_is_systematic_true_for_dual_diagonal_parity() {
+        let edges = [(0, 0), (0, 2), (1, 1), (1, 2), (1, 3)];
+        let code = LdpcCode::from_edges(2, 4, &edges);
+        assert!(GeneratorMatrixAccess::is_systematic(&code));
+        assert!(first_k_columns_are_identity(&code));
+    }
+
     #[test]
     fn test_ldpc_code_creation() {
         let edges = vec![(0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 2)];
