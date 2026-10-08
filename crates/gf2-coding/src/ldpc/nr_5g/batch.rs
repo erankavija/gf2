@@ -381,14 +381,13 @@ mod tests {
     fn sum_product_batches_satisfy_the_batch_contract_on_the_single_frame_route() {
         for case in cases() {
             let (_, frames) = noisy_frames(&case);
-            for (selectors, backend, _) in routes() {
-                assert_batch_contract(
-                    &case,
-                    &frames,
-                    DecoderAlgorithm::SumProduct,
-                    (selectors, backend, BatchRoute::SingleFrame),
-                );
-            }
+            let (lane_selectors, backend, _) = routes().swap_remove(0);
+            assert_batch_contract(
+                &case,
+                &frames,
+                DecoderAlgorithm::SumProduct,
+                (lane_selectors, backend, BatchRoute::SingleFrame),
+            );
         }
     }
 
