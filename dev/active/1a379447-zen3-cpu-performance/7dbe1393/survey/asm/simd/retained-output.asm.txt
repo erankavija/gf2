@@ -1,5 +1,5 @@
 # retained-output: dense_parity_harness::routes::OutputSink
-# binary sha256: 0e2ef163e5ccc2254a694c824142a39b6c5769976cab2e7fd567659e01042e88
+# binary sha256: bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
 
 ## dense_parity_harness::routes::OutputSink::release_window at 0000000000041b70, 0x00000000000000ef bytes
 0000000000041b70 <dense_parity_harness::routes::OutputSink::release_window>:
@@ -51,7 +51,7 @@
    41c25:	lea    0x8(%rsp),%rcx
    41c2a:	mov    %rcx,0x20(%rsp)
    41c2f:	mov    %rax,0x28(%rsp)
-   41c34:	lea    -0x382e2(%rip),%rsi        # 9959 <anon.daf97e3d3fd0c06bfa97605a4c8cc852.218.llvm.1869521184388496478>
+   41c34:	lea    -0x382e2(%rip),%rsi        # 9959 <anon.daf97e3d3fd0c06bfa97605a4c8cc852.218.llvm.641736512563505307>
    41c3b:	lea    0x10(%rsp),%rdx
    41c40:	mov    %rbx,%rdi
    41c43:	call   *0x67d8f(%rip)        # a99d8 <_DYNAMIC+0x2a0>

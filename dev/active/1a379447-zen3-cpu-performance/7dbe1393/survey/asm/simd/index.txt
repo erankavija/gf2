@@ -1,6 +1,6 @@
 # Dense arm release assembly
 # binary: target/e1f9a78f-arms/release/dense-arm
-# sha256: 0e2ef163e5ccc2254a694c824142a39b6c5769976cab2e7fd567659e01042e88
+# sha256: bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
 # rustc: rustc 1.95.0 (59807616e 2026-04-14)
 # objdump: GNU objdump (GNU Binutils) 2.47
 # label symbols bytes source-pattern

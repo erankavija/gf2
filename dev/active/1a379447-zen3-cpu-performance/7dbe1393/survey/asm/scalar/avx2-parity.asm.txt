@@ -1,166 +1,92 @@
 # avx2-parity: gf2_kernels_simd::x86::avx2::avx2_and_parity
-# binary sha256: 0d76ba9c161c3b3aaeb8a20cd161c4ee49baf2eb199ce6707a6081e249d6178c
+# binary sha256: 1cfb254df63744dc43e0130bec0fa2eb54e3994874ef21de8694a08722601509
 
-## gf2_kernels_simd::x86::avx2::avx2_and_parity at 000000000005beb0, 0x00000000000002a7 bytes
-000000000005beb0 <gf2_kernels_simd::x86::avx2::avx2_and_parity>:
-   5beb0:	cmp    %rsi,%rcx
-   5beb3:	cmovb  %rcx,%rsi
-   5beb7:	movabs $0xffffffffffffffc,%rax
-   5bec1:	lea    0x0(,%rsi,8),%rcx
-   5bec9:	movabs $0x7fffffffffffffc0,%r8
-   5bed3:	and    %rcx,%r8
-   5bed6:	je     5bf53 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xa3>
-   5bed8:	dec    %r8
-   5bedb:	shr    $0x6,%r8
-   5bedf:	je     5bfc9 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x119>
-   5bee5:	inc    %r8
-   5bee8:	mov    %r8,%r9
-   5beeb:	and    $0xfffffffffffffffe,%r9
-   5beef:	vpxor  %xmm0,%xmm0,%xmm0
-   5bef3:	xor    %ecx,%ecx
-   5bef5:	vpxor  %xmm1,%xmm1,%xmm1
-   5bef9:	nopl   0x0(%rax)
-   5bf00:	vmovdqu (%rdx,%rcx,1),%ymm2
-   5bf05:	vmovdqu 0x20(%rdx,%rcx,1),%ymm3
-   5bf0b:	vmovdqu 0x40(%rdx,%rcx,1),%ymm4
-   5bf11:	vmovdqu 0x60(%rdx,%rcx,1),%ymm5
-   5bf17:	vpand  (%rdi,%rcx,1),%ymm2,%ymm2
-   5bf1c:	vpxor  %ymm1,%ymm2,%ymm1
-   5bf20:	vpand  0x20(%rdi,%rcx,1),%ymm3,%ymm2
-   5bf26:	vpxor  %ymm0,%ymm2,%ymm0
-   5bf2a:	vpand  0x40(%rdi,%rcx,1),%ymm4,%ymm2
-   5bf30:	vpand  0x60(%rdi,%rcx,1),%ymm5,%ymm3
-   5bf36:	vpxor  %ymm1,%ymm2,%ymm1
-   5bf3a:	vpxor  %ymm0,%ymm3,%ymm0
-   5bf3e:	sub    $0xffffffffffffff80,%rcx
-   5bf42:	add    $0xfffffffffffffffe,%r9
-   5bf46:	jne    5bf00 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x50>
-   5bf48:	test   $0x1,%r8b
-   5bf4c:	je     5bf5d <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xad>
-   5bf4e:	jmp    5bfd3 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x123>
-   5bf53:	xor    %ecx,%ecx
-   5bf55:	vpxor  %xmm1,%xmm1,%xmm1
-   5bf59:	vpxor  %xmm0,%xmm0,%xmm0
-   5bf5d:	and    %rsi,%rax
-   5bf60:	test   $0x4,%sil
-   5bf64:	je     5bf74 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xc4>
-   5bf66:	vmovdqu (%rdx,%rcx,1),%ymm2
-   5bf6b:	vpand  (%rdi,%rcx,1),%ymm2,%ymm2
-   5bf70:	vpxor  %ymm1,%ymm2,%ymm1
-   5bf74:	vpxor  %ymm0,%ymm1,%ymm0
-   5bf78:	vextracti128 $0x1,%ymm0,%xmm1
-   5bf7e:	vpxor  %xmm0,%xmm1,%xmm0
-   5bf82:	vpshufd $0xee,%xmm0,%xmm1
-   5bf87:	vpxor  %xmm0,%xmm1,%xmm0
-   5bf8b:	vmovq  %xmm0,%r9
-   5bf90:	cmp    %rsi,%rax
-   5bf93:	je     5c133 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x283>
-   5bf99:	mov    %rax,%r8
-   5bf9c:	or     $0x1,%r8
-   5bfa0:	cmp    %r8,%rsi
-   5bfa3:	cmova  %rsi,%r8
-   5bfa7:	mov    %r8,%rcx
-   5bfaa:	sub    %rax,%rcx
-   5bfad:	cmp    $0x4,%rcx
-   5bfb1:	jae    5bfbb <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x10b>
-   5bfb3:	mov    %rax,%rcx
-   5bfb6:	jmp    5c120 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x270>
-   5bfbb:	cmp    $0x10,%rcx
-   5bfbf:	jae    5c007 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x157>
-   5bfc1:	xor    %r10d,%r10d
-   5bfc4:	jmp    5c0c2 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x212>
-   5bfc9:	vpxor  %xmm0,%xmm0,%xmm0
-   5bfcd:	xor    %ecx,%ecx
-   5bfcf:	vpxor  %xmm1,%xmm1,%xmm1
-   5bfd3:	vmovdqu (%rdx,%rcx,1),%ymm2
-   5bfd8:	vmovdqu 0x20(%rdx,%rcx,1),%ymm3
-   5bfde:	vpand  (%rdi,%rcx,1),%ymm2,%ymm2
-   5bfe3:	vpxor  %ymm1,%ymm2,%ymm1
-   5bfe7:	vpand  0x20(%rdi,%rcx,1),%ymm3,%ymm2
-   5bfed:	vpxor  %ymm0,%ymm2,%ymm0
-   5bff1:	add    $0x40,%rcx
-   5bff5:	and    %rsi,%rax
-   5bff8:	test   $0x4,%sil
-   5bffc:	jne    5bf66 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xb6>
-   5c002:	jmp    5bf74 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xc4>
-   5c007:	push   %rbx
-   5c008:	mov    %rcx,%r10
-   5c00b:	and    $0xfffffffffffffff0,%r10
-   5c00f:	vmovq  %r9,%xmm0
-   5c014:	mov    %rsi,%r11
-   5c017:	and    $0xfffffffffffffffc,%r11
-   5c01b:	lea    (%rdx,%r11,8),%r9
-   5c01f:	add    $0x60,%r9
-   5c023:	lea    (%rdi,%r11,8),%r11
-   5c027:	add    $0x60,%r11
-   5c02b:	vpxor  %xmm1,%xmm1,%xmm1
-   5c02f:	xor    %ebx,%ebx
-   5c031:	vpxor  %xmm2,%xmm2,%xmm2
-   5c035:	vpxor  %xmm3,%xmm3,%xmm3
-   5c039:	nopl   0x0(%rax)
-   5c040:	vmovdqu -0x60(%r9,%rbx,8),%ymm4
-   5c047:	vmovdqu -0x40(%r9,%rbx,8),%ymm5
-   5c04e:	vmovdqu -0x20(%r9,%rbx,8),%ymm6
-   5c055:	vmovdqu (%r9,%rbx,8),%ymm7
-   5c05b:	vpand  -0x60(%r11,%rbx,8),%ymm4,%ymm4
-   5c062:	vpxor  %ymm0,%ymm4,%ymm0
-   5c066:	vpand  -0x40(%r11,%rbx,8),%ymm5,%ymm4
-   5c06d:	vpxor  %ymm1,%ymm4,%ymm1
-   5c071:	vpand  -0x20(%r11,%rbx,8),%ymm6,%ymm4
-   5c078:	vpand  (%r11,%rbx,8),%ymm7,%ymm5
-   5c07e:	vpxor  %ymm2,%ymm4,%ymm2
-   5c082:	vpxor  %ymm3,%ymm5,%ymm3
-   5c086:	add    $0x10,%rbx
-   5c08a:	cmp    %rbx,%r10
-   5c08d:	jne    5c040 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x190>
-   5c08f:	vpxor  %ymm0,%ymm1,%ymm0
-   5c093:	vpxor  %ymm0,%ymm2,%ymm0
-   5c097:	vpxor  %ymm0,%ymm3,%ymm0
-   5c09b:	vextracti128 $0x1,%ymm0,%xmm1
-   5c0a1:	vpxor  %xmm1,%xmm0,%xmm0
-   5c0a5:	vpshufd $0xee,%xmm0,%xmm1
-   5c0aa:	vpxor  %xmm1,%xmm0,%xmm0
-   5c0ae:	vmovq  %xmm0,%r9
-   5c0b3:	cmp    %r10,%rcx
-   5c0b6:	pop    %rbx
-   5c0b7:	je     5c133 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x283>
-   5c0b9:	test   $0xc,%cl
-   5c0bc:	je     5c14f <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x29f>
-   5c0c2:	and    $0x3,%r8d
-   5c0c6:	sub    %r8,%rcx
-   5c0c9:	add    %rax,%rcx
-   5c0cc:	vmovq  %r9,%xmm0
-   5c0d1:	add    %rax,%r10
-   5c0d4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
-   5c0e0:	vmovdqu (%rdx,%r10,8),%ymm1
-   5c0e6:	vpand  (%rdi,%r10,8),%ymm1,%ymm1
-   5c0ec:	vpxor  %ymm0,%ymm1,%ymm0
-   5c0f0:	add    $0x4,%r10
-   5c0f4:	cmp    %r10,%rcx
-   5c0f7:	jne    5c0e0 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x230>
-   5c0f9:	vextracti128 $0x1,%ymm0,%xmm1
-   5c0ff:	vpxor  %xmm1,%xmm0,%xmm0
-   5c103:	vpshufd $0xee,%xmm0,%xmm1
-   5c108:	vpxor  %xmm1,%xmm0,%xmm0
-   5c10c:	vmovq  %xmm0,%r9
-   5c111:	test   %r8,%r8
-   5c114:	je     5c133 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x283>
-   5c116:	cs nopw 0x0(%rax,%rax,1)
-   5c120:	mov    (%rdx,%rcx,8),%rax
-   5c124:	and    (%rdi,%rcx,8),%rax
-   5c128:	inc    %rcx
-   5c12b:	xor    %rax,%r9
-   5c12e:	cmp    %rsi,%rcx
-   5c131:	jb     5c120 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x270>
-   5c133:	mov    %r9d,%eax
-   5c136:	shr    $0x20,%r9
-   5c13a:	xor    %eax,%r9d
-   5c13d:	mov    %r9d,%eax
-   5c140:	shr    $0x10,%eax
-   5c143:	xor    %r9d,%eax
-   5c146:	xor    %ah,%al
-   5c148:	setnp  %al
-   5c14b:	vzeroupper
-   5c14e:	ret
-   5c14f:	add    %r10,%rax
-   5c152:	jmp    5bfb3 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x103>
+## gf2_kernels_simd::x86::avx2::avx2_and_parity at 000000000005bf30, 0x0000000000000186 bytes
+000000000005bf30 <gf2_kernels_simd::x86::avx2::avx2_and_parity>:
+   5bf30:	cmp    %rsi,%rcx
+   5bf33:	cmovb  %rcx,%rsi
+   5bf37:	movabs $0x7fffffffffffffc0,%rcx
+   5bf41:	lea    0x0(,%rsi,8),%rax
+   5bf49:	mov    %rax,%r9
+   5bf4c:	and    %rcx,%r9
+   5bf4f:	je     5c049 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x119>
+   5bf55:	dec    %r9
+   5bf58:	shr    $0x6,%r9
+   5bf5c:	je     5c05c <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x12c>
+   5bf62:	inc    %r9
+   5bf65:	mov    %r9,%r10
+   5bf68:	and    $0xfffffffffffffffe,%r10
+   5bf6c:	vpxor  %xmm0,%xmm0,%xmm0
+   5bf70:	xor    %r8d,%r8d
+   5bf73:	vpxor  %xmm1,%xmm1,%xmm1
+   5bf77:	nopw   0x0(%rax,%rax,1)
+   5bf80:	vmovdqu (%rdx,%r8,1),%ymm2
+   5bf86:	vmovdqu 0x20(%rdx,%r8,1),%ymm3
+   5bf8d:	vmovdqu 0x40(%rdx,%r8,1),%ymm4
+   5bf94:	vmovdqu 0x60(%rdx,%r8,1),%ymm5
+   5bf9b:	vpand  (%rdi,%r8,1),%ymm2,%ymm2
+   5bfa1:	vpxor  %ymm0,%ymm2,%ymm0
+   5bfa5:	vpand  0x20(%rdi,%r8,1),%ymm3,%ymm2
+   5bfac:	vpxor  %ymm1,%ymm2,%ymm1
+   5bfb0:	vpand  0x40(%rdi,%r8,1),%ymm4,%ymm2
+   5bfb7:	vpand  0x60(%rdi,%r8,1),%ymm5,%ymm3
+   5bfbe:	vpxor  %ymm0,%ymm2,%ymm0
+   5bfc2:	vpxor  %ymm1,%ymm3,%ymm1
+   5bfc6:	sub    $0xffffffffffffff80,%r8
+   5bfca:	add    $0xfffffffffffffffe,%r10
+   5bfce:	jne    5bf80 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x50>
+   5bfd0:	test   $0x1,%r9b
+   5bfd4:	jne    5c067 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x137>
+   5bfda:	test   $0x4,%sil
+   5bfde:	jne    5c097 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x167>
+   5bfe4:	and    $0x3,%rsi
+   5bfe8:	je     5c015 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xe5>
+   5bfea:	shl    $0x5,%esi
+   5bfed:	lea    -0x4e9ec(%rip),%r8        # d608 <anon.13225d46b1f2fb0cfcd6195632f0ffc0.572.llvm.7085431191478999509+0x28>
+   5bff4:	vmovdqu (%rsi,%r8,1),%ymm2
+   5bffa:	add    $0x20,%rcx
+   5bffe:	and    %rcx,%rax
+   5c001:	vpmaskmovq (%rdi,%rax,1),%ymm2,%ymm3
+   5c007:	vpmaskmovq (%rdx,%rax,1),%ymm2,%ymm2
+   5c00d:	vpand  %ymm3,%ymm2,%ymm2
+   5c011:	vpxor  %ymm1,%ymm2,%ymm1
+   5c015:	vpxor  %ymm0,%ymm1,%ymm0
+   5c019:	vextracti128 $0x1,%ymm0,%xmm1
+   5c01f:	vpxor  %xmm0,%xmm1,%xmm0
+   5c023:	vpshufd $0xee,%xmm0,%xmm1
+   5c028:	vpxor  %xmm0,%xmm1,%xmm0
+   5c02c:	vmovq  %xmm0,%rax
+   5c031:	mov    %eax,%ecx
+   5c033:	shr    $0x20,%rax
+   5c037:	xor    %ecx,%eax
+   5c039:	mov    %eax,%ecx
+   5c03b:	shr    $0x10,%ecx
+   5c03e:	xor    %eax,%ecx
+   5c040:	xor    %ch,%cl
+   5c042:	setnp  %al
+   5c045:	vzeroupper
+   5c048:	ret
+   5c049:	xor    %r8d,%r8d
+   5c04c:	vpxor  %xmm1,%xmm1,%xmm1
+   5c050:	vpxor  %xmm0,%xmm0,%xmm0
+   5c054:	test   $0x4,%sil
+   5c058:	je     5bfe4 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xb4>
+   5c05a:	jmp    5c097 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0x167>
+   5c05c:	vpxor  %xmm0,%xmm0,%xmm0
+   5c060:	xor    %r8d,%r8d
+   5c063:	vpxor  %xmm1,%xmm1,%xmm1
+   5c067:	vmovdqu (%rdx,%r8,1),%ymm2
+   5c06d:	vmovdqu 0x20(%rdx,%r8,1),%ymm3
+   5c074:	vpand  (%rdi,%r8,1),%ymm2,%ymm2
+   5c07a:	vpxor  %ymm0,%ymm2,%ymm0
+   5c07e:	vpand  0x20(%rdi,%r8,1),%ymm3,%ymm2
+   5c085:	vpxor  %ymm1,%ymm2,%ymm1
+   5c089:	add    $0x40,%r8
+   5c08d:	test   $0x4,%sil
+   5c091:	je     5bfe4 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xb4>
+   5c097:	vmovdqu (%rdx,%r8,1),%ymm2
+   5c09d:	vpand  (%rdi,%r8,1),%ymm2,%ymm2
+   5c0a3:	vpxor  %ymm0,%ymm2,%ymm0
+   5c0a7:	and    $0x3,%rsi
+   5c0ab:	jne    5bfea <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xba>
+   5c0b1:	jmp    5c015 <gf2_kernels_simd::x86::avx2::avx2_and_parity+0xe5>

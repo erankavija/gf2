@@ -1,2 +1,2 @@
 # parity-entry: gf2_core::matrix::BitMatrix::matvec_parity_kernel
-# binary sha256: 0d76ba9c161c3b3aaeb8a20cd161c4ee49baf2eb199ce6707a6081e249d6178c
+# binary sha256: 1cfb254df63744dc43e0130bec0fa2eb54e3994874ef21de8694a08722601509
