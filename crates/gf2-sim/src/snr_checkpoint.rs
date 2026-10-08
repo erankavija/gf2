@@ -151,7 +151,8 @@ pub fn config_hash(config: &PipelineConfig) -> String {
 
 /// Computes the checkpoint identity of a [`Pipeline`]: the fields
 /// [`config_hash`] covers, followed by every field of the pipeline's
-/// [`RunPlan`] (code rate, modulation, decoder and demapper).
+/// [`RunPlan`] (code rate, modulation, decoder and demapper). A pipeline
+/// without a run plan has the [`config_hash`] identity of its configuration.
 ///
 /// [`Scheduler::run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed)
 /// writes this identity into each checkpoint and rejects a resume whose
