@@ -227,6 +227,66 @@ impl BitVec {
         }
     }
 
+    /// Overwrites bits `offset..offset + len_bits` with the low `len_bits`
+    /// bits of the packed run `source`, bit $j$ of the run landing at
+    /// `offset + j`.
+    ///
+    /// Bits of `source` at or above `len_bits` are ignored and every other
+    /// bit of `self` is kept.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `offset + len_bits > self.len()` or if `source` holds fewer
+    /// than `len_bits` bits.
+    ///
+    /// # Complexity
+    ///
+    /// $O(\lceil \text{len\_bits}/64 \rceil)$ word operations; a word-aligned
+    /// `offset` copies whole words.
+    pub fn write_bits(&mut self, offset: usize, source: &[u64], len_bits: usize) {
+        let end = offset
+            .checked_add(len_bits)
+            .filter(|&end| end <= self.len_bits)
+            .expect("bit range out of bounds");
+        assert!(
+            source.len() >= len_bits.div_ceil(64),
+            "Insufficient words: need {}, got {}",
+            len_bits.div_ceil(64),
+            source.len()
+        );
+        if len_bits == 0 {
+            return;
+        }
+
+        let data = self.words_mut();
+        let first = offset / 64;
+        let shift = offset % 64;
+        if shift == 0 {
+            let whole = len_bits / 64;
+            data[first..first + whole].copy_from_slice(&source[..whole]);
+            let rest = len_bits % 64;
+            if rest != 0 {
+                let mask = (1u64 << rest) - 1;
+                data[first + whole] = (data[first + whole] & !mask) | (source[whole] & mask);
+            }
+            return;
+        }
+
+        for word in first..=(end - 1) / 64 {
+            let low = (word * 64).max(offset);
+            let count = ((word + 1) * 64).min(end) - low;
+            // The 64 run bits from `low - offset` up, bits past the run's
+            // words reading zero.
+            let run = low - offset;
+            let mut window = source[run / 64] >> (run % 64);
+            if !run.is_multiple_of(64) {
+                window |= source.get(run / 64 + 1).copied().unwrap_or(0) << (64 - run % 64);
+            }
+            let mask = (u64::MAX >> (64 - count)) << (low % 64);
+            data[word] = (data[word] & !mask) | ((window << (low % 64)) & mask);
+        }
+    }
+
     /// Performs bitwise AND with `other` and stores the result in `self`.
     ///
     /// # Panics
@@ -1014,6 +1074,46 @@ impl fmt::Display for BitVec {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn write_bits_matches_bit_serial_writes_at_the_word_boundaries() {
+        let boundaries = [0usize, 1, 63, 64, 65, 127, 128, 129];
+        for &offset in &boundaries {
+            for &len_bits in &boundaries {
+                for slack in [0usize, 1, 63] {
+                    let len = offset + len_bits + slack;
+                    let seed = (offset * 1000 + len_bits * 10 + slack) as u64;
+                    // One word more than the run needs, so the run's own
+                    // padding and a trailing word are both dirty.
+                    let source = BitVec::random_seeded((len_bits.div_ceil(64) + 1) * 64, seed);
+                    let mut written = BitVec::random_seeded(len, seed + 1);
+                    let mut expected = written.clone();
+                    for bit in 0..len_bits {
+                        expected.set(offset + bit, source.get(bit));
+                    }
+
+                    written.write_bits(offset, source.words(), len_bits);
+                    assert_eq!(
+                        written.words(),
+                        expected.words(),
+                        "offset {offset}, length {len_bits}, slack {slack}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "bit range out of bounds")]
+    fn write_bits_rejects_a_run_past_the_end() {
+        BitVec::zeros(65).write_bits(2, &[0], 64);
+    }
+
+    #[test]
+    #[should_panic(expected = "Insufficient words")]
+    fn write_bits_rejects_a_short_source() {
+        BitVec::zeros(130).write_bits(0, &[0], 65);
+    }
 
     #[test]
     fn test_new() {
