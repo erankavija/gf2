@@ -18,13 +18,17 @@ command here takes a timing window, the host lock or an ignored test.
 - [`decision-table.md`](decision-table.md): one row per pointer type, grouped
   by cost class, with the decision, the instruction counts of the check and
   the interface's cost rows of both stages; for the sparse row class, the
-  grains at which the check can stand and the P-20 arithmetic of a further
-  confirmation.
+  grains at which the check can stand, the P-20 arithmetic of a further
+  confirmation and the measured cost of the per-product check.
 - [`measurement-plan.md`](measurement-plan.md): the family, its cells and its
   committed stages.
 - [`tables.md`](../../../bench_results/bfc2ceab/tables.md): each stage's cells
   with pair count, interval and outcome, the lane witness, the family ledger
   and the source digests with the acceptance finding counts.
+- [`spmm-check-tables.md`](../../../bench_results/bfc2ceab/spmm-check-tables.md):
+  the same for the stages of the family `sparse-product-check-cost`.
+- [`confirmation-freeze-refusal-spmm-check.json`](confirmation-freeze-refusal-spmm-check.json):
+  the refused freeze of that family's confirmation, as its launcher reports it.
 
 ## Review record and generators
 
@@ -41,6 +45,8 @@ check.
 | `python3 -B survey/make-instruction-counts.py` | [`survey/instruction-counts.json`](survey/instruction-counts.json) |
 | `python3 -B survey/run-witnesses.py` | [`survey/witness-runs.json`](survey/witness-runs.json) |
 | `python3 -B survey/make-tables.py` | `tables.md` beside the family ledger, through the shared `campaign_tables.py` |
+| `python3 -B survey/make-spmm-freeze-refusal.py` | [`confirmation-freeze-refusal-spmm-check.json`](confirmation-freeze-refusal-spmm-check.json), from the launcher's `freeze` action |
+| `python3 -B survey/make-spmm-tables.py` | `spmm-check-tables.md` beside the family ledger, through the shared `campaign_tables.py` |
 | `python3 -B survey/make-inventory.py` | `inventory.md`, `inventory.json`, `decision-table.md` and `measurement-plan.md` |
 
 `make-inventory.py` states under which conditions it fails before writing; its
@@ -239,12 +245,24 @@ decision rule. The decision table names the family's committed stages.
   the shared `benchmark-ab-runner smoke` and writes
   [`survey/spmm-pilot-smoke.json`](survey/spmm-pilot-smoke.json), and
   `dev/bench_results/bfc2ceab/run-spmm-check.sh` has the actions `build`,
-  `window pilot|confirmation` and `freeze`; `window` refuses outside a
+  `window pilot|pilot2|confirmation` and `freeze`; `window` refuses outside a
   benchmark window and refuses a campaign input that differs from its
-  committed bytes.
+  committed bytes. `survey/make-spmm-pilot-pairs.py` sizes the second pilot
+  trial from the first pilot's receipt and writes
+  [`survey/spmm-second-pilot-pairs.json`](survey/spmm-second-pilot-pairs.json).
 - Admissibility. A first confirmatory attempt of this family spends half the
   family alpha over its four cells, which P-20's tail-support bound admits;
   the pilot addendum's family description carries the arithmetic.
+- Outcome. The family holds the two pilot trials its search budget admits and
+  no confirmation: the `freeze` action refuses the receipt of the second
+  trial, and `survey/make-spmm-freeze-refusal.py` records the refusal. The
+  measured cost of the per-product check is therefore exploratory; the
+  decision table holds each stage's rows, the load each receipt records at the
+  start of its session and what the frozen decision rule records. REQ-04 asks
+  for "before/after evidence under the measurement contract" or a record of
+  "the measured cost as accepted"; the family's rule records an accepted cost
+  from confirmatory cells only, so the acceptance of this cost is the
+  invoker's to record.
 
 ## Checks run
 

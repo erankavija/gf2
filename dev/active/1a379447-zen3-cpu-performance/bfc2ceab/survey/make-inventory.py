@@ -16,10 +16,13 @@ writing, when
   review assigns to its constructors, or a method of that file takes
   `&mut self`.
 
+- the freeze refusal record of the sparse product family pins another receipt
+  than that family's last committed pilot.
+
 `witness-runs.json` and `instruction-counts.json` are read as committed, and so
-are the family's receipts: the decision table names each interface's rows of
-the family tables with the role, outcome and decision each stage's acceptance
-summary records.
+are the families' receipts and the freeze refusal record: the decision table
+names each interface's rows of the family tables with the role, outcome and
+decision each stage's acceptance summary records.
 
 Usage: make-inventory.py, with no arguments
 """
@@ -31,6 +34,7 @@ import re
 import sys
 
 import review
+import spmm_family
 from locate import (
     HERE, ISSUE, KERNEL_PACKAGE, ROOT, family_stages, package, repository_files, rust_code_text,
     tracked,
@@ -395,24 +399,97 @@ def admissibility(stages):
 
 
 def grain_family():
-    """The family that prices the per-product grain, with its committed stages."""
-    addendum = json.loads((OUT / review.GRAIN_FAMILY_ADDENDUM).read_text())
-    ledger = ROOT / addendum["family_wise"]["ledger_path"]
-    stages = [
-        (json.loads(receipt.read_text()), receipt.parent)
-        for receipt in sorted(ledger.parent.glob("*/receipt.json"))
-        if json.loads(receipt.read_text())["family_id"] == addendum["family"]["id"]
-    ]
+    """The family that prices the per-product grain: its stages and its refused freeze."""
+    addendum = spmm_family.pilot_addendum()
+    ledger = spmm_family.ledger()[0]
+    tables = os.path.relpath(ledger.parent / review.GRAIN_FAMILY_TABLES, OUT)
+    stages = []
+    for label, directory, receipt in spmm_family.stages():
+        summary = json.loads((directory / "acceptance-summary.json").read_text())
+        stages.append({
+            "stage": label,
+            "label": receipt["label"],
+            "receipt": str(directory.relative_to(ROOT)),
+            "receipt_sha256": spmm_family.sha256(directory / "receipt.json"),
+            "verdict": summary["verdict"],
+            "pairs": sorted({cell["pairs"] for cell in summary["cells"]}),
+            "session_load_average": [host["load_average"] for host in receipt["session_hosts"]],
+            "link": f"{tables}#{label}",
+            "cells": {
+                cell["cell_id"]: f"{cell['role']}, outcome {cell['outcome']}, "
+                                 f"decision {cell['decision']}"
+                for cell in summary["cells"]
+            },
+        })
+    refusal = json.loads((OUT / review.GRAIN_FAMILY_REFUSAL).read_text())
+    pilots = [stage for stage in stages if stage["label"] == "pilot"]
+    if [(trial["stage"], trial["sha256"]) for trial in refusal["pilot_trials"]] != [
+            (stage["stage"], stage["receipt_sha256"]) for stage in pilots]:
+        raise SystemExit(f"{review.GRAIN_FAMILY_REFUSAL} pins other pilot receipts")
+    if len(pilots) != len(stages):
+        raise SystemExit("the sparse product family holds a stage past its refused freeze")
     return {
         "family": addendum["family"]["id"],
         "pilot_addendum": review.GRAIN_FAMILY_ADDENDUM,
         "ledger": str(ledger.relative_to(ROOT)),
+        "tables": tables,
         "cells": [cell["cell_id"] for cell in addendum["cells"]],
-        "committed_stages": [
-            {"label": receipt["label"], "receipt": str(directory.relative_to(ROOT))}
-            for receipt, directory in stages
-        ],
+        "committed_stages": stages,
+        "freeze": {
+            "record": review.GRAIN_FAMILY_REFUSAL,
+            "command": refusal["command"],
+            "exit_status": refusal["exit_status"],
+            "standard_error": refusal["standard_error"],
+            "pilot_trials": len(refusal["pilot_trials"]),
+            "pilot_trials_admitted_per_cell": refusal["pilot_trials_admitted_per_cell"],
+            "pilot_trials_left": refusal["pilot_trials_left"],
+        },
     }
+
+
+def pricing_section(pricing):
+    """The measured cost of the per-product check, as the pricing family's stages record it."""
+    freeze, stages = pricing["freeze"], pricing["committed_stages"]
+    addendum = f"[`{pricing['pilot_addendum']}`]({pricing['pilot_addendum']})"
+    return [
+        "### Measured cost of the per-product check",
+        "",
+        f"Stages of the family `{pricing['family']}` in the order of its ledger. The rows stand "
+        f"in the family's [tables]({pricing['tables']}), which `survey/make-spmm-tables.py` "
+        "writes from each stage's acceptance summary with the pair count, interval and outcome "
+        "of every cell. The load column holds the first three fields of `/proc/loadavg` each "
+        "receipt records at the start of a session (`session_hosts[].load_average`).",
+        "",
+        table(
+            ["Stage", "Receipt", "Verdict", "Pairs per cell", "Load average at session start",
+             "Cost rows"],
+            [[stage["stage"], f"`{stage['receipt']}`", f"`{stage['verdict']}`",
+              ", ".join(str(pairs) for pairs in stage["pairs"]),
+              "; ".join(", ".join(str(value) for value in load)
+                        for load in stage["session_load_average"]),
+              ", ".join(f"[`{cell}`]({stage['link']}) ({row})"
+                        for cell, row in stage["cells"].items())] for stage in stages],
+        ),
+        "",
+        f"Confirmation: none. The launcher's `freeze` action (`{' '.join(freeze['command'])}`) "
+        "derives the confirmation addendum from the receipt of the last pilot trial through "
+        f"the canonical freezer; it exits {freeze['exit_status']} with `"
+        + " ".join(freeze["standard_error"])
+        + f"` and writes no addendum ([`{freeze['record']}`]({freeze['record']}), written by "
+        "`survey/make-spmm-freeze-refusal.py`). The ledger holds "
+        f"{plural(freeze['pilot_trials'], 'pilot trial')} of the "
+        f"{freeze['pilot_trials_admitted_per_cell']} the search budget of {addendum} admits per "
+        f"cell, which leaves {freeze['pilot_trials_left']}, so the family has no confirmatory "
+        "cell.",
+        "",
+        "Outcome, exploratory: the measured cost of the per-product check is the rows above, at "
+        "pilot level and without a confirmation. A pilot row sizes a confirmation and decides "
+        f"nothing. The frozen decision rule (the family description of {addendum}) records an "
+        "accepted measured cost when every confirmatory cell records `pass` and sends the form "
+        "back to the invoker with a cell that records `fail` or `inconclusive`; no "
+        "confirmatory cell is committed, so the rule records neither.",
+        "",
+    ]
 
 
 def constructor_problems():
@@ -748,9 +825,6 @@ def grain_section(record, stages):
     cells, last = class_cells(record, found["class"]), list(stages)[-1]
     kind, more = found["sparse_type"], found["further_confirmation"]
     pricing = found["pricing_family"]
-    committed = ", ".join(
-        f"{stage['label']} (`{stage['receipt']}`)" for stage in pricing["committed_stages"]
-    ) or "none"
     verdict = ("admits" if more["admits_a_confirmatory_cell"] else "admits no")
     return [
         "### Grain of the column check",
@@ -773,8 +847,8 @@ def grain_section(record, stages):
         "whose candidate is the shipped product and whose baseline is the dispatcher's row "
         "loop over the unchecked row kernel, in cells "
         + ", ".join(f"`{cell}`" for cell in pricing["cells"])
-        + f". Committed stages of that family: {committed}. The earlier family cannot "
-        "price it: a further "
+        + "; its stages and outcome stand under the measured cost below. The earlier family "
+        "cannot price it: a further "
         f"confirmatory attempt on its ledger (`{more['ledger']}`) is attempt "
         f"{more['next_attempt']} and spends alpha {more['attempt_alpha']:.6g}; with one more "
         f"cell the ledger holds {more['comparisons_with_one_more_cell']} comparisons, which "
@@ -793,6 +867,7 @@ def grain_section(record, stages):
              for row in kind["constructors"]],
         ),
         "",
+        *pricing_section(pricing),
     ]
 
 

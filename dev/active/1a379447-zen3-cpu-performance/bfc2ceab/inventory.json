@@ -2481,13 +2481,77 @@
       "family": "sparse-product-check-cost",
       "pilot_addendum": "addendum-v4-spmm-check-pilot.json",
       "ledger": "dev/bench_results/bfc2ceab/spmm-check-family-ledger.jsonl",
+      "tables": "../../../bench_results/bfc2ceab/spmm-check-tables.md",
       "cells": [
         "spmm-small-n16",
         "spmm-small-n1024",
         "spmm-medium-n16",
         "spmm-medium-n1024"
       ],
-      "committed_stages": []
+      "committed_stages": [
+        {
+          "stage": "pilot",
+          "label": "pilot",
+          "receipt": "dev/bench_results/bfc2ceab/r1-spmm-check-pilot",
+          "receipt_sha256": "0afedb9bc20a30107230af72a9e5666057fe41490cb4335b932eca59270c803e",
+          "verdict": "accepted",
+          "pairs": [
+            12
+          ],
+          "session_load_average": [
+            [
+              3.25,
+              5.22,
+              6.08
+            ]
+          ],
+          "link": "../../../bench_results/bfc2ceab/spmm-check-tables.md#pilot",
+          "cells": {
+            "spmm-small-n16": "exploratory, outcome pilot, decision not-worse",
+            "spmm-small-n1024": "exploratory, outcome pilot, decision inconclusive",
+            "spmm-medium-n16": "exploratory, outcome pilot, decision not-worse",
+            "spmm-medium-n1024": "exploratory, outcome pilot, decision inconclusive"
+          }
+        },
+        {
+          "stage": "pilot2",
+          "label": "pilot",
+          "receipt": "dev/bench_results/bfc2ceab/r1-spmm-check-pilot2",
+          "receipt_sha256": "deb649efbf0afe56cf0c15d4f045e499d8c0740741b11d4c726d1df48f7be76b",
+          "verdict": "accepted",
+          "pairs": [
+            24
+          ],
+          "session_load_average": [
+            [
+              76.44,
+              47.1,
+              33.74
+            ]
+          ],
+          "link": "../../../bench_results/bfc2ceab/spmm-check-tables.md#pilot2",
+          "cells": {
+            "spmm-small-n16": "exploratory, outcome pilot, decision inconclusive",
+            "spmm-small-n1024": "exploratory, outcome pilot, decision inconclusive",
+            "spmm-medium-n16": "exploratory, outcome pilot, decision inconclusive",
+            "spmm-medium-n1024": "exploratory, outcome pilot, decision not-worse"
+          }
+        }
+      ],
+      "freeze": {
+        "record": "confirmation-freeze-refusal-spmm-check.json",
+        "command": [
+          "dev/bench_results/bfc2ceab/run-spmm-check.sh",
+          "freeze"
+        ],
+        "exit_status": 1,
+        "standard_error": [
+          "worthwhile_speedup 1.1 does not exceed 1 + 0.52"
+        ],
+        "pilot_trials": 2,
+        "pilot_trials_admitted_per_cell": 2,
+        "pilot_trials_left": 0
+      }
     },
     "sparse_type": {
       "name": "SparseFieldMatrix",
