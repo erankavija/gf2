@@ -13,7 +13,11 @@
 # the workspace crates: the named exception `harness-path-dependencies` to
 # `@/inv/no-dev-path-coupling`, which ends under `@/issue/58a4bb51`.
 
+# The AFF3CT arm of the comparison is the member package `aff3ct-intra`, built
+# on request alone: it needs the staged AFF3CT tree.
 [workspace]
+members = ["aff3ct-intra"]
+default-members = ["."]
 
 [package]
 name = "ldpc-batch-arms"
