@@ -94,15 +94,22 @@ fn main() {
     let mut body = |bank: usize| {
         prepared.run(bank % banks);
     };
-    let samples = match execution_windows_configured(
-        0,
-        u64::from(request.windows),
-        Duration::from_millis(u64::from(request.window_target_ms)),
-        &mut body,
-        |_| Ok(()),
-    ) {
-        Ok(samples) => samples,
-        Err(error) => fail(format!("timing failed: {error}")),
+    // The validation position carries a zero window budget: one untimed
+    // dispatch and no timing window.
+    let samples = if request.windows == 0 {
+        body(0);
+        Vec::new()
+    } else {
+        match execution_windows_configured(
+            0,
+            u64::from(request.windows),
+            Duration::from_millis(u64::from(request.window_target_ms)),
+            &mut body,
+            |_| Ok(()),
+        ) {
+            Ok(samples) => samples,
+            Err(error) => fail(format!("timing failed: {error}")),
+        }
     };
     black_box(prepared.sink());
 

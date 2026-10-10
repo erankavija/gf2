@@ -9,10 +9,16 @@ pairing is keyed by cell identifier and is the same for a family's pilot and
 its confirmation, so the confirmation measures exactly the routes the pilot
 sized.
 
+A family another issue owns reuses this derivation: it adds its cells to the
+pairing below and names its own producing manifest, campaign seed and
+exploratory pair count through the options.
+
 Usage:
   build-plan.py <plan.json> <campaign> <arm-exe> <lock> <label> <addendum> <max-cells>
+                [--producing-manifest <path>] [--campaign-seed <n>] [--pilot-pairs <n>]
 """
 
+import argparse
 import json
 import sys
 
@@ -33,6 +39,15 @@ ARMS = {
     "family-bitslice": ("family-bitslice-interleaved", "bit-sliced interleaved encoding family, forced"),
     "family-fold": ("family-clmul-fold", "carry-less-multiply fold encoding family, forced"),
     "caller-buffer": ("caller-buffer", "caller-buffer batch entry point encode_batch_into"),
+    "word-wise": ("word-wise", "the selected encoding family, codewords placed word-wise"),
+    "family-bitslice-word-wise": (
+        "family-bitslice-interleaved-word-wise",
+        "bit-sliced interleaved encoding family, forced, codewords placed word-wise",
+    ),
+    "family-fold-word-wise": (
+        "family-clmul-fold-word-wise",
+        "carry-less-multiply fold encoding family, forced, codewords placed word-wise",
+    ),
     "current": ("current", "the route the production dispatcher selects"),
     "current-control": ("current", "identity control: the production route launched as a second arm"),
 }
@@ -67,6 +82,12 @@ PAIRING = {
     "layout-bch-encode-caller-buffer-m16-b256-1core": ("current", "caller-buffer"),
     "layout-dense-transpose-4096-control-1core": ("current", "current-control"),
     "layout-dvb-bch-encode-7200-control-1core": ("current", "current-control"),
+    # codeword-assembly family (jit:8e53235b)
+    "assembly-bch-encode-current-m14-b256-1core": ("current", "word-wise"),
+    "assembly-bch-encode-current-m16-b256-1core": ("current", "word-wise"),
+    "assembly-bch-encode-fold-m14-b256-1core": ("family-fold", "family-fold-word-wise"),
+    "assembly-bch-encode-bitslice-m14-b256-1core": ("family-bitslice", "family-bitslice-word-wise"),
+    "assembly-bch-encode-current-m8-b1-1core": ("current", "word-wise"),
 }
 
 # Pairs an exploratory cell measures. The frozen pilot maximum: a pilot at the
@@ -78,9 +99,15 @@ SINGLE_WORKER_ENVIRONMENT = {"RAYON_NUM_THREADS": "1"}
 
 
 def main():
-    if len(sys.argv) != 8:
-        sys.exit(__doc__)
-    plan_path, campaign, arm_exe, lock, label, addendum_path, max_cells = sys.argv[1:]
+    parser = argparse.ArgumentParser(usage=__doc__)
+    for name in ("plan", "campaign", "arm_exe", "lock", "label", "addendum", "max_cells"):
+        parser.add_argument(name)
+    parser.add_argument("--producing-manifest", default=PRODUCING_MANIFEST)
+    parser.add_argument("--campaign-seed", type=int, default=20260910)
+    parser.add_argument("--pilot-pairs", type=int, default=PILOT_PAIRS)
+    options = parser.parse_args()
+    plan_path, campaign, arm_exe, lock = options.plan, options.campaign, options.arm_exe, options.lock
+    label, addendum_path, max_cells = options.label, options.addendum, options.max_cells
 
     with open(addendum_path, encoding="utf-8") as handle:
         addendum = json.load(handle)
@@ -118,7 +145,7 @@ def main():
                     "size": workload["size"],
                     "seed": workload["seed"],
                 },
-                "pilot_pairs": PILOT_PAIRS if declared["role"] == "exploratory" else None,
+                "pilot_pairs": options.pilot_pairs if declared["role"] == "exploratory" else None,
             }
         )
 
@@ -128,9 +155,9 @@ def main():
         "campaign_id": campaign,
         "issue": addendum["family"]["issue"],
         "label": label,
-        "campaign_seed": 20260910,
+        "campaign_seed": options.campaign_seed,
         "addendum": addendum_path,
-        "producing_manifest": PRODUCING_MANIFEST,
+        "producing_manifest": options.producing_manifest,
         "lock_path": lock,
         "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
         "timing_override": None,
