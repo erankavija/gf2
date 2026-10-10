@@ -18,9 +18,7 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::nr_5g::max_payload_for_lifting;
-use gf2_coding::ldpc::{
-    BatchRoute, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcCode, QuasiCyclicLdpc,
-};
+use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, DecoderConfig, LaneBackend, QuasiCyclicLdpc};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::BlockEncoder;
@@ -240,7 +238,7 @@ fn cpu_ldpc_decode_is_worker_and_route_invariant() {
         vec![5, 0, 11, -1, 2, 9],
         vec![9, 13, 0, 6, -1, 4],
     ];
-    let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::new(base, 16));
+    let code = gf2_coding::ldpc::LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::new(base, 16));
     let encoder = LdpcEncoder::new(code.clone());
     let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
 
