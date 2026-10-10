@@ -9,6 +9,10 @@
 # child framing, timing windows and prepared quality those of `c077a88b`, by
 # path. The arms differ from the `3be770d5` gf2 arm in the decoder call alone.
 
+# The path dependencies below count directory levels to the harness crates and
+# the workspace crates: the named exception `harness-path-dependencies` to
+# `@/inv/no-dev-path-coupling`, which ends under `@/issue/58a4bb51`.
+
 [workspace]
 
 [package]

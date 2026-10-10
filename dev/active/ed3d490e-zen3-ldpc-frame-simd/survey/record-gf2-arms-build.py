@@ -8,6 +8,13 @@ executable digest an LDPC campaign's build identity record pins, the files of
 the repository target directory that carry it. The run fails when the build
 changes one of those files.
 
+A pinned executable absent from the building checkout carries the identity
+that shows the arms workspace does not reach it: its producing record and the
+lockfile of its producing harness are unmodified, the arms workspace builds
+into a target directory no pinned executable lives in, and every commit that
+touches the arms workspace or this record adds or changes paths only inside
+the story directory, which holds no producer of a pinned executable.
+
 Every value comes from a command this run executes or a file it reads, and
 none is a clock reading, so a second run over an unchanged tree reproduces the
 record.
@@ -88,6 +95,49 @@ def pinned_executables():
     return rows
 
 
+def story_changes(story, scopes):
+    """Paths outside `story` changed by the commits that touch any of `scopes`."""
+    commits = output(["git", "-C", str(ROOT), "log", "--format=%H", "--",
+                      *map(str, scopes)]).split()
+    changed = set()
+    for commit in commits:
+        names = output(["git", "-C", str(ROOT), "show", "--format=", "--name-only",
+                        "-m", commit]).splitlines()
+        changed.update(name for name in names if story not in pathlib.Path(name).parents)
+    return commits, sorted(changed)
+
+
+def producer_identity(rows, release, story, scopes):
+    """Per absent executable, the identity showing the arms workspace leaves it unchanged."""
+    _, outside = story_changes(story, scopes)
+    if outside:
+        sys.exit(f"commits of the arms workspace change paths outside the story: {outside}")
+    pinned_directories = {pathlib.Path(path).parent.as_posix()
+                          for row in rows for path in row["found_at"]}
+    if release.as_posix() in pinned_directories:
+        sys.exit("the arms target directory holds a pinned executable")
+    for row in rows:
+        if row["found_at"]:
+            continue
+        record = ROOT / row["record"]
+        identity = json.loads(record.read_text(encoding="utf-8"))
+        harness = identity.get("harness")
+        unaffected = {
+            "record_sha256": digest(record),
+            "paths_changed_outside_story": outside,
+        }
+        if harness:
+            pinned = harness["cargo_lock_sha256"]
+            carriers = [str(path) for path in listed("Cargo.lock")
+                        if digest(ROOT / path) == pinned]
+            if not carriers:
+                sys.exit(f"no Cargo.lock has the digest {pinned} the record pins")
+            unaffected["harness_lockfile_sha256"] = pinned
+            unaffected["harness_lockfile_found_at"] = carriers
+        row["producer_unaffected"] = unaffected
+    return rows
+
+
 def main():
     if len(sys.argv) != 2:
         sys.exit(__doc__)
@@ -112,6 +162,8 @@ def main():
     after = pinned_executables()
     if after != before:
         sys.exit("the build changed a pinned executable of an LDPC campaign")
+    story = os.path.commonpath([arms, out_dir.resolve().relative_to(ROOT)])
+    after = producer_identity(after, release, pathlib.Path(story), [arms, out_dir])
 
     record = {
         "schema": "ldpc-batch-arms-build-v1",
