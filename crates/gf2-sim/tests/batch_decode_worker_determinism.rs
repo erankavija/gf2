@@ -90,7 +90,6 @@ fn hard_frames(batch: &dyn TypedBatch) -> Vec<BitVec> {
         .clone()
 }
 
-/// `llrs` as one batch through a one-stage pipeline of `workers` workers.
 fn decode_via_executor(stage: Box<dyn AnyStage>, llrs: &[Vec<Llr>], count: usize) -> Vec<BitVec> {
     let pipeline = common::linear_pipeline(vec![stage], SEED, workers(count));
     let out = TopologyExecutor::run(
@@ -104,8 +103,6 @@ fn decode_via_executor(stage: Box<dyn AnyStage>, llrs: &[Vec<Llr>], count: usize
     hard_frames(out.as_ref())
 }
 
-/// `llrs` in contiguous chunks, one per worker of a pool of `count` workers,
-/// each decoded on its own scratch.
 fn decode_via_chunks(stage: &dyn AnyStage, llrs: &[Vec<Llr>], count: usize) -> Vec<BitVec> {
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(count)
@@ -126,7 +123,6 @@ fn decode_via_chunks(stage: &dyn AnyStage, llrs: &[Vec<Llr>], count: usize) -> V
     parts.into_iter().flatten().collect()
 }
 
-/// The conservative route, whose decode is the single-frame decoder's.
 fn conservative(routes: &[Route]) -> &Route {
     routes
         .iter()
