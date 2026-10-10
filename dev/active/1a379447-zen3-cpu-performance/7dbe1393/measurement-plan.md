@@ -56,7 +56,8 @@ one.
    [`survey/pilot-plan-smoke.json`](survey/pilot-plan-smoke.json) is the
    shared smoke's record of that plan: one untimed dispatch per arm and cell.
 3. **Confirmation.** The canonical freezer derives the confirmation addendum
-   from the committed pilot receipt; it runs in the window after the pilot's.
+   from the committed pilot receipt when the pilot resolves the family within
+   its ceiling; it runs in the window after the pilot's.
 
 ## Decision
 
@@ -78,6 +79,44 @@ for the measurement and either outcome removes them.
 A pilot that places the candidate behind the baseline is a recorded no-win
 without a confirmation: the family spends no reservation on a candidate its
 own pilot does not favour, and the removal of the second row applies.
+
+## Recorded outcome
+
+**Pilot.** The pilot's
+[execution log](../../../bench_results/7dbe1393/7dbe1393-matvec-ragged-tail/v4-r1-pilot/execution.log)
+holds a `cell-start` and a `cell-complete` record for each cell of the
+campaign addendum, every cell `measured` at the pilot's pair count, and a
+terminal `complete` record; the campaign ran as resumed sessions under one
+identity. Its
+[acceptance summary](../../../bench_results/7dbe1393/7dbe1393-matvec-ragged-tail/v4-r1-pilot/acceptance-summary.md)
+records the verdict `accepted` under the label `Pilot`, with each cell's
+estimate, pair count and interval; every row is exploratory.
+
+**Host condition.** The runner's observation at each session start is in the
+*Host load at each pilot session* table of
+[`pilot-resolution.md`](pilot-resolution.md), and the window runner's start
+line for the job is the second job of
+[`survey/bench-window-jobs.txt`](survey/bench-window-jobs.txt). Both state
+load averages of a host running other work during the pilot. The receipt
+stands as measured.
+
+**Resolution.** [`pilot-resolution.md`](pilot-resolution.md) applies the
+addendum's *Margins and resolution* rule to the committed pilot and records
+the outcome `resolution-insufficient`: the pilot-derived resolution exceeds
+the family ceiling, and its widest cell is the aligned control. The canonical
+freezer, given that resolution and the pilot addendum's margins unchanged,
+refuses to write a confirmation addendum;
+[`survey/freeze-refusal.txt`](survey/freeze-refusal.txt) holds its command,
+its message and its exit status.
+
+**Consequence.** The fourth row of the *Decision* table applies. The family
+runs no confirmation and its ledger holds no confirmatory reservation;
+production keeps its kernel and the candidate stays unselected behind its own
+entry. The deciding step is the resolution rule, before the decision rule
+reads any cell. The pilot's rows favour the candidate at every cell and decide
+nothing. The P-20 arithmetic in `pilot-resolution.md` states the comparisons
+the ledger still admits; the addendum's *Search and stopping* section allows
+this family one pilot.
 
 ## Limits
 

@@ -4,11 +4,12 @@
 
 Issue `@/issue/7dbe1393` asks where the SIMD lane of the allocated
 `BitMatrix::matvec` spends its time, relative to the scalar lane, at strides
-of 9, 10, 62, 63 and 66 words. This page reads the untimed evidence: the
+of 9, 10, 62, 63 and 66 words. This page reads the untimed evidence, the
 emitted assembly of the measured executable and the exact execution count of
-every instruction of the three lanes. It carries no figure. Every count is in
-[the generated tables](asm-attribution-tables.md), and a statement below names
-the section and column it reads. Code claims are claims of the
+every instruction of the three lanes, and then the profile session's
+counters. It carries no figure. Every count is in
+[the generated tables](asm-attribution-tables.md) or the profile summary, and
+a statement below names the section and column it reads. Code claims are claims of the
 [source ledger](survey/source-evidence.json), cited by identifier in
 backticks.
 
@@ -88,6 +89,48 @@ strides and behind at 32. Between 9 and 10 words, and between 62 and 63, the
 SIMD lane's total rises by one tail-word loop trip while the scalar lane's
 rises by a few instructions.
 
+## What the profile session records
+
+The [profile summary](../../../bench_results/7dbe1393/ragged-tail-profile/profile-summary.md)
+holds hardware counters and sampled symbols for the three lanes at the five
+ragged strides and the control, each as a median of full process passes with
+its order-statistic interval; its opening paragraph states the pass count and
+the interval's coverage. The session's
+[execution log](../../../bench_results/7dbe1393/ragged-tail-profile/execution.log)
+holds a `start` and a `done` line for every case of
+[`survey/profile-cases.txt`](survey/profile-cases.txt) and a terminal
+`complete` line, and the summary's generator, the dense story's
+`summarize-dense-profile.py`, reproduces the committed summary byte for byte
+from the retained passes. The rows are descriptive: the session carries no
+paired design and no decision.
+
+**Counters.** In the *cycles/call* column the SIMD lane's interval lies above
+the scalar lane's at each of the strides 9, 10, 62, 63 and 66, and the two
+intervals overlap at the 32-word control. The *instructions/call* column has
+the order of the untimed counts: the SIMD lane above the scalar lane at the
+five ragged strides and below it at the control. The *L1 misses/call*
+column differs little between the lanes of one stride, so the gap at the
+ragged strides is executed work and not first-level cache traffic.
+
+**Where the SIMD lane's cycles fall.** In *Sampled cycle attribution* the
+kernel `avx2_and_popcnt` holds the largest share of the SIMD lane at every
+stride; the lane body `matvec_simd` and the bundle entry `and_popcnt_fn` hold
+the rest of the retained rows. The scalar lane's samples fall in
+`matvec_scalar` alone. The time the SIMD lane spends beyond the scalar lane
+is therefore in the kernel the instruction attribution examines, and the
+per-row call and entry are a smaller, stride-independent part.
+
+**The candidate.** The parity-kernel lane's *instructions/call* is below both
+other lanes at every stride, and its *cycles/call* median is below the SIMD
+lane's at every stride and at or below the scalar lane's; the interval
+columns state where those orders are resolved.
+
+**Host condition.** The window runner read the host's load averages at the
+session's start; its start line is in
+[`survey/bench-window-jobs.txt`](survey/bench-window-jobs.txt), the first job
+of the record. The load it states is that of a host running other work, so
+the counter intervals include that interference.
+
 ## The candidate the evidence supports
 
 The gap has two parts the kernel owns: a population count where a parity
@@ -106,4 +149,5 @@ family, the control included.
 
 Whether that order holds in time is the question of the
 [frozen addendum](matvec-ragged-tail-addendum.md); the
-[measurement plan](measurement-plan.md) states how it is measured.
+[measurement plan](measurement-plan.md) states how it is measured and what
+the family records.
