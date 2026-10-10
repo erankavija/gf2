@@ -121,7 +121,12 @@ pub fn settings(iteration_cap: u32, syndrome_stopping: bool, wave: u32) -> ArmSe
 
 /// An owned AFF3CT INTRA decoder handle.
 pub struct Handle {
+    /// Non-null, from `a3_intra_new` or `a3_intra_clone`, freed on drop.
     raw: *mut c_void,
+    /// LLRs the shim reads per frame.
+    n: usize,
+    /// Decision bytes the shim writes per frame.
+    k: usize,
 }
 
 // SAFETY: a handle owns its decoder and buffers exclusively; the harness moves
@@ -144,7 +149,9 @@ impl Handle {
     ///
     /// # Errors
     ///
-    /// Returns AFF3CT's message when it rejects the configuration.
+    /// Returns an error when `0 < k <= n` fails or a dimension or the cap
+    /// exceeds the shim's integer, and AFF3CT's message when it rejects the
+    /// configuration.
     pub fn build(
         alist: &Path,
         k: usize,
@@ -152,16 +159,25 @@ impl Handle {
         iteration_cap: u32,
         syndrome_stopping: bool,
     ) -> Result<Self, String> {
+        if k == 0 || k > n {
+            return Err(format!("no ({n}, {k}) code has an information window"));
+        }
+        let shim_int = |value: usize, what: &str| {
+            c_int::try_from(value).map_err(|_| format!("{what} {value} exceeds the shim's integer"))
+        };
+        let (shim_k, shim_n) = (shim_int(k, "k")?, shim_int(n, "n")?);
+        let shim_cap = shim_int(iteration_cap as usize, "the iteration cap")?;
         let alist = CString::new(alist.to_string_lossy().as_ref()).map_err(|e| e.to_string())?;
-        let mut error = vec![0 as c_char; 512];
-        // SAFETY: both pointers are live NUL-terminated buffers for the call,
-        // and the shim reports failure by returning null and filling `error`.
+        let mut error = [0 as c_char; 512];
+        // SAFETY: `alist` is a live NUL-terminated string and `error` a live
+        // buffer of the length passed; the shim writes at most that many
+        // bytes and reports failure by returning null.
         let raw = unsafe {
             a3_intra_new(
                 alist.as_ptr(),
-                k as c_int,
-                n as c_int,
-                iteration_cap as c_int,
+                shim_k,
+                shim_n,
+                shim_cap,
                 c_int::from(syndrome_stopping),
                 SYNDROME_DEPTH,
                 error.as_mut_ptr(),
@@ -169,14 +185,15 @@ impl Handle {
             )
         };
         if raw.is_null() {
-            // SAFETY: the shim wrote a NUL-terminated message into `error`.
+            // SAFETY: `error` starts zeroed and the shim terminates what it
+            // writes inside the buffer, so a NUL lies within it.
             let message = unsafe { CStr::from_ptr(error.as_ptr()) };
             return Err(format!(
                 "aff3ct rejected the sum-product INTRA decoder: {}",
                 message.to_string_lossy()
             ));
         }
-        Ok(Self { raw })
+        Ok(Self { raw, n, k })
     }
 
     /// An independent handle from AFF3CT's `clone()` of this decoder; it
@@ -187,12 +204,18 @@ impl Handle {
     /// Returns an error when the clone fails.
     pub fn replicate(&self) -> Result<Self, String> {
         let _serialized = CLONE.lock().map_err(|e| e.to_string())?;
-        // SAFETY: `raw` is a live shim handle; the clone reads it only.
+        // SAFETY: `raw` is a live shim handle; the clone reads it only, and
+        // the lock excludes a concurrent clone.
         let raw = unsafe { a3_intra_clone(self.raw) };
         if raw.is_null() {
             return Err("aff3ct could not clone the decoder".to_owned());
         }
-        Ok(Self { raw })
+        // The shim's clone copies the source's K and N.
+        Ok(Self {
+            raw,
+            n: self.n,
+            k: self.k,
+        })
     }
 
     /// Frames one native decode consumes.
@@ -206,7 +229,8 @@ impl Handle {
     /// AFF3CT's decoder name with the observed SIMD backend and wave size.
     #[must_use]
     pub fn name(&self) -> String {
-        // SAFETY: `raw` is live and owns the returned string.
+        // SAFETY: `raw` is live and owns the returned NUL-terminated string,
+        // which is copied before the borrow of `self` ends.
         unsafe { CStr::from_ptr(a3_name(self.raw)) }
             .to_string_lossy()
             .into_owned()
@@ -228,18 +252,14 @@ impl Handle {
     ///
     /// # Panics
     ///
-    /// Panics when the buffers do not hold whole waves or AFF3CT fails.
+    /// Panics when `frames` is not a positive number of whole waves, when
+    /// `llrs` does not hold exactly `frames * n` LLRs or `decisions` exactly
+    /// `frames * k` bytes, or when AFF3CT fails.
     pub fn decode(&mut self, llrs: &[f32], decisions: &mut [u8], frames: usize) {
-        self.check_buffers(llrs, decisions, frames);
-        // SAFETY: both buffers hold `frames` whole frames, checked above.
-        let status = unsafe {
-            a3_decode(
-                self.raw,
-                llrs.as_ptr(),
-                decisions.as_mut_ptr(),
-                frames as c_int,
-            )
-        };
+        let frames = self.checked_frames(llrs, decisions, frames);
+        // SAFETY: `raw` is live; the shim reads `frames * n` LLRs and writes
+        // `frames * k` bytes, the lengths `checked_frames` established.
+        let status = unsafe { a3_decode(self.raw, llrs.as_ptr(), decisions.as_mut_ptr(), frames) };
         assert_eq!(status, 0, "AFF3CT decode failed");
     }
 
@@ -254,16 +274,16 @@ impl Handle {
         decisions: &mut [u8],
         frames: usize,
     ) -> Vec<u32> {
-        self.check_buffers(llrs, decisions, frames);
+        let shim_frames = self.checked_frames(llrs, decisions, frames);
         let mut iterations = vec![0 as c_int; frames / self.wave()];
-        // SAFETY: both buffers hold `frames` whole frames, checked above, and
-        // `iterations` one entry per wave.
+        // SAFETY: as in `decode`, and the shim writes one entry of
+        // `iterations` per wave, `frames / wave` of them.
         let status = unsafe {
             a3_decode_counted(
                 self.raw,
                 llrs.as_ptr(),
                 decisions.as_mut_ptr(),
-                frames as c_int,
+                shim_frames,
                 iterations.as_mut_ptr(),
             )
         };
@@ -274,13 +294,27 @@ impl Handle {
             .collect()
     }
 
-    fn check_buffers(&self, llrs: &[f32], decisions: &[u8], frames: usize) {
+    /// The frame count as the shim takes it, once the buffers hold exactly
+    /// what the shim reads and writes for it (`@/inv/caller-trusted-fast-paths`).
+    fn checked_frames(&self, llrs: &[f32], decisions: &[u8], frames: usize) -> c_int {
         let wave = self.wave();
         assert!(
             wave > 0 && frames > 0 && frames.is_multiple_of(wave),
             "whole native waves"
         );
-        assert!(llrs.len().is_multiple_of(frames) && decisions.len().is_multiple_of(frames));
+        assert_eq!(
+            Some(llrs.len()),
+            frames.checked_mul(self.n),
+            "{frames} frames of {} LLRs",
+            self.n
+        );
+        assert_eq!(
+            Some(decisions.len()),
+            frames.checked_mul(self.k),
+            "{frames} frames of {} decision bytes",
+            self.k
+        );
+        c_int::try_from(frames).expect("a frame count within the shim's integer")
     }
 }
 
@@ -298,7 +332,7 @@ impl IntraWorker {
     ///
     /// Returns an error when the clone fails or `frames` is not a whole
     /// number of native waves.
-    pub fn new(prototype: &Handle, frames: usize, k: usize) -> Result<Self, String> {
+    pub fn new(prototype: &Handle, frames: usize) -> Result<Self, String> {
         let handle = prototype.replicate()?;
         let wave = handle.wave();
         if wave == 0 || !frames.is_multiple_of(wave) {
@@ -306,9 +340,10 @@ impl IntraWorker {
                 "a {frames}-frame batch is not whole {wave}-frame waves"
             ));
         }
+        let decisions = vec![0; frames * handle.k];
         Ok(Self {
             handle,
-            decisions: vec![0; frames * k],
+            decisions,
             frames,
         })
     }
@@ -416,7 +451,7 @@ pub fn run() -> Result<(), String> {
         setup_start,
         // AFF3CT converts inside every decode call; no separate stage exists.
         0,
-        |_| IntraWorker::new(&prototype, batch, k),
+        |_| IntraWorker::new(&prototype, batch),
         |worker: &mut IntraWorker| worker.decode_batch(llrs),
         |worker: &IntraWorker| &worker.decisions,
     )?;
@@ -492,7 +527,7 @@ mod tests {
         assert_eq!(iterations.len(), frames / wave);
         assert!(iterations.iter().all(|count| (1..CAP).contains(count)));
 
-        let mut worker = IntraWorker::new(&prototype, frames, K).expect("clone");
+        let mut worker = IntraWorker::new(&prototype, frames).expect("clone");
         worker.decode_batch(&llrs);
         assert_eq!(worker.decisions, counted);
     }
