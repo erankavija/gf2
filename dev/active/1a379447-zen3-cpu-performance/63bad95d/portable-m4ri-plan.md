@@ -116,6 +116,29 @@ alone, so the pair also shows what host targeting gives M4RI at that shape.
 The fresh and the retained-state cells are read separately, as in the
 mirrored family.
 
+## Pilot outcome
+
+The pilot receipt
+[`v4-r1-pilot`](../../../bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md)
+is accepted exploratory evidence; its arm table names the portable gf2 arm as
+the baseline and its summary holds each cell's exploratory decision.
+[`portable-m4ri-pilot-resolution.md`](portable-m4ri-pilot-resolution.md),
+written by
+[`survey/freeze-m4ri-confirmation.sh`](survey/freeze-m4ri-confirmation.sh),
+applies the frozen resolution rule and records `resolution-insufficient`: its
+table shows one fresh mid-range cell and the full-single-word cell above the
+ceiling and the other cells within it. The family runs no confirmation and reserves
+no comparison, and REQ-09's portable comparator leg has no confirmatory
+reading.
+
+The host was loaded when the pilot ran. Each session's `host-observation`
+record in the receipt's
+[`execution.log`](../../../bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r1-pilot/execution.log)
+states the `load_average` it observed, and the window runner's job-start line
+for key `646f169b95c76bc5` in the primary checkout's
+`.agents/bench-window/window.log` states the load at launch. The receipt
+stands as measured.
+
 ## Execution
 
 | Step | Command | Window |
