@@ -12,51 +12,107 @@
   "lockfile_sha256": "9e61671dda870c76a6a0eff5c315a2cc41d6e41b12474d041e0b13bf79a139db",
   "target_directory": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release",
   "executables": {
-    "gf2-batch-lane-arm": "1e96c6e46b36a068cd4787f3822f2107642207580ab8dc76a52e6a1120b4646a",
-    "gf2-batch-single-frame-arm": "b3be6f0fcfbb424ad8b6968b0fc62f1cce2a9b368b2dbe14638bcedddb8b1743"
+    "gf2-batch-lane-arm": "08d5be9fb87a270fc114a6528c6504847fb1477d3945c5dce215bff9aac43335",
+    "gf2-batch-single-frame-arm": "90bbd2fc0438ead2e07883cc8fdfac948473479ff0c7e18b5bb0812b3356576e"
   },
   "pinned_executables": [
     {
       "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
       "executable": "aff3ct-throughput-arm",
       "sha256": "991ddbc661244be9a186f2ef1f54e44737a601ce064797270b1177e28f1d65cf",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c",
+        "paths_changed_outside_story": [],
+        "harness_lockfile_sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+        "harness_lockfile_found_at": [
+          "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.lock"
+        ]
+      }
     },
     {
       "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
       "executable": "gf2-throughput-arm",
       "sha256": "27852917abecb3df39b00c260c45fb33c1fc808ff87b491c861c1dc9b1e32391",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c",
+        "paths_changed_outside_story": [],
+        "harness_lockfile_sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+        "harness_lockfile_found_at": [
+          "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.lock"
+        ]
+      }
     },
     {
       "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
       "executable": "gf2-throughput-arm",
       "sha256": "76425724ff2e7af21f728666734077d24ea4659222889ba95ab5663a621e4583",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c",
+        "paths_changed_outside_story": [],
+        "harness_lockfile_sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+        "harness_lockfile_found_at": [
+          "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.lock"
+        ]
+      }
     },
     {
       "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
       "executable": "ldpc-alloc-census",
       "sha256": "30a46921ce6613ed350ce47afbf1da96033544a98b5804ec0676e50f9b1ab5cd",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c",
+        "paths_changed_outside_story": [],
+        "harness_lockfile_sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+        "harness_lockfile_found_at": [
+          "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.lock"
+        ]
+      }
     },
     {
       "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
       "executable": "ldpc-alloc-census",
       "sha256": "8cbd5c9a6901d1411bc6ceaba07bff0e7d0af23c22b4ab746f21684acae17030",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c",
+        "paths_changed_outside_story": [],
+        "harness_lockfile_sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+        "harness_lockfile_found_at": [
+          "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.lock"
+        ]
+      }
     },
     {
       "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
       "executable": "ldpc-plan-check",
       "sha256": "53ee3883b3cb0f1d766803feae6e4052d1b13c4e5a63eb7fb6bf5fd35ef2ab1a",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c",
+        "paths_changed_outside_story": [],
+        "harness_lockfile_sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+        "harness_lockfile_found_at": [
+          "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.lock"
+        ]
+      }
     },
     {
       "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
       "executable": "ldpc-throughput-validate",
       "sha256": "51e904d1f4eefb5164a3dc8790f147c8c27a7b8302051f9fabfc1a5f09394d97",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c",
+        "paths_changed_outside_story": [],
+        "harness_lockfile_sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+        "harness_lockfile_found_at": [
+          "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.lock"
+        ]
+      }
     },
     {
       "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
@@ -110,37 +166,61 @@
       "record": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
       "executable": "aff3ct-ldpc-arm",
       "sha256": "c30d7901fada187639b941c5b9691b8a37470933e7d2e48a19c374dbe383a344",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "1ec2e69490aa6d43ecc022c09b84f1a3864b95470e15b0673ed9d1e98bbed773",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
       "executable": "gf2-ldpc-arm",
       "sha256": "1be2c26f2d059bb40143180bfde66e04af8ed619fc03bae696f822d479af3c6e",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "1ec2e69490aa6d43ecc022c09b84f1a3864b95470e15b0673ed9d1e98bbed773",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
       "executable": "ldpc-validate",
       "sha256": "a574dee35785494bb40c1abda8148fc83feb0667a98f9bb73fd79b02330e34f8",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "1ec2e69490aa6d43ecc022c09b84f1a3864b95470e15b0673ed9d1e98bbed773",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json",
       "executable": "aff3ct-ldpc-arm",
       "sha256": "301390dfd096b5eea362f212c1816019c41e2f81d033e1f42aee917a97185a02",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "e2c2c9f2a8e10f1e7a98d7b48ea2c6079515cf30f0d60f48f73377fcb9d64f30",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json",
       "executable": "gf2-ldpc-arm",
       "sha256": "a2362e76c875c483a5b2f349f5e72019ea50569ac4915a7e93df873c98c7e9ea",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "e2c2c9f2a8e10f1e7a98d7b48ea2c6079515cf30f0d60f48f73377fcb9d64f30",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json",
       "executable": "ldpc-validate",
       "sha256": "f6ede5d60719ff035a6fafe465f8b5e68da3f338ce8164578f84a5d30d8fc685",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "e2c2c9f2a8e10f1e7a98d7b48ea2c6079515cf30f0d60f48f73377fcb9d64f30",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
@@ -170,7 +250,11 @@
       "record": "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/build-identity.json",
       "executable": "aff3ct-ldpc-arm",
       "sha256": "79b500c7739d586c51ab24046f8bb8e2495fa8f745dbb440bcfe23050ea91060",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "bf62265e14389b7ca0db7d5c9dc3c4e289251269673ddedb0fa456dceaed72a1",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/build-identity.json",
@@ -192,19 +276,31 @@
       "record": "dev/bench_results/f63a2464/preparation/build-identity.json",
       "executable": "aff3ct-throughput-arm",
       "sha256": "5f8df6f3c9c0abfe23dee1b0589c7e45e867c0c1903366c3f54197dec48bc9b8",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "019a84f495b59419a3c27e2a6498306995c6a5c673f748ae524f2691c579955c",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/f63a2464/preparation/build-identity.json",
       "executable": "gf2-throughput-arm",
       "sha256": "3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "019a84f495b59419a3c27e2a6498306995c6a5c673f748ae524f2691c579955c",
+        "paths_changed_outside_story": []
+      }
     },
     {
       "record": "dev/bench_results/f63a2464/preparation/build-identity.json",
       "executable": "qc-decoder-arm",
       "sha256": "6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236",
-      "found_at": []
+      "found_at": [],
+      "producer_unaffected": {
+        "record_sha256": "019a84f495b59419a3c27e2a6498306995c6a5c673f748ae524f2691c579955c",
+        "paths_changed_outside_story": []
+      }
     }
   ]
 }
