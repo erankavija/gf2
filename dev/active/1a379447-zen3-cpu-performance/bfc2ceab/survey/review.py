@@ -1180,6 +1180,12 @@ GRAINS = [
 
 # The family that prices the per-product grain against the unchecked row loop.
 GRAIN_FAMILY_ADDENDUM = "addendum-v4-spmm-check-pilot.json"
+# The confirmation addendum the family launcher's `freeze` action writes, and
+# the record `make-spmm-freeze-refusal.py` writes when the action refuses.
+GRAIN_FAMILY_CONFIRMATION = "addendum-v4-spmm-check-confirmation.json"
+GRAIN_FAMILY_REFUSAL = "confirmation-freeze-refusal-spmm-check.json"
+# That family's result tables, written beside its ledger by `make-spmm-tables.py`.
+GRAIN_FAMILY_TABLES = "spmm-check-tables.md"
 
 # P-20's tail-support floor, in expected bootstrap draws per tail, and the
 # claims of the two rules the admissibility arithmetic applies.
