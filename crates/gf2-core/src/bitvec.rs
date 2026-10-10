@@ -272,7 +272,8 @@ impl BitVec {
             return;
         }
 
-        for word in first..=(end - 1) / 64 {
+        let last = (end - 1) / 64;
+        for (word, target) in data.iter_mut().enumerate().take(last + 1).skip(first) {
             let low = (word * 64).max(offset);
             let count = ((word + 1) * 64).min(end) - low;
             // The 64 run bits from `low - offset` up, bits past the run's
@@ -283,7 +284,7 @@ impl BitVec {
                 window |= source.get(run / 64 + 1).copied().unwrap_or(0) << (64 - run % 64);
             }
             let mask = (u64::MAX >> (64 - count)) << (low % 64);
-            data[word] = (data[word] & !mask) | ((window << (low % 64)) & mask);
+            *target = (*target & !mask) | ((window << (low % 64)) & mask);
         }
     }
 
