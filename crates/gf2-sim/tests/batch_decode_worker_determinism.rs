@@ -15,10 +15,9 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 use gf2_coding::ldpc::dvb_t2::concat::{DvbT2Concat, DvbT2ConcatBatchDecoder};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::nr_5g::{max_payload_for_lifting, Nr5gRateMatchedBatchDecoder};
-use gf2_coding::ldpc::{
-    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcBatchDecoder,
-    QuasiCyclicLdpc,
-};
+use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, DecoderConfig, LaneBackend, QuasiCyclicLdpc};
+#[cfg(feature = "hip")]
+use gf2_coding::ldpc::{DecodedWord, LdpcBatchDecoder};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::BlockEncoder;
