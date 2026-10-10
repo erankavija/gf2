@@ -110,6 +110,27 @@ charges M4RI its bit-wise packing and unpacking, so it answers the
 whole-consumer question; a retained-state cell is the closest boundary to
 operation throughput and is no pure `mzd_mul` measurement.
 
+## Pilot outcome
+
+The pilot receipt
+[`v4-r1-pilot`](../../../bench_results/63bad95d/63bad95d-native-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md)
+is accepted exploratory evidence; its arm table names the native gf2 arm as
+the baseline and its summary holds each cell's exploratory decision.
+[`native-m4ri-pilot-resolution.md`](native-m4ri-pilot-resolution.md), written
+by [`survey/freeze-m4ri-confirmation.sh`](survey/freeze-m4ri-confirmation.sh),
+applies the frozen resolution rule and records `resolution-insufficient`: the
+two fresh mid-range cells exceed the ceiling, and the retained-state and
+small-input cells lie within it. The family runs no confirmation and reserves
+no comparison, and REQ-09's native comparator leg has no confirmatory reading.
+
+The host was loaded when the pilot ran. Each session's `host-observation`
+record in the receipt's
+[`execution.log`](../../../bench_results/63bad95d/63bad95d-native-matvec-vs-m4ri/v4-r1-pilot/execution.log)
+states the `load_average` it observed, and the window runner's job-start line
+for key `6351b1b2b9117119` in the primary checkout's
+`.agents/bench-window/window.log` states the load at launch. The receipt
+stands as measured.
+
 ## Execution
 
 | Step | Command | Window |
