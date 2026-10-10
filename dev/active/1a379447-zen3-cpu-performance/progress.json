@@ -2053,7 +2053,7 @@
   "4767d936": 1,
   "e918a8ee": 1,
   "9e0cd346": 1,
-  "feb60d0d": 0,
+  "feb60d0d": 1,
   "aff59c3c": 0
  },
  "surfaced_pitfalls": [
@@ -2702,7 +2702,8 @@
   "Session 32: a merge that adds a source file under crates/ fails cargo-ci family-producing-closures; regenerate with the family make-*-producing-inputs.py generators inside the merge or directly after it (done for 4e68f9b2 and 4767d936; 13728e1a carried its own).",
   "Session 32: merge order for the dense harness cell table: worktree-agent-7dbe1393 first, worktree-agent-63bad95d-m4ri after it (textual conflicts in cells.rs, Question::ALL, tests, closure; neither family takes seeds from the other). Unfiled worker reports: dense-harness manifest fails clippy -D warnings at tests/harness_contract.rs:147 and :972 and cargo fmt --check at build.rs:33; sibling x86 kernel modules import core::arch::x86_64 unconditionally.",
   "Session 32: common-rules told every worker to use the Opus co-author trailer; sonnet workers followed it. Wrong trailers on main: 99f1ade19 (13728e1a rework), 9d1ca38a2 (f5ae4c49), b9340fbec (83ed701d); on the pinned bfc2ceab branch: 222b02396. The rule now tells a worker to use its own session attribution.",
-  "Session 32 end: 11 story issues closed (4e68f9b2, 4767d936, 13728e1a, c317f5ac, f5ae4c49, 83ed701d, 391f5419, 86d9260e, e918a8ee, 9e0cd346, 4de9d983). feb60d0d batch_size decision for the later addendum leaf: lane cells declare batching.batch_size 1 (P-19), the wave size is in selected_path; batch_fill_ns is a zero-iteration-cap probe. aff59c3c grid accepted as baked (74 cells). Unfiled: dense-harness manifest clippy and fmt failures; sibling x86 modules import core::arch::x86_64 unconditionally; regen-asm reading hard-linked target/release (unverified)."
+  "Session 32 end: 11 story issues closed (4e68f9b2, 4767d936, 13728e1a, c317f5ac, f5ae4c49, 83ed701d, 391f5419, 86d9260e, e918a8ee, 9e0cd346, 4de9d983). feb60d0d batch_size decision for the later addendum leaf: lane cells declare batching.batch_size 1 (P-19), the wave size is in selected_path; batch_fill_ns is a zero-iteration-cap probe. aff59c3c grid accepted as baked (74 cells). Unfiled: dense-harness manifest clippy and fmt failures; sibling x86 modules import core::arch::x86_64 unconditionally; regen-asm reading hard-linked target/release (unverified).",
+  "Session 33 (2026-10-11): the 2026-10-09 window ran all seven jobs to a terminal 'complete' with acceptance Accepted per job output, but on a contended host: epic b4b4b9ee's session merged and gated on main from 00:12 to 02:53 local, and window.log records one-minute loads of 77.94 (63bad95d native-ladder confirmation), 77.63 (bfc2ceab pilot2), 25.19 (63bad95d dispatch-overhead pilot2), 13.91 and 33.35 (7dbe1393 profile and pilot), 10.28 and 5.03 (63bad95d M4RI pilots). Receipts are committed as measured; each worker records the load beside the outcome. No window ran on 2026-10-10 or is armed at session start. Claimed 8e53235b, a96a4cd6, 395fe4e2, e4e2ba52 (7a1b494ad); nine fresh workers dispatched (opus: 63bad95d-fam, bfc2ceab, 7dbe1393, 63bad95d M4RI pair, 8e53235b; sonnet: a96a4cd6, 395fe4e2, e4e2ba52, feb60d0d rework 2). Common rules in the session scratchpad."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -2761,13 +2762,23 @@
   "note": "Verify each campaign from its own execution log, never the job rc. The 4337c02e confirmation job (key ae13fbd8b6c8b708, rc 1 on the acceptance verdict) was marked done by the lead after verifying its log. Nightly windows are authorized (handoff-25); the invoker approved these pilots on 2026-10-07. 2026-10-08 window (23:00Z on 10-07): the three pilots (bfc2ceab sparse-product-check-cost, 63bad95d profile-dispatch-overhead and native-ladder) each report a complete execution log at declared cells and acceptance Accepted qualifies=false findings=0; workers re-verify from the logs before committing. 2026-10-09 window: seven jobs; each family that runs a pilot needs its confirmation the night after."
  },
  "session_scope": {
-  "session": 32,
-  "date": "2026-10-08",
+  "session": 33,
+  "date": "2026-10-11",
   "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Standing from session 31: no reuse of existing subagents; no questions while working; handoff after this and the next wave.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "disk": "120 GB free at the end of session 32; five pinned worktrees remain (bfc2ceab, 63bad95d-fam, 63bad95d-run, 63bad95d-m4ri, 63bad95d-pm4ri, 7dbe1393 makes six).",
-  "peer_session": "None: epic fa787f85 closed at 95c86a865.",
-  "active_workers": {},
+  "peer_session": "None observed at session start; epic b4b4b9ee's session 1 ended at da8caecf7 (2026-10-09 02:53 local).",
+  "active_workers": {
+   "w33-63bad95d-fam": "agent-63bad95d-fam",
+   "w33-bfc2ceab": "agent-bfc2ceab",
+   "w33-7dbe1393": "agent-7dbe1393",
+   "w33-63bad95d-m4ri": "agent-63bad95d-m4ri, agent-63bad95d-pm4ri",
+   "w33-8e53235b": "agent-8e53235b",
+   "w33-a96a4cd6": "agent-a96a4cd6",
+   "w33-395fe4e2": "agent-395fe4e2",
+   "w33-e4e2ba52": "agent-e4e2ba52",
+   "w33-feb60d0d-r2": "agent-feb60d0d-r2"
+  },
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes."
  }
