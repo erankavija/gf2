@@ -80,8 +80,8 @@ Disposition: the baked constants pin this campaign's owner and mirror its
 value (`tuning-baked-owner-digest`, `baked-measured-owner-test`). The default
 build keeps the conservative constant. The profile-dispatch-overhead family
 (plan §6) measures the profile build against the conservative build on both
-sides of the two thresholds and decides whether the baked value is retained
-(plan §7).
+sides of the two thresholds; plan §7 states how its confirmation decides
+whether the baked value is retained, and F-07 states where the family stands.
 
 ## F-04: one runtime field differs from the seam owner
 
@@ -100,6 +100,70 @@ states another measured value: it is empty, names the conservative table, or
 names an earlier owner that omits the field because its campaign does not
 sweep it ([decision table](campaign-tables.md#retained-threshold-decisions),
 "not swept").
+
+## F-06: the native-ladder confirmation is accepted and does not qualify
+
+`63bad95d-r1-native-ladder-confirmation` measures the six cells of its frozen
+addendum, native build against tuned-portable build, and spends the family's
+one confirmatory attempt
+([ledger](../../../bench_results/63bad95d/63bad95d-native-ladder-ledger.jsonl),
+last line). Acceptance records the verdict, the qualification and each cell's
+outcome in the
+[acceptance summary](../../../bench_results/63bad95d/63bad95d-native-ladder/r1-confirmation/acceptance-summary.md):
+three cells pass as not worse and three are inconclusive, so the confirmation
+does not qualify. No cell records a regression.
+
+The host is contended while the campaign runs. The launcher log and the
+receipt's session records state a load at start above the pilot's
+([disturbance record](disturbance-record.md#host-load-each-campaign-records)).
+Every cell that does not pass has a relative half-width above the measurement
+resolution its addendum freezes from the pilot, and every cell that passes
+stays within it
+([decision table](disturbance-record.md#decisions-of-63bad95d-r1-native-ladder-confirmation)).
+In each inconclusive cell the median of the raw pair ratios reaches the
+decision floor (same table); the raw-pair rows above it give the pair
+dispersion beside the pilot's.
+
+The disturbance is therefore sufficient to explain all three inconclusive
+outcomes and the missing qualification, and the receipt does not show whether
+the native build is worse or not worse on those cells. The three
+passing outcomes are reached with intervals inside the frozen resolution and
+do not depend on it. The receipt stays committed as measured. Whether it
+serves as evidence under `@/invariant/benchmark-backed-performance`, which
+asks for an uncontended host, is reported to the lead; this record claims no
+native-build result for the inconclusive cells.
+
+## F-07: the dispatch-overhead family has no confirmation
+
+`63bad95d-r2-profile-dispatch-overhead-pilot` is the second trial of the
+frozen pilot addendum and is accepted as a pilot
+([acceptance summary](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead/r2-pilot/acceptance-summary.md)).
+It also runs on a loaded host
+([disturbance record](disturbance-record.md#host-load-each-campaign-records)).
+The cell that sets the first trial's resolution is narrow in the second, and
+the other two cells are wider than in the first
+([interval and raw-pair tables](disturbance-record.md#63bad95d-profile-dispatch-overhead)):
+each trial holds a cell whose interval is several times its counterpart's, and
+the two trials disagree on which.
+
+The canonical freezer refuses to derive a confirmation from the second trial
+with the margins the pilot addendum declares; its message is kept verbatim in
+[`63bad95d-profile-dispatch-overhead-r2-freeze-refusal.txt`](campaigns/63bad95d-profile-dispatch-overhead-r2-freeze-refusal.txt),
+and
+[`63bad95d-profile-dispatch-overhead-r2-pilot-resolution.txt`](campaigns/63bad95d-profile-dispatch-overhead-r2-pilot-resolution.txt)
+gives the trial's intervals at the confirmation's corrected alpha. The margins
+are not replaced: a margin above one plus that resolution exceeds the margin
+of the [superseded](campaigns/63bad95d-profile-dispatch-overhead-confirmation-superseded.md)
+confirmation, which is set aside for being wider than the effect the addendum
+declares worthwhile.
+
+The family therefore has no frozen confirmation, no arm smoke of one and no
+queue line. The pilot addendum's `search_budget.max_pilot_trials_per_cell` is
+spent by the two pilot lines of the
+[ledger](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-ledger.jsonl),
+and the family's one confirmatory attempt is unspent. The retention rule of
+plan §7 for the baked bit-backend threshold reads a dispatch-overhead
+confirmation, and none exists; the disposition is reported to the lead.
 
 ## What the campaign does not decide
 

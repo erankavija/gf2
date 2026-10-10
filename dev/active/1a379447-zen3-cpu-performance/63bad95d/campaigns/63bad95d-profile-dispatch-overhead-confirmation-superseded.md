@@ -41,10 +41,13 @@ declares its pilot trials per cell in `search_budget.max_pilot_trials_per_cell`,
 and the ledger holds one pilot reservation. The second trial is stage `pilot2`
 of the launcher: campaign `63bad95d-r2-profile-dispatch-overhead-pilot`, the
 same addendum bytes, its own seed, receipt directory `r2-pilot` beside
-`r1-pilot`. `freeze 63bad95d-profile-dispatch-overhead pilot2` writes
+`r1-pilot`. `freeze 63bad95d-profile-dispatch-overhead pilot2` derives
 `63bad95d-profile-dispatch-overhead-r2-confirmation.json` and
 `63bad95d-profile-dispatch-overhead-r2-confirmation-derivation.txt`, and
-stage `confirmation2` measures that addendum. Cells, arms, sizes, the holdout
+stage `confirmation2` measures that addendum. The freezer refuses the second
+trial's receipt
+([refusal record](63bad95d-profile-dispatch-overhead-r2-freeze-refusal.txt)),
+so neither file exists. Cells, arms, sizes, the holdout
 declaration, the margin rule and the decision rule are those of the pilot
 addendum and the plan record.
 
