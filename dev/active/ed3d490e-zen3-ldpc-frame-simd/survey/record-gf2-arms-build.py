@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-"""Record the Rust 1.95 build of the gf2 batch decoder arms (jit:ed3d490e).
+"""Record the Rust 1.95 build of the batch decoder arms (jit:ed3d490e).
 
 Builds the arms workspace beside this script in its own target directory and
 writes `gf2-arms-build.json`: the toolchain, the command this run executed,
-the digest of every executable the workspace declares, and what this checkout
-shows about each executable digest an LDPC campaign's build identity record
-pins.
+the digest of every executable the build produces, what this checkout shows
+about each executable digest an LDPC campaign's build identity record pins,
+and how the arms catalogue `arms.json` beside the workspace agrees with both.
+
+Given `AFF3CT_ROOT`, the staged AFF3CT [Cassagne2019] tree, a second command
+builds the workspace's other member packages, which link it. The run then
+writes `aff3ct-arms-build.json` instead and adds the tree's revision and the
+digest of its static library, as this run reads them, with the build identity
+records that pin each.
 
 Content alone decides, and the run fails on any of:
 
@@ -14,7 +20,11 @@ Content alone decides, and the run fails on any of:
 - the arms workspace is not its own workspace root with its target directory
   inside it;
 - the arms target directory holds a file with a pinned executable's name or
-  digest, or the arms workspace declares a package or target under such a name.
+  digest, or the arms workspace declares a package or target under such a name;
+- the catalogue names a pinned arm whose record, found by content, does not
+  pin that executable digest, or an arm of a built package that the build
+  does not produce;
+- no build identity record pins the digest of the AFF3CT static library.
 
 The rest is observation. `found_at` lists the target files carrying a pinned
 digest, and is empty for an executable this checkout never built.
@@ -30,7 +40,7 @@ Every value comes from a command this run executes or a file it reads, and
 none is a clock reading, so a second run over an unchanged tree reproduces the
 record.
 
-Usage (from the worktree root): record-gf2-arms-build.py OUT_DIR
+Usage (from the worktree root): record-gf2-arms-build.py OUT_DIR [AFF3CT_ROOT]
 """
 
 import hashlib
@@ -176,12 +186,62 @@ def isolation(metadata, arms, rows):
     }
 
 
+def catalogue(arms, rows, records, executables, packages):
+    """What the catalogue beside the arms workspace names; exits on a disagreement.
+
+    A workspace arm of a package outside the built `packages` is listed unbuilt.
+    """
+    path = arms.parent / "arms.json"
+    named = json.loads(path.read_text(encoding="utf-8"))["arms"]
+    by_digest = {record["sha256"]: name for name, record in records.items()}
+    pinned, workspace, unbuilt = [], [], []
+    for name, arm in sorted(named.items()):
+        if arm["source"] == "workspace":
+            if arm["package"] not in packages:
+                unbuilt.append(name)
+                continue
+            if arm["executable"] not in executables:
+                sys.exit(f"the build produces no executable of the catalogued arm {name}")
+            workspace.append({"arm": name, "executable": arm["executable"],
+                              "sha256": executables[arm["executable"]]})
+            continue
+        record = by_digest.get(arm["pinned_by"]["sha256"])
+        found = [row for row in rows if row["record"] == record
+                 and row["executable"] == arm["executable"]
+                 and row["sha256"] == arm["executable_sha256"]]
+        if not found:
+            sys.exit(f"no live record pins the executable digest of the catalogued arm {name}")
+        pinned.append({"arm": name, **found[0]})
+    return {"path": str(path), "sha256": digest(path), "pinned_arms": pinned,
+            "workspace_arms": workspace, "unbuilt_workspace_arms": unbuilt}
+
+
+def aff3ct_identity(root, records):
+    """Revision and library digest of the AFF3CT tree `root`, with the records pinning each."""
+    revision = output(["git", "-C", str(root), "rev-parse", "HEAD"])
+    libraries = sorted((root / "build/lib").glob("libaff3ct-*.a"))
+    if len(libraries) != 1:
+        sys.exit(f"{root} holds {len(libraries)} AFF3CT static libraries")
+    library = digest(libraries[0])
+    pinning = sorted(name for name, record in records.items()
+                     if any(pin["sha256"] == library for pin in record["pins"]))
+    if not pinning:
+        sys.exit("no build identity record pins the digest of the AFF3CT static library")
+    stating = sorted(
+        str(record) for record, identity in identity_records()
+        if isinstance(identity.get("aff3ct"), dict) and revision in identity["aff3ct"].values())
+    return {"revision": revision, "revision_stated_by": stating,
+            "static_library": libraries[0].name, "static_library_sha256": library,
+            "static_library_pinned_by": pinning}
+
+
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         sys.exit(__doc__)
     if pathlib.Path.cwd() != ROOT:
         sys.exit("invoke from the worktree root")
     out_dir = pathlib.Path(sys.argv[1])
+    aff3ct = pathlib.Path(sys.argv[2]).resolve() if len(sys.argv) == 3 else None
     arms = located("package-directory", PACKAGE)
     manifest = arms / "Cargo.toml"
     _, before = pinned_executables()
@@ -190,31 +250,46 @@ def main():
     command = ["./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build", "--offline",
                "--locked", "--release", "--manifest-path", str(manifest)]
     subprocess.run(command, check=True, env={**os.environ, **environment})
+    commands = [" ".join([f"{name}='{value}'" for name, value in environment.items()] + command)]
 
     metadata = json.loads(output(
         ["cargo", f"+{TOOLCHAIN}", "metadata", "--offline", "--locked", "--no-deps",
          "--format-version", "1", "--manifest-path", str(manifest)]))
     release = pathlib.Path(metadata["target_directory"]).relative_to(ROOT) / "release"
-    binaries = sorted(target["name"] for package in metadata["packages"]
-                      for target in package["targets"] if "bin" in target["kind"])
+    built = [package for package in metadata["packages"]
+             if package["name"] == PACKAGE or aff3ct is not None]
+    binaries = sorted(target["name"] for package in built for target in package["targets"]
+                      if "bin" in target["kind"])
+    if aff3ct is not None:
+        command += [argument for package in built if package["name"] != PACKAGE
+                    for argument in ("--package", package["name"])]
+        subprocess.run(command, check=True,
+                       env={**os.environ, **environment, "GF2_AFF3CT_ROOT": str(aff3ct)})
+        # The tree's location is the caller's; `aff3ct` gives its identity.
+        commands.append(" ".join([f"{name}='{value}'" for name, value in environment.items()]
+                                 + ["GF2_AFF3CT_ROOT=<aff3ct root>"] + command))
     rows, after = pinned_executables()
     if after != before:
         sys.exit("the build changed a pinned executable of an LDPC campaign")
 
+    executables = {name: digest(release / name) for name in binaries}
+    records = pinned_records()
     record = {
-        "schema": "ldpc-batch-arms-build-v2",
+        "schema": "ldpc-batch-arms-build-v3",
         "rustc": output(["rustc", f"+{TOOLCHAIN}", "--version", "--verbose"]),
         "cargo": output(["cargo", f"+{TOOLCHAIN}", "--version"]),
-        "build_command": " ".join(
-            [f"{name}='{value}'" for name, value in environment.items()] + command),
+        "build_commands": commands,
         "release_profile": tomllib.loads(manifest.read_text(encoding="utf-8"))["profile"]["release"],
-        "executables": {name: digest(release / name) for name in binaries},
+        "executables": executables,
+        "aff3ct": None if aff3ct is None else aff3ct_identity(aff3ct, records),
+        "catalogue": catalogue(arms, rows, records, executables,
+                               {package["name"] for package in built}),
         "isolation": isolation(metadata, arms, rows),
-        "pinned_records": pinned_records(),
+        "pinned_records": records,
         "pinned_executables": rows,
     }
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / "gf2-arms-build.json"
+    path = out_dir / ("gf2-arms-build.json" if aff3ct is None else "aff3ct-arms-build.json")
     path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     print(path)
 

@@ -52,8 +52,7 @@ fn revision(aff3ct: &Path) -> String {
 fn build_aff3ct() {
     println!("cargo:rerun-if-env-changed=GF2_AFF3CT_ROOT");
     let aff3ct = PathBuf::from(
-        env::var("GF2_AFF3CT_ROOT")
-            .expect("GF2_AFF3CT_ROOT must name the staged AFF3CT tree for the aff3ct feature"),
+        env::var("GF2_AFF3CT_ROOT").expect("GF2_AFF3CT_ROOT must name the staged AFF3CT tree"),
     );
     let throughput_shim = dependency_dir("ldpc-throughput-harness").join("cpp");
     let survey_shim = dependency_dir("ldpc-survey-harness").join("cpp");
@@ -117,7 +116,5 @@ fn build_aff3ct() {
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=Cargo.toml");
-    if env::var_os("CARGO_FEATURE_AFF3CT").is_some() {
-        build_aff3ct();
-    }
+    build_aff3ct();
 }

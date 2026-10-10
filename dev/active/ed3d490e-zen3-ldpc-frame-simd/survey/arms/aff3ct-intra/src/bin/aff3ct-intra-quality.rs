@@ -5,7 +5,7 @@
 //! bundle once and writes their quality record to `OUT`, the record the arm
 //! takes in `GF2_LDPC_QUALITY`.
 
-use ldpc_batch_arms::aff3ct_intra::{replay_quality, settings, Handle, LINKED_AFF3CT};
+use aff3ct_intra::{replay_quality, settings, Handle, LINKED_AFF3CT};
 use ldpc_survey::arm::DecoderCase;
 use ldpc_throughput::workload::Workload;
 use std::process::ExitCode;

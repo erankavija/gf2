@@ -3,7 +3,7 @@
 //! The steady-state operation of the `3be770d5` AFF3CT arm with the decoder
 //! `cpp/intra_shim.cpp` adds: a prototype built from the recorded AList and
 //! one AFF3CT `clone()` per pinned worker, which converts and decodes the
-//! recorded f32 LLRs inside the timed call. The handle is this module's own
+//! recorded f32 LLRs inside the timed call. The handle is this crate's own
 //! because the `3be770d5` handle is built by `a3_new` alone.
 
 use ldpc_survey::arm::{
@@ -457,14 +457,17 @@ mod tests {
     const K: usize = 4;
     const CAP: u32 = 20;
 
-    /// The (7, 4) Hamming code as an AList file.
-    fn alist() -> std::path::PathBuf {
-        let path = std::env::temp_dir().join(format!("hamming-{}.alist", std::process::id()));
-        let text = "7 3\n3 4\n1 1 2 1 2 2 3\n4 4 4\n\
-                    1 0 0\n2 0 0\n1 2 0\n3 0 0\n1 3 0\n2 3 0\n1 2 3\n\
-                    1 3 5 7\n2 3 6 7\n4 5 6 7\n";
-        std::fs::write(&path, text).expect("alist");
-        path
+    /// The (7, 4) Hamming code as an AList file, written once for all tests.
+    fn alist() -> &'static std::path::Path {
+        static FILE: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+        FILE.get_or_init(|| {
+            let path = std::env::temp_dir().join(format!("hamming-{}.alist", std::process::id()));
+            let text = "7 3\n3 4\n1 1 2 1 2 2 3\n4 4 4\n\
+                        1 0 0\n2 0 0\n1 2 0\n3 0 0\n1 3 0\n2 3 0\n1 2 3\n\
+                        1 3 5 7\n2 3 6 7\n4 5 6 7\n";
+            std::fs::write(&path, text).expect("alist");
+            path
+        })
     }
 
     /// The all-zero codeword with one unreliable wrong position per frame.
@@ -478,7 +481,7 @@ mod tests {
 
     #[test]
     fn a_clone_decodes_as_the_counting_prototype() {
-        let mut prototype = Handle::build(&alist(), K, N, CAP, true).expect("decoder");
+        let mut prototype = Handle::build(alist(), K, N, CAP, true).expect("decoder");
         let wave = prototype.wave();
         let frames = 3 * wave;
         let llrs = llrs(frames);
@@ -495,7 +498,7 @@ mod tests {
 
     #[test]
     fn a_handle_reports_the_decoder_of_its_wave() {
-        let prototype = Handle::build(&alist(), K, N, CAP, true).expect("decoder");
+        let prototype = Handle::build(alist(), K, N, CAP, true).expect("decoder");
         let observed = prototype.observed().expect("observed");
         assert_eq!(observed.wave_frames, prototype.wave());
         assert!(prototype.name().starts_with(&observed.class));
