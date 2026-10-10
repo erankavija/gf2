@@ -1,0 +1,55 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2619595526
+#
+# Overhead       Samples  Shared Object         Symbol                                            
+# ........  ............  ....................  ..................................................
+#
+    99.25%          2812  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.14%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             3  libc.so.6             [.] malloc
+     0.07%             2  libc.so.6             [.] 0x00000000000a7a8f
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c18
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa6aaaff1
+     0.04%             1  libc.so.6             [.] 0x00000000000a7696
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94c2
+     0.04%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_with_route
+     0.04%             1  [unknown]             [k] 0xffffffffa6801cf0
+     0.04%             1  [unknown]             [k] 0xffffffffa690410b
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d7f
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a684
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b372
+     0.01%             1  [unknown]             [k] 0xffffffffa6801284
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788b8
+     0.00%             1  [unknown]             [k] 0xffffffffa6fca705
+     0.00%             1  [unknown]             [k] 0xffffffffa6f99338
+     0.00%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002951e
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede40e
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000021e34
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001934b
+     0.00%             1  [unknown]             [k] 0xffffffffa6fdbb55
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee615e
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa7d804df
+     0.00%             1  [unknown]             [k] 0xffffffffa6f331fe
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78640
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785e7
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f7ef62
+     0.00%             1  [unknown]             [k] 0xffffffffa6f990bf
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#

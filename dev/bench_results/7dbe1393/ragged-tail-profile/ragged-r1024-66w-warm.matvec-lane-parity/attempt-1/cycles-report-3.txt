@@ -1,0 +1,61 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2215123620
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    86.88%          2446  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+     7.97%           224  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     3.99%           112  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.28%             8  dense-arm             [.] dense_arm::run::{{closure}}
+     0.12%             7  [unknown]             [k] 0xffffffffa6801280
+     0.11%             3  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.11%             3  libc.so.6             [.] 0x00000000000a79a1
+     0.07%             2  libc.so.6             [.] malloc
+     0.07%             2  libc.so.6             [.] 0x00000000000a7696
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  libc.so.6             [.] 0x00000000000a61bb
+     0.04%             1  [unknown]             [k] 0xffffffffa6b4856e
+     0.04%             1  libc.so.6             [.] 0x00000000000a5047
+     0.04%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5cfa
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61be4
+     0.04%             1  libc.so.6             [.] 0x00000000000a5efd
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a905
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000913a
+     0.01%             1  dense-arm             [.] <&T as core::fmt::Display>::fmt
+     0.01%             1  libc.so.6             [.] 0x00000000000329c4
+     0.01%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5f13e
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bb9a
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010bfe
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000017c51
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7874d
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000028981
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000265e4
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc8e6
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016484
+     0.00%             1  [unknown]             [k] 0xffffffffa6fd4fd1
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5e02
+     0.00%             1  [unknown]             [k] 0xffffffffa701568a
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6c41
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff3d73
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61c6a
+     0.00%             1  libc.so.6             [.] 0x00000000001763b0
+     0.00%             1  [unknown]             [k] 0xffffffffa6801298
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1e5c6
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33136
+     0.00%             1  [unknown]             [k] 0xffffffffa6fdbb6f
+
+
+#
+# (Tip: List events using substring match: perf list <keyword>)
+#

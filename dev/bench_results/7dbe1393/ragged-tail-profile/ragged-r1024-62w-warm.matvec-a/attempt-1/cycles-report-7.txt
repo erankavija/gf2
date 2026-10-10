@@ -1,0 +1,55 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2526262110
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    84.25%          2349  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    13.32%           372  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.51%            42  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.18%             5  dense-arm             [.] dense_arm::run::{{closure}}
+     0.18%             5  libc.so.6             [.] malloc
+     0.11%             3  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             2  [unknown]             [k] 0xffffffffa7d8e58c
+     0.04%             1  libc.so.6             [.] 0x00000000000a629b
+     0.04%             1  libc.so.6             [.] 0x00000000000a5d1c
+     0.04%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.04%             1  [unknown]             [k] 0xffffffffa6801284
+     0.04%             1  libc.so.6             [.] 0x00000000000a5019
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa6c957ba
+     0.04%             1  [unknown]             [k] 0xffffffffa6ca910c
+     0.01%             2  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.01%             1  [unknown]             [k] 0xffffffffa7d92eb3
+     0.01%             1  [unknown]             [k] 0xffffffffa6801d30
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x00000000000103fd
+     0.01%             1  libc.so.6             [.] strcpy
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ccaa
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a18c
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6eb0dc8
+     0.00%             1  [unknown]             [k] 0xffffffffa6eec5f4
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff05d3
+     0.00%             1  [unknown]             [k] 0xffffffffa6f19036
+     0.00%             1  [unknown]             [k] 0xffffffffa6fec3be
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5d9a
+     0.00%             1  libc.so.6             [.] 0x000000000017a289
+     0.00%             1  [unknown]             [k] 0xffffffffa6c27730
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.00%             1  [unknown]             [k] 0xffffffffa6f00834
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff030d
+
+
+#
+# (Tip: Show estimate cycles per function and IPC in annotate use perf record -b ... ; perf report --total-cycles)
+#

@@ -1,0 +1,64 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2564057733
+#
+# Overhead       Samples  Shared Object         Symbol                                                
+# ........  ............  ....................  ......................................................
+#
+    84.41%          2362  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    10.23%           286  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     4.26%           120  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.14%             4  libc.so.6             [.] malloc
+     0.11%             3  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.07%             3  libc.so.6             [.] cfree
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.04%             1  [unknown]             [k] 0xffffffffa6caf163
+     0.04%             1  [unknown]             [k] 0xffffffffa6c92a69
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a15e
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  libc.so.6             [.] 0x00000000000a624e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e5f3
+     0.04%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  libc.so.6             [.] 0x00000000000a6208
+     0.04%             1  libc.so.6             [.] 0x00000000000a7a8f
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61e78
+     0.04%             1  libc.so.6             [.] 0x00000000000a5032
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94110
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e57d
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f10
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f24d
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee668a
+     0.01%             1  [unknown]             [k] 0xffffffffa6800175
+     0.01%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.01%             1  dense-arm             [.] <core::fmt::Formatter>::pad_integral::write_prefix
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.00%             1  [unknown]             [k] 0xffffffffa6f0c97c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78907
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc9cb
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a754
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029595
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001b9d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef9510
+     0.00%             1  [unknown]             [k] 0xffffffffa6e787cd
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80dc5
+     0.00%             1  [unknown]             [k] 0xffffffffa6febf45
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede6b5
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78644
+     0.00%             1  [unknown]             [k] 0xffffffffa6f330c0
+
+
+#
+# (Tip: To analyze particular parallelism levels, try: perf report --latency --parallelism=32-64)
+#

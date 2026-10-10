@@ -1,0 +1,64 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2419463447
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    78.10%          2126  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    13.91%           382  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     6.66%           182  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.18%             7  [unknown]             [k] 0xffffffffa6f12633
+     0.18%             5  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             3  [unknown]             [k] 0xffffffffa6801280
+     0.07%             2  libc.so.6             [.] malloc
+     0.04%             2  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  libc.so.6             [.] 0x00000000000a7669
+     0.04%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.04%             1  [unknown]             [k] 0xffffffffa6801cac
+     0.04%             2  libc.so.6             [.] cfree
+     0.04%             1  ld-linux-x86-64.so.2  [.] 0x0000000000013d5f
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  libc.so.6             [.] 0x00000000000a7628
+     0.04%             1  libc.so.6             [.] 0x00000000000a7121
+     0.04%             1  [unknown]             [k] 0xffffffffa6f980c6
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed693a
+     0.04%             1  libc.so.6             [.] 0x00000000000a72a2
+     0.04%             1  libc.so.6             [.] 0x00000000000a5eed
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f8f
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f04
+     0.04%             1  [unknown]             [k] 0xffffffffa7da4704
+     0.04%             1  libc.so.6             [.] 0x00000000000a4ffe
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6da1
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94ab
+     0.01%             1  [unknown]             [k] 0xffffffffa6e788af
+     0.01%             1  [unknown]             [k] 0xffffffffa7d649ae
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b219
+     0.00%             1  libc.so.6             [.] 0x00000000000a6e47
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a928
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5d97
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78907
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a544
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a1f4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94af
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed6602
+     0.00%             1  [unknown]             [k] 0xffffffffa7004120
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8054b
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3316d
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7869e
+     0.00%             1  libc.so.6             [.] 0x00000000001785f2
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6c5cb51
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9918c
+
+
+#
+# (Tip: To separate samples by time use perf report --sort time,overhead,sym)
+#

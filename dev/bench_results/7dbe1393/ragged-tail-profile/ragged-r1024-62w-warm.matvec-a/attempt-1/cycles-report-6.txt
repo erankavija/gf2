@@ -1,0 +1,41 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2677144358
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    83.88%          2465  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    13.47%           396  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.98%            58  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.24%             7  dense-arm             [.] dense_arm::run::{{closure}}
+     0.10%             3  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             2  libc.so.6             [.] 0x00000000000a4ffe
+     0.03%             1  [unknown]             [k] 0xffffffffa7d61c26
+     0.03%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.03%             1  [unknown]             [k] 0xffffffffa6801280
+     0.03%             1  [unknown]             [k] 0xffffffffa6f9411c
+     0.03%             1  [unknown]             [k] 0xffffffffa6f98789
+     0.03%             1  libc.so.6             [.] 0x00000000000a620c
+     0.01%             1  libc.so.6             [.] 0x00000000000a6233
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016e70
+     0.01%             1  [unknown]             [k] 0xffffffffa6edcc8b
+     0.01%             1  libc.so.6             [.] __isoc23_sscanf
+     0.01%             1  dense-arm             [.] core::fmt::write
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b137
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778e8
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778b8
+     0.00%             1  [unknown]             [k] 0xffffffffa6f99078
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#

@@ -1,0 +1,67 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2551276702
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    72.20%          2035  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    16.88%           477  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     9.11%           256  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.21%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.14%             4  libc.so.6             [.] malloc
+     0.14%             5  libc.so.6             [.] cfree
+     0.14%             4  [unknown]             [k] 0xffffffffa6f1900a
+     0.11%             3  [unknown]             [k] 0xffffffffa6801280
+     0.11%             5  [unknown]             [k] 0xffffffffa6f12633
+     0.11%             3  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a132
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e5b5
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e713
+     0.04%             1  [unknown]             [k] 0xffffffffa6f930a5
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee4058
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c29b
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f10
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a110
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d30
+     0.04%             2  [unknown]             [k] 0xffffffffa6f98755
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94257
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e58c
+     0.04%             1  [unknown]             [k] 0xffffffffa6f106d0
+     0.04%             1  libc.so.6             [.] 0x00000000000a5edc
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c14
+     0.04%             1  [unknown]             [k] 0xffffffffa6caf163
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61d18
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6c9523b
+     0.04%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.04%             1  libc.so.6             [.] 0x00000000000a5ee6
+     0.03%             1  libc.so.6             [.] 0x00000000000a6201
+     0.03%             1  [unknown]             [k] 0xffffffffa74a1956
+     0.01%             2  [unknown]             [k] 0xffffffffa6efc924
+     0.01%             1  [unknown]             [k] 0xffffffffa6f33fcc
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000aee1
+     0.00%             1  [unknown]             [k] 0xffffffffa6800116
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6e786f4
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee66d4
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6edde7d
+     0.00%             1  [unknown]             [k] 0xffffffffa7595f00
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1cb03
+     0.00%             1  libc.so.6             [.] 0x00000000000e71be
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78844
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7789d
+     0.00%             1  [unknown]             [k] 0xffffffffa7d6618f
+
+
+#
+# (Tip: To record callchains for each sample: perf record -g)
+#

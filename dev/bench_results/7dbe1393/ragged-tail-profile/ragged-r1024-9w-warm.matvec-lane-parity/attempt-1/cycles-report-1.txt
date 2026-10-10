@@ -1,0 +1,63 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2464439467
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    74.27%          2026  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    15.71%           431  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     8.76%           239  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.15%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             5  [unknown]             [k] 0xffffffffa6f12633
+     0.11%             4  libc.so.6             [.] cfree
+     0.07%             2  libc.so.6             [.] malloc
+     0.07%             2  libc.so.6             [.] 0x00000000000a4ffe
+     0.07%             2  [unknown]             [k] 0xffffffffa6801280
+     0.07%             2  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  libc.so.6             [.] 0x00000000000a61bb
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed5370
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee615e
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.04%             1  [unknown]             [k] 0xffffffffa758e341
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3d67
+     0.04%             1  [unknown]             [k] 0xffffffffa6f980d7
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f1f
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef96ab
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a16e
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee65fc
+     0.03%             1  libc.so.6             [.] 0x00000000000a6e2e
+     0.01%             1  [unknown]             [k] 0xffffffffa6edde64
+     0.01%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a190
+     0.00%             1  [unknown]             [k] 0xffffffffa6b49525
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a82f
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001057e
+     0.00%             1  [unknown]             [k] 0xffffffffa7d89a61
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000023684
+     0.00%             1  [unknown]             [k] 0xffffffffa7595f37
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1e802
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed6960
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7783a
+     0.00%             1  libc.so.6             [.] 0x00000000000e725b
+     0.00%             1  libc.so.6             [.] 0x000000000017a6ec
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78650
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77825
+     0.00%             1  [unknown]             [k] 0xffffffffa6f99188
+
+
+#
+# (Tip: Use --symfs <dir>[,layout] if your symbol files are in non-standard locations.)
+#

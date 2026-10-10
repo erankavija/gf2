@@ -1,0 +1,50 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2629801589
+#
+# Overhead       Samples  Shared Object         Symbol                                        
+# ........  ............  ....................  ..............................................
+#
+    99.43%          2816  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.11%             3  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b0d9
+     0.04%             1  libc.so.6             [.] 0x00000000000a503a
+     0.04%             1  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa6c95411
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  libc.so.6             [.] 0x00000000000a7696
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee437f
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97042
+     0.04%             1  [unknown]             [k] 0xffffffffa6b4922b
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee4439
+     0.01%             1  [unknown]             [k] 0xffffffffa6c5cb58
+     0.01%             1  [unknown]             [k] 0xffffffffa74acaf0
+     0.01%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000aed9
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000baf1
+     0.00%             1  [unknown]             [k] 0xffffffffa6f00840
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a1f1
+     0.00%             1  [unknown]             [k] 0xffffffffa6f942c3
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78907
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             2  [unknown]             [k] 0xffffffffa7d80565
+     0.00%             1  [unknown]             [k] 0xffffffffa6aab359
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f990c2
+     0.00%             1  [unknown]             [k] 0xffffffffa7d804df
+
+
+#
+# (Tip: To not record events from perf itself add --exclude-perf)
+#

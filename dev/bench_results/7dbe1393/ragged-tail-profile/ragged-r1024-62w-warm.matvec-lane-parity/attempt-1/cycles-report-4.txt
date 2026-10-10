@@ -1,0 +1,63 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2664985760
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    83.02%          2406  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    11.34%           329  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     4.15%           120  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.59%            17  dense-arm             [.] dense_arm::run::{{closure}}
+     0.10%             3  [unknown]             [k] 0xffffffffa6801280
+     0.07%             2  libc.so.6             [.] malloc
+     0.07%             2  [unknown]             [k] 0xffffffffa6c9368f
+     0.03%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.03%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.03%             1  [unknown]             [k] 0xffffffffa7d92a2b
+     0.03%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.03%             1  [unknown]             [k] 0xffffffffa6b48506
+     0.03%             1  [unknown]             [k] 0xffffffffa6c65708
+     0.03%             1  [unknown]             [k] 0xffffffffa6eb1c18
+     0.03%             1  [unknown]             [k] 0xffffffffa6c936e3
+     0.03%             1  [unknown]             [k] 0xffffffffa6f1e5f3
+     0.03%             1  [unknown]             [k] 0xffffffffa6f5f24d
+     0.03%             1  libc.so.6             [.] 0x00000000000a5ee9
+     0.03%             1  libc.so.6             [.] 0x00000000000a6196
+     0.03%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.03%             1  libc.so.6             [.] 0x00000000000a4f77
+     0.03%             1  [unknown]             [k] 0xffffffffa7d8e58c
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee5f8f
+     0.03%             1  [unknown]             [k] 0xffffffffa6801d30
+     0.01%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed6721
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bc53
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef2aac
+     0.00%             1  libc.so.6             [.] _IO_file_seekoff
+     0.00%             2  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6f94110
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  [unknown]             [k] 0xffffffffa6edde5a
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77877
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6f930ae
+     0.00%             1  [unknown]             [k] 0xffffffffa6edde7d
+     0.00%             1  [unknown]             [k] 0xffffffffa7da460b
+     0.00%             1  [unknown]             [k] 0xffffffffa6fecd0b
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6aab359
+     0.00%             1  [unknown]             [k] 0xffffffffa6f334ad
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c84
+
+
+#
+# (Tip: For tracepoint events, try: perf report -s trace_fields)
+#

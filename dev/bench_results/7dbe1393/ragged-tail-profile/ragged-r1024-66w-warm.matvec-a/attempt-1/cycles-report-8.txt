@@ -1,0 +1,58 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 4K of event 'cycles:u'
+# Event count (approx.): 3515068128
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    85.25%          3501  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    12.65%           515  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.26%            51  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.20%             8  dense-arm             [.] dense_arm::run::{{closure}}
+     0.17%             7  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.10%             4  libc.so.6             [.] 0x00000000000a4ffe
+     0.07%             3  libc.so.6             [.] 0x00000000000a728d
+     0.05%             2  libc.so.6             [.] malloc
+     0.03%             1  [unknown]             [k] 0xffffffffa6aaae30
+     0.03%             1  [unknown]             [k] 0xffffffffa6c91392
+     0.03%             1  [unknown]             [k] 0xffffffffa6c904a5
+     0.02%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.02%             1  [unknown]             [k] 0xffffffffa7d61d0c
+     0.02%             1  libc.so.6             [.] 0x00000000000a6230
+     0.02%             1  [unknown]             [k] 0xffffffffa6f1b24c
+     0.02%             1  [unknown]             [k] 0xffffffffa7d61f10
+     0.02%             1  libc.so.6             [.] 0x00000000000a4f52
+     0.02%             1  libc.so.6             [.] 0x00000000000a7a2c
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029550
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94bf
+     0.00%             1  libc.so.6             [.] 0x00000000000a75a1
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee65e8
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad8d
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61d18
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af41
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6f930ae
+     0.00%             1  [unknown]             [k] 0xffffffffa6eebf9b
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc79d
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c416
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc770
+     0.00%             1  [unknown]             [k] 0xffffffffa6fecc3b
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8047a
+     0.00%             1  libc.so.6             [.] 0x0000000000179180
+     0.00%             1  [unknown]             [k] 0xffffffffa6f94aae
+     0.00%             1  [unknown]             [k] 0xffffffffa6fe6554
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff05c7
+     0.00%             1  [unknown]             [k] 0xffffffffa7d804df
+
+
+#
+# (Tip: To show information about system the samples were collected on use perf report --header)
+#
