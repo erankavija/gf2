@@ -348,6 +348,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 name = "ldpc-batch-arms"
 version = "0.0.0"
 dependencies = [
+ "cc",
  "gf2-coding",
  "gf2-core",
  "gf2-kernels-simd",
@@ -355,6 +356,7 @@ dependencies = [
  "ldpc-throughput-harness",
  "serde",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]

@@ -9,6 +9,9 @@
 //! [`BatchRoute`], holds it through explicit [`DecodeSelectors`], and fails
 //! when a wave of its batch decodes on another.
 
+#[cfg(feature = "aff3ct")]
+pub mod aff3ct_intra;
+
 pub use gf2_coding::ldpc::{BatchRoute, LaneBackend};
 use gf2_coding::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode};
 use gf2_coding::llr::Llr;
