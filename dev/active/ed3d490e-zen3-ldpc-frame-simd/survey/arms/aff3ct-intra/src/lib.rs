@@ -452,6 +452,7 @@ pub fn run() -> Result<(), String> {
 mod tests {
     use super::{settings, Handle, IntraWorker, ObservedDecoder};
     use ldpc_survey::arm::NormalizationKind;
+    use std::os::raw::c_int;
 
     const N: usize = 7;
     const K: usize = 4;
@@ -494,6 +495,73 @@ mod tests {
         let mut worker = IntraWorker::new(&prototype, frames, K).expect("clone");
         worker.decode_batch(&llrs);
         assert_eq!(worker.decisions, counted);
+    }
+
+    /// Decodes one wave with buffers `llr_delta` and `decision_delta`
+    /// elements off the decoder's dimensions.
+    fn decode_off_by(llr_delta: isize, decision_delta: isize, counted: bool) {
+        let mut prototype = Handle::build(alist(), K, N, CAP, true).expect("decoder");
+        let wave = prototype.wave();
+        let llrs = vec![4.0f32; (wave * N).saturating_add_signed(llr_delta)];
+        let mut decisions = vec![0u8; (wave * K).saturating_add_signed(decision_delta)];
+        if counted {
+            prototype.decode_counted(&llrs, &mut decisions, wave);
+        } else {
+            prototype.decode(&llrs, &mut decisions, wave);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "LLRs")]
+    fn a_decode_refuses_undersized_llrs() {
+        decode_off_by(-1, 0, false);
+    }
+
+    #[test]
+    #[should_panic(expected = "LLRs")]
+    fn a_decode_refuses_oversized_llrs() {
+        decode_off_by(1, 0, false);
+    }
+
+    #[test]
+    #[should_panic(expected = "decision bytes")]
+    fn a_decode_refuses_undersized_decisions() {
+        decode_off_by(0, -1, false);
+    }
+
+    #[test]
+    #[should_panic(expected = "decision bytes")]
+    fn a_decode_refuses_oversized_decisions() {
+        decode_off_by(0, 1, false);
+    }
+
+    #[test]
+    #[should_panic(expected = "LLRs")]
+    fn a_counted_decode_refuses_undersized_llrs() {
+        decode_off_by(-1, 0, true);
+    }
+
+    #[test]
+    #[should_panic(expected = "decision bytes")]
+    fn a_counted_decode_refuses_undersized_decisions() {
+        decode_off_by(0, -1, true);
+    }
+
+    /// One LLR and one decision byte per frame divide by the frame count.
+    #[test]
+    #[should_panic(expected = "LLRs")]
+    fn a_decode_refuses_one_element_per_frame() {
+        let mut prototype = Handle::build(alist(), K, N, CAP, true).expect("decoder");
+        let wave = prototype.wave();
+        prototype.decode(&vec![4.0f32; wave], &mut vec![0u8; wave], wave);
+    }
+
+    #[test]
+    fn dimensions_outside_the_shim_integer_are_refused() {
+        let wide = c_int::MAX as usize + 1;
+        assert!(Handle::build(alist(), K, wide, CAP, true).is_err());
+        assert!(Handle::build(alist(), wide, N, CAP, true).is_err());
+        assert!(Handle::build(alist(), 0, N, CAP, true).is_err());
     }
 
     #[test]
