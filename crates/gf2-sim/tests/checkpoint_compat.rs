@@ -6,13 +6,21 @@
 use std::num::NonZeroUsize;
 use std::path::Path;
 
-use gf2_sim::batch::SymbolBatch;
+use gf2_coding::ldpc::{
+    DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDecoder, QuasiCyclicLdpc,
+};
+use gf2_coding::traits::BatchSoftDecoder;
+use gf2_coding::{LdpcCode, Llr};
+use gf2_sim::batch::{LlrBatch, SymbolBatch};
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
-use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
+use gf2_sim::parallel::{FrameOutcome, WorkerCounters, WorkerCtx};
 use gf2_sim::snr_checkpoint::{
     clear_interrupt, config_hash, run_snr_point_checkpointed, CheckpointReader, CheckpointV2,
     CheckpointWriter,
 };
+use gf2_sim::stage::Stage;
+use gf2_sim::stages::batch_decode::{BatchDecode, BatchDecodeScratch};
+use gf2_sim::testutil::AwgnLlrSource;
 use gf2_sim::PipelineConfig;
 
 fn tempdir(tag: &str) -> gf2_core::test_scratch::Scratch {
@@ -111,15 +119,40 @@ fn assert_resume_byte_identical<F>(tag: &str, parallelism: usize, frame: F)
 where
     F: Fn(usize, &mut WorkerCtx, &mut ()) -> FrameOutcome + Sync,
 {
+    assert_resume_with_state_byte_identical(tag, parallelism, || (), frame);
+}
+
+/// Interrupts a run at the first heartbeat checkpoint and resumes it; returns
+/// the interruption boundary (frames completed in the checkpoint) and the
+/// counters, equal to those of the uninterrupted reference.
+fn assert_resume_with_state_byte_identical<S, M, F>(
+    tag: &str,
+    parallelism: usize,
+    make_state: M,
+    frame: F,
+) -> (u64, WorkerCounters)
+where
+    M: Fn() -> S + Sync,
+    F: Fn(usize, &mut WorkerCtx, &mut S) -> FrameOutcome + Sync,
+{
     let full = cfg(parallelism, 40, 13);
     let h = config_hash(&full);
 
     let dir_ref = tempdir(&format!("{tag}-ref"));
     let w_ref = CheckpointWriter::new(dir_ref.path()).unwrap();
     clear_interrupt();
-    let reference =
-        run_snr_point_checkpointed(&full, 0, 6.25, &w_ref, &h, None, || (), &frame, |_, _| {})
-            .unwrap();
+    let reference = run_snr_point_checkpointed(
+        &full,
+        0,
+        6.25,
+        &w_ref,
+        &h,
+        None,
+        &make_state,
+        &frame,
+        |_, _| {},
+    )
+    .unwrap();
     assert!(reference.completed);
     assert_eq!(reference.counters.frames, 40);
 
@@ -137,7 +170,7 @@ where
         &writer,
         &h,
         None,
-        || (),
+        &make_state,
         &frame,
         |_, _| {},
     )
@@ -146,6 +179,7 @@ where
 
     let reader = CheckpointReader::new(dir.path(), h.clone());
     let mut loaded = reader.load(0).unwrap().unwrap();
+    let boundary = loaded.frames_completed;
     // Re-open the point under the full budget for resume.
     loaded.completed = false;
     let resumed = run_snr_point_checkpointed(
@@ -155,7 +189,7 @@ where
         &writer,
         &h,
         Some(loaded),
-        || (),
+        &make_state,
         &frame,
         |_, _| {},
     )
@@ -172,6 +206,7 @@ where
         reference.counters.mean_iters()
     );
     assert!(resumed.completed);
+    (boundary, resumed.counters)
 }
 
 #[test]
@@ -196,6 +231,101 @@ fn test_v2_resume_byte_identical_rician() {
     assert_resume_byte_identical("rician-p1", 1, rician_frame(&ch));
     assert_resume_byte_identical("rician-p2", 2, rician_frame(&ch));
     assert_resume_byte_identical("rician-p4", 4, rician_frame(&ch));
+}
+
+/// Frame `g` of a batch-decoding campaign: the `batch`-frame group holding `g`
+/// is decoded through one [`BatchDecode`] stage over an [`LdpcBatchDecoder`],
+/// and the outcome is that of frame `g`'s lane. Each frame's LLRs depend on
+/// its index alone, so the group composition is independent of where a run
+/// starts, stops or resumes.
+fn batch_decode_frame<'a>(
+    code: &'a LdpcCode,
+    stage: &'a BatchDecode<impl Fn() -> LdpcBatchDecoder + Send + Sync + 'static>,
+    batch: usize,
+) -> impl Fn(usize, &mut WorkerCtx, &mut BatchDecodeScratch) -> FrameOutcome + Sync + 'a {
+    move |g, _ctx, scratch| {
+        let first = g / batch * batch;
+        let llrs: Vec<Vec<Llr>> = (first..first + batch)
+            .map(|f| {
+                let sigma = BATCH_SIGMAS[f % BATCH_SIGMAS.len()];
+                AwgnLlrSource::new(BATCH_SEED ^ (f as u64).wrapping_mul(0x9E37))
+                    .frame_all_zero(code.n(), sigma)
+            })
+            .collect();
+        let decoded = stage
+            .process(&LlrBatch::new(llrs), scratch)
+            .expect("the batch decode stage does not fail");
+        let word = &decoded.frames[g - first];
+        let bit_errors = (0..word.len()).filter(|&i| word.get(i)).count() as u64;
+        FrameOutcome {
+            errored: bit_errors > 0,
+            iterations: scratch.iterations[g - first],
+            info_bits: word.len() as u64,
+            bit_errors,
+        }
+    }
+}
+
+const BATCH_SEED: u64 = 0xB47C_4DEC;
+
+/// Noise deviations cycling over the frames, from clean to undecodable, so
+/// that a decode wave holds converging and non-converging lanes.
+const BATCH_SIGMAS: [f64; 6] = [0.5, 0.8, 1.6, 0.7, 1.2, 0.9];
+
+const BATCH_MAX_ITER: usize = 12;
+
+fn batch_code() -> LdpcCode {
+    QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121)
+        .mother_code()
+        .clone()
+}
+
+fn batch_decoder_factory(code: LdpcCode) -> impl Fn() -> LdpcBatchDecoder + Send + Sync + 'static {
+    move || {
+        let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        LdpcBatchDecoder::new(code.clone(), cfg, BATCH_MAX_ITER, DecodedWord::Message)
+    }
+}
+
+/// Resumes a campaign decoding `batch`-frame groups, interrupted at the
+/// checkpoint the heartbeat of [`cfg`] writes, and returns the interruption
+/// boundary with the counters after asserting byte identity at each worker
+/// count.
+fn assert_batch_decode_resume(batch: usize) {
+    let code = batch_code();
+    let factory = batch_decoder_factory(code.clone());
+    let lanes = factory().batch_granularity();
+    let stage = BatchDecode::new(factory);
+    for parallelism in [1, 2, 4] {
+        let (boundary, counters) = assert_resume_with_state_byte_identical(
+            &format!("batch{batch}-p{parallelism}"),
+            parallelism,
+            BatchDecodeScratch::default,
+            batch_decode_frame(&code, &stage, batch),
+        );
+        let boundary = boundary as usize;
+        assert!(
+            !boundary.is_multiple_of(lanes),
+            "[batch {batch}] the checkpoint boundary {boundary} must fall \
+             strictly inside a {lanes}-lane wave"
+        );
+        assert!(
+            counters.errors > 0 && counters.errors < counters.frames,
+            "[batch {batch}] the campaign must mix frame errors and successes: {counters:?}"
+        );
+    }
+}
+
+#[test]
+fn test_v2_resume_byte_identical_batch_decode_one_wave_batches() {
+    let lanes = batch_decoder_factory(batch_code())().batch_granularity();
+    assert_batch_decode_resume(lanes);
+}
+
+#[test]
+fn test_v2_resume_byte_identical_batch_decode_partial_wave_batches() {
+    // A batch of 1.5 waves decodes a full wave and a half-filled one.
+    assert_batch_decode_resume(12);
 }
 
 #[test]
