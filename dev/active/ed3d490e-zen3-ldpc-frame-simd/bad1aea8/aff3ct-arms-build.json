@@ -13,10 +13,10 @@
     "debug": "line-tables-only"
   },
   "executables": {
-    "aff3ct-intra-arm": "3d997c71efcbac592eb7987b2b6648d798a035e8a442b2b861d3b34cc8a73caa",
-    "aff3ct-intra-quality": "bea02a3e59493e92e0fec38811cb7d244776ab68cce98aab5e5c728ebaa54201",
-    "gf2-batch-lane-arm": "278bb3da57fc1df682baf88ba5df9ec659b9b034eb75e0d218f8b6fa162e6e58",
-    "gf2-batch-single-frame-arm": "6b28e032db0b2e874b3c640ef05527020373a19708bc2d1ff1fb9390b66735f1"
+    "aff3ct-intra-arm": "2d934028f7e8b7027ce646abc00fbaba487951a77cb74d5f3b6b20bbeaa6cf80",
+    "aff3ct-intra-quality": "f553a8565e1dff850ab6a0e32a8959bbab1c6d4e4df5be61c550a32b274f9533",
+    "gf2-batch-lane-arm": "9f13787ced6c61c48994c82334333acc27f8be4a1b3b211bd9fa1fb66f4942e1",
+    "gf2-batch-single-frame-arm": "cb82a8899cc8bdb1caac8fa8216f1253453e5513a31e006ad8c3301b9410371b"
   },
   "aff3ct": {
     "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
@@ -66,22 +66,22 @@
       {
         "arm": "aff3ct-spa-intra",
         "executable": "aff3ct-intra-arm",
-        "sha256": "3d997c71efcbac592eb7987b2b6648d798a035e8a442b2b861d3b34cc8a73caa"
+        "sha256": "2d934028f7e8b7027ce646abc00fbaba487951a77cb74d5f3b6b20bbeaa6cf80"
       },
       {
         "arm": "gf2-batch-lane-avx2",
         "executable": "gf2-batch-lane-arm",
-        "sha256": "278bb3da57fc1df682baf88ba5df9ec659b9b034eb75e0d218f8b6fa162e6e58"
+        "sha256": "9f13787ced6c61c48994c82334333acc27f8be4a1b3b211bd9fa1fb66f4942e1"
       },
       {
         "arm": "gf2-batch-lane-portable",
         "executable": "gf2-batch-lane-arm",
-        "sha256": "278bb3da57fc1df682baf88ba5df9ec659b9b034eb75e0d218f8b6fa162e6e58"
+        "sha256": "9f13787ced6c61c48994c82334333acc27f8be4a1b3b211bd9fa1fb66f4942e1"
       },
       {
         "arm": "gf2-batch-single-frame",
         "executable": "gf2-batch-single-frame-arm",
-        "sha256": "6b28e032db0b2e874b3c640ef05527020373a19708bc2d1ff1fb9390b66735f1"
+        "sha256": "cb82a8899cc8bdb1caac8fa8216f1253453e5513a31e006ad8c3301b9410371b"
       }
     ],
     "unbuilt_workspace_arms": []
