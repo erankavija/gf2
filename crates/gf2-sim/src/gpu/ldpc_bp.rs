@@ -516,7 +516,7 @@ mod imp {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use gf2_coding::ldpc::{DecoderAlgorithm, LdpcEncoder, QuasiCyclicLdpc};
+        use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, LdpcEncoder, QuasiCyclicLdpc};
         use gf2_coding::traits::BlockEncoder;
 
         fn qc_code() -> LdpcCode {
@@ -690,6 +690,19 @@ mod imp {
             let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
             let every_wave = DecodeSelectors::try_new(1, usize::MAX, 1).unwrap();
             for portable in [false, true] {
+                let decoder = LdpcBatchDecoder::with_selectors(
+                    code.clone(),
+                    config,
+                    cap,
+                    DecodedWord::Codeword,
+                    every_wave.clone(),
+                );
+                let decoder = if portable {
+                    decoder.with_portable_lanes()
+                } else {
+                    decoder
+                };
+                assert!(matches!(decoder.batch_route(1), BatchRoute::Lane(_)));
                 let stage =
                     CpuLdpcBp::with_selectors(code.clone(), config, cap, every_wave.clone());
                 let stage = if portable {

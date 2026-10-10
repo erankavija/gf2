@@ -1,13 +1,10 @@
 //! The CPU LDPC, 5G NR and DVB-T2 decode stages give byte-identical outputs
-//! for one worker, two workers and the pool default, on every scheduling path
-//! below, and on every decode route of
-//! [`ldpc_batch_routes`]: the conservative selectors, and the lane route on the
-//! portable and on the AVX2 backend.
-//!
-//! Scheduling paths: a whole batch through `TopologyExecutor::run`; contiguous
-//! chunks of a batch decoded by the workers of a rayon pool; and the
-//! stage-driven DVB-T2 sweep, which decodes one frame per call on strided
-//! workers.
+//! for one worker, two workers and the pool default, on the scheduling paths
+//! below (a whole batch through `TopologyExecutor::run`, contiguous chunks on
+//! the workers of a rayon pool, and the stage-driven DVB-T2 sweep, which
+//! decodes one frame per call) and on every route of [`ldpc_batch_routes`]. A
+//! decoder built from each stage's code, algorithm and selectors asserts that
+//! the route a case names is the route it takes.
 
 mod common;
 
@@ -15,10 +12,13 @@ use std::num::NonZeroUsize;
 use std::sync::Arc;
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
+use gf2_coding::ldpc::dvb_t2::concat::{DvbT2Concat, DvbT2ConcatBatchDecoder};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
-use gf2_coding::ldpc::nr_5g::max_payload_for_lifting;
-use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, DecoderConfig, LaneBackend, QuasiCyclicLdpc};
+use gf2_coding::ldpc::nr_5g::{max_payload_for_lifting, Nr5gRateMatchedBatchDecoder};
+use gf2_coding::ldpc::{
+    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcBatchDecoder,
+    QuasiCyclicLdpc,
+};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::BlockEncoder;
@@ -38,11 +38,11 @@ use gf2_sim::{Scheduler, TopologyExecutor};
 
 const SEED: u64 = 0xDE16_0FC5;
 
-/// Not a multiple of the eight-lane decode wave, so a batch ends in a partial
-/// wave.
+const WAVE: usize = 8;
+
+/// Not a multiple of [`WAVE`], so a batch ends in a partial wave.
 const LLR_FRAMES: usize = 19;
 
-/// A decode setup of [`ldpc_batch_routes`].
 struct Route {
     selectors: DecodeSelectors,
     backend: LaneBackend,
@@ -62,7 +62,6 @@ fn routes() -> Vec<Route> {
         .collect()
 }
 
-/// One worker, two workers and the pool default.
 fn worker_counts() -> [usize; 3] {
     [1, 2, rayon::current_num_threads()]
 }
@@ -128,18 +127,28 @@ fn decode_via_chunks(stage: &dyn AnyStage, llrs: &[Vec<Llr>], count: usize) -> V
     parts.into_iter().flatten().collect()
 }
 
-/// Asserts the decoded frames equal one reference on every route, worker
-/// count and path. `sent` are the words the frames decode to when the decode
-/// succeeds; the batch must mix successes and failures, or every route would
-/// agree trivially.
+/// The conservative route, whose decode is the single-frame decoder's.
+fn conservative(routes: &[Route]) -> &Route {
+    routes
+        .iter()
+        .find(|route| route.route == BatchRoute::SingleFrame)
+        .expect("the routes include the conservative selectors")
+}
+
+/// Asserts the decoded frames equal the conservative route's at one worker on
+/// every route, worker count and path. `full_wave` gives the route a decoder
+/// of the stage's code, algorithm and selectors takes for a full wave. `sent`
+/// are the words the frames decode to when the decode succeeds; the batch must
+/// mix successes and failures, or every route would agree trivially.
 fn assert_invariant(
     name: &str,
     build: impl Fn(&Route) -> Box<dyn AnyStage>,
+    full_wave: impl Fn(&Route) -> BatchRoute,
     llrs: &[Vec<Llr>],
     sent: &[BitVec],
 ) {
     let routes = routes();
-    let reference = decode_via_executor(build(&routes[0]), llrs, 1);
+    let reference = decode_via_executor(build(conservative(&routes)), llrs, 1);
     let exact = reference.iter().zip(sent).filter(|(r, s)| r == s).count();
     assert!(
         exact > 0 && exact < llrs.len(),
@@ -147,6 +156,12 @@ fn assert_invariant(
         llrs.len()
     );
     for route in &routes {
+        assert_eq!(
+            full_wave(route),
+            route.route,
+            "{name}: {} takes another route",
+            route.label
+        );
         let stage = build(route);
         for count in worker_counts() {
             assert_eq!(
@@ -188,6 +203,12 @@ fn dvb_t2_decode_is_worker_and_route_invariant() {
             let stage = DvbT2Decode::with_selectors(codec.clone(), route.selectors.clone());
             erase(on_backend(stage, route, DvbT2Decode::with_portable_lanes))
         },
+        |route| {
+            let decoder = DvbT2ConcatBatchDecoder::with_selectors(&codec, route.selectors.clone());
+            on_backend(decoder, route, DvbT2ConcatBatchDecoder::with_portable_lanes)
+                .ldpc()
+                .batch_route(WAVE)
+        },
         &llrs,
         &sent,
     );
@@ -220,6 +241,20 @@ fn nr_decode_is_worker_and_route_invariant() {
                 route.selectors.clone(),
             );
             erase(on_backend(stage, route, Nr5gDecode::with_portable_lanes))
+        },
+        |route| {
+            let decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
+                (*code).clone(),
+                DecoderAlgorithm::NormalizedMinSum(0.75),
+                max_iterations,
+                route.selectors.clone(),
+            );
+            on_backend(
+                decoder,
+                route,
+                Nr5gRateMatchedBatchDecoder::with_portable_lanes,
+            )
+            .batch_route(WAVE)
         },
         &llrs,
         &sent,
@@ -259,6 +294,16 @@ fn cpu_ldpc_decode_is_worker_and_route_invariant() {
                 CpuLdpcBp::with_selectors(code.clone(), config, 20, route.selectors.clone());
             erase(on_backend(stage, route, CpuLdpcBp::with_portable_lanes))
         },
+        |route| {
+            let decoder = LdpcBatchDecoder::with_selectors(
+                code.clone(),
+                config,
+                20,
+                DecodedWord::Codeword,
+                route.selectors.clone(),
+            );
+            on_backend(decoder, route, LdpcBatchDecoder::with_portable_lanes).batch_route(WAVE)
+        },
         &llrs,
         &sent,
     );
@@ -284,6 +329,18 @@ fn nr_chain_is_worker_and_route_invariant() {
             SEED,
             workers(count),
             |code| {
+                let decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
+                    (*code).clone(),
+                    DecoderAlgorithm::NormalizedMinSum(0.75),
+                    25,
+                    route.selectors.clone(),
+                );
+                let decoder = on_backend(
+                    decoder,
+                    route,
+                    Nr5gRateMatchedBatchDecoder::with_portable_lanes,
+                );
+                assert_eq!(decoder.batch_route(WAVE), route.route, "{}", route.label);
                 let stage = Nr5gDecode::with_selectors(
                     code,
                     DecoderAlgorithm::NormalizedMinSum(0.75),
@@ -305,7 +362,7 @@ fn nr_chain_is_worker_and_route_invariant() {
     };
 
     let routes = routes();
-    let reference = run(&routes[0], 1);
+    let reference = run(conservative(&routes), 1);
     let exact = reference
         .iter()
         .zip(&messages)
@@ -328,14 +385,20 @@ fn nr_chain_is_worker_and_route_invariant() {
     }
 }
 
-/// The sweep of the routes `select` keeps equals the sweep on the conservative
-/// selectors at one worker.
-fn assert_sweep_invariant(select: impl Fn(&Route) -> bool) {
-    const FRAMES: usize = 2;
-    let (rate, modulation, es_n0_db) = (CodeRate::Rate1_2, DvbT2Modulation::Qam16, 6.0_f32);
-    let config = DecoderConfig::new(DecoderAlgorithm::SumProduct, true);
+/// The sweep on every route whose one-frame decode takes `target` equals the
+/// sweep on the conservative selectors at one worker.
+fn assert_sweep_invariant(target: BatchRoute) {
+    const FRAMES: usize = 4;
+    let (rate, modulation, es_n0_db) = (CodeRate::Rate1_2, DvbT2Modulation::Qam16, 6.4_f32);
+    let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
 
-    let run = |route: &Route, count: usize| -> WorkerCounters {
+    let one_frame = |codec: &DvbT2Concat, route: &Route| {
+        let decoder = DvbT2ConcatBatchDecoder::with_selectors(codec, route.selectors.clone());
+        on_backend(decoder, route, DvbT2ConcatBatchDecoder::with_portable_lanes)
+            .ldpc()
+            .batch_route(1)
+    };
+    let run = |route: &Route, taken: BatchRoute, count: usize| -> WorkerCounters {
         let pipeline = common::build_dvb_t2_graph_chain_with_decode(
             rate,
             modulation,
@@ -346,6 +409,7 @@ fn assert_sweep_invariant(select: impl Fn(&Route) -> bool) {
             SEED,
             workers(count),
             |codec| {
+                assert_eq!(one_frame(&codec, route), taken, "{}", route.label);
                 let stage = DvbT2Decode::with_selectors(codec, route.selectors.clone());
                 on_backend(stage, route, DvbT2Decode::with_portable_lanes)
             },
@@ -360,7 +424,17 @@ fn assert_sweep_invariant(select: impl Fn(&Route) -> bool) {
     };
 
     let routes = routes();
-    let reference = run(&routes[0], 1);
+    let mut probe = DvbT2Concat::new(FrameSize::Normal, rate).unwrap();
+    probe.set_decoder_config(config);
+    let selected: Vec<&Route> = routes
+        .iter()
+        .filter(|route| one_frame(&probe, route) == target)
+        .collect();
+    assert!(
+        !selected.is_empty() || routes.iter().all(|route| route.route != target),
+        "no route takes {target:?} for a one-frame decode"
+    );
+    let reference = run(conservative(&routes), BatchRoute::SingleFrame, 1);
     assert_eq!(reference.frames, FRAMES as u64);
     assert!(
         reference.errors > 0 && reference.errors < reference.frames,
@@ -368,10 +442,10 @@ fn assert_sweep_invariant(select: impl Fn(&Route) -> bool) {
         reference.errors,
         reference.frames
     );
-    for route in routes.iter().filter(|route| select(route)) {
+    for route in selected {
         for count in worker_counts() {
             common::assert_four_columns_byte_identical(
-                &run(route, count),
+                &run(route, target, count),
                 &reference,
                 &format!("DVB-T2 sweep, {count} workers, {}", route.label),
             );
@@ -381,15 +455,15 @@ fn assert_sweep_invariant(select: impl Fn(&Route) -> bool) {
 
 #[test]
 fn dvb_t2_sweep_is_worker_invariant_on_conservative_selectors() {
-    assert_sweep_invariant(|route| route.route == BatchRoute::SingleFrame);
+    assert_sweep_invariant(BatchRoute::SingleFrame);
 }
 
 #[test]
 fn dvb_t2_sweep_is_worker_invariant_on_portable_lanes() {
-    assert_sweep_invariant(|route| route.route == BatchRoute::Lane(LaneBackend::Portable));
+    assert_sweep_invariant(BatchRoute::Lane(LaneBackend::Portable));
 }
 
 #[test]
 fn dvb_t2_sweep_is_worker_invariant_on_avx2_lanes() {
-    assert_sweep_invariant(|route| route.route == BatchRoute::Lane(LaneBackend::Avx2));
+    assert_sweep_invariant(BatchRoute::Lane(LaneBackend::Avx2));
 }
