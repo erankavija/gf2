@@ -2140,7 +2140,8 @@
   "aff59c3c": 0,
   "395fe4e2": 1,
   "a96a4cd6": 1,
-  "e4e2ba52": 0
+  "e4e2ba52": 0,
+  "bad1aea8": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2852,7 +2853,8 @@
   "handoff-25.md",
   "handoff-26.md",
   "handoff-27.md",
-  "handoff-28.md"
+  "handoff-28.md",
+  "handoff-29.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
