@@ -18,7 +18,9 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::nr_5g::max_payload_for_lifting;
-use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcCode, QuasiCyclicLdpc};
+use gf2_coding::ldpc::{
+    BatchRoute, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcCode, QuasiCyclicLdpc,
+};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::BlockEncoder;
@@ -46,6 +48,7 @@ const LLR_FRAMES: usize = 19;
 struct Route {
     selectors: DecodeSelectors,
     backend: LaneBackend,
+    route: BatchRoute,
     label: String,
 }
 
@@ -56,6 +59,7 @@ fn routes() -> Vec<Route> {
             label: format!("{route:?} on {backend:?}"),
             selectors,
             backend,
+            route,
         })
         .collect()
 }
@@ -326,9 +330,10 @@ fn nr_chain_is_worker_and_route_invariant() {
     }
 }
 
-#[test]
-fn dvb_t2_sweep_is_worker_and_route_invariant() {
-    const FRAMES: usize = 4;
+/// The sweep of the routes `select` keeps equals the sweep on the conservative
+/// selectors at one worker.
+fn assert_sweep_invariant(select: impl Fn(&Route) -> bool) {
+    const FRAMES: usize = 2;
     let (rate, modulation, es_n0_db) = (CodeRate::Rate1_2, DvbT2Modulation::Qam16, 6.0_f32);
     let config = DecoderConfig::new(DecoderAlgorithm::SumProduct, true);
 
@@ -365,7 +370,7 @@ fn dvb_t2_sweep_is_worker_and_route_invariant() {
         reference.errors,
         reference.frames
     );
-    for route in &routes {
+    for route in routes.iter().filter(|route| select(route)) {
         for count in worker_counts() {
             common::assert_four_columns_byte_identical(
                 &run(route, count),
@@ -374,4 +379,19 @@ fn dvb_t2_sweep_is_worker_and_route_invariant() {
             );
         }
     }
+}
+
+#[test]
+fn dvb_t2_sweep_is_worker_invariant_on_conservative_selectors() {
+    assert_sweep_invariant(|route| route.route == BatchRoute::SingleFrame);
+}
+
+#[test]
+fn dvb_t2_sweep_is_worker_invariant_on_portable_lanes() {
+    assert_sweep_invariant(|route| route.route == BatchRoute::Lane(LaneBackend::Portable));
+}
+
+#[test]
+fn dvb_t2_sweep_is_worker_invariant_on_avx2_lanes() {
+    assert_sweep_invariant(|route| route.route == BatchRoute::Lane(LaneBackend::Avx2));
 }

@@ -22,6 +22,7 @@ use gf2_coding::modem::{
     BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GrayQamMapper,
     ModemSpec,
 };
+use gf2_coding::tuning::{self, DecodeSelectors};
 use gf2_coding::{CodeRate, Llr};
 use gf2_core::BitVec;
 
@@ -408,16 +409,52 @@ type ConcatDecoderFactory = Box<dyn Fn() -> DvbT2ConcatBatchDecoder + Send + Syn
 /// # Panics
 ///
 /// `process` panics as [`BatchDecode`] does, and on the first call with a
-/// scratch as [`DvbT2ConcatBatchDecoder::new`] does.
+/// scratch as [`DvbT2ConcatBatchDecoder::with_selectors`] does.
 pub struct DvbT2Decode {
+    codec: Arc<DvbT2Concat>,
+    selectors: DecodeSelectors,
     batch: BatchDecode<ConcatDecoderFactory>,
 }
 
 impl DvbT2Decode {
-    /// Builds a decode stage over a shared [`DvbT2Concat`] codec.
+    /// Builds a decode stage over a shared [`DvbT2Concat`] codec. The decode
+    /// selectors are those of the process-wide coding tuning section, read
+    /// once here.
+    ///
+    /// # Panics
+    ///
+    /// As [`tuning::active`].
     pub fn new(codec: Arc<DvbT2Concat>) -> Self {
-        let factory: ConcatDecoderFactory = Box::new(move || DvbT2ConcatBatchDecoder::new(&codec));
+        let selectors = tuning::active().section.decode().clone();
+        Self::with_selectors(codec, selectors)
+    }
+
+    /// Builds a decode stage whose decoders take the given decode selectors,
+    /// as [`DvbT2ConcatBatchDecoder::with_selectors`] does.
+    pub fn with_selectors(codec: Arc<DvbT2Concat>, selectors: DecodeSelectors) -> Self {
+        Self::build(codec, selectors, false)
+    }
+
+    /// Holds the lane route of every decoder on the portable backend, as
+    /// [`DvbT2ConcatBatchDecoder::with_portable_lanes`] does.
+    #[must_use]
+    pub fn with_portable_lanes(self) -> Self {
+        Self::build(self.codec, self.selectors, true)
+    }
+
+    fn build(codec: Arc<DvbT2Concat>, selectors: DecodeSelectors, portable: bool) -> Self {
+        let (shared, chosen) = (codec.clone(), selectors.clone());
+        let factory: ConcatDecoderFactory = Box::new(move || {
+            let decoder = DvbT2ConcatBatchDecoder::with_selectors(&shared, chosen.clone());
+            if portable {
+                decoder.with_portable_lanes()
+            } else {
+                decoder
+            }
+        });
         Self {
+            codec,
+            selectors,
             batch: BatchDecode::new(factory),
         }
     }

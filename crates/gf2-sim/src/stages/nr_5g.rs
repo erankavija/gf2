@@ -13,6 +13,7 @@ use gf2_coding::ldpc::nr_5g::{Nr5gRateMatchedBatchDecoder, Nr5gRateMatchedCode};
 use gf2_coding::ldpc::DecoderAlgorithm;
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::traits::BlockEncoder;
+use gf2_coding::tuning::{self, DecodeSelectors};
 
 use crate::batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 use crate::error::StageError;
@@ -243,9 +244,12 @@ impl Stage<SymbolBatch, LlrBatch> for NrGrayQamDemap {
 /// # Panics
 ///
 /// `process` panics as [`BatchDecode`] does, and its first call on a scratch
-/// as [`Nr5gRateMatchedBatchDecoder::new`] does.
+/// as [`Nr5gRateMatchedBatchDecoder::with_selectors`] does.
 pub struct Nr5gDecode {
     code: Arc<Nr5gRateMatchedCode>,
+    algorithm: DecoderAlgorithm,
+    max_iterations: usize,
+    selectors: DecodeSelectors,
     batch: BatchDecode<DecoderFactory>,
 }
 
@@ -255,6 +259,10 @@ impl Nr5gDecode {
     /// Builds a 5G NR decode stage over a shared rate-matched code, decoding
     /// with normalized min-sum (`alpha` = 0.75) at the given iteration cap. A
     /// cap of zero behaves as in [`Nr5gRateMatchedBatchDecoder`].
+    ///
+    /// # Panics
+    ///
+    /// As [`with_algorithm`](Self::with_algorithm).
     pub fn new(code: Arc<Nr5gRateMatchedCode>, max_iterations: usize) -> Self {
         Self::with_algorithm(
             code,
@@ -264,18 +272,71 @@ impl Nr5gDecode {
     }
 
     /// Builds a 5G NR decode stage with an explicit BP algorithm; the cap of
-    /// zero behaves as in [`new`](Self::new).
+    /// zero behaves as in [`new`](Self::new). The decode selectors are those
+    /// of the process-wide coding tuning section, read once here.
+    ///
+    /// # Panics
+    ///
+    /// As [`tuning::active`].
     pub fn with_algorithm(
         code: Arc<Nr5gRateMatchedCode>,
         algorithm: DecoderAlgorithm,
         max_iterations: usize,
     ) -> Self {
-        let shared = code.clone();
+        let selectors = tuning::active().section.decode().clone();
+        Self::with_selectors(code, algorithm, max_iterations, selectors)
+    }
+
+    /// Builds a 5G NR decode stage whose decoders take the given decode
+    /// selectors, as [`Nr5gRateMatchedBatchDecoder::with_selectors`] does.
+    pub fn with_selectors(
+        code: Arc<Nr5gRateMatchedCode>,
+        algorithm: DecoderAlgorithm,
+        max_iterations: usize,
+        selectors: DecodeSelectors,
+    ) -> Self {
+        Self::build(code, algorithm, max_iterations, selectors, false)
+    }
+
+    /// Holds the lane route of every decoder on the portable backend, as
+    /// [`Nr5gRateMatchedBatchDecoder::with_portable_lanes`] does.
+    #[must_use]
+    pub fn with_portable_lanes(self) -> Self {
+        Self::build(
+            self.code,
+            self.algorithm,
+            self.max_iterations,
+            self.selectors,
+            true,
+        )
+    }
+
+    fn build(
+        code: Arc<Nr5gRateMatchedCode>,
+        algorithm: DecoderAlgorithm,
+        max_iterations: usize,
+        selectors: DecodeSelectors,
+        portable: bool,
+    ) -> Self {
+        let (shared, chosen) = (code.clone(), selectors.clone());
         let factory: DecoderFactory = Box::new(move || {
-            Nr5gRateMatchedBatchDecoder::new((*shared).clone(), algorithm, max_iterations)
+            let decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
+                (*shared).clone(),
+                algorithm,
+                max_iterations,
+                chosen.clone(),
+            );
+            if portable {
+                decoder.with_portable_lanes()
+            } else {
+                decoder
+            }
         });
         Self {
             code,
+            algorithm,
+            max_iterations,
+            selectors,
             batch: BatchDecode::new(factory),
         }
     }
