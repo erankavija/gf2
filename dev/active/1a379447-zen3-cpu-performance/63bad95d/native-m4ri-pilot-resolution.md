@@ -22,3 +22,5 @@ Ledger `dev/bench_results/63bad95d/native-matvec-vs-m4ri-ledger.jsonl` through t
 Largest confirmatory width: 0.404217; frozen upward rounding to 0.001: $r=0.405$. Family ceiling: 0.040.
 
 **Outcome: `resolution-insufficient`.** The frozen family rule ends this comparison after its exploratory pilot. No confirmatory reservation is made.
+
+The pilot ran under host load: the `host-observation` records in the receipt's `execution.log` carry the observed `load_average`, and [the plan](native-m4ri-plan.md#pilot-outcome) points at the launch-time record. The receipt stands as measured. A second pilot, run id `v4-r2`, repeats the pilot in this family on a quiet host under the same addendum and ledger; its queue line is in [`queue.tsv`](../bench-window/queue.tsv) and its receipt lands beside this one under the run id.

@@ -91,6 +91,8 @@ The equivalence margin, material-gap threshold and resolution ceiling are the
 committed comparator family's, because the boundaries and the candidate arm
 are the same; the addendum's margin table states them. The pilot budget is
 smaller than that family's: one pilot and one replacement for a voided pilot.
+The invoker ruled on 2026-10-11 that a load-disturbed pilot counts as a voided
+pilot for this budget, so run `v4-r2` is the family's second pilot trial.
 
 ## What each outcome means for REQ-09
 
