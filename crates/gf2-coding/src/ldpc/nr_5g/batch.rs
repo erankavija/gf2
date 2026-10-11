@@ -100,6 +100,10 @@ impl Nr5gRateMatchedBatchDecoder {
 
     /// Builds the decoder with the given decode selectors.
     ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
+    ///
     /// Every frame decodes under `algorithm` with early termination and the
     /// iteration cap `max_iterations`; a cap of zero behaves as in
     /// [`Nr5gRateMatchedDecoder`](super::Nr5gRateMatchedDecoder)'s
@@ -153,6 +157,10 @@ impl Nr5gRateMatchedBatchDecoder {
 
     /// Holds the lane route on the portable backend, as
     /// [`LdpcBatchDecoder::with_portable_lanes`] does.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
     #[must_use]
     pub fn with_portable_lanes(mut self) -> Self {
         self.inner = self.inner.with_portable_lanes();

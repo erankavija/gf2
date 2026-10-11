@@ -289,6 +289,10 @@ impl Nr5gDecode {
 
     /// Builds a 5G NR decode stage whose decoders take the given decode
     /// selectors, as [`Nr5gRateMatchedBatchDecoder::with_selectors`] does.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
     pub fn with_selectors(
         code: Arc<Nr5gRateMatchedCode>,
         algorithm: DecoderAlgorithm,
@@ -300,6 +304,10 @@ impl Nr5gDecode {
 
     /// Holds the lane route of every decoder on the portable backend, as
     /// [`Nr5gRateMatchedBatchDecoder::with_portable_lanes`] does.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
     #[must_use]
     pub fn with_portable_lanes(self) -> Self {
         Self::build(

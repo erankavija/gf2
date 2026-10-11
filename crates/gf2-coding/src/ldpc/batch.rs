@@ -154,6 +154,10 @@ impl LdpcBatchDecoder {
 
     /// Builds the decoder with the given decode selectors.
     ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
+    ///
     /// Every frame decodes under `config` with the iteration cap
     /// `max_iterations`; a cap of zero behaves as in
     /// [`LdpcDecoder::decode_codeword_into`]. Construction allocates the
@@ -199,6 +203,10 @@ impl LdpcBatchDecoder {
 
     /// Holds the lane route on [`LaneBackend::Portable`], whatever the build
     /// and the host provide.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
     #[must_use]
     pub fn with_portable_lanes(mut self) -> Self {
         self.lane_backend = LaneBackend::Portable;
