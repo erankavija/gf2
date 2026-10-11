@@ -146,13 +146,9 @@ where
 
     let dir = tempdir(&format!("{tag}-resume"));
     let writer = CheckpointWriter::new(dir.path()).unwrap();
-    let partial_cfg = PipelineConfig {
-        max_frames: 13,
-        ..full.clone()
-    };
     clear_interrupt();
-    let partial = run_snr_point_checkpointed(
-        &partial_cfg,
+    let interrupted = run_snr_point_checkpointed(
+        &full,
         0,
         6.25,
         &writer,
@@ -160,15 +156,23 @@ where
         None,
         || (),
         &frame,
-        |_, _| {},
+        |_, _| request_interrupt(),
     )
     .unwrap();
-    assert_eq!(partial.counters.frames, 13);
+    clear_interrupt();
+    assert!(
+        interrupted.interrupted && !interrupted.completed,
+        "[{tag}] the run must stop on the interrupt: {interrupted:?}"
+    );
+    assert!(
+        0 < interrupted.counters.frames && interrupted.counters.frames < full.max_frames,
+        "[{tag}] the interrupt must leave frames to resume: {:?}",
+        interrupted.counters
+    );
 
     let reader = CheckpointReader::new(dir.path(), h.clone());
-    let mut loaded = reader.load(0).unwrap().unwrap();
-    // Re-open the point under the full budget for resume.
-    loaded.completed = false;
+    let loaded = reader.load(0).unwrap().unwrap();
+    assert!(!loaded.completed, "[{tag}] the checkpoint is resumable");
     let resumed = run_snr_point_checkpointed(
         &full,
         0,
