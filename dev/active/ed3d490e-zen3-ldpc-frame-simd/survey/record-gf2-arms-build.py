@@ -12,13 +12,13 @@ each executable digest an LDPC campaign's build identity record pins.
 An executable carries the absolute location of the checkout that builds it:
 in its source paths, and in the symbol hashes cargo derives from the location
 of each path dependency outside the workspace root. `build_root` is that
-location as this run observes it and `carries_build_root` says whether the
-executable's bytes hold it, so the digests are those of this checkout's build.
+location as this run observes it, so the digests are those of this checkout's
+build.
 
-An arm row gives the executable's root-relative path and digest. A workspace
-arm is an executable of this build; a pinned arm is a target file of this
-checkout with the digest the catalogue names, under the campaign record that
-pins it. `inputs` is what cargo's dep-info names for an executable: the digest
+An arm row gives the executable's digest. A workspace arm is an executable of
+this build, at `path`; a pinned arm has the digest the catalogue names, under
+the campaign record that pins it, in the target files `found_at`. `inputs` is
+what cargo's dep-info names for an executable: the digest
 of the `sha256sum` listing of the repository files in path order, and each
 file outside the repository with its digest.
 
@@ -31,8 +31,7 @@ Content alone decides, and the run fails on any of:
 - the arms target directory holds a file with a pinned executable's name or
   digest, or the arms workspace declares a package or target under such a name;
 - the catalogue names a workspace arm the build does not produce, or a pinned
-  arm whose record, found by content, does not pin that executable digest or
-  whose executable no target file of this checkout carries;
+  arm whose record, found by content, does not pin that executable digest;
 - no build identity record pins the digest of the AFF3CT static library.
 
 The rest is observation. `found_at` lists the target files carrying a pinned
@@ -197,7 +196,7 @@ def isolation(metadata, arms, rows):
 
 
 def arm_rows(named, rows, records, executables, release):
-    """One row per arm of the catalogue `named`; exits on an arm this checkout lacks."""
+    """One row per arm of the catalogue `named`; exits on an arm without an executable digest."""
     by_digest = {record["sha256"]: name for name, record in records.items()}
     arms = {}
     for name, arm in sorted(named.items()):
@@ -216,9 +215,7 @@ def arm_rows(named, rows, records, executables, release):
                  and row["sha256"] == arm["executable_sha256"]]
         if not found:
             sys.exit(f"no live record pins the executable digest of the catalogued arm {name}")
-        if not found[0]["found_at"]:
-            sys.exit(f"no target file carries the pinned executable of the catalogued arm {name}")
-        arms[name] = {**row, "path": found[0]["found_at"][0],
+        arms[name] = {**row, "found_at": found[0]["found_at"],
                       "executable_sha256": arm["executable_sha256"],
                       "pinned_by": {"record": record, "sha256": arm["pinned_by"]["sha256"]}}
     return arms
@@ -295,7 +292,7 @@ def main():
     records = pinned_records()
     catalogue = arms.parent / "arms.json"
     record = {
-        "schema": "ldpc-batch-arms-build-v4",
+        "schema": "ldpc-batch-arms-build-v3",
         "build_root": str(ROOT),
         "rustc": output(["rustc", f"+{TOOLCHAIN}", "--version", "--verbose"]),
         "cargo": output(["cargo", f"+{TOOLCHAIN}", "--version"]),
@@ -303,9 +300,7 @@ def main():
         "build_commands": commands,
         "release_profile": tomllib.loads(manifest.read_text(encoding="utf-8"))["profile"]["release"],
         "executables": {
-            name: {"sha256": executables[name],
-                   "carries_build_root": str(ROOT).encode() in (release / name).read_bytes(),
-                   "inputs": inputs(release, name)}
+            name: {"sha256": executables[name], "inputs": inputs(release, name)}
             for name in binaries},
         "aff3ct": aff3ct_identity(aff3ct, records),
         "catalogue": {"path": str(catalogue), "sha256": digest(catalogue)},

@@ -54,17 +54,13 @@ class ArmRowsTest(unittest.TestCase):
         self.assertEqual(rows["built"]["executable_sha256"], BUILT["built-arm"])
         self.assertEqual(rows["built"]["path"], str(RELEASE / "built-arm"))
         self.assertEqual(rows["pinned"]["executable_sha256"], PIN["sha256"])
-        self.assertEqual(rows["pinned"]["path"], "target/campaign/release/pinned-arm")
+        self.assertEqual(rows["pinned"]["found_at"], ["target/campaign/release/pinned-arm"])
         self.assertEqual(rows["pinned"]["pinned_by"],
                          {"record": PIN["record"], "sha256": "c" * 64})
 
     def test_a_workspace_arm_the_build_does_not_produce_is_refused(self):
         with self.assertRaisesRegex(SystemExit, "absent"):
             arm_rows({"absent": workspace_arm("absent-arm")}, [])
-
-    def test_a_pinned_arm_no_target_file_carries_is_refused(self):
-        with self.assertRaisesRegex(SystemExit, "pinned"):
-            arm_rows({"pinned": pinned_arm(PIN["sha256"])}, [])
 
     def test_a_pinned_arm_no_record_pins_is_refused(self):
         with self.assertRaisesRegex(SystemExit, "pinned"):

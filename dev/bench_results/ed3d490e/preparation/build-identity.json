@@ -1,5 +1,5 @@
 {
-  "schema": "ldpc-batch-arms-build-v4",
+  "schema": "ldpc-batch-arms-build-v3",
   "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
   "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
@@ -52,7 +52,6 @@
   "executables": {
     "aff3ct-intra-arm": {
       "sha256": "608e25aaee846768e081f5f8a5198b75b4694b227486af55d4c71f857155f1a5",
-      "carries_build_root": true,
       "inputs": {
         "repository_files_sha256": "0e35fb03adfea49c2de8eff238046f7b7d09bb79613d95e2e1abcd5c8236b5fe",
         "other_files": {
@@ -62,7 +61,6 @@
     },
     "aff3ct-intra-quality": {
       "sha256": "171ef65d7cd460eea2cd7abc47cca04100cd2c3c3211adc97be90338de29dde6",
-      "carries_build_root": true,
       "inputs": {
         "repository_files_sha256": "db4b9c719ce8d52c72268b80568659cb4694b716fd3463360258b68942bbc8a3",
         "other_files": {
@@ -72,7 +70,6 @@
     },
     "gf2-batch-lane-arm": {
       "sha256": "8a5e546a2933010d9a7409a01f3f0b8b9069511e9e3f954fa9f100fcac3fbdb9",
-      "carries_build_root": true,
       "inputs": {
         "repository_files_sha256": "72ae84027a1520155f16c73f759d7cfcc7faa9ed85d9e4f654e9c875eab89478",
         "other_files": {}
@@ -80,7 +77,6 @@
     },
     "gf2-batch-single-frame-arm": {
       "sha256": "8f95853b03d239fc03b027817e38094a9743c0d5ae2a1bf46148ce11c308ae83",
-      "carries_build_root": true,
       "inputs": {
         "repository_files_sha256": "c86a80026ceb90b86797617e72e3d0acb1818307f240406c1db40964bf8bd873",
         "other_files": {}
@@ -121,7 +117,9 @@
         "GF2_AFF3CT_PRECISION": "f32",
         "GF2_AFF3CT_SYNDROME_DEPTH": "1"
       },
-      "path": "target/ldpc-throughput/release/aff3ct-throughput-arm",
+      "found_at": [
+        "target/ldpc-throughput/release/aff3ct-throughput-arm"
+      ],
       "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
       "pinned_by": {
         "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
@@ -138,7 +136,9 @@
         "GF2_AFF3CT_PRECISION": "f32",
         "GF2_AFF3CT_SYNDROME_DEPTH": "1"
       },
-      "path": "target/ldpc-throughput/release/aff3ct-throughput-arm",
+      "found_at": [
+        "target/ldpc-throughput/release/aff3ct-throughput-arm"
+      ],
       "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
       "pinned_by": {
         "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
@@ -156,7 +156,9 @@
         "GF2_AFF3CT_QUANT_SCALE": "16",
         "GF2_AFF3CT_SYNDROME_DEPTH": "1"
       },
-      "path": "target/ldpc-throughput/release/aff3ct-throughput-arm",
+      "found_at": [
+        "target/ldpc-throughput/release/aff3ct-throughput-arm"
+      ],
       "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
       "pinned_by": {
         "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
