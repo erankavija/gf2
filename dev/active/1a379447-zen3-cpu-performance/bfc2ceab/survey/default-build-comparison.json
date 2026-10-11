@@ -10,9 +10,9 @@
     "step": "anchor to the checked entry points, default build",
     "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
     "before_sources_sha256": "76c32a9cc7a0222b5ae961b5072c3f57b9174d95d130049c7eef2e598c315ed9",
-    "after_sources_sha256": "c24f7e769e2c67b468aadca8723d5bb065f9363f9d61a8f95d44e1a4fda5d1f6",
-    "function_count": 277,
-    "differing_function_count": 47,
+    "after_sources_sha256": "7398419e8b9d46ce3db6a4463cc1a80b85ee6411a1a3478ef55fe0172dc08c1c",
+    "function_count": 280,
+    "differing_function_count": 51,
     "functions": [
       {
         "function": "_ZN102_$LT$core..iter..adapters..map..Map$LT$I$C$F$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h3b1146d8c8ecba6eE",
@@ -531,6 +531,12 @@
         "instruction_text": "same"
       },
       {
+        "function": "_ZN16gf2_kernels_simd3x864avx215avx2_and_parity17h89e555b0bdddffb4E",
+        "before_sha256": null,
+        "after_sha256": "28759f77972bb56ecf09376fc6a30761f1afd134261efdb55e3593cc06e2cd9b",
+        "instruction_text": "differs"
+      },
+      {
         "function": "_ZN16gf2_kernels_simd3x864avx215avx2_and_popcnt17h5bf84ffde5c84b52E",
         "before_sha256": "a36b71f82facb838f736590cf577e1eed5c3aeef664343143154bfbdc13845f3",
         "after_sha256": "a36b71f82facb838f736590cf577e1eed5c3aeef664343143154bfbdc13845f3",
@@ -595,6 +601,12 @@
         "before_sha256": "07ce9421df2dd95c21605463267b3dc9b3a0465453095d768b122245853a3160",
         "after_sha256": "07ce9421df2dd95c21605463267b3dc9b3a0465453095d768b122245853a3160",
         "instruction_text": "same"
+      },
+      {
+        "function": "_ZN16gf2_kernels_simd3x864avx23fns13and_parity_fn17h59da311ed29ee377E",
+        "before_sha256": null,
+        "after_sha256": "8e2d93829431ab656efb899b8f25b280a6f8dc13030724045dee7b576497aa95",
+        "instruction_text": "differs"
       },
       {
         "function": "_ZN16gf2_kernels_simd3x864avx23fns13and_popcnt_fn17h64743a199dbe775fE",
@@ -1055,8 +1067,14 @@
       {
         "function": "_ZN16gf2_kernels_simd6detect17h0bdd9bc93cea5b49E",
         "before_sha256": "2203482b1ad464eb16455a803e1cd2e338b8a134ccf36ec8a174661ff47acdc5",
-        "after_sha256": "2203482b1ad464eb16455a803e1cd2e338b8a134ccf36ec8a174661ff47acdc5",
-        "instruction_text": "same"
+        "after_sha256": null,
+        "instruction_text": "differs"
+      },
+      {
+        "function": "_ZN16gf2_kernels_simd6detect17h41fa7dad877b42f2E",
+        "before_sha256": null,
+        "after_sha256": "c70de0a84a2620e0f175f3179459925a2906321cc1f557dac277596cc206ff6b",
+        "instruction_text": "differs"
       },
       {
         "function": "_ZN16gf2_kernels_simd7bipedal11detect_avx217h105eeff72c20a79aE",

@@ -808,24 +808,24 @@
     {
       "id": "gray-check-call",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 649,
+      "line": 710,
       "occurrences": 2,
       "verbatim": "        crate::m4rm::assert_gray_build_lengths(",
       "why": "Each specialized Gray builder runs the shared check before its `unsafe` block.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "gray-check-panics-doc",
       "project": "gf2",
-      "commit": "b6d87f96e42d3a632f300524f527e8e2185f30e6",
+      "commit": "6c6e5787043723fd874db1365ae73888d95cc806",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
       "line": 96,
       "occurrences": 1,
       "verbatim": "/// Panics if `stride_words` is not the width this builder specializes for, if",
       "why": "The pointer type of the checked builders lists its conditions under Panics.",
-      "sha256": "0d7129d5b0f63f27b9af7bfe2b08037183ca8cc4898e682f3e5d67278525dafb"
+      "sha256": "f0afdef458a8612cfc2c9fda91cc60429b6b793a5f7004b9bca072bfe53b4be3"
     },
     {
       "id": "gray-check-contract",
@@ -841,13 +841,13 @@
     {
       "id": "tile-index-check",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 839,
+      "line": 905,
       "occurrences": 1,
       "verbatim": "    idx.iter().all(|&entry| {",
       "why": "The M4RM tile wrappers check eight table indices per call with checked arithmetic: the house form of a per-element index check.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "core-denies-unsafe",
@@ -1919,123 +1919,134 @@
     {
       "id": "cleared-x86-avx2-and-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 233,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_and_into(dst: &mut [u64], src: &[u64]) {",
       "why": "`and_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-or-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 257,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_or_into(dst: &mut [u64], src: &[u64]) {",
       "why": "`or_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-xor-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 36,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {",
       "why": "`xor_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-m4rm-gray-xor16-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 635,
+      "line": 696,
       "occurrences": 1,
       "verbatim": "            \"m4rm_gray_xor16: src must contain at least 16 words\"",
       "why": "`m4rm_gray_xor16_fn` of `src/x86/avx2.rs`: A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-m4rm-gray-build4-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 650,
+      "line": 711,
       "occurrences": 1,
       "verbatim": "            \"m4rm_gray_build4\",",
       "why": "`m4rm_gray_build4_fn` of `src/x86/avx2.rs`: A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-m4rm-gray-build8-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 671,
+      "line": 732,
       "occurrences": 1,
       "verbatim": "            \"m4rm_gray_build8\",",
       "why": "`m4rm_gray_build8_fn` of `src/x86/avx2.rs`: A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-m4rm-tile8x4-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 708,
+      "line": 769,
       "occurrences": 1,
       "verbatim": "            \"m4rm_tile8x4: table_buffer must cover all indexed 8x4 table rows\"",
       "why": "`m4rm_tile8x4_fn` of `src/x86/avx2.rs`: A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-m4rm-tile8xn-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 731,
+      "line": 792,
       "occurrences": 1,
       "verbatim": "            \"m4rm_tile8xn: table_buffer must cover all indexed 8xN table rows\"",
       "why": "`m4rm_tile8xn_fn` of `src/x86/avx2.rs`: A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-not-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 281,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_not_into(buf: &mut [u64]) {",
       "why": "`not_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-popcnt-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 307,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {",
       "why": "`popcnt_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-and-popcnt-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "line": 365,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
       "why": "`and_popcnt_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
+    },
+    {
+      "id": "cleared-x86-avx2-and-parity-fn",
+      "project": "gf2",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 432,
+      "occurrences": 1,
+      "verbatim": "unsafe fn avx2_and_parity(lhs: &[u64], rhs: &[u64]) -> bool {",
+      "why": "`and_parity_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-popcnt-csa-fn",
@@ -2073,46 +2084,46 @@
     {
       "id": "cleared-x86-avx2-find-first-one-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 420,
+      "line": 481,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_find_first_one(buf: &[u64]) -> Option<usize> {",
       "why": "`find_first_one_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-find-first-zero-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 464,
+      "line": 525,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_find_first_zero(buf: &[u64]) -> Option<usize> {",
       "why": "`find_first_zero_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-shift-left-words-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 509,
+      "line": 570,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_shift_left_words(buf: &mut [u64], word_shift: usize) {",
       "why": "`shift_left_words_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-avx2-shift-right-words-fn",
       "project": "gf2",
-      "commit": "4c36e7cd58ddcabf677f6b9e978105d46c9f6117",
+      "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 562,
+      "line": 623,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {",
       "why": "`shift_right_words_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
-      "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+      "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
     },
     {
       "id": "cleared-x86-ldpc-lanes-lane-check-step-avx2",

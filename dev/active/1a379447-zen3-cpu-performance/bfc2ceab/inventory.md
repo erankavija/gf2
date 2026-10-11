@@ -10,11 +10,11 @@ An entry point is a safe function of `gf2-kernels-simd`, published through a saf
 
 | Quantity | Count |
 |---|---|
-| safe functions holding an `unsafe` block outside test code | 92 |
+| safe functions holding an `unsafe` block outside test code | 93 |
 | entry points of the inventory | 24 |
 | safe pointer types they are published through | 17 |
 | cost classes | 4 |
-| safe functions cleared | 68 |
+| safe functions cleared | 69 |
 
 ## Coverage
 
@@ -27,7 +27,7 @@ In every tracked Rust file outside receipt input snapshots and outside this reco
 | `bounds-checked` | 6 | Every slice access is bounds-checked; the only unsafe operations take values. |
 | `fixed-size` | 10 | Every operand is a value or a reference to a fixed-size object. |
 | `hint` | 1 | The instruction is a cache hint that dereferences nothing. |
-| `length-derived` | 17 | Every access index derives from the lengths of the slices the call passes. |
+| `length-derived` | 18 | Every access index derives from the lengths of the slices the call passes. |
 | `release-assertion` | 31 | A release-mode assertion in the wrapper or the kernel bounds every unchecked access. |
 | `values-only` | 3 | Every argument is a value. |
 
