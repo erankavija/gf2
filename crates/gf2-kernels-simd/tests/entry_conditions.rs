@@ -431,26 +431,30 @@ fn medium_prime_f64_gemm_rejects_wrapping_shape() {
     whole_gemm_cases!(fns.batch_gemm_fn, "fp_medium_f64_gemm", 1f64, 257u16, 0u16);
 }
 
+/// One contract for both precisions, over the scalar and the detected bundle.
+macro_rules! pam_cases {
+    ($cell:ty, $($fns:expr),+) => {
+        let levels: [$cell; 4] = [-3.0, -1.0, 1.0, 3.0];
+        for fns in [$($fns),+] {
+            let kernel = fns.pam_sq_distances_fn;
+            kernel(&[0.5], &[1.0], &[2.0], &levels, &mut [0.0; 4]);
+            kernel(&[], &[], &[], &levels, &mut []);
+            kernel(&[0.5], &[1.0], &[2.0], &[], &mut []);
+            let short_output = catch_unwind(AssertUnwindSafe(|| {
+                kernel(&[0.5], &[1.0], &[2.0], &levels, &mut [0.0; 3])
+            }));
+            assert!(short_output.is_err());
+        }
+    };
+}
+
 /// The wrapped product of two slice lengths needs operands no test holds, so
 /// these cases cover the length assertion the checked product feeds; the unit
-/// test of `entry_check::checked_cells` covers the overflow branch.
+/// test of `entry_check::checked_cells` covers the overflow branch. The
+/// scalar kernels index with bounds checks, so the cases require a panic and
+/// no message.
 #[test]
 fn pam_distance_kernels_reject_output_shape() {
-    let refuses = |call: &dyn Fn()| catch_unwind(AssertUnwindSafe(call)).is_err();
-    let levels32 = [-3.0f32, -1.0, 1.0, 3.0];
-    let f32_fns = modem::detect_f32();
-    (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels32, &mut [0.0; 4]);
-    (f32_fns.pam_sq_distances_fn)(&[], &[], &[], &levels32, &mut []);
-    (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &[], &mut []);
-    assert!(refuses(&|| {
-        (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels32, &mut [0.0; 3])
-    }));
-    let levels64 = [-3.0f64, -1.0, 1.0, 3.0];
-    let f64_fns = modem::detect_f64();
-    (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels64, &mut [0.0; 4]);
-    (f64_fns.pam_sq_distances_fn)(&[], &[], &[], &levels64, &mut []);
-    (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &[], &mut []);
-    assert!(refuses(&|| {
-        (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels64, &mut [0.0; 3])
-    }));
+    pam_cases!(f32, modem::scalar_fns_f32(), modem::detect_f32());
+    pam_cases!(f64, modem::scalar_fns_f64(), modem::detect_f64());
 }

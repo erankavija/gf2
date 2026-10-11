@@ -152,9 +152,11 @@ overstate what the checked product adds.
 type, and one for the two precisions of the Gray-PAM kernel. Each test calls
 every implementation the type publishes with arguments that meet the
 conditions and then with arguments that break each condition, and requires a
-panic that opens with the kernel's name and names the condition; the Gray-PAM
-test requires a panic. The two sparse lanes share one contract through a
-macro. The
+panic that opens with the kernel's name and names the condition. The Gray-PAM
+bundles are the one interface with a scalar implementation beside the
+detected one; their test runs one case list over both and requires a panic,
+which the scalar kernels raise from a bounds-checked index. The two sparse
+lanes share one contract through a macro. The
 product of two slice lengths that the Gray-PAM wrappers check wraps only for
 operands of at least $2^{32}$ elements, so their test covers the length
 assertion the product feeds and a unit test of `entry_check::checked_cells`
