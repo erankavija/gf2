@@ -78,9 +78,12 @@ one.
    [`survey/pilot-plan-smoke.json`](survey/pilot-plan-smoke.json) is the
    shared smoke's record of that plan: one untimed dispatch per arm and cell.
 2. **Confirmation.** `run-codeword-assembly.sh freeze` derives the
-   confirmation addendum from the committed pilot receipt with the canonical
-   freezer; `run-codeword-assembly.sh window confirmation` measures it in a
-   later window.
+   [confirmation addendum](addendum-v4-codeword-assembly-confirmation.json)
+   from the committed pilot receipt with the canonical freezer, and the
+   [derivation record](confirmation-derivation.txt) states the resolution and
+   the pilot pin. `run-codeword-assembly.sh window confirmation` measures it;
+   [`survey/confirmation-plan-smoke.json`](survey/confirmation-plan-smoke.json)
+   is the shared smoke's record of that plan.
 
 ## Decision
 
@@ -96,6 +99,26 @@ summary.
 Either outcome leaves one assembly behind the existing entry points and no
 selectable parallel path. `BitVec::write_bits` stays under *adopt* and is
 removed with its tests under *no change*.
+
+## Outcome
+
+[`tables.md`](../../../bench_results/8e53235b/tables.md), written by
+[`survey/make-tables.py`](survey/make-tables.py) from the committed receipts
+and the family ledger, is the authoritative statement of every measured cell;
+its Source table carries each receipt's digest and acceptance finding count.
+
+- **Pilot.** The receipt is accepted and exploratory (tables, § Pilot). Its
+  execution log records every declared cell started, checkpointed and
+  completed once at its declared pairs across two sessions, with a terminal
+  `complete` record. Every cell's interval, the deciding cell's included,
+  places the candidate ahead of the baseline, so the decision table's
+  pilot no-win row does not apply.
+- **Confirmation.** The addendum is frozen with every pilot cell
+  confirmatory; the frozen resolution lies below both margins (derivation
+  record). The tables report the stage as absent while no confirmation
+  receipt is committed, and the decision rule reads nothing else: production
+  encodes with the bit-serial assembly and the candidate stays a selectable
+  comparator.
 
 ## Limits
 
