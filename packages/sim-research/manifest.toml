@@ -1,7 +1,7 @@
 [profile]
 manifest-version = 2
 id = "sim-research"
-version = "1.2.4"
+version = "1.2.5"
 compatible-jit = ">=1.0.0, <2.0.0"
 
 [[dependency]]
@@ -163,7 +163,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/plan-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-6.1-sol -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -187,7 +187,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/breakdown-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-6.1-sol -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -211,7 +211,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/code-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-6.1-sol -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -293,7 +293,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/doc-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-6.1-sol -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -317,7 +317,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/holistic-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-6-astra -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
