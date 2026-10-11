@@ -1,8 +1,48 @@
 {
-  "schema": "ldpc-batch-arms-build-v2",
+  "schema": "ldpc-batch-arms-build-v3",
+  "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
   "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
-  "build_command": "CARGO_CI_NO_SCCACHE='1' RUSTFLAGS='-C target-cpu=native' ./scripts/cargo-budget.sh cargo +1.95 build --offline --locked --release --manifest-path dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+  "cxx": "c++ (GCC) 16.2.1 20260810",
+  "build_commands": [
+    {
+      "environment": {
+        "CARGO_CI_NO_SCCACHE": "1",
+        "RUSTFLAGS": "-C target-cpu=native"
+      },
+      "argv": [
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml"
+      ]
+    },
+    {
+      "environment": {
+        "CARGO_CI_NO_SCCACHE": "1",
+        "RUSTFLAGS": "-C target-cpu=native",
+        "GF2_AFF3CT_ROOT": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct"
+      },
+      "argv": [
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--package",
+        "ldpc-aff3ct-intra-arm"
+      ]
+    }
+  ],
   "release_profile": {
     "opt-level": 3,
     "lto": true,
@@ -10,17 +50,171 @@
     "debug": "line-tables-only"
   },
   "executables": {
-    "gf2-batch-lane-arm": "948d2456fae6cd59954af41a6794c198f3643b4e9f0686f3503c47136c95c25a",
-    "gf2-batch-single-frame-arm": "09be6be57900075bd262a2ca8f9399a4e0b5143a40d531faa3219258fe6b30cd"
+    "aff3ct-intra-arm": {
+      "sha256": "608e25aaee846768e081f5f8a5198b75b4694b227486af55d4c71f857155f1a5",
+      "inputs": {
+        "repository_files_sha256": "0e35fb03adfea49c2de8eff238046f7b7d09bb79613d95e2e1abcd5c8236b5fe",
+        "other_files": {
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+        }
+      }
+    },
+    "aff3ct-intra-quality": {
+      "sha256": "171ef65d7cd460eea2cd7abc47cca04100cd2c3c3211adc97be90338de29dde6",
+      "inputs": {
+        "repository_files_sha256": "db4b9c719ce8d52c72268b80568659cb4694b716fd3463360258b68942bbc8a3",
+        "other_files": {
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+        }
+      }
+    },
+    "gf2-batch-lane-arm": {
+      "sha256": "8a5e546a2933010d9a7409a01f3f0b8b9069511e9e3f954fa9f100fcac3fbdb9",
+      "inputs": {
+        "repository_files_sha256": "72ae84027a1520155f16c73f759d7cfcc7faa9ed85d9e4f654e9c875eab89478",
+        "other_files": {}
+      }
+    },
+    "gf2-batch-single-frame-arm": {
+      "sha256": "8f95853b03d239fc03b027817e38094a9743c0d5ae2a1bf46148ce11c308ae83",
+      "inputs": {
+        "repository_files_sha256": "c86a80026ceb90b86797617e72e3d0acb1818307f240406c1db40964bf8bd873",
+        "other_files": {}
+      }
+    }
+  },
+  "aff3ct": {
+    "root": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct",
+    "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+    "revision_stated_by": [
+      "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "dev/bench_results/3be770d5/preparation/build-identity.json"
+    ],
+    "static_library": "libaff3ct-4.7.0.a",
+    "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+    "static_library_pinned_by": [
+      "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "dev/bench_results/3be770d5/preparation/build-identity.json",
+      "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
+      "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json",
+      "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+      "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/build-identity.json",
+      "dev/bench_results/f63a2464/preparation/build-identity.json"
+    ]
+  },
+  "catalogue": {
+    "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json",
+    "sha256": "829fc2e2ec5254a3b9c8f78e1b74dc116858cda412892fb8f5bd738c443b276a"
+  },
+  "arms": {
+    "aff3ct-flooding-nms-f32": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "found_at": [
+        "target/ldpc-throughput/release/aff3ct-throughput-arm"
+      ],
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      }
+    },
+    "aff3ct-layered-nms-f32-inter": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "horizontal-layered",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "INTER",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "found_at": [
+        "target/ldpc-throughput/release/aff3ct-throughput-arm"
+      ],
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      }
+    },
+    "aff3ct-layered-nms-i16-inter": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "horizontal-layered",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "INTER",
+        "GF2_AFF3CT_PRECISION": "i16",
+        "GF2_AFF3CT_QUANT_SCALE": "16",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "found_at": [
+        "target/ldpc-throughput/release/aff3ct-throughput-arm"
+      ],
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      }
+    },
+    "aff3ct-spa-intra": {
+      "source": "workspace",
+      "executable": "aff3ct-intra-arm",
+      "environment": {},
+      "package": "ldpc-aff3ct-intra-arm",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
+      "executable_sha256": "608e25aaee846768e081f5f8a5198b75b4694b227486af55d4c71f857155f1a5"
+    },
+    "gf2-batch-lane-avx2": {
+      "source": "workspace",
+      "executable": "gf2-batch-lane-arm",
+      "environment": {
+        "GF2_LDPC_LANE_BACKEND": "avx2"
+      },
+      "package": "ldpc-batch-arms",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+      "executable_sha256": "8a5e546a2933010d9a7409a01f3f0b8b9069511e9e3f954fa9f100fcac3fbdb9"
+    },
+    "gf2-batch-lane-portable": {
+      "source": "workspace",
+      "executable": "gf2-batch-lane-arm",
+      "environment": {
+        "GF2_LDPC_LANE_BACKEND": "portable"
+      },
+      "package": "ldpc-batch-arms",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+      "executable_sha256": "8a5e546a2933010d9a7409a01f3f0b8b9069511e9e3f954fa9f100fcac3fbdb9"
+    },
+    "gf2-batch-single-frame": {
+      "source": "workspace",
+      "executable": "gf2-batch-single-frame-arm",
+      "environment": {},
+      "package": "ldpc-batch-arms",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
+      "executable_sha256": "8f95853b03d239fc03b027817e38094a9743c0d5ae2a1bf46148ce11c308ae83"
+    }
   },
   "isolation": {
     "workspace_root": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms",
-    "manifest_sha256": "2b5224effacbad56f43fb09789dc25488a5901cf80b4bdb2ba3f602fb2604b61",
-    "lockfile_sha256": "9e61671dda870c76a6a0eff5c315a2cc41d6e41b12474d041e0b13bf79a139db",
+    "manifest_sha256": "90000107c9e122b83b71fb8fc86ed20c1d448dae41029fec8d8374120cd0a09d",
+    "lockfile_sha256": "148ebe85b9d8548b8cc1fee8765be99843ada5b7cbe4e950211724d43bc77f94",
     "target_directory": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target",
     "declared_names": [
+      "aff3ct-intra-arm",
+      "aff3ct-intra-quality",
+      "aff3ct_intra",
+      "build-script-build",
       "gf2-batch-lane-arm",
       "gf2-batch-single-frame-arm",
+      "ldpc-aff3ct-intra-arm",
       "ldpc-batch-arms",
       "ldpc_batch_arms"
     ],
@@ -592,7 +786,9 @@
       "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
       "executable": "aff3ct-throughput-arm",
       "sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
-      "found_at": []
+      "found_at": [
+        "target/ldpc-throughput/release/aff3ct-throughput-arm"
+      ]
     },
     {
       "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
