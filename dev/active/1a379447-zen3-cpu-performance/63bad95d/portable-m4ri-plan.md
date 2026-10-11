@@ -97,6 +97,7 @@ The equivalence margin, material-gap threshold and resolution ceiling are the
 committed comparator family's, because the boundaries and the gf2 arm are the
 same; the addendum's margin table states them. The pilot budget is one pilot
 and one replacement for a voided pilot.
+By invoker ruling of 2026-10-11, the pilot measured while another session loaded the host counts as the first trial, and the repeat on a quiet host (run id `v4-r2`) is the second.
 
 ## What each outcome means for REQ-09
 
