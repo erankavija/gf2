@@ -482,12 +482,12 @@ def pricing_section(pricing):
         f"cell, which leaves {freeze['pilot_trials_left']}, so the family has no confirmatory "
         "cell.",
         "",
-        "Outcome, exploratory: the measured cost of the per-product check is the rows above, at "
-        "pilot level and without a confirmation. A pilot row sizes a confirmation and decides "
-        f"nothing. The frozen decision rule (the family description of {addendum}) records an "
-        "accepted measured cost when every confirmatory cell records `pass` and sends the form "
-        "back to the invoker with a cell that records `fail` or `inconclusive`; no "
-        "confirmatory cell is committed, so the rule records neither.",
+        "Outcome, exploratory and accepted: the measured cost of the per-product check is the "
+        "rows above, at pilot level and without a confirmation, and the invoker's last ruling "
+        f"on REQ-04 ([`{review.DECISIONS_FILE}`]({review.DECISIONS_FILE})) records it as "
+        f"accepted. The frozen decision rule (the family description of {addendum}) decides "
+        "from confirmatory cells; no confirmatory cell is committed, so the acceptance stands "
+        "on the ruling and the rule records nothing.",
         "",
     ]
 
@@ -797,7 +797,8 @@ def rule_line(stages, cells):
         return "No confirmatory cell of the class is committed."
     recorded = ", ".join(f"`{outcome}`" for outcome in outcomes)
     verdict = ("the measured form of the check is recorded as an accepted measured cost"
-               if outcomes == ["pass"] else "the class goes back to the invoker")
+               if outcomes == ["pass"]
+               else "the rule refers the class to the invoker, whose decision stands above")
     return (f"Frozen decision rule (the family description of "
             f"[`{review.CONFIRMATION_ADDENDUM}`]({review.CONFIRMATION_ADDENDUM})): the "
             f"confirmatory cells of the class record {recorded}, so {verdict}.")
@@ -909,9 +910,8 @@ def decision_page(record):
         "`Decision` column states it per class, and the tree holds the decided form of "
         "every entry point.",
         "",
-        *[f"Ruling of the {later['decided_by']}, {later['decided_on']}: {later['ruling']}"
-          for later in ruling["later_rulings"]],
-        "",
+        *[line for later in ruling["later_rulings"] for line in (
+            f"Ruling of the {later['decided_by']}, {later['decided_on']}: {later['ruling']}", "")],
         "The last column names, for each interface, its rows in the family's "
         f"[tables]({tables}), which `survey/make-tables.py` writes from each stage's "
         "acceptance summary with the pair count, interval and outcome of every cell. Each "

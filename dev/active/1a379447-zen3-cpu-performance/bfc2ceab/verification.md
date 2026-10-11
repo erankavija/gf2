@@ -199,10 +199,10 @@ derived from the pilot receipt by the canonical freezer with the
   form of each entry point, so its two builds of the arm do not differ.
 - Outcome. The confirmation records a regression for the per-row column check
   of both sparse row interfaces and no regression for the other retained
-  cells; the rows are in the `Confirmation` section of the tables. Under the
-  decision rule the confirmation addendum freezes, the sparse row class goes
-  back to the invoker and the measured check of each other class is recorded
-  as an accepted measured cost. The regression contradicts the non-regression
+  cells; the rows are in the `Confirmation` section of the tables. The
+  decision rule the confirmation addendum freezes refers the sparse row class
+  to the invoker and records the measured check of each other class as an
+  accepted measured cost. The regression contradicts the non-regression
   criterion the family freezes for the per-row form; the invoker's decision
   replaces that form by the per-product entry.
 - Per-product entry. The family above cannot price it: its ledger admits no
@@ -257,12 +257,13 @@ decision rule. The decision table names the family's committed stages.
   no confirmation: the `freeze` action refuses the receipt of the second
   trial, and `survey/make-spmm-freeze-refusal.py` records the refusal. The
   measured cost of the per-product check is therefore exploratory; the
-  decision table holds each stage's rows, the load each receipt records at the
-  start of its session and what the frozen decision rule records. REQ-04 asks
-  for "before/after evidence under the measurement contract" or a record of
-  "the measured cost as accepted"; the family's rule records an accepted cost
-  from confirmatory cells only, so the acceptance of this cost is the
-  invoker's to record.
+  decision table holds each stage's rows and the load each receipt records at
+  the start of its session. REQ-04 asks for "before/after evidence under the
+  measurement contract" or a record of "the measured cost as accepted"; the
+  family's rule records an accepted cost from confirmatory cells only, so the
+  acceptance is the invoker's: the last ruling of
+  [`decisions.json`](decisions.json) records the exploratory cost as accepted
+  and closes the family without a further measurement.
 
 ## Checks run
 
