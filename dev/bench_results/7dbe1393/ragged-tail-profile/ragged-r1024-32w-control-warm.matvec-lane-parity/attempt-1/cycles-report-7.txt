@@ -1,0 +1,69 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2033806848
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                               
+# ........  ............  ....................  .....................................................................................................
+#
+    84.23%          2171  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+     9.53%           247  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     4.72%           122  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.23%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.16%             4  libc.so.6             [.] 0x00000000000a728d
+     0.15%             4  libc.so.6             [.] malloc
+     0.08%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.08%             4  [unknown]             [k] 0xffffffffa6801280
+     0.08%             2  libc.so.6             [.] 0x00000000000a4ffe
+     0.04%             1  libc.so.6             [.] 0x00000000000a7651
+     0.04%             1  dense-arm             [.] tuning_campaign_support::host::CpuAffinity::parse
+     0.04%             1  libc.so.6             [.] 0x00000000000a624e
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61c01
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed5467
+     0.04%             1  libc.so.6             [.] 0x00000000000a6208
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f08
+     0.04%             1  libc.so.6             [.] 0x00000000000a6191
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e23
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f4
+     0.04%             1  [unknown]             [k] 0xffffffffa6b29ae4
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e584
+     0.04%             1  libc.so.6             [.] 0x00000000000a7282
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6d84
+     0.04%             1  libc.so.6             [.] 0x00000000000a7a83
+     0.01%             1  [unknown]             [k] 0xffffffffa6ed6590
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b219
+     0.01%             1  [unknown]             [k] 0xffffffffa7d80565
+     0.01%             1  dense-arm             [.] serde_json::value::ser::<impl serde_core::ser::Serialize for serde_json::value::Value>::serialize
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.01%             1  libc.so.6             [.] 0x00000000000329c4
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.01%             1  [unknown]             [k] 0xffffffffa6ed5408
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000024834
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6af1584
+     0.00%             1  ld-linux-x86-64.so.2  [.] __tunable_get_val
+     0.00%             1  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5f84
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef96a2
+     0.00%             1  libc.so.6             [.] 0x00000000001763b0
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5f0d4
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a0
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6eb1c21
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc5ee
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6141
+
+
+#
+# (Tip: Order by the overhead of source file name and line number: perf report -s srcline)
+#

@@ -16,6 +16,8 @@
 //! dense-campaign inputs  --producing-manifest <path> [--also <path>]...
 //! dense-campaign profile-request --family <id> --addendum <path>
 //!                        --cell <id> --arm <name> --cpu <n>
+//! dense-campaign validation-request --family <id> --addendum <path>
+//!                        --cell <id> --arm <name>
 //! ```
 //!
 //! `verify` re-derives the transcription of the named family and compares it
@@ -140,7 +142,7 @@ fn transcribe(arguments: &Arguments) -> Result<FamilyAddendum, String> {
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     let (command, rest) = raw.split_first().ok_or(
-        "usage: dense-campaign <pins|list|cells|verify|verify-confirmation|unavailable|plan|inputs|profile-request> --flag value ...",
+        "usage: dense-campaign <pins|list|cells|verify|verify-confirmation|unavailable|plan|inputs|profile-request|validation-request> --flag value ...",
     )?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
@@ -175,6 +177,7 @@ fn run() -> Result<(), String> {
         "unavailable" => unavailable(&arguments),
         "plan" => project(&arguments),
         "profile-request" => profile_request(&arguments),
+        "validation-request" => validation_request(&arguments),
         "inputs" => {
             let manifest = arguments.required("producing-manifest")?;
             let checked = inputs::check(&repository_root()?, manifest, arguments.repeated())?;
@@ -236,16 +239,21 @@ fn pins() -> Result<(), String> {
             row.row_id, row.stride_words, row.reason
         );
     }
-    let lane = Question::MatvecLaneThreshold;
-    let pin = lane.addendum();
-    println!(
-        "family_addendum={} path={} sha256={} identity={} frozen_utc={}",
-        lane.family_id(),
-        pin.path,
-        pinned_addendum_digest(lane)?,
-        pin.identity,
-        pin.frozen_utc
-    );
+    for question in [
+        Question::MatvecLaneThreshold,
+        Question::MatvecRaggedTail,
+        Question::MatvecRaggedTailV2,
+    ] {
+        let pin = question.addendum();
+        println!(
+            "family_addendum={} path={} sha256={} identity={} frozen_utc={}",
+            question.family_id(),
+            pin.path,
+            pinned_addendum_digest(question)?,
+            pin.identity,
+            pin.frozen_utc
+        );
+    }
     Ok(())
 }
 
@@ -344,7 +352,8 @@ fn resolution_ceiling(question: Question) -> f64 {
         Question::IsolatedFusedParity => 0.020,
         Question::AllocatedMatvec => 0.035,
         Question::MatvecVsM4ri => 0.040,
-        Question::MatvecLaneThreshold => 0.035,
+        Question::MatvecLaneThreshold | Question::MatvecRaggedTail => 0.035,
+        Question::MatvecRaggedTailV2 => resolution_ceiling(Question::MatvecRaggedTail),
     }
 }
 
@@ -478,12 +487,10 @@ fn repository_root() -> Result<std::path::PathBuf, String> {
         .map_err(|error| format!("cannot resolve the working directory: {error}"))
 }
 
-/// Emits one canonical timed request for profiler attribution of a frozen cell.
-///
-/// The profiler invokes the existing arm and is not a campaign or a source of
-/// acceptance samples. The request uses the protocol's builder and frozen
-/// window settings, so the arm follows its measured cost boundary.
-fn profile_request(arguments: &Arguments) -> Result<(), String> {
+/// One frozen cell as a plan declares it, with the requested arm.
+fn requested_cell(
+    arguments: &Arguments,
+) -> Result<(FamilyAddendum, PlanCell, String), String> {
     let (question, addendum) = verified_addendum(arguments)?;
     if question.boundary() == Question::MatvecVsM4ri {
         return Err("the M4RI comparison is a separate family".into());
@@ -498,9 +505,6 @@ fn profile_request(arguments: &Arguments) -> Result<(), String> {
     if arm != baseline && arm != candidate {
         return Err(format!("{arm} is not an arm of {cell_id}"));
     }
-    let declared = addendum
-        .cell(cell_id)
-        .ok_or("the cell is absent from the addendum")?;
     let plan_cell = PlanCell {
         cell_id: cell.cell_id.clone(),
         baseline_arm: baseline.to_owned(),
@@ -509,12 +513,25 @@ fn profile_request(arguments: &Arguments) -> Result<(), String> {
             .map_err(|error| format!("cannot encode case: {error}"))?,
         pilot_pairs: Some(campaign::PILOT_PAIRS),
     };
+    Ok((addendum, plan_cell, arm.to_owned()))
+}
+
+/// Emits one canonical timed request for profiler attribution of a frozen cell.
+///
+/// The profiler invokes the existing arm and is not a campaign or a source of
+/// acceptance samples. The request uses the protocol's builder and frozen
+/// window settings, so the arm follows its measured cost boundary.
+fn profile_request(arguments: &Arguments) -> Result<(), String> {
+    let (addendum, plan_cell, arm) = requested_cell(arguments)?;
+    let declared = addendum
+        .cell(&plan_cell.cell_id)
+        .ok_or("the cell is absent from the addendum")?;
     let cpu = arguments
         .number("cpu")?
         .ok_or("--cpu is required")?
         .try_into()
         .map_err(|_| "--cpu exceeds the supported CPU range")?;
-    let role = if arm == baseline {
+    let role = if arm == plan_cell.baseline_arm {
         PairPosition::Baseline
     } else {
         PairPosition::Candidate
@@ -522,12 +539,25 @@ fn profile_request(arguments: &Arguments) -> Result<(), String> {
     let request = ArmRequest::timed(
         &plan_cell,
         declared,
-        arm,
+        &arm,
         role,
         0,
         vec![cpu],
         &SHARED_SETTINGS,
     )?;
+    print!("{}", transport::encode_case(&request)?);
+    Ok(())
+}
+
+/// Emits the validation-position request of a frozen cell: the zero-window
+/// request the shared smoke sends, which an arm answers with its untimed
+/// arrangement pass and no timing window.
+fn validation_request(arguments: &Arguments) -> Result<(), String> {
+    let (addendum, plan_cell, arm) = requested_cell(arguments)?;
+    let declared = addendum
+        .cell(&plan_cell.cell_id)
+        .ok_or("the cell is absent from the addendum")?;
+    let request = ArmRequest::validation(&plan_cell, declared, &arm);
     print!("{}", transport::encode_case(&request)?);
     Ok(())
 }

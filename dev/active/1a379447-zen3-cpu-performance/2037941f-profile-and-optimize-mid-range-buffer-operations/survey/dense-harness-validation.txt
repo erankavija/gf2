@@ -1,21 +1,25 @@
 # Dense-parity harness non-timed validation (jit:e1f9a78f)
-# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh build --m4ri
+# command: dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh build
 # timing: none; the command builds release binaries and runs semantic validators only
 # rustc: 1.95.0 (59807616e 2026-04-14); LLVM 22.1.2; x86_64-unknown-linux-gnu
-# addendum=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md
+# addendum=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md
 # addendum_sha256=7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2
 # addendum_identity=2037941f-dense-parity-v2
 # addendum_frozen_utc=2026-09-28T06:22:24Z
-# comparator=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md
+# comparator=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md
 # family=2037941f-dense-isolated-fused-parity ledger=dev/bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl cells=12
 # family=2037941f-dense-allocated-matvec ledger=dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl cells=24
 # family=2037941f-dense-matvec-vs-m4ri ledger=dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl cells=8
 # family=4337c02e-matvec-simd-threshold ledger=dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl cells=17
+# family=7dbe1393-matvec-ragged-tail ledger=dev/bench_results/7dbe1393/matvec-ragged-tail-ledger.jsonl cells=6
+# family=7dbe1393-matvec-ragged-tail-v2 ledger=dev/bench_results/7dbe1393/matvec-ragged-tail-v2-ledger.jsonl cells=6
 # unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
 # family_addendum=4337c02e-matvec-simd-threshold path=dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md sha256=e95dbb382c70a0498973f6909c899657657f7b95bb22d25cce76bc2367be1047 identity=4337c02e-matvec-lane-threshold-v1 frozen_utc=2026-10-05T19:34:54Z
-PASS harness contract: 53 tests pass
+# family_addendum=7dbe1393-matvec-ragged-tail path=dev/active/1a379447-zen3-cpu-performance/7dbe1393/matvec-ragged-tail-addendum.md sha256=1161c4c81148cdfa50c9adb3c81f6ea5b3a7f14cbc5f9b5939e05bdc488c847b identity=7dbe1393-matvec-ragged-tail-v1 frozen_utc=2026-10-08T11:39:41Z
+# family_addendum=7dbe1393-matvec-ragged-tail-v2 path=dev/active/1a379447-zen3-cpu-performance/7dbe1393/matvec-ragged-tail-v2-addendum.md sha256=e2149903acee36ac8e2224d1442098bff8d0d0b95367efc86e1254162e25d6b6 identity=7dbe1393-matvec-ragged-tail-addendum-v2 frozen_utc=2026-10-11T09:26:12Z
+PASS harness contract: 55 tests pass
 PASS matvec-cols-0-rows-0: 6 checks
 PASS matvec-cols-0-rows-1: 9 checks
 PASS matvec-cols-0-rows-63: 195 checks
@@ -70,6 +74,12 @@ PASS matvec-lane-7w: 1028 checks
 PASS matvec-lane-10w: 1028 checks
 PASS matvec-lane-62w: 1028 checks
 PASS matvec-lane-66w: 1028 checks
+PASS matvec-ragged-9w: 1028 checks
+PASS matvec-ragged-10w: 1028 checks
+PASS matvec-ragged-62w: 1028 checks
+PASS matvec-ragged-63w: 1028 checks
+PASS matvec-ragged-66w: 1028 checks
+PASS matvec-ragged-32w: 1028 checks
 PASS and-popcnt-7w: 3 checks
 PASS and-popcnt-8w: 3 checks
 PASS and-popcnt-9w: 3 checks
@@ -132,6 +142,12 @@ PASS matvec-lane-7w: 1028 checks
 PASS matvec-lane-10w: 1028 checks
 PASS matvec-lane-62w: 1028 checks
 PASS matvec-lane-66w: 1028 checks
+PASS matvec-ragged-9w: 1028 checks
+PASS matvec-ragged-10w: 1028 checks
+PASS matvec-ragged-62w: 1028 checks
+PASS matvec-ragged-63w: 1028 checks
+PASS matvec-ragged-66w: 1028 checks
+PASS matvec-ragged-32w: 1028 checks
 PASS and-popcnt-7w: 3 checks
 PASS and-popcnt-8w: 3 checks
 PASS and-popcnt-9w: 3 checks
@@ -139,17 +155,7 @@ PASS and-popcnt-63w: 3 checks
 PASS and-popcnt-64w: 3 checks
 PASS and-popcnt-65w: 3 checks
 PASS and-popcnt-66w: 3 checks
-# m4ri prefix: /home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3
-# {"library":"m4ri","entrypoint":"mzd_mul","matched_operation":"mzd_mul(y, A, x, 0)","coordinates":"mzd_write_bit/mzd_read_bit","qualified_shapes":"65x512,65x4096,1x1,63x63,64x64,65x65","comparator":"dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md","loaded_library":"/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-qualified-v3/lib/libm4ri.so.2.0.1","loaded_sha256":"1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb"}
-PASS m4ri-65x512: 71 checks
-PASS m4ri-65x4096: 71 checks
-PASS m4ri-1x1: 7 checks
-PASS m4ri-63x63: 69 checks
-PASS m4ri-64x64: 70 checks
-PASS m4ri-65x65: 71 checks
-# dense-m4ri-arm sha256: 5f6f17edd3b2c9352da8bd92218dcfa36a15cd7dedb487e8b9c9e7c45a023886
-# libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
-# dense-arm sha256: b8cb470686cd44e086fe47c1e64deef4e61eb016e441f538c6305dd231a24e9c
-# dense-campaign sha256: 4a0e6aac6504df0f2c82f7b800193e947db0954b00d3302c95e2d9cf254838d1
-# dense-oracle sha256: 8c8a9834f341dcf4f78e5f05d4c382f04079c1d50b45104a7374394188dad9de
-# dense-arm (scalar-reference) sha256: 0e3943f50b6a306e7ec1acb620c01e2ac9ed4e06c35ef8d06108ba737720c86f
+# dense-arm sha256: 650a497df6d9c576529c62359497c5946955914726f05e75468111526d6a7e71
+# dense-campaign sha256: 5ec6faad0ffd02e11536c51022335b801708566f839e496a7ba30ca8b450bdb1
+# dense-oracle sha256: fda37a5a04620fbc9175c2b944fb2d31db7a95439e1c9a8c64e7107eeb33286c
+# dense-arm (scalar-reference) sha256: 24c0faa40c2475b41d8596319eb6050ff07b2f125df92d847d92535fb18a1148

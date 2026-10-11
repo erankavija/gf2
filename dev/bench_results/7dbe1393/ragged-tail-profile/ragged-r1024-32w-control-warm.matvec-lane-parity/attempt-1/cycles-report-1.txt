@@ -1,0 +1,55 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2121675172
+#
+# Overhead       Samples  Shared Object         Symbol                                                  
+# ........  ............  ....................  ........................................................
+#
+    80.80%          2179  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    11.72%           316  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     5.40%           146  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.71%            19  dense-arm             [.] dense_arm::run::{{closure}}
+     0.33%             9  libc.so.6             [.] malloc
+     0.26%             7  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.07%             2  libc.so.6             [.] cfree
+     0.05%             2  [unknown]             [k] 0xffffffffa6ee6da1
+     0.04%             1  libc.so.6             [.] 0x00000000000a711d
+     0.04%             1  libc.so.6             [.] 0x00000000000a7004
+     0.04%             1  [unknown]             [k] 0xffffffffa680128d
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f23
+     0.04%             1  libc.so.6             [.] 0x00000000000a5d0f
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f13
+     0.04%             1  libc.so.6             [.] 0x00000000000a6236
+     0.04%             1  libc.so.6             [.] 0x00000000000a503a
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d28
+     0.04%             1  libc.so.6             [.] 0x00000000000a728d
+     0.04%             1  libc.so.6             [.] 0x00000000000a7696
+     0.04%             1  libc.so.6             [.] 0x00000000000a71f8
+     0.04%             1  libc.so.6             [.] 0x00000000000a5000
+     0.04%             1  [unknown]             [k] 0xffffffffa6b493df
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6cf2
+     0.04%             1  libc.so.6             [.] 0x00000000000a7a83
+     0.01%             1  [unknown]             [k] 0xffffffffa6f18fc7
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.01%             1  [unknown]             [k] 0xffffffffa6801280
+     0.01%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000001b9a4
+     0.01%             1  dense-arm             [.] tuning_campaign_support::transport::decode_canonical
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000cad4
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1e570
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5f49
+     0.00%             1  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6c27724
+     0.00%             1  [unknown]             [k] 0xffffffffa6e786f0
+     0.00%             1  [unknown]             [k] 0xffffffffa6c904f3
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6141
+
+
+#
+# (Tip: When collecting LBR backtraces use --stitch-lbr to handle more than 32 deep entries: perf record --call-graph lbr ; perf report --stitch-lbr)
+#

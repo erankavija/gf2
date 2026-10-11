@@ -1,0 +1,461 @@
+# arm-body: dense_arm::run::{{closure}}
+# binary sha256: bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+
+## dense_arm::run::{{closure}} at 00000000000334b0, 0x0000000000000142 bytes
+00000000000334b0 <dense_arm::run::{{closure}}>:
+   334b0:	push   %rbx
+   334b1:	sub    $0x60,%rsp
+   334b5:	mov    (%rdi),%rcx
+   334b8:	mov    0x10(%rcx),%rax
+   334bc:	cmp    %rax,%rsi
+   334bf:	jae    335cc <dense_arm::run::{{closure}}+0x11c>
+   334c5:	mov    0x8(%rcx),%rax
+   334c9:	lea    (%rsi,%rsi,2),%rcx
+   334cd:	mov    0x10(%rax,%rcx,8),%rsi
+   334d2:	cmp    %rsi,%rdx
+   334d5:	jae    335df <dense_arm::run::{{closure}}+0x12f>
+   334db:	mov    %rdi,%rbx
+   334de:	lea    (%rax,%rcx,8),%rax
+   334e2:	mov    0x8(%rax),%rax
+   334e6:	mov    %rdx,%rcx
+   334e9:	shl    $0x7,%rcx
+   334ed:	lea    (%rcx,%rdx,8),%rcx
+   334f1:	lea    (%rax,%rcx,1),%rdx
+   334f5:	add    %rcx,%rax
+   334f8:	add    $0x30,%rax
+   334fc:	mov    %rdx,0x8(%rsp)
+   33501:	lea    0x8(%rsp),%rcx
+   33506:	mov    0x8(%rsp),%rsi
+   3350b:	mov    %rax,0x8(%rsp)
+   33510:	lea    0x8(%rsp),%rax
+   33515:	mov    0x8(%rsp),%rdx
+   3351a:	lea    0x8(%rsp),%rdi
+   3351f:	call   *0x766db(%rip)        # a9c00 <_DYNAMIC+0x4c8>
+   33525:	mov    0x8(%rbx),%rax
+   33529:	mov    (%rax),%rcx
+   3352c:	mov    0x10(%rsp),%rdi
+   33531:	mov    0x18(%rsp),%rdx
+   33536:	test   %rdx,%rdx
+   33539:	je     3355c <dense_arm::run::{{closure}}+0xac>
+   3353b:	cmp    $0x1,%rdx
+   3353f:	jne    335ac <dense_arm::run::{{closure}}+0xfc>
+   33541:	mov    (%rdi),%rdx
+   33544:	mov    %rdx,(%rsp)
+   33548:	mov    %rsp,%rdx
+   3354b:	xor    (%rsp),%rcx
+   3354f:	mov    %rcx,(%rax)
+   33552:	cmpq   $0x0,0x8(%rsp)
+   33558:	jne    33576 <dense_arm::run::{{closure}}+0xc6>
+   3355a:	jmp    3357c <dense_arm::run::{{closure}}+0xcc>
+   3355c:	movq   $0x0,(%rsp)
+   33564:	mov    %rsp,%rdx
+   33567:	xor    (%rsp),%rcx
+   3356b:	mov    %rcx,(%rax)
+   3356e:	cmpq   $0x0,0x8(%rsp)
+   33574:	je     3357c <dense_arm::run::{{closure}}+0xcc>
+   33576:	call   *0x763b4(%rip)        # a9930 <free@GLIBC_2.2.5>
+   3357c:	mov    0x30(%rsp),%rax
+   33581:	neg    %rax
+   33584:	jo     335a6 <dense_arm::run::{{closure}}+0xf6>
+   33586:	jae    33593 <dense_arm::run::{{closure}}+0xe3>
+   33588:	mov    0x38(%rsp),%rdi
+   3358d:	call   *0x7639d(%rip)        # a9930 <free@GLIBC_2.2.5>
+   33593:	cmpq   $0x0,0x48(%rsp)
+   33599:	je     335a6 <dense_arm::run::{{closure}}+0xf6>
+   3359b:	mov    0x50(%rsp),%rdi
+   335a0:	call   *0x7638a(%rip)        # a9930 <free@GLIBC_2.2.5>
+   335a6:	add    $0x60,%rsp
+   335aa:	pop    %rbx
+   335ab:	ret
+   335ac:	mov    -0x8(%rdi,%rdx,8),%rdx
+   335b1:	xor    (%rdi),%rdx
+   335b4:	mov    %rdx,(%rsp)
+   335b8:	mov    %rsp,%rdx
+   335bb:	xor    (%rsp),%rcx
+   335bf:	mov    %rcx,(%rax)
+   335c2:	cmpq   $0x0,0x8(%rsp)
+   335c8:	jne    33576 <dense_arm::run::{{closure}}+0xc6>
+   335ca:	jmp    3357c <dense_arm::run::{{closure}}+0xcc>
+   335cc:	lea    0x72ecd(%rip),%rdx        # a64a0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x798>
+   335d3:	mov    %rsi,%rdi
+   335d6:	mov    %rax,%rsi
+   335d9:	call   *0x76399(%rip)        # a9978 <_DYNAMIC+0x240>
+   335df:	lea    0x72ed2(%rip),%rax        # a64b8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x7b0>
+   335e6:	mov    %rdx,%rdi
+   335e9:	mov    %rax,%rdx
+   335ec:	call   *0x76386(%rip)        # a9978 <_DYNAMIC+0x240>
+
+## dense_arm::run::{{closure}} at 0000000000033600, 0x0000000000000297 bytes
+0000000000033600 <dense_arm::run::{{closure}}>:
+   33600:	push   %r15
+   33602:	push   %r14
+   33604:	push   %r12
+   33606:	push   %rbx
+   33607:	sub    $0x68,%rsp
+   3360b:	mov    (%rdi),%rcx
+   3360e:	mov    0x10(%rcx),%rax
+   33612:	cmp    %rax,%rsi
+   33615:	jae    33844 <dense_arm::run::{{closure}}+0x244>
+   3361b:	mov    0x8(%rcx),%rax
+   3361f:	lea    (%rsi,%rsi,2),%rcx
+   33623:	mov    0x10(%rax,%rcx,8),%rsi
+   33628:	cmp    %rsi,%rdx
+   3362b:	jae    33857 <dense_arm::run::{{closure}}+0x257>
+   33631:	mov    %rdi,%rbx
+   33634:	lea    (%rax,%rcx,8),%rax
+   33638:	mov    0x8(%rax),%rax
+   3363c:	mov    %rdx,%rcx
+   3363f:	shl    $0x7,%rcx
+   33643:	lea    (%rcx,%rdx,8),%rsi
+   33647:	lea    (%rax,%rsi,1),%rcx
+   3364b:	mov    0x8(%rdi),%rdx
+   3364f:	movzbl (%rdx),%edx
+   33652:	add    %rsi,%rax
+   33655:	add    $0x30,%rax
+   33659:	cmp    $0x6,%edx
+   3365c:	je     336eb <dense_arm::run::{{closure}}+0xeb>
+   33662:	cmp    $0x7,%edx
+   33665:	jne    3372d <dense_arm::run::{{closure}}+0x12d>
+   3366b:	mov    %rcx,0x8(%rsp)
+   33670:	lea    0x8(%rsp),%rcx
+   33675:	mov    0x8(%rsp),%rsi
+   3367a:	mov    %rax,0x8(%rsp)
+   3367f:	lea    0x8(%rsp),%rax
+   33684:	mov    0x8(%rsp),%rdx
+   33689:	mov    0x18(%rdx),%rax
+   3368d:	mov    %rax,0x8(%rsp)
+   33692:	cmp    0x20(%rsi),%rax
+   33696:	jne    337d7 <dense_arm::run::{{closure}}+0x1d7>
+   3369c:	cmpq   $0x0,0x28(%rsi)
+   336a1:	je     3381d <dense_arm::run::{{closure}}+0x21d>
+   336a7:	mov    0x7655a(%rip),%r14        # a9c08 <_DYNAMIC+0x4d0>
+   336ae:	mov    0x98(%r14),%eax
+   336b5:	test   %eax,%eax
+   336b7:	jne    33802 <dense_arm::run::{{closure}}+0x202>
+   336bd:	cmpq   $0x0,(%r14)
+   336c1:	je     3381d <dense_arm::run::{{closure}}+0x21d>
+   336c7:	mov    0x8(%rdx),%rax
+   336cb:	mov    0x10(%rdx),%rcx
+   336cf:	lea    0x10(%rsp),%rdi
+   336d4:	mov    %rax,%rdx
+   336d7:	call   5c160 <gf2_core::matrix::BitMatrix::matvec_simd_parity>
+   336dc:	mov    0x10(%rbx),%r14
+   336e0:	cmpq   $0x0,(%r14)
+   336e4:	je     33764 <dense_arm::run::{{closure}}+0x164>
+   336e6:	jmp    33835 <dense_arm::run::{{closure}}+0x235>
+   336eb:	mov    %rcx,0x8(%rsp)
+   336f0:	lea    0x8(%rsp),%rcx
+   336f5:	mov    0x8(%rsp),%rsi
+   336fa:	mov    %rax,0x8(%rsp)
+   336ff:	lea    0x8(%rsp),%rax
+   33704:	mov    0x8(%rsp),%rdx
+   33709:	movb   $0x0,0x8(%rsp)
+   3370e:	movzbl 0x8(%rsp),%ecx
+   33713:	lea    0x10(%rsp),%rdi
+   33718:	call   *0x764f2(%rip)        # a9c10 <_DYNAMIC+0x4d8>
+   3371e:	mov    0x10(%rbx),%r14
+   33722:	cmpq   $0x0,(%r14)
+   33726:	je     33764 <dense_arm::run::{{closure}}+0x164>
+   33728:	jmp    33835 <dense_arm::run::{{closure}}+0x235>
+   3372d:	mov    %rcx,0x8(%rsp)
+   33732:	lea    0x8(%rsp),%rcx
+   33737:	mov    0x8(%rsp),%rsi
+   3373c:	mov    %rax,0x8(%rsp)
+   33741:	lea    0x8(%rsp),%rax
+   33746:	mov    0x8(%rsp),%rdx
+   3374b:	lea    0x10(%rsp),%rdi
+   33750:	call   *0x764aa(%rip)        # a9c00 <_DYNAMIC+0x4c8>
+   33756:	mov    0x10(%rbx),%r14
+   3375a:	cmpq   $0x0,(%r14)
+   3375e:	jne    33835 <dense_arm::run::{{closure}}+0x235>
+   33764:	movq   $0xffffffffffffffff,(%r14)
+   3376b:	mov    0x18(%r14),%rbx
+   3376f:	cmp    0x8(%r14),%rbx
+   33773:	jne    3377e <dense_arm::run::{{closure}}+0x17e>
+   33775:	lea    0x8(%r14),%rdi
+   33779:	call   32d90 <alloc::raw_vec::RawVec<T,A>::grow_one>
+   3377e:	mov    0x10(%r14),%rax
+   33782:	imul   $0x58,%rbx,%rcx
+   33786:	mov    0x60(%rsp),%rdx
+   3378b:	mov    %rdx,0x50(%rax,%rcx,1)
+   33790:	movups 0x50(%rsp),%xmm0
+   33795:	movups %xmm0,0x40(%rax,%rcx,1)
+   3379a:	movups 0x10(%rsp),%xmm0
+   3379f:	movups 0x20(%rsp),%xmm1
+   337a4:	movups 0x30(%rsp),%xmm2
+   337a9:	movups 0x40(%rsp),%xmm3
+   337ae:	movups %xmm3,0x30(%rax,%rcx,1)
+   337b3:	movups %xmm2,0x20(%rax,%rcx,1)
+   337b8:	movups %xmm1,0x10(%rax,%rcx,1)
+   337bd:	movups %xmm0,(%rax,%rcx,1)
+   337c1:	inc    %rbx
+   337c4:	mov    %rbx,0x18(%r14)
+   337c8:	incq   (%r14)
+   337cb:	add    $0x68,%rsp
+   337cf:	pop    %rbx
+   337d0:	pop    %r12
+   337d2:	pop    %r14
+   337d4:	pop    %r15
+   337d6:	ret
+   337d7:	add    $0x20,%rsi
+   337db:	lea    -0x26227(%rip),%rcx        # d5bb <anon.229579301b8481c92d2776dc7c4a3443.596.llvm.8545422325330379486>
+   337e2:	lea    0x73d47(%rip),%r9        # a7530 <anon.229579301b8481c92d2776dc7c4a3443.602.llvm.8545422325330379486>
+   337e9:	lea    0x8(%rsp),%rax
+   337ee:	mov    $0x47,%r8d
+   337f4:	xor    %edi,%edi
+   337f6:	mov    %rsi,%rdx
+   337f9:	mov    %rax,%rsi
+   337fc:	call   *0x76206(%rip)        # a9a08 <_DYNAMIC+0x2d0>
+   33802:	mov    %rsi,%r15
+   33805:	mov    %rdx,%r12
+   33808:	call   5b852 <std::sync::once_lock::OnceLock<T>::initialize>
+   3380d:	mov    %r12,%rdx
+   33810:	mov    %r15,%rsi
+   33813:	cmpq   $0x0,(%r14)
+   33817:	jne    336c7 <dense_arm::run::{{closure}}+0xc7>
+   3381d:	lea    0x10(%rsp),%rdi
+   33822:	call   5bc90 <gf2_core::matrix::BitMatrix::matvec_scalar>
+   33827:	mov    0x10(%rbx),%r14
+   3382b:	cmpq   $0x0,(%r14)
+   3382f:	je     33764 <dense_arm::run::{{closure}}+0x164>
+   33835:	lea    0x72cfc(%rip),%rdi        # a6538 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x830>
+   3383c:	call   *0x762ae(%rip)        # a9af0 <_DYNAMIC+0x3b8>
+   33842:	ud2
+   33844:	lea    0x72c55(%rip),%rdx        # a64a0 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x798>
+   3384b:	mov    %rsi,%rdi
+   3384e:	mov    %rax,%rsi
+   33851:	call   *0x76121(%rip)        # a9978 <_DYNAMIC+0x240>
+   33857:	lea    0x72c5a(%rip),%rax        # a64b8 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x7b0>
+   3385e:	mov    %rdx,%rdi
+   33861:	mov    %rax,%rdx
+   33864:	call   *0x7610e(%rip)        # a9978 <_DYNAMIC+0x240>
+   3386a:	mov    %rax,%rbx
+   3386d:	lea    0x10(%rsp),%rdi
+   33872:	call   32220 <core::ptr::drop_in_place<gf2_core::bitvec::BitVec>>
+   33877:	incq   (%r14)
+   3387a:	mov    %rbx,%rdi
+   3387d:	call   a4a50 <_Unwind_Resume@plt>
+   33882:	mov    %rax,%rbx
+   33885:	lea    0x10(%rsp),%rdi
+   3388a:	call   32220 <core::ptr::drop_in_place<gf2_core::bitvec::BitVec>>
+   3388f:	mov    %rbx,%rdi
+   33892:	call   a4a50 <_Unwind_Resume@plt>
+
+## dense_arm::run::{{closure}} at 00000000000338a0, 0x000000000000013d bytes
+00000000000338a0 <dense_arm::run::{{closure}}>:
+   338a0:	push   %r15
+   338a2:	push   %r14
+   338a4:	push   %r12
+   338a6:	push   %rbx
+   338a7:	sub    $0x48,%rsp
+   338ab:	mov    %rsi,%rbx
+   338ae:	mov    %rdi,%r14
+   338b1:	mov    %rsi,0x28(%rsp)
+   338b6:	movq   $0x0,0x10(%rsp)
+   338bf:	movq   $0x1,0x18(%rsp)
+   338c8:	movq   $0x0,0x20(%rsp)
+   338d1:	movq   $0x60000020,0x40(%rsp)
+   338da:	lea    0x10(%rsp),%rax
+   338df:	mov    %rax,0x30(%rsp)
+   338e4:	lea    0x72a35(%rip),%rax        # a6320 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x618>
+   338eb:	mov    %rax,0x38(%rsp)
+   338f0:	lea    0x28(%rsp),%rdi
+   338f5:	lea    0x30(%rsp),%rsi
+   338fa:	call   *0x76318(%rip)        # a9c18 <_DYNAMIC+0x4e0>
+   33900:	test   %al,%al
+   33902:	jne    33966 <dense_arm::run::{{closure}}+0xc6>
+   33904:	mov    0x20(%rsp),%rax
+   33909:	mov    %rax,0x10(%r14)
+   3390d:	movups 0x10(%rsp),%xmm0
+   33912:	movups %xmm0,(%r14)
+   33916:	mov    %ebx,%eax
+   33918:	and    $0x3,%eax
+   3391b:	lea    -0x2(%rax),%ecx
+   3391e:	cmp    $0x2,%ecx
+   33921:	jb     3395a <dense_arm::run::{{closure}}+0xba>
+   33923:	test   %rax,%rax
+   33926:	je     3395a <dense_arm::run::{{closure}}+0xba>
+   33928:	lea    -0x1(%rbx),%r14
+   3392c:	mov    -0x1(%rbx),%r12
+   33930:	mov    0x7(%rbx),%rbx
+   33934:	mov    (%rbx),%rax
+   33937:	test   %rax,%rax
+   3393a:	je     33941 <dense_arm::run::{{closure}}+0xa1>
+   3393c:	mov    %r12,%rdi
+   3393f:	call   *%rax
+   33941:	cmpq   $0x0,0x8(%rbx)
+   33946:	je     33951 <dense_arm::run::{{closure}}+0xb1>
+   33948:	mov    %r12,%rdi
+   3394b:	call   *0x75fdf(%rip)        # a9930 <free@GLIBC_2.2.5>
+   33951:	mov    %r14,%rdi
+   33954:	call   *0x75fd6(%rip)        # a9930 <free@GLIBC_2.2.5>
+   3395a:	add    $0x48,%rsp
+   3395e:	pop    %rbx
+   3395f:	pop    %r12
+   33961:	pop    %r14
+   33963:	pop    %r15
+   33965:	ret
+   33966:	lea    -0x27c08(%rip),%rdi        # bd65 <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x17b>
+   3396d:	lea    0x729f4(%rip),%rcx        # a6368 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x660>
+   33974:	lea    0x729d5(%rip),%r8        # a6350 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x648>
+   3397b:	lea    0xf(%rsp),%rdx
+   33980:	mov    $0x37,%esi
+   33985:	call   *0x7605d(%rip)        # a99e8 <_DYNAMIC+0x2b0>
+   3398b:	ud2
+   3398d:	mov    %rax,%r15
+   33990:	cmpq   $0x0,0x8(%rbx)
+   33995:	je     339a0 <dense_arm::run::{{closure}}+0x100>
+   33997:	mov    %r12,%rdi
+   3399a:	call   *0x75f90(%rip)        # a9930 <free@GLIBC_2.2.5>
+   339a0:	mov    %r14,%rdi
+   339a3:	call   *0x75f87(%rip)        # a9930 <free@GLIBC_2.2.5>
+   339a9:	mov    %r15,%rdi
+   339ac:	call   a4a50 <_Unwind_Resume@plt>
+   339b1:	mov    %rax,%r15
+   339b4:	cmpq   $0x0,0x10(%rsp)
+   339ba:	je     339c7 <dense_arm::run::{{closure}}+0x127>
+   339bc:	mov    0x18(%rsp),%rdi
+   339c1:	call   *0x75f69(%rip)        # a9930 <free@GLIBC_2.2.5>
+   339c7:	mov    %rbx,%rdi
+   339ca:	call   32190 <core::ptr::drop_in_place<std::io::error::Error>>
+   339cf:	mov    %r15,%rdi
+   339d2:	call   a4a50 <_Unwind_Resume@plt>
+   339d7:	call   *0x7613b(%rip)        # a9b18 <_DYNAMIC+0x3e0>
+
+## dense_arm::run::{{closure}} at 00000000000339e0, 0x0000000000000140 bytes
+00000000000339e0 <dense_arm::run::{{closure}}>:
+   339e0:	push   %r15
+   339e2:	push   %r14
+   339e4:	push   %r13
+   339e6:	push   %r12
+   339e8:	push   %rbx
+   339e9:	sub    $0x20,%rsp
+   339ed:	cmpq   $0x0,(%rdi)
+   339f1:	jne    33aa2 <dense_arm::run::{{closure}}+0xc2>
+   339f7:	mov    %rdx,%rax
+   339fa:	mov    %rsi,%rdx
+   339fd:	mov    %rdi,%rbx
+   33a00:	movq   $0xffffffffffffffff,(%rdi)
+   33a07:	lea    0x8(%rdi),%rsi
+   33a0b:	cmpb   $0x0,(%rcx)
+   33a0e:	je     33a21 <dense_arm::run::{{closure}}+0x41>
+   33a10:	mov    0x18(%rcx),%rdx
+   33a14:	lea    0x8(%rsp),%rdi
+   33a19:	call   *0x76201(%rip)        # a9c20 <_DYNAMIC+0x4e8>
+   33a1f:	jmp    33a33 <dense_arm::run::{{closure}}+0x53>
+   33a21:	mov    0x8(%rcx),%r8
+   33a25:	lea    0x8(%rsp),%rdi
+   33a2a:	mov    %rax,%rcx
+   33a2d:	call   *0x761f5(%rip)        # a9c28 <_DYNAMIC+0x4f0>
+   33a33:	mov    0x8(%rsp),%r13
+   33a38:	mov    %r13,%rax
+   33a3b:	neg    %rax
+   33a3e:	jno    33a44 <dense_arm::run::{{closure}}+0x64>
+   33a40:	xor    %eax,%eax
+   33a42:	jmp    33a91 <dense_arm::run::{{closure}}+0xb1>
+   33a44:	mov    0x10(%rsp),%r12
+   33a49:	mov    0x18(%rsp),%r14
+   33a4e:	mov    $0x18,%edi
+   33a53:	call   *0x75ec7(%rip)        # a9920 <malloc@GLIBC_2.2.5>
+   33a59:	test   %rax,%rax
+   33a5c:	je     33ac1 <dense_arm::run::{{closure}}+0xe1>
+   33a5e:	mov    %rax,%r15
+   33a61:	mov    %r13,(%rax)
+   33a64:	mov    %r12,0x8(%rax)
+   33a68:	mov    %r14,0x10(%rax)
+   33a6c:	mov    $0x18,%edi
+   33a71:	call   *0x75ea9(%rip)        # a9920 <malloc@GLIBC_2.2.5>
+   33a77:	test   %rax,%rax
+   33a7a:	je     33aaf <dense_arm::run::{{closure}}+0xcf>
+   33a7c:	mov    %r15,(%rax)
+   33a7f:	lea    0x7270a(%rip),%rcx        # a6190 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x488>
+   33a86:	mov    %rcx,0x8(%rax)
+   33a8a:	movb   $0x28,0x10(%rax)
+   33a8e:	inc    %rax
+   33a91:	incq   (%rbx)
+   33a94:	add    $0x20,%rsp
+   33a98:	pop    %rbx
+   33a99:	pop    %r12
+   33a9b:	pop    %r13
+   33a9d:	pop    %r14
+   33a9f:	pop    %r15
+   33aa1:	ret
+   33aa2:	lea    0x72aa7(%rip),%rdi        # a6550 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x848>
+   33aa9:	call   *0x76041(%rip)        # a9af0 <_DYNAMIC+0x3b8>
+   33aaf:	mov    $0x8,%edi
+   33ab4:	mov    $0x18,%esi
+   33ab9:	call   *0x75ef9(%rip)        # a99b8 <_DYNAMIC+0x280>
+   33abf:	jmp    33ad1 <dense_arm::run::{{closure}}+0xf1>
+   33ac1:	mov    $0x8,%edi
+   33ac6:	mov    $0x18,%esi
+   33acb:	call   *0x75ee7(%rip)        # a99b8 <_DYNAMIC+0x280>
+   33ad1:	ud2
+   33ad3:	mov    %rax,%r14
+   33ad6:	incq   (%rbx)
+   33ad9:	mov    %r14,%rdi
+   33adc:	call   a4a50 <_Unwind_Resume@plt>
+   33ae1:	mov    %rax,%r14
+   33ae4:	test   %r13,%r13
+   33ae7:	je     33b0f <dense_arm::run::{{closure}}+0x12f>
+   33ae9:	mov    %r12,%rdi
+   33aec:	call   *0x75e3e(%rip)        # a9930 <free@GLIBC_2.2.5>
+   33af2:	incq   (%rbx)
+   33af5:	mov    %r14,%rdi
+   33af8:	call   a4a50 <_Unwind_Resume@plt>
+   33afd:	mov    %rax,%r14
+   33b00:	lea    0x72689(%rip),%rsi        # a6190 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x488>
+   33b07:	mov    %r15,%rdi
+   33b0a:	call   78790 <core::ptr::drop_in_place::<std::io::error::Custom>>
+   33b0f:	incq   (%rbx)
+   33b12:	mov    %r14,%rdi
+   33b15:	call   a4a50 <_Unwind_Resume@plt>
+   33b1a:	call   *0x75ff8(%rip)        # a9b18 <_DYNAMIC+0x3e0>
+
+## dense_arm::run::{{closure}} at 0000000000033b20, 0x00000000000000b1 bytes
+0000000000033b20 <dense_arm::run::{{closure}}>:
+   33b20:	push   %r14
+   33b22:	push   %rbx
+   33b23:	sub    $0x18,%rsp
+   33b27:	mov    (%rdi),%rcx
+   33b2a:	mov    0x10(%rcx),%rax
+   33b2e:	cmp    %rax,%rsi
+   33b31:	jae    33bab <dense_arm::run::{{closure}}+0x8b>
+   33b33:	mov    0x8(%rcx),%rax
+   33b37:	lea    (%rsi,%rsi,2),%rcx
+   33b3b:	mov    0x10(%rax,%rcx,8),%rsi
+   33b40:	cmp    %rsi,%rdx
+   33b43:	jae    33bbe <dense_arm::run::{{closure}}+0x9e>
+   33b45:	lea    (%rax,%rcx,8),%rax
+   33b49:	mov    0x8(%rax),%rax
+   33b4d:	shl    $0x5,%rdx
+   33b51:	movups (%rax,%rdx,1),%xmm0
+   33b55:	movups 0x10(%rax,%rdx,1),%xmm1
+   33b5a:	mov    0x8(%rdi),%rbx
+   33b5e:	mov    0x10(%rdi),%rax
+   33b62:	mov    (%rbx),%r14
+   33b65:	mov    %rax,0x8(%rsp)
+   33b6a:	lea    0x8(%rsp),%rax
+   33b6f:	mov    0x8(%rsp),%rax
+   33b74:	mov    0x50(%rax),%rax
+   33b78:	movups %xmm0,0x8(%rsp)
+   33b7d:	lea    0x8(%rsp),%rcx
+   33b82:	mov    0x8(%rsp),%rdi
+   33b87:	mov    0x10(%rsp),%rsi
+   33b8c:	movups %xmm1,0x8(%rsp)
+   33b91:	mov    0x8(%rsp),%rdx
+   33b96:	mov    0x10(%rsp),%rcx
+   33b9b:	call   *%rax
+   33b9d:	xor    %r14,%rax
+   33ba0:	mov    %rax,(%rbx)
+   33ba3:	add    $0x18,%rsp
+   33ba7:	pop    %rbx
+   33ba8:	pop    %r14
+   33baa:	ret
+   33bab:	lea    0x72696(%rip),%rdx        # a6248 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x540>
+   33bb2:	mov    %rsi,%rdi
+   33bb5:	mov    %rax,%rsi
+   33bb8:	call   *0x75dba(%rip)        # a9978 <_DYNAMIC+0x240>
+   33bbe:	lea    0x7269b(%rip),%rax        # a6260 <anon.58baeeae7d5fe476157d296c9f08f803.183.llvm.5844774155465566772+0x558>
+   33bc5:	mov    %rdx,%rdi
+   33bc8:	mov    %rax,%rdx
+   33bcb:	call   *0x75da7(%rip)        # a9978 <_DYNAMIC+0x240>

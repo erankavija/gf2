@@ -89,6 +89,10 @@ impl DvbT2ConcatBatchDecoder {
 
     /// Builds the batch decoder of `codec` with the given decode selectors.
     ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
+    ///
     /// Construction clones both codes and allocates the workspace of an
     /// [`LdpcBatchDecoder`] and one FECFRAME-length codeword per lane.
     ///
@@ -115,6 +119,10 @@ impl DvbT2ConcatBatchDecoder {
 
     /// Holds the lane route of the LDPC inner decoder on the portable
     /// backend, as [`LdpcBatchDecoder::with_portable_lanes`] does.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
     #[must_use]
     pub fn with_portable_lanes(mut self) -> Self {
         self.ldpc = self.ldpc.with_portable_lanes();

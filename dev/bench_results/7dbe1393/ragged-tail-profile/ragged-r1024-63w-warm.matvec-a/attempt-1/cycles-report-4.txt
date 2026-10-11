@@ -1,0 +1,61 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 2772661218
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    85.38%          2551  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    11.96%           358  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.85%            55  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.17%             5  libc.so.6             [.] malloc
+     0.13%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  [unknown]             [k] 0xffffffffa7d92a46
+     0.07%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.03%             1  libc.so.6             [.] 0x00000000000a5d05
+     0.03%             1  [unknown]             [k] 0xffffffffa6801284
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee5f10
+     0.03%             1  [unknown]             [k] 0xffffffffa6f1b381
+     0.03%             2  [unknown]             [k] 0xffffffffa6801280
+     0.03%             1  libc.so.6             [.] 0x00000000000a6e31
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee5d9a
+     0.03%             1  libc.so.6             [.] 0x00000000000a7a92
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee6102
+     0.03%             1  libc.so.6             [.] 0x00000000000a5032
+     0.01%             5  [unknown]             [k] 0xffffffffa6f12633
+     0.01%             1  dense-arm             [.] <std::time::Instant>::elapsed
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bb15
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61d04
+     0.00%             1  [unknown]             [k] 0xffffffffa6b49318
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000107b9
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029dcc
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016f2d
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001f042
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a6a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000013d07
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77820
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff044b
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a6b4
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7789d
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000003e6b
+     0.00%             1  [unknown]             [k] 0xffffffffa6feb4ec
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000003881
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7869a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000009a02
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.00%             1  [unknown]             [k] 0xffffffffa6f331d6
+     0.00%             1  [unknown]             [k] 0xffffffffa6fca705
+     0.00%             1  [unknown]             [k] 0xffffffffa6fd275d
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+
+
+#
+# (Tip: To trace only single function with Processor Trace use perf record --filter 'filter func @ program' -e intel_pt//u ./program ; perf script --insn-trace)
+#

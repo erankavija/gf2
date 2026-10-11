@@ -1,0 +1,77 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2105694553
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    81.73%          2188  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    10.45%           279  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     5.25%           141  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.52%            14  dense-arm             [.] dense_arm::run::{{closure}}
+     0.26%             7  libc.so.6             [.] 0x00000000000a6e20
+     0.15%             4  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.15%             4  libc.so.6             [.] cfree
+     0.15%             4  libc.so.6             [.] malloc
+     0.08%             2  [unknown]             [k] 0xffffffffa6801280
+     0.07%             2  libc.so.6             [.] 0x00000000000a75a1
+     0.07%             2  libc.so.6             [.] 0x00000000000a79af
+     0.07%             2  libc.so.6             [.] 0x00000000000a7696
+     0.07%             2  [unknown]             [k] 0xffffffffa7d61c26
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6da1
+     0.04%             1  libc.so.6             [.] 0x00000000000a7606
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e43
+     0.04%             1  libc.so.6             [.] 0x00000000000a7a83
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d30
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.04%             1  libc.so.6             [.] 0x00000000000a7655
+     0.04%             1  [unknown]             [k] 0xffffffffa6801284
+     0.04%             1  libc.so.6             [.] 0x00000000000a623e
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e2a
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61be6
+     0.04%             1  [unknown]             [k] 0xffffffffa6c1aca6
+     0.04%             1  [unknown]             [k] 0xffffffffa6b493bd
+     0.04%             1  libc.so.6             [.] 0x00000000000a6236
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed542a
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5cd3
+     0.04%             1  libc.so.6             [.] 0x00000000000a711d
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f13
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8f926
+     0.04%             1  [unknown]             [k] 0xffffffffa6c904f3
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f1e4
+     0.04%             1  libc.so.6             [.] 0x00000000000a79a0
+     0.03%             1  libc.so.6             [.] 0x00000000000a4ffe
+     0.03%             1  libc.so.6             [.] 0x00000000000a4fe4
+     0.02%             2  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.01%             1  [unknown]             [k] 0xffffffffa6ed5370
+     0.01%             1  [unknown]             [k] 0xffffffffa6f12633
+     0.01%             1  [unknown]             [k] 0xffffffffa7d61bf1
+     0.00%             1  [unknown]             [k] 0xffffffffa7d64ec1
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000019f9b
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000cad4
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc8e2
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc5dc
+     0.00%             1  [unknown]             [k] 0xffffffffa6eff5ed
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000161d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff031d
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff029a
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed541a
+     0.00%             1  [unknown]             [k] 0xffffffffa6fed7d7
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1e77f
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee3c49
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5f8f
+     0.00%             1  [unknown]             [k] 0xffffffffa6fdbb78
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80454
+     0.00%             1  [unknown]             [k] 0xffffffffa7d89add
+
+
+#
+# (Tip: To add Node.js USDT(User-Level Statically Defined Tracing): perf buildid-cache --add `which node`)
+#

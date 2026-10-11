@@ -1,0 +1,58 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2459520544
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                                                 
+# ........  ............  ....................  .......................................................................................................................
+#
+    85.97%          2359  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+     8.61%           236  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     3.94%           108  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.55%            15  dense-arm             [.] dense_arm::run::{{closure}}
+     0.15%             4  libc.so.6             [.] malloc
+     0.11%             3  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.07%             2  libc.so.6             [.] 0x00000000000a4f23
+     0.07%             2  libc.so.6             [.] 0x00000000000a75a1
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed542a
+     0.04%             1  [unknown]             [k] 0xffffffffa6801284
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f3b
+     0.04%             1  libc.so.6             [.] 0x00000000000a7690
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d4a
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61d18
+     0.04%             1  libc.so.6             [.] 0x00000000000a7696
+     0.04%             1  [unknown]             [k] 0xffffffffa6b493f8
+     0.04%             1  libc.so.6             [.] 0x00000000000a6199
+     0.04%             1  libc.so.6             [.] 0x00000000000a624e
+     0.04%             1  [unknown]             [k] 0xffffffffa6c65701
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97022
+     0.02%             2  ld-linux-x86-64.so.2  [.] 0x000000000002951e
+     0.01%             1  dense-arm             [.] dense_parity_harness::wire::_::<impl serde_core::de::Deserialize for dense_parity_harness::wire::Case>::deserialize
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.01%             2  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef29b1
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bba5
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016e55
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7893e
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c296
+     0.00%             1  [unknown]             [k] 0xffffffffa6fe6554
+     0.00%             1  [unknown]             [k] 0xffffffffa6e786f4
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  libc.so.6             [.] 0x0000000000179184
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78658
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] execvp
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f994c6
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80d3f
+
+
+#
+# (Tip: To count events every 1000 msec: perf stat -I 1000)
+#

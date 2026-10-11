@@ -1,0 +1,55 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2580303611
+#
+# Overhead       Samples  Shared Object         Symbol                                         
+# ........  ............  ....................  ...............................................
+#
+    99.23%          2759  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.22%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             3  libc.so.6             [.] malloc
+     0.07%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  libc.so.6             [.] 0x00000000000a6230
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5e3f
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee437f
+     0.04%             1  [unknown]             [k] 0xffffffffa6c92a75
+     0.04%             1  [unknown]             [k] 0xffffffffa6f18ff5
+     0.04%             1  [unknown]             [k] 0xffffffffa6801284
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f13
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b24c
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1e591
+     0.01%             1  [unknown]             [k] 0xffffffffa7d61c34
+     0.00%             1  [unknown]             [k] 0xffffffffa701da20
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016cec
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             2  libc.so.6             [.] getenv
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000add4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b219
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80552
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee63e6
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] __tunable_get_val
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c416
+     0.00%             1  [unknown]             [k] 0xffffffffa7d929fd
+     0.00%             1  [unknown]             [k] 0xffffffffa700413f
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+     0.00%             1  [unknown]             [k] 0xffffffffa73140b4
+     0.00%             1  [unknown]             [k] 0xffffffffa6f18fce
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0668
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5d08
+     0.00%             1  [unknown]             [k] 0xffffffffa6c65701
+     0.00%             1  [unknown]             [k] 0xffffffffa7316653
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c84
+     0.00%             1  [unknown]             [k] 0xffffffffa7d89a79
+
+
+#
+# (Tip: To see call chains by final symbol taking CPU time (bottom up) use perf report -G)
+#

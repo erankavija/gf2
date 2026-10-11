@@ -1,0 +1,49 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2559001427
+#
+# Overhead       Samples  Shared Object         Symbol                                        
+# ........  ............  ....................  ..............................................
+#
+    99.35%          2781  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.29%             8  dense-arm             [.] dense_arm::run::{{closure}}
+     0.04%             1  libc.so.6             [.] malloc
+     0.04%             1  libc.so.6             [.] 0x00000000000a6301
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e58c
+     0.04%             1  libc.so.6             [.] 0x00000000000a4ffe
+     0.04%             1  libc.so.6             [.] 0x00000000000a5023
+     0.04%             1  [unknown]             [k] 0xffffffffa6f18fce
+     0.04%             1  libc.so.6             [.] 0x00000000000a619d
+     0.04%             1  libc.so.6             [.] 0x00000000000a4fe0
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92ae3
+     0.01%             1  [unknown]             [k] 0xffffffffa7d80552
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef97ca
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029307
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000017309
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788a3
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001650e
+     0.00%             1  [unknown]             [k] 0xffffffffa6f94110
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78750
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff3e58
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff3fbf
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78705
+     0.00%             1  libc.so.6             [.] 0x000000000017a626
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9918c
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa7d805b8
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+
+
+#
+# (Tip: To group events which need to be collected together for accuracy use {}: perf record -e {cycles,branches}' ...)
+#

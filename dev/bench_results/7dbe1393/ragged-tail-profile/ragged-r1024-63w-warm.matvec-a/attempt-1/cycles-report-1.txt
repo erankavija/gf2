@@ -1,0 +1,57 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2625536970
+#
+# Overhead       Samples  Shared Object         Symbol                                                  
+# ........  ............  ....................  ........................................................
+#
+    84.55%          2402  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    13.02%           370  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.72%            49  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.14%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  [unknown]             [k] 0xffffffffa68015f0
+     0.07%             2  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6ca910c
+     0.04%             1  [unknown]             [k] 0xffffffffa6c92b35
+     0.04%             1  libc.so.6             [.] 0x00000000000a700b
+     0.04%             1  [unknown]             [k] 0xffffffffa6800005
+     0.04%             1  libc.so.6             [.] 0x00000000000a640f
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e582
+     0.04%             1  libc.so.6             [.] 0x00000000000a5cf1
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b3a8
+     0.04%             1  [unknown]             [k] 0xffffffffa6bfa1f7
+     0.04%             1  [unknown]             [k] 0xffffffffa6bb2a04
+     0.01%             1  [unknown]             [k] 0xffffffffa6801cad
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef94f9
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77941
+     0.00%             1  dense-arm             [.] tuning_campaign_support::transport::decode_canonical
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bb00
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778e8
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee439b
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002951e
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000021e62
+     0.00%             1  [unknown]             [k] 0xffffffffa6800125
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a251
+     0.00%             1  [unknown]             [k] 0xffffffffa74acaf0
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77865
+     0.00%             2  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80cc3
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0562
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02d5
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78644
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede422
+     0.00%             1  [unknown]             [k] 0xffffffffa6f330fe
+     0.00%             1  [unknown]             [k] 0xffffffffa6f99067
+
+
+#
+# (Tip: To compare scalability of two workload samples use perf diff -c ratio file1 file2)
+#

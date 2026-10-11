@@ -1,0 +1,59 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2488523707
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    80.74%          2195  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    14.45%           395  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     3.81%           104  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.15%             4  [unknown]             [k] 0xffffffffa6801280
+     0.11%             3  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             3  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f8f
+     0.04%             1  [unknown]             [k] 0xffffffffa73070a0
+     0.04%             1  libc.so.6             [.] 0x00000000000a61fe
+     0.04%             1  [unknown]             [k] 0xffffffffa7d929fd
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f08
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61f01
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  libc.so.6             [.] 0x00000000000a5011
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61c26
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed4ce2
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e582
+     0.04%             1  libc.so.6             [.] 0x00000000000a5005
+     0.04%             1  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a928
+     0.01%             1  libc.so.6             [.] 0x00000000001765e2
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000afd4
+     0.01%             1  [unknown]             [k] 0xffffffffa6eecbee
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000baf4
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc964
+     0.00%             1  [unknown]             [k] 0xffffffffa74acb10
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5ebe
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000191c7
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000019d02
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78907
+     0.00%             1  [unknown]             [k] 0xffffffffa7d64310
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff05d6
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1ca43
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede6a7
+     0.00%             1  libc.so.6             [.] 0x000000000017a285
+     0.00%             1  [unknown]             [k] 0xffffffffa6b4cb4c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77827
+     0.00%             1  [unknown]             [k] 0xffffffffa6eff5ed
+     0.00%             1  [unknown]             [k] 0xffffffffa7da460b
+
+
+#
+# (Tip: Add -I to perf record to sample register values, which will be visible in perf report sample context.)
+#
