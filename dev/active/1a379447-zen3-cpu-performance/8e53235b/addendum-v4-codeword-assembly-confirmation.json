@@ -1,0 +1,185 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "8e53235b-bch-codeword-assembly",
+    "issue": "8e53235b",
+    "purpose": "consumer-family",
+    "description": "Confirmatory stage of issue 8e53235b, protocol version 4: every cell below is confirmatory and decides, on fresh samples, whether the word-wise codeword assembly replaces the bit-serial one in the packed binary BCH kernel. Question, arms, codes and sizes are the pilot's; the resolution and the pilot pin are derived from the committed pilot receipt by the repository's canonical freezer, and the derivation record beside this addendum names them. Both arms remain the one executable consumer-arm: the baseline workspace keeps CodewordAssembly::BitSerial, the pinned pre-change consumer, and the candidate workspace selects CodewordAssembly::WordWise. The declared cells reach the mother code of the DVB-T2 short frame, the mother code of the DVB-T2 normal frame and the degree-8 mother code of corpus row B3. The frozen decision rule is the pilot's: the word-wise assembly is adopted as the one assembly of the packed kernel when this receipt is accepted and every confirmatory cell records pass, which is improvement on the deciding cell assembly-bch-encode-current-m14-b256-1core and non-regression on each guard; on any other recorded outcome the bit-serial assembly is retained and the candidate is removed."
+  },
+  "frozen": {
+    "frozen_utc": "2026-10-11T07:34:32Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The bar of the bit-storage layout consumer family of issue 04b85d10, held for a change measured on the same whole consumer: ten percent of the whole batch encode, packing and output included, is the smallest gain worth a new bit-run primitive in the bit-storage crate and a second statement of the layout mapping in the packed kernel.",
+    "measurement_resolution": 0.03,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/8e53235b/r1-codeword-assembly-pilot/receipt.json",
+      "sha256": "7f714d40ee5d497b0812b59341f8c018fb4207a15453e999448dba21046859fa"
+    },
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "A guard cell records the candidate as not worse when it is at most five percent slower than the bit-serial assembly on the whole consumer, the equivalence margin of the bit-storage layout consumer family of issue 04b85d10 for the same consumer. The confirmation freezes a pilot-derived resolution strictly below this margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "No cell is a comparator-gap cell: every cell compares two assemblies of one gf2 encode, so no material-gap threshold applies."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 120,
+    "maintenance_rationale": "The adopted state is one safe bit-run write on BitVec in gf2-core and one assembly function in the packed BCH kernel of gf2-coding that replaces the bit-serial one, within 120 added nonblank production lines, with no unsafe kernel, no selector, no dependency and no second entry point. The CodewordAssembly selection and its workspace setter exist for the measurement and either outcome removes them."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/8e53235b/codeword-assembly-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "assembly-bch-encode-current-m14-b256-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 8101
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-current-m16-b256-1core",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 16,
+          "batch": 256
+        },
+        "seed": 8102
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-fold-m14-b256-1core",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 8103
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-bitslice-m14-b256-1core",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 8104
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-current-m8-b1-1core",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 8,
+          "batch": 1
+        },
+        "seed": 8105
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
