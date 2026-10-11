@@ -1,0 +1,46 @@
+{
+  "schema": "spmm-freeze-refusal-v1",
+  "generator": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/make-spmm-freeze-refusal.py",
+  "family": "sparse-product-check-cost",
+  "command": [
+    "dev/bench_results/bfc2ceab/run-spmm-check.sh",
+    "freeze"
+  ],
+  "exit_status": 1,
+  "standard_output": [],
+  "standard_error": [
+    "worthwhile_speedup 1.1 does not exceed 1 + 0.52"
+  ],
+  "confirmation_addendum_written": false,
+  "launcher": {
+    "path": "dev/bench_results/bfc2ceab/run-spmm-check.sh",
+    "sha256": "e6e886c39a6ff7978ec9ef4ea18b8813d65b3e58da458c0f9ec2e64348cf5c30"
+  },
+  "freezer": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py",
+    "sha256": "422d860cc0cd81062b58d3c4fe4c2a3dc4889f6b4154c989abda4bc2b86a072a"
+  },
+  "pilot_addendum": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/addendum-v4-spmm-check-pilot.json",
+    "sha256": "a6b08b4f65630a859e732f739af91ccbc5a0cc196b8a22ca0091abb0f36aedaf"
+  },
+  "ledger": {
+    "path": "dev/bench_results/bfc2ceab/spmm-check-family-ledger.jsonl",
+    "sha256": "bf200d0df7ddfa8fed15e635a7eb17879aa58434b8e6452ce9ecad2efa751870",
+    "entries": 2
+  },
+  "pilot_trials": [
+    {
+      "stage": "pilot",
+      "path": "dev/bench_results/bfc2ceab/r1-spmm-check-pilot/receipt.json",
+      "sha256": "0afedb9bc20a30107230af72a9e5666057fe41490cb4335b932eca59270c803e"
+    },
+    {
+      "stage": "pilot2",
+      "path": "dev/bench_results/bfc2ceab/r1-spmm-check-pilot2/receipt.json",
+      "sha256": "deb649efbf0afe56cf0c15d4f045e499d8c0740741b11d4c726d1df48f7be76b"
+    }
+  ],
+  "pilot_trials_admitted_per_cell": 2,
+  "pilot_trials_left": 0
+}

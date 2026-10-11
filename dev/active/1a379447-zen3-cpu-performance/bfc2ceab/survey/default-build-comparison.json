@@ -10,9 +10,9 @@
     "step": "anchor to the checked entry points, default build",
     "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
     "before_sources_sha256": "76c32a9cc7a0222b5ae961b5072c3f57b9174d95d130049c7eef2e598c315ed9",
-    "after_sources_sha256": "6ce92ad27f676f268b6ed5dfd130ce80b75e8074ab2cb91eac703551edee3d96",
-    "function_count": 270,
-    "differing_function_count": 38,
+    "after_sources_sha256": "c24f7e769e2c67b468aadca8723d5bb065f9363f9d61a8f95d44e1a4fda5d1f6",
+    "function_count": 277,
+    "differing_function_count": 47,
     "functions": [
       {
         "function": "_ZN102_$LT$core..iter..adapters..map..Map$LT$I$C$F$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h3b1146d8c8ecba6eE",
@@ -150,6 +150,12 @@
         "function": "_ZN16gf2_kernels_simd10ldpc_lanes28assert_variable_step_lengths17hc47e11bd4111563cE",
         "before_sha256": null,
         "after_sha256": "d81e3434bd0928e87a78fbfbe89e837cad3cb6a832e70a4007a82c68e7d2528d",
+        "instruction_text": "differs"
+      },
+      {
+        "function": "_ZN16gf2_kernels_simd10ldpc_lanes6detect17h0019dca196ae25fdE",
+        "before_sha256": null,
+        "after_sha256": "2e4e57fe4860e5537ba7550e3cfd211776207fa85800d86804345ff4b39d0993",
         "instruction_text": "differs"
       },
       {
@@ -343,6 +349,30 @@
         "before_sha256": "a884acf1fc0b280ca34ceee85dc033192585d285adb0c69584a85edcd9d68294",
         "after_sha256": "a884acf1fc0b280ca34ceee85dc033192585d285adb0c69584a85edcd9d68294",
         "instruction_text": "same"
+      },
+      {
+        "function": "_ZN16gf2_kernels_simd3x8610ldpc_lanes20lane_check_step_avx217hca5b4d9413b5c911E",
+        "before_sha256": null,
+        "after_sha256": "038e851a504f04c15d698900622c29dbcdb3f47c41998cb6c3d340dde45336b8",
+        "instruction_text": "differs"
+      },
+      {
+        "function": "_ZN16gf2_kernels_simd3x8610ldpc_lanes23lane_variable_step_avx217he754acc0e520be81E",
+        "before_sha256": null,
+        "after_sha256": "f00d0528002d312c3a70d43228e88db7e422d796f4f42ce1503311afa367d49b",
+        "instruction_text": "differs"
+      },
+      {
+        "function": "_ZN16gf2_kernels_simd3x8610ldpc_lanes30lane_check_step_avx2_unchecked17ha863ae8d4c13e48cE",
+        "before_sha256": null,
+        "after_sha256": "afdeac2d2d827657d9fb6cd61890c06eee0cb10f520aaaaf34ae01d6a3b41643",
+        "instruction_text": "differs"
+      },
+      {
+        "function": "_ZN16gf2_kernels_simd3x8610ldpc_lanes33lane_variable_step_avx2_unchecked17h7c771c267d620340E",
+        "before_sha256": null,
+        "after_sha256": "ca625dd8bd3d189c47d66bd94fa10718435f5535360302f324a04c2ea895efcd",
+        "instruction_text": "differs"
       },
       {
         "function": "_ZN16gf2_kernels_simd3x8612bipedal_avx213run_add_batch17h3923e652976cb57aE",
@@ -923,8 +953,8 @@
       {
         "function": "_ZN16gf2_kernels_simd4gf2m15gf2m_mul_pclmul17h877dc20833ff761eE",
         "before_sha256": "550bfe51cf10c6497595f3095d4510d8acfb50d939f804192491e9595ca37763",
-        "after_sha256": "550bfe51cf10c6497595f3095d4510d8acfb50d939f804192491e9595ca37763",
-        "instruction_text": "same"
+        "after_sha256": "6cedb651e7272dd9c41678522bba0c2028bcb3c3a7d9d560d66ebd38c192aba4",
+        "instruction_text": "differs"
       },
       {
         "function": "_ZN16gf2_kernels_simd4gf2m16clmul_batch_safe17h04069daf0ba9f7fbE",
@@ -941,8 +971,8 @@
       {
         "function": "_ZN16gf2_kernels_simd4gf2m20gf2m_mul_pclmul_safe17hbcaea60e7eb979d1E",
         "before_sha256": "6501525a52da160b9616d2140fe78467fc3beab667d43b9aa875b5cf043e7f6c",
-        "after_sha256": "6501525a52da160b9616d2140fe78467fc3beab667d43b9aa875b5cf043e7f6c",
-        "instruction_text": "same"
+        "after_sha256": "fe196588937212b1bf8ab8c4868fa2028dee0d896dbf7f70e54423f9fa9c04e6",
+        "instruction_text": "differs"
       },
       {
         "function": "_ZN16gf2_kernels_simd4gf2m25clmul_barrett_reduce_safe17h057740b9dd1172aaE",
@@ -1257,15 +1287,21 @@
         "instruction_text": "same"
       },
       {
+        "function": "_ZN16gf2_kernels_simd8fp_small18spmm_row_unchecked17h1b506d665507fafeE",
+        "before_sha256": null,
+        "after_sha256": "09fec2170bd3f9c4e69690d729f1406bb1d1733199a9877e953a61199940dfde",
+        "instruction_text": "differs"
+      },
+      {
         "function": "_ZN16gf2_kernels_simd8fp_small19gemm_row_panel_safe17ha709679735962f33E",
         "before_sha256": "5ecd451a53eccebba905d8c57910705a7a7743230974b2fd1bead25bc37c5088",
         "after_sha256": "0e46516dbd5cf6466b5075ec2d1229b48e3dfa6a66e064ee20dc5299ebe95b7f",
         "instruction_text": "differs"
       },
       {
-        "function": "_ZN16gf2_kernels_simd8fp_small6detect17ha2ffbb874b402d93E",
+        "function": "_ZN16gf2_kernels_simd8fp_small6detect17h5c47bba595c663acE",
         "before_sha256": null,
-        "after_sha256": "50476bd0e0065e92539eb0f24ce86f933a0d3a03e5e0fee64083008c1964bf5f",
+        "after_sha256": "b1c466a7266176e49ec7005098dbb8006483c584270dc6721861fb93fada23fc",
         "instruction_text": "differs"
       },
       {
@@ -1341,9 +1377,15 @@
         "instruction_text": "differs"
       },
       {
-        "function": "_ZN16gf2_kernels_simd9fp_medium6detect17h6b8350e8520d8afcE",
+        "function": "_ZN16gf2_kernels_simd9fp_medium18spmm_row_unchecked17hb1a45b5c2b44ddcfE",
         "before_sha256": null,
-        "after_sha256": "60ca8d532dda61a3ac36c42b2545753380fe820ebd1a4357efcb15b2a6a17a92",
+        "after_sha256": "d02f7fc5c77cd9bdc63e8d1073c063e2cd15262b226311a107cd1c96a4e606ec",
+        "instruction_text": "differs"
+      },
+      {
+        "function": "_ZN16gf2_kernels_simd9fp_medium6detect17h29596f0bb389a014E",
+        "before_sha256": null,
+        "after_sha256": "d2237d5bde2788b082f17fb508130e9b5c438ebcb67fee4999828453de118c0a",
         "instruction_text": "differs"
       },
       {

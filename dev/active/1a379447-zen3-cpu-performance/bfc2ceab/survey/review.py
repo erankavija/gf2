@@ -439,7 +439,7 @@ BASES = {
                          "unchecked access.",
     "length-derived": "Every access index derives from the lengths of the slices the call "
                       "passes.",
-    "fixed-size": "Every operand is a value or a fixed-size array reference.",
+    "fixed-size": "Every operand is a value or a reference to a fixed-size object.",
     "values-only": "Every argument is a value.",
     "bounds-checked": "Every slice access is bounds-checked; the only unsafe operations "
                       "take values.",
@@ -598,6 +598,14 @@ CLEARED = [
     ("src/x86/avx2.rs", "shift_right_words_fn", "length-derived",
      "src/x86/avx2.rs",
      "unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {", 1),
+    ("src/x86/ldpc_lanes.rs", "lane_check_step_avx2", "release-assertion",
+     "src/x86/ldpc_lanes.rs", '"lane_check_step_avx2",', 1),
+    ("src/x86/ldpc_lanes.rs", "lane_variable_step_avx2", "release-assertion",
+     "src/x86/ldpc_lanes.rs", '"lane_variable_step_avx2",', 1),
+    ("src/x86/ldpc_lanes.rs", "load", "fixed-size",
+     "src/x86/ldpc_lanes.rs", "fn load(lanes: &F32x8) -> __m256 {", 1),
+    ("src/x86/ldpc_lanes.rs", "store", "fixed-size",
+     "src/x86/ldpc_lanes.rs", "fn store(lanes: &mut F32x8, value: __m256) {", 1),
 ]
 
 # One cost class per kind of check; interfaces of one class are decided together.
@@ -1050,7 +1058,7 @@ USES = [
      "`Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory", []),
     (CORE, "benches/gf2m_mul_strategies.rs", "mul_fn", "bench", [(None, 1)],
      "`Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory", []),
-    (SIMD, "src/gf2m.rs", "mul_fn", "test", [(None, 6)],
+    (SIMD, "src/gf2m.rs", "mul_fn", "test", [(None, 7)],
      "`Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory", []),
     (SIMD, "src/gf2m_batch.rs", "mul_fn", "test", [(None, 3)],
      "`Gf2mBatchFns::mul_fn`, a GF(2^m) bundle outside the inventory", []),
@@ -1180,6 +1188,12 @@ GRAINS = [
 
 # The family that prices the per-product grain against the unchecked row loop.
 GRAIN_FAMILY_ADDENDUM = "addendum-v4-spmm-check-pilot.json"
+# The confirmation addendum the family launcher's `freeze` action writes, and
+# the record `make-spmm-freeze-refusal.py` writes when the action refuses.
+GRAIN_FAMILY_CONFIRMATION = "addendum-v4-spmm-check-confirmation.json"
+GRAIN_FAMILY_REFUSAL = "confirmation-freeze-refusal-spmm-check.json"
+# That family's result tables, written beside its ledger by `make-spmm-tables.py`.
+GRAIN_FAMILY_TABLES = "spmm-check-tables.md"
 
 # P-20's tail-support floor, in expected bootstrap draws per tail, and the
 # claims of the two rules the admissibility arithmetic applies.
