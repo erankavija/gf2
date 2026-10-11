@@ -159,13 +159,13 @@
   {
    "id": "ragged-cell-arms",
    "project": "gf2",
-   "commit": "7bbb5be8c3b30a8540799acb4d06756f4e9294a2",
+   "commit": "8a4b536d0a85c3c622245247e9f78403a1bd2af0",
    "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs",
-   "line": 319,
+   "line": 330,
    "occurrences": 1,
    "verbatim": "        Question::MatvecRaggedTail => (Route::MatvecA.id(), Route::MatvecLaneParity.id()),",
    "why": "Every ragged-tail cell takes the selected SIMD lane as baseline and the parity-kernel lane as candidate.",
-   "sha256": "fda9ec67f5cea4165519c093a759b061e83c5d628c9d6ddc2c79396d8efc1c89"
+   "sha256": "e01c57698c71c1cc93bec2b6b94776cf81feba494ba2e6a2db925bfcd0ad9b36"
   },
   {
    "id": "ragged-route-call",
@@ -181,13 +181,13 @@
   {
    "id": "ragged-resolution-ceiling",
    "project": "gf2",
-   "commit": "7bbb5be8c3b30a8540799acb4d06756f4e9294a2",
+   "commit": "8a4b536d0a85c3c622245247e9f78403a1bd2af0",
    "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs",
-   "line": 351,
+   "line": 355,
    "occurrences": 1,
    "verbatim": "        Question::MatvecLaneThreshold | Question::MatvecRaggedTail => 0.035,",
    "why": "`verify-confirmation` refuses a ragged-tail confirmation above the family ceiling.",
-   "sha256": "ff19888e3638268c56cad9c801ee6c0d039025a02cb7874e6f7f0b0eaeea3b77"
+   "sha256": "23edd51714a1f4a23f2517a8aa40a25751d5b09d93341d8d988df8100c6308ea"
   }
  ]
 }
