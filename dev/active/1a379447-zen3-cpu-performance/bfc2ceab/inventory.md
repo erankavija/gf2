@@ -10,11 +10,11 @@ An entry point is a safe function of `gf2-kernels-simd`, published through a saf
 
 | Quantity | Count |
 |---|---|
-| safe functions holding an `unsafe` block outside test code | 88 |
+| safe functions holding an `unsafe` block outside test code | 92 |
 | entry points of the inventory | 24 |
 | safe pointer types they are published through | 17 |
 | cost classes | 4 |
-| safe functions cleared | 64 |
+| safe functions cleared | 68 |
 
 ## Coverage
 
@@ -25,10 +25,10 @@ In every tracked Rust file outside receipt input snapshots and outside this reco
 | Basis of a cleared function | Functions | Meaning |
 |---|---|---|
 | `bounds-checked` | 6 | Every slice access is bounds-checked; the only unsafe operations take values. |
-| `fixed-size` | 8 | Every operand is a value or a fixed-size array reference. |
+| `fixed-size` | 10 | Every operand is a value or a reference to a fixed-size object. |
 | `hint` | 1 | The instruction is a cache hint that dereferences nothing. |
 | `length-derived` | 17 | Every access index derives from the lengths of the slices the call passes. |
-| `release-assertion` | 29 | A release-mode assertion in the wrapper or the kernel bounds every unchecked access. |
+| `release-assertion` | 31 | A release-mode assertion in the wrapper or the kernel bounds every unchecked access. |
 | `values-only` | 3 | Every argument is a value. |
 
 ## Checked precedent
@@ -374,5 +374,5 @@ Witness: dimensions `symbols` = 2^32, `levels` = 2^32 pass the kernel's own rele
 | `crates/gf2-core/src/gf2m/batch.rs` | `mul_fn` | 1 | `Gf2mBatchFns::mul_fn`, a GF(2^m) bundle outside the inventory |
 | `crates/gf2-core/src/gf2m/field.rs` | `mul_fn` | 1 | `Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory |
 | `crates/gf2-core/benches/gf2m_mul_strategies.rs` | `mul_fn` | 1 | `Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory |
-| `crates/gf2-kernels-simd/src/gf2m.rs` | `mul_fn` | 6 | `Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory |
+| `crates/gf2-kernels-simd/src/gf2m.rs` | `mul_fn` | 7 | `Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory |
 | `crates/gf2-kernels-simd/src/gf2m_batch.rs` | `mul_fn` | 3 | `Gf2mBatchFns::mul_fn`, a GF(2^m) bundle outside the inventory |

@@ -819,13 +819,13 @@
     {
       "id": "gray-check-panics-doc",
       "project": "gf2",
-      "commit": "860383e4f768e0d976b85be00b063638780f7e14",
+      "commit": "b6d87f96e42d3a632f300524f527e8e2185f30e6",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
       "line": 96,
       "occurrences": 1,
       "verbatim": "/// Panics if `stride_words` is not the width this builder specializes for, if",
       "why": "The pointer type of the checked builders lists its conditions under Panics.",
-      "sha256": "0fc5f4316b2a9b75de6efb476febaa0bb09fe8f9b58b185a95ded9d308c12393"
+      "sha256": "0d7129d5b0f63f27b9af7bfe2b08037183ca8cc4898e682f3e5d67278525dafb"
     },
     {
       "id": "gray-check-contract",
@@ -1138,24 +1138,24 @@
     {
       "id": "algebra-bipedal-buffers",
       "project": "gf2",
-      "commit": "36fc84cf011b36a21ecc3f55b4e5d1db808b4680",
+      "commit": "3c7a51cda083345236d65d310e5feff700bd54a5",
       "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
-      "line": 376,
+      "line": 391,
       "occurrences": 1,
       "verbatim": "    let mut buf_sum_mag = [0u64; 4];",
       "why": "The single-word permanent passes six four-word arrays, so the slice shape holds by construction.",
-      "sha256": "db0a99ecf459632e23433671cf565d02353b73d98e37b4a849011632e1dec452"
+      "sha256": "746c65d224190cdce2e672e033f7429d51a094af87010a06a43b65f44a696549"
     },
     {
       "id": "algebra-bipedal-loop",
       "project": "gf2",
-      "commit": "36fc84cf011b36a21ecc3f55b4e5d1db808b4680",
+      "commit": "3c7a51cda083345236d65d310e5feff700bd54a5",
       "path": "crates/gf2-algebra/src/permanent/bipedal3.rs",
-      "line": 274,
+      "line": 289,
       "occurrences": 2,
       "verbatim": "    for (flip, parity) in gray_code_iter(n) {",
       "why": "The single-word SIMD permanent calls one kernel per Gray step.",
-      "sha256": "db0a99ecf459632e23433671cf565d02353b73d98e37b4a849011632e1dec452"
+      "sha256": "746c65d224190cdce2e672e033f7429d51a094af87010a06a43b65f44a696549"
     },
     {
       "id": "coding-pam-output",
@@ -1677,13 +1677,13 @@
     {
       "id": "cleared-gf2m-gf2m-mul-pclmul-safe",
       "project": "gf2",
-      "commit": "c8d6e2543d9732b6dffdcd871d9d762dfe30c37a",
+      "commit": "f53e3ba0a4271e609566525a66b0daab8e06f945",
       "path": "crates/gf2-kernels-simd/src/gf2m.rs",
-      "line": 148,
+      "line": 158,
       "occurrences": 1,
       "verbatim": "unsafe fn gf2m_mul_pclmul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {",
       "why": "`gf2m_mul_pclmul_safe` of `src/gf2m.rs`: Every argument is a value.",
-      "sha256": "dc199cfe51cf8e91fbe2f731e1aa5efb41ac54db1b036014f55d8e2691c35c81"
+      "sha256": "2b14697fce0ba8bad9f2c33b23d72d67cb51265e44f8df0a81c930ca2c30ee57"
     },
     {
       "id": "cleared-gf2m-batch-gf2m-batch-mul-ymm-unroll4-safe",
@@ -1726,7 +1726,7 @@
       "line": 29,
       "occurrences": 1,
       "verbatim": "pub unsafe fn clmul_wide4_xmm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {",
-      "why": "`clmul_wide4_xmm_safe` of `src/gf2m_wide.rs`: Every operand is a value or a fixed-size array reference.",
+      "why": "`clmul_wide4_xmm_safe` of `src/gf2m_wide.rs`: Every operand is a value or a reference to a fixed-size object.",
       "sha256": "f087dc92df87f0076d560a8d39db52ecdccafa0fc33bb3269930d4f4f39dd78c"
     },
     {
@@ -1737,7 +1737,7 @@
       "line": 66,
       "occurrences": 1,
       "verbatim": "pub unsafe fn clmul_wide4_ymm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {",
-      "why": "`clmul_wide4_ymm_safe` of `src/gf2m_wide.rs`: Every operand is a value or a fixed-size array reference.",
+      "why": "`clmul_wide4_ymm_safe` of `src/gf2m_wide.rs`: Every operand is a value or a reference to a fixed-size object.",
       "sha256": "f087dc92df87f0076d560a8d39db52ecdccafa0fc33bb3269930d4f4f39dd78c"
     },
     {
@@ -1748,7 +1748,7 @@
       "line": 114,
       "occurrences": 1,
       "verbatim": "pub unsafe fn clmul_wide9_xmm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {",
-      "why": "`clmul_wide9_xmm_safe` of `src/gf2m_wide.rs`: Every operand is a value or a fixed-size array reference.",
+      "why": "`clmul_wide9_xmm_safe` of `src/gf2m_wide.rs`: Every operand is a value or a reference to a fixed-size object.",
       "sha256": "f087dc92df87f0076d560a8d39db52ecdccafa0fc33bb3269930d4f4f39dd78c"
     },
     {
@@ -1759,7 +1759,7 @@
       "line": 147,
       "occurrences": 1,
       "verbatim": "pub unsafe fn clmul_wide9_ymm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {",
-      "why": "`clmul_wide9_ymm_safe` of `src/gf2m_wide.rs`: Every operand is a value or a fixed-size array reference.",
+      "why": "`clmul_wide9_ymm_safe` of `src/gf2m_wide.rs`: Every operand is a value or a reference to a fixed-size object.",
       "sha256": "f087dc92df87f0076d560a8d39db52ecdccafa0fc33bb3269930d4f4f39dd78c"
     },
     {
@@ -1880,7 +1880,7 @@
       "line": 24,
       "occurrences": 1,
       "verbatim": "pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 64]) {",
-      "why": "`transpose_64x64_avx2_safe` of `src/transpose.rs`: Every operand is a value or a fixed-size array reference.",
+      "why": "`transpose_64x64_avx2_safe` of `src/transpose.rs`: Every operand is a value or a reference to a fixed-size object.",
       "sha256": "4165c468268e1e1877fcc63f5aa76497fc2465819a3f4598e56317e0c97b9706"
     },
     {
@@ -1891,7 +1891,7 @@
       "line": 176,
       "occurrences": 1,
       "verbatim": "pub(crate) unsafe fn transpose_64x64_avx2_ymm6(input: &[u64; 64], output: &mut [u64; 64]) {",
-      "why": "`transpose_64x64_avx2_ymm6_safe` of `src/transpose.rs`: Every operand is a value or a fixed-size array reference.",
+      "why": "`transpose_64x64_avx2_ymm6_safe` of `src/transpose.rs`: Every operand is a value or a reference to a fixed-size object.",
       "sha256": "4165c468268e1e1877fcc63f5aa76497fc2465819a3f4598e56317e0c97b9706"
     },
     {
@@ -1902,7 +1902,7 @@
       "line": 109,
       "occurrences": 1,
       "verbatim": "pub(crate) unsafe fn transpose_64x64_avx2_pshufb(input: &[u64; 64], output: &mut [u64; 64]) {",
-      "why": "`transpose_64x64_avx2_pshufb_safe` of `src/transpose.rs`: Every operand is a value or a fixed-size array reference.",
+      "why": "`transpose_64x64_avx2_pshufb_safe` of `src/transpose.rs`: Every operand is a value or a reference to a fixed-size object.",
       "sha256": "4165c468268e1e1877fcc63f5aa76497fc2465819a3f4598e56317e0c97b9706"
     },
     {
@@ -1913,7 +1913,7 @@
       "line": 298,
       "occurrences": 1,
       "verbatim": "pub(crate) unsafe fn transpose_64x64_avx2_movemask(input: &[u64; 64], output: &mut [u64; 64]) {",
-      "why": "`transpose_64x64_avx2_movemask_safe` of `src/transpose.rs`: Every operand is a value or a fixed-size array reference.",
+      "why": "`transpose_64x64_avx2_movemask_safe` of `src/transpose.rs`: Every operand is a value or a reference to a fixed-size object.",
       "sha256": "4165c468268e1e1877fcc63f5aa76497fc2465819a3f4598e56317e0c97b9706"
     },
     {
@@ -2113,6 +2113,50 @@
       "verbatim": "unsafe fn avx2_shift_right_words(buf: &mut [u64], word_shift: usize) {",
       "why": "`shift_right_words_fn` of `src/x86/avx2.rs`: Every access index derives from the lengths of the slices the call passes.",
       "sha256": "84d3f74d426549f11daa0f9b9283d3098e928e3b7b4967501029cd20fdbb93c6"
+    },
+    {
+      "id": "cleared-x86-ldpc-lanes-lane-check-step-avx2",
+      "project": "gf2",
+      "commit": "99f1ade192530e5e879d0cc9774e18fbce783c94",
+      "path": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
+      "line": 36,
+      "occurrences": 1,
+      "verbatim": "        \"lane_check_step_avx2\",",
+      "why": "`lane_check_step_avx2` of `src/x86/ldpc_lanes.rs`: A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
+      "sha256": "cea2cd639c5bf83b33c4d898f40a36cb8c7cd65869e05f0c04c2f01a22b570b4"
+    },
+    {
+      "id": "cleared-x86-ldpc-lanes-lane-variable-step-avx2",
+      "project": "gf2",
+      "commit": "99f1ade192530e5e879d0cc9774e18fbce783c94",
+      "path": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
+      "line": 60,
+      "occurrences": 1,
+      "verbatim": "        \"lane_variable_step_avx2\",",
+      "why": "`lane_variable_step_avx2` of `src/x86/ldpc_lanes.rs`: A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
+      "sha256": "cea2cd639c5bf83b33c4d898f40a36cb8c7cd65869e05f0c04c2f01a22b570b4"
+    },
+    {
+      "id": "cleared-x86-ldpc-lanes-load",
+      "project": "gf2",
+      "commit": "99f1ade192530e5e879d0cc9774e18fbce783c94",
+      "path": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
+      "line": 92,
+      "occurrences": 1,
+      "verbatim": "fn load(lanes: &F32x8) -> __m256 {",
+      "why": "`load` of `src/x86/ldpc_lanes.rs`: Every operand is a value or a reference to a fixed-size object.",
+      "sha256": "cea2cd639c5bf83b33c4d898f40a36cb8c7cd65869e05f0c04c2f01a22b570b4"
+    },
+    {
+      "id": "cleared-x86-ldpc-lanes-store",
+      "project": "gf2",
+      "commit": "99f1ade192530e5e879d0cc9774e18fbce783c94",
+      "path": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
+      "line": 100,
+      "occurrences": 1,
+      "verbatim": "fn store(lanes: &mut F32x8, value: __m256) {",
+      "why": "`store` of `src/x86/ldpc_lanes.rs`: Every operand is a value or a reference to a fixed-size object.",
+      "sha256": "cea2cd639c5bf83b33c4d898f40a36cb8c7cd65869e05f0c04c2f01a22b570b4"
     }
   ]
 }
