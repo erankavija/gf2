@@ -252,6 +252,239 @@
      }
     }
    ]
+  },
+  {
+   "id": "63bad95d-profile-dispatch-overhead-v2",
+   "repeats": "63bad95d-profile-dispatch-overhead",
+   "purpose": "selector-calibration",
+   "pilot_purpose": "kernel-family",
+   "selector": "bit_backend.simd_min_words",
+   "question": "Is the profile build no worse than the conservative build on small buffers, on both sides of the bit-backend threshold the measured owner states?",
+   "condition": "Runs when the baked constants of the profile differ from the conservative table.",
+   "objective_rule": "Every cell is a non-regression cell; the improvement claim is the producer's crossover decision.",
+   "ledger": "63bad95d-profile-dispatch-overhead-v2-ledger.jsonl",
+   "holdout_declaration": "dispatch-holdout-cells-v2.json",
+   "cells": [
+    {
+     "cell_id": "xor-inplace-4w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 4 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 4,
+      "seed": 630401
+     }
+    },
+    {
+     "cell_id": "and-popcount-7w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::and_popcount, 7 words",
+     "small_input": true,
+     "case": {
+      "operation": "and-popcount",
+      "words": 7,
+      "seed": 630701
+     }
+    },
+    {
+     "cell_id": "xor-inplace-8w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 8 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 8,
+      "seed": 630801
+     }
+    },
+    {
+     "cell_id": "xor-inplace-5w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 5 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 5,
+      "seed": 630501
+     }
+    },
+    {
+     "cell_id": "popcount-6w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::popcount, 6 words",
+     "small_input": true,
+     "case": {
+      "operation": "popcount",
+      "words": 6,
+      "seed": 630601
+     }
+    },
+    {
+     "cell_id": "xor-inplace-3w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 3 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 3,
+      "seed": 630301
+     }
+    }
+   ]
+  },
+  {
+   "id": "63bad95d-native-ladder-v2",
+   "repeats": "63bad95d-native-ladder",
+   "purpose": "consumer-family",
+   "pilot_purpose": "consumer-family",
+   "selector": "build configuration",
+   "question": "Is the native build of the profile no worse than its portable build on one primary workload per entry-point group?",
+   "condition": "Runs for the committed profile.",
+   "objective_rule": "Every cell is a non-regression cell.",
+   "ledger": "63bad95d-native-ladder-v2-ledger.jsonl",
+   "cells": [
+    {
+     "cell_id": "matvec-r1024-24w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "BitMatrix::matvec, 1024 rows, 24-word stride",
+     "small_input": false,
+     "case": {
+      "operation": "matvec",
+      "rows": 1024,
+      "columns": 1536,
+      "seed": 632411
+     }
+    },
+    {
+     "cell_id": "bitmatrix-transpose-8192x2048-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "whole-consumer",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "BitMatrix::transpose, 8192 x 2048",
+     "small_input": false,
+     "case": {
+      "operation": "transpose",
+      "rows": 8192,
+      "columns": 2048,
+      "seed": 638211
+     }
+    },
+    {
+     "cell_id": "popcount-1024w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::popcount, 1024 words",
+     "small_input": false,
+     "case": {
+      "operation": "popcount",
+      "words": 1024,
+      "seed": 631011
+     }
+    },
+    {
+     "cell_id": "and-popcount-1024w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::and_popcount, 1024 words",
+     "small_input": false,
+     "case": {
+      "operation": "and-popcount",
+      "words": 1024,
+      "seed": 631021
+     }
+    },
+    {
+     "cell_id": "xor-inplace-8w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::xor_inplace, 8 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 8,
+      "seed": 630811
+     }
+    },
+    {
+     "cell_id": "clmul-wide-9w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "gf2m::wide::clmul_wide, 9 words",
+     "small_input": false,
+     "case": {
+      "operation": "clmul-wide",
+      "words": 9,
+      "seed": 630911
+     }
+    }
+   ]
   }
  ],
  "excluded": [

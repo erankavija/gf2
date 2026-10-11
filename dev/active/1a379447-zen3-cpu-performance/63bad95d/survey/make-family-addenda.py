@@ -5,7 +5,8 @@ Reads `planned-families.json` and writes, per family, the frozen pilot addendum
 `campaigns/<family>-pilot.json`, its genesis ledger when none exists, and the
 holdout declaration the plan names for it. A pilot holds the family's piloted
 cells as exploratory cells; the holdout cells appear in the declaration alone,
-which the canonical freezer attaches to the confirmation.
+which the canonical freezer attaches to the confirmation. A family that names
+another under `repeats` asks that family's question again on its own ledger.
 
 Nothing here is a measurement. `--check` compares the committed files with the
 projection and writes nothing.
@@ -20,6 +21,7 @@ from locate import HERE, ROOT, repository_files
 
 ISSUE = HERE.parent
 FROZEN_UTC = "2026-10-07T05:01:11Z"
+REPEAT_FROZEN_UTC = "2026-10-11T09:25:36Z"
 # Receipts and ledgers sit beside the launcher.
 RESULTS = str((ROOT / repository_files.live_file(ROOT, "run-profile-families.sh")).parent.relative_to(ROOT))
 
@@ -60,6 +62,13 @@ DESCRIPTIONS = {
         "who builds for the host loses anything against the portable profile build."
     ),
 }
+
+REPEAT = (
+    " This family repeats {repeats}, by invoker ruling, on a quiet host with the same cells, "
+    "arms and settings on its own ledger: the campaigns of {repeats} run on a loaded host, "
+    "at the launcher and session load averages {record} states under 'Host load each campaign "
+    "records', and their receipts stay committed as measured."
+)
 
 WORTHWHILE = (
     1.05,
@@ -112,6 +121,18 @@ def declaration(cell, role):
     }
 
 
+def description(family, plan, issue):
+    repeats = family.get("repeats")
+    if repeats is None:
+        return DESCRIPTIONS[family["id"]]
+    text = DESCRIPTIONS[repeats]
+    (repeated,) = [other for other in plan["families"] if other["id"] == repeats]
+    if "holdout_declaration" in family:
+        # The repeat confirms on its own declaration.
+        text = text.replace(repeated["holdout_declaration"], family["holdout_declaration"])
+    return text + REPEAT.format(repeats=repeats, record=f"{issue}/disturbance-record.md")
+
+
 def projections(plan):
     """Root-relative path to canonical text, for every file this generator owns."""
     files = {}
@@ -126,9 +147,11 @@ def projections(plan):
                 "id": family["id"],
                 "issue": plan["issue"],
                 "purpose": family["pilot_purpose"],
-                "description": DESCRIPTIONS[family["id"]],
+                "description": description(family, plan, issue),
             },
-            "frozen": {"frozen_utc": FROZEN_UTC},
+            "frozen": {
+                "frozen_utc": REPEAT_FROZEN_UTC if "repeats" in family else FROZEN_UTC
+            },
             "effect": {
                 "worthwhile_speedup": WORTHWHILE[0],
                 "rationale": WORTHWHILE[1],

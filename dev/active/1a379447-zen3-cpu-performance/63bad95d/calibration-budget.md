@@ -27,7 +27,9 @@ Minutes are estimates: the child count times the median child duration the commi
 |---|---|---|---|---|---|---|---|---|---|
 | `63bad95d-profile-dispatch-overhead` | selector-calibration | 6 | 3 | 6 | 0.004167 | 20.8 | 3 | 0.7 | 2.8 |
 | `63bad95d-native-ladder` | consumer-family | 6 | 0 | 1 | 0.004167 | 20.8 | 6 | 1.4 | 2.8 |
-| total |  | 12 |  |  |  |  |  | 2.1 | 5.6 |
+| `63bad95d-profile-dispatch-overhead-v2` | selector-calibration | 6 | 3 | 6 | 0.004167 | 20.8 | 3 | 0.7 | 2.8 |
+| `63bad95d-native-ladder-v2` | consumer-family | 6 | 0 | 1 | 0.004167 | 20.8 | 6 | 1.4 | 2.8 |
+| total |  | 24 |  |  |  |  |  | 4.2 | 11.2 |
 
 | Stage | Children observed | Median child seconds |
 |---|---|---|
@@ -71,6 +73,18 @@ One session of the offline tuning campaign has a budget of 180 minutes (`dev/act
 | `63bad95d-native-ladder` | `and-popcount-1024w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | kernels::ops::and_popcount, 1024 words |  |
 | `63bad95d-native-ladder` | `xor-inplace-8w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | kernels::ops::xor_inplace, 8 words | yes |
 | `63bad95d-native-ladder` | `clmul-wide-9w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | gf2m::wide::clmul_wide, 9 words |  |
+| `63bad95d-profile-dispatch-overhead-v2` | `xor-inplace-4w` | confirmatory | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | kernels::ops::xor_inplace, 4 words | yes |
+| `63bad95d-profile-dispatch-overhead-v2` | `and-popcount-7w` | confirmatory | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | kernels::ops::and_popcount, 7 words | yes |
+| `63bad95d-profile-dispatch-overhead-v2` | `xor-inplace-8w` | confirmatory | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | kernels::ops::xor_inplace, 8 words | yes |
+| `63bad95d-profile-dispatch-overhead-v2` | `xor-inplace-5w` | holdout | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | kernels::ops::xor_inplace, 5 words | yes |
+| `63bad95d-profile-dispatch-overhead-v2` | `popcount-6w` | holdout | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | kernels::ops::popcount, 6 words | yes |
+| `63bad95d-profile-dispatch-overhead-v2` | `xor-inplace-3w` | holdout | non-regression | kernel-isolated | single-core | warm | conservative-portable → tuned-portable | kernels::ops::xor_inplace, 3 words | yes |
+| `63bad95d-native-ladder-v2` | `matvec-r1024-24w-native` | confirmatory | non-regression | whole-consumer | single-core | warm | tuned-portable → native | BitMatrix::matvec, 1024 rows, 24-word stride |  |
+| `63bad95d-native-ladder-v2` | `bitmatrix-transpose-8192x2048-native` | confirmatory | non-regression | whole-consumer | single-core | warm | tuned-portable → native | BitMatrix::transpose, 8192 x 2048 |  |
+| `63bad95d-native-ladder-v2` | `popcount-1024w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | kernels::ops::popcount, 1024 words |  |
+| `63bad95d-native-ladder-v2` | `and-popcount-1024w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | kernels::ops::and_popcount, 1024 words |  |
+| `63bad95d-native-ladder-v2` | `xor-inplace-8w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | kernels::ops::xor_inplace, 8 words | yes |
+| `63bad95d-native-ladder-v2` | `clmul-wide-9w-native` | confirmatory | non-regression | kernel-isolated | single-core | warm | tuned-portable → native | gf2m::wide::clmul_wide, 9 words |  |
 
 ## Ledgers of the measured core-kernel families
 

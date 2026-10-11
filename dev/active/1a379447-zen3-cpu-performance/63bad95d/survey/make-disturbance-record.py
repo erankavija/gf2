@@ -249,7 +249,8 @@ def main():
     ]
     load_section(lines, [entry for _, entries in families for entry in entries])
     for family, entries in families:
-        family_section(lines, family, entries)
+        if entries:
+            family_section(lines, family, entries)
     (ISSUE / "disturbance-record.md").write_text("\n".join(lines).rstrip("\n") + "\n")
 
 

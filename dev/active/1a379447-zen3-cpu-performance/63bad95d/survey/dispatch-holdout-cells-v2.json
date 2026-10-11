@@ -1,0 +1,85 @@
+{
+ "schema": "63bad95d-holdout-declaration-v1",
+ "family": "63bad95d-profile-dispatch-overhead-v2",
+ "rationale": "The declared cells are measured by no pilot of this family, and the offline producer's bit-backend sweep times none of these operation and length pairs, so no sample of a held-out workload takes part in selecting the threshold or in sizing the confirmation's resolution. Each cell is a non-regression cell of the profile build against the conservative build.",
+ "addendum_cells": [
+  {
+   "cell_id": "xor-inplace-5w",
+   "objective": "non-regression",
+   "role": "holdout",
+   "workload": {
+    "identity": "profile-xor-inplace-5",
+    "size": {
+     "words": 5
+    },
+    "seed": 630501
+   },
+   "metric_kind": "kernel-isolated",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "warm",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": false,
+   "decoder": null
+  },
+  {
+   "cell_id": "popcount-6w",
+   "objective": "non-regression",
+   "role": "holdout",
+   "workload": {
+    "identity": "profile-popcount-6",
+    "size": {
+     "words": 6
+    },
+    "seed": 630601
+   },
+   "metric_kind": "kernel-isolated",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "warm",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": false,
+   "decoder": null
+  },
+  {
+   "cell_id": "xor-inplace-3w",
+   "objective": "non-regression",
+   "role": "holdout",
+   "workload": {
+    "identity": "profile-xor-inplace-3",
+    "size": {
+     "words": 3
+    },
+    "seed": 630301
+   },
+   "metric_kind": "kernel-isolated",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "warm",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": false,
+   "decoder": null
+  }
+ ]
+}

@@ -423,12 +423,44 @@
    "confirmation_children": 288,
    "estimated_pilot_minutes": 1.3967279196,
    "estimated_confirmation_minutes": 2.789948136
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead-v2",
+   "purpose": "selector-calibration",
+   "non_exploratory_cells": 6,
+   "holdout_cells": 3,
+   "small_input_cells": 6,
+   "attempt": 1,
+   "attempt_alpha": 0.025,
+   "corrected_alpha": 0.004166666666666667,
+   "expected_draws_per_tail": 20.833333333333332,
+   "pilot_cells": 3,
+   "pilot_children": 72,
+   "confirmation_children": 288,
+   "estimated_pilot_minutes": 0.6983639598,
+   "estimated_confirmation_minutes": 2.789948136
+  },
+  {
+   "family": "63bad95d-native-ladder-v2",
+   "purpose": "consumer-family",
+   "non_exploratory_cells": 6,
+   "holdout_cells": 0,
+   "small_input_cells": 1,
+   "attempt": 1,
+   "attempt_alpha": 0.025,
+   "corrected_alpha": 0.004166666666666667,
+   "expected_draws_per_tail": 20.833333333333332,
+   "pilot_cells": 6,
+   "pilot_children": 144,
+   "confirmation_children": 288,
+   "estimated_pilot_minutes": 1.3967279196,
+   "estimated_confirmation_minutes": 2.789948136
   }
  ],
  "planned_totals": {
-  "non_exploratory_cells": 12,
-  "estimated_pilot_minutes": 2.0950918794,
-  "estimated_confirmation_minutes": 5.579896272
+  "non_exploratory_cells": 24,
+  "estimated_pilot_minutes": 4.1901837588,
+  "estimated_confirmation_minutes": 11.159792544
  },
  "offline_tuning_campaign": {
   "matvec_sweep_stride_words": [
