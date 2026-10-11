@@ -5,7 +5,8 @@
 //! build script: the pinned static library's class layouts are gated on the
 //! definitions. The script also reads the identity of the AFF3CT tree it
 //! links, its revision and the digest of its static library, which the arm
-//! reports on every run.
+//! reports on every run, and hands cargo every file the compiler read, so
+//! cargo's dep-info names the headers of the translation unit.
 
 use sha2::{Digest, Sha256};
 use std::env;
@@ -64,6 +65,7 @@ fn build_aff3ct() {
         .flag("-O3")
         .flag("-march=native")
         .flag("-g1")
+        .flag("-MD")
         .define("NDEBUG", None)
         .include(&throughput_shim)
         .include(&survey_shim);
@@ -85,6 +87,7 @@ fn build_aff3ct() {
         build.include(aff3ct.join(include));
     }
     build.compile("aff3ct_intra_shim");
+    rerun_if_compiler_input_changed();
 
     let library_dir = aff3ct.join("build/lib");
     let library = library_dir.join(format!("lib{AFF3CT_LIBRARY}.a"));
@@ -103,14 +106,29 @@ fn build_aff3ct() {
     for name in [AFF3CT_LIBRARY, "cpptrace", "dwarf", "z", "zstd", "dl"] {
         println!("cargo:rustc-link-lib={name}");
     }
-    println!("cargo:rerun-if-changed=cpp/intra_shim.cpp");
     println!("cargo:rerun-if-changed={}", library.display());
-    for shim in [
-        throughput_shim.join("throughput_shim.cpp"),
-        survey_shim.join("aff3ct_shim.cpp"),
-    ] {
-        println!("cargo:rerun-if-changed={}", shim.display());
+}
+
+/// Names to cargo each prerequisite of the make rules `-MD` writes beside the
+/// objects: the translation unit and every file it includes.
+fn rerun_if_compiler_input_changed() {
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("cargo sets OUT_DIR"));
+    let mut rules = 0;
+    for entry in fs::read_dir(&out_dir).expect("the build script output directory") {
+        let path = entry.expect("a directory entry").path();
+        if path.extension().is_some_and(|extension| extension == "d") {
+            let rule = fs::read_to_string(&path).expect("a compiler dependency file");
+            let (_, prerequisites) = rule.split_once(':').expect("a make rule");
+            for input in prerequisites
+                .split_whitespace()
+                .filter(|word| *word != "\\")
+            {
+                println!("cargo:rerun-if-changed={input}");
+            }
+            rules += 1;
+        }
     }
+    assert!(rules > 0, "the compiler wrote no dependency file");
 }
 
 fn main() {

@@ -62,9 +62,48 @@ class ArmRowsTest(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, "absent"):
             arm_rows({"absent": workspace_arm("absent-arm")}, [])
 
+    def test_a_pinned_arm_no_target_file_carries_is_refused(self):
+        with self.assertRaisesRegex(SystemExit, "pinned"):
+            arm_rows({"pinned": pinned_arm(PIN["sha256"])}, [])
+
     def test_a_pinned_arm_no_record_pins_is_refused(self):
         with self.assertRaisesRegex(SystemExit, "pinned"):
             arm_rows({"pinned": pinned_arm("d" * 64)}, ["target/campaign/release/pinned-arm"])
+
+
+class InputsTest(unittest.TestCase):
+    def test_a_changed_file_on_either_side_of_the_root_changes_its_listing_digest(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "repository"
+            source, header = root / "unit.cpp", Path(temporary) / "tree" / "decoder.hpp"
+            for path in (source, header):
+                path.parent.mkdir()
+                path.write_text("first")
+            dep_info = Path(temporary) / "arm.d"
+            dep_info.write_text(f"{temporary}/arm: {source} {header}\n")
+            first = recorder.inputs(dep_info, root)
+            header.write_text("second")
+            second = recorder.inputs(dep_info, root)
+            source.write_text("second")
+            third = recorder.inputs(dep_info, root)
+        self.assertEqual(first["repository_files_sha256"], second["repository_files_sha256"])
+        self.assertNotEqual(first["other_files_sha256"], second["other_files_sha256"])
+        self.assertNotEqual(second["repository_files_sha256"], third["repository_files_sha256"])
+        self.assertEqual(second["other_files_sha256"], third["other_files_sha256"])
+
+
+class BuildEnvironmentTest(unittest.TestCase):
+    def test_inherited_compiler_settings_do_not_reach_the_build(self):
+        steering = ["CXX", "CC", "CXXFLAGS", "CFLAGS", "HOST_CXX", "TARGET_CXXFLAGS",
+                    "CXX_x86_64_unknown_linux_gnu", "CXXFLAGS_x86_64-unknown-linux-gnu",
+                    "RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS", "CARGO_BUILD_RUSTFLAGS",
+                    "RUSTC_WRAPPER", "CARGO_TARGET_DIR", "CARGO_PROFILE_RELEASE_LTO"]
+        inherited = {**{name: "inherited" for name in steering}, "PATH": "/bin", "HOME": "/home"}
+        environment = recorder.build_environment(inherited)
+        self.assertEqual({name: value for name, value in environment.items()
+                          if value == "inherited"}, {})
+        self.assertEqual(environment, {"PATH": "/bin", "HOME": "/home", **recorder.ENVIRONMENT})
+        self.assertEqual(environment["CXX"], recorder.CXX)
 
 
 @unittest.skipUnless(os.environ.get("GF2_AFF3CT_ROOT"), "needs the staged AFF3CT tree")
@@ -78,6 +117,13 @@ class ReproductionTest(unittest.TestCase):
                     cwd=ROOT, check=True, capture_output=True)
                 records.append((Path(out_dir) / "build-identity.json").read_bytes())
         self.assertEqual(records[0], records[1])
+
+    def test_the_dep_info_of_the_intra_arm_names_the_headers_its_unit_compiles(self):
+        subprocess.run(
+            [sys.executable, "-B", str(RECORDER), tempfile.mkdtemp(),
+             os.environ["GF2_AFF3CT_ROOT"]], cwd=ROOT, check=True, capture_output=True)
+        dep_info = SURVEY / "arms/target/release/aff3ct-intra-arm.d"
+        self.assertIn("Decoder_LDPC_BP_flooding_SPA.hpp", dep_info.read_text())
 
 
 if __name__ == "__main__":
