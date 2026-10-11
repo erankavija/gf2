@@ -149,10 +149,12 @@ overstate what the checked product adds.
 ## Contract test and suites (REQ-03)
 
 `crates/gf2-kernels-simd/tests/entry_conditions.rs` holds one test per pointer
-type. Each test calls every implementation the type publishes with arguments
-that meet the conditions and then with arguments that break each condition,
-and requires a panic that opens with the kernel's name and names the
-condition. The two sparse lanes share one contract through a macro. The
+type, and one for the two precisions of the Gray-PAM kernel. Each test calls
+every implementation the type publishes with arguments that meet the
+conditions and then with arguments that break each condition, and requires a
+panic that opens with the kernel's name and names the condition; the Gray-PAM
+test requires a panic. The two sparse lanes share one contract through a
+macro. The
 product of two slice lengths that the Gray-PAM wrappers check wraps only for
 operands of at least $2^{32}$ elements, so their test covers the length
 assertion the product feeds and a unit test of `entry_check::checked_cells`
