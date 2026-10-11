@@ -1,0 +1,141 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "8e53235b-codeword-assembly-confirmation-arms-smoke",
+  "issue": "8e53235b",
+  "family": "8e53235b-bch-codeword-assembly",
+  "plan_sha256": "3666cf32e820ddaaeaba38a8971d762df854fb3a570a9d62f2c351fada970fb8",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/8e53235b/addendum-v4-codeword-assembly-confirmation.json",
+  "addendum_sha256": "674af555fcf5daae9834f8f2d9741acab5427755a1cda191978c89087c1ac024",
+  "cells": [
+    {
+      "cell_id": "assembly-bch-encode-current-m14-b256-1core",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/PolyRemainderScalar",
+          "windows": 0
+        },
+        {
+          "arm": "current-word-wise",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/PolyRemainderScalar/word-wise",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "assembly-bch-encode-current-m16-b256-1core",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/PolyRemainderScalar",
+          "windows": 0
+        },
+        {
+          "arm": "current-word-wise",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/PolyRemainderScalar/word-wise",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "assembly-bch-encode-fold-m14-b256-1core",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "family-fold",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "family-pinned/ClmulFold",
+          "windows": 0
+        },
+        {
+          "arm": "family-fold-word-wise",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "family-pinned/ClmulFold/word-wise",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "assembly-bch-encode-bitslice-m14-b256-1core",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "family-bitslice",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "family-pinned/BitsliceInterleaved",
+          "windows": 0
+        },
+        {
+          "arm": "family-bitslice-word-wise",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "family-pinned/BitsliceInterleaved/word-wise",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "assembly-bch-encode-current-m8-b1-1core",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "current",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/PolyRemainderScalar",
+          "windows": 0
+        },
+        {
+          "arm": "current-word-wise",
+          "role": "validation",
+          "executable": "target/8e53235b-arm/release/consumer-arm",
+          "executable_sha256": "26e3ed26bce810b08737be88cb6e9e03dad1c5da364b744f47bd95702fef8f17",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/PolyRemainderScalar/word-wise",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
