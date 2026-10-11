@@ -29,7 +29,7 @@ ROOT = subprocess.run(
     check=True, capture_output=True, text=True,
 ).stdout.strip()
 # The entry path as the committed tables state it.
-ACTIVE = "dev/active/c04dd4ac-zen3-shifts-and-permutations"
+ACTIVE = "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations"
 CAMPAIGN = "dev/bench_results/c04dd4ac/residual-shift-profile"
 OUTPUT = "dev/bench_results/c04dd4ac/residual-shift-tables.md"
 GENERATOR = f"{ACTIVE}/survey/summarize-shift-receipt.py"

@@ -198,6 +198,12 @@ batch assigns it no frame.
   again: its beliefs, outgoing messages and hard decisions keep the values
   they hold when it leaves the active set. It changes no other lane.
 - **Idle lanes.** An idle lane holds zero LLRs.
+- **Lane backends.** The lane kernels of `gf2-kernels-simd` have a portable
+  backend and an AVX2 backend that writes the same bit patterns, so each
+  clause holds on either. `LdpcBatchDecoder` runs the AVX2 backend when
+  `gf2-coding` is built with its `simd` cargo feature and AVX2 is detected at
+  run time, and the portable backend otherwise; `batch_route` names the
+  backend of a lane-route wave.
 
 ## Evidence
 
@@ -212,11 +218,45 @@ The unit test `test_zero_cap_results_depend_only_on_the_frame` in
 an iteration cap of zero against the frame's own channel LLRs and parity checks.
 
 The unit tests of [`ldpc/batch.rs`](../../crates/gf2-coding/src/ldpc/batch.rs)
-assert the batch clauses for `LdpcBatchDecoder` on the lane route and on the
-single-frame route:
+assert the batch clauses for `LdpcBatchDecoder` on the lane route of each lane
+backend of the build and on the single-frame route:
 `frames_equal_the_single_frame_decoder_to_the_posterior_bit` holds each frame's
 posterior bit patterns, hard decisions, iteration count and flags to
 `LdpcDecoder` for each min-sum rule and both early-termination settings,
 `a_terminated_lane_keeps_its_posterior_while_its_wave_continues` asserts the
 terminated-lane clause, and the two `*_satisfy_the_batch_contract_on_each_route`
 tests run the shared batch contract over full, partial and empty waves.
+
+[`ldpc_batch_contract`](../../crates/gf2-coding/tests/ldpc_batch_contract.rs)
+asserts per-frame equality on each route and lane backend of
+`LdpcBatchDecoder` over a DVB-T2
+short code (`@/citation/Etsi2015`), 5G NR mother codes of both base graphs
+(`@/citation/ThreeGpp2017`) and hand-built codes with checks of degree one, two
+and above eight. Its frames are noisy codewords whose waves mix early, late and
+non-converging frames, frames of signed zeros, saturated, extreme finite and
+non-finite LLRs, and rate-matched 5G NR frames; each set runs at the batch
+sizes around the wave boundaries, under a permutation of its frames, and with
+the other lanes of a wave holding non-converging frames. A build with `simd`
+runs the AVX2 backend, requires AVX2 of the host and asserts that the lane
+route reports that backend; a build without `simd` asserts that it reports the
+portable backend.
+
+[`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs)
+runs the shared batch contract on `DvbT2ConcatBatchDecoder`, whose LDPC inner
+code decodes on `LdpcBatchDecoder`, against `DvbT2Concat::decode_soft_counted`
+on each route and lane backend: a frame's BBFRAME, LDPC iteration count and flags equal the
+single-frame codec's, for converging and non-converging frames.
+
+The unit tests of
+[`nr_5g/batch.rs`](../../crates/gf2-coding/src/ldpc/nr_5g/batch.rs) hold
+`Nr5gRateMatchedBatchDecoder`, which prepares each rate-matched frame as above
+and decodes the batch through `LdpcBatchDecoder`, to
+`Nr5gRateMatchedDecoder::decode_iterative` frame by frame: the shared batch
+contract runs on each route and lane backend over codes of both base graphs with punctured
+systematic columns, truncated parity and filler bits, for each algorithm and
+at an iteration cap of zero.
+[`nr5g_external_vectors`](../../crates/gf2-coding/tests/nr5g_external_vectors.rs)
+decodes the rate-matched codewords of `@/citation/Sionna2026` to their messages
+through the same decoder on each route and through
+`Nr5gRateMatchedDecoder::decode_iterative`; the vectors are described in
+[Standards conformance](standards-conformance.md#5g-nr-ldpc).

@@ -35,7 +35,7 @@ struct RankSelectIndex {
 pub struct BitVec {
     data: Vec<u64>,
     len_bits: usize,
-    /// Lazy rank/select index (built on first query, thread-safe)
+    /// Lazy rank/select index (built on first query, thread-safe); reset by `words_mut`
     rank_select_index: Mutex<Option<RankSelectIndex>>,
 }
 
@@ -165,11 +165,11 @@ impl BitVec {
         let bit_idx = self.len_bits % 64;
 
         if bit_idx == 0 {
-            self.data.push(0);
+            self.words_mut().push(0);
         }
 
         if bit {
-            self.data[word_idx] |= 1u64 << bit_idx;
+            self.words_mut()[word_idx] |= 1u64 << bit_idx;
         }
 
         self.len_bits += 1;
@@ -188,10 +188,10 @@ impl BitVec {
         let bit = (self.data[word_idx] >> bit_idx) & 1 == 1;
 
         // Clear the bit to maintain invariant
-        self.data[word_idx] &= !(1u64 << bit_idx);
+        self.words_mut()[word_idx] &= !(1u64 << bit_idx);
 
         if bit_idx == 0 && !self.data.is_empty() {
-            self.data.pop();
+            self.words_mut().pop();
         }
 
         Some(bit)
@@ -221,9 +221,9 @@ impl BitVec {
         let bit_idx = idx % 64;
 
         if bit {
-            self.data[word_idx] |= 1u64 << bit_idx;
+            self.words_mut()[word_idx] |= 1u64 << bit_idx;
         } else {
-            self.data[word_idx] &= !(1u64 << bit_idx);
+            self.words_mut()[word_idx] &= !(1u64 << bit_idx);
         }
     }
 
@@ -234,7 +234,7 @@ impl BitVec {
     /// Panics if `self.len() != other.len()`.
     pub fn bit_and_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        crate::kernels::ops::and_inplace(&mut self.data, &other.data);
+        crate::kernels::ops::and_inplace(self.words_mut(), &other.data);
     }
 
     /// Performs bitwise OR with `other` and stores the result in `self`.
@@ -244,7 +244,7 @@ impl BitVec {
     /// Panics if `self.len() != other.len()`.
     pub fn bit_or_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        crate::kernels::ops::or_inplace(&mut self.data, &other.data);
+        crate::kernels::ops::or_inplace(self.words_mut(), &other.data);
     }
 
     /// Performs bitwise XOR with `other` and stores the result in `self`.
@@ -254,12 +254,12 @@ impl BitVec {
     /// Panics if `self.len() != other.len()`.
     pub fn bit_xor_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
-        crate::kernels::ops::xor_inplace(&mut self.data, &other.data);
+        crate::kernels::ops::xor_inplace(self.words_mut(), &other.data);
     }
 
     /// Performs bitwise NOT on all bits in `self`.
     pub fn not_into(&mut self) {
-        crate::kernels::ops::not_inplace(&mut self.data);
+        crate::kernels::ops::not_inplace(self.words_mut());
         self.mask_tail();
     }
 
@@ -279,9 +279,7 @@ impl BitVec {
         }
 
         if k >= self.len_bits {
-            for word in self.data.iter_mut() {
-                *word = 0;
-            }
+            self.words_mut().fill(0);
             return;
         }
 
@@ -291,18 +289,18 @@ impl BitVec {
         if bit_shift == 0 {
             #[cfg(feature = "simd")]
             if let Some(fns) = crate::simd::maybe_simd() {
-                (fns.shift_left_words_fn)(&mut self.data, word_shift);
+                (fns.shift_left_words_fn)(self.words_mut(), word_shift);
                 self.mask_tail();
                 return;
             }
-            for i in (word_shift..self.data.len()).rev() {
-                self.data[i] = self.data[i - word_shift];
+            let data = self.words_mut();
+            for i in (word_shift..data.len()).rev() {
+                data[i] = data[i - word_shift];
             }
-            for i in 0..word_shift.min(self.data.len()) {
-                self.data[i] = 0;
-            }
+            let zeroed = word_shift.min(data.len());
+            data[..zeroed].fill(0);
         } else {
-            crate::residual_shift::shift_left(&mut self.data, word_shift, bit_shift as u32);
+            crate::residual_shift::shift_left(self.words_mut(), word_shift, bit_shift as u32);
         }
 
         self.mask_tail();
@@ -320,9 +318,7 @@ impl BitVec {
         }
 
         if k >= self.len_bits {
-            for word in self.data.iter_mut() {
-                *word = 0;
-            }
+            self.words_mut().fill(0);
             return;
         }
 
@@ -332,18 +328,18 @@ impl BitVec {
         if bit_shift == 0 {
             #[cfg(feature = "simd")]
             if let Some(fns) = crate::simd::maybe_simd() {
-                (fns.shift_right_words_fn)(&mut self.data, word_shift);
+                (fns.shift_right_words_fn)(self.words_mut(), word_shift);
                 self.mask_tail();
                 return;
             }
-            for i in 0..(self.data.len() - word_shift) {
-                self.data[i] = self.data[i + word_shift];
+            let data = self.words_mut();
+            let kept = data.len() - word_shift;
+            for i in 0..kept {
+                data[i] = data[i + word_shift];
             }
-            for i in (self.data.len() - word_shift)..self.data.len() {
-                self.data[i] = 0;
-            }
+            data[kept..].fill(0);
         } else {
-            crate::residual_shift::shift_right(&mut self.data, word_shift, bit_shift as u32);
+            crate::residual_shift::shift_right(self.words_mut(), word_shift, bit_shift as u32);
         }
 
         self.mask_tail();
@@ -360,6 +356,15 @@ impl BitVec {
             .iter()
             .map(|&w| (w.count_ones() & 1) != 0)
             .fold(false, |acc, p| acc ^ p)
+    }
+
+    /// Mutable access to the backing words; discards the rank/select index.
+    ///
+    /// Every mutation of `data` goes through this accessor.
+    #[inline]
+    fn words_mut(&mut self) -> &mut Vec<u64> {
+        *self.rank_select_index.get_mut().unwrap() = None;
+        &mut self.data
     }
 
     /// Builds the rank/select index if not already built.
@@ -668,7 +673,7 @@ impl BitVec {
             "BitSlice range out of bounds"
         );
         crate::BitSliceMut {
-            words: &mut self.data,
+            words: self.words_mut(),
             offset: start,
             len_bits: end - start,
         }
@@ -769,14 +774,14 @@ impl BitVec {
     #[cfg(feature = "rand")]
     pub fn fill_random<R: rand::Rng>(&mut self, rng: &mut R) {
         if !self.data.is_empty() {
-            rng.fill(&mut self.data[..]);
+            rng.fill(&mut self.words_mut()[..]);
             self.mask_tail();
         }
     }
 
     /// Clears all bits, setting the length to zero.
     pub fn clear(&mut self) {
-        self.data.clear();
+        self.words_mut().clear();
         self.len_bits = 0;
     }
 
@@ -789,12 +794,12 @@ impl BitVec {
         if new_len_bits < self.len_bits {
             self.len_bits = new_len_bits;
             let new_num_words = new_len_bits.div_ceil(64);
-            self.data.truncate(new_num_words);
+            self.words_mut().truncate(new_num_words);
             self.mask_tail();
         } else {
             let old_len = self.len_bits;
             let new_num_words = new_len_bits.div_ceil(64);
-            self.data
+            self.words_mut()
                 .resize(new_num_words, if fill_bit { u64::MAX } else { 0 });
             self.len_bits = new_len_bits;
 
@@ -816,7 +821,7 @@ impl BitVec {
         }
         let bits_in_last_word = self.len_bits % 64;
         if bits_in_last_word != 0 {
-            if let Some(last) = self.data.last_mut() {
+            if let Some(last) = self.words_mut().last_mut() {
                 let mask = (1u64 << bits_in_last_word) - 1;
                 *last &= mask;
             }

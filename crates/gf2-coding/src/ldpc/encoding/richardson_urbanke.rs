@@ -28,6 +28,49 @@ impl fmt::Display for PreprocessError {
 
 impl std::error::Error for PreprocessError {}
 
+/// The systematic layout of an LDPC code and the row reduction that fixes it.
+///
+/// A column carries parity when right-to-left pivoting of H gives it a pivot,
+/// that is, when it is independent of the columns to its right; the other
+/// columns carry the message, bit `i` at `message_cols[i]`.
+pub(crate) struct SystematicReduction {
+    /// Reduced row echelon form of H; row `j` has its pivot at `parity_cols[j]`.
+    pub(crate) reduced: BitMatrix,
+    /// Ascending.
+    pub(crate) parity_cols: Vec<usize>,
+    /// Ascending.
+    pub(crate) message_cols: Vec<usize>,
+}
+
+impl SystematicReduction {
+    /// # Errors
+    ///
+    /// [`PreprocessError::RankDeficient`] if the rank of `h` is below its row
+    /// count.
+    ///
+    /// # Complexity
+    ///
+    /// O(m * n * min(m, n)) for the m × n matrix `h`.
+    pub(crate) fn of(h: &BitMatrix) -> Result<Self, PreprocessError> {
+        let reduction = rref(h, true);
+        if reduction.rank != h.rows() {
+            return Err(PreprocessError::RankDeficient);
+        }
+
+        let mut is_parity = vec![false; h.cols()];
+        for &col in &reduction.pivot_cols {
+            is_parity[col] = true;
+        }
+        let message_cols = (0..h.cols()).filter(|&col| !is_parity[col]).collect();
+
+        Ok(Self {
+            reduced: reduction.reduced,
+            parity_cols: reduction.pivot_cols,
+            message_cols,
+        })
+    }
+}
+
 /// Preprocessed systematic-encoding matrices of one LDPC code.
 ///
 /// For G = [I_k | P] only the parity part P is stored, as a dense
@@ -88,9 +131,8 @@ impl RuEncodingMatrices {
         Self::compute_generator_matrix(&h_dense, k, n)
     }
 
-    /// Computes G with H·G^T = 0: RREF with right-to-left pivoting selects m
-    /// independent parity columns, and G = [I_k | P] with
-    /// P[i,j] = H_work[row_order[j], message_cols[i]].
+    /// Computes G = [I_k | P] with H·G^T = 0 from the [`SystematicReduction`]
+    /// of `h`: P[i, j] = reduced[j, message_cols[i]].
     fn compute_generator_matrix(
         h: &BitMatrix,
         k: usize,
@@ -98,54 +140,25 @@ impl RuEncodingMatrices {
     ) -> Result<Self, PreprocessError> {
         let m = h.rows();
 
-        // pivot_from_right=true to prefer parity bits on right
         eprintln!("  Running RREF (word-level + SIMD)...");
-        let rref_result = rref(h, true);
-
-        if rref_result.rank != m {
-            return Err(PreprocessError::RankDeficient);
-        }
-
-        let parity_cols = rref_result.pivot_cols;
-        let h_work = rref_result.reduced;
-        eprintln!("  RREF complete (rank = {})", rref_result.rank);
-
-        let mut message_cols = Vec::new();
-        for col in 0..n {
-            if !parity_cols.contains(&col) {
-                message_cols.push(col);
-            }
-        }
+        let SystematicReduction {
+            reduced: h_work,
+            parity_cols,
+            message_cols,
+        } = SystematicReduction::of(h)?;
+        eprintln!("  RREF complete (rank = {})", m);
 
         if message_cols.len() != k {
             return Err(PreprocessError::GaussianEliminationFailed);
         }
 
-        // rref(h, true) reorders rows so that row i has its pivot at
-        // parity_cols[i], so the identity permutation is the row order.
-        let row_order: Vec<usize> = (0..m).collect();
-
-        #[cfg(debug_assertions)]
-        {
-            for (i, &pcol) in parity_cols.iter().enumerate() {
-                debug_assert!(
-                    h_work.get(i, pcol),
-                    "RREF invariant violated: row {} has no 1 at pivot col {}",
-                    i,
-                    pcol
-                );
-            }
-        }
-
-        // From H·G^T = 0: P[i, j] = H_work[row_order[j], message_cols[i]]
         let mut p = BitMatrix::zeros(k, m);
 
         eprintln!("  Building dense parity matrix ({} × {})...", k, m);
         let mut nnz = 0;
         for (i, &msg_col) in message_cols.iter().enumerate() {
-            for (j, &row_idx) in row_order.iter().enumerate() {
-                let h_val = h_work.get(row_idx, msg_col);
-                if h_val {
+            for j in 0..m {
+                if h_work.get(j, msg_col) {
                     p.set(i, j, true);
                     nnz += 1;
                 }

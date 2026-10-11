@@ -6,8 +6,10 @@
 # the scheduled-window runner exported GF2_BENCH_WINDOW=1.
 
 set -euo pipefail
-repo=$(git rev-parse --show-toplevel)
-active=$(dirname "$(realpath --relative-to="$repo" "$(dirname "${BASH_SOURCE[0]}")")")
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+repo=$(git -C "$here" rev-parse --show-toplevel)
+survey=$(realpath --relative-to="$repo" "$here")
+active=$(dirname "$survey")
 cd "$repo"
 export PATH="/home/vkaskivuo/.cargo/bin:$PATH"
 export RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
@@ -22,7 +24,6 @@ if [[ "$mode" == window && "${GF2_BENCH_WINDOW:-0}" != 1 ]]; then
   exit 2
 fi
 
-survey="$active/survey"
 addendum="$active/shift-profile-addendum.json"
 validation="$active/shift-profile-validation.json"
 producing="$survey/shift-profile-producing-inputs.json"

@@ -1,0 +1,26 @@
+container dev/archive/026fc832-gf2-core-sota-stretch: 86 files, 55 internal links, 0 unresolved, 2 https:
+container dev/archive/2928ccce-dvb-t2-awgn-campaign: 11 files, 4 internal links, 0 unresolved
+container dev/archive/6dc81018-field-capability-dispatch: 60 files, 244 internal links, 0 unresolved
+container dev/archive/6efb756b-grand: 13 files, 0 internal links, 0 unresolved
+container dev/archive/7be754bd-coverage-90: 1 files, 0 internal links, 0 unresolved
+container dev/archive/806eb14e-hip-gpu-prototype: 7 files, 0 internal links, 0 unresolved
+container dev/archive/97bf0879-gf2-core-sota-performance: 58 files, 54 internal links, 0 unresolved, 1 https:
+container dev/archive/ae82bd73-gf2-algebra-permanent: 46 files, 0 internal links, 0 unresolved
+container dev/archive/b7157be6-osd: 8 files, 14 internal links, 0 unresolved
+container dev/archive/babcf05e-gf2-core-ppc-spiral: 18 files, 0 internal links, 0 unresolved
+container dev/archive/bb85c68a-field-linear-algebra: 14 files, 0 internal links, 0 unresolved, 2 https:
+container dev/archive/d4851c3d-modem-framework: 5 files, 0 internal links, 0 unresolved
+container dev/archive/e095a100-gfpm-arithmetic: 19 files, 3 internal links, 0 unresolved, 3 https:
+container dev/archive/f9717e7e-gf2-sim: 23 files, 6 internal links, 0 unresolved, 1 https:
+legacy dev/archive/legacy: 43 files, 60 internal links, 0 unresolved, 8 https:
+deck dev/archive/6efb756b-grand/docs/presentations/6efb756b-grand-sogrand: 4 files, 5 internal links, 0 unresolved, 10 https:, 0 fragment-only
+deck dev/archive/97bf0879-gf2-core-sota-performance/bench_results: 3 files, 2 internal links, 0 unresolved, 11 https:, 0 fragment-only
+deck dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck: 3 files, 2 internal links, 0 unresolved, 11 https:, 0 fragment-only
+deck dev/archive/97bf0879-gf2-core-sota-performance/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral: 3 files, 2 internal links, 0 unresolved, 10 https:, 0 fragment-only
+deck dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent: 4 files, 6 internal links, 0 unresolved, 10 https:, 0 fragment-only
+deck dev/archive/babcf05e-gf2-core-ppc-spiral/presentations/babcf05e-ppc-spiral: 4 files, 2 internal links, 0 unresolved, 10 https:, 0 fragment-only
+deck dev/archive/bb85c68a-field-linear-algebra/docs/presentations/bb85c68a-fieldmatrix: 4 files, 2 internal links, 0 unresolved, 10 https:, 0 fragment-only
+deck dev/archive/d4851c3d-modem-framework/docs/presentations/d4851c3d-modem-framework: 4 files, 5 internal links, 0 unresolved, 10 https:, 0 fragment-only
+deck dev/archive/e095a100-gfpm-arithmetic/active/e095a100-presentation: 4 files, 2 internal links, 0 unresolved, 10 https:, 0 fragment-only
+deck dev/archive/f9717e7e-gf2-sim/presentations: 4 files, 2 internal links, 0 unresolved, 10 https:, 0 fragment-only
+unresolved internal links: 0

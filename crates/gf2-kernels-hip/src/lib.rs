@@ -5,7 +5,7 @@
 //!
 //! # Requirements
 //!
-//! - ROCm with `hipcc`.
+//! - ROCm with `hipcc`; the tests run against ROCm 7.2.4 (HIP 7.2.53211).
 //! - An AMD GPU with the gfx1030 ISA for the linked kernels, which `build.rs`
 //!   compiles for gfx1030 only. [`host::GfxTarget::detect`] returns
 //!   [`HipError::UnsupportedArch`] for a device whose arch has no compiled
@@ -187,20 +187,28 @@ impl DecoderDeviceBuffer {
         self.inner.copy_to_host(dst)
     }
 
-    pub(crate) fn copy_from_pinned_async(
+    /// # Safety
+    ///
+    /// The contract of [`host::DeviceBuffer::copy_from_pinned_async`].
+    pub(crate) unsafe fn copy_from_pinned_async(
         &self,
         src: &host::PinnedHostBuffer<u8>,
         stream: &host::HipStream,
     ) -> Result<(), HipError> {
-        self.inner.copy_from_pinned_async(src, stream)
+        // SAFETY: the caller upholds the forwarded contract.
+        unsafe { self.inner.copy_from_pinned_async(src, stream) }
     }
 
-    pub(crate) fn copy_to_pinned_async(
+    /// # Safety
+    ///
+    /// The contract of [`host::DeviceBuffer::copy_to_pinned_async`].
+    pub(crate) unsafe fn copy_to_pinned_async(
         &self,
         dst: &mut host::PinnedHostBuffer<u8>,
         stream: &host::HipStream,
     ) -> Result<(), HipError> {
-        self.inner.copy_to_pinned_async(dst, stream)
+        // SAFETY: the caller upholds the forwarded contract.
+        unsafe { self.inner.copy_to_pinned_async(dst, stream) }
     }
 }
 
@@ -731,18 +739,30 @@ impl GpuGrayQamDemapper {
         }
 
         let payload_bytes = std::mem::size_of_val(rx_i);
+        // The stream path's async-copy contract, cited by each enqueue below:
+        // the device buffers and the pinned `scratch` buffers are borrowed for
+        // this call; each input staging buffer is written only before its
+        // enqueue and `scratch.out_llrs` is read only after the synchronize;
+        // and `drain` synchronizes `stream` on an error return, before the
+        // borrows end.
+        let mut drain = stream.map(host::streams::StreamDrainOnError::armed);
         match (stream, staging.as_deref_mut()) {
             (Some(stream), Some(scratch)) => {
                 scratch.rx_i.as_mut_slice()[..payload_bytes]
                     .copy_from_slice(f32_slice_as_bytes(rx_i));
-                self.d_rx_i.copy_from_pinned_async(&scratch.rx_i, stream)?;
+                // SAFETY: the stream path's async-copy contract above.
+                unsafe { self.d_rx_i.copy_from_pinned_async(&scratch.rx_i, stream) }?;
                 scratch.rx_q.as_mut_slice()[..payload_bytes]
                     .copy_from_slice(f32_slice_as_bytes(rx_q));
-                self.d_rx_q.copy_from_pinned_async(&scratch.rx_q, stream)?;
+                // SAFETY: the stream path's async-copy contract above.
+                unsafe { self.d_rx_q.copy_from_pinned_async(&scratch.rx_q, stream) }?;
                 scratch.noise_var.as_mut_slice()[..payload_bytes]
                     .copy_from_slice(f32_slice_as_bytes(noise_var));
-                self.d_noise_var
-                    .copy_from_pinned_async(&scratch.noise_var, stream)?;
+                // SAFETY: the stream path's async-copy contract above.
+                unsafe {
+                    self.d_noise_var
+                        .copy_from_pinned_async(&scratch.noise_var, stream)
+                }?;
             }
             _ => {
                 self.d_rx_i.copy_from_host(f32_slice_as_bytes(rx_i))?;
@@ -759,12 +779,18 @@ impl GpuGrayQamDemapper {
                 (Some(stream), Some(scratch)) => {
                     scratch.gain_i.as_mut_slice()[..payload_bytes]
                         .copy_from_slice(f32_slice_as_bytes(gi));
-                    self.d_gain_i
-                        .copy_from_pinned_async(&scratch.gain_i, stream)?;
+                    // SAFETY: the stream path's async-copy contract above.
+                    unsafe {
+                        self.d_gain_i
+                            .copy_from_pinned_async(&scratch.gain_i, stream)
+                    }?;
                     scratch.gain_q.as_mut_slice()[..payload_bytes]
                         .copy_from_slice(f32_slice_as_bytes(gq));
-                    self.d_gain_q
-                        .copy_from_pinned_async(&scratch.gain_q, stream)?;
+                    // SAFETY: the stream path's async-copy contract above.
+                    unsafe {
+                        self.d_gain_q
+                            .copy_from_pinned_async(&scratch.gain_q, stream)
+                    }?;
                 }
                 _ => {
                     self.d_gain_i.copy_from_host(f32_slice_as_bytes(gi))?;
@@ -813,9 +839,15 @@ impl GpuGrayQamDemapper {
         let mut out = vec![0.0f32; out_len];
         match (stream, staging) {
             (Some(stream), Some(scratch)) => {
-                self.d_out_llrs
-                    .copy_to_pinned_async(&mut scratch.out_llrs, stream)?;
+                // SAFETY: the stream path's async-copy contract above.
+                unsafe {
+                    self.d_out_llrs
+                        .copy_to_pinned_async(&mut scratch.out_llrs, stream)
+                }?;
                 stream.synchronize()?;
+                if let Some(drain) = drain.as_mut() {
+                    drain.disarm();
+                }
                 let out_bytes = out_len * std::mem::size_of::<f32>();
                 f32_slice_as_bytes_mut(&mut out)
                     .copy_from_slice(&scratch.out_llrs.as_slice()[..out_bytes]);

@@ -1,0 +1,7 @@
+dev/bench_results/bfc2ceab/r1-spmm-check-pilot2/receipt.json	evidence	Second pilot receipt of the sparse product check-cost family
+dev/bench_results/bfc2ceab/r1-spmm-check-pilot2/acceptance-summary.md	evidence	Acceptance summary of the second sparse product pilot
+dev/bench_results/bfc2ceab/spmm-check-family-ledger.jsonl	evidence	Ledger of the sparse product check-cost family
+dev/bench_results/bfc2ceab/spmm-check-tables.md	evidence	Result tables of the sparse product check-cost family
+dev/active/1a379447-zen3-cpu-performance/bfc2ceab/confirmation-freeze-refusal-spmm-check.json	evidence	Refused freeze of the sparse product confirmation
+dev/active/1a379447-zen3-cpu-performance/bfc2ceab/decision-table.md	design	Decision table with the exploratory cost of the per-product check
+dev/active/1a379447-zen3-cpu-performance/bfc2ceab/verification.md	verification	Verification record with the sparse product family outcome

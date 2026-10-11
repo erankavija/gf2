@@ -11,14 +11,9 @@ use std::time::Duration;
 
 use gf2_algebra::packed::Bipedal3Matrix;
 use gf2_algebra::permanent::{permanent_bipedal3, permanent_mod3_reference};
-use gf2_algebra::testutil::random_matrix;
+use gf2_algebra::testutil::{host_fingerprint, random_matrix};
 
 const S1_SEED_BASE: u64 = 0xc98e_d603_0000_0000_u64;
-
-const HW_MODEL: &str = "AMD Ryzen 9 5900X 12-Core Processor";
-const HW_ARCH: &str = "Zen 3";
-const HW_AVX2: &str = "yes";
-const HW_AVX512: &str = "no";
 
 /// `permanent_mod3_reference` at n ∈ {24, 28}; n ∈ {32, 36} run in the offline
 /// harness.
@@ -60,25 +55,27 @@ fn s1_bench_bipedal3(c: &mut Criterion) {
 criterion_group!(s1_benches, s1_bench_reference, s1_bench_bipedal3);
 
 /// Takes one wall-clock sample per (n, impl) cell for n ∈ {32, 36} up to
-/// `max_n` and writes CSV rows; `csv` must already have a header.
+/// `max_n` and writes CSV rows tagged `hw_tag`; `csv` must already have a
+/// header.
 ///
 /// # Panics
 ///
 /// Panics if `permanent_mod3_reference` and `permanent_bipedal3` disagree on
 /// the same input.
-fn run_offline_cells(csv: &mut (impl std::io::Write + ?Sized), max_n: usize, date: &str) {
+fn run_offline_cells(
+    csv: &mut (impl std::io::Write + ?Sized),
+    max_n: usize,
+    date: &str,
+    hw_tag: &str,
+) {
     use std::time::Instant;
 
     println!("S1 offline harness: single-sample wall-clock timing for n ∈ {{32, 36}}.");
     println!("  date    : {date}");
     println!("  max_n   : {max_n}");
-    println!("  host    : {HW_MODEL}");
-    println!("  arch    : {HW_ARCH}");
-    println!("  avx2    : {HW_AVX2}   avx512: {HW_AVX512}");
+    println!("  host    : {hw_tag}");
     println!("  seed    : {S1_SEED_BASE:#018x}");
     println!();
-
-    let hw_tag = format!("{HW_MODEL}/{HW_ARCH}/AVX2={HW_AVX2}");
 
     for n in [32usize, 36] {
         if n > max_n {
@@ -157,6 +154,7 @@ fn main() {
 
     if offline {
         let date = today_yyyy_mm_dd();
+        let hw_tag = host_fingerprint();
         // `cargo bench` runs the binary in the package directory, so the
         // workspace root is resolved from CARGO_MANIFEST_DIR.
         let workspace_root = {
@@ -187,16 +185,9 @@ fn main() {
             )
             .unwrap();
             writeln!(f, "# date: {date}").unwrap();
-            writeln!(f, "# host: {HW_MODEL}").unwrap();
-            writeln!(f, "# arch: {HW_ARCH}").unwrap();
-            writeln!(f, "# avx2: {HW_AVX2}, avx512: {HW_AVX512}").unwrap();
+            writeln!(f, "# host: {hw_tag}").unwrap();
             writeln!(f, "# seed_base: {S1_SEED_BASE:#018x}").unwrap();
-            writeln!(
-                f,
-                "# method: n=24/28 from Criterion (sample_size=10, 25s measurement_time); \
-                 n=32/36 offline (1 sample each)"
-            )
-            .unwrap();
+            writeln!(f, "# method: one wall-clock sample per (n, impl) cell").unwrap();
             writeln!(
                 f,
                 "n,impl,mean_us,std_us,samples,ratio_vs_reference,hardware_fingerprint"
@@ -210,7 +201,7 @@ fn main() {
             .and_then(|s| s.parse().ok())
             .unwrap_or(36);
 
-        run_offline_cells(&mut *csv, max_n, &date);
+        run_offline_cells(&mut *csv, max_n, &date, &hw_tag);
         let csv_path_display = csv_path.display();
         println!("CSV written/appended to: {csv_path_display}");
         return;

@@ -1,0 +1,17 @@
+{
+  "schema": "tuning-selector-outcomes-v1",
+  "issue": "63bad95d",
+  "outcomes": [
+    {
+      "selector": "bit_matrix.matvec_simd_min_words",
+      "issue": "4337c02e",
+      "record": "dev/active/1a379447-zen3-cpu-performance/4337c02e/outcome.json",
+      "sha256": "75a91a4d218d2e0daa449fef7d59a29464ebcb3e271c67dae6fd39068ce618f5",
+      "outcome": "no-change",
+      "conservative_definition": {
+        "ledger": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
+        "claim": "matvec-threshold-conservative"
+      }
+    }
+  ]
+}

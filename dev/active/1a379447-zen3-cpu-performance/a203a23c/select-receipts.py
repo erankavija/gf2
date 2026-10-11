@@ -10,8 +10,8 @@ path, so a receipt of another schema is skipped and recorded instead of
 evaluated.
 
 Usage:
-  dev/active/1a379447-zen3-cpu-performance/a203a23c/select-receipts.py <tree> --selected-out <path> --skipped-out <path>
-  dev/active/1a379447-zen3-cpu-performance/a203a23c/select-receipts.py --self-test
+  select-receipts.py <tree> --selected-out <path> --skipped-out <path>
+  select-receipts.py --self-test
 """
 
 from __future__ import annotations

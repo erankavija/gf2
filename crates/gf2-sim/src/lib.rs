@@ -44,6 +44,8 @@
 #![warn(missing_docs)]
 
 pub mod batch;
+#[cfg(any(test, feature = "test-support"))]
+pub mod bler_sweep;
 pub mod channels;
 pub mod checkpoint;
 pub mod config;
@@ -95,8 +97,9 @@ pub use parallel::{
 pub use pipeline::{BatchHandle, Pipeline};
 #[doc(inline)]
 pub use snr_checkpoint::{
-    config_hash, run_snr_point_checkpointed, run_sweep_checkpointed, CheckpointReader,
-    CheckpointV2, CheckpointWriter, CheckpointedRun, SweepError, SweepRun, WorkerState,
+    config_hash, pipeline_config_hash, run_snr_point_checkpointed, run_sweep_checkpointed,
+    CheckpointReader, CheckpointV2, CheckpointWriter, CheckpointedRun, SweepError, SweepRun,
+    WorkerState,
 };
 #[doc(inline)]
 pub use stage::{

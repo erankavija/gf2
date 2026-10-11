@@ -1,12 +1,14 @@
 //! CPU channel stages: AWGN, Rayleigh flat-fading, Rician flat-fading. Each
-//! stage maps a [`SymbolBatch`](crate::SymbolBatch) to a
-//! [`SymbolBatch`](crate::SymbolBatch), drawing from the RNG of its
-//! [`ChannelScratch`](awgn::ChannelScratch).
+//! stage maps a [`SymbolBatch`] to a [`SymbolBatch`], drawing from the RNG of
+//! its [`ChannelScratch`](awgn::ChannelScratch).
 
 use rand::Rng as _;
 use rand_chacha::ChaCha20Rng;
 
 use gf2_coding::dvb_t2_bicm_harness::box_muller_cos;
+
+use crate::batch::SymbolBatch;
+use crate::parallel::{DEBUG_ASSERT_WORD_MARGIN, FRAME_STRIDE};
 
 pub mod awgn;
 pub mod rayleigh;
@@ -16,8 +18,32 @@ pub use awgn::Awgn;
 pub use rayleigh::Rayleigh;
 pub use rician::Rician;
 
+/// ChaCha20 32-bit words one [`draw_standard_normal`] call consumes.
+const WORDS_PER_NORMAL: u128 = 4;
+
+/// The largest symbol count of a frame that draws `normals_per_symbol`
+/// [`draw_standard_normal`] samples per symbol within the per-frame budget of
+/// `FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN` words.
+pub(crate) const fn max_frame_symbols(normals_per_symbol: u128) -> usize {
+    ((FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN) / (normals_per_symbol * WORDS_PER_NORMAL)) as usize
+}
+
+/// Panics unless every frame of `batch` has at most `max_symbols` symbols.
+/// `channel` names the stage in the message.
+pub(crate) fn assert_frame_budget(channel: &str, batch: &SymbolBatch, max_symbols: usize) {
+    for (f, (i_frame, q_frame)) in batch.i.iter().zip(batch.q.iter()).enumerate() {
+        let symbols = i_frame.len().max(q_frame.len());
+        assert!(
+            symbols <= max_symbols,
+            "{channel} frame {f} has {symbols} symbols; a frame holds at most {max_symbols} \
+             symbols, which draw FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN = {} ChaCha20 words",
+            FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN
+        );
+    }
+}
+
 /// Draws one `N(0, 1)` sample: two `f64` uniforms fed to [`box_muller_cos`],
-/// consuming exactly 4 ChaCha20 32-bit words.
+/// consuming exactly [`WORDS_PER_NORMAL`] ChaCha20 32-bit words.
 #[inline]
 pub(crate) fn draw_standard_normal(rng: &mut ChaCha20Rng) -> f32 {
     let u1: f64 = rng.random();

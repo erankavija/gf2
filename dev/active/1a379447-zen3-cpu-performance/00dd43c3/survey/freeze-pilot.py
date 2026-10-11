@@ -28,9 +28,9 @@ def encoded(value):
 
 
 def outputs():
-    receipt_bytes = PROFILE_RECEIPT.read_bytes()
-    summary = json.loads(PROFILE_SUMMARY.read_text())
-    profile = json.loads(PROFILE_ADDENDUM.read_text())
+    receipt_bytes = (ROOT / PROFILE_RECEIPT).read_bytes()
+    summary = json.loads((ROOT / PROFILE_SUMMARY).read_text())
+    profile = json.loads((ROOT / PROFILE_ADDENDUM).read_text())
     digest = hashlib.sha256(receipt_bytes).hexdigest()
     if summary["verdict"] != "accepted" or summary["receipt_sha256"] != digest:
         raise SystemExit("the workload profile is not an accepted pinned receipt")
@@ -51,7 +51,7 @@ def outputs():
         "profile_receipt": {"path": str(PROFILE_RECEIPT), "sha256": digest},
         "profile_summary": {
             "path": str(PROFILE_SUMMARY),
-            "sha256": hashlib.sha256(PROFILE_SUMMARY.read_bytes()).hexdigest(),
+            "sha256": hashlib.sha256((ROOT / PROFILE_SUMMARY).read_bytes()).hexdigest(),
         },
         "material_cells": [cell["cell_id"] for cell in cells],
     }
@@ -139,10 +139,10 @@ def main():
     args = parser.parse_args()
     for path, expected in outputs().items():
         if args.check:
-            if path.read_text() != expected:
+            if (ROOT / path).read_text() != expected:
                 raise SystemExit(f"{path} differs from its pinned profile projection")
         else:
-            path.write_text(expected)
+            (ROOT / path).write_text(expected)
         print(path)
 
 

@@ -19,10 +19,9 @@ This runs automatically as Step 3 of `scripts/verify-lean.sh`.
 `wrapping_neg` and U128 `add`/`add_assign`. The `verify-lean.sh` script only
 seeds from the template on first run; it never overwrites the hand-edited file.
 
-`overflowing_sub` was previously hand-defined here too, but Aeneas 0f99a049
-provides it natively as a pure `U64 → U64 → (U64 × Bool)` (consumed via `lift`);
-the hand-written `Result`-returning override conflicted with it and was removed
-(issue 150d7d79).
+The file holds no `overflowing_sub` override: Aeneas provides it natively as a
+pure `U64 → U64 → (U64 × Bool)` (consumed via `lift`), and a `Result`-returning
+override conflicts with it.
 
 ## Opaque modules
 
@@ -36,7 +35,6 @@ they are outside the verification scope or cause extraction issues:
 | `gf2_core::gf2m::generation` | Uses `gf2m::field` types |
 | `gf2_core::gf2m::uint_ext` | Sealed trait, out of scope |
 | `gf2_core::gf2m::thread_safety_tests` | Test module |
-| ~~`gf2_core::gfpn`~~ | Now transparent (was opaque before Charon HRTB patches) |
 | `gf2_core::bitvec` | Out of scope (bit manipulation, not field arithmetic) |
 | `gf2_core::bitslice` | Out of scope |
 | `gf2_core::matrix` | Out of scope |
@@ -48,15 +46,14 @@ they are outside the verification scope or cause extraction issues:
 | `gf2_core::io` | Serde, not supported by Aeneas |
 | `gf2_core::macros` | Proc macros, not relevant |
 
-The `field::traits::FiniteField` and `ConstField` trait *declarations* are still
+The `field::traits::FiniteField` and `ConstField` trait *declarations* are
 extracted (needed for the `Fp` impl), but their bodies are opaque.
 
 ## gfpn/ extraction and verification
 
-The `gfpn/` module (`QuadraticExt`, `CubicExt`) is now fully extracted and
-verified. This required three patches to our local Charon build (HRTB erase,
-SelfClause/Local unification, implied clause constraint propagation) and the
-post-processing workarounds described above. See
+The `gfpn/` module (`QuadraticExt`, `CubicExt`) is fully extracted and
+verified. It needs the implied-clause Charon patch of the tool-version table
+and the post-processing workarounds described above. See
 [`docs/how-to/formal-verification.md`](../docs/how-to/formal-verification.md) for the workflow.
 
 Charon emits 13 benign "Type error after transformations" warnings about
@@ -93,24 +90,23 @@ from `Types.lean`. This is outside the `gfp/` and `gfpn/` proof target.
 ## FiniteField default method projection extraction
 
 Aeneas 5220259c can generate `FiniteField` implementation records that project
-default trait methods from impl-specific constants it never emitted. This showed
-up after adding delayed product-sum hooks as missing
-`mul_product_sum_wide`/`reduce_product_sum_wide` definitions for
-`GoldilocksFp`, `QuadraticExt`, and `CubicExt`.
+default trait methods from impl-specific constants it never emitted. The
+delayed product-sum hooks `mul_product_sum_wide`/`reduce_product_sum_wide` of
+`GoldilocksFp`, `QuadraticExt`, and `CubicExt` are the affected definitions.
 
-The production Rust impls for those three field families now explicitly forward
+The production Rust impls for those three field families explicitly forward
 the hooks to the same canonical wide path used by the trait defaults:
 `mul_product_sum_wide` calls `mul_to_wide`, and `reduce_product_sum_wide` calls
 `reduce_wide`. This is intentionally narrow: `gfp/` and scalar `gfpn/`
 arithmetic remain transparent to Charon/Aeneas, and the specialized
-storage-domain product-sum override for generic `Fp<P>` remains unchanged.
+storage-domain product-sum override for generic `Fp<P>` is unaffected.
 
 ## gf2m/ selective extraction
 
-The `gf2m` module was originally fully opaque due to `Arc<FieldParams>` and
-`Option<Vec<u16>>` in `Gf2mField_<V>`. To verify `mul_raw` (schoolbook GF(2^m)
-multiplication), a monomorphized u64 free function `gf2m_mul_raw` was extracted
-into `gf2m/mul_raw.rs`.
+`Gf2mField_<V>` holds `Arc<FieldParams>` and `Option<Vec<u16>>`, which keep
+`gf2m::field` opaque. The proof target for `mul_raw` (schoolbook GF(2^m)
+multiplication) is the monomorphized u64 free function `gf2m_mul_raw` in
+`gf2m/mul_raw.rs`.
 
 **Key**: Charon's `--opaque gf2_core::gf2m` prevents exploring the module
 entirely, so `--include gf2_core::gf2m::mul_raw` within it has no effect.
@@ -119,16 +115,16 @@ The solution is to make individual submodules opaque (`gf2m::field`,
 leaving `gf2m::mul_raw` transparent.
 
 The extracted loop uses Aeneas's `loop` combinator with `(result, temp, i)`
-state. The Rust `while i < m` loop (replacing `for i in 0..m` which has a
-runtime bound) extracts cleanly.
+state. The Rust loop is `while i < m`, in place of a `for i in 0..m` over a
+runtime bound, and extracts cleanly.
 
 ## Const generics work
 
 `Fp<const P: u64>` extracts correctly — Charon handles const generics and
-Aeneas translates `P` as a Lean4 parameter `(P : Std.U64)`. No monomorphization
-wrappers were needed.
+Aeneas translates `P` as a Lean4 parameter `(P : Std.U64)`. `Fp` needs no
+monomorphization wrapper.
 
-## gf2-algebra bipedal F_3 extraction (D2 / JIT f05ffbe1)
+## gf2-algebra bipedal F_3 extraction
 
 The `Gf2Algebra/` Lean library is a second Aeneas extraction covering only the
 bipedal F_3 packed arithmetic at `gf2_algebra::packed::bipedal3::Bipedal3`,

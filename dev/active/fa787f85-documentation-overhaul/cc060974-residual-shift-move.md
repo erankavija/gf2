@@ -16,16 +16,17 @@
 | Commit | Content |
 |---|---|
 | `ef15dadc9`, `88227cc19` | baseline script and output |
-| `b47e9ebfa` | 23 scripts resolve the root and their entry at run time; its message lists each edit per entry |
+| `b47e9ebfa` | entry scripts resolve path literals and depth counts at run time; its message lists each edit per entry |
 | `b911fe67c` | `git mv`, link targets, three generated files, manifest rows |
 | `37391ec5c` | path text in eight Markdown files |
 | the commit that adds this record | the baseline script with its commit argument and order-free digest, its two outputs, the listing of flat paths, the verdict repeat |
+| `5ef8fba75`, `277806d89` | entry scripts take the root from git run in their own directory and join default paths to it; each message lists the scripts |
 
 ## Baseline and repeat (REQ-02)
 
 Command, run from the repository root:
-`R/cc060974-baseline.sh <outfile> [<commit>]`. Its header states each line
-form. It runs in a scratch clone of the commit: the two script tests,
+`R/cc060974-baseline.sh <outfile> [<commit> [<directory>]]`. Its header states
+each line form. It runs in a scratch clone of the commit: the two script tests,
 `make-shift-producing-inputs.py --check`, and the generators of the table
 "Generators".
 
@@ -34,6 +35,7 @@ form. It runs in a scratch clone of the commit: the two script tests,
 | `88227cc19`, the parent of the decoupling | `cc060974-baseline-before.txt` |
 | `b47e9ebfa`, after the decoupling | `diff` against `cc060974-baseline-before.txt` prints nothing |
 | `37391ec5c`, after the move | `cc060974-baseline-after.txt` |
+| `277806d89`, from the root and with `/tmp` as `<directory>` | `diff` of each against the output at its parent `fd6b3bf71` prints nothing |
 
 This command prints the three differences of the table below and nothing
 else:
@@ -43,11 +45,11 @@ F='s# raw=[0-9a-f]*##; s#dev/active/1a379447-zen3-cpu-performance/\(00dd43c3\|c0
 diff <(sed "$F" R/cc060974-baseline-before.txt) <(sed "$F" R/cc060974-baseline-after.txt)
 ```
 
-| Line of the listing | Before | After | Cause |
-|---|---|---|---|
-| `Z/survey/producing-inputs.json` rewritten in place | 10 added, 0 deleted | 22 added, 12 deleted; same `flat` digest | the committed manifest is receipt-pinned and states 12 flat paths; the generator lists the tree it runs on |
-| `C/survey/dvb-producing-inputs.json` rewritten in place | 18 added, 577 deleted | 38 added, 597 deleted; same `flat` digest | as above, 20 flat paths |
-| `make-publication-tables.py` against `publication-tables.md` | `same` | `same`, other `flat` digest | the table states the SHA-256 of five Markdown files whose link targets `b911fe67c` changes |
+| Line of the listing | Difference | Cause |
+|---|---|---|
+| `Z/survey/producing-inputs.json` rewritten in place | added and deleted line counts; same `flat` digest | the committed manifest is receipt-pinned and states flat paths; the generator lists the tree it runs on |
+| `C/survey/dvb-producing-inputs.json` rewritten in place | as above | as above |
+| `make-publication-tables.py` against `publication-tables.md` | `same` in both, other `flat` digest | the table states the SHA-256 of Markdown files whose link targets `b911fe67c` changes |
 
 | Does not establish | Reason |
 |---|---|
@@ -64,33 +66,37 @@ diff <(sed "$F" R/cc060974-baseline-before.txt) <(sed "$F" R/cc060974-baseline-a
 | `C/survey`: `freeze-shift-addendum.py`, `inspect-shift-consumers.py`, `make-dvb-addendum.py`, `make-dvb-plan.py`, `make-dvb-tables.py`, `make-producing-inputs.py`, `make-profile-provenance.py`, `make-publication-tables.py`, `make-shift-plan.py`, `make-shift-producing-inputs.py`, `make-source-evidence.py`, `make-voided-attempt.py`, `make-voided-attempt-record.py`, `summarize-profile.py`, `summarize-shift-receipt.py` | yes | |
 | `C/survey/make-shift-source-evidence.py` | yes; exits 1 at each commit (V1) | |
 | `C/survey/find-shift-executable.py` | no | reads the message stream of a `cargo build` |
-| `C/survey/summarize-arm-smoke.py`, `Z/survey/verify-smoke.py` | no | read the smoke record and plan of a built arm under `target/` |
-| each `.sh` of `Z/survey` and `C/survey` | no | builds, or runs in a benchmark window; `bash -n` passes for each at `b47e9ebfa` |
+| `C/survey/summarize-arm-smoke.py`, `Z/survey/verify-smoke.py` | no | read the smoke record and plan of a built arm |
+| each `.sh` of `Z/survey` and `C/survey` | no | builds, or runs in a benchmark window; `bash -n` passes for each at `277806d89` |
 
 ## Scripts (REQ-01)
 
-Root: `git rev-parse --show-toplevel`. Entry directory: the script location.
-The message of `b47e9ebfa` names the lookup of each file of another entry:
-`repository_files.live_file` by name, `repository_files.document` by opening
-line, in shell `dev/scripts/repository_files.py file <name>`.
+`R/cc060974-scripts.sh <outfile>` lists each line of an entry script that
+names the script location, the root, a directory step, the working directory,
+a `repository_files` lookup or an active path, with the scripts that hold it;
+`cc060974-scripts.txt` is its output at `277806d89`.
 
-This command lists each line of an entry script that names `dev/active`,
-counts levels or holds `../`:
+| Aspect | Lines of the listing | Form |
+|---|---|---|
+| Root | `show-toplevel` | git runs with `-C` on the script directory, taken from `__file__` or `BASH_SOURCE` |
+| Entry directory | `SURVEY.parent`, `os.path.dirname(HERE)`, `dirname "$survey"`, `dirname "${SURVEY}"` | the parent of the script directory |
+| Directory levels | `dirname`, `.parent`, `../` | one level per `dirname` or `.parent`, each on a named path; no `parents[`, no `pardir`; the `../` is link text of `profile-summary.md` |
+| File of another entry | `repository_files` | `live_file` and `file` by name, `document` by opening line |
+| Default paths, `.py` | `cwd=ROOT` | joined to the root: section "Baseline and repeat", row of `277806d89` |
+| Default paths, `.sh` | `cd`, `pwd -P` | the script changes to the root, or exits unless the working directory is the root |
 
-```
-git grep -nE 'dev/active|parents\[|\.\./|pardir' -- 'Z/survey/*.py' 'Z/survey/*.sh' 'C/survey/*.py' 'C/survey/*.sh'
-```
+A script without a `show-toplevel` line opens what its arguments name, a
+temporary directory, a sibling through `with_name` or, in `capture-asm.sh`,
+its own directory. Each `dev/active` line of the listing belongs to a row of
+the table below; no script of `Z` holds one.
 
-At `37391ec5c` it prints the lines of this table and no line of `Z`. REQ-01
-is unmet for each line of rows one to four.
-
-| Lines of `C/survey` | Ground: text a script reproduces from a frozen document or committed record |
-|---|---|
-| `freeze-shift-addendum.py:19`, `make-dvb-addendum.py:28` | `family_wise.ledger_path` of the frozen addenda `C/shift-profile-addendum.json:35` and `C/dvb-profile-addendum.json:35`; `--check` and the baseline compare the bytes |
-| `make-profile-provenance.py:39-47,218` | paths of the tree the profile session names in `host.txt`, read with `git show <revision>:<path>` and printed into the two committed provenance records, which the baseline reproduces as `same` |
-| `make-voided-attempt.py:30,102,103`, `make-voided-attempt-record.py:18,43,49,50` | text of `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json` and `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json`, which the baseline leaves unchanged |
-| `summarize-shift-receipt.py:32` | entry path in `dev/bench_results/c04dd4ac/residual-shift-tables.md`, which the baseline leaves unchanged |
-| `summarize-profile.py:49` | a relative link in the text of `profile-summary.md`; it locates no file |
+| Script of `C/survey` | Record text | Path, with its pin where flat |
+|---|---|---|
+| `freeze-shift-addendum.py`, `LEDGER` | `family_wise.ledger_path`, `C/shift-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/shift-profile-trial-ledger.jsonl:1`, `C/shift-profile-smoke.json:8` and `dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json:3865` -> @/issue/dfff0e05 |
+| `make-dvb-addendum.py`, `LEDGER` | `family_wise.ledger_path`, `C/dvb-profile-addendum.json:35` | flat; SHA-256 of the addendum at `C/dvb-profile-trial-ledger.jsonl:1`, `C/survey/runner-smoke.txt:5` and `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/receipt.json:3865` -> @/issue/dfff0e05 |
+| `make-profile-provenance.py` | paths in the `v4-r2` and `v4-r3` provenance records of `dev/bench_results/c04dd4ac/dvb-interleave-profile/` | path at the revision the `host.txt` of the profile session records, read with `git show <revision>:<path>`: flat except `QUEUE` |
+| `make-voided-attempt.py`, `make-voided-attempt-record.py` | `dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-voided-profile-attempt.json`, `dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json` | under `E`; records written in `78d74ddb3` |
+| `summarize-shift-receipt.py`, `ACTIVE` | `dev/bench_results/c04dd4ac/residual-shift-tables.md` | as above |
 
 ## Move (REQ-03, REQ-04, REQ-06)
 
@@ -117,41 +123,34 @@ nothing at `b911fe67c`.
 | relative link targets | `Z/confirmation-outcome.md`; eight Markdown files of `C`; `E/f8dd4dde/retention-rule.md`, `E/handoff-18.md` to `E/handoff-22.md`, four files of `E/reviews/` | `b911fe67c` |
 | path text | `C/publication-findings.md`, `E/handoff-10.md`, `E/handoff-11.md`, `E/handoff-16.md`, `E/handoff-17.md`, `E/handoff-19.md`, `E/reviews/9fb40c83-r8.md`, `E/reviews/c04dd4ac-r2.md` | `37391ec5c` |
 
-`python3 contrib/gates/docs-mechanical.py` prints
-`PASS: 0 finding(s), 15 baselined` at each commit of the table "Commits"; it
-checks each inline and reference link of `dev/active/**/*.md` and no path
-inside a JSON string. Each Markdown file the unit changes lies under
-`dev/active/`. `8f61d6de-baseline-findings.md` names no file of the two
-entries as a source: the unit removes 0 rows and adds 0.
+`python3 contrib/gates/docs-mechanical.py` prints `PASS` with 0 findings at
+each commit of the table "Commits"; it checks each inline and reference link
+of `dev/active/**/*.md` and no path inside a JSON string. Each Markdown file
+that `b911fe67c` or `37391ec5c` changes lies under `dev/active/`.
+`contrib/gates/docs-mechanical-baseline.md` names no file of the two entries as a source.
 
 `R/cc060974-remaining.sh <outfile>` classifies each line of a tracked file
-outside `.jit/` and outside the `cc060974-` files of `R` that holds
+in the scope its header states that holds
 `dev/active/<entry>` for one of the two entries; `cc060974-remaining.txt` is
-its output at `37391ec5c`, with the file and line count of each class, and
-holds no line of the class `unclassified`.
+its output and holds no line of the class `unclassified`.
 
 | Class | Ground |
 |---|---|
 | `snapshot` | receipt `inputs/` snapshots |
 | `receipt-directory` | receipts, logs, plans, checkpoints, ledgers and tables under `dev/bench_results/` |
 | `manifest` | `path`, `consumers` and `inbound` fields of the migration manifest |
-| `tracker-state` | `E/progress.json` |
 | `bench-window` | `E/bench-window/queue.tsv`; the job key hashes the command text |
-| `data-record` in `Z` and `C` | receipt-pinned inputs (the two producing manifests, two addenda) and output of the freezer and of built tools at the commit that adds each file (the derivation record, three smoke records, `harness-validation.txt`, `runner-smoke.txt`) |
+| `data-record` in `Z` and `C` | receipt-pinned producing manifests and addenda; output of the freezer and of built tools at the commit that adds each file (derivation and smoke records, `harness-validation.txt`, `runner-smoke.txt`) |
 | `data-record` and `generated-table` in `E/63bad95d` | tool output at `2d9fdf471`: `calibration-budget.json`, `route-inventory.json` and the tables their generators write beside them (V2) |
-| `breakdown-manifest` | `C/breakdown.json`, the manifest the tracker instantiated; four of its paths name files the tree never held |
 | `record-text` | table "Scripts" |
-| `epic-record` | records, scripts and raw outputs of other units in `R`; each describes the tree of the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
-
-The classes `breakdown-manifest` and `epic-record` are outside the grounds
-the unit's assignment lists; the return of the unit raises both.
+| `epic-record` | records, scripts and raw outputs of other units in `R`: text bound to the commit `git log -1 --follow --diff-filter=AM --format=%h -- <file>` names |
 
 ## Divergences
 
 | Id | Divergence | Tracking |
 |---|---|---|
-| V1 | `C/survey/make-shift-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/bitvec.rs` lacks the fragment `self.data[i] = (self.data[i - word_shift] << bit_shift)` | -> c3ef9ee7 (`jit issue show c3ef9ee7`) |
-| V2 | `E/63bad95d/survey/make-calibration-budget.py` and `make-route-inventory.py` list tracked paths; on a clone of `37391ec5c` they rewrite `calibration-budget.json`, `calibration-budget.md`, `route-inventory.json` and `route-inventory.md` with other bytes, and the committed lines `:151`, `:104`, `:2421,2422` and `:386` of those files state the flat path of the two entries | -> 63bad95d (`jit issue show 63bad95d`), the open issue that owns both generators |
+| V1 | `C/survey/make-shift-source-evidence.py` exits 1 at the baseline and at the repeat: `crates/gf2-core/src/bitvec.rs` lacks the fragment `self.data[i] = (self.data[i - word_shift] << bit_shift)` | -> @/issue/c3ef9ee7 |
+| V2 | `E/63bad95d/survey/make-calibration-budget.py` and `make-route-inventory.py` list tracked paths; on a clone of `37391ec5c` they rewrite `calibration-budget.json`, `calibration-budget.md`, `route-inventory.json` and `route-inventory.md` with other bytes, and the committed lines `:151`, `:104`, `:2421,2422` and `:386` of those files state the flat path of the two entries | -> @/issue/63bad95d, the open issue that owns both generators |
 
 ## Verdicts (REQ-07)
 
@@ -164,9 +163,9 @@ dev/bench_results dev/tools` prints nothing.
 
 | Check | Command | Result | Does not establish |
 |---|---|---|---|
-| Manifest | `python3 R/migration/check.py` at `b911fe67c` and after | no finding, exit 0: the 88 rows whose path is one of the two flat directories or lies below one are `complete`, and each source lies at its destination under `E` | |
-| Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each of the 13 steps `ok` on the tree of `37391ec5c` | the CI verdict: the filtered run omits every cargo step, and the `cargo-ci` gate runs on the merged tree |
-| Tracker | the two commands below, on the main checkout | 84 unpinned references under the two flat paths and 4 commit-pinned ones, which keep the path of their commit | the tracker changes themselves: the relink script of the unit's return makes them on the main checkout |
+| Manifest | `python3 R/migration/check.py` at `b911fe67c` and after | no finding, exit 0: each row whose path is one of the two flat directories or lies below one is `complete`, and each source lies at its destination under `E` | |
+| Python CI steps | `CARGO_CI_STEPS='^(repository-files-self-test\|campaign-producing-closure-self-test\|campaign-producing-closure\|family-producing-closures-self-test\|family-producing-closures\|tuning-campaign-records\|receipt-input-snapshots-self-test\|receipt-input-snapshots\|addendum-schema-versions-self-test\|addendum-schema-versions\|docs-mechanical-self-test\|tuning-campaign-launcher-syntax\|tuning-campaign-validator)$' ./scripts/cargo-ci.sh` | each step `ok` on the tree of `37391ec5c` | the CI verdict: the filtered run omits every cargo step |
+| Tracker | the two commands below | the first prints 0; the second counts the commit-pinned references, which keep the path of their commit | |
 
 ```
 P='^dev/active/(00dd43c3|c04dd4ac-zen3-shifts-and-permutations)(/|$)'
@@ -174,19 +173,18 @@ jq -r '.documents[]? | select(.commit == null) | .path' .jit/issues/*.json | gre
 jq -r '.documents[]? | select(.commit != null) | .path' .jit/issues/*.json | grep -cE "$P"
 ```
 
-`git -C <main checkout> status --short --ignored` prints one ignored path
-under the two flat directories:
-`dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/__pycache__/`.
+`git -C <main checkout> status --short --ignored -- dev/active/<entry>` prints
+nothing for the two entries: the flat directories hold no ignored file.
 
 ## Criteria
 
 | Criterion | Evidence | Does not establish |
 |---|---|---|
-| REQ-01 | section "Scripts"; message of `b47e9ebfa` | unmet for each line of rows one to four of its table, which keeps a `dev/active/` literal as record text |
+| REQ-01 | section "Scripts" | a run of a `.sh` script, or of the lines after the exit of the two generators that exit 1; a script without a `show-toplevel` line resolves no root |
 | REQ-02 | section "Baseline and repeat" | the launchers and the smoke comparisons |
 | REQ-03 | section "Move"; table "Entries" | |
 | REQ-04 | row 1 of the generated files; closure check | the closure-freshness of other families, which the same check covers |
-| REQ-05 | section "Citations"; `git diff -M --name-status b47e9ebfa 37391ec5c` shows each addendum, ledger, smoke record and pinned producing manifest as `R100` | `C/breakdown.json` and the records of `E/63bad95d` keep their citations |
+| REQ-05 | section "Citations"; `git diff -M --name-status b47e9ebfa 37391ec5c` shows each addendum, ledger, smoke record and pinned producing manifest as `R100` | the records of `E/63bad95d` keep their citations |
 | REQ-06 | row 2 of the generated files | |
 | REQ-07 | section "Verdicts" | |
-| REQ-08 | section "Manifest and tracker" | the tracker references and the `cargo-ci` gate, which belong to the main checkout |
+| REQ-08 | section "Manifest and tracker"; gate `cargo-ci` of @/issue/cc060974 | |

@@ -53,8 +53,8 @@ const _: () = {
 ///
 /// Panics if `mat.cols() > N_MAX_MULTIWORD` (`n` must be `≤ 255`).
 ///
-/// Panics if `mat.cols() == 0` (the zero-dimension edge case belongs to
-/// `permanent_bipedal3_singleword` / the dispatcher).
+/// Panics if `mat.cols() == 0`; the dispatcher evaluates the `0 × 0`
+/// permanent on the single-word path.
 ///
 /// # Complexity
 ///
@@ -77,9 +77,11 @@ pub fn permanent_bipedal3_multiword(mat: &Bipedal3Matrix) -> Fp<3> {
         n <= N_MAX_MULTIWORD,
         "permanent_bipedal3_multiword: n = {n} exceeds N_MAX_MULTIWORD = {N_MAX_MULTIWORD}"
     );
-    // No lower-bound assert: the counter and word loops handle
-    // `1..=N_MAX_MULTIWORD` uniformly, and the tests call this path directly
-    // at small `n`.
+    assert!(
+        n >= 1,
+        "permanent_bipedal3_multiword: n must be at least 1; \
+         permanent_bipedal3 evaluates the 0 x 0 permanent"
+    );
 
     let w = n.div_ceil(64);
 
@@ -348,6 +350,13 @@ mod tests {
         let n = N_MAX_MULTIWORD + 1;
         let data = vec![Fp::<3>::new(0); n * n];
         let m = Bipedal3Matrix::from_row_major(&data, n, n);
+        let _ = permanent_bipedal3_multiword(&m);
+    }
+
+    #[test]
+    #[should_panic(expected = "n must be at least 1")]
+    fn test_multiword_panics_on_empty_matrix() {
+        let m = Bipedal3Matrix::from_row_major(&[], 0, 0);
         let _ = permanent_bipedal3_multiword(&m);
     }
 

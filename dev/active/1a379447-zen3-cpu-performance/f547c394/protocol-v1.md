@@ -2,7 +2,7 @@
 
 Protocol `zen3-benchmark-protocol` version 1. This document is the executable
 shared protocol required by the
-[measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
+[measurement contract](../measurement-contract.md)
 of epic `1a379447`. Every rule below is enforced by a check the acceptance tool
 performs or by a field a receipt must carry; the rule identifiers `P-NN` are the
 finding codes the tool emits. Family and cell settings that the contract leaves

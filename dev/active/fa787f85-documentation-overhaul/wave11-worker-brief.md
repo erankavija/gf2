@@ -22,9 +22,8 @@ place you write.
 - `dev/active/fa787f85-documentation-overhaul/plan.md`, sections
   `migration-manifest`, `relocation-protocol`, `archive-execution-protocol`,
   `active-layout`.
-- `dev/active/fa787f85-documentation-overhaul/migration/` (`manifest.toml`,
-  `check.py`, `check_test.py`). Manifest rows are single lines of many
-  kilobytes: never `cat`, `grep` or `sed -n` the file raw. Parse it with Python
+- `dev/active/fa787f85-documentation-overhaul/migration/manifest.toml`.
+  Manifest rows are single lines of many kilobytes: never `cat`, `grep` or `sed -n` the file raw. Parse it with Python
   and print selected fields only. Edit rows by a Python script that changes
   only the fields you own (`status`, and `destination` when the plan requires)
   and leaves every other byte of the file intact.
@@ -89,8 +88,8 @@ place you write.
 ## Checks before you return
 
 - `python3 contrib/gates/docs-mechanical.py` passes.
-- `python3 dev/active/fa787f85-documentation-overhaul/migration/check.py` (read
-  its usage first) passes for the rows you changed.
+- `migration/manifest.toml` parses with `tomllib` and each row you changed has
+  status `complete`.
 - Every local link in each file you touched and each directory you moved
   resolves (the record names the command).
 - `git status --short` shows nothing outside `target/`.

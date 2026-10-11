@@ -1,0 +1,141 @@
+{
+  "schema": "ldpc-batch-arms-v1",
+  "cites": [
+    "Cassagne2019"
+  ],
+  "codes": {
+    "dvb-t2-r12": {
+      "bundle": "dvb-t2-r12-waterfall",
+      "code": "dvb-t2-r12"
+    },
+    "nr-bg1-z384": {
+      "bundle": "nr-bg1-z384-mother",
+      "code": "nr-bg1-r12"
+    }
+  },
+  "arms": {
+    "gf2-batch-single-frame": {
+      "source": "workspace",
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "native",
+      "comparison": "baseline",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "gf2-coding LdpcBatchDecoder on the single-frame route",
+      "environment": {},
+      "package": "ldpc-batch-arms"
+    },
+    "gf2-batch-lane-avx2": {
+      "source": "workspace",
+      "executable": "gf2-batch-lane-arm",
+      "build": "native",
+      "comparison": "candidate",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "gf2-coding LdpcBatchDecoder on the lane route, AVX2 lane backend",
+      "environment": {
+        "GF2_LDPC_LANE_BACKEND": "avx2"
+      },
+      "package": "ldpc-batch-arms"
+    },
+    "gf2-batch-lane-portable": {
+      "source": "workspace",
+      "executable": "gf2-batch-lane-arm",
+      "build": "native",
+      "comparison": "candidate",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "gf2-coding LdpcBatchDecoder on the lane route, portable lane backend",
+      "environment": {
+        "GF2_LDPC_LANE_BACKEND": "portable"
+      },
+      "package": "ldpc-batch-arms"
+    },
+    "aff3ct-flooding-nms-f32": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      },
+      "build": "external",
+      "comparison": "matched",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "simd": "none",
+      "description": "AFF3CT [Cassagne2019] flooding normalized min-sum, one clone per pinned worker",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      }
+    },
+    "aff3ct-layered-nms-f32-inter": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      },
+      "build": "external",
+      "comparison": "fastest-compatible",
+      "precision": "f32",
+      "schedule": "layered",
+      "update_rule": "normalized-min-sum",
+      "simd": "INTER",
+      "description": "AFF3CT [Cassagne2019] horizontal-layered normalized min-sum, inter-frame SIMD, one clone per pinned worker",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "horizontal-layered",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "INTER",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      }
+    },
+    "aff3ct-layered-nms-i16-inter": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      },
+      "build": "external",
+      "comparison": "fastest-compatible",
+      "precision": "i16",
+      "schedule": "layered",
+      "update_rule": "normalized-min-sum",
+      "simd": "INTER",
+      "description": "AFF3CT [Cassagne2019] horizontal-layered normalized min-sum, inter-frame SIMD, one clone per pinned worker",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "horizontal-layered",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "INTER",
+        "GF2_AFF3CT_PRECISION": "i16",
+        "GF2_AFF3CT_QUANT_SCALE": "16",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      }
+    },
+    "aff3ct-spa-intra": {
+      "source": "workspace",
+      "executable": "aff3ct-intra-arm",
+      "build": "external",
+      "comparison": "fastest-compatible",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "sum-product",
+      "simd": "INTRA",
+      "description": "AFF3CT [Cassagne2019] flooding sum-product, intra-frame SIMD, one clone per pinned worker",
+      "environment": {},
+      "package": "ldpc-aff3ct-intra-arm"
+    }
+  }
+}

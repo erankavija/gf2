@@ -24,8 +24,17 @@ favours the prototype.
 """
 
 import json
+import subprocess
 import sys
+from pathlib import Path
 
+HERE = Path(__file__).resolve().parent
+ROOT = Path(subprocess.run(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
+                           check=True, capture_output=True, text=True).stdout.strip())
+sys.path.insert(0, str(ROOT / "dev/scripts"))
+import repository_files  # noqa: E402
+
+ACTIVE = HERE.parent.relative_to(ROOT).as_posix()
 ISSUE = "19513245"
 LEDGERS = f"dev/bench_results/{ISSUE}"
 KIB = 1024
@@ -34,7 +43,7 @@ MIB = 1024 * KIB
 RNG = (
     "Operands come from SplitMix64 [Steele2014] as implemented in tuning-campaign-support 0.1.0 "
     "(dev/tools/tuning-campaign-support/src/abtest.rs), seeded with the cell's workload seed and "
-    "read through OperandStream in dev/active/6c6b09b1/survey/arm-common/src/lib.rs: each operand "
+    f"read through OperandStream in {repository_files.package_directory(ROOT, 'byte-field-arm-common')}/src/lib.rs: each operand "
     "byte is the low byte of one output, and the fixed coefficient of a region or vector cell is "
     "the next output's low byte with its low bit set, so no cell measures the zero coefficient "
     "(the validation covers that case and every other byte coefficient)."
@@ -269,8 +278,8 @@ def main():
             "holdout": {"required": False, "cells": []},
             "cells": cells(),
         }
-        path = f"dev/active/1a379447-zen3-cpu-performance/{ISSUE}/addendum-v{version}-{short}-pilot.json"
-        with open(path, "w") as output:
+        path = f"{ACTIVE}/addendum-v{version}-{short}-pilot.json"
+        with open(ROOT / path, "w") as output:
             json.dump(addendum, output, indent=2)
             output.write("\n")
         print(f"{path}: {len(addendum['cells'])} exploratory cells")

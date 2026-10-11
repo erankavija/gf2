@@ -124,7 +124,7 @@ Repointed in commit `55fbea37a`, path text only:
 | `AR/active/1ac74567/elaboration/elaborate.sh:8,9,30` | its own directory, in two comment lines and in `HERE` |
 | `handoff-7.md:51`, `handoff-8.md:5,60` of the archived epic directory; `handoff-12.md:114`, `handoff-13.md:84` of `dev/active/6dc81018-field-capability-dispatch` | `progress.json`, `handoff.md` of the archived epic directory |
 | `dev/active/f547c394/research-r3-sweep-resolutions.md:775,776,870,1021` and the `path` fields at `research-r3-sweeps.json:3982,3987,4457,5258` | `AR/active/2a85f728/asm-delta.md`, `progress.json`, `handoff.md` |
-| `8f61d6de-baseline-findings.md:9,10`, `d1f6b2c9-inventory-notes.md:3` | `handoff-4.md`, `handoff-17.md` of the archived epic directory |
+| `contrib/gates/docs-mechanical-baseline.md:9,10`, `d1f6b2c9-inventory-notes.md:3` | `handoff-4.md`, `handoff-17.md` of the archived epic directory |
 
 `design.md:12` cites `progress.json` without a line suffix; line 785 of the
 archived file holds other content. The words that `design.md:104-107` quotes

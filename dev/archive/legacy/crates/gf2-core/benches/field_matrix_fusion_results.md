@@ -78,7 +78,7 @@ The in-crate unit test
 (in `crates/gf2-core/src/field/expr.rs`) makes this assertion
 runtime-observable by summing the kernel-exit counters on both paths.
 
-[alloc-test]: ../src/field/expr.rs
+[alloc-test]: ../../../../../../crates/gf2-core/src/field/expr.rs
 
 ## Proposal for further study (not gating T2)
 

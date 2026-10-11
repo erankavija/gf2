@@ -104,8 +104,8 @@
 
 - Epic: `jit issue show 6dc81018`
 - Current issue: `jit issue show a83583e0`
-- Premeasurement protocol: `dev/active/a83583e0/premeasurement-protocol.md`
-- Producing manifest: `dev/active/a83583e0/producing-build-inputs.json`
+- Premeasurement protocol: `dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md`
+- Producing manifest: `dev/active/6dc81018-field-capability-dispatch/a83583e0/producing-build-inputs.json`
 - Driver and validator: `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs`,
   `dev/scripts/validate-tuning-extent-campaign.py`
 - Governing designs: `dev/active/7d824b2f/design.md`,

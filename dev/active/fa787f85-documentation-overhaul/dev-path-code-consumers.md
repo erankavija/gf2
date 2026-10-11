@@ -36,10 +36,6 @@ Known already: `f547c394`, `02b8137c`. Newly found:
 | same | `dev/tools/tuning-campaign-support/src/receipt.rs:1030` | P-02 rule: receipt `contract.path` must equal `CONTRACT_PATH` | identity (applies to every committed receipt under `dev/bench_results/`) |
 | same | `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs:342,610` | `pin(repo, CONTRACT_PATH)` / `ArtifactPin::capture` | read |
 | `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv` | `dev/scripts/ccx1-bench-flock.sh:82` | error message | text |
-| `dev/active/a83583e0/campaign-declaration.json` | `dev/tools/tuning-campaign-support/tests/driver_launcher.rs:23-29,75,241` | `format!("dev/active/{issue}/campaign-declaration.json")`, `fs::copy` from repo | read |
-| same | `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:273,276-283,3142` | `relative_path(issue)` + `for_campaign(.., "gf2-a83583e0-...")` | derived read |
-| same | `dev/scripts/validate-tuning-extent-campaign.py:427,4127` | `declaration_path(issue)` must be listed in the producing manifest `lifecycle_sources` | identity (vs `dev/active/a83583e0/producing-build-inputs.json`) |
-| same | `dev/scripts/tuning-extent-campaign.sh:30` | `declaration=dev/active/$issue/campaign-declaration.json` | derived read |
 | `dev/active/dbd8787d/campaign-declaration.json` | `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:3147` | `for_campaign(.., "gf2-dbd8787d-...")` | derived read |
 | `dev/active/26465e6c/superseded/v1/addendum-popcount.json` | `dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs:40` | `VERSIONED_FIXTURES` literal, `fs::read(root.join(..))` | read |
 | `dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json` | `dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs:48` | same | read |

@@ -21,6 +21,20 @@ mkdir -p "$(jit doc dir <epic-id> dev/active)"
 jit doc add <issue-id> <path>
 ```
 
+`active/` holds four further forms of entry, per
+`@/issue/fa787f85/decision/DEC-01` and `@/issue/fa787f85/decision/DEC-02`:
+
+| Entry | Held at its path by |
+|---|---|
+| Flat entry `active/<issue-short-id>/` of an open issue | The tracked move issue that names it |
+| Flat entry of a done task that tooling reads at its path | That tooling; a tracked move issue names the entry |
+| Files of an archived epic, in its directory or in a flat entry of one of its done tasks | A commit-pinned tracker document reference, or a link from a byte-fixed receipt or protocol |
+| Directory that the session of another running epic places | That epic, which links its files to their owning issues |
+
+`jit doc list <issue-id>` prints the document references of an entry's owning
+issue, and `jit search <issue-id>` lists the issues that name the entry, the
+move issue among them.
+
 [authoring-conventions.md](authoring-conventions.md) gives the asset and link
 patterns that keep a linked document resolvable through archival.
 

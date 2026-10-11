@@ -272,7 +272,8 @@ CLASSES = {
 TRACKS = {
     "00dd43c3": "core-kernel", "04b85d10": "core-kernel", "18a87159": "core-kernel",
     "19513245": "core-kernel", "1c602857": "core-kernel", "1d0da41f": "core-kernel",
-    "1d4fd63d": "core-kernel", "26465e6c": "core-kernel", "4c1e441f": "core-kernel",
+    "1d4fd63d": "core-kernel", "26465e6c": "core-kernel", "4337c02e": "core-kernel",
+    "4c1e441f": "core-kernel",
     "53c5a8c0": "core-kernel", "5cbb6545": "core-kernel", "65c0e13d": "core-kernel",
     "6c6b09b1": "core-kernel", "6fb89a3c": "core-kernel", "85fc5ff4": "core-kernel",
     "ad2a6a58": "core-kernel", "bfc2ceab": "core-kernel", "c7113c5a": "core-kernel",

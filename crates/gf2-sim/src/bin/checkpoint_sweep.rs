@@ -12,7 +12,7 @@ use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
 use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
 use gf2_sim::snr_checkpoint::{
-    config_hash, is_interrupted, run_sweep_checkpointed, CheckpointV2, CheckpointWriter,
+    is_interrupted, kernel_config_hash, run_sweep_checkpointed, CheckpointV2, CheckpointWriter,
     SweepError, WorkerState, SCHEMA_VERSION,
 };
 use gf2_sim::PipelineConfig;
@@ -46,6 +46,20 @@ enum Channel {
     Awgn,
     Rayleigh,
     Rician,
+}
+
+/// Rician K-factor of the `rician` channel.
+const RICIAN_K: f32 = 4.0;
+
+impl Channel {
+    /// Every channel parameter that shapes the sweep's results.
+    fn identity(self) -> String {
+        match self {
+            Channel::Awgn => "channel:awgn".to_string(),
+            Channel::Rayleigh => "channel:rayleigh".to_string(),
+            Channel::Rician => format!("channel:rician:k={RICIAN_K}"),
+        }
+    }
 }
 
 const USAGE: &str = "checkpoint_sweep --checkpoint-dir <dir> [--resume] \
@@ -222,7 +236,7 @@ fn run(
     config: &PipelineConfig,
     writer: &CheckpointWriter,
 ) -> Result<bool, SweepError> {
-    let hash = config_hash(config);
+    let hash = kernel_config_hash(config, &args.channel.identity());
     let resume = args.resume;
     let delay = args.point_delay_ms;
     let sweep = match args.channel {
@@ -270,7 +284,7 @@ fn run(
             &hash,
             resume,
             |_idx, esn0| {
-                let ch = Rician::new(esn0 as f32, 2, 4.0);
+                let ch = Rician::new(esn0 as f32, 2, RICIAN_K);
                 (
                     || (),
                     move |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
@@ -334,8 +348,8 @@ fn crash_checkpoint(
 
 /// `--crash-loop` mode: rewrites the SNR-0 checkpoint forever so that a parent
 /// can SIGKILL mid-write.
-fn crash_loop(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
-    let hash = config_hash(config);
+fn crash_loop(config: &PipelineConfig, channel: Channel, writer: &CheckpointWriter) -> ! {
+    let hash = kernel_config_hash(config, &channel.identity());
     let mut frames = 0u64;
     loop {
         frames = frames.wrapping_add(1) % 1000 + 1;
@@ -353,9 +367,9 @@ const FSYNC_CRASH_WORKERS: usize = 700_000;
 /// the padded payload forever through `CheckpointWriter::write_with_fsync_hook`.
 /// The hook prints `BEGIN_FSYNC` immediately before the file fsync, the marker
 /// on which the parent sends SIGKILL.
-fn crash_during_fsync(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
+fn crash_during_fsync(config: &PipelineConfig, channel: Channel, writer: &CheckpointWriter) -> ! {
     use std::io::Write as _;
-    let hash = config_hash(config);
+    let hash = kernel_config_hash(config, &channel.identity());
 
     let _ = writer.write(&crash_checkpoint(config, &hash, 7, 0));
 
@@ -395,10 +409,10 @@ fn main() -> ExitCode {
     };
 
     if args.crash_during_fsync {
-        crash_during_fsync(&config, &writer);
+        crash_during_fsync(&config, args.channel, &writer);
     }
     if args.crash_loop {
-        crash_loop(&config, &writer);
+        crash_loop(&config, args.channel, &writer);
     }
 
     match run(&args, &config, &writer) {

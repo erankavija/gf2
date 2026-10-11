@@ -2,11 +2,13 @@
 //! base graphs BG1 and BG2 expanded by a lifting size Z from Table 5.3.2-1
 //! ([`QuasiCyclicLdpc::nr_5g`]), and rate matching ([`Nr5gRateMatchedCode`]).
 
+mod batch;
 pub(crate) mod bg1;
 pub(crate) mod bg2;
 pub mod interleaver;
 pub mod lifting;
 
+pub use batch::Nr5gRateMatchedBatchDecoder;
 pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 
 /// Returns the raw per-`i_LS` shift table for a base graph.
@@ -754,6 +756,33 @@ impl Nr5gRateMatchedCode {
     ///
     /// Panics if `channel_llrs.len() != target_n`.
     pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {
+        let mut full_llrs = vec![Llr::zero(); self.params.full_n];
+        self.write_known_llrs(channel_llrs, &mut full_llrs);
+        full_llrs
+    }
+
+    /// Writes the vector of [`Self::prepare_llrs`] to `full_llrs`, replacing
+    /// every element.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `channel_llrs.len() != target_n` or
+    /// `full_llrs.len() != full_n`.
+    pub fn prepare_llrs_into(&self, channel_llrs: &[Llr], full_llrs: &mut [Llr]) {
+        assert_eq!(
+            full_llrs.len(),
+            self.params.full_n,
+            "Prepared LLR length {} must equal full_n = {}",
+            full_llrs.len(),
+            self.params.full_n
+        );
+        full_llrs.fill(Llr::zero());
+        self.write_known_llrs(channel_llrs, full_llrs);
+    }
+
+    /// Writes the transmitted and filler positions of `full_llrs`, leaving
+    /// the punctured and untransmitted positions to the caller's zeros.
+    fn write_known_llrs(&self, channel_llrs: &[Llr], full_llrs: &mut [Llr]) {
         assert_eq!(
             channel_llrs.len(),
             self.params.target_n,
@@ -762,9 +791,7 @@ impl Nr5gRateMatchedCode {
             self.params.target_n
         );
 
-        let p = &self.params;
         let enc = &self.encoding;
-        let mut full_llrs = vec![Llr::zero(); p.full_n];
 
         for (ch_idx, &col) in enc.transmitted_cols.iter().enumerate() {
             full_llrs[col] = channel_llrs[ch_idx];
@@ -775,8 +802,16 @@ impl Nr5gRateMatchedCode {
         for &col in &enc.filler_col_set {
             full_llrs[col] = Llr::new(FILLER_LLR);
         }
+    }
 
-        full_llrs
+    /// Replaces `message` with the target_k bits at positions `0..target_k`
+    /// of a decoded mother codeword, the word of
+    /// [`Nr5gRateMatchedDecoder`]'s `decode_iterative`.
+    fn natural_order_message_into(&self, decoded_codeword: &BitVec, message: &mut BitVec) {
+        message.clear();
+        for i in 0..self.params.target_k {
+            message.push_bit(decoded_codeword.get(i));
+        }
     }
 
     /// Extracts target_k message bits from a full decoded codeword.
@@ -822,17 +857,19 @@ impl SoftDecoder for Nr5gRateMatchedCode {
     }
 
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
-        assert_eq!(
-            llrs.len(),
-            self.params.target_n,
-            "LLR length must equal target_n = {}",
-            self.params.target_n
-        );
-        // Use the full BP decoder — decode_iterative handles prepare_llrs internally
-        let mut decoder = Nr5gRateMatchedDecoder::new((*self).clone());
-        decoder.decode_iterative(llrs, 50).decoded_bits
+        self.decode_soft_with_result(llrs).decoded_bits
+    }
+
+    /// Reports the [`Nr5gRateMatchedDecoder::decode_iterative`] result at
+    /// [`SOFT_DECODE_MAX_ITERATIONS`].
+    fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+        Nr5gRateMatchedDecoder::new(self.clone()).decode_iterative(llrs, SOFT_DECODE_MAX_ITERATIONS)
     }
 }
+
+/// Iteration cap of `decode_soft` and `decode_soft_with_result` on the
+/// rate-matched types.
+pub const SOFT_DECODE_MAX_ITERATIONS: usize = 50;
 
 /// Default normalized min-sum scaling factor for check-to-variable messages.
 const DEFAULT_NMS_SCALE: f32 = 0.75;
@@ -918,6 +955,10 @@ impl SoftDecoder for Nr5gRateMatchedDecoder {
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
         self.rm_code.decode_soft(llrs)
     }
+
+    fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
+        self.rm_code.decode_soft_with_result(llrs)
+    }
 }
 
 impl IterativeSoftDecoder for Nr5gRateMatchedDecoder {
@@ -939,11 +980,9 @@ impl IterativeSoftDecoder for Nr5gRateMatchedDecoder {
         // RREF-determined systematic positions of LdpcDecoder::decode_iterative.
         let mother_result = self.inner.decode_to_codeword(&full_llrs, max_iterations);
 
-        let target_k = self.rm_code.params.target_k;
-        let mut message = BitVec::with_capacity(target_k);
-        for i in 0..target_k {
-            message.push_bit(mother_result.decoded_bits.get(i));
-        }
+        let mut message = BitVec::with_capacity(self.rm_code.params.target_k);
+        self.rm_code
+            .natural_order_message_into(&mother_result.decoded_bits, &mut message);
 
         DecoderResult::new(
             message,
@@ -1355,6 +1394,15 @@ mod tests {
         let count = |value: Llr| full_llrs.iter().filter(|&&llr| llr == value).count();
         assert_eq!(count(Llr::new(FILLER_LLR)), rm_code.params().num_shortened);
         assert_eq!(count(channel), 256);
+    }
+
+    #[test]
+    fn test_prepare_llrs_into_replaces_every_element() {
+        let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+        let channel: Vec<Llr> = (0..256).map(|i| Llr::new(i as f32 - 100.5)).collect();
+        let mut full_llrs = vec![Llr::new(f32::NAN); rm_code.params().full_n];
+        rm_code.prepare_llrs_into(&channel, &mut full_llrs);
+        assert_eq!(full_llrs, rm_code.prepare_llrs(&channel));
     }
 
     fn assert_bp_converges_rate_matched(bg: u8, target_n: usize, target_k: usize, label: &str) {

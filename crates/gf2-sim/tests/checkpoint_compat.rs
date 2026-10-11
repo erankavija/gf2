@@ -3,20 +3,40 @@
 //! uninterrupted one, and a writer killed mid-flush leaves the canonical
 //! checkpoint complete or absent.
 
+use std::collections::VecDeque;
 use std::num::NonZeroUsize;
 use std::path::Path;
+use std::sync::{Mutex, MutexGuard, PoisonError};
 
-use gf2_sim::batch::SymbolBatch;
-use gf2_sim::channels::{Awgn, Rayleigh, Rician};
-use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
-use gf2_sim::snr_checkpoint::{
-    clear_interrupt, config_hash, run_snr_point_checkpointed, CheckpointReader, CheckpointV2,
-    CheckpointWriter,
+use gf2_coding::ldpc::{
+    DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDecoder, QuasiCyclicLdpc,
 };
+use gf2_coding::traits::BatchSoftDecoder;
+use gf2_coding::{LdpcCode, Llr};
+use gf2_sim::batch::{LlrBatch, SymbolBatch};
+use gf2_sim::channels::{Awgn, Rayleigh, Rician};
+use gf2_sim::parallel::{worker_index_partition, FrameOutcome, WorkerCtx};
+use gf2_sim::snr_checkpoint::{
+    clear_interrupt, config_hash, request_interrupt, run_snr_point_checkpointed, CheckpointReader,
+    CheckpointV2, CheckpointWriter, CheckpointedRun,
+};
+use gf2_sim::stage::Stage;
+use gf2_sim::stages::batch_decode::{BatchDecode, BatchDecodeScratch};
+use gf2_sim::testutil::AwgnLlrSource;
 use gf2_sim::PipelineConfig;
 
 fn tempdir(tag: &str) -> gf2_core::test_scratch::Scratch {
     gf2_core::test_scratch::scratch(&format!("gf2sim-ckcompat-{tag}"))
+}
+
+/// Serialises the in-process runs of this binary: the interrupt flag is
+/// process-wide, so a request one test raises must not reach another's run.
+static INTERRUPT_MUTEX: Mutex<()> = Mutex::new(());
+
+fn interrupt_guard() -> MutexGuard<'static, ()> {
+    INTERRUPT_MUTEX
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
 }
 
 fn checkpoint_payload(bytes: &[u8]) -> serde_json::Result<CheckpointV2> {
@@ -111,6 +131,7 @@ fn assert_resume_byte_identical<F>(tag: &str, parallelism: usize, frame: F)
 where
     F: Fn(usize, &mut WorkerCtx, &mut ()) -> FrameOutcome + Sync,
 {
+    let _guard = interrupt_guard();
     let full = cfg(parallelism, 40, 13);
     let h = config_hash(&full);
 
@@ -198,12 +219,258 @@ fn test_v2_resume_byte_identical_rician() {
     assert_resume_byte_identical("rician-p4", 4, rician_frame(&ch));
 }
 
+const BATCH_SEED: u64 = 0xB47C_4DEC;
+
+/// Noise deviations cycling over the frames, from clean to undecodable, so
+/// that a decode wave holds converging and non-converging lanes.
+const BATCH_SIGMAS: [f64; 6] = [0.5, 0.8, 1.6, 0.7, 1.2, 0.9];
+
+const BATCH_MAX_ITER: usize = 12;
+
+const BATCH_FRAMES: u64 = 100;
+
+/// At one, two and four workers no worker's share of a heartbeat chunk is a
+/// multiple of either batch size under test.
+const BATCH_HEARTBEAT: u64 = 43;
+
+fn batch_code() -> LdpcCode {
+    QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121)
+        .mother_code()
+        .clone()
+}
+
+fn batch_decoder_factory(code: LdpcCode) -> impl Fn() -> LdpcBatchDecoder + Send + Sync + 'static {
+    move || {
+        let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        LdpcBatchDecoder::new(code.clone(), cfg, BATCH_MAX_ITER, DecodedWord::Message)
+    }
+}
+
+/// End of the dispatch holding frame `g`: the runner dispatches
+/// `heartbeat_every_frames`-sized chunks from frame 0 or from a heartbeat
+/// checkpoint.
+fn dispatch_end(config: &PipelineConfig, g: usize) -> usize {
+    let max_frames = config.max_frames as usize;
+    match config.heartbeat_every_frames as usize {
+        0 => max_frames,
+        chunk => ((g / chunk + 1) * chunk).min(max_frames),
+    }
+}
+
+/// Per-worker state of a batch-decoding campaign: the outcomes of the batch
+/// in progress, in the order the worker's frames arrive.
+#[derive(Default)]
+struct BatchWorker {
+    scratch: BatchDecodeScratch,
+    pending: VecDeque<(usize, FrameOutcome)>,
+}
+
+/// Frame kernel of a batch-decoding campaign. A worker without pending
+/// outcomes decodes its next `batch` frames of the current dispatch, fewer at
+/// the dispatch end, in one [`BatchDecode`] call and appends their indices to
+/// `decoded`. Each frame's LLRs depend on its index alone.
+fn batch_decode_frame<'a>(
+    code: &'a LdpcCode,
+    stage: &'a BatchDecode<impl Fn() -> LdpcBatchDecoder + Send + Sync + 'static>,
+    config: &'a PipelineConfig,
+    batch: usize,
+    decoded: &'a Mutex<Vec<Vec<usize>>>,
+) -> impl Fn(usize, &mut WorkerCtx, &mut BatchWorker) -> FrameOutcome + Sync + 'a {
+    move |g, _ctx, worker| {
+        if worker.pending.is_empty() {
+            // The worker's remaining frames of the dispatch stride from `g`.
+            let frames: Vec<usize> = worker_index_partition(
+                g as u64..dispatch_end(config, g) as u64,
+                0,
+                config.parallelism,
+            )
+            .take(batch)
+            .map(|f| f as usize)
+            .collect();
+            let llrs: Vec<Vec<Llr>> = frames
+                .iter()
+                .map(|&f| {
+                    let sigma = BATCH_SIGMAS[f % BATCH_SIGMAS.len()];
+                    AwgnLlrSource::new(BATCH_SEED ^ (f as u64).wrapping_mul(0x9E37))
+                        .frame_all_zero(code.n(), sigma)
+                })
+                .collect();
+            let words = stage
+                .process(&LlrBatch::new(llrs), &mut worker.scratch)
+                .expect("the batch decode stage does not fail");
+            for ((&f, word), &iterations) in frames
+                .iter()
+                .zip(&words.frames)
+                .zip(&worker.scratch.iterations)
+            {
+                let bit_errors = (0..word.len()).filter(|&i| word.get(i)).count() as u64;
+                worker.pending.push_back((
+                    f,
+                    FrameOutcome {
+                        errored: bit_errors > 0,
+                        iterations,
+                        info_bits: word.len() as u64,
+                        bit_errors,
+                    },
+                ));
+            }
+            decoded.lock().unwrap().push(frames);
+        }
+        let (frame, outcome) = worker.pending.pop_front().unwrap();
+        assert_eq!(frame, g, "a worker's frames follow its strided partition");
+        outcome
+    }
+}
+
+/// Runs the batch-decoding campaign under `config` and returns the run with
+/// the frame indices of every decoded batch. The caller holds
+/// [`interrupt_guard`].
+fn run_batch_campaign(
+    batch: usize,
+    config: &PipelineConfig,
+    dir: &Path,
+    resume: Option<CheckpointV2>,
+    on_heartbeat_flush: impl FnMut(usize, u64),
+) -> (CheckpointedRun, Vec<Vec<usize>>) {
+    let code = batch_code();
+    let stage = BatchDecode::new(batch_decoder_factory(code.clone()));
+    let decoded = Mutex::new(Vec::new());
+    let run = run_snr_point_checkpointed(
+        config,
+        0,
+        6.25,
+        &CheckpointWriter::new(dir).unwrap(),
+        &config_hash(config),
+        resume,
+        BatchWorker::default,
+        batch_decode_frame(&code, &stage, config, batch, &decoded),
+        on_heartbeat_flush,
+    )
+    .unwrap();
+    (run, decoded.into_inner().unwrap())
+}
+
+fn sorted_frames(batches: &[Vec<usize>]) -> Vec<usize> {
+    let mut frames: Vec<usize> = batches.iter().flatten().copied().collect();
+    frames.sort_unstable();
+    frames
+}
+
+/// Interrupts a campaign decoding `batch`-frame batches at its first heartbeat
+/// checkpoint, resumes it, and asserts at each worker count that the counters
+/// equal those of two uninterrupted runs, one of which decodes a wave across
+/// the checkpoint boundary.
+fn assert_batch_decode_resume(batch: usize) {
+    let lanes = batch_decoder_factory(batch_code())().batch_granularity();
+    // A batch the dispatch end cuts short, leaving a lane wave partly filled.
+    let cut_short = |batches: &[Vec<usize>]| {
+        batches
+            .iter()
+            .filter(|b| b.len() < batch && !b.len().is_multiple_of(lanes))
+            .count()
+    };
+    for parallelism in [1, 2, 4] {
+        let tag = format!("batch{batch}-p{parallelism}");
+        let _guard = interrupt_guard();
+        let full = cfg(parallelism, BATCH_FRAMES, BATCH_HEARTBEAT);
+
+        let dir = tempdir(&format!("{tag}-resume"));
+        clear_interrupt();
+        let mut heartbeats = 0;
+        let (interrupted, before) = run_batch_campaign(batch, &full, dir.path(), None, |_, _| {
+            heartbeats += 1;
+            request_interrupt();
+        });
+        clear_interrupt();
+        assert!(
+            interrupted.interrupted && !interrupted.completed,
+            "[{tag}] the run must stop on the interrupt: {interrupted:?}"
+        );
+        assert_eq!(
+            heartbeats, 1,
+            "[{tag}] the run stops at its first heartbeat"
+        );
+        let boundary = interrupted.counters.frames as usize;
+        assert_eq!(
+            sorted_frames(&before),
+            (0..boundary).collect::<Vec<_>>(),
+            "[{tag}] the interrupted run decodes the frames below the checkpoint"
+        );
+        assert_eq!(
+            cut_short(&before),
+            parallelism,
+            "[{tag}] the checkpoint must cut each worker's last batch short: {before:?}"
+        );
+
+        let loaded = CheckpointReader::new(dir.path(), config_hash(&full))
+            .load(0)
+            .unwrap()
+            .unwrap();
+        assert!(!loaded.completed, "[{tag}] the checkpoint is resumable");
+        assert_eq!(loaded.frames_completed as usize, boundary);
+        let (resumed, after) =
+            run_batch_campaign(batch, &full, dir.path(), Some(loaded), |_, _| {});
+        assert!(resumed.completed && !resumed.interrupted);
+        assert_eq!(
+            sorted_frames(&after),
+            (boundary..BATCH_FRAMES as usize).collect::<Vec<_>>(),
+            "[{tag}] the resumed run decodes the remaining frames"
+        );
+        assert!(
+            resumed.counters.errors > 0 && resumed.counters.errors < resumed.counters.frames,
+            "[{tag}] the campaign must mix frame errors and successes: {:?}",
+            resumed.counters
+        );
+
+        // One dispatch over the whole range, so no checkpoint bounds a batch.
+        let undivided = PipelineConfig {
+            heartbeat_every_frames: 0,
+            ..full.clone()
+        };
+        for (name, config) in [("checkpointed", &full), ("undivided", &undivided)] {
+            let dir_ref = tempdir(&format!("{tag}-{name}"));
+            let (reference, batches) =
+                run_batch_campaign(batch, config, dir_ref.path(), None, |_, _| {});
+            assert!(reference.completed && !reference.interrupted);
+            assert_eq!(
+                resumed.counters, reference.counters,
+                "[{tag}] resume must be byte-identical to the {name} uninterrupted run"
+            );
+            if config.heartbeat_every_frames == 0 {
+                let across_boundary = batches
+                    .iter()
+                    .filter(|b| b[0] < boundary && boundary <= b[b.len() - 1])
+                    .count();
+                assert_eq!(
+                    across_boundary, parallelism,
+                    "[{tag}] each worker of the undivided run must decode one \
+                     batch across the checkpoint boundary: {batches:?}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn test_v2_resume_byte_identical_batch_decode_one_wave_batches() {
+    let lanes = batch_decoder_factory(batch_code())().batch_granularity();
+    assert_batch_decode_resume(lanes);
+}
+
+#[test]
+fn test_v2_resume_byte_identical_batch_decode_partial_wave_batches() {
+    // A batch of 1.5 waves decodes a full wave and a half-filled one.
+    let lanes = batch_decoder_factory(batch_code())().batch_granularity();
+    assert_batch_decode_resume(lanes + lanes / 2);
+}
+
 #[test]
 fn test_v2_resume_nonzero_errors_present() {
     let ch = Awgn::new(0.5, 2);
     let c = cfg(2, 20, 7);
     let h = config_hash(&c);
     let dir = tempdir("nonzero");
+    let _guard = interrupt_guard();
     let w = CheckpointWriter::new(dir.path()).unwrap();
     clear_interrupt();
     let run =
@@ -224,6 +491,8 @@ fn test_snr_checkpoint_uses_generic_envelope() {
     let dir = tempdir("generic-envelope");
     let writer = CheckpointWriter::new(dir.path()).unwrap();
     let ch = Awgn::new(0.0, 1);
+    let _guard = interrupt_guard();
+    clear_interrupt();
     run_snr_point_checkpointed(
         &c,
         0,
@@ -481,6 +750,87 @@ fn test_sweep_sigint_resume_byte_identical_rayleigh_subprocess() {
 #[test]
 fn test_sweep_sigint_resume_byte_identical_rician_subprocess() {
     assert_sweep_resume_byte_identical("rician", 2_000);
+}
+
+const SWEEP_CHANNELS: [&str; 3] = ["awgn", "rayleigh", "rician"];
+
+fn sweep_args<'a>(dir: &'a str, channel: &'a str, resume: bool) -> Vec<&'a str> {
+    let mut args = vec![
+        "--checkpoint-dir",
+        dir,
+        "--channel",
+        channel,
+        "--snr-points",
+        "2",
+        "--seed",
+        "7",
+        "--max-frames",
+        "8",
+        "--heartbeat",
+        "4",
+    ];
+    if resume {
+        args.push("--resume");
+    }
+    args
+}
+
+fn sweep_checkpoint_identity(channel: &str) -> String {
+    let dir = tempdir(&format!("sweep-identity-{channel}"));
+    run_full_sweep(dir.path(), channel, 2, 8, 4);
+    let bytes = std::fs::read(dir.path().join("snr_0000.json")).unwrap();
+    checkpoint_payload(&bytes).unwrap().config_hash
+}
+
+#[test]
+fn test_sweep_checkpoint_identity_differs_per_channel_pair() {
+    let identities: Vec<String> = SWEEP_CHANNELS
+        .iter()
+        .map(|c| sweep_checkpoint_identity(c))
+        .collect();
+    for a in 0..identities.len() {
+        for b in a + 1..identities.len() {
+            assert_ne!(
+                identities[a], identities[b],
+                "{} and {} sweeps must have distinct checkpoint identities",
+                SWEEP_CHANNELS[a], SWEEP_CHANNELS[b]
+            );
+        }
+    }
+}
+
+#[test]
+fn test_sweep_resume_rejects_checkpoints_of_another_channel() {
+    for written in SWEEP_CHANNELS {
+        for resumed in SWEEP_CHANNELS.into_iter().filter(|c| *c != written) {
+            let dir = tempdir(&format!("sweep-xchannel-{written}-{resumed}"));
+            let dir_str = dir.path().to_str().unwrap();
+            run_full_sweep(dir.path(), written, 2, 8, 4);
+            let before = load_all_normalized(dir.path());
+
+            let out = std::process::Command::new(env!("CARGO_BIN_EXE_checkpoint_sweep"))
+                .args(sweep_args(dir_str, resumed, true))
+                .output()
+                .expect("checkpoint_sweep must spawn");
+
+            let ctx = format!("{written} checkpoints resumed as {resumed}");
+            assert!(!out.status.success(), "{ctx}: resume must fail");
+            assert!(
+                String::from_utf8_lossy(&out.stderr).contains("ConfigHashMismatch"),
+                "{ctx}: stderr must report the mismatch, got {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            assert!(
+                !String::from_utf8_lossy(&out.stdout).contains("FLUSHED"),
+                "{ctx}: no point may be completed or reused"
+            );
+            assert_eq!(
+                load_all_normalized(dir.path()),
+                before,
+                "{ctx}: checkpoints must be left untouched"
+            );
+        }
+    }
 }
 
 /// Returns whether the canonical `snr_0000.json` is present.

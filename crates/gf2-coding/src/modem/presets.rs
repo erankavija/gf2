@@ -383,11 +383,9 @@ impl ModemSpec<DefaultScalar> {
     ///
     /// For `order >= 4` the first `m/2` MSBs of a label form the I-axis
     /// Gray-PAM label (MSB = coarsest level) and the remaining `m/2` bits
-    /// the Q-axis label. `order = 2` is [`ModemSpec::bpsk`]. Each axis uses
-    /// the level mapping of `@/citation/Etsi2015` Table 14; the standard
-    /// takes the I label from the even-indexed and the Q label from the
-    /// odd-indexed cell-word bits, so labels agree with it for orders 2 and
-    /// 4 only.
+    /// the Q-axis label. `order = 2` is [`ModemSpec::bpsk`]. On each axis
+    /// the binary-reflected Gray label of `k` selects the `k`-th level
+    /// counted from the most positive.
     ///
     /// # Panics
     ///

@@ -1,0 +1,6 @@
+jit-container-archive: 498/498 complete
+legacy-archive: 55/55 complete
+retained-operational: 1867/1867 complete
+deletion: 55/55 complete
+rewritten-topic: 6/6 complete
+policy: 5/5 complete

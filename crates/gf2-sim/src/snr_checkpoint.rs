@@ -15,11 +15,18 @@ use crate::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader as GenericCheckpointReader,
     CheckpointWriter as GenericCheckpointWriter, ConfigHashProvider,
 };
+use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+use gf2_coding::ldpc::DecoderAlgorithm;
+use gf2_coding::modem::DemapMethod;
+use gf2_coding::CodeRate;
+
 use crate::config::PipelineConfig;
 use crate::error::{BuildError, FatalError, StageError};
+use crate::executor::RunPlan;
 use crate::parallel::{
     run_snr_point_range, worker_offset, FrameOutcome, WorkerCounters, WorkerCtx,
 };
+use crate::pipeline::Pipeline;
 
 /// The schema version this module reads and writes. A loaded checkpoint with
 /// any other value is rejected.
@@ -68,7 +75,8 @@ pub struct CheckpointV2 {
     pub snr_index: usize,
     /// The Es/N0 (dB) of this SNR point (diagnostic).
     pub esn0_db: f64,
-    /// `"blake3:<hex>"` of the live [`PipelineConfig`] (see [`config_hash`]).
+    /// The `"blake3:<hex>"` identity of the writing run: [`pipeline_config_hash`]
+    /// for a [`Pipeline`] sweep, the caller's `expected_hash` otherwise.
     pub config_hash: String,
     /// Target frame count for the point; equals `max_frames`.
     pub frames_target: u64,
@@ -120,10 +128,15 @@ mod u128_string {
     }
 }
 
-/// Computes the config hash of a [`PipelineConfig`]:
+/// Computes the run-configuration hash of a [`PipelineConfig`]:
 /// `"blake3:<64 lowercase hex chars>"` over every field except
 /// `checkpoint_dir`, `tracing_log_path`, `diagnostic_dump_dir` and
 /// `inject_gpu_oom_modulus`.
+///
+/// The hash identifies the sweep schedule only. A caller of
+/// [`run_sweep_checkpointed`] whose frame kernel has its own configuration
+/// supplies an `expected_hash` that covers it: [`kernel_config_hash`] for an
+/// arbitrary frame closure, [`pipeline_config_hash`] for a [`Pipeline`].
 ///
 /// `gpu_enabled` is hashed because the CPU executor and the hybrid executor
 /// record differently shaped `worker_states[]` and path-specific
@@ -132,18 +145,116 @@ mod u128_string {
 #[must_use]
 pub fn config_hash(config: &PipelineConfig) -> String {
     let mut hasher = blake3::Hasher::new();
-    hasher.update(&config.seed.to_le_bytes());
-    hasher.update(&(config.esn0_db_points.len() as u64).to_le_bytes());
-    for &v in &config.esn0_db_points {
+    hash_run_config(&mut hasher, config);
+    finish_hash(&hasher)
+}
+
+/// Computes the checkpoint identity of a sweep whose frame closure is described
+/// by `kernel_identity`: the fields [`config_hash`] covers, followed by the
+/// identity bytes. Distinct identities give distinct hashes for the same
+/// configuration; the caller encodes every parameter of the closure that
+/// affects its results (a channel model and its parameters, for example).
+#[must_use]
+pub fn kernel_config_hash(config: &PipelineConfig, kernel_identity: &str) -> String {
+    let mut hasher = blake3::Hasher::new();
+    hash_run_config(&mut hasher, config);
+    hasher.update(b"frame-kernel:");
+    hasher.update(&(kernel_identity.len() as u64).to_le_bytes());
+    hasher.update(kernel_identity.as_bytes());
+    finish_hash(&hasher)
+}
+
+/// Computes the checkpoint identity of a [`Pipeline`]: the fields
+/// [`config_hash`] covers, followed by every field of the pipeline's
+/// [`RunPlan`] (code rate, modulation, decoder and demapper). A pipeline
+/// without a run plan has the [`config_hash`] identity of its configuration.
+///
+/// [`Scheduler::run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed)
+/// writes this identity into each checkpoint and rejects a resume whose
+/// pipeline has another one with
+/// [`BuildError::ConfigHashMismatch`].
+#[must_use]
+pub fn pipeline_config_hash(pipeline: &Pipeline) -> String {
+    let mut hasher = blake3::Hasher::new();
+    hash_run_config(&mut hasher, pipeline.config());
+    if let Some(plan) = pipeline.run_plan() {
+        hash_run_plan(&mut hasher, &plan);
+    }
+    finish_hash(&hasher)
+}
+
+fn finish_hash(hasher: &blake3::Hasher) -> String {
+    format!("blake3:{}", hasher.finalize().to_hex())
+}
+
+/// The destructuring is exhaustive: a field added to [`PipelineConfig`] does
+/// not compile until it is hashed or excluded here.
+fn hash_run_config(hasher: &mut blake3::Hasher, config: &PipelineConfig) {
+    let PipelineConfig {
+        seed,
+        esn0_db_points,
+        target_errors,
+        max_frames,
+        heartbeat_every_frames,
+        parallelism,
+        gpu_enabled,
+        strict_gpu,
+        checkpoint_dir: _,
+        tracing_log_path: _,
+        diagnostic_dump_dir: _,
+        inject_gpu_oom_modulus: _,
+    } = config;
+    hasher.update(&seed.to_le_bytes());
+    hasher.update(&(esn0_db_points.len() as u64).to_le_bytes());
+    for v in esn0_db_points {
         hasher.update(&v.to_le_bytes());
     }
-    hasher.update(&config.target_errors.to_le_bytes());
-    hasher.update(&config.max_frames.to_le_bytes());
-    hasher.update(&config.heartbeat_every_frames.to_le_bytes());
-    hasher.update(&(config.parallelism.get() as u64).to_le_bytes());
-    hasher.update(&[u8::from(config.gpu_enabled)]);
-    hasher.update(&[u8::from(config.strict_gpu)]);
-    format!("blake3:{}", hasher.finalize().to_hex())
+    hasher.update(&target_errors.to_le_bytes());
+    hasher.update(&max_frames.to_le_bytes());
+    hasher.update(&heartbeat_every_frames.to_le_bytes());
+    hasher.update(&(parallelism.get() as u64).to_le_bytes());
+    hasher.update(&[u8::from(*gpu_enabled)]);
+    hasher.update(&[u8::from(*strict_gpu)]);
+}
+
+/// The destructuring and every `match` are exhaustive: a field added to
+/// [`RunPlan`] or a variant added to one of its enums does not compile until
+/// it is hashed here. Each tag is the encoded identity of its variant and
+/// stays fixed. The decoder configuration is read through its accessors.
+fn hash_run_plan(hasher: &mut blake3::Hasher, plan: &RunPlan) {
+    let RunPlan::Dvbt2 {
+        rate,
+        modulation,
+        decoder,
+        demap,
+    } = plan;
+    hasher.update(b"run-plan:dvbt2");
+    hasher.update(&[match rate {
+        CodeRate::Rate1_2 => 0,
+        CodeRate::Rate3_5 => 1,
+        CodeRate::Rate2_3 => 2,
+        CodeRate::Rate3_4 => 3,
+        CodeRate::Rate4_5 => 4,
+        CodeRate::Rate5_6 => 5,
+    }]);
+    hasher.update(&[match modulation {
+        DvbT2Modulation::Qpsk => 0,
+        DvbT2Modulation::Qam16 => 1,
+        DvbT2Modulation::Qam64 => 2,
+    }]);
+    let (algorithm, parameter) = match decoder.algorithm() {
+        DecoderAlgorithm::MinSum => (0u8, 0u32),
+        DecoderAlgorithm::NormalizedMinSum(alpha) => (1, alpha.to_bits()),
+        DecoderAlgorithm::OffsetMinSum(beta) => (2, beta.to_bits()),
+        DecoderAlgorithm::SumProduct => (3, 0),
+    };
+    hasher.update(&[algorithm]);
+    hasher.update(&parameter.to_le_bytes());
+    hasher.update(&[u8::from(decoder.early_termination())]);
+    hasher.update(&[match demap {
+        DemapMethod::ExactLogMap => 0,
+        DemapMethod::MaxLog => 1,
+    }]);
 }
 
 /// The checkpoint file path for SNR point `index` (`<dir>/snr_<NNNN>.json`).
@@ -778,6 +889,15 @@ mod tests {
             ..cfg.clone()
         };
         assert_ne!(config_hash(&cfg), config_hash(&diff_seed));
+    }
+
+    #[test]
+    fn test_kernel_config_hash_separates_identities() {
+        let cfg = test_config(4);
+        let a = kernel_config_hash(&cfg, "awgn");
+        assert_eq!(a, kernel_config_hash(&cfg, "awgn"));
+        assert_ne!(a, kernel_config_hash(&cfg, "rayleigh"));
+        assert_ne!(a, config_hash(&cfg));
     }
 
     #[test]

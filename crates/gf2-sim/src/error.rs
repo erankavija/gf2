@@ -213,8 +213,9 @@ pub enum BuildError {
         /// A human-readable explanation of the inconsistency found.
         reason: String,
     },
-    /// A loaded checkpoint's `config_hash` does not match the live
-    /// [`PipelineConfig`](crate::PipelineConfig); the resume aborts.
+    /// A loaded checkpoint's `config_hash` does not match the identity of the
+    /// live run ([`pipeline_config_hash`](crate::snr_checkpoint::pipeline_config_hash)
+    /// for a [`Pipeline`](crate::Pipeline) sweep); the resume aborts.
     ConfigHashMismatch {
         /// The hash recorded in the loaded checkpoint.
         loaded: String,

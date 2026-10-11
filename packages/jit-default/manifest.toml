@@ -9,7 +9,7 @@
 [profile]
 manifest-version = 1
 id = "jit-default"
-version = "1.0.2"
+version = "1.0.3"
 jit = ">=1.0.0, <2.0.0"
 
 # =============================================================================
@@ -345,21 +345,6 @@ value = "dev/studies"
 [[contribution]]
 kind = "set-string"
 target = "documentation-managed-paths"
-value = "dev/sessions"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-managed-paths"
-value = "dev/plans"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-managed-paths"
-value = "dev/presentations"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-managed-paths"
 value = "dev/benchmarks"
 
 # Living documentation, a configured item-kind source, or documented
@@ -390,16 +375,6 @@ value = "dev/active"
 kind = "set-string"
 target = "documentation-issue-scoped-areas"
 value = "dev/studies"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-issue-scoped-areas"
-value = "dev/plans"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-issue-scoped-areas"
-value = "dev/presentations"
 
 # =============================================================================
 # WHAT THIS PACKAGE LEAVES TO THE ADOPTER

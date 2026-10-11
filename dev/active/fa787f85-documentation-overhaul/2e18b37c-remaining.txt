@@ -1,17 +1,12 @@
 bench-window 1 1
-data-record 14 83
+data-record 10 76
 epic-record 9 96
-generated-table 1 1
 manifest 1 223
 queue-quote 1 1
-receipt-directory 33 277
-record-text 2 4
+receipt-directory 32 275
 revision-path 2 4
 session-record 5 10
 snapshot 68 371
-tracker-state 1 1
 queue-quote 19513245/findings.md:570
-record-text 19513245/survey/summarize-profile.py:67,176
-record-text a203a23c/timing/measure.py:360,766
-revision-path a203a23c/timing/measure.py:7,99,946
+revision-path a203a23c/timing/measure.py:7,103,946
 revision-path a203a23c/timing/README.md:6

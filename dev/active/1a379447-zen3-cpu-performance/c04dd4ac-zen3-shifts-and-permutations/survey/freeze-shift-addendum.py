@@ -147,12 +147,12 @@ def main():
     args = parser.parse_args()
     expected = encoded()
     if args.check:
-        observed = OUTPUT.read_text()
+        observed = (ROOT / OUTPUT).read_text()
         if observed != expected:
             raise SystemExit(f"{OUTPUT} differs from its frozen generator")
         print(f"{OUTPUT}: frozen matrix matches ({len(cells())} cells)")
     else:
-        OUTPUT.write_text(expected)
+        (ROOT / OUTPUT).write_text(expected)
         print(f"{OUTPUT}: froze {len(cells())} exploratory cells")
 
 

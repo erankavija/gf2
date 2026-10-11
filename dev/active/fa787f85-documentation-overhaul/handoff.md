@@ -21,7 +21,7 @@
 - Main checkout edit to `contrib/gates/doc-review-prompt.md` (archive exemption removed): committed as-is on owner instruction (1868d7926).
 - `56378e82` (CLAUDE.md symlink, AGENTS.md scope): passed first try, net −6 lines.
 - `dcd38c45` (invariant-grounded doc-review prompt): passed first try. The owner chose to keep the two REQ-05 run reports in this directory. The profile-owned prompt was folded into sim-research 1.2.4 (aca9d60e4).
-- `8f61d6de` (docs-mechanical gate): the owner decided citations are checked on the permanent surface only (DEC-01). Three deliberate quotations are baselined in `8f61d6de-baseline-findings.md`. One rework round; done.
+- `8f61d6de` (docs-mechanical gate): the owner decided citations are checked on the permanent surface only (DEC-01). Three deliberate quotations are baselined in `contrib/gates/docs-mechanical-baseline.md`. One rework round; done.
 - OD-08: `docs-mechanical` was added to every open overhaul issue (114).
 - Owner decision: `cargo-ci` and `code-review` were removed from 25 purely documentation issues; the list is in `progress.json` `notes`. No reviewer prompt changed.
 - `3f29e945` story checkpoint: doc-review and holistic-review failed twice on stale planning-brief statements (sweep owner, manifest owner, invariant ownership, inherited README issue, finished breakdown). The brief was fixed, then all six gates passed; done.

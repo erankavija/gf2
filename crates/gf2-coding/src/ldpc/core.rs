@@ -125,57 +125,33 @@ impl LdpcCode {
         Self::from_edges(params.m, params.n, &edges)
     }
 
-    /// Computes the generator matrix (k × n) from the RREF of H with
-    /// left-to-right pivoting: the identity sits on the non-pivot columns and
-    /// the parity on the pivot columns.
+    /// Computes the k × n generator matrix whose row `i` is the codeword
+    /// [`LdpcEncoder`] gives the unit message `i`, from the
+    /// [`SystematicReduction`](crate::ldpc::encoding::SystematicReduction) of H.
     ///
     /// Returns None if H is not full rank.
     fn compute_generator_matrix(&self) -> Option<gf2_core::BitMatrix> {
-        use gf2_core::alg::rref::rref;
+        use crate::ldpc::encoding::SystematicReduction;
         use gf2_core::BitMatrix;
 
         let k = self.k();
-        let m = self.m;
 
         if k == 0 {
             return Some(BitMatrix::zeros(0, self.n));
         }
 
-        let h_dense = self.h.to_dense();
-
-        // pivot_from_right=false for left-to-right pivoting (standard order)
-        let rref_result = rref(&h_dense, false);
-
-        if rref_result.rank != m {
-            return None;
-        }
-
-        let h_dense = rref_result.reduced;
-        let col_permutation = rref_result.pivot_cols;
-
-        // Extract systematic (information) bit positions (non-pivot columns)
-        let all_cols: Vec<usize> = (0..self.n).collect();
-        let systematic_positions: Vec<usize> = all_cols
-            .into_iter()
-            .filter(|c| !col_permutation.contains(c))
-            .collect();
-
-        assert_eq!(
-            systematic_positions.len(),
-            k,
-            "Should have k systematic positions"
-        );
+        let SystematicReduction {
+            reduced,
+            parity_cols,
+            message_cols,
+        } = SystematicReduction::of(&self.h.to_dense()).ok()?;
 
         let mut g = BitMatrix::zeros(k, self.n);
-
-        for (i, &sys_col) in systematic_positions.iter().enumerate() {
-            g.set(i, sys_col, true);
-        }
-
-        for (msg_idx, &sys_col) in systematic_positions.iter().enumerate() {
-            for (check_idx, &parity_col) in col_permutation.iter().enumerate() {
-                if h_dense.get(check_idx, sys_col) {
-                    g.set(msg_idx, parity_col, true);
+        for (i, &message_col) in message_cols.iter().enumerate() {
+            g.set(i, message_col, true);
+            for (row, &parity_col) in parity_cols.iter().enumerate() {
+                if reduced.get(row, message_col) {
+                    g.set(i, parity_col, true);
                 }
             }
         }
@@ -183,51 +159,9 @@ impl LdpcCode {
         Some(g)
     }
 
-    /// Computes the systematic column positions from the parity-check matrix.
-    ///
-    /// If every row of H has at least one nonzero entry in columns k..n (an
-    /// O(nnz) scan), columns 0..k-1 are taken as the systematic positions.
-    /// Otherwise they are the non-pivot columns of an RREF with right-to-left
-    /// pivoting, the convention of [`RuEncodingMatrices::preprocess`](crate::ldpc::encoding::RuEncodingMatrices),
-    /// so decoder message extraction is consistent with the encoder.
-    ///
-    /// Returns `None` if H is rank deficient (RREF path only).
-    fn compute_systematic_cols(&self) -> Option<Vec<usize>> {
-        let k = self.k();
-        let m = self.m;
-
-        if k == 0 {
-            return Some(Vec::new());
-        }
-
-        let all_rows_touch_parity = (0..m).all(|row| self.h.row_iter(row).any(|col| col >= k));
-
-        if all_rows_touch_parity {
-            return Some((0..k).collect());
-        }
-
-        use gf2_core::alg::rref::rref;
-
-        let h_dense = self.h.to_dense();
-
-        // Use right-to-left pivoting to match the RU encoder convention
-        let rref_result = rref(&h_dense, true);
-
-        if rref_result.rank != m {
-            return None;
-        }
-
-        let pivot_set: std::collections::HashSet<usize> =
-            rref_result.pivot_cols.iter().copied().collect();
-        let systematic_cols: Vec<usize> = (0..self.n).filter(|c| !pivot_set.contains(c)).collect();
-        debug_assert_eq!(systematic_cols.len(), k);
-
-        Some(systematic_cols)
-    }
-
-    /// Returns the systematic column positions (cached after first computation).
-    ///
-    /// Message bit `i` corresponds to codeword position `systematic_cols[i]`.
+    /// Returns the codeword positions of the message bits, cached after the
+    /// first call: [`LdpcEncoder`] places message bit `i` at
+    /// `systematic_cols[i]`.
     ///
     /// # Panics
     ///
@@ -235,14 +169,13 @@ impl LdpcCode {
     ///
     /// # Complexity
     ///
-    /// First call: O(m * n * min(m, n)) when the RREF path runs.
+    /// First call: that of [`message_cols`](crate::ldpc::encoding::message_cols).
     pub(crate) fn systematic_cols(&self) -> Vec<usize> {
         let mut cache = self.cached_systematic_cols.lock().unwrap();
         if let Some(ref cols) = *cache {
             cols.clone()
         } else {
-            let cols = self
-                .compute_systematic_cols()
+            let cols = crate::ldpc::encoding::message_cols(&self.h)
                 .expect("LDPC parity-check matrix is not full rank");
             *cache = Some(cols.clone());
             cols
@@ -272,9 +205,22 @@ impl crate::traits::GeneratorMatrixAccess for LdpcCode {
         }
     }
 
+    /// Reports whether the message bits sit at codeword positions `0..k`,
+    /// that is, whether the generator's first `k` columns are the identity.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `k > 0` and H is rank deficient.
+    ///
+    /// # Complexity
+    ///
+    /// First call: O(nnz + k) for a dual-diagonal parity part, else
+    /// O(k + m·n·min(m, n)) for the m × n matrix H; later calls O(k).
     fn is_systematic(&self) -> bool {
-        // Conservative: the generator matrix is not analysed.
-        false
+        self.systematic_cols()
+            .iter()
+            .enumerate()
+            .all(|(i, &col)| i == col)
     }
 }
 
@@ -570,9 +516,7 @@ pub struct LdpcDecoder {
     /// Number of iterations in last decode
     last_iterations: usize,
     config: DecoderConfig,
-    /// Systematic column positions: message bit `i` corresponds to codeword
-    /// position `systematic_cols[i]`. Computed on the first `decode_iterative`,
-    /// so construction never runs RREF.
+    /// [`LdpcCode::systematic_cols`], resolved on the first `decode_iterative`.
     systematic_cols: Option<Vec<usize>>,
 }
 
@@ -622,52 +566,6 @@ impl LdpcDecoder {
     /// After a decode with a cap of zero they equal the frame's channel LLRs.
     pub fn posterior_llrs(&self) -> &[Llr] {
         &self.beliefs
-    }
-
-    /// Decodes multiple LLR blocks in batch with the default configuration.
-    ///
-    /// A cap of zero behaves as in [`LdpcDecoder::decode_codeword_into`].
-    ///
-    /// Each block is decoded independently by its own decoder, built on a
-    /// clone of `code`; under the `parallel` feature the blocks run on rayon.
-    pub fn decode_batch(
-        code: &LdpcCode,
-        llr_blocks: &[Vec<Llr>],
-        max_iterations: usize,
-    ) -> Vec<DecoderResult> {
-        Self::decode_batch_with_config(code, llr_blocks, max_iterations, DecoderConfig::default())
-    }
-
-    /// As [`Self::decode_batch`], with a custom configuration; the cap of zero
-    /// behaves as there.
-    pub fn decode_batch_with_config(
-        code: &LdpcCode,
-        llr_blocks: &[Vec<Llr>],
-        max_iterations: usize,
-        config: DecoderConfig,
-    ) -> Vec<DecoderResult> {
-        #[cfg(feature = "parallel")]
-        {
-            use rayon::prelude::*;
-            (0..llr_blocks.len())
-                .into_par_iter()
-                .map(|i| {
-                    let mut decoder = Self::with_config(code.clone(), config);
-                    decoder.decode_iterative(&llr_blocks[i], max_iterations)
-                })
-                .collect()
-        }
-
-        #[cfg(not(feature = "parallel"))]
-        {
-            llr_blocks
-                .iter()
-                .map(|llrs| {
-                    let mut decoder = Self::with_config(code.clone(), config);
-                    decoder.decode_iterative(llrs, max_iterations)
-                })
-                .collect()
-        }
     }
 
     /// Performs check node update (sum-product algorithm).
@@ -930,16 +828,12 @@ impl IterativeSoftDecoder for LdpcDecoder {
             queries: _,
         } = outcome;
 
-        // Message bit i is located at codeword position systematic_cols[i],
-        // which may differ from i when RREF assigns pivots to columns in the
-        // natural systematic range. Computed on first decode so that
-        // construction never runs RREF.
+        // Resolved here so that construction never runs a row reduction.
         let sys_cols = self
             .systematic_cols
             .get_or_insert_with(|| self.code.systematic_cols());
-        let k = self.code.k();
-        let mut message = BitVec::with_capacity(k);
-        for &col in &sys_cols[..k] {
+        let mut message = BitVec::with_capacity(sys_cols.len());
+        for &col in sys_cols.iter() {
             message.push_bit(decoded_codeword.get(col));
         }
 
@@ -994,6 +888,11 @@ impl std::fmt::Debug for EncoderImpl {
 /// densification and no RREF. Any other code uses the RREF-based
 /// preprocessing of [`RuEncodingMatrices`](crate::ldpc::encoding::RuEncodingMatrices).
 ///
+/// The codeword carries the message, in order, at the columns that
+/// right-to-left pivoting of H leaves without a pivot: columns `0..k` when the
+/// last `m` columns of H are linearly independent. [`LdpcDecoder`]'s
+/// `decode_iterative` returns the bits at those columns.
+///
 /// # Examples
 ///
 /// ```
@@ -1037,35 +936,6 @@ impl LdpcEncoder {
         Self { code, impl_ }
     }
 
-    /// Detect whether the parity part of `h` is dual-diagonal (IRA structure).
-    ///
-    /// The dual-diagonal parity structure requires exactly:
-    /// - Row 0: parity columns = {k}          (single diagonal entry)
-    /// - Row p (p > 0): parity columns = {k+p, k+p-1}  (diagonal + sub-diagonal)
-    ///
-    /// This is O(nnz).
-    fn has_dual_diagonal_parity(h: &SpBitMatrixDual, k: usize) -> bool {
-        let m = h.rows();
-        if m == 0 {
-            return false;
-        }
-
-        let row0_parity: Vec<usize> = h.row_iter(0).filter(|&c| c >= k).collect();
-        if row0_parity != [k] {
-            return false;
-        }
-
-        for p in 1..m {
-            let mut parity_cols: Vec<usize> = h.row_iter(p).filter(|&c| c >= k).collect();
-            parity_cols.sort_unstable();
-            if parity_cols != [k + p - 1, k + p] {
-                return false;
-            }
-        }
-
-        true
-    }
-
     /// If the code has standard systematic layout (cols 0..k) and
     /// dual-diagonal parity, build the linear-time IRA encoder. Returns
     /// `None` for codes that need the generic RREF path.
@@ -1074,7 +944,7 @@ impl LdpcEncoder {
     fn try_build_ira(code: &LdpcCode) -> Option<EncoderImpl> {
         let h = code.parity_check_matrix();
         let k = code.k();
-        if Self::has_dual_diagonal_parity(h, k) {
+        if crate::ldpc::encoding::ira::has_dual_diagonal_parity(h, k) {
             let ira = crate::ldpc::encoding::IraEncoder::new(h, k);
             Some(EncoderImpl::Ira(std::sync::Arc::new(ira)))
         } else {
@@ -1158,6 +1028,7 @@ impl crate::traits::BlockEncoder for LdpcEncoder {
 #[cfg(test)]
 mod decoder_tests {
     use super::*;
+    use crate::test_support::pooled_decode;
     use crate::traits::BlockEncoder;
 
     #[test]
@@ -1446,8 +1317,12 @@ mod decoder_tests {
             vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)], // [0,0,0]
         ];
 
-        let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
+        let results = pooled_decode(&code, &llr_blocks, 10);
 
+        let mut single = LdpcDecoder::new(code.clone());
+        for (llrs, result) in llr_blocks.iter().zip(&results) {
+            assert_eq!(result, &single.decode_iterative(llrs, 10));
+        }
         assert_eq!(results.len(), 3);
         assert!(results[0].converged);
         assert_eq!(results[0].decoded_bits.count_ones(), 0);
@@ -1468,7 +1343,7 @@ mod decoder_tests {
         assert_eq!(codewords.len(), 0);
 
         let empty_llrs: Vec<Vec<Llr>> = vec![];
-        let results = LdpcDecoder::decode_batch(&code, &empty_llrs, 10);
+        let results = pooled_decode(&code, &empty_llrs, 10);
         assert_eq!(results.len(), 0);
     }
 
@@ -1512,6 +1387,37 @@ mod decoder_tests {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::traits::GeneratorMatrixAccess;
+
+    fn first_k_columns_are_identity(code: &LdpcCode) -> bool {
+        let g = GeneratorMatrixAccess::generator_matrix(code);
+        (0..code.k()).all(|i| (0..code.k()).all(|j| g.get(i, j) == (i == j)))
+    }
+
+    #[test]
+    fn test_is_systematic_message_bits_at_leading_positions() {
+        // H = [1 1 1]: right-to-left pivoting gives column 2 the parity.
+        let code = LdpcCode::from_edges(1, 3, &[(0, 0), (0, 1), (0, 2)]);
+        assert!(GeneratorMatrixAccess::is_systematic(&code));
+        assert!(first_k_columns_are_identity(&code));
+    }
+
+    #[test]
+    fn test_is_systematic_false_when_message_bits_are_displaced() {
+        // Column 3 of H carries no parity, so message bit 1 sits at position 3.
+        let code = LdpcCode::from_edges(2, 4, &[(0, 0), (0, 1), (1, 1), (1, 2)]);
+        assert_eq!(code.systematic_cols(), vec![0, 3]);
+        assert!(!GeneratorMatrixAccess::is_systematic(&code));
+        assert!(!first_k_columns_are_identity(&code));
+    }
+
+    #[test]
+    fn test_is_systematic_true_for_dual_diagonal_parity() {
+        let edges = [(0, 0), (0, 2), (1, 1), (1, 2), (1, 3)];
+        let code = LdpcCode::from_edges(2, 4, &edges);
+        assert!(GeneratorMatrixAccess::is_systematic(&code));
+        assert!(first_k_columns_are_identity(&code));
+    }
 
     #[test]
     fn test_ldpc_code_creation() {

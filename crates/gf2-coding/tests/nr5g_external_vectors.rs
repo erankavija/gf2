@@ -1,15 +1,21 @@
-//! Checks the compiled-in 5G NR LDPC base-graph shift tables
-//! (`@/citation/ThreeGpp2017` Tables 5.3.2-2 and 5.3.2-3, lifting sets
-//! `i_LS` = 0..7) bit-exactly against the `@/citation/Sionna2026` CSV tables
-//! under `data/ldpc/nr_5g/` (provenance in `data/ldpc/nr_5g/PROVENANCE.md`).
+//! External 5G NR LDPC conformance evidence (`@/citation/ThreeGpp2017`) from
+//! `@/citation/Sionna2026`, with provenance in `data/ldpc/nr_5g/PROVENANCE.md`:
+//! the compiled-in base-graph shift tables (Tables 5.3.2-2 and 5.3.2-3,
+//! lifting sets `i_LS` = 0..7) equal the Sionna CSV tables bit for bit, and
+//! the messages and rate-matched codewords of Sionna's encoder are reproduced
+//! by the encoder and recovered by the single-frame and batch decoders.
 //! BG2 rate coverage stops at 2/3: above a payload of 292 bits, clause 7.2.2
 //! selects BG2 only for R <= 0.67.
 
 use gf2_coding::ldpc::nr_5g::lifting::LIFTING_SIZE_SETS;
-use gf2_coding::ldpc::nr_5g::{lifting_set_index, shift_table, Nr5gRateMatchedDecoder};
-use gf2_coding::ldpc::QuasiCyclicLdpc;
+use gf2_coding::ldpc::nr_5g::{
+    lifting_set_index, shift_table, Nr5gRateMatchedBatchDecoder, Nr5gRateMatchedCode,
+    Nr5gRateMatchedDecoder,
+};
+use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, LaneBackend, QuasiCyclicLdpc};
 use gf2_coding::llr::Llr;
-use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
+use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeSoftDecoder};
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use std::path::PathBuf;
 
@@ -226,11 +232,198 @@ fn test_per_ils_tables_pairwise_distinct() {
 }
 
 fn deterministic_message(k: usize) -> BitVec {
+    stepped_message(k, 3)
+}
+
+/// The `k`-bit message with every `step`-th bit set, from bit zero.
+fn stepped_message(k: usize, step: usize) -> BitVec {
     let mut msg = BitVec::zeros(k);
-    for i in (0..k).step_by(3) {
+    for i in (0..k).step_by(step) {
         msg.set(i, true);
     }
     msg
+}
+
+fn noiseless_llrs(codeword: &BitVec) -> Vec<Llr> {
+    (0..codeword.len())
+        .map(|i| Llr::new(if codeword.get(i) { -4.0 } else { 4.0 }))
+        .collect()
+}
+
+/// The frames Sionna's encoder produced for one rate-matched configuration.
+struct ExternalVectors {
+    lifting_size: usize,
+    filler_bits: usize,
+    messages: Vec<BitVec>,
+    codewords: Vec<BitVec>,
+}
+
+/// Parses a hex bit string of `data/ldpc/nr_5g/sionna_ldpc5g_vectors.txt`
+/// (format in `PROVENANCE.md` beside it) into its first `len` bits.
+fn parse_hex_bits(hex: &str, len: usize) -> BitVec {
+    assert_eq!(hex.len(), len.div_ceil(4), "hex length for {len} bits");
+    let mut bits = BitVec::zeros(len);
+    for (j, c) in hex.chars().enumerate() {
+        let digit = c.to_digit(16).expect("hex digit");
+        for b in 0..4 {
+            let set = digit & (8 >> b) != 0;
+            if 4 * j + b < len {
+                bits.set(4 * j + b, set);
+            } else {
+                assert!(!set, "padding bits must be zero");
+            }
+        }
+    }
+    bits
+}
+
+fn load_external_vectors(bg: u8, target_n: usize, target_k: usize) -> ExternalVectors {
+    let path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/nr_5g/sionna_ldpc5g_vectors.txt");
+    let text = std::fs::read_to_string(&path)
+        .unwrap_or_else(|e| panic!("failed to read vector file {}: {e}", path.display()));
+    let field = |fields: &[&str], key: &str| -> usize {
+        fields
+            .iter()
+            .find_map(|f| f.strip_prefix(key)?.strip_prefix('='))
+            .unwrap_or_else(|| panic!("config line lacks {key}"))
+            .parse()
+            .expect("config value")
+    };
+
+    let mut found: Option<ExternalVectors> = None;
+    let mut in_config = false;
+    for line in text.lines().filter(|l| !l.starts_with('#')) {
+        let fields: Vec<&str> = line.split_whitespace().collect();
+        match fields.as_slice() {
+            ["config", rest @ ..] => {
+                in_config = (field(rest, "bg"), field(rest, "n"), field(rest, "k"))
+                    == (bg as usize, target_n, target_k);
+                if in_config {
+                    assert!(found.is_none(), "duplicate configuration");
+                    found = Some(ExternalVectors {
+                        lifting_size: field(rest, "z"),
+                        filler_bits: field(rest, "k_filler"),
+                        messages: Vec::new(),
+                        codewords: Vec::new(),
+                    });
+                }
+            }
+            ["frame", message, codeword] => {
+                if in_config {
+                    let vectors = found.as_mut().expect("frame before its configuration");
+                    vectors.messages.push(parse_hex_bits(message, target_k));
+                    vectors.codewords.push(parse_hex_bits(codeword, target_n));
+                }
+            }
+            _ => panic!("malformed vector line: {line:?}"),
+        }
+    }
+    found.unwrap_or_else(|| panic!("no external vectors for BG{bg} (n={target_n}, k={target_k})"))
+}
+
+fn batch_decoder(
+    rm: &Nr5gRateMatchedCode,
+    selectors: DecodeSelectors,
+) -> Nr5gRateMatchedBatchDecoder {
+    Nr5gRateMatchedBatchDecoder::with_selectors(
+        rm.clone(),
+        DecoderAlgorithm::NormalizedMinSum(0.75),
+        50,
+        selectors,
+    )
+}
+
+/// The number of frames in one wave of the batch decoder.
+fn wave_frames(rm: &Nr5gRateMatchedCode) -> usize {
+    batch_decoder(rm, DecodeSelectors::CONSERVATIVE).batch_granularity()
+}
+
+/// Decodes noiseless `codewords` through [`Nr5gRateMatchedBatchDecoder`] on the
+/// lane route and on the single-frame route and expects `messages`.
+fn check_batch_decodes(
+    rm: &Nr5gRateMatchedCode,
+    codewords: &[BitVec],
+    messages: &[BitVec],
+    label: &str,
+) {
+    let frames: Vec<Vec<Llr>> = codewords.iter().map(noiseless_llrs).collect();
+    let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+
+    let routes = [
+        (
+            DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
+            BatchRoute::Lane(LaneBackend::detected()),
+        ),
+        (DecodeSelectors::CONSERVATIVE, BatchRoute::SingleFrame),
+    ];
+    for (selectors, route) in routes {
+        let mut decoder = batch_decoder(rm, selectors);
+        assert_eq!(decoder.batch_route(frames.len()), route, "{label}");
+        let mut decoded = vec![BitVec::new(); frames.len()];
+        let mut outcomes = vec![DecodeOutcome::default(); frames.len()];
+        decoder.decode_batch(&views, &mut decoded, &mut outcomes);
+        for (f, outcome) in outcomes.iter().enumerate() {
+            assert!(
+                outcome.syndrome_check_passed,
+                "{label}, {route:?}: noiseless batch decode of frame {f} must converge"
+            );
+        }
+        assert_eq!(
+            decoded, messages,
+            "{label}, {route:?}: noiseless batch decode must be bit-exact"
+        );
+    }
+}
+
+/// Holds the encoder, the single-frame decoder and the batch decoder to the
+/// Sionna vectors of one configuration, which span one full wave and an
+/// incomplete final wave.
+fn check_external_vectors(rm: &Nr5gRateMatchedCode, label: &str) {
+    let params = rm.params();
+    let vectors = load_external_vectors(params.base_graph, rm.n(), rm.k());
+    assert_eq!(
+        vectors.lifting_size, params.lifting_factor,
+        "{label}: lifting size differs from Sionna's"
+    );
+    assert_eq!(
+        vectors.filler_bits, params.num_shortened,
+        "{label}: filler count differs from Sionna's"
+    );
+    let (frames, wave) = (vectors.messages.len(), wave_frames(rm));
+    assert!(
+        frames > wave && frames % wave != 0,
+        "{label}: the vectors must span a full and an incomplete wave"
+    );
+
+    for (f, (msg, codeword)) in vectors.messages.iter().zip(&vectors.codewords).enumerate() {
+        assert_eq!(
+            &rm.encode(msg),
+            codeword,
+            "{label}: encoder output differs from Sionna's codeword of frame {f}"
+        );
+        let mut decoder = Nr5gRateMatchedDecoder::new(rm.clone());
+        let result = decoder.decode_iterative(&noiseless_llrs(codeword), 50);
+        assert!(
+            result.syndrome_check_passed,
+            "{label}: noiseless decode of Sionna frame {f} must converge"
+        );
+        assert_eq!(
+            &result.decoded_bits, msg,
+            "{label}: Sionna frame {f} must decode to its message"
+        );
+    }
+    check_batch_decodes(rm, &vectors.codewords, &vectors.messages, label);
+}
+
+/// Round-trips library-encoded frames through the batch decoder; the first
+/// message is [`deterministic_message`].
+fn check_batch_roundtrip(rm: &Nr5gRateMatchedCode, label: &str) {
+    let messages: Vec<BitVec> = (0..wave_frames(rm) + 1)
+        .map(|f| stepped_message(rm.k(), 3 + f))
+        .collect();
+    let codewords: Vec<BitVec> = messages.iter().map(|msg| rm.encode(msg)).collect();
+    check_batch_decodes(rm, &codewords, &messages, label);
 }
 
 fn check_rate_tuple(bg: u8, target_n: usize, target_k: usize, expect_z: usize, expect_ils: usize) {
@@ -261,9 +454,10 @@ fn check_rate_tuple(bg: u8, target_n: usize, target_k: usize, expect_z: usize, e
     let msg = deterministic_message(target_k);
     let codeword = rm.encode(&msg);
     assert_eq!(codeword.len(), target_n);
-    let llrs: Vec<Llr> = (0..target_n)
-        .map(|i| Llr::new(if codeword.get(i) { -4.0 } else { 4.0 }))
-        .collect();
+    let llrs = noiseless_llrs(&codeword);
+    let label = format!("BG{bg} (n={target_n}, k={target_k})");
+    check_external_vectors(&rm, &label);
+    check_batch_roundtrip(&rm, &label);
     let mut decoder = Nr5gRateMatchedDecoder::new(rm);
     let result = decoder.decode_iterative(&llrs, 50);
     assert!(

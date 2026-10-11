@@ -9,7 +9,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use gf2_kernels_simd::bipedal::{self, packed5, packed7};
 use gf2_kernels_simd::{fp_medium, fp_medium_f64, fp_medium_ple, fp_small, fp_small_f32};
-use gf2_kernels_simd::{fp_small_panel, fp_small_ple, modem};
+use gf2_kernels_simd::{fp_small_panel, fp_small_ple, gf2m, modem};
 
 /// Dimensions whose three shape products overflow `usize`.
 const OVERFLOWING: (usize, usize, usize) = (1 << 63, 2, 2);
@@ -194,6 +194,18 @@ fn medium_prime_ple_panel_rejects_window_and_table() {
     rejects(kernel, "shorter than p", || {
         run(&mut [1, 0, 0, 1], 2, 2, &inv_table[..256]);
     });
+}
+
+#[test]
+fn gf2m_mul_kernel_rejects_degrees_outside_its_domain() {
+    let fns = detected!(gf2m::detect());
+    assert_eq!((fns.mul_fn)(1, 1, 1, 1), 1);
+    assert_eq!((fns.mul_fn)(1, 1, 64, 0x1B), 1);
+    for m in [0, 65, 128, usize::MAX] {
+        rejects("gf2m mul kernel", "degree m must be in 1..=64", || {
+            (fns.mul_fn)(1, 1, m, 1);
+        });
+    }
 }
 
 #[test]

@@ -1,33 +1,11 @@
 # benchmarks/ — reference reproducibility harness
 
 This directory holds the pinned-container reference harness for the
-`FieldMatrix` linear-algebra benchmarking story
-(`jit:64c88ae4` / `jit:bb85c68a`). The artefacts here let any host with
-a container runtime reproduce the reference numbers byte-for-byte —
-matrices, build flags, library versions and OS userspace are all
-pinned. The gf2-side criterion benches (under `crates/gf2-core/benches/`,
-delivered by sibling task `T2`) consume the same master seed so each
+`FieldMatrix` linear-algebra benchmarks. Matrices, build flags, library
+versions and OS userspace are all pinned, so any host with a container
+runtime reruns the same reference configuration. The gf2-side criterion benches
+(under `crates/gf2-core/benches/`) consume the same master seed so each
 matrix is identical on both sides.
-
-## Layout
-
-```
-benchmarks/
-├── Containerfile            # Debian-slim + pinned gcc-12 / g++-12 /
-│                            # OpenBLAS / GMP / LAPACK / CMake (apt) +
-│                            # Givaro / fflas-ffpack / M4RI (tarballs)
-├── image.lock               # version + sha256 pins (lock file)
-├── run.sh                   # build + run driver (rootless podman default)
-├── reference/
-│   ├── fflas_bench.cpp      # fgemm, PLUQ, echelon, invert, solve, charpoly
-│   ├── m4ri_bench.c         # GF(2) matmul + echelonize via Method-of-4-Russians
-│   └── Makefile             # in-container build (Containerfile invokes it)
-├── seeds/
-│   └── seed.txt             # single 64-bit master seed shared with gf2 side
-├── host.txt                 # captured at run time (CPU, OS, runtime)
-└── results/
-    └── <timestamp>.csv      # one CSV per run; latest.csv symlink follows
-```
 
 ## Container runtime
 
@@ -66,9 +44,9 @@ microarchitecture flags, and cache topology so any reader can verify
 the substrate before drawing conclusions.
 
 After a successful image build, `run.sh` records the local
-content-addressable id into `image.lock` (the `[image].local_id` slot).
-The committed baseline includes the `2026-04-26` bench-day local id so
-re-runs can detect environment drift.
+content-addressable id into `image.lock` (the `[image].local_id` slot);
+a mismatch with the committed id signals environment drift. A rebuild on
+different hardware commits the stamped id together with its results.
 
 ## CSV schema
 
@@ -76,10 +54,10 @@ Every row in `results/<timestamp>.csv` has exactly **ten** columns:
 
 | Column           | Type     | Description                                                                                                                                |
 |------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| `lib`            | string   | Reference implementation: `fflas-ffpack` or `m4ri`.                                                                                        |
-| `operation`      | string   | One of `fgemm`, `pluq`, `echelon`, `invert`, `solve`, `charpoly`, `minpoly`, `spmv`, `matmul` (m4ri spelling for `fgemm`), or one of the sparse ops added by protocol Amendment 2 (`sparse-matmul`, `sparse×dense`, `sparse-elim`).                |
+| `lib`            | string   | Reference implementation, e.g. `fflas-ffpack` or `m4ri`.                                                                                       |
+| `operation`      | string   | One of `fgemm`, `pluq`, `echelon`, `invert`, `solve`, `charpoly`, `minpoly`, `spmv`, `matmul` (m4ri spelling for `fgemm`), or one of the sparse ops `sparse-matmul`, `sparse×dense`, `sparse-elim`.               |
 | `field`          | string   | Field tag, e.g. `GF(2^31-1)`, `GF(65521)`, `GF(251)`, `GF(7)`, `GF(2)`.                                                                   |
-| `m`, `k`, `n`    | usize    | Matrix shape passed to the kernel. For square ops `m = k = n`. For `fgemm` rectangular variants (deferred to T2), `m`, `k`, `n` differ.    |
+| `m`, `k`, `n`    | usize    | Matrix shape passed to the kernel. For square ops `m = k = n`. For rectangular `fgemm`, `m`, `k`, `n` differ. |
 | `rank_regime`    | string   | `uniform` (sample i.i.d.) or `deficient` (rank exactly `n/2`, generated as L·R with shared inner dimension).                              |
 | `seed`           | uint64   | The 64-bit deterministic seed for *this row*'s matrix. Derived from the master seed via `SplitMix64(tag, op_idx, size_idx, regime_idx)`. |
 | `wall_ns`        | uint64   | Mean wall-clock nanoseconds per iteration (steady_clock / CLOCK_MONOTONIC, total wall time / `--iters`).                                  |
@@ -92,8 +70,7 @@ without de-duplication.
 ### Column rationale
 
 - `(m, k, n)` rather than just `n` because `fgemm` is genuinely
-  rectangular; the schema also covers the rectangular sweep that T2
-  introduces without re-versioning the CSV.
+  rectangular.
 - `seed` is per-row, not per-run, because rank-deficient and uniform
   draws need independent seeds for the same operation/size cell. The
   master seed is a derivation key.
@@ -125,11 +102,9 @@ field element, reduced mod `p`). The reduction-into-field step is
 biased only for non-power-of-two fields, but the bias is identical on
 both sides.
 
-## What's covered in T1
+## Coverage of `fflas_bench` and `m4ri_bench`
 
-Per the parent story `64c88ae4` and the R1 amendment dated 2026-04-26:
-
-| Operation              | T1 sizes (square)    | Fields                                       | Rank regimes        |
+| Operation              | Sizes (square)       | Fields                                       | Rank regimes        |
 |------------------------|----------------------|----------------------------------------------|---------------------|
 | fgemm                  | 64, 256, 1024, 4096  | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform             |
 | PLUQ (≡ PLE)           | 64, 256, 1024        | GF(2^31-1), GF(65521), GF(251), GF(7)         | uniform + deficient |
@@ -158,70 +133,18 @@ emit an `early_exit` warning on stderr and a CSV row with the
 measurements taken so far; downstream consumers can filter on the
 warning when comparing.
 
-For `n = 4096` we keep `fgemm` only across all four GF(p) fields (the
-cheapest of the dense ops at that size, BLAS3 with peak microarch
-utilisation) — PLUQ / echelon / invert / solve / charpoly / minpoly
-at 4096 are formally deferred (see below).
-
 **M4RI scope exclusions.** The M4RI library does not expose a
-`charpoly` or `minpoly` interface. Per the protocol's `not-supported-
-by-library` exclusion class
-(`dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md`
-§ 8), those operations are documented as having no
-M4RI lane and are sourced from a different reference (today: gf2-core
-itself; future: LinBox per `jit:79388011`). M4RI's `mzd_addmul`
-(rectangular fgemm) and sparse paths remain out of scope for this
-issue — see `jit:cbecfced` for the canonical-reference designation
-roadmap.
-
-## Deferred to T2 / T3
-
-The R1 amendment (2026-04-26) formalises the following deferrals:
-
-- **PLUQ / echelon / invert / solve / charpoly at `n = 4096`**: each
-  cell is multi-second per iteration on most reference fields and the
-  full sweep would dominate the T1 wall-clock budget. The fgemm@4096
-  point is preserved on every field; the rest will land in T2 with
-  per-cell budgets relaxed.
-- **Rectangular fgemm** (`m × k × n` with skew aspect ratios): the
-  Winograd-crossover sweep. The CSV schema already supports it.
-- **Sparse SpMV** (sparsity 1% / 5% at n = 1024, 4096): fflas-ffpack's
-  sparse interface is via LinBox proper, not fflas-ffpack itself, so
-  reference numbers will come from a separate harness. Tracked under
-  story `8a90882e`.
-- **`Modular<int8_t>` proper**: fflas-ffpack does not ship an int8
-  Modular template; `Modular<float>` over `[0, 251)` is the canonical
-  small-prime path used in the upstream test corpus. A native int8 path
-  would require a custom field wrapper and is not on the critical path
-  for the epic.
-- **`Givaro::GFq` for GF(2^m)**: GF(2^m) reference numbers via Givaro
-  are tracked separately. fflas-ffpack's GF(2^m) path goes through
-  Modular<float> with a polynomial multiplication wrapper, which is
-  not a fair comparison to gf2's PCLMULQDQ kernels. T2 will add a
-  Givaro::GFq harness if a fair-comparison framing is found.
+`charpoly` or `minpoly` interface, so those operations have no M4RI
+lane. `m4ri_bench` covers neither `mzd_addmul` (rectangular fgemm) nor
+sparse paths.
 
 ## Gate coverage
 
-`cargo-ci` (the workspace's lint/test gate) does **not** validate the
-container build or the harness binaries — the gate runner has no
-`podman` daemon. The criteria
-
-- "container builds from clean state with the pinned `Containerfile`",
-  and
-- "harnesses run to completion and emit CSV for every (field, op,
-  size) cell"
-
-are therefore validated **out-of-gate** by running
-`./benchmarks/run.sh` once on a real host (the dev workstation, the
-project lead's machine, or any contributor with rootless podman). The
-generated `benchmarks/results/<timestamp>.csv` and
-`benchmarks/host.txt` are the audit-trail artefacts the lead checks in
-to substantiate those criteria.
-
-For interactive verification without a full timing run, see
-`benchmarks/smoke.sh` — it builds the image and runs both harnesses
-with `--warmup 0 --iters 1` so a single end-to-end pass takes well
-under a minute per supported field.
+`cargo-ci` validates neither the container build nor the harness
+binaries. `./benchmarks/run.sh` on a host with a container runtime
+validates both and writes `benchmarks/results/<timestamp>.csv` and
+`benchmarks/host.txt`. `benchmarks/smoke.sh` builds the image and runs
+the harnesses with `--warmup 0 --iters 1`, without a full timing run.
 
 ## Determinism guarantees
 
@@ -257,12 +180,7 @@ GF2_BENCH_WARMUP=1 GF2_BENCH_ITERS=1 ./benchmarks/run.sh --skip-fflas
 GF2_RUNTIME=docker ./benchmarks/run.sh
 ```
 
-## Prerequisites the human must satisfy
-
-The agent that produced this directory cannot itself build the image
-(no privilege to invoke the container runtime in the worker sandbox).
-Before the gate job can certify the success criteria, a human (or the
-gate job runner) must have:
+## Prerequisites
 
 1. **Rootless podman** installed (or Docker, with the env var set).
    `which podman` should resolve.
@@ -270,13 +188,5 @@ gate job runner) must have:
    the upstream tarballs. Run-time of the container itself is offline.
 3. **At least ~6 GiB of free disk** for the layer cache (Givaro +
    fflas-ffpack + M4RI source trees + build artefacts).
-4. **A host CPU that satisfies `-march=native`** for whatever
-   microarchitecture the gate runs on. The `host.txt` file at run time
-   captures this.
-
-`run.sh` automatically stamps the new `[image].local_id` into
-`image.lock` after each successful build, so subsequent runs on the
-same host detect environment drift if the local id no longer matches
-the committed bench-day baseline. If a future refresh intentionally
-rebuilds the image on different hardware, commit the newly stamped id
-together with the refreshed results.
+4. **A host CPU that satisfies `-march=native`**. The `host.txt` file
+   at run time captures the microarchitecture.

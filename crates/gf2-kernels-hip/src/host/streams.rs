@@ -124,6 +124,40 @@ unsafe impl Send for HipStream {}
 // (e.g. both block until the stream drains), not a Rust-level data race.
 unsafe impl Sync for HipStream {}
 
+/// Synchronizes a stream on drop while armed, so a scope that enqueued
+/// asynchronous copies leaves none pending when an error return or unwind ends
+/// its borrows of the staging buffers. Declared after any buffer the scope
+/// owns, it drops first and the buffers are released only once HIP no longer
+/// references them. The synchronize status is discarded: an exit that drops an
+/// armed guard is already reporting a failure.
+pub(crate) struct StreamDrainOnError<'a> {
+    stream: &'a HipStream,
+    armed: bool,
+}
+
+impl<'a> StreamDrainOnError<'a> {
+    pub(crate) fn armed(stream: &'a HipStream) -> Self {
+        Self {
+            stream,
+            armed: true,
+        }
+    }
+
+    /// Called once the scope has synchronized the stream itself or handed the
+    /// obligation to an owner that does.
+    pub(crate) fn disarm(&mut self) {
+        self.armed = false;
+    }
+}
+
+impl Drop for StreamDrainOnError<'_> {
+    fn drop(&mut self) {
+        if self.armed {
+            let _ = self.stream.synchronize();
+        }
+    }
+}
+
 /// A fixed-size pool of [`HipStream`]s bound to a single device.
 ///
 /// Streams are handed out by fixed index ([`get`](HipStreamPool::get)),

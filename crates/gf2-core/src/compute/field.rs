@@ -34,12 +34,12 @@ pub fn last_effective_soa_chunk() -> Option<usize> {
 /// # Panics
 ///
 /// Panics if the pool cannot be built.
-#[cfg(all(feature = "parallel", any(test, feature = "test-support")))]
+#[cfg(feature = "parallel")]
 pub fn run_in_dedicated_parallel_pool<R: Send>(threads: usize, f: impl FnOnce() -> R + Send) -> R {
     rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
         .build()
-        .expect("dedicated test pool builds")
+        .expect("dedicated pool builds")
         .install(f)
 }
 

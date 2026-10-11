@@ -27,7 +27,7 @@ pub const WORKER_STRIDE: u128 = 1 << 40;
 /// `tests::test_worst_case_frame_draw_under_stride`.
 pub const FRAME_STRIDE: u128 = 1 << 20;
 
-/// Debug-assert headroom: a frame draws at most
+/// Headroom below [`FRAME_STRIDE`]: a frame draws at most
 /// `FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN` ChaCha20 32-bit words.
 pub const DEBUG_ASSERT_WORD_MARGIN: u128 = 1024;
 

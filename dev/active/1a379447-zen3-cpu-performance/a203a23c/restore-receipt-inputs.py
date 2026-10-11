@@ -5,8 +5,8 @@
 receipt pins by digest and a checkout of that revision does not carry. This
 script resolves each one to a file of the same revision whose bytes hash to the
 pinned digest, writes it into the receipt's snapshot, stages it past
-`.gitignore`, and records source and digest in
-`dev/active/1a379447-zen3-cpu-performance/a203a23c/restored-inputs.json`.
+`.gitignore`, and records source and digest in `restored-inputs.json` beside
+this script.
 
 Only content that already exists in the repository at the base revision is
 written, so no measurement evidence is reconstructed and every restored byte
@@ -15,9 +15,9 @@ as unrestored with its receipt.
 
 `sources_by_digest` hashes every file the base revision tracks, reading blob
 bytes through one `git cat-file --batch` process rather than one process per
-file; `dev/active/1a379447-zen3-cpu-performance/a203a23c/timing/` records the cost that batching avoids.
+file; `timing/` beside this script records the cost that batching avoids.
 
-Usage: dev/active/1a379447-zen3-cpu-performance/a203a23c/restore-receipt-inputs.py <base-revision>
+Usage: restore-receipt-inputs.py <base-revision>
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-RECORD = "dev/active/1a379447-zen3-cpu-performance/a203a23c/restored-inputs.json"
+HERE = Path(__file__).resolve().parent
 CHECKER = "dev/scripts/check-receipt-input-snapshots.py"
 NO_SOURCE = "no file of the base revision carries this digest"
 
@@ -63,7 +63,7 @@ def main() -> int:
         return 2
     root = Path(
         subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
+            ["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
             capture_output=True,
             text=True,
             check=True,
@@ -113,14 +113,14 @@ def main() -> int:
             "Files added to committed receipt input snapshots so a fresh checkout "
             "reproduces the acceptance verdict, with the committed source of each."
         ),
-        "generator": "dev/active/1a379447-zen3-cpu-performance/a203a23c/restore-receipt-inputs.py",
+        "generator": Path(__file__).resolve().relative_to(root).as_posix(),
         "check": CHECKER,
         "base_revision": base,
         "restored": restored,
         "unrestored": unrestored,
         "result": {"restored": len(restored), "unrestored": len(unrestored)},
     }
-    (root / RECORD).write_text(json.dumps(record, indent=2) + "\n")
+    (HERE / "restored-inputs.json").write_text(json.dumps(record, indent=2) + "\n")
     print(json.dumps(record["result"]))
     return 0
 
