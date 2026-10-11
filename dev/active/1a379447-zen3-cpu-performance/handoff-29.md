@@ -40,7 +40,7 @@
 - [ ] Before any of the pinned measurement branches merges: reword the 72-character subject `96d44eded` on `worktree-agent-63bad95d-pm4ri`; regenerate `f547c394/schema-versions.json` on the merged tree; merge order `worktree-agent-7dbe1393`, then `worktree-agent-63bad95d-m4ri`, then `worktree-agent-63bad95d-pm4ri`.
 - [ ] File the follow-ups recorded in `progress.json` `surfaced_pitfalls` for session 33 (the `checkpoint_compat` resume tests that clear the completion flag; the stale `04b85d10` findings and launchers; the `permanent_rare_event_artifacts` load timeouts under `@/issue/f21b25ac`). Read `.jit/reference/content-standards.md` first and wire each to the issue that surfaced it.
 - [ ] Reconcile the pitfall on `ed3d490e` REQ-09 (no production checkpointed campaign uses the batch decode stage) before the story's gates.
-- [ ] Dispatch the next ready story issues as they unblock (`jit graph deps 1a379447 --depth 0`).
+- [ ] Dispatch the ready story issues `4252085a` (quality record of the INTRA arm) and `d4185e9e` (build identity of the arms; it settles the checkout question below), then the next as they unblock (`jit graph deps 1a379447 --depth 0`).
 - [ ] Reclaim each pinned worktree when its issue closes (`LEAD_CACHE_DIRS=none`).
 
 ## Traps — do not repeat these
