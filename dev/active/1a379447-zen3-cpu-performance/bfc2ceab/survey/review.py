@@ -581,6 +581,8 @@ CLEARED = [
      "src/x86/avx2.rs", "unsafe fn avx2_popcnt(buf: &[u64]) -> u64 {", 1),
     ("src/x86/avx2.rs", "and_popcnt_fn", "length-derived",
      "src/x86/avx2.rs", "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {", 1),
+    ("src/x86/avx2.rs", "and_parity_fn", "length-derived",
+     "src/x86/avx2.rs", "unsafe fn avx2_and_parity(lhs: &[u64], rhs: &[u64]) -> bool {", 1),
     ("src/x86/avx2.rs", "popcnt_csa_fn", "length-derived",
      "src/x86/popcount.rs", "pub(crate) unsafe fn avx2_popcnt_csa(buf: &[u64]) -> u64 {", 1),
     ("src/x86/avx2.rs", "and_popcnt_csa_fn", "length-derived",

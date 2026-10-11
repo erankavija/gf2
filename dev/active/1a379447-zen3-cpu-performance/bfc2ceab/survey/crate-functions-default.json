@@ -9,7 +9,7 @@
     "baseline": "dev/active/1a379447-zen3-cpu-performance/bfc2ceab/survey/kernel-anchor-baseline.json",
     "baseline_sha256": "00595aebed4a1945f41b13087879bed811e5b5775528ca1c4563f065a70ac48a"
   },
-  "sources_sha256": "c24f7e769e2c67b468aadca8723d5bb065f9363f9d61a8f95d44e1a4fda5d1f6",
+  "sources_sha256": "7398419e8b9d46ce3db6a4463cc1a80b85ee6411a1a3478ef55fe0172dc08c1c",
   "functions": {
     "_ZN102_$LT$core..iter..adapters..map..Map$LT$I$C$F$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h3b1146d8c8ecba6eE": "b0f0d99c476ed096bbfd819c977dbeb1b316eb945701031c7ddfff86e1041b7f",
     "_ZN16gf2_kernels_simd10bch_encode12BchEncodeFns12absorb_block17h9bcd14f44017f24cE": "7adb4e08f348f22e4fe1d24d33f67aa57ba8d6ea9b91019260af2e3b4f25f543",
@@ -97,6 +97,7 @@
     "_ZN16gf2_kernels_simd3x864avx213avx2_and_into17h74a00751ab6590ebE": "1b1cd33e081b857e9249d11a06310c551696370cb40f5b0e9ab9c579021190cc",
     "_ZN16gf2_kernels_simd3x864avx213avx2_not_into17h4e4768342ac45d1aE": "6fd01192175155db86c6bd4aa45ff72988f34a6b428672509b960338fee5cbae",
     "_ZN16gf2_kernels_simd3x864avx213avx2_xor_into17hd8d8ae3027e01c7cE": "2271bf47bc207922c66c4e8efb1774a7e236b02edd0467e7c678068adb796c0a",
+    "_ZN16gf2_kernels_simd3x864avx215avx2_and_parity17h89e555b0bdddffb4E": "28759f77972bb56ecf09376fc6a30761f1afd134261efdb55e3593cc06e2cd9b",
     "_ZN16gf2_kernels_simd3x864avx215avx2_and_popcnt17h5bf84ffde5c84b52E": "a36b71f82facb838f736590cf577e1eed5c3aeef664343143154bfbdc13845f3",
     "_ZN16gf2_kernels_simd3x864avx217avx2_m4rm_tile8x417h0e08bb9829ca469eE": "88c45c2408dc7302f740ad4b254eac73373598a954b79d3f976a6c7cb2559b87",
     "_ZN16gf2_kernels_simd3x864avx217avx2_m4rm_tile8xn17hc33eb99b1eead644E": "48a9f432f502137bb3b101c8abd2afb61f2010940fa2271ffc22c9106b046087",
@@ -108,6 +109,7 @@
     "_ZN16gf2_kernels_simd3x864avx221avx2_shift_left_words17hd8f5aa9b72ee9954E": "9adbee3c50950d3eded4dae397b674ebcf2d94a9d6087887c6fa0631d436c5a6",
     "_ZN16gf2_kernels_simd3x864avx221m4rm_table_rows_cover17h58bd5bbc07481ab6E": "f7afe66053f1a238ef4d7aefa1b96d7598e098348a06b7e8754fe413d37cbcd8",
     "_ZN16gf2_kernels_simd3x864avx222avx2_shift_right_words17h786caa05552616f4E": "07ce9421df2dd95c21605463267b3dc9b3a0465453095d768b122245853a3160",
+    "_ZN16gf2_kernels_simd3x864avx23fns13and_parity_fn17h59da311ed29ee377E": "8e2d93829431ab656efb899b8f25b280a6f8dc13030724045dee7b576497aa95",
     "_ZN16gf2_kernels_simd3x864avx23fns13and_popcnt_fn17h64743a199dbe775fE": "9921579579bb497208a048d31e8a9316b01747eac8c8a722929ec0eb234b33eb",
     "_ZN16gf2_kernels_simd3x864avx23fns13popcnt_csa_fn17hfea3b40875730345E": "560b75f5947ac71493ac56239f09c8fbb3e05c3cc3c24c0f7138f85e8ee2275e",
     "_ZN16gf2_kernels_simd3x864avx23fns15m4rm_tile8x4_fn17h19f7d6b30844d0cfE": "cbf0892164ff83e8ea111a9f91105157548016c8a02c460f358fba2dfe05d9f3",
@@ -184,7 +186,7 @@
     "_ZN16gf2_kernels_simd5modem4avx225pam_sq_distances_f64_avx217h5ab99a15f0a26e84E": "df0a8ce82a11778e26c52022890183468835e301e12d6484eb8ed283be658340",
     "_ZN16gf2_kernels_simd5modem4avx230pam_sq_distances_f32_avx2_safe17hce8b7e6f2059c16fE": "be4806901be92514ee0d2c4f2e140d53676ff27c27927b36ee28c98c1c7e811c",
     "_ZN16gf2_kernels_simd5modem4avx230pam_sq_distances_f64_avx2_safe17h9d1bac431669accbE": "45f192f3b0ecfb61a2909360328ec829f65c71875c5a8cb7a8aac5eefdff5847",
-    "_ZN16gf2_kernels_simd6detect17h0bdd9bc93cea5b49E": "2203482b1ad464eb16455a803e1cd2e338b8a134ccf36ec8a174661ff47acdc5",
+    "_ZN16gf2_kernels_simd6detect17h41fa7dad877b42f2E": "c70de0a84a2620e0f175f3179459925a2906321cc1f557dac277596cc206ff6b",
     "_ZN16gf2_kernels_simd7bipedal11detect_avx217h105eeff72c20a79aE": "9b97f546a2d1576ff8227c716e6c0106745555c2e59d1a1c887e6ca59b1c3627",
     "_ZN16gf2_kernels_simd7bipedal15permanent4_safe17h2da65c78e5d5b9b2E": "1d35935df6a167299f0f99ace7d99632f0f1a4f47b1fa39cce2a40cd77d9c3e0",
     "_ZN16gf2_kernels_simd7bipedal7packed511has_avx2_f517h7042d80bdf45c69bE": "de957c15faf0701050c6951920c9bd82c54e5fc4532860863c255cf3f3d00299",
