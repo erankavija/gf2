@@ -119,9 +119,10 @@ class ReproductionTest(unittest.TestCase):
         self.assertEqual(records[0], records[1])
 
     def test_the_dep_info_of_the_intra_arm_names_the_headers_its_unit_compiles(self):
-        subprocess.run(
-            [sys.executable, "-B", str(RECORDER), tempfile.mkdtemp(),
-             os.environ["GF2_AFF3CT_ROOT"]], cwd=ROOT, check=True, capture_output=True)
+        with tempfile.TemporaryDirectory() as out_dir:
+            subprocess.run(
+                [sys.executable, "-B", str(RECORDER), out_dir, os.environ["GF2_AFF3CT_ROOT"]],
+                cwd=ROOT, check=True, capture_output=True)
         dep_info = SURVEY / "arms/target/release/aff3ct-intra-arm.d"
         self.assertIn("Decoder_LDPC_BP_flooding_SPA.hpp", dep_info.read_text())
 
