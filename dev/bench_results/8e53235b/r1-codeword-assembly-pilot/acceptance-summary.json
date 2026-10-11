@@ -1,0 +1,187 @@
+{
+  "schema": "zen3-benchmark-acceptance-v2",
+  "receipt_sha256": "7f714d40ee5d497b0812b59341f8c018fb4207a15453e999448dba21046859fa",
+  "campaign_id": "8e53235b-r1-codeword-assembly-pilot",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "8e53235b-bch-codeword-assembly",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "attempt_alpha": 0.025,
+    "corrected_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "assembly-bch-encode-current-m14-b256-1core",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.9517296875894068,
+        "lower": 1.9498933357696981,
+        "upper": 1.9542808338412752,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 3009057374007762088,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-current-m16-b256-1core",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.9432037506400628,
+        "lower": 1.9405585928906786,
+        "upper": 1.956573849005829,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 16575617881855208031,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-fold-m14-b256-1core",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 48.394933709221576,
+        "lower": 48.254468163792914,
+        "upper": 48.47241222311846,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 14214106227327978893,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-bitslice-m14-b256-1core",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 19.76017932356647,
+        "lower": 19.723582075233228,
+        "upper": 20.017927647373547,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 11294406530733665602,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-current-m8-b1-1core",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 3.829907490539572,
+        "lower": 3.820010963008262,
+        "upper": 3.920038281239236,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 8906510488023301461,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}
