@@ -58,7 +58,11 @@ measured at the `allocated-matvec` boundary by the same arms and cases. The
 variant `matvec-ragged-tail` belongs to the
 [ragged-tail addendum](../7dbe1393/matvec-ragged-tail-addendum.md) of issue
 `7dbe1393`, identity `7dbe1393-matvec-ragged-tail-v1`, and is measured at the
-same boundary. `Question::addendum` names the frozen document each variant
+same boundary. The variant `matvec-ragged-tail-v2` belongs to the
+[second ragged-tail addendum](../7dbe1393/matvec-ragged-tail-v2-addendum.md),
+identity `7dbe1393-matvec-ragged-tail-addendum-v2`: its family measures the
+`matvec-ragged-tail` cells again on a ledger of its own and adds no cell to
+the table (`Question::table`). `Question::addendum` names the frozen document each variant
 transcribes.
 `dense_parity_harness::cells()` returns the complete cell table in that order,
 then in each question's listed axis order: the normative primary product first,
@@ -406,7 +410,7 @@ runs the crate's own contract tests and both builds' semantic oracle, and writes
 `cells` writes one family's campaign JSON addendum. `--family` is one of
 `2037941f-dense-isolated-fused-parity`, `2037941f-dense-allocated-matvec`,
 `2037941f-dense-matvec-vs-m4ri`, `4337c02e-matvec-simd-threshold`,
-`7dbe1393-matvec-ragged-tail`.
+`7dbe1393-matvec-ragged-tail`, `7dbe1393-matvec-ragged-tail-v2`.
 
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
 SHA-256 equals the pin the harness carries, and the campaign JSON matches

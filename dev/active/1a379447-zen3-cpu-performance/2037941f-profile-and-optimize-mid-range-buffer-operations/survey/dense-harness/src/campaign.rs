@@ -174,6 +174,17 @@ fn rules(question: Question) -> FamilyRules {
                                     selector or second dispatcher.",
             max_pilot_trials_per_cell: 2,
         },
+        Question::MatvecRaggedTailV2 => FamilyRules {
+            description: "Allocated BitMatrix::matvec_parity_kernel as candidate against the \
+                          public BitMatrix::matvec on its selected SIMD lane in the same build, \
+                          at the cells, arms and settings of family \
+                          7dbe1393-matvec-ragged-tail. This addendum is the pilot, and it \
+                          repeats that family's pilot: the receipt of campaign \
+                          v4-r1-7dbe1393-matvec-ragged-tail records the host load at each \
+                          session start in session_hosts[].load_average. Every cell is \
+                          exploratory and no cell decides adoption.",
+            ..rules(Question::MatvecRaggedTail)
+        },
     }
 }
 
@@ -317,6 +328,8 @@ pub fn cell_arms(cell: &Cell) -> (&'static str, &'static str) {
         // The selected SIMD lane is the baseline, so a speedup above one
         // favours the parity kernel.
         Question::MatvecRaggedTail => (Route::MatvecA.id(), Route::MatvecLaneParity.id()),
+        // No cell carries this question: its family measures the cells above.
+        Question::MatvecRaggedTailV2 => (Route::MatvecA.id(), Route::MatvecLaneParity.id()),
     }
 }
 

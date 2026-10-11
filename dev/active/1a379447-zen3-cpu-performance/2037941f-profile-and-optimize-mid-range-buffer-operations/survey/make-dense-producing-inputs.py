@@ -90,6 +90,8 @@ def closure():
                 located("matvec-lane-threshold-addendum.md"),
                 # The ragged-tail question's frozen addendum.
                 located("matvec-ragged-tail-addendum.md"),
+                # The second ragged-tail family's frozen addendum.
+                located("matvec-ragged-tail-v2-addendum.md"),
                 str(STORY / "m4ri-operation-match.md"),
                 str(STORY / "m4ri-probe-record.txt"),
                 str(SURVEY / "m4ri_matvec_arm.c"),

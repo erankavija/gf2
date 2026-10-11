@@ -83,9 +83,10 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
     // 2 neighbours, 5 tail1, 2 cold, 5 streaming, 5 scalar-reference. M4RI:
     // 6 qualified shapes plus 2 retained-state cells. Lane threshold: 6 lane
     // strides, the control, 3 exploratory strides, 5 streaming, 2 cold.
-    // Ragged tail: 5 ragged strides and the aligned control.
-    assert_eq!(counts, vec![12, 24, 8, 17, 6]);
-    assert_eq!(table.len(), counts.iter().sum::<usize>());
+    // Ragged tail: 5 ragged strides and the aligned control, which the second
+    // ragged-tail family measures again and the table holds once.
+    assert_eq!(counts, vec![12, 24, 8, 17, 6, 6]);
+    assert_eq!(table.len(), counts[..5].iter().sum::<usize>());
 
     let ids: Vec<&str> = table.iter().map(|cell| cell.cell_id.as_str()).collect();
     assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), ids.len());
@@ -112,7 +113,7 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
         .iter()
         .map(|question| family_cells(*question).iter().filter(|cell| cell.anchor).count())
         .collect();
-    assert_eq!(anchors, vec![5, 5, 2, 6, 6]);
+    assert_eq!(anchors, vec![5, 5, 2, 6, 6, 6]);
     assert!(table.iter().all(|cell| !cell.anchor || cell.cache == Cache::Warm));
 
     // The scalar-reference rows are exploratory cells of the allocated family.
@@ -123,6 +124,21 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
         .collect();
     assert_eq!(reference.len(), ANCHOR_WORDS.len());
     assert!(reference.iter().all(|id| id.contains("scalar-reference")));
+}
+
+/// The second ragged-tail family is the first on a ledger of its own: the same
+/// cells, seeds, arms, margins and limits under another identity.
+#[test]
+fn the_second_ragged_tail_family_repeats_the_first_on_its_own_ledger() {
+    let first = campaign::addendum(Question::MatvecRaggedTail, ISSUE, FROZEN);
+    let mut second = campaign::addendum(Question::MatvecRaggedTailV2, ISSUE, FROZEN);
+    assert_ne!(second.family.id, first.family.id);
+    assert_ne!(second.family_wise.ledger_path, first.family_wise.ledger_path);
+    assert!(second.family.description.contains(&first.family.id));
+    second.family.id.clone_from(&first.family.id);
+    second.family.description.clone_from(&first.family.description);
+    second.family_wise.ledger_path.clone_from(&first.family_wise.ledger_path);
+    assert_eq!(second, first);
 }
 
 /// The lane-threshold family contrasts the two lanes at the allocated boundary
@@ -1191,6 +1207,7 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
         (Question::MatvecVsM4ri, 2),
         (Question::MatvecLaneThreshold, 2),
         (Question::MatvecRaggedTail, 2),
+        (Question::MatvecRaggedTailV2, 2),
     ];
     for (question, arms) in expected_arms {
         let addendum = campaign::addendum(question, ISSUE, FROZEN);
@@ -1561,7 +1578,7 @@ fn the_carried_pins_are_the_frozen_addendums_own_identity() {
         .iter()
         .map(|question| question.addendum().path)
         .collect();
-    assert_eq!(pins.len(), 3);
+    assert_eq!(pins.len(), 4);
     for question in Question::ALL {
         let pin = question.addendum();
         let bytes = std::fs::read(root.join(pin.path)).expect("the frozen addendum is committed");

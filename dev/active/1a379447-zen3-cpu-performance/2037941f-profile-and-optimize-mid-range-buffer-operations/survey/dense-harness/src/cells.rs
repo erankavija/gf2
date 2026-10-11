@@ -1,6 +1,7 @@
 //! The frozen cell tables of addendum `2037941f-dense-parity-v2`, of the
 //! lane-threshold addendum `4337c02e-matvec-lane-threshold-v1` and of the
-//! ragged-tail addendum `7dbe1393-matvec-ragged-tail-v1`.
+//! ragged-tail addendum `7dbe1393-matvec-ragged-tail-v1`, whose cells the
+//! addendum `7dbe1393-matvec-ragged-tail-addendum-v2` measures again.
 //!
 //! [`cells`] returns every cell the dense-parity addendum declares, in that
 //! addendum's own order: the cell-matrix sections in document order, and within
@@ -72,6 +73,14 @@ pub const RAGGED_TAIL_ADDENDUM: FrozenAddendum = FrozenAddendum {
     frozen_utc: "2026-10-08T11:39:41Z",
 };
 
+/// The second ragged-tail addendum, which freezes [`Question::MatvecRaggedTailV2`].
+pub const RAGGED_TAIL_V2_ADDENDUM: FrozenAddendum = FrozenAddendum {
+    path: "dev/active/1a379447-zen3-cpu-performance/7dbe1393/matvec-ragged-tail-v2-addendum.md",
+    sha256: "e2149903acee36ac8e2224d1442098bff8d0d0b95367efc86e1254162e25d6b6",
+    identity: "7dbe1393-matvec-ragged-tail-addendum-v2",
+    frozen_utc: "2026-10-11T09:26:12Z",
+};
+
 /// Name stem of the external shared object a comparator arm loads.
 pub const COMPARATOR_LIBRARY_STEM: &str = "m4ri";
 
@@ -120,17 +129,20 @@ pub enum Question {
     MatvecLaneThreshold,
     /// `BitMatrix::matvec_parity_kernel` against the selected SIMD lane.
     MatvecRaggedTail,
+    /// The cells of [`Self::MatvecRaggedTail`] again, on a ledger of their own.
+    MatvecRaggedTailV2,
 }
 
 impl Question {
     /// Every question: the dense-parity addendum's in document order, then the
-    /// lane-threshold addendum's and the ragged-tail addendum's.
-    pub const ALL: [Self; 5] = [
+    /// lane-threshold addendum's and the two ragged-tail addenda's.
+    pub const ALL: [Self; 6] = [
         Self::IsolatedFusedParity,
         Self::AllocatedMatvec,
         Self::MatvecVsM4ri,
         Self::MatvecLaneThreshold,
         Self::MatvecRaggedTail,
+        Self::MatvecRaggedTailV2,
     ];
 
     /// The frozen prose addendum that declares this question.
@@ -138,6 +150,7 @@ impl Question {
         match self {
             Self::MatvecLaneThreshold => &LANE_THRESHOLD_ADDENDUM,
             Self::MatvecRaggedTail => &RAGGED_TAIL_ADDENDUM,
+            Self::MatvecRaggedTailV2 => &RAGGED_TAIL_V2_ADDENDUM,
             _ => &DENSE_PARITY_ADDENDUM,
         }
     }
@@ -145,7 +158,17 @@ impl Question {
     /// The question whose cost boundary, cases and arms serve this one's cells.
     pub fn boundary(self) -> Self {
         match self {
-            Self::MatvecLaneThreshold | Self::MatvecRaggedTail => Self::AllocatedMatvec,
+            Self::MatvecLaneThreshold | Self::MatvecRaggedTail | Self::MatvecRaggedTailV2 => {
+                Self::AllocatedMatvec
+            }
+            other => other,
+        }
+    }
+
+    /// The question whose frozen cells, seeds included, this family measures.
+    pub fn table(self) -> Self {
+        match self {
+            Self::MatvecRaggedTailV2 => Self::MatvecRaggedTail,
             other => other,
         }
     }
@@ -158,6 +181,7 @@ impl Question {
             Self::MatvecVsM4ri => "matvec-vs-m4ri",
             Self::MatvecLaneThreshold => "matvec-lane-threshold",
             Self::MatvecRaggedTail => "matvec-ragged-tail",
+            Self::MatvecRaggedTailV2 => "matvec-ragged-tail-v2",
         }
     }
 
@@ -169,6 +193,7 @@ impl Question {
             Self::MatvecVsM4ri => "2037941f-dense-matvec-vs-m4ri",
             Self::MatvecLaneThreshold => "4337c02e-matvec-simd-threshold",
             Self::MatvecRaggedTail => "7dbe1393-matvec-ragged-tail",
+            Self::MatvecRaggedTailV2 => "7dbe1393-matvec-ragged-tail-v2",
         }
     }
 
@@ -187,6 +212,9 @@ impl Question {
             }
             Self::MatvecRaggedTail => {
                 "dev/bench_results/7dbe1393/matvec-ragged-tail-ledger.jsonl"
+            }
+            Self::MatvecRaggedTailV2 => {
+                "dev/bench_results/7dbe1393/matvec-ragged-tail-v2-ledger.jsonl"
             }
         }
     }
@@ -582,10 +610,10 @@ pub fn cells() -> Vec<Cell> {
         .collect()
 }
 
-/// The frozen cells of one question, in ordinal order.
+/// The frozen cells one question's family measures, in ordinal order.
 pub fn family_cells(question: Question) -> Vec<Cell> {
     cells()
         .into_iter()
-        .filter(|cell| cell.question == question)
+        .filter(|cell| cell.question == question.table())
         .collect()
 }

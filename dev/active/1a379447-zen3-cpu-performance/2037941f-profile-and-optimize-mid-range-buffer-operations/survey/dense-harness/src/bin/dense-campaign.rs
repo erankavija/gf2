@@ -239,7 +239,11 @@ fn pins() -> Result<(), String> {
             row.row_id, row.stride_words, row.reason
         );
     }
-    for question in [Question::MatvecLaneThreshold, Question::MatvecRaggedTail] {
+    for question in [
+        Question::MatvecLaneThreshold,
+        Question::MatvecRaggedTail,
+        Question::MatvecRaggedTailV2,
+    ] {
         let pin = question.addendum();
         println!(
             "family_addendum={} path={} sha256={} identity={} frozen_utc={}",
@@ -349,6 +353,7 @@ fn resolution_ceiling(question: Question) -> f64 {
         Question::AllocatedMatvec => 0.035,
         Question::MatvecVsM4ri => 0.040,
         Question::MatvecLaneThreshold | Question::MatvecRaggedTail => 0.035,
+        Question::MatvecRaggedTailV2 => resolution_ceiling(Question::MatvecRaggedTail),
     }
 }
 

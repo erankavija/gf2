@@ -12,12 +12,14 @@
 # family=2037941f-dense-matvec-vs-m4ri ledger=dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl cells=8
 # family=4337c02e-matvec-simd-threshold ledger=dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl cells=17
 # family=7dbe1393-matvec-ragged-tail ledger=dev/bench_results/7dbe1393/matvec-ragged-tail-ledger.jsonl cells=6
+# family=7dbe1393-matvec-ragged-tail-v2 ledger=dev/bench_results/7dbe1393/matvec-ragged-tail-v2-ledger.jsonl cells=6
 # unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
 # unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
 # family_addendum=4337c02e-matvec-simd-threshold path=dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md sha256=e95dbb382c70a0498973f6909c899657657f7b95bb22d25cce76bc2367be1047 identity=4337c02e-matvec-lane-threshold-v1 frozen_utc=2026-10-05T19:34:54Z
 # family_addendum=7dbe1393-matvec-ragged-tail path=dev/active/1a379447-zen3-cpu-performance/7dbe1393/matvec-ragged-tail-addendum.md sha256=1161c4c81148cdfa50c9adb3c81f6ea5b3a7f14cbc5f9b5939e05bdc488c847b identity=7dbe1393-matvec-ragged-tail-v1 frozen_utc=2026-10-08T11:39:41Z
-PASS harness contract: 54 tests pass
+# family_addendum=7dbe1393-matvec-ragged-tail-v2 path=dev/active/1a379447-zen3-cpu-performance/7dbe1393/matvec-ragged-tail-v2-addendum.md sha256=e2149903acee36ac8e2224d1442098bff8d0d0b95367efc86e1254162e25d6b6 identity=7dbe1393-matvec-ragged-tail-addendum-v2 frozen_utc=2026-10-11T09:26:12Z
+PASS harness contract: 55 tests pass
 PASS matvec-cols-0-rows-0: 6 checks
 PASS matvec-cols-0-rows-1: 9 checks
 PASS matvec-cols-0-rows-63: 195 checks
@@ -153,7 +155,7 @@ PASS and-popcnt-63w: 3 checks
 PASS and-popcnt-64w: 3 checks
 PASS and-popcnt-65w: 3 checks
 PASS and-popcnt-66w: 3 checks
-# dense-arm sha256: bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
-# dense-campaign sha256: b40f04a230c058a0e4b1247baf239510178b4afdde21c1e6bcbd207e40a792fd
+# dense-arm sha256: 650a497df6d9c576529c62359497c5946955914726f05e75468111526d6a7e71
+# dense-campaign sha256: 5ec6faad0ffd02e11536c51022335b801708566f839e496a7ba30ca8b450bdb1
 # dense-oracle sha256: fda37a5a04620fbc9175c2b944fb2d31db7a95439e1c9a8c64e7107eeb33286c
-# dense-arm (scalar-reference) sha256: 1cfb254df63744dc43e0130bec0fa2eb54e3994874ef21de8694a08722601509
+# dense-arm (scalar-reference) sha256: 24c0faa40c2475b41d8596319eb6050ff07b2f125df92d847d92535fb18a1148

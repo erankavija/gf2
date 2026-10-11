@@ -5,8 +5,9 @@
 //! and its untimed correctness oracle. It also carries the lane-threshold
 //! question of addendum `4337c02e-matvec-lane-threshold-v1` and the ragged-tail
 //! question of addendum `7dbe1393-matvec-ragged-tail-v1`, both measured at the
-//! allocated `matvec` boundary. It changes no production code and no
-//! production selection.
+//! allocated `matvec` boundary, and the second ragged-tail family of addendum
+//! `7dbe1393-matvec-ragged-tail-addendum-v2` on the same cells. It changes no
+//! production code and no production selection.
 //!
 //! Every numeric setting reaches the harness from a frozen addendum
 //! ([`cells`]) or from `tuning_campaign_support::protocol::SHARED_SETTINGS`.
