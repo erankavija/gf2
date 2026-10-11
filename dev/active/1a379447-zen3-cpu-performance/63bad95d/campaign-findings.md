@@ -128,10 +128,11 @@ The disturbance is therefore sufficient to explain all three inconclusive
 outcomes and the missing qualification, and the receipt does not show whether
 the native build is worse or not worse on those cells. The three
 passing outcomes are reached with intervals inside the frozen resolution and
-do not depend on it. The receipt stays committed as measured. Whether it
-serves as evidence under `@/invariant/benchmark-backed-performance`, which
-asks for an uncontended host, is reported to the lead; this record claims no
-native-build result for the inconclusive cells.
+do not depend on it. The receipt stays committed as measured, and this record
+claims no native-build result for the inconclusive cells.
+
+By invoker ruling the disturbed stage is repeated once on a quiet host:
+F-08 states the repeat family and where it stands.
 
 ## F-07: the dispatch-overhead family has no confirmation
 
@@ -163,7 +164,40 @@ spent by the two pilot lines of the
 [ledger](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-ledger.jsonl),
 and the family's one confirmatory attempt is unspent. The retention rule of
 plan §7 for the baked bit-backend threshold reads a dispatch-overhead
-confirmation, and none exists; the disposition is reported to the lead.
+confirmation, and none exists. By invoker ruling the family is repeated on a
+quiet host (F-08).
+
+## F-08: both disturbed families are repeated under their own ledgers
+
+`63bad95d-native-ladder-v2` and `63bad95d-profile-dispatch-overhead-v2`
+repeat the two families: `survey/planned-families.json` gives each the cells,
+arms and settings of the family its `repeats` field names, its own ledger
+and, for the dispatch family, its own holdout declaration. The description
+of each pilot addendum
+([native ladder](campaigns/63bad95d-native-ladder-v2-pilot.json),
+[dispatch overhead](campaigns/63bad95d-profile-dispatch-overhead-v2-pilot.json))
+states the repetition and cites the
+[recorded load](disturbance-record.md#host-load-each-campaign-records).
+The receipts of the repeated families stay committed as measured and take
+no part in a repeat's decisions.
+
+Each repeat starts at its pilot. The protocol admits resolution evidence
+from the confirmation's own family alone (`protocol.md`, *Roles and
+freezing*: "Missing, self-referential, cross-family, or non-pilot evidence
+rejects (P-03)"), and the canonical freezer refuses a pilot receipt of
+another family, so the pilot of `63bad95d-native-ladder` does not serve the
+repeat's confirmation.
+
+State of each repeat: the pilot addendum is frozen, every arm of every pilot
+cell is smoked through the shared runner
+([native ladder](survey/native-ladder-v2-pilot-smoke.json),
+[dispatch overhead](survey/profile-dispatch-overhead-v2-pilot-smoke.json)),
+and the pilot is a line of the benchmark-window queue that starts only on a
+quiet host. Both ledgers are empty. No repeat has a receipt, a frozen
+confirmation or an outcome; the confirmation of each is frozen from its
+committed pilot receipt and measured in a later window. The native-build
+result for the inconclusive cells of F-06 and the retention decision of plan
+§7 wait for those confirmations.
 
 ## What the campaign does not decide
 

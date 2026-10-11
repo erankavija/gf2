@@ -17,8 +17,9 @@ records and one ledger:
 - the planned families and cells,
   [`survey/planned-families.json`](survey/planned-families.json), which the
   budget record tabulates and from which `survey/make-family-addenda.py`
-  projects the pilot addenda and the holdout declaration
-  [`survey/dispatch-holdout-cells.json`](survey/dispatch-holdout-cells.json);
+  projects the pilot addenda and each dispatch family's holdout declaration
+  ([`survey/dispatch-holdout-cells.json`](survey/dispatch-holdout-cells.json),
+  [`survey/dispatch-holdout-cells-v2.json`](survey/dispatch-holdout-cells-v2.json));
 - [`survey/source-evidence.json`](survey/source-evidence.json), whose claim
   identifiers appear in backticks.
 
@@ -200,6 +201,15 @@ generator refuses a family above it.
 |---|---|---|
 | `63bad95d-profile-dispatch-overhead` | selector calibration | Non-regression of small inputs of the bit-backend entry points, the profile build against the conservative build, on both sides of the two thresholds. |
 | `63bad95d-native-ladder` | consumer family | The native build against the portable profile build, one primary workload per entry-point group. |
+| `63bad95d-profile-dispatch-overhead-v2` | selector calibration | Repeats `63bad95d-profile-dispatch-overhead` on a quiet host: the same cells, arms and settings on its own ledger. |
+| `63bad95d-native-ladder-v2` | consumer family | Repeats `63bad95d-native-ladder` on a quiet host: the same cells, arms and settings on its own ledger. |
+
+The campaigns of the first two families run on a loaded host
+([disturbance record](disturbance-record.md#host-load-each-campaign-records)).
+By invoker ruling each is repeated once under a family that names it in the
+`repeats` field of `planned-families.json` and cites that record in its
+addendum; [`campaign-findings.md`](campaign-findings.md) (F-06 to F-08)
+states the outcomes of the repeated families and where the repeats stand.
 
 The harness is `survey/profile-arms`: one executable built once per build
 level, which refuses a request for a level it is not, installs the pinned
@@ -241,8 +251,8 @@ cell of each entry point.
   non-monotone and the protocol confirmation of `4337c02e` is rejected, so no
   single boundary expresses a result.
 - The baked bit-backend threshold mirrors the measured owner. It is retained
-  when no confirmatory or holdout cell of the dispatch-overhead confirmation
-  records `fail`, and takes the conservative value otherwise, with each
+  when no confirmatory or holdout cell of the confirmation of
+  `63bad95d-profile-dispatch-overhead-v2` records `fail`, and takes the conservative value otherwise, with each
   receipt committed as the outcome; the family's addendum freezes this rule.
 - A production change carries its before and after cells: a cell's baseline
   arm is the conservative build and its candidate arm the profile build, on
