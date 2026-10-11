@@ -147,6 +147,44 @@ fn rules(question: Question) -> FamilyRules {
                                     through the offline tuning system by its owning issue.",
             max_pilot_trials_per_cell: 2,
         },
+        Question::MatvecRaggedTail => FamilyRules {
+            purpose: FamilyPurpose::ConsumerFamily,
+            description: "Allocated BitMatrix::matvec_parity_kernel, which reduces each row \
+                          through the bundle's fused AND-parity kernel, as candidate against the \
+                          public BitMatrix::matvec on its selected SIMD lane in the same build, \
+                          with the output allocation and appends inside both calls, at the frozen \
+                          ragged strides and the aligned control in the warm cache state. This \
+                          addendum is the pilot: every cell is exploratory and no cell decides \
+                          adoption.",
+            worthwhile_speedup: Some(1.08),
+            rationale: "The allocated consumer's bar of the dense-parity addendum, held for a \
+                        kernel change measured at the same boundary.",
+            equivalence_margin: 1.05,
+            equivalence_rationale: "A non-inferiority statement finer than five percent is not \
+                                    available at the allocated consumer's resolution.",
+            material_gap_threshold: None,
+            material_gap_rationale: "The ragged-tail family selects a candidate; it holds no \
+                                     comparator-gap cell and declares no external gap.",
+            max_new_unsafe_kernels: 1,
+            max_added_source_lines: 96,
+            maintenance_rationale: "The dense-parity addendum's budget for one candidate of the \
+                                    same consumer: one new unsafe kernel function with an \
+                                    explicit safety contract in crates/gf2-kernels-simd/src/x86/ \
+                                    and 96 added nonblank production lines, with no dependency, \
+                                    selector or second dispatcher.",
+            max_pilot_trials_per_cell: 2,
+        },
+        Question::MatvecRaggedTailV2 => FamilyRules {
+            description: "Allocated BitMatrix::matvec_parity_kernel as candidate against the \
+                          public BitMatrix::matvec on its selected SIMD lane in the same build, \
+                          at the cells, arms and settings of family \
+                          7dbe1393-matvec-ragged-tail. This addendum is the pilot, and it \
+                          repeats that family's pilot: the receipt of campaign \
+                          v4-r1-7dbe1393-matvec-ragged-tail records the host load at each \
+                          session start in session_hosts[].load_average. Every cell is \
+                          exploratory and no cell decides adoption.",
+            ..rules(Question::MatvecRaggedTail)
+        },
     }
 }
 
@@ -287,6 +325,11 @@ pub fn cell_arms(cell: &Cell) -> (&'static str, &'static str) {
         // The selected route is the baseline, so a speedup above one favours
         // the scalar lane a raised threshold would select.
         Question::MatvecLaneThreshold => (Route::MatvecA.id(), Route::MatvecLaneScalar.id()),
+        // The selected SIMD lane is the baseline, so a speedup above one
+        // favours the parity kernel.
+        Question::MatvecRaggedTail => (Route::MatvecA.id(), Route::MatvecLaneParity.id()),
+        // No cell carries this question: its family measures the cells above.
+        Question::MatvecRaggedTailV2 => (Route::MatvecA.id(), Route::MatvecLaneParity.id()),
     }
 }
 
@@ -317,6 +360,11 @@ fn arm_description(route: Route) -> &'static str {
             "One public BitMatrix::matvec_with_route pinned to the scalar lane in the same build \
              as the public route, with the output allocation and every output append inside the \
              measured call"
+        }
+        Route::MatvecLaneParity => {
+            "One public BitMatrix::matvec_parity_kernel in the same build as the public route, \
+             with the per-row call to the bundle's and_parity_fn, the output allocation and every \
+             output append inside the measured call"
         }
         Route::M4riPeerGf2 => {
             "One public BitMatrix::matvec on a fresh gf2 matrix and vector, with the returned \

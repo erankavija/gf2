@@ -3,6 +3,7 @@
 #
 # Subcommands:
 #   build [--m4ri]                     build the arms, run the crate contract and the oracle
+#   arms                               build the gf2 arms and write no record
 #   cells --family <id> --issue <hex8> --frozen-utc <t> --output <path>
 #                                      transcribe one family into a campaign addendum
 #   smoke [--m4ri]                     untimed release smoke; the arm contract is
@@ -414,8 +415,9 @@ PY
 
 case "${1:-}" in
     build) shift; cmd_build "$@" ;;
+    arms) build_gf2 ;;
     cells) shift; cmd_cells "$@" ;;
     smoke) shift; cmd_smoke "$@" ;;
     window) shift; cmd_window "$@" ;;
-    *) sed -n '2,11p' "${BASH_SOURCE[0]}" >&2; exit 2 ;;
+    *) sed -n '2,12p' "${BASH_SOURCE[0]}" >&2; exit 2 ;;
 esac

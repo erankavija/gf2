@@ -1,0 +1,57 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2655825254
+#
+# Overhead       Samples  Shared Object         Symbol                                                  
+# ........  ............  ....................  ........................................................
+#
+    99.14%          2854  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.21%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             3  libc.so.6             [.] cfree
+     0.04%             1  [unknown]             [k] 0xffffffffa6ca910c
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61d18
+     0.04%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_with_route
+     0.04%             1  [unknown]             [k] 0xffffffffa6c952ed
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa6c8ead3
+     0.03%             1  libc.so.6             [.] malloc
+     0.03%             1  libc.so.6             [.] 0x00000000000a4f10
+     0.03%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.03%             1  libc.so.6             [.] 0x00000000000a71fd
+     0.03%             1  libc.so.6             [.] 0x00000000000a5f13
+     0.03%             1  libc.so.6             [.] 0x00000000000a5d05
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee403b
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee6da1
+     0.03%             1  libc.so.6             [.] 0x00000000000a75a1
+     0.02%             1  libc.so.6             [.] 0x00000000000a6eba
+     0.01%             1  [unknown]             [k] 0xffffffffa6edc728
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5c29b
+     0.01%             1  dense-arm             [.] tuning_campaign_support::transport::decode_canonical
+     0.00%             1  [unknown]             [k] 0xffffffffa7595f00
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000afb5
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b27a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a924
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001eac4
+     0.00%             1  [unknown]             [k] 0xffffffffa7d6f338
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018acb
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee3d70
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6c6c
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0310
+     0.00%             1  [unknown]             [k] 0xffffffffa6febf45
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  libc.so.6             [.] strnlen@plt
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778fa
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9906c
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+
+
+#
+# (Tip: For tracepoint events, try: perf report -s trace_fields)
+#

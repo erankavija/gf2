@@ -1,0 +1,66 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2353564424
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    73.33%          1966  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    17.35%           464  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     7.80%           210  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.22%             8  [unknown]             [k] 0xffffffffa6f12633
+     0.22%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.15%             4  libc.so.6             [.] malloc
+     0.15%             5  [unknown]             [k] 0xffffffffa6801280
+     0.08%             2  libc.so.6             [.] 0x00000000000a4ffe
+     0.07%             2  [unknown]             [k] 0xffffffffa6ef96a2
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed538c
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94bf
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c04
+     0.04%             1  libc.so.6             [.] 0x00000000000a5ee6
+     0.04%             1  [unknown]             [k] 0xffffffffa6f980d7
+     0.04%             1  libc.so.6             [.] 0x00000000000a5eed
+     0.04%             1  [unknown]             [k] 0xffffffffa6801290
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed54a6
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94129
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f41
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61bed
+     0.04%             2  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f08
+     0.04%             2  libc.so.6             [.] cfree
+     0.04%             1  libc.so.6             [.] __sbrk
+     0.01%             2  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.01%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7893e
+     0.00%             2  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6eddd7a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad65
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000286a9
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000017354
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029595
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016524
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef976d
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed65f0
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02df
+     0.00%             1  [unknown]             [k] 0xffffffffa7d89a85
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef9517
+     0.00%             1  [unknown]             [k] 0xffffffffa6febfd4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a928
+     0.00%             1  libc.so.6             [.] 0x00000000001763b4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef972d
+     0.00%             1  [unknown]             [k] 0xffffffffa6f00840
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ca25
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002467e
+     0.00%             1  taskset               [.] 0x0000000000003f0c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7783a
+     0.00%             1  [unknown]             [k] 0xffffffffa6f0ae68
+
+
+#
+# (Tip: Save output of perf stat using: perf stat record <target workload>)
+#

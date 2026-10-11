@@ -1,0 +1,62 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2558655490
+#
+# Overhead       Samples  Shared Object         Symbol                                                              
+# ........  ............  ....................  ....................................................................
+#
+    83.14%          2337  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    10.89%           305  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     4.65%           131  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.32%             9  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             5  [unknown]             [k] 0xffffffffa6f12633
+     0.07%             2  [unknown]             [k] 0xffffffffa6ee60fd
+     0.07%             2  libc.so.6             [.] 0x00000000000a764b
+     0.04%             2  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  libc.so.6             [.] 0x00000000000a4ffe
+     0.04%             1  libc.so.6             [.] 0x00000000000a5011
+     0.04%             1  libc.so.6             [.] 0x00000000000a71f8
+     0.04%             1  libc.so.6             [.] 0x00000000000a7644
+     0.04%             1  libc.so.6             [.] 0x00000000000a6236
+     0.04%             1  libc.so.6             [.] 0x00000000000a711d
+     0.04%             1  [unknown]             [k] 0xffffffffa6b49203
+     0.04%             1  libc.so.6             [.] 0x00000000000a5019
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e5b5
+     0.04%             1  [unknown]             [k] 0xffffffffa6ca9105
+     0.04%             2  [unknown]             [k] 0xffffffffa7da460b
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f53
+     0.04%             1  [unknown]             [k] 0xffffffffa6ca9100
+     0.04%             1  [unknown]             [k] 0xffffffffa6ca93f7
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92063
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f23
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f63
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f152
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5dc0
+     0.01%             1  dense-arm             [.] <serde_json::read::StrRead as serde_json::read::Read>::parse_str
+     0.01%             1  [unknown]             [k] 0xffffffffa6b4856e
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bad4
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ba80
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77847
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6aab359
+     0.00%             1  libc.so.6             [.] 0x000000000017ad64
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785c7
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.00%             1  [unknown]             [k] 0xffffffffa6f99078
+
+
+#
+# (Tip: To browse sample contexts use perf report --sample 10 and select in context menu)
+#

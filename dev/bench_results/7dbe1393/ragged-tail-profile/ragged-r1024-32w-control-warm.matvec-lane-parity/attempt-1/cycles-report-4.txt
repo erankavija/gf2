@@ -1,0 +1,78 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2329088867
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    82.31%          2429  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+     9.44%           279  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     5.77%           170  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.51%            15  dense-arm             [.] dense_arm::run::{{closure}}
+     0.34%            10  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.20%             6  libc.so.6             [.] malloc
+     0.14%             4  libc.so.6             [.] 0x00000000000a6e20
+     0.13%             4  [unknown]             [k] 0xffffffffa6801280
+     0.10%             3  libc.so.6             [.] cfree
+     0.10%             3  libc.so.6             [.] 0x00000000000a75a1
+     0.07%             2  [unknown]             [k] 0xffffffffa7d61dd0
+     0.03%             1  [unknown]             [k] 0xffffffffa6c93663
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee615e
+     0.03%             1  libc.so.6             [.] 0x00000000000a7628
+     0.03%             1  [unknown]             [k] 0xffffffffa7d61c26
+     0.03%             1  [unknown]             [k] 0xffffffffa7d61c66
+     0.03%             1  libc.so.6             [.] 0x00000000000a7a83
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee5f8f
+     0.03%             1  [unknown]             [k] 0xffffffffa7d61be4
+     0.03%             1  libc.so.6             [.] 0x00000000000a79af
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee5e02
+     0.03%             1  libc.so.6             [.] 0x00000000000a4fe0
+     0.03%             1  libc.so.6             [.] 0x00000000000a6e2a
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee5d84
+     0.03%             1  [unknown]             [k] 0xffffffffa68000ad
+     0.03%             1  libc.so.6             [.] 0x00000000000a6e51
+     0.03%             1  [unknown]             [k] 0xffffffffa6f1e5e3
+     0.03%             1  [unknown]             [k] 0xffffffffa6801284
+     0.03%             1  libc.so.6             [.] 0x00000000000a4ffe
+     0.03%             1  libc.so.6             [.] 0x00000000000a71f8
+     0.03%             1  [unknown]             [k] 0xffffffffa690410b
+     0.03%             1  libc.so.6             [.] 0x00000000000a4f23
+     0.03%             1  libc.so.6             [.] 0x00000000000a5000
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee6141
+     0.03%             1  libc.so.6             [.] 0x00000000000a78fc
+     0.01%             1  [unknown]             [k] 0xffffffffa6ff02ea
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a2cc
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.01%             1  [unknown]             [k] 0xffffffffa6f33f0a
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef298a
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef94c8
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016e31
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc8f9
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001927d
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8e5b5
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa6eec147
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6cfa
+     0.00%             1  [unknown]             [k] 0xffffffffa6f990bf
+     0.00%             1  [unknown]             [k] 0xffffffffa6800002
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6b493df
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02f7
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1e5c6
+     0.00%             1  [unknown]             [k] 0xffffffffa6fdbc37
+     0.00%             1  [unknown]             [k] 0xffffffffa7d92e74
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed7613
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6cc3
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33136
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c1c2
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#

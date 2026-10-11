@@ -1,0 +1,63 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2019664967
+#
+# Overhead       Samples  Shared Object         Symbol                                               
+# ........  ............  ....................  .....................................................
+#
+    86.28%          2217  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+     8.03%           207  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     4.44%           114  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.51%            13  dense-arm             [.] dense_arm::run::{{closure}}
+     0.12%             3  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.09%             3  libc.so.6             [.] malloc
+     0.04%             1  libc.so.6             [.] 0x00000000000a7676
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e20
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d4a
+     0.04%             1  libc.so.6             [.] 0x00000000000a4ffe
+     0.04%             1  libc.so.6             [.] 0x00000000000a7640
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef96ab
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61d7e
+     0.04%             1  libc.so.6             [.] 0x00000000000a6304
+     0.04%             1  [unknown]             [k] 0xffffffffa6801287
+     0.04%             1  libc.so.6             [.] 0x00000000000a6253
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d7f
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed542a
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002ab7e
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bc53
+     0.01%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.01%             1  [unknown]             [k] 0xffffffffa7d61e83
+     0.01%             2  [unknown]             [k] 0xffffffffa6801280
+     0.01%             1  [unknown]             [k] 0xffffffffa7317093
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002951e
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af5a
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000240a4
+     0.00%             1  [unknown]             [k] 0xffffffffa7595f37
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001927d
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778e8
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016524
+     0.00%             1  [unknown]             [k] 0xffffffffa700cb57
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef97d1
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5f152
+     0.00%             1  [unknown]             [k] 0xffffffffa6fed769
+     0.00%             1  [unknown]             [k] 0xffffffffa73140c1
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed5412
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff3d28
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61c6a
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6eb1c14
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5d58
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33136
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61c01
+     0.00%             1  [unknown]             [k] 0xffffffffa7d89a54
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#

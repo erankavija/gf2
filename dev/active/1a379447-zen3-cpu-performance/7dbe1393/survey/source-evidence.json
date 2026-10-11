@@ -1,0 +1,193 @@
+{
+ "schema": "source-evidence-v1",
+ "issue": "7dbe1393",
+ "claims": [
+  {
+   "id": "matvec-threshold-conservative",
+   "project": "gf2",
+   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "path": "crates/gf2-core/src/matrix.rs",
+   "line": 15,
+   "occurrences": 1,
+   "verbatim": "pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;",
+   "why": "The conservative value of `bit_matrix.matvec_simd_min_words`: every stride of this family takes the SIMD lane.",
+   "sha256": "4b95443a0c1dae979e4ad240028061ccd798208abcdc5957c345dc1bbe53b927"
+  },
+  {
+   "id": "matvec-selector",
+   "project": "gf2",
+   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "path": "crates/gf2-core/src/matrix.rs",
+   "line": 1071,
+   "occurrences": 1,
+   "verbatim": "        match matvec_route(self.stride_words) {",
+   "why": "`matvec` selects its lane from the stride alone; this issue leaves the match unchanged.",
+   "sha256": "4b95443a0c1dae979e4ad240028061ccd798208abcdc5957c345dc1bbe53b927"
+  },
+  {
+   "id": "matvec-simd-kernel-call",
+   "project": "gf2",
+   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "path": "crates/gf2-core/src/matrix.rs",
+   "line": 1193,
+   "occurrences": 1,
+   "verbatim": "            y.push_bit((fns.and_popcnt_fn)(row, x_words) & 1 == 1);",
+   "why": "The SIMD lane calls the bundle's fused count once per row and keeps its low bit.",
+   "sha256": "4b95443a0c1dae979e4ad240028061ccd798208abcdc5957c345dc1bbe53b927"
+  },
+  {
+   "id": "matvec-parity-kernel-call",
+   "project": "gf2",
+   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "path": "crates/gf2-core/src/matrix.rs",
+   "line": 1215,
+   "occurrences": 1,
+   "verbatim": "            y.push_bit((fns.and_parity_fn)(row, x_words));",
+   "why": "The parity-kernel lane has the SIMD lane's row loop and calls the fused parity entry.",
+   "sha256": "4b95443a0c1dae979e4ad240028061ccd798208abcdc5957c345dc1bbe53b927"
+  },
+  {
+   "id": "matvec-parity-entry",
+   "project": "gf2",
+   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "path": "crates/gf2-core/src/matrix.rs",
+   "line": 1119,
+   "occurrences": 1,
+   "verbatim": "    pub fn matvec_parity_kernel(&self, x: &crate::BitVec) -> crate::BitVec {",
+   "why": "The public entry of the candidate lane, which `matvec` does not call.",
+   "sha256": "4b95443a0c1dae979e4ad240028061ccd798208abcdc5957c345dc1bbe53b927"
+  },
+  {
+   "id": "scalar-accumulators",
+   "project": "gf2",
+   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "path": "crates/gf2-core/src/matrix.rs",
+   "line": 1167,
+   "occurrences": 1,
+   "verbatim": "            acc0 ^= r[0] & x[0];",
+   "why": "The scalar lane XOR-folds the intersection in four accumulators and counts nothing per word.",
+   "sha256": "4b95443a0c1dae979e4ad240028061ccd798208abcdc5957c345dc1bbe53b927"
+  },
+  {
+   "id": "scalar-word-count",
+   "project": "gf2",
+   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "path": "crates/gf2-core/src/matrix.rs",
+   "line": 1178,
+   "occurrences": 1,
+   "verbatim": "        acc.count_ones() & 1 == 1",
+   "why": "The scalar lane takes one word count per row, of the folded word.",
+   "sha256": "4b95443a0c1dae979e4ad240028061ccd798208abcdc5957c345dc1bbe53b927"
+  },
+  {
+   "id": "popcnt-kernel-signature",
+   "project": "gf2",
+   "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "line": 365,
+   "occurrences": 1,
+   "verbatim": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
+   "why": "The SIMD lane's kernel; the attribute on the line above it enables `avx2` and not `popcnt`.",
+   "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
+  },
+  {
+   "id": "popcnt-tail-word-count",
+   "project": "gf2",
+   "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "line": 407,
+   "occurrences": 1,
+   "verbatim": "        total += (*lhs.get_unchecked(j) & *rhs.get_unchecked(j)).count_ones() as u64;",
+   "why": "The SIMD lane's kernel counts each word past its last whole vector on its own.",
+   "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
+  },
+  {
+   "id": "parity-masked-tail",
+   "project": "gf2",
+   "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "line": 458,
+   "occurrences": 1,
+   "verbatim": "            _mm256_maskload_epi64(lhs_ptr.add(tail) as *const i64, mask),",
+   "why": "The parity kernel folds the words past its last whole vector through one masked load of each operand.",
+   "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
+  },
+  {
+   "id": "parity-fold",
+   "project": "gf2",
+   "commit": "c569b349c981dd535d9f5a4a6c14f8b50279647b",
+   "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+   "line": 471,
+   "occurrences": 1,
+   "verbatim": "    folded.count_ones() & 1 == 1",
+   "why": "The parity kernel takes one word count per row, of the folded word.",
+   "sha256": "062d920b7c9bb518342e59873233e99adf9b3af3b64094df4de1a51145673dab"
+  },
+  {
+   "id": "parity-bundle-field",
+   "project": "gf2",
+   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "path": "crates/gf2-kernels-simd/src/lib.rs",
+   "line": 125,
+   "occurrences": 1,
+   "verbatim": "    pub and_parity_fn: fn(&[u64], &[u64]) -> bool,",
+   "why": "The bundle entry of the parity kernel, a comparator no automatic dispatch selects.",
+   "sha256": "fa726fd6067e13e618d00dd0b99a45761c02495bfa17872e7bc17147b32d6334"
+  },
+  {
+   "id": "p20-tail-rule",
+   "project": "gf2",
+   "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+   "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
+   "line": 2153,
+   "occurrences": 1,
+   "verbatim": "                || f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;",
+   "why": "P-20 leaves a confirmatory interval unresolved below twenty expected draws per bootstrap tail.",
+   "sha256": "c8f3dc32510822b38472eef913af508ad98b47abc6a8195e60877a0dfc736be8"
+  },
+  {
+   "id": "attempt-alpha",
+   "project": "gf2",
+   "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+   "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
+   "line": 217,
+   "occurrences": 1,
+   "verbatim": "    Ok(family.family_wise.alpha / (attempts * (attempts + 1.0)))",
+   "why": "Attempt t of a family spends alpha / (t (t + 1)); the first spends half.",
+   "sha256": "4b8abb212518f2726132401db766712f18cba473108170e54e8e6289d167d811"
+  },
+  {
+   "id": "ragged-cell-arms",
+   "project": "gf2",
+   "commit": "8a4b536d0a85c3c622245247e9f78403a1bd2af0",
+   "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs",
+   "line": 330,
+   "occurrences": 1,
+   "verbatim": "        Question::MatvecRaggedTail => (Route::MatvecA.id(), Route::MatvecLaneParity.id()),",
+   "why": "Every ragged-tail cell takes the selected SIMD lane as baseline and the parity-kernel lane as candidate.",
+   "sha256": "e01c57698c71c1cc93bec2b6b94776cf81feba494ba2e6a2db925bfcd0ad9b36"
+  },
+  {
+   "id": "ragged-route-call",
+   "project": "gf2",
+   "commit": "50c0217311fb5d64c0e3dc1a53e78fa9a80862f4",
+   "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/routes.rs",
+   "line": 185,
+   "occurrences": 1,
+   "verbatim": "        return black_box(matrix).matvec_parity_kernel(black_box(vector));",
+   "why": "The candidate arm times the public parity-kernel entry behind the baseline's optimisation barriers.",
+   "sha256": "103f4ebde5ee84c47356e9f187375338a671a34fd2808119fedc4be7e275fa41"
+  },
+  {
+   "id": "ragged-resolution-ceiling",
+   "project": "gf2",
+   "commit": "8a4b536d0a85c3c622245247e9f78403a1bd2af0",
+   "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs",
+   "line": 355,
+   "occurrences": 1,
+   "verbatim": "        Question::MatvecLaneThreshold | Question::MatvecRaggedTail => 0.035,",
+   "why": "`verify-confirmation` refuses a ragged-tail confirmation above the family ceiling.",
+   "sha256": "23edd51714a1f4a23f2517a8aa40a25751d5b09d93341d8d988df8100c6308ea"
+  }
+ ]
+}

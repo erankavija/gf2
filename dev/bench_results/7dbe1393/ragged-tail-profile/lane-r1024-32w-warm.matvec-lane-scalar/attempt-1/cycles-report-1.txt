@@ -1,0 +1,54 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2504232691
+#
+# Overhead       Samples  Shared Object         Symbol                                            
+# ........  ............  ....................  ..................................................
+#
+    99.29%          2690  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.15%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa6801287
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed538f
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a11a
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61be4
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e98
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f1a
+     0.04%             1  [unknown]             [k] 0xffffffffa6b493f8
+     0.04%             1  [unknown]             [k] 0xffffffffa7da3f82
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f08
+     0.04%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_with_route
+     0.04%             1  libc.so.6             [.] 0x00000000000a6201
+     0.01%             1  [unknown]             [k] 0xffffffffa6c1aca6
+     0.01%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef2a7c
+     0.01%             1  libc.so.6             [.] 0x0000000000033f8d
+     0.00%             1  libc.so.6             [.] 0x0000000000033ce7
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000fd13
+     0.00%             1  [unknown]             [k] 0xffffffffa7d6618d
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001b195
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed542d
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000019fb7
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef9684
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6c6c
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede792
+     0.00%             1  [unknown]             [k] 0xffffffffa6f330c9
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef96a2
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77825
+     0.00%             1  [unknown]             [k] 0xffffffffa6eff5c2
+
+
+#
+# (Tip: See assembly instructions with percentage: perf annotate <symbol>)
+#

@@ -1,0 +1,3 @@
+# Runner check of the ragged-tail pilot plan (jit:7dbe1393)
+# plan sha256: 93789bfb0c66932017a6cf1209163ede2fe1aa4ac896d0f2c03ee12e431a0fe1
+plan v4-r1-7dbe1393-matvec-ragged-tail for family 7dbe1393-matvec-ragged-tail: 6 cells, 2 arms, addendum dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json

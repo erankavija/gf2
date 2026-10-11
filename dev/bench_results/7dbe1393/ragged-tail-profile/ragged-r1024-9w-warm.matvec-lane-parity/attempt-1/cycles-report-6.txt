@@ -1,0 +1,65 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2484873351
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    72.73%          2006  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    16.33%           452  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     9.53%           262  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.15%             4  libc.so.6             [.] malloc
+     0.15%             6  [unknown]             [k] 0xffffffffa6f12633
+     0.07%             2  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             3  libc.so.6             [.] cfree
+     0.07%             2  libc.so.6             [.] 0x00000000000a4ffe
+     0.07%             2  [unknown]             [k] 0xffffffffa6f1900a
+     0.07%             2  [unknown]             [k] 0xffffffffa6ed5467
+     0.04%             2  [unknown]             [k] 0xffffffffa6801284
+     0.04%             1  [unknown]             [k] 0xffffffffa6eee3d7
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3f7d
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa690410b
+     0.04%             1  libc.so.6             [.] 0x00000000000a7121
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93080
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.04%             1  libc.so.6             [.] 0x00000000000a61b4
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f10
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee615e
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d7f
+     0.04%             1  [unknown]             [k] 0xffffffffa6f18ff5
+     0.04%             1  libc.so.6             [.] 0x00000000000a7628
+     0.04%             1  [unknown]             [k] 0xffffffffa7412644
+     0.04%             1  libc.so.6             [.] mremap
+     0.04%             1  libc.so.6             [.] 0x00000000000a6317
+     0.04%             1  [unknown]             [k] 0xffffffffa6b493f8
+     0.04%             1  [unknown]             [k] 0xffffffffa6f98067
+     0.01%             1  [unknown]             [k] 0xffffffffa7d89a79
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000add4
+     0.01%             1  libc.so.6             [.] brk
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b219
+     0.00%             1  [unknown]             [k] 0xffffffffa6f330c0
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc5dc
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a6c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78924
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02f0
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80dc5
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3315d
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede422
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#

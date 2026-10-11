@@ -1,0 +1,44 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2501102549
+#
+# Overhead       Samples  Shared Object         Symbol                                        
+# ........  ............  ....................  ..............................................
+#
+    99.49%          2676  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.15%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.04%             1  [unknown]             [k] 0xffffffffa6c9368f
+     0.04%             1  [unknown]             [k] 0xffffffffa6c96c36
+     0.04%             1  libc.so.6             [.] 0x00000000000a7636
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97022
+     0.04%             1  [unknown]             [k] 0xffffffffa6f47549
+     0.04%             1  libc.so.6             [.] 0x00000000000a5011
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5ef1
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e5b5
+     0.01%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016f24
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000019fd4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a1f1
+     0.00%             1  [unknown]             [k] 0xffffffffa7d6433d
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed6602
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc7e9
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80dc5
+     0.00%             1  [unknown]             [k] 0xffffffffa7316535
+     0.00%             2  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8054b
+     0.00%             1  libc.so.6             [.] 0x000000000017a2bd
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9918c
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff51e0
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+
+
+#
+# (Tip: To analyze cache line scalability issues use perf c2c record ... ; perf c2c report)
+#

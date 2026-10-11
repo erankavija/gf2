@@ -1,0 +1,39 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2631664768
+#
+# Overhead       Samples  Shared Object         Symbol                                                  
+# ........  ............  ....................  ........................................................
+#
+    99.53%          2810  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.07%             2  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             2  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3f86
+     0.04%             1  libc.so.6             [.] cfree
+     0.04%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.04%             1  [unknown]             [k] 0xffffffffa6800005
+     0.04%             1  [unknown]             [k] 0xffffffffa6b48506
+     0.04%             1  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6800125
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000001934b
+     0.01%             1  [unknown]             [k] 0xffffffffa6fe6634
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b36c
+     0.01%             1  [unknown]             [k] 0xffffffffa6ed542a
+     0.01%             1  dense-arm             [.] tuning_campaign_support::transport::decode_canonical
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000afa7
+     0.00%             1  ld-linux-x86-64.so.2  [.] __tunable_get_val
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc930
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78811
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7791c
+     0.00%             1  [unknown]             [k] 0xffffffffa6eff5fa
+
+
+#
+# (Tip: Profiling branch (mis)predictions with: perf record -b / perf report)
+#
