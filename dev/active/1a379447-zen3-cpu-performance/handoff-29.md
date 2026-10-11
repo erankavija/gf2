@@ -9,9 +9,9 @@
 - Epic: `1a379447` — state: backlog (claimed by `agent:jit-execution-lead`).
 - Wave in progress: 4 of 7; story `ed3d490e` runs its own layers inside it.
 - Direct children: 21 of 26 done or rejected; open `bfc2ceab`, `7dbe1393`, `8e53235b` (in progress), `817fc47d`, `1362381c` (backlog). `63bad95d` is in progress below `1362381c`.
-- Story `ed3d490e`: `e4e2ba52`, `395fe4e2`, `a96a4cd6`, `feb60d0d` closed this session; `bad1aea8` in rework 1; `aff59c3c` blocked on an escalation.
-- Active claims, each `agent:worker`: `bfc2ceab`, `63bad95d`, `7dbe1393`, `8e53235b`, `aff59c3c`, `bad1aea8`.
-- Open escalations: eight, listed under "Open questions needing invoker input".
+- Story `ed3d490e`: `e4e2ba52`, `395fe4e2`, `a96a4cd6`, `feb60d0d`, `bad1aea8` closed this session; `aff59c3c` blocked on an escalation.
+- Active claims, each `agent:worker`: `bfc2ceab`, `63bad95d`, `7dbe1393`, `8e53235b`, `aff59c3c`.
+- Open escalations: nine, listed under "Open questions needing invoker input".
 - Benchmark window: timer `gf2-bench-window-20261011` armed for 2026-10-11 04:00 Europe/Helsinki. One new job: the `8e53235b` pilot, whose queue line starts the launcher only below a one-minute load of 2 and otherwise exits 75 and stays queued.
 - Pinned worktrees, none merged into main: `agent-bfc2ceab` (`c6869fc6d`), `agent-63bad95d-fam` (`a257dd63b`), `agent-63bad95d-run` (`d808af2f3`), `agent-63bad95d-m4ri` (`998a0a3d4`), `agent-63bad95d-pm4ri` (`1aad07d0e`), `agent-7dbe1393` (`ca918074f`), `agent-8e53235b` (`d0dcfbcb2`).
 - `jit validate` fails with five `profile-ownership` errors that commit `2b4d4a4ba` of epic `b4b4b9ee` introduced.
@@ -30,13 +30,12 @@
 - `a96a4cd6` closed after one rework: the three decode stages gain `with_selectors` and `with_portable_lanes` (lead decision; the stages exposed no route control), and the tests assert the route each case takes.
 - `feb60d0d` closed after two reworks: the arms manifest cites the `harness-path-dependencies` exception; the build recorder decides from content only.
 - `8e53235b` stage 1 on its branch: `BitVec::write_bits`, a selectable word-wise assembly with production unchanged, family `8e53235b-bch-codeword-assembly` frozen and smoked, pilot queued.
-- `bad1aea8` merged at `a82eea0a2`; cargo-ci and research-review pass; code-review failed on an undersized-buffer check before the AFF3CT FFI call; rework dispatched.
-- Seven merged worktrees reclaimed without harvest.
+- `bad1aea8` closed after one rework: arms catalogue `survey/arms.json`, the AFF3CT sum-product INTRA arm, and buffer validation before its FFI call.
+- Nine merged worktrees reclaimed without harvest.
 
 ## What to do next
 
 - [ ] Collect the 2026-10-11 window: `.agents/bench-window/window.log`, then the `8e53235b` campaign's own execution log. A job exit of 75 means the load guard held the pilot back; it stays queued.
-- [ ] `bad1aea8`: review the rework on `worktree-agent-bad1aea8-r2`, merge, cargo-ci on a quiet host, then code-review; research-review again if a record changed.
 - [ ] Apply the invoker's rulings to `63bad95d`, `bfc2ceab`, `7dbe1393` and `aff59c3c`; each ruling's branch work is listed in `progress.json` under the issue's status.
 - [ ] Before any of the pinned measurement branches merges: reword the 72-character subject `96d44eded` on `worktree-agent-63bad95d-pm4ri`; regenerate `f547c394/schema-versions.json` on the merged tree; merge order `worktree-agent-7dbe1393`, then `worktree-agent-63bad95d-m4ri`, then `worktree-agent-63bad95d-pm4ri`.
 - [ ] File the follow-ups recorded in `progress.json` `surfaced_pitfalls` for session 33 (the `checkpoint_compat` resume tests that clear the completion flag; the stale `04b85d10` findings and launchers; the `permanent_rare_event_artifacts` load timeouts under `@/issue/f21b25ac`). Read `.jit/reference/content-standards.md` first and wire each to the issue that surfaced it.
@@ -84,10 +83,14 @@
 - Question: `bad1aea8`'s INTRA crate carries its own AFF3CT handle beside the pinned `3be770d5` one. File it as a named exception to `@/invariant/convention-convergence` with a tracking issue?
   - Recommendation: yes; the `3be770d5` handle is digest-pinned.
 
+- Question: from which checkout are the story's arms built for the measurement leaves?
+  - Context: the arm executables build to different digests in different checkouts with identical sources; the `feb60d0d` and `bad1aea8` records hold the digests of the worktrees that built them.
+  - Recommendation: the measurement leaf builds and records in the checkout its campaigns run from.
+
 ## Reference artefacts
 
 - Epic: `jit issue show 1a379447`; progress: `progress.json`; worker brief `worker-brief.md`; measurement contract `measurement-contract.md`.
-- Reviews of this session: `reviews/e4e2ba52-r1.md`, `reviews/395fe4e2-r2.md`, `reviews/a96a4cd6-r2.md`, `reviews/feb60d0d-r3.md`.
+- Reviews of this session: `reviews/e4e2ba52-r1.md`, `reviews/395fe4e2-r2.md`, `reviews/a96a4cd6-r2.md`, `reviews/feb60d0d-r3.md`, `reviews/bad1aea8-r2.md`.
 - Window: `bench-window/run-window.sh`, `bench-window/queue.tsv`, state `.agents/bench-window/`.
 - Disturbed families, on their branches: `63bad95d/disturbance-record.md`, `63bad95d/campaign-findings.md`, `63bad95d/campaigns/63bad95d-profile-dispatch-overhead-r2-freeze-refusal.txt` (`worktree-agent-63bad95d-fam`); `63bad95d/native-m4ri-pilot-resolution.md` (`worktree-agent-63bad95d-m4ri`); `63bad95d/portable-m4ri-pilot-resolution.md` (`worktree-agent-63bad95d-pm4ri`); `bfc2ceab/confirmation-freeze-refusal-spmm-check.json`, `bfc2ceab/decision-table.md` (`worktree-agent-bfc2ceab`); `7dbe1393/pilot-resolution.md`, `7dbe1393/survey/freeze-refusal.txt` (`worktree-agent-7dbe1393`).
 - Word-wise assembly, on `worktree-agent-8e53235b`: `8e53235b/measurement-plan.md`, `8e53235b/addendum-v4-codeword-assembly-pilot.json`, `dev/bench_results/8e53235b/run-codeword-assembly.sh`.
