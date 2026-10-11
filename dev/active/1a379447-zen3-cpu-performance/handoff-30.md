@@ -32,7 +32,9 @@
 ## What to do next
 
 - [ ] Read `.agents/bench-window/window.log` loads and each campaign's own execution log; dispatch collection for `8e53235b` (confirmation), `7dbe1393`, and the four `63bad95d` pilots. A line that exited 75 stays queued: re-arm the timer.
-- [ ] Collect the three rework branches (check `git log main..<branch>` and a clean worktree first; a worker may have stopped uncommitted): `worktree-agent-ed3d490e-run` (`d4185e9e`), `worktree-agent-aff59c3c-r2`, `worktree-agent-bfc2ceab`. Review each resolution table against the findings in `jit gate status <id> code-review`, merge, then cargo-ci and the failed reviews. `aff59c3c` and `bfc2ceab` are at 2 rework attempts: another failure escalates.
+- [ ] Merge the three rework branches, all reported complete with clean worktrees after this session's gates: `worktree-agent-aff59c3c-r2` at `9ba89c415` (F1 exception comment, F2 `resume_equivalent`, F3 comment sweep), `worktree-agent-bfc2ceab` at `e584a9d53` (F1 only), `worktree-agent-ed3d490e-run` at `bf26f5bda` (`d4185e9e` F1 to F3, record regenerated). Review each resolution table against `jit gate status <id> code-review` on main, then cargo-ci and the failed reviews. `aff59c3c` and `bfc2ceab` are at 2 rework attempts: another failure escalates.
+- [ ] `bfc2ceab` F2 is unresolved in the tree: both arm manifests are pinned by digest in four committed receipts (`dev/bench_results/bfc2ceab/r1-spmm-check-pilot`, `-pilot2`, `r1-entry-check-pilot`, `-confirmation`), so the worker did not add the exception comment. Cite `@/issue/e430f035` outside the pinned files (`bfc2ceab/verification.md`) before the review; whether the reviewer accepts that is untested.
+- [ ] `d4185e9e`: all four arm executables have new digests after the rework; the recorder again needs the pinned `aff3ct-throughput-arm` staged under `target/ldpc-throughput/release/` (present in `agent-ed3d490e-run`). The `.jit` document links of `feb60d0d` and `bad1aea8` still name the two removed build records; check `jit doc list` for both.
 - [ ] After `bfc2ceab` merges: run `bfc2ceab/survey/make-inventory.py` and the `2037941f` producing-closure `--check` commands.
 - [ ] After `d4185e9e` is done: dispatch `1ca04967` in `agent-ed3d490e-run`, then `4252085a` in the same worktree; then `5d590bac`, `a4476c6a` as they unblock. `aff59c3c` done unblocks the `958639ec` chain. `6230e0b6` now waits only on its other dependencies.
 - [ ] File a bug for the failing `6e87c436/survey/make-source-evidence.py --check` on main (`crates/gf2-core/src/matrix.rs` anchor missing after the `7dbe1393` merge).
@@ -45,6 +47,7 @@
 
 Traps of `handoff-29.md` and earlier remain in force.
 
+- **Do NOT point a worker at `jit gate status` for a verdict.** In a worktree it reports the gate as not run; paste the findings into the rework message.
 - **Do NOT assume an idle worker has reported.** `w-aff59c3c-s34` went idle with four edited manifests uncommitted and no report; it finished only after a nudge. Check the worktree's `git status` and `git log main..` when a worker is idle without a report.
 - **Do NOT treat an invoker ruling on form as a review pass.** The ruled root workspace dependency still failed `no-dev-path-coupling` because the path spells `dev/`. A literal Cargo path under `dev/` needs the exception citation `@/issue/e430f035`.
 - **Do NOT ask a worker for "a new family version" of a dense-harness family.** The families are a compiled enum; a new one needs harness code. The M4RI pair repeats as run id `v4-r2` in the existing family.
