@@ -431,12 +431,20 @@ impl DvbT2Decode {
 
     /// Builds a decode stage whose decoders take the given decode selectors,
     /// as [`DvbT2ConcatBatchDecoder::with_selectors`] does.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
     pub fn with_selectors(codec: Arc<DvbT2Concat>, selectors: DecodeSelectors) -> Self {
         Self::build(codec, selectors, false)
     }
 
     /// Holds the lane route of every decoder on the portable backend, as
     /// [`DvbT2ConcatBatchDecoder::with_portable_lanes`] does.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
     #[must_use]
     pub fn with_portable_lanes(self) -> Self {
         Self::build(self.codec, self.selectors, true)

@@ -85,6 +85,10 @@ mod imp {
 
         /// Builds a CPU LDPC BP stage whose decoders take the given decode
         /// selectors, as [`LdpcBatchDecoder::with_selectors`] does.
+        ///
+        /// The builder selects a route for equivalence tests and benchmarks; decoded
+        /// results and per-frame outcomes are identical on every route
+        /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
         #[must_use]
         pub fn with_selectors(
             code: LdpcCode,
@@ -97,6 +101,10 @@ mod imp {
 
         /// Holds the lane route of every decoder on the portable backend, as
         /// [`LdpcBatchDecoder::with_portable_lanes`] does.
+        ///
+        /// The builder selects a route for equivalence tests and benchmarks; decoded
+        /// results and per-frame outcomes are identical on every route
+        /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
         #[must_use]
         pub fn with_portable_lanes(self) -> Self {
             Self::build(
