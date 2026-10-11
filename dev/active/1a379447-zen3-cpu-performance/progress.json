@@ -1328,6 +1328,13 @@
    "type": "bug",
    "in_epic": false,
    "reason": "rare-event artifact tests time out on a loaded host"
+  },
+  {
+   "id": "e430f035",
+   "title": "Move tuning-campaign-support under crates/",
+   "type": "task",
+   "placement": "outside the epic; depends on aff59c3c",
+   "reason": "tracked exception to no-dev-path-coupling, invoker ruling 2026-10-11"
   }
  ],
  "escalations": [
@@ -1871,9 +1878,9 @@
    "category": "design decision (bfc2ceab)",
    "issue": "bfc2ceab",
    "question": "check or _unchecked per kernel interface",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-05T09:20Z",
-   "resolution": null,
+   "resolution": "Settled by the invoker decisions of 2026-10-07 and 2026-10-11 in bfc2ceab/decisions.json (later_rulings).",
    "interim": "Invoker 2026-10-05: measure first; the worker commits the inventory and the measured cost of each check, and the per-interface choice returns to the invoker with numbers. Session 30: pilot accepted; confirmation queued for 2026-10-07."
   },
   {
@@ -2108,6 +2115,22 @@
    "status": "resolved",
    "raised_at": "2026-10-10T22:30Z",
    "resolution": "Invoker 2026-10-11: this lead repairs. Done at 28a64b749 (sim-research 1.2.5 carries the reviewer models; jit validate passes)."
+  },
+  {
+   "category": "gate finding vs invoker ruling",
+   "issue": "aff59c3c, bfc2ceab",
+   "question": "Cargo path dependency on dev/tools/tuning-campaign-support fails no-dev-path-coupling",
+   "status": "resolved",
+   "raised_at": "2026-10-11",
+   "resolution": "Invoker 2026-10-11: tracked exception. Issue e430f035 is the named exception with the convergence condition (crate moves under crates/); manifests cite it in a comment."
+  },
+  {
+   "category": "measurement",
+   "issue": "63bad95d M4RI pair",
+   "question": "dense harness families are a compiled enum; a new family version needs harness code",
+   "status": "resolved",
+   "raised_at": "2026-10-11",
+   "resolution": "Invoker 2026-10-11: second pilot in the same family, run id v4-r2; a load-disturbed pilot counts for the second trial."
   }
  ],
  "rework_counts": {
@@ -2160,18 +2183,21 @@
   "4337c02e": 1,
   "5cb74f81": 1,
   "1d4b05d5": 1,
-  "bfc2ceab": 1,
+  "bfc2ceab": 2,
   "07ae376c": 0,
   "13728e1a": 2,
   "4767d936": 1,
   "e918a8ee": 1,
   "9e0cd346": 1,
   "feb60d0d": 2,
-  "aff59c3c": 1,
+  "aff59c3c": 2,
   "395fe4e2": 1,
   "a96a4cd6": 1,
   "e4e2ba52": 0,
-  "bad1aea8": 1
+  "bad1aea8": 1,
+  "d4185e9e": 1,
+  "81e955b0": 0,
+  "151af028": 0
  },
  "surfaced_pitfalls": [
   {
@@ -2680,6 +2706,36 @@
    "subject": "record-gf2-arms-build.py is at schema ldpc-batch-arms-build-v3 while feb60d0d/gf2-arms-build.json was written at v2 and not regenerated.",
    "disposition": "OPEN: regenerate with the measurement leaf that builds the arms in the campaign checkout.",
    "criterion_named_by": null
+  },
+  {
+   "issue": "6e87c436",
+   "finding": "After the 7dbe1393 merge, `python3 -B dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/make-source-evidence.py --check` fails on main (crates/gf2-core/src/matrix.rs: expected 1 occurrence of 'if let Some(fns) = crate::simd::maybe_simd() {', found 0). cargo-ci does not run it.",
+   "disposition": "open: file a follow-up bug (not yet filed)"
+  },
+  {
+   "issue": "bfc2ceab",
+   "finding": "bfc2ceab/survey/make-inventory.py fails on main whenever a merged issue adds a safe kernel function holding an unsafe block without a verdict in survey/review.py.",
+   "disposition": "standing rule: run it after every merge touching crates/gf2-kernels-simd"
+  },
+  {
+   "issue": "d4185e9e",
+   "finding": "build-identity.json keeps the label ldpc-batch-arms-build-v3 with a changed shape.",
+   "disposition": "accepted; reviewers raised no finding on it"
+  },
+  {
+   "issue": "63bad95d",
+   "finding": "On worktree-agent-63bad95d-fam: survey/make-route-inventory.py --check fails (issue 63bad95d has no declared track) and CARGO_CI_STEPS=^$ ./scripts/cargo-ci.sh fails (repository_files.py not found). Worker reports both pre-existing.",
+   "disposition": "open: verify on main when the branch merges"
+  },
+  {
+   "issue": "63bad95d",
+   "finding": "The 63bad95d dense-harness branches conflict with merged 7dbe1393 in cells.rs and the harness_contract.rs counts.",
+   "disposition": "open: resolve at merge, after their runs"
+  },
+  {
+   "issue": "1a379447",
+   "finding": "Commit 222b02396 carries a wrong co-author trailer.",
+   "disposition": "accepted as is; main history is immutable"
   }
  ],
  "notes": [
@@ -2910,41 +2966,47 @@
   "handoff-26.md",
   "handoff-27.md",
   "handoff-28.md",
-  "handoff-29.md"
+  "handoff-29.md",
+  "handoff-30.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
  },
  "benchmark_window": {
-  "unit": "gf2-bench-window-20261011",
-  "armed_for": "2026-10-11T04:00:00+03:00",
+  "unit": "gf2-bench-window-20261012",
+  "armed_for": "2026-10-12T04:00:00+03:00",
   "state_dir": ".agents/bench-window",
   "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
   "pending_jobs": {
    "8e53235b": [
-    "8e53235b-bch-codeword-assembly pilot, 10 min, worktree agent-8e53235b, starts only below a one-minute load of 2"
+    "codeword-assembly confirmation, 10 min, agent-8e53235b"
+   ],
+   "63bad95d": [
+    "profile-dispatch-overhead-v2 pilot, 10 min, agent-63bad95d-fam",
+    "native-ladder-v2 pilot, 12 min, agent-63bad95d-fam",
+    "native-matvec-vs-m4ri second pilot v4-r2, 25 min, agent-63bad95d-m4ri",
+    "portable-matvec-vs-m4ri second pilot v4-r2, 10 min, agent-63bad95d-pm4ri"
+   ],
+   "7dbe1393": [
+    "matvec-ragged-tail-v2 pilot v4-r1, 10 min, agent-7dbe1393"
    ]
   },
-  "note": "Verify each campaign from its own execution log, never the job rc. The 4337c02e confirmation job (key ae13fbd8b6c8b708, rc 1 on the acceptance verdict) was marked done by the lead after verifying its log. Nightly windows are authorized (handoff-25); the invoker approved these pilots on 2026-10-07. 2026-10-08 window (23:00Z on 10-07): the three pilots (bfc2ceab sparse-product-check-cost, 63bad95d profile-dispatch-overhead and native-ladder) each report a complete execution log at declared cells and acceptance Accepted qualifies=false findings=0; workers re-verify from the logs before committing. 2026-10-09 window: seven jobs; each family that runs a pilot needs its confirmation the night after."
+  "note": "Every line carries its own load guard (exit 75 above a one-minute load of 2, line stays queued). Verify each campaign from its own execution log and read window.log loads first. Count the queue lines; the lead counted seven jobs when arming."
  },
  "session_scope": {
   "session": 34,
   "date": "2026-10-11",
   "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Steer: simplest, least protocol-intensive approach; focus HPC.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
-  "disk": "pinned worktrees: bfc2ceab, 63bad95d-fam, 63bad95d-run, 63bad95d-m4ri, 63bad95d-pm4ri, 7dbe1393, 8e53235b, ed3d490e-run (story campaigns), aff59c3c-r2.",
+  "disk": "pinned worktrees: 63bad95d-fam, 63bad95d-run, 63bad95d-m4ri, 63bad95d-pm4ri, 7dbe1393, 8e53235b, ed3d490e-run. In rework: bfc2ceab, aff59c3c-r2. Reclaimable: 81e955b0, 151af028.",
   "peer_session": "None observed at session start (load 0.2).",
   "active_workers": {
-   "8e53235b": "opus, pilot collection and confirmation freeze",
-   "d4185e9e": "opus, in agent-ed3d490e-run",
-   "bfc2ceab": "opus, ruling and final stage",
-   "7dbe1393": "opus, repeat family and merge preparation",
-   "63bad95d-fam": "opus, ladder and overhead repeats",
-   "63bad95d-m4ri": "sonnet",
-   "63bad95d-pm4ri": "sonnet",
-   "aff59c3c": "sonnet, rework 1 in agent-aff59c3c-r2"
+   "d4185e9e": "opus, rework 1 (F1-F3 of code-review and research-review) in agent-ed3d490e-run; unmerged at handoff",
+   "bfc2ceab": "opus, rework 2 (F1 PAM scalar coverage, F2 exception comment) in agent-bfc2ceab; unmerged at handoff",
+   "aff59c3c": "sonnet, rework 2 (F1 exception comment, F2 resume_equivalent, F3 comment sweep) in agent-aff59c3c-r2; unmerged at handoff"
   },
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
-  "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes."
+  "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes.",
+  "session_34_outcome": "Done: 81e955b0, 151af028. Merged and in rework after failed reviews: d4185e9e, bfc2ceab, aff59c3c. Merged, in progress pending measurement: 7dbe1393. Unmerged pinned branches awaiting the 2026-10-12 window: 8e53235b (75280f153), 63bad95d-fam (6d2106d1a), -m4ri (74ba66ed2), -pm4ri (a84073607)."
  }
 }
