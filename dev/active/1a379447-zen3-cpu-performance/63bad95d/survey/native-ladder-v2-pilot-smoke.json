@@ -1,0 +1,167 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "63bad95d-native-ladder-v2-pilot-arms-smoke",
+  "issue": "63bad95d",
+  "family": "63bad95d-native-ladder-v2",
+  "plan_sha256": "5d254286590f925fd8c73f54e27a37cd482315ac53ddfa3e75e4aba3824f4e55",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-native-ladder-v2-pilot.json",
+  "addendum_sha256": "023b9688f2c2fd76e48ec2b39a362a88c96382d347fa1743a89052032c889c93",
+  "cells": [
+    {
+      "cell_id": "matvec-r1024-24w-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-native/release/profile-arm",
+          "executable_sha256": "6603aa019a6908bbda09d8243d20c0d66ee27fb1d265a0f7a10e0de6cd4fe5fa",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "bitmatrix-transpose-8192x2048-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-native/release/profile-arm",
+          "executable_sha256": "6603aa019a6908bbda09d8243d20c0d66ee27fb1d265a0f7a10e0de6cd4fe5fa",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "popcount-1024w-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-native/release/profile-arm",
+          "executable_sha256": "6603aa019a6908bbda09d8243d20c0d66ee27fb1d265a0f7a10e0de6cd4fe5fa",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcount-1024w-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-native/release/profile-arm",
+          "executable_sha256": "6603aa019a6908bbda09d8243d20c0d66ee27fb1d265a0f7a10e0de6cd4fe5fa",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-inplace-8w-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-native/release/profile-arm",
+          "executable_sha256": "6603aa019a6908bbda09d8243d20c0d66ee27fb1d265a0f7a10e0de6cd4fe5fa",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "clmul-wide-9w-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-native/release/profile-arm",
+          "executable_sha256": "6603aa019a6908bbda09d8243d20c0d66ee27fb1d265a0f7a10e0de6cd4fe5fa",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
