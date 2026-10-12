@@ -1,9 +1,30 @@
 {
-  "schema": "ldpc-batch-arms-build-v3",
+  "schema": "ldpc-batch-arms-build-v4",
   "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
   "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
   "cxx": "c++ (GCC) 16.2.1 20260810",
+  "linker": {
+    "driver": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh",
+    "sha256": "e8d78e58a493ba924d3af494e5a49bde7a9747c42014e5f4f7c944695e7e7846",
+    "cc": "cc (GCC) 16.2.1 20260810"
+  },
+  "cargo_configuration": [
+    {
+      "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/.cargo/config.toml",
+      "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
+      "env": {
+        "RAYON_NUM_THREADS": "4"
+      }
+    },
+    {
+      "path": "/home/vkaskivuo/Projects/gf2/.cargo/config.toml",
+      "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
+      "env": {
+        "RAYON_NUM_THREADS": "4"
+      }
+    }
+  ],
   "build_commands": [
     {
       "environment": {
@@ -20,7 +41,9 @@
         "--locked",
         "--release",
         "--manifest-path",
-        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml"
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--config",
+        "target.x86_64-unknown-linux-gnu.linker=\"dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh\""
       ]
     },
     {
@@ -40,6 +63,8 @@
         "--release",
         "--manifest-path",
         "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--config",
+        "target.x86_64-unknown-linux-gnu.linker=\"dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh\"",
         "--package",
         "ldpc-aff3ct-intra-arm"
       ]
@@ -53,31 +78,159 @@
   },
   "executables": {
     "aff3ct-intra-arm": {
-      "sha256": "12f23b816a891fd08532dc62752025b8ed92583d6a81043eff4aeb99f39bee03",
+      "sha256": "80fe083bbef543b918f45eb54950987be5a31d15ed98daa261e0fa1f6ddeb843",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [
+        "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
+      ],
       "inputs": {
-        "repository_files_sha256": "dd719eec22b76241e6e6ea11a3e683d3ecbbe1ec74a0d7e4849869c3488f88d5",
-        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d"
+        "repository_files_sha256": "a2daadb63beb580ba27a46e3bdce4d66f58fa595745431e7a5632cf108f5ff73",
+        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/streampu/lib/cpptrace/lib/libcpptrace.a": "3abb1478c37b386fcb978606b50d36ce9dbd68cc18f3704733f60fe7ec57f7c9",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libstdc++.so": "f5fc7380f2ae46fa4053a64be04e7b98109f1066a4bbfff3c37042488aa0be0e",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libdwarf.so": "150d0b85aaa2fc6343408a3c80beb535b8917443411ed84aa531922b3f937dc8",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libz.so": "9ba92a0b85dc9b659e8f5e596a69452cec801def6ece0883a8a2c1f032e52397",
+          "/usr/lib/libzstd.so": "f023d49e85fb22057bfdd21857263d2638b73356c06f3b342f678a75212379f8"
+        }
       }
     },
     "aff3ct-intra-quality": {
-      "sha256": "db2f7ce1ea596997677b58237c9f0667a4920596fcb6e2b342b91ff07ead55f3",
+      "sha256": "8b1b92728e4abba92a4ff7a62c257dc7354b97e987f5895c9ddb4ecf8a9b7887",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [
+        "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
+      ],
       "inputs": {
-        "repository_files_sha256": "89c391c8b8f69994a1084a6b7bd9ca271fc9526665228e2dfc2d1caf62778afc",
-        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d"
+        "repository_files_sha256": "514aaa6cc1e0f95fd6c4e5472e20d5f0285c12d532151d4f6bb429f308da2f0d",
+        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/streampu/lib/cpptrace/lib/libcpptrace.a": "3abb1478c37b386fcb978606b50d36ce9dbd68cc18f3704733f60fe7ec57f7c9",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libstdc++.so": "f5fc7380f2ae46fa4053a64be04e7b98109f1066a4bbfff3c37042488aa0be0e",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libdwarf.so": "150d0b85aaa2fc6343408a3c80beb535b8917443411ed84aa531922b3f937dc8",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libz.so": "9ba92a0b85dc9b659e8f5e596a69452cec801def6ece0883a8a2c1f032e52397",
+          "/usr/lib/libzstd.so": "f023d49e85fb22057bfdd21857263d2638b73356c06f3b342f678a75212379f8"
+        }
       }
     },
     "gf2-batch-lane-arm": {
       "sha256": "520cbeaa76755e674a00808807227ad5f778cb90654874a9b78d33b967e2b395",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
       "inputs": {
         "repository_files_sha256": "e61dd3f444c158f9f276a6d4695744f26267047eb591363950160c796ae61eef",
-        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
       }
     },
     "gf2-batch-single-frame-arm": {
       "sha256": "5b7ba81e3bb686b98db048a4fdb0b182b79d52e41c25f079b45fa10d8b4d0cb6",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
       "inputs": {
         "repository_files_sha256": "48a8b2ea91c4e65b5b32cf5f5d669e3089eccc9d03f8c02cc36b8275e7c6df59",
-        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
       }
     }
   },
@@ -169,7 +322,7 @@
       "environment": {},
       "package": "ldpc-aff3ct-intra-arm",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
-      "executable_sha256": "12f23b816a891fd08532dc62752025b8ed92583d6a81043eff4aeb99f39bee03"
+      "executable_sha256": "80fe083bbef543b918f45eb54950987be5a31d15ed98daa261e0fa1f6ddeb843"
     },
     "gf2-batch-lane-avx2": {
       "source": "workspace",
