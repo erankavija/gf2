@@ -1,12 +1,11 @@
 //! Compiles the AFF3CT translation unit of the sum-product INTRA arm.
 //!
-//! `cpp/intra_shim.cpp` includes the `3be770d5` unit and through it the
-//! `c077a88b` shim, so the flags and definitions are those of the `3be770d5`
-//! build script: the pinned static library's class layouts are gated on the
-//! definitions. The script also reads the identity of the AFF3CT tree it
-//! links, its revision and the digest of its static library, which the arm
-//! reports on every run, and hands cargo every file the compiler read, so
-//! cargo's dep-info names the headers of the translation unit.
+//! The flags and definitions are those of the `3be770d5` build script: the
+//! pinned static library's class layouts are gated on the definitions.
+//! `-frecord-gcc-switches` leaves the compiler's options in the executable,
+//! and `-MD` the files it read, which cargo's dep-info then names.
+
+mod make_rules;
 
 use sha2::{Digest, Sha256};
 use std::env;
@@ -66,6 +65,7 @@ fn build_aff3ct() {
         .flag("-march=native")
         .flag("-g1")
         .flag("-MD")
+        .flag("-frecord-gcc-switches")
         .define("NDEBUG", None)
         .include(&throughput_shim)
         .include(&survey_shim);
@@ -110,29 +110,26 @@ fn build_aff3ct() {
 }
 
 /// Names to cargo each prerequisite of the make rules `-MD` writes beside the
-/// objects: the translation unit and every file it includes.
+/// objects.
 fn rerun_if_compiler_input_changed() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("cargo sets OUT_DIR"));
-    let mut rules = 0;
+    let mut files = 0;
     for entry in fs::read_dir(&out_dir).expect("the build script output directory") {
         let path = entry.expect("a directory entry").path();
         if path.extension().is_some_and(|extension| extension == "d") {
-            let rule = fs::read_to_string(&path).expect("a compiler dependency file");
-            let (_, prerequisites) = rule.split_once(':').expect("a make rule");
-            for input in prerequisites
-                .split_whitespace()
-                .filter(|word| *word != "\\")
-            {
+            let rules = fs::read_to_string(&path).expect("a compiler dependency file");
+            for input in make_rules::prerequisites(&rules) {
                 println!("cargo:rerun-if-changed={input}");
             }
-            rules += 1;
+            files += 1;
         }
     }
-    assert!(rules > 0, "the compiler wrote no dependency file");
+    assert!(files > 0, "the compiler wrote no dependency file");
 }
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=make_rules.rs");
     println!("cargo:rerun-if-changed=Cargo.toml");
     build_aff3ct();
 }
