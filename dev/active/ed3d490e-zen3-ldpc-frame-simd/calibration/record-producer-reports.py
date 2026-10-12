@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 """Record the untimed reports of the coding tuning producer (jit:0a77ecfc).
 
-Builds the producer as the campaign launcher builds it, under Rust 1.95 in
-release mode, runs its capability report, grid listing and self-check, and
-writes each response under `producer/` in the form a published session record
-holds, beside `producer/identity.json` with the digests of the producer source
-and executable. No mode installs a profile or runs a cell.
+The producer is built as the campaign launcher builds it.
 
 Usage: record-producer-reports.py, with no arguments
 """

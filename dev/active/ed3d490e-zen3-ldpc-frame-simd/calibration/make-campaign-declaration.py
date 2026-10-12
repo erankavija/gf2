@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """Write the campaign declaration of the decoder calibration (jit:0a77ecfc).
 
-The measured owner's cell count is the one the committed grid listing of the
-coding producer reports. The imported core owner is the envelope the baked
-core constants pin; the imported algebra owner is the one committed calibrated
-algebra envelope. Each import's complete envelope is the committed envelope of
-the same run that holds every imported section.
+The cell count is the committed grid listing's; the imports are the core owner
+the baked constants pin and the one calibrated algebra owner.
 
 Usage: make-campaign-declaration.py [--check]
 """

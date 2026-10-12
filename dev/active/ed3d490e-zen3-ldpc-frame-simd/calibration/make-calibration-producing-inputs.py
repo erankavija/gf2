@@ -1,19 +1,10 @@
 #!/usr/bin/env python3
-"""Write the producing manifest of the decoder calibration campaign (jit:0a77ecfc).
+"""Write the producing manifest of the decoder calibration and its digests (jit:0a77ecfc).
+
+`--check` compares the digests with the tree of the commit that last changed
+the digest record, so the record keeps naming the declared tree.
 
 Usage: make-calibration-producing-inputs.py [--check]
-
-Writes `producing-build-inputs.json` beside itself and
-`producing-build-inputs.sha256`, the SHA-256 of every build input the manifest
-names. The behaviour sources are every Rust source of the packages the coding
-producer and the composer compile, the files those sources include, the
-producer, the composer, the campaign tooling and the campaign declaration.
-
-`--check` writes nothing. It compares the manifest with this tree's
-enumeration, and the digests with the tree of the commit that last changed
-the digest record, so the record keeps naming the declared tree after later
-changes to its sources. An uncommitted record is compared with the working
-tree.
 """
 
 import argparse
