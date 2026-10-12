@@ -1,19 +1,19 @@
 {
  "issue": "0a77ecfc",
- "source_revision": "fbce190e0c25ba1030330d09b96184f70e529dea",
+ "source_revision": "aa166a392ba7f9eb25c9cf90a7a24d18114abb52",
  "stand_ins": {
   "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/private-lock.sh": "ba84c154e15a1048dae7a4c077d1edd65b5b471b2511181aaba613144c35d0b1",
   "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/untimed-windows.patch": "58db4cefbb5abfd197fa983c80f76ef3dc5136d3462a6c9e2b210cc05f4fa0bc"
  },
- "campaign_id": "gf2-0a77ecfc-20261012t193441z-3653305",
+ "campaign_id": "gf2-0a77ecfc-20261012t195339z-3872353",
  "launcher_exit": {
   "first": 0,
   "resumed": 0
  },
  "staged_executables_sha256": {
-  "coding-producer": "e353ca88b84e829bd92c78b3c487fcb816f66ea76df75a097fa68ca3f071fdc7",
+  "coding-producer": "68eefc75df8423bc420720549afc1fb580b7ff6e271d1d105a1e522afa36a1c3",
   "composer": "e3d164442a25d7f2ce69afd70b3df1bf6fe176b3eee8d01d9ee8ef22244e7d83",
-  "driver": "24ab4666c472ed38e2ea094d9b7c71498c1aedef0b3888610c8c9b35c97faa81"
+  "driver": "6c2f5133fadb94f60af7fc24deefb157c6f8fe96e46dae6b65dec6bf83e800c5"
  },
  "journal_events": {
   "campaign-start": 1,
@@ -42,20 +42,20 @@
   "work-finished": 1,
   "wrapper-returned": 1
  },
- "active_seconds": 526.551588107,
+ "active_seconds": 506.618235233,
  "stage_validation": {
   "schema": "tuning-extent-campaign-validation-v1",
-  "campaign_id": "gf2-0a77ecfc-20261012t193441z-3653305",
+  "campaign_id": "gf2-0a77ecfc-20261012t195339z-3872353",
   "status": "complete-valid",
   "cells": 74,
   "accepted_results": 444,
   "windows": 1850,
-  "execution_log_sha256": "c97da29bd9fc10eec60dea896ec2694980c79c31e8ceb9b9b9dbf540187cc4a5",
-  "coding_manifest_sha256": "af792aa9a71b5c4d73f42f16b6cec7fedcdd4231054ec821b0aef7ab9e3197dd"
+  "execution_log_sha256": "f94086ba3ff85dcacce455818cd88c6e34f6f5e1cbb5c7cd67a3547da22e9048",
+  "coding_manifest_sha256": "8709adde5a8133fa536795b839b9f6825d42fa6c824326b65c485a9455df92b0"
  },
  "publication_validation": {
   "schema": "tuning-extent-campaign-publication-v1",
-  "campaign_id": "gf2-0a77ecfc-20261012t193441z-3653305",
+  "campaign_id": "gf2-0a77ecfc-20261012t195339z-3872353",
   "status": "published",
   "entries": 1397
  },
