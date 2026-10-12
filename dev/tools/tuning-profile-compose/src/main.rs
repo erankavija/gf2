@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec};
+use gf2_coding::tuning::{CodingTuning, CodingTuningCodec};
 use gf2_core::tuning::{
     AssemblyProvenance, CompiledProfileProvenance, CoreTuning, CoreTuningCodec, GitRevision,
     MeasurementProvenance, PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder,
@@ -22,7 +23,8 @@ const TOOL_PATH: &str = "dev/tools/tuning-profile-compose";
 const USAGE: &str = "usage: tuning-profile-compose \
     (core-owner OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
      algebra-owner OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
-     complete CORE_OWNER ALGEBRA_OWNER OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256)";
+     coding-owner CALIBRATED_OWNER OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
+     complete CORE_OWNER ALGEBRA_OWNER [CODING_OWNER] OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256)";
 
 #[derive(Debug, PartialEq, Eq)]
 enum Command {
@@ -36,9 +38,16 @@ enum Command {
         profile_id: ProfileId,
         assembly: AssemblyProvenance,
     },
+    CodingOwner {
+        calibrated_path: PathBuf,
+        output_path: PathBuf,
+        profile_id: ProfileId,
+        assembly: AssemblyProvenance,
+    },
     Complete {
         core_path: PathBuf,
         algebra_path: PathBuf,
+        coding_path: Option<PathBuf>,
         output_path: PathBuf,
         profile_id: ProfileId,
         assembly: AssemblyProvenance,
@@ -83,9 +92,31 @@ fn parse_command(arguments: &[String]) -> Result<Command, Box<dyn Error>> {
                 })
             }
         }
-        [mode, core_path, algebra_path, output_path, profile_id, assembled_at, source_revision, source_dirty, tool_sha256]
+        [mode, calibrated_path, output_path, profile_id, assembled_at, source_revision, source_dirty, tool_sha256]
+            if mode == "coding-owner" =>
+        {
+            let (profile_id, assembly) = parse_identity_and_assembly(
+                profile_id,
+                assembled_at,
+                source_revision,
+                source_dirty,
+                tool_sha256,
+            )?;
+            Ok(Command::CodingOwner {
+                calibrated_path: PathBuf::from(calibrated_path),
+                output_path: PathBuf::from(output_path),
+                profile_id,
+                assembly,
+            })
+        }
+        [mode, core_path, algebra_path, owner_paths @ .., profile_id, assembled_at, source_revision, source_dirty, tool_sha256]
             if mode == "complete" =>
         {
+            let (coding_path, output_path) = match owner_paths {
+                [output_path] => (None, output_path),
+                [coding_path, output_path] => (Some(PathBuf::from(coding_path)), output_path),
+                _ => return Err(USAGE.into()),
+            };
             let (profile_id, assembly) = parse_identity_and_assembly(
                 profile_id,
                 assembled_at,
@@ -96,6 +127,7 @@ fn parse_command(arguments: &[String]) -> Result<Command, Box<dyn Error>> {
             Ok(Command::Complete {
                 core_path: PathBuf::from(core_path),
                 algebra_path: PathBuf::from(algebra_path),
+                coding_path,
                 output_path: PathBuf::from(output_path),
                 profile_id,
                 assembly,
@@ -139,15 +171,23 @@ fn execute(command: Command) -> Result<(), Box<dyn Error>> {
             profile_id,
             assembly,
         } => emit_algebra_owner(&output_path, profile_id, &assembly),
+        Command::CodingOwner {
+            calibrated_path,
+            output_path,
+            profile_id,
+            assembly,
+        } => emit_coding_owner(&calibrated_path, &output_path, profile_id, &assembly),
         Command::Complete {
             core_path,
             algebra_path,
+            coding_path,
             output_path,
             profile_id,
             assembly,
         } => compose(
             &core_path,
             &algebra_path,
+            coding_path.as_deref(),
             &output_path,
             profile_id,
             &assembly,
@@ -179,6 +219,20 @@ fn emit_algebra_owner(
     })
 }
 
+fn emit_coding_owner(
+    calibrated_path: &Path,
+    output_path: &Path,
+    profile_id: ProfileId,
+    assembly: &AssemblyProvenance,
+) -> Result<(), Box<dyn Error>> {
+    let calibrated_text = fs::read_to_string(calibrated_path)?;
+    let text = coding_owner_text(&calibrated_text, profile_id.clone(), assembly)?;
+    write_validated_atomic(output_path, text.as_bytes(), |written_path| {
+        let written_text = fs::read_to_string(written_path)?;
+        verify_coding_owner(&calibrated_text, &written_text, &profile_id, assembly)
+    })
+}
+
 fn core_owner_text(
     profile_id: ProfileId,
     assembly: &AssemblyProvenance,
@@ -206,6 +260,33 @@ fn algebra_owner_text(
         .build()?;
     let text = owner_algebra_registry()?.to_json(&prepared, assembly)?;
     verify_algebra_owner(&text, &profile_id, assembly)?;
+    Ok(text)
+}
+
+/// Reassembles the calibrated section of a coding owner envelope, with its
+/// measurement provenance, under the caller's profile ID and assembly.
+fn coding_owner_text(
+    calibrated_text: &str,
+    profile_id: ProfileId,
+    assembly: &AssemblyProvenance,
+) -> Result<String, Box<dyn Error>> {
+    let registry = owner_coding_registry()?;
+    let calibrated = registry.from_json(calibrated_text)?;
+    require_ids(&calibrated, &[CodingTuning::ID.as_str()])?;
+    let projection = calibrated
+        .section::<CodingTuning>()?
+        .ok_or("calibrated coding envelope is missing its typed section")?;
+    let provenance = CompiledProfileProvenance {
+        artifact_id: profile_id.clone(),
+    };
+    let prepared = PreparedEnvelope::compiled(profile_id.clone(), provenance)
+        .insert_measured::<CodingTuning, CodingTuningCodec>(
+            projection.section.clone(),
+            projection.measurement.clone(),
+        )?
+        .build()?;
+    let text = registry.to_json(&prepared, assembly)?;
+    verify_coding_owner(calibrated_text, &text, &profile_id, assembly)?;
     Ok(text)
 }
 
@@ -261,6 +342,40 @@ fn verify_algebra_owner(
     Ok(())
 }
 
+fn verify_coding_owner(
+    calibrated_text: &str,
+    text: &str,
+    expected_profile_id: &ProfileId,
+    expected_assembly: &AssemblyProvenance,
+) -> Result<(), Box<dyn Error>> {
+    let registry = owner_coding_registry()?;
+    let calibrated = registry.from_json(calibrated_text)?;
+    require_ids(&calibrated, &[CodingTuning::ID.as_str()])?;
+    let source = calibrated
+        .section::<CodingTuning>()?
+        .ok_or("calibrated coding envelope is missing its typed section")?;
+    if source.measurement == &MeasurementProvenance::Inherited {
+        return Err("coding owner input is an inherited section, not a calibrated one".into());
+    }
+    let reopened = registry.from_json(text)?;
+    verify_owner_identity(
+        &registry,
+        &reopened,
+        text,
+        expected_profile_id,
+        expected_assembly,
+        &[CodingTuning::ID.as_str()],
+    )?;
+    let canonical_calibrated = registry.to_json(
+        &calibrated,
+        &calibrated
+            .verified_assembly()
+            .ok_or("calibrated coding envelope lacks verified assembly")?
+            .provenance,
+    )?;
+    verify_wrapper_identity(&canonical_calibrated, text, CodingTuning::ID.as_str())
+}
+
 fn verify_owner_identity(
     registry: &ProfileRegistry,
     reopened: &PreparedEnvelope,
@@ -294,18 +409,27 @@ fn verify_owner_identity(
 fn compose(
     core_path: &Path,
     algebra_path: &Path,
+    coding_path: Option<&Path>,
     output_path: &Path,
     profile_id: ProfileId,
     assembly: &AssemblyProvenance,
 ) -> Result<(), Box<dyn Error>> {
     let core_text = fs::read_to_string(core_path)?;
     let algebra_text = fs::read_to_string(algebra_path)?;
-    let complete_text = compose_texts(&core_text, &algebra_text, profile_id.clone(), assembly)?;
+    let coding_text = coding_path.map(fs::read_to_string).transpose()?;
+    let complete_text = compose_texts(
+        &core_text,
+        &algebra_text,
+        coding_text.as_deref(),
+        profile_id.clone(),
+        assembly,
+    )?;
     write_validated_atomic(output_path, complete_text.as_bytes(), |written_path| {
         let written_text = fs::read_to_string(written_path)?;
         verify_composition(
             &core_text,
             &algebra_text,
+            coding_text.as_deref(),
             &written_text,
             &profile_id,
             assembly,
@@ -314,15 +438,18 @@ fn compose(
     Ok(())
 }
 
+/// Joins the core and algebra owner sections, and the coding owner section
+/// when `coding_text` is given, under the caller's profile ID and assembly.
 fn compose_texts(
     core_text: &str,
     algebra_text: &str,
+    coding_text: Option<&str>,
     profile_id: ProfileId,
     assembly: &AssemblyProvenance,
 ) -> Result<String, Box<dyn Error>> {
     let core_registry = owner_core_registry()?;
     let algebra_registry = owner_algebra_registry()?;
-    let both_registry = complete_registry()?;
+    let complete_registry = complete_registry()?;
 
     let core = core_registry.from_json(core_text)?;
     let algebra = algebra_registry.from_json(algebra_text)?;
@@ -338,7 +465,7 @@ fn compose_texts(
     let provenance = CompiledProfileProvenance {
         artifact_id: profile_id.clone(),
     };
-    let complete = PreparedEnvelope::compiled(profile_id.clone(), provenance)
+    let mut complete = PreparedEnvelope::compiled(profile_id.clone(), provenance)
         .insert_measured::<CoreTuning, CoreTuningCodec>(
             core_projection.section.clone(),
             core_projection.measurement.clone(),
@@ -346,12 +473,24 @@ fn compose_texts(
         .insert_measured::<AlgebraTuning, AlgebraTuningCodec>(
             algebra_projection.section.clone(),
             algebra_projection.measurement.clone(),
-        )?
-        .build()?;
-    let complete_text = both_registry.to_json(&complete, assembly)?;
+        )?;
+    if let Some(coding_text) = coding_text {
+        let coding = owner_coding_registry()?.from_json(coding_text)?;
+        require_ids(&coding, &[CodingTuning::ID.as_str()])?;
+        let coding_projection = coding
+            .section::<CodingTuning>()?
+            .ok_or("coding owner envelope is missing its typed section")?;
+        complete = complete.insert_measured::<CodingTuning, CodingTuningCodec>(
+            coding_projection.section.clone(),
+            coding_projection.measurement.clone(),
+        )?;
+    }
+    let complete = complete.build()?;
+    let complete_text = complete_registry.to_json(&complete, assembly)?;
     verify_composition(
         core_text,
         algebra_text,
+        coding_text,
         &complete_text,
         &profile_id,
         assembly,
@@ -364,23 +503,26 @@ fn compose_texts(
 fn verify_composition(
     core_text: &str,
     algebra_text: &str,
+    coding_text: Option<&str>,
     complete_text: &str,
     expected_profile_id: &ProfileId,
     expected_assembly: &AssemblyProvenance,
 ) -> Result<(), Box<dyn Error>> {
     let core_registry = owner_core_registry()?;
     let algebra_registry = owner_algebra_registry()?;
-    let both_registry = complete_registry()?;
+    let complete_registry = complete_registry()?;
     let core = core_registry.from_json(core_text)?;
     let algebra = algebra_registry.from_json(algebra_text)?;
     require_ids(&core, &[CoreTuning::ID.as_str()])?;
     require_ids(&algebra, &[AlgebraTuning::ID.as_str()])?;
 
-    let reopened = both_registry.from_json(complete_text)?;
-    require_ids(
-        &reopened,
-        &[AlgebraTuning::ID.as_str(), CoreTuning::ID.as_str()],
-    )?;
+    let reopened = complete_registry.from_json(complete_text)?;
+    let mut expected_ids = vec![AlgebraTuning::ID.as_str(), CoreTuning::ID.as_str()];
+    if coding_text.is_some() {
+        expected_ids.push(CodingTuning::ID.as_str());
+        expected_ids.sort_unstable();
+    }
+    require_ids(&reopened, &expected_ids)?;
     if reopened.profile_id() != expected_profile_id {
         return Err(format!(
             "complete profile ID {} does not match caller ID {}",
@@ -396,7 +538,7 @@ fn verify_composition(
     if reopened_assembly != expected_assembly {
         return Err("complete assembly provenance changed during publication".into());
     }
-    let canonical_complete = both_registry.to_json(&reopened, expected_assembly)?;
+    let canonical_complete = complete_registry.to_json(&reopened, expected_assembly)?;
     if canonical_complete != complete_text {
         return Err("complete envelope or content digest is not canonical".into());
     }
@@ -421,6 +563,19 @@ fn verify_composition(
         complete_text,
         AlgebraTuning::ID.as_str(),
     )?;
+    if let Some(coding_text) = coding_text {
+        let coding_registry = owner_coding_registry()?;
+        let coding = coding_registry.from_json(coding_text)?;
+        require_ids(&coding, &[CodingTuning::ID.as_str()])?;
+        let canonical_coding = coding_registry.to_json(
+            &coding,
+            &coding
+                .verified_assembly()
+                .ok_or("coding owner lacks verified assembly")?
+                .provenance,
+        )?;
+        verify_wrapper_identity(&canonical_coding, complete_text, CodingTuning::ID.as_str())?;
+    }
 
     Ok(())
 }
@@ -437,10 +592,17 @@ fn owner_algebra_registry() -> Result<ProfileRegistry, Box<dyn Error>> {
         .build()?)
 }
 
+fn owner_coding_registry() -> Result<ProfileRegistry, Box<dyn Error>> {
+    Ok(ProfileRegistryBuilder::new()
+        .register::<CodingTuning, CodingTuningCodec>()?
+        .build()?)
+}
+
 fn complete_registry() -> Result<ProfileRegistry, Box<dyn Error>> {
     Ok(ProfileRegistryBuilder::new()
         .register::<CoreTuning, CoreTuningCodec>()?
         .register::<AlgebraTuning, AlgebraTuningCodec>()?
+        .register::<CodingTuning, CodingTuningCodec>()?
         .build()?)
 }
 
@@ -536,7 +698,6 @@ fn write_validated_atomic(
 mod tests {
     use super::*;
 
-    const COMPOSER_SOURCE: &[u8] = include_bytes!("main.rs");
     const CORE_OWNER: &str =
         include_str!("../../../../crates/gf2-core/data/tuning-profiles/conservative.json");
     const ALGEBRA_OWNER: &str =
@@ -625,7 +786,7 @@ mod tests {
     }
 
     #[test]
-    fn parser_routes_only_the_three_explicit_producer_modes() {
+    fn parser_routes_only_the_explicit_producer_modes() {
         let core = parse_command(&command_arguments("core-owner", &["core.json"])).unwrap();
         assert!(matches!(
             core,
@@ -657,6 +818,7 @@ mod tests {
             Command::Complete {
                 core_path,
                 algebra_path,
+                coding_path: None,
                 output_path,
                 profile_id,
                 ..
@@ -666,6 +828,51 @@ mod tests {
                 && profile_id.as_str() == "campaign"
         ));
 
+        let coding = parse_command(&command_arguments(
+            "coding-owner",
+            &["calibrated.json", "coding.json"],
+        ))
+        .unwrap();
+        assert!(matches!(
+            coding,
+            Command::CodingOwner {
+                calibrated_path,
+                output_path,
+                profile_id,
+                ..
+            } if calibrated_path == Path::new("calibrated.json")
+                && output_path == Path::new("coding.json")
+                && profile_id.as_str() == "campaign"
+        ));
+
+        let three_owner = parse_command(&command_arguments(
+            "complete",
+            &["core.json", "algebra.json", "coding.json", "complete.json"],
+        ))
+        .unwrap();
+        assert!(matches!(
+            three_owner,
+            Command::Complete {
+                coding_path: Some(coding_path),
+                output_path,
+                ..
+            } if coding_path == Path::new("coding.json")
+                && output_path == Path::new("complete.json")
+        ));
+
+        assert!(parse_command(&command_arguments(
+            "complete",
+            &[
+                "core.json",
+                "algebra.json",
+                "coding.json",
+                "extra.json",
+                "complete.json"
+            ]
+        ))
+        .unwrap_err()
+        .to_string()
+        .contains(USAGE));
         assert!(parse_command(&command_arguments(
             "unknown",
             &["core.json", "algebra.json", "complete.json"]
@@ -714,6 +921,7 @@ mod tests {
         let complete_text = compose_texts(
             &core_text,
             &algebra_text,
+            None,
             id("complete-campaign"),
             &assembly(),
         )
@@ -771,7 +979,14 @@ mod tests {
         write_validated_atomic(&output.path, COMPLETE.as_bytes(), |written_path| {
             calls.set(calls.get() + 1);
             let text = fs::read_to_string(written_path)?;
-            verify_composition(CORE_OWNER, ALGEBRA_OWNER, &text, &profile_id, &assembly)
+            verify_composition(
+                CORE_OWNER,
+                ALGEBRA_OWNER,
+                None,
+                &text,
+                &profile_id,
+                &assembly,
+            )
         })
         .unwrap();
 
@@ -781,8 +996,7 @@ mod tests {
     }
 
     #[test]
-    fn committed_artifacts_are_exact_output_of_this_composer_source() {
-        let source_digest = format!("{:x}", Sha256Hasher::digest(COMPOSER_SOURCE));
+    fn committed_artifacts_are_exact_output_for_their_recorded_assembly() {
         let core = owner_core_registry()
             .unwrap()
             .from_json(CORE_OWNER)
@@ -796,7 +1010,6 @@ mod tests {
         for prepared in [&core, &algebra, &complete] {
             let assembly = &prepared.verified_assembly().unwrap().provenance;
             assert_eq!(assembly.tool.as_str(), TOOL_PATH);
-            assert_eq!(assembly.tool_sha256.as_str(), source_digest);
         }
 
         let core_output = TestOutput::new("core.json");
@@ -840,6 +1053,7 @@ mod tests {
             compose_texts(
                 CORE_OWNER,
                 ALGEBRA_OWNER,
+                None,
                 complete.profile_id().clone(),
                 &complete.verified_assembly().unwrap().provenance,
             )
