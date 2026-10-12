@@ -163,7 +163,6 @@ def release():
 
 
 def prepared(arm, key):
-    """The committed prepared quality record of `arm` on code `key`."""
     return by_digest(CODES[key]["quality" if arm not in EXTERNAL else "intra_quality"])
 
 

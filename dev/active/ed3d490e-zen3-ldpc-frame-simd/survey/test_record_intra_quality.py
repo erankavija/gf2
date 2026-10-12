@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Check the INTRA quality recorder's comparison and its replay of the committed record.
-
-The replay test needs the built `aff3ct-intra-quality` and is skipped without it.
-"""
+"""Tests of `record-intra-quality.py`; the replay test is skipped without the built arm."""
 
 import importlib.util
 import json
@@ -36,6 +33,35 @@ class DifferencesTest(unittest.TestCase):
     def test_the_record_carries_zero_diagnostics(self):
         self.assertEqual({name: recorder.untimed(QUALITY)[name] for name in recorder.DIAGNOSTICS},
                          dict.fromkeys(recorder.DIAGNOSTICS, 0))
+
+
+BUILD = {
+    "rustc": "rustc 1.95.0", "cargo": "cargo 1.95.0", "release_profile": {"lto": True},
+    "build_commands": [{"argv": ["cargo", "build"]},
+                       {"argv": ["cargo", "build", "--package", "ldpc-aff3ct-intra-arm"],
+                        "environment": {"RUSTFLAGS": "-C target-cpu=native"}}],
+    "executables": {"aff3ct-intra-quality": {"sha256": "a" * 64, "compiler_options": ["-O3"]},
+                    "other-arm": {"sha256": "b" * 64}},
+}
+
+
+class ArmBuildTest(unittest.TestCase):
+    def test_changes_outside_the_arm_identity_do_not_differ(self):
+        other = json.loads(json.dumps(BUILD))
+        other["executables"]["other-arm"]["sha256"] = "c" * 64
+        other["build_commands"][0]["argv"].append("--other")
+        other["catalogue"] = {"sha256": "d" * 64}
+        self.assertEqual(recorder.arm_build(other), recorder.arm_build(BUILD))
+
+    def test_executable_digest_flags_and_toolchain_differ(self):
+        for change in (
+            lambda b: b["executables"]["aff3ct-intra-quality"].update(sha256="e" * 64),
+            lambda b: b["build_commands"][1]["environment"].update(RUSTFLAGS="-O0"),
+            lambda b: b.update(rustc="rustc 1.96.0"),
+        ):
+            other = json.loads(json.dumps(BUILD))
+            change(other)
+            self.assertNotEqual(recorder.arm_build(other), recorder.arm_build(BUILD))
 
 
 class HostFactsTest(unittest.TestCase):

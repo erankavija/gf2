@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
-"""Prepare and check the quality record of the AFF3CT [Cassagne2019] INTRA arm (jit:4252085a).
+"""Quality record of the AFF3CT [Cassagne2019] INTRA arm (jit:4252085a).
 
-`record` replays each full recorded bundle once, untimed, with the arm
-workspace's `aff3ct-intra-quality` and writes, per code, the prepared quality
-file the arm takes in `GF2_LDPC_QUALITY` plus `record.json`, which pins the
-executable, bundles and frozen configuration and states the decoder the
-replay observed. `check` replays again and exits non-zero on any difference
-from the committed record; it writes nothing into the repository.
-
-The memory and latency diagnostics of the quality form are zero: nothing is
-timed. The bundles, frozen decoder settings and file names are those of the
-`smoke-gf2-arms.py` group `aff3ct` and the `07ca8585` comparator addendum.
+`record` replays each full recorded bundle once, untimed, and writes the prepared quality files
+the arm checks against; `check` replays again, writes nothing and exits non-zero on any
+difference within the replay's closed identity set (`@/inv/behavioral-evidence-validity`).
 
 Usage (from the worktree root): record-intra-quality.py record|check OUT_DIR
-OUT_DIR holds `record.json`; the arms build identity is `OUT_DIR/../build-identity.json`.
+The build record is the git-listed `build-identity.json` that lists the replay executable.
 """
 
 import array
@@ -36,9 +29,9 @@ smoke.__spec__.loader.exec_module(smoke)
 ARM = "aff3ct-spa-intra"
 EXECUTABLE = "aff3ct-intra-quality"
 FAMILY = "aff3ct-intra"
-# Quality-form fields that are diagnostics of a timed or resident-memory pass.
+PACKAGE = "ldpc-aff3ct-intra-arm"
+# Zeroed: the pass is untimed, and the arm compares neither.
 DIAGNOSTICS = ("memory_bytes", "latency_ns_p50")
-# Confidence the quality form fixes in its `interval_method` identifier.
 INTERVALS = {
     "fer": "Wilson score interval over the frames",
     "ber": "Hoeffding interval over the independent frames",
@@ -46,7 +39,6 @@ INTERVALS = {
 }
 RECORD = "record.json"
 PROBE = "llr-scale-probe.json"
-# Multipliers of the recorded LLRs the probe replays; 1 is the record itself.
 PROBE_SCALES = (1.0, 2.0, 4.0)
 
 
@@ -55,12 +47,10 @@ def sha256(data):
 
 
 def untimed(quality):
-    """`quality` with the timing and memory diagnostics zeroed."""
     return {**quality, **dict.fromkeys(DIAGNOSTICS, 0)}
 
 
 def case_of(cell, bundle, frames):
-    """The decoder case of an addendum cell over the whole of `bundle`."""
     decoder = cell["decoder"]
     return {
         "bundle": str(bundle),
@@ -74,13 +64,11 @@ def case_of(cell, bundle, frames):
 
 
 def differences(replayed, committed):
-    """Names of the fields in which two quality records differ."""
     left, right = untimed(replayed), untimed(committed)
     return [name for name in sorted(left.keys() | right.keys()) if left.get(name) != right.get(name)]
 
 
 def host_facts(text=None):
-    """The CPU the replay ran on, from `/proc/cpuinfo` text."""
     if text is None:
         text = pathlib.Path("/proc/cpuinfo").read_text(encoding="utf-8")
     first = text.split("\n\n")[0]
@@ -92,7 +80,6 @@ def host_facts(text=None):
 
 
 def replay(executable, case, scratch):
-    """One replay of `case`: its quality record and the decoder it observed."""
     case_path, out = scratch / "case.json", scratch / "quality.json"
     case_path.write_text(json.dumps(case), encoding="utf-8")
     run = subprocess.run([str(executable), str(case_path), str(out)], check=True,
@@ -101,12 +88,28 @@ def replay(executable, case, scratch):
     return json.loads(out.read_text(encoding="utf-8")), observed
 
 
-def replays(executable, build_identity):
-    """Replays every code of the recorded bundles; returns `(record, qualities)`."""
+def arm_build(build_record):
+    """The part of the shared build record that identifies this arm's executable."""
+    command = next(c for c in build_record["build_commands"] if PACKAGE in c["argv"])
+    return {"rustc": build_record["rustc"], "cargo": build_record["cargo"],
+            "release_profile": build_record["release_profile"], "command": command,
+            "executable": build_record["executables"][EXECUTABLE]}
+
+
+def locate_build_record():
+    for path in smoke.listed("build-identity.json"):
+        record = json.loads((smoke.ROOT / path).read_text(encoding="utf-8"))
+        if EXECUTABLE in record.get("executables", {}):
+            return path, record
+    sys.exit(f"no build record lists {EXECUTABLE}")
+
+
+def replays(executable):
     base = json.loads((smoke.ROOT / smoke.located("file", smoke.FAMILIES[FAMILY][0]))
                       .read_text(encoding="utf-8"))
     archive = smoke.by_digest(smoke.ARCHIVE)
-    pinned = build_identity["executables"][EXECUTABLE]["sha256"]
+    path, build_record = locate_build_record()
+    pinned = build_record["executables"][EXECUTABLE]["sha256"]
     digest = sha256(executable.read_bytes())
     if digest != pinned:
         sys.exit(f"{EXECUTABLE} digest {digest} differs from the build identity's {pinned}")
@@ -139,8 +142,8 @@ def replays(executable, build_identity):
         "cites": ["Cassagne2019"],
         "arm": ARM,
         "executable": {"name": EXECUTABLE, "sha256": digest},
-        "build_identity": {"path": str(build_identity["path"]),
-                           "sha256": build_identity["sha256"]},
+        "build": arm_build(build_record),
+        "build_record": {"path": path, "sha256": sha256((smoke.ROOT / path).read_bytes())},
         "recorded_inputs": {"name": smoke.ARCHIVE[0], "sha256": smoke.ARCHIVE[1]},
         "intervals": {**INTERVALS, "method": next(iter(qualities.values()))["interval_method"],
                       "samples": "replayed_frames of each code"},
@@ -152,7 +155,6 @@ def replays(executable, build_identity):
 
 
 def scaled_bundle(source, target, scale):
-    """A copy of the bundle `source` in `target` with every LLR multiplied by `scale`."""
     target.mkdir(parents=True)
     for name in ("h.alist", "codewords.bin"):
         shutil.copy(source / name, target / name)
@@ -166,7 +168,6 @@ def scaled_bundle(source, target, scale):
 
 
 def llr_scale(bundle):
-    """Mean recorded LLR in the direction of the sent bit, over `2/sigma^2`."""
     manifest = json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))
     llrs = array.array("f")
     llrs.frombytes((bundle / "llrs.f32").read_bytes())
@@ -177,10 +178,10 @@ def llr_scale(bundle):
 
 
 def probes(executable):
-    """The LLR-scale probe of every code, untimed."""
     base = json.loads((smoke.ROOT / smoke.located("file", smoke.FAMILIES[FAMILY][0]))
                       .read_text(encoding="utf-8"))
-    result = {"cites": ["Cassagne2019"], "scales": list(PROBE_SCALES), "codes": {}}
+    result = {"cites": ["Cassagne2019"], "scales": list(PROBE_SCALES),
+              "intervals": INTERVALS, "codes": {}}
     with tempfile.TemporaryDirectory() as temporary:
         scratch = pathlib.Path(temporary)
         with tarfile.open(smoke.by_digest(smoke.ARCHIVE)) as handle:
@@ -197,16 +198,11 @@ def probes(executable):
                 quality, _ = replay(executable, case_of(cell, bundle, frames), scratch)
                 replayed.append({"scale": scale, "frames": quality["frames"],
                                  "frame_errors": quality["frame_errors"],
+                                 "fer_interval": quality["fer_interval"],
                                  "bit_errors": quality["bit_errors"],
                                  "iterations_mean": quality["iterations"]["mean"]})
             result["codes"][key] = {**llr_scale(source), "replays": replayed}
     return result
-
-
-def load_build_identity(out_dir):
-    path = out_dir.parent / "build-identity.json"
-    data = path.read_bytes()
-    return {**json.loads(data), "path": path.relative_to(smoke.ROOT), "sha256": sha256(data)}
 
 
 def encoded(value):
@@ -214,8 +210,7 @@ def encoded(value):
 
 
 def record_mode(out_dir):
-    record, qualities = replays(
-        smoke.ROOT / smoke.release() / EXECUTABLE, load_build_identity(out_dir))
+    record, qualities = replays(smoke.ROOT / smoke.release() / EXECUTABLE)
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, quality in qualities.items():
         (out_dir / name).write_text(encoded(quality), encoding="utf-8")
@@ -229,8 +224,7 @@ def record_mode(out_dir):
 
 def check_mode(out_dir):
     committed = json.loads((out_dir / RECORD).read_text(encoding="utf-8"))
-    record, qualities = replays(
-        smoke.ROOT / smoke.release() / EXECUTABLE, load_build_identity(out_dir))
+    record, qualities = replays(smoke.ROOT / smoke.release() / EXECUTABLE)
     failures = []
     for key, code in committed["codes"].items():
         replayed = record["codes"][key]
@@ -246,7 +240,7 @@ def check_mode(out_dir):
         print(f"{key}: second replay {'differs' if found else 'reproduces the record'}")
         failures += found
     failures += [f"{name} differs" for name in
-                 ("executable", "build_identity", "recorded_inputs", "host")
+                 ("executable", "build", "host")
                  if record[name] != committed[name]]
     if probes(smoke.ROOT / smoke.release() / EXECUTABLE) != json.loads(
             (out_dir / PROBE).read_text(encoding="utf-8")):
