@@ -1248,13 +1248,13 @@
     {
       "id": "p20-tail-support",
       "project": "gf2",
-      "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+      "commit": "97eb8206132b86f4068e68165cfa9fbed6c85b88",
       "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
       "line": 2153,
       "occurrences": 1,
       "verbatim": "                || f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;",
       "why": "P-20 records a non-exploratory cell as not confirmatory when a bootstrap tail holds fewer than twenty expected draws at the corrected alpha.",
-      "sha256": "c8f3dc32510822b38472eef913af508ad98b47abc6a8195e60877a0dfc736be8"
+      "sha256": "70f5c68e9a6d5f324385672671e10ae6354aaffd1f37a89510cb273d866340a3"
     },
     {
       "id": "ledger-attempt-alpha",

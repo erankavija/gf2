@@ -7,7 +7,7 @@
   },
   "current_projector": {
     "path": "dev/scripts/campaign_plan.py",
-    "sha256": "d4317859512146844f718b5f1e30fcf19e9d1ebd682aae44e998fa7411cd4bb8"
+    "sha256": "2ce33470d07b93367850423c49c5e42cdd391e87429c2a0c3cb7b45d0fce9801"
   },
   "arguments": [
     "--label",
