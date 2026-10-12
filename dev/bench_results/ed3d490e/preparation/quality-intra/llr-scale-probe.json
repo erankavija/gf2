@@ -8,6 +8,10 @@
       "replays": [
         {
           "bit_errors": 3098,
+          "fer_interval": [
+            0.03742976830393997,
+            0.12823480349360633
+          ],
           "frame_errors": 9,
           "frames": 128,
           "iterations_mean": 39.0703125,
@@ -15,6 +19,10 @@
         },
         {
           "bit_errors": 0,
+          "fer_interval": [
+            0.0,
+            0.029136956273508416
+          ],
           "frame_errors": 0,
           "frames": 128,
           "iterations_mean": 14.5078125,
@@ -22,6 +30,10 @@
         },
         {
           "bit_errors": 0,
+          "fer_interval": [
+            0.0,
+            0.029136956273508416
+          ],
           "frame_errors": 0,
           "frames": 128,
           "iterations_mean": 16.4375,
@@ -35,6 +47,10 @@
       "replays": [
         {
           "bit_errors": 151766,
+          "fer_interval": [
+            0.9708630437264916,
+            1.0
+          ],
           "frame_errors": 128,
           "frames": 128,
           "iterations_mean": 50.0,
@@ -42,6 +58,10 @@
         },
         {
           "bit_errors": 0,
+          "fer_interval": [
+            0.0,
+            0.029136956273508416
+          ],
           "frame_errors": 0,
           "frames": 128,
           "iterations_mean": 16.8515625,
@@ -49,6 +69,10 @@
         },
         {
           "bit_errors": 81033,
+          "fer_interval": [
+            0.4528298312720518,
+            0.6230188440190805
+          ],
           "frame_errors": 69,
           "frames": 128,
           "iterations_mean": 43.203125,
@@ -57,6 +81,11 @@
       ],
       "sigma": 1.1600721537746943
     }
+  },
+  "intervals": {
+    "ber": "Hoeffding interval over the independent frames",
+    "confidence": 0.95,
+    "fer": "Wilson score interval over the frames"
   },
   "scales": [
     1.0,
