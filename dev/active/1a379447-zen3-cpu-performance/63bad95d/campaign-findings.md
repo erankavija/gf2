@@ -188,16 +188,62 @@ rejects (P-03)"), and the canonical freezer refuses a pilot receipt of
 another family, so the pilot of `63bad95d-native-ladder` does not serve the
 repeat's confirmation.
 
-State of each repeat: the pilot addendum is frozen, every arm of every pilot
-cell is smoked through the shared runner
-([native ladder](survey/native-ladder-v2-pilot-smoke.json),
-[dispatch overhead](survey/profile-dispatch-overhead-v2-pilot-smoke.json)),
-and the pilot is a line of the benchmark-window queue that starts only on a
-quiet host. Both ledgers are empty. No repeat has a receipt, a frozen
-confirmation or an outcome; the confirmation of each is frozen from its
-committed pilot receipt and measured in a later window. The native-build
-result for the inconclusive cells of F-06 and the retention decision of plan
-§7 wait for those confirmations.
+Each repeat pilot is accepted as a pilot
+([native ladder](../../../bench_results/63bad95d/63bad95d-native-ladder-v2/r1-pilot/acceptance-summary.md),
+[dispatch overhead](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2/r1-pilot/acceptance-summary.md);
+verdict, qualification and finding count are on each summary). Each execution
+log holds every declared cell started, checkpointed and completed once at its
+declared pairs with a terminal `complete` record
+(`dev/scripts/verify-campaign-log.py`). Both run on a quiet host: the
+[load table](disturbance-record.md#host-load-each-campaign-records) quotes
+their launcher lines and session rows beside those of the repeated families.
+Every pilot row is exploratory and decides nothing. The interval and raw-pair
+rows are in the disturbance record
+([dispatch overhead](disturbance-record.md#63bad95d-profile-dispatch-overhead-v2),
+[native ladder](disturbance-record.md#63bad95d-native-ladder-v2)); the
+native-ladder pilot records `inconclusive` for
+`bitmatrix-transpose-8192x2048-native` at the pilot addendum's margin.
+
+The canonical freezer derives each confirmation from its committed pilot
+receipt. The frozen resolution is the widest relative half-width of the whole
+pilot at the confirmation's corrected alpha, which each resolution record
+derives and each derivation record carries above its pilot-alpha floor; the
+[budget record](calibration-budget.md#planned-families) gives the corrected alpha and the
+draws per tail of each confirmation under P-20.
+
+- `63bad95d-profile-dispatch-overhead-v2`
+  ([addendum](campaigns/63bad95d-profile-dispatch-overhead-v2-confirmation.json),
+  [derivation](campaigns/63bad95d-profile-dispatch-overhead-v2-confirmation-derivation.txt),
+  [resolution](campaigns/63bad95d-profile-dispatch-overhead-v2-pilot-resolution.txt)):
+  the resolution lies below the margins the pilot addendum declares, so the
+  confirmation keeps both values and restates their rationale. The pilot's
+  cells are confirmatory and the cells of
+  [`dispatch-holdout-cells-v2.json`](survey/dispatch-holdout-cells-v2.json)
+  are the holdout. The addendum freezes the retention rule of plan §7.
+- `63bad95d-native-ladder-v2`
+  ([addendum](campaigns/63bad95d-native-ladder-v2-confirmation.json),
+  [derivation](campaigns/63bad95d-native-ladder-v2-confirmation-derivation.txt),
+  [resolution](campaigns/63bad95d-native-ladder-v2-pilot-resolution.txt)):
+  the resolution exceeds the margin the pilot addendum declares. The
+  confirmation freezes the worthwhile-effect and equivalence margins at the
+  smallest two-decimal value strictly above one plus the resolution, the rule
+  the pilot addendum's rationale states and the confirmation of the repeated
+  family applies; the derivation record names both replaced values. Every
+  pilot cell is confirmatory.
+
+Every arm of every cell of each confirmation is smoked through the shared
+runner
+([native ladder](survey/native-ladder-v2-confirmation-smoke.json),
+[dispatch overhead](survey/profile-dispatch-overhead-v2-confirmation-smoke.json)),
+and each confirmation is a line of the benchmark-window queue that starts only
+on a quiet host. Each ledger holds its pilot's line and no confirmatory
+reservation
+([native ladder](../../../bench_results/63bad95d/63bad95d-native-ladder-v2-ledger.jsonl),
+[dispatch overhead](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2-ledger.jsonl)).
+No repeat confirmation has a receipt or an outcome. The native-build result
+for the inconclusive cells of F-06 and the retention decision of plan §7 are
+read from the acceptance summaries of those confirmations, which
+`@/issue/63bad95d` owns.
 
 ## What the campaign does not decide
 
