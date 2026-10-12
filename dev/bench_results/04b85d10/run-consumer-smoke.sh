@@ -19,6 +19,11 @@ set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 ISSUE=04b85d10
+HARNESS_DIR=$(python3 -B dev/scripts/repository_files.py package-directory consumer-profile-gf2-side)
+SURVEY=$(dirname "$HARNESS_DIR")
+ISSUE_DIR=$(dirname "$SURVEY")
+FLOCK=$(python3 -B dev/scripts/repository_files.py file ccx1-bench-flock.sh)
+BENCH_DIR=$(realpath --relative-to="$repo" "$(dirname "$(realpath "$0")")")
 FAMILY=${1:-}
 MODE=${2:-}
 VERSION=${3:-4}
@@ -27,7 +32,7 @@ case "$FAMILY" in logical|count|layout) ;; *) echo "$usage" >&2; exit 2 ;; esac
 case "$MODE" in pilot|confirmation) ;; *) echo "$usage" >&2; exit 2 ;; esac
 case "$VERSION" in 3|4) ;; *) echo "$usage" >&2; exit 2 ;; esac
 
-FROZEN=dev/active/$ISSUE/addendum-bit-storage-$FAMILY-v$VERSION-$MODE.json
+FROZEN=$ISSUE_DIR/addendum-bit-storage-$FAMILY-v$VERSION-$MODE.json
 [[ -f "$FROZEN" ]] || { echo "no frozen addendum $FROZEN" >&2; exit 2; }
 
 SMOKE=target/consumer-smoke-$ISSUE/$FAMILY-v$VERSION-$MODE
@@ -37,7 +42,7 @@ ADDENDUM=$SMOKE/family-addendum.json
 LEDGER=$SMOKE/family-ledger.jsonl
 
 export RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
-HARNESS_MANIFEST=dev/active/$ISSUE/survey/gf2-side/Cargo.toml
+HARNESS_MANIFEST=$HARNESS_DIR/Cargo.toml
 HARNESS_TARGET="$repo/target/consumer-profile-$ISSUE"
 ./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
   --bin benchmark-ab-runner --bin benchmark-acceptance
@@ -72,7 +77,7 @@ touch "$LOCK"
 LOCK=$(realpath "$LOCK")
 export GF2_CCX1_LOCK="$LOCK"
 
-python3 dev/active/$ISSUE/survey/build-plan.py \
+python3 "$SURVEY/build-plan.py" \
   "$PLAN" "$CAMPAIGN" "$ARM" "$LOCK" "$MODE" "$ADDENDUM" 99
 
 # The runner's smallest legal pilot pair count and one short window per
@@ -97,7 +102,7 @@ echo "# consumer-verify:"
 "$VERIFY"
 
 OUT="$SMOKE/receipt"
-GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host \
+GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "$FLOCK" --full-host \
   "$RUNNER" run "$STAGE" "$PLAN"
 "$RUNNER" finalize "$STAGE" "$OUT"
 set +e
