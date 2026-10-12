@@ -15,6 +15,7 @@ use crate::receipt::{ArmQuality, ConversionCosts, WindowRecord};
 use crate::transport::{self, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::collections::BTreeMap;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -311,16 +312,7 @@ pub fn dispatch_arm(
     let mut command = Command::new(executable);
     command.args(&arm.arguments);
     command.env_clear();
-    for (name, value) in INHERITED_ENVIRONMENT
-        .iter()
-        .filter_map(|name| std::env::var(name).ok().map(|value| (*name, value)))
-    {
-        command.env(name, value);
-    }
-    for (name, value) in &arm.environment {
-        command.env(name, value);
-    }
-    command.env(FRESH_CASE_VAR, FRESH_CASE_VALUE);
+    command.envs(child_environment(arm));
     let input = transport::encode_case(request).map_err(invalid)?;
     let mut stderr = Vec::new();
     let result = run_process(
@@ -440,6 +432,89 @@ impl SmokeRecord {
     }
 }
 
+/// The environment of an arm child: [`INHERITED_ENVIRONMENT`] from this
+/// process, the plan arm's declared variables and the fresh-child sentinel.
+pub fn child_environment(arm: &PlanArm) -> BTreeMap<String, String> {
+    let mut environment: BTreeMap<String, String> = INHERITED_ENVIRONMENT
+        .iter()
+        .filter_map(|name| {
+            std::env::var(name)
+                .ok()
+                .map(|value| ((*name).to_owned(), value))
+        })
+        .collect();
+    environment.extend(arm.environment.clone());
+    environment.insert(FRESH_CASE_VAR.to_owned(), FRESH_CASE_VALUE.to_owned());
+    environment
+}
+
+/// How the runner starts one arm child in the validation position, for a
+/// caller that observes the child itself.
+#[derive(Clone, Debug, Serialize)]
+pub struct ValidationLaunch {
+    /// Executable path as the runner resolves it.
+    pub executable: String,
+    pub arguments: Vec<String>,
+    /// The whole child environment, the fresh-child sentinel included.
+    pub environment: BTreeMap<String, String>,
+    /// Name of the sentinel variable in `environment`; a child without it
+    /// stops at its guard before reading the request.
+    pub guard_variable: &'static str,
+    /// The request the runner writes on the child's standard input.
+    pub request: String,
+}
+
+/// The [`ValidationLaunch`] of `arm_name` on `cell_id` of a saved plan, built
+/// by the same plan and addendum validation, request encoder and environment
+/// rule as [`smoke`]. Starts nothing.
+pub fn validation_launch(
+    root: &Path,
+    plan_path: &Path,
+    cell_id: &str,
+    arm_name: &str,
+) -> io::Result<ValidationLaunch> {
+    let (plan, _, addendum, _) = load_plan(root, plan_path)?;
+    let cell = plan
+        .cells
+        .iter()
+        .find(|cell| cell.cell_id == cell_id)
+        .ok_or_else(|| invalid(format!("the plan declares no cell {cell_id}")))?;
+    let declared = addendum
+        .cell(cell_id)
+        .ok_or_else(|| invalid(format!("the addendum declares no cell {cell_id}")))?;
+    let arm = plan
+        .arms
+        .get(arm_name)
+        .ok_or_else(|| invalid(format!("the plan declares no arm {arm_name:?}")))?;
+    let request = ArmRequest::validation(cell, declared, arm_name);
+    Ok(ValidationLaunch {
+        executable: resolve(root, &arm.executable)?
+            .to_string_lossy()
+            .into_owned(),
+        arguments: arm.arguments.clone(),
+        environment: child_environment(arm),
+        guard_variable: FRESH_CASE_VAR,
+        request: transport::encode_case(&request).map_err(invalid)?,
+    })
+}
+
+/// The validated plan and addendum of a saved plan, each with its bytes.
+fn load_plan(
+    root: &Path,
+    plan_path: &Path,
+) -> io::Result<(RunnerPlan, Vec<u8>, FamilyAddendum, Vec<u8>)> {
+    let plan_bytes = std::fs::read(plan_path)?;
+    let plan = RunnerPlan::decode(&plan_bytes).map_err(invalid)?;
+    let addendum_bytes = std::fs::read(root.join(&plan.addendum))?;
+    let addendum = FamilyAddendum::decode(&addendum_bytes).map_err(invalid)?;
+    addendum
+        .validate()
+        .map_err(|errors| invalid(format!("addendum invalid: {}", errors.join("; "))))?;
+    plan.validate(&addendum)
+        .map_err(|errors| invalid(format!("plan invalid: {}", errors.join("; "))))?;
+    Ok((plan, plan_bytes, addendum, addendum_bytes))
+}
+
 /// Drives one arm of one declared cell once in the validation position.
 ///
 /// `root` is the repository root a repository-relative executable resolves
@@ -551,15 +626,7 @@ pub fn validate_cell(
 /// smoke must not also spawn and wait on unrelated children: those belong in
 /// their own test binary.
 pub fn smoke(root: &Path, plan_path: &Path) -> io::Result<SmokeRecord> {
-    let plan_bytes = std::fs::read(plan_path)?;
-    let plan = RunnerPlan::decode(&plan_bytes).map_err(invalid)?;
-    let addendum_bytes = std::fs::read(root.join(&plan.addendum))?;
-    let addendum = FamilyAddendum::decode(&addendum_bytes).map_err(invalid)?;
-    addendum
-        .validate()
-        .map_err(|errors| invalid(format!("addendum invalid: {}", errors.join("; "))))?;
-    plan.validate(&addendum)
-        .map_err(|errors| invalid(format!("plan invalid: {}", errors.join("; "))))?;
+    let (plan, plan_bytes, addendum, addendum_bytes) = load_plan(root, plan_path)?;
     let timeout = Duration::from_secs(plan.settings().0.child_timeout_seconds);
     let mut cells = Vec::with_capacity(plan.cells.len());
     for cell in &plan.cells {

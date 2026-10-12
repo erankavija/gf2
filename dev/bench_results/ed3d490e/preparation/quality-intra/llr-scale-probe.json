@@ -1,0 +1,95 @@
+{
+  "cites": [
+    "Cassagne2019"
+  ],
+  "codes": {
+    "dvb-t2-r12": {
+      "mean_signed_llr_over_true_scale": 0.5000844493833648,
+      "replays": [
+        {
+          "bit_errors": 3098,
+          "fer_interval": [
+            0.03742976830393997,
+            0.12823480349360633
+          ],
+          "frame_errors": 9,
+          "frames": 128,
+          "iterations_mean": 39.0703125,
+          "scale": 1.0
+        },
+        {
+          "bit_errors": 0,
+          "fer_interval": [
+            0.0,
+            0.029136956273508416
+          ],
+          "frame_errors": 0,
+          "frames": 128,
+          "iterations_mean": 14.5078125,
+          "scale": 2.0
+        },
+        {
+          "bit_errors": 0,
+          "fer_interval": [
+            0.0,
+            0.029136956273508416
+          ],
+          "frame_errors": 0,
+          "frames": 128,
+          "iterations_mean": 16.4375,
+          "scale": 4.0
+        }
+      ],
+      "sigma": 0.8118672116043384
+    },
+    "nr-bg1-z384": {
+      "mean_signed_llr_over_true_scale": 0.4996745014415588,
+      "replays": [
+        {
+          "bit_errors": 151766,
+          "fer_interval": [
+            0.9708630437264916,
+            1.0
+          ],
+          "frame_errors": 128,
+          "frames": 128,
+          "iterations_mean": 50.0,
+          "scale": 1.0
+        },
+        {
+          "bit_errors": 0,
+          "fer_interval": [
+            0.0,
+            0.029136956273508416
+          ],
+          "frame_errors": 0,
+          "frames": 128,
+          "iterations_mean": 16.8515625,
+          "scale": 2.0
+        },
+        {
+          "bit_errors": 81033,
+          "fer_interval": [
+            0.4528298312720518,
+            0.6230188440190805
+          ],
+          "frame_errors": 69,
+          "frames": 128,
+          "iterations_mean": 43.203125,
+          "scale": 4.0
+        }
+      ],
+      "sigma": 1.1600721537746943
+    }
+  },
+  "intervals": {
+    "ber": "Hoeffding interval over the independent frames",
+    "confidence": 0.95,
+    "fer": "Wilson score interval over the frames"
+  },
+  "scales": [
+    1.0,
+    2.0,
+    4.0
+  ]
+}

@@ -976,6 +976,49 @@
      "classification": "implementation",
      "status": "done (session 35)",
      "tracker_state": "done"
+    },
+    {
+     "short_id": "4252085a",
+     "title": "Prepare the quality record of the sum-product INTRA arm",
+     "classification": "research",
+     "status": "blocked on the invoker: two reworks spent (lead review; code-review round 1), round-2 merge b30832568; cargo-ci and research-review pass at a22192d74, code-review fails on one finding (the check's arm_build projection copies the build record's inputs block)",
+     "tracker_state": "in_progress",
+     "dispatch": {
+      "model": "sonnet",
+      "worktree": ".agents/worktrees/agent-ed3d490e-run",
+      "branch": "worktree-agent-4252085a",
+      "base": "8cfd6e6cc",
+      "session": 36
+     },
+     "merge_commit": "df7603594"
+    },
+    {
+     "short_id": "0a77ecfc",
+     "title": "Declare the decoder calibration campaign",
+     "classification": "research",
+     "status": "in_progress (session 36)",
+     "tracker_state": "in_progress",
+     "dispatch": {
+      "model": "opus",
+      "worktree": ".agents/worktrees/agent-0a77ecfc",
+      "branch": "worktree-agent-0a77ecfc",
+      "base": "8cfd6e6cc",
+      "session": 36
+     }
+    },
+    {
+     "short_id": "05c9065e",
+     "title": "Record the peak memory of the benchmark arms",
+     "classification": "research",
+     "status": "in_progress (session 36)",
+     "tracker_state": "in_progress",
+     "dispatch": {
+      "model": "sonnet",
+      "worktree": ".agents/worktrees/agent-ed3d490e-run",
+      "branch": "worktree-agent-05c9065e",
+      "base": "a020f5320",
+      "session": 36
+     }
     }
    ]
   },
@@ -1350,6 +1393,12 @@
    "type": "bug",
    "in_epic": false,
    "reason": "session 35: Lean model and proof sketch describe the per-coordinate codeword write 8e53235b replaced; depends on 8e53235b"
+  },
+  {
+   "id": "11bfbfd9",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "4252085a measured the recorded LDPC bundles at half the BPSK-AWGN closed-form LLR scale (gf2-sim testutil frame source computes 2r/N0 with N0 = 2 sigma^2); depends on 4252085a"
   }
  ],
  "escalations": [
@@ -2163,6 +2212,24 @@
    "status": "resolved",
    "raised_at": "2026-10-12",
    "resolution": "Invoker 2026-10-12: apply the reduced invariant set, re-review with the prose finding fixed, then one authorized rework for the two remaining findings (Cargo env PATH refusal, schema identifier restored). Passed."
+  },
+  {
+   "category": "architectural decision with trade-offs (policy item 6)",
+   "issue": "4252085a",
+   "question": "does the sum-product INTRA arm receive the recorded LLRs as they are (half the closed-form scale, FER 1 on NR), or multiplied by two inside the arm with a re-recorded quality file",
+   "recommendation": "multiply by two in the INTRA arm adapter: exact in f32, leaves the pinned bundles and the matched min-sum arms untouched, and makes the fastest-compatible comparison a comparison against a working decoder",
+   "status": "open",
+   "raised_at": "2026-10-12T19:30Z",
+   "resolution": null
+  },
+  {
+   "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5)",
+   "issue": "4252085a",
+   "question": "authorize rework round 3: code-review round 2 keeps one blocking finding, record-intra-quality.py arm_build copies executable.inputs (source and link input digests) into the identity the check compares",
+   "recommendation": "authorize; the change is to drop the inputs block from the projection (or converge on the shared projection 05c9065e adds), add the reviewer's test case, regenerate record.json; quality files stay byte-identical",
+   "status": "open",
+   "raised_at": "2026-10-12T20:00Z",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -2237,7 +2304,9 @@
   "07024d65": 1,
   "dd50ea11": 1,
   "1ca04967": 0,
-  "824cde7c": 0
+  "824cde7c": 0,
+  "4252085a": 2,
+  "05c9065e": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2790,6 +2859,20 @@
    "origin": "issue-impact",
    "disposition": "0a77ecfc runs driver and validator end to end, untimed, before queuing",
    "criterion_named_by": "0a77ecfc"
+  },
+  {
+   "issue": "4252085a",
+   "subject": "the AFF3CT sum-product INTRA arm decodes the recorded bundles at half the true LLR scale: every NR frame fails and DVB-T2 errs above the min-sum arms; at twice the recorded LLRs it decodes every frame (quality-intra/llr-scale-probe.json)",
+   "origin": "pre-existing (c077a88b corpus, gf2-sim testutil)",
+   "disposition": "record kept as observed with the limit stated; bug 11bfbfd9 filed outside the epic; open question for the invoker on a true-scale INTRA arm",
+   "criterion_named_by": "ed3d490e REQ-10 (fastest-compatible results), 1362381c REQ-08 (fastest quality-compatible measured arms): the arm is not quality-compatible on this corpus as recorded"
+  },
+  {
+   "issue": "4252085a",
+   "subject": "the workspace arm executables embed their checkout path: a rebuild in another worktree gives different digests than build-identity.json pins, so the story's arm identity holds only in .agents/worktrees/agent-ed3d490e-run",
+   "origin": "pre-existing (d4185e9e build identity)",
+   "disposition": "advisory; the rework copied the pinned executables instead of rebuilding; a path-independent build (remap-path-prefix) is a candidate follow-up",
+   "criterion_named_by": "none in 1a379447"
   }
  ],
  "notes": [
@@ -3043,16 +3126,17 @@
   "note": "Each line carries its load guard (exit 75 above a one-minute load of 2). Verify each campaign from its own execution log."
  },
  "session_scope": {
-  "session": 35,
+  "session": 36,
   "date": "2026-10-12",
-  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable.",
+  "instruction": "Invoker 2026-10-12 (session 36): drive epic 1a379447; subagent model by task difficulty; no Fable.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
-  "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes.",
+  "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run (pinned for the window), ed3d490e-run (story build tree with the staged pinned comparator). Eleven reclaimed.",
   "active_workers": {},
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
-  "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc."
+  "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
+  "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30."
  }
 }

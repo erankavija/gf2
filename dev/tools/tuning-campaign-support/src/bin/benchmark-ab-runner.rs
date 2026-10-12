@@ -1243,10 +1243,20 @@ fn smoke_options(options: &[&str]) -> Option<(Option<PathBuf>, Option<PathBuf>)>
     rest.is_empty().then_some((record, stage))
 }
 
+/// Prints the [`tuning_campaign_support::arm::ValidationLaunch`] of one arm of
+/// one cell as a JSON line.
+fn launch(plan: &Path, cell_id: &str, arm: &str) -> io::Result<i32> {
+    let launch =
+        tuning_campaign_support::arm::validation_launch(&invocation_root()?, plan, cell_id, arm)?;
+    println!("{}", serde_json::to_string(&launch)?);
+    Ok(0)
+}
+
 fn usage() -> ! {
     eprintln!(
         "usage: benchmark-ab-runner run <stage> <plan.json> | \
          finalize <stage> <out-dir> | check <plan.json> | \
+         launch <plan.json> <cell-id> <arm> | \
          smoke <plan.json> [--record <path>] [--stage <dir>]\n\
          smoke drives every arm of every declared cell once in the untimed \
          validation position: it takes no lock, opens no ledger, writes no \
@@ -1254,7 +1264,8 @@ fn usage() -> ! {
          drives those dispatches through the session loop, execution log and \
          checkpoints, pausing at the plan\'s cells-per-session budget and \
          resuming without repeating a completed cell; finalize refuses such a \
-         stage."
+         stage. launch prints how the runner starts one arm in that position, \
+         without starting it."
     );
     std::process::exit(2);
 }
@@ -1274,6 +1285,7 @@ fn main() {
             finalize(Path::new(stage), Path::new(out_dir)).map(|()| 0)
         }
         [_, "check", plan] => check(Path::new(plan)),
+        [_, "launch", plan, cell, arm] => launch(Path::new(plan), cell, arm),
         [_, "smoke", plan, options @ ..] => match smoke_options(options) {
             Some((record, stage)) => smoke(Path::new(plan), record.as_deref(), stage.as_deref()),
             None => usage(),

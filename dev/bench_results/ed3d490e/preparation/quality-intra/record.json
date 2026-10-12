@@ -1,0 +1,204 @@
+{
+  "arm": "aff3ct-spa-intra",
+  "build": {
+    "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+    "command": {
+      "argv": [
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--config",
+        "target.x86_64-unknown-linux-gnu.linker=\"dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh\"",
+        "--package",
+        "ldpc-aff3ct-intra-arm"
+      ],
+      "environment": {
+        "CARGO_CI_NO_SCCACHE": "1",
+        "CXX": "c++",
+        "GF2_AFF3CT_ROOT": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct",
+        "RUSTFLAGS": "-C target-cpu=native"
+      }
+    },
+    "executable": {
+      "compiler_options": [
+        "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
+      ],
+      "inputs": {
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/streampu/lib/cpptrace/lib/libcpptrace.a": "3abb1478c37b386fcb978606b50d36ce9dbd68cc18f3704733f60fe7ec57f7c9",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libstdc++.so": "f5fc7380f2ae46fa4053a64be04e7b98109f1066a4bbfff3c37042488aa0be0e",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libdwarf.so": "150d0b85aaa2fc6343408a3c80beb535b8917443411ed84aa531922b3f937dc8",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libz.so": "9ba92a0b85dc9b659e8f5e596a69452cec801def6ece0883a8a2c1f032e52397",
+          "/usr/lib/libzstd.so": "f023d49e85fb22057bfdd21857263d2638b73356c06f3b342f678a75212379f8"
+        },
+        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
+        "repository_files_sha256": "c4d008d952dde2d60d0ba86caf01d2b5c17bf0becb476b298a3cb43459188871"
+      },
+      "sha256": "e6980b590737c8da08afa7e449abb1188d73c7dc4e597e0680aeffcc1c7fa146",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ]
+    },
+    "release_profile": {
+      "codegen-units": 1,
+      "debug": "line-tables-only",
+      "lto": true,
+      "opt-level": 3
+    },
+    "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+  },
+  "build_record": {
+    "path": "dev/bench_results/ed3d490e/preparation/build-identity.json",
+    "sha256": "2e9b8de3673ef6f1647dfa445bece6244810ccc4c6f0e3473de502d84bc06f18"
+  },
+  "cites": [
+    "Cassagne2019"
+  ],
+  "codes": {
+    "dvb-t2-r12": {
+      "bundle": "dvb-t2-r12-waterfall",
+      "bundle_digests": {
+        "codewords_sha256": "4b70fec2970f72c57e55678192e01b5a72c3cdc4043e2330f9fa221f097dc44a",
+        "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+        "llrs_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892"
+      },
+      "bundle_seed": 42,
+      "codeword_source": "both",
+      "frozen_case": {
+        "batch_size": 8,
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "quality_frames": 128,
+        "syndrome_stopping": true
+      },
+      "linked_aff3ct": {
+        "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+        "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+      },
+      "observed_decoder": {
+        "backend": "AVX2",
+        "class": "Decoder_LDPC_BP_flooding_SPA",
+        "wave_frames": 1
+      },
+      "quality": {
+        "file": "aff3ct-spa-intra-dvb-t2-r12.json",
+        "sha256": "f18498e30eb972c0de5cae432ac50935a2e4292ab2ea5364509c8790c7cf0ef4"
+      },
+      "replayed_frames": 128,
+      "settings": {
+        "batch_size": 1,
+        "iteration_cap": 50,
+        "normalization": {
+          "factor": null,
+          "kind": "sum-product"
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "stopping": {
+          "crc": null,
+          "kind": "syndrome"
+        }
+      }
+    },
+    "nr-bg1-z384": {
+      "bundle": "nr-bg1-z384-mother",
+      "bundle_digests": {
+        "codewords_sha256": "7bb775743d7f17a807db66663185e49f2d6ab49202ed75692d090375733296af",
+        "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+        "llrs_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a"
+      },
+      "bundle_seed": 42,
+      "codeword_source": "both",
+      "frozen_case": {
+        "batch_size": 8,
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "quality_frames": 128,
+        "syndrome_stopping": true
+      },
+      "linked_aff3ct": {
+        "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+        "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+      },
+      "observed_decoder": {
+        "backend": "AVX2",
+        "class": "Decoder_LDPC_BP_flooding_SPA",
+        "wave_frames": 1
+      },
+      "quality": {
+        "file": "aff3ct-spa-intra-nr-bg1-z384.json",
+        "sha256": "f253417b02ee74103e3889c72a56d4601ecd03da050b5e1fda6e8b1e825a8db8"
+      },
+      "replayed_frames": 128,
+      "settings": {
+        "batch_size": 1,
+        "iteration_cap": 50,
+        "normalization": {
+          "factor": null,
+          "kind": "sum-product"
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "stopping": {
+          "crc": null,
+          "kind": "syndrome"
+        }
+      }
+    }
+  },
+  "diagnostics_zeroed": [
+    "memory_bytes",
+    "latency_ns_p50"
+  ],
+  "executable": {
+    "name": "aff3ct-intra-quality",
+    "sha256": "e6980b590737c8da08afa7e449abb1188d73c7dc4e597e0680aeffcc1c7fa146"
+  },
+  "host": {
+    "avx2": true,
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "fma": true
+  },
+  "intervals": {
+    "ber": "Hoeffding interval over the independent frames",
+    "confidence": 0.95,
+    "fer": "Wilson score interval over the frames",
+    "method": "frame-hoeffding-95+fer-wilson-95",
+    "samples": "replayed_frames of each code"
+  },
+  "recorded_inputs": {
+    "name": "recorded-inputs.tar.gz",
+    "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba"
+  }
+}
