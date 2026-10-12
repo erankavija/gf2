@@ -3,8 +3,9 @@
 
 `record` replays each full recorded bundle once, untimed, under the arm's declared environment,
 and writes the prepared quality files the arm checks against and the LLR factor probe; `check`
-replays again, writes nothing and exits non-zero when the replay or its closed identity set
-(`@/inv/behavioral-evidence-validity`) differs from the record.
+replays again, writes nothing and exits non-zero when a field of `COMPARED` differs from the
+record: the closed identity set of `@/inv/behavioral-evidence-validity` and the replay results.
+Every other field of the record is descriptive.
 
 Usage (from the worktree root): record-intra-quality.py record|check OUT_DIR
 The build record is the git-listed `build-identity.json` that lists the replay executable.
@@ -62,9 +63,18 @@ PROBE_METHOD = {
                     "signed by its transmitted bit, over the BPSK-AWGN closed-form mean 2/sigma^2",
     "replays": f"one full replay of each recorded bundle per value of {FACTOR_VARIABLE}",
 }
-# Per code, what a second replay must reproduce beside the quality file.
-REPLAYED = ("bundle_digests", "bundle_seed", "request_declaration", "effective", "linked_aff3ct",
-            "replayed_frames")
+# The fields `check` compares; a field absent here never decides.
+COMPARED = {
+    # Executable digest, build flags, toolchain version, frozen configuration.
+    "build": ("executable_sha256", "compiler_options", "builds", "release_profile", "rustc",
+              "cargo", "environment"),
+    "host": ("cpu_model", "avx2", "fma"),
+    # Per code: frozen configuration and seed, then the observed decoder and frame count.
+    "code": ("bundle_digests", "bundle_seed", "request_declaration", "effective",
+             "replayed_frames"),
+    "quality": ("frame_bit_errors", "frames", "frame_errors", "fer", "fer_interval", "bits",
+                "bit_errors", "ber", "ber_interval", "interval_method", "iterations", "settings"),
+}
 
 
 def sha256(data):
@@ -88,9 +98,8 @@ def case_of(cell, bundle, frames):
     }
 
 
-def differences(replayed, committed):
-    left, right = untimed(replayed), untimed(committed)
-    return [name for name in sorted(left.keys() | right.keys()) if left.get(name) != right.get(name)]
+def differences(group, replayed, committed):
+    return [name for name in COMPARED[group] if replayed.get(name) != committed.get(name)]
 
 
 def host_facts(text=None):
@@ -250,12 +259,11 @@ def check_failures(committed, stored, record, qualities):
     for key, code in committed["codes"].items():
         replayed = record["codes"].get(key, {})
         name = code["quality"]["file"]
-        failures[key] += [f"quality field {field} differs"
-                          for field in differences(qualities.get(name, {}), stored[name])]
-        failures[key] += [f"{field} differs" for field in REPLAYED
-                          if replayed.get(field) != code[field]]
-    failures[""] = [f"{name} differs" for name in ("build", "host")
-                    if record[name] != committed[name]]
+        failures[key] += [f"quality field {field} differs" for field in
+                          differences("quality", qualities.get(name, {}), stored[name])]
+        failures[key] += [f"{field} differs" for field in differences("code", replayed, code)]
+    failures[""] = [f"{name} {field} differs" for name in ("build", "host")
+                    for field in differences(name, record[name], committed[name])]
     if record["codes"].keys() != committed["codes"].keys():
         failures[""].append("codes differ")
     return failures

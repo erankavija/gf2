@@ -26,8 +26,9 @@ over independent frames for the bit-error rate, both at 95% confidence with the 
 count as the sample size.
 
 `check.log` is the output of `record-intra-quality.py check`, a second replay that exits
-non-zero when a quality field, a per-code replay field, the build identity or a host fact
-differs from the committed files. Regenerate the files with
+non-zero when a field its `COMPARED` table names differs from the committed files: the closed
+identity set of `@/inv/behavioral-evidence-validity` and the replay results. Every other field
+of the record, the linked AFF3CT revision and library among them, is descriptive. Regenerate the files with
 `python3 -B dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/record-intra-quality.py record
 <this directory>`; the check takes `check` in place of `record`.
 

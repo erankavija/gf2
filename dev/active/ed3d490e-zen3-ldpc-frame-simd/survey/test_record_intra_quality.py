@@ -19,16 +19,16 @@ QUALITY = {"frame_bit_errors": [0, 2, 0], "frames": 3, "memory_bytes": 7, "laten
 
 class DifferencesTest(unittest.TestCase):
     def test_timing_and_memory_diagnostics_never_differ(self):
-        self.assertEqual(recorder.differences(QUALITY, {**QUALITY, "memory_bytes": 1,
-                                                        "latency_ns_p50": 2}), [])
+        self.assertEqual(recorder.differences("quality", QUALITY, {
+            **QUALITY, "memory_bytes": 1, "latency_ns_p50": 2}), [])
 
     def test_a_changed_frame_is_named(self):
         changed = {**QUALITY, "frame_bit_errors": [0, 3, 0]}
-        self.assertEqual(recorder.differences(changed, QUALITY), ["frame_bit_errors"])
+        self.assertEqual(recorder.differences("quality", changed, QUALITY), ["frame_bit_errors"])
 
     def test_a_missing_field_differs(self):
         shorter = {name: value for name, value in QUALITY.items() if name != "frames"}
-        self.assertEqual(recorder.differences(shorter, QUALITY), ["frames"])
+        self.assertEqual(recorder.differences("quality", shorter, QUALITY), ["frames"])
 
     def test_the_record_carries_zero_diagnostics(self):
         self.assertEqual({name: recorder.untimed(QUALITY)[name] for name in recorder.DIAGNOSTICS},
@@ -59,10 +59,11 @@ CODE = {"bundle_digests": {"llrs_sha256": "4" * 64}, "bundle_seed": 1,
         "quality": {"file": "quality.json", "sha256": "5" * 64}}
 
 
-def replayed(build=BUILD, code=CODE, quality=QUALITY):
+def replayed(build=BUILD, code=CODE, quality=QUALITY, host=HOST, identity=None):
     """The check's verdict on a second replay against the record of `BUILD`, `CODE`, `QUALITY`."""
     committed = {"build": recorder.identity(BUILD), "host": HOST, "codes": {"code": CODE}}
-    record = {"build": recorder.identity(build), "host": HOST, "codes": {"code": code}}
+    record = {"build": identity or recorder.identity(build), "host": host,
+              "codes": {"code": code}}
     return recorder.check_failures(committed, {"quality.json": QUALITY}, record,
                                    {"quality.json": quality})
 
@@ -93,6 +94,16 @@ class CheckTest(unittest.TestCase):
             build["build_commands"][0]["environment"]["RUSTFLAGS"] = "-C b"
         self.assertEqual(replayed(build=edited(edit)), {"code": [], "": []})
 
+    def test_the_linked_aff3ct_revision_and_library_do_not_decide(self):
+        code = edited(lambda c: c.update(linked_aff3ct={"revision": "s"}), CODE)
+        self.assertEqual(replayed(code=code), {"code": [], "": []})
+
+    def test_a_field_outside_the_compared_ones_does_not_decide(self):
+        self.assertEqual(
+            replayed(identity={**recorder.identity(BUILD), "added": 1}, host={**HOST, "added": 1},
+                     code={**CODE, "added": 1}, quality={**QUALITY, "added": 1}),
+            {"code": [], "": []})
+
     def test_the_replays_build_identity_decides(self):
         for edit in (
             lambda b: b["executables"]["aff3ct-intra-quality"].update(sha256="e" * 64),
@@ -100,11 +111,29 @@ class CheckTest(unittest.TestCase):
             lambda b: b["build_commands"][1]["environment"].update(RUSTFLAGS="-O0"),
             lambda b: b["build_commands"][1]["argv"].remove("--release"),
             lambda b: b.update(rustc="rustc 1.96.0"),
+            lambda b: b.update(cargo="cargo 1.96.0"),
             lambda b: b["release_profile"].update(lto=False),
             lambda b: b["arms"]["aff3ct-spa-intra"]["environment"].update(
                 GF2_AFF3CT_LLR_FACTOR="1"),
         ):
-            self.assertEqual(replayed(build=edited(edit)), {"code": [], "": ["build differs"]})
+            verdict = replayed(build=edited(edit))
+            self.assertEqual((verdict["code"], len(verdict[""])), ([], 1))
+
+    def test_a_host_fact_decides(self):
+        for fact in ({"cpu_model": "Other CPU"}, {"avx2": False}, {"fma": False}):
+            verdict = replayed(host={**HOST, **fact})
+            self.assertEqual((verdict["code"], len(verdict[""])), ([], 1))
+
+    def test_the_replays_configuration_and_seed_decide(self):
+        for edit in (
+            lambda c: c["bundle_digests"].update(llrs_sha256="6" * 64),
+            lambda c: c.update(bundle_seed=2),
+            lambda c: c["request_declaration"].update(iteration_cap=20),
+            lambda c: c["effective"]["decoder"].update({"class": "NMS"}),
+            lambda c: c.update(replayed_frames=4),
+        ):
+            verdict = replayed(code=edited(edit, CODE))
+            self.assertEqual((len(verdict["code"]), verdict[""]), (1, []))
 
     def test_a_differing_frame_and_a_differing_factor_are_named_for_their_code(self):
         quality = {**QUALITY, "frame_bit_errors": [0, 3, 0]}
