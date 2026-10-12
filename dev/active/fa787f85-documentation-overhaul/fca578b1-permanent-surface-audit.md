@@ -20,8 +20,8 @@ file.
 `@/inv/researcher-audience`, `@/inv/adapted-diataxis-placement`,
 `@/inv/current-state-scope`, `@/inv/present-tense-prose`, `@/inv/no-marketing`,
 `@/inv/single-source-prose`, `@/inv/benchmark-backed-performance`,
-`@/inv/claims-trace-to-artifacts`, `@/inv/uncertainty-reported`,
-`@/inv/external-claims-cited`, `@/inv/teaching-rustdoc-examples`,
+`@/inv/claims-trace-to-artifacts`,
+`@/inv/teaching-rustdoc-examples`,
 `@/inv/non-obvious-comments`, `@/inv/agents-md-scope`,
 `@/inv/convention-convergence`. The registry `.jit/invariants.toml` holds no
 other invariant whose subject is prose, Rustdoc, examples or page placement,
@@ -53,7 +53,7 @@ Every row is fixed in the named commit.
 | `AGENTS.md:50` | `@/inv/current-state-scope` | The lock wrapper is stated to set `CARGO_CI_NO_LOCK=1`; its header makes that the caller's obligation | `a12757f45` |
 | `AGENTS.md:100` | `@/inv/current-state-scope` | The command is attributed to the nightly run; `.github/workflows/ci-slow.yml` passes an explicit feature list | `1ebd1248d` |
 | `README.md:28` | `@/inv/current-state-scope` | Kernels are stated as AVX2-only and feature-gated; `gf2m.rs` binds on PCLMULQDQ and SSE4.1, and `gf2-coding` detects BCH encode and demapper kernels in every build | `71a1eb545` |
-| `docs/index.md:10`, `:39` | `@/inv/external-claims-cited` | Standards named without a registry key | `124392903` |
+| `docs/index.md:10`, `:39` | `@/inv/claims-trace-to-artifacts` | Standards named without a registry key | `124392903` |
 | `docs/index.md:34` | `@/inv/single-source-prose` | The section sentence copies the invariant's wording | `124392903` |
 | `docs/concepts/acceleration-architecture.md:13` | `@/inv/current-state-scope` | "All `unsafe` code": test targets hold `unsafe impl GlobalAlloc` | `71e933b84` |
 | `docs/concepts/acceleration-architecture.md:21`, `:93` | `@/inv/current-state-scope` | Every consumer is stated to apply `is_recoverable`; `gf2_algebra::gpu` and the GPU BCJR engine panic | `71e933b84` |
@@ -68,19 +68,19 @@ Every row is fixed in the named commit.
 | `docs/how-to/formal-verification.md:51` | `@/inv/current-state-scope` | `proofs/WORKAROUNDS.md` does not cover `fix-aeneas-sorrys.py` | `71e933b84` |
 | `docs/how-to/reproduce-performance-evidence.md:3` | `@/inv/current-state-scope` | The receipt commit is equated with the built source; the worked example builds another revision | `71e933b84` |
 | `docs/how-to/reproduce-performance-evidence.md:117` | `@/inv/current-state-scope` | The window requirement is attributed to the receipt's protocol; the wrapper imposes it | `71e933b84` |
-| `docs/how-to/run-simulation-campaigns.md:6` | `@/inv/external-claims-cited` | Standard named without a registry key | `124392903` |
+| `docs/how-to/run-simulation-campaigns.md:6` | `@/inv/claims-trace-to-artifacts` | Standard named without a registry key | `124392903` |
 | `docs/how-to/run-simulation-campaigns.md:55`, `:62`, `:105` | `@/inv/convention-convergence` | Commands without the `cargo-budget.sh` prefix the other pages use | `124392903` |
 | `docs/how-to/run-simulation-campaigns.md:88`, `:112` | `@/inv/current-state-scope` | SIGTERM is stated as handled; `ctrlc` is built without its `termination` feature | `71e933b84` |
 | `docs/how-to/select-acceleration.md:50` | `@/inv/current-state-scope` | `matvec_route` is stated to report the dispatcher's arm; it reports the word-count comparison | `71e933b84` |
 | `docs/how-to/select-acceleration.md:98` | `@/inv/current-state-scope` | "No committed receipt measures" the BCH encode families; a committed receipt times them | `71e933b84` |
 | `docs/how-to/select-acceleration.md:137` | `@/inv/single-source-prose` | A copied value of `RAYON_NUM_THREADS` | `124392903` |
-| `docs/how-to/select-acceleration.md:157` | `@/inv/external-claims-cited` | Standard named without a registry key | `124392903` |
+| `docs/how-to/select-acceleration.md:157` | `@/inv/claims-trace-to-artifacts` | Standard named without a registry key | `124392903` |
 | `docs/reference/performance-evidence.md:4` | `@/inv/claims-trace-to-artifacts` | The evidence commit is stated as the source identity of a claim whose Build line names another revision | `71e933b84` |
 | `docs/reference/performance-evidence.md:7` | `@/inv/benchmark-backed-performance` | The introduction asserts that each receipt measures the shipped code path; no committed comparison establishes it (`@/issue/16fee10f`) | `999228b25` |
 | `docs/reference/performance-evidence.md:76`, `:101`, `:122`, `:145` | `@/inv/benchmark-backed-performance` | The linked summaries omit host, build, workload, baseline and date; each receipt's `receipt.json` holds them | `a12757f45` |
 | `docs/reference/performance-evidence.md:170` | `@/inv/benchmark-backed-performance` | "no RUSTFLAGS" without its source, the receipt's command | `a12757f45` |
 | `docs/reference/performance-evidence.md:110` | `@/inv/claims-trace-to-artifacts` | The stated interval hull excludes two receipt bounds | `71e933b84` |
-| `docs/reference/standards-conformance.md:20` | `@/inv/external-claims-cited` | Two section numbers without a source in the tree | `71e933b84` |
+| `docs/reference/standards-conformance.md:20` | `@/inv/claims-trace-to-artifacts` | Two section numbers without a source in the tree | `71e933b84` |
 | `docs/reference/standards-conformance.md:51`, `:95` | `@/inv/current-state-scope` | Two test-tier universals with a counterexample each | `71e933b84` |
 | `docs/reference/supported-configurations.md:11` | `@/inv/single-source-prose` | A tested ROCm version that neither cited source states | `124392903` |
 | `docs/reference/supported-configurations.md:16` | `@/inv/current-state-scope` | "no operating-system-specific code": a `gf2-core` bench target is Unix-only | `71e933b84` |
@@ -94,7 +94,7 @@ Every row is fixed in the named commit.
 | `crates/gf2-kernels-simd/src/lib.rs:2`, `:9` | `@/inv/current-state-scope` | Same defects in the crate-root doc | `71a1eb545` |
 | `crates/gf2-core/src/lib.rs:1`, `:7` | `@/inv/non-obvious-comments` | A title line above the orientation paragraph; a second-level heading | `6baf3db24` |
 | `crates/gf2-algebra/src/lib.rs:7` | `@/inv/non-obvious-comments` | The orientation restates the crate attribute | `6baf3db24` |
-| `crates/gf2-sim/src/lib.rs:6` | `@/inv/external-claims-cited` | Standard named without a registry key | `71a1eb545` |
+| `crates/gf2-sim/src/lib.rs:6` | `@/inv/claims-trace-to-artifacts` | Standard named without a registry key | `71a1eb545` |
 | `crates/gf2-sim/src/lib.rs:40` | `@/inv/single-source-prose` | A copied worker-count set | `6baf3db24` |
 
 ### Judged dispositions
@@ -111,7 +111,7 @@ Placement (`@/inv/adapted-diataxis-placement`), audience
 (`@/inv/researcher-audience`), the crate-root example
 (`@/inv/teaching-rustdoc-examples`, in `crates/gf2-sim/src/lib.rs`, a typestate
 build and sweep) and the Monte Carlo table of the link tutorial
-(`@/inv/uncertainty-reported`: frame counts and intervals present, run record
+(`@/inv/claims-trace-to-artifacts`: frame counts and intervals present, run record
 linked at a fixed commit) carry no finding. `wc -l AGENTS.md` prints the
 limit `@/inv/agents-md-scope` sets.
 

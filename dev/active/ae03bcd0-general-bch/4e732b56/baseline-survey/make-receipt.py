@@ -44,7 +44,7 @@ def load_derivation(run: pathlib.Path) -> dict[str, list[tuple[str, str]]]:
     Returns stage name -> ordered list of (invocation, basis), for stages
     whose log carries no native `# command:` header. The derivation record
     is the only place a reconstructed or session-recorded invocation may be
-    stated (`@/inv/runtime-observed-provenance`); this function is the sole
+    stated (`@/inv/behavioral-evidence-validity`); this function is the sole
     reader of it.
     """
     table: dict[str, list[tuple[str, str]]] = {}

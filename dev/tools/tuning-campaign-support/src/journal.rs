@@ -431,7 +431,7 @@ impl ExecutionLog {
         &self.session_id
     }
 
-    /// Log-path line `@/inv/campaign-execution-logging` requires before work starts.
+    /// Log-path line a launcher prints before work starts.
     pub fn announcement(&self) -> String {
         format!("GF2_CAMPAIGN_EXECUTION_LOG={}", self.path.to_string_lossy())
     }

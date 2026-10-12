@@ -26,7 +26,7 @@ grep -inE '\b(deferred|todo|future work|open question|not (yet )?implemented|fol
 ```
 (The gate-runs directory exists only in the main checkout; if the scan is empty in your worktree, the findings below are the verbatim record.)
 
-Resolve: `jit item show @/issue/3f7edef1/requirement/REQ-01 @/issue/3f7edef1/requirement/REQ-02 @/invariant/claims-trace-to-artifacts @/invariant/runtime-observed-provenance @/invariant/standards-vector-conformance @/invariant/present-tense-prose @/invariant/single-source-prose @/invariant/behavioral-evidence-validity`.
+Resolve: `jit item show @/issue/3f7edef1/requirement/REQ-01 @/issue/3f7edef1/requirement/REQ-02 @/invariant/claims-trace-to-artifacts @/invariant/behavioral-evidence-validity @/invariant/standards-vector-conformance @/invariant/present-tense-prose @/invariant/single-source-prose`.
 
 ## Review verdict — research-review R2 (2026-09-02 17:02Z), five findings
 

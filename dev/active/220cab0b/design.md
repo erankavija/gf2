@@ -416,7 +416,7 @@ the repository's provenance-fixed receipt; the profile carries the same field
 set as data so a reader does not have to cross-reference the prose to know what
 produced a threshold. Every field is runtime-observed by the harness or a
 protocol constant of the harness itself — no field is hand-written into the
-tool, per `@/inv/runtime-observed-provenance`.
+tool, per `@/inv/behavioral-evidence-validity`.
 
 An illustrative calibrated record, with placeholders where a real run supplies
 observed values:
@@ -462,7 +462,7 @@ observed values:
 A test globs `crates/gf2-core/data/tuning-profiles/` at run time and asserts
 every file loads and validates, so a committed profile cannot rot silently. The
 glob is deliberate: a hand-maintained file list inside the test would be the
-staleness defect `@/inv/runtime-observed-provenance` names.
+staleness defect `@/inv/behavioral-evidence-validity` names.
 
 ## 3. Key decisions
 

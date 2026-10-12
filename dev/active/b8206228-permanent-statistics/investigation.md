@@ -696,7 +696,7 @@ away (`feasibility-study.md:1554-1557`); (c) the q=7, n=20 by-product cell at
 z = −2.30 stays on the record when the campaign resamples it, whatever the
 resample returns.
 
-**`@/inv/uncertainty-reported`** — every Monte Carlo estimate states sample count
+**`@/inv/claims-trace-to-artifacts`** — every Monte Carlo estimate states sample count
 and CI; plots and tables carry error bars or interval columns. Binds every REQ-03
 artifact and the analysis report's figures.
 

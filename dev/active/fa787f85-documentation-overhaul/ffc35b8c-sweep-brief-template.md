@@ -134,7 +134,7 @@ Also delete remaining `dev/active/...`, `dev/plans/...`, `dev/sessions/...` poin
 
 ## 6. External works: cite by registry key
 
-`@/inv/external-claims-cited`: "a work referenced only by prose title is a staleness defect". Reviewer wording: "retains an external Seroussi claim without a resolving citation key".
+`@/inv/claims-trace-to-artifacts`: "a work referenced only by prose title is a staleness defect". Reviewer wording: "retains an external Seroussi claim without a resolving citation key".
 
 The citation registry is `.jit/references.toml` on main, and a mapping of cited works to keys is `dev/active/fa787f85-documentation-overhaul/554c2935-citation-map.md` with `554c2935-citation-map.txt` (both on main; if your worktree's anchor predates them, read them through the one allowed read-only relative path `../../../dev/active/fa787f85-documentation-overhaul/` and `../../../.jit/references.toml`). For every comment in scope that names an external paper, book, report, standard, sequence database entry or library as the source of a method, a constant or a claim: replace the prose citation with `@/citation/<Key>` in the form already used in the repository's Rustdoc (the key in a code span, e.g. `` `@/citation/Seroussi1998` ``), keeping a section, algorithm or table number as plain text after it. Use only keys that exist in the registry on main. If a cited work has no key, do NOT invent one and do NOT keep the bare prose claim on a line you touched: list the work with file:line in your return under Needs decision. For standards, use the key of the edition the code's provenance names; if the mapping gives no key for that edition, list it.
 

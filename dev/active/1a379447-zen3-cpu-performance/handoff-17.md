@@ -56,7 +56,7 @@
 - Question: `9fb40c83` research-review round 4 keeps F3 (retained-session hardware-counter and hot-symbol tables carry n = 1 and no interval; only the first profile repetition collected counters). Rework count is 3, past the limit (session-21 ruling 4). Which way?
   - Context: `scratchpad` draft `escalation-9fb40c83.md` of this session, reproduced in `progress.json` `escalations`.
   - Options: (1) authorize round 4: launcher collects counters and hot symbols in every repetition, a v4-r3 profile session as a window line, per-repetition order-statistic intervals; (2) record an overrule decision on the issue (the tables are descriptive, n = 1 labelled) and re-run the gate; (3) drop the two tables and cite the raw perf files, at the cost of REQ-03's attribution.
-  - Recommendation: option 1; it is the only route that keeps REQ-03 and satisfies @/inv/uncertainty-reported literally, and the window mechanism is armed nightly.
+  - Recommendation: option 1; it is the only route that keeps REQ-03 and satisfies @/inv/claims-trace-to-artifacts literally, and the window mechanism is armed nightly.
 - Question: `f63a2464`'s decision record caps "confirmatory campaigns" at one per family, and QC has three ledgers; the worker queued three confirmations under the ledger reading (recorded in findings.md Limits). Confirm the reading before the window, or hold the three lines by commenting them out.
   - Recommendation: confirm the ledger reading; it is the arithmetic the frozen record performs and the one the pilots already spent.
 
