@@ -1,0 +1,63 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "bad1aea8-smoke-aff3ct-intra",
+  "issue": "bad1aea8",
+  "family": "ldpc-batch-arms-smoke-aff3ct-intra",
+  "plan_sha256": "ff3bda51305a0febda44ad09bafeca8090f0ee6414ea5feec7a1179d69038134",
+  "addendum": "target/ldpc-batch-arms-smoke/aff3ct-intra-addendum.json",
+  "addendum_sha256": "a015c4c720a1ffb3ef4303bb383bbd4bc1f3f91685dc0dcf93aaddfd4cef4ca4",
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-update-w1",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-single-frame-dvb-t2-r12",
+          "role": "validation",
+          "executable": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "5211aa6972b6e61f6ddba777d429aa8a235c36a08db3fe6ad3b5643834c8d896",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-spa-intra-dvb-t2-r12",
+          "role": "validation",
+          "executable": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
+          "executable_sha256": "b8c7c2432a3336ffa510254ae88385b893a77e3a6258310f5cee7d58a21805cf",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "Decoder_LDPC_BP_flooding_SPA backend=AVX2 wave=1 simd=INTRA precision=f32, clone per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "nr-bg1-z384-update-w1",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-single-frame-nr-bg1-z384",
+          "role": "validation",
+          "executable": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "5211aa6972b6e61f6ddba777d429aa8a235c36a08db3fe6ad3b5643834c8d896",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-spa-intra-nr-bg1-z384",
+          "role": "validation",
+          "executable": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
+          "executable_sha256": "b8c7c2432a3336ffa510254ae88385b893a77e3a6258310f5cee7d58a21805cf",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "Decoder_LDPC_BP_flooding_SPA backend=AVX2 wave=1 simd=INTRA precision=f32, clone per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}

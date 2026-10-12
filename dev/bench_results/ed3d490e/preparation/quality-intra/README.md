@@ -23,6 +23,31 @@ over independent frames for the bit-error rate, both at 95% confidence with the 
 count as the sample size.
 
 `check.log` is the output of `record-intra-quality.py check`, a second replay that exits
-non-zero on any difference from the committed files. Regenerate with
+non-zero on any difference from the committed files, host facts and `llr-scale-probe.json`
+included. Regenerate the files with
 `python3 -B dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/record-intra-quality.py record
-<this directory>`.
+<this directory>`; the check takes `check` in place of `record`.
+
+## Arm acceptance
+
+`arm-acceptance/` holds the untimed smoke of the group `aff3ct` of `smoke-gf2-arms.py`, which
+dispatches the `aff3ct-intra-arm` executable (named there by SHA-256) through the shared runner
+with these quality files. The arm decodes its first wave and checks its per-frame bit errors
+against the file; the diagnostics record the refusal of a file that differs in one frame and of
+a missing file. Regenerate with
+`python3 -B dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/smoke-gf2-arms.py <this
+directory>/arm-acceptance aff3ct`. The smoke record under `bad1aea8/` names a quality file
+replayed into `target/`; the record in `arm-acceptance/` names the committed files and governs
+the current plan.
+
+## Observed limit
+
+The arm's frame-error rate and iteration counts differ from those of the matched normalized
+min-sum arms on the same bundles: compare these files with the `aff3ct-flooding-nms-f32-*`
+files of `c077a88b/v3-preparation/quality/`. The recorded LLRs are `r/sigma^2` where the
+true BPSK-AWGN LLR is `2r/sigma^2`, half the true scale (`llr-scale-probe.json`; code claims
+in `survey/source-evidence.json`, topic `recorded-llr-scale`). Normalized min-sum is
+invariant to LLR scale and sum-product is not. The probe replays throwaway copies of the
+bundles with the LLRs multiplied by 1, 2 and 4: at the true scale the arm decodes with fewer
+iterations than at the recorded scale; the bundles, the arm and these records are unchanged.
+The record states the arm as it decodes the recorded corpus.

@@ -1,0 +1,179 @@
+{
+  "schema": "ldpc-batch-arms-diagnostics-v1",
+  "aff3ct-intra": [
+    {
+      "cell_id": "dvb-t2-r12-update-w1",
+      "arm": "gf2-batch-single-frame-dvb-t2-r12",
+      "worker-placement": {
+        "arm": "gf2-batch-single-frame",
+        "threads": {
+          "ready": 2,
+          "after": 2
+        },
+        "workers": [
+          {
+            "worker": 0,
+            "cpu": 0,
+            "affinity": [
+              0
+            ],
+            "cpus_seen": [
+              0
+            ],
+            "calls": 1
+          }
+        ]
+      },
+      "batch-decoder-diagnostics": {
+        "arm": "gf2-batch-single-frame",
+        "route": "SingleFrame",
+        "lane_min_frames": 18446744073709551615,
+        "lane_max_edges": 0,
+        "granules_per_task": 1,
+        "batch_frames": 8,
+        "wave_frames": 8,
+        "workspace_bytes": [
+          18727136
+        ],
+        "stage_probes": 9,
+        "stage_statistic": "median",
+        "conversion": [
+          "batch_fill_ns",
+          "dispatch_ns",
+          "pack_ns",
+          "setup_ns",
+          "unpack_ns"
+        ]
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-update-w1",
+      "arm": "aff3ct-spa-intra-dvb-t2-r12",
+      "worker-placement": {
+        "arm": "aff3ct-spa-intra",
+        "threads": {
+          "ready": 2,
+          "after": 2
+        },
+        "workers": [
+          {
+            "worker": 0,
+            "cpu": 0,
+            "affinity": [
+              0
+            ],
+            "cpus_seen": [
+              0
+            ],
+            "calls": 1
+          }
+        ]
+      },
+      "aff3ct-decoder-diagnostics": {
+        "arm": "aff3ct-spa-intra",
+        "decoder": {
+          "class": "Decoder_LDPC_BP_flooding_SPA",
+          "backend": "AVX2",
+          "wave_frames": 1
+        },
+        "linked_aff3ct": {
+          "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+          "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+        }
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-update-w1",
+      "arm": "gf2-batch-single-frame-nr-bg1-z384",
+      "worker-placement": {
+        "arm": "gf2-batch-single-frame",
+        "threads": {
+          "ready": 2,
+          "after": 2
+        },
+        "workers": [
+          {
+            "worker": 0,
+            "cpu": 0,
+            "affinity": [
+              0
+            ],
+            "cpus_seen": [
+              0
+            ],
+            "calls": 1
+          }
+        ]
+      },
+      "batch-decoder-diagnostics": {
+        "arm": "gf2-batch-single-frame",
+        "route": "SingleFrame",
+        "lane_min_frames": 18446744073709551615,
+        "lane_max_edges": 0,
+        "granules_per_task": 1,
+        "batch_frames": 8,
+        "wave_frames": 8,
+        "workspace_bytes": [
+          9463296
+        ],
+        "stage_probes": 9,
+        "stage_statistic": "median",
+        "conversion": [
+          "batch_fill_ns",
+          "dispatch_ns",
+          "pack_ns",
+          "setup_ns",
+          "unpack_ns"
+        ]
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-update-w1",
+      "arm": "aff3ct-spa-intra-nr-bg1-z384",
+      "worker-placement": {
+        "arm": "aff3ct-spa-intra",
+        "threads": {
+          "ready": 2,
+          "after": 2
+        },
+        "workers": [
+          {
+            "worker": 0,
+            "cpu": 0,
+            "affinity": [
+              0
+            ],
+            "cpus_seen": [
+              0
+            ],
+            "calls": 1
+          }
+        ]
+      },
+      "aff3ct-decoder-diagnostics": {
+        "arm": "aff3ct-spa-intra",
+        "decoder": {
+          "class": "Decoder_LDPC_BP_flooding_SPA",
+          "backend": "AVX2",
+          "wave_frames": 1
+        },
+        "linked_aff3ct": {
+          "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+          "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+        }
+      }
+    }
+  ],
+  "unusable_quality_refused": [
+    {
+      "cell_id": "dvb-t2-r12-update-w1",
+      "arm": "aff3ct-spa-intra-dvb-t2-r12",
+      "error": "aff3ct-intra-arm: worker 0: frame 0 decoded with 0 bit errors; the prepared quality records 1"
+    },
+    {
+      "cell_id": "dvb-t2-r12-update-w1",
+      "arm": "aff3ct-spa-intra-dvb-t2-r12",
+      "error": "aff3ct-intra-arm: steady-state cells reuse prepared quality; GF2_LDPC_QUALITY is unset"
+    }
+  ]
+}
