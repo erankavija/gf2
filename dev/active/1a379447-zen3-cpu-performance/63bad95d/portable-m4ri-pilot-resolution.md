@@ -21,6 +21,4 @@ Ledger `dev/bench_results/63bad95d/portable-matvec-vs-m4ri-ledger.jsonl` through
 
 Largest confirmatory width: 0.402187; frozen upward rounding to 0.001: $r=0.403$. Family ceiling: 0.040.
 
-The pilot ran while another session loaded the host; its load averages are the receipt fields `session_hosts[].load_average` and `host.load_average`. By invoker ruling of 2026-10-11 the receipt stays as measured and a second pilot in the same family and ledger, run id `v4-r2`, repeats it on a quiet host (see [`portable-m4ri-plan.md`](portable-m4ri-plan.md)).
-
-**Outcome: `resolution-insufficient`.** The frozen family rule ends this comparison after its exploratory pilot unless a repeat pilot resolves the widest cell. No confirmatory reservation is made.
+**Outcome: `resolution-insufficient`.** The frozen family rule ends this comparison after its exploratory pilot. No confirmatory reservation is made.
