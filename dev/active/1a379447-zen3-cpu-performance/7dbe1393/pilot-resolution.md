@@ -1,4 +1,4 @@
-# Ragged-tail pilot resolution
+# Ragged-tail pilot resolution, family `7dbe1393-matvec-ragged-tail`
 
 > **Diátaxis Type:** Reference
 
