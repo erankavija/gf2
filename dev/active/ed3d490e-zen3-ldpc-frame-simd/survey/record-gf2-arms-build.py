@@ -1,30 +1,9 @@
 #!/usr/bin/env python3
 """Record the build identity of the batch decoder arms (jit:ed3d490e).
 
-Builds the arms workspace beside this script, its member packages against the
-staged AFF3CT [Cassagne2019] tree `AFF3CT_ROOT`, and writes
-`build-identity.json` from the commands it runs and the files it reads. No
-value is a clock reading, and `build_root` is the checkout location the
-executables carry.
-
-An executable's `inputs` are the digests of two `sha256sum` listings in path
-order, the repository files and the other files cargo's dep-info names, and
-`linked`, each file outside the target directory the linker reports reading.
-`found_at` lists the target files carrying a pinned arm's digest. `carried_by`
-lists the live files with a pinned content; none means an archive member, a
-file outside the repository or a file changed since.
-
-The run refuses:
-
-- a cargo configuration file that sets anything but `[env]` variables
-  outside `STEERING`;
-- a linker driver or a file a link read that is newer than its executable;
-- a build that changes a target file bearing a pinned executable's name;
-- an arms workspace that shares its root, its target directory, or a package,
-  target or file name or digest with a pinned executable;
-- a workspace arm the build does not produce, and a pinned arm whose record
-  does not pin its digest or whose executable no target file carries;
-- an AFF3CT static library no build identity record pins.
+Builds the arms workspace beside this script against the staged AFF3CT
+[Cassagne2019] tree `AFF3CT_ROOT` and writes `build-identity.json` from the
+commands it runs and the files it reads; no value is a clock reading.
 
 Usage (from the worktree root): record-gf2-arms-build.py OUT_DIR AFF3CT_ROOT
 """
@@ -67,7 +46,6 @@ ROOT = pathlib.Path(output(["git", "rev-parse", "--show-toplevel"]))
 
 
 def live_files(name="*"):
-    """Root-relative live files called `name`, receipt input snapshots excluded."""
     paths = output(["git", "-C", str(ROOT), "ls-files", "-z", "--cached", "--others",
                     "--exclude-standard", "--", f":(glob)**/{name}"]).split("\0")
     return sorted(pathlib.Path(path) for path in paths
@@ -76,7 +54,6 @@ def live_files(name="*"):
 
 
 def located(*query):
-    """Root-relative path the repository-file helper prints for `query`."""
     helper = ROOT / live_files("repository_files.py")[0]
     return pathlib.Path(output([sys.executable, "-B", str(helper), *query]))
 
@@ -93,7 +70,6 @@ def is_digest(value):
 
 
 def pinned_digests(node, inside=False):
-    """(executable, digest) pairs of the executable maps in a build identity."""
     if not isinstance(node, dict):
         return
     for key, value in node.items():
@@ -106,7 +82,6 @@ def pinned_digests(node, inside=False):
 
 
 def pinned_files(node, pointer=""):
-    """(JSON pointer, digest) of every digest a build identity pins outside its executable maps."""
     if isinstance(node, dict):
         for key, value in node.items():
             if key not in EXECUTABLE_MAPS:
@@ -119,7 +94,6 @@ def pinned_files(node, pointer=""):
 
 
 def identity_records():
-    """Root-relative build identity record of each LDPC campaign, with its content."""
     for record in live_files("build-identity.json"):
         identity = json.loads((ROOT / record).read_text(encoding="utf-8"))
         if {"prepared_quality", "arm_binaries"} & identity.keys():
@@ -127,7 +101,6 @@ def identity_records():
 
 
 def pinned_executables():
-    """Each pinned executable digest and the digest of every target file bearing its name."""
     built = {}
     for path in sorted((ROOT / "target").glob("*/release/*")):
         if path.is_file() and os.access(path, os.X_OK):
@@ -147,7 +120,7 @@ def pinned_executables():
 
 
 def pinned_records():
-    """Per build identity record, its digest and the live files carrying each file digest it pins."""
+    # An empty `carried_by` means an archive member, a file outside the repository or a file changed since.
     carriers = {}
     for path in live_files():
         carriers.setdefault(digest(ROOT / path), []).append(str(path))
@@ -162,7 +135,6 @@ def pinned_records():
 
 
 def isolation(metadata, arms, rows):
-    """The content showing the arms build reaches no pinned executable; exits when it does."""
     target = pathlib.Path(metadata["target_directory"])
     if pathlib.Path(metadata["workspace_root"]) != ROOT / arms or ROOT / arms not in target.parents:
         sys.exit("the arms workspace shares a workspace root or a target directory")
@@ -189,7 +161,6 @@ def isolation(metadata, arms, rows):
 
 
 def arm_rows(named, rows, records, executables, release):
-    """One row per arm of the catalogue `named`; exits on an arm without an executable digest."""
     by_digest = {record["sha256"]: name for name, record in records.items()}
     arms = {}
     for name, arm in sorted(named.items()):
@@ -217,14 +188,12 @@ def arm_rows(named, rows, records, executables, release):
 
 
 def listing_digest(paths, relative_to=None):
-    """Digest of the `sha256sum` listing of `paths` in path order."""
     lines = [f"{digest(path)}  {path.relative_to(relative_to) if relative_to else path}\n"
              for path in sorted(paths)]
     return hashlib.sha256("".join(lines).encode()).hexdigest()
 
 
 def prerequisites(rules):
-    """Prerequisites of the make rules `rules`, read as GNU make reads them."""
     def quoted(match):
         backslashes, character = match.groups()
         literal = len(backslashes) % 2 and character == " "
@@ -240,7 +209,6 @@ def prerequisites(rules):
 
 
 def link_rules(executable):
-    """The linker's dependency file beside the one file with the content of `executable`."""
     found = [path for path in sorted((executable.parent / "deps").glob(f"*{LINK_RULES}"))
              if digest(path.with_name(path.name.removesuffix(LINK_RULES))) == digest(executable)]
     if len(found) != 1:
@@ -249,7 +217,6 @@ def link_rules(executable):
 
 
 def refuse_newer(executable, files):
-    """Exits when one of `files`, which the link of `executable` used, is newer than it."""
     linked_at = executable.stat().st_mtime_ns
     newer = [str(path) for path in files if path.stat().st_mtime_ns > linked_at]
     if newer:
@@ -257,8 +224,7 @@ def refuse_newer(executable, files):
 
 
 def inputs(executable, dep_info, link_rules, root, target):
-    """Listing digests of the files `dep_info` names, split at `root`, and the digest of each
-    file outside `target` that `link_rules` names; exits on one newer than `executable`."""
+    # The listings are `sha256sum` listings in path order: files inside `root`, then the others.
     def named(rules):
         return {pathlib.Path(os.path.normpath(entry))
                 for entry in prerequisites(rules.read_text(encoding="utf-8"))}
@@ -273,20 +239,17 @@ def inputs(executable, dep_info, link_rules, root, target):
 
 
 def strings(executable, section):
-    """Strings of the ELF `section` of `executable`; none when it has no such section."""
     dump = output(["readelf", f"--string-dump={section}", str(executable)])
     return re.findall(r"^ +\[ *[0-9a-f]+\]  (.*)$", dump, re.MULTILINE)
 
 
 def cargo_configuration(directory, home):
-    """Configuration files cargo reads when run in `directory` with the cargo home `home`."""
     folders = [folder / ".cargo" for folder in (directory, *directory.parents)]
     return [path for folder in dict.fromkeys([*folders, home])
             for path in (folder / "config", folder / "config.toml") if path.is_file()]
 
 
 def configuration_rows(files):
-    """Digest and `[env]` table of each cargo configuration file; exits on any other setting."""
     rows = []
     for path in files:
         settings = tomllib.loads(path.read_text(encoding="utf-8"))
@@ -300,13 +263,11 @@ def configuration_rows(files):
 
 
 def build_environment(inherited):
-    """`inherited` without the `STEERING` variables, plus this run's own."""
     kept = {name: value for name, value in inherited.items() if not STEERING.match(name)}
     return {**kept, **ENVIRONMENT}
 
 
 def aff3ct_identity(root, records):
-    """Revision and library digest of the AFF3CT tree `root`, with the records pinning each."""
     revision = output(["git", "-C", str(root), "rev-parse", "HEAD"])
     libraries = sorted((root / "build/lib").glob("libaff3ct-*.a"))
     if len(libraries) != 1:
