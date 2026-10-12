@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 # Non-timed harness smoke of both arms and every cell of the frozen sparse
-# product check-cost family (jit:bfc2ceab), writing spmm-<stage>-smoke.json
-# beside this script.
+# product check-cost family (jit:bfc2ceab) through the shared
+# `smoke-campaign-arms.sh`, writing spmm-<stage>-smoke.json beside this script.
+# `pilot2` is the pilot addendum at the second pilot trial's pair count.
 #
 # Usage (from the worker worktree root):
 #   smoke-spmm-arms.sh [pilot|pilot2|confirmation]...
-#
-# `pilot2` is the pilot addendum at the second pilot trial's pair count.
-#
-# The three untimed steps are the shared `smoke-campaign-arms.sh`, whose record
-# is the one `benchmark-ab-runner smoke` writes.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,12 +17,10 @@ ROOT=$(git -C "${HERE}" rev-parse --show-toplevel)
 SURVEY=$(realpath --relative-to="${ROOT}" "${HERE}")
 FAMILY=$(dirname "${SURVEY}")
 ISSUE=$(basename "${FAMILY}")
-mapfile -t SHARED < <(git -C "${ROOT}" ls-files -- ':(glob)**/smoke-campaign-arms.sh' |
-    grep -v '/inputs/')
-[[ ${#SHARED[@]} -eq 1 ]] || {
-    echo "${#SHARED[@]} live smoke-campaign-arms.sh files; exactly one must exist" >&2
-    exit 2
-}
+# The shared locator, found once, names the shared smoke script.
+LOCATOR=$(git ls-files --cached --others --exclude-standard -- \
+    ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')
+SHARED=$(python3 -B "${LOCATOR}" file smoke-campaign-arms.sh)
 
 [[ $# -gt 0 ]] || set -- pilot
 for STAGE in "$@"; do
@@ -42,8 +36,8 @@ for STAGE in "$@"; do
     esac
     ADDENDUM_STAGE=${STAGE%2}
     # The shared script names its arm target after the issue; this family's
-    # arm takes a name of its own beside the earlier family's.
-    "${SHARED[0]}" \
+    # arm takes a name of its own beside the entry-check family's.
+    "${SHARED}" \
         --issue "${ISSUE}-spmm" \
         --addendum "${FAMILY}/addendum-v4-spmm-check-${ADDENDUM_STAGE}.json" \
         --arm-manifest "${SURVEY}/spmm-check-arm/Cargo.toml" \

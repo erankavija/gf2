@@ -1,28 +1,15 @@
 #!/usr/bin/env bash
-# Entry-check cost campaigns (jit:bfc2ceab).
+# Entry-check cost campaigns (jit:bfc2ceab): `build` builds and tests the two
+# arms, which are one package without and with `--cfg gf2_entry_checked`, and
+# the campaign tools, `window` runs one campaign and is the only timed action,
+# and `freeze` derives the confirmation addendum from the committed pilot
+# receipt with the canonical freezer. The family's verification record states
+# what each action refuses.
 #
 # Usage (from the worker worktree root):
 #   run-entry-check.sh build
 #   run-entry-check.sh window pilot|confirmation
 #   run-entry-check.sh freeze
-#
-# `build` builds the two arms, the runner and the acceptance tool and runs the
-# arm package's tests in both builds: the baseline with no flag and the
-# candidate under `--cfg gf2_entry_checked`.
-#
-# `window` is the only timed action and the only command a queue line carries.
-# It refuses outside a benchmark window, refuses a campaign input that is not
-# committed and unmodified, prints the canonical execution log path before the
-# first bounded run, resumes an interrupted campaign under its own identity,
-# and finalizes and evaluates a complete campaign once. Re-running it on a
-# finalized campaign re-evaluates and measures nothing.
-#
-# `freeze` derives the confirmation addendum from the committed pilot receipt
-# with the repository's canonical freezer, reading no result of its own.
-#
-# Every numeric setting comes from the frozen addendum and the protocol's
-# frozen shared settings; this script fixes only campaign identities, seeds,
-# the pilot pair count and the session cell budget.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -32,29 +19,21 @@ REPO=$(git -C "${HERE}" rev-parse --show-toplevel)
     exit 2
 }
 
-# The one live file called $1, repository-relative: receipt input snapshots hold
-# byte copies under an `inputs` directory, and the live file lies outside them.
-live() {
-    local found
-    mapfile -t found < <(git ls-files -- ":(glob)**/$1" | grep -v '/inputs/')
-    [[ ${#found[@]} -eq 1 ]] || {
-        echo "${#found[@]} live files are called $1; exactly one must be" >&2
-        exit 2
-    }
-    printf '%s\n' "${found[0]}"
-}
+# The shared locator, found once; it names every other live file.
+LOCATOR=$(git ls-files --cached --others --exclude-standard -- \
+    ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')
 
 RESULTS=$(realpath --relative-to="${REPO}" "${HERE}")
 ISSUE=$(basename "${RESULTS}")
-FAMILY=$(dirname "$(live addendum-v4-entry-check-pilot.json)")
+PILOT_ADDENDUM=$(python3 -B "${LOCATOR}" file addendum-v4-entry-check-pilot.json)
+FAMILY=$(dirname "${PILOT_ADDENDUM}")
 SURVEY=${FAMILY}/survey
 LEDGER=${RESULTS}/entry-check-family-ledger.jsonl
 PRODUCING=${SURVEY}/producing-inputs.json
 PLAN_TOOL=${SURVEY}/make-plan.py
 MANIFEST=${SURVEY}/entry-check-arm/Cargo.toml
-LOG_CHECKER=$(live verify-campaign-log.py)
-LOCK_WRAPPER=$(live ccx1-bench-flock.sh)
-PILOT_ADDENDUM=${FAMILY}/addendum-v4-entry-check-pilot.json
+LOG_CHECKER=$(python3 -B "${LOCATOR}" file verify-campaign-log.py)
+LOCK_WRAPPER=$(python3 -B "${LOCATOR}" file ccx1-bench-flock.sh)
 CONFIRMATION_ADDENDUM=${FAMILY}/addendum-v4-entry-check-confirmation.json
 DERIVATION=${FAMILY}/confirmation-derivation-entry-check.txt
 ARM_TARGET="${REPO}/target/${ISSUE}-arm"
@@ -116,7 +95,7 @@ if [[ "${ACTION}" == freeze ]]; then
         }
     done
     # The canonical freezer, by its name and opening among the same-named scripts.
-    FREEZER=$(python3 -B "$(live repository_files.py)" document freeze-confirmation.py \
+    FREEZER=$(python3 -B "${LOCATOR}" document freeze-confirmation.py \
         $'#!/usr/bin/env python3\n"""Freeze a confirmation addendum from its accepted pilot.')
     python3 -B "${FREEZER}" \
         --pilot-addendum "${PILOT_ADDENDUM}" \

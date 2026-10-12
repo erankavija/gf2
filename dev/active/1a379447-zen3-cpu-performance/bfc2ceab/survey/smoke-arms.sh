@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 # Non-timed harness smoke of both arms and every cell of the frozen entry-check
-# cost family (jit:bfc2ceab), writing <stage>-smoke.json beside this script.
+# cost family (jit:bfc2ceab) through the shared `smoke-campaign-arms.sh`,
+# writing <stage>-smoke.json beside this script. The candidate arm is a second
+# build of the arm package under `--cfg gf2_entry_checked`, which this script
+# tests and builds first, into the sibling target directory `make-plan.py`
+# names.
 #
 # Usage (from the worker worktree root):
 #   smoke-arms.sh [pilot|confirmation]...
-#
-# The three untimed steps are the shared `smoke-campaign-arms.sh`, whose record
-# is the one `benchmark-ab-runner smoke` writes. That script builds the arm
-# once; this family's candidate arm is a second build of the same package
-# under `--cfg gf2_entry_checked`, so this script tests and builds it first,
-# into the sibling target directory `make-plan.py` names.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,12 +19,10 @@ ROOT=$(git -C "${HERE}" rev-parse --show-toplevel)
 SURVEY=$(realpath --relative-to="${ROOT}" "${HERE}")
 FAMILY=$(dirname "${SURVEY}")
 ISSUE=$(basename "${FAMILY}")
-mapfile -t SHARED < <(git -C "${ROOT}" ls-files -- ':(glob)**/smoke-campaign-arms.sh' |
-    grep -v '/inputs/')
-[[ ${#SHARED[@]} -eq 1 ]] || {
-    echo "${#SHARED[@]} live smoke-campaign-arms.sh files; exactly one must exist" >&2
-    exit 2
-}
+# The shared locator, found once, names the shared smoke script.
+LOCATOR=$(git ls-files --cached --others --exclude-standard -- \
+    ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')
+SHARED=$(python3 -B "${LOCATOR}" file smoke-campaign-arms.sh)
 
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
@@ -44,7 +40,7 @@ for STAGE in "$@"; do
         confirmation) SEED=20261006 MAX_CELLS=3 PILOT_PAIRS=() ;;
         *) echo "stage must be pilot or confirmation" >&2; exit 2 ;;
     esac
-    "${SHARED[0]}" \
+    "${SHARED}" \
         --issue "${ISSUE}" \
         --addendum "${FAMILY}/addendum-v4-entry-check-${STAGE}.json" \
         --arm-manifest "${MANIFEST}" \
