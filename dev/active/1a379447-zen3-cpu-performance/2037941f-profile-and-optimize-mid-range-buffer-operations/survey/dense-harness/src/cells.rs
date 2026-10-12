@@ -16,12 +16,15 @@
 //! allocated family's `scalar-reference` exploratory rows, whose baseline arm is
 //! the executable built without the `simd` feature.
 
-use tuning_campaign_support::abtest::SplitMix64;
-use tuning_campaign_support::protocol::CacheState;
+use std::io;
+use std::path::Path;
 
-/// Repository-relative path of the frozen prose addendum this table transcribes.
-pub const ADDENDUM_PATH: &str =
-    "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md";
+use tuning_campaign_support::abtest::SplitMix64;
+use tuning_campaign_support::protocol::{sha256_hex, CacheState};
+use tuning_campaign_support::repository::locate_live;
+
+/// File name of the frozen prose addendum this table transcribes.
+pub const ADDENDUM_FILE: &str = "dense-parity-addendum.md";
 /// Content identity of that frozen document, verified before a timed run.
 pub const ADDENDUM_SHA256: &str =
     "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2";
@@ -39,8 +42,8 @@ pub const QUALIFICATION_RECORD: &str =
 /// Content identity of one frozen prose addendum.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FrozenAddendum {
-    /// Repository-relative path of the document.
-    pub path: &'static str,
+    /// File name of the document, which the repository holds once.
+    pub file_name: &'static str,
     /// SHA-256 of its bytes, verified before a timed run.
     pub sha256: &'static str,
     /// Identity string the document declares.
@@ -49,9 +52,22 @@ pub struct FrozenAddendum {
     pub frozen_utc: &'static str,
 }
 
+impl FrozenAddendum {
+    /// The `root`-relative path of the one live file named
+    /// [`Self::file_name`] whose bytes hash to [`Self::sha256`].
+    ///
+    /// # Errors
+    ///
+    /// Fails when the listing fails or not exactly one live file carries the
+    /// digest.
+    pub fn locate(&self, root: &Path) -> io::Result<String> {
+        locate_live(root, self.file_name, |bytes| sha256_hex(bytes) == self.sha256)
+    }
+}
+
 /// The dense-parity addendum, which freezes the first three questions.
 pub const DENSE_PARITY_ADDENDUM: FrozenAddendum = FrozenAddendum {
-    path: ADDENDUM_PATH,
+    file_name: ADDENDUM_FILE,
     sha256: ADDENDUM_SHA256,
     identity: ADDENDUM_IDENTITY,
     frozen_utc: ADDENDUM_FROZEN_UTC,
@@ -59,7 +75,7 @@ pub const DENSE_PARITY_ADDENDUM: FrozenAddendum = FrozenAddendum {
 
 /// The lane-threshold addendum, which freezes [`Question::MatvecLaneThreshold`].
 pub const LANE_THRESHOLD_ADDENDUM: FrozenAddendum = FrozenAddendum {
-    path: "dev/active/1a379447-zen3-cpu-performance/4337c02e/matvec-lane-threshold-addendum.md",
+    file_name: "matvec-lane-threshold-addendum.md",
     sha256: "e95dbb382c70a0498973f6909c899657657f7b95bb22d25cce76bc2367be1047",
     identity: "4337c02e-matvec-lane-threshold-v1",
     frozen_utc: "2026-10-05T19:34:54Z",
@@ -67,7 +83,7 @@ pub const LANE_THRESHOLD_ADDENDUM: FrozenAddendum = FrozenAddendum {
 
 /// The ragged-tail addendum, which freezes [`Question::MatvecRaggedTail`].
 pub const RAGGED_TAIL_ADDENDUM: FrozenAddendum = FrozenAddendum {
-    path: "dev/active/1a379447-zen3-cpu-performance/7dbe1393/matvec-ragged-tail-addendum.md",
+    file_name: "matvec-ragged-tail-addendum.md",
     sha256: "1161c4c81148cdfa50c9adb3c81f6ea5b3a7f14cbc5f9b5939e05bdc488c847b",
     identity: "7dbe1393-matvec-ragged-tail-v1",
     frozen_utc: "2026-10-08T11:39:41Z",
@@ -75,7 +91,7 @@ pub const RAGGED_TAIL_ADDENDUM: FrozenAddendum = FrozenAddendum {
 
 /// The second ragged-tail addendum, which freezes [`Question::MatvecRaggedTailV2`].
 pub const RAGGED_TAIL_V2_ADDENDUM: FrozenAddendum = FrozenAddendum {
-    path: "dev/active/1a379447-zen3-cpu-performance/7dbe1393/matvec-ragged-tail-v2-addendum.md",
+    file_name: "matvec-ragged-tail-v2-addendum.md",
     sha256: "e2149903acee36ac8e2224d1442098bff8d0d0b95367efc86e1254162e25d6b6",
     identity: "7dbe1393-matvec-ragged-tail-addendum-v2",
     frozen_utc: "2026-10-11T09:26:12Z",
@@ -197,26 +213,26 @@ impl Question {
         }
     }
 
-    /// The canonical append-only family ledger.
-    pub fn ledger_path(self) -> &'static str {
+    /// File name of the canonical append-only family ledger.
+    pub fn ledger_file(self) -> &'static str {
         match self {
-            Self::IsolatedFusedParity => {
-                "dev/bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl"
-            }
-            Self::AllocatedMatvec => {
-                "dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl"
-            }
-            Self::MatvecVsM4ri => "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl",
-            Self::MatvecLaneThreshold => {
-                "dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl"
-            }
-            Self::MatvecRaggedTail => {
-                "dev/bench_results/7dbe1393/matvec-ragged-tail-ledger.jsonl"
-            }
-            Self::MatvecRaggedTailV2 => {
-                "dev/bench_results/7dbe1393/matvec-ragged-tail-v2-ledger.jsonl"
-            }
+            Self::IsolatedFusedParity => "dense-isolated-fused-parity-ledger.jsonl",
+            Self::AllocatedMatvec => "dense-allocated-matvec-ledger.jsonl",
+            Self::MatvecVsM4ri => "dense-matvec-vs-m4ri-ledger.jsonl",
+            Self::MatvecLaneThreshold => "matvec-simd-threshold-ledger.jsonl",
+            Self::MatvecRaggedTail => "matvec-ragged-tail-ledger.jsonl",
+            Self::MatvecRaggedTailV2 => "matvec-ragged-tail-v2-ledger.jsonl",
         }
+    }
+
+    /// The `root`-relative path of this question's one live ledger file.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the listing fails or not exactly one live file bears
+    /// [`Self::ledger_file`].
+    pub fn ledger_path(self, root: &Path) -> io::Result<String> {
+        locate_live(root, self.ledger_file(), |_| true)
     }
 
     /// Resolves a family identity back to its question.

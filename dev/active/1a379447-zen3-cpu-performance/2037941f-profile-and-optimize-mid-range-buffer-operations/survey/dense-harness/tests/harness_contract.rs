@@ -346,7 +346,7 @@ fn every_family_transcribes_into_a_valid_version_four_addendum() {
         assert_eq!(addendum.family.id, question.family_id());
         assert_eq!(
             addendum.family_wise.ledger_path.as_deref(),
-            Some(question.ledger_path())
+            Some(question.ledger_path(&repository_root()).expect("the ledger").as_str())
         );
         assert_eq!(addendum.family_wise.alpha, SHARED_SETTINGS.family_alpha);
         // A pilot transcription resolves no measurement resolution, so no cell
@@ -1576,21 +1576,21 @@ fn the_carried_pins_are_the_frozen_addendums_own_identity() {
     let root = repository_root();
     let pins: BTreeSet<&str> = Question::ALL
         .iter()
-        .map(|question| question.addendum().path)
+        .map(|question| question.addendum().file_name)
         .collect();
     assert_eq!(pins.len(), 4);
     for question in Question::ALL {
         let pin = question.addendum();
-        let bytes = std::fs::read(root.join(pin.path)).expect("the frozen addendum is committed");
+        let path = pin.locate(&root).unwrap_or_else(|error| panic!("{}: {error}", pin.file_name));
+        let bytes = std::fs::read(root.join(&path)).expect("the frozen addendum is committed");
         assert_eq!(
             tuning_campaign_support::protocol::sha256_hex(&bytes),
             pin.sha256,
-            "{}",
-            pin.path
+            "{path}"
         );
         let text = String::from_utf8(bytes).expect("the addendum is UTF-8");
         for declaration in [pin.identity, pin.frozen_utc, question.family_id()] {
-            assert!(text.contains(declaration), "{}: {declaration}", pin.path);
+            assert!(text.contains(declaration), "{path}: {declaration}");
         }
     }
     for cited in [
@@ -1607,9 +1607,11 @@ fn every_family_ledger_exists_and_has_a_distinct_path() {
     let root = repository_root();
     let mut paths = BTreeSet::new();
     for question in Question::ALL {
-        let path = question.ledger_path();
-        std::fs::read(root.join(path)).unwrap_or_else(|error| panic!("{path}: {error}"));
-        assert!(paths.insert(path), "{path} is shared");
+        let path = question
+            .ledger_path(&root)
+            .unwrap_or_else(|error| panic!("{}: {error}", question.ledger_file()));
+        std::fs::read(root.join(&path)).unwrap_or_else(|error| panic!("{path}: {error}"));
+        assert!(paths.insert(path.clone()), "{path} is shared");
         assert_eq!(Question::from_family_id(question.family_id()), Some(question));
     }
 }

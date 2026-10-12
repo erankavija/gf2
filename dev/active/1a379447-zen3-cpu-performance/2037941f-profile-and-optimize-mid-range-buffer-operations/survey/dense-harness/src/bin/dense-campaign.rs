@@ -191,28 +191,33 @@ fn run() -> Result<(), String> {
     }
 }
 
-/// Verifies the frozen prose bytes a question's projections cite.
-fn pinned_addendum_digest(question: Question) -> Result<String, String> {
+/// Locates the frozen prose a question's projections cite by its content
+/// identity and returns its repository-relative path.
+fn pinned_addendum_path(question: Question) -> Result<String, String> {
     let pin = question.addendum();
-    let path = pin.path;
-    let bytes = std::fs::read(path)
-        .map_err(|error| format!("cannot read {path} from the repository root: {error}"))?;
-    let observed = tuning_campaign_support::protocol::sha256_hex(&bytes);
-    if observed != pin.sha256 {
-        return Err(format!(
-            "{path} sha256 {observed} differs from the pinned {}",
-            pin.sha256
-        ));
-    }
-    Ok(observed)
+    pin.locate(&repository_root()?).map_err(|error| {
+        format!(
+            "no live {} carries sha256 {}: {error}",
+            pin.file_name, pin.sha256
+        )
+    })
+}
+
+/// Locates a question's family ledger below the repository root.
+fn ledger_path(question: Question) -> Result<String, String> {
+    question
+        .ledger_path(&repository_root()?)
+        .map_err(|error| format!("cannot locate {}: {error}", question.ledger_file()))
 }
 
 /// Prints the frozen input identities a timed run refuses to start without.
 fn pins() -> Result<(), String> {
-    let path = dense_parity_harness::cells::ADDENDUM_PATH;
-    let observed = pinned_addendum_digest(Question::AllocatedMatvec)?;
+    let path = pinned_addendum_path(Question::AllocatedMatvec)?;
     println!("addendum={path}");
-    println!("addendum_sha256={observed}");
+    println!(
+        "addendum_sha256={}",
+        Question::AllocatedMatvec.addendum().sha256
+    );
     println!(
         "addendum_identity={}",
         dense_parity_harness::cells::ADDENDUM_IDENTITY
@@ -229,7 +234,7 @@ fn pins() -> Result<(), String> {
         println!(
             "family={} ledger={} cells={}",
             question.family_id(),
-            question.ledger_path(),
+            ledger_path(question)?,
             family_cells(question).len()
         );
     }
@@ -248,8 +253,8 @@ fn pins() -> Result<(), String> {
         println!(
             "family_addendum={} path={} sha256={} identity={} frozen_utc={}",
             question.family_id(),
-            pin.path,
-            pinned_addendum_digest(question)?,
+            pinned_addendum_path(question)?,
+            pin.sha256,
             pin.identity,
             pin.frozen_utc
         );
@@ -268,11 +273,10 @@ fn unavailable(arguments: &Arguments) -> Result<(), String> {
             return Err(format!("{} is also a measured cell", row.row_id));
         }
     }
-    let digest = pinned_addendum_digest(question)?;
     let mut table = format!(
         "# addendum={} sha256={}\n# family={}\ncell_id\tstride_words\tstatus\tsamples\tcomparisons\treason\n",
-        dense_parity_harness::cells::ADDENDUM_PATH,
-        digest,
+        pinned_addendum_path(question)?,
+        question.addendum().sha256,
         question.family_id(),
     );
     for row in UNAVAILABLE_ROWS {
@@ -334,12 +338,11 @@ fn verified_addendum(arguments: &Arguments) -> Result<(Question, FamilyAddendum)
 fn verify(arguments: &Arguments) -> Result<(), String> {
     let (question, candidate) = verified_addendum(arguments)?;
     let path = arguments.required("addendum")?;
-    pinned_addendum_digest(question)?;
+    let pinned = pinned_addendum_path(question)?;
     println!(
-        "{path}: transcribes {} with {} cells from {} ({})",
+        "{path}: transcribes {} with {} cells from {pinned} ({})",
         question.family_id(),
         candidate.cells.len(),
-        question.addendum().path,
         question.addendum().identity
     );
     Ok(())
@@ -415,12 +418,11 @@ fn verify_confirmation(arguments: &Arguments) -> Result<(), String> {
     let (question, candidate) = family_addendum(arguments)?;
     let path = arguments.required("addendum")?;
     check_confirmation(question, &candidate).map_err(|error| format!("{path}: {error}"))?;
-    pinned_addendum_digest(question)?;
+    let pinned = pinned_addendum_path(question)?;
     println!(
-        "{path}: confirms {} cells of {} from {} ({})",
+        "{path}: confirms {} cells of {} from {pinned} ({})",
         candidate.cells.len(),
         question.family_id(),
-        question.addendum().path,
         question.addendum().identity
     );
     Ok(())
@@ -483,8 +485,8 @@ fn project(arguments: &Arguments) -> Result<(), String> {
 
 /// The repository root every repository-relative campaign path resolves against.
 fn repository_root() -> Result<std::path::PathBuf, String> {
-    std::fs::canonicalize(".")
-        .map_err(|error| format!("cannot resolve the working directory: {error}"))
+    tuning_campaign_support::repository::repository_root()
+        .map_err(|error| format!("cannot resolve the repository root: {error}"))
 }
 
 /// One frozen cell as a plan declares it, with the requested arm.
