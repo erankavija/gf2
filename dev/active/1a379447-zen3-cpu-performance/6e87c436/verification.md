@@ -86,6 +86,27 @@ differing paths. `survey/verify_records_test.py` shows the check on the
 committed records, its failure on edited records, and the refusal on a fixture
 tree whose baselined file changed after the freeze.
 
+## Tree the source ledger describes
+
+The [source ledger](survey/source-evidence.json) describes the files whose
+SHA-256 each claim records in its `sha256` field; the claim's `commit` field is
+informational. A later tree can hold other bytes for a claimed file, so the
+ledger is verified against the pinned content, not the working tree:
+
+```sh
+python3 survey/make-source-evidence.py --check
+```
+
+The check (path relative to this directory) reads each claimed file by digest
+from the committed blobs git holds, confirms the fragment's occurrence count,
+line and verbatim text in those bytes, writes nothing, and exits zero on any
+later tree while the blobs are present.
+`python3 -B survey/make-source-evidence.py` without arguments regenerates the
+ledger from the working tree, refuses to write when a claimed fragment is
+absent or changes its occurrence count, and names every such claim.
+`survey/verify_records_test.py` shows the check on the committed ledger and
+the refusal on a fixture tree whose claimed fragment is absent.
+
 ## Route selection
 
 `survey/make-route-comparison.py` joins each receipt's per-pair
