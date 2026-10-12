@@ -432,8 +432,7 @@ impl SmokeRecord {
     }
 }
 
-/// The environment of an arm child: [`INHERITED_ENVIRONMENT`] from this
-/// process, the plan arm's declared variables and the fresh-child sentinel.
+/// The arm's declaration overrides the inherited variables; the sentinel overrides both.
 pub fn child_environment(arm: &PlanArm) -> BTreeMap<String, String> {
     let mut environment: BTreeMap<String, String> = INHERITED_ENVIRONMENT
         .iter()
@@ -448,25 +447,21 @@ pub fn child_environment(arm: &PlanArm) -> BTreeMap<String, String> {
     environment
 }
 
-/// How the runner starts one arm child in the validation position, for a
-/// caller that observes the child itself.
+/// How the runner starts an arm child in the validation position, for a caller
+/// that observes the child itself.
 #[derive(Clone, Debug, Serialize)]
 pub struct ValidationLaunch {
-    /// Executable path as the runner resolves it.
     pub executable: String,
     pub arguments: Vec<String>,
-    /// The whole child environment, the fresh-child sentinel included.
     pub environment: BTreeMap<String, String>,
     /// Name of the sentinel variable in `environment`; a child without it
     /// stops at its guard before reading the request.
     pub guard_variable: &'static str,
-    /// The request the runner writes on the child's standard input.
+    /// Written on the child's standard input.
     pub request: String,
 }
 
-/// The [`ValidationLaunch`] of `arm_name` on `cell_id` of a saved plan, built
-/// by the same plan and addendum validation, request encoder and environment
-/// rule as [`smoke`]. Starts nothing.
+/// Validates the plan as [`smoke`] does; starts nothing.
 pub fn validation_launch(
     root: &Path,
     plan_path: &Path,
@@ -498,7 +493,6 @@ pub fn validation_launch(
     })
 }
 
-/// The validated plan and addendum of a saved plan, each with its bytes.
 fn load_plan(
     root: &Path,
     plan_path: &Path,

@@ -4264,14 +4264,16 @@ mod arm_wire {
     }
 
     #[test]
-    fn child_environment_is_the_declaration_and_the_sentinel() {
+    fn child_environment_overrides_inherited_variables_and_ends_with_the_sentinel() {
         let arm: PlanArm = serde_json::from_value(json!({
             "build": "native", "description": "arm", "executable": "arm", "arguments": [],
-            "environment": {"DECLARED": "1"}, "rustflags": null, "tuning_profile": null
+            "environment": {"DECLARED": "1", "PATH": "declared", "GF2_TUNING_FRESH_CASE": "x"},
+            "rustflags": null, "tuning_profile": null
         }))
         .expect("a plan arm");
         let environment = tuning_campaign_support::arm::child_environment(&arm);
         assert_eq!(environment["DECLARED"], "1");
+        assert_eq!(environment["PATH"], "declared");
         assert_eq!(
             environment[tuning_campaign_support::transport::FRESH_CASE_VAR],
             tuning_campaign_support::transport::FRESH_CASE_VALUE
