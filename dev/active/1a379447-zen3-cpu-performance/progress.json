@@ -981,7 +981,7 @@
      "short_id": "4252085a",
      "title": "Prepare the quality record of the sum-product INTRA arm",
      "classification": "research",
-     "status": "blocked on the invoker: two reworks spent (lead review; code-review round 1), round-2 merge b30832568; cargo-ci and research-review pass at a22192d74, code-review fails on one finding (the check's arm_build projection copies the build record's inputs block)",
+     "status": "round 3 authorized by the invoker; waits for cba35553 (INTRA arm at twice the recorded LLRs), then converges on arm_build and re-records",
      "tracker_state": "in_progress",
      "dispatch": {
       "model": "sonnet",
@@ -996,7 +996,7 @@
      "short_id": "0a77ecfc",
      "title": "Declare the decoder calibration campaign",
      "classification": "research",
-     "status": "in_progress (session 36)",
+     "status": "worker merging main c16811021 and regenerating the manifest and rehearsal; first pass complete at afa68bb65",
      "tracker_state": "in_progress",
      "dispatch": {
       "model": "opus",
@@ -1010,7 +1010,7 @@
      "short_id": "05c9065e",
      "title": "Record the peak memory of the benchmark arms",
      "classification": "research",
-     "status": "in_progress (session 36)",
+     "status": "merged ef0c8ccc6 and bdf5d5123; cargo-ci pass; code-review round 1 failed on three findings (effective arm configuration, per-arm build commands, envelope checker); rework round 2 with the worker",
      "tracker_state": "in_progress",
      "dispatch": {
       "model": "sonnet",
@@ -1019,6 +1019,13 @@
       "base": "a020f5320",
       "session": 36
      }
+    },
+    {
+     "short_id": "cba35553",
+     "title": "Feed the sum-product INTRA arm closed-form-scale LLRs",
+     "classification": "implementation",
+     "status": "pending: after 05c9065e round 2 frees agent-ed3d490e-run",
+     "tracker_state": "ready"
     }
    ]
   },
@@ -1399,6 +1406,12 @@
    "type": "bug",
    "in_epic": false,
    "reason": "4252085a measured the recorded LDPC bundles at half the BPSK-AWGN closed-form LLR scale (gf2-sim testutil frame source computes 2r/N0 with N0 = 2 sigma^2); depends on 4252085a"
+  },
+  {
+   "id": "cba35553",
+   "type": "task",
+   "in_epic": true,
+   "reason": "invoker decision 2026-10-12: the INTRA arm decodes the recorded LLRs multiplied by two; 4252085a depends on it"
   }
  ],
  "escalations": [
@@ -2218,18 +2231,27 @@
    "issue": "4252085a",
    "question": "does the sum-product INTRA arm receive the recorded LLRs as they are (half the closed-form scale, FER 1 on NR), or multiplied by two inside the arm with a re-recorded quality file",
    "recommendation": "multiply by two in the INTRA arm adapter: exact in f32, leaves the pinned bundles and the matched min-sum arms untouched, and makes the fastest-compatible comparison a comparison against a working decoder",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-12T19:30Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-12: multiply by two in the INTRA arm adapter. Task cba35553 created in the story; 4252085a depends on it and re-records the quality at the converted scale; plan DEC-13."
   },
   {
    "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5)",
    "issue": "4252085a",
    "question": "authorize rework round 3: code-review round 2 keeps one blocking finding, record-intra-quality.py arm_build copies executable.inputs (source and link input digests) into the identity the check compares",
    "recommendation": "authorize; the change is to drop the inputs block from the projection (or converge on the shared projection 05c9065e adds), add the reviewer's test case, regenerate record.json; quality files stay byte-identical",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-12T20:00Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-12: round 3 authorized; converge the recorder on the shared arm_build projection of 05c9065e, add the reviewer's test case, regenerate record.json."
+  },
+  {
+   "category": "carried open questions of handoff-31",
+   "issue": "1a379447",
+   "question": "staged aff3ct-throughput-arm; e430f035; make-source-evidence check as a cargo-ci step",
+   "recommendation": "keep the staged file; reject; leave out",
+   "status": "resolved",
+   "raised_at": "2026-10-12T09:17Z",
+   "resolution": "Invoker 2026-10-12: keep the staged aff3ct-throughput-arm (digest pins it, the revision is the rebuild pointer); reject e430f035 and remove the exception comments citing it; no cargo-ci step for the source-evidence check."
   }
  ],
  "rework_counts": {
@@ -2306,7 +2328,7 @@
   "1ca04967": 0,
   "824cde7c": 0,
   "4252085a": 2,
-  "05c9065e": 1
+  "05c9065e": 2
  },
  "surfaced_pitfalls": [
   {
@@ -3137,6 +3159,7 @@
   "active_workers": {},
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
-  "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30."
+  "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30.",
+  "e430f035": "rejected 2026-10-12 by invoker decision; the exception comments citing it (root Cargo.toml) are removed after 0a77ecfc merges, because its producing manifest may pin that file"
  }
 }
