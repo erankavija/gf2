@@ -2258,18 +2258,26 @@
    "issue": "4252085a",
    "question": "authorize rework round 4: code-review round 3 fails on the check comparing linked_aff3ct (AFF3CT revision and static-library digest) among the REPLAYED fields, the third finding of the class 'check compares fields outside the closed identity set'",
    "recommendation": "authorize one round that audits every field the check compares against the closed set of behavioral-evidence-validity in one pass (executable digest, build flags, frozen configuration, seed, toolchain version, observed host facts) and drops the rest, with one test per dropped field",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-12T21:10Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-13 (session 37): one audit round authorized. Round 4 (opus) merged at 5d89c9805; cargo-ci and code-review pass; done."
   },
   {
    "category": "issue scope change (policy item 4)",
    "issue": "cba35553",
    "question": "amend REQ-03, which the lead wrote stricter than the convention: 'The build identity record and the catalogue name the rebuilt INTRA executables by digest, written by their committed recorder.' The catalogue names no workspace executable by digest; the build record names them and pins the catalogue by digest",
    "recommendation": "replace REQ-03 with: 'The build identity record names the rebuilt INTRA executables by digest and pins the catalogue that declares the factor, written by its committed recorder.' Then gate cba35553; its tree is merged",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-12T21:10Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-13 (session 37): amend REQ-03 as recommended (b18fc3661). Three gates pass on main; done."
+  },
+  {
+   "category": "architectural",
+   "issue": "ed3d490e",
+   "question": "does the workspace arm build become independent of the checkout path",
+   "status": "resolved",
+   "raised_at": "2026-10-12T21:10Z",
+   "resolution": "Invoker 2026-10-13 (session 37): keep agent-ed3d490e-run as the build tree until the story's evidence is collected; no issue filed."
   }
  ],
  "rework_counts": {
@@ -2345,7 +2353,7 @@
   "dd50ea11": 1,
   "1ca04967": 0,
   "824cde7c": 0,
-  "4252085a": 3,
+  "4252085a": 4,
   "05c9065e": 2,
   "0a77ecfc": 1
  },
@@ -3126,7 +3134,8 @@
   "Session 33: every family measured in the 2026-10-09 window is refused by its freezer or inconclusive (63bad95d native ladder, dispatch overhead, both M4RI families; bfc2ceab; 7dbe1393); seven open escalations recorded. Closed e4e2ba52, 395fe4e2, a96a4cd6, feb60d0d. Lead errors: code-review evaluated before cargo-ci (e4e2ba52), and cargo-ci gates started while rework workers built (feb60d0d, 395fe4e2 failed on load flakes). Gate order that worked: cargo-ci for every merged issue on a quiet host, then the reviews. progress.json is written with indent=1 and ensure_ascii=False.",
   "Session 33: window gf2-bench-window-20261011 armed for 04:00 Europe/Helsinki (the first attempt was denied by the permission classifier; the invoker said to try again). Queue: one new job, the 8e53235b pilot, behind a load guard on its queue line. A session of another project (mealie-fi) is active on the host.",
   "Session 33 end: bad1aea8 closed after one rework. Five story issues closed this session (e4e2ba52, 395fe4e2, a96a4cd6, feb60d0d, bad1aea8). Host quiet from 03:05 local for the 04:00 window.",
-  "Session 34 (2026-10-11): invoker rulings on the nine handoff-29 questions: repeat each disturbed family once under a new family version; bfc2ceab exploratory cost accepted; 7dbe1393 merges unselected; load guard per queue line only; lead repaired jit validate (28a64b749); aff59c3c dependency as a root workspace dependency; a96a4cd6 stage builders stay public and gain the stated route-equivalence contract (81e955b0); the INTRA arm converges on the shared AFF3CT handle before measuring (1ca04967, between d4185e9e and 4252085a); the story's arms build and run from the pinned worktree agent-ed3d490e-run. Invoker steer the same day: too much pinning and protocol; prefer the simplest, least protocol-intensive approach that meets the criteria; the focus is HPC. Filed 151af028 (checkpoint_compat resume tests), 07024d65 (stale 04b85d10 survey, lead holds it after 8e53235b), 754208a0 (rare-event artifact timeouts, outside the epic)."
+  "Session 34 (2026-10-11): invoker rulings on the nine handoff-29 questions: repeat each disturbed family once under a new family version; bfc2ceab exploratory cost accepted; 7dbe1393 merges unselected; load guard per queue line only; lead repaired jit validate (28a64b749); aff59c3c dependency as a root workspace dependency; a96a4cd6 stage builders stay public and gain the stated route-equivalence contract (81e955b0); the INTRA arm converges on the shared AFF3CT handle before measuring (1ca04967, between d4185e9e and 4252085a); the story's arms build and run from the pinned worktree agent-ed3d490e-run. Invoker steer the same day: too much pinning and protocol; prefer the simplest, least protocol-intensive approach that meets the criteria; the focus is HPC. Filed 151af028 (checkpoint_compat resume tests), 07024d65 (stale 04b85d10 survey, lead holds it after 8e53235b), 754208a0 (rare-event artifact timeouts, outside the epic).",
+  "Session 37 (2026-10-13): invoker answered the three handoff-32 questions (amend cba35553 REQ-03; one audit round for 4252085a; keep the build worktree). Both issues closed. agent-ed3d490e-run is on branch worktree-agent-4252085a-r4 at 05e7cf4b3 (merged)."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -3185,9 +3194,9 @@
   "note": "Each line carries its load guard (exit 75 above a one-minute load of 2). Verify each campaign from its own execution log."
  },
  "session_scope": {
-  "session": 36,
-  "date": "2026-10-12",
-  "instruction": "Invoker 2026-10-12 (session 36): drive epic 1a379447; subagent model by task difficulty; no Fable.",
+  "session": 37,
+  "date": "2026-10-13",
+  "instruction": "Invoker 2026-10-13 (session 37): drive epic 1a379447; subagent model by task difficulty; no Fable.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
@@ -3198,6 +3207,7 @@
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
   "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30.",
   "e430f035": "rejected 2026-10-12 by invoker decision; the exception comments citing it (root Cargo.toml) are removed after 0a77ecfc merges, because its producing manifest may pin that file",
-  "session_36_outcome": "Done: 05c9065e, 0a77ecfc. Merged, blocked on the invoker: cba35553 (REQ-03 amendment), 4252085a (rework round 4). Filed: 11bfbfd9 (outside the epic), cba35553. Rejected: e430f035. Window 2026-10-13 04:00 holds five jobs: four 63bad95d confirmations and the 0a77ecfc calibration campaign."
+  "session_36_outcome": "Done: 05c9065e, 0a77ecfc. Merged, blocked on the invoker: cba35553 (REQ-03 amendment), 4252085a (rework round 4). Filed: 11bfbfd9 (outside the epic), cba35553. Rejected: e430f035. Window 2026-10-13 04:00 holds five jobs: four 63bad95d confirmations and the 0a77ecfc calibration campaign.",
+  "session_37": "Done: cba35553, 4252085a. 5d590bac held by the lead until 63bad95d merges and the gf2 arms build record is regenerated (its validation record names arms by build-identity digest). Window 2026-10-13 04:00 holds five jobs."
  }
 }
