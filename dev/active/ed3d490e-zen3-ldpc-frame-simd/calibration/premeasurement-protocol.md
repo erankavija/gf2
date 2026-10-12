@@ -147,7 +147,7 @@ and one dispatch per window. It is an estimate, not a measurement.
 | Term | Value |
 |---|---|
 | nominal target-window seconds | 462.5 |
-| active seconds of the rehearsal session (one run, unlocked host) | 445 |
+| active seconds of the rehearsal session (one run, unlocked host) | 527 |
 | session budget seconds | 10800 |
 | estimated minutes, rounded up to a multiple of 5 | 20 |
 <!-- /generated:estimate -->

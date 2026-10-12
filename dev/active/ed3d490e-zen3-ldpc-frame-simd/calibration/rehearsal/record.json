@@ -1,11 +1,11 @@
 {
  "issue": "0a77ecfc",
- "source_revision": "d9b600df3b0126b837872f89dbffec2ac37526fc",
+ "source_revision": "fbce190e0c25ba1030330d09b96184f70e529dea",
  "stand_ins": {
   "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/private-lock.sh": "ba84c154e15a1048dae7a4c077d1edd65b5b471b2511181aaba613144c35d0b1",
-  "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/untimed-windows.patch": "98ebf80144c093017cc3971d5a4c53e18064b22a1414e749ae3c0938f6a8c857"
+  "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/untimed-windows.patch": "58db4cefbb5abfd197fa983c80f76ef3dc5136d3462a6c9e2b210cc05f4fa0bc"
  },
- "campaign_id": "gf2-0a77ecfc-20261012t191857z-3495813",
+ "campaign_id": "gf2-0a77ecfc-20261012t193441z-3653305",
  "launcher_exit": {
   "first": 0,
   "resumed": 0
@@ -42,20 +42,20 @@
   "work-finished": 1,
   "wrapper-returned": 1
  },
- "active_seconds": 444.85739797,
+ "active_seconds": 526.551588107,
  "stage_validation": {
   "schema": "tuning-extent-campaign-validation-v1",
-  "campaign_id": "gf2-0a77ecfc-20261012t191857z-3495813",
+  "campaign_id": "gf2-0a77ecfc-20261012t193441z-3653305",
   "status": "complete-valid",
   "cells": 74,
   "accepted_results": 444,
   "windows": 1850,
-  "execution_log_sha256": "0559871a3affa9bfb2d7d2ab7f93b088092bd614439770f93ef50c7c47f5a580",
-  "coding_manifest_sha256": "2faa0fb87db3cbb3aa293189c7552546e4cf2b31b59e584523197ce62d45d185"
+  "execution_log_sha256": "c97da29bd9fc10eec60dea896ec2694980c79c31e8ceb9b9b9dbf540187cc4a5",
+  "coding_manifest_sha256": "af792aa9a71b5c4d73f42f16b6cec7fedcdd4231054ec821b0aef7ab9e3197dd"
  },
  "publication_validation": {
   "schema": "tuning-extent-campaign-publication-v1",
-  "campaign_id": "gf2-0a77ecfc-20261012t191857z-3495813",
+  "campaign_id": "gf2-0a77ecfc-20261012t193441z-3653305",
   "status": "published",
   "entries": 1397
  },
