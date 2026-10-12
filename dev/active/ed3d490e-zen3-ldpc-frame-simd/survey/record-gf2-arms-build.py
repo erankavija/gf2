@@ -1,56 +1,30 @@
 #!/usr/bin/env python3
 """Record the build identity of the batch decoder arms (jit:ed3d490e).
 
-Builds the arms workspace beside this script in its own target directory, the
-member packages against `AFF3CT_ROOT`, the staged AFF3CT [Cassagne2019] tree,
-and writes `build-identity.json`: the toolchain, the commands this run
-executed with their environment, the digest and the inputs of every executable
-the build produces, the identity of the AFF3CT tree, one row per arm of the
-catalogue `arms.json` beside the workspace, and what this checkout shows about
-each executable digest an LDPC campaign's build identity record pins.
+Builds the arms workspace beside this script, its member packages against the
+staged AFF3CT [Cassagne2019] tree `AFF3CT_ROOT`, and writes
+`build-identity.json` from the commands it runs and the files it reads. No
+value is a clock reading, and `build_root` is the checkout location the
+executables carry.
 
-An executable carries the absolute location of the checkout that builds it:
-in its source paths, and in the symbol hashes cargo derives from the location
-of each path dependency outside the workspace root. `build_root` is that
-location as this run observes it, so the digests are those of this checkout's
-build.
+An executable's `inputs` are the digests of two `sha256sum` listings in path
+order, the repository files and the other files cargo's dep-info names, and
+`linked`, each file outside the target directory the linker reports reading.
+`found_at` lists the target files carrying a pinned arm's digest. `carried_by`
+lists the live files with a pinned content; none means an archive member, a
+file outside the repository or a file changed since.
 
-An arm row gives the executable's digest. A workspace arm is an executable of
-this build, at `path`; a pinned arm has the digest the catalogue names, under
-the campaign record that pins it, in the target files `found_at`. `inputs` is
-what cargo's dep-info names for an executable, the files the C++ compiler read
-included: the digests of the `sha256sum` listings, in path order, of the
-repository files and of the files outside the repository.
+The run refuses:
 
-The build runs without the inherited variables that steer rustc, cargo, the
-`cc` crate or the compiler driver; `build_commands` gives those this run sets.
-
-Content alone decides, and the run fails on any of:
-
-- the files of the repository target directory bearing a pinned executable's
-  name, or their digests, differ after the build from before it;
-- the arms workspace is not its own workspace root with its target directory
-  inside it;
-- the arms target directory holds a file with a pinned executable's name or
-  digest, or the arms workspace declares a package or target under such a name;
-- the catalogue names a workspace arm the build does not produce, or a pinned
-  arm whose record, found by content, does not pin that executable digest or
-  whose executable no target file of this checkout carries;
-- no build identity record pins the digest of the AFF3CT static library.
-
-The rest is observation. `found_at` lists the target files carrying a pinned
-digest, and is empty for an executable this checkout does not hold.
-`pinned_records` gives each build identity record's digest and, per file
-digest the record pins, the live repository files with that content.
-`carried_by` empty says no live file has that content: the pin names an
-archive member, a file outside the repository, or a file changed since. A
-changed producing input leaves the pinned executable the one its campaign
-measured. Git supplies the list of working-tree files; commit ids and history
-are informational (`@/inv/behavioral-evidence-validity`).
-
-Every value comes from a command this run executes or a file it reads, and
-none is a clock reading, so a second run over an unchanged build reproduces
-the record.
+- a cargo configuration file that sets anything but `[env]` variables
+  outside `STEERING`;
+- a linker driver or a file a link read that is newer than its executable;
+- a build that changes a target file bearing a pinned executable's name;
+- an arms workspace that shares its root, its target directory, or a package,
+  target or file name or digest with a pinned executable;
+- a workspace arm the build does not produce, and a pinned arm whose record
+  does not pin its digest or whose executable no target file carries;
+- an AFF3CT static library no build identity record pins.
 
 Usage (from the worktree root): record-gf2-arms-build.py OUT_DIR AFF3CT_ROOT
 """
@@ -69,13 +43,19 @@ RUSTFLAGS = "-C target-cpu=native"
 PACKAGE = "ldpc-batch-arms"
 CXX = "c++"
 ENVIRONMENT = {"CARGO_CI_NO_SCCACHE": "1", "RUSTFLAGS": RUSTFLAGS, "CXX": CXX}
-# Variables rustc, cargo, the `cc` crate and the compiler driver read, in every
-# host, target and target-suffixed form.
+AFF3CT_VARIABLE = "GF2_AFF3CT_ROOT"
+# The arms workspace's linker driver and its suffix for the linker's dependency file.
+LINKER = "link-inputs-cc.sh"
+LINK_RULES = ".link.d"
+# Variables rustc, cargo, the `cc` crate, the compiler driver and the build
+# scripts read, in every host, target and target-suffixed form.
 STEERING = re.compile(
     r"(HOST_|TARGET_)?(CC|CXX|AR|CFLAGS|CXXFLAGS|ARFLAGS|CXXSTDLIB)(_.*)?$"
-    r"|RUSTC.*$|RUSTFLAGS$|CARGO_ENCODED_RUSTFLAGS$|CARGO_(BUILD|PROFILE|TARGET)_.*$"
+    r"|RUSTC.*$|RUSTFLAGS$|CARGO_ENCODED_RUSTFLAGS$|CARGO_INCREMENTAL$"
+    r"|CARGO_(BUILD|PROFILE|TARGET|HOST|UNSTABLE)_.*$"
     r"|CRATE_CC_NO_DEFAULTS$|CPATH$|C_INCLUDE_PATH$|CPLUS_INCLUDE_PATH$|LIBRARY_PATH$"
-    r"|SOURCE_DATE_EPOCH$")
+    r"|LD_RUN_PATH$|GCC_EXEC_PREFIX$|COMPILER_PATH$|SOURCE_DATE_EPOCH$"
+    rf"|{AFF3CT_VARIABLE}$")
 
 
 def output(command, **kwargs):
@@ -243,18 +223,84 @@ def listing_digest(paths, relative_to=None):
     return hashlib.sha256("".join(lines).encode()).hexdigest()
 
 
-def inputs(dep_info, root):
-    """Identity of the files the cargo dep-info file `dep_info` names, split at `root`."""
-    listed = dep_info.read_text(encoding="utf-8").partition(": ")[2].strip()
-    paths = [pathlib.Path(os.path.normpath(entry.replace("\\ ", " ")))
-             for entry in re.split(r"(?<!\\) ", listed)]
-    inside = [path for path in paths if root in path.parents]
+def prerequisites(rules):
+    """Prerequisites of the make rules `rules`, read as GNU make reads them."""
+    def quoted(match):
+        backslashes, character = match.groups()
+        literal = len(backslashes) % 2 and character == " "
+        return backslashes[:len(backslashes) // 2] + ("\0" if literal else character)
+
+    found = []
+    for rule in rules.replace("\\\n", " ").splitlines():
+        parts = re.split(r":(?=\s|$)", rule, maxsplit=1)
+        if len(parts) == 2:
+            found += [word.replace("\0", " ").replace("$$", "$")
+                      for word in re.sub(r"(\\+)([ #])", quoted, parts[1]).split()]
+    return found
+
+
+def link_rules(executable):
+    """The linker's dependency file beside the one file with the content of `executable`."""
+    found = [path for path in sorted((executable.parent / "deps").glob(f"*{LINK_RULES}"))
+             if digest(path.with_name(path.name.removesuffix(LINK_RULES))) == digest(executable)]
+    if len(found) != 1:
+        sys.exit(f"{len(found)} links wrote the content of {executable}")
+    return found[0]
+
+
+def refuse_newer(executable, files):
+    """Exits when one of `files`, which the link of `executable` used, is newer than it."""
+    linked_at = executable.stat().st_mtime_ns
+    newer = [str(path) for path in files if path.stat().st_mtime_ns > linked_at]
+    if newer:
+        sys.exit(f"{executable} is older than {newer}, which its link used")
+
+
+def inputs(executable, dep_info, link_rules, root, target):
+    """Listing digests of the files `dep_info` names, split at `root`, and the digest of each
+    file outside `target` that `link_rules` names; exits on one newer than `executable`."""
+    def named(rules):
+        return {pathlib.Path(os.path.normpath(entry))
+                for entry in prerequisites(rules.read_text(encoding="utf-8"))}
+
+    paths = named(dep_info)
+    inside = {path for path in paths if root in path.parents}
+    linked = sorted(path for path in named(link_rules) if target not in path.parents)
+    refuse_newer(executable, linked)
     return {"repository_files_sha256": listing_digest(inside, root),
-            "other_files_sha256": listing_digest(set(paths) - set(inside))}
+            "other_files_sha256": listing_digest(paths - inside),
+            "linked": {str(path): digest(path) for path in linked}}
+
+
+def strings(executable, section):
+    """Strings of the ELF `section` of `executable`; none when it has no such section."""
+    dump = output(["readelf", f"--string-dump={section}", str(executable)])
+    return re.findall(r"^ +\[ *[0-9a-f]+\]  (.*)$", dump, re.MULTILINE)
+
+
+def cargo_configuration(directory, home):
+    """Configuration files cargo reads when run in `directory` with the cargo home `home`."""
+    folders = [folder / ".cargo" for folder in (directory, *directory.parents)]
+    return [path for folder in dict.fromkeys([*folders, home])
+            for path in (folder / "config", folder / "config.toml") if path.is_file()]
+
+
+def configuration_rows(files):
+    """Digest and `[env]` table of each cargo configuration file; exits on any other setting."""
+    rows = []
+    for path in files:
+        settings = tomllib.loads(path.read_text(encoding="utf-8"))
+        environment = settings.pop("env", {})
+        unstated = sorted(settings) + sorted(f"env.{name}" for name in environment
+                                             if STEERING.match(name))
+        if unstated:
+            sys.exit(f"{path} sets {unstated}, which the record does not state")
+        rows.append({"path": str(path), "sha256": digest(path), "env": environment})
+    return rows
 
 
 def build_environment(inherited):
-    """`inherited` without the variables that steer rustc, cargo or `cc`, plus this run's own."""
+    """`inherited` without the `STEERING` variables, plus this run's own."""
     kept = {name: value for name, value in inherited.items() if not STEERING.match(name)}
     return {**kept, **ENVIRONMENT}
 
@@ -290,6 +336,11 @@ def main():
     _, before = pinned_executables()
 
     inherited = build_environment(os.environ)
+    configuration = configuration_rows(cargo_configuration(
+        ROOT, pathlib.Path(inherited.get("CARGO_HOME") or pathlib.Path.home() / ".cargo")))
+    rustc = output(["rustc", f"+{TOOLCHAIN}", "--version", "--verbose"], env=inherited)
+    host = re.search(r"^host: (.*)$", rustc, re.MULTILINE).group(1)
+    linker = arms / LINKER
     metadata = json.loads(output(
         ["cargo", f"+{TOOLCHAIN}", "metadata", "--offline", "--locked", "--no-deps",
          "--format-version", "1", "--manifest-path", str(manifest)], env=inherited))
@@ -300,10 +351,11 @@ def main():
                for argument in ("--package", package["name"])]
 
     build = ["./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build", "--offline",
-             "--locked", "--release", "--manifest-path", str(manifest)]
+             "--locked", "--release", "--manifest-path", str(manifest),
+             "--config", f"target.{host}.linker={json.dumps(str(linker))}"]
     # The default members build without the AFF3CT tree; the member packages link it.
     commands = [{"environment": ENVIRONMENT, "argv": build},
-                {"environment": {**ENVIRONMENT, "GF2_AFF3CT_ROOT": str(aff3ct)},
+                {"environment": {**ENVIRONMENT, AFF3CT_VARIABLE: str(aff3ct)},
                  "argv": build + members}]
     for command in commands:
         subprocess.run(command["argv"], check=True, env={**inherited, **command["environment"]})
@@ -311,20 +363,28 @@ def main():
     if after != before:
         sys.exit("the build changed a pinned executable of an LDPC campaign")
 
+    for name in binaries:
+        refuse_newer(release / name, [linker])
     executables = {name: digest(release / name) for name in binaries}
     records = pinned_records()
     catalogue = arms.parent / "arms.json"
     record = {
-        "schema": "ldpc-batch-arms-build-v3",
+        "schema": "ldpc-batch-arms-build-v4",
         "build_root": str(ROOT),
-        "rustc": output(["rustc", f"+{TOOLCHAIN}", "--version", "--verbose"], env=inherited),
+        "rustc": rustc,
         "cargo": output(["cargo", f"+{TOOLCHAIN}", "--version"], env=inherited),
         "cxx": output([CXX, "--version"], env=inherited).splitlines()[0],
+        "linker": {"driver": str(linker), "sha256": digest(linker),
+                   "cc": output([str(linker), "--version"], env=inherited).splitlines()[0]},
+        "cargo_configuration": configuration,
         "build_commands": commands,
         "release_profile": tomllib.loads(manifest.read_text(encoding="utf-8"))["profile"]["release"],
         "executables": {
             name: {"sha256": executables[name],
-                   "inputs": inputs(release / f"{name}.d", ROOT)}
+                   "written_by": strings(release / name, ".comment"),
+                   "compiler_options": strings(release / name, ".GCC.command.line"),
+                   "inputs": inputs(release / name, release / f"{name}.d",
+                                    link_rules(release / name), ROOT, ROOT / release.parent)}
             for name in binaries},
         "aff3ct": aff3ct_identity(aff3ct, records),
         "catalogue": {"path": str(catalogue), "sha256": digest(catalogue)},
