@@ -726,9 +726,10 @@ theorem readout_run (g : (ZMod 2)[X]) (hρ : 0 < g.natDegree) {low : ℕ → Bit
     refine ⟨?_, clean_step g hρ hlow _⟩
     rw [run, readout_step g hρ _ hlow, (readout_run g hρ hlow msg k t).1, regRun]
 
-/-- `packed_write_codeword` (`crates/gf2-coding/src/bch/encode.rs:2024`) after
-`packed_serial_reduce`: the message bits copied into user
-coordinates `0` to `k - 1`, and register bit `internal_at u` at user coordinate `u ≥ k`. -/
+/-- The coordinate contract of `packed_place_codeword` (`crates/gf2-coding/src/bch/encode.rs`)
+after `packed_serial_reduce`: the message bits at user coordinates `0` to `k - 1`, and register
+bit `internal_at u` at user coordinate `u ≥ k`. The function places packed runs; the unit test
+`the_assembly_places_the_bits_the_bit_serial_reference_writes` holds them to this map. -/
 def encodeUser (g : (ZMod 2)[X]) (low : ℕ → BitVec 64) (L : Layout) (n : ℕ) (msg : ℕ → Bool)
     (u : ℕ) : Bool :=
   if u < n - g.natDegree then msg u

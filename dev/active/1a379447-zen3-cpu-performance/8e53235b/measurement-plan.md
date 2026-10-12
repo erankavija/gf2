@@ -4,46 +4,49 @@
 
 Issue `@/issue/8e53235b` measures one candidate, the word-wise assembly of
 packed systematic BCH codewords, under the
-[frozen pilot addendum](addendum-v4-codeword-assembly-pilot.json) of family
-`8e53235b-bch-codeword-assembly`. The
+[frozen pilot addendum](addendum-v4-codeword-assembly-pilot.json) and the
+[frozen confirmation addendum](addendum-v4-codeword-assembly-confirmation.json)
+of family `8e53235b-bch-codeword-assembly`. The
 [measurement contract](../measurement-contract.md) and the
 [shared protocol](../f547c394/protocol.md) at
 [version 4](../f547c394/amendment-v4.md) govern every receipt. This page
 states how the two arms are reached, which cells are frozen, what decides, and
-what each outcome does to the candidate.
+what the recorded outcome does to the candidate.
 
 ## How the arms are reached
 
 Both arms are routes of one executable, `consumer-arm` of the bit-storage
-consumer harness (`04b85d10/survey/gf2-side`), built once; the plan selects a
-route through `GF2_CONSUMER_PATH`.
+consumer harness (`04b85d10/survey/gf2-side`), built once from the tree each
+receipt pins under `inputs/producing`; the plan selects a route through
+`GF2_CONSUMER_PATH`.
 
-| Arm | Workspace assembly | Entry |
+| Arm | Workspace assembly in the pinned tree | Entry |
 |---|---|---|
 | baseline | `CodewordAssembly::BitSerial` | `BchCode::encode_batch_into`, or `encode_batch_family_into` in a family-pinned cell |
 | candidate | `CodewordAssembly::WordWise` | the same entry on the same messages |
 
-`CodewordAssembly::BitSerial` is the default of every workspace and the only
-assembly an entry point without a workspace uses, so production encoding is
-what `main` encodes and the baseline arm is the pinned pre-change consumer.
-The candidate is reachable only through
-`BchEncodeWorkspace::set_codeword_assembly`, documented as a comparator that
-no encode selects. The pair differs in that selection alone: one build, one
-entry point, one message batch.
+In the pinned tree `CodewordAssembly::BitSerial` is the default of every
+workspace and the only assembly an entry point without a workspace uses, so
+the baseline arm is the pinned pre-change consumer, and the candidate is
+reachable only through `BchEncodeWorkspace::set_codeword_assembly`. The pair
+differs in that selection alone: one build, one entry point, one message
+batch.
 
 The candidate copies the message as one packed run and places the parity as
 shifted runs through `BitVec::write_bits`, the bit-run write this issue adds
 to `gf2-core`.
 
-Correctness precedes timing. The `gf2-coding` unit tests hold both assemblies
-to the same bits: the assembly functions directly at dimensions and
-redundancies of 0, 1, 63, 64, 65, 127, 128 and 129 bits under both layouts
-with zero tail padding checked, every registered family at the batch lengths
-0, 1, 63, 64, 65 and 129 on the boundary codes and the construction suite's
-parameter points, and every workspace, batch and parallel entry point. The
-harness's `consumer-verify` requires every family under both assemblies to
-write the reference family's bits on the three declared mother codes, and the
-launcher runs it before the first timed session.
+Correctness precedes timing. In the pinned tree the `gf2-coding` unit tests
+hold both assemblies to the same bits and the harness's `consumer-verify`
+requires every family under both assemblies to write the reference family's
+bits on the three declared mother codes; the launcher runs it before the first
+timed session. The tree that adopts the candidate keeps the bit-serial writer
+as the unit tests' reference: the assembly function is held to it at
+dimensions and redundancies of 0, 1, 63, 64, 65, 127, 128 and 129 bits under
+both layouts with zero tail padding checked, and every registered family is
+held to the serial reduction followed by that writer at the batch lengths 0,
+1, 63, 64, 65 and 129 on the boundary codes and the construction suite's
+parameter points.
 
 ## Frozen cells
 
@@ -115,14 +118,25 @@ its Source table carries each receipt's digest and acceptance finding count.
   pilot no-win row does not apply.
 - **Confirmation.** The addendum is frozen with every pilot cell
   confirmatory; the frozen resolution lies below both margins (derivation
-  record). The tables report the stage as absent while no confirmation
-  receipt is committed, and the decision rule reads nothing else: production
-  encodes with the bit-serial assembly and the candidate stays a selectable
-  comparator.
+  record). The receipt is accepted and qualifies for production selection
+  ([acceptance summary](../../../bench_results/8e53235b/r1-codeword-assembly-confirmation/acceptance-summary.md);
+  tables, § Confirmation). Its execution log records every declared cell
+  started, checkpointed and completed once at its declared pairs with status
+  `measured` across two sessions, with a terminal `complete` record. Every
+  confirmatory cell, the deciding cell and the four guards, records the
+  outcome `pass` with the decision `improved`.
+- **Decision.** The *adopt* row applies. The packed kernel assembles every
+  codeword word-wise through the existing entry points; `CodewordAssembly`,
+  the `assembly` register field, the workspace setter and the harness routes
+  are removed, and the bit-serial writer is the reference of the `gf2-coding`
+  unit tests.
 
 ## Limits
 
 The family holds one cache state, one worker, three mother codes and two
-batch lengths. The parallel entry point reaches the candidate through its
-workspaces and is covered by the unit tests, not by a timed cell. The entry
-points that take no workspace use the bit-serial assembly.
+batch lengths. The parallel entry point reaches the assembly through its
+workspaces and is covered by the unit tests, not by a timed cell. The
+launcher, the plan projection and the smoke script name the candidate routes
+of the pinned harness; the adopting tree's harness carries one assembly and
+no such route, so they reproduce the campaigns only on the tree the receipts
+pin.
