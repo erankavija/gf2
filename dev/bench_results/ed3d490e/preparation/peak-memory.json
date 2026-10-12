@@ -3,7 +3,7 @@
     "aff3ct-flooding-nms-f32": {
       "codes": {
         "dvb-t2-r12": {
-          "above_floor_median_kib": 70622.0,
+          "above_floor_median_kib": 70718.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -18,7 +18,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "matched",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": "none",
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11320.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11320,
+                11324,
+                11324,
+                11292,
+                11296,
+                11320,
+                11320,
+                11304,
+                11292,
+                11288,
+                11320,
+                11320,
+                11320,
+                11320,
+                11320,
+                11280,
+                11204,
+                11320,
+                11304,
+                11324
+              ],
+              "stdev_kib": 27.052541470257466
+            },
+            "max_kib": 11708,
+            "median_kib": 11312.0,
+            "min_kib": 10664,
+            "samples_kib": [
+              11336,
+              11708,
+              11456,
+              11208,
+              11576,
+              11668,
+              11084,
+              11652,
+              11384,
+              10664,
+              11056,
+              11480,
+              11028,
+              11204,
+              11672,
+              11248,
+              11556,
+              11288,
+              11168,
+              11156
+            ],
+            "stdev_kib": 264.2737974147267
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11332,
+            "median_kib": 11324.0,
+            "min_kib": 11208,
+            "samples_kib": [
+              11304,
+              11324,
+              11324,
+              11320,
+              11328,
+              11332,
+              11300,
+              11208,
+              11332,
+              11320,
+              11324,
+              11324,
+              11324,
+              11324,
+              11316,
+              11304,
+              11324,
+              11328,
+              11220,
+              11324
+            ],
+            "stdev_kib": 33.23793014012756
+          },
+          "max_kib": 82252,
+          "median_kib": 82030.0,
+          "min_kib": 81520,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json",
+            "sha256": "8443cdfae4e6bfb7036c8dbb10142baecacd40f911c582bf18a369aefa15559a"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -55,126 +172,32 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11328,
-              "median_kib": 11322.0,
-              "min_kib": 11288,
-              "samples_kib": [
-                11320,
-                11328,
-                11328,
-                11316,
-                11292,
-                11328,
-                11320,
-                11328,
-                11324,
-                11324,
-                11316,
-                11328,
-                11288,
-                11292,
-                11328,
-                11328,
-                11308,
-                11324,
-                11316,
-                11320
-              ],
-              "stdev_kib": 12.615863030328127
-            },
-            "max_kib": 11680,
-            "median_kib": 11480.0,
-            "min_kib": 11032,
-            "samples_kib": [
-              11672,
-              11648,
-              11672,
-              11416,
-              11384,
-              11420,
-              11420,
-              11680,
-              11672,
-              11032,
-              11664,
-              11540,
-              11196,
-              11444,
-              11480,
-              11228,
-              11656,
-              11480,
-              11476,
-              11480
-            ],
-            "stdev_kib": 175.17933668101384
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11332,
-            "median_kib": 11324.0,
-            "min_kib": 11208,
-            "samples_kib": [
-              11332,
-              11320,
-              11320,
-              11328,
-              11324,
-              11312,
-              11332,
-              11324,
-              11324,
-              11328,
-              11320,
-              11300,
-              11308,
-              11208,
-              11208,
-              11328,
-              11324,
-              11316,
-              11324,
-              11328
-            ],
-            "stdev_kib": 34.994856764959046
-          },
-          "max_kib": 82560,
-          "median_kib": 82102.0,
-          "min_kib": 81472,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json",
-            "sha256": "8443cdfae4e6bfb7036c8dbb10142baecacd40f911c582bf18a369aefa15559a"
-          },
           "samples_kib": [
             81808,
-            82192,
-            81992,
+            82196,
+            82100,
             82064,
+            81960,
+            82172,
+            81892,
+            82008,
+            82196,
+            81784,
+            82068,
+            82052,
+            81832,
+            82252,
+            82196,
+            81952,
+            81520,
+            82136,
             81968,
-            82176,
-            82108,
-            81472,
-            82400,
-            82560,
-            82236,
-            82336,
-            81860,
-            82268,
-            82096,
-            81996,
-            82224,
-            82156,
-            82040,
-            81788
+            81832
           ],
-          "stdev_kib": 235.88768513849976
+          "stdev_kib": 178.22356746513634
         },
         "nr-bg1-z384": {
-          "above_floor_median_kib": 28684.0,
+          "above_floor_median_kib": 28632.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -189,7 +212,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "matched",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": "none",
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11320.0,
+              "min_kib": 11208,
+              "samples_kib": [
+                11320,
+                11304,
+                11288,
+                11296,
+                11328,
+                11324,
+                11320,
+                11324,
+                11328,
+                11320,
+                11304,
+                11324,
+                11308,
+                11296,
+                11324,
+                11320,
+                11324,
+                11324,
+                11324,
+                11208
+              ],
+              "stdev_kib": 26.24195114697076
+            },
+            "max_kib": 11672,
+            "median_kib": 11480.0,
+            "min_kib": 11044,
+            "samples_kib": [
+              11672,
+              11520,
+              11384,
+              11452,
+              11480,
+              11176,
+              11672,
+              11264,
+              11480,
+              11428,
+              11404,
+              11228,
+              11640,
+              11044,
+              11612,
+              11672,
+              11540,
+              11672,
+              11480,
+              11304
+            ],
+            "stdev_kib": 176.98576213921842
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11332,
+            "median_kib": 11324.0,
+            "min_kib": 11208,
+            "samples_kib": [
+              11324,
+              11328,
+              11216,
+              11324,
+              11208,
+              11328,
+              11324,
+              11304,
+              11328,
+              11324,
+              11284,
+              11328,
+              11324,
+              11328,
+              11212,
+              11308,
+              11316,
+              11332,
+              11324,
+              11320
+            ],
+            "stdev_kib": 40.18905323592483
+          },
+          "max_kib": 40580,
+          "median_kib": 40112.0,
+          "min_kib": 39732,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json",
+            "sha256": "330e6dd7c7c90c904128328084e4ceb678fbe3a38a2ed56e7155ec4e6a2f72d0"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -226,123 +366,29 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11332,
-              "median_kib": 11324.0,
-              "min_kib": 11216,
-              "samples_kib": [
-                11328,
-                11320,
-                11320,
-                11332,
-                11300,
-                11320,
-                11328,
-                11324,
-                11324,
-                11324,
-                11312,
-                11324,
-                11288,
-                11284,
-                11328,
-                11316,
-                11216,
-                11332,
-                11328,
-                11328
-              ],
-              "stdev_kib": 25.99923075785128
-            },
-            "max_kib": 11680,
-            "median_kib": 11478.0,
-            "min_kib": 11188,
-            "samples_kib": [
-              11672,
-              11388,
-              11544,
-              11680,
-              11460,
-              11348,
-              11516,
-              11480,
-              11672,
-              11420,
-              11660,
-              11672,
-              11444,
-              11188,
-              11228,
-              11476,
-              11564,
-              11392,
-              11420,
-              11480
-            ],
-            "stdev_kib": 138.96244096877402
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11332,
-            "median_kib": 11324.0,
-            "min_kib": 11284,
-            "samples_kib": [
-              11284,
-              11324,
-              11328,
-              11296,
-              11328,
-              11308,
-              11312,
-              11304,
-              11328,
-              11332,
-              11304,
-              11324,
-              11328,
-              11324,
-              11324,
-              11308,
-              11296,
-              11324,
-              11308,
-              11324
-            ],
-            "stdev_kib": 13.283071933856265
-          },
-          "max_kib": 40388,
-          "median_kib": 40162.0,
-          "min_kib": 39632,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json",
-            "sha256": "330e6dd7c7c90c904128328084e4ceb678fbe3a38a2ed56e7155ec4e6a2f72d0"
-          },
           "samples_kib": [
-            40192,
-            40260,
             40224,
-            39832,
-            40056,
-            40388,
+            40108,
+            40212,
+            39920,
+            39988,
+            40580,
+            39732,
+            39988,
+            39856,
+            40116,
+            39888,
+            40176,
             40084,
-            40292,
-            40052,
+            40104,
+            40140,
+            40196,
             40364,
-            40056,
-            40216,
-            40048,
-            40040,
-            40364,
-            40172,
-            40152,
-            39632,
-            40100,
-            40316
+            40032,
+            40156,
+            40484
           ],
-          "stdev_kib": 179.57505394681078
+          "stdev_kib": 198.966429329171
         }
       },
       "executable": "aff3ct-throughput-arm",
@@ -360,7 +406,7 @@
     "aff3ct-layered-nms-f32-inter": {
       "codes": {
         "dvb-t2-r12": {
-          "above_floor_median_kib": 173932.0,
+          "above_floor_median_kib": 174138.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -375,7 +421,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "fastest-compatible",
+              "precision": "f32",
+              "schedule": "layered",
+              "simd": "INTER",
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 8,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "layered",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11332,
+              "median_kib": 11324.0,
+              "min_kib": 11300,
+              "samples_kib": [
+                11324,
+                11300,
+                11328,
+                11328,
+                11332,
+                11320,
+                11324,
+                11328,
+                11324,
+                11324,
+                11328,
+                11328,
+                11320,
+                11300,
+                11304,
+                11324,
+                11308,
+                11324,
+                11324,
+                11324
+              ],
+              "stdev_kib": 9.431860898041277
+            },
+            "max_kib": 11672,
+            "median_kib": 11348.0,
+            "min_kib": 10972,
+            "samples_kib": [
+              11092,
+              11504,
+              11672,
+              10972,
+              11372,
+              11008,
+              11348,
+              11324,
+              11456,
+              11348,
+              11348,
+              11264,
+              11480,
+              11012,
+              11268,
+              11540,
+              11528,
+              11268,
+              11556,
+              11480
+            ],
+            "stdev_kib": 192.87923682968056
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11332,
+            "median_kib": 11324.0,
+            "min_kib": 11300,
+            "samples_kib": [
+              11332,
+              11324,
+              11312,
+              11320,
+              11324,
+              11324,
+              11300,
+              11324,
+              11324,
+              11320,
+              11324,
+              11324,
+              11320,
+              11328,
+              11304,
+              11328,
+              11324,
+              11320,
+              11324,
+              11324
+            ],
+            "stdev_kib": 7.493997598078078
+          },
+          "max_kib": 185792,
+          "median_kib": 185486.0,
+          "min_kib": 185140,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json",
+            "sha256": "fc00b05ba8e05726b733e8e6c05d4ddaff3a2ae6f9b3b5f565fdd2a786cc6ef1"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -412,126 +575,32 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11332,
-              "median_kib": 11322.0,
-              "min_kib": 11284,
-              "samples_kib": [
-                11328,
-                11324,
-                11316,
-                11324,
-                11320,
-                11324,
-                11316,
-                11332,
-                11316,
-                11292,
-                11288,
-                11328,
-                11328,
-                11324,
-                11316,
-                11300,
-                11324,
-                11328,
-                11284,
-                11296
-              ],
-              "stdev_kib": 14.492756811593852
-            },
-            "max_kib": 11672,
-            "median_kib": 11474.0,
-            "min_kib": 10940,
-            "samples_kib": [
-              11196,
-              10940,
-              11476,
-              11348,
-              11672,
-              11420,
-              11280,
-              11548,
-              11664,
-              11640,
-              11484,
-              11072,
-              11484,
-              11540,
-              11472,
-              11180,
-              11672,
-              11672,
-              11416,
-              11396
-            ],
-            "stdev_kib": 203.27823297146205
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11328,
-            "median_kib": 11320.0,
-            "min_kib": 11204,
-            "samples_kib": [
-              11324,
-              11320,
-              11292,
-              11324,
-              11316,
-              11296,
-              11324,
-              11324,
-              11324,
-              11292,
-              11324,
-              11324,
-              11308,
-              11316,
-              11328,
-              11300,
-              11324,
-              11204,
-              11320,
-              11320
-            ],
-            "stdev_kib": 26.87675575660128
-          },
-          "max_kib": 185812,
-          "median_kib": 185406.0,
-          "min_kib": 184900,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json",
-            "sha256": "fc00b05ba8e05726b733e8e6c05d4ddaff3a2ae6f9b3b5f565fdd2a786cc6ef1"
-          },
           "samples_kib": [
-            185424,
-            185400,
-            185812,
-            185436,
-            185596,
-            185376,
-            184900,
-            185268,
-            185632,
-            185412,
+            185696,
+            185648,
+            185556,
+            185440,
+            185504,
+            185244,
+            185456,
+            185320,
+            185448,
             185388,
-            185688,
-            185352,
-            185188,
-            185596,
-            185544,
-            185340,
-            185352,
-            185472,
-            185044
+            185424,
+            185576,
+            185640,
+            185488,
+            185304,
+            185656,
+            185140,
+            185484,
+            185792,
+            185732
           ],
-          "stdev_kib": 206.98937170782466
+          "stdev_kib": 165.07259009296484
         },
         "nr-bg1-z384": {
-          "above_floor_median_kib": 69166.0,
+          "above_floor_median_kib": 69368.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -546,7 +615,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "fastest-compatible",
+              "precision": "f32",
+              "schedule": "layered",
+              "simd": "INTER",
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 8,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "layered",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11320.0,
+              "min_kib": 11220,
+              "samples_kib": [
+                11300,
+                11320,
+                11324,
+                11284,
+                11328,
+                11320,
+                11324,
+                11324,
+                11324,
+                11312,
+                11292,
+                11220,
+                11324,
+                11316,
+                11300,
+                11300,
+                11324,
+                11324,
+                11320,
+                11324
+              ],
+              "stdev_kib": 24.11555514600483
+            },
+            "max_kib": 11672,
+            "median_kib": 11480.0,
+            "min_kib": 10936,
+            "samples_kib": [
+              11136,
+              11584,
+              11160,
+              10936,
+              11672,
+              11672,
+              11196,
+              11672,
+              11480,
+              11468,
+              11360,
+              11184,
+              11232,
+              11660,
+              11200,
+              11648,
+              11480,
+              11480,
+              11672,
+              11480
+            ],
+            "stdev_kib": 221.68545283802453
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11328,
+            "median_kib": 11324.0,
+            "min_kib": 11204,
+            "samples_kib": [
+              11212,
+              11308,
+              11204,
+              11328,
+              11212,
+              11324,
+              11324,
+              11324,
+              11328,
+              11324,
+              11316,
+              11324,
+              11312,
+              11292,
+              11328,
+              11324,
+              11324,
+              11324,
+              11204,
+              11208
+            ],
+            "stdev_kib": 49.32301693935601
+          },
+          "max_kib": 81224,
+          "median_kib": 80848.0,
+          "min_kib": 80420,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json",
+            "sha256": "29248fdeeb0f408166190f9c0c5d72b7ce8b40f09a1eb3ddb7a7c9cd437fea4d"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -583,123 +769,29 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11328,
-              "median_kib": 11324.0,
-              "min_kib": 11208,
-              "samples_kib": [
-                11324,
-                11208,
-                11324,
-                11324,
-                11320,
-                11312,
-                11324,
-                11328,
-                11328,
-                11324,
-                11324,
-                11324,
-                11324,
-                11324,
-                11324,
-                11320,
-                11312,
-                11324,
-                11328,
-                11316
-              ],
-              "stdev_kib": 25.348767228407777
-            },
-            "max_kib": 11672,
-            "median_kib": 11670.0,
-            "min_kib": 11220,
-            "samples_kib": [
-              11672,
-              11556,
-              11672,
-              11672,
-              11420,
-              11488,
-              11672,
-              11672,
-              11292,
-              11672,
-              11484,
-              11672,
-              11672,
-              11512,
-              11456,
-              11672,
-              11220,
-              11672,
-              11480,
-              11668
-            ],
-            "stdev_kib": 136.77777597256068
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11328,
-            "median_kib": 11324.0,
-            "min_kib": 11208,
-            "samples_kib": [
-              11324,
-              11324,
-              11320,
-              11324,
-              11324,
-              11324,
-              11320,
-              11328,
-              11328,
-              11324,
-              11324,
-              11288,
-              11324,
-              11320,
-              11324,
-              11308,
-              11324,
-              11208,
-              11300,
-              11212
-            ],
-            "stdev_kib": 34.252591142861
-          },
-          "max_kib": 81188,
-          "median_kib": 80836.0,
-          "min_kib": 80080,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json",
-            "sha256": "29248fdeeb0f408166190f9c0c5d72b7ce8b40f09a1eb3ddb7a7c9cd437fea4d"
-          },
           "samples_kib": [
-            80844,
-            80832,
-            80892,
-            80752,
-            80840,
-            81080,
-            80572,
-            80588,
-            80588,
-            80904,
-            80080,
-            80936,
-            80584,
-            80648,
-            81188,
-            80748,
-            80996,
-            80484,
+            81164,
+            80728,
+            80420,
+            81028,
+            80704,
+            80580,
+            81224,
+            80736,
+            80740,
             81024,
-            80944
+            80620,
+            81144,
+            81136,
+            80856,
+            80984,
+            81080,
+            80608,
+            80948,
+            80840,
+            80676
           ],
-          "stdev_kib": 245.37473382563252
+          "stdev_kib": 224.4121208847686
         }
       },
       "executable": "aff3ct-throughput-arm",
@@ -717,7 +809,7 @@
     "aff3ct-layered-nms-i16-inter": {
       "codes": {
         "dvb-t2-r12": {
-          "above_floor_median_kib": 174296.0,
+          "above_floor_median_kib": 174450.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -732,7 +824,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "fastest-compatible",
+              "precision": "i16",
+              "schedule": "layered",
+              "simd": "INTER",
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 16,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "i16",
+              "schedule": "layered",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11324.0,
+              "min_kib": 11212,
+              "samples_kib": [
+                11324,
+                11316,
+                11324,
+                11320,
+                11324,
+                11328,
+                11324,
+                11324,
+                11288,
+                11324,
+                11324,
+                11320,
+                11212,
+                11320,
+                11324,
+                11324,
+                11216,
+                11324,
+                11320,
+                11320
+              ],
+              "stdev_kib": 32.97271599368181
+            },
+            "max_kib": 11672,
+            "median_kib": 11420.0,
+            "min_kib": 11000,
+            "samples_kib": [
+              11228,
+              11268,
+              11480,
+              11656,
+              11420,
+              11480,
+              11420,
+              11672,
+              11000,
+              11168,
+              11672,
+              11556,
+              11420,
+              11532,
+              11516,
+              11096,
+              11272,
+              11480,
+              11224,
+              11232
+            ],
+            "stdev_kib": 189.18097155898107
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11328,
+            "median_kib": 11320.0,
+            "min_kib": 11288,
+            "samples_kib": [
+              11324,
+              11288,
+              11296,
+              11320,
+              11292,
+              11324,
+              11296,
+              11316,
+              11324,
+              11328,
+              11312,
+              11324,
+              11292,
+              11328,
+              11304,
+              11328,
+              11324,
+              11320,
+              11328,
+              11320
+            ],
+            "stdev_kib": 13.763720427268202
+          },
+          "max_kib": 186068,
+          "median_kib": 185870.0,
+          "min_kib": 185500,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json",
+            "sha256": "68beaf11e9139cf3a12123016215747ede3ac796663a23c51bcd3c78c5e4e5ce"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -769,126 +978,32 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11328,
-              "median_kib": 11322.0,
-              "min_kib": 11212,
-              "samples_kib": [
-                11328,
-                11212,
-                11324,
-                11292,
-                11324,
-                11284,
-                11324,
-                11324,
-                11328,
-                11320,
-                11292,
-                11324,
-                11320,
-                11284,
-                11324,
-                11312,
-                11324,
-                11324,
-                11316,
-                11296
-              ],
-              "stdev_kib": 26.671332925071443
-            },
-            "max_kib": 11672,
-            "median_kib": 11592.0,
-            "min_kib": 11172,
-            "samples_kib": [
-              11672,
-              11364,
-              11480,
-              11636,
-              11536,
-              11588,
-              11672,
-              11172,
-              11420,
-              11504,
-              11448,
-              11516,
-              11480,
-              11596,
-              11672,
-              11660,
-              11672,
-              11612,
-              11664,
-              11644
-            ],
-            "stdev_kib": 127.73347251210232
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11328,
-            "median_kib": 11324.0,
-            "min_kib": 11204,
-            "samples_kib": [
-              11324,
-              11324,
-              11324,
-              11316,
-              11324,
-              11324,
-              11296,
-              11324,
-              11304,
-              11328,
-              11288,
-              11324,
-              11324,
-              11308,
-              11312,
-              11204,
-              11320,
-              11324,
-              11316,
-              11324
-            ],
-            "stdev_kib": 26.8
-          },
-          "max_kib": 186108,
-          "median_kib": 185888.0,
-          "min_kib": 185488,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json",
-            "sha256": "68beaf11e9139cf3a12123016215747ede3ac796663a23c51bcd3c78c5e4e5ce"
-          },
           "samples_kib": [
-            185860,
-            186012,
-            186108,
-            185488,
-            185832,
-            185544,
-            185880,
-            186040,
-            185896,
-            185860,
+            185952,
+            185804,
+            185904,
+            185964,
+            185872,
             185936,
+            185672,
+            185564,
+            185900,
+            185868,
             185876,
-            185808,
+            185832,
+            185860,
+            185500,
+            186044,
+            185964,
+            185736,
+            185620,
             186068,
-            185576,
-            185508,
-            185908,
-            186052,
-            186008,
-            186044
+            185836
           ],
-          "stdev_kib": 188.23857203028288
+          "stdev_kib": 147.96364418329253
         },
         "nr-bg1-z384": {
-          "above_floor_median_kib": 69416.0,
+          "above_floor_median_kib": 69574.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -903,7 +1018,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "fastest-compatible",
+              "precision": "i16",
+              "schedule": "layered",
+              "simd": "INTER",
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 16,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "i16",
+              "schedule": "layered",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11322.0,
+              "min_kib": 11300,
+              "samples_kib": [
+                11300,
+                11328,
+                11324,
+                11324,
+                11316,
+                11316,
+                11320,
+                11320,
+                11308,
+                11328,
+                11328,
+                11328,
+                11324,
+                11328,
+                11328,
+                11320,
+                11324,
+                11316,
+                11300,
+                11320
+              ],
+              "stdev_kib": 8.48528137423857
+            },
+            "max_kib": 11708,
+            "median_kib": 11566.0,
+            "min_kib": 11156,
+            "samples_kib": [
+              11592,
+              11672,
+              11216,
+              11288,
+              11664,
+              11156,
+              11708,
+              11476,
+              11596,
+              11680,
+              11612,
+              11480,
+              11516,
+              11228,
+              11672,
+              11668,
+              11480,
+              11408,
+              11648,
+              11540
+            ],
+            "stdev_kib": 168.40368166996825
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11328,
+            "median_kib": 11324.0,
+            "min_kib": 11208,
+            "samples_kib": [
+              11324,
+              11308,
+              11324,
+              11296,
+              11324,
+              11324,
+              11208,
+              11324,
+              11320,
+              11324,
+              11308,
+              11324,
+              11288,
+              11212,
+              11308,
+              11324,
+              11324,
+              11328,
+              11324,
+              11296
+            ],
+            "stdev_kib": 33.8325287260648
+          },
+          "max_kib": 81376,
+          "median_kib": 81140.0,
+          "min_kib": 80788,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json",
+            "sha256": "12d9c0994d23424fecbbf286d5c0250a2d599a172505c08c855805ca47575fad"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -940,123 +1172,29 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11336,
-              "median_kib": 11324.0,
-              "min_kib": 11220,
-              "samples_kib": [
-                11324,
-                11220,
-                11328,
-                11308,
-                11324,
-                11324,
-                11336,
-                11324,
-                11300,
-                11324,
-                11320,
-                11324,
-                11304,
-                11324,
-                11328,
-                11312,
-                11320,
-                11328,
-                11324,
-                11324
-              ],
-              "stdev_kib": 23.596609926004202
-            },
-            "max_kib": 11672,
-            "median_kib": 11572.0,
-            "min_kib": 11348,
-            "samples_kib": [
-              11672,
-              11564,
-              11672,
-              11640,
-              11420,
-              11420,
-              11352,
-              11348,
-              11456,
-              11420,
-              11480,
-              11672,
-              11648,
-              11672,
-              11672,
-              11656,
-              11480,
-              11584,
-              11420,
-              11580
-            ],
-            "stdev_kib": 116.27054657134798
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11324,
-            "median_kib": 11320.0,
-            "min_kib": 11208,
-            "samples_kib": [
-              11212,
-              11220,
-              11320,
-              11212,
-              11324,
-              11320,
-              11324,
-              11324,
-              11208,
-              11324,
-              11324,
-              11320,
-              11324,
-              11324,
-              11288,
-              11304,
-              11280,
-              11324,
-              11208,
-              11324
-            ],
-            "stdev_kib": 46.85979086594391
-          },
-          "max_kib": 81320,
-          "median_kib": 80988.0,
-          "min_kib": 80520,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json",
-            "sha256": "12d9c0994d23424fecbbf286d5c0250a2d599a172505c08c855805ca47575fad"
-          },
           "samples_kib": [
-            81100,
-            81128,
-            81012,
-            81032,
-            80860,
-            81320,
+            81376,
+            80848,
+            81008,
+            80840,
+            80788,
+            81316,
             80932,
-            80520,
-            81264,
-            80964,
-            80792,
-            80948,
-            80924,
-            80868,
-            80728,
-            81040,
-            80796,
-            81196,
+            80808,
+            81312,
+            81136,
+            81024,
             81144,
-            81188
+            81264,
+            81112,
+            81236,
+            81180,
+            81276,
+            80940,
+            81340,
+            81248
           ],
-          "stdev_kib": 191.5013315880597
+          "stdev_kib": 188.99481474368548
         }
       },
       "executable": "aff3ct-throughput-arm",
@@ -1075,7 +1213,7 @@
     "aff3ct-spa-intra": {
       "codes": {
         "dvb-t2-r12": {
-          "above_floor_median_kib": 71240.0,
+          "above_floor_median_kib": 71266.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -1090,7 +1228,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "fastest-compatible",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": "INTRA",
+              "update_rule": "sum-product"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": null,
+                "kind": "sum-product"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11320,
+              "median_kib": 11318.0,
+              "min_kib": 11212,
+              "samples_kib": [
+                11320,
+                11316,
+                11304,
+                11320,
+                11292,
+                11288,
+                11212,
+                11320,
+                11300,
+                11320,
+                11284,
+                11320,
+                11316,
+                11316,
+                11320,
+                11320,
+                11320,
+                11320,
+                11316,
+                11320
+              ],
+              "stdev_kib": 24.7095123383688
+            },
+            "max_kib": 11672,
+            "median_kib": 11478.0,
+            "min_kib": 11096,
+            "samples_kib": [
+              11228,
+              11420,
+              11464,
+              11672,
+              11492,
+              11584,
+              11564,
+              11480,
+              11208,
+              11420,
+              11212,
+              11420,
+              11476,
+              11672,
+              11096,
+              11480,
+              11672,
+              11112,
+              11480,
+              11612
+            ],
+            "stdev_kib": 175.26425762259686
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11318.0,
+            "min_kib": 11204,
+            "samples_kib": [
+              11300,
+              11316,
+              11316,
+              11320,
+              11288,
+              11296,
+              11292,
+              11324,
+              11320,
+              11320,
+              11320,
+              11216,
+              11320,
+              11316,
+              11320,
+              11320,
+              11280,
+              11204,
+              11320,
+              11320
+            ],
+            "stdev_kib": 33.01575381541363
+          },
+          "max_kib": 83256,
+          "median_kib": 82744.0,
+          "min_kib": 82476,
+          "quality": {
+            "path": "dev/bench_results/ed3d490e/preparation/quality-intra/aff3ct-spa-intra-dvb-t2-r12.json",
+            "sha256": "f18498e30eb972c0de5cae432ac50935a2e4292ab2ea5364509c8790c7cf0ef4"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -1127,126 +1382,32 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11324,
-              "median_kib": 11316.0,
-              "min_kib": 11276,
-              "samples_kib": [
-                11320,
-                11292,
-                11276,
-                11280,
-                11300,
-                11320,
-                11316,
-                11316,
-                11324,
-                11324,
-                11320,
-                11316,
-                11312,
-                11284,
-                11320,
-                11320,
-                11320,
-                11288,
-                11284,
-                11292
-              ],
-              "stdev_kib": 16.515447314559786
-            },
-            "max_kib": 11672,
-            "median_kib": 11480.0,
-            "min_kib": 11020,
-            "samples_kib": [
-              11672,
-              11260,
-              11632,
-              11640,
-              11020,
-              11672,
-              11480,
-              11348,
-              11480,
-              11516,
-              11480,
-              11172,
-              11668,
-              11424,
-              11480,
-              11096,
-              11228,
-              11336,
-              11636,
-              11300
-            ],
-            "stdev_kib": 195.79938712876503
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11324,
-            "median_kib": 11318.0,
-            "min_kib": 11200,
-            "samples_kib": [
-              11320,
-              11316,
-              11212,
-              11324,
-              11292,
-              11324,
-              11320,
-              11320,
-              11292,
-              11320,
-              11300,
-              11316,
-              11284,
-              11200,
-              11324,
-              11316,
-              11324,
-              11288,
-              11320,
-              11324
-            ],
-            "stdev_kib": 34.536357653927546
-          },
-          "max_kib": 83172,
-          "median_kib": 82720.0,
-          "min_kib": 81828,
-          "quality": {
-            "path": "dev/bench_results/ed3d490e/preparation/quality-intra/aff3ct-spa-intra-dvb-t2-r12.json",
-            "sha256": "f18498e30eb972c0de5cae432ac50935a2e4292ab2ea5364509c8790c7cf0ef4"
-          },
           "samples_kib": [
-            82560,
-            82976,
-            83100,
-            83172,
-            82724,
-            81828,
-            82716,
-            82808,
-            82456,
-            82600,
-            83076,
-            82668,
-            82576,
-            82380,
-            82888,
-            83032,
-            82852,
-            82460,
+            82816,
+            82652,
+            82756,
+            82936,
+            82868,
+            82672,
+            82592,
+            82624,
+            83256,
+            82592,
+            82476,
+            82784,
             82588,
-            82996
+            82676,
+            82812,
+            83080,
+            83000,
+            82824,
+            82580,
+            82732
           ],
-          "stdev_kib": 307.99246744035804
+          "stdev_kib": 187.52909107655805
         },
         "nr-bg1-z384": {
-          "above_floor_median_kib": 28266.0,
+          "above_floor_median_kib": 28398.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -1261,7 +1422,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "fastest-compatible",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": "INTRA",
+              "update_rule": "sum-product"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": null,
+                "kind": "sum-product"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11320.0,
+              "min_kib": 11200,
+              "samples_kib": [
+                11320,
+                11304,
+                11312,
+                11300,
+                11320,
+                11280,
+                11320,
+                11316,
+                11320,
+                11316,
+                11288,
+                11324,
+                11320,
+                11320,
+                11320,
+                11304,
+                11320,
+                11320,
+                11320,
+                11200
+              ],
+              "stdev_kib": 27.176460402340847
+            },
+            "max_kib": 11672,
+            "median_kib": 11460.0,
+            "min_kib": 10788,
+            "samples_kib": [
+              11516,
+              11652,
+              11476,
+              11656,
+              10788,
+              11444,
+              11284,
+              11492,
+              11344,
+              11672,
+              11248,
+              11480,
+              11348,
+              11612,
+              11516,
+              10908,
+              11480,
+              11132,
+              11208,
+              11364
+            ],
+            "stdev_kib": 230.8276413257303
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11316.0,
+            "min_kib": 11204,
+            "samples_kib": [
+              11320,
+              11204,
+              11324,
+              11324,
+              11316,
+              11320,
+              11312,
+              11284,
+              11316,
+              11320,
+              11296,
+              11316,
+              11324,
+              11320,
+              11324,
+              11320,
+              11312,
+              11292,
+              11316,
+              11316
+            ],
+            "stdev_kib": 26.339324213046925
+          },
+          "max_kib": 40236,
+          "median_kib": 39858.0,
+          "min_kib": 39436,
+          "quality": {
+            "path": "dev/bench_results/ed3d490e/preparation/quality-intra/aff3ct-spa-intra-nr-bg1-z384.json",
+            "sha256": "f253417b02ee74103e3889c72a56d4601ecd03da050b5e1fda6e8b1e825a8db8"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -1298,132 +1576,34 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11324,
-              "median_kib": 11310.0,
-              "min_kib": 11200,
-              "samples_kib": [
-                11312,
-                11308,
-                11320,
-                11304,
-                11308,
-                11320,
-                11320,
-                11316,
-                11308,
-                11200,
-                11324,
-                11320,
-                11324,
-                11320,
-                11316,
-                11296,
-                11204,
-                11208,
-                11308,
-                11308
-              ],
-              "stdev_kib": 39.801507509138396
-            },
-            "max_kib": 11680,
-            "median_kib": 11598.0,
-            "min_kib": 11304,
-            "samples_kib": [
-              11632,
-              11664,
-              11672,
-              11660,
-              11412,
-              11480,
-              11516,
-              11320,
-              11472,
-              11480,
-              11680,
-              11480,
-              11484,
-              11672,
-              11672,
-              11652,
-              11304,
-              11564,
-              11664,
-              11652
-            ],
-            "stdev_kib": 119.4271325955706
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11324,
-            "median_kib": 11318.0,
-            "min_kib": 11204,
-            "samples_kib": [
-              11316,
-              11292,
-              11204,
-              11320,
-              11304,
-              11316,
-              11212,
-              11324,
-              11296,
-              11324,
-              11320,
-              11304,
-              11320,
-              11320,
-              11324,
-              11320,
-              11320,
-              11324,
-              11276,
-              11292
-            ],
-            "stdev_kib": 33.82957286162508
-          },
-          "max_kib": 40176,
-          "median_kib": 39864.0,
-          "min_kib": 39480,
-          "quality": {
-            "path": "dev/bench_results/ed3d490e/preparation/quality-intra/aff3ct-spa-intra-nr-bg1-z384.json",
-            "sha256": "f253417b02ee74103e3889c72a56d4601ecd03da050b5e1fda6e8b1e825a8db8"
-          },
           "samples_kib": [
-            40076,
-            39728,
-            39540,
-            39984,
-            39824,
-            40152,
-            39800,
-            39480,
-            39844,
-            39972,
-            39884,
-            39800,
-            40176,
-            40032,
-            39960,
-            39752,
-            40040,
-            40144,
-            39696,
-            39780
+            40172,
+            40236,
+            39896,
+            39888,
+            39456,
+            39936,
+            39828,
+            40104,
+            39764,
+            39940,
+            39664,
+            39464,
+            39812,
+            39900,
+            39640,
+            40148,
+            39556,
+            39436,
+            39672,
+            40084
           ],
-          "stdev_kib": 189.74762185598004
+          "stdev_kib": 240.4079033642613
         }
       },
       "executable": "aff3ct-intra-arm",
       "identity": {
         "builds": [
-          {
-            "release": true,
-            "rustflags": "-C target-cpu=native"
-          },
           {
             "release": true,
             "rustflags": "-C target-cpu=native"
@@ -1447,7 +1627,7 @@
     "gf2-batch-lane-avx2": {
       "codes": {
         "dvb-t2-r12": {
-          "above_floor_median_kib": 100602.0,
+          "above_floor_median_kib": 100658.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -1462,7 +1642,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "candidate",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": null,
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11318.0,
+              "min_kib": 11200,
+              "samples_kib": [
+                11324,
+                11304,
+                11320,
+                11320,
+                11320,
+                11316,
+                11296,
+                11324,
+                11212,
+                11320,
+                11316,
+                11316,
+                11316,
+                11316,
+                11320,
+                11296,
+                11324,
+                11320,
+                11320,
+                11200
+              ],
+              "stdev_kib": 33.98529093593286
+            },
+            "max_kib": 11672,
+            "median_kib": 11334.0,
+            "min_kib": 11068,
+            "samples_kib": [
+              11480,
+              11280,
+              11096,
+              11420,
+              11288,
+              11612,
+              11584,
+              11288,
+              11304,
+              11672,
+              11288,
+              11352,
+              11240,
+              11068,
+              11316,
+              11460,
+              11420,
+              11672,
+              11516,
+              11172
+            ],
+            "stdev_kib": 171.85994297683214
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11332,
+            "median_kib": 11320.0,
+            "min_kib": 11288,
+            "samples_kib": [
+              11300,
+              11320,
+              11304,
+              11316,
+              11320,
+              11300,
+              11320,
+              11324,
+              11320,
+              11316,
+              11320,
+              11288,
+              11316,
+              11320,
+              11320,
+              11320,
+              11316,
+              11332,
+              11320,
+              11328
+            ],
+            "stdev_kib": 10.119288512538814
+          },
+          "max_kib": 112220,
+          "median_kib": 111992.0,
+          "min_kib": 111620,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -1499,126 +1796,32 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11324,
-              "median_kib": 11320.0,
-              "min_kib": 11208,
-              "samples_kib": [
-                11320,
-                11320,
-                11320,
-                11208,
-                11320,
-                11308,
-                11320,
-                11320,
-                11320,
-                11312,
-                11288,
-                11284,
-                11324,
-                11320,
-                11320,
-                11320,
-                11320,
-                11324,
-                11320,
-                11320
-              ],
-              "stdev_kib": 25.74956310308973
-            },
-            "max_kib": 11672,
-            "median_kib": 11420.0,
-            "min_kib": 11072,
-            "samples_kib": [
-              11348,
-              11288,
-              11480,
-              11400,
-              11072,
-              11428,
-              11480,
-              11420,
-              11672,
-              11508,
-              11452,
-              11644,
-              11672,
-              11420,
-              11420,
-              11288,
-              11212,
-              11232,
-              11148,
-              11664
-            ],
-            "stdev_kib": 168.1851360852082
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11328,
-            "median_kib": 11316.0,
-            "min_kib": 11204,
-            "samples_kib": [
-              11320,
-              11316,
-              11320,
-              11320,
-              11320,
-              11212,
-              11328,
-              11280,
-              11320,
-              11212,
-              11324,
-              11320,
-              11316,
-              11300,
-              11308,
-              11284,
-              11316,
-              11316,
-              11204,
-              11320
-            ],
-            "stdev_kib": 39.05841778669484
-          },
-          "max_kib": 112324,
-          "median_kib": 112022.0,
-          "min_kib": 111628,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
-            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
-          },
           "samples_kib": [
-            112172,
-            111628,
-            111948,
-            112128,
-            112024,
-            112324,
-            112224,
-            112020,
+            112000,
+            111828,
+            111996,
+            111920,
+            112004,
             112120,
+            112172,
+            112072,
             111936,
-            111952,
-            111744,
-            111892,
-            112216,
-            111964,
-            111944,
-            112184,
-            112216,
+            112096,
+            111840,
             111752,
-            112084
+            111620,
+            111988,
+            111760,
+            112124,
+            112220,
+            111784,
+            111892,
+            112008
           ],
-          "stdev_kib": 177.51123908079737
+          "stdev_kib": 153.66079526020943
         },
         "nr-bg1-z384": {
-          "above_floor_median_kib": 42644.0,
+          "above_floor_median_kib": 42692.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -1633,7 +1836,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "candidate",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": null,
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11320,
+              "median_kib": 11316.0,
+              "min_kib": 11200,
+              "samples_kib": [
+                11204,
+                11320,
+                11200,
+                11316,
+                11280,
+                11320,
+                11276,
+                11320,
+                11320,
+                11320,
+                11320,
+                11320,
+                11320,
+                11320,
+                11284,
+                11316,
+                11200,
+                11316,
+                11272,
+                11292
+              ],
+              "stdev_kib": 41.4241475470528
+            },
+            "max_kib": 11636,
+            "median_kib": 11312.0,
+            "min_kib": 10880,
+            "samples_kib": [
+              11556,
+              11580,
+              11304,
+              11204,
+              11196,
+              11200,
+              11384,
+              11320,
+              11288,
+              11196,
+              11480,
+              11288,
+              11480,
+              11420,
+              11636,
+              11472,
+              11076,
+              11296,
+              11400,
+              10880
+            ],
+            "stdev_kib": 177.38365200885903
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11320.0,
+            "min_kib": 11204,
+            "samples_kib": [
+              11280,
+              11320,
+              11320,
+              11296,
+              11320,
+              11284,
+              11320,
+              11324,
+              11316,
+              11320,
+              11304,
+              11320,
+              11316,
+              11320,
+              11320,
+              11324,
+              11288,
+              11204,
+              11320,
+              11320
+            ],
+            "stdev_kib": 27.191175038971743
+          },
+          "max_kib": 54400,
+          "median_kib": 54004.0,
+          "min_kib": 53444,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -1670,132 +1990,34 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11324,
-              "median_kib": 11320.0,
-              "min_kib": 11196,
-              "samples_kib": [
-                11320,
-                11320,
-                11316,
-                11316,
-                11320,
-                11320,
-                11196,
-                11276,
-                11292,
-                11320,
-                11320,
-                11200,
-                11288,
-                11324,
-                11320,
-                11316,
-                11320,
-                11308,
-                11320,
-                11320
-              ],
-              "stdev_kib": 36.712940497868054
-            },
-            "max_kib": 11672,
-            "median_kib": 11408.0,
-            "min_kib": 10564,
-            "samples_kib": [
-              11408,
-              11024,
-              10564,
-              10844,
-              11536,
-              11344,
-              10956,
-              11572,
-              11492,
-              11420,
-              11516,
-              10908,
-              10808,
-              11288,
-              11480,
-              11408,
-              11520,
-              11648,
-              11168,
-              11672
-            ],
-            "stdev_kib": 311.5768925963541
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11324,
-            "median_kib": 11320.0,
-            "min_kib": 11212,
-            "samples_kib": [
-              11284,
-              11320,
-              11324,
-              11320,
-              11320,
-              11316,
-              11320,
-              11324,
-              11320,
-              11316,
-              11316,
-              11312,
-              11320,
-              11316,
-              11212,
-              11324,
-              11324,
-              11320,
-              11276,
-              11316
-            ],
-            "stdev_kib": 25.59687480924185
-          },
-          "max_kib": 54352,
-          "median_kib": 54052.0,
-          "min_kib": 53692,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
-            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
-          },
           "samples_kib": [
+            54400,
+            54028,
+            54144,
+            53924,
+            53988,
+            54004,
+            53932,
+            53964,
+            53960,
+            53444,
+            53908,
+            53984,
+            53488,
+            54336,
+            54004,
+            54024,
             54108,
-            54020,
-            54048,
-            53980,
-            54112,
-            53692,
-            54296,
-            53796,
+            54076,
             54204,
-            54084,
-            53696,
-            54352,
-            54276,
-            53928,
-            53992,
-            54016,
-            53884,
-            54056,
-            54248,
-            54100
+            54012
           ],
-          "stdev_kib": 179.8261382558164
+          "stdev_kib": 217.65026992861738
         }
       },
       "executable": "gf2-batch-lane-arm",
       "identity": {
         "builds": [
-          {
-            "release": true,
-            "rustflags": "-C target-cpu=native"
-          },
           {
             "release": true,
             "rustflags": "-C target-cpu=native"
@@ -1819,7 +2041,7 @@
     "gf2-batch-lane-portable": {
       "codes": {
         "dvb-t2-r12": {
-          "above_floor_median_kib": 100558.0,
+          "above_floor_median_kib": 100512.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -1834,7 +2056,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "candidate",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": null,
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11316.0,
+              "min_kib": 11200,
+              "samples_kib": [
+                11320,
+                11204,
+                11324,
+                11316,
+                11324,
+                11328,
+                11200,
+                11320,
+                11304,
+                11312,
+                11316,
+                11308,
+                11320,
+                11324,
+                11320,
+                11296,
+                11316,
+                11320,
+                11292,
+                11204
+              ],
+              "stdev_kib": 41.20970759420649
+            },
+            "max_kib": 11680,
+            "median_kib": 11502.0,
+            "min_kib": 10844,
+            "samples_kib": [
+              11672,
+              11364,
+              11612,
+              11484,
+              11612,
+              11680,
+              11304,
+              11672,
+              11336,
+              11284,
+              11672,
+              11448,
+              11072,
+              11672,
+              11656,
+              11536,
+              10844,
+              11264,
+              11456,
+              11520
+            ],
+            "stdev_kib": 220.35789071417435
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11320.0,
+            "min_kib": 11208,
+            "samples_kib": [
+              11320,
+              11324,
+              11320,
+              11320,
+              11284,
+              11320,
+              11320,
+              11308,
+              11316,
+              11320,
+              11288,
+              11316,
+              11324,
+              11208,
+              11316,
+              11324,
+              11316,
+              11324,
+              11316,
+              11320
+            ],
+            "stdev_kib": 25.720808696462093
+          },
+          "max_kib": 112372,
+          "median_kib": 112014.0,
+          "min_kib": 111736,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -1871,126 +2210,32 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11324,
-              "median_kib": 11320.0,
-              "min_kib": 11204,
-              "samples_kib": [
-                11320,
-                11320,
-                11320,
-                11288,
-                11316,
-                11320,
-                11324,
-                11292,
-                11320,
-                11320,
-                11324,
-                11204,
-                11324,
-                11320,
-                11316,
-                11288,
-                11316,
-                11316,
-                11308,
-                11320
-              ],
-              "stdev_kib": 26.490753103677516
-            },
-            "max_kib": 11688,
-            "median_kib": 11480.0,
-            "min_kib": 10992,
-            "samples_kib": [
-              11664,
-              11420,
-              11288,
-              11676,
-              11672,
-              11248,
-              11672,
-              11132,
-              11464,
-              11672,
-              11676,
-              10992,
-              11688,
-              11580,
-              11096,
-              11592,
-              11480,
-              11420,
-              11192,
-              11480
-            ],
-            "stdev_kib": 219.3831351767952
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11324,
-            "median_kib": 11320.0,
-            "min_kib": 11200,
-            "samples_kib": [
-              11320,
-              11296,
-              11288,
-              11324,
-              11324,
-              11320,
-              11296,
-              11320,
-              11324,
-              11324,
-              11304,
-              11316,
-              11296,
-              11280,
-              11200,
-              11320,
-              11320,
-              11320,
-              11320,
-              11324
-            ],
-            "stdev_kib": 27.945661559533708
-          },
-          "max_kib": 112296,
-          "median_kib": 112038.0,
-          "min_kib": 111492,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
-            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
-          },
           "samples_kib": [
-            112092,
-            111640,
-            112076,
-            112148,
-            112044,
-            111952,
-            112012,
-            111720,
-            112236,
-            112184,
-            112296,
-            112032,
-            112032,
-            111832,
-            111968,
-            112156,
+            112048,
+            112372,
+            111988,
+            112132,
+            111936,
+            112128,
+            111844,
             112124,
-            111492,
-            112188,
-            111668
+            111736,
+            112184,
+            111936,
+            111992,
+            111984,
+            112200,
+            111900,
+            112036,
+            112072,
+            111820,
+            111892,
+            112196
           ],
-          "stdev_kib": 212.10289955585236
+          "stdev_kib": 150.30901503236592
         },
         "nr-bg1-z384": {
-          "above_floor_median_kib": 42742.0,
+          "above_floor_median_kib": 42658.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -2005,7 +2250,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "candidate",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": null,
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11320.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11320,
+                11324,
+                11288,
+                11324,
+                11320,
+                11204,
+                11212,
+                11300,
+                11320,
+                11320,
+                11320,
+                11308,
+                11276,
+                11320,
+                11324,
+                11320,
+                11324,
+                11320,
+                11324,
+                11324
+              ],
+              "stdev_kib": 34.624268945351034
+            },
+            "max_kib": 11672,
+            "median_kib": 11404.0,
+            "min_kib": 11008,
+            "samples_kib": [
+              11480,
+              11456,
+              11644,
+              11672,
+              11612,
+              11400,
+              11244,
+              11396,
+              11288,
+              11424,
+              11228,
+              11408,
+              11380,
+              11480,
+              11228,
+              11288,
+              11480,
+              11220,
+              11008,
+              11612
+            ],
+            "stdev_kib": 164.51759784290556
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11316.0,
+            "min_kib": 11200,
+            "samples_kib": [
+              11292,
+              11316,
+              11200,
+              11204,
+              11320,
+              11324,
+              11296,
+              11284,
+              11296,
+              11320,
+              11296,
+              11316,
+              11320,
+              11320,
+              11280,
+              11300,
+              11320,
+              11316,
+              11320,
+              11320
+            ],
+            "stdev_kib": 34.675639864319734
+          },
+          "max_kib": 54388,
+          "median_kib": 54062.0,
+          "min_kib": 53416,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -2042,132 +2404,34 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11324,
-              "median_kib": 11316.0,
-              "min_kib": 11200,
-              "samples_kib": [
-                11320,
-                11308,
-                11292,
-                11212,
-                11320,
-                11276,
-                11316,
-                11304,
-                11324,
-                11200,
-                11316,
-                11320,
-                11320,
-                11272,
-                11320,
-                11316,
-                11324,
-                11320,
-                11320,
-                11316
-              ],
-              "stdev_kib": 34.793102764772215
-            },
-            "max_kib": 11672,
-            "median_kib": 11346.0,
-            "min_kib": 10992,
-            "samples_kib": [
-              11228,
-              11088,
-              11140,
-              11372,
-              11480,
-              11380,
-              11344,
-              10992,
-              11348,
-              11304,
-              11288,
-              11556,
-              11480,
-              11608,
-              11432,
-              11480,
-              11040,
-              11324,
-              11228,
-              11672
-            ],
-            "stdev_kib": 179.24999302649917
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11324,
-            "median_kib": 11316.0,
-            "min_kib": 11200,
-            "samples_kib": [
-              11320,
-              11280,
-              11320,
-              11316,
-              11320,
-              11304,
-              11308,
-              11204,
-              11200,
-              11292,
-              11316,
-              11320,
-              11320,
-              11320,
-              11308,
-              11320,
-              11316,
-              11324,
-              11316,
-              11316
-            ],
-            "stdev_kib": 34.92849839314596
-          },
-          "max_kib": 54292,
-          "median_kib": 54088.0,
-          "min_kib": 53820,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
-            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
-          },
           "samples_kib": [
-            54156,
-            54292,
-            54056,
-            53820,
-            54060,
-            53888,
-            53928,
-            54028,
-            54224,
-            54104,
-            54208,
+            53696,
+            53772,
+            54020,
+            54388,
             53948,
-            54248,
-            53904,
-            54136,
-            54120,
-            54268,
-            54196,
-            54072,
-            54012
+            54056,
+            53980,
+            53416,
+            54048,
+            54288,
+            54244,
+            54068,
+            54080,
+            54192,
+            53868,
+            54208,
+            54252,
+            54148,
+            54024,
+            54104
           ],
-          "stdev_kib": 133.09410204813736
+          "stdev_kib": 219.18029108475972
         }
       },
       "executable": "gf2-batch-lane-arm",
       "identity": {
         "builds": [
-          {
-            "release": true,
-            "rustflags": "-C target-cpu=native"
-          },
           {
             "release": true,
             "rustflags": "-C target-cpu=native"
@@ -2191,7 +2455,7 @@
     "gf2-batch-single-frame": {
       "codes": {
         "dvb-t2-r12": {
-          "above_floor_median_kib": 100514.0,
+          "above_floor_median_kib": 100492.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -2206,7 +2470,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "baseline",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": null,
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11318.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11316,
+                11208,
+                11320,
+                11316,
+                11320,
+                11324,
+                11320,
+                11324,
+                11320,
+                11316,
+                11320,
+                11284,
+                11304,
+                11296,
+                11204,
+                11292,
+                11324,
+                11324,
+                11320,
+                11316
+              ],
+              "stdev_kib": 34.29927112928203
+            },
+            "max_kib": 11672,
+            "median_kib": 11470.0,
+            "min_kib": 11116,
+            "samples_kib": [
+              11228,
+              11556,
+              11348,
+              11580,
+              11480,
+              11488,
+              11420,
+              11228,
+              11480,
+              11672,
+              11480,
+              11632,
+              11116,
+              11396,
+              11364,
+              11460,
+              11452,
+              11672,
+              11228,
+              11672
+            ],
+            "stdev_kib": 157.2050889761524
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11328,
+            "median_kib": 11316.0,
+            "min_kib": 11272,
+            "samples_kib": [
+              11316,
+              11320,
+              11312,
+              11300,
+              11284,
+              11316,
+              11320,
+              11316,
+              11324,
+              11272,
+              11316,
+              11304,
+              11320,
+              11284,
+              11320,
+              11328,
+              11292,
+              11320,
+              11288,
+              11284
+            ],
+            "stdev_kib": 16.4
+          },
+          "max_kib": 112428,
+          "median_kib": 111962.0,
+          "min_kib": 111572,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -2243,126 +2624,32 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11324,
-              "median_kib": 11316.0,
-              "min_kib": 11196,
-              "samples_kib": [
-                11320,
-                11324,
-                11320,
-                11320,
-                11316,
-                11312,
-                11280,
-                11320,
-                11196,
-                11316,
-                11292,
-                11316,
-                11324,
-                11316,
-                11304,
-                11316,
-                11312,
-                11316,
-                11316,
-                11316
-              ],
-              "stdev_kib": 27.59420228961149
-            },
-            "max_kib": 11672,
-            "median_kib": 11502.0,
-            "min_kib": 11132,
-            "samples_kib": [
-              11656,
-              11524,
-              11288,
-              11480,
-              11672,
-              11664,
-              11248,
-              11672,
-              11424,
-              11456,
-              11132,
-              11668,
-              11672,
-              11656,
-              11372,
-              11420,
-              11672,
-              11260,
-              11224,
-              11672
-            ],
-            "stdev_kib": 181.5792939737348
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11324,
-            "median_kib": 11316.0,
-            "min_kib": 11204,
-            "samples_kib": [
-              11316,
-              11316,
-              11316,
-              11312,
-              11324,
-              11320,
-              11324,
-              11312,
-              11316,
-              11320,
-              11316,
-              11284,
-              11324,
-              11204,
-              11320,
-              11296,
-              11204,
-              11324,
-              11320,
-              11320
-            ],
-            "stdev_kib": 34.77700389625305
-          },
-          "max_kib": 112300,
-          "median_kib": 112016.0,
-          "min_kib": 111568,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
-            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
-          },
           "samples_kib": [
-            111856,
+            111728,
+            111748,
             111976,
-            112260,
-            112176,
-            112004,
-            112056,
-            112252,
-            112028,
-            112148,
-            112236,
-            111684,
-            111888,
-            111976,
-            111760,
-            112136,
-            112104,
-            111872,
-            112300,
-            111568,
-            111964
+            112184,
+            112076,
+            112044,
+            111740,
+            112108,
+            111912,
+            112204,
+            111948,
+            111752,
+            112428,
+            112032,
+            111852,
+            112100,
+            111940,
+            112000,
+            111572,
+            111840
           ],
-          "stdev_kib": 194.44063361345025
+          "stdev_kib": 195.91671699985176
         },
         "nr-bg1-z384": {
-          "above_floor_median_kib": 42644.0,
+          "above_floor_median_kib": 42618.0,
           "batch_frames_source": {
             "declared_by": "single-worker family cell timed_batch",
             "raised_by": "settings.batch_size of the quality file"
@@ -2377,7 +2664,124 @@
             "syndrome_stopping": true
           },
           "count": 20,
-          "decoder": {
+          "effective": {
+            "catalogue": {
+              "comparison": "baseline",
+              "precision": "f32",
+              "schedule": "flooding",
+              "simd": null,
+              "update_rule": "normalized-min-sum"
+            },
+            "settings": {
+              "batch_size": 1,
+              "iteration_cap": 50,
+              "normalization": {
+                "factor": 0.75,
+                "kind": "normalized-min-sum"
+              },
+              "precision": "f32",
+              "schedule": "flooding",
+              "stopping": {
+                "crc": null,
+                "kind": "syndrome"
+              }
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11320.0,
+              "min_kib": 11268,
+              "samples_kib": [
+                11324,
+                11308,
+                11268,
+                11320,
+                11284,
+                11312,
+                11320,
+                11320,
+                11316,
+                11304,
+                11320,
+                11320,
+                11320,
+                11320,
+                11316,
+                11320,
+                11300,
+                11320,
+                11292,
+                11324
+              ],
+              "stdev_kib": 14.547852075134665
+            },
+            "max_kib": 11676,
+            "median_kib": 11448.0,
+            "min_kib": 11036,
+            "samples_kib": [
+              11288,
+              11468,
+              11632,
+              11584,
+              11428,
+              11412,
+              11480,
+              11164,
+              11528,
+              11408,
+              11672,
+              11676,
+              11488,
+              11672,
+              11416,
+              11420,
+              11656,
+              11236,
+              11104,
+              11036
+            ],
+            "stdev_kib": 187.07175094064843
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11320,
+            "median_kib": 11316.0,
+            "min_kib": 11284,
+            "samples_kib": [
+              11284,
+              11320,
+              11312,
+              11320,
+              11316,
+              11304,
+              11316,
+              11284,
+              11320,
+              11296,
+              11316,
+              11320,
+              11316,
+              11316,
+              11320,
+              11284,
+              11320,
+              11320,
+              11292,
+              11300
+            ],
+            "stdev_kib": 13.302631318652713
+          },
+          "max_kib": 54428,
+          "median_kib": 54066.0,
+          "min_kib": 53716,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
+          },
+          "request_declaration": {
             "arm_kind": "matched-algorithm",
             "batching": {
               "batch_fill_included": true,
@@ -2414,132 +2818,34 @@
               "kind": "syndrome"
             }
           },
-          "floor": {
-            "count": 20,
-            "launcher": {
-              "count": 20,
-              "max_kib": 11324,
-              "median_kib": 11316.0,
-              "min_kib": 11196,
-              "samples_kib": [
-                11316,
-                11320,
-                11320,
-                11292,
-                11320,
-                11316,
-                11324,
-                11316,
-                11320,
-                11196,
-                11320,
-                11276,
-                11324,
-                11320,
-                11320,
-                11196,
-                11200,
-                11316,
-                11316,
-                11288
-              ],
-              "stdev_kib": 43.18286697290952
-            },
-            "max_kib": 11672,
-            "median_kib": 11364.0,
-            "min_kib": 11176,
-            "samples_kib": [
-              11480,
-              11264,
-              11600,
-              11176,
-              11212,
-              11348,
-              11664,
-              11420,
-              11480,
-              11364,
-              11228,
-              11320,
-              11480,
-              11672,
-              11324,
-              11364,
-              11556,
-              11348,
-              11672,
-              11300
-            ],
-            "stdev_kib": 151.93366973781684
-          },
-          "launcher": {
-            "count": 20,
-            "max_kib": 11324,
-            "median_kib": 11318.0,
-            "min_kib": 11204,
-            "samples_kib": [
-              11208,
-              11320,
-              11324,
-              11292,
-              11312,
-              11320,
-              11204,
-              11280,
-              11324,
-              11320,
-              11316,
-              11320,
-              11320,
-              11320,
-              11276,
-              11316,
-              11320,
-              11320,
-              11212,
-              11292
-            ],
-            "stdev_kib": 39.48620012105495
-          },
-          "max_kib": 54448,
-          "median_kib": 54008.0,
-          "min_kib": 53596,
-          "quality": {
-            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
-            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
-          },
           "samples_kib": [
             54240,
-            53976,
-            53596,
-            54172,
-            53956,
-            54144,
-            54448,
-            53964,
-            54072,
-            54056,
-            54120,
-            53880,
-            54016,
-            54000,
-            53824,
-            53948,
-            54068,
-            54336,
-            53760,
-            53948
+            53840,
+            54188,
+            53940,
+            54104,
+            54020,
+            54428,
+            54416,
+            54008,
+            53932,
+            54048,
+            54084,
+            54184,
+            54096,
+            54096,
+            54320,
+            53888,
+            53776,
+            54020,
+            53716
           ],
-          "stdev_kib": 188.52044981911115
+          "stdev_kib": 188.65248474377432
         }
       },
       "executable": "gf2-batch-single-frame-arm",
       "identity": {
         "builds": [
-          {
-            "release": true,
-            "rustflags": "-C target-cpu=native"
-          },
           {
             "release": true,
             "rustflags": "-C target-cpu=native"
@@ -2571,6 +2877,7 @@
     "page_bytes": 4096
   },
   "method": {
+    "effective": "per cell, the arm's catalogue class and the settings of its quality file",
     "floor": "the same launch without the runner's fresh-child sentinel; the arm stops before decoding",
     "includes": [
       "executable and shared libraries",
@@ -2584,6 +2891,7 @@
     "observation": "ru_maxrss of the exited child from wait4, in KiB",
     "position": "validation: untimed, zero timing windows, one dispatch",
     "quantity": "peak resident set size of the arm process",
+    "request_declaration": "per cell, the decoder block the runner sent: the single-worker cell's declaration, not the arm's settings",
     "scope": "process memory, not decoder-owned memory",
     "statistics": "descriptive: minimum, median, maximum and population standard deviation"
   },

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Record and check the peak memory of the batch decoder benchmark arms (jit:05c9065e).
+"""Record the peak memory of the batch decoder benchmark arms (jit:05c9065e).
 
-Launches each arm of `arms.json` on each recorded code, untimed, the way `benchmark-ab-runner
-launch` prints; `peak-memory.json` states the method. `check` relaunches each cell against the
-recorded envelope and writes nothing into the repository.
+`record` launches each arm of `arms.json` on each recorded code, untimed, as `benchmark-ab-runner
+launch` prints, and writes `peak-memory.json`, which states the method. `check` compares the
+record's arm identities with the committed build record and recomputes its statistics; it
+launches nothing and writes nothing.
 
 Usage (from the worktree root): record-peak-memory.py record|check OUT_DIR
 """
@@ -31,7 +32,6 @@ arm_build.__spec__.loader.exec_module(arm_build)
 
 RECORD = "peak-memory.json"
 LAUNCHES = 20
-CHECK_LAUNCHES = 3
 FAMILY = "single-worker"
 SCRATCH = pathlib.Path("target/peak-memory-scratch")
 GROUP = {"issue": "05c9065e", "subject": "peak memory of the benchmark arms", "arm_kind": None}
@@ -39,6 +39,7 @@ QUALITY_ENVIRONMENT = "GF2_LDPC_QUALITY"
 INTRA_ARM = intra.ARM
 PARTNERS = ("gf2-batch-single-frame", "gf2-batch-lane-avx2")
 QUALITY_PIN = "prepared_quality"
+CATALOGUE_FIELDS = ("comparison", "precision", "schedule", "update_rule", "simd")
 # `exec` folds the launcher's pages into the child's mark; `VmHWM` is that share.
 LAUNCHER = """
 import os, sys
@@ -58,6 +59,9 @@ METHOD = {
     "floor": "the same launch without the runner's fresh-child sentinel; the arm stops before decoding",
     "launcher": "VmHWM of the launcher interpreter before it spawns the arm, the share its "
                 "exec folds into the child's mark",
+    "effective": "per cell, the arm's catalogue class and the settings of its quality file",
+    "request_declaration": "per cell, the decoder block the runner sent: the single-worker "
+                           "cell's declaration, not the arm's settings",
     "statistics": "descriptive: minimum, median, maximum and population standard deviation",
 }
 
@@ -173,6 +177,17 @@ def catalogued(build_identity):
                            .read_text(encoding="utf-8"))
     if catalogue["arms"].keys() != build_identity["arms"].keys():
         sys.exit("the build identity and the catalogue name different arms")
+    return catalogue["arms"]
+
+
+def effective(name, entry, settings):
+    """What the arm states about itself: its catalogue class and the settings of its quality file."""
+    rule = {"normalized-min-sum": "normalized-min-sum", "sum-product": "sum-product"}
+    if (settings["precision"], settings["schedule"], settings["normalization"]["kind"]) != (
+            entry["precision"], entry["schedule"], rule[entry["update_rule"]]):
+        sys.exit(f"{name}: the quality file and the catalogue state different decoders")
+    return {"catalogue": {field: entry.get(field) for field in CATALOGUE_FIELDS},
+            "settings": settings}
 
 
 def arm_identity(build, name):
@@ -200,7 +215,7 @@ def family_batches():
 
 
 def observe(build, launches):
-    catalogued(build)
+    catalogue = catalogued(build)
     files = quality_files(build)
     declared = family_batches()
     rows = {(name, key): row for name, row in build["arms"].items() for key in smoke.CODES}
@@ -221,7 +236,8 @@ def observe(build, launches):
         run, floor = (list(zip(*observed[kind])) for kind in ("run", "floor"))
         cells.setdefault(name, {})[key] = {
             "case": {**request["case"], "bundle": smoke.CODES[key]["bundle"]},
-            "decoder": request["decoder"],
+            "effective": effective(name, catalogue[name], qualities[name, key]["settings"]),
+            "request_declaration": request["decoder"],
             "batch_frames_source": {"declared_by": f"{FAMILY} family cell timed_batch",
                                     "raised_by": "settings.batch_size of the quality file"},
             "quality": {"path": str(files[name, key][0]), "sha256": files[name, key][1]},
@@ -287,26 +303,24 @@ def structure_failures(record, build):
     return failures
 
 
+def quality_failures(record):
+    """Cells whose quality file or effective settings differ from the committed file."""
+    failures = []
+    for name, arm in record["arms"].items():
+        for key, cell in arm["codes"].items():
+            quality = smoke.ROOT / cell["quality"]["path"]
+            if sha256_file(quality) != cell["quality"]["sha256"]:
+                failures.append(f"{name} {key}: the quality file differs from its recorded digest")
+            elif cell["effective"]["settings"] != json.loads(
+                    quality.read_text(encoding="utf-8"))["settings"]:
+                failures.append(f"{name} {key}: effective settings differ from the quality file")
+    return failures
+
+
 def check_mode(out_dir):
     record = json.loads((out_dir / RECORD).read_text(encoding="utf-8"))
     _, build = build_record()
-    failures = structure_failures(record, build)
-    failures += [f"{name} differs" for name, current in (
-        ("recorded_inputs", {"name": smoke.ARCHIVE[0], "sha256": smoke.ARCHIVE[1]}),
-        ("host", host())) if record[name] != current]
-    if not failures:
-        for name, keys in observe(build, CHECK_LAUNCHES).items():
-            for key, cell in keys.items():
-                held = record["arms"][name]["codes"][key]
-                failures += [f"{name} {key}: {field} differs" for field in ("case", "decoder", "quality")
-                             if cell[field] != held[field]]
-                slack = max(held["max_kib"] - held["min_kib"], record["host"]["page_bytes"] // 1024)
-                low, high = held["min_kib"] - slack, held["max_kib"] + slack
-                outside = [peak for peak in cell["peak"] if not low <= peak <= high]
-                print(f"{name} {key}: observed {cell['peak']} KiB within [{low}, {high}]"
-                      if not outside else f"{name} {key}: {outside} KiB outside [{low}, {high}]")
-                failures += [f"{name} {key}: peak {peak} KiB outside the recorded envelope"
-                             for peak in outside]
+    failures = structure_failures(record, build) + quality_failures(record)
     for failure in failures:
         print(f"DIFFERENCE {failure}")
     sys.exit(1 if failures else 0)
