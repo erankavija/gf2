@@ -180,8 +180,58 @@ impl HostAdmissionPolicy {
 }
 /// Schema of a committed campaign declaration.
 const DECLARATION_SCHEMA: &str = "tuning-campaign-declaration-v1";
-/// The two owners a complete envelope composes, by declaration name.
-const OWNER_NAMES: [(&str, &str); 2] = [("core", "gf2-core"), ("algebra", "gf2-algebra")];
+/// An owner of one complete-envelope section, serialized as its declaration
+/// name. The variant order is the composer's `complete` argument order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum Owner {
+    Core,
+    Algebra,
+    Coding,
+}
+impl Owner {
+    const ALL: [Self; 3] = [Self::Core, Self::Algebra, Self::Coding];
+    /// The declaration name, which prefixes the owner's stage files and its
+    /// producer.
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Core => "core",
+            Self::Algebra => "algebra",
+            Self::Coding => "coding",
+        }
+    }
+    const fn crate_name(self) -> &'static str {
+        match self {
+            Self::Core => "gf2-core",
+            Self::Algebra => "gf2-algebra",
+            Self::Coding => "gf2-coding",
+        }
+    }
+    /// The section the owner's envelope carries.
+    const fn section(self) -> &'static str {
+        match self {
+            Self::Core => "gf2-core/selectors",
+            Self::Algebra => "gf2-algebra/permanent",
+            Self::Coding => "gf2-coding/encode",
+        }
+    }
+    /// Whether every complete envelope holds the owner's section. The
+    /// composer writes a conservative envelope of exactly these owners.
+    const fn required(self) -> bool {
+        !matches!(self, Self::Coding)
+    }
+    /// The argument that makes the owner's producer run one fresh child.
+    const fn fresh_child(self) -> &'static str {
+        match self {
+            Self::Core => "--fresh-tuning-process-child",
+            Self::Algebra | Self::Coding => "--fresh-child",
+        }
+    }
+    /// Stage file of the owner's envelope, measured or imported.
+    fn envelope(self) -> String {
+        format!("{}-owner.json", self.as_str())
+    }
+}
 
 /// A repository-relative file pinned by its SHA-256.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -222,7 +272,7 @@ fn repository_relative(path: &str) -> io::Result<()> {
 #[serde(deny_unknown_fields)]
 struct MeasuredOwner {
     owner: Token,
-    name: Token,
+    name: Owner,
     cells: u64,
 }
 /// An owner the campaign takes from a committed envelope without measuring
@@ -232,7 +282,7 @@ struct MeasuredOwner {
 #[serde(deny_unknown_fields)]
 struct ImportedOwner {
     owner: Token,
-    name: Token,
+    name: Owner,
     section: String,
     envelope: RepositoryArtifact,
     complete: RepositoryArtifact,
@@ -305,44 +355,51 @@ impl CampaignDeclaration {
     fn prefix(&self) -> String {
         format!("gf2-{}-", self.issue)
     }
-    /// Requires the schema and issue, normalized paths, the core owner
-    /// measured first, and every complete-envelope owner exactly once as
-    /// measured or imported.
+    /// Requires the schema and issue, normalized paths, at least one measured
+    /// owner, the measured owners in composition order, no owner twice, and
+    /// every required owner measured or imported.
     fn validate(&self, issue: &str) -> io::Result<()> {
         if self.schema != DECLARATION_SCHEMA || self.issue != issue {
             return Err(invalid("campaign declaration schema/issue mismatch"));
         }
         repository_relative(&self.protocol)?;
         repository_relative(&self.producing_manifest)?;
-        let mut names: Vec<(&str, &str)> = self
+        let measured: Vec<Owner> = self
             .measured_owners
             .iter()
-            .map(|owner| (owner.name.as_str(), owner.owner.as_str()))
-            .chain(
-                self.imported_owners
-                    .iter()
-                    .map(|owner| (owner.name.as_str(), owner.owner.as_str())),
-            )
+            .map(|owner| owner.name)
             .collect();
-        names.sort_unstable();
-        let mut expected = OWNER_NAMES.to_vec();
-        expected.sort_unstable();
-        if names != expected
-            || self
-                .measured_owners
-                .first()
-                .map(|owner| owner.name.as_str())
-                != Some("core")
+        let declared = self.owners();
+        if measured.is_empty()
+            || !measured.windows(2).all(|pair| pair[0] < pair[1])
+            || declared.windows(2).any(|pair| pair[0] == pair[1])
+            || Owner::ALL
+                .into_iter()
+                .any(|owner| owner.required() && !declared.contains(&owner))
             || self.measured_owners.iter().any(|owner| owner.cells == 0)
         {
             return Err(invalid(
-                "campaign declaration must measure core first and cover each owner once",
+                "campaign declaration must measure owners in composition order and cover each required owner once",
             ));
+        }
+        let crates = self
+            .measured_owners
+            .iter()
+            .map(|owner| (owner.name, &owner.owner))
+            .chain(
+                self.imported_owners
+                    .iter()
+                    .map(|owner| (owner.name, &owner.owner)),
+            );
+        for (name, owner) in crates {
+            if owner.as_str() != name.crate_name() {
+                return Err(invalid("declared owner crate differs from its name"));
+            }
         }
         for imported in &self.imported_owners {
             repository_relative(&imported.envelope.path)?;
             repository_relative(&imported.complete.path)?;
-            if imported.section != format!("{}/permanent", imported.owner.as_str()) {
+            if imported.section != imported.name.section() {
                 return Err(invalid("imported owner section mismatch"));
             }
         }
@@ -356,20 +413,47 @@ impl CampaignDeclaration {
             .iter()
             .find(|owner| owner.name.as_str() == name)
     }
+    /// The declared owners, measured and imported, in composition order.
+    fn owners(&self) -> Vec<Owner> {
+        let mut owners: Vec<Owner> = self
+            .measured_owners
+            .iter()
+            .map(|owner| owner.name)
+            .chain(self.imported_owners.iter().map(|owner| owner.name))
+            .collect();
+        owners.sort_unstable();
+        owners
+    }
+    fn measures(&self, owner: Owner) -> bool {
+        self.measured_owners
+            .iter()
+            .any(|measured| measured.name == owner)
+    }
+    /// The declared owners in composition order, each with the
+    /// repository-relative path of its published envelope: the run-named
+    /// owner envelope of a measured owner, the committed envelope of an
+    /// imported one.
+    fn published_owners(&self, layout: &RepositoryLayout) -> Vec<(Owner, String)> {
+        self.owners()
+            .into_iter()
+            .map(|owner| {
+                let path = self.imported(owner.as_str()).map_or_else(
+                    || layout.owner(owner),
+                    |imported| imported.envelope.path.clone(),
+                );
+                (owner, path)
+            })
+            .collect()
+    }
     /// Staged process identifiers with their fixed arguments: each measured
     /// owner's producer in declaration order, then the composer and driver.
     fn processes(&self) -> Vec<(String, Vec<String>)> {
         self.measured_owners
             .iter()
             .map(|owner| {
-                let arguments = if owner.name.as_str() == "core" {
-                    "--fresh-tuning-process-child"
-                } else {
-                    "--fresh-child"
-                };
                 (
                     format!("{}-producer", owner.name.as_str()),
-                    vec![arguments.to_owned()],
+                    vec![owner.name.fresh_child().to_owned()],
                 )
             })
             .chain([
@@ -722,10 +806,7 @@ fn verify_imported_owners(
         .zip(&declaration.imported_owners)
     {
         let bytes = declared.envelope.read(Path::new("."))?;
-        let staged = config
-            .channels
-            .stage
-            .join(format!("{}-owner.json", declared.name.as_str()));
+        let staged = config.channels.stage.join(declared.name.envelope());
         if evidence.owner != declared.owner
             || evidence.source != declared.envelope
             || evidence.staged.path != staged
@@ -755,8 +836,9 @@ fn section_wrapper(document: &[u8], section: &str) -> io::Result<Value> {
 /// section wrapper as its declared committed complete envelope. Its bytes are
 /// staged as `<name>-owner.json`, the composition input, and the staged
 /// composer then strictly reopens the staged copy with the owner-only codec
-/// by composing it with a conservative core probe. Both composer runs are
-/// journaled verification actions; their outputs are evidence only.
+/// by composing it with a conservative probe of every other required owner.
+/// The composer runs are journaled verification actions; their outputs are
+/// evidence only.
 fn import_owner(
     root: &Path,
     channels: &SessionChannels,
@@ -775,11 +857,7 @@ fn import_owner(
             "imported owner wrapper differs from its committed complete envelope",
         ));
     }
-    let staged = publish_artifact(
-        stage,
-        &stage.join(format!("{}-owner.json", imported.name.as_str())),
-        &bytes,
-    )?;
+    let staged = publish_artifact(stage, &stage.join(imported.name.envelope()), &bytes)?;
     let root = stage.join("imported");
     fs::create_dir_all(&root)?;
     File::open(stage)?.sync_all()?;
@@ -791,7 +869,16 @@ fn import_owner(
     ));
     fs::create_dir(&directory)?;
     File::open(&root)?.sync_all()?;
-    let probe_core = directory.join("probe-core.json");
+    let probes: Vec<(Owner, PathBuf)> = Owner::ALL
+        .into_iter()
+        .filter(|owner| owner.required() && *owner != imported.name)
+        .map(|owner| {
+            (
+                owner,
+                directory.join(format!("probe-{}.json", owner.as_str())),
+            )
+        })
+        .collect();
     let probe_complete = directory.join("probe-complete.json");
     let path_text = |path: &Path| -> io::Result<String> {
         path.to_str()
@@ -805,17 +892,23 @@ fn import_owner(
         "false".to_owned(),
         composer.executable_sha256.as_str().to_owned(),
     ];
-    let mut core_args = vec!["core-owner".to_owned(), path_text(&probe_core)?];
-    core_args.extend(tail.iter().cloned());
-    let mut complete_args = vec![
-        "complete".to_owned(),
-        path_text(&probe_core)?,
-        path_text(&staged.path)?,
-        path_text(&probe_complete)?,
-    ];
+    let mut commands = Vec::new();
+    let mut complete_args = vec!["complete".to_owned()];
+    for owner in Owner::ALL {
+        if owner == imported.name {
+            complete_args.push(path_text(&staged.path)?);
+        } else if let Some((_, probe)) = probes.iter().find(|(probed, _)| *probed == owner) {
+            let mut args = vec![format!("{}-owner", owner.as_str()), path_text(probe)?];
+            args.extend(tail.iter().cloned());
+            commands.push(args);
+            complete_args.push(path_text(probe)?);
+        }
+    }
+    complete_args.push(path_text(&probe_complete)?);
     complete_args.extend(tail);
+    commands.push(complete_args);
     let mut runs = Vec::new();
-    for (index, args) in [core_args, complete_args].into_iter().enumerate() {
+    for (index, args) in commands.into_iter().enumerate() {
         let request = save(
             &directory.join(format!("request-{index}.json")),
             &json!({"schema":"tuning-campaign-imported-owner-request-v1","process":composer,"args":args}),
@@ -855,21 +948,22 @@ fn import_owner(
     if section_wrapper(&fs::read(&probe_complete)?, &imported.section)? != wrapper {
         return Err(invalid("strict reopen changed the imported owner wrapper"));
     }
-    let reopen = save(
-        &directory.join("reopen.json"),
-        &json!({
-            "schema":"tuning-campaign-imported-owner-v1",
-            "owner":imported.owner,
-            "section":imported.section,
-            "source":imported.envelope,
-            "reference":imported.complete,
-            "staged":staged,
-            "wrapper_sha256":Sha256Digest::of(&encoded(&wrapper)?),
-            "probe_core":artifact(&probe_core)?,
-            "probe_complete":artifact(&probe_complete)?,
-            "runs":runs,
-        }),
-    )?;
+    let mut record = json!({
+        "schema":"tuning-campaign-imported-owner-v1",
+        "owner":imported.owner,
+        "section":imported.section,
+        "source":imported.envelope,
+        "reference":imported.complete,
+        "staged":staged,
+        "wrapper_sha256":Sha256Digest::of(&encoded(&wrapper)?),
+        "probe_complete":artifact(&probe_complete)?,
+        "runs":runs,
+    });
+    for (owner, probe) in &probes {
+        record[format!("probe_{}", owner.as_str())] =
+            serde_json::to_value(artifact(probe)?).map_err(invalid)?;
+    }
+    let reopen = save(&directory.join("reopen.json"), &record)?;
     Ok(ImportedOwnerEvidence {
         owner: imported.owner.clone(),
         source: imported.envelope.clone(),
@@ -1714,10 +1808,12 @@ fn cited_sources(
             format!("{}-manifest.json", owner.name.as_str()),
         ));
     }
-    sources.push((
-        "gf2-core resolved owner manifest".to_owned(),
-        "core-resolved-manifest.json".to_owned(),
-    ));
+    if declaration.measures(Owner::Core) {
+        sources.push((
+            "gf2-core resolved owner manifest".to_owned(),
+            "core-resolved-manifest.json".to_owned(),
+        ));
+    }
     for owner in &declaration.measured_owners {
         sources.push((
             format!("{} owner response", owner.owner.as_str()),
@@ -1838,7 +1934,12 @@ fn render_receipt(
     let layout = RepositoryLayout {
         id: &facts.campaign_id,
     };
-    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Declaration: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nThe campaign record, owner responses and composition record listed under cited evidence hold the runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests listed under cited evidence contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal, pinned by its row in the committed checksum manifest `{}`, and the checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through the receipt projection's raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n",facts.campaign_id,facts.declaration.protocol,facts.protocol_sha256.as_str(),facts.declaration_path,facts.declaration_sha256.as_str(),facts.source_revision,layout.checksum(),serde_json::to_string_pretty(&receipt_decisions(responses, stage, &layout)?).map_err(invalid)?);
+    let decisions_lead = if facts.declaration.measures(Owner::Core) {
+        "GEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks"
+    } else {
+        "Owner projections preserve every field's extent decision"
+    };
+    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Declaration: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nThe campaign record, owner responses and composition record listed under cited evidence hold the runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests listed under cited evidence contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal, pinned by its row in the committed checksum manifest `{}`, and the checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through the receipt projection's raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\n{}:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n",facts.campaign_id,facts.declaration.protocol,facts.protocol_sha256.as_str(),facts.declaration_path,facts.declaration_sha256.as_str(),facts.source_revision,layout.checksum(),decisions_lead,serde_json::to_string_pretty(&receipt_decisions(responses, stage, &layout)?).map_err(invalid)?);
     if !facts.declaration.imported_owners.is_empty() {
         receipt.push_str("## Imported owners\n\n");
         for imported in &facts.declaration.imported_owners {
@@ -1935,7 +2036,7 @@ fn render_evidence_index(
         Sha256Digest::of(&fs::read(stage.join("execution.log"))?).as_str()
     ));
     for owner in &declaration.measured_owners {
-        let source = format!("{}-owner.json", owner.name.as_str());
+        let source = owner.name.envelope();
         text.push_str(&format!(
             "| {} owner envelope | `{}` | `{}` |\n",
             owner.owner.as_str(),
@@ -2003,6 +2104,7 @@ fn emit(
     let mut responses = Vec::new();
     for (i, owner) in declaration.measured_owners.iter().enumerate() {
         let name = owner.name.as_str();
+        let envelope = owner.name.envelope();
         if !may_launch_child(ns(start)) {
             return Ok(SessionOutcome::BudgetExhausted);
         }
@@ -2027,7 +2129,10 @@ fn emit(
                 observed_utc: timestamp,
                 runtime: CanonicalJson::from_serializable(&AssemblyRuntime {
                     source_dirty: false,
-                    tool: format!("crates/gf2-{name}/benches/tuning_calibration.rs"),
+                    tool: format!(
+                        "crates/{}/benches/tuning_calibration.rs",
+                        owner.name.crate_name()
+                    ),
                     tool_sha256: producer.executable_sha256.as_str().into(),
                 })?,
             };
@@ -2070,16 +2175,49 @@ fn emit(
         else {
             return Err(invalid("owner emission returned wrong operation"));
         };
-        let canonical = promote(owner, &stage.join(format!("{name}-owner.json")))?;
+        let canonical = promote(owner, &stage.join(&envelope))?;
         log.append(JournalEvent::OwnerReopen,None,json!({"owner":manifests[i].owner,"candidate":owner,"artifact":canonical,"decisions":decisions}))?;
         responses.push(response);
     }
     if !may_launch_child(ns(start)) {
         return Ok(SessionOutcome::BudgetExhausted);
     }
-    let composer = process(config, "composer")?;
-    let core = artifact(&stage.join("core-owner.json"))?;
-    let algebra = artifact(&stage.join("algebra-owner.json"))?;
+    compose_complete(
+        stage,
+        &config.campaign_id,
+        &config.identity.source_revision,
+        &process(config, "composer")?,
+        &declaration,
+        log,
+    )?;
+    make_receipt(config, &declaration, bundles, &responses)?;
+    if ns(start) > SESSION_BUDGET_SECONDS * 1_000_000_000 {
+        return Ok(SessionOutcome::BudgetExhausted);
+    }
+    Ok(SessionOutcome::Complete)
+}
+/// Composes every declared owner's staged envelope, in composition order,
+/// into the complete envelope and promotes it to `complete.json`. A recorded
+/// candidate is promoted without another composer run.
+fn compose_complete(
+    stage: &Path,
+    campaign_id: &Token,
+    source_revision: &str,
+    composer: &ProcessDescriptor,
+    declaration: &CampaignDeclaration,
+    log: &mut ExecutionLog,
+) -> io::Result<()> {
+    let inputs = declaration
+        .owners()
+        .into_iter()
+        .map(|owner| Ok((owner, artifact(&stage.join(owner.envelope()))?)))
+        .collect::<io::Result<Vec<_>>>()?;
+    let with_inputs = |mut record: Value| -> io::Result<Value> {
+        for (owner, input) in &inputs {
+            record[owner.as_str()] = serde_json::to_value(input).map_err(invalid)?;
+        }
+        Ok(record)
+    };
     let output = stage.join("complete.json");
     let candidate_record = stage.join("composition-candidate.json");
     let composition: Value = if candidate_record.exists() {
@@ -2087,20 +2225,25 @@ fn emit(
     } else {
         let directory = candidate_directory(stage, "composer", log)?;
         let candidate = directory.join("output.json");
-        let args = vec![
-            "complete".into(),
-            core.path.to_string_lossy().into_owned(),
-            algebra.path.to_string_lossy().into_owned(),
+        let mut args = vec!["complete".to_owned()];
+        args.extend(
+            inputs
+                .iter()
+                .map(|(_, input)| input.path.to_string_lossy().into_owned()),
+        );
+        args.extend([
             candidate.to_string_lossy().into_owned(),
-            config.campaign_id.as_str().into(),
+            campaign_id.as_str().into(),
             utc()?,
-            config.identity.source_revision.clone(),
+            source_revision.to_owned(),
             "false".into(),
             composer.executable_sha256.as_str().into(),
-        ];
+        ]);
         let request = save(
             &directory.join("request.json"),
-            &json!({"schema":"tuning-campaign-composition-request-v1","process":composer,"args":args,"core":core,"algebra":algebra}),
+            &with_inputs(
+                json!({"schema":"tuning-campaign-composition-request-v1","process":composer,"args":args}),
+            )?,
         )?;
         log.append(
             JournalEvent::Composition,
@@ -2132,7 +2275,9 @@ fn emit(
         }
         File::open(&candidate)?.sync_all()?;
         File::open(&directory)?.sync_all()?;
-        let composition = json!({"schema":"tuning-campaign-composition-v1","args":args,"source_revision":config.identity.source_revision,"source_dirty":false,"tool_sha256":composer.executable_sha256,"core":core,"algebra":algebra,"candidate":artifact(&candidate)?,"request":request,"exit":exit});
+        let composition = with_inputs(
+            json!({"schema":"tuning-campaign-composition-v1","args":args,"source_revision":source_revision,"source_dirty":false,"tool_sha256":composer.executable_sha256,"candidate":artifact(&candidate)?,"request":request,"exit":exit}),
+        )?;
         save(&directory.join("response.json"), &composition)?;
         save(&candidate_record, &composition)?;
         composition
@@ -2159,11 +2304,7 @@ fn emit(
         None,
         json!({"candidate":candidate,"artifact":canonical}),
     )?;
-    make_receipt(config, &declaration, bundles, &responses)?;
-    if ns(start) > SESSION_BUDGET_SECONDS * 1_000_000_000 {
-        return Ok(SessionOutcome::BudgetExhausted);
-    }
-    Ok(SessionOutcome::Complete)
+    Ok(())
 }
 fn recover_unit(
     config: &CampaignConfig,
@@ -2783,12 +2924,15 @@ const TUNING_EVIDENCE: &str = "dev/benchmarks/tuning_profiles";
 /// Stage records small enough to commit in the session record. Every other
 /// published stage file, bulk evidence and the execution log included, goes
 /// to the git-ignored evidence archive.
-const COMMITTED_SESSION_RECORDS: [&str; 10] = [
+const COMMITTED_SESSION_RECORDS: [&str; 13] = [
     "algebra-capability-report.json",
     "algebra-list-grid.json",
     "algebra-self-check.json",
     "build/source-after.json",
     "build/source-before.json",
+    "coding-capability-report.json",
+    "coding-list-grid.json",
+    "coding-self-check.json",
     "composition.json",
     "core-capability-report.json",
     "core-list-grid.json",
@@ -2805,6 +2949,17 @@ impl RepositoryLayout<'_> {
     }
     fn algebra_owner(&self) -> String {
         format!("crates/gf2-algebra/data/tuning-profiles/{}.json", self.id)
+    }
+    fn coding_owner(&self) -> String {
+        format!("crates/gf2-coding/data/tuning-profiles/{}.json", self.id)
+    }
+    /// The run-named envelope of a measured `owner`.
+    fn owner(&self, owner: Owner) -> String {
+        match owner {
+            Owner::Core => self.core_owner(),
+            Owner::Algebra => self.algebra_owner(),
+            Owner::Coding => self.coding_owner(),
+        }
     }
     fn complete(&self) -> String {
         format!("dev/reference_data/tuning-profiles/{}.json", self.id)
@@ -2841,9 +2996,13 @@ fn destination_for(
     declaration: &CampaignDeclaration,
     source: &str,
 ) -> Option<String> {
+    if let Some(owner) = Owner::ALL
+        .into_iter()
+        .find(|owner| owner.envelope() == source && declaration.measures(*owner))
+    {
+        return Some(layout.owner(owner));
+    }
     Some(match source {
-        "core-owner.json" => layout.core_owner(),
-        "algebra-owner.json" if declaration.imported("algebra").is_none() => layout.algebra_owner(),
         "complete.json" => layout.complete(),
         "receipt.md" => layout.receipt(),
         "repository-publication/validation.json" => {
@@ -2889,15 +3048,12 @@ fn repository_mapping(
             return Err(invalid("two stage files map to one repository destination"));
         }
     }
-    let mut required = vec![
-        layout.core_owner(),
-        layout.complete(),
-        layout.receipt(),
-        layout.execution_log(),
-    ];
-    if declaration.imported("algebra").is_none() {
-        required.push(layout.algebra_owner());
-    }
+    let mut required: Vec<String> = declaration
+        .measured_owners
+        .iter()
+        .map(|owner| layout.owner(owner.name))
+        .collect();
+    required.extend([layout.complete(), layout.receipt(), layout.execution_log()]);
     if declaration.evidence_index {
         required.push(layout.evidence_index());
     }
@@ -2909,7 +3065,11 @@ fn repository_mapping(
     Ok(mapping)
 }
 /// The composer's profile/provenance arguments from the accepted composition.
-fn reopen_arguments(stage: &Path, campaign_id: &Token) -> io::Result<Vec<String>> {
+fn reopen_arguments(
+    stage: &Path,
+    campaign_id: &Token,
+    declaration: &CampaignDeclaration,
+) -> io::Result<Vec<String>> {
     let composition: Value = read_json(&stage.join("composition.json"))?;
     let args: Vec<String> = serde_json::from_value(
         composition
@@ -2918,14 +3078,17 @@ fn reopen_arguments(stage: &Path, campaign_id: &Token) -> io::Result<Vec<String>
             .ok_or_else(|| invalid("composition lacks its arguments"))?,
     )
     .map_err(invalid)?;
-    if args.len() != 9 || args[0] != "complete" || args[4] != campaign_id.as_str() {
+    // `complete`, one envelope per declared owner, the output, then the five
+    // profile/provenance arguments.
+    let profile = declaration.owners().len() + 2;
+    if args.len() != profile + 5 || args[0] != "complete" || args[profile] != campaign_id.as_str() {
         return Err(invalid("composition arguments are not the declared form"));
     }
-    Ok(args[4..].to_vec())
+    Ok(args[profile..].to_vec())
 }
-/// Strictly reopens the three published envelopes through the staged
-/// composer's complete loader: both owners with their owner-only codecs and
-/// the recomposed complete envelope with both. Its output must equal the
+/// Strictly reopens the published envelopes through the staged composer's
+/// complete loader: every declared owner with its owner-only codec and the
+/// recomposed complete envelope with all of them. Its output must equal the
 /// published complete envelope byte for byte; it is verification evidence
 /// only and never a publishable artifact.
 fn reopen_published(
@@ -2936,17 +3099,19 @@ fn reopen_published(
     composer: &ProcessDescriptor,
     profile_arguments: &[String],
 ) -> io::Result<Vec<u8>> {
-    let algebra = declaration.imported("algebra").map_or_else(
-        || layout.algebra_owner(),
-        |imported| imported.envelope.path.clone(),
-    );
-    let published = [layout.core_owner(), algebra, layout.complete()];
-    let identities = published
-        .iter()
-        .map(|path| {
-            Ok(json!({"path":path,"sha256":Sha256Digest::of(&fs::read(repository.join(path))?)}))
-        })
-        .collect::<io::Result<Vec<_>>>()?;
+    let owners = declaration.published_owners(layout);
+    let identity = |path: &str| -> io::Result<Value> {
+        Ok(json!({"path":path,"sha256":Sha256Digest::of(&fs::read(repository.join(path))?)}))
+    };
+    let mut record = json!({
+        "schema":"tuning-campaign-repository-reopen-v1",
+        "composer_sha256":composer.executable_sha256,
+        "profile_arguments":profile_arguments,
+        "complete":identity(&layout.complete())?,
+    });
+    for (owner, path) in &owners {
+        record[owner.as_str()] = identity(path)?;
+    }
     let attempts = stage.join(REPOSITORY_PUBLICATION_DIR).join("reopen");
     fs::create_dir_all(&attempts)?;
     File::open(stage.join(REPOSITORY_PUBLICATION_DIR))?.sync_all()?;
@@ -2959,11 +3124,11 @@ fn reopen_published(
     File::open(&attempts)?.sync_all()?;
     let output = directory.join("complete.json");
     let mut args = vec!["complete".to_owned()];
-    for path in [
-        repository.join(&published[0]),
-        repository.join(&published[1]),
-        output.clone(),
-    ] {
+    for path in owners
+        .iter()
+        .map(|(_, path)| repository.join(path))
+        .chain([output.clone()])
+    {
         args.push(
             path.to_str()
                 .ok_or_else(|| invalid("non-UTF-8 reopen path"))?
@@ -2988,19 +3153,12 @@ fn reopen_published(
             "published envelopes failed the composer's strict reopen",
         ));
     }
-    if fs::read(&output)? != fs::read(repository.join(&published[2]))? {
+    if fs::read(&output)? != fs::read(repository.join(layout.complete()))? {
         return Err(invalid(
             "strictly reopened composition differs from the published complete envelope",
         ));
     }
-    encoded(&json!({
-        "schema":"tuning-campaign-repository-reopen-v1",
-        "composer_sha256":composer.executable_sha256,
-        "profile_arguments":profile_arguments,
-        "core":identities[0],
-        "algebra":identities[1],
-        "complete":identities[2],
-    }))
+    encoded(&record)
 }
 /// Publishes a complete, validated stage into `repository`: plans the
 /// protocol §9 destinations, copies them through the durable publication
@@ -3035,7 +3193,7 @@ fn publish_to_repository(
     let layout = RepositoryLayout {
         id: campaign_id.as_str(),
     };
-    let profile_arguments = reopen_arguments(stage, campaign_id)?;
+    let profile_arguments = reopen_arguments(stage, campaign_id, declaration)?;
     let plan = RepositoryPlan::new(
         stage,
         campaign_id.clone(),
@@ -4975,6 +5133,626 @@ mod tests {
             "{}",
             String::from_utf8_lossy(&output.stderr)
         );
+    }
+
+    /// The issue the coding fixture declaration names.
+    const CODING_ISSUE: &str = "c0d1f1ed";
+
+    /// A declaration that measures the coding owner and imports the core and
+    /// algebra envelopes one committed campaign published.
+    fn coding_declaration() -> CampaignDeclaration {
+        let root = repository_root().unwrap();
+        let algebra = seam_declaration().imported("algebra").unwrap().clone();
+        let run = Path::new(&algebra.envelope.path)
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned();
+        let core_path = RepositoryLayout { id: &run }.core_owner();
+        let core = ImportedOwner {
+            owner: Token::new(Owner::Core.crate_name()).unwrap(),
+            name: Owner::Core,
+            section: Owner::Core.section().to_owned(),
+            envelope: RepositoryArtifact {
+                sha256: Sha256Digest::of(&fs::read(root.join(&core_path)).unwrap()),
+                path: core_path,
+            },
+            complete: algebra.complete.clone(),
+        };
+        let mut declaration = CampaignDeclaration {
+            schema: DECLARATION_SCHEMA.into(),
+            issue: CODING_ISSUE.into(),
+            protocol: "protocol.md".into(),
+            producing_manifest: "producing-build-inputs.json".into(),
+            measured_owners: vec![MeasuredOwner {
+                owner: Token::new(Owner::Coding.crate_name()).unwrap(),
+                name: Owner::Coding,
+                cells: 3,
+            }],
+            imported_owners: vec![core, algebra],
+            evidence_index: true,
+            sha256: None,
+        };
+        declaration.validate(CODING_ISSUE).unwrap();
+        declaration.sha256 = Some(Sha256Digest::of(&encoded(&declaration).unwrap()));
+        declaration
+    }
+
+    fn stand_in(path: &Path, script: &str) -> ProcessDescriptor {
+        use std::os::unix::fs::PermissionsExt;
+        fs::write(path, script).unwrap();
+        fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
+        let executable = artifact(path).unwrap();
+        ProcessDescriptor {
+            id: Token::new("composer").unwrap(),
+            working_directory: executable.path.parent().unwrap().to_owned(),
+            executable: executable.path,
+            executable_sha256: executable.sha256,
+            arguments: vec![],
+            environment: measurement_environment(),
+        }
+    }
+
+    fn journaled(stage: &Path, campaign: &Token, kind: &str) -> usize {
+        ExecutionLog::validate_prefix(
+            &fs::read(stage.join("execution.log")).unwrap(),
+            campaign.as_str(),
+        )
+        .unwrap()
+        .iter()
+        .filter(|record| record.details.get("kind").and_then(Value::as_str) == Some(kind))
+        .count()
+    }
+
+    #[test]
+    fn coding_declaration_measures_one_owner_and_imports_the_required_two() {
+        let root = repository_root().unwrap();
+        let coding = coding_declaration();
+        assert_eq!(coding.prefix(), format!("gf2-{CODING_ISSUE}-"));
+        assert_eq!(coding.total_cells(), 3);
+        assert_eq!(
+            coding.executables(),
+            ["coding-producer", "composer", "driver"]
+        );
+        assert_eq!(
+            coding.processes()[0],
+            (
+                "coding-producer".to_owned(),
+                vec!["--fresh-child".to_owned()]
+            )
+        );
+        let mut reopened: CampaignDeclaration =
+            serde_json::from_slice(&encoded(&coding).unwrap()).unwrap();
+        reopened.sha256 = coding.sha256.clone();
+        assert_eq!(reopened, coding);
+        for imported in &coding.imported_owners {
+            assert_eq!(
+                section_wrapper(&imported.envelope.read(&root).unwrap(), &imported.section)
+                    .unwrap(),
+                section_wrapper(&imported.complete.read(&root).unwrap(), &imported.section)
+                    .unwrap()
+            );
+        }
+        for two_owner in [extent_declaration(), seam_declaration()] {
+            assert!(!two_owner.owners().contains(&Owner::Coding));
+        }
+        let measured = |name: Owner| MeasuredOwner {
+            owner: Token::new(name.crate_name()).unwrap(),
+            name,
+            cells: 1,
+        };
+        for (mutate, what) in [
+            (
+                (|d: &mut CampaignDeclaration, _: &dyn Fn(Owner) -> MeasuredOwner| {
+                    d.imported_owners.pop();
+                }) as fn(&mut CampaignDeclaration, &dyn Fn(Owner) -> MeasuredOwner),
+                "an uncovered required owner",
+            ),
+            (
+                |d, _| d.measured_owners.clear(),
+                "a campaign that measures nothing",
+            ),
+            (
+                |d, measured| {
+                    d.imported_owners.remove(0);
+                    d.measured_owners.push(measured(Owner::Core));
+                },
+                "measured owners out of composition order",
+            ),
+            (
+                |d, measured| d.measured_owners.insert(0, measured(Owner::Core)),
+                "an owner both measured and imported",
+            ),
+            (
+                |d, _| d.measured_owners[0].owner = Token::new("gf2-core").unwrap(),
+                "a name under another crate",
+            ),
+            (
+                |d, _| d.imported_owners[0].section = Owner::Coding.section().to_owned(),
+                "a foreign imported section",
+            ),
+        ] {
+            let mut changed = coding.clone();
+            mutate(&mut changed, &measured);
+            assert!(changed.validate(CODING_ISSUE).is_err(), "accepted {what}");
+        }
+        assert!(
+            serde_json::from_str::<MeasuredOwner>(
+                "{\"owner\":\"gf2-sim\",\"name\":\"sim\",\"cells\":1}"
+            )
+            .is_err(),
+            "accepted an owner outside the closed set"
+        );
+    }
+
+    #[test]
+    fn coding_campaign_stages_its_producer_and_no_imported_owner_producer() {
+        let stage = scratch("gf2-driver-coding-staging");
+        fs::create_dir(stage.join("build")).unwrap();
+        let mut observations = Vec::new();
+        for phase in ["before", "after"] {
+            let path = stage.join(format!("build/source-{phase}.json"));
+            fs::write(
+                &path,
+                encoded(&BuildSourceObservation {
+                    schema: "tuning-campaign-build-source-v1".into(),
+                    phase: format!("{phase}-build"),
+                    source_revision: command_text("git", &["rev-parse", "HEAD"]).unwrap(),
+                    source_tree: command_text("git", &["rev-parse", "HEAD^{tree}"]).unwrap(),
+                    porcelain: String::new(),
+                })
+                .unwrap(),
+            )
+            .unwrap();
+            observations.push(artifact(&path).unwrap());
+        }
+        let built = stage.join("built");
+        fs::write(&built, b"staged executable").unwrap();
+        let built = artifact(&built).unwrap();
+        let input = |names: &[&str]| {
+            let path = stage.join(format!("build-input-{}.json", names.len()));
+            let staging = StagingManifest {
+                schema: "tuning-campaign-staging-v1".into(),
+                source_before: observations[0].clone(),
+                source_after: observations[1].clone(),
+                executables: names
+                    .iter()
+                    .map(|name| (Token::new(*name).unwrap(), built.clone()))
+                    .collect(),
+            };
+            fs::write(&path, encoded(&staging).unwrap()).unwrap();
+            path
+        };
+        let coding = coding_declaration();
+        assert!(stage_executables(
+            &stage,
+            &input(&["coding-producer", "composer", "core-producer", "driver"]),
+            &coding
+        )
+        .is_err());
+        stage_executables(
+            &stage,
+            &input(&["coding-producer", "composer", "driver"]),
+            &coding,
+        )
+        .unwrap();
+        for name in coding.executables() {
+            assert_eq!(
+                artifact(&stage.join("bin").join(name)).unwrap().sha256,
+                built.sha256
+            );
+        }
+        let reports: BTreeMap<String, ArtifactIdentity> =
+            ["self-check", "list-grid", "capability-report"]
+                .into_iter()
+                .map(|mode| {
+                    let name = format!("coding-{mode}");
+                    let path = stage.join(format!("{name}.json"));
+                    fs::write(&path, b"{}").unwrap();
+                    (name, artifact(&path).unwrap())
+                })
+                .collect();
+        validate_preflight_identities(&stage, &reports, &coding).unwrap();
+        assert!(validate_preflight_identities(&stage, &reports, &seam_declaration()).is_err());
+    }
+
+    #[test]
+    fn imported_core_and_algebra_are_staged_and_reopened_beside_conservative_probes() {
+        let scratch_root = scratch("gf2-driver-coding-import");
+        let root = fs::canonicalize(scratch_root.path()).unwrap();
+        let stage = root.join("stage");
+        fs::create_dir(&stage).unwrap();
+        let declaration = coding_declaration();
+        let [core, algebra] = ["core", "algebra"].map(|name| declaration.imported(name).unwrap());
+        let campaign = Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
+        let probe = Sha256Digest::of(b"{}");
+        // Accepts a staged import only in its own composition slot, beside a
+        // probe in the other.
+        let composer = stand_in(
+            &root.join("composer"),
+            &format!(
+                "#!/bin/sh\nPATH=/usr/bin:/bin\nset -C\nsum() {{ sha256sum < \"$1\" | cut -d' ' -f1; }}\necho \"$1\" >> {root}/calls\ncase \"$1\" in\n  core-owner|algebra-owner) printf '{{}}' > \"$2\" ;;\n  complete) case \"$(sum \"$2\") $(sum \"$3\")\" in\n    \"{core} {probe}\"|\"{probe} {algebra}\") cat {reference} > \"$4\" ;;\n    *) exit 5 ;;\n  esac ;;\n  *) exit 2 ;;\nesac\n",
+                root = root.display(),
+                core = core.envelope.sha256.as_str(),
+                algebra = algebra.envelope.sha256.as_str(),
+                probe = probe.as_str(),
+                reference = repository_root().unwrap().join(&core.complete.path).display(),
+            ),
+        );
+        let channels = SessionChannels::for_stage(&stage).unwrap();
+        let mut log = ExecutionLog::create_new(&stage, campaign.as_str(), "session-1").unwrap();
+        log.append(JournalEvent::CampaignStart, None, json!({}))
+            .unwrap();
+        for (imported, other) in [(core, "algebra"), (algebra, "core")] {
+            let evidence = import_owner(
+                &repository_root().unwrap(),
+                &channels,
+                &campaign,
+                &"0".repeat(40),
+                &composer,
+                imported,
+                &mut log,
+            )
+            .unwrap();
+            assert_eq!(evidence.owner, imported.owner);
+            assert_eq!(evidence.source, imported.envelope);
+            assert_eq!(evidence.staged.path, stage.join(imported.name.envelope()));
+            assert_eq!(evidence.staged.sha256, imported.envelope.sha256);
+            let record: Value = read_json(&evidence.reopen.path).unwrap();
+            assert_eq!(record["staged"]["sha256"], json!(imported.envelope.sha256));
+            assert_eq!(
+                record["probe_complete"]["sha256"],
+                json!(core.complete.sha256)
+            );
+            assert_eq!(record[format!("probe_{other}")]["sha256"], json!(probe));
+            assert!(record
+                .get(format!("probe_{}", imported.name.as_str()))
+                .is_none());
+        }
+        assert_eq!(
+            fs::read_to_string(root.join("calls")).unwrap(),
+            "algebra-owner\ncomplete\ncore-owner\ncomplete\n"
+        );
+        assert_eq!(journaled(&stage, &campaign, "orchestration-start"), 4);
+        assert_eq!(journaled(&stage, &campaign, "orchestration-exit"), 4);
+    }
+
+    #[test]
+    fn coding_composition_joins_three_owner_envelopes_in_composition_order() {
+        let scratch_root = scratch("gf2-driver-coding-composition");
+        let root = fs::canonicalize(scratch_root.path()).unwrap();
+        let stage = root.join("stage");
+        fs::create_dir(&stage).unwrap();
+        let declaration = coding_declaration();
+        let campaign = Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
+        let revision = "0".repeat(40);
+        for owner in Owner::ALL {
+            fs::write(stage.join(owner.envelope()), owner.as_str()).unwrap();
+        }
+        let composer = stand_in(
+            &root.join("composer"),
+            &format!(
+                "#!/bin/sh\nPATH=/usr/bin:/bin\nset -C\necho run >> {root}/calls\ntest \"$1\" = complete || exit 2\ntest \"$(cat \"$2\" \"$3\" \"$4\")\" = corealgebracoding || exit 4\ntest \"$6 $8 $9\" = \"{campaign} {revision} false\" || exit 6\nprintf three-owner > \"$5\"\n",
+                root = root.display(),
+                campaign = campaign.as_str(),
+            ),
+        );
+        let mut log = ExecutionLog::create_new(&stage, campaign.as_str(), "session-1").unwrap();
+        log.append(JournalEvent::CampaignStart, None, json!({}))
+            .unwrap();
+        // The second call resumes from the recorded candidate.
+        for _ in 0..2 {
+            compose_complete(
+                &stage,
+                &campaign,
+                &revision,
+                &composer,
+                &declaration,
+                &mut log,
+            )
+            .unwrap();
+        }
+        assert_eq!(fs::read_to_string(root.join("calls")).unwrap(), "run\n");
+        assert_eq!(
+            fs::read(stage.join("complete.json")).unwrap(),
+            b"three-owner"
+        );
+        let composition: Value = read_json(&stage.join("composition.json")).unwrap();
+        for owner in Owner::ALL {
+            assert_eq!(
+                composition[owner.as_str()],
+                serde_json::to_value(artifact(&stage.join(owner.envelope())).unwrap()).unwrap()
+            );
+        }
+        assert_eq!(
+            composition["output"]["sha256"],
+            json!(Sha256Digest::of(b"three-owner"))
+        );
+        let records = ExecutionLog::validate_prefix(
+            &fs::read(stage.join("execution.log")).unwrap(),
+            campaign.as_str(),
+        )
+        .unwrap();
+        for event in [JournalEvent::Composition, JournalEvent::CompositionReopen] {
+            assert!(records.iter().any(|record| record.event == event));
+        }
+        let profile = reopen_arguments(&stage, &campaign, &declaration).unwrap();
+        assert_eq!(profile.len(), 5);
+        assert_eq!(profile[0], campaign.as_str());
+        assert_eq!(profile[4], composer.executable_sha256.as_str());
+        assert!(
+            reopen_arguments(&stage, &campaign, &seam_declaration()).is_err(),
+            "a two-owner declaration accepted a three-owner composition"
+        );
+    }
+
+    impl PublicationFixture {
+        /// A complete stage of [`coding_declaration`]: the measured coding
+        /// envelope, both imports staged, and a stand-in composer that
+        /// accepts only the three published owners. The validator is a
+        /// stand-in that records its arguments: the independent validator
+        /// accepts a coding stage under `@/issue/dd50ea11`.
+        fn coding() -> Self {
+            let declaration = coding_declaration();
+            let scratch_root = scratch("gf2-driver-coding-publication");
+            let root = fs::canonicalize(scratch_root.path()).unwrap();
+            let campaign =
+                Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
+            let stage = root.join("stage");
+            let mut files: Vec<(String, Vec<u8>)> = [
+                ("coding-owner.json", &b"{\"owner\":\"coding\"}"[..]),
+                ("complete.json", b"{\"owners\":3}"),
+                ("receipt.md", b"# receipt\n"),
+                ("execution.log", b"{\"sequence\":0}\n"),
+                ("checkpoints/manifest.json", b"{}"),
+                ("coding-accepted.json", b"{\"accepted\":1}"),
+                ("bin/driver", b"staged executable"),
+                ("sessions/s1/checksum.json", b"{\"checksum\":1}"),
+                ("coding-self-check.json", b"{\"report\":1}"),
+                ("coding-manifest.json", b"{\"manifest\":\"coding\"}"),
+                ("coding-owner-response.json", b"{\"response\":\"coding\"}"),
+                ("receipt-projection.json", b"{\"projection\":1}"),
+                (RAW_RESULT_INDEX, b"# Raw result index\n"),
+                (OWNER_DECISIONS, b"[]"),
+            ]
+            .into_iter()
+            .map(|(name, content)| (name.to_owned(), content.to_vec()))
+            .collect();
+            for imported in &declaration.imported_owners {
+                files.push((
+                    imported.name.envelope(),
+                    imported.envelope.read(&repository_root().unwrap()).unwrap(),
+                ));
+                files.push((
+                    format!("imported/{}-session-1/reopen.json", imported.name.as_str()),
+                    imported.name.as_str().as_bytes().to_vec(),
+                ));
+            }
+            for (relative, content) in &files {
+                fs::create_dir_all(stage.join(relative).parent().unwrap()).unwrap();
+                fs::write(stage.join(relative), content).unwrap();
+            }
+            let imported_owners: Vec<ImportedOwnerEvidence> = declaration
+                .imported_owners
+                .iter()
+                .map(|imported| ImportedOwnerEvidence {
+                    owner: imported.owner.clone(),
+                    source: imported.envelope.clone(),
+                    staged: artifact(&stage.join(imported.name.envelope())).unwrap(),
+                    reopen: artifact(&stage.join(format!(
+                        "imported/{}-session-1/reopen.json",
+                        imported.name.as_str()
+                    )))
+                    .unwrap(),
+                })
+                .collect();
+            let protocol = Sha256Digest::of(b"protocol");
+            let declaration_sha = declaration.sha256.clone().unwrap();
+            let revision = "0".repeat(40);
+            fs::write(
+                stage.join("campaign.json"),
+                encoded(&json!({
+                    "campaign_id": campaign,
+                    "identity": {"source_revision": revision},
+                    "imported_owners": imported_owners,
+                }))
+                .unwrap(),
+            )
+            .unwrap();
+            let digest =
+                |relative: &str| Sha256Digest::of(&fs::read(stage.join(relative)).unwrap());
+            let tail = [
+                campaign.as_str(),
+                "1970-01-01T00:00:00Z",
+                &revision,
+                "false",
+            ];
+            let composer = stand_in(
+                &root.join("composer"),
+                &format!(
+                    "#!/bin/sh\nPATH=/usr/bin:/bin\nset -C\nsum() {{ sha256sum < \"$1\" | cut -d' ' -f1; }}\ntest \"$1\" = complete || exit 2\ntest \"$(sum \"$2\") $(sum \"$3\") $(sum \"$4\")\" = \"{core} {algebra} {coding}\" || exit 4\ntest \"$6 $7 $8 $9\" = \"{tail}\" || exit 6\ncat {complete} > \"$5\"\n",
+                    core = digest("core-owner.json").as_str(),
+                    algebra = digest("algebra-owner.json").as_str(),
+                    coding = digest("coding-owner.json").as_str(),
+                    tail = tail.join(" "),
+                    complete = stage.join("complete.json").display(),
+                ),
+            );
+            let mut arguments: Vec<String> = ["complete", "core", "algebra", "coding", "output"]
+                .into_iter()
+                .chain(tail)
+                .map(str::to_owned)
+                .collect();
+            arguments.push(composer.executable_sha256.as_str().into());
+            fs::write(
+                stage.join("composition.json"),
+                encoded(&json!({"args":arguments,"tool_sha256":composer.executable_sha256}))
+                    .unwrap(),
+            )
+            .unwrap();
+            let validator = root.join("validator.py");
+            fs::write(
+                &validator,
+                "import pathlib, sys\nwith pathlib.Path(__file__).with_name('validator-calls').open('a') as calls:\n    calls.write(' '.join(sys.argv[1:]) + '\\n')\n",
+            )
+            .unwrap();
+            let evidence_index = render_evidence_index(
+                &stage,
+                &EvidenceIdentity {
+                    campaign_id: campaign.as_str(),
+                    protocol_sha256: &protocol,
+                    source_revision: &revision,
+                    declaration_path: RECORDED_DECLARATION,
+                    declaration_sha256: declaration_sha.as_str(),
+                    imported: &imported_owners,
+                },
+                &declaration,
+            )
+            .unwrap()
+            .into_bytes();
+            Self {
+                _root: scratch_root,
+                root,
+                stage,
+                campaign,
+                declaration,
+                composer,
+                validator,
+                evidence_index: Some(evidence_index),
+            }
+        }
+    }
+
+    #[test]
+    fn coding_publication_lands_the_owner_envelope_and_keeps_both_imports() {
+        let fixture = PublicationFixture::coding();
+        let layout = RepositoryLayout {
+            id: fixture.campaign.as_str(),
+        };
+        let [core, algebra] =
+            ["core", "algebra"].map(|name| fixture.declaration.imported(name).unwrap().clone());
+
+        let drifted = fixture.repository("drifted");
+        fs::write(drifted.join(&core.envelope.path), b"{}").unwrap();
+        let refused = fixture.publish(&drifted).unwrap_err().to_string();
+        assert!(refused.contains("strict reopen"), "{refused}");
+        assert!(!drifted.join(layout.checksum()).exists());
+
+        let repository = fixture.repository("repository");
+        let manifest = fixture.publish(&repository).unwrap();
+        let published = layout.coding_owner();
+        assert!(published.starts_with("crates/gf2-coding/data/tuning-profiles/"));
+        assert_eq!(
+            fs::read(repository.join(&published)).unwrap(),
+            fs::read(fixture.stage.join("coding-owner.json")).unwrap()
+        );
+        let archive = |relative: &str| format!("{}/{relative}", layout.archive());
+        let session = |relative: &str| format!("{}/{relative}", layout.session());
+        for (imported, run_named) in [
+            (&core, layout.core_owner()),
+            (&algebra, layout.algebra_owner()),
+        ] {
+            assert!(
+                !repository.join(run_named).exists(),
+                "an imported owner must not publish a run-named envelope"
+            );
+            assert_eq!(
+                fs::read(repository.join(archive(&imported.name.envelope()))).unwrap(),
+                imported.envelope.read(&repository_root().unwrap()).unwrap()
+            );
+        }
+        assert!(repository.join(session("coding-self-check.json")).is_file());
+        assert!(repository.join(archive("coding-accepted.json")).is_file());
+        let reopen: Value = serde_json::from_slice(
+            &fs::read(repository.join(session("repository-reopen.json"))).unwrap(),
+        )
+        .unwrap();
+        for imported in [&core, &algebra] {
+            assert_eq!(
+                reopen[imported.name.as_str()],
+                json!({"path": imported.envelope.path, "sha256": imported.envelope.sha256})
+            );
+        }
+        assert_eq!(reopen["coding"]["path"], json!(published));
+        let index =
+            String::from_utf8(fs::read(repository.join(layout.evidence_index())).unwrap()).unwrap();
+        assert!(index.contains(&format!("| gf2-coding owner envelope | `{published}` |")));
+        for imported in [&core, &algebra] {
+            assert!(index.contains(&format!(
+                "| {} owner envelope (imported) | `{}` |",
+                imported.owner.as_str(),
+                imported.envelope.path
+            )));
+        }
+        assert!(
+            !index.contains("resolved owner manifest"),
+            "the index cites a derivation only the core owner records"
+        );
+        let committed = fs::read_to_string(&manifest.path).unwrap();
+        assert!(committed.contains(&published));
+        assert_eq!(
+            fs::read_to_string(fixture.root.join("validator-calls"))
+                .unwrap()
+                .lines()
+                .last(),
+            Some(
+                format!(
+                    "--stage {} --publication {}",
+                    fixture.stage.display(),
+                    repository.display()
+                )
+                .as_str()
+            )
+        );
+        assert_eq!(fixture.publish(&repository).unwrap(), manifest);
+    }
+
+    #[test]
+    fn coding_receipt_states_the_imports_and_no_core_decision() {
+        let fixture = PublicationFixture::coding();
+        let declaration = &fixture.declaration;
+        let config: Value = read_json(&fixture.stage.join("campaign.json")).unwrap();
+        let imported: Vec<ImportedOwnerEvidence> =
+            serde_json::from_value(config["imported_owners"].clone()).unwrap();
+        let facts = |declaration: &CampaignDeclaration, cited| ReceiptFacts {
+            campaign_id: fixture.campaign.as_str().to_owned(),
+            declaration: declaration.clone(),
+            declaration_path: RECORDED_DECLARATION.to_owned(),
+            declaration_sha256: declaration.sha256.clone().unwrap(),
+            protocol_sha256: Sha256Digest::of(b"protocol"),
+            source_revision: "0".repeat(40),
+            affinity: "[0]".to_owned(),
+            owners: vec![],
+            cited,
+            counts: DeclaredCounts::for_cells(declaration.total_cells()).unwrap(),
+            attempts: 1,
+            orchestration: 1,
+            sessions: 1,
+        };
+        let cited = cited_sources(declaration, &imported, &fixture.stage).unwrap();
+        assert!(cited
+            .iter()
+            .all(|(_, source)| fixture.stage.join(source).is_file()));
+        let receipt =
+            render_receipt(&facts(declaration, cited), &fixture.stage, &[], b"", b"").unwrap();
+        assert!(!receipt.contains("GEMM") && !receipt.contains("M4RM"));
+        for imported in &declaration.imported_owners {
+            assert!(receipt.contains(&format!(
+                "Owner `{}` is imported unmeasured from `{}`",
+                imported.owner.as_str(),
+                imported.envelope.path
+            )));
+        }
+        let core_measured = render_receipt(
+            &facts(&seam_declaration(), vec![]),
+            &fixture.stage,
+            &[],
+            b"",
+            b"",
+        )
+        .unwrap();
+        assert!(core_measured.contains("GEMM row/column decisions are joint"));
     }
 
     /// Serialized forms of one Rust value: the sorted-key JSON value that
