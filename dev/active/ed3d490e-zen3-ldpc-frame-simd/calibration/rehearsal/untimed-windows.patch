@@ -2,9 +2,7 @@ diff --git a/dev/tools/tuning-campaign-support/src/timing.rs b/dev/tools/tuning-
 index a4325c804..7b697c90f 100644
 --- a/dev/tools/tuning-campaign-support/src/timing.rs
 +++ b/dev/tools/tuning-campaign-support/src/timing.rs
-@@ -143,9 +143,29 @@ pub fn execution_windows(
- pub fn execution_windows_with_progress(
-     execution: u64,
+@@ -145,5 +145,25 @@ pub fn execution_windows_with_progress(
      body: &mut impl FnMut(usize),
 -    progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
 +    mut progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
@@ -32,5 +30,3 @@ index a4325c804..7b697c90f 100644
 +    }
 +    Ok(samples)
  }
- 
- /// Shared mechanics for an explicitly declared/test timing protocol.
