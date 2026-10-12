@@ -1,30 +1,12 @@
 #!/usr/bin/env python3
 """Inventory the caller-trusted safe kernel entry points (jit:bfc2ceab).
 
-Joins the review record `review.py` with the working tree and writes, in the
-directory above this script, `inventory.json`, `inventory.md`,
-`decision-table.md` and `measurement-plan.md`. The script fails, before
-writing, when
-
-- a safe function of `gf2-kernels-simd` that holds an `unsafe` block outside
-  test code has no verdict in the review, or a verdict names no such function;
-- a use of a published pointer field in a tracked Rust file is unassigned, or
-  an assignment counts differently;
-- a cited claim is absent from `source-evidence.json`;
-- a witness tuple does not pass the release assertions it is recorded against;
-- the struct literals that build the sparse matrix type are not those the
-  review assigns to its constructors, or a method of that file takes
-  `&mut self`.
-
-- the freeze refusal record of the sparse product family pins another receipt
-  than that family's last committed pilot.
-
-`witness-runs.json` and `instruction-counts.json` are read as committed, and so
-are the families' receipts and the freeze refusal record: the decision table
-names each interface's rows of the family tables with the role, outcome and
-decision each stage's acceptance summary records.
-
 Usage: make-inventory.py, with no arguments
+
+Joins the review record `review.py` with the working tree and the committed
+family evidence and writes `inventory.json`, `inventory.md`,
+`decision-table.md` and `measurement-plan.md` in the directory above this
+script. `verification.md` lists what makes it fail before writing.
 """
 
 import importlib.util
@@ -36,8 +18,8 @@ import sys
 import review
 import spmm_family
 from locate import (
-    HERE, ISSUE, KERNEL_PACKAGE, ROOT, family_stages, package, repository_files, rust_code_text,
-    tracked,
+    HERE, ISSUE, KERNEL_PACKAGE, ROOT, family_stages, package, package_files, repository_files,
+    rust_code_text,
 )
 
 OUT = HERE.parent
@@ -52,7 +34,8 @@ SCAN_RULE = (
     "or cleared with a basis and a source claim."
 )
 USE_RULE = (
-    "In every tracked Rust file outside receipt input snapshots and outside this "
+    "In every Rust file git lists as tracked or as untracked and not ignored, outside "
+    "receipt input snapshots and outside this "
     "record's own directory, whose witness example calls the pointers on purpose, and "
     "outside the condition test of the checked build, which does the same, a call is "
     "a line holding `.<field>)(` for a published pointer field of the "
@@ -98,7 +81,7 @@ def safe_functions_with_unsafe(boundaries):
     """Package-relative path and name of each safe function holding a non-test block."""
     prefix = package(KERNEL_PACKAGE) + "/"
     found = {}
-    for path in tracked(f"{prefix}**/*.rs"):
+    for path in package_files(KERNEL_PACKAGE, "*.rs"):
         source = (ROOT / path).read_text()
         masked = rust_code_text.masked(source)
         code, tests = masked.splitlines(), test_lines(masked)
@@ -127,7 +110,7 @@ def scan_uses():
     found = {}
     own = str(OUT.relative_to(ROOT)) + "/"
     condition_test = f"{package(review.CONDITION_TEST[0])}/{review.CONDITION_TEST[1]}"
-    for path in tracked("**/*.rs"):
+    for path in repository_files.tracked_files(ROOT, "*.rs"):
         if path.startswith(own) or path == condition_test:
             continue
         source = (ROOT / path).read_text()
@@ -519,7 +502,7 @@ def constructor_problems():
 def hook_lines():
     """Per tracked Rust file, the definitions and calls of the forwarding hook."""
     name, found = review.GRAIN_HOOK, {}
-    for path in tracked("**/*.rs"):
+    for path in repository_files.tracked_files(ROOT, "*.rs"):
         source = (ROOT / path).read_text()
         if name not in source:
             continue
@@ -768,7 +751,8 @@ def cost_rows():
     A cell maps to the role, outcome and decision the stage's acceptance
     summary records.
     """
-    stages = family_stages(OUT / review.CONFIRMATION_ADDENDUM)
+    stages = {label: directory
+              for label, directory, _ in family_stages(OUT / review.PILOT_ADDENDUM)}
     pilot = json.loads((stages["pilot"] / "receipt.json").read_text())
     tables = (ROOT / pilot["trial_ledger"]["path"]).parent / review.TABLES
     link, found = os.path.relpath(tables, OUT), {}
@@ -848,8 +832,8 @@ def grain_section(record, stages):
         "whose candidate is the shipped product and whose baseline is the dispatcher's row "
         "loop over the unchecked row kernel, in cells "
         + ", ".join(f"`{cell}`" for cell in pricing["cells"])
-        + "; its stages and outcome stand under the measured cost below. The earlier family "
-        "cannot price it: a further "
+        + "; its stages and outcome stand under the measured cost below. The family "
+        "that measures the per-row form cannot price it: a further "
         f"confirmatory attempt on its ledger (`{more['ledger']}`) is attempt "
         f"{more['next_attempt']} and spends alpha {more['attempt_alpha']:.6g}; with one more "
         f"cell the ledger holds {more['comparisons_with_one_more_cell']} comparisons, which "

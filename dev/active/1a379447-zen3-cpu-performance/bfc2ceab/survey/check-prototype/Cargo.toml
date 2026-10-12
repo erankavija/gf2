@@ -1,11 +1,6 @@
 # Checked-form prototypes of the caller-trusted kernel entry points
-# (jit:bfc2ceab).
-#
-# A standalone workspace, so the prototypes add no target, feature or
-# dependency to the production workspace and stay outside every production
-# path. Each interface has a `*_current` function that forwards to the
-# published pointer and a `*_checked` function that runs the release-mode
-# check first; `../regen-prototype-listing.sh` writes their assembly.
+# (jit:bfc2ceab), a standalone workspace outside every production path;
+# `regen-prototype-listing.py` beside this crate writes their assembly.
 
 [workspace]
 

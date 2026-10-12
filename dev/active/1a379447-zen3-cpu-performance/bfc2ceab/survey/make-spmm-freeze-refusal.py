@@ -3,15 +3,9 @@
 
 Usage: make-spmm-freeze-refusal.py, with no arguments
 
-Runs the family launcher's `freeze` action, which derives the confirmation
-addendum from the committed receipt of the family's last pilot trial through
-the canonical freezer, and writes the refusal record in the directory above
-this script: the command, its exit status and its standard error as the
-action reports them, the digests of the launcher, the freezer, the pilot
-addendum and every pilot receipt, and the pilot trials the family ledger holds
-against the search budget the pilot addendum freezes. The action reads
-committed bytes only, so the record reproduces. The script fails, before
-writing, when the action freezes an addendum.
+Runs the family launcher's `freeze` action and writes, in the directory above
+this script, how the action ends beside the digests of what it reads. Fails,
+before writing, when the action freezes an addendum.
 """
 
 import json

@@ -1,7 +1,6 @@
-"""Shared locators for this issue's generators (jit:bfc2ceab).
-
-Importing this module puts the shared scripts on `sys.path`; they resolve
-files under the root git reports.
+"""Shared locators for this issue's generators (jit:bfc2ceab): importing this
+module puts the shared scripts on `sys.path`, and they resolve files under the
+root git reports.
 """
 
 import functools
@@ -49,44 +48,45 @@ def package(name):
     return repository_files.package_directory(ROOT, name)
 
 
-@functools.cache
-def _tracked(pattern):
-    listing = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files", "--", f":(glob){pattern}"],
-        capture_output=True, check=True, text=True,
-    ).stdout.split()
-    return tuple(sorted(path for path in listing if not repository_files.is_snapshot_copy(path)))
+def package_files(name, glob):
+    """The live files of package `name` whose file name matches `glob`, root-relative."""
+    prefix = package(name) + "/"
+    return [path for path in repository_files.tracked_files(ROOT, glob)
+            if path.startswith(prefix)]
 
 
-def tracked(pattern):
-    """Sorted root-relative tracked paths matching the glob `pattern`, outside receipt snapshots."""
-    return list(_tracked(pattern))
+def sha256(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def family_stages(confirmation_addendum):
-    """Receipt directory of each committed stage of the family, by label.
+def family_ledger(pilot_addendum):
+    """The ledger of the family `pilot_addendum` freezes: its path and its entries."""
+    path = ROOT / json.loads(pilot_addendum.read_text())["family_wise"]["ledger_path"]
+    return path, [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
-    The pilot is the receipt the confirmation addendum pins as its resolution
-    evidence, and the confirmation the receipt beside it that pins that
-    addendum; each acceptance summary must evaluate its receipt's bytes.
+
+def family_stages(pilot_addendum):
+    """The family's stages in ledger order, as `(label, receipt directory, receipt)`.
+
+    A stage is the committed receipt of a ledger entry's campaign. A label that
+    repeats takes its ordinal, as the launcher's campaign names do. Each
+    acceptance summary must evaluate its receipt's bytes.
     """
-    pinned = hashlib.sha256(confirmation_addendum.read_bytes()).hexdigest()
-    evidence = json.loads(confirmation_addendum.read_text())["effect"]["resolution_evidence"]
-    pilot = ROOT / evidence["receipt"]
-    if hashlib.sha256(pilot.read_bytes()).hexdigest() != evidence["sha256"]:
-        raise SystemExit(f"{evidence['receipt']} is not the receipt the confirmation pins")
-    stages = {"pilot": pilot.parent}
-    confirmations = [
-        receipt.parent for receipt in sorted(pilot.parent.parent.glob("*/receipt.json"))
-        if json.loads(receipt.read_text())["addendum"]["sha256"] == pinned
-    ]
-    if len(confirmations) > 1:
-        raise SystemExit(f"{len(confirmations)} receipts pin {confirmation_addendum.name}")
-    if confirmations:
-        stages["confirmation"] = confirmations[0]
-    for label, directory in stages.items():
-        receipt = hashlib.sha256((directory / "receipt.json").read_bytes()).hexdigest()
+    path, entries = family_ledger(pilot_addendum)
+    family = json.loads(pilot_addendum.read_text())["family"]["id"]
+    receipts = {}
+    for file in sorted(path.parent.glob("*/receipt.json")):
+        receipt = json.loads(file.read_text())
+        if receipt["family_id"] == family:
+            receipts[receipt["campaign_id"]] = (file.parent, receipt)
+    found, seen = [], {}
+    for entry in entries:
+        if entry["campaign"] not in receipts:
+            raise SystemExit(f"no committed receipt of ledger campaign {entry['campaign']}")
+        directory, receipt = receipts[entry["campaign"]]
         summary = json.loads((directory / "acceptance-summary.json").read_text())
-        if summary["receipt_sha256"] != receipt:
-            raise SystemExit(f"the {label}'s acceptance summary evaluates another receipt")
-    return stages
+        if summary["receipt_sha256"] != sha256(directory / "receipt.json"):
+            raise SystemExit(f"the acceptance summary of {directory.name} evaluates another receipt")
+        seen[receipt["label"]] = ordinal = seen.get(receipt["label"], 0) + 1
+        found.append((receipt["label"] + (str(ordinal) if ordinal > 1 else ""), directory, receipt))
+    return found

@@ -1,10 +1,9 @@
 """Review record of the caller-trusted safe kernel entry points (jit:bfc2ceab).
 
-The reviewer's reading of `gf2-kernels-simd`, as data the generators check
-against the tree: `make-source-evidence.py` resolves every claim to a line,
-`make-inventory.py` requires a verdict for every safe function that holds an
-`unsafe` block and an assignment for every use of a published kernel pointer,
-and fails on a gap or a stale row.
+The reviewer's reading of `gf2-kernels-simd` as data: `make-source-evidence.py`
+resolves every claim to a line, and `make-inventory.py` fails on a safe
+function holding an `unsafe` block without a verdict and on a use of a
+published kernel pointer without an assignment.
 """
 
 SIMD, CORE, ALGEBRA, CODING = "gf2-kernels-simd", "gf2-core", "gf2-algebra", "gf2-coding"

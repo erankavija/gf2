@@ -13,12 +13,12 @@ import json
 import sys
 
 import review
-from locate import HERE, ISSUE, ROOT
+from locate import HERE, ISSUE, ROOT, repository_files
 
 FROZEN_UTC = "2026-10-05T21:29:00Z"
 FAMILY = "caller-trusted-entry-check-cost"
 OUTPUT = HERE.parent / "addendum-v4-entry-check-pilot.json"
-LEDGER = f"dev/bench_results/{ISSUE}/entry-check-family-ledger.jsonl"
+LEDGER_NAME = "entry-check-family-ledger.jsonl"
 CFG = "--cfg gf2_entry_checked"
 
 # (cell, consumer, size, seed); `review.PILOT_CELLS` states the checked form
@@ -155,7 +155,7 @@ def main():
             "alpha": 0.05,
             "prior_confirmatory_trials": 0,
             "prior_trials": [],
-            "ledger_path": LEDGER,
+            "ledger_path": repository_files.live_file(ROOT, LEDGER_NAME),
         },
         "search_budget": {
             "max_pilot_trials_per_cell": 2,

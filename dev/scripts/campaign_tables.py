@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
 """Shared result tables of a two-arm family's committed campaigns.
 
-A family supplies its title, its stages, its ledger and, when it states
-agreement with an earlier campaign, its receipt pin; the stage sections, the
-lane-witness table, the ledger table, the direction-agreement table and the
-source digests with each stage's acceptance finding count are the same for
-every such family and live here. A family's own generator puts this file's
-directory on `sys.path`, imports `campaign_tables` and calls
-`campaign_tables.main(...)`.
-
-Every row is read from a committed acceptance summary, receipt, ledger line or
-receipt pin at run time; the generator carries no figure of its own and no clock
-reading, so two consecutive runs over the same committed bytes produce the same
-file. A stage that is not committed yet is reported as absent rather than
-guessed.
+A family's generator puts this file's directory on `sys.path` and calls
+`campaign_tables.main(...)` with its title, stages, ledger and, when it states
+agreement with an earlier campaign, its receipt pin. Every row is read from
+committed evidence at run time, so two runs over the same bytes write the same
+file; a stage that is not committed is reported as absent.
 """
 
 import hashlib

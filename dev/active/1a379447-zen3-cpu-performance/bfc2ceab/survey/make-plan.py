@@ -5,12 +5,10 @@ Usage: make-plan.py --addendum A --label L --campaign-id ID --campaign-seed S
                     --lock PATH --executable BIN --producing-manifest M
                     --max-cells-per-session N [--pilot-pairs P] --output PLAN
 
-The projection itself is the shared `campaign_plan.py`, which `locate.py`
-beside this file puts on the import path; this file declares what is this
-family's own: its two arms, which are two builds of one package, and the case
-a cell decodes. `--executable` names the baseline build; the candidate is the
-same binary under the sibling target directory with the `-checked` suffix,
-built with the candidate's RUSTFLAGS.
+Declares what is this family's own for the shared `campaign_plan.py`: the two
+arms, which are two builds of one package, and the case a cell decodes.
+`--executable` names the baseline build; the candidate is the same binary in
+the sibling target directory with the `-checked` suffix.
 """
 
 import locate  # noqa: F401

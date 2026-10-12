@@ -185,6 +185,17 @@ pub struct BootstrapInterval {
     pub pairs: usize,
 }
 
+impl BootstrapInterval {
+    /// Wider side of the interval relative to the estimate, the quantity a
+    /// pilot's measurement resolution is sized from.
+    pub fn relative_half_width(&self) -> f64 {
+        (self.estimate - self.lower)
+            .abs()
+            .max((self.upper - self.estimate).abs())
+            / self.estimate
+    }
+}
+
 /// Resamples whole pairs with replacement and reports the nearest-rank
 /// percentile interval of the speedup at the declared two-sided error rate.
 pub fn paired_bootstrap_speedup(
@@ -239,6 +250,43 @@ pub fn paired_bootstrap_speedup_legacy(
         return Err(AbError("confidence must lie in [0.5, 1)".into()));
     }
     paired_bootstrap_speedup(pairs, resamples, 1.0 - confidence, seed)
+}
+
+/// Pairs to bootstrap under one seed at several two-sided error rates: the
+/// request `benchmark-acceptance --bootstrap` decodes.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct BootstrapRequest {
+    pub pairs: Vec<PairedObservation>,
+    pub resamples: u32,
+    pub seed: u64,
+    pub alphas: Vec<f64>,
+}
+
+/// One interval of a [`BootstrapRequest`] with its relative half-width.
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SizedInterval {
+    pub interval: BootstrapInterval,
+    pub relative_half_width: f64,
+}
+
+impl BootstrapRequest {
+    /// [`paired_bootstrap_speedup`] at each alpha, in request order; the seed
+    /// fixes the replicates, so every alpha reads the same ones.
+    pub fn intervals(&self) -> Result<Vec<SizedInterval>, AbError> {
+        self.alphas
+            .iter()
+            .map(|alpha| {
+                let interval =
+                    paired_bootstrap_speedup(&self.pairs, self.resamples, *alpha, self.seed)?;
+                Ok(SizedInterval {
+                    interval,
+                    relative_half_width: interval.relative_half_width(),
+                })
+            })
+            .collect()
+    }
 }
 
 /// Zero-based nearest-rank index for a percentile in a sorted sample.

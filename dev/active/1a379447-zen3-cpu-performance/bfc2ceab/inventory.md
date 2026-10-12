@@ -20,7 +20,7 @@ An entry point is a safe function of `gf2-kernels-simd`, published through a saf
 
 An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim.
 
-In every tracked Rust file outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, and outside the condition test of the checked build, which does the same, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.
+In every Rust file git lists as tracked or as untracked and not ignored, outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, and outside the condition test of the checked build, which does the same, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.
 
 | Basis of a cleared function | Functions | Meaning |
 |---|---|---|
