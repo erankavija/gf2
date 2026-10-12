@@ -50,6 +50,27 @@ session observed_utc 2026-10-08T23:00:28.079055072Z load_average 60.26 39.30 29.
 session observed_utc 2026-10-08T23:02:19.274131740Z load_average 29.55 35.04 29.00
 ```
 
+`dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2/r1-pilot`:
+
+```
+# started_utc: 2026-10-12T01:05:59Z
+# load_avg_start: 1.14 0.76 0.34
+# load_avg_end: 1.07 0.79 0.37
+# finished_utc: 2026-10-12T01:06:43Z
+session observed_utc 2026-10-12T01:06:00.884097739Z load_average 1.14 0.76 0.34
+```
+
+`dev/bench_results/63bad95d/63bad95d-native-ladder-v2/r1-pilot`:
+
+```
+# started_utc: 2026-10-12T01:06:46Z
+# load_avg_start: 1.07 0.79 0.37
+# load_avg_end: 1.04 0.86 0.44
+# finished_utc: 2026-10-12T01:08:12Z
+session observed_utc 2026-10-12T01:06:47.996789224Z load_average 1.07 0.79 0.37
+session observed_utc 2026-10-12T01:07:30.317222555Z load_average 1.08 0.84 0.41
+```
+
 ## `63bad95d-profile-dispatch-overhead`
 
 Intervals are each campaign's acceptance summary rows at that campaign's corrected alpha.
@@ -130,3 +151,45 @@ The estimate of `xor-inplace-8w-native` (inconclusive) lies below the floor and 
 The half-width of `bitmatrix-transpose-8192x2048-native` (pass), `and-popcount-1024w-native` (pass), `clmul-wide-9w-native` (pass) stays within the frozen resolution: the dispersion the pilot predicts decides these cells.
 
 Every cell that does not pass has a half-width above the frozen resolution, so the qualification is withheld by cells whose dispersion exceeds what the pilot measures.
+
+## `63bad95d-profile-dispatch-overhead-v2`
+
+Intervals are each campaign's acceptance summary rows at that campaign's corrected alpha.
+
+| Cell | Campaign | Label | Pairs | Alpha | Estimate | Interval | Relative half-width | Decision |
+|---|---|---|---:|---:|---:|---|---:|---|
+| `xor-inplace-4w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | pilot | 12 | 0.025000 | 1.3046 | [1.2988, 1.3078] | 0.0044 | improved |
+| `and-popcount-7w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | pilot | 12 | 0.025000 | 0.9836 | [0.9818, 0.9859] | 0.0023 | not-worse |
+| `xor-inplace-8w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | pilot | 12 | 0.025000 | 0.9976 | [0.9891, 1.0018] | 0.0086 | not-worse |
+
+Raw pairs of the same receipts, descriptive: the median and the relative interquartile range of the per-pair ratio over the stated pairs, and the median and the maximum window spread over the stated executions.
+
+| Cell | Campaign | Pairs | Ratio median | Ratio relative IQR | Executions | Window spread median | Window spread maximum |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `xor-inplace-4w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | 12 | 1.3042 | 0.0050 | 24 | 1.0041 | 1.0220 |
+| `and-popcount-7w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | 12 | 0.9831 | 0.0019 | 24 | 1.0037 | 1.0266 |
+| `xor-inplace-8w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | 12 | 0.9958 | 0.0110 | 24 | 1.0052 | 1.0187 |
+
+## `63bad95d-native-ladder-v2`
+
+Intervals are each campaign's acceptance summary rows at that campaign's corrected alpha.
+
+| Cell | Campaign | Label | Pairs | Alpha | Estimate | Interval | Relative half-width | Decision |
+|---|---|---|---:|---:|---:|---|---:|---|
+| `matvec-r1024-24w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0215 | [1.0065, 1.0358] | 0.0147 | not-worse |
+| `bitmatrix-transpose-8192x2048-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0035 | [0.9480, 1.0232] | 0.0553 | inconclusive |
+| `popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0278 | [1.0253, 1.0287] | 0.0024 | not-worse |
+| `and-popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0252 | [1.0239, 1.0280] | 0.0028 | not-worse |
+| `xor-inplace-8w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0017 | [0.9530, 1.0248] | 0.0486 | not-worse |
+| `clmul-wide-9w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0629 | [1.0620, 1.0645] | 0.0016 | improved |
+
+Raw pairs of the same receipts, descriptive: the median and the relative interquartile range of the per-pair ratio over the stated pairs, and the median and the maximum window spread over the stated executions.
+
+| Cell | Campaign | Pairs | Ratio median | Ratio relative IQR | Executions | Window spread median | Window spread maximum |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `matvec-r1024-24w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0198 | 0.0266 | 24 | 1.0217 | 1.0603 |
+| `bitmatrix-transpose-8192x2048-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0049 | 0.0218 | 24 | 1.0054 | 1.0225 |
+| `popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0278 | 0.0021 | 24 | 1.0031 | 1.0082 |
+| `and-popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0250 | 0.0019 | 24 | 1.0049 | 1.0318 |
+| `xor-inplace-8w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0022 | 0.0372 | 24 | 1.0096 | 1.1076 |
+| `clmul-wide-9w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0627 | 0.0023 | 24 | 1.0038 | 1.0242 |
