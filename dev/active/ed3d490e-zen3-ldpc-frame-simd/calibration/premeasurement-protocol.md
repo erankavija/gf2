@@ -17,7 +17,9 @@ holds unless a section here replaces it. The timed run follows the timed-run
 rules of the
 [worker brief](../../1a379447-zen3-cpu-performance/worker-brief.md); the
 [measurement contract](../../1a379447-zen3-cpu-performance/measurement-contract.md)
-governs the protocol family that reconfirms the published profile (§9).
+and the [frozen protocol](../../1a379447-zen3-cpu-performance/f547c394/protocol.md)
+with its [version-4 amendment](../../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md)
+govern the protocol family that reconfirms the published profile (§9).
 
 ## 1. Scope
 
@@ -35,7 +37,7 @@ reopens a calibrated section only under that token. The producing manifest
 `make-calibration-producing-inputs.py`, names the campaign's behaviour,
 lifecycle and build inputs; [`producing-build-inputs.sha256`](producing-build-inputs.sha256)
 pins each build input and the manifest by SHA-256 at the declared tree.
-Preparation records the same digests in the campaign record.
+Preparation records each input's digest in the campaign record.
 
 The encode family of the section is not measured. Its leaves are omitted
 under the codec's omission rule and keep their conservative values.
@@ -54,10 +56,11 @@ A cell is one candidate value of one field on one stratum.
 | 34 | `decode.granules_per_task` | `1`, `2`, `4`, `8`, `16` | `1` | `pooled-ldpc-batch-decoder` | `nr5g-bg2-z16-f128-closed`, `nr5g-bg2-z16-f128-open`, `dvb-t2-short-r1-2-f128-closed`, `dvb-t2-short-r1-2-f128-open` | 20 |
 <!-- /generated:grid -->
 
-A stratum names its code, its batch size in frames and whether the two lane
-bounds the field does not measure open the lane route (`open`: one frame, no
-edge bound) or hold their conservative values (`closed`). The remaining
-selector of each case holds its conservative value.
+A stratum names its code, its batch size in frames and whether the lane
+bounds the field does not measure open the lane route (`open`: a minimum of
+one frame, no edge bound) or hold their conservative values (`closed`). The
+cases of the two lane fields hold `decode.granules_per_task` at its
+conservative value.
 
 | Field | Operation timed | Required observation |
 |---|---|---|
@@ -144,7 +147,7 @@ and one dispatch per window. It is an estimate, not a measurement.
 | Term | Value |
 |---|---|
 | nominal target-window seconds | 462.5 |
-| active seconds of the rehearsal session (one run, unlocked host) | 439 |
+| active seconds of the rehearsal session (one run, unlocked host) | 445 |
 | session budget seconds | 10800 |
 | estimated minutes, rounded up to a multiple of 5 | 20 |
 <!-- /generated:estimate -->
@@ -165,7 +168,9 @@ algebra owner. The complete envelope holds three sections.
 campaign. `run-campaign.sh` is its queue launcher: it starts a run through
 `dev/scripts/tuning-extent-campaign.sh 0a77ecfc`, or resumes the one existing
 stage of the issue under that stage's run identifier, and leaves its queue
-line open while the campaign is incomplete.
+line open while the campaign is incomplete. Its one line of the
+[benchmark-window queue](../../1a379447-zen3-cpu-performance/bench-window/queue.tsv)
+carries the estimate of §5 behind the window's load guard.
 
 Repository destinations are derived from the run identifier as in seam §7,
 with the coding-owner envelope at

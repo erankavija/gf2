@@ -1,11 +1,15 @@
 {
  "issue": "0a77ecfc",
- "source_revision": "0001afb4677b8eb57b40f28cd35757c3039655ac",
+ "source_revision": "d9b600df3b0126b837872f89dbffec2ac37526fc",
  "stand_ins": {
   "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/private-lock.sh": "ba84c154e15a1048dae7a4c077d1edd65b5b471b2511181aaba613144c35d0b1",
   "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/untimed-windows.patch": "98ebf80144c093017cc3971d5a4c53e18064b22a1414e749ae3c0938f6a8c857"
  },
- "campaign_id": "gf2-0a77ecfc-20261012t190702z-3392634",
+ "campaign_id": "gf2-0a77ecfc-20261012t191857z-3495813",
+ "launcher_exit": {
+  "first": 0,
+  "resumed": 0
+ },
  "staged_executables_sha256": {
   "coding-producer": "e353ca88b84e829bd92c78b3c487fcb816f66ea76df75a097fa68ca3f071fdc7",
   "composer": "e3d164442a25d7f2ce69afd70b3df1bf6fe176b3eee8d01d9ee8ef22244e7d83",
@@ -38,22 +42,25 @@
   "work-finished": 1,
   "wrapper-returned": 1
  },
- "active_seconds": 438.974011859,
+ "active_seconds": 444.85739797,
  "stage_validation": {
   "schema": "tuning-extent-campaign-validation-v1",
-  "campaign_id": "gf2-0a77ecfc-20261012t190702z-3392634",
+  "campaign_id": "gf2-0a77ecfc-20261012t191857z-3495813",
   "status": "complete-valid",
   "cells": 74,
   "accepted_results": 444,
   "windows": 1850,
-  "execution_log_sha256": "68894b6b6f877140a45561645563d1c28d717d2ff7070f2124fa0df74b232c36",
-  "coding_manifest_sha256": "0c002aac6ce73c44469f62d0d77df02648050f21e8de8129a4c5648cc50b5b19"
+  "execution_log_sha256": "0559871a3affa9bfb2d7d2ab7f93b088092bd614439770f93ef50c7c47f5a580",
+  "coding_manifest_sha256": "2faa0fb87db3cbb3aa293189c7552546e4cf2b31b59e584523197ce62d45d185"
  },
  "publication_validation": {
   "schema": "tuning-extent-campaign-publication-v1",
-  "campaign_id": "gf2-0a77ecfc-20261012t190702z-3392634",
+  "campaign_id": "gf2-0a77ecfc-20261012t191857z-3495813",
   "status": "published",
   "entries": 1397
+ },
+ "published_owner_selectors": {
+  "gf2-coding/encode": {}
  },
  "published_paths": [
   "crates/gf2-coding/data/tuning-profiles/<run-id>.json",
