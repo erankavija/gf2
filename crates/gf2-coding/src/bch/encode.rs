@@ -3439,6 +3439,28 @@ mod tests {
         codewords
     }
 
+    /// The serial reduction followed by one bit write per coordinate, into
+    /// buffers that hold ones: the reference every assembly is held to.
+    fn bit_serial_batch(
+        code: &BinaryBchCode,
+        messages: &[BitVec],
+        layout: SystematicLayout,
+    ) -> Vec<BitVec> {
+        let plan = code.systematic_plan(layout);
+        let mut registers = BitVec::registers(&plan);
+        messages
+            .iter()
+            .map(|message| {
+                if plan.redundancy() > 0 {
+                    packed_serial_reduce(&plan, message, &mut registers.register, &registers.low);
+                }
+                let mut codeword = BitVec::ones(code.n());
+                packed_write_codeword(&plan, message, &registers.register, &mut codeword);
+                codeword
+            })
+            .collect()
+    }
+
     fn assert_zero_tail_padding(codeword: &BitVec) {
         let used = codeword.len() % 64;
         if used != 0 {
@@ -3485,7 +3507,7 @@ mod tests {
     }
 
     #[test]
-    fn every_family_assembles_one_codeword_under_both_assemblies() {
+    fn every_family_assembles_the_bit_serial_reference_codeword() {
         // The boundary codes of the kernel-family suite, as (k, r), then the
         // parameter points the construction suite pins.
         let mut codes = vec![
@@ -3535,26 +3557,18 @@ mod tests {
                     }
                     for batch in [0usize, 1, 63, 64, 65, 129] {
                         let messages = seeded_bit_batch(code.k(), batch, redundancy as u64 + 1);
-                        let placed = batch_assembled(
-                            code,
-                            family,
-                            CodewordAssembly::WordWise,
-                            &messages,
-                            layout,
-                        );
-                        assert_eq!(
-                            placed,
-                            batch_assembled(
-                                code,
-                                EncodeFamily::REFERENCE,
-                                CodewordAssembly::BitSerial,
-                                &messages,
-                                layout,
-                            ),
-                            "{family} at k = {}, r = {redundancy}, batch {batch}, under {layout:?}",
-                            code.k()
-                        );
-                        placed.iter().for_each(assert_zero_tail_padding);
+                        let expected = bit_serial_batch(code, &messages, layout);
+                        for assembly in [CodewordAssembly::BitSerial, CodewordAssembly::WordWise] {
+                            let placed = batch_assembled(code, family, assembly, &messages, layout);
+                            assert_eq!(
+                                placed,
+                                expected,
+                                "{family} at k = {}, r = {redundancy}, batch {batch}, under \
+                                 {layout:?} and {assembly:?}",
+                                code.k()
+                            );
+                            placed.iter().for_each(assert_zero_tail_padding);
+                        }
                     }
                 }
             }
