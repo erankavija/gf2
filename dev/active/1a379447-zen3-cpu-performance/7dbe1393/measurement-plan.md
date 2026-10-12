@@ -55,17 +55,16 @@ one.
    all exploratory.
    [`survey/pilot-plan-smoke.json`](survey/pilot-plan-smoke.json) is the
    shared smoke's record of that plan: one untimed dispatch per arm and cell.
-3. **Confirmation.** The canonical freezer derives the confirmation addendum
-   from the committed pilot receipt when the pilot resolves the family within
-   its ceiling; it runs in the window after the pilot's.
+3. **Confirmation.** A pilot that resolves its family within the ceiling gives
+   the canonical freezer the receipt to derive a confirmation addendum from;
+   neither pilot does.
 4. **Repeat pilot.** `run-dense-harness.sh window --family
    7dbe1393-matvec-ragged-tail-v2` runs the same six cells, seeds and arms
    under the [second addendum](matvec-ragged-tail-v2-addendum.md), from
    [`campaigns/matvec-ragged-tail-v2.json`](campaigns/matvec-ragged-tail-v2.json)
    on a ledger of its own. Its queue line starts the launcher only on a
    quiet host. [`survey/pilot-plan-v2-smoke.json`](survey/pilot-plan-v2-smoke.json)
-   is the shared smoke's record of that plan, and step 3 applies to its
-   receipt.
+   is the shared smoke's record of that plan.
 
 ## Decision
 
@@ -91,7 +90,7 @@ own pilot does not favour, and the removal of the second row applies.
 ## Recorded outcome
 
 The first four paragraphs record family `7dbe1393-matvec-ragged-tail`; the
-last records the family that repeats its pilot.
+last section records the family that repeats its pilot.
 
 **Pilot.** The pilot's
 [execution log](../../../bench_results/7dbe1393/7dbe1393-matvec-ragged-tail/v4-r1-pilot/execution.log)
@@ -130,11 +129,37 @@ the ledger still admits; the addendum's *Search and stopping* section allows
 this family one pilot.
 
 **Repeat.** Family `7dbe1393-matvec-ragged-tail-v2` asks the same question
-again because the pilot above ran under the load its receipt records
-(`session_hosts[].load_average`). Its pilot is a line of the benchmark-window
-queue, its ledger is at genesis, and it has no receipt. The *Decision* table
-reads that family's confirmation; until one qualifies, production keeps its
-kernel and the candidate stays unselected.
+again because the first pilot ran under the load its receipt records
+(`session_hosts[].load_average`). Its pilot is the last attempt at the
+question.
+
+- *Pilot.* The
+  [execution log](../../../bench_results/7dbe1393/7dbe1393-matvec-ragged-tail-v2/v4-r1-pilot/execution.log)
+  holds a `cell-start` and a `cell-complete` record for each of the six cells,
+  every cell `measured` at the pilot's pair count, and a terminal `complete`
+  record. The
+  [acceptance summary](../../../bench_results/7dbe1393/7dbe1393-matvec-ragged-tail-v2/v4-r1-pilot/acceptance-summary.md)
+  records the verdict `accepted`, does not qualify the receipt for production
+  selection, and tabulates each cell's estimate, pair count and interval; every
+  row is exploratory. The speedup is the baseline's time over the candidate's,
+  so a value above one favours the parity kernel, and every pilot row favours
+  it.
+- *Host condition.* [`pilot-resolution-v2.md`](pilot-resolution-v2.md)
+  tabulates the load the runner observed at each session start.
+- *Resolution.* The same page applies the *Margins and resolution* rule of the
+  first addendum to this receipt and records the outcome
+  `resolution-insufficient`: the pilot-derived resolution exceeds the family
+  ceiling, and the widest cell is the aligned control.
+  [`survey/freeze-refusal-v2.txt`](survey/freeze-refusal-v2.txt) records the
+  canonical freezer's command and output. The freezer checks the margins
+  against one plus the supplied resolution and not against the ceiling, so it
+  writes an addendum; the frozen rule governs, and the record states that no
+  confirmation addendum is kept.
+- *Consequence.* The *no change on validity, or `resolution-insufficient`*
+  row of the *Decision* table applies to the repeat. The family runs no
+  confirmation and its ledger holds no confirmatory reservation. The question
+  has no further attempt: the candidate kernel stays unselected behind
+  `BitMatrix::matvec_parity_kernel` and production keeps its kernel.
 
 ## Limits
 

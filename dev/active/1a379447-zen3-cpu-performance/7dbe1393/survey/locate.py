@@ -33,6 +33,7 @@ sys.path.insert(0, str(ROOT / _shared_scripts()))
 import repository_files  # noqa: E402
 
 FAMILY = "7dbe1393-matvec-ragged-tail"
+REPEAT_FAMILY = "7dbe1393-matvec-ragged-tail-v2"
 PREDECESSOR_FAMILY = "4337c02e-matvec-simd-threshold"
 
 # The three lanes of the allocated product and the frozen cell that reaches

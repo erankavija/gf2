@@ -1,4 +1,4 @@
-# Ragged-tail pilot resolution
+# Ragged-tail pilot resolution, family `7dbe1393-matvec-ragged-tail`
 
 > **Diátaxis Type:** Reference
 
@@ -22,6 +22,8 @@ Ledger `dev/bench_results/7dbe1393/matvec-ragged-tail-ledger.jsonl` through the 
 Largest width: 0.167440, in `ragged-r1024-32w-control-warm`; frozen upward rounding to 0.001: $r=0.168$. Family ceiling: 0.035.
 
 **Outcome: `resolution-insufficient`.** The frozen family rule ends this family after its exploratory pilot: it runs no confirmation, makes no confirmatory reservation, and production keeps its kernel.
+
+The repeat family's resolution is in [`pilot-resolution-v2.md`](pilot-resolution-v2.md).
 
 ## Host load at each pilot session
 
