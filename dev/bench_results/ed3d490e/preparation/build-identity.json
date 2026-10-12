@@ -1,5 +1,5 @@
 {
-  "schema": "ldpc-batch-arms-build-v4",
+  "schema": "ldpc-batch-arms-build-v3",
   "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
   "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
@@ -78,7 +78,7 @@
   },
   "executables": {
     "aff3ct-intra-arm": {
-      "sha256": "80fe083bbef543b918f45eb54950987be5a31d15ed98daa261e0fa1f6ddeb843",
+      "sha256": "a8a78fac9141bcd53fe9ad2dcc1d112ede65b236b6aed56bf6f8855219eac282",
       "written_by": [
         "rustc version 1.95.0 (59807616e 2026-04-14)",
         "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
@@ -88,7 +88,7 @@
         "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
       ],
       "inputs": {
-        "repository_files_sha256": "a2daadb63beb580ba27a46e3bdce4d66f58fa595745431e7a5632cf108f5ff73",
+        "repository_files_sha256": "6f35293fc07fd20a9c811cbd2a4b369b9338c4b5d01dfbdacb8055781a9e00b6",
         "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -121,7 +121,7 @@
       }
     },
     "aff3ct-intra-quality": {
-      "sha256": "8b1b92728e4abba92a4ff7a62c257dc7354b97e987f5895c9ddb4ecf8a9b7887",
+      "sha256": "bdce8f33a3e5ff4eb611b66869013d35f1e709b29323b0bbaef786a885a9178e",
       "written_by": [
         "rustc version 1.95.0 (59807616e 2026-04-14)",
         "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
@@ -131,7 +131,7 @@
         "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
       ],
       "inputs": {
-        "repository_files_sha256": "514aaa6cc1e0f95fd6c4e5472e20d5f0285c12d532151d4f6bb429f308da2f0d",
+        "repository_files_sha256": "f6f05ce0981d16a1a0dbd897ef9aba3aa68e22ba7b61f940ea9df9f427c53261",
         "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -164,7 +164,7 @@
       }
     },
     "gf2-batch-lane-arm": {
-      "sha256": "520cbeaa76755e674a00808807227ad5f778cb90654874a9b78d33b967e2b395",
+      "sha256": "7f9b52fad8e1a92a164868c872721ade7870f3d44e895a000c2bf36d8dfc34e3",
       "written_by": [
         "rustc version 1.95.0 (59807616e 2026-04-14)",
         "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
@@ -172,7 +172,7 @@
       ],
       "compiler_options": [],
       "inputs": {
-        "repository_files_sha256": "e61dd3f444c158f9f276a6d4695744f26267047eb591363950160c796ae61eef",
+        "repository_files_sha256": "501abc36fb01875152c67589915fb4c275a380d6ec1ab076ba89a3c46def6bbd",
         "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -199,7 +199,7 @@
       }
     },
     "gf2-batch-single-frame-arm": {
-      "sha256": "5b7ba81e3bb686b98db048a4fdb0b182b79d52e41c25f079b45fa10d8b4d0cb6",
+      "sha256": "5211aa6972b6e61f6ddba777d429aa8a235c36a08db3fe6ad3b5643834c8d896",
       "written_by": [
         "rustc version 1.95.0 (59807616e 2026-04-14)",
         "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
@@ -207,7 +207,7 @@
       ],
       "compiler_options": [],
       "inputs": {
-        "repository_files_sha256": "48a8b2ea91c4e65b5b32cf5f5d669e3089eccc9d03f8c02cc36b8275e7c6df59",
+        "repository_files_sha256": "05dfa754f504ae4ead2fd82e5bb1315d07fbc918bc42a89bfe4bfa990540a769",
         "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -322,7 +322,7 @@
       "environment": {},
       "package": "ldpc-aff3ct-intra-arm",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
-      "executable_sha256": "80fe083bbef543b918f45eb54950987be5a31d15ed98daa261e0fa1f6ddeb843"
+      "executable_sha256": "a8a78fac9141bcd53fe9ad2dcc1d112ede65b236b6aed56bf6f8855219eac282"
     },
     "gf2-batch-lane-avx2": {
       "source": "workspace",
@@ -332,7 +332,7 @@
       },
       "package": "ldpc-batch-arms",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
-      "executable_sha256": "520cbeaa76755e674a00808807227ad5f778cb90654874a9b78d33b967e2b395"
+      "executable_sha256": "7f9b52fad8e1a92a164868c872721ade7870f3d44e895a000c2bf36d8dfc34e3"
     },
     "gf2-batch-lane-portable": {
       "source": "workspace",
@@ -342,7 +342,7 @@
       },
       "package": "ldpc-batch-arms",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
-      "executable_sha256": "520cbeaa76755e674a00808807227ad5f778cb90654874a9b78d33b967e2b395"
+      "executable_sha256": "7f9b52fad8e1a92a164868c872721ade7870f3d44e895a000c2bf36d8dfc34e3"
     },
     "gf2-batch-single-frame": {
       "source": "workspace",
@@ -350,7 +350,7 @@
       "environment": {},
       "package": "ldpc-batch-arms",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
-      "executable_sha256": "5b7ba81e3bb686b98db048a4fdb0b182b79d52e41c25f079b45fa10d8b4d0cb6"
+      "executable_sha256": "5211aa6972b6e61f6ddba777d429aa8a235c36a08db3fe6ad3b5643834c8d896"
     }
   },
   "isolation": {
