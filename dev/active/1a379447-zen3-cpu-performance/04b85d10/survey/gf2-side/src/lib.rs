@@ -30,8 +30,7 @@ use serde::{Deserialize, Serialize};
 
 use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, FrameSize};
 use gf2_coding::bch::encode::{
-    max_parallel_batch_workers, BchEncodeWorkspace, CodewordAssembly, EncodeFamily,
-    SystematicLayout,
+    max_parallel_batch_workers, BchEncodeWorkspace, EncodeFamily, SystematicLayout,
 };
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::bch::CodeRate;
@@ -178,12 +177,6 @@ pub enum ArmPath {
     FamilyBitsliceInterleaved,
     /// The carry-less-multiply fold family.
     FamilyClmulFold,
-    /// The selected family, its codewords placed by the word-wise assembly.
-    WordWise,
-    /// The bit-sliced interleaved family under the word-wise assembly.
-    FamilyBitsliceInterleavedWordWise,
-    /// The carry-less-multiply fold family under the word-wise assembly.
-    FamilyClmulFoldWordWise,
     /// The caller-buffer batch entry point `encode_batch_into`, paired
     /// against the allocating `encode_batch` on the same batch.
     CallerBuffer,
@@ -213,9 +206,6 @@ impl ArmPath {
             "family-table-remainder" => Self::FamilyTableRemainder,
             "family-bitslice-interleaved" => Self::FamilyBitsliceInterleaved,
             "family-clmul-fold" => Self::FamilyClmulFold,
-            "word-wise" => Self::WordWise,
-            "family-bitslice-interleaved-word-wise" => Self::FamilyBitsliceInterleavedWordWise,
-            "family-clmul-fold-word-wise" => Self::FamilyClmulFoldWordWise,
             "caller-buffer" => Self::CallerBuffer,
             "transpose-scalar" => Self::TransposeScalar,
             "transpose-detected" => Self::TransposeDetected,
@@ -228,22 +218,10 @@ impl ArmPath {
         Some(match self {
             Self::FamilyPolyRemainderScalar => EncodeFamily::PolyRemainderScalar,
             Self::FamilyTableRemainder => EncodeFamily::TableRemainder,
-            Self::FamilyBitsliceInterleaved | Self::FamilyBitsliceInterleavedWordWise => {
-                EncodeFamily::BitsliceInterleaved
-            }
-            Self::FamilyClmulFold | Self::FamilyClmulFoldWordWise => EncodeFamily::ClmulFold,
+            Self::FamilyBitsliceInterleaved => EncodeFamily::BitsliceInterleaved,
+            Self::FamilyClmulFold => EncodeFamily::ClmulFold,
             _ => return None,
         })
-    }
-
-    /// The codeword assembly this path's workspace selects.
-    fn codeword_assembly(self) -> CodewordAssembly {
-        match self {
-            Self::WordWise
-            | Self::FamilyBitsliceInterleavedWordWise
-            | Self::FamilyClmulFoldWordWise => CodewordAssembly::WordWise,
-            _ => CodewordAssembly::default(),
-        }
     }
 }
 
@@ -1031,20 +1009,13 @@ pub fn prepare(
                             return Err(format!("this code does not implement {family:?}"));
                         }
                     }
-                    let assembly = path.codeword_assembly();
-                    let route = match family {
+                    let name = match family {
                         Some(family) => format!("family-pinned/{family:?}"),
                         None => format!("current/{selected:?}"),
                     };
-                    let name = match assembly {
-                        CodewordAssembly::WordWise => format!("{route}/word-wise"),
-                        _ => route,
-                    };
-                    let mut workspace = Box::new(code.encode_workspace());
-                    workspace.set_codeword_assembly(assembly);
                     (
                         State::BchBatchWorkspace {
-                            workspace,
+                            workspace: Box::new(code.encode_workspace()),
                             codewords: vec![BitVec::zeros(code.n()); batch],
                             code,
                             messages,

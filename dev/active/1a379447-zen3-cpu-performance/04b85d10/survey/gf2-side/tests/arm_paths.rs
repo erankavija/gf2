@@ -25,9 +25,6 @@ fn arm_paths_round_trip_the_plan_vocabulary() {
         "family-table-remainder",
         "family-bitslice-interleaved",
         "family-clmul-fold",
-        "word-wise",
-        "family-bitslice-interleaved-word-wise",
-        "family-clmul-fold-word-wise",
         "caller-buffer",
         "transpose-scalar",
         "transpose-detected",
@@ -73,32 +70,6 @@ fn allocation_cell_arms_prepare_and_name_their_routes() {
     let caller = prepare(&bch, ArmPath::CallerBuffer, "warm", FIXTURE_BANKS).expect("caller arm");
     assert!(caller.selected_path.starts_with("caller-buffer/"));
     assert!(prepare(&bch, ArmPath::TransposeScalar, "warm", FIXTURE_BANKS).is_err());
-}
-
-/// The assembly cells' arms prepare from one case and name the assembly their
-/// workspace selects; the bit-serial arms keep the names earlier receipts
-/// record.
-#[test]
-fn assembly_cell_arms_prepare_and_name_their_routes() {
-    let bch = case("bch-encode-batch", &[("degree", 8), ("batch", 4)], 811);
-    for (baseline, candidate) in [
-        (ArmPath::Current, ArmPath::WordWise),
-        (
-            ArmPath::FamilyBitsliceInterleaved,
-            ArmPath::FamilyBitsliceInterleavedWordWise,
-        ),
-        (ArmPath::FamilyClmulFold, ArmPath::FamilyClmulFoldWordWise),
-    ] {
-        let mut bit_serial = prepare(&bch, baseline, "warm", FIXTURE_BANKS).expect("baseline arm");
-        let mut word_wise = prepare(&bch, candidate, "warm", FIXTURE_BANKS).expect("candidate arm");
-        assert_eq!(
-            word_wise.selected_path,
-            format!("{}/word-wise", bit_serial.selected_path)
-        );
-        bit_serial.run(0);
-        word_wise.run(0);
-        assert_eq!(bit_serial.sink(), word_wise.sink());
-    }
 }
 
 /// Both arms of a timed cell leave a non-zero sink after one call, so the

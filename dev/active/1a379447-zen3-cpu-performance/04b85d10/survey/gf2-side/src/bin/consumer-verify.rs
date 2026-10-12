@@ -15,7 +15,7 @@ use std::process::ExitCode;
 
 use consumer_profile_gf2_side::FIXTURE_RNG;
 
-use gf2_coding::bch::encode::{CodewordAssembly, EncodeFamily, SystematicLayout};
+use gf2_coding::bch::encode::{EncodeFamily, SystematicLayout};
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::bch::CodeRate;
 use gf2_coding::ldpc::LdpcCode;
@@ -334,8 +334,7 @@ fn build(degree: usize, modulus: u64, designed_distance: u64) -> BinaryBchCode {
 }
 
 /// Every available encoding family writes the same codewords as the reference
-/// family under both codeword assemblies, and the allocating entry point
-/// writes those same codewords.
+/// family, and the allocating entry point writes those same codewords.
 fn check_bch_families() -> Check {
     const BATCHES: [usize; 5] = [1, 16, 64, 65, 256];
     let mut mismatches = Vec::new();
@@ -365,24 +364,20 @@ fn check_bch_families() -> Check {
                 if !code.encode_family_available(family, layout) {
                     continue;
                 }
-                for assembly in [CodewordAssembly::BitSerial, CodewordAssembly::WordWise] {
-                    let mut codewords = vec![BitVec::zeros(code.n()); batch];
-                    let mut workspace = code.encode_workspace();
-                    workspace.set_codeword_assembly(assembly);
-                    code.encode_batch_family_into(
-                        family,
-                        &messages,
-                        layout,
-                        &mut workspace,
-                        &mut codewords,
-                    )
-                    .expect("an available family encodes a validated batch");
-                    if codewords != reference {
-                        mismatches.push(format!(
-                            "m={degree} batch={batch}: {family:?} under {assembly:?} differs \
-                             from the reference"
-                        ));
-                    }
+                let mut codewords = vec![BitVec::zeros(code.n()); batch];
+                let mut workspace = code.encode_workspace();
+                code.encode_batch_family_into(
+                    family,
+                    &messages,
+                    layout,
+                    &mut workspace,
+                    &mut codewords,
+                )
+                .expect("an available family encodes a validated batch");
+                if codewords != reference {
+                    mismatches.push(format!(
+                        "m={degree} batch={batch}: {family:?} differs from the reference"
+                    ));
                 }
             }
 
@@ -411,7 +406,7 @@ fn check_bch_families() -> Check {
     record(
         "bch-encoding-families-agree",
         if mismatches.is_empty() {
-            "three rows, five batch lengths, every available family under both codeword assemblies and both batch entry points bit-identical".to_owned()
+            "three rows, five batch lengths, every available family and both batch entry points bit-identical".to_owned()
         } else {
             mismatches.join("; ")
         },
