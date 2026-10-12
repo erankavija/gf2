@@ -751,7 +751,8 @@ def cost_rows():
     A cell maps to the role, outcome and decision the stage's acceptance
     summary records.
     """
-    stages = family_stages(OUT / review.CONFIRMATION_ADDENDUM)
+    stages = {label: directory
+              for label, directory, _ in family_stages(OUT / review.PILOT_ADDENDUM)}
     pilot = json.loads((stages["pilot"] / "receipt.json").read_text())
     tables = (ROOT / pilot["trial_ledger"]["path"]).parent / review.TABLES
     link, found = os.path.relpath(tables, OUT), {}
