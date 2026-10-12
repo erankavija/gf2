@@ -5,8 +5,9 @@
 //! bundle once and writes their quality record to `OUT`, the record the arm
 //! takes in `GF2_LDPC_QUALITY`.
 
-use aff3ct_intra::{replay_quality, settings, Handle, LINKED_AFF3CT};
+use aff3ct_intra::{prototype, replay_quality, settings};
 use ldpc_survey::arm::DecoderCase;
+use ldpc_throughput::aff3ct::LINKED_AFF3CT;
 use ldpc_throughput::workload::Workload;
 use std::process::ExitCode;
 
@@ -19,13 +20,7 @@ fn run() -> Result<(), String> {
         serde_json::from_slice(&std::fs::read(case).map_err(|e| format!("{case}: {e}"))?)
             .map_err(|error| format!("case does not decode: {error}"))?;
     let workload = Workload::load(&case)?;
-    let mut prototype = Handle::build(
-        &workload.alist(),
-        workload.manifest.k,
-        workload.manifest.n,
-        case.iteration_cap,
-        case.syndrome_stopping,
-    )?;
+    let mut prototype = prototype(&workload, &case)?;
     let decoder = prototype.observed()?;
     let settings = settings(
         case.iteration_cap,

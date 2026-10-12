@@ -28,6 +28,8 @@ spec = importlib.util.spec_from_file_location("arms_build_recorder", RECORDER)
 recorder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recorder)
 
+# The package whose build script compiles the AFF3CT translation unit.
+HARNESS = "ldpc-throughput-harness"
 RELEASE = Path("arms/target/release")
 BUILT = {"built-arm": "a" * 64}
 PIN = {"record": "campaign/build-identity.json", "executable": "pinned-arm", "sha256": "b" * 64}
@@ -135,7 +137,7 @@ class InputsTest(unittest.TestCase):
                           "back\\", "slash.hpp", "C:/drive.hpp"])
 
     def test_the_build_script_reads_make_rules_as_make_reads_them(self):
-        unit = SURVEY / "arms/aff3ct-intra/make_rules.rs"
+        unit = ROOT / recorder.located("package-directory", HARNESS) / "make_rules.rs"
         with tempfile.TemporaryDirectory() as temporary:
             tests = Path(temporary) / "make_rules"
             subprocess.run(["rustc", f"+{recorder.TOOLCHAIN}", "--edition", "2021", "--test",

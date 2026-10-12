@@ -4,7 +4,8 @@
 # adds no target, feature or dependency to the production workspace. It reuses
 # that harness's library (bundle contract, AList reader, child framing, timing
 # windows, prepared quality) by path and compiles one C++ translation unit
-# that includes its AFF3CT shim unchanged and adds a clone entry.
+# that includes its AFF3CT shim unchanged and adds a clone entry and the
+# sum-product INTRA decoder.
 #
 # Release builds keep line tables so the timed arms and the profiled binaries
 # carry source-line attribution; line tables do not change generated code.

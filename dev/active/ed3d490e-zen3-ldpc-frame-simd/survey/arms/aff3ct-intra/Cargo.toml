@@ -1,12 +1,11 @@
 # AFF3CT [Cassagne2019] float sum-product INTRA arm of the LDPC batch decoder
 # comparison (jit:ed3d490e).
 #
-# A member of the arms workspace with a package of its own: its build script
-# links the pinned AFF3CT static library into every executable of the package,
-# so the gf2 arms stay outside it. It compiles one C++ translation unit that
-# includes the `3be770d5` unit unchanged, and through it the `c077a88b` shim,
-# and adds the decoder `a3_new` does not build. The build needs
-# GF2_AFF3CT_ROOT, the staged AFF3CT tree.
+# A member of the arms workspace with a package of its own: it enables the
+# `aff3ct` feature of the `3be770d5` harness, whose build script links the
+# pinned AFF3CT static library into every executable of the package, so the
+# gf2 arms stay outside it. Its AFF3CT handle is that harness's. The build
+# needs GF2_AFF3CT_ROOT, the staged AFF3CT tree.
 
 # The path dependencies below count directory levels to the harness crates:
 # the named exception `harness-path-dependencies` to
@@ -20,13 +19,9 @@ publish = false
 
 [dependencies]
 ldpc-survey-harness = { path = "../../../../1a379447-zen3-cpu-performance/c077a88b/survey/harness" }
-ldpc-throughput-harness = { path = "../../../../1a379447-zen3-cpu-performance/3be770d5/survey/harness" }
+ldpc-throughput-harness = { path = "../../../../1a379447-zen3-cpu-performance/3be770d5/survey/harness", features = ["aff3ct"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
-
-[build-dependencies]
-cc = "1"
-sha2 = "0.10"
 
 [lib]
 name = "aff3ct_intra"
