@@ -38,18 +38,50 @@ The path each arm reported after its timed windows, as the receipt records it.
 
 ## Confirmation
 
-No committed confirmation receipt at `dev/bench_results/8e53235b/r1-codeword-assembly-confirmation`.
+Campaign `8e53235b-r1-codeword-assembly-confirmation`, verdict `accepted`, qualifies `True`.
+
+| family                         | comparisons | family alpha | attempt alpha | corrected alpha | per-comparison confidence |
+|--------------------------------|-------------|--------------|---------------|-----------------|---------------------------|
+| 8e53235b-bch-codeword-assembly | 5           | 0.05         | 0.025         | 0.005           | 0.995                     |
+
+| cell                                        | outcome | pairs | estimate           | lower              | upper              | flagged windows | total windows |
+|---------------------------------------------|---------|-------|--------------------|--------------------|--------------------|-----------------|---------------|
+| assembly-bch-encode-current-m14-b256-1core  | pass    | 24    | 1.950220164812724  | 1.945807109238639  | 1.9733520762481307 | 0               | 240           |
+| assembly-bch-encode-current-m16-b256-1core  | pass    | 24    | 1.940171364446716  | 1.936486176531987  | 1.9650415557256309 | 0               | 240           |
+| assembly-bch-encode-fold-m14-b256-1core     | pass    | 24    | 48.22174952240445  | 47.961524285954994 | 48.988090461182075 | 0               | 240           |
+| assembly-bch-encode-bitslice-m14-b256-1core | pass    | 24    | 19.664778198161695 | 19.553193982952266 | 19.912363306686657 | 0               | 240           |
+| assembly-bch-encode-current-m8-b1-1core     | pass    | 24    | 3.78408912500159   | 3.761354257320183  | 3.7967932332465013 | 0               | 240           |
+
+### Confirmation lane witness
+
+The path each arm reported after its timed windows, as the receipt records it.
+
+| cell                                        | position  | arm                       | selected path                               | executions |
+|---------------------------------------------|-----------|---------------------------|---------------------------------------------|------------|
+| assembly-bch-encode-bitslice-m14-b256-1core | baseline  | family-bitslice           | family-pinned/BitsliceInterleaved           | 24         |
+| assembly-bch-encode-bitslice-m14-b256-1core | candidate | family-bitslice-word-wise | family-pinned/BitsliceInterleaved/word-wise | 24         |
+| assembly-bch-encode-current-m14-b256-1core  | baseline  | current                   | current/PolyRemainderScalar                 | 24         |
+| assembly-bch-encode-current-m14-b256-1core  | candidate | current-word-wise         | current/PolyRemainderScalar/word-wise       | 24         |
+| assembly-bch-encode-current-m16-b256-1core  | baseline  | current                   | current/PolyRemainderScalar                 | 24         |
+| assembly-bch-encode-current-m16-b256-1core  | candidate | current-word-wise         | current/PolyRemainderScalar/word-wise       | 24         |
+| assembly-bch-encode-current-m8-b1-1core     | baseline  | current                   | current/PolyRemainderScalar                 | 24         |
+| assembly-bch-encode-current-m8-b1-1core     | candidate | current-word-wise         | current/PolyRemainderScalar/word-wise       | 24         |
+| assembly-bch-encode-fold-m14-b256-1core     | baseline  | family-fold               | family-pinned/ClmulFold                     | 24         |
+| assembly-bch-encode-fold-m14-b256-1core     | candidate | family-fold-word-wise     | family-pinned/ClmulFold/word-wise           | 24         |
 
 ## Family ledger
 
-| sequence | family                         | campaign                            | protocol | comparisons | addendum sha256  |
-|----------|--------------------------------|-------------------------------------|----------|-------------|------------------|
-| 0        | 8e53235b-bch-codeword-assembly | 8e53235b-r1-codeword-assembly-pilot | 4        | 0           | 6d9284c004c3f527 |
+| sequence | family                         | campaign                                   | protocol | comparisons | addendum sha256  |
+|----------|--------------------------------|--------------------------------------------|----------|-------------|------------------|
+| 0        | 8e53235b-bch-codeword-assembly | 8e53235b-r1-codeword-assembly-pilot        | 4        | 0           | 6d9284c004c3f527 |
+| 1        | 8e53235b-bch-codeword-assembly | 8e53235b-r1-codeword-assembly-confirmation | 4        | 5           | 674af555fcf5daae |
 
 ## Source
 
-| path                                                                          | sha256                                                           | acceptance findings |
-|-------------------------------------------------------------------------------|------------------------------------------------------------------|---------------------|
-| dev/bench_results/8e53235b/codeword-assembly-family-ledger.jsonl              | 118c52a9b3e495d4a110e629346ec3d9a013407817fde70b1d0afdc82192e40d |                     |
-| dev/bench_results/8e53235b/r1-codeword-assembly-pilot/receipt.json            | 7f714d40ee5d497b0812b59341f8c018fb4207a15453e999448dba21046859fa |                     |
-| dev/bench_results/8e53235b/r1-codeword-assembly-pilot/acceptance-summary.json | 93982713c0814c82ed7576834843fc46e22eef9bf0ddf0aca7f738899f88f571 | 0                   |
+| path                                                                                 | sha256                                                           | acceptance findings |
+|--------------------------------------------------------------------------------------|------------------------------------------------------------------|---------------------|
+| dev/bench_results/8e53235b/codeword-assembly-family-ledger.jsonl                     | 2244da5f8dc61354319b80377610bf5abc3591c65b8e195350319a8eafc7e496 |                     |
+| dev/bench_results/8e53235b/r1-codeword-assembly-pilot/receipt.json                   | 7f714d40ee5d497b0812b59341f8c018fb4207a15453e999448dba21046859fa |                     |
+| dev/bench_results/8e53235b/r1-codeword-assembly-pilot/acceptance-summary.json        | 93982713c0814c82ed7576834843fc46e22eef9bf0ddf0aca7f738899f88f571 | 0                   |
+| dev/bench_results/8e53235b/r1-codeword-assembly-confirmation/receipt.json            | da1c6a9c6456ce23b91e767c64e5ed7b97186fd61f1f94ef5c218202dc34cd2d |                     |
+| dev/bench_results/8e53235b/r1-codeword-assembly-confirmation/acceptance-summary.json | c594b95e0790ee281700b2977363c852ee5548497d076fc0060d68f941c78467 | 0                   |
