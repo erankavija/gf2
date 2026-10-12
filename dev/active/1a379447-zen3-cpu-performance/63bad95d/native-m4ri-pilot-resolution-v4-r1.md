@@ -23,4 +23,4 @@ Largest confirmatory width: 0.404217; frozen upward rounding to 0.001: $r=0.405$
 
 **Outcome: `resolution-insufficient`.** The frozen family rule ends this comparison after its exploratory pilot. No confirmatory reservation is made.
 
-The pilot ran under host load: the `host-observation` records in the receipt's `execution.log` carry the observed `load_average`, and [the plan](native-m4ri-plan.md#pilot-outcome) points at the launch-time record. The receipt stands as measured. A second pilot, run id `v4-r2`, repeats the pilot in this family on a quiet host under the same addendum and ledger; its queue line is in [`queue.tsv`](../bench-window/queue.tsv) and its receipt lands beside this one under the run id.
+The pilot ran under host load: the `host-observation` records in the receipt's `execution.log` carry the observed `load_average`. The receipt stands as measured. The family's second pilot, run `v4-r2`, has its own record in [`native-m4ri-pilot-resolution-v4-r2.md`](native-m4ri-pilot-resolution-v4-r2.md).

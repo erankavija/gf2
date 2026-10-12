@@ -91,7 +91,7 @@ The equivalence margin, material-gap threshold and resolution ceiling are the
 committed comparator family's, because the boundaries and the candidate arm
 are the same; the addendum's margin table states them. The pilot budget is
 smaller than that family's: one pilot and one replacement for a voided pilot.
-The invoker ruled on 2026-10-11 that a load-disturbed pilot counts as a voided
+The invoker ruled that a load-disturbed pilot counts as a voided
 pilot for this budget, so run `v4-r2` is the family's second pilot trial.
 
 ## What each outcome means for REQ-09
@@ -112,26 +112,33 @@ charges M4RI its bit-wise packing and unpacking, so it answers the
 whole-consumer question; a retained-state cell is the closest boundary to
 operation throughput and is no pure `mzd_mul` measurement.
 
-## Pilot outcome
+## Pilot outcomes
 
-The pilot receipt
-[`v4-r1-pilot`](../../../bench_results/63bad95d/63bad95d-native-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md)
-is accepted exploratory evidence; its arm table names the native gf2 arm as
-the baseline and its summary holds each cell's exploratory decision.
-[`native-m4ri-pilot-resolution.md`](native-m4ri-pilot-resolution.md), written
-by [`survey/freeze-m4ri-confirmation.sh`](survey/freeze-m4ri-confirmation.sh),
-applies the frozen resolution rule and records `resolution-insufficient`: the
-two fresh mid-range cells exceed the ceiling, and the retained-state and
-small-input cells lie within it. The family runs no confirmation and reserves
-no comparison, and REQ-09's native comparator leg has no confirmatory reading.
+The family ran two pilots under one addendum and one ledger. Run `v4-r1`
+ran on a loaded host and its record
+[`native-m4ri-pilot-resolution-v4-r1.md`](native-m4ri-pilot-resolution-v4-r1.md)
+applies the frozen resolution rule with the outcome `resolution-insufficient`.
+The invoker ruled that a load-disturbed pilot counts as a voided pilot for
+this budget, so run `v4-r2` is the second pilot trial. The `host-observation`
+records of each receipt's `execution.log` state the `load_average` its
+sessions observed.
 
-The host was loaded when the pilot ran. Each session's `host-observation`
-record in the receipt's
-[`execution.log`](../../../bench_results/63bad95d/63bad95d-native-matvec-vs-m4ri/v4-r1-pilot/execution.log)
-states the `load_average` it observed, and the window runner's job-start line
-for key `6351b1b2b9117119` in the primary checkout's
-`.agents/bench-window/window.log` states the load at launch. The receipt
-stands as measured.
+Run `v4-r2`
+([acceptance summary](../../../bench_results/63bad95d/63bad95d-native-matvec-vs-m4ri/v4-r2-pilot/acceptance-summary.md))
+is accepted exploratory evidence. Its resolution record
+[`native-m4ri-pilot-resolution-v4-r2.md`](native-m4ri-pilot-resolution-v4-r2.md)
+is written by [`survey/freeze-m4ri-confirmation.sh`](survey/freeze-m4ri-confirmation.sh)
+and records `eligible`. The canonical freezer derived the confirmation
+addendum [`native-matvec-vs-m4ri-confirmation.json`](campaigns/native-matvec-vs-m4ri-confirmation.json)
+and its [derivation record](campaigns/native-matvec-vs-m4ri-confirmation-derivation.txt)
+from that receipt. Both pilots' cells, intervals and outcomes are in the
+generated [tables](../../../bench_results/63bad95d/native-m4ri-tables.md),
+written by [`survey/render-native-m4ri-tables.sh`](survey/render-native-m4ri-tables.sh).
+
+Each plan's arm table names the native gf2 arm as the baseline and M4RI as
+the candidate, so a speedup above one favours M4RI. The pilot rows are
+exploratory; the confirmation's acceptance summary holds the family's reading
+of each cell.
 
 ## Execution
 
@@ -139,13 +146,16 @@ stands as measured.
 |---|---|---|
 | Build and untimed validation | `run-dense-harness.sh build --m4ri --native` | none |
 | Pilot plan smoke | `run-dense-harness.sh window ... --m4ri --native --smoke <record>` | none |
-| Pilot | the queue line of this family in [`queue.tsv`](../bench-window/queue.tsv) | first |
-| Freeze the confirmation from the committed pilot receipt with the canonical freezer | | none |
-| Confirmation | the same launcher with `--confirmation` | second |
+| Pilot (`v4-r1`, `v4-r2`) | the pilot queue lines of this family in [`queue.tsv`](../bench-window/queue.tsv) | first, second |
+| Freeze the confirmation from the committed `v4-r2` receipt with the canonical freezer | `freeze-m4ri-confirmation.sh native <frozen-utc> v4-r2` | none |
+| Confirmation plan smoke | `run-dense-harness.sh window ... --m4ri --native --confirmation --smoke <record>` | none |
+| Confirmation | the confirmation queue line of this family in [`queue.tsv`](../bench-window/queue.tsv) | third |
 
 The untimed validation record is
 [`dense-harness-validation.txt`](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt):
 on each cell's own fixture the native gf2 build and the portable gf2 build
 pass the independent parity oracle (`comparator-*` cases) and the M4RI arm
 agrees with the gf2 peer (`m4ri-cell-*` cases). The pilot plan smoke is
-[`survey/native-m4ri-pilot-smoke.json`](survey/native-m4ri-pilot-smoke.json).
+[`survey/native-m4ri-pilot-smoke.json`](survey/native-m4ri-pilot-smoke.json)
+and the confirmation plan smoke is
+[`survey/native-m4ri-confirmation-smoke.json`](survey/native-m4ri-confirmation-smoke.json).
