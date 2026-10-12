@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Receipts for the bit-storage consumer families (jit:04b85d10).
 #
-# Usage: dev/bench_results/04b85d10/run-consumer-campaigns.sh \
+# Usage: run-consumer-campaigns.sh \
 #          <family> pilot|confirmation [protocol-version] [date-utc]
 #   family: logical | count | layout
 #   protocol-version: the version of the frozen addendum to measure (default 4)
@@ -32,10 +32,13 @@ set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 ISSUE=04b85d10
-HARNESS_DIR=$(python3 -B dev/scripts/repository_files.py package-directory consumer-profile-gf2-side)
+# The shared locator, found once; it names every other live file.
+LOCATOR=$(git ls-files --cached --others --exclude-standard -- \
+  ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')
+HARNESS_DIR=$(python3 -B "$LOCATOR" package-directory consumer-profile-gf2-side)
 SURVEY=$(dirname "$HARNESS_DIR")
 ISSUE_DIR=$(dirname "$SURVEY")
-FLOCK=$(python3 -B dev/scripts/repository_files.py file ccx1-bench-flock.sh)
+FLOCK=$(python3 -B "$LOCATOR" file ccx1-bench-flock.sh)
 BENCH_DIR=$(realpath --relative-to="$repo" "$(dirname "$(realpath "$0")")")
 FAMILY=${1:-}
 MODE=${2:-}

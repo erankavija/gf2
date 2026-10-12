@@ -128,7 +128,7 @@ def main():
     print(
         f"Projection of `rep-*/profile.jsonl`: n = {n} profile sessions "
         f"({', '.join(name for name, _ in sessions)}), each one `sweep.sh` run under its own "
-        f"`dev/scripts/ccx1-bench-flock.sh --full-host` invocation, over {len(rows)} routes. "
+        f"`ccx1-bench-flock.sh --full-host` invocation, over {len(rows)} routes. "
         "Within a session each route is one process, and its `ns/call` is the wall-clock "
         "mean over the calls that process made."
     )
@@ -141,7 +141,7 @@ def main():
         "distribution-free order-statistic interval for the median: for n independent "
         "sessions the count below the population median is Binomial(n, 1/2), so "
         "[x(j), x(n+1-j)] covers it with probability 1 - 2 P(Binomial(n, 1/2) <= j - 1), "
-        f"here {coverage:.1%} (`dev/active/1a379447-zen3-cpu-performance/04b85d10/survey/intervals.py`). Calls per "
+        f"here {coverage:.1%} (`intervals.py` of the survey). Calls per "
         "session are descriptive. Allocation counters are exact counts from the counting "
         "allocator over the timed calls; one value means every session reported it."
     )
