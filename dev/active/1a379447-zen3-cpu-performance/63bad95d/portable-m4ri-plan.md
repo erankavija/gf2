@@ -117,28 +117,41 @@ alone, so the pair also shows what host targeting gives M4RI at that shape.
 The fresh and the retained-state cells are read separately, as in the
 mirrored family.
 
-## Pilot outcome
+## Pilot outcomes
 
-The pilot receipt
-[`v4-r1-pilot`](../../../bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md)
-is accepted exploratory evidence; its arm table names the portable gf2 arm as
-the baseline and its summary holds each cell's exploratory decision.
-[`portable-m4ri-pilot-resolution.md`](portable-m4ri-pilot-resolution.md),
+Two exploratory pilots of the family are committed, each beside its own
+acceptance summary and execution log:
+
+| Run | Receipt | Resolution record | Host |
+|---|---|---|---|
+| `v4-r1` | [`v4-r1-pilot`](../../../bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md) | [`portable-m4ri-pilot-resolution.md`](portable-m4ri-pilot-resolution.md) | loaded by another session |
+| `v4-r2` | [`v4-r2-pilot`](../../../bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r2-pilot/acceptance-summary.md) | [`portable-m4ri-pilot-resolution-v4-r2.md`](portable-m4ri-pilot-resolution-v4-r2.md) | quiet at the window start |
+
+Each plan names the portable gf2 arm as the baseline and the portable M4RI arm
+as the candidate. Each summary holds the cell's exploratory decision; a
+resolution record holds the half-width of every confirmatory cell at the
+confirmation's corrected alpha and the rule's outcome. Both records are
 written by
-[`survey/freeze-m4ri-confirmation.sh`](survey/freeze-m4ri-confirmation.sh),
-applies the frozen resolution rule and records `resolution-insufficient`: its
-table shows one fresh mid-range cell and the full-single-word cell above the
-ceiling and the other cells within it. The family runs no confirmation and reserves
-no comparison, and REQ-09's portable comparator leg has no confirmatory
-reading.
+[`survey/freeze-m4ri-confirmation.sh`](survey/freeze-m4ri-confirmation.sh)
+through the mid-range story's renderer, so the pair is regenerated from the
+committed receipts.
 
-The host was loaded when the pilot ran. Each session's `host-observation`
-record in the receipt's
-[`execution.log`](../../../bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r1-pilot/execution.log)
-states the `load_average` it observed, and the window runner's job-start line
-for key `646f169b95c76bc5` in the primary checkout's
-`.agents/bench-window/window.log` states the load at launch. The receipt
-stands as measured.
+The `v4-r1` record is `resolution-insufficient`: its table shows cells above
+the family ceiling, and the family ran no confirmation from it. By invoker
+ruling the receipt stays as measured and the pair repeats once in the same
+family and ledger as `v4-r2` (the ledger holds one reservation of zero
+comparisons per pilot). The load each session observed is the
+`host-observation` record of that receipt's `execution.log`, and the window
+runner's job-start line for key `646f169b95c76bc5` in the primary checkout's
+`.agents/bench-window/window.log` states the load at its launch.
+
+The `v4-r2` record is `eligible`: every confirmatory cell resolves within the
+ceiling. The canonical freezer pins the `v4-r2` receipt, refuses a resolution below
+the whole pilot's own width at the pilot's alpha, and writes
+[`portable-matvec-vs-m4ri-confirmation.json`](campaigns/portable-matvec-vs-m4ri-confirmation.json)
+with its derivation record beside it. The confirmation addendum restates the
+family description for the confirmatory stage. The smoke of its plan is
+[`survey/portable-m4ri-confirmation-smoke.json`](survey/portable-m4ri-confirmation-smoke.json).
 
 ## Execution
 
@@ -147,9 +160,10 @@ stands as measured.
 | Portable M4RI install and its record | `M4RI_BUILD_LEVEL=portable record-m4ri-build.sh` | none |
 | Build and untimed validation | `run-dense-harness.sh build --m4ri --native --m4ri-portable` | none |
 | Pilot plan smoke | `run-dense-harness.sh window ... --m4ri-portable --smoke <record>` | none |
-| Pilot | this family's queue line in [`queue.tsv`](../bench-window/queue.tsv) | first |
-| Freeze the confirmation from the committed pilot receipt with the canonical freezer | | none |
-| Confirmation | the same launcher with `--confirmation` | second |
+| Pilot (`v4-r1`, `v4-r2`) | this family's queue lines in [`queue.tsv`](../bench-window/queue.tsv) | each its own window |
+| Freeze the confirmation from the committed `v4-r2` receipt | `survey/freeze-m4ri-confirmation.sh portable <frozen-utc> v4-r2` | none |
+| Confirmation plan smoke | `run-dense-harness.sh window ... --m4ri-portable --confirmation --smoke <record>` | none |
+| Confirmation | this family's `--confirmation` queue line in [`queue.tsv`](../bench-window/queue.tsv) | next |
 
 The untimed validation record is
 [`dense-harness-validation.txt`](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt):
