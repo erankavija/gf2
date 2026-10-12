@@ -8,7 +8,8 @@
     {
       "environment": {
         "CARGO_CI_NO_SCCACHE": "1",
-        "RUSTFLAGS": "-C target-cpu=native"
+        "RUSTFLAGS": "-C target-cpu=native",
+        "CXX": "c++"
       },
       "argv": [
         "./scripts/cargo-budget.sh",
@@ -26,6 +27,7 @@
       "environment": {
         "CARGO_CI_NO_SCCACHE": "1",
         "RUSTFLAGS": "-C target-cpu=native",
+        "CXX": "c++",
         "GF2_AFF3CT_ROOT": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct"
       },
       "argv": [
@@ -51,35 +53,31 @@
   },
   "executables": {
     "aff3ct-intra-arm": {
-      "sha256": "608e25aaee846768e081f5f8a5198b75b4694b227486af55d4c71f857155f1a5",
+      "sha256": "12f23b816a891fd08532dc62752025b8ed92583d6a81043eff4aeb99f39bee03",
       "inputs": {
-        "repository_files_sha256": "0e35fb03adfea49c2de8eff238046f7b7d09bb79613d95e2e1abcd5c8236b5fe",
-        "other_files": {
-          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
-        }
+        "repository_files_sha256": "dd719eec22b76241e6e6ea11a3e683d3ecbbe1ec74a0d7e4849869c3488f88d5",
+        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d"
       }
     },
     "aff3ct-intra-quality": {
-      "sha256": "171ef65d7cd460eea2cd7abc47cca04100cd2c3c3211adc97be90338de29dde6",
+      "sha256": "db2f7ce1ea596997677b58237c9f0667a4920596fcb6e2b342b91ff07ead55f3",
       "inputs": {
-        "repository_files_sha256": "db4b9c719ce8d52c72268b80568659cb4694b716fd3463360258b68942bbc8a3",
-        "other_files": {
-          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
-        }
+        "repository_files_sha256": "89c391c8b8f69994a1084a6b7bd9ca271fc9526665228e2dfc2d1caf62778afc",
+        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d"
       }
     },
     "gf2-batch-lane-arm": {
-      "sha256": "8a5e546a2933010d9a7409a01f3f0b8b9069511e9e3f954fa9f100fcac3fbdb9",
+      "sha256": "520cbeaa76755e674a00808807227ad5f778cb90654874a9b78d33b967e2b395",
       "inputs": {
-        "repository_files_sha256": "72ae84027a1520155f16c73f759d7cfcc7faa9ed85d9e4f654e9c875eab89478",
-        "other_files": {}
+        "repository_files_sha256": "e61dd3f444c158f9f276a6d4695744f26267047eb591363950160c796ae61eef",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
     },
     "gf2-batch-single-frame-arm": {
-      "sha256": "8f95853b03d239fc03b027817e38094a9743c0d5ae2a1bf46148ce11c308ae83",
+      "sha256": "5b7ba81e3bb686b98db048a4fdb0b182b79d52e41c25f079b45fa10d8b4d0cb6",
       "inputs": {
-        "repository_files_sha256": "c86a80026ceb90b86797617e72e3d0acb1818307f240406c1db40964bf8bd873",
-        "other_files": {}
+        "repository_files_sha256": "48a8b2ea91c4e65b5b32cf5f5d669e3089eccc9d03f8c02cc36b8275e7c6df59",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
     }
   },
@@ -171,7 +169,7 @@
       "environment": {},
       "package": "ldpc-aff3ct-intra-arm",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
-      "executable_sha256": "608e25aaee846768e081f5f8a5198b75b4694b227486af55d4c71f857155f1a5"
+      "executable_sha256": "12f23b816a891fd08532dc62752025b8ed92583d6a81043eff4aeb99f39bee03"
     },
     "gf2-batch-lane-avx2": {
       "source": "workspace",
@@ -181,7 +179,7 @@
       },
       "package": "ldpc-batch-arms",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
-      "executable_sha256": "8a5e546a2933010d9a7409a01f3f0b8b9069511e9e3f954fa9f100fcac3fbdb9"
+      "executable_sha256": "520cbeaa76755e674a00808807227ad5f778cb90654874a9b78d33b967e2b395"
     },
     "gf2-batch-lane-portable": {
       "source": "workspace",
@@ -191,7 +189,7 @@
       },
       "package": "ldpc-batch-arms",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
-      "executable_sha256": "8a5e546a2933010d9a7409a01f3f0b8b9069511e9e3f954fa9f100fcac3fbdb9"
+      "executable_sha256": "520cbeaa76755e674a00808807227ad5f778cb90654874a9b78d33b967e2b395"
     },
     "gf2-batch-single-frame": {
       "source": "workspace",
@@ -199,7 +197,7 @@
       "environment": {},
       "package": "ldpc-batch-arms",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
-      "executable_sha256": "8f95853b03d239fc03b027817e38094a9743c0d5ae2a1bf46148ce11c308ae83"
+      "executable_sha256": "5b7ba81e3bb686b98db048a4fdb0b182b79d52e41c25f079b45fa10d8b4d0cb6"
     }
   },
   "isolation": {
