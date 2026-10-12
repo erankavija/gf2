@@ -78,10 +78,13 @@ exploratory, so it ranks a candidate and confirms nothing
    exploratory, so the margin each pinned family holds over the selected one
    at $m = 14$ and $m = 16$ ranks a candidate rather than confirming it.
    The sweep, whose cases declare and reach the same
-   code, shows the bit-serial `packed_write_codeword` holding nearly all of the
-   fold consumer's samples (attribution § Sampled shares, case
-   `bch-m14-b256-clmul`) at about the same per-batch cost in every family
-   (attribution § Per-call cost of one symbol).
+   code, shows the bit-serial codeword write of that profile's tree holding
+   nearly all of the fold consumer's samples (attribution § Sampled shares,
+   case `bch-m14-b256-clmul`) at about the same per-batch cost in every family
+   (attribution § Per-call cost of one symbol). `packed_place_codeword`
+   replaces that write with word-wise placement (`bch-reference-place`,
+   `bch-place-word-wise`); its measured effect is in `dev/bench_results/8e53235b/tables.md`
+   (`@/issue/8e53235b`).
 2. **Count.** The fused AVX2 AND-popcount holds most of the sampled dense
    1024x4096 matvec (attribution § Sampled shares, case
    `dense-matvec-1024x4096`). The measured executable contains no `POPCNT`
@@ -366,17 +369,17 @@ unchanged.
 
 | Consumer | Public entry point to executed kernel (claim ids) | Observed in the receipts |
 |---|---|---|
-| Logical row | `BitMatrix::row_xor` calls `kernels::ops::xor_inplace`, which calls `resolve_xor_inplace(len)` on every call; below eight words that is `scalar_xor_inplace`, at or above eight words the detected `LogicalFns::xor_fn`, `avx2_xor_into` on this host (`row-xor-public-entry`, `xor-inplace-resolves-per-call`, `resolve-xor-simd-fn`, `simd-min-words-default`, `avx2-xor-into`). The baked four-word cutover exists only under `--cfg gf2_tuning_baked` (`baked-simd-min-words`). | 4 words `ops-dispatched/scalar`; 8, 64 and 8192 words `ops-dispatched/simd`. |
+| Logical row | `BitMatrix::row_xor` calls `kernels::ops::xor_inplace`, which calls `resolve_xor_inplace(len)` on every call; below eight words that is `scalar_xor_inplace`, at or above eight words the detected `LogicalFns::xor_fn`, `avx2_xor_into` on this host (`row-xor-public-entry`, `xor-inplace-resolves-per-call`, `resolve-xor-simd-fn`, `simd-min-words-default`, `avx2-xor-into`). A build under `--cfg gf2_tuning_baked` takes the calibrated cutover instead of that default; the measured build does not set it (`baked-simd-min-words`). | 4 words `ops-dispatched/scalar`; 8, 64 and 8192 words `ops-dispatched/simd`. |
 | Dense RREF | `alg::rref::rref` selects an eight-wide Gray table above 512 columns, clones the input, resolves one XOR kernel, allocates one table per pivot block and applies rows through the inline `row_xor_slice_from` (`rref-block-width`, `rref-clone`, `rref-resolves-xor-once`, `rref-table-per-block`, `rref-row-apply`). | 1024-square `current/blocked-m4ri`. |
-| Dense matvec | `BitMatrix::matvec` dispatches on the stride; eight or more words reach `matvec_simd`, whose per-row parity is `LogicalFns::and_popcnt_fn` (`avx2_and_popcnt`) appended to a fresh `BitVec`; the scalar route is private (`matvec-route`, `matvec-simd-min-words`, `matvec-fused-kernel`, `matvec-output-alloc`, `matvec-scalar-private`). | 1024x4096 `current/simd-and-popcnt`. |
+| Dense matvec | `BitMatrix::matvec` dispatches on the stride; eight or more words reach `matvec_simd`, whose per-row parity is `LogicalFns::and_popcnt_fn` (`avx2_and_popcnt`) appended to a fresh `BitVec`; the scalar lane is private to `matvec_scalar` and reached through the public `matvec_with_route`, which the consumer arm does not call (`matvec-route`, `matvec-simd-min-words`, `matvec-fused-kernel`, `matvec-output-alloc`, `matvec-scalar-private`, `matvec-with-route`). | 1024x4096 `current/simd-and-popcnt`. |
 | Sparse LDPC parity | `LdpcCode::syndrome` is `SpBitMatrixDual::matvec`, which delegates to the CSR `SpBitMatrix::matvec`: one `x.get(c)` per stored index into a fresh `BitVec` (`ldpc-syndrome`, `ldpc-h-dual`, `ldpc-dual-matvec`, `ldpc-csr-bit-at-a-time`, `ldpc-syndrome-output-alloc`). | $n = 64800$ `current/csr-bit-at-a-time-matvec`. |
 | Population count | `BitVec::count_ones` is `ops::popcount`, re-dispatched per call at the same eight-word cutover to `avx2_popcnt` or the scalar fallback (`count-ones-entry`, `popcount-dispatch`, `simd-backend-popcount`, `avx2-popcnt`). | 4 words scalar, 8 and 65536 words `simd-backend/avx2`. |
 | Any-nonzero | `LdpcCode::is_valid_codeword` computes the syndrome and tests `count_ones() == 0`; `find_first_one` reaches `avx2_find_first_one`, which can stop at the first nonzero vector (`ldpc-is-valid-count`, `find-first-one-simd`, `avx2-find-first-one`). | Both spellings bit-identical on zero, weight-one and random words. |
-| Block transpose | `transpose::detect` publishes `avx2-bit-twiddle` under AVX2; the PSHUFB lane exists behind `detect_pshufb` and is not selected (`transpose-detect-avx2`, `transpose-pshufb-alternative`). | `transpose-detected/avx2-bit-twiddle` against `transpose-scalar/portable`. |
+| Block transpose | `transpose::detect` publishes the first supported lane of `PRODUCTION_PREFERENCE`, `avx2-bit-twiddle` under AVX2; the PSHUFB lane is reachable through `transpose::lane` and is not in that list (`transpose-detect-avx2`, `transpose-pshufb-alternative`). | `transpose-detected/avx2-bit-twiddle` against `transpose-scalar/portable`. |
 | Dense transpose | `BitMatrix::transpose` resolves the block kernel once, allocates the output, selects the outer loop through `transpose_route` and tiles through `transpose_inner_loop` with two 64-word local blocks (`dense-transpose-resolves-once`, `dense-transpose-output-alloc`, `dense-transpose-route`, `dense-transpose-tile-scratch`). | 4096-square `current/macro-tiled-8`. |
-| Packed BCH batch | `encode_batch_into` selects the family once through `select_family` and calls `encode_batch_family_into`, which runs one partition over the caller's workspace. The reference family is always admitted; bitslice and fold need the active profile's minimum batch, which the conservative profile does not grant at $B = 256$. Every per-frame family ends in `packed_write_codeword`, which copies the message one bit at a time (`bch-batch-into-selects`, `bch-batch-into-delegates`, `bch-family-into-partition`, `bch-family-admission`, `bch-bitslice-admission`, `bch-fold-admission`, `bch-reference-serial-reduce`, `bch-reference-write`, `bch-write-bit-at-a-time`, `bch-fold-reduce`, `bch-bitslice-batch`). | `current/PolyRemainderScalar` on the short-frame mother code ($m = 14$, $B = 256$); forced arms `family-pinned/BitsliceInterleaved`, `family-pinned/ClmulFold`. |
+| Packed BCH batch | `encode_batch_into` selects the family once through `select_family` and calls `encode_batch_family_into`, which runs one partition over the caller's workspace. The reference family is always admitted; bitslice and fold need the active profile's minimum batch, which the conservative profile does not grant at $B = 256$. Every per-frame family ends in `packed_place_codeword`, which places the message and the parity as packed runs (`bch-batch-into-selects`, `bch-batch-into-delegates`, `bch-family-into-partition`, `bch-family-admission`, `bch-bitslice-admission`, `bch-fold-admission`, `bch-reference-serial-reduce`, `bch-reference-place`, `bch-place-word-wise`, `bch-fold-reduce`, `bch-bitslice-batch`). | `current/PolyRemainderScalar` on the short-frame mother code ($m = 14$, $B = 256$); forced arms `family-pinned/BitsliceInterleaved`, `family-pinned/ClmulFold`. |
 | Allocating and parallel packed BCH | `encode_batch` allocates its output and reduces over thread-local scratch; `encode_batch_parallel_into` selects the family once and recurses through `rayon::join`, with no forced-family variant (`bch-allocating-entry`, `bch-allocating-scratch`, `bch-parallel-selects-once`, `bch-parallel-join`). | `current-allocating/PolyRemainderScalar` against `caller-buffer/PolyRemainderScalar`; parallel path in the sweep only. |
-| DVB-T2 compatibility BCH | `BchEncoder::encode_batch` maps `encode`, which expands the message into `Gf2mPoly` coefficients and divides by the generator (`dvb-bch-batch-maps-encode`, `dvb-bch-field-poly`, `dvb-bch-div-rem`). | Short frame $n = 7200$ `current/field-polynomial-div-rem`. |
+| DVB-T2 compatibility BCH | `DvbT2BchCode` is the mother code shortened on its leading message coordinates, so `Shortened::encode_into` places the message in a mother-length buffer, encodes it with the packed mother encoder and copies the kept coordinates back symbol by symbol (`dvb-bch-mother-buffers`, `dvb-bch-mother-encode`, `dvb-bch-symbol-moves`). | Short frame $n = 7200$ `current/field-polynomial-div-rem` in the committed profile receipts, whose tree encoded through a field-polynomial division that the tree no longer has; the harness arm now reports `current/shortened-systematic`. |
 
 ## Why these sizes represent consumers
 
@@ -449,10 +452,10 @@ where the time goes.
 | 65536-word popcount | SIMD backend and scalar fallback at 512 KiB, and the SIMD backend at 32 KiB (sweep, rows `popcount` `words=65536` and `words=4096`). | None. | Dispatch adds nothing visible at 512 KiB (rows `popcount` `words=65536`, `ops-dispatched` against `simd-backend`). The SIMD route's useful bandwidth at 32 and 512 KiB and the scalar fallback's fraction of it (§ Useful bandwidth) bound what a faster kernel can gain. No route here issues `POPCNT`: the scalar fallback is the bit-twiddle sequence and the AVX2 route counts with `VPSHUFB` nibble lookups and `VPSADBW` byte sums (`asm/popcnt-attribution.txt`). The whole bit-twiddle sequence, masks and byte-sum multiplier, sits in the harness's scalar arm (`Prepared::run`), `LdpcCode::is_valid_codeword`, `BitMatrix::matvec_scalar` and the tail loop of `avx2_and_popcnt`; the 64x64 transpose and the BCH reductions use some of the masks without the multiplier, to permute bits (same file, last section). |
 | 256 block transposes | Scalar and detected AVX2 lanes (sweep § Transpose, bitslice and BCH encoding consumers, rows `transpose-64x64` `blocks=256`). | None. | The AVX2 lane executes a fraction of the scalar lane's instructions per block (§ Instructions per unit of work) at a lower IPC with negligible front-end stalls (§ Counter ratios, rows `transpose64-256-detected` and `transpose64-256-scalar`): it is bounded by vector-unit throughput and its own dependency chain, not by dispatch or the front end. |
 | Dense transpose 4096 | The outer tiling loop of `BitMatrix::transpose` holds more samples than `transpose_64x64_avx2` (case `dense-transpose-4096`; time in sweep row `dense-transpose` `cols=4096 rows=4096`). | One output allocation per call (same row; `rep-01/alloc-trace/dense-transpose-4096.txt`); input and output traffic in § Useful bandwidth. | L1 and last-level miss rates (§ Counter ratios, row `dense-transpose-4096`): tile assembly, the two intentional 64-word scratch blocks and cache traffic bound the whole consumer. |
-| Packed short-frame mother BCH ($m = 14$), $B = 256$ | Current family: `encode_systematic_with` holds most samples and `packed_write_codeword` the rest; fold: `packed_write_codeword` nearly all, `fold_block_pclmul` little; bitslice: the batch body most, `bitslice_reduce_avx2` little (cases `bch-m14-b256-current`, `bch-m14-b256-clmul` and `bch-m14-b256-bitslice`). Every family, the table family included, in sweep rows `bch-encode-batch` `batch=256 degree=14`. | One field-identity allocation per message in `validate_batch` (`rep-01/alloc-trace/bch-m14-b256-current.txt`; its cost in rows `field-id-hint`); batch fill, workspace and dispatch probes (§ Reported setup and conversion probes, rows `bch-encode-batch`). | Low IPC, front-end stalls and branch misses with almost no L1 misses (§ Counter ratios, rows `bch-m14-b256-reference`, `bch-m14-b256-clmul` and `bch-m14-b256-bitslice`): control and data dependencies, and above all the bit-serial codeword write, whose per-batch cost is the same in every family (§ Per-call cost of one symbol). |
-| Allocating packed BCH | Allocating and caller-buffer entry points (sweep rows `bch-encode-batch-alloc` `batch=256 degree=14`). | About twice the allocations and many times the bytes per call of the caller-buffer entry point (same rows). | The receipt cell that decided materiality is withdrawn under `layout-v3-declared-mother-code` (tables § `layout-v3-confirmation`, row `layout-bch-encode-caller-buffer-m14-b256-1core`); the layout v4 pilot measures the cell on both mother codes as exploratory cells (tables § `layout-v4-pilot`, rows `layout-bch-encode-caller-buffer-m14-b256-1core` and `layout-bch-encode-caller-buffer-m16-b256-1core`). The scalar recurrence and the bit-serial write dominate the sweep rows. |
+| Packed short-frame mother BCH ($m = 14$), $B = 256$ | Current family: `encode_systematic_with` holds most samples and the bit-serial codeword write of the profile's tree the rest; fold: that write nearly all, `fold_block_pclmul` little; bitslice: the batch body most, `bitslice_reduce_avx2` little (cases `bch-m14-b256-current`, `bch-m14-b256-clmul` and `bch-m14-b256-bitslice`). Every family, the table family included, in sweep rows `bch-encode-batch` `batch=256 degree=14`. | One field-identity allocation per message in `validate_batch` (`rep-01/alloc-trace/bch-m14-b256-current.txt`; its cost in rows `field-id-hint`); batch fill, workspace and dispatch probes (§ Reported setup and conversion probes, rows `bch-encode-batch`). | Low IPC, front-end stalls and branch misses with almost no L1 misses (§ Counter ratios, rows `bch-m14-b256-reference`, `bch-m14-b256-clmul` and `bch-m14-b256-bitslice`): control and data dependencies, and above all the bit-serial codeword write of the profile's tree, whose per-batch cost is the same in every family (§ Per-call cost of one symbol); `@/issue/8e53235b` replaced that write (`dev/bench_results/8e53235b/tables.md`). |
+| Allocating packed BCH | Allocating and caller-buffer entry points (sweep rows `bch-encode-batch-alloc` `batch=256 degree=14`). | About twice the allocations and many times the bytes per call of the caller-buffer entry point (same rows). | The receipt cell that decided materiality is withdrawn under `layout-v3-declared-mother-code` (tables § `layout-v3-confirmation`, row `layout-bch-encode-caller-buffer-m14-b256-1core`); the layout v4 pilot measures the cell on both mother codes as exploratory cells (tables § `layout-v4-pilot`, rows `layout-bch-encode-caller-buffer-m14-b256-1core` and `layout-bch-encode-caller-buffer-m16-b256-1core`). The scalar recurrence and the bit-serial write of the profile's tree dominate the sweep rows. |
 | Parallel packed BCH | The current family at 1, 6, 12 and 24 workers, $B = 256$ and $1024$ (sweep rows `bch-encode-batch-parallel`). | The same per-message allocation (same rows). | Scaling of the current family only; the entry point exposes no forced-family arm. |
-| DVB-T2 compatibility BCH | `BchEncoder::encode` holds most samples and `Gf2mElement` multiplication the rest (case `dvb-bch-7200-b1`); short and normal frames in sweep rows `dvb-bch-encode`. | Hundreds of allocations and megabytes per 16-frame call, the growing coefficient vectors of `encode` (sweep row `dvb-bch-encode` `batch=16 n=7200`; `rep-01/alloc-trace/dvb-bch-7200-b1.txt`; `dvb-bch-field-poly`, `dvb-bch-div-rem`). | A field-polynomial route (§ Counter ratios, row `dvb-bch-7200-b1`). Recorded for its owner; not campaigned here. |
+| DVB-T2 compatibility BCH | The committed profile's `encode` of the field-polynomial route holds most samples and `Gf2mElement` multiplication the rest (case `dvb-bch-7200-b1`); short and normal frames in sweep rows `dvb-bch-encode`. | Hundreds of allocations and megabytes per 16-frame call, the growing coefficient vectors of that route's `encode` (sweep row `dvb-bch-encode` `batch=16 n=7200`; `rep-01/alloc-trace/dvb-bch-7200-b1.txt`). The tree's route is now `Shortened::encode_into` with two mother-length buffers per message (`dvb-bch-mother-buffers`, `dvb-bch-symbol-moves`). | The field-polynomial route of the profiled tree (§ Counter ratios, row `dvb-bch-7200-b1`). Recorded for its owner; not campaigned here. |
 
 ### Scratch buffers versus compiler spills
 
@@ -462,7 +465,7 @@ routine of the measured executable and joins them with the declaration that
 settles intent; each routine's counts are its row there.
 
 - No frame traffic: `avx2_xor_into`, `avx2_and_into`, `avx2_popcnt`,
-  `avx2_and_popcnt`, `avx2_find_first_one`, `packed_write_codeword`.
+  `avx2_and_popcnt`, `avx2_find_first_one`.
 - Intentional scratch: the portable 64x64 transpose and the AVX2 lane copy
   the block into a local they mutate in place (`transpose-scalar-scratch`,
   `transpose-avx2-scratch`); the tiled dense transpose holds `tile_in` and
@@ -487,8 +490,10 @@ as a full count, with the measured consequence where one exists:
   the syndrome matvec holds nearly every sample of the check (attribution §
   Sampled shares, case `ldpc-codeword-check-64800`).
 - The LDPC BP decoder's per-iteration early-termination check and terminal
-  check (`ldpc-bp-early-termination`, `ldpc-bp-final-check`): the same
-  consumer repeated per iteration, bounded by the same matvec.
+  check (`ldpc-bp-early-termination`, `ldpc-bp-final-check`) are
+  `syndrome_passes`, which stops at the first unsatisfied check and takes no
+  count and no syndrome; the profile's tree spelled them as the full-count
+  `is_valid_codeword`, so they are no longer candidates.
 - ORBGRAND's candidate loop (`orbgrand-count`): each candidate clones the
   base syndrome, XORs a few columns and counts, so the count is a comparable
   share of per-candidate work and the first nonzero bit's position varies;
@@ -516,12 +521,15 @@ issues do not rediscover them.
 1. **Word-wise systematic codeword assembly for packed BCH (`1d4fd63d`).**
    Consumer: `encode_batch_into` on the mother code of the DVB-T2 short
    frame ($m = 14$, $B = 256$), the sweep's BCH cases. Hypothesis:
-   replacing the bit-serial `packed_write_codeword` with word copies and
-   shifted parity placement removes most of the per-batch write cost that
-   every family pays (attribution § Per-call cost of one symbol). Share it
-   could move: nearly all of the fold consumer and the smaller part of the
-   current one (attribution § Sampled shares, cases `bch-m14-b256-clmul` and
-   `bch-m14-b256-current`, row `packed_write_codeword`). This is a
+   replacing the bit-serial codeword write with word copies and shifted
+   parity placement removes most of the per-batch write cost that every
+   family pays (attribution § Per-call cost of one symbol). Share it could
+   move: nearly all of the fold consumer and the smaller part of the current
+   one (attribution § Sampled shares, cases `bch-m14-b256-clmul` and
+   `bch-m14-b256-current`, the codeword-write row). `@/issue/8e53235b`
+   implements the word-wise placement as `packed_place_codeword`
+   (`bch-place-word-wise`); the ranking's outcome is in
+   `dev/bench_results/8e53235b/tables.md`. This is a
    bit-layout packing change and belongs with the conversion costs `1d4fd63d`
    REQ-09 measures.
 2. **Packed BCH family selection (`1d4fd63d`).** Consumer: the same entry

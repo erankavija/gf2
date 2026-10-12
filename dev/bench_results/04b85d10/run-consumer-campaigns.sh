@@ -32,6 +32,11 @@ set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 ISSUE=04b85d10
+HARNESS_DIR=$(python3 -B dev/scripts/repository_files.py package-directory consumer-profile-gf2-side)
+SURVEY=$(dirname "$HARNESS_DIR")
+ISSUE_DIR=$(dirname "$SURVEY")
+FLOCK=$(python3 -B dev/scripts/repository_files.py file ccx1-bench-flock.sh)
+BENCH_DIR=$(realpath --relative-to="$repo" "$(dirname "$(realpath "$0")")")
 FAMILY=${1:-}
 MODE=${2:-}
 VERSION=${3:-4}
@@ -50,10 +55,10 @@ case "$VERSION" in
   3|4) ;;
   *) echo "$usage" >&2; exit 2 ;;
 esac
-ADDENDUM=dev/active/$ISSUE/addendum-bit-storage-$FAMILY-v$VERSION-$MODE.json
+ADDENDUM=$ISSUE_DIR/addendum-bit-storage-$FAMILY-v$VERSION-$MODE.json
 [[ -f "$ADDENDUM" ]] || { echo "no frozen addendum $ADDENDUM" >&2; exit 2; }
-OUT="dev/bench_results/$ISSUE/$DATE_UTC-$ISSUE-$FAMILY-v$VERSION-$MODE"
-LEDGER="dev/bench_results/$ISSUE/v3-bit-storage-$FAMILY-consumers-family-ledger.jsonl"
+OUT="$BENCH_DIR/$DATE_UTC-$ISSUE-$FAMILY-v$VERSION-$MODE"
+LEDGER="$BENCH_DIR/v3-bit-storage-$FAMILY-consumers-family-ledger.jsonl"
 MAX_CELLS=3
 
 if [[ "$MODE" == confirmation ]]; then
@@ -70,7 +75,7 @@ fi
 # Builds finish before timed work. The harness keeps its artefacts in the
 # git-excluded target tree so the committed tree carries no build output.
 export RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
-HARNESS_MANIFEST=dev/active/$ISSUE/survey/gf2-side/Cargo.toml
+HARNESS_MANIFEST=$HARNESS_DIR/Cargo.toml
 HARNESS_TARGET="$repo/target/consumer-profile-$ISSUE"
 ./scripts/cargo-budget.sh cargo build --release -p tuning-campaign-support \
   --bin benchmark-ab-runner --bin benchmark-acceptance
@@ -91,7 +96,7 @@ touch "$LOCK"
 LOCK=$(realpath "$LOCK")
 export GF2_CCX1_LOCK="$LOCK"
 
-python3 dev/active/$ISSUE/survey/build-plan.py \
+python3 "$SURVEY/build-plan.py" \
   "$PLAN" "$CAMPAIGN" "$ARM" "$LOCK" "$LABEL" "$ADDENDUM" "$MAX_CELLS"
 
 LAUNCH_LOG="$STAGE.launcher.log"
@@ -131,7 +136,7 @@ while :; do
   session=$((session + 1))
   echo "# session $session start: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"$LAUNCH_LOG"
   set +e
-  GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host \
+  GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "$FLOCK" --full-host \
     "$RUNNER" run "$STAGE" "$PLAN" | tee -a "$LAUNCH_LOG"
   rc=${PIPESTATUS[0]}
   set -e

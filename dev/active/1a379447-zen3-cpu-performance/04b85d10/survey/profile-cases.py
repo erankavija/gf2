@@ -9,7 +9,7 @@ justification stay in one place.
 Sizes are justified against this host's cache hierarchy, observed at run time
 and recorded in the run's host record: 32 KiB L1d and 512 KiB L2 per core,
 32 MiB L3 per core complex. The BCH rows and batch ladder are those of
-`dev/active/4e732b56/workload-selection.md` sections 2 and 3.
+`workload-selection.md` of `@/issue/4e732b56` sections 2 and 3.
 """
 
 import json
