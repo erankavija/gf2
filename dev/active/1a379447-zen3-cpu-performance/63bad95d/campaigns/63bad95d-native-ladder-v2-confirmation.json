@@ -1,0 +1,208 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "63bad95d-native-ladder-v2",
+    "issue": "63bad95d",
+    "purpose": "consumer-family",
+    "description": "Confirmation of issue 63bad95d, protocol version 4: every cell is confirmatory and its declaration is the pilot's. Question: is the native build of the profile no worse than its portable build on one primary workload per entry-point group? The baseline arm is the tuned-portable build: default target, simd and tuning-profile features, --cfg gf2_tuning_baked, the measured core owner the plan pins installed before the first selector read. The candidate arm is the native build: the same sources, features, cfg and installed owner with -C target-cpu=native added. The two arms are separate executables of one harness crate and differ in that one flag. Kernel-isolated cells time the public kernel entry on prepared operands; whole-consumer cells time the public BitMatrix call including its output allocation and release. Every cell is warm, single-core and calibrated. The measurement resolution is the widest relative bootstrap half-width of the whole pinned pilot at this confirmation's corrected alpha. The family selects nothing: it reports whether a consumer who builds for the host loses anything against the portable profile build. This family repeats 63bad95d-native-ladder, by invoker ruling, on a quiet host with the same cells, arms and settings on its own ledger: the campaigns of 63bad95d-native-ladder run on a loaded host, at the launcher and session load averages dev/active/1a379447-zen3-cpu-performance/63bad95d/disturbance-record.md states under 'Host load each campaign records', and their receipts stay committed as measured."
+  },
+  "frozen": {
+    "frozen_utc": "2026-10-12T05:36:49Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.08,
+    "rationale": "Every cell is a non-regression cell and the family claims no improvement. The threshold is the smallest two-decimal value strictly above one plus the pilot-derived resolution, the smallest gain of the native build this family can resolve.",
+    "measurement_resolution": 0.07,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/63bad95d/63bad95d-native-ladder-v2/r1-pilot/receipt.json",
+      "sha256": "348a0c3da326e5411069d4cd9920fdcec5754a91b38e78bd60c80beb404bfad2"
+    },
+    "equivalence_margin": 1.08,
+    "equivalence_rationale": "The pilot-derived resolution exceeds the five percent a consumer dominated by these calls would act on, so the margin is the smallest two-decimal value strictly above one plus that resolution. Within it the two builds are reported as interchangeable for a consumer; a smaller difference lies below what this family resolves.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The family holds no comparator-gap cell and declares no external gap."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "Zero added production lines and zero unsafe kernels: the family measures build configurations of committed sources, and its outcome is the value of existing baked constants."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/63bad95d/63bad95d-native-ladder-v2-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "matvec-r1024-24w-native",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "profile-matvec-1536x1024",
+        "size": {
+          "rows": 1024,
+          "columns": 1536
+        },
+        "seed": 632411
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "tuned-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "bitmatrix-transpose-8192x2048-native",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "profile-transpose-2048x8192",
+        "size": {
+          "rows": 8192,
+          "columns": 2048
+        },
+        "seed": 638211
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "tuned-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "popcount-1024w-native",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "profile-popcount-1024",
+        "size": {
+          "words": 1024
+        },
+        "seed": 631011
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "tuned-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "and-popcount-1024w-native",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "profile-and-popcount-1024",
+        "size": {
+          "words": 1024
+        },
+        "seed": 631021
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "tuned-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-inplace-8w-native",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "profile-xor-inplace-8",
+        "size": {
+          "words": 8
+        },
+        "seed": 630811
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "tuned-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "clmul-wide-9w-native",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "profile-clmul-wide-9",
+        "size": {
+          "words": 9
+        },
+        "seed": 630911
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "tuned-portable",
+        "candidate": "native"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
