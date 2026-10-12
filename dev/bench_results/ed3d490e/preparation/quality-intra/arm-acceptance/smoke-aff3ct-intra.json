@@ -3,7 +3,7 @@
   "campaign_id": "bad1aea8-smoke-aff3ct-intra",
   "issue": "bad1aea8",
   "family": "ldpc-batch-arms-smoke-aff3ct-intra",
-  "plan_sha256": "ff3bda51305a0febda44ad09bafeca8090f0ee6414ea5feec7a1179d69038134",
+  "plan_sha256": "0420d6ef4477ae468cd7a9b6fd1441c2c0c3e0128b59e45922b76fabd73c5065",
   "addendum": "target/ldpc-batch-arms-smoke/aff3ct-intra-addendum.json",
   "addendum_sha256": "a015c4c720a1ffb3ef4303bb383bbd4bc1f3f91685dc0dcf93aaddfd4cef4ca4",
   "cells": [
@@ -25,10 +25,10 @@
           "arm": "aff3ct-spa-intra-dvb-t2-r12",
           "role": "validation",
           "executable": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
-          "executable_sha256": "b8c7c2432a3336ffa510254ae88385b893a77e3a6258310f5cee7d58a21805cf",
+          "executable_sha256": "416c9fd90ee45419f563c9dbbc9fe91a4b776bcdf1c5469386a838a208fc6887",
           "cache_state_declared": "warm",
           "cache_state_applied": "warm",
-          "selected_path": "Decoder_LDPC_BP_flooding_SPA backend=AVX2 wave=1 simd=INTRA precision=f32, clone per worker; 1 pinned workers, 2 process threads",
+          "selected_path": "Decoder_LDPC_BP_flooding_SPA backend=AVX2 wave=1 simd=INTRA precision=f32 llr_factor=2, clone per worker; 1 pinned workers, 2 process threads",
           "windows": 0
         }
       ]
@@ -51,10 +51,10 @@
           "arm": "aff3ct-spa-intra-nr-bg1-z384",
           "role": "validation",
           "executable": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
-          "executable_sha256": "b8c7c2432a3336ffa510254ae88385b893a77e3a6258310f5cee7d58a21805cf",
+          "executable_sha256": "416c9fd90ee45419f563c9dbbc9fe91a4b776bcdf1c5469386a838a208fc6887",
           "cache_state_declared": "warm",
           "cache_state_applied": "warm",
-          "selected_path": "Decoder_LDPC_BP_flooding_SPA backend=AVX2 wave=1 simd=INTRA precision=f32, clone per worker; 1 pinned workers, 2 process threads",
+          "selected_path": "Decoder_LDPC_BP_flooding_SPA backend=AVX2 wave=1 simd=INTRA precision=f32 llr_factor=2, clone per worker; 1 pinned workers, 2 process threads",
           "windows": 0
         }
       ]

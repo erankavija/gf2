@@ -1,95 +1,155 @@
 {
+  "arm": "aff3ct-spa-intra",
+  "build": {
+    "builds": [
+      {
+        "release": true,
+        "rustflags": "-C target-cpu=native"
+      }
+    ],
+    "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+    "compiler_options": [
+      "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
+    ],
+    "environment": {
+      "GF2_AFF3CT_LLR_FACTOR": "2"
+    },
+    "executable_sha256": "7c8b4c386b4515909e4b3e5379ce8f1bb87b59319fa1c27b7802d7339bdac50b",
+    "release_profile": {
+      "codegen-units": 1,
+      "debug": "line-tables-only",
+      "lto": true,
+      "opt-level": 3
+    },
+    "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+  },
   "cites": [
     "Cassagne2019"
   ],
   "codes": {
     "dvb-t2-r12": {
-      "mean_signed_llr_over_true_scale": 0.5000844493833648,
+      "llrs": 8294400,
+      "mean_signed_llr_over_closed_form_mean": 0.5000844493833648,
       "replays": [
         {
+          "GF2_AFF3CT_LLR_FACTOR": "1",
+          "ber_interval": [
+            0.0,
+            0.12078735894585427
+          ],
           "bit_errors": 3098,
+          "bits": 4147200,
           "fer_interval": [
             0.03742976830393997,
             0.12823480349360633
           ],
           "frame_errors": 9,
           "frames": 128,
-          "iterations_mean": 39.0703125,
-          "scale": 1.0
+          "llr_factor": 1.0
         },
         {
+          "GF2_AFF3CT_LLR_FACTOR": "2",
+          "ber_interval": [
+            0.0,
+            0.12004034891499007
+          ],
           "bit_errors": 0,
+          "bits": 4147200,
           "fer_interval": [
             0.0,
             0.029136956273508416
           ],
           "frame_errors": 0,
           "frames": 128,
-          "iterations_mean": 14.5078125,
-          "scale": 2.0
+          "llr_factor": 2.0
         },
         {
+          "GF2_AFF3CT_LLR_FACTOR": "4",
+          "ber_interval": [
+            0.0,
+            0.12004034891499007
+          ],
           "bit_errors": 0,
+          "bits": 4147200,
           "fer_interval": [
             0.0,
             0.029136956273508416
           ],
           "frame_errors": 0,
           "frames": 128,
-          "iterations_mean": 16.4375,
-          "scale": 4.0
+          "llr_factor": 4.0
         }
       ],
       "sigma": 0.8118672116043384
     },
     "nr-bg1-z384": {
-      "mean_signed_llr_over_true_scale": 0.4996745014415588,
+      "llrs": 3342336,
+      "mean_signed_llr_over_closed_form_mean": 0.4996745014415588,
       "replays": [
         {
+          "GF2_AFF3CT_LLR_FACTOR": "1",
+          "ber_interval": [
+            0.020309068106790173,
+            0.2603897659367703
+          ],
           "bit_errors": 151766,
+          "bits": 1081344,
           "fer_interval": [
             0.9708630437264916,
             1.0
           ],
           "frame_errors": 128,
           "frames": 128,
-          "iterations_mean": 50.0,
-          "scale": 1.0
+          "llr_factor": 1.0
         },
         {
+          "GF2_AFF3CT_LLR_FACTOR": "2",
+          "ber_interval": [
+            0.0,
+            0.12004034891499007
+          ],
           "bit_errors": 0,
+          "bits": 1081344,
           "fer_interval": [
             0.0,
             0.029136956273508416
           ],
           "frame_errors": 0,
           "frames": 128,
-          "iterations_mean": 16.8515625,
-          "scale": 2.0
+          "llr_factor": 2.0
         },
         {
+          "GF2_AFF3CT_LLR_FACTOR": "4",
+          "ber_interval": [
+            0.0,
+            0.19497764916356963
+          ],
           "bit_errors": 81033,
+          "bits": 1081344,
           "fer_interval": [
             0.4528298312720518,
             0.6230188440190805
           ],
           "frame_errors": 69,
           "frames": 128,
-          "iterations_mean": 43.203125,
-          "scale": 4.0
+          "llr_factor": 4.0
         }
       ],
       "sigma": 1.1600721537746943
     }
   },
+  "executable": "aff3ct-intra-quality",
   "intervals": {
     "ber": "Hoeffding interval over the independent frames",
     "confidence": 0.95,
     "fer": "Wilson score interval over the frames"
   },
-  "scales": [
-    1.0,
-    2.0,
-    4.0
-  ]
+  "method": {
+    "corpus_scale": "descriptive: the mean over the `llrs` recorded LLRs of a bundle of the LLR signed by its transmitted bit, over the BPSK-AWGN closed-form mean 2/sigma^2",
+    "replays": "one full replay of each recorded bundle per value of GF2_AFF3CT_LLR_FACTOR"
+  },
+  "recorded_inputs": {
+    "name": "recorded-inputs.tar.gz",
+    "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba"
+  }
 }

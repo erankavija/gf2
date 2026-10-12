@@ -76,6 +76,7 @@
           "backend": "AVX2",
           "wave_frames": 1
         },
+        "llr_factor": 2.0,
         "linked_aff3ct": {
           "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
           "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
@@ -157,6 +158,7 @@
           "backend": "AVX2",
           "wave_frames": 1
         },
+        "llr_factor": 2.0,
         "linked_aff3ct": {
           "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
           "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"

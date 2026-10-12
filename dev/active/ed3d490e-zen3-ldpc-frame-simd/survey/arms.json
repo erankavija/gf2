@@ -134,7 +134,9 @@
       "update_rule": "sum-product",
       "simd": "INTRA",
       "description": "AFF3CT [Cassagne2019] flooding sum-product, intra-frame SIMD, one clone per pinned worker",
-      "environment": {},
+      "environment": {
+        "GF2_AFF3CT_LLR_FACTOR": "2"
+      },
       "package": "ldpc-aff3ct-intra-arm"
     }
   }

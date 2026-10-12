@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tests of `record-intra-quality.py`; the replay test is skipped without the built arm."""
 
+import copy
 import importlib.util
-import json
 import subprocess
 import sys
 import unittest
@@ -37,31 +37,80 @@ class DifferencesTest(unittest.TestCase):
 
 BUILD = {
     "rustc": "rustc 1.95.0", "cargo": "cargo 1.95.0", "release_profile": {"lto": True},
-    "build_commands": [{"argv": ["cargo", "build"]},
-                       {"argv": ["cargo", "build", "--package", "ldpc-aff3ct-intra-arm"],
-                        "environment": {"RUSTFLAGS": "-C target-cpu=native"}}],
-    "executables": {"aff3ct-intra-quality": {"sha256": "a" * 64, "compiler_options": ["-O3"]},
-                    "other-arm": {"sha256": "b" * 64}},
+    "build_commands": [
+        {"argv": ["cargo", "build", "--release"], "environment": {"RUSTFLAGS": "-C a"}},
+        {"argv": ["cargo", "build", "--release", "--package", "ldpc-aff3ct-intra-arm"],
+         "environment": {"RUSTFLAGS": "-C target-cpu=native"}}],
+    "executables": {
+        "aff3ct-intra-quality": {
+            "sha256": "a" * 64, "compiler_options": ["-O3"],
+            "inputs": {"repository_files_sha256": "1" * 64, "other_files_sha256": "2" * 64,
+                       "linked": {"/lib/x.a": "3" * 64}}},
+        "aff3ct-intra-arm": {"sha256": "b" * 64, "compiler_options": ["-O3"]}},
+    "arms": {"aff3ct-spa-intra": {
+        "source": "workspace", "executable": "aff3ct-intra-arm", "executable_sha256": "b" * 64,
+        "package": "ldpc-aff3ct-intra-arm", "environment": {"GF2_AFF3CT_LLR_FACTOR": "2"}}},
 }
+HOST = {"cpu_model": "Test CPU", "avx2": True, "fma": True}
+CODE = {"bundle_digests": {"llrs_sha256": "4" * 64}, "bundle_seed": 1,
+        "request_declaration": {"iteration_cap": 50},
+        "effective": {"decoder": {"class": "SPA"}, "llr_factor": 2.0, "settings": {}},
+        "linked_aff3ct": {"revision": "r"}, "replayed_frames": 3,
+        "quality": {"file": "quality.json", "sha256": "5" * 64}}
 
 
-class ArmBuildTest(unittest.TestCase):
-    def test_changes_outside_the_arm_identity_do_not_differ(self):
-        other = json.loads(json.dumps(BUILD))
-        other["executables"]["other-arm"]["sha256"] = "c" * 64
-        other["build_commands"][0]["argv"].append("--other")
-        other["catalogue"] = {"sha256": "d" * 64}
-        self.assertEqual(recorder.arm_build(other), recorder.arm_build(BUILD))
+def replayed(build=BUILD, code=CODE, quality=QUALITY):
+    """The check's verdict on a second replay against the record of `BUILD`, `CODE`, `QUALITY`."""
+    committed = {"build": recorder.identity(BUILD), "host": HOST, "codes": {"code": CODE}}
+    record = {"build": recorder.identity(build), "host": HOST, "codes": {"code": code}}
+    return recorder.check_failures(committed, {"quality.json": QUALITY}, record,
+                                   {"quality.json": quality})
 
-    def test_executable_digest_flags_and_toolchain_differ(self):
-        for change in (
+
+def edited(edit, value=BUILD):
+    value = copy.deepcopy(value)
+    edit(value)
+    return value
+
+
+class CheckTest(unittest.TestCase):
+    def test_an_identical_replay_has_no_failure(self):
+        self.assertEqual(replayed(), {"code": [], "": []})
+
+    def test_source_and_link_input_hashes_do_not_decide(self):
+        inputs = ("executables", "aff3ct-intra-quality", "inputs")
+        for name in ("repository_files_sha256", "other_files_sha256"):
+            build = edited(lambda b: b[inputs[0]][inputs[1]][inputs[2]].update({name: "9" * 64}))
+            self.assertEqual(replayed(build=build), {"code": [], "": []})
+        build = edited(lambda b: b[inputs[0]][inputs[1]][inputs[2]].update(
+            linked={"/elsewhere/y.a": "8" * 64}))
+        self.assertEqual(replayed(build=build), {"code": [], "": []})
+
+    def test_another_executable_and_another_packages_command_do_not_decide(self):
+        def edit(build):
+            build["executables"]["aff3ct-intra-arm"]["sha256"] = "c" * 64
+            build["arms"]["aff3ct-spa-intra"]["executable_sha256"] = "c" * 64
+            build["build_commands"][0]["environment"]["RUSTFLAGS"] = "-C b"
+        self.assertEqual(replayed(build=edited(edit)), {"code": [], "": []})
+
+    def test_the_replays_build_identity_decides(self):
+        for edit in (
             lambda b: b["executables"]["aff3ct-intra-quality"].update(sha256="e" * 64),
+            lambda b: b["executables"]["aff3ct-intra-quality"].update(compiler_options=["-O0"]),
             lambda b: b["build_commands"][1]["environment"].update(RUSTFLAGS="-O0"),
+            lambda b: b["build_commands"][1]["argv"].remove("--release"),
             lambda b: b.update(rustc="rustc 1.96.0"),
+            lambda b: b["release_profile"].update(lto=False),
+            lambda b: b["arms"]["aff3ct-spa-intra"]["environment"].update(
+                GF2_AFF3CT_LLR_FACTOR="1"),
         ):
-            other = json.loads(json.dumps(BUILD))
-            change(other)
-            self.assertNotEqual(recorder.arm_build(other), recorder.arm_build(BUILD))
+            self.assertEqual(replayed(build=edited(edit)), {"code": [], "": ["build differs"]})
+
+    def test_a_differing_frame_and_a_differing_factor_are_named_for_their_code(self):
+        quality = {**QUALITY, "frame_bit_errors": [0, 3, 0]}
+        code = edited(lambda c: c["effective"].update(llr_factor=1.0), CODE)
+        self.assertEqual(replayed(code=code, quality=quality)["code"],
+                         ["quality field frame_bit_errors differs", "effective differs"])
 
 
 class HostFactsTest(unittest.TestCase):

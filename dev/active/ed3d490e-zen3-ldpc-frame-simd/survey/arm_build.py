@@ -1,17 +1,22 @@
 """Projection of a build record onto the closed identity set of one arm."""
 
 
-def arm_build(build, name):
+def arm_build(build, name, executable=None):
     """Executable digest; for a workspace arm also compiler options, toolchain, build flags.
 
+    `executable` names another executable of a workspace arm's package in place of the arm's.
     Source and link input hashes, file lists, paths and whole-file digests are outside the set.
     """
     row = build["arms"][name]
-    identity = {"executable_sha256": row["executable_sha256"]}
+    if executable is None:
+        executable, digest = row["executable"], row["executable_sha256"]
+    else:
+        digest = build["executables"][executable]["sha256"]
+    identity = {"executable_sha256": digest}
     if row["source"] != "workspace":
         return identity
     return {**identity,
-            "compiler_options": build["executables"][row["executable"]]["compiler_options"],
+            "compiler_options": build["executables"][executable]["compiler_options"],
             "rustc": build["rustc"], "cargo": build["cargo"],
             "release_profile": build["release_profile"],
             "builds": [{"rustflags": command["environment"].get("RUSTFLAGS"),
