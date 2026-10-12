@@ -269,6 +269,7 @@ class CodingStage:
         self.campaign = f"gf2-{CODING_ISSUE}-19700101t000000z-1"
         self.layout = validator.publication_layout(self.campaign)
         self.records: list[dict] = []
+        self.event("campaign-start", {})
         self.manifest = self.owner_manifest(self.staged_processes())
         cells = len(self.manifest["ordered_units"]) // 6
         self.declaration = self.declare(cells if declared_cells is None else declared_cells)
@@ -862,6 +863,45 @@ class CodingOwner(unittest.TestCase):
         self.v.validate_envelopes(stage.stage, stage.campaign, {"coding": stage.response},
                                   decisions or self.decisions(stage),
                                   {"coding": stage.manifest}, stage.config, stage.records)
+
+    def entry_point(self, stage: CodingStage, *arguments: str) -> subprocess.CompletedProcess:
+        """Runs the validator from inside the fixture repository, which it
+        then resolves as its own."""
+        script = stage.root / VALIDATOR.name
+        shutil.copyfile(VALIDATOR, script)
+        return subprocess.run([sys.executable, "-B", str(script), *arguments],
+                              capture_output=True, text=True)
+
+    def accepted(self, stage: CodingStage, *arguments: str) -> dict:
+        result = self.entry_point(stage, *arguments)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout.removeprefix(OUTPUT))
+
+    def test_the_declaration_check_accepts_the_coding_grid(self):
+        stage = self.staged()
+        self.assertEqual(self.accepted(stage, "--declaration-check", CODING_ISSUE)["status"],
+                         "declaration-valid")
+        other = self.staged(declared_cells=75)
+        result = self.entry_point(other, "--declaration-check", CODING_ISSUE)
+        self.assertEqual(result.returncode, 2, result.stderr)
+
+    def test_the_session_record_check_accepts_the_coding_reports(self):
+        stage = self.staged()
+        record = stage.root.parent / Path(stage.layout["session"]).name
+        record.mkdir()
+        for name in stage.reports:
+            shutil.copyfile(stage.stage / f"{name}.json", record / f"{name}.json")
+        self.assertEqual(self.accepted(stage, "--session-record", str(record))["campaign_id"],
+                         stage.campaign)
+
+    def test_the_stage_checks_accept_the_coding_stage(self):
+        stage = self.staged()
+        for mode in ["--receipt-check", "--imported-owner-check"]:
+            self.accepted(stage, "--stage", str(stage.stage), mode)
+        repository = stage.root.parent / "published"
+        stage.publish(repository)
+        self.assertEqual(self.accepted(stage, "--stage", str(stage.stage), "--publication",
+                                       str(repository))["status"], "published")
 
     def rejects(self, check, stage: CodingStage, *arguments) -> None:
         with self.assertRaises((self.v.ValidationError, KeyError)):

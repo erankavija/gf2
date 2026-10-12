@@ -595,8 +595,10 @@ def declared_counts(declaration: Any) -> dict[str, int]:
 
 
 def owner_counts(declaration: Any, owner: str) -> dict[str, int]:
-    return counts(next(item["cells"] for item in declaration["measured_owners"]
-                       if item["owner"] == owner))
+    cells = next((item["cells"] for item in declaration["measured_owners"]
+                  if item["owner"] == owner), None)
+    require(cells is not None, f"the campaign declaration does not measure {owner}")
+    return counts(cells)
 
 
 def measured_names(declaration: Any) -> list[str]:
@@ -4572,11 +4574,20 @@ def check_session_record(record_arg: str) -> dict[str, Any]:
 def check_declaration(issue: str) -> dict[str, Any]:
     """`--declaration-check`: the declaration of a campaign that has no stage.
 
-    A producer built from the checkout sweeps every field of the table, so
-    the declared core cells are those of the complete table.
+    A producer built from the checkout sweeps its complete grid, so each
+    measured owner's declared cells are those of its grid; for core that is
+    the complete field table.
     """
     declaration = issue_declaration(issue)
-    thresholds = selected_thresholds(list(THRESHOLD_GRIDS), declaration)
+    thresholds: dict[str, list[int]] = {}
+    grids = {"algebra": expected_algebra_blocks, "coding": expected_coding_blocks}
+    for name in measured_names(declaration):
+        if name == "core":
+            thresholds = selected_thresholds(list(THRESHOLD_GRIDS), declaration)
+            continue
+        cells = sum(len(candidates) for *_, candidates in grids[name]())
+        require(cells == owner_counts(declaration, OWNER_NAMES[name])["cells"],
+                f"the {name} grid is of another size than the declared cells")
     return {"schema": "tuning-extent-campaign-declaration-check-v1", "issue": issue,
             "status": "declaration-valid", **selection_summary(thresholds, declaration)}
 
@@ -5378,6 +5389,8 @@ def coding_owner_self_test() -> None:
                 and declared_processes(declaration)[0] == ("coding-producer", ["--fresh-child"])
                 and preflight_names(declaration)[0] == "coding-capability-report",
                 "coding declaration self-test")
+        must_reject(lambda: owner_counts(declaration, "gf2-core"),
+                    "counts of an owner the campaign imports")
         foreign = [{**imported[0], "section": OWNER_SECTIONS["gf2-coding"]}, imported[1]]
         for measured_owners, imported_owners, what in [
                 ([measured("coding")], imported[:1], "uncovered required owner"),
