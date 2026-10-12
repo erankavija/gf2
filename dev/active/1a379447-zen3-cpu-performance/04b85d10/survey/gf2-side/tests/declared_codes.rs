@@ -291,8 +291,14 @@ fn family_descriptions_name_the_codes_their_cells_reach() {
 
     for path in addendum_paths() {
         let addendum = read_json(&path);
+        // The issue directory's name and the file's: the part of a recorded
+        // path that survives a move of the issue directory.
         let relative = format!(
-            "dev/active/1a379447-zen3-cpu-performance/04b85d10/{}",
+            "{}/{}",
+            issue_dir()
+                .file_name()
+                .expect("an issue directory name")
+                .to_string_lossy(),
             path.file_name().expect("a file name").to_string_lossy()
         );
         let mut reached: BTreeSet<&String> = BTreeSet::new();
@@ -323,7 +329,9 @@ fn family_descriptions_name_the_codes_their_cells_reach() {
             continue;
         }
         assert!(
-            recorded.contains(&relative),
+            recorded
+                .iter()
+                .any(|declared| declared.ends_with(&format!("/{relative}"))),
             "{relative} names {named:?} where its packed BCH cells reach {reached:?}, \
              and the evidence record carries no contradiction for it",
         );

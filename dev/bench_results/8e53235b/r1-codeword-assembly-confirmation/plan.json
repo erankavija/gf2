@@ -1,0 +1,159 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "8e53235b-r1-codeword-assembly-confirmation",
+  "issue": "8e53235b",
+  "label": "confirmation",
+  "campaign_seed": 2026101211,
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/8e53235b/addendum-v4-codeword-assembly-confirmation.json",
+  "producing_manifest": "dev/active/1a379447-zen3-cpu-performance/8e53235b/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "current": {
+      "build": "conservative-portable",
+      "description": "consumer-arm, conservative-portable release build: `encode_batch_into` through the family the production dispatcher selects, with the bit-serial codeword assembly every encode selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-8e53235b/target/8e53235b-arm/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "current"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "current-word-wise": {
+      "build": "conservative-portable",
+      "description": "consumer-arm, conservative-portable release build: `encode_batch_into` through the family the production dispatcher selects, with the word-wise codeword assembly its workspace selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-8e53235b/target/8e53235b-arm/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "word-wise"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-fold": {
+      "build": "conservative-portable",
+      "description": "consumer-arm, conservative-portable release build: `encode_batch_into` through the carry-less-multiply fold family, forced, with the bit-serial codeword assembly every encode selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-8e53235b/target/8e53235b-arm/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-clmul-fold"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-fold-word-wise": {
+      "build": "conservative-portable",
+      "description": "consumer-arm, conservative-portable release build: `encode_batch_into` through the carry-less-multiply fold family, forced, with the word-wise codeword assembly its workspace selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-8e53235b/target/8e53235b-arm/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-clmul-fold-word-wise"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-bitslice": {
+      "build": "conservative-portable",
+      "description": "consumer-arm, conservative-portable release build: `encode_batch_into` through the bit-sliced interleaved family, forced, with the bit-serial codeword assembly every encode selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-8e53235b/target/8e53235b-arm/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-bitslice-interleaved"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "family-bitslice-word-wise": {
+      "build": "conservative-portable",
+      "description": "consumer-arm, conservative-portable release build: `encode_batch_into` through the bit-sliced interleaved family, forced, with the word-wise codeword assembly its workspace selects",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-8e53235b/target/8e53235b-arm/release/consumer-arm",
+      "arguments": [],
+      "environment": {
+        "RAYON_NUM_THREADS": "1",
+        "GF2_CONSUMER_PATH": "family-bitslice-interleaved-word-wise"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "assembly-bch-encode-current-m14-b256-1core",
+      "baseline_arm": "current",
+      "candidate_arm": "current-word-wise",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 8101
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-current-m16-b256-1core",
+      "baseline_arm": "current",
+      "candidate_arm": "current-word-wise",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 16,
+          "batch": 256
+        },
+        "seed": 8102
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-fold-m14-b256-1core",
+      "baseline_arm": "family-fold",
+      "candidate_arm": "family-fold-word-wise",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 8103
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-bitslice-m14-b256-1core",
+      "baseline_arm": "family-bitslice",
+      "candidate_arm": "family-bitslice-word-wise",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 8104
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "assembly-bch-encode-current-m8-b1-1core",
+      "baseline_arm": "current",
+      "candidate_arm": "current-word-wise",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 8,
+          "batch": 1
+        },
+        "seed": 8105
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 3
+}

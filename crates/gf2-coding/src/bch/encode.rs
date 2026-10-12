@@ -1098,8 +1098,8 @@ impl SystematicKernel<Fp<2>> for BitVec {
     ///
     /// # Complexity
     ///
-    /// $O(k \lceil r/64 \rceil)$ word operations and $O(n)$ bit writes over
-    /// the caller's registers, with no allocation.
+    /// $O(k \lceil r/64 \rceil)$ word operations and $O(n / 64)$ word writes
+    /// over the caller's registers, with no allocation.
     fn encode_systematic_with(
         plan: &SystematicPlan<'_, Fp<2>>,
         message: &Self,
@@ -1115,7 +1115,7 @@ impl SystematicKernel<Fp<2>> for BitVec {
         if redundancy > 0 {
             packed_serial_reduce(plan, message, register, low);
         }
-        packed_write_codeword(plan, message, register, codeword);
+        packed_place_codeword(plan, message, register, codeword);
         Ok(())
     }
 
@@ -1204,8 +1204,8 @@ impl SystematicKernel<Fp<2>> for BitVec {
     /// $O((k / 32) \lceil r/64 \rceil)$ for
     /// [`EncodeFamily::TableRemainder`], and
     /// $O((k / 64)(1 + \lceil r/64 \rceil))$ carry-less multiplies for
-    /// [`EncodeFamily::ClmulFold`], each plus $O(n)$ bit writes, over the
-    /// caller's registers and with no allocation.
+    /// [`EncodeFamily::ClmulFold`], each plus $O(n / 64)$ word writes, over
+    /// the caller's registers and with no allocation.
     fn encode_systematic_family(
         family: EncodeFamily,
         plan: &SystematicPlan<'_, Fp<2>>,
@@ -1230,7 +1230,7 @@ impl SystematicKernel<Fp<2>> for BitVec {
                     ..
                 } = registers;
                 packed_table_reduce(plan, message, register, low, tables);
-                packed_write_codeword(plan, message, register, codeword);
+                packed_place_codeword(plan, message, register, codeword);
                 Ok(())
             }
             EncodeFamily::ClmulFold if redundancy > 0 => {
@@ -1244,7 +1244,7 @@ impl SystematicKernel<Fp<2>> for BitVec {
                     ..
                 } = registers;
                 packed_fold_reduce(plan, message, register, low, fold[0]);
-                packed_write_codeword(plan, message, register, codeword);
+                packed_place_codeword(plan, message, register, codeword);
                 Ok(())
             }
             _ => Self::encode_systematic_with(plan, message, registers, codeword),
@@ -1272,7 +1272,7 @@ impl SystematicKernel<Fp<2>> for BitVec {
     /// $O(k r)$ word operations per lane group of
     /// [`gf2_kernels_simd::bch_encode::BITSLICE_LANES`] frames, plus
     /// $O(k / 64 + \lceil r/64 \rceil)$ bit-block transposes per group and
-    /// $O(n)$ bit writes per message.
+    /// $O(n / 64)$ word writes per message.
     fn encode_batch_family(
         family: EncodeFamily,
         plan: &SystematicPlan<'_, Fp<2>>,
@@ -1655,7 +1655,7 @@ pub(crate) fn selected_encode_kernels() -> &'static str {
 /// most the lane width, bit-slicing each block through the kernel bundle's
 /// transpose and advancing every lane of the group over it. The reduced
 /// slices come back as one packed parity run per lane, which
-/// [`packed_write_codeword`] then reads exactly as the per-frame families'
+/// [`packed_place_codeword`] then reads exactly as the per-frame families'
 /// register.
 ///
 /// A group shorter than the lane width leaves its unfilled lanes' windows
@@ -1692,32 +1692,44 @@ fn packed_bitslice_batch(
             frames.iter().zip(codewords[base..].iter_mut()).enumerate()
         {
             let parity = &parts.parity[lane * words..(lane + 1) * words];
-            packed_write_codeword(plan, message, parity, codeword);
+            packed_place_codeword(plan, message, parity, codeword);
         }
     }
 }
 
-/// Writes the systematic codeword of `message` from the reduced `register`.
+/// Writes the systematic codeword of `message` from the reduced `register`:
+/// the message as one packed run at coordinate 0 and the parity as packed
+/// runs from coordinate $k$.
 ///
 /// The message occupies the first $k$ user coordinates under every declared
 /// layout, and the layout decides which parity degree each remaining
 /// coordinate carries.
-fn packed_write_codeword(
+fn packed_place_codeword(
     plan: &SystematicPlan<'_, Fp<2>>,
     message: &BitVec,
     register: &[u64],
     codeword: &mut BitVec,
 ) {
-    for user in 0..plan.dimension() {
-        codeword.set(user, message.get(user));
-    }
-    for user in plan.dimension()..plan.length() {
-        let parity = plan.internal_at(user);
-        debug_assert!(
-            parity < plan.redundancy(),
-            "a systematic layout carries the coordinates above k onto the parity degrees"
-        );
-        codeword.set(user, (register[parity / 64] >> (parity % 64)) & 1 == 1);
+    let dimension = plan.dimension();
+    let redundancy = plan.redundancy();
+    codeword.write_bits(0, message.words(), dimension);
+    match plan.layout() {
+        SystematicLayout::MessageParityAscending => {
+            codeword.write_bits(dimension, register, redundancy);
+        }
+        SystematicLayout::MessageParityDescending => {
+            // Coordinate $k + j$ carries parity degree $r - 1 - j$, so each
+            // placed window is the register's matching window reversed.
+            let mut placed = 0;
+            while placed < redundancy {
+                let count = (redundancy - placed).min(64);
+                let window = packed_read_window(register, redundancy - placed - count)
+                    .reverse_bits()
+                    >> (64 - count);
+                codeword.write_bits(dimension + placed, slice::from_ref(&window), count);
+                placed += count;
+            }
+        }
     }
 }
 
@@ -1764,8 +1776,8 @@ where
     /// # Complexity
     ///
     /// The reference recurrence: $O(k r)$ base-field multiply-adds
-    /// field-generic, $O(k \lceil r/64 \rceil)$ word operations plus $O(n)$
-    /// bit writes packed, each plus the $O(r)$ register reset.
+    /// field-generic, $O(k \lceil r/64 \rceil)$ word operations plus
+    /// $O(n / 64)$ word writes packed, each plus the $O(r)$ register reset.
     pub fn encode_systematic_into(
         &self,
         message: &S,
@@ -3290,17 +3302,170 @@ mod tests {
         }
     }
 
+    /// Encodes into buffers that hold ones, so an assembly that skips a
+    /// coordinate is observable.
     fn batch_under(
         code: &BinaryBchCode,
         family: EncodeFamily,
         messages: &[BitVec],
         layout: SystematicLayout,
     ) -> Vec<BitVec> {
-        let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+        let mut codewords = vec![BitVec::ones(code.n()); messages.len()];
         let mut workspace = code.encode_workspace();
         code.encode_batch_family_into(family, messages, layout, &mut workspace, &mut codewords)
             .expect("an available family encodes a validated batch");
         codewords
+    }
+
+    /// One bit write per coordinate through the layout mapping: the
+    /// reference [`packed_place_codeword`] is held to.
+    fn bit_serial_codeword(
+        plan: &SystematicPlan<'_, Fp<2>>,
+        message: &BitVec,
+        register: &[u64],
+        codeword: &mut BitVec,
+    ) {
+        for user in 0..plan.dimension() {
+            codeword.set(user, message.get(user));
+        }
+        for user in plan.dimension()..plan.length() {
+            let parity = plan.internal_at(user);
+            assert!(parity < plan.redundancy());
+            codeword.set(user, (register[parity / 64] >> (parity % 64)) & 1 == 1);
+        }
+    }
+
+    /// The serial reduction followed by [`bit_serial_codeword`], into buffers
+    /// that hold ones: the reference every family's batch is held to.
+    fn bit_serial_batch(
+        code: &BinaryBchCode,
+        messages: &[BitVec],
+        layout: SystematicLayout,
+    ) -> Vec<BitVec> {
+        let plan = code.systematic_plan(layout);
+        let mut registers = BitVec::registers(&plan);
+        messages
+            .iter()
+            .map(|message| {
+                if plan.redundancy() > 0 {
+                    packed_serial_reduce(&plan, message, &mut registers.register, &registers.low);
+                }
+                let mut codeword = BitVec::ones(code.n());
+                bit_serial_codeword(&plan, message, &registers.register, &mut codeword);
+                codeword
+            })
+            .collect()
+    }
+
+    fn assert_zero_tail_padding(codeword: &BitVec) {
+        let used = codeword.len() % 64;
+        if used != 0 {
+            let last = codeword.words().last().expect("a nonempty codeword");
+            assert_eq!(last >> used, 0, "the bits above n must stay zero");
+        }
+    }
+
+    #[test]
+    fn the_assembly_places_the_bits_the_bit_serial_reference_writes() {
+        // Dimensions and redundancies on both sides of a word and of two, so
+        // the message run ends, and the parity run starts and ends, 1, 63, 64
+        // and 65 bits into a word. The register carries bits above degree
+        // r - 1, which the assembly must not read.
+        let boundaries = [0usize, 1, 63, 64, 65, 127, 128, 129];
+        let generator = FieldPoly::new(vec![Fp::<2>::new(1)]);
+        for &dimension in &boundaries {
+            for &redundancy in &boundaries {
+                for &layout in LAYOUTS {
+                    let plan = SystematicPlan {
+                        generator: &generator,
+                        zero: Fp::<2>::new(0),
+                        length: dimension + redundancy,
+                        dimension,
+                        layout,
+                    };
+                    let seed = (dimension * 1000 + redundancy) as u64;
+                    let message = seeded_bits(dimension, seed);
+                    let register = seeded_bits((redundancy.div_ceil(64) + 1) * 64, seed + 1);
+
+                    let mut expected = seeded_bits(plan.length(), seed + 2);
+                    let mut placed = expected.clone();
+                    bit_serial_codeword(&plan, &message, register.words(), &mut expected);
+                    packed_place_codeword(&plan, &message, register.words(), &mut placed);
+                    assert_eq!(
+                        placed.words(),
+                        expected.words(),
+                        "k = {dimension}, r = {redundancy}, under {layout:?}"
+                    );
+                    assert_zero_tail_padding(&placed);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn every_family_assembles_the_bit_serial_reference_codeword() {
+        // The boundary codes of the kernel-family suite, as (k, r), then the
+        // parameter points the construction suite pins.
+        let mut codes = vec![
+            binary_narrow_sense(4, 0b10011, 16),
+            binary_narrow_sense(4, 0b10011, 15),
+            binary_narrow_sense(4, 0b10011, 1),
+            binary_first_root(4, 0b10011, 0, 2),
+            binary_narrow_sense(7, 0b10000011, 21),
+            binary_first_root(7, 0b10000011, 0, 22),
+            BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                designed_distance: DesignedDistance::try_from(17).expect("positive"),
+            })
+            .expect("a valid GF(2^8) narrow-sense spec"),
+            BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                first_root: RootExponent::from(0),
+                designed_distance: DesignedDistance::try_from(18).expect("positive"),
+            })
+            .expect("a valid GF(2^8) first-root spec"),
+        ];
+        let shapes = [
+            (0usize, 15usize),
+            (1, 14),
+            (15, 0),
+            (14, 1),
+            (64, 63),
+            (63, 64),
+            (191, 64),
+            (190, 65),
+        ];
+        for (code, shape) in codes.iter().zip(shapes) {
+            assert_eq!((code.k(), BlockCode::redundancy(code)), shape);
+        }
+        codes.extend(
+            BINARY_POINTS
+                .iter()
+                .map(|&(m, modulus, _, _, t)| binary_narrow_sense(m, modulus, 2 * t as u64 + 1)),
+        );
+
+        for code in &codes {
+            let redundancy = BlockCode::redundancy(code);
+            for &family in EncodeFamily::REGISTERED {
+                for &layout in LAYOUTS {
+                    if !code.encode_family_available(family, layout) {
+                        continue;
+                    }
+                    for batch in [0usize, 1, 63, 64, 65, 129] {
+                        let messages = seeded_bit_batch(code.k(), batch, redundancy as u64 + 1);
+                        let expected = bit_serial_batch(code, &messages, layout);
+                        let placed = batch_under(code, family, &messages, layout);
+                        assert_eq!(
+                            placed,
+                            expected,
+                            "{family} at k = {}, r = {redundancy}, batch {batch}, under {layout:?}",
+                            code.k()
+                        );
+                        placed.iter().for_each(assert_zero_tail_padding);
+                    }
+                }
+            }
+        }
     }
 
     #[test]

@@ -28,11 +28,12 @@ use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
 
+use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, FrameSize};
 use gf2_coding::bch::encode::{
     max_parallel_batch_workers, BchEncodeWorkspace, EncodeFamily, SystematicLayout,
 };
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
-use gf2_coding::bch::{BchCode, BchEncoder, CodeRate};
+use gf2_coding::bch::CodeRate;
 use gf2_coding::ldpc::LdpcCode;
 use gf2_coding::traits::BlockEncoder;
 use gf2_core::alg::rref::rref;
@@ -334,9 +335,9 @@ enum State {
         workspaces: Vec<BchEncodeWorkspace<u64>>,
         codewords: Vec<BitVec>,
     },
-    /// The DVB-T2 field-polynomial encoding entry point.
+    /// The DVB-T2 outer BCH code's canonical encoding entry point.
     DvbBchEncode {
-        encoder: Box<BchEncoder>,
+        code: Box<DvbT2BchCode>,
         messages: Vec<BitVec>,
     },
     /// The per-message field-identity check of a batch encode.
@@ -492,10 +493,10 @@ impl State {
                 }
                 sink
             }
-            State::DvbBchEncode { encoder, messages } => {
+            State::DvbBchEncode { code, messages } => {
                 let mut sink = 0u64;
                 for message in black_box(messages.iter()) {
-                    sink ^= encoder.encode(message).words()[0];
+                    sink ^= code.encode(message).words()[0];
                 }
                 sink
             }
@@ -587,14 +588,15 @@ fn ldpc_code(n: usize) -> Result<LdpcCode, String> {
     }
 }
 
-/// Builds the DVB-T2 rate-1/2 compatibility BCH code of one declared length.
-fn dvb_bch_code(n: usize) -> Result<BchCode, String> {
+/// Builds the DVB-T2 rate-1/2 outer BCH code of one declared length.
+fn dvb_bch_code(n: usize) -> Result<DvbT2BchCode, String> {
     let frame = match n {
-        7200 => gf2_coding::bch::dvb_t2::FrameSize::Short,
-        32400 => gf2_coding::bch::dvb_t2::FrameSize::Normal,
+        7200 => FrameSize::Short,
+        32400 => FrameSize::Normal,
         other => return Err(format!("no declared DVB-T2 BCH row of length {other}")),
     };
-    Ok(BchCode::dvb_t2(frame, CodeRate::Rate1_2))
+    dvb_t2_bch_code(frame, CodeRate::Rate1_2)
+        .map_err(|error| format!("the declared DVB-T2 BCH construction is rejected: {error:?}"))
 }
 
 /// The code a cell's declared sizes name, as this harness constructs it.
@@ -1069,9 +1071,8 @@ pub fn prepare(
             let setup_ns = per_call_ns(1, || {
                 black_box(dvb_bch_code(n).ok());
             });
-            let code = dvb_bch_code(n)?;
+            let code = Box::new(dvb_bch_code(n)?);
             let k = code.k();
-            let encoder = Box::new(BchEncoder::new(code));
             let messages: Vec<BitVec> = (0..batch)
                 .map(|index| BitVec::random_seeded(k, case.seed.wrapping_add(index as u64 + 1)))
                 .collect();
@@ -1084,15 +1085,16 @@ pub fn prepare(
             });
             conversion = Some(Conversion {
                 setup_ns,
-                // The route rebuilds the message as k field elements per call.
+                // The route places the message in a mother-length buffer
+                // inside each timed call.
                 pack_ns: 0,
                 unpack_ns: 0,
                 batch_fill_ns,
                 dispatch_ns: 0,
             });
             (
-                State::DvbBchEncode { encoder, messages },
-                "current/field-polynomial-div-rem".to_owned(),
+                State::DvbBchEncode { code, messages },
+                "current/shortened-systematic".to_owned(),
             )
         }
         "field-id-hint" => {
