@@ -2379,10 +2379,7 @@ fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f6
                 cell.cell_id
             ));
         }
-        let half_width = (interval.estimate - interval.lower)
-            .abs()
-            .max((interval.upper - interval.estimate).abs())
-            / interval.estimate;
+        let half_width = interval.relative_half_width();
         widest = Some(widest.map_or(half_width, |current| current.max(half_width)));
     }
     widest.ok_or_else(|| "pilot receipt contains no measured paired cells".into())

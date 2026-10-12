@@ -3,16 +3,27 @@
 //! decision from the receipt's raw parts, writes `acceptance-summary.json` and
 //! `acceptance-summary.md` beside the receipt, and exits 0 when the receipt is
 //! accepted, 1 when it is rejected, and 2 on a usage or I/O error.
+//! `benchmark-acceptance --bootstrap` reads an `abtest::BootstrapRequest` from
+//! standard input and prints its intervals, so a sizing script takes the
+//! evaluator's bootstrap of the pairs it names.
 
 use std::env;
 use std::fs;
+use std::io;
 use std::path::PathBuf;
+use tuning_campaign_support::abtest::BootstrapRequest;
 use tuning_campaign_support::receipt::{
     evaluate, render_markdown, Verdict, SUMMARY_JSON_FILE, SUMMARY_MARKDOWN_FILE,
 };
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    if args.get(1).map(String::as_str) == Some("--bootstrap") {
+        if args.len() != 2 {
+            usage();
+        }
+        bootstrap();
+    }
     let mut receipt_dir: Option<PathBuf> = None;
     for arg in args.iter().skip(1) {
         if receipt_dir.is_none() {
@@ -61,7 +72,24 @@ fn main() {
     });
 }
 
+fn bootstrap() -> ! {
+    let printed = serde_json::from_reader::<_, BootstrapRequest>(io::stdin().lock())
+        .map_err(|error| error.to_string())
+        .and_then(|request| request.intervals().map_err(|error| error.to_string()))
+        .and_then(|sized| serde_json::to_string_pretty(&sized).map_err(|error| error.to_string()));
+    match printed {
+        Ok(json) => {
+            println!("{json}");
+            std::process::exit(0);
+        }
+        Err(error) => {
+            eprintln!("benchmark-acceptance: {error}");
+            std::process::exit(2);
+        }
+    }
+}
+
 fn usage() -> ! {
-    eprintln!("usage: benchmark-acceptance <receipt-dir>");
+    eprintln!("usage: benchmark-acceptance <receipt-dir> | --bootstrap < request.json");
     std::process::exit(2);
 }
