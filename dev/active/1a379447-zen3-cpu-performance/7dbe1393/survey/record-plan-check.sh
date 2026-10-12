@@ -2,9 +2,7 @@
 # Record the runner's untimed check of the pilot plan (jit:7dbe1393).
 #
 # Usage: record-plan-check.sh <benchmark-ab-runner> <plan.json>, from the
-# worktree root. `check` decodes the plan and the campaign addendum it names
-# and validates the addendum against the live version-4 schema; it measures
-# nothing. The plan is the projection the launcher's `window --smoke` stores.
+# worktree root.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"

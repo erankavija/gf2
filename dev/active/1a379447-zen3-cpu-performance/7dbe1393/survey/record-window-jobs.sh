@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 # Record the benchmark-window log lines of this issue's jobs (jit:7dbe1393).
 #
-# Usage: record-window-jobs.sh <window.log> <job key>..., from the worktree
-# root. The window runner writes one start line per job, with the host load
-# averages it reads at that moment, and one exit line. The record holds those
-# lines verbatim for the named keys.
+# Usage: record-window-jobs.sh <window.log> <job key>..., from the worktree root.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"

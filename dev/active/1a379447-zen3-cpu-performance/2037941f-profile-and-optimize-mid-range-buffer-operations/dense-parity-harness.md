@@ -129,7 +129,8 @@ the ceiling, refuses the run.
 `tuning_campaign_support::trial_ledger::reserve` runs for every protocol
 version at or above 2 and fails when the family ledger file is absent, so each
 ledger path a frozen addendum names is a committed file under its owning
-issue's `dev/bench_results/` directory. An empty ledger is the explicit genesis
+issue's `dev/bench_results/` directory. The harness locates each frozen addendum by file name and SHA-256 and each
+ledger by file name among the tracked files below the repository root. An empty ledger is the explicit genesis
 state; it reserves nothing, and each timed campaign appends its own
 reservation. A family's confirmatory count is whatever that ledger and the
 campaign addendum's non-exploratory cells admit; the harness carries no

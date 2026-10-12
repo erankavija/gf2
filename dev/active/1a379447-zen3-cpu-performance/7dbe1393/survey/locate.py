@@ -1,8 +1,4 @@
-"""Shared locators for this issue's generators (jit:7dbe1393).
-
-Importing this module puts the shared `repository_files` on `sys.path`; it
-resolves files under the root git reports.
-"""
+"""Shared locators for this issue's generators (jit:7dbe1393)."""
 
 import subprocess
 import sys

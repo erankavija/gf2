@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 """Freeze the source claims of the ragged-tail attribution and addendum (jit:7dbe1393).
 
-Every claim has an identifier the documents cite, names a file by Cargo
-package and package-relative path, a fragment of one line, how often the
-fragment occurs in the file and why the claim matters. The script writes
-`source-evidence.json` beside itself with the line the first occurrence holds,
-the verbatim line, the file digest and the commit that last changed the file.
-A fragment that is absent or changes its occurrence count fails the script.
-
-Usage: make-source-evidence.py, with no arguments
+Usage: make-source-evidence.py, with no arguments. Each claim names a file by
+Cargo package and path and a fragment of one of its lines; the script writes
+`source-evidence.json` beside itself.
 """
 
 import hashlib

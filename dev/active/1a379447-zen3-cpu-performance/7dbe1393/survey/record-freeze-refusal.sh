@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 # Record the canonical freezer's answer to a ragged-tail pilot (jit:7dbe1393).
 #
-# Usage: record-freeze-refusal.sh <freeze-confirmation.py> <survey-analysis>
-# <dense-campaign> <frozen-utc> [family], from the worktree root. The family
-# defaults to the first ragged-tail family; the repeat family records to
-# `freeze-refusal-v2.txt`. The resolution is the one `make-resolution.py` derives
-# under the frozen rule; the freezer receives it with every margin of the pilot
-# addendum unchanged. The record holds the command, the freezer's output and
-# exit status, and whether a confirmation addendum exists afterwards. Nothing
-# here is timed.
+# Usage: see USAGE below, from the worktree root. Untimed.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
