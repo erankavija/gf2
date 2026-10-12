@@ -294,7 +294,7 @@ def diagnostics(stage):
 
 
 def build_runner():
-    """Builds the shared runner; returns its path and the environment its plans run under."""
+    """Path of the built runner and the environment its plans run under."""
     environment = {**os.environ, "CARGO_CI_NO_SCCACHE": "1", "RAYON_NUM_THREADS": "1",
                    "RUSTUP_TOOLCHAIN": TOOLCHAIN}
     subprocess.run(["./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build", "--offline",

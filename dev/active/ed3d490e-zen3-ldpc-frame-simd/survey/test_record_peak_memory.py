@@ -34,13 +34,10 @@ def cell():
             "above_floor_median_kib": peak["median_kib"] - floor["median_kib"]}
 
 
-BUILD = {"rustc": "rustc 1.95.0",
-         "executables": {"arm-bin": {"compiler_options": ["-O"]}},
-         "catalogue": {"path": "arms.json", "sha256": "1" * 64},
-         "arms": {"arm": {"executable": "arm-bin", "executable_sha256": "a" * 64,
-                          "environment": {"MODE": "x"}},
-                  "other": {"executable": "other-bin", "executable_sha256": "c" * 64,
-                            "environment": {}}}}
+BUILD = {"arms": {"arm": {"source": "pinned", "executable": "arm-bin",
+                          "executable_sha256": "a" * 64, "environment": {"MODE": "x"}},
+                  "other": {"source": "pinned", "executable": "other-bin",
+                            "executable_sha256": "c" * 64, "environment": {}}}}
 
 
 def record(build=BUILD):
@@ -93,23 +90,20 @@ class IdentityTest(unittest.TestCase):
         edit(build)
         return recorder.structure_failures(record(), build)
 
-    def test_the_arms_executable_digest_is_checked(self):
+    def test_the_arms_executable_digest_and_environment_are_checked(self):
         self.assertEqual(len(self.changed(
             lambda build: build["arms"]["arm"].update(executable_sha256="b" * 64))), 1)
-
-    def test_the_toolchain_and_build_flags_are_checked(self):
-        self.assertTrue(self.changed(lambda build: build.update(rustc="rustc 1.96.0")))
-        self.assertTrue(self.changed(
-            lambda build: build["executables"]["arm-bin"].update(compiler_options=["-O0"])))
+        self.assertEqual(len(self.changed(
+            lambda build: build["arms"]["arm"]["environment"].update(MODE="y"))), 1)
 
     def test_another_arm_relinking_is_named_for_that_arm_only(self):
         failures = self.changed(
             lambda build: build["arms"]["other"].update(executable_sha256="d" * 64))
         self.assertEqual([failure.split(":")[0] for failure in failures], ["other"])
 
-    def test_the_shared_record_digest_does_not_matter(self):
+    def test_a_shared_record_digest_does_not_matter(self):
         self.assertEqual(self.changed(
-            lambda build: build["catalogue"].update(sha256="2" * 64)), [])
+            lambda build: build.update(catalogue={"path": "arms.json", "sha256": "2" * 64})), [])
 
 
 class LaunchTest(unittest.TestCase):
