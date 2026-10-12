@@ -20,7 +20,10 @@ import argparse
 import hashlib
 import re
 import subprocess
+import sys
 from pathlib import Path
+
+sys.dont_write_bytecode = True  # a check writes nothing, however invoked
 
 from locate import CALIBRATION, HERE, ROOT, SHARED, package, producing_closure
 

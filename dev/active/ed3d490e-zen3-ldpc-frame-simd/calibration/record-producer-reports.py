@@ -14,6 +14,9 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
+
+sys.dont_write_bytecode = True  # a check writes nothing, however invoked
 
 from locate import HERE, ISSUE, ROOT, package, sha256
 

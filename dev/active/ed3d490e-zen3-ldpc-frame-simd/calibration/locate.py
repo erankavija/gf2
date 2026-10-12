@@ -10,8 +10,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.dont_write_bytecode = True  # a check writes nothing, however invoked
-
 HERE = Path(__file__).resolve().parent
 ROOT = Path(
     subprocess.run(

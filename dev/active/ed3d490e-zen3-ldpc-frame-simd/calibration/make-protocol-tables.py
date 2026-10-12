@@ -15,6 +15,8 @@ import math
 import re
 import sys
 
+sys.dont_write_bytecode = True  # a check writes nothing, however invoked
+
 from locate import CALIBRATION, HERE, ROOT, emit, package
 
 DOCUMENT = HERE / "premeasurement-protocol.md"
@@ -119,9 +121,9 @@ def estimate(listing, timing):
     minutes = math.ceil((windows + untimed) / 60 / ESTIMATE_STEP) * ESTIMATE_STEP
     return table(("Term", "Value"), [
         ("nominal target-window seconds", windows),
-        ("active seconds of the rehearsal session (one run, unlocked host)", untimed),
+        ("active seconds of the rehearsal session (one run, unlocked host)", round(untimed)),
         ("session budget seconds", timing["budget"]),
-        (f"estimated minutes, rounded up to {ESTIMATE_STEP}", minutes),
+        (f"estimated minutes, rounded up to a multiple of {ESTIMATE_STEP}", minutes),
     ])
 
 

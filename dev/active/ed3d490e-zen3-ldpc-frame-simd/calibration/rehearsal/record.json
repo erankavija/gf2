@@ -1,0 +1,74 @@
+{
+ "issue": "0a77ecfc",
+ "source_revision": "0001afb4677b8eb57b40f28cd35757c3039655ac",
+ "stand_ins": {
+  "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/private-lock.sh": "ba84c154e15a1048dae7a4c077d1edd65b5b471b2511181aaba613144c35d0b1",
+  "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/rehearsal/untimed-windows.patch": "98ebf80144c093017cc3971d5a4c53e18064b22a1414e749ae3c0938f6a8c857"
+ },
+ "campaign_id": "gf2-0a77ecfc-20261012t190702z-3392634",
+ "staged_executables_sha256": {
+  "coding-producer": "e353ca88b84e829bd92c78b3c487fcb816f66ea76df75a097fa68ca3f071fdc7",
+  "composer": "e3d164442a25d7f2ce69afd70b3df1bf6fe176b3eee8d01d9ee8ef22244e7d83",
+  "driver": "24ab4666c472ed38e2ea094d9b7c71498c1aedef0b3888610c8c9b35c97faa81"
+ },
+ "journal_events": {
+  "campaign-start": 1,
+  "cell-complete": 444,
+  "cell-start": 444,
+  "checkpoint-accepted": 444,
+  "child-exit": 444,
+  "child-spawn": 444,
+  "complete": 1,
+  "composition": 1,
+  "composition-reopen": 1,
+  "driver-diagnostic": 1799,
+  "execution-progress": 370,
+  "lock-hold": 1,
+  "lock-release": 1,
+  "orchestration-exit": 454,
+  "orchestration-start": 454,
+  "owner-reopen": 1,
+  "owner-write": 1,
+  "phase-complete": 1,
+  "phase-start": 1,
+  "raw-streams": 444,
+  "result-validated": 444,
+  "session-prepared": 1,
+  "window-progress": 1850,
+  "work-finished": 1,
+  "wrapper-returned": 1
+ },
+ "active_seconds": 438.974011859,
+ "stage_validation": {
+  "schema": "tuning-extent-campaign-validation-v1",
+  "campaign_id": "gf2-0a77ecfc-20261012t190702z-3392634",
+  "status": "complete-valid",
+  "cells": 74,
+  "accepted_results": 444,
+  "windows": 1850,
+  "execution_log_sha256": "68894b6b6f877140a45561645563d1c28d717d2ff7070f2124fa0df74b232c36",
+  "coding_manifest_sha256": "0c002aac6ce73c44469f62d0d77df02648050f21e8de8129a4c5648cc50b5b19"
+ },
+ "publication_validation": {
+  "schema": "tuning-extent-campaign-publication-v1",
+  "campaign_id": "gf2-0a77ecfc-20261012t190702z-3392634",
+  "status": "published",
+  "entries": 1397
+ },
+ "published_paths": [
+  "crates/gf2-coding/data/tuning-profiles/<run-id>.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-evidence.md",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/build/source-after.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/build/source-before.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/coding-capability-report.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/coding-list-grid.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/coding-self-check.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/composition.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/repository-reopen.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/staging-manifest.json",
+  "dev/benchmarks/tuning_profiles/<run-id>-session/validation.json",
+  "dev/benchmarks/tuning_profiles/<run-id>.md",
+  "dev/benchmarks/tuning_profiles/<run-id>.sha256",
+  "dev/reference_data/tuning-profiles/<run-id>.json"
+ ]
+}

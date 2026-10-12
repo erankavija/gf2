@@ -15,6 +15,8 @@ import re
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True  # a check writes nothing, however invoked
+
 from locate import CALIBRATION, HERE, ISSUE, ROOT, emit, package, sha256, tracked
 
 OUTPUT = HERE / "campaign-declaration.json"

@@ -136,6 +136,19 @@ budget and the child limits are those of the extent protocol; a
 session that exhausts its budget is resumed under the same campaign
 identifier.
 
+The queue estimate is the nominal target-window time plus the active time of
+the rehearsal session of §8, which holds every untimed step of every child
+and one dispatch per window. It is an estimate, not a measurement.
+
+<!-- generated:estimate -->
+| Term | Value |
+|---|---|
+| nominal target-window seconds | 462.5 |
+| active seconds of the rehearsal session (one run, unlocked host) | 439 |
+| session budget seconds | 10800 |
+| estimated minutes, rounded up to a multiple of 5 | 20 |
+<!-- /generated:estimate -->
+
 ## 6. Imported owners
 
 [`campaign-declaration.json`](campaign-declaration.json) imports the core
@@ -167,6 +180,23 @@ by `record-producer-reports.py`, with the digests of the producer source and
 executable. `validate-tuning-extent-campaign.py --declaration-check 0a77ecfc`
 accepts the declaration. Each generator of this directory has a `--check`
 mode that writes nothing.
+
+`rehearse-campaign.sh` runs the queue launcher end to end, untimed, over a
+throwaway stage in a throwaway clone of the declared tree: the campaign
+launcher, driver, coding producer, composer and validator build, stage,
+prepare, run every cell, compose, validate and publish into the clone. Two
+stand-ins, committed in the clone only, replace what a working session may
+not do. [`rehearsal/untimed-windows.patch`](rehearsal/untimed-windows.patch)
+makes a timed child dispatch each window once and report constant samples
+without reading a clock, and
+[`rehearsal/private-lock.sh`](rehearsal/private-lock.sh) holds a lock file of
+the rehearsal in place of the host mutex. The rehearsed producer therefore has
+another digest than the campaign's, its samples are no measurements, and its
+decisions select nothing. A second launcher call resumes the complete stage
+under its run identifier. [`rehearsal/record.json`](rehearsal/record.json)
+holds the rehearsed revision, the stand-in digests, the journal's event
+counts, the launcher's exit statuses, the validator's verdicts on the stage
+and on its publication, and the selectors the published owner states.
 
 ## 9. What the campaign does not decide
 
