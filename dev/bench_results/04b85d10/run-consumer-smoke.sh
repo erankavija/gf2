@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Untimed wire smoke of one bit-storage consumer campaign (jit:04b85d10).
 #
-# Usage: dev/bench_results/04b85d10/run-consumer-smoke.sh <family> pilot|confirmation [version]
+# Usage: run-consumer-smoke.sh <family> pilot|confirmation [version]
 #
 # Carries the frozen addendum through the same plan derivation, the same
 # `benchmark-ab-runner` and the same acceptance tool a campaign uses, at one
@@ -19,10 +19,13 @@ set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 ISSUE=04b85d10
-HARNESS_DIR=$(python3 -B dev/scripts/repository_files.py package-directory consumer-profile-gf2-side)
+# The shared locator, found once; it names every other live file.
+LOCATOR=$(git ls-files --cached --others --exclude-standard -- \
+  ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')
+HARNESS_DIR=$(python3 -B "$LOCATOR" package-directory consumer-profile-gf2-side)
 SURVEY=$(dirname "$HARNESS_DIR")
 ISSUE_DIR=$(dirname "$SURVEY")
-FLOCK=$(python3 -B dev/scripts/repository_files.py file ccx1-bench-flock.sh)
+FLOCK=$(python3 -B "$LOCATOR" file ccx1-bench-flock.sh)
 BENCH_DIR=$(realpath --relative-to="$repo" "$(dirname "$(realpath "$0")")")
 FAMILY=${1:-}
 MODE=${2:-}
