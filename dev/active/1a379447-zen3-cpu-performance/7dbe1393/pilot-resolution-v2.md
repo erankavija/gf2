@@ -23,6 +23,8 @@ Largest width: 0.037449, in `ragged-r1024-32w-control-warm`; frozen upward round
 
 **Outcome: `resolution-insufficient`.** The frozen family rule ends this family after its exploratory pilot: it runs no confirmation, makes no confirmatory reservation, and production keeps its kernel.
 
+This family repeats the pilot of [`pilot-resolution.md`](pilot-resolution.md).
+
 ## Host load at each pilot session
 
 The runner observes the host at each session start and writes the observation to `dev/bench_results/7dbe1393/7dbe1393-matvec-ragged-tail-v2/v4-r1-pilot/execution.log` (`host-observation`, `load_average`).

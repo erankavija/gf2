@@ -111,7 +111,12 @@ def main():
         f"Largest width: {widths[widest]:.6f}, in `{widest}`; frozen upward rounding to "
         f"0.001: $r={resolution:.3f}$. Family ceiling: {limit:.3f}.\n\n"
         f"**Outcome: `{outcome}`.** {consequence}\n\n"
-        "## Host load at each pilot session\n\n"
+        + (
+            "The repeat family's resolution is in [`pilot-resolution-v2.md`](pilot-resolution-v2.md).\n\n"
+            if family == FAMILY
+            else "This family repeats the pilot of [`pilot-resolution.md`](pilot-resolution.md).\n\n"
+        )
+        + "## Host load at each pilot session\n\n"
         "The runner observes the host at each session start and writes the observation to "
         f"`{pilot}/execution.log` (`host-observation`, `load_average`).\n\n"
         "| Session | Observed UTC | Load average, 1 / 5 / 15 min |\n|---|---|---|\n"

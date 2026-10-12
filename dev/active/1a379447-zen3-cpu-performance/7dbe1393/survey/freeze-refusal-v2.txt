@@ -1,7 +1,7 @@
 # Canonical freezer on the pilot of 7dbe1393-matvec-ragged-tail-v2 (jit:7dbe1393)
 # freezer sha256: 422d860cc0cd81062b58d3c4fe4c2a3dc4889f6b4154c989abda4bc2b86a072a
 # pilot receipt sha256: c5bf003273bf6e28d51d7e98bea8b58aeda36528149db3f313dee2c6a7b4639a
-# derivation sha256: 1846e1bc0843f9db44abd5be6a580bc3afb80ab950cc9618d0b1349e28783221
+# derivation sha256: fb3dc58d00d5a98980b87a698aa8c909650d32ed37e2bc06cbedb4d46b367ca6
 # frozen rule: resolution=0.038 outcome=resolution-insufficient
 # command: python3 -B dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py --pilot-addendum dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail-v2.json --pilot dev/bench_results/7dbe1393/7dbe1393-matvec-ragged-tail-v2/v4-r1-pilot --frozen-utc 2026-10-12T09:00:00Z --output dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail-v2-confirmation.json --record dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail-v2-confirmation-derivation.txt --resolution 0.038 --resolution-derivation dev/active/1a379447-zen3-cpu-performance/7dbe1393/pilot-resolution-v2.md --resolution-decimals 3 --family-description Allocated\ BitMatrix::matvec_parity_kernel\,\ which\ reduces\ each\ row\ through\ the\ bundle\'s\ fused\ AND-parity\ kernel\,\ as\ candidate\ against\ the\ public\ BitMatrix::matvec\ on\ its\ selected\ SIMD\ lane\ in\ the\ same\ build\,\ with\ the\ output\ allocation\ and\ appends\ inside\ both\ calls\,\ at\ the\ frozen\ ragged\ strides\ and\ the\ aligned\ control\ in\ the\ warm\ cache\ state.\ This\ addendum\ is\ the\ confirmation:\ every\ cell\ is\ confirmatory\ and\ is\ measured\ on\ fresh\ pairs.
 pilot receipt  dev/bench_results/7dbe1393/7dbe1393-matvec-ragged-tail-v2/v4-r1-pilot/receipt.json
@@ -47,6 +47,8 @@ Ledger `dev/bench_results/7dbe1393/matvec-ragged-tail-v2-ledger.jsonl` through t
 Largest width: 0.037449, in `ragged-r1024-32w-control-warm`; frozen upward rounding to 0.001: $r=0.038$. Family ceiling: 0.035.
 
 **Outcome: `resolution-insufficient`.** The frozen family rule ends this family after its exploratory pilot: it runs no confirmation, makes no confirmatory reservation, and production keeps its kernel.
+
+This family repeats the pilot of [`pilot-resolution.md`](pilot-resolution.md).
 
 ## Host load at each pilot session
 
