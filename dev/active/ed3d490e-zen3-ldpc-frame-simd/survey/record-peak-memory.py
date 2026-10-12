@@ -1,32 +1,16 @@
 #!/usr/bin/env python3
 """Record and check the peak memory of the batch decoder benchmark arms (jit:05c9065e).
 
-For every arm of `arms.json` on each recorded code the recorder launches the
-arm executable `LAUNCHES` times in the runner's untimed validation position
-(window budget zero). The request, environment and sentinel are those
-`benchmark-ab-runner launch` prints for the arm over a throwaway plan of
-`smoke-gf2-arms.py`; the recorder starts the child itself, so the runner is
-no ancestor and contributes no pages. The kernel's peak resident set size of
-the exited child comes from `wait4`. The figure is process memory: executable,
-libraries, bundle buffers, request transport and decoder state, plus the
-pages the launcher interpreter held at `exec`, which the kernel folds into a
-child's high-water mark. It is not decoder-owned memory (the decoder reports
-that as `workspace_bytes`). The floor is the same method over `LAUNCHES`
-launches of the same executable and environment without the sentinel, which
-stop at the arm's guard before decoding, so it bounds the launcher and
-loader share. Statistics are descriptive. Nothing is timed.
-
-`record` writes `peak-memory.json`. `check` verifies its structure, recomputes
-its statistics from its samples, requires the arm and cited-record digests to
-match the files on disk and the host to match the recorded one, then launches
-each cell `CHECK_LAUNCHES` times and requires every observation to lie within
-the recorded envelope: the sample range widened on each side by its own width
-(at least one page). A new launch of an unchanged arm falls outside a bare
-sample range often, so the widening carries the launch-to-launch spread the
-record states. It writes nothing into the repository.
+Launches every arm of `arms.json` on each recorded code `LAUNCHES` times, untimed, with the
+request and environment `benchmark-ab-runner launch` prints, and records the kernel's peak
+resident set size of each exited child (process memory, not decoder-owned memory) with a floor
+from launches that stop at the arm's guard. `check` compares each arm's identity (executable
+digest, environment, toolchain, build flags), frozen case, quality file digest and host with the
+record, recomputes the statistics, and relaunches each cell `CHECK_LAUNCHES` times against the
+recorded envelope. It writes nothing into the repository.
 
 Usage (from the worktree root): record-peak-memory.py record|check OUT_DIR
-OUT_DIR holds `peak-memory.json`; the arms build identity is `OUT_DIR/build-identity.json`.
+OUT_DIR holds `peak-memory.json`.
 """
 
 import hashlib
@@ -50,17 +34,14 @@ smoke = intra.smoke
 RECORD = "peak-memory.json"
 LAUNCHES = 20
 CHECK_LAUNCHES = 3
-# The addendum whose cells every arm launch takes its decoder declaration and batch from.
 FAMILY = "single-worker"
 SCRATCH = pathlib.Path("target/peak-memory-scratch")
 GROUP = {"issue": "05c9065e", "subject": "peak memory of the benchmark arms", "arm_kind": None}
 QUALITY_ENVIRONMENT = "GF2_LDPC_QUALITY"
 INTRA_ARM = intra.ARM
-# The smoke arms every throwaway plan carries, per code.
 PARTNERS = ("gf2-batch-single-frame", "gf2-batch-lane-avx2")
 QUALITY_PIN = "prepared_quality"
-# The launcher is a fresh interpreter per launch; the kernel folds the pages it
-# held at `exec` into the child's high-water mark; `VmHWM` is that share.
+# `exec` folds the launcher's pages into the child's mark; `VmHWM` is that share.
 LAUNCHER = """
 import os, sys
 held = next(int(line.split()[1]) for line in open("/proc/self/status") if line.startswith("VmHWM:"))
@@ -88,14 +69,13 @@ def sha256_file(path):
 
 
 def summary(samples):
-    """Descriptive statistics of a list of KiB samples."""
     return {"samples_kib": samples, "count": len(samples), "min_kib": min(samples),
             "median_kib": statistics.median(samples), "max_kib": max(samples),
             "stdev_kib": statistics.pstdev(samples)}
 
 
 def launch(command, environment, stdin):
-    """One launch: return code, stdout, the child's and the launcher's `ru_maxrss` in KiB."""
+    """Return code, stdout, the child's `ru_maxrss` and the launcher's share, in KiB."""
     child = subprocess.run([sys.executable, "-S", "-E", "-c", LAUNCHER, *command],
                            input=stdin, capture_output=True, env=environment, cwd=smoke.ROOT,
                            check=True)
@@ -105,7 +85,6 @@ def launch(command, environment, stdin):
 
 
 def arm_launch(name, shared, floor):
-    """One launch of arm `name` as the runner starts it; the floor launch omits the sentinel."""
     environment = dict(shared["environment"])
     if floor:
         del environment[shared["guard_variable"]]
@@ -120,11 +99,6 @@ def arm_launch(name, shared, floor):
 
 
 def runner_launches(rows, files, batches):
-    """`{(arm, code): launch}` from `benchmark-ab-runner launch` over a plan of every arm.
-
-    Each launch has a plan derived from the smoke's throwaway single-worker plan;
-    the runner supplies its request, environment and sentinel.
-    """
     runner, _ = smoke.build_runner()
     shutil.rmtree(SCRATCH, ignore_errors=True)
     (SCRATCH / "inputs").mkdir(parents=True)
@@ -139,14 +113,13 @@ def runner_launches(rows, files, batches):
     base = json.loads(plan_path.read_text(encoding="utf-8"))
     launches = {}
     for (name, key), row in sorted(rows.items()):
-        # The runner refuses a plan arm no cell uses, so each launch has a plan of its own: the
-        # arm against one of the smoke's two arms, whichever is not the arm itself.
+        # The runner refuses a plan arm no cell uses: one plan per arm, against a smoke arm.
         arm = f"{name}-{key}"
         partner = next(f"{partner}-{key}" for partner in PARTNERS if f"{partner}-{key}" != arm)
         cell = next(cell for cell in base["cells"] if cell["cell_id"].startswith(key + "-")
                     and cell["case"]["batch_size"] == batches[name, key])
         plan = {**base, "arms": {partner: base["arms"][partner], arm: {
-            "build": "native",  # the single-worker addendum declares both builds native
+            "build": "native",  # the addendum declares native builds
             "description": f"{name} on {key}", "executable": str(executable_of(row)),
             "arguments": [],
             "environment": {**row["environment"],
@@ -162,19 +135,36 @@ def runner_launches(rows, files, batches):
     return launches
 
 
-def quality_files(build_identity, out_dir):
+def committed(name, matches):
+    """The one committed JSON file called `name` whose content satisfies `matches`."""
+    found = [(path, json.loads((smoke.ROOT / path).read_text(encoding="utf-8")))
+             for path in smoke.listed(name)]
+    found = [(path, record) for path, record in found if matches(record)]
+    if len(found) != 1:
+        sys.exit(f"{len(found)} committed files called {name} match")
+    return smoke.ROOT / found[0][0], found[0][1]
+
+
+def build_record():
+    """The arms build identity, the record that catalogues the arms."""
+    return committed("build-identity.json", lambda record: "catalogue" in record)
+
+
+def quality_files(build_identity):
     """`{(arm, code): (path, sha256)}` of the committed prepared quality files."""
     record = json.loads((smoke.ROOT / build_identity["arms"]["aff3ct-flooding-nms-f32"][
         "pinned_by"]["record"]).read_text(encoding="utf-8"))
     pinned = {pathlib.Path(path).name: (pathlib.Path(path), digest)
               for path, digest in record[QUALITY_PIN].items()}
-    intra_record = json.loads((out_dir / "quality-intra" / intra.RECORD).read_text(encoding="utf-8"))
+    intra_path, intra_record = committed(
+        intra.RECORD, lambda record: record.get("arm") == INTRA_ARM)
     files = {}
     for name, arm in build_identity["arms"].items():
         for key in smoke.CODES:
             if name == INTRA_ARM:
                 held = intra_record["codes"][key]["quality"]
-                files[name, key] = (out_dir / "quality-intra" / held["file"], held["sha256"])
+                files[name, key] = (intra_path.parent.relative_to(smoke.ROOT) / held["file"],
+                                    held["sha256"])
             elif arm["executable"] == "aff3ct-throughput-arm":
                 files[name, key] = pinned[f"{name}-{key}.json"]
             else:
@@ -183,15 +173,20 @@ def quality_files(build_identity, out_dir):
 
 
 def catalogued(build_identity):
-    """The catalogue and the build-identity arm rows, which must name the same arms."""
+    """The build-identity arm rows, which must name the catalogue's arms."""
     catalogue = json.loads((smoke.ROOT / build_identity["catalogue"]["path"])
                            .read_text(encoding="utf-8"))
     if catalogue["arms"].keys() != build_identity["arms"].keys():
         sys.exit("the build identity and the catalogue name different arms")
-    if sha256_file(smoke.ROOT / build_identity["catalogue"]["path"]) != build_identity[
-            "catalogue"]["sha256"]:
-        sys.exit("the catalogue differs from the build identity's digest of it")
-    return catalogue["arms"]
+
+
+def arm_identity(build, name):
+    """The identity of arm `name` a measurement depends on, from the build record."""
+    row = build["arms"][name]
+    return {"executable_sha256": row["executable_sha256"], "environment": row["environment"],
+            "toolchain": build["rustc"], "rustflags": smoke.RUSTFLAGS,
+            "compiler_options": build["executables"].get(row["executable"], {}).get(
+                "compiler_options")}
 
 
 def executable_of(row):
@@ -215,11 +210,10 @@ def family_batches():
             cell["workload"]["size"]["timed_batch"] for cell in family["cells"]}
 
 
-def observe(out_dir, launches):
-    """Launches every arm on every code; `{arm: {code: cell}}` with the cell's samples."""
-    build = json.loads((out_dir / "build-identity.json").read_text(encoding="utf-8"))
+def observe(build, launches):
+    """`{arm: {code: cell}}` with the samples of every cell."""
     catalogued(build)
-    files = quality_files(build, out_dir)
+    files = quality_files(build)
     declared = family_batches()
     rows = {(name, key): row for name, row in build["arms"].items() for key in smoke.CODES}
     qualities, batches = {}, {}
@@ -228,7 +222,7 @@ def observe(out_dir, launches):
         if sha256_file(path) != files[name, key][1]:
             sys.exit(f"{path} differs from its pinned digest")
         qualities[name, key] = json.loads(path.read_text(encoding="utf-8"))
-        # The quality file's decoder settings state the frames per SIMD wave the arm needs.
+        # The quality file states the frames per SIMD wave the arm needs.
         batches[name, key] = max(declared[key], qualities[name, key]["settings"]["batch_size"])
     shared = runner_launches(rows, files, batches)
     cells = {}
@@ -254,14 +248,12 @@ def cited(path):
 
 
 def record_mode(out_dir):
-    build_path = out_dir / "build-identity.json"
-    build = json.loads(build_path.read_text(encoding="utf-8"))
-    observed = observe(out_dir, LAUNCHES)
+    build_path, build = build_record()
+    observed = observe(build, LAUNCHES)
     arms = {}
     for name, row in sorted(build["arms"].items()):
-        arms[name] = {"executable": {"name": row["executable"],
-                                     "sha256": row["executable_sha256"]},
-                      "environment": row["environment"], "codes": {}}
+        arms[name] = {"executable": row["executable"], "identity": arm_identity(build, name),
+                      "codes": {}}
         for key, cell in observed[name].items():
             peak, floor = summary(cell.pop("peak")), summary(cell.pop("floor"))
             launcher = summary(cell.pop("launcher"))
@@ -270,7 +262,7 @@ def record_mode(out_dir):
                 **cell, **peak, "launcher": launcher, "floor": floor,
                 "above_floor_median_kib": peak["median_kib"] - floor["median_kib"]}
     record = {"cites": ["Cassagne2019"], "method": {**METHOD, "launches": LAUNCHES},
-              "build_identity": cited(build_path), "catalogue": build["catalogue"],
+              "pointers": {"build_identity": cited(build_path), "catalogue": build["catalogue"]},
               "recorded_inputs": {"name": smoke.ARCHIVE[0], "sha256": smoke.ARCHIVE[1]},
               "host": host(),
               "arms": arms}
@@ -279,16 +271,18 @@ def record_mode(out_dir):
 
 
 def structure_failures(record, build):
-    """Failures of the record's structure, statistics and recorded identities."""
+    """Failures of the record's structure, statistics and per-arm identities.
+
+    Only the identity of each recorded arm decides: other arms and the shared record's
+    digest change without invalidating it."""
     failures = []
     if record["cites"] != ["Cassagne2019"]:
         failures.append("cites")
     if record["arms"].keys() != build["arms"].keys():
-        failures.append("arms differ from the build identity")
+        failures.append("arms differ from the build record")
     for name, arm in record["arms"].items():
-        pinned = build["arms"].get(name, {})
-        if arm["executable"]["sha256"] != pinned.get("executable_sha256"):
-            failures.append(f"{name}: executable digest differs from the build identity")
+        if name in build["arms"] and arm["identity"] != arm_identity(build, name):
+            failures.append(f"{name}: identity differs from the build record")
         if set(arm["codes"]) != set(smoke.CODES):
             failures.append(f"{name}: codes differ from the recorded codes")
         for key, cell in arm["codes"].items():
@@ -307,15 +301,13 @@ def structure_failures(record, build):
 
 def check_mode(out_dir):
     record = json.loads((out_dir / RECORD).read_text(encoding="utf-8"))
-    build_path = out_dir / "build-identity.json"
-    build = json.loads(build_path.read_text(encoding="utf-8"))
+    _, build = build_record()
     failures = structure_failures(record, build)
     failures += [f"{name} differs" for name, current in (
-        ("build_identity", cited(build_path)), ("catalogue", build["catalogue"]),
         ("recorded_inputs", {"name": smoke.ARCHIVE[0], "sha256": smoke.ARCHIVE[1]}),
         ("host", host())) if record[name] != current]
     if not failures:
-        for name, keys in observe(out_dir, CHECK_LAUNCHES).items():
+        for name, keys in observe(build, CHECK_LAUNCHES).items():
             for key, cell in keys.items():
                 held = record["arms"][name]["codes"][key]
                 failures += [f"{name} {key}: {field} differs" for field in ("case", "decoder", "quality")

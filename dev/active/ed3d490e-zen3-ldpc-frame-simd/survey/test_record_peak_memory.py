@@ -7,7 +7,6 @@ and is skipped without them.
 
 import copy
 import importlib.util
-import json
 import subprocess
 import sys
 import unittest
@@ -35,13 +34,21 @@ def cell():
             "above_floor_median_kib": peak["median_kib"] - floor["median_kib"]}
 
 
-def record():
+BUILD = {"rustc": "rustc 1.95.0",
+         "executables": {"arm-bin": {"compiler_options": ["-O"]}},
+         "catalogue": {"path": "arms.json", "sha256": "1" * 64},
+         "arms": {"arm": {"executable": "arm-bin", "executable_sha256": "a" * 64,
+                          "environment": {"MODE": "x"}},
+                  "other": {"executable": "other-bin", "executable_sha256": "c" * 64,
+                            "environment": {}}}}
+
+
+def record(build=BUILD):
     return {"cites": ["Cassagne2019"], "method": {"launches": LAUNCHES},
-            "arms": {"arm": {"executable": {"sha256": "a" * 64},
-                             "codes": {key: cell() for key in CODES}}}}
-
-
-BUILD = {"arms": {"arm": {"executable_sha256": "a" * 64}}}
+            "arms": {name: {"executable": row["executable"],
+                            "identity": recorder.arm_identity(build, name),
+                            "codes": {key: cell() for key in CODES}}
+                     for name, row in build["arms"].items()}}
 
 
 class SummaryTest(unittest.TestCase):
@@ -69,11 +76,6 @@ class StructureTest(unittest.TestCase):
         broken["arms"]["arm"]["codes"][CODES[0]]["floor"]["samples_kib"].pop()
         self.assertTrue(recorder.structure_failures(broken, BUILD))
 
-    def test_another_executable_digest_is_named(self):
-        other = copy.deepcopy(BUILD)
-        other["arms"]["arm"]["executable_sha256"] = "b" * 64
-        self.assertEqual(len(recorder.structure_failures(record(), other)), 1)
-
     def test_an_unrecorded_code_is_named(self):
         broken = record()
         del broken["arms"]["arm"]["codes"][CODES[0]]
@@ -83,6 +85,31 @@ class StructureTest(unittest.TestCase):
         broken = record()
         broken["arms"]["extra"] = broken["arms"]["arm"]
         self.assertTrue(recorder.structure_failures(broken, BUILD))
+
+
+class IdentityTest(unittest.TestCase):
+    def changed(self, edit):
+        build = copy.deepcopy(BUILD)
+        edit(build)
+        return recorder.structure_failures(record(), build)
+
+    def test_the_arms_executable_digest_is_checked(self):
+        self.assertEqual(len(self.changed(
+            lambda build: build["arms"]["arm"].update(executable_sha256="b" * 64))), 1)
+
+    def test_the_toolchain_and_build_flags_are_checked(self):
+        self.assertTrue(self.changed(lambda build: build.update(rustc="rustc 1.96.0")))
+        self.assertTrue(self.changed(
+            lambda build: build["executables"]["arm-bin"].update(compiler_options=["-O0"])))
+
+    def test_another_arm_relinking_is_named_for_that_arm_only(self):
+        failures = self.changed(
+            lambda build: build["arms"]["other"].update(executable_sha256="d" * 64))
+        self.assertEqual([failure.split(":")[0] for failure in failures], ["other"])
+
+    def test_the_shared_record_digest_does_not_matter(self):
+        self.assertEqual(self.changed(
+            lambda build: build["catalogue"].update(sha256="2" * 64)), [])
 
 
 class LaunchTest(unittest.TestCase):
@@ -100,7 +127,7 @@ class CommittedRecordTest(unittest.TestCase):
         root = recorder.smoke.ROOT
         records = [root / path for path in recorder.smoke.listed(recorder.RECORD)]
         self.assertEqual(len(records), 1)
-        build = json.loads((records[0].parent / "build-identity.json").read_text(encoding="utf-8"))
+        build = recorder.build_record()[1]
         missing = [row for row in build["arms"].values()
                    if not (root / (row["path"] if "path" in row else row["found_at"][0])).exists()]
         if missing or not (root / "target").is_dir():
