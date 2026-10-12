@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
 """Record and check the peak memory of the batch decoder benchmark arms (jit:05c9065e).
 
-Launches every arm of `arms.json` on each recorded code `LAUNCHES` times, untimed, with the
-request and environment `benchmark-ab-runner launch` prints, and records the kernel's peak
-resident set size of each exited child (process memory, not decoder-owned memory) with a floor
-from launches that stop at the arm's guard. `check` compares each arm's identity (executable
-digest, environment, toolchain, build flags), frozen case, quality file digest and host with the
-record, recomputes the statistics, and relaunches each cell `CHECK_LAUNCHES` times against the
-recorded envelope. It writes nothing into the repository.
+Launches each arm of `arms.json` on each recorded code, untimed, the way `benchmark-ab-runner
+launch` prints; `peak-memory.json` states the method. `check` relaunches each cell against the
+recorded envelope and writes nothing into the repository.
 
 Usage (from the worktree root): record-peak-memory.py record|check OUT_DIR
-OUT_DIR holds `peak-memory.json`.
 """
 
 import hashlib
@@ -30,6 +25,9 @@ INTRA = pathlib.Path(__file__).resolve().with_name("record-intra-quality.py")
 intra = importlib.util.module_from_spec(importlib.util.spec_from_file_location("intra", INTRA))
 intra.__spec__.loader.exec_module(intra)
 smoke = intra.smoke
+BUILD = pathlib.Path(__file__).resolve().with_name("arm_build.py")
+arm_build = importlib.util.module_from_spec(importlib.util.spec_from_file_location("arm_build", BUILD))
+arm_build.__spec__.loader.exec_module(arm_build)
 
 RECORD = "peak-memory.json"
 LAUNCHES = 20
@@ -146,12 +144,10 @@ def committed(name, matches):
 
 
 def build_record():
-    """The arms build identity, the record that catalogues the arms."""
     return committed("build-identity.json", lambda record: "catalogue" in record)
 
 
 def quality_files(build_identity):
-    """`{(arm, code): (path, sha256)}` of the committed prepared quality files."""
     record = json.loads((smoke.ROOT / build_identity["arms"]["aff3ct-flooding-nms-f32"][
         "pinned_by"]["record"]).read_text(encoding="utf-8"))
     pinned = {pathlib.Path(path).name: (pathlib.Path(path), digest)
@@ -173,7 +169,6 @@ def quality_files(build_identity):
 
 
 def catalogued(build_identity):
-    """The build-identity arm rows, which must name the catalogue's arms."""
     catalogue = json.loads((smoke.ROOT / build_identity["catalogue"]["path"])
                            .read_text(encoding="utf-8"))
     if catalogue["arms"].keys() != build_identity["arms"].keys():
@@ -181,12 +176,7 @@ def catalogued(build_identity):
 
 
 def arm_identity(build, name):
-    """The identity of arm `name` a measurement depends on, from the build record."""
-    row = build["arms"][name]
-    return {"executable_sha256": row["executable_sha256"], "environment": row["environment"],
-            "toolchain": build["rustc"], "rustflags": smoke.RUSTFLAGS,
-            "compiler_options": build["executables"].get(row["executable"], {}).get(
-                "compiler_options")}
+    return {**arm_build.arm_build(build, name), "environment": build["arms"][name]["environment"]}
 
 
 def executable_of(row):
@@ -203,7 +193,6 @@ def host():
 
 
 def family_batches():
-    """`{code: timed batch}` the family's cells declare."""
     family = json.loads((smoke.ROOT / smoke.located("file", smoke.FAMILIES[FAMILY][0]))
                         .read_text(encoding="utf-8"))
     return {next(key for key in smoke.CODES if cell["cell_id"].startswith(key + "-")):
@@ -211,7 +200,6 @@ def family_batches():
 
 
 def observe(build, launches):
-    """`{arm: {code: cell}}` with the samples of every cell."""
     catalogued(build)
     files = quality_files(build)
     declared = family_batches()
