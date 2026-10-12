@@ -152,9 +152,11 @@ overstate what the checked product adds.
 type, and one for the two precisions of the Gray-PAM kernel. Each test calls
 every implementation the type publishes with arguments that meet the
 conditions and then with arguments that break each condition, and requires a
-panic that opens with the kernel's name and names the condition; the Gray-PAM
-test requires a panic. The two sparse lanes share one contract through a
-macro. The
+panic that opens with the kernel's name and names the condition. The Gray-PAM
+bundles are the one interface with a scalar implementation beside the
+detected one; their test runs one case list over both and requires a panic,
+which the scalar kernels raise from a bounds-checked index. The two sparse
+lanes share one contract through a macro. The
 product of two slice lengths that the Gray-PAM wrappers check wraps only for
 operands of at least $2^{32}$ elements, so their test covers the length
 assertion the product feeds and a unit test of `entry_check::checked_cells`
@@ -239,7 +241,11 @@ decision rule. The decision table names the family's committed stages.
   `spmm_row_unchecked_fn` with the column bound under Safety; the arm's
   `// SAFETY:` comment discharges it from the sparse matrix type's
   constructors. The arm's tests require both forms to equal a scalar
-  reference on both lanes.
+  reference on both lanes. The manifests of both measurement arms reach
+  `tuning-campaign-support` by a relative path under `dev/tools/`, the
+  tracked exception `@/issue/e430f035` to `@/inv/no-dev-path-coupling`; the
+  committed receipts pin the manifests by digest, so the citation stands
+  here.
 - Tooling. `survey/make-spmm-plan.py` projects the plan through the shared
   `campaign_plan.py`, `survey/make-spmm-producing-inputs.py` writes the
   producing manifest through the shared `campaign_inputs.py`,

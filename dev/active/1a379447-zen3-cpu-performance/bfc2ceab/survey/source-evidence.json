@@ -555,13 +555,13 @@
     {
       "id": "release-profile",
       "project": "gf2",
-      "commit": "cec7c141ffb8cc9c1b31d20d046d098abe2f8bcd",
+      "commit": "77b55b4470ee2b75ae19116b16eec3ce8250e6cf",
       "path": "Cargo.toml",
-      "line": 41,
+      "line": 42,
       "occurrences": 1,
       "verbatim": "[profile.release]",
       "why": "The release profile sets no `overflow-checks` key, so a product in a release assertion wraps.",
-      "sha256": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5"
+      "sha256": "6991a6d3befac6e5b75d22b0c8ada6bf3f2fac3f461e9f44a526ce0bf2d05dba"
     },
     {
       "id": "row-panel-assert",
