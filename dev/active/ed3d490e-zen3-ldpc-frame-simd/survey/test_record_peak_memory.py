@@ -87,12 +87,12 @@ class StructureTest(unittest.TestCase):
 
 class LaunchTest(unittest.TestCase):
     def test_a_launch_reports_the_child_peak_above_the_launcher_share(self):
-        status, out, peak, launcher = recorder.launch("/bin/true", {}, b"")
+        status, out, peak, launcher = recorder.launch(["/bin/true"], {}, b"")
         self.assertEqual((status, out), (0, ""))
         self.assertGreaterEqual(peak, launcher)
 
     def test_a_failing_child_reports_its_status(self):
-        self.assertNotEqual(recorder.launch("/bin/false", {}, b"")[0], 0)
+        self.assertNotEqual(recorder.launch(["/bin/false"], {}, b"")[0], 0)
 
 
 class CommittedRecordTest(unittest.TestCase):
