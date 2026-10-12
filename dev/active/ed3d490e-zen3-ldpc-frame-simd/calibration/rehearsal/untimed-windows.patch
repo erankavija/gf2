@@ -1,0 +1,36 @@
+diff --git a/dev/tools/tuning-campaign-support/src/timing.rs b/dev/tools/tuning-campaign-support/src/timing.rs
+index a4325c804..7b697c90f 100644
+--- a/dev/tools/tuning-campaign-support/src/timing.rs
++++ b/dev/tools/tuning-campaign-support/src/timing.rs
+@@ -143,9 +143,29 @@ pub fn execution_windows(
+ pub fn execution_windows_with_progress(
+     execution: u64,
+     body: &mut impl FnMut(usize),
+-    progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
++    mut progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
+ ) -> std::io::Result<Vec<TimingSample>> {
+-    execution_windows_configured(execution, WINDOWS, TARGET, body, progress)
++    // Rehearsal stand-in: each window dispatches once and reports the two
++    // constants below; no clock is read, so no sample is a measurement.
++    const REHEARSAL_CALLS: u64 = 1;
++    const REHEARSAL_ELAPSED_NS: u64 = 1;
++    progress(TimingProgress::CalibrationComplete {
++        calls: REHEARSAL_CALLS,
++    })?;
++    let mut samples = Vec::with_capacity(WINDOWS as usize);
++    for repetition in 0..WINDOWS {
++        body(execution_window_start(execution, repetition));
++        let sample = TimingSample::new(
++            execution,
++            repetition,
++            REHEARSAL_CALLS,
++            REHEARSAL_ELAPSED_NS,
++        )
++        .map_err(std::io::Error::other)?;
++        progress(TimingProgress::WindowComplete(sample))?;
++        samples.push(sample);
++    }
++    Ok(samples)
+ }
+ 
+ /// Shared mechanics for an explicitly declared/test timing protocol.
