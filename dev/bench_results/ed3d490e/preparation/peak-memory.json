@@ -1,0 +1,2549 @@
+{
+  "arms": {
+    "aff3ct-flooding-nms-f32": {
+      "codes": {
+        "dvb-t2-r12": {
+          "above_floor_median_kib": 70578.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "dvb-t2-r12-waterfall",
+            "code": "dvb-t2-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+              "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+              "k": 32400,
+              "n": 64800
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+              "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -1.2
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11332,
+              "median_kib": 11322.0,
+              "min_kib": 11208,
+              "samples_kib": [
+                11284,
+                11332,
+                11324,
+                11324,
+                11328,
+                11324,
+                11308,
+                11284,
+                11324,
+                11320,
+                11324,
+                11328,
+                11324,
+                11320,
+                11316,
+                11216,
+                11320,
+                11208,
+                11220,
+                11324
+              ],
+              "stdev_kib": 39.01333105490993
+            },
+            "max_kib": 11672,
+            "median_kib": 11480.0,
+            "min_kib": 11228,
+            "samples_kib": [
+              11380,
+              11564,
+              11480,
+              11228,
+              11480,
+              11672,
+              11408,
+              11444,
+              11672,
+              11456,
+              11672,
+              11480,
+              11420,
+              11480,
+              11412,
+              11372,
+              11668,
+              11364,
+              11504,
+              11480
+            ],
+            "stdev_kib": 115.63027285274389
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11328,
+            "median_kib": 11310.0,
+            "min_kib": 11208,
+            "samples_kib": [
+              11320,
+              11220,
+              11320,
+              11296,
+              11320,
+              11308,
+              11320,
+              11324,
+              11328,
+              11296,
+              11212,
+              11320,
+              11292,
+              11328,
+              11300,
+              11304,
+              11324,
+              11208,
+              11208,
+              11312
+            ],
+            "stdev_kib": 41.911812177475696
+          },
+          "max_kib": 82328,
+          "median_kib": 82058.0,
+          "min_kib": 81764,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json",
+            "sha256": "8443cdfae4e6bfb7036c8dbb10142baecacd40f911c582bf18a369aefa15559a"
+          },
+          "samples_kib": [
+            81912,
+            82072,
+            81764,
+            81880,
+            82144,
+            81788,
+            82172,
+            82292,
+            81972,
+            81904,
+            82240,
+            82328,
+            82008,
+            81904,
+            82044,
+            82264,
+            82224,
+            82072,
+            82108,
+            81892
+          ],
+          "stdev_kib": 165.8196610779313
+        },
+        "nr-bg1-z384": {
+          "above_floor_median_kib": 28704.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "nr-bg1-z384-mother",
+            "code": "nr-bg1-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+              "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+              "k": 8448,
+              "n": 26112
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+              "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -4.3
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11332,
+              "median_kib": 11320.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11320,
+                11324,
+                11324,
+                11320,
+                11320,
+                11328,
+                11212,
+                11316,
+                11320,
+                11308,
+                11204,
+                11324,
+                11324,
+                11284,
+                11324,
+                11320,
+                11320,
+                11324,
+                11320,
+                11332
+              ],
+              "stdev_kib": 34.77700389625305
+            },
+            "max_kib": 11672,
+            "median_kib": 11442.0,
+            "min_kib": 10760,
+            "samples_kib": [
+              11672,
+              11624,
+              11672,
+              11228,
+              11420,
+              11672,
+              10760,
+              11224,
+              11456,
+              11272,
+              11172,
+              11420,
+              11480,
+              11632,
+              11672,
+              11668,
+              11224,
+              11288,
+              11572,
+              11428
+            ],
+            "stdev_kib": 232.27733423646828
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11332,
+            "median_kib": 11324.0,
+            "min_kib": 11212,
+            "samples_kib": [
+              11328,
+              11328,
+              11328,
+              11320,
+              11324,
+              11324,
+              11320,
+              11324,
+              11324,
+              11324,
+              11308,
+              11212,
+              11328,
+              11316,
+              11324,
+              11328,
+              11332,
+              11328,
+              11316,
+              11324
+            ],
+            "stdev_kib": 24.899799195977465
+          },
+          "max_kib": 40408,
+          "median_kib": 40146.0,
+          "min_kib": 39760,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json",
+            "sha256": "330e6dd7c7c90c904128328084e4ceb678fbe3a38a2ed56e7155ec4e6a2f72d0"
+          },
+          "samples_kib": [
+            39888,
+            40204,
+            40000,
+            39760,
+            40056,
+            40156,
+            40052,
+            40136,
+            40188,
+            40292,
+            40348,
+            40240,
+            39936,
+            40236,
+            40408,
+            40240,
+            40304,
+            40112,
+            40072,
+            39964
+          ],
+          "stdev_kib": 161.10816242512357
+        }
+      },
+      "executable": "aff3ct-throughput-arm",
+      "identity": {
+        "compiler_options": null,
+        "environment": {
+          "GF2_AFF3CT_IMPLEM": "NMS",
+          "GF2_AFF3CT_PRECISION": "f32",
+          "GF2_AFF3CT_SIMD": "",
+          "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+          "GF2_AFF3CT_TYPE": "flooding"
+        },
+        "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+        "rustflags": "-C target-cpu=native",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+      }
+    },
+    "aff3ct-layered-nms-f32-inter": {
+      "codes": {
+        "dvb-t2-r12": {
+          "above_floor_median_kib": 174036.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "dvb-t2-r12-waterfall",
+            "code": "dvb-t2-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+              "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+              "k": 32400,
+              "n": 64800
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+              "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -1.2
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11324.0,
+              "min_kib": 11212,
+              "samples_kib": [
+                11324,
+                11324,
+                11320,
+                11308,
+                11212,
+                11312,
+                11324,
+                11324,
+                11324,
+                11324,
+                11324,
+                11324,
+                11300,
+                11328,
+                11324,
+                11320,
+                11296,
+                11320,
+                11324,
+                11320
+              ],
+              "stdev_kib": 24.80241923684059
+            },
+            "max_kib": 11672,
+            "median_kib": 11442.0,
+            "min_kib": 11096,
+            "samples_kib": [
+              11480,
+              11472,
+              11288,
+              11464,
+              11180,
+              11216,
+              11672,
+              11420,
+              11480,
+              11672,
+              11264,
+              11480,
+              11648,
+              11096,
+              11480,
+              11224,
+              11136,
+              11228,
+              11288,
+              11672
+            ],
+            "stdev_kib": 182.5195879898922
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11332,
+            "median_kib": 11298.0,
+            "min_kib": 11208,
+            "samples_kib": [
+              11284,
+              11296,
+              11320,
+              11312,
+              11324,
+              11332,
+              11208,
+              11280,
+              11320,
+              11280,
+              11212,
+              11208,
+              11320,
+              11292,
+              11324,
+              11316,
+              11288,
+              11324,
+              11296,
+              11300
+            ],
+            "stdev_kib": 38.06258004917691
+          },
+          "max_kib": 185908,
+          "median_kib": 185478.0,
+          "min_kib": 184988,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json",
+            "sha256": "fc00b05ba8e05726b733e8e6c05d4ddaff3a2ae6f9b3b5f565fdd2a786cc6ef1"
+          },
+          "samples_kib": [
+            185908,
+            185700,
+            185240,
+            185260,
+            184988,
+            185268,
+            185360,
+            185688,
+            185508,
+            185148,
+            185408,
+            185704,
+            185448,
+            185524,
+            185588,
+            185280,
+            185696,
+            185736,
+            185388,
+            185784
+          ],
+          "stdev_kib": 236.25105290770662
+        },
+        "nr-bg1-z384": {
+          "above_floor_median_kib": 69408.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "nr-bg1-z384-mother",
+            "code": "nr-bg1-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+              "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+              "k": 8448,
+              "n": 26112
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+              "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -4.3
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11332,
+              "median_kib": 11324.0,
+              "min_kib": 11208,
+              "samples_kib": [
+                11324,
+                11328,
+                11324,
+                11324,
+                11324,
+                11324,
+                11324,
+                11324,
+                11324,
+                11208,
+                11296,
+                11324,
+                11332,
+                11324,
+                11320,
+                11324,
+                11324,
+                11328,
+                11288,
+                11328
+              ],
+              "stdev_kib": 26.757428874987223
+            },
+            "max_kib": 11672,
+            "median_kib": 11480.0,
+            "min_kib": 11168,
+            "samples_kib": [
+              11672,
+              11480,
+              11672,
+              11516,
+              11168,
+              11672,
+              11612,
+              11672,
+              11480,
+              11400,
+              11644,
+              11420,
+              11296,
+              11480,
+              11420,
+              11480,
+              11420,
+              11584,
+              11640,
+              11288
+            ],
+            "stdev_kib": 142.49547361232214
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11336,
+            "median_kib": 11324.0,
+            "min_kib": 11292,
+            "samples_kib": [
+              11320,
+              11324,
+              11324,
+              11324,
+              11292,
+              11328,
+              11316,
+              11324,
+              11328,
+              11324,
+              11304,
+              11324,
+              11320,
+              11324,
+              11336,
+              11332,
+              11324,
+              11320,
+              11324,
+              11324
+            ],
+            "stdev_kib": 9.162968951164245
+          },
+          "max_kib": 81184,
+          "median_kib": 80888.0,
+          "min_kib": 80544,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json",
+            "sha256": "29248fdeeb0f408166190f9c0c5d72b7ce8b40f09a1eb3ddb7a7c9cd437fea4d"
+          },
+          "samples_kib": [
+            81176,
+            81052,
+            80840,
+            80780,
+            80908,
+            80736,
+            80884,
+            80996,
+            81184,
+            80768,
+            81064,
+            80892,
+            81016,
+            80544,
+            80696,
+            80776,
+            80728,
+            80712,
+            81148,
+            81008
+          ],
+          "stdev_kib": 175.15832837749966
+        }
+      },
+      "executable": "aff3ct-throughput-arm",
+      "identity": {
+        "compiler_options": null,
+        "environment": {
+          "GF2_AFF3CT_IMPLEM": "NMS",
+          "GF2_AFF3CT_PRECISION": "f32",
+          "GF2_AFF3CT_SIMD": "INTER",
+          "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+          "GF2_AFF3CT_TYPE": "horizontal-layered"
+        },
+        "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+        "rustflags": "-C target-cpu=native",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+      }
+    },
+    "aff3ct-layered-nms-i16-inter": {
+      "codes": {
+        "dvb-t2-r12": {
+          "above_floor_median_kib": 174252.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 16,
+            "bundle": "dvb-t2-r12-waterfall",
+            "code": "dvb-t2-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+              "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+              "k": 32400,
+              "n": 64800
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+              "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -1.2
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11318.0,
+              "min_kib": 11216,
+              "samples_kib": [
+                11324,
+                11316,
+                11324,
+                11300,
+                11324,
+                11320,
+                11320,
+                11304,
+                11324,
+                11312,
+                11308,
+                11328,
+                11288,
+                11324,
+                11316,
+                11324,
+                11324,
+                11216,
+                11308,
+                11284
+              ],
+              "stdev_kib": 24.601625962525322
+            },
+            "max_kib": 11672,
+            "median_kib": 11666.0,
+            "min_kib": 11408,
+            "samples_kib": [
+              11672,
+              11476,
+              11672,
+              11652,
+              11672,
+              11668,
+              11672,
+              11656,
+              11672,
+              11408,
+              11656,
+              11672,
+              11640,
+              11672,
+              11664,
+              11672,
+              11672,
+              11564,
+              11660,
+              11632
+            ],
+            "stdev_kib": 69.96542003018348
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11328,
+            "median_kib": 11324.0,
+            "min_kib": 11216,
+            "samples_kib": [
+              11316,
+              11328,
+              11288,
+              11324,
+              11328,
+              11324,
+              11324,
+              11308,
+              11320,
+              11312,
+              11304,
+              11324,
+              11324,
+              11216,
+              11324,
+              11324,
+              11324,
+              11324,
+              11324,
+              11320
+            ],
+            "stdev_kib": 24.380319932273242
+          },
+          "max_kib": 186140,
+          "median_kib": 185918.0,
+          "min_kib": 185396,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json",
+            "sha256": "68beaf11e9139cf3a12123016215747ede3ac796663a23c51bcd3c78c5e4e5ce"
+          },
+          "samples_kib": [
+            185548,
+            185936,
+            186120,
+            185780,
+            185544,
+            185912,
+            185596,
+            186052,
+            185928,
+            185940,
+            185924,
+            185812,
+            186008,
+            185788,
+            186140,
+            186072,
+            185756,
+            185844,
+            185396,
+            186004
+          ],
+          "stdev_kib": 200.08748086774446
+        },
+        "nr-bg1-z384": {
+          "above_floor_median_kib": 69462.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 16,
+            "bundle": "nr-bg1-z384-mother",
+            "code": "nr-bg1-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+              "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+              "k": 8448,
+              "n": 26112
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+              "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -4.3
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11320.0,
+              "min_kib": 11208,
+              "samples_kib": [
+                11324,
+                11312,
+                11324,
+                11300,
+                11208,
+                11312,
+                11324,
+                11320,
+                11328,
+                11308,
+                11208,
+                11328,
+                11304,
+                11328,
+                11320,
+                11320,
+                11324,
+                11208,
+                11296,
+                11320
+              ],
+              "stdev_kib": 40.0119982005398
+            },
+            "max_kib": 11672,
+            "median_kib": 11602.0,
+            "min_kib": 11192,
+            "samples_kib": [
+              11672,
+              11660,
+              11672,
+              11648,
+              11556,
+              11468,
+              11672,
+              11672,
+              11672,
+              11656,
+              11252,
+              11420,
+              11648,
+              11480,
+              11480,
+              11480,
+              11480,
+              11364,
+              11192,
+              11660
+            ],
+            "stdev_kib": 145.25274524083875
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11332,
+            "median_kib": 11316.0,
+            "min_kib": 11208,
+            "samples_kib": [
+              11312,
+              11284,
+              11324,
+              11324,
+              11304,
+              11332,
+              11324,
+              11312,
+              11320,
+              11308,
+              11324,
+              11324,
+              11292,
+              11328,
+              11208,
+              11324,
+              11304,
+              11300,
+              11324,
+              11208
+            ],
+            "stdev_kib": 34.31617694324355
+          },
+          "max_kib": 81328,
+          "median_kib": 81064.0,
+          "min_kib": 80768,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json",
+            "sha256": "12d9c0994d23424fecbbf286d5c0250a2d599a172505c08c855805ca47575fad"
+          },
+          "samples_kib": [
+            81180,
+            80824,
+            81320,
+            81328,
+            81068,
+            80960,
+            81164,
+            80972,
+            81100,
+            80992,
+            81060,
+            81092,
+            80776,
+            80984,
+            80768,
+            81000,
+            81268,
+            81248,
+            81020,
+            81128
+          ],
+          "stdev_kib": 158.96301456628206
+        }
+      },
+      "executable": "aff3ct-throughput-arm",
+      "identity": {
+        "compiler_options": null,
+        "environment": {
+          "GF2_AFF3CT_IMPLEM": "NMS",
+          "GF2_AFF3CT_PRECISION": "i16",
+          "GF2_AFF3CT_QUANT_SCALE": "16",
+          "GF2_AFF3CT_SIMD": "INTER",
+          "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+          "GF2_AFF3CT_TYPE": "horizontal-layered"
+        },
+        "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+        "rustflags": "-C target-cpu=native",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+      }
+    },
+    "aff3ct-spa-intra": {
+      "codes": {
+        "dvb-t2-r12": {
+          "above_floor_median_kib": 71122.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "dvb-t2-r12-waterfall",
+            "code": "dvb-t2-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+              "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+              "k": 32400,
+              "n": 64800
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+              "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -1.2
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11332,
+              "median_kib": 11318.0,
+              "min_kib": 11200,
+              "samples_kib": [
+                11200,
+                11316,
+                11320,
+                11276,
+                11320,
+                11320,
+                11324,
+                11332,
+                11204,
+                11320,
+                11320,
+                11316,
+                11296,
+                11320,
+                11316,
+                11312,
+                11324,
+                11316,
+                11320,
+                11296
+              ],
+              "stdev_kib": 35.87255218129873
+            },
+            "max_kib": 11680,
+            "median_kib": 11668.0,
+            "min_kib": 11288,
+            "samples_kib": [
+              11304,
+              11672,
+              11672,
+              11632,
+              11348,
+              11288,
+              11672,
+              11680,
+              11508,
+              11512,
+              11480,
+              11672,
+              11424,
+              11672,
+              11672,
+              11668,
+              11672,
+              11668,
+              11672,
+              11652
+            ],
+            "stdev_kib": 134.2229488574886
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11318.0,
+            "min_kib": 11204,
+            "samples_kib": [
+              11324,
+              11320,
+              11320,
+              11320,
+              11316,
+              11316,
+              11320,
+              11204,
+              11204,
+              11288,
+              11204,
+              11320,
+              11324,
+              11320,
+              11272,
+              11284,
+              11304,
+              11320,
+              11320,
+              11316
+            ],
+            "stdev_kib": 40.99707306625682
+          },
+          "max_kib": 83056,
+          "median_kib": 82790.0,
+          "min_kib": 82068,
+          "quality": {
+            "path": "dev/bench_results/ed3d490e/preparation/quality-intra/aff3ct-spa-intra-dvb-t2-r12.json",
+            "sha256": "f18498e30eb972c0de5cae432ac50935a2e4292ab2ea5364509c8790c7cf0ef4"
+          },
+          "samples_kib": [
+            82972,
+            82388,
+            82524,
+            82420,
+            82852,
+            82752,
+            82540,
+            83004,
+            83036,
+            82772,
+            83056,
+            82936,
+            82728,
+            82808,
+            82848,
+            82872,
+            82648,
+            82828,
+            82068,
+            82536
+          ],
+          "stdev_kib": 246.6877378387503
+        },
+        "nr-bg1-z384": {
+          "above_floor_median_kib": 28454.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "nr-bg1-z384-mother",
+            "code": "nr-bg1-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+              "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+              "k": 8448,
+              "n": 26112
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+              "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -4.3
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11316.0,
+              "min_kib": 11196,
+              "samples_kib": [
+                11316,
+                11300,
+                11320,
+                11320,
+                11292,
+                11320,
+                11320,
+                11204,
+                11312,
+                11320,
+                11320,
+                11296,
+                11204,
+                11316,
+                11320,
+                11328,
+                11320,
+                11212,
+                11300,
+                11196
+              ],
+              "stdev_kib": 44.92616164330089
+            },
+            "max_kib": 11676,
+            "median_kib": 11480.0,
+            "min_kib": 10784,
+            "samples_kib": [
+              11480,
+              11464,
+              11672,
+              11672,
+              11460,
+              11480,
+              11516,
+              11372,
+              11668,
+              11676,
+              11672,
+              11420,
+              11304,
+              11288,
+              11288,
+              11676,
+              11672,
+              11180,
+              11660,
+              10784
+            ],
+            "stdev_kib": 222.0863795913653
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11318.0,
+            "min_kib": 11208,
+            "samples_kib": [
+              11324,
+              11320,
+              11320,
+              11316,
+              11316,
+              11312,
+              11324,
+              11324,
+              11316,
+              11288,
+              11320,
+              11320,
+              11208,
+              11284,
+              11320,
+              11320,
+              11324,
+              11312,
+              11284,
+              11312
+            ],
+            "stdev_kib": 26.15262893095071
+          },
+          "max_kib": 40372,
+          "median_kib": 39934.0,
+          "min_kib": 38960,
+          "quality": {
+            "path": "dev/bench_results/ed3d490e/preparation/quality-intra/aff3ct-spa-intra-nr-bg1-z384.json",
+            "sha256": "f253417b02ee74103e3889c72a56d4601ecd03da050b5e1fda6e8b1e825a8db8"
+          },
+          "samples_kib": [
+            39784,
+            40168,
+            39584,
+            40084,
+            39856,
+            39992,
+            40072,
+            39576,
+            39964,
+            40072,
+            40372,
+            39520,
+            38960,
+            39904,
+            39456,
+            40000,
+            40160,
+            39748,
+            39504,
+            39988
+          ],
+          "stdev_kib": 318.939429986322
+        }
+      },
+      "executable": "aff3ct-intra-arm",
+      "identity": {
+        "compiler_options": [
+          "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
+        ],
+        "environment": {},
+        "executable_sha256": "b8c7c2432a3336ffa510254ae88385b893a77e3a6258310f5cee7d58a21805cf",
+        "rustflags": "-C target-cpu=native",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+      }
+    },
+    "gf2-batch-lane-avx2": {
+      "codes": {
+        "dvb-t2-r12": {
+          "above_floor_median_kib": 100492.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "dvb-t2-r12-waterfall",
+            "code": "dvb-t2-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+              "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+              "k": 32400,
+              "n": 64800
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+              "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -1.2
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11316.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11204,
+                11320,
+                11316,
+                11316,
+                11316,
+                11316,
+                11320,
+                11320,
+                11320,
+                11320,
+                11316,
+                11300,
+                11324,
+                11308,
+                11304,
+                11324,
+                11320,
+                11320,
+                11288,
+                11316
+              ],
+              "stdev_kib": 25.65229034608801
+            },
+            "max_kib": 11672,
+            "median_kib": 11416.0,
+            "min_kib": 10808,
+            "samples_kib": [
+              11556,
+              11348,
+              11096,
+              11156,
+              11196,
+              10808,
+              11672,
+              11600,
+              11672,
+              11228,
+              11476,
+              11400,
+              11432,
+              11384,
+              11656,
+              11344,
+              11480,
+              11672,
+              11384,
+              11672
+            ],
+            "stdev_kib": 225.42014106995853
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11328,
+            "median_kib": 11320.0,
+            "min_kib": 11200,
+            "samples_kib": [
+              11328,
+              11320,
+              11316,
+              11320,
+              11316,
+              11316,
+              11320,
+              11288,
+              11320,
+              11320,
+              11328,
+              11200,
+              11320,
+              11296,
+              11320,
+              11320,
+              11324,
+              11280,
+              11200,
+              11328
+            ],
+            "stdev_kib": 36.83476618630828
+          },
+          "max_kib": 112424,
+          "median_kib": 111908.0,
+          "min_kib": 111668,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
+          },
+          "samples_kib": [
+            111796,
+            111928,
+            112028,
+            112008,
+            111828,
+            111768,
+            111732,
+            112012,
+            112012,
+            111948,
+            111776,
+            111668,
+            111736,
+            112184,
+            111888,
+            112424,
+            112164,
+            111836,
+            111760,
+            112120
+          ],
+          "stdev_kib": 186.03268530019128
+        },
+        "nr-bg1-z384": {
+          "above_floor_median_kib": 42448.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "nr-bg1-z384-mother",
+            "code": "nr-bg1-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+              "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+              "k": 8448,
+              "n": 26112
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+              "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -4.3
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11300.0,
+              "min_kib": 11196,
+              "samples_kib": [
+                11304,
+                11208,
+                11320,
+                11320,
+                11308,
+                11208,
+                11284,
+                11324,
+                11276,
+                11320,
+                11296,
+                11288,
+                11320,
+                11320,
+                11316,
+                11280,
+                11208,
+                11320,
+                11196,
+                11292
+              ],
+              "stdev_kib": 42.84436952506128
+            },
+            "max_kib": 11672,
+            "median_kib": 11560.0,
+            "min_kib": 11060,
+            "samples_kib": [
+              11656,
+              11372,
+              11612,
+              11672,
+              11656,
+              11364,
+              11400,
+              11672,
+              11632,
+              11408,
+              11648,
+              11456,
+              11672,
+              11672,
+              11156,
+              11060,
+              11564,
+              11288,
+              11556,
+              11376
+            ],
+            "stdev_kib": 180.70207525095
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11320.0,
+            "min_kib": 11204,
+            "samples_kib": [
+              11316,
+              11320,
+              11300,
+              11320,
+              11316,
+              11320,
+              11320,
+              11204,
+              11316,
+              11204,
+              11316,
+              11320,
+              11320,
+              11280,
+              11320,
+              11320,
+              11324,
+              11324,
+              11320,
+              11204
+            ],
+            "stdev_kib": 41.116420077628355
+          },
+          "max_kib": 54348,
+          "median_kib": 54008.0,
+          "min_kib": 53576,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
+          },
+          "samples_kib": [
+            54120,
+            54152,
+            54348,
+            54124,
+            53732,
+            54000,
+            53980,
+            53576,
+            54120,
+            53856,
+            53816,
+            54016,
+            54172,
+            53956,
+            53888,
+            53948,
+            54180,
+            54048,
+            53952,
+            54304
+          ],
+          "stdev_kib": 182.65771267592288
+        }
+      },
+      "executable": "gf2-batch-lane-arm",
+      "identity": {
+        "compiler_options": [],
+        "environment": {
+          "GF2_LDPC_LANE_BACKEND": "avx2"
+        },
+        "executable_sha256": "7f9b52fad8e1a92a164868c872721ade7870f3d44e895a000c2bf36d8dfc34e3",
+        "rustflags": "-C target-cpu=native",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+      }
+    },
+    "gf2-batch-lane-portable": {
+      "codes": {
+        "dvb-t2-r12": {
+          "above_floor_median_kib": 100448.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "dvb-t2-r12-waterfall",
+            "code": "dvb-t2-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+              "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+              "k": 32400,
+              "n": 64800
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+              "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -1.2
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11316.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11320,
+                11316,
+                11284,
+                11320,
+                11316,
+                11316,
+                11324,
+                11320,
+                11316,
+                11296,
+                11280,
+                11288,
+                11320,
+                11316,
+                11212,
+                11320,
+                11204,
+                11320,
+                11324,
+                11320
+              ],
+              "stdev_kib": 33.879787484575516
+            },
+            "max_kib": 11672,
+            "median_kib": 11480.0,
+            "min_kib": 11112,
+            "samples_kib": [
+              11228,
+              11152,
+              11448,
+              11672,
+              11672,
+              11672,
+              11484,
+              11672,
+              11672,
+              11648,
+              11248,
+              11348,
+              11408,
+              11476,
+              11372,
+              11672,
+              11112,
+              11672,
+              11168,
+              11672
+            ],
+            "stdev_kib": 201.90007429419137
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11316.0,
+            "min_kib": 11200,
+            "samples_kib": [
+              11320,
+              11200,
+              11320,
+              11204,
+              11320,
+              11324,
+              11316,
+              11280,
+              11208,
+              11296,
+              11216,
+              11312,
+              11288,
+              11300,
+              11324,
+              11316,
+              11320,
+              11316,
+              11316,
+              11320
+            ],
+            "stdev_kib": 43.54491933624404
+          },
+          "max_kib": 112236,
+          "median_kib": 111928.0,
+          "min_kib": 111400,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
+          },
+          "samples_kib": [
+            112212,
+            111940,
+            112236,
+            112060,
+            111708,
+            111784,
+            111776,
+            112016,
+            111716,
+            111784,
+            111768,
+            111916,
+            112036,
+            112020,
+            111980,
+            111972,
+            112012,
+            111400,
+            111876,
+            111812
+          ],
+          "stdev_kib": 186.66804761393954
+        },
+        "nr-bg1-z384": {
+          "above_floor_median_kib": 42328.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "nr-bg1-z384-mother",
+            "code": "nr-bg1-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+              "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+              "k": 8448,
+              "n": 26112
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+              "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -4.3
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11324,
+              "median_kib": 11316.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11320,
+                11320,
+                11280,
+                11316,
+                11316,
+                11316,
+                11316,
+                11288,
+                11320,
+                11324,
+                11316,
+                11312,
+                11316,
+                11204,
+                11320,
+                11276,
+                11320,
+                11324,
+                11320,
+                11308
+              ],
+              "stdev_kib": 27.166891614610606
+            },
+            "max_kib": 11672,
+            "median_kib": 11648.0,
+            "min_kib": 11152,
+            "samples_kib": [
+              11672,
+              11672,
+              11440,
+              11532,
+              11664,
+              11476,
+              11476,
+              11388,
+              11672,
+              11420,
+              11672,
+              11152,
+              11672,
+              11556,
+              11480,
+              11636,
+              11672,
+              11672,
+              11672,
+              11660
+            ],
+            "stdev_kib": 137.50403630439362
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11328,
+            "median_kib": 11320.0,
+            "min_kib": 11292,
+            "samples_kib": [
+              11324,
+              11304,
+              11328,
+              11320,
+              11312,
+              11320,
+              11320,
+              11320,
+              11320,
+              11320,
+              11320,
+              11320,
+              11320,
+              11316,
+              11320,
+              11320,
+              11320,
+              11320,
+              11316,
+              11292
+            ],
+            "stdev_kib": 7.418894796396563
+          },
+          "max_kib": 54276,
+          "median_kib": 53976.0,
+          "min_kib": 53624,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
+          },
+          "samples_kib": [
+            54084,
+            53940,
+            54192,
+            54088,
+            54096,
+            53692,
+            54276,
+            53932,
+            54080,
+            53868,
+            53988,
+            53948,
+            53864,
+            54076,
+            53964,
+            54072,
+            53996,
+            53804,
+            53888,
+            53624
+          ],
+          "stdev_kib": 154.2693747961662
+        }
+      },
+      "executable": "gf2-batch-lane-arm",
+      "identity": {
+        "compiler_options": [],
+        "environment": {
+          "GF2_LDPC_LANE_BACKEND": "portable"
+        },
+        "executable_sha256": "7f9b52fad8e1a92a164868c872721ade7870f3d44e895a000c2bf36d8dfc34e3",
+        "rustflags": "-C target-cpu=native",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+      }
+    },
+    "gf2-batch-single-frame": {
+      "codes": {
+        "dvb-t2-r12": {
+          "above_floor_median_kib": 100258.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "dvb-t2-r12-waterfall",
+            "code": "dvb-t2-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+              "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+              "k": 32400,
+              "n": 64800
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+              "llr_source": "dev/active/c077a88b/survey bundle dvb-t2-r12-waterfall (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -1.2
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11328,
+              "median_kib": 11316.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11312,
+                11320,
+                11316,
+                11284,
+                11204,
+                11320,
+                11328,
+                11320,
+                11300,
+                11320,
+                11276,
+                11212,
+                11308,
+                11324,
+                11316,
+                11320,
+                11316,
+                11320,
+                11320,
+                11296
+              ],
+              "stdev_kib": 33.8325287260648
+            },
+            "max_kib": 11680,
+            "median_kib": 11656.0,
+            "min_kib": 11068,
+            "samples_kib": [
+              11672,
+              11480,
+              11476,
+              11068,
+              11256,
+              11672,
+              11680,
+              11672,
+              11652,
+              11580,
+              11632,
+              11564,
+              11660,
+              11672,
+              11676,
+              11672,
+              11668,
+              11480,
+              11672,
+              11396
+            ],
+            "stdev_kib": 161.18002357612434
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11324,
+            "median_kib": 11320.0,
+            "min_kib": 11204,
+            "samples_kib": [
+              11316,
+              11324,
+              11320,
+              11324,
+              11316,
+              11204,
+              11320,
+              11204,
+              11324,
+              11324,
+              11280,
+              11324,
+              11308,
+              11312,
+              11320,
+              11324,
+              11212,
+              11320,
+              11320,
+              11324
+            ],
+            "stdev_kib": 40.80931266267542
+          },
+          "max_kib": 112204,
+          "median_kib": 111914.0,
+          "min_kib": 111480,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+            "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"
+          },
+          "samples_kib": [
+            111892,
+            111536,
+            112016,
+            111660,
+            111916,
+            111812,
+            112164,
+            112172,
+            111912,
+            112032,
+            112116,
+            111880,
+            111888,
+            112204,
+            112040,
+            111896,
+            111944,
+            111480,
+            111800,
+            111924
+          ],
+          "stdev_kib": 189.33768774335448
+        },
+        "nr-bg1-z384": {
+          "above_floor_median_kib": 42332.0,
+          "batch_frames_source": {
+            "declared_by": "single-worker family cell timed_batch",
+            "raised_by": "settings.batch_size of the quality file"
+          },
+          "case": {
+            "batch_size": 8,
+            "bundle": "nr-bg1-z384-mother",
+            "code": "nr-bg1-r12",
+            "iteration_cap": 50,
+            "normalization_factor": 0.75,
+            "quality_frames": 128,
+            "syndrome_stopping": true
+          },
+          "count": 20,
+          "decoder": {
+            "arm_kind": "matched-algorithm",
+            "batching": {
+              "batch_fill_included": true,
+              "batch_size": 1
+            },
+            "code": {
+              "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+              "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+              "k": 8448,
+              "n": 26112
+            },
+            "input": {
+              "codeword_source": "both",
+              "frames": 128,
+              "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+              "llr_source": "dev/active/c077a88b/survey bundle nr-bg1-z384-mother (ldpc-make-inputs)",
+              "seed": 42,
+              "snr_db": -4.3
+            },
+            "iteration_cap": 50,
+            "normalization": {
+              "factor": 0.75,
+              "kind": "normalized-min-sum"
+            },
+            "precision": "f32",
+            "quality_tolerance": {
+              "confidence": 0.95,
+              "fer_ratio_max": 1.0
+            },
+            "rate_matching": null,
+            "schedule": "flooding",
+            "stopping": {
+              "crc": null,
+              "kind": "syndrome"
+            }
+          },
+          "floor": {
+            "count": 20,
+            "launcher": {
+              "count": 20,
+              "max_kib": 11320,
+              "median_kib": 11308.0,
+              "min_kib": 11204,
+              "samples_kib": [
+                11288,
+                11304,
+                11320,
+                11292,
+                11292,
+                11280,
+                11316,
+                11292,
+                11308,
+                11308,
+                11316,
+                11320,
+                11316,
+                11320,
+                11304,
+                11316,
+                11204,
+                11284,
+                11316,
+                11316
+              ],
+              "stdev_kib": 25.589841734563347
+            },
+            "max_kib": 11684,
+            "median_kib": 11648.0,
+            "min_kib": 11168,
+            "samples_kib": [
+              11492,
+              11504,
+              11480,
+              11648,
+              11648,
+              11388,
+              11672,
+              11684,
+              11660,
+              11660,
+              11672,
+              11672,
+              11672,
+              11672,
+              11468,
+              11644,
+              11556,
+              11640,
+              11672,
+              11168
+            ],
+            "stdev_kib": 129.29284589643774
+          },
+          "launcher": {
+            "count": 20,
+            "max_kib": 11320,
+            "median_kib": 11316.0,
+            "min_kib": 11280,
+            "samples_kib": [
+              11320,
+              11316,
+              11280,
+              11312,
+              11316,
+              11320,
+              11300,
+              11316,
+              11280,
+              11320,
+              11320,
+              11320,
+              11316,
+              11320,
+              11316,
+              11292,
+              11280,
+              11304,
+              11320,
+              11320
+            ],
+            "stdev_kib": 14.381933110677437
+          },
+          "max_kib": 54412,
+          "median_kib": 53980.0,
+          "min_kib": 53636,
+          "quality": {
+            "path": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+            "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"
+          },
+          "samples_kib": [
+            54092,
+            53980,
+            54028,
+            54124,
+            53948,
+            54224,
+            53636,
+            54136,
+            53852,
+            53976,
+            53964,
+            53872,
+            54036,
+            53980,
+            53860,
+            54156,
+            53896,
+            54412,
+            53732,
+            54008
+          ],
+          "stdev_kib": 168.33728048177562
+        }
+      },
+      "executable": "gf2-batch-single-frame-arm",
+      "identity": {
+        "compiler_options": [],
+        "environment": {},
+        "executable_sha256": "5211aa6972b6e61f6ddba777d429aa8a235c36a08db3fe6ad3b5643834c8d896",
+        "rustflags": "-C target-cpu=native",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+      }
+    }
+  },
+  "cites": [
+    "Cassagne2019"
+  ],
+  "host": {
+    "avx2": true,
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "cpus_available": 24,
+    "fma": true,
+    "kernel": "7.2.9-arch1-1",
+    "page_bytes": 4096
+  },
+  "method": {
+    "floor": "the same launch without the runner's fresh-child sentinel; the arm stops before decoding",
+    "includes": [
+      "executable and shared libraries",
+      "bundle buffers",
+      "runner transport",
+      "decoder state",
+      "pages the launcher held at exec"
+    ],
+    "launcher": "VmHWM of the launcher interpreter before it spawns the arm, the share its exec folds into the child's mark",
+    "launches": 20,
+    "observation": "ru_maxrss of the exited child from wait4, in KiB",
+    "position": "validation: untimed, zero timing windows, one dispatch",
+    "quantity": "peak resident set size of the arm process",
+    "scope": "process memory, not decoder-owned memory",
+    "statistics": "descriptive: minimum, median, maximum and population standard deviation"
+  },
+  "pointers": {
+    "build_identity": {
+      "path": "dev/bench_results/ed3d490e/preparation/build-identity.json",
+      "sha256": "2e9b8de3673ef6f1647dfa445bece6244810ccc4c6f0e3473de502d84bc06f18"
+    },
+    "catalogue": {
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json",
+      "sha256": "829fc2e2ec5254a3b9c8f78e1b74dc116858cda412892fb8f5bd738c443b276a"
+    }
+  },
+  "recorded_inputs": {
+    "name": "recorded-inputs.tar.gz",
+    "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba"
+  }
+}
