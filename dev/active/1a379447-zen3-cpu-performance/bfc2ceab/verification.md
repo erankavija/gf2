@@ -241,7 +241,11 @@ decision rule. The decision table names the family's committed stages.
   `spmm_row_unchecked_fn` with the column bound under Safety; the arm's
   `// SAFETY:` comment discharges it from the sparse matrix type's
   constructors. The arm's tests require both forms to equal a scalar
-  reference on both lanes.
+  reference on both lanes. The manifests of both measurement arms reach
+  `tuning-campaign-support` by a relative path under `dev/tools/`, the
+  tracked exception `@/issue/e430f035` to `@/inv/no-dev-path-coupling`; the
+  committed receipts pin the manifests by digest, so the citation stands
+  here.
 - Tooling. `survey/make-spmm-plan.py` projects the plan through the shared
   `campaign_plan.py`, `survey/make-spmm-producing-inputs.py` writes the
   producing manifest through the shared `campaign_inputs.py`,
