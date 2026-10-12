@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 """Compare plan projections across the generalisation of `campaign_plan.py` (jit:bfc2ceab).
 
-Every tracked `make-plan.py` that calls `campaign_plan.main` projects each
-frozen addendum beside its family once with the anchor projector, whose bytes
-`inputs/plan-anchor/campaign_plan.py` holds, and once with the working tree's.
-The arguments are this script's constants, so a plan's bytes depend on the
-projector, the caller and the addendum alone. Writes
-`plan-projection-comparison.json` beside itself and exits nonzero after
-writing when a pair of plans differs.
-
 Usage: make-plan-projection-comparison.py, with no arguments
+
+Projects every frozen addendum of each live `make-plan.py` that calls
+`campaign_plan.main` with the anchor projector under `inputs/plan-anchor` and
+with the working tree's, under fixed arguments, and writes
+`plan-projection-comparison.json` beside itself. Exits nonzero after writing
+when a pair of plans differs.
 """
 
 import hashlib
@@ -19,7 +17,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from locate import HERE, ISSUE, ROOT, repository_files, tracked
+from locate import HERE, ISSUE, ROOT, repository_files
 
 ANCHOR = HERE / "inputs" / "plan-anchor" / "campaign_plan.py"
 CURRENT = ROOT / repository_files.live_file(ROOT, "campaign_plan.py")
@@ -60,16 +58,23 @@ def projected(projector, caller, addendum, scratch):
     return digest(output)
 
 
+def addenda(caller):
+    """The frozen addenda of the caller's family: those of the nearest directory holding any."""
+    for directory in (ROOT / caller).parents:
+        found = sorted(directory.glob("addendum-*.json"))
+        if found or directory == ROOT:
+            return found
+
+
 def main():
     if sys.argv[1:]:
         raise SystemExit(__doc__)
-    callers = [path for path in tracked("**/make-plan.py")
+    callers = [path for path in repository_files.tracked_files(ROOT, "make-plan.py")
                if LANE_ENTRY in (ROOT / path).read_text()]
     rows = []
     with tempfile.TemporaryDirectory() as scratch:
         for caller in callers:
-            family = Path(caller).parent.parent
-            for addendum in sorted((ROOT / family).glob("addendum-*.json")):
+            for addendum in addenda(caller):
                 relative = str(addendum.relative_to(ROOT))
                 before = projected(ANCHOR, caller, relative, scratch)
                 after = projected(CURRENT, caller, relative, scratch)

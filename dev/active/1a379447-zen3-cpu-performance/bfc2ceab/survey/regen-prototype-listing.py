@@ -35,9 +35,11 @@ def prototype_functions():
 def main():
     regenerate = ROOT / repository_files.document(ROOT, "regen-asm.sh", REGENERATOR)
     symbols = [f"{review.PROTOTYPE_CRATE}::{name}" for name in prototype_functions()]
+    crate = HERE / "check-prototype"
     subprocess.run(
-        [str(regenerate), review.PROTOTYPE, symbols[0], f"../{LISTING}", *symbols[1:]],
-        cwd=HERE / "check-prototype",
+        [str(regenerate), review.PROTOTYPE, symbols[0], os.path.relpath(HERE / LISTING, crate),
+         *symbols[1:]],
+        cwd=crate,
         check=True,
         env=os.environ | {"RUSTUP_TOOLCHAIN": TOOLCHAIN},
     )

@@ -15,7 +15,7 @@ import re
 import sys
 
 import review
-from locate import HERE, ISSUE, KERNEL_PACKAGE, ROOT, asm_listing, package, tracked
+from locate import HERE, ISSUE, KERNEL_PACKAGE, ROOT, asm_listing, package_files
 
 RULE = (
     "Per symbol, the instruction text `asm_listing.RULE` defines. A line ending in `:` "
@@ -104,7 +104,7 @@ def self_test():
 
 def kernel_listing(name):
     """Root-relative path of the kernel listing called `name`."""
-    found = tracked(f"{package(KERNEL_PACKAGE)}/**/{name}")
+    found = package_files(KERNEL_PACKAGE, name)
     if len(found) != 1:
         raise SystemExit(f"{len(found)} kernel listings are called {name}; exactly one must be")
     return found[0]

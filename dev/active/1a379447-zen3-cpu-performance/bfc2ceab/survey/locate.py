@@ -1,7 +1,6 @@
-"""Shared locators for this issue's generators (jit:bfc2ceab).
-
-Importing this module puts the shared scripts on `sys.path`; they resolve
-files under the root git reports.
+"""Shared locators for this issue's generators (jit:bfc2ceab): importing this
+module puts the shared scripts on `sys.path`, and they resolve files under the
+root git reports.
 """
 
 import functools
@@ -49,18 +48,11 @@ def package(name):
     return repository_files.package_directory(ROOT, name)
 
 
-@functools.cache
-def _tracked(pattern):
-    listing = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files", "--", f":(glob){pattern}"],
-        capture_output=True, check=True, text=True,
-    ).stdout.split()
-    return tuple(sorted(path for path in listing if not repository_files.is_snapshot_copy(path)))
-
-
-def tracked(pattern):
-    """Sorted root-relative tracked paths matching the glob `pattern`, outside receipt snapshots."""
-    return list(_tracked(pattern))
+def package_files(name, glob):
+    """The live files of package `name` whose file name matches `glob`, root-relative."""
+    prefix = package(name) + "/"
+    return [path for path in repository_files.tracked_files(ROOT, glob)
+            if path.startswith(prefix)]
 
 
 def family_stages(confirmation_addendum):
