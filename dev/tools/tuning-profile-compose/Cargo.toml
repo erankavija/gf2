@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 gf2-core = { path = "../../../crates/gf2-core", features = ["tuning-profile"] }
 gf2-algebra = { path = "../../../crates/gf2-algebra", default-features = false, features = ["tuning-profile"] }
+gf2-coding = { path = "../../../crates/gf2-coding", default-features = false, features = ["tuning-profile"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 sha2 = "0.10"
