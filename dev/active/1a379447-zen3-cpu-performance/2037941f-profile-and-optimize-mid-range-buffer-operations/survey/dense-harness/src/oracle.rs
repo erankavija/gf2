@@ -10,7 +10,7 @@
 
 use crate::cells::{
     Cache, MatvecShape, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, LANE_CONTROL_WORDS,
-    LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS,
+    LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS, RAGGED_CONTROL_WORDS, RAGGED_WORDS,
 };
 use crate::fixture::MatvecBanks;
 use crate::routes::{
@@ -160,7 +160,8 @@ fn shape_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
 }
 
 /// Checks the frozen allocated geometry and the lane it resolves, for the
-/// dense-parity anchors and for every lane-threshold stride.
+/// dense-parity anchors, every lane-threshold stride and every ragged-tail
+/// stride.
 fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
     let route = if cfg!(feature = "simd") { Route::MatvecA } else { Route::MatvecScalarReference };
     let anchors = ANCHOR_WORDS.map(|words| ("anchor", words));
@@ -169,7 +170,11 @@ fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
         .chain([LANE_CONTROL_WORDS])
         .chain(LANE_NEIGHBOR_WORDS)
         .map(|words| ("lane", words));
-    for (group, words) in anchors.into_iter().chain(lanes) {
+    let ragged = RAGGED_WORDS
+        .into_iter()
+        .chain([RAGGED_CONTROL_WORDS])
+        .map(|words| ("ragged", words));
+    for (group, words) in anchors.into_iter().chain(lanes).chain(ragged) {
         let columns = MatvecShape::Full.columns(words);
         let name = format!("matvec-{group}-{words}w");
         let banks = MatvecBanks::allocated(words, MatvecShape::Full, Cache::Warm, CAMPAIGN_SEED);
@@ -191,6 +196,13 @@ fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
             // The pinned scalar lane returns the bits the selected lane returns.
             if route_matvec(Route::MatvecLaneScalar, &item.matrix, &item.vector) != output {
                 return Err(fail(&name, "the pinned scalar lane differs from the public call"));
+            }
+            checks += 1;
+        }
+        if group == "ragged" {
+            // The parity-kernel entry returns the bits the selected lane returns.
+            if route_matvec(Route::MatvecLaneParity, &item.matrix, &item.vector) != output {
+                return Err(fail(&name, "the parity-kernel entry differs from the public call"));
             }
             checks += 1;
         }

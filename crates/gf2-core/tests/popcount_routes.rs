@@ -5,6 +5,7 @@
 //! the empty buffer, the sub-vector widths, the 0/1/63/64/65 word boundaries
 //! and the carry-save block boundary, on random, all-zero and all-one data;
 //! the fused routes also run on slices at each word offset of their buffers.
+//! The fused parity routes run the same lengths and offsets.
 
 mod simd_equiv;
 
@@ -29,12 +30,16 @@ fn lengths() -> Vec<usize> {
         3,
         4,
         5,
+        6,
         7,
         8,
         9,
+        10,
+        62,
         63,
         64,
         65,
+        66,
         CSA_BLOCK_WORDS - 1,
         CSA_BLOCK_WORDS,
         CSA_BLOCK_WORDS + 1,
@@ -97,6 +102,34 @@ fn and_routes(len: usize) -> Vec<(String, AndPopcountFn)> {
     routes
 }
 
+/// Parity of `lhs & rhs` over the shorter slice.
+type AndParity = Box<dyn Fn(&[u64], &[u64]) -> bool>;
+
+/// Every route to the parity of an intersection: the low bit of each fused
+/// count and the detected bundle's fused parity entry.
+fn parity_routes(len: usize) -> Vec<(String, AndParity)> {
+    let mut routes: Vec<(String, AndParity)> = and_routes(len)
+        .into_iter()
+        .map(|(route, and_count)| {
+            let parity: AndParity = Box::new(move |lhs, rhs| and_count(lhs, rhs) & 1 == 1);
+            (format!("{route} low bit"), parity)
+        })
+        .collect();
+    if let Some(fns) = gf2_kernels_simd::detect() {
+        routes.push((
+            "bundle and_parity_fn".to_owned(),
+            Box::new(fns.and_parity_fn),
+        ));
+    }
+    routes
+}
+
+fn reference_parity(lhs: &[u64], rhs: &[u64]) -> bool {
+    lhs.iter().zip(rhs).fold(false, |parity, (left, right)| {
+        parity ^ ((left & right).count_ones() & 1 == 1)
+    })
+}
+
 #[test]
 fn every_population_count_route_reproduces_the_reference() {
     for len in lengths() {
@@ -152,6 +185,75 @@ fn every_fused_route_counts_slices_at_each_word_offset() {
                     );
                 }
             }
+        }
+    }
+}
+
+#[test]
+fn every_parity_route_folds_the_intersection_at_each_word_offset() {
+    for len in lengths() {
+        for (label, pattern) in patterns(len + 3, 0x7d ^ len as u64) {
+            let mut lhs_buf = pattern;
+            let mut rhs_buf = seeded(len + 3, 0xbe ^ len as u64);
+            for lhs_offset in 0..4 {
+                for rhs_offset in 0..4 {
+                    let lhs = &*unaligned_slice(&mut lhs_buf, lhs_offset, len);
+                    let rhs = &*unaligned_slice(&mut rhs_buf, rhs_offset, len);
+                    let expected = reference_parity(lhs, rhs);
+                    for (route, parity) in parity_routes(len) {
+                        assert_eq!(
+                            parity(lhs, rhs),
+                            expected,
+                            "{route}, {label} length {len}, offsets {lhs_offset} and {rhs_offset}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn every_parity_route_sees_each_single_bit_of_each_word() {
+    // One set bit moves through every word of the operand, so a route that
+    // drops a vector, a tail word or half of its fold reports even parity.
+    for len in [1, 3, 4, 5, 8, 9, 10, 11, 62, 63, 66] {
+        let rhs = vec![u64::MAX; len];
+        for word in 0..len {
+            for bit in [0, 31, 32, 63] {
+                let mut lhs = vec![0_u64; len];
+                lhs[word] = 1 << bit;
+                for (route, parity) in parity_routes(len) {
+                    assert!(
+                        parity(&lhs, &rhs),
+                        "{route}, length {len}, word {word} bit {bit}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn every_parity_route_covers_the_shorter_operand() {
+    let long = vec![u64::MAX; 2 * CSA_BLOCK_WORDS + 3];
+    for short_len in [0, 1, 5, 9, CSA_BLOCK_WORDS + 1] {
+        let mut short = vec![0_u64; short_len];
+        if let Some(last) = short.last_mut() {
+            *last = 1;
+        }
+        let expected = short_len > 0;
+        for (route, parity) in parity_routes(short_len) {
+            assert_eq!(
+                parity(&long, &short),
+                expected,
+                "{route}, long-first, {short_len}"
+            );
+            assert_eq!(
+                parity(&short, &long),
+                expected,
+                "{route}, short-first, {short_len}"
+            );
         }
     }
 }

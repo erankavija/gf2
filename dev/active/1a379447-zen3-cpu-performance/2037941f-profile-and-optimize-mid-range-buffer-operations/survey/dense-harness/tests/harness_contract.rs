@@ -8,7 +8,8 @@ use dense_parity_harness::campaign::{self, PlanInputs, M4RI_ARM, PILOT_PAIRS};
 use dense_parity_harness::cells::{
     cells, family_cells, Cache, Cell, MatvecShape, Question, Workload, ADDENDUM_FROZEN_UTC,
     ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, LANE_CONTROL_WORDS,
-    LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS, M4RI_SHAPES, SIMD_LANE_MIN_WORDS,
+    LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS, M4RI_SHAPES, RAGGED_CONTROL_WORDS,
+    RAGGED_WORDS, SIMD_LANE_MIN_WORDS,
     STREAMING_BANKS, STREAMING_BANK_BYTES, UNAVAILABLE_ROWS,
 };
 use dense_parity_harness::external::{self, LibraryIdentity};
@@ -82,8 +83,10 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
     // 2 neighbours, 5 tail1, 2 cold, 5 streaming, 5 scalar-reference. M4RI:
     // 6 qualified shapes plus 2 retained-state cells. Lane threshold: 6 lane
     // strides, the control, 3 exploratory strides, 5 streaming, 2 cold.
-    assert_eq!(counts, vec![12, 24, 8, 17]);
-    assert_eq!(table.len(), counts.iter().sum::<usize>());
+    // Ragged tail: 5 ragged strides and the aligned control, which the second
+    // ragged-tail family measures again and the table holds once.
+    assert_eq!(counts, vec![12, 24, 8, 17, 6, 6]);
+    assert_eq!(table.len(), counts[..5].iter().sum::<usize>());
 
     let ids: Vec<&str> = table.iter().map(|cell| cell.cell_id.as_str()).collect();
     assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), ids.len());
@@ -102,13 +105,15 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
     assert_eq!(ids[51], "lane-r1024-10w-warm");
     assert_eq!(ids[54], "lane-r1024-8w-streaming");
     assert_eq!(ids[59], "lane-r1024-8w-cold");
+    assert_eq!(ids[61], "ragged-r1024-9w-warm");
+    assert_eq!(ids[66], "ragged-r1024-32w-control-warm");
 
     // Anchors are the confirmatory family of each question and are warm.
     let anchors: Vec<usize> = Question::ALL
         .iter()
         .map(|question| family_cells(*question).iter().filter(|cell| cell.anchor).count())
         .collect();
-    assert_eq!(anchors, vec![5, 5, 2, 6]);
+    assert_eq!(anchors, vec![5, 5, 2, 6, 6, 6]);
     assert!(table.iter().all(|cell| !cell.anchor || cell.cache == Cache::Warm));
 
     // The scalar-reference rows are exploratory cells of the allocated family.
@@ -119,6 +124,21 @@ fn the_cell_table_reproduces_the_frozen_matrices() {
         .collect();
     assert_eq!(reference.len(), ANCHOR_WORDS.len());
     assert!(reference.iter().all(|id| id.contains("scalar-reference")));
+}
+
+/// The second ragged-tail family is the first on a ledger of its own: the same
+/// cells, seeds, arms, margins and limits under another identity.
+#[test]
+fn the_second_ragged_tail_family_repeats_the_first_on_its_own_ledger() {
+    let first = campaign::addendum(Question::MatvecRaggedTail, ISSUE, FROZEN);
+    let mut second = campaign::addendum(Question::MatvecRaggedTailV2, ISSUE, FROZEN);
+    assert_ne!(second.family.id, first.family.id);
+    assert_ne!(second.family_wise.ledger_path, first.family_wise.ledger_path);
+    assert!(second.family.description.contains(&first.family.id));
+    second.family.id.clone_from(&first.family.id);
+    second.family.description.clone_from(&first.family.description);
+    second.family_wise.ledger_path.clone_from(&first.family_wise.ledger_path);
+    assert_eq!(second, first);
 }
 
 /// The lane-threshold family contrasts the two lanes at the allocated boundary
@@ -206,6 +226,82 @@ fn the_lane_threshold_family_contrasts_the_two_lanes_at_its_frozen_strides() {
     let tail_draws = |alpha: f64| f64::from(SHARED_SETTINGS.bootstrap_resamples) * alpha / 2.0;
     assert!(tail_draws(corrected) >= 20.0);
     assert!(tail_draws(corrected * anchors.len() as f64 / (anchors.len() + 1) as f64) < 20.0);
+}
+
+/// The ragged-tail family contrasts the parity kernel with the selected SIMD
+/// lane at the allocated boundary inside one build. Every cell is warm and
+/// confirmatory-eligible; each ragged stride leaves a partial vector and is an
+/// improvement cell, and the control, a whole number of vectors, is the one
+/// non-regression cell.
+#[test]
+fn the_ragged_tail_family_contrasts_the_parity_kernel_with_the_simd_lane() {
+    let question = Question::MatvecRaggedTail;
+    assert_eq!(question.boundary(), Question::AllocatedMatvec);
+    let table = family_cells(question);
+    let strides: Vec<usize> = table.iter().map(|cell| cell.workload.stride_words()).collect();
+    let declared: Vec<usize> = RAGGED_WORDS.into_iter().chain([RAGGED_CONTROL_WORDS]).collect();
+    assert_eq!(strides, declared);
+    assert!(RAGGED_WORDS.iter().all(|words| words % 4 != 0));
+    assert_eq!(RAGGED_CONTROL_WORDS % 4, 0);
+    for cell in &table {
+        let words = cell.workload.stride_words();
+        assert!(cell.anchor, "{}", cell.cell_id);
+        assert_eq!(cell.cache, Cache::Warm, "{}", cell.cell_id);
+        assert!(words >= SIMD_LANE_MIN_WORDS, "{}", cell.cell_id);
+        assert_eq!(
+            campaign::cell_arms(cell),
+            (Route::MatvecA.id(), Route::MatvecLaneParity.id()),
+            "{}",
+            cell.cell_id
+        );
+        assert!(matches!(
+            cell.workload,
+            Workload::Matvec { shape: MatvecShape::Full, .. }
+        ));
+        let control = words == RAGGED_CONTROL_WORDS;
+        assert_eq!(cell.aligned_control(), control, "{}", cell.cell_id);
+        assert_eq!(
+            cell.objective(),
+            if control { "non-regression" } else { "improvement" },
+            "{}",
+            cell.cell_id
+        );
+        let banks = MatvecBanks::allocated(words, MatvecShape::Full, Cache::Warm, cell.seed);
+        let item = banks.item(0, 0);
+        let facts = verify_shape(&item.matrix, &item.vector, banks.rows(), banks.columns())
+            .expect("the frozen shape holds");
+        if cfg!(feature = "simd") {
+            for route in [Route::MatvecA, Route::MatvecLaneParity] {
+                verify_lane(facts, route).expect("the selector's lane and the bundle");
+            }
+            assert_eq!(facts.executed_lane(Route::MatvecLaneParity), "parity-kernel-lane");
+            assert_eq!(facts.executed_lane(Route::MatvecA), "simd-lane");
+            assert_eq!(
+                route_matvec(Route::MatvecLaneParity, &item.matrix, &item.vector),
+                route_matvec(Route::MatvecA, &item.matrix, &item.vector),
+                "{}",
+                cell.cell_id
+            );
+        }
+    }
+    assert_eq!(Route::MatvecLaneParity.question(), Question::AllocatedMatvec);
+    assert!(Route::MatvecLaneParity.simd_build());
+    assert!(cells().iter().all(|cell| cell.question == question || !cell.aligned_control()));
+
+    let addendum = campaign::addendum(question, ISSUE, FROZEN);
+    assert_eq!(addendum.effect.worthwhile_speedup, Some(1.08));
+    assert_eq!(addendum.effect.equivalence_margin, Some(1.05));
+    assert_eq!(addendum.effect.material_gap_threshold, None);
+    assert_eq!(addendum.complexity_budget.max_new_unsafe_kernels, 1);
+    assert_eq!(addendum.complexity_budget.max_added_source_lines, Some(96));
+    assert!(!addendum.holdout.required);
+
+    // P-20: a first attempt spends half the family alpha, and each bootstrap
+    // tail of its Bonferroni-corrected interval needs twenty expected draws.
+    let corrected = SHARED_SETTINGS.family_alpha / 2.0 / table.len() as f64;
+    let tail_draws = |alpha: f64| f64::from(SHARED_SETTINGS.bootstrap_resamples) * alpha / 2.0;
+    assert!(tail_draws(corrected) >= 20.0);
+    assert!(tail_draws(corrected * table.len() as f64 / (table.len() + 1) as f64) < 20.0);
 }
 
 #[test]
@@ -955,6 +1051,10 @@ fn the_oracle_covers_every_frozen_boundary_and_passes() {
         let words = cell.workload.stride_words();
         assert!(names.contains(format!("matvec-lane-{words}w").as_str()), "{words}");
     }
+    for cell in family_cells(Question::MatvecRaggedTail) {
+        let words = cell.workload.stride_words();
+        assert!(names.contains(format!("matvec-ragged-{words}w").as_str()), "{words}");
+    }
     assert!(report.iter().all(|case| case.checks > 0));
 }
 
@@ -1106,6 +1206,8 @@ fn the_projected_plan_covers_every_declared_cell_with_declared_builds() {
         (Question::AllocatedMatvec, 3),
         (Question::MatvecVsM4ri, 2),
         (Question::MatvecLaneThreshold, 2),
+        (Question::MatvecRaggedTail, 2),
+        (Question::MatvecRaggedTailV2, 2),
     ];
     for (question, arms) in expected_arms {
         let addendum = campaign::addendum(question, ISSUE, FROZEN);
@@ -1476,7 +1578,7 @@ fn the_carried_pins_are_the_frozen_addendums_own_identity() {
         .iter()
         .map(|question| question.addendum().path)
         .collect();
-    assert_eq!(pins.len(), 2);
+    assert_eq!(pins.len(), 4);
     for question in Question::ALL {
         let pin = question.addendum();
         let bytes = std::fs::read(root.join(pin.path)).expect("the frozen addendum is committed");

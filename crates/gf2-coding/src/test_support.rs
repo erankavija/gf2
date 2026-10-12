@@ -1826,7 +1826,7 @@ fn assert_padding_is_zero(words: &[u64], length: usize, what: &str) {
 }
 
 /// Decodes `blocks` through a pooled [`LdpcBatchDecoder`](crate::ldpc::LdpcBatchDecoder)
-/// of message words with `cap` frames per wave, mapping each trait outcome to
+/// of message words with iteration cap `cap`, mapping each trait outcome to
 /// a [`DecoderResult`](crate::DecoderResult).
 pub fn pooled_decode(
     code: &crate::ldpc::LdpcCode,

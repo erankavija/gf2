@@ -1,0 +1,50 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 1809588567
+#
+# Overhead       Samples  Shared Object         Symbol                                        
+# ........  ............  ....................  ..............................................
+#
+    99.30%          2076  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.29%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.05%             1  libc.so.6             [.] 0x00000000000a71f8
+     0.05%             1  dense-arm             [.] dense_arm::windows
+     0.05%             1  [unknown]             [k] 0xffffffffa6ee5dc0
+     0.05%             1  [unknown]             [k] 0xffffffffa7d61de5
+     0.05%             1  libc.so.6             [.] 0x00000000000a75b5
+     0.05%             1  libc.so.6             [.] 0x00000000000a7a9b
+     0.05%             1  libc.so.6             [.] 0x00000000000a75a1
+     0.02%             1  [unknown]             [k] 0xffffffffa700e2e5
+     0.02%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000011458
+     0.01%             1  [unknown]             [k] 0xffffffffa7d80565
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010d5b
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b264
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000017131
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001f004
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77827
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016524
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3315d
+     0.00%             1  [unknown]             [k] 0xffffffffa6801280
+     0.00%             1  libc.so.6             [.] 0x00000000001787e4
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c170
+     0.00%             1  libc.so.6             [.] 0x000000000017a27b
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] strchr@plt
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788cb
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee65e8
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+
+
+#
+# (Tip: To show time in nanoseconds in record/report add --ns)
+#

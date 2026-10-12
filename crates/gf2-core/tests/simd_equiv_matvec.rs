@@ -99,6 +99,22 @@ fn matvec_word_boundary_lengths_match_scalar_reference() {
 /// successive rows at every 32-byte phase.
 const BOUNDARY_COLS: [usize; 12] = [0, 1, 63, 64, 65, 449, 511, 512, 513, 575, 576, 577];
 
+/// One way to the product: the public entry, a pinned lane, or the fused
+/// parity kernel.
+type Lane = (&'static str, fn(&BitMatrix, &BitVec) -> BitVec);
+
+/// Every lane of the product. Each returns the bits of the others.
+const LANES: [Lane; 4] = [
+    ("matvec", |matrix, x| matrix.matvec(x)),
+    ("scalar lane", |matrix, x| {
+        matrix.matvec_with_route(x, MatvecRoute::Scalar)
+    }),
+    ("simd lane", |matrix, x| {
+        matrix.matvec_with_route(x, MatvecRoute::Simd)
+    }),
+    ("parity kernel", |matrix, x| matrix.matvec_parity_kernel(x)),
+];
+
 fn assert_zero_tail(vector: &BitVec, context: &str) {
     let words = vector.words();
     assert_eq!(words.len(), vector.len().div_ceil(64), "{context}");
@@ -118,6 +134,20 @@ const THRESHOLD_STRIDES: [usize; 6] = [8, 9, 10, 64, 65, 66];
 #[test]
 fn matvec_boundary_shapes_index_canonically_and_keep_zero_tails() {
     assert_boundary_shapes(BOUNDARY_COLS);
+}
+
+/// Row strides on both sides of a 256-bit vector boundary: one, two and three
+/// words past a whole vector, and the whole vector itself.
+const VECTOR_BOUNDARY_STRIDES: [usize; 8] = [4, 5, 32, 33, 61, 62, 63, 66];
+
+/// Column counts 0, 1, 63, 64 and 65 bits past the last full word below each
+/// vector-boundary stride, on every lane.
+#[test]
+fn every_lane_is_exact_on_both_sides_of_each_vector_boundary() {
+    for stride in VECTOR_BOUNDARY_STRIDES {
+        let below = 64 * (stride - 1);
+        assert_boundary_shapes([0, 1, 63, 64, 65].map(|bits| below + bits));
+    }
 }
 
 /// Column counts 0, 1, 63, 64 and 65 bits past the last full word below each
@@ -156,16 +186,22 @@ fn assert_boundary_shapes(column_counts: impl IntoIterator<Item = usize> + Clone
             let all_set = BitVec::from_words(vec![u64::MAX; cols.div_ceil(64) + 1], cols);
 
             for vector in [&pushed, &all_set] {
-                let product = matrix.matvec(vector);
-                assert_eq!(product.len(), rows, "{context}");
-                assert_zero_tail(&product, &context);
-                for row in 0..rows {
-                    let parity = (0..cols)
-                        .filter(|&col| matrix.get(row, col) && vector.get(col))
-                        .count()
-                        % 2
-                        == 1;
-                    assert_eq!(product.get(row), parity, "row {row}, {context}");
+                let parities: Vec<bool> = (0..rows)
+                    .map(|row| {
+                        (0..cols)
+                            .filter(|&col| matrix.get(row, col) && vector.get(col))
+                            .count()
+                            % 2
+                            == 1
+                    })
+                    .collect();
+                for (lane, product_of) in LANES {
+                    let product = product_of(&matrix, vector);
+                    assert_eq!(product.len(), rows, "{lane}, {context}");
+                    assert_zero_tail(&product, &format!("{lane}, {context}"));
+                    for (row, &parity) in parities.iter().enumerate() {
+                        assert_eq!(product.get(row), parity, "{lane}, row {row}, {context}");
+                    }
                 }
             }
         }
@@ -192,9 +228,9 @@ fn each_route_matches_the_reference_at_stride_and_word_boundaries() {
             }
             let reference = scalar_matvec_reference(&matrix, &vector);
 
-            for route in [MatvecRoute::Scalar, MatvecRoute::Simd] {
-                let context = format!("rows={rows} cols={cols} route={route:?}");
-                let product = matrix.matvec_with_route(&vector, route);
+            for (lane, product_of) in LANES {
+                let context = format!("rows={rows} cols={cols} lane={lane}");
+                let product = product_of(&matrix, &vector);
                 assert_eq!(product, reference, "{context}");
                 assert_zero_tail(&product, &context);
             }
@@ -212,6 +248,13 @@ fn each_route_matches_the_reference_at_stride_and_word_boundaries() {
 fn a_pinned_route_rejects_a_vector_of_another_length() {
     let matrix = BitMatrix::zeros(2, 65);
     let _ = matrix.matvec_with_route(&BitVec::zeros(64), MatvecRoute::Scalar);
+}
+
+#[test]
+#[should_panic(expected = "input BitVec length must equal cols")]
+fn the_parity_kernel_lane_rejects_a_vector_of_another_length() {
+    let matrix = BitMatrix::zeros(2, 65);
+    let _ = matrix.matvec_parity_kernel(&BitVec::zeros(64));
 }
 
 #[test]

@@ -6,7 +6,8 @@ Usage: make-spmm-producing-inputs.py, with no arguments
 Writes `spmm-producing-inputs.json` beside itself through the shared
 `campaign_inputs.py`. This file declares the family's closure: the gf2
 production crates the arm compiles, the arm crate, the campaign tooling, the
-family's generators, its launcher and the shared lock wrapper.
+family's generators, the sizing record of its second pilot trial, its launcher
+and the shared lock wrapper.
 """
 
 import sys
@@ -63,8 +64,10 @@ BUILD_EXTRA = [
     f"{SHARED}/campaign_inputs.py",
     f"{SHARED}/smoke-campaign-arms.sh",
     f"{SURVEY}/make-spmm-addendum.py",
+    f"{SURVEY}/make-spmm-pilot-pairs.py",
     f"{SURVEY}/make-spmm-producing-inputs.py",
     f"{SURVEY}/smoke-spmm-arms.sh",
+    f"{SURVEY}/spmm-second-pilot-pairs.json",
 ]
 
 SOURCE_DIRS = [f"{CORE}/src", f"{SIMD}/src", f"{ARM}/src", f"{TOOL}/src"]

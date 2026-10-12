@@ -1,0 +1,52 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2700933165
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    83.83%          2483  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    13.74%           407  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.62%            48  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.13%             4  libc.so.6             [.] 0x00000000000a728d
+     0.10%             3  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             2  dense-arm             [.] dense_arm::run::{{closure}}
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee437f
+     0.03%             1  libc.so.6             [.] malloc
+     0.03%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.03%             1  libc.so.6             [.] 0x00000000000a7633
+     0.03%             1  libc.so.6             [.] 0x00000000000a5d0f
+     0.03%             1  libc.so.6             [.] cfree
+     0.03%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.03%             1  [unknown]             [k] 0xffffffffa6801cc1
+     0.03%             1  [unknown]             [k] 0xffffffffa6eb1c29
+     0.03%             1  [unknown]             [k] 0xffffffffa7d61c26
+     0.03%             1  libc.so.6             [.] 0x00000000000a7622
+     0.03%             1  libc.so.6             [.] 0x00000000000a4ffe
+     0.03%             1  [unknown]             [k] 0xffffffffa6ee5da6
+     0.03%             1  [unknown]             [k] 0xffffffffa6801280
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000019fb7
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad8f
+     0.01%             2  [unknown]             [k] 0xffffffffa6f1900a
+     0.01%             1  [unknown]             [k] 0xffffffffa6f942d4
+     0.01%             1  [unknown]             [k] 0xffffffffa6f94156
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029564
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000c7cd
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b219
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001f099
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016524
+     0.00%             1  [unknown]             [k] 0xffffffffa68012a1
+     0.00%             1  [unknown]             [k] 0xffffffffa6c656f0
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3315d
+     0.00%             1  [unknown]             [k] 0xffffffffa6e779ef
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee615e
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61d92
+
+
+#
+# (Tip: To show inline functions in call traces add --inline to perf report)
+#

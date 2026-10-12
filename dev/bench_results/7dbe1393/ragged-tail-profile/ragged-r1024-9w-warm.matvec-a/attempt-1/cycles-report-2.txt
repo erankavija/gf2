@@ -1,0 +1,63 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2484725530
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    78.20%          2134  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    14.26%           388  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     6.04%           165  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.26%             7  dense-arm             [.] dense_arm::run::{{closure}}
+     0.18%             5  libc.so.6             [.] malloc
+     0.11%             3  [unknown]             [k] 0xffffffffa7da460b
+     0.11%             5  [unknown]             [k] 0xffffffffa6f12633
+     0.08%             3  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  libc.so.6             [.] 0x00000000000a6317
+     0.04%             1  libc.so.6             [.] 0x00000000000a5ee6
+     0.04%             1  [unknown]             [k] 0xffffffffa6efa6fd
+     0.04%             1  libc.so.6             [.] 0x00000000000a75a1
+     0.04%             1  libc.so.6             [.] 0x00000000000a7633
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef969f
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97087
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f11
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  libc.so.6             [.] 0x00000000000a5019
+     0.04%             1  [unknown]             [k] 0xffffffffa6c9523b
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.04%             1  [unknown]             [k] 0xffffffffa6b48557
+     0.04%             1  [unknown]             [k] 0xffffffffa6c92baa
+     0.04%             1  [unknown]             [k] 0xffffffffa6801602
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97042
+     0.04%             1  [unknown]             [k] 0xffffffffa6f98071
+     0.04%             1  libc.so.6             [.] 0x00000000000a63b1
+     0.04%             1  libc.so.6             [.] 0x00000000000a6199
+     0.01%             1  [unknown]             [k] 0xffffffffa6e788a3
+     0.00%             2  [unknown]             [k] 0xffffffffa7d80dc5
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bc53
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000103e4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede7c4
+     0.00%             1  [unknown]             [k] 0xffffffffa6eb1c18
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c296
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788be
+     0.00%             1  [unknown]             [k] 0xffffffffa758e341
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778a8
+     0.00%             1  libc.so.6             [.] 0x00000000001763b0
+     0.00%             1  libc.so.6             [.] 0x000000000017a6ec
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede422
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f331c4
+
+
+#
+# (Tip: Show estimate cycles per function and IPC in annotate use perf record -b ... ; perf report --total-cycles)
+#

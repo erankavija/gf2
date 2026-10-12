@@ -402,7 +402,7 @@ pub fn run(arm_name: &str, route: BatchRoute) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{lane_backend, probe_stages, route_selectors, BatchWorker, LANES};
+    use super::{lane_backend, probe_stages, BatchWorker, LANES};
     use gf2_coding::ldpc::{BatchRoute, LaneBackend, LdpcCode, LdpcEncoder, QuasiCyclicLdpc};
     use gf2_coding::traits::BlockEncoder;
     use gf2_core::BitVec;
@@ -464,7 +464,6 @@ mod tests {
                     worker.decisions, reference.decisions,
                     "{route:?} batch {batch}"
                 );
-                // A reused worker repeats its decisions.
                 worker.decode_batch_staged(&llrs);
                 assert_eq!(
                     worker.decisions, reference.decisions,
@@ -510,14 +509,15 @@ mod tests {
     }
 
     #[test]
-    fn selectors_open_the_lane_route_to_every_wave_and_close_the_other() {
-        let lane = route_selectors(BatchRoute::Lane(LaneBackend::Portable));
-        assert_eq!(
-            (lane.lane_min_frames(), lane.lane_max_edges()),
-            (1, usize::MAX)
-        );
-        let single = route_selectors(BatchRoute::SingleFrame);
-        assert_eq!(single, gf2_coding::tuning::DecodeSelectors::CONSERVATIVE);
+    fn selectors_route_every_wave_size_to_the_declared_route() {
+        let code = code();
+        for route in routes() {
+            let worker =
+                BatchWorker::new(&code, config(0.75, true), CAP, LANES, route).expect("route");
+            for frames in 1..=LANES {
+                assert_eq!(worker.decoder.batch_route(frames), route, "{frames} frames");
+            }
+        }
     }
 
     #[test]

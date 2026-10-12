@@ -1,0 +1,64 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2573760065
+#
+# Overhead       Samples  Shared Object         Symbol                                                       
+# ........  ............  ....................  .............................................................
+#
+    83.80%          2342  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+    10.53%           294  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     4.23%           118  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.32%             9  dense-arm             [.] dense_arm::run::{{closure}}
+     0.14%             7  [unknown]             [k] 0xffffffffa6f12633
+     0.11%             3  [unknown]             [k] 0xffffffffa6801280
+     0.11%             3  libc.so.6             [.] malloc
+     0.07%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61d18
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a129
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c21
+     0.04%             1  [unknown]             [k] 0xffffffffa6b4856e
+     0.04%             1  libc.so.6             [.] 0x00000000000a727f
+     0.04%             1  dense-arm             [.] <std::io::stdio::StdoutLock as std::io::Write>::write_all
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed542d
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f0c
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  libc.so.6             [.] cfree
+     0.04%             1  libc.so.6             [.] 0x00000000000a6252
+     0.04%             1  libc.so.6             [.] 0x00000000000a7a2d
+     0.04%             1  [unknown]             [k] 0xffffffffa7da3f82
+     0.04%             1  [unknown]             [k] 0xffffffffa6b493f8
+     0.04%             1  libc.so.6             [.] 0x00000000000a61c5
+     0.04%             1  [unknown]             [k] 0xffffffffa6801ca0
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f15
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee437f
+     0.01%             1  [unknown]             [k] 0xffffffffa6f47549
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b219
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61e78
+     0.00%             1  libc.so.6             [.] strnlen
+     0.00%             1  [unknown]             [k] 0xffffffffa68000ad
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1b2b9
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000093c7
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c84
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef9567
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             1  [unknown]             [k] 0xffffffffa700413f
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80dc5
+     0.00%             1  libc.so.6             [.] 0x0000000000179184
+     0.00%             1  [unknown]             [k] 0xffffffffa6aab8c1
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7871b
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9909a
+     0.00%             1  [unknown]             [k] 0xffffffffa6fee845
+
+
+#
+# (Tip: To set sampling period of individual events use perf record -e cpu/cpu-cycles,period=100001/,cpu/branches,period=10001/ ...)
+#

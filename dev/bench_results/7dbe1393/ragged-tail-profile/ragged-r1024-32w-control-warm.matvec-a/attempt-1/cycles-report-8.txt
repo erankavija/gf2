@@ -1,0 +1,66 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 1202916118
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    79.14%          1208  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    15.60%           238  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     3.56%            54  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.20%             3  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.19%             3  dense-arm             [.] dense_arm::run::{{closure}}
+     0.13%             2  [unknown]             [k] 0xffffffffa68015f0
+     0.07%             1  [unknown]             [k] 0xffffffffa6bfa0f4
+     0.07%             1  libc.so.6             [.] 0x00000000000a7279
+     0.07%             1  libc.so.6             [.] 0x00000000000a7636
+     0.07%             1  libc.so.6             [.] 0x00000000000a79af
+     0.07%             1  libc.so.6             [.] 0x00000000000a4ffe
+     0.07%             1  [unknown]             [k] 0xffffffffa7d929f4
+     0.07%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.07%             2  [unknown]             [k] 0xffffffffa6801280
+     0.07%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             1  [unknown]             [k] 0xffffffffa6b491e4
+     0.07%             1  [unknown]             [k] 0xffffffffa7d61be4
+     0.07%             1  [unknown]             [k] 0xffffffffa6b493df
+     0.07%             1  [unknown]             [k] 0xffffffffa6c5cb44
+     0.06%             1  libc.so.6             [.] 0x00000000000a6236
+     0.06%             1  [unknown]             [k] 0xffffffffa6ed541a
+     0.06%             1  [unknown]             [k] 0xffffffffa7d8e58c
+     0.02%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.02%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.02%             1  libc.so.6             [.] 0x0000000000068329
+     0.02%             1  dense-arm             [.] <usize as core::fmt::Display>::fmt
+     0.02%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee3c49
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000afd4
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.01%             1  [unknown]             [k] 0xffffffffa6e78907
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001b195
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bc0f
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001650e
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a6a
+     0.00%             1  [unknown]             [k] 0xffffffffa6c5cb58
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+     0.00%             1  [unknown]             [k] 0xffffffffa6fec386
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5d22
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0342
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.00%             1  [unknown]             [k] 0xffffffffa6fefaee
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61c31
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6aab8b2
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef96ba
+     0.00%             1  [unknown]             [k] 0xffffffffa7316685
+
+
+#
+# (Tip: Skip collecting build-id when recording: perf record -B)
+#

@@ -68,15 +68,11 @@ const HARNESS_PATH: &str = "crates/gf2-coding/benches/tuning_calibration.rs";
 const DIRECT_ENTRY: &str = "ldpc-batch-decoder";
 const POOLED_ENTRY: &str = "pooled-ldpc-batch-decoder";
 
-/// Iteration cap of every frame.
 const MAX_ITERATIONS: usize = 50;
 /// Occupied lanes of the one-wave batches of the `lane_min_frames` grid.
 const OCCUPIED_LANES: [usize; 6] = [1, 2, 3, 4, 6, 8];
-/// Waves per task of the `granules_per_task` grid.
 const TASK_GRANULES: [usize; 5] = [1, 2, 4, 8, 16];
-/// Waves of a pooled batch.
 const POOLED_WAVES: usize = 16;
-/// Indices into [`CODES`] of the pooled strata.
 const POOLED_CODES: [usize; 2] = [0, 1];
 /// Per-mille factors on a code's noise deviation, by frame index in a batch,
 /// so that the frames of one wave stop at different iterations.
@@ -290,9 +286,7 @@ impl Field {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Stratum {
-    /// Index into [`CODES`].
     code: usize,
-    /// Frames of the batch.
     frames: usize,
     /// Whether the lane bounds the field does not measure open the lane
     /// route; they hold their conservative values otherwise.
@@ -438,7 +432,6 @@ struct CodeEvidence {
     name: String,
     frame_len: usize,
     edges: usize,
-    /// Lane workspace of one batch decoder.
     workspace_bytes: usize,
 }
 
@@ -1468,7 +1461,7 @@ fn validate_observed_provenance(
         .case
         .decode()
         .map_err(|error| error.to_string())?;
-    if measurement.identity != assembly.identity
+    if !measurement.identity.resume_equivalent(&assembly.identity)
         || measurement.process.as_str() != PROCESS
         || assembly.process.as_str() != PROCESS
         || measurement.identity.feature_contract != FEATURE_CONTRACT
@@ -1478,7 +1471,6 @@ fn validate_observed_provenance(
             .identity
             .behavior_sha256
             .contains_key(HARNESS_PATH)
-        || facts.source_dirty
         || facts.toolchain.trim().is_empty()
         || !facts.toolchain.contains(TOOLCHAIN_CONTRACT)
         || facts.cpu_model.trim().is_empty()
@@ -1493,7 +1485,6 @@ fn validate_observed_provenance(
         || facts.os_kernel.trim().is_empty()
         || facts.governor.trim().is_empty()
         || measurement.identity.host_identity.trim().is_empty()
-        || assembly_facts.source_dirty
         || assembly_facts.tool != HARNESS_PATH
     {
         return Err("coding observed provenance violates the producing contract".to_owned());
@@ -2350,6 +2341,14 @@ mod tests {
     /// Emits the owner envelope of a campaign whose results follow `curve`
     /// and returns the analysis with the reopened section.
     fn emit(label: &str, curve: impl Fn(Field) -> Curve) -> (AnalysisOutput, CodingTuning) {
+        try_emit(label, curve, |_| {}).unwrap()
+    }
+
+    fn try_emit(
+        label: &str,
+        curve: impl Fn(Field) -> Curve,
+        adjust: impl FnOnce(&mut EmitOwnerRequest),
+    ) -> Result<(AnalysisOutput, CodingTuning), String> {
         let (root, request) = manifest_request(label);
         let manifest = campaign_manifest(request).unwrap();
         let bundle_bytes = serde_json::to_vec(&synthetic_bundle(&manifest, curve)).unwrap();
@@ -2392,7 +2391,9 @@ mod tests {
             },
             output: root.path().join("coding-owner.json"),
         };
-        let (artifact, analysis) = emit_owner(request).unwrap();
+        let mut request = request;
+        adjust(&mut request);
+        let (artifact, analysis) = emit_owner(request)?;
         let bytes = fs::read(&artifact.path).unwrap();
         assert_eq!(artifact.sha256, Sha256Digest::of(&bytes));
         let reopened = coding_registry()
@@ -2406,7 +2407,7 @@ mod tests {
             .unwrap()
             .section
             .clone();
-        (analysis, section)
+        Ok((analysis, section))
     }
 
     /// The fields an emitted section states, as `family.field`.
@@ -2466,6 +2467,38 @@ mod tests {
         assert_eq!(decode.lane_min_frames(), winner);
         assert_eq!(decode.lane_max_edges(), LANE_MAX_EDGES);
         assert_eq!(decode.granules_per_task(), GRANULES_PER_TASK);
+    }
+
+    #[test]
+    fn source_control_metadata_does_not_decide_acceptance() {
+        let flat = |field| Curve::at_conservative(field);
+        try_emit("meta-revision", flat, |request| {
+            request.assembly.identity.source_revision = "1".repeat(40);
+        })
+        .unwrap();
+        try_emit("meta-dirty", flat, |request| {
+            request.measurement.runtime = canonical_json(&MeasurementRuntime {
+                source_dirty: true,
+                toolchain: format!("rustc {TOOLCHAIN_CONTRACT}"),
+                cpu_model: "test-cpu".to_owned(),
+                cpu_features: vec!["test".to_owned()],
+                os_kernel: "test-kernel".to_owned(),
+                governor: "performance".to_owned(),
+                receipt: "test/receipt.md".to_owned(),
+            })
+            .unwrap();
+            request.assembly.runtime = canonical_json(&AssemblyRuntime {
+                source_dirty: true,
+                tool: HARNESS_PATH.to_owned(),
+                tool_sha256: request.measurement.identity.executable_sha256[PROCESS].clone(),
+            })
+            .unwrap();
+        })
+        .unwrap();
+        try_emit("content-source", flat, |request| {
+            request.assembly.identity.source_sha256 = "1".repeat(64);
+        })
+        .unwrap_err();
     }
 
     #[test]

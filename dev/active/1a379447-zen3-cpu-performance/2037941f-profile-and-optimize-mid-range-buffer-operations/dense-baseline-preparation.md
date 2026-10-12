@@ -51,7 +51,8 @@ retains actual commands, arm results, hardware counters, sampled symbols,
 annotated cycle samples, runtime host facts and a digest-bound append-only log.
 The [summary generator](survey/summarize-dense-profile.py) reports medians
 with order-statistic intervals over the repeated counter passes. The launcher
-requires both accepted baseline receipts before profiling.
+requires both accepted baseline receipts before profiling. With `--cases` it
+profiles the cells and arms a case file names into that file's own directory.
 
 The completed [profile log](../../../bench_results/2037941f/dense-baseline-profile-r2/execution.log)
 and [summary](../../../bench_results/2037941f/dense-baseline-profile-r2/profile-summary.md)

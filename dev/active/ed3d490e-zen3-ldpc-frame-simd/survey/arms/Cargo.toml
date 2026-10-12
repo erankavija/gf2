@@ -9,7 +9,15 @@
 # child framing, timing windows and prepared quality those of `c077a88b`, by
 # path. The arms differ from the `3be770d5` gf2 arm in the decoder call alone.
 
+# The path dependencies below count directory levels to the harness crates and
+# the workspace crates: the named exception `harness-path-dependencies` to
+# `@/inv/no-dev-path-coupling`, which ends under `@/issue/58a4bb51`.
+
+# The AFF3CT arm of the comparison is the member package `aff3ct-intra`, built
+# on request alone: it needs the staged AFF3CT tree.
 [workspace]
+members = ["aff3ct-intra"]
+default-members = ["."]
 
 [package]
 name = "ldpc-batch-arms"

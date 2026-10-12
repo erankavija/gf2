@@ -20,6 +20,7 @@ mod imp {
         DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LdpcBatchDecoder, LdpcCode,
         LdpcDecoder,
     };
+    use gf2_coding::tuning::{self, DecodeSelectors};
     use gf2_coding::Llr;
     use gf2_core::BitVec;
     use gf2_kernels_hip::host::HipStream;
@@ -61,43 +62,87 @@ mod imp {
     /// fallback, so each `process` call on a non-empty batch builds its
     /// decoder.
     pub struct CpuLdpcBp {
-        n: usize,
+        code: LdpcCode,
         config: DecoderConfig,
         max_iterations: usize,
+        selectors: DecodeSelectors,
         stage: BatchDecode<DecoderFactory>,
     }
 
     impl CpuLdpcBp {
         /// Builds a CPU LDPC BP stage whose decoders take the decode selectors
-        /// of the process-wide coding tuning section. A cap of zero behaves as
-        /// in [`LdpcDecoder::decode_codeword_into`].
+        /// of the process-wide coding tuning section, read once here. A cap of
+        /// zero behaves as in [`LdpcDecoder::decode_codeword_into`].
+        ///
+        /// # Panics
+        ///
+        /// As [`tuning::active`].
         #[must_use]
         pub fn new(code: LdpcCode, config: DecoderConfig, max_iterations: usize) -> Self {
-            Self::from_factory(
-                code.n(),
-                config,
-                max_iterations,
-                Box::new(move || {
-                    LdpcBatchDecoder::new(
-                        code.clone(),
-                        config,
-                        max_iterations,
-                        DecodedWord::Codeword,
-                    )
-                }),
+            let selectors = tuning::active().section.decode().clone();
+            Self::with_selectors(code, config, max_iterations, selectors)
+        }
+
+        /// Builds a CPU LDPC BP stage whose decoders take the given decode
+        /// selectors, as [`LdpcBatchDecoder::with_selectors`] does.
+        ///
+        /// The builder selects a route for equivalence tests and benchmarks; decoded
+        /// results and per-frame outcomes are identical on every route
+        /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
+        #[must_use]
+        pub fn with_selectors(
+            code: LdpcCode,
+            config: DecoderConfig,
+            max_iterations: usize,
+            selectors: DecodeSelectors,
+        ) -> Self {
+            Self::build(code, config, max_iterations, selectors, false)
+        }
+
+        /// Holds the lane route of every decoder on the portable backend, as
+        /// [`LdpcBatchDecoder::with_portable_lanes`] does.
+        ///
+        /// The builder selects a route for equivalence tests and benchmarks; decoded
+        /// results and per-frame outcomes are identical on every route
+        /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
+        #[must_use]
+        pub fn with_portable_lanes(self) -> Self {
+            Self::build(
+                self.code,
+                self.config,
+                self.max_iterations,
+                self.selectors,
+                true,
             )
         }
 
-        fn from_factory(
-            n: usize,
+        fn build(
+            code: LdpcCode,
             config: DecoderConfig,
             max_iterations: usize,
-            factory: DecoderFactory,
+            selectors: DecodeSelectors,
+            portable: bool,
         ) -> Self {
+            let (shared, chosen) = (code.clone(), selectors.clone());
+            let factory: DecoderFactory = Box::new(move || {
+                let decoder = LdpcBatchDecoder::with_selectors(
+                    shared.clone(),
+                    config,
+                    max_iterations,
+                    DecodedWord::Codeword,
+                    chosen.clone(),
+                );
+                if portable {
+                    decoder.with_portable_lanes()
+                } else {
+                    decoder
+                }
+            });
             Self {
-                n,
+                code,
                 config,
                 max_iterations,
+                selectors,
                 stage: BatchDecode::new(factory),
             }
         }
@@ -106,7 +151,7 @@ mod imp {
         #[inline]
         #[must_use]
         pub fn n(&self) -> usize {
-            self.n
+            self.code.n()
         }
 
         /// The BP iteration cap.
@@ -131,7 +176,7 @@ mod imp {
         /// # Panics
         ///
         /// Panics as [`BatchDecode`]'s `process` does, and as
-        /// [`LdpcBatchDecoder::new`].
+        /// [`LdpcBatchDecoder::with_selectors`].
         fn process(
             &self,
             input: &LlrBatch,
@@ -481,7 +526,6 @@ mod imp {
         use super::*;
         use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, LdpcEncoder, QuasiCyclicLdpc};
         use gf2_coding::traits::BlockEncoder;
-        use gf2_coding::tuning::DecodeSelectors;
 
         fn qc_code() -> LdpcCode {
             let base = vec![
@@ -654,26 +698,26 @@ mod imp {
             let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
             let every_wave = DecodeSelectors::try_new(1, usize::MAX, 1).unwrap();
             for portable in [false, true] {
-                let factory = {
-                    let (code, selectors) = (code.clone(), every_wave.clone());
-                    move || {
-                        let decoder = LdpcBatchDecoder::with_selectors(
-                            code.clone(),
-                            config,
-                            cap,
-                            DecodedWord::Codeword,
-                            selectors.clone(),
-                        );
-                        let decoder = if portable {
-                            decoder.with_portable_lanes()
-                        } else {
-                            decoder
-                        };
-                        assert!(matches!(decoder.batch_route(1), BatchRoute::Lane(_)));
-                        decoder
-                    }
+                let decoder = LdpcBatchDecoder::with_selectors(
+                    code.clone(),
+                    config,
+                    cap,
+                    DecodedWord::Codeword,
+                    every_wave.clone(),
+                );
+                let decoder = if portable {
+                    decoder.with_portable_lanes()
+                } else {
+                    decoder
                 };
-                let stage = CpuLdpcBp::from_factory(code.n(), config, cap, Box::new(factory));
+                assert!(matches!(decoder.batch_route(1), BatchRoute::Lane(_)));
+                let stage =
+                    CpuLdpcBp::with_selectors(code.clone(), config, cap, every_wave.clone());
+                let stage = if portable {
+                    stage.with_portable_lanes()
+                } else {
+                    stage
+                };
                 assert_matches_per_frame_decoding(&stage, &code, config, cap);
             }
         }

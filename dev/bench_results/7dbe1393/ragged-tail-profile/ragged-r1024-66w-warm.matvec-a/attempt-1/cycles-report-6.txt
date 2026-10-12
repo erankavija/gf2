@@ -1,0 +1,50 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2586234269
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    84.55%          2510  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    13.28%           394  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.63%            48  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.13%             4  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.10%             3  libc.so.6             [.] 0x00000000000a4ffe
+     0.07%             2  dense-arm             [.] dense_arm::run::{{closure}}
+     0.06%             2  libc.so.6             [.] malloc
+     0.04%             1  libc.so.6             [.] pthread_mutex_lock
+     0.03%             1  [unknown]             [k] 0xffffffffa6c656f0
+     0.03%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.03%             1  [unknown]             [k] 0xffffffffa6f9309e
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b2a1
+     0.01%             1  [unknown]             [k] 0xffffffffa6f94129
+     0.01%             1  [unknown]             [k] 0xffffffffa6ff51f0
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef977e
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000baf1
+     0.00%             1  [unknown]             [k] 0xffffffffa6e779ef
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000017354
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001ecbc
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78a48
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             2  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778a8
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff04b6
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa690410b
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7789d
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78644
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33136
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+
+
+#
+# (Tip: For a higher level overview, try: perf report --sort comm,dso)
+#

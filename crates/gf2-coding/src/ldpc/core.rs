@@ -568,52 +568,6 @@ impl LdpcDecoder {
         &self.beliefs
     }
 
-    /// Decodes multiple LLR blocks in batch with the default configuration.
-    ///
-    /// A cap of zero behaves as in [`LdpcDecoder::decode_codeword_into`].
-    ///
-    /// Each block is decoded independently by its own decoder, built on a
-    /// clone of `code`; under the `parallel` feature the blocks run on rayon.
-    pub fn decode_batch(
-        code: &LdpcCode,
-        llr_blocks: &[Vec<Llr>],
-        max_iterations: usize,
-    ) -> Vec<DecoderResult> {
-        Self::decode_batch_with_config(code, llr_blocks, max_iterations, DecoderConfig::default())
-    }
-
-    /// As [`Self::decode_batch`], with a custom configuration; the cap of zero
-    /// behaves as there.
-    pub fn decode_batch_with_config(
-        code: &LdpcCode,
-        llr_blocks: &[Vec<Llr>],
-        max_iterations: usize,
-        config: DecoderConfig,
-    ) -> Vec<DecoderResult> {
-        #[cfg(feature = "parallel")]
-        {
-            use rayon::prelude::*;
-            (0..llr_blocks.len())
-                .into_par_iter()
-                .map(|i| {
-                    let mut decoder = Self::with_config(code.clone(), config);
-                    decoder.decode_iterative(&llr_blocks[i], max_iterations)
-                })
-                .collect()
-        }
-
-        #[cfg(not(feature = "parallel"))]
-        {
-            llr_blocks
-                .iter()
-                .map(|llrs| {
-                    let mut decoder = Self::with_config(code.clone(), config);
-                    decoder.decode_iterative(llrs, max_iterations)
-                })
-                .collect()
-        }
-    }
-
     /// Performs check node update (sum-product algorithm).
     ///
     /// Computes check-to-variable messages using the exact box-plus operation.

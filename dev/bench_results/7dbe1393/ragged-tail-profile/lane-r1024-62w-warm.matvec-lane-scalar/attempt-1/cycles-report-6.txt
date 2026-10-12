@@ -1,0 +1,59 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2645760835
+#
+# Overhead       Samples  Shared Object         Symbol                                         
+# ........  ............  ....................  ...............................................
+#
+    99.08%          2852  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_scalar
+     0.21%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.07%             2  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94ec
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6c34
+     0.03%             1  [unknown]             [k] 0xffffffffa7d8f957
+     0.03%             1  [unknown]             [k] 0xffffffffa6c91314
+     0.03%             1  [unknown]             [k] 0xffffffffa7da3f3b
+     0.03%             1  [unknown]             [k] 0xffffffffa7d8e5b5
+     0.03%             1  [unknown]             [k] 0xffffffffa7d8e584
+     0.03%             1  [unknown]             [k] 0xffffffffa6c656f0
+     0.03%             1  libc.so.6             [.] malloc
+     0.03%             1  [unknown]             [k] 0xffffffffa6c9528e
+     0.03%             1  [unknown]             [k] 0xffffffffa68015f7
+     0.03%             1  [unknown]             [k] 0xffffffffa6c904c6
+     0.03%             1  [unknown]             [k] 0xffffffffa6c97022
+     0.03%             1  libc.so.6             [.] 0x00000000000a61b4
+     0.03%             1  [unknown]             [k] 0xffffffffa68015f4
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee5d9a
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.01%             1  [unknown]             [k] 0xffffffffa6f19000
+     0.01%             1  [unknown]             [k] 0xffffffffa6f10a35
+     0.01%             2  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  libc.so.6             [.] bindtextdomain
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000baf1
+     0.00%             1  [unknown]             [k] 0xffffffffa6fcddbe
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a6a
+     0.00%             1  [unknown]             [k] 0xffffffffa758e36c
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018b52
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1b090
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80545
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3316d
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  libc.so.6             [.] 0x000000000017ad64
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede7a1
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7871b
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3348e
+
+
+#
+# (Tip: To see call chains by final symbol taking CPU time (bottom up) use perf report -G)
+#

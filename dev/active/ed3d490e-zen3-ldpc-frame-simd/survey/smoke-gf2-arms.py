@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-"""Smoke the gf2 batch decoder arms through the shared runner (jit:ed3d490e).
+"""Smoke the batch decoder arms through the shared runner (jit:ed3d490e).
 
-Times nothing. For each base addendum it writes a throwaway addendum and plan
-under `target/`, runs `benchmark-ab-runner check`, then `benchmark-ab-runner
-smoke` over a validation stage, whose contract
+Times nothing. For each base addendum of the chosen group it writes a
+throwaway addendum and plan under `target/`, runs `benchmark-ab-runner check`,
+then `benchmark-ab-runner smoke` over a validation stage, whose contract
 `tuning_campaign_support::arm::smoke` states: every arm of every cell runs
 once in the untimed validation position. It writes the runner's smoke record
-and `arm-diagnostics.json`, the placement reports and decoder diagnostics the
-stage journalled from each arm's standard error, without their clock readings.
-It then gives each arm a prepared quality record whose first frame count is
-one too high, requires the smoke to fail, and records the arm's refusal.
+and the group's diagnostics file, the placement reports and decoder
+diagnostics the stage journalled from each arm's standard error, without
+their clock readings. It then gives an arm an unusable prepared quality
+record, requires the smoke to fail, and records the arm's refusal: a record
+whose first frame count is one too high, and for the AFF3CT arm also none.
+
+Group `gf2`, the default, smokes the gf2 arms. Group `aff3ct` smokes the
+AFF3CT [Cassagne2019] sum-product INTRA arm of the workspace's member package
+against the gf2 single-frame arm on the `07ca8585` comparator pilot addendum.
+No prepared quality record of that arm is committed, so the smoke replays one
+with `aff3ct-intra-quality` into `target/`.
 
 The throwaway addenda are the `07ca8585` before/after pilot addenda with the
 family renamed and the ledger redirected into `target/`. The single-worker one
@@ -18,7 +25,7 @@ last wave is partial and which sets the portable lane backend against the
 AVX2 one. The recorded bundles and the prepared quality records are the
 `c077a88b` ones, found among the repository's files by the digests below.
 
-Usage (from the worktree root): smoke-gf2-arms.py OUT_DIR
+Usage (from the worktree root): smoke-gf2-arms.py OUT_DIR [gf2|aff3ct]
 """
 
 import hashlib
@@ -58,6 +65,11 @@ ARMS = {
     "single-frame": ("gf2-batch-single-frame-arm", {}),
     "lane-avx2": ("gf2-batch-lane-arm", {"GF2_LDPC_LANE_BACKEND": "avx2"}),
     "lane-portable": ("gf2-batch-lane-arm", {"GF2_LDPC_LANE_BACKEND": "portable"}),
+    "spa-intra": ("aff3ct-intra-arm", {}),
+}
+# Plan name and description of each arm built outside the gf2 tree.
+EXTERNAL = {
+    "spa-intra": ("aff3ct-spa-intra", "AFF3CT float sum-product INTRA decoder"),
 }
 # Base addendum, then (cell suffix, per-worker batch, baseline, candidate) of
 # the cells derived from each of its cells; no suffix keeps the cell.
@@ -70,13 +82,48 @@ FAMILIES = {
     "multicore": ("addendum-ldpc-update-multicore-pilot.json", [
         ("", None, "single-frame", "lane-avx2"),
     ]),
+    "aff3ct-intra": ("addendum-ldpc-update-comparator-single-worker-pilot.json", [
+        ("", None, "single-frame", "spa-intra"),
+    ]),
 }
-# Plans whose first arm must refuse a differing quality record.
-REFUSALS = {
-    "refused-single-frame": [("", None, "single-frame", "lane-avx2")],
-    "refused-lane": [("", None, "lane-avx2", "single-frame")],
+PLACEMENT = "worker-placement"
+DECODER_DIAGNOSTICS = ("batch-decoder-diagnostics", "aff3ct-decoder-diagnostics")
+DIFFERING = "the prepared quality records"
+# Per group: the issue its throwaway plans name, what they smoke, its
+# families, its diagnostics file, the key of its refusals there, the
+# `decoder.arm_kind` its cells declare when not the base addendum's, and its
+# refusal plans as name: (base family, arm that must refuse, how its quality
+# record is unusable, text of its refusal).
+GROUPS = {
+    "gf2": {
+        "issue": "feb60d0d",
+        "subject": "gf2 batch decoder arms",
+        "families": ("single-worker", "multicore"),
+        "diagnostics": "arm-diagnostics.json",
+        "refusal_key": "differing_quality_refused",
+        "arm_kind": None,
+        "refusals": {
+            "refused-single-frame": ("single-worker", [("", None, "single-frame", "lane-avx2")],
+                                     "single-frame", "differing", DIFFERING),
+            "refused-lane": ("single-worker", [("", None, "lane-avx2", "single-frame")],
+                             "lane-avx2", "differing", DIFFERING),
+        },
+    },
+    "aff3ct": {
+        "issue": "bad1aea8",
+        "subject": "AFF3CT sum-product INTRA arm",
+        "families": ("aff3ct-intra",),
+        "diagnostics": "aff3ct-arm-diagnostics.json",
+        "refusal_key": "unusable_quality_refused",
+        "arm_kind": "fastest-quality-compatible",
+        "refusals": {
+            "refused-intra-differing": ("aff3ct-intra", [("", None, "single-frame", "spa-intra")],
+                                        "spa-intra", "differing", DIFFERING),
+            "refused-intra-missing": ("aff3ct-intra", [("", None, "single-frame", "spa-intra")],
+                                      "spa-intra", "missing", "GF2_LDPC_QUALITY is unset"),
+        },
+    },
 }
-DIAGNOSTIC_KINDS = ("worker-placement", "batch-decoder-diagnostics")
 
 
 def output(command):
@@ -107,29 +154,53 @@ def by_digest(identity):
     sys.exit(f"no file called {name} has the pinned digest {pinned}")
 
 
-def differing(code):
-    """A copy of the prepared quality record of `code` with one more error in frame 0."""
-    record = json.loads(by_digest(code["quality"]).read_text(encoding="utf-8"))
+def release():
+    """Root-relative release directory of the arms workspace."""
+    return located("package-directory", PACKAGE) / "target/release"
+
+
+def prepared(arm, key, case):
+    """The prepared quality record of `arm` on code `key`: the committed one of the gf2
+    decoder, or for an external arm one replay of the bundle of `case`."""
+    if arm not in EXTERNAL:
+        return by_digest(CODES[key]["quality"])
+    path = ROOT / SCRATCH / f"replayed-{arm}-{key}.json"
+    if not path.exists():
+        case_path = ROOT / SCRATCH / f"case-{arm}-{key}.json"
+        case_path.write_text(json.dumps(case), encoding="utf-8")
+        subprocess.run([str(ROOT / release() / "aff3ct-intra-quality"), str(case_path),
+                        str(path)], check=True)
+    return path
+
+
+def differing(arm, key, case):
+    """A copy of the prepared quality record with one more error in frame 0."""
+    record = json.loads(prepared(arm, key, case).read_text(encoding="utf-8"))
     record["frame_bit_errors"][0] += 1
-    path = ROOT / SCRATCH / f"differing-{code['quality'][0]}"
+    path = ROOT / SCRATCH / f"differing-{arm}-{key}.json"
     path.write_text(json.dumps(record), encoding="utf-8")
     return path
 
 
-def throwaway(family, base, derived, quality=lambda code: by_digest(code["quality"])):
-    """Writes the throwaway addendum and plan of `family` and returns the plan path."""
+UNUSABLE = {"differing": differing, "missing": lambda arm, key, case: None}
+
+
+def throwaway(group, family, base, derived, refusing=None, unusable=None):
+    """Writes the throwaway addendum and plan of `family` and returns the plan path.
+
+    The arm `refusing` gets its quality record from `UNUSABLE[unusable]`.
+    """
     addendum = json.loads((ROOT / located("file", base)).read_text(encoding="utf-8"))
     addendum["family"].update({
         "id": f"ldpc-batch-arms-smoke-{family}",
-        "issue": "feb60d0d",
-        "description": "Throwaway wire-contract smoke of the gf2 batch decoder arms. It "
+        "issue": group["issue"],
+        "description": f"Throwaway wire-contract smoke of the {group['subject']}. It "
                        "publishes no receipt and supports no performance claim.",
     })
     ledger = SCRATCH / f"{family}-ledger.jsonl"
     ledger.touch()
     addendum["family_wise"]["ledger_path"] = str(ledger)
 
-    release = located("package-directory", PACKAGE) / "target/release"
     arms, cells, declared_cells = {}, [], []
     for declared in addendum["cells"]:
         key = next(key for key in CODES if declared["cell_id"].startswith(key + "-"))
@@ -141,36 +212,42 @@ def throwaway(family, base, derived, quality=lambda code: by_digest(code["qualit
             if batch is not None:
                 size["timed_batch"] = batch
                 size["timed_frames"] = batch * size["workers"]
+            if group["arm_kind"] is not None:
+                cell["decoder"]["arm_kind"] = group["arm_kind"]
             declared_cells.append(cell)
+            decoder = cell["decoder"]
+            case = {
+                "bundle": str(ROOT / SCRATCH / "inputs" / code["bundle"]),
+                "code": code["code"],
+                "iteration_cap": decoder["iteration_cap"],
+                "normalization_factor": decoder["normalization"]["factor"],
+                "syndrome_stopping": decoder["stopping"]["kind"] == "syndrome",
+                "batch_size": size["timed_batch"],
+                "quality_frames": decoder["input"]["frames"],
+            }
             names = []
             for arm in (baseline, candidate):
                 executable, environment = ARMS[arm]
-                name = f"gf2-batch-{arm}-{key}"
+                build, prefix, description = ("external", *EXTERNAL[arm]) if arm in EXTERNAL else (
+                    "native", f"gf2-batch-{arm}", f"gf2 LDPC batch decoder, {arm} route")
+                name = f"{prefix}-{key}"
+                quality = (UNUSABLE[unusable] if arm == refusing else prepared)(arm, key, case)
                 arms[name] = {
-                    "build": "native",
-                    "description": f"gf2 LDPC batch decoder, {arm} route",
-                    "executable": str(ROOT / release / executable),
+                    "build": build,
+                    "description": description,
+                    "executable": str(ROOT / release() / executable),
                     "arguments": [],
-                    "environment": {**environment,
-                                    "GF2_LDPC_QUALITY": str(quality(code))},
+                    "environment": {**environment, **(
+                        {} if quality is None else {"GF2_LDPC_QUALITY": str(quality)})},
                     "rustflags": RUSTFLAGS,
                     "tuning_profile": None,
                 }
                 names.append(name)
-            decoder = cell["decoder"]
             cells.append({
                 "cell_id": cell["cell_id"],
                 "baseline_arm": names[0],
                 "candidate_arm": names[1],
-                "case": {
-                    "bundle": str(ROOT / SCRATCH / "inputs" / code["bundle"]),
-                    "code": code["code"],
-                    "iteration_cap": decoder["iteration_cap"],
-                    "normalization_factor": decoder["normalization"]["factor"],
-                    "syndrome_stopping": decoder["stopping"]["kind"] == "syndrome",
-                    "batch_size": size["timed_batch"],
-                    "quality_frames": decoder["input"]["frames"],
-                },
+                "case": case,
                 "pilot_pairs": 6,
             })
     addendum["cells"] = declared_cells
@@ -178,8 +255,8 @@ def throwaway(family, base, derived, quality=lambda code: by_digest(code["qualit
     addendum_path.write_text(json.dumps(addendum, indent=2) + "\n", encoding="utf-8")
     plan = {
         "schema": "zen3-benchmark-plan-v1",
-        "campaign_id": f"feb60d0d-smoke-{family}",
-        "issue": "feb60d0d",
+        "campaign_id": f"{group['issue']}-smoke-{family}",
+        "issue": group["issue"],
         "label": "pilot",
         "campaign_seed": 0,
         "addendum": str(addendum_path),
@@ -212,7 +289,8 @@ def diagnostics(stage):
                 report = json.loads(text)
             except ValueError:
                 continue
-            if isinstance(report, dict) and report.get("kind") in DIAGNOSTIC_KINDS:
+            if isinstance(report, dict) and report.get("kind") in (
+                    PLACEMENT, *DECODER_DIAGNOSTICS):
                 reports[report.pop("kind")] = report
         decoder = reports.get("batch-decoder-diagnostics")
         if decoder is not None:
@@ -223,11 +301,12 @@ def diagnostics(stage):
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3) or sys.argv[2:] not in ([], *([name] for name in GROUPS)):
         sys.exit(__doc__)
     if pathlib.Path.cwd() != ROOT:
         sys.exit("invoke from the worktree root")
     out_dir = pathlib.Path(sys.argv[1])
+    group = GROUPS[(sys.argv[2:] or ["gf2"])[0]]
     shutil.rmtree(SCRATCH, ignore_errors=True)
     (SCRATCH / "inputs").mkdir(parents=True)
     with tarfile.open(by_digest(ARCHIVE)) as archive:
@@ -241,8 +320,8 @@ def main():
     runner = str(ROOT / "target/release/benchmark-ab-runner")
     out_dir.mkdir(parents=True, exist_ok=True)
     observed = {}
-    for family, (base, derived) in FAMILIES.items():
-        plan = str(throwaway(family, base, derived))
+    for family in group["families"]:
+        plan = str(throwaway(group, family, *FAMILIES[family]))
         stage = SCRATCH / f"{family}-stage"
         subprocess.run([runner, "check", plan], check=True, env=environment)
         subprocess.run([runner, "smoke", plan, "--stage", str(stage), "--record",
@@ -250,23 +329,24 @@ def main():
         observed[family] = diagnostics(stage)
         dispatches = 2 * len(json.loads(pathlib.Path(plan).read_text(encoding="utf-8"))["cells"])
         if len(observed[family]) != dispatches or any(
-                set(DIAGNOSTIC_KINDS) - row.keys() for row in observed[family]):
+                PLACEMENT not in row or not set(DECODER_DIAGNOSTICS) & row.keys()
+                for row in observed[family]):
             sys.exit(f"{family}: an arm wrote no placement report or decoder diagnostics")
     refused = []
-    for family, derived in REFUSALS.items():
-        plan = str(throwaway(family, FAMILIES["single-worker"][0], derived, differing))
+    for family, (base, derived, refusing, unusable, refusal) in group["refusals"].items():
+        plan = str(throwaway(group, family, FAMILIES[base][0], derived, refusing, unusable))
         stage = SCRATCH / f"{family}-stage"
         smoke = subprocess.run([runner, "smoke", plan, "--stage", str(stage)], env=environment,
                                capture_output=True, text=True)
         event = child_diagnostics(stage)[-1]
         message = event["details"]["stderr"].splitlines()[-1]
-        if smoke.returncode == 0 or "the prepared quality records" not in message:
-            sys.exit(f"{family}: the arm accepted a differing quality record")
+        if smoke.returncode == 0 or refusal not in message:
+            sys.exit(f"{family}: the arm accepted a {unusable} quality record")
         refused.append({"cell_id": event["case"]["cell_id"], "arm": event["case"]["arm"],
                         "error": message})
-    path = out_dir / "arm-diagnostics.json"
+    path = out_dir / group["diagnostics"]
     path.write_text(json.dumps({"schema": "ldpc-batch-arms-diagnostics-v1", **observed,
-                                "differing_quality_refused": refused},
+                                group["refusal_key"]: refused},
                                indent=2) + "\n", encoding="utf-8")
     print(path)
 

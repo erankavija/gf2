@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
-# Profile the frozen dense-parity baseline through its existing campaign arm.
+# Profile frozen dense-parity cells through the existing campaign arm.
 # prepare is untimed; window requires the scheduled full-host benchmark window.
+#
+# Usage: run-dense-profile.sh prepare|window [--cases <file>]
+#
+# Without --cases the session is the frozen dense-parity baseline's. A case
+# file names another session: one `out=<directory>` line, one `title=<text>`
+# line and one `family|campaign addendum|cell|route|build` line per case. Its
+# cells are profiled under `<cell>.<route>`, so one cell serves both its arms.
 set -Eeuo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,50 +29,92 @@ MEMORY_EVENTS=L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misse
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 
+ISOLATED="${CAMPAIGNS}/dense-isolated-fused-parity.json"
+ALLOCATED="${CAMPAIGNS}/dense-allocated-matvec.json"
+# family|campaign addendum|cell|route|build|label
 CASES=(
-    '2037941f-dense-isolated-fused-parity|and-popcnt-8w-warm|and-popcnt-a|simd'
-    '2037941f-dense-isolated-fused-parity|and-popcnt-64w-warm|and-popcnt-a|simd'
-    '2037941f-dense-allocated-matvec|matvec-r1024-8w-warm|matvec-a|simd'
-    '2037941f-dense-allocated-matvec|matvec-r1024-64w-warm|matvec-a|simd'
-    '2037941f-dense-allocated-matvec|matvec-r1024-64w-streaming|matvec-a|simd'
-    '2037941f-dense-allocated-matvec|matvec-r1024-8w-scalar-reference-warm|matvec-scalar-reference|scalar'
+    "2037941f-dense-isolated-fused-parity|${ISOLATED}|and-popcnt-8w-warm|and-popcnt-a|simd|and-popcnt-8w-warm"
+    "2037941f-dense-isolated-fused-parity|${ISOLATED}|and-popcnt-64w-warm|and-popcnt-a|simd|and-popcnt-64w-warm"
+    "2037941f-dense-allocated-matvec|${ALLOCATED}|matvec-r1024-8w-warm|matvec-a|simd|matvec-r1024-8w-warm"
+    "2037941f-dense-allocated-matvec|${ALLOCATED}|matvec-r1024-64w-warm|matvec-a|simd|matvec-r1024-64w-warm"
+    "2037941f-dense-allocated-matvec|${ALLOCATED}|matvec-r1024-64w-streaming|matvec-a|simd|matvec-r1024-64w-streaming"
+    "2037941f-dense-allocated-matvec|${ALLOCATED}|matvec-r1024-8w-scalar-reference-warm|matvec-scalar-reference|scalar|matvec-r1024-8w-scalar-reference-warm"
 )
+TITLE=''
+CASE_FILE=''
 
 mode="${1:-}"
 [[ "${mode}" == prepare || "${mode}" == window || "${mode}" == --case ]] || {
-    echo "usage: $0 prepare|window" >&2
+    sed -n '2,10p' "${BASH_SOURCE[0]}" >&2
     exit 2
 }
+if [[ "${mode}" == --case ]]; then
+    OUT="$2"
+elif [[ "${2:-}" == --cases ]]; then
+    CASE_FILE="${3:?--cases needs a file}"
+    CASES=()
+    OUT=''
+    while IFS= read -r line; do
+        case "${line}" in
+            out=*) OUT="${line#out=}" ;;
+            title=*) TITLE="${line#title=}" ;;
+            ''|'#'*) ;;
+            *) IFS='|' read -r family addendum cell route build <<<"${line}"
+               CASES+=("${family}|${addendum}|${cell}|${route}|${build}|${cell}.${route}") ;;
+        esac
+    done <"${CASE_FILE}"
+    [[ -n "${OUT}" && ${#CASES[@]} -gt 0 ]] || {
+        echo "${CASE_FILE} names no output directory or no case" >&2
+        exit 2
+    }
+elif [[ $# -gt 1 ]]; then
+    sed -n '2,10p' "${BASH_SOURCE[0]}" >&2
+    exit 2
+fi
+if [[ "${mode}" == window ]]; then
+    [[ "${GF2_BENCH_WINDOW:-0}" == 1 ]] || {
+        echo 'profiling runs only in the scheduled benchmark window' >&2
+        exit 2
+    }
+    # The window unit starts from a tree no session has built.
+    "${SURVEY}/run-dense-harness.sh" arms
+fi
 [[ -x "${ARM}" && -x "${SCALAR_ARM}" && -x "${TOOL}" ]] || {
     echo 'release dense arms are absent; run run-dense-harness.sh build first' >&2
     exit 2
 }
 "${TOOL}" pins >/dev/null
-for family in 2037941f-dense-isolated-fused-parity 2037941f-dense-allocated-matvec; do
-    "${TOOL}" verify --family "${family}" --addendum "${CAMPAIGNS}/${family#2037941f-}.json" >/dev/null
+ADDENDA=()
+for item in "${CASES[@]}"; do
+    IFS='|' read -r family addendum _ <<<"${item}"
+    [[ " ${ADDENDA[*]} " == *" ${addendum} "* ]] && continue
+    "${TOOL}" verify --family "${family}" --addendum "${addendum}" >/dev/null
+    ADDENDA+=("${addendum}")
 done
 
 cpu="$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')"
 request() {
-    local family="$1" cell="$2" arm="$3"
-    "${TOOL}" profile-request --family "${family}" \
-        --addendum "${CAMPAIGNS}/${family#2037941f-}.json" \
+    local family="$1" addendum="$2" cell="$3" arm="$4"
+    "${TOOL}" profile-request --family "${family}" --addendum "${addendum}" \
         --cell "${cell}" --arm "${arm}" --cpu "${cpu}"
 }
 if [[ "${mode}" == prepare ]]; then
     for item in "${CASES[@]}"; do
-        IFS='|' read -r family cell route build <<<"${item}"
-        request "${family}" "${cell}" "${route}" >/dev/null
-        echo "${cell}: ${route} (${build})"
+        IFS='|' read -r family addendum cell route build label <<<"${item}"
+        request "${family}" "${addendum}" "${cell}" "${route}" >/dev/null
+        echo "${label}: ${route} (${build})"
     done
     echo 'non-timed profile preparation complete' >&2
     exit 0
 fi
 
 [[ "${GF2_BENCH_WINDOW:-0}" == 1 ]] || {
-    echo 'profiling runs only in the scheduled benchmark window' >&2
+    echo 'a profile case runs only in the scheduled benchmark window' >&2
     exit 2
 }
+# The baseline session attributes an accepted baseline; a case file's session
+# states its own precondition in its plan.
+[[ -n "${CASE_FILE}" || "${mode}" == --case ]] ||
 for family in 2037941f-dense-isolated-fused-parity 2037941f-dense-allocated-matvec; do
     receipt="dev/bench_results/2037941f/${family}/v4-r1-pilot"
     [[ -f "${receipt}/receipt.json" && -f "${receipt}/acceptance-summary.json" ]] || {
@@ -93,14 +142,22 @@ trap 'on_exit "$?"' EXIT
 identity="arm=$(sha256sum "${ARM}" | cut -d' ' -f1) scalar=$(sha256sum "${SCALAR_ARM}" | cut -d' ' -f1) tool=$(sha256sum "${TOOL}" | cut -d' ' -f1) script=$(sha256sum "$0" | cut -d' ' -f1)"
 identity+=" summary=$(sha256sum "${SURVEY}/summarize-dense-profile.py" | cut -d' ' -f1)"
 identity+=" closure=$(sha256sum "${SURVEY}/dense-producing-inputs.json" | cut -d' ' -f1)"
-identity+=" isolated-addendum=$(sha256sum "${CAMPAIGNS}/dense-isolated-fused-parity.json" | cut -d' ' -f1)"
-identity+=" allocated-addendum=$(sha256sum "${CAMPAIGNS}/dense-allocated-matvec.json" | cut -d' ' -f1)"
+if [[ -z "${CASE_FILE}" && "${mode}" != --case ]]; then
+    identity+=" isolated-addendum=$(sha256sum "${ISOLATED}" | cut -d' ' -f1)"
+    identity+=" allocated-addendum=$(sha256sum "${ALLOCATED}" | cut -d' ' -f1)"
+elif [[ -n "${CASE_FILE}" ]]; then
+    identity+=" cases=$(sha256sum "${CASE_FILE}" | cut -d' ' -f1)"
+    for addendum in "${ADDENDA[@]}"; do
+        identity+=" addendum=$(sha256sum "${addendum}" | cut -d' ' -f1)"
+    done
+fi
 first="$(sed -n 's/^identity //p' "${LOG}" | head -n 1)"
-[[ -z "${first}" || "${first}" == "${identity}" ]] || {
+# A case runs inside the session whose parent wrote and checked the identity.
+[[ "${mode}" == --case || -z "${first}" || "${first}" == "${identity}" ]] || {
     echo 'profile producing identity changed; resume refused' >&2
     exit 2
 }
-[[ -n "${first}" ]] || echo "identity ${identity}" >>"${LOG}"
+[[ "${mode}" == --case || -n "${first}" ]] || echo "identity ${identity}" >>"${LOG}"
 echo "profile execution log: ${OUT}/execution.log"
 if [[ ! -e "${OUT}/host.txt" ]]; then
     {
@@ -132,23 +189,23 @@ fi
 } >>"${LOG}"
 
 profile_case() {
-    local family="$1" cell="$2" route="$3" build="$4"
+    local family="$1" addendum="$2" cell="$3" route="$4" build="$5" label="$6"
     local binary="${ARM}"
     [[ "${build}" == scalar ]] && binary="${SCALAR_ARM}"
-    if rg -q "^cell ${cell} done " "${LOG}"; then
+    if rg -q -F "cell ${label} done " "${LOG}"; then
         return
     fi
     local attempt=1
-    while [[ -e "${OUT}/${cell}/attempt-${attempt}" ]]; do
+    while [[ -e "${OUT}/${label}/attempt-${attempt}" ]]; do
         attempt=$((attempt + 1))
     done
-    local dir="${OUT}/${cell}/attempt-${attempt}"
+    local dir="${OUT}/${label}/attempt-${attempt}"
     mkdir -p "${dir}"
     printf '%q profile-request --family %q --addendum %q --cell %q --arm %q --cpu %q > %q\n' \
-        "${TOOL}" "${family}" "${CAMPAIGNS}/${family#2037941f-}.json" \
+        "${TOOL}" "${family}" "${addendum}" \
         "${cell}" "${route}" "${cpu}" "${dir}/request.json" >>"${dir}/commands.txt"
-    request "${family}" "${cell}" "${route}" >"${dir}/request.json"
-    echo "cell ${cell} start $(date -u +%Y-%m-%dT%H:%M:%SZ) attempt=${attempt} request=$(sha256sum "${dir}/request.json" | cut -d' ' -f1) arm=$(sha256sum "${binary}" | cut -d' ' -f1)" >>"${LOG}"
+    request "${family}" "${addendum}" "${cell}" "${route}" >"${dir}/request.json"
+    echo "cell ${label} start $(date -u +%Y-%m-%dT%H:%M:%SZ) attempt=${attempt} request=$(sha256sum "${dir}/request.json" | cut -d' ' -f1) arm=$(sha256sum "${binary}" | cut -d' ' -f1)" >>"${LOG}"
     printf 'GF2_DENSE_ROUTE=%q GF2_TUNING_FRESH_CASE=child-v2 taskset -c %q %q < %q\n' \
         "${route}" "${cpu}" "${binary}" "${dir}/request.json" >>"${dir}/commands.txt"
     local rep events kind
@@ -177,25 +234,26 @@ profile_case() {
             >"${dir}/cycles-annotate-${rep}.txt"
         rm "${dir}/cycles-${rep}.data"
     done
-    echo "cell ${cell} done $(date -u +%Y-%m-%dT%H:%M:%SZ) attempt=${attempt}" >>"${LOG}"
+    echo "cell ${label} done $(date -u +%Y-%m-%dT%H:%M:%SZ) attempt=${attempt}" >>"${LOG}"
 }
 
 if [[ "${mode}" == --case ]]; then
-    profile_case "$3" "$4" "$5" "$6"
+    profile_case "$3" "$4" "$5" "$6" "$7" "$8"
     exit 0
 fi
 for item in "${CASES[@]}"; do
-    IFS='|' read -r family cell route build <<<"${item}"
+    IFS='|' read -r family addendum cell route build label <<<"${item}"
     {
         printf 'wrapper command='
         printf '%q ' "${FLOCK}" --full-host "$0" --case "${OUT}" \
-            "${family}" "${cell}" "${route}" "${build}"
+            "${family}" "${addendum}" "${cell}" "${route}" "${build}" "${label}"
         echo
     } >>"${LOG}"
     GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "${FLOCK}" --full-host "$0" --case "${OUT}" \
-        "${family}" "${cell}" "${route}" "${build}"
+        "${family}" "${addendum}" "${cell}" "${route}" "${build}" "${label}"
 done
-python3 -B "${SURVEY}/summarize-dense-profile.py" "${OUT}" >"${OUT}/profile-summary.md"
+python3 -B "${SURVEY}/summarize-dense-profile.py" "${OUT}" ${TITLE:+"${TITLE}"} \
+    >"${OUT}/profile-summary.md"
 if ! rg -q '^complete ' "${LOG}"; then
     echo "complete $(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"${LOG}"
 fi

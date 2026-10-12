@@ -1,0 +1,18 @@
+# Dense arm release assembly
+# binary: target/e1f9a78f-arms/release/dense-arm
+# sha256: bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+# rustc: rustc 1.95.0 (59807616e 2026-04-14)
+# objdump: GNU objdump (GNU Binutils) 2.47
+# label symbols bytes source-pattern
+public-matvec 1 164 gf2_core::matrix::BitMatrix::matvec
+simd-matvec 1 571 gf2_core::matrix::BitMatrix::matvec_simd
+scalar-matvec 1 1048 gf2_core::matrix::BitMatrix::matvec_scalar
+avx2-fused 1 979 gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+bundle-entry 1 5 gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+retained-output 4 864 dense_parity_harness::routes::OutputSink
+arm-body 5 1799 dense_arm::run::{{closure}}
+parity-entry 0 0 gf2_core::matrix::BitMatrix::matvec_parity_kernel
+parity-matvec 1 570 gf2_core::matrix::BitMatrix::matvec_simd_parity
+avx2-parity 1 390 gf2_kernels_simd::x86::avx2::avx2_and_parity
+parity-bundle-entry 1 5 gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+pinned-entry 1 168 gf2_core::matrix::BitMatrix::matvec_with_route

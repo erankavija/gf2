@@ -1,0 +1,66 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2229058443
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    87.80%          2482  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_parity
+     7.19%           203  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd_parity
+     3.61%           102  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_parity_fn
+     0.32%             9  dense-arm             [.] dense_arm::run::{{closure}}
+     0.21%             6  libc.so.6             [.] malloc
+     0.07%             2  [unknown]             [k] 0xffffffffa68015f0
+     0.07%             2  libc.so.6             [.] 0x00000000000a4ffe
+     0.07%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.05%             2  [unknown]             [k] 0xffffffffa7d61c26
+     0.04%             1  libc.so.6             [.] 0x00000000000a7273
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e5b5
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d97
+     0.04%             1  libc.so.6             [.] 0x00000000000a5d0f
+     0.04%             1  libc.so.6             [.] 0x00000000000a629b
+     0.04%             1  libc.so.6             [.] 0x00000000000a6208
+     0.04%             1  libc.so.6             [.] 0x00000000000a6196
+     0.04%             1  [unknown]             [k] 0xffffffffa7d929f4
+     0.04%             1  libc.so.6             [.] 0x00000000000a79a1
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e584
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6cd5
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e2a
+     0.04%             1  [unknown]             [k] 0xffffffffa6b4928f
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e23
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6c34
+     0.02%             1  ld-linux-x86-64.so.2  [.] 0x00000000000165ef
+     0.02%             1  [unknown]             [k] 0xffffffffa6c5cb58
+     0.01%             1  libc.so.6             [.] 0x00000000000a6701
+     0.01%             1  [unknown]             [k] 0xffffffffa6ede405
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed540d
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed6593
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a56
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61e78
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016526
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000019fb7
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5eec
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3315d
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0265
+     0.00%             1  [unknown]             [k] 0xffffffffa6801280
+     0.00%             1  [unknown]             [k] 0xffffffffa6800084
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1b1af
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6801cf0
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa690410b
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede400
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c405
+
+
+#
+# (Tip: To see callchains in a more compact form: perf report -g folded)
+#

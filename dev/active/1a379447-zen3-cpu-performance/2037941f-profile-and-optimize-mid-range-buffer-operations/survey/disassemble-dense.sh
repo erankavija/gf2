@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-# Release assembly of the frozen dense-parity baseline arms.
+# Release assembly of the dense-parity arms.
+#
+# Usage: disassemble-dense.sh [--out <directory> [<label>|<symbol> ...]]
+#
+# Without arguments the record is the frozen baseline's, beside this script.
+# `--out` writes the same record for the current arms into another directory
+# and appends the given symbols to the baseline's.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
@@ -8,6 +14,16 @@ REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
     exit 2
 }
 OUT="${HERE}/asm/dense-baseline"
+TITLE='Dense baseline release assembly'
+EXTRA=()
+if [[ "${1:-}" == --out ]]; then
+    OUT="${REPO}/${2:?--out needs a directory relative to the root}"
+    TITLE='Dense arm release assembly'
+    EXTRA=("${@:3}")
+elif [[ $# -gt 0 ]]; then
+    sed -n '2,8p' "${BASH_SOURCE[0]}" >&2
+    exit 2
+fi
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 mkdir -p "${OUT}"
@@ -20,6 +36,7 @@ SYMBOLS=(
     'bundle-entry|gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn'
     'retained-output|dense_parity_harness::routes::OutputSink'
     'arm-body|dense_arm::run::{{closure}}'
+    "${EXTRA[@]}"
 )
 for build in simd scalar; do
     binary="target/e1f9a78f-$([[ "${build}" == simd ]] && echo arms || echo scalar-arm)/release/dense-arm"
@@ -28,7 +45,7 @@ for build in simd scalar; do
     mkdir -p "${dir}"
     digest="$(sha256sum "${binary}" | cut -d' ' -f1)"
     {
-        echo "# Dense baseline release assembly"
+        echo "# ${TITLE}"
         echo "# binary: ${binary}"
         echo "# sha256: ${digest}"
         echo "# rustc: $(rustc --version)"

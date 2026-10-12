@@ -64,11 +64,13 @@ pub enum Route {
     M4riPeerGf2,
     /// Allocated `BitMatrix::matvec_with_route` pinned to the scalar lane.
     MatvecLaneScalar,
+    /// Allocated `BitMatrix::matvec_parity_kernel`.
+    MatvecLaneParity,
 }
 
 impl Route {
     /// Every route, in declaration order.
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::AndPopcntA,
         Self::AndPopcntB,
         Self::MatvecA,
@@ -76,6 +78,7 @@ impl Route {
         Self::MatvecScalarReference,
         Self::M4riPeerGf2,
         Self::MatvecLaneScalar,
+        Self::MatvecLaneParity,
     ];
 
     /// The arm name the plan gives this route.
@@ -88,6 +91,7 @@ impl Route {
             Self::MatvecScalarReference => "matvec-scalar-reference",
             Self::M4riPeerGf2 => "m4ri-peer-gf2",
             Self::MatvecLaneScalar => "matvec-lane-scalar",
+            Self::MatvecLaneParity => "matvec-lane-parity",
         }
     }
 
@@ -98,7 +102,8 @@ impl Route {
             Self::MatvecA
             | Self::MatvecB
             | Self::MatvecScalarReference
-            | Self::MatvecLaneScalar => Question::AllocatedMatvec,
+            | Self::MatvecLaneScalar
+            | Self::MatvecLaneParity => Question::AllocatedMatvec,
             Self::M4riPeerGf2 => Question::MatvecVsM4ri,
         }
     }
@@ -168,13 +173,17 @@ pub fn public_matvec(matrix: &BitMatrix, vector: &BitVec) -> BitVec {
     black_box(matrix).matvec(black_box(vector))
 }
 
-/// One allocated product on `route`: the public `matvec`, or the public
-/// `matvec_with_route` on the lane the route pins.
+/// One allocated product on `route`: the public `matvec`, the public
+/// `matvec_with_route` on the lane the route pins, or the public
+/// `matvec_parity_kernel`.
 ///
 /// The pinned lane passes the barrier, so the entry keeps its route match and
 /// reaches the lane body `matvec` reaches rather than a specialised copy.
 #[inline]
 pub fn route_matvec(route: Route, matrix: &BitMatrix, vector: &BitVec) -> BitVec {
+    if route == Route::MatvecLaneParity {
+        return black_box(matrix).matvec_parity_kernel(black_box(vector));
+    }
     match route.pinned_lane() {
         Some(lane) => black_box(matrix).matvec_with_route(black_box(vector), black_box(lane)),
         None => public_matvec(matrix, vector),
@@ -283,8 +292,12 @@ impl ShapeFacts {
         lane_name(self.route)
     }
 
-    /// The lane `route` executes: its pinned lane, or the resolved one.
+    /// The lane `route` executes: the parity kernel, its pinned lane, or the
+    /// resolved one.
     pub fn executed_lane(self, route: Route) -> String {
+        if route == Route::MatvecLaneParity {
+            return "parity-kernel-lane".to_owned();
+        }
         match route.pinned_lane() {
             Some(lane) => format!("{}-pinned", lane_name(lane)),
             None => self.lane().to_owned(),
@@ -351,6 +364,11 @@ pub fn verify_lane(facts: ShapeFacts, route: Route) -> Result<(), String> {
     }
     if wanted == MatvecRoute::Simd && !facts.bundle {
         return Err("the host detected no kernel bundle, so the SIMD lane is unavailable".into());
+    }
+    // Without the bundle the parity-kernel entry runs the scalar lane.
+    if route == Route::MatvecLaneParity && !facts.bundle {
+        return Err("the host detected no kernel bundle, so the parity kernel is unavailable"
+            .into());
     }
     Ok(())
 }

@@ -1,0 +1,132 @@
+identity arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18 scalar=1cfb254df63744dc43e0130bec0fa2eb54e3994874ef21de8694a08722601509 tool=b40f04a230c058a0e4b1247baf239510178b4afdde21c1e6bcbd207e40a792fd script=5cad65580451bb1cb8cf97a750f7f49f00ae1e74b92405417b01d5cf09e960fd summary=b510910b673164f5a7dcffee6f3ec0a1e1287c87e4627955e028b7402212e9c1 closure=eb5fdd85af53d97ad505c6475d5b1de6c5e65109e95a515780a32438a79696ff cases=88361e6bcc65f6dc6fdcef2e3931a661adba261181e548827152ec5686597908 addendum=58d932380a1bf008680dc4aefee9f209735dc4ecbb5784f231e5e9254176b5aa addendum=c82f752c91eacd1b5f45770e29692c82cb941ca79b49b3328abcca323c08140c
+session start 2026-10-08T23:07:09Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh window --cases dev/active/1a379447-zen3-cpu-performance/7dbe1393/survey/profile-cases.txt 
+cpu=0 affinity=pid 1668690's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-9w-warm matvec-lane-scalar simd lane-r1024-9w-warm.matvec-lane-scalar 
+session start 2026-10-08T23:07:09Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-9w-warm matvec-lane-scalar simd lane-r1024-9w-warm.matvec-lane-scalar 
+cpu=0 affinity=pid 1668887's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell lane-r1024-9w-warm.matvec-lane-scalar start 2026-10-08T23:07:09Z attempt=1 request=7005e43c97e704d920f2e362a8bbfd725ffe37fbf3f31f62908ebdf3bd4d5d18 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell lane-r1024-9w-warm.matvec-lane-scalar done 2026-10-08T23:07:25Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-9w-warm matvec-a simd ragged-r1024-9w-warm.matvec-a 
+session start 2026-10-08T23:07:26Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-9w-warm matvec-a simd ragged-r1024-9w-warm.matvec-a 
+cpu=0 affinity=pid 1670749's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-9w-warm.matvec-a start 2026-10-08T23:07:26Z attempt=1 request=61697e02089ea6a9b6078ef8ad279e6119553a40160a50417ddab14a130acfdc arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-9w-warm.matvec-a done 2026-10-08T23:07:41Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-9w-warm matvec-lane-parity simd ragged-r1024-9w-warm.matvec-lane-parity 
+session start 2026-10-08T23:07:41Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-9w-warm matvec-lane-parity simd ragged-r1024-9w-warm.matvec-lane-parity 
+cpu=0 affinity=pid 1671458's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-9w-warm.matvec-lane-parity start 2026-10-08T23:07:41Z attempt=1 request=b9e46c3bee6214dbd2ddd74d1c1b7ed0457123547bfc619fc8e4ef73f9354a7f arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-9w-warm.matvec-lane-parity done 2026-10-08T23:07:57Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-10w-warm matvec-lane-scalar simd lane-r1024-10w-warm.matvec-lane-scalar 
+session start 2026-10-08T23:07:57Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-10w-warm matvec-lane-scalar simd lane-r1024-10w-warm.matvec-lane-scalar 
+cpu=0 affinity=pid 1673776's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell lane-r1024-10w-warm.matvec-lane-scalar start 2026-10-08T23:07:57Z attempt=1 request=8a21f4a6cb7fb1787cb6f9877fb647ca3ededb872fa096f7ab4d5c4dc26a31d7 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell lane-r1024-10w-warm.matvec-lane-scalar done 2026-10-08T23:08:13Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-10w-warm matvec-a simd ragged-r1024-10w-warm.matvec-a 
+session start 2026-10-08T23:08:13Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-10w-warm matvec-a simd ragged-r1024-10w-warm.matvec-a 
+cpu=0 affinity=pid 1675028's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-10w-warm.matvec-a start 2026-10-08T23:08:13Z attempt=1 request=26af0ea6594d907ff8a03f0ce8a0c2a97165987046805f3763efc886bc04e913 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-10w-warm.matvec-a done 2026-10-08T23:08:29Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-10w-warm matvec-lane-parity simd ragged-r1024-10w-warm.matvec-lane-parity 
+session start 2026-10-08T23:08:29Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-10w-warm matvec-lane-parity simd ragged-r1024-10w-warm.matvec-lane-parity 
+cpu=0 affinity=pid 1677386's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-10w-warm.matvec-lane-parity start 2026-10-08T23:08:29Z attempt=1 request=8334aff3150d0c8ad71fadeda9f49535491bd5d6cd99cf3393a4fbab6a0aa298 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-10w-warm.matvec-lane-parity done 2026-10-08T23:08:45Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-62w-warm matvec-lane-scalar simd lane-r1024-62w-warm.matvec-lane-scalar 
+session start 2026-10-08T23:08:45Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-62w-warm matvec-lane-scalar simd lane-r1024-62w-warm.matvec-lane-scalar 
+cpu=0 affinity=pid 1679522's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell lane-r1024-62w-warm.matvec-lane-scalar start 2026-10-08T23:08:45Z attempt=1 request=4736370f51b2dd7205919811ef82bd0b943938dbce4b4c919076854d4af8f463 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell lane-r1024-62w-warm.matvec-lane-scalar done 2026-10-08T23:09:01Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-62w-warm matvec-a simd ragged-r1024-62w-warm.matvec-a 
+session start 2026-10-08T23:09:01Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-62w-warm matvec-a simd ragged-r1024-62w-warm.matvec-a 
+cpu=0 affinity=pid 1680234's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-62w-warm.matvec-a start 2026-10-08T23:09:01Z attempt=1 request=65ea1b6e90bbb0833ef199b8e22941e4a3910e329fb4fee8c9f0361495510e44 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-62w-warm.matvec-a done 2026-10-08T23:09:18Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-62w-warm matvec-lane-parity simd ragged-r1024-62w-warm.matvec-lane-parity 
+session start 2026-10-08T23:09:18Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-62w-warm matvec-lane-parity simd ragged-r1024-62w-warm.matvec-lane-parity 
+cpu=0 affinity=pid 1683389's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-62w-warm.matvec-lane-parity start 2026-10-08T23:09:18Z attempt=1 request=d3861ed0404613177729fe6a2d938162ad197e3366049c19ce3d50798b382268 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-62w-warm.matvec-lane-parity done 2026-10-08T23:09:34Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-63w-warm matvec-lane-scalar simd lane-r1024-63w-warm.matvec-lane-scalar 
+session start 2026-10-08T23:09:34Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-63w-warm matvec-lane-scalar simd lane-r1024-63w-warm.matvec-lane-scalar 
+cpu=0 affinity=pid 1684957's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell lane-r1024-63w-warm.matvec-lane-scalar start 2026-10-08T23:09:34Z attempt=1 request=52087d0ce723b3682825a41f62897476409fd0e2af4b9e9af504558938add3cf arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell lane-r1024-63w-warm.matvec-lane-scalar done 2026-10-08T23:09:52Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-63w-warm matvec-a simd ragged-r1024-63w-warm.matvec-a 
+session start 2026-10-08T23:09:52Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-63w-warm matvec-a simd ragged-r1024-63w-warm.matvec-a 
+cpu=0 affinity=pid 1686352's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-63w-warm.matvec-a start 2026-10-08T23:09:52Z attempt=1 request=f040de05b0acba211f4ced407612ae3390894463cf2c6beb6e4af0c4cc0a5b24 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-63w-warm.matvec-a done 2026-10-08T23:10:09Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-63w-warm matvec-lane-parity simd ragged-r1024-63w-warm.matvec-lane-parity 
+session start 2026-10-08T23:10:09Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-63w-warm matvec-lane-parity simd ragged-r1024-63w-warm.matvec-lane-parity 
+cpu=0 affinity=pid 1686627's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-63w-warm.matvec-lane-parity start 2026-10-08T23:10:09Z attempt=1 request=cffc1e50edc177423316dd2284357471e6dd8120b5a07fd05de76373c155cfe0 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-63w-warm.matvec-lane-parity done 2026-10-08T23:10:29Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-66w-warm matvec-lane-scalar simd lane-r1024-66w-warm.matvec-lane-scalar 
+session start 2026-10-08T23:10:29Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-66w-warm matvec-lane-scalar simd lane-r1024-66w-warm.matvec-lane-scalar 
+cpu=0 affinity=pid 1687168's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell lane-r1024-66w-warm.matvec-lane-scalar start 2026-10-08T23:10:29Z attempt=1 request=deb7a30c01467c48f9fea97822839dffe9fefcfb37a7ebd3039af1ecbd057cbf arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell lane-r1024-66w-warm.matvec-lane-scalar done 2026-10-08T23:10:46Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-66w-warm matvec-a simd ragged-r1024-66w-warm.matvec-a 
+session start 2026-10-08T23:10:46Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-66w-warm matvec-a simd ragged-r1024-66w-warm.matvec-a 
+cpu=0 affinity=pid 1688007's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-66w-warm.matvec-a start 2026-10-08T23:10:46Z attempt=1 request=57a3c33ea606b63c99bbc6cd872c66a3d866ba64d0c2432559a3244e7101f3fa arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-66w-warm.matvec-a done 2026-10-08T23:11:03Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-66w-warm matvec-lane-parity simd ragged-r1024-66w-warm.matvec-lane-parity 
+session start 2026-10-08T23:11:03Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-66w-warm matvec-lane-parity simd ragged-r1024-66w-warm.matvec-lane-parity 
+cpu=0 affinity=pid 1690563's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-66w-warm.matvec-lane-parity start 2026-10-08T23:11:03Z attempt=1 request=55c3f3880a1a59bf846a857f96c8bfbd9a0d1c582a0ef110420f26ac36c5aaed arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-66w-warm.matvec-lane-parity done 2026-10-08T23:11:20Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-32w-warm matvec-lane-scalar simd lane-r1024-32w-warm.matvec-lane-scalar 
+session start 2026-10-08T23:11:20Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 4337c02e-matvec-simd-threshold dev/active/1a379447-zen3-cpu-performance/4337c02e/campaigns/matvec-simd-threshold.json lane-r1024-32w-warm matvec-lane-scalar simd lane-r1024-32w-warm.matvec-lane-scalar 
+cpu=0 affinity=pid 1696458's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell lane-r1024-32w-warm.matvec-lane-scalar start 2026-10-08T23:11:20Z attempt=1 request=733d9e3f73c4e458b4aaae1ea11a12e34acfba7e9a9be385054b675d70f4795f arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell lane-r1024-32w-warm.matvec-lane-scalar done 2026-10-08T23:11:37Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-32w-control-warm matvec-a simd ragged-r1024-32w-control-warm.matvec-a 
+session start 2026-10-08T23:11:37Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-32w-control-warm matvec-a simd ragged-r1024-32w-control-warm.matvec-a 
+cpu=0 affinity=pid 1698746's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-32w-control-warm.matvec-a start 2026-10-08T23:11:37Z attempt=1 request=6380a787cbbe7a1d019befda21e6deb0075b0596e042aa6dd5a34dc6393436d1 arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-32w-control-warm.matvec-a done 2026-10-08T23:11:53Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-32w-control-warm matvec-lane-parity simd ragged-r1024-32w-control-warm.matvec-lane-parity 
+session start 2026-10-08T23:11:53Z
+command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/7dbe1393/ragged-tail-profile 7dbe1393-matvec-ragged-tail dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json ragged-r1024-32w-control-warm matvec-lane-parity simd ragged-r1024-32w-control-warm.matvec-lane-parity 
+cpu=0 affinity=pid 1704285's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell ragged-r1024-32w-control-warm.matvec-lane-parity start 2026-10-08T23:11:53Z attempt=1 request=b21c05d3725ec4efa5dbf90ce9d4eea71817d22238f2ce55850e4552bc0a858c arm=bc063260827669db4459f94c25b1d89fb298610b50fbe331b9c5514af5a08e18
+cell ragged-r1024-32w-control-warm.matvec-lane-parity done 2026-10-08T23:12:10Z attempt=1
+complete 2026-10-08T23:12:10Z

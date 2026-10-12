@@ -1,0 +1,5 @@
+dev/bench_results/63bad95d/63bad95d-native-matvec-vs-m4ri/v4-r1-pilot/receipt.json	receipt	Native M4RI comparator pilot receipt
+dev/bench_results/63bad95d/63bad95d-native-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md	receipt	Native M4RI comparator pilot acceptance summary
+dev/bench_results/63bad95d/native-matvec-vs-m4ri-ledger.jsonl	ledger	Native M4RI comparator family ledger
+dev/active/1a379447-zen3-cpu-performance/63bad95d/native-m4ri-pilot-resolution.md	reference	Native M4RI pilot resolution record (resolution-insufficient)
+dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/freeze-m4ri-confirmation.sh	tool	M4RI family confirmation freeze script

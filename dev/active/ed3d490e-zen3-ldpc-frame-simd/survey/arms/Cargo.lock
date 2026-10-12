@@ -345,6 +345,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
+name = "ldpc-aff3ct-intra-arm"
+version = "0.0.0"
+dependencies = [
+ "cc",
+ "ldpc-survey-harness",
+ "ldpc-throughput-harness",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "ldpc-batch-arms"
 version = "0.0.0"
 dependencies = [
