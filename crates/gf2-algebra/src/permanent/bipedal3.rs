@@ -75,10 +75,25 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
         bipedal3_multiword::N_MAX_MULTIWORD,
         n
     );
+    match kernel_for_dimension(n) {
+        Bipedal3Kernel::Singleword => permanent_bipedal3_singleword(mat),
+        Bipedal3Kernel::Multiword => bipedal3_multiword::permanent_bipedal3_multiword(mat),
+    }
+}
+
+/// Kernel [`permanent_bipedal3`] evaluates a matrix of a given dimension with.
+#[derive(Debug, PartialEq, Eq)]
+enum Bipedal3Kernel {
+    Singleword,
+    Multiword,
+}
+
+/// One bipedal word holds the column sum of at most 63 rows.
+fn kernel_for_dimension(n: usize) -> Bipedal3Kernel {
     if n <= 63 {
-        permanent_bipedal3_singleword(mat)
+        Bipedal3Kernel::Singleword
     } else {
-        bipedal3_multiword::permanent_bipedal3_multiword(mat)
+        Bipedal3Kernel::Multiword
     }
 }
 
@@ -875,12 +890,94 @@ mod tests {
         let _ = permanent_bipedal3_singleword(&m);
     }
 
-    /// Checks only that the dispatcher's multi-word range
-    /// `64..=N_MAX_MULTIWORD` is non-empty.
+    #[test]
+    #[should_panic(expected = "permanent_bipedal3_singleword: matrix must be square")]
+    fn test_permanent_bipedal3_singleword_panics_on_non_square() {
+        let data = vec![Fp::<3>::new(0); 3 * 5];
+        let m = Bipedal3Matrix::from_row_major(&data, 3, 5);
+        let _ = permanent_bipedal3_singleword(&m);
+    }
+
+    /// The direct SIMD kernel takes its function bundle from the host, so
+    /// its shape checks are reachable only where AVX2 is detected.
+    #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+    #[test]
+    fn test_permanent_bipedal3_singleword_simd_panics_on_invalid_shape() {
+        let Some(fns) = maybe_bipedal_avx2() else {
+            eprintln!("AVX2 not detected: the direct SIMD kernel is unreachable on this host");
+            return;
+        };
+        for (rows, cols, expected) in [
+            (3, 5, "matrix must be square"),
+            (64, 64, "single-u64 fast path requires n <= 63"),
+        ] {
+            let data = vec![Fp::<3>::new(0); rows * cols];
+            let m = Bipedal3Matrix::from_row_major(&data, rows, cols);
+            let payload = std::panic::catch_unwind(|| permanent_bipedal3_singleword_simd(&m, &fns))
+                .expect_err("an invalid shape must panic");
+            let message = payload
+                .downcast_ref::<String>()
+                .expect("the shape checks panic with a formatted message");
+            assert!(
+                message.contains("permanent_bipedal3_singleword_simd:")
+                    && message.contains(expected),
+                "{rows}x{cols}: unexpected panic message: {message}"
+            );
+        }
+    }
+
+    fn square_zero_matrix(n: usize) -> Bipedal3Matrix {
+        Bipedal3Matrix::from_row_major(&vec![Fp::<3>::new(0); n * n], n, n)
+    }
+
+    #[test]
+    #[should_panic(expected = "matrices must not be empty")]
+    fn test_batched_panics_on_empty_batch() {
+        let _ = permanent_bipedal3_batch(&[]);
+    }
+
+    #[test]
+    #[should_panic(expected = "at most four matrices are supported")]
+    fn test_batched_panics_on_five_matrices() {
+        let matrices: Vec<_> = (0..5).map(|_| square_zero_matrix(2)).collect();
+        let _ = permanent_bipedal3_batch(&matrices);
+    }
+
+    #[test]
+    #[should_panic(expected = "matrix[1] must be square")]
+    fn test_batched_panics_on_non_square() {
+        let data = vec![Fp::<3>::new(0); 3 * 5];
+        let matrices = [
+            square_zero_matrix(5),
+            Bipedal3Matrix::from_row_major(&data, 3, 5),
+        ];
+        let _ = permanent_bipedal3_batch(&matrices);
+    }
+
+    #[test]
+    #[should_panic(expected = "matrix[1] has dimension 3, expected 2")]
+    fn test_batched_panics_on_mixed_dimensions() {
+        let matrices = [square_zero_matrix(2), square_zero_matrix(3)];
+        let _ = permanent_bipedal3_batch(&matrices);
+    }
+
+    #[test]
+    #[should_panic(expected = "permanent_bipedal3_batch: single-word path requires n <= 63")]
+    fn test_batched_panics_on_n_64() {
+        let _ = permanent_bipedal3_batch(&[square_zero_matrix(64)]);
+    }
+
+    /// A dispatched call at `n >= 64` walks `2^n` subsets, so the selection
+    /// is asserted on the dispatcher's selector at the word boundary.
     #[test]
     fn test_permanent_bipedal3_dispatch_routes_n64_to_multiword() {
         use crate::permanent::bipedal3_multiword::N_MAX_MULTIWORD;
-        const { assert!(N_MAX_MULTIWORD >= 64) }
+        for n in [0, 1, 63] {
+            assert_eq!(kernel_for_dimension(n), Bipedal3Kernel::Singleword, "n={n}");
+        }
+        for n in [64, 65, N_MAX_MULTIWORD] {
+            assert_eq!(kernel_for_dimension(n), Bipedal3Kernel::Multiword, "n={n}");
+        }
     }
 
     macro_rules! cross_check_n {

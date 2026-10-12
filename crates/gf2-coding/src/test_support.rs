@@ -1,6 +1,7 @@
 //! Test helpers shared by crate unit tests, the integration tests under
 //! `tests/`, and the bench targets: allocation witnesses over the encoding
-//! workspaces, kernel-selection controls, basis-vector matrix oracles, the
+//! workspaces, kernel-selection controls, the LDPC lane backends of a build,
+//! basis-vector matrix oracles, the
 //! predeclared BCH conformance corpus with its seeded messages, the BCH and
 //! derived-code conformance cases, and a reader for the DVB-T2 reference
 //! streams (`@/citation/DvbVerification2010`).
@@ -16,12 +17,14 @@ use crate::bch::spec::{
     BchCode, BchLength, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent, RootSelection,
 };
 use crate::error::CodeError;
+use crate::ldpc::{BatchRoute, LaneBackend};
 use crate::product::ExtendedBchComponent;
 use crate::traits::block::{
     BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
     SymbolSequence,
 };
 use crate::transform::{CoordinateMap, Extended, Punctured, Shortened, ShortenedDerivation};
+use crate::tuning::DecodeSelectors;
 use crate::CodeRate;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension, FieldIdentity, TrivialExt};
 use gf2_core::field::matrix::FieldMatrix;
@@ -126,6 +129,49 @@ pub fn selected_encode_kernel() -> &'static str {
     crate::bch::encode::selected_encode_kernels()
 }
 
+/// The lane backends an LDPC batch suite pins: [`LaneBackend::Portable`]
+/// and, in a build with the `simd` cargo feature, [`LaneBackend::Avx2`].
+///
+/// # Panics
+///
+/// Panics in a build with `simd` on a host without AVX2, so an AVX2 case
+/// fails there instead of passing on the portable kernels.
+pub fn ldpc_lane_backends() -> Vec<LaneBackend> {
+    let mut backends = vec![LaneBackend::Portable];
+    if cfg!(feature = "simd") {
+        gf2_kernels_simd::contract::require_detected(
+            "avx2",
+            gf2_kernels_simd::ldpc_lanes::detect(),
+        );
+        backends.push(LaneBackend::Avx2);
+    }
+    backends
+}
+
+/// The decoder setups an LDPC batch suite runs, each with the route it gives
+/// a full wave under a min-sum rule: per backend of [`ldpc_lane_backends`],
+/// selectors that give every wave the lane route and selectors that give it
+/// to a wave of at least four frames, then the conservative selectors, which
+/// give every wave the single-frame route.
+///
+/// # Panics
+///
+/// As [`ldpc_lane_backends`].
+pub fn ldpc_batch_routes() -> Vec<(DecodeSelectors, LaneBackend, BatchRoute)> {
+    let lane_from = |frames| DecodeSelectors::try_new(frames, usize::MAX, 1).unwrap();
+    let mut routes = Vec::new();
+    for backend in ldpc_lane_backends() {
+        routes.push((lane_from(1), backend, BatchRoute::Lane(backend)));
+        routes.push((lane_from(4), backend, BatchRoute::Lane(backend)));
+    }
+    routes.push((
+        DecodeSelectors::CONSERVATIVE,
+        LaneBackend::Portable,
+        BatchRoute::SingleFrame,
+    ));
+    routes
+}
+
 /// Builds the generic eBCH(16,11) fixture used by library tests.
 ///
 /// The production [`ExtendedBchComponent::ebch_16_11`] constructor owns the
@@ -138,7 +184,7 @@ pub fn generic_ebch_16_11() -> Extended<BinaryBchCode> {
 /// A mother-code wrapper whose only difference is that it reports no
 /// systematic layout.
 ///
-/// [`Shortened`](crate::transform::Shortened) reads the mother's
+/// [`Shortened`] reads the mother's
 /// [`is_systematic`](GeneratorMatrixAccess::is_systematic) report to select
 /// [`SystematicRestriction`](crate::transform::ShortenedDerivation::SystematicRestriction),
 /// so wrapping a systematic mother in this forces the same coordinate set
@@ -212,8 +258,57 @@ pub fn dvb_vectors_path() -> PathBuf {
         })
 }
 
-/// Parses a CSP test-point file of `@/citation/DvbVerification2010` into
-/// `BitVec` blocks.
+/// Streams the first `max_blocks` non-empty blocks of a CSP test-point file
+/// of `@/citation/DvbVerification2010` without reading past them.
+///
+/// Each `%`- or `#`-prefixed line begins a new block and `push_line` folds
+/// one data line into the open block. Blocks left empty are dropped.
+///
+/// # Panics
+///
+/// Panics if the file cannot be read.
+fn fold_tp_blocks<B>(
+    path: &Path,
+    max_blocks: usize,
+    new_block: fn() -> B,
+    is_empty: fn(&B) -> bool,
+    mut push_line: impl FnMut(&mut B, &str),
+) -> Vec<B> {
+    use std::io::BufRead;
+
+    let file = std::fs::File::open(path)
+        .unwrap_or_else(|e| panic!("cannot read {}: {}", path.display(), e));
+    let mut blocks: Vec<B> = Vec::new();
+    let mut current: Option<B> = None;
+    for line in std::io::BufReader::new(file).lines() {
+        if blocks.len() >= max_blocks {
+            return blocks;
+        }
+        let line = line.unwrap_or_else(|e| panic!("cannot read {}: {}", path.display(), e));
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if line.starts_with('%') || line.starts_with('#') {
+            if let Some(block) = current.replace(new_block()) {
+                if !is_empty(&block) {
+                    blocks.push(block);
+                }
+            }
+            continue;
+        }
+        push_line(current.get_or_insert_with(new_block), line);
+    }
+    if let Some(block) = current {
+        if blocks.len() < max_blocks && !is_empty(&block) {
+            blocks.push(block);
+        }
+    }
+    blocks
+}
+
+/// Parses a bit-data CSP test-point file of
+/// `@/citation/DvbVerification2010` into `BitVec` blocks.
 ///
 /// Each `%`- or `#`-prefixed line begins a new block. Within a block,
 /// `'0'` and `'1'` characters become bits; all other characters are
@@ -223,39 +318,49 @@ pub fn dvb_vectors_path() -> PathBuf {
 ///
 /// Panics if the file cannot be read.
 pub fn parse_tp_blocks(path: &Path) -> Vec<BitVec> {
-    let text = std::fs::read_to_string(path)
-        .unwrap_or_else(|e| panic!("cannot read {}: {}", path.display(), e));
-    let mut blocks: Vec<BitVec> = Vec::new();
-    let mut current: Option<BitVec> = None;
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-        if line.starts_with('%') || line.starts_with('#') {
-            if let Some(bv) = current.take() {
-                if !bv.is_empty() {
-                    blocks.push(bv);
+    parse_tp_block_prefix(path, usize::MAX)
+}
+
+/// The first `max_blocks` blocks [`parse_tp_blocks`] returns, read without
+/// scanning the rest of the file.
+///
+/// # Panics
+///
+/// Panics if the file cannot be read.
+pub fn parse_tp_block_prefix(path: &Path, max_blocks: usize) -> Vec<BitVec> {
+    fold_tp_blocks(
+        path,
+        max_blocks,
+        BitVec::new,
+        BitVec::is_empty,
+        |bv, line| {
+            for ch in line.chars() {
+                match ch {
+                    '0' => bv.push_bit(false),
+                    '1' => bv.push_bit(true),
+                    _ => {}
                 }
             }
-            current = Some(BitVec::new());
-            continue;
+        },
+    )
+}
+
+/// Parses the first `max_blocks` blocks of a complex-data CSP test-point
+/// file of `@/citation/DvbVerification2010` into `(re, im)` cells, one per
+/// data line, with the block delimiters of [`parse_tp_blocks`].
+///
+/// # Panics
+///
+/// Panics if the file cannot be read or a data line is not two
+/// whitespace-separated decimal numbers.
+pub fn parse_tp_complex_block_prefix(path: &Path, max_blocks: usize) -> Vec<Vec<(f64, f64)>> {
+    fold_tp_blocks(path, max_blocks, Vec::new, Vec::is_empty, |cells, line| {
+        let mut fields = line.split_whitespace().map(str::parse::<f64>);
+        match (fields.next(), fields.next(), fields.next()) {
+            (Some(Ok(re)), Some(Ok(im)), None) => cells.push((re, im)),
+            _ => panic!("{}: not a complex data line: {line:?}", path.display()),
         }
-        let bv = current.get_or_insert_with(BitVec::new);
-        for ch in line.chars() {
-            match ch {
-                '0' => bv.push_bit(false),
-                '1' => bv.push_bit(true),
-                _ => {}
-            }
-        }
-    }
-    if let Some(bv) = current {
-        if !bv.is_empty() {
-            blocks.push(bv);
-        }
-    }
-    blocks
+    })
 }
 
 /// Builds the canonical path to a VV001-CR35 test-point file under
@@ -1718,4 +1823,43 @@ fn assert_padding_is_zero(words: &[u64], length: usize, what: &str) {
             );
         }
     }
+}
+
+/// Decodes `blocks` through a pooled [`LdpcBatchDecoder`](crate::ldpc::LdpcBatchDecoder)
+/// of message words with iteration cap `cap`, mapping each trait outcome to
+/// a [`DecoderResult`](crate::DecoderResult).
+pub fn pooled_decode(
+    code: &crate::ldpc::LdpcCode,
+    blocks: &[Vec<crate::llr::Llr>],
+    cap: usize,
+) -> Vec<crate::DecoderResult> {
+    use crate::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder};
+    use crate::llr::Llr;
+    use crate::pooled::PooledBatchDecoder;
+    use crate::traits::{BatchSoftDecoder, DecodeOutcome};
+    use gf2_core::BitVec;
+
+    let mut pool = PooledBatchDecoder::new(|| {
+        LdpcBatchDecoder::new(
+            code.clone(),
+            DecoderConfig::default(),
+            cap,
+            DecodedWord::Message,
+        )
+    });
+    let views: Vec<&[Llr]> = blocks.iter().map(Vec::as_slice).collect();
+    let mut decoded = vec![BitVec::new(); blocks.len()];
+    let mut outcomes = vec![DecodeOutcome::default(); blocks.len()];
+    pool.decode_batch(&views, &mut decoded, &mut outcomes);
+    decoded
+        .into_iter()
+        .zip(outcomes)
+        .map(|(decoded_bits, outcome)| crate::DecoderResult {
+            decoded_bits,
+            iterations: outcome.iterations,
+            converged: outcome.converged,
+            syndrome_check_passed: outcome.syndrome_check_passed,
+            queries: outcome.queries,
+        })
+        .collect()
 }

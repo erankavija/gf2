@@ -3,7 +3,7 @@
 #
 # Usage (from the worker worktree root):
 #   run-spmm-check.sh build
-#   run-spmm-check.sh window pilot|confirmation
+#   run-spmm-check.sh window pilot|pilot2|confirmation
 #   run-spmm-check.sh freeze
 #
 # `build` builds the arm, the runner and the acceptance tool and runs the arm
@@ -16,12 +16,19 @@
 # and finalizes and evaluates a complete campaign once. Re-running it on a
 # finalized campaign re-evaluates and measures nothing.
 #
-# `freeze` derives the confirmation addendum from the committed pilot receipt
-# with the repository's canonical freezer, reading no result of its own.
+# `pilot` and `pilot2` are the two pilot trials the frozen pilot addendum's
+# search budget admits per cell: one addendum and one plan projection under two
+# campaign identities, seeds and pair counts.
+#
+# `freeze` derives the confirmation addendum from the committed receipt of the
+# second pilot trial with the repository's canonical freezer, reading no result
+# of its own.
 #
 # Every numeric setting comes from the frozen addendum and the protocol's
 # frozen shared settings; this script fixes only campaign identities, seeds,
-# the pilot pair count and the session cell budget.
+# the first pilot's pair count and the session cell budget. The second pilot's
+# pair count is the one the committed sizing record derives from the first
+# pilot's receipt.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,12 +57,15 @@ SURVEY=${FAMILY}/survey
 LEDGER=${RESULTS}/spmm-check-family-ledger.jsonl
 PRODUCING=${SURVEY}/spmm-producing-inputs.json
 PLAN_TOOL=${SURVEY}/make-spmm-plan.py
+PILOT_SIZING=${SURVEY}/spmm-second-pilot-pairs.json
 MANIFEST=${SURVEY}/spmm-check-arm/Cargo.toml
 LOG_CHECKER=$(live verify-campaign-log.py)
 LOCK_WRAPPER=$(live ccx1-bench-flock.sh)
 PILOT_ADDENDUM=${FAMILY}/addendum-v4-spmm-check-pilot.json
 CONFIRMATION_ADDENDUM=${FAMILY}/addendum-v4-spmm-check-confirmation.json
 DERIVATION=${FAMILY}/confirmation-derivation-spmm-check.txt
+# The pilot trial whose receipt sizes the confirmation.
+FREEZE_PILOT=${RESULTS}/r1-spmm-check-pilot2
 ARM_TARGET="${REPO}/target/${ISSUE}-spmm-arm"
 ARM="${ARM_TARGET}/release/spmm-check-arm"
 STAGES="${REPO}/target/${ISSUE}-spmm-campaigns"
@@ -98,7 +108,7 @@ if [[ "${ACTION}" == freeze ]]; then
     # The confirmation's resolution and pilot pin come from the committed pilot
     # receipt, never from a reading taken here; every pilot cell is retained,
     # as the pilot addendum freezes.
-    for frozen in "${PILOT_ADDENDUM}" "${RESULTS}/r1-spmm-check-pilot/receipt.json"; do
+    for frozen in "${PILOT_ADDENDUM}" "${FREEZE_PILOT}/receipt.json"; do
         git ls-files --error-unmatch "${frozen}" >/dev/null
         git diff --quiet HEAD -- "${frozen}" || {
             echo "${frozen} differs from the committed bytes" >&2
@@ -110,7 +120,7 @@ if [[ "${ACTION}" == freeze ]]; then
         $'#!/usr/bin/env python3\n"""Freeze a confirmation addendum from its accepted pilot.')
     python3 -B "${FREEZER}" \
         --pilot-addendum "${PILOT_ADDENDUM}" \
-        --pilot "${RESULTS}/r1-spmm-check-pilot" \
+        --pilot "${FREEZE_PILOT}" \
         --frozen-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         --output "${CONFIRMATION_ADDENDUM}" \
         --record "${DERIVATION}" \
@@ -141,11 +151,17 @@ the benchmark-window queue" >&2
     exit 2
 }
 
-CAMPAIGN_NAME=${2:?pilot or confirmation}
+CAMPAIGN_NAME=${2:?pilot, pilot2 or confirmation}
 case "${CAMPAIGN_NAME}" in
     pilot)
         ADDENDUM=${PILOT_ADDENDUM}
         LABEL=pilot SEED=2026100701 MAX_CELLS=4 PILOT_PAIRS=12 ;;
+    pilot2)
+        ADDENDUM=${PILOT_ADDENDUM}
+        LABEL=pilot SEED=2026100802 MAX_CELLS=4
+        PILOT_PAIRS=$(python3 -B -c \
+            'import json,sys; print(json.load(open(sys.argv[1]))["second_pilot"]["pairs"])' \
+            "${PILOT_SIZING}") ;;
     confirmation)
         ADDENDUM=${CONFIRMATION_ADDENDUM}
         LABEL=confirmation SEED=2026100811 MAX_CELLS=4 PILOT_PAIRS= ;;

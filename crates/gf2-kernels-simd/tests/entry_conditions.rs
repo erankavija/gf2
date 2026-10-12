@@ -9,7 +9,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use gf2_kernels_simd::bipedal::{self, packed5, packed7};
 use gf2_kernels_simd::{fp_medium, fp_medium_f64, fp_medium_ple, fp_small, fp_small_f32};
-use gf2_kernels_simd::{fp_small_panel, fp_small_ple, modem};
+use gf2_kernels_simd::{fp_small_panel, fp_small_ple, gf2m, modem};
 
 /// Dimensions whose three shape products overflow `usize`.
 const OVERFLOWING: (usize, usize, usize) = (1 << 63, 2, 2);
@@ -194,6 +194,18 @@ fn medium_prime_ple_panel_rejects_window_and_table() {
     rejects(kernel, "shorter than p", || {
         run(&mut [1, 0, 0, 1], 2, 2, &inv_table[..256]);
     });
+}
+
+#[test]
+fn gf2m_mul_kernel_rejects_degrees_outside_its_domain() {
+    let fns = detected!(gf2m::detect());
+    assert_eq!((fns.mul_fn)(1, 1, 1, 1), 1);
+    assert_eq!((fns.mul_fn)(1, 1, 64, 0x1B), 1);
+    for m in [0, 65, 128, usize::MAX] {
+        rejects("gf2m mul kernel", "degree m must be in 1..=64", || {
+            (fns.mul_fn)(1, 1, m, 1);
+        });
+    }
 }
 
 #[test]
@@ -419,26 +431,30 @@ fn medium_prime_f64_gemm_rejects_wrapping_shape() {
     whole_gemm_cases!(fns.batch_gemm_fn, "fp_medium_f64_gemm", 1f64, 257u16, 0u16);
 }
 
+/// One contract for both precisions, over the scalar and the detected bundle.
+macro_rules! pam_cases {
+    ($cell:ty, $($fns:expr),+) => {
+        let levels: [$cell; 4] = [-3.0, -1.0, 1.0, 3.0];
+        for fns in [$($fns),+] {
+            let kernel = fns.pam_sq_distances_fn;
+            kernel(&[0.5], &[1.0], &[2.0], &levels, &mut [0.0; 4]);
+            kernel(&[], &[], &[], &levels, &mut []);
+            kernel(&[0.5], &[1.0], &[2.0], &[], &mut []);
+            let short_output = catch_unwind(AssertUnwindSafe(|| {
+                kernel(&[0.5], &[1.0], &[2.0], &levels, &mut [0.0; 3])
+            }));
+            assert!(short_output.is_err());
+        }
+    };
+}
+
 /// The wrapped product of two slice lengths needs operands no test holds, so
 /// these cases cover the length assertion the checked product feeds; the unit
-/// test of `entry_check::checked_cells` covers the overflow branch.
+/// test of `entry_check::checked_cells` covers the overflow branch. The
+/// scalar kernels index with bounds checks, so the cases require a panic and
+/// no message.
 #[test]
 fn pam_distance_kernels_reject_output_shape() {
-    let refuses = |call: &dyn Fn()| catch_unwind(AssertUnwindSafe(call)).is_err();
-    let levels32 = [-3.0f32, -1.0, 1.0, 3.0];
-    let f32_fns = modem::detect_f32();
-    (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels32, &mut [0.0; 4]);
-    (f32_fns.pam_sq_distances_fn)(&[], &[], &[], &levels32, &mut []);
-    (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &[], &mut []);
-    assert!(refuses(&|| {
-        (f32_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels32, &mut [0.0; 3])
-    }));
-    let levels64 = [-3.0f64, -1.0, 1.0, 3.0];
-    let f64_fns = modem::detect_f64();
-    (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels64, &mut [0.0; 4]);
-    (f64_fns.pam_sq_distances_fn)(&[], &[], &[], &levels64, &mut []);
-    (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &[], &mut []);
-    assert!(refuses(&|| {
-        (f64_fns.pam_sq_distances_fn)(&[0.5], &[1.0], &[2.0], &levels64, &mut [0.0; 3])
-    }));
+    pam_cases!(f32, modem::scalar_fns_f32(), modem::detect_f32());
+    pam_cases!(f64, modem::scalar_fns_f64(), modem::detect_f64());
 }

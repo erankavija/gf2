@@ -8,17 +8,17 @@
   "scan_rule": "An `unsafe` block is a boundary of kind `unsafe block` under the rule of the kernel safety-contract inventory (jit:7d44b71f), whose scanner this script runs on the working tree. A block is test code when it lies inside the braces of a module that a `#[cfg(test)]` attribute introduces. Its function is safe when the nearest preceding `fn` of the enclosing item's name is not an `unsafe fn`. Every safe function with a block outside test code is either an entry point of the inventory or cleared with a basis and a source claim.",
   "use_rule": "In every tracked Rust file outside receipt input snapshots and outside this record's own directory, whose witness example calls the pointers on purpose, and outside the condition test of the checked build, which does the same, a call is a line holding `.<field>)(` for a published pointer field of the inventory, doc comments included; a value use is `.<field>` in code text that no call parenthesis follows. Each file and field is assigned in the review with the entry points its uses reach and their counts.",
   "counts": {
-    "safe_functions_with_an_unsafe_block": 88,
+    "safe_functions_with_an_unsafe_block": 93,
     "entry_points": 24,
     "pointer_types": 17,
     "cost_classes": 4,
-    "cleared_safe_functions": 64,
+    "cleared_safe_functions": 69,
     "cleared_by_basis": {
       "bounds-checked": 6,
-      "fixed-size": 8,
+      "fixed-size": 10,
       "hint": 1,
-      "length-derived": 17,
-      "release-assertion": 29,
+      "length-derived": 18,
+      "release-assertion": 31,
       "values-only": 3
     },
     "files_and_fields_using_a_pointer": 22
@@ -2265,6 +2265,12 @@
     },
     {
       "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "safe_function": "and_parity_fn",
+      "basis": "length-derived",
+      "claim": "cleared-x86-avx2-and-parity-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/avx2.rs",
       "safe_function": "popcnt_csa_fn",
       "basis": "length-derived",
       "claim": "cleared-x86-avx2-popcnt-csa-fn"
@@ -2304,12 +2310,36 @@
       "safe_function": "shift_right_words_fn",
       "basis": "length-derived",
       "claim": "cleared-x86-avx2-shift-right-words-fn"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
+      "safe_function": "lane_check_step_avx2",
+      "basis": "release-assertion",
+      "claim": "cleared-x86-ldpc-lanes-lane-check-step-avx2"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
+      "safe_function": "lane_variable_step_avx2",
+      "basis": "release-assertion",
+      "claim": "cleared-x86-ldpc-lanes-lane-variable-step-avx2"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
+      "safe_function": "load",
+      "basis": "fixed-size",
+      "claim": "cleared-x86-ldpc-lanes-load"
+    },
+    {
+      "module": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
+      "safe_function": "store",
+      "basis": "fixed-size",
+      "claim": "cleared-x86-ldpc-lanes-store"
     }
   ],
   "bases": {
     "release-assertion": "A release-mode assertion in the wrapper or the kernel bounds every unchecked access.",
     "length-derived": "Every access index derives from the lengths of the slices the call passes.",
-    "fixed-size": "Every operand is a value or a fixed-size array reference.",
+    "fixed-size": "Every operand is a value or a reference to a fixed-size object.",
     "values-only": "Every argument is a value.",
     "bounds-checked": "Every slice access is bounds-checked; the only unsafe operations take values.",
     "hint": "The instruction is a cache hint that dereferences nothing."
@@ -2342,7 +2372,7 @@
     {
       "path": "crates/gf2-kernels-simd/src/gf2m.rs",
       "field": "mul_fn",
-      "uses": 6,
+      "uses": 7,
       "reason": "`Gf2mFns::mul_fn`, a GF(2^m) bundle outside the inventory"
     },
     {
@@ -2362,13 +2392,18 @@
         "decided_by": "invoker",
         "decided_on": "2026-10-07",
         "ruling": "REQ-04 for the hoisted sparse form: a new single-purpose family, pilot and then confirmation in consecutive benchmark windows; arms are the hoisted checked form of the tree against the unchecked baseline, the baseline built inside the arm crate from the kernel crate's own `unsafe` row kernel driven by the pre-change row loop, so both arms come from one tree and one closure."
+      },
+      {
+        "decided_by": "invoker",
+        "decided_on": "2026-10-11",
+        "ruling": "REQ-04 for the hoisted sparse form: the exploratory measured cost of the per-product check is accepted as the two pilot receipts of the family `sparse-product-check-cost` record it, without a confirmation; no new family and no further measurement. The ruling holds with both disturbances in view: the load average the first pilot's receipt records at the start of its session, and the contended window of the second pilot, whose receipt records the load at the start of its session."
       }
     ],
     "classes": {
       "sparse-row-index": {
         "option": "b",
         "grain": "per-product",
-        "cost": "the per-row form's measured cost is not accepted; the per-product form replaces it",
+        "cost": "the per-row form's measured cost is not accepted; the per-product form replaces it, and its exploratory measured cost is recorded as accepted",
         "basis": "The confirmation records the per-row form of the check as a regression on both interfaces, which contradicts the family's non-regression criterion for that form. The one production caller forwards column indices from a safe public hook and cannot hold an `unsafe` block, so the row loop stands in the kernel crate behind one check per product."
       },
       "ple-panel": {
@@ -2481,13 +2516,77 @@
       "family": "sparse-product-check-cost",
       "pilot_addendum": "addendum-v4-spmm-check-pilot.json",
       "ledger": "dev/bench_results/bfc2ceab/spmm-check-family-ledger.jsonl",
+      "tables": "../../../bench_results/bfc2ceab/spmm-check-tables.md",
       "cells": [
         "spmm-small-n16",
         "spmm-small-n1024",
         "spmm-medium-n16",
         "spmm-medium-n1024"
       ],
-      "committed_stages": []
+      "committed_stages": [
+        {
+          "stage": "pilot",
+          "label": "pilot",
+          "receipt": "dev/bench_results/bfc2ceab/r1-spmm-check-pilot",
+          "receipt_sha256": "0afedb9bc20a30107230af72a9e5666057fe41490cb4335b932eca59270c803e",
+          "verdict": "accepted",
+          "pairs": [
+            12
+          ],
+          "session_load_average": [
+            [
+              3.25,
+              5.22,
+              6.08
+            ]
+          ],
+          "link": "../../../bench_results/bfc2ceab/spmm-check-tables.md#pilot",
+          "cells": {
+            "spmm-small-n16": "exploratory, outcome pilot, decision not-worse",
+            "spmm-small-n1024": "exploratory, outcome pilot, decision inconclusive",
+            "spmm-medium-n16": "exploratory, outcome pilot, decision not-worse",
+            "spmm-medium-n1024": "exploratory, outcome pilot, decision inconclusive"
+          }
+        },
+        {
+          "stage": "pilot2",
+          "label": "pilot",
+          "receipt": "dev/bench_results/bfc2ceab/r1-spmm-check-pilot2",
+          "receipt_sha256": "deb649efbf0afe56cf0c15d4f045e499d8c0740741b11d4c726d1df48f7be76b",
+          "verdict": "accepted",
+          "pairs": [
+            24
+          ],
+          "session_load_average": [
+            [
+              76.44,
+              47.1,
+              33.74
+            ]
+          ],
+          "link": "../../../bench_results/bfc2ceab/spmm-check-tables.md#pilot2",
+          "cells": {
+            "spmm-small-n16": "exploratory, outcome pilot, decision inconclusive",
+            "spmm-small-n1024": "exploratory, outcome pilot, decision inconclusive",
+            "spmm-medium-n16": "exploratory, outcome pilot, decision inconclusive",
+            "spmm-medium-n1024": "exploratory, outcome pilot, decision not-worse"
+          }
+        }
+      ],
+      "freeze": {
+        "record": "confirmation-freeze-refusal-spmm-check.json",
+        "command": [
+          "dev/bench_results/bfc2ceab/run-spmm-check.sh",
+          "freeze"
+        ],
+        "exit_status": 1,
+        "standard_error": [
+          "worthwhile_speedup 1.1 does not exceed 1 + 0.52"
+        ],
+        "pilot_trials": 2,
+        "pilot_trials_admitted_per_cell": 2,
+        "pilot_trials_left": 0
+      }
     },
     "sparse_type": {
       "name": "SparseFieldMatrix",
@@ -2645,7 +2744,7 @@
       "pam_sq",
       "demap"
     ],
-    "families": 73,
+    "families": 74,
     "families_naming_a_consumer": []
   }
 }

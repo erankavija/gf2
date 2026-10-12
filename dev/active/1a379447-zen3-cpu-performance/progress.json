@@ -554,7 +554,7 @@
      "short_id": "63bad95d",
      "title": "Calibrate production dispatch for the 5900X",
      "classification": "implementation",
-     "status": "in_progress: producer campaign gf2-63bad95d-20261006t230547z-2073085 complete-valid and published (run branch d808af2f3; stage backup in the run worktree target/campaign-stage-backup); interpretation, baked cutover (bit_backend.simd_min_words 8 to 4 on the branch only) and two pilot families on worktree-agent-63bad95d-fam at 347b5e2b6 (pinned, unmerged); pilots queued for 2026-10-08; confirmations after. REQ-11 exception issue 817fc47d filed.",
+     "status": "in_progress, blocked on the invoker (contended 2026-10-09 window). Branch worktree-agent-63bad95d-fam at a257dd63b: native-ladder confirmation committed (3 pass, 3 inconclusive, attempt spent), dispatch-overhead r2 pilot committed and its freeze refused (pilot budget spent), disturbance-record.md. Branch worktree-agent-63bad95d-m4ri at 998a0a3d4 and worktree-agent-63bad95d-pm4ri at 1aad07d0e: both M4RI pilots committed, both resolution-insufficient, no confirmation. pm4ri carries a 72-character subject (96d44eded) to reword before merge. None merged.",
      "tracker_state": "in_progress"
     },
     {
@@ -664,7 +664,7 @@
      "id": "bfc2ceab",
      "short_id": "bfc2ceab",
      "classification": "implementation",
-     "status": "in_progress: production change merged at cc9bfe66b and zero-dimension cases at bffbc2f2a; code-review R1 F1 does not reproduce (bound by tests), F2 (REQ-04) waits on family sparse-product-check-cost: pilot queued for 2026-10-08, confirmation the night after; worktree agent-bfc2ceab pinned at 108356c4c.",
+     "status": "in_progress, blocked on the invoker. Branch worktree-agent-bfc2ceab at c6869fc6d: second pilot committed (launcher load 76.22), freeze refused, no pilot trial left; cost recorded as exploratory; REQ-04 not met literally. schema-versions.json stale on the branch (regenerate on the merged tree).",
      "tracker_state": "in_progress"
     },
     {
@@ -710,7 +710,27 @@
      "short_id": "7dbe1393",
      "title": "Close the matvec SIMD lane gap at ragged strides",
      "classification": "implementation",
-     "status": "pending: filed session 31; under the epic by the invoker ruling on 4337c02e; gates cargo-ci, code-review, research-review, asm-artefact-present; needs a new family (two windows)"
+     "status": "in_progress, blocked on the invoker. Branch worktree-agent-7dbe1393 at ca918074f: profile session (18 cases) and pilot committed; pilot resolution-insufficient (freezer refusal recorded), no confirmation; candidate kernel unselected. Not merged."
+    },
+    {
+     "short_id": "e4e2ba52",
+     "status": "done. Session 33: merged at 5d6508af4; code-review failed once because it ran before cargo-ci (lead ordering error); both gates pass; review reviews/e4e2ba52-r1.md."
+    },
+    {
+     "short_id": "395fe4e2",
+     "status": "done. Session 33: merged at a1dd4e77f, rework 1 at 1d5245607 (real interruption, range-bounded batches); cargo-ci and code-review pass; review reviews/395fe4e2-r2.md."
+    },
+    {
+     "short_id": "a96a4cd6",
+     "status": "done. Session 33: first worker blocked on REQ-02 (no stage exposes selectors); lead decision: stage constructors with_selectors and with_portable_lanes; merged at 4d1fd626f, rework 1 at 9a32ec1d6 (min-sum sweeps, route assertions, nextest reservation), lead comment removal b607e8e9d; cargo-ci and code-review pass; review reviews/a96a4cd6-r2.md."
+    },
+    {
+     "short_id": "8e53235b",
+     "status": "in_progress: stage 1 on worktree-agent-8e53235b at d0dcfbcb2 (pinned, unmerged): BitVec::write_bits, selectable CodewordAssembly::WordWise (production stays bit-serial), family 8e53235b-bch-codeword-assembly frozen (5 exploratory whole-consumer cells) and smoked; pilot queued for the 2026-10-11 04:00 window behind a load guard."
+    },
+    {
+     "short_id": "bad1aea8",
+     "status": "done. Session 33: merged at a82eea0a2, rework 1 at ad461cb37 (buffer validation before the AFF3CT FFI call); cargo-ci, code-review, research-review pass; review reviews/bad1aea8-r2.md."
     }
    ]
   },
@@ -751,7 +771,7 @@
      "short_id": "ed3d490e",
      "title": "Vectorize LDPC decoding across frames",
      "classification": "implementation",
-     "status": "in_progress: 7 of 66 tasks done (c79d60f9, 6818f1b6, 8840b0ff, 53b74fc2, ee12b09e, 2438c16f, 441fbd5c; reviews under reviews/). Ready: 5cb74f81 (LDPC lane batch decoder) and 1d4b05d5 (pooled batch decoder). Layers computed from breakdown.json depends_on.",
+     "status": "in_progress: 24 story issues done, 2 in progress (feb60d0d, aff59c3c), 3 ready (a96a4cd6, 395fe4e2, e4e2ba52), 41 backlog at the end of session 32",
      "tracker_state": "backlog"
     },
     {
@@ -880,19 +900,79 @@
      "short_id": "13728e1a",
      "title": "Vectorize the lane kernels with AVX2",
      "classification": "implementation",
-     "status": "pending: ready at the end of session 31; gates from gates_required"
+     "status": "done. Session 32: merged at eb60f6b23, rework 1 at 14bee8212 (x86 import, safety contracts), rework 2 by the lead (host precondition names avx2); REQ-04 amended by the invoker; all four gates pass; review reviews/13728e1a-r2.md"
     },
     {
      "short_id": "4767d936",
      "title": "Decode rate-matched 5G NR frame batches in lanes",
      "classification": "implementation",
-     "status": "pending: ready at the end of session 31; gates from gates_required"
+     "status": "done. Session 32: merged at 4a985be44, rework 1 at efc7e42c8 (Sionna LDPC5GEncoder vectors, invoker ruling); cargo-ci, code-review, doc-review pass; review reviews/4767d936-r2.md"
     },
     {
      "short_id": "4e68f9b2",
      "title": "Decode DVB-T2 concatenated frame batches in lanes",
      "classification": "implementation",
-     "status": "pending: ready at the end of session 31; gates from gates_required"
+     "status": "done. Session 32: merged at 7f30c65cc (closure fix f. logical family after it); cargo-ci, code-review, doc-review passed first round; review reviews/4e68f9b2-r1.md"
+    },
+    {
+     "short_id": "c317f5ac",
+     "title": "Route LDPC batch decoding to the AVX2 lanes by capability",
+     "classification": "implementation",
+     "status": "done. Session 32: merged at bb4e110da; cargo-ci, code-review, doc-review passed first round; review reviews/c317f5ac-r1.md"
+    },
+    {
+     "short_id": "391f5419",
+     "title": "Decode DVB-T2 stage batches through the batch decode stage",
+     "classification": "implementation",
+     "status": "done. Session 32: merged at 92e0cd689; cargo-ci and code-review passed first round"
+    },
+    {
+     "short_id": "9e0cd346",
+     "title": "Decode NR stage batches through the batch decode stage",
+     "classification": "implementation",
+     "status": "done. Session 32: merged at d15a0436d, rework 1 at d63891b7b (NR preset-versus-graph byte identity); cargo-ci and code-review pass; review reviews/9e0cd346-r2.md"
+    },
+    {
+     "short_id": "86d9260e",
+     "title": "Decode CPU LDPC stage batches through the batch decode stage",
+     "classification": "implementation",
+     "status": "done. Session 32: merged at 912ae2ad2; cargo-ci and code-review passed first round"
+    },
+    {
+     "short_id": "e918a8ee",
+     "title": "Move the tests of the inherent LDPC batch functions to the batch trait",
+     "classification": "implementation",
+     "status": "done. Session 32: merged at 8702a88ac, rework 1 at 7ee112158 (shared test adapter); cargo-ci and code-review pass; review reviews/e918a8ee-r2.md"
+    },
+    {
+     "short_id": "83ed701d",
+     "title": "Move the benchmarks of the inherent LDPC batch functions to the batch trait",
+     "classification": "implementation",
+     "status": "done. Session 32: merged at 1b375873a; cargo-ci and code-review passed first round"
+    },
+    {
+     "short_id": "f5ae4c49",
+     "title": "Show parallel LDPC decoding through the batch trait in the how-to page",
+     "classification": "documentation",
+     "status": "done. Session 32: merged at eb91991a1; cargo-ci and doc-review passed first round"
+    },
+    {
+     "short_id": "4de9d983",
+     "title": "Decode BLER sweep slices through the batch decoder trait",
+     "classification": "implementation",
+     "status": "done. Session 32: merged at 339dc19b6; cargo-ci and code-review passed first round; review reviews/4de9d983-r1.md"
+    },
+    {
+     "short_id": "feb60d0d",
+     "title": "Build the gf2 batch decoder benchmark arms",
+     "classification": "implementation",
+     "status": "done. Session 33: rework 1 merged at 807ea8838 (exception citation, build record), rework 2 at bf78efc81 (content-identity recorder); cargo-ci, code-review, research-review pass; review reviews/feb60d0d-r3.md."
+    },
+    {
+     "short_id": "aff59c3c",
+     "title": "Produce decode selector measurements from a coding owner harness",
+     "classification": "implementation",
+     "status": "blocked: open escalation on the form of the tuning-campaign-support dependency (unchanged in session 33)."
     }
    ]
   },
@@ -1182,6 +1262,79 @@
    "type": "bug",
    "in_epic": false,
    "reason": "session 31: EncodingCache directory reload assumes message columns 0..k; depends on 95ca83aa"
+  },
+  {
+   "id": "02a26b83",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: six Normal-frame dvb_t2_bicm_chain tests carry a stale slow-tier ignore reason; depends on 4e68f9b2"
+  },
+  {
+   "id": "d1bfe986",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: gf2-coding all-features rustdoc fails with warnings denied; depends on 4e68f9b2"
+  },
+  {
+   "id": "07fe99b8",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: benchmark window starts its first job on a loaded host; depends on bfc2ceab"
+  },
+  {
+   "id": "81c7d370",
+   "type": "task",
+   "in_epic": false,
+   "reason": "session 32: CpuLdpcBp rebuilds its batch decoder per call (unit-scratch guard of the erased CPU fallback); depends on 86d9260e"
+  },
+  {
+   "id": "dd493649",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: Awgn::apply bounds its per-call noise draw by a debug assertion only; depends on 9e0cd346"
+  },
+  {
+   "id": "f21b25ac",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 32: two GPU tests and one allocation-count test failed once each under load; depends on 86d9260e"
+  },
+  {
+   "id": "81e955b0",
+   "type": "task",
+   "in_epic": true,
+   "reason": "invoker 2026-10-11: stage route builders stay public and state the route-equivalence contract; story child via 6230e0b6"
+  },
+  {
+   "id": "1ca04967",
+   "type": "task",
+   "in_epic": true,
+   "reason": "invoker 2026-10-11: converge the INTRA arm on the shared AFF3CT handle before measuring; after d4185e9e, before 4252085a"
+  },
+  {
+   "id": "151af028",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "checkpoint_compat resume tests clear the completion flag; story child via 6230e0b6"
+  },
+  {
+   "id": "07024d65",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "stale 04b85d10 survey text and launchers; direct epic child, lead holds it after 8e53235b"
+  },
+  {
+   "id": "754208a0",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "rare-event artifact tests time out on a loaded host"
+  },
+  {
+   "id": "e430f035",
+   "title": "Move tuning-campaign-support under crates/",
+   "type": "task",
+   "placement": "outside the epic; depends on aff59c3c",
+   "reason": "tracked exception to no-dev-path-coupling, invoker ruling 2026-10-11"
   }
  ],
  "escalations": [
@@ -1725,9 +1878,9 @@
    "category": "design decision (bfc2ceab)",
    "issue": "bfc2ceab",
    "question": "check or _unchecked per kernel interface",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-05T09:20Z",
-   "resolution": null,
+   "resolution": "Settled by the invoker decisions of 2026-10-07 and 2026-10-11 in bfc2ceab/decisions.json (later_rulings).",
    "interim": "Invoker 2026-10-05: measure first; the worker commits the inventory and the measured cost of each check, and the per-interface choice returns to the invoker with numbers. Session 30: pilot accepted; confirmation queued for 2026-10-07."
   },
   {
@@ -1844,18 +1997,140 @@
    "issue": "63bad95d",
    "question": "is the committed M4RI confirmation of 50f0bd42 sufficient competitor evidence with the matvec external ladder excluded, or is a native-level M4RI family required",
    "recommendation": "the committed confirmation stands",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-07T18:00Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-08: add the native M4RI family; use the next benchmark window."
   },
   {
    "category": "design decision (63bad95d)",
    "issue": "63bad95d",
    "question": "the new owner publishes ple.scalar_base_max_cols 1 (earlier owner 24) and no family of this epic measures FieldMatrix::ple: accept as recorded or keep the earlier value in the baked constants until measured",
    "recommendation": "keep the earlier value until measured",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-07T18:00Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-08: restore 24 in the baked constants."
+  },
+  {
+   "category": "issue criterion premise (4767d936 REQ-04)",
+   "issue": "4767d936",
+   "question": "code-review R1 F1: REQ-04 names external 5G NR conformance vectors that decode to expected messages; the crate's only external NR evidence is the Sionna base-graph tables, and no external NR encoder builds on this host. Options: (A) amend REQ-04 to the configurations of the external base-graph suite round-tripping through the batch decoder on both routes, equal to the single-frame decoder; (B) obtain external NR message vectors with provenance (new scope).",
+   "recommendation": "A, with B filed as a separate conformance task",
+   "status": "resolved",
+   "raised_at": "2026-10-08T11:40Z",
+   "resolution": "Invoker 2026-10-08: obtain external NR message vectors now; be mindful of the licence."
+  },
+  {
+   "category": "issue criterion against crate convention (13728e1a REQ-04)",
+   "issue": "13728e1a",
+   "question": "code-review R1 F1: REQ-04 says AVX2 assertions are reported as not run on a host without AVX2; the crate's host-precondition contract (crate::contract, issue 6605cac2) fails such a test because libtest has no run-time skip. Options: (A) amend REQ-04 to 'are not reported as passed: the crate's host-precondition contract fails them and names the missing instruction set'; (B) change crate::contract at its source to a build-time ignore for every kernel test of the crate.",
+   "recommendation": "A",
+   "status": "resolved",
+   "raised_at": "2026-10-08T12:10Z",
+   "resolution": "Invoker 2026-10-08: amend REQ-04 to the crate convention (not reported as passed; the host-precondition contract fails them and names the missing instruction set). Applied to the issue."
+  },
+  {
+   "category": "shared infrastructure (scripts/cargo-ci.sh)",
+   "issue": "aff59c3c",
+   "question": "two tuning-coding-calibration steps copied from the algebra pair",
+   "status": "resolved",
+   "raised_at": "2026-10-08T16:00Z",
+   "resolution": "Invoker 2026-10-08: approved."
+  },
+  {
+   "category": "criterion reading (63bad95d REQ-09)",
+   "issue": "63bad95d",
+   "question": "portable-level M4RI comparator",
+   "status": "resolved",
+   "raised_at": "2026-10-08T16:00Z",
+   "resolution": "Invoker 2026-10-08: add a portable M4RI family."
+  },
+  {
+   "category": "shared build layout (no-dev-path-coupling)",
+   "issue": "aff59c3c",
+   "question": "code-review R1 F1: crates/gf2-coding/Cargo.toml declares tuning-campaign-support by ../../dev/tools/tuning-campaign-support, as gf2-core and gf2-algebra already do; the harness-path-dependencies exception covers survey harness manifests under dev/active only. Options: (A) one [workspace.dependencies] entry at the repository root and `workspace = true` in the three owner crates; (B) move tuning-campaign-support under crates/; (C) extend the named exception to owner-producer dev-dependencies of workspace crates.",
+   "recommendation": "A if the reviewer's reading admits a root-relative path in the workspace manifest, otherwise C; B moves a crate that committed campaigns pin by path",
+   "status": "resolved",
+   "raised_at": "2026-10-08T16:40Z",
+   "resolution": "Invoker 2026-10-11: (A) one [workspace.dependencies] entry at the root, workspace = true in the three owner crates."
+  },
+  {
+   "category": "evidence validity (contended window)",
+   "issue": "63bad95d",
+   "question": "native-ladder confirmation ran at launcher load 70; three cells inconclusive with half-widths above the frozen resolution; the single confirmatory attempt is spent. Keep as a preserved non-qualifying outcome, or authorize one repeat on a quiet host under a new family version.",
+   "recommendation": "repeat: the disturbance is another session of the same invoker and is documented independently of the result (63bad95d/disturbance-record.md on the branch)",
+   "status": "resolved",
+   "raised_at": "2026-10-10T22:30Z",
+   "resolution": "Invoker 2026-10-11: repeat once on a quiet host under a new family version citing the recorded load."
+  },
+  {
+   "category": "evidence validity (contended window)",
+   "issue": "63bad95d",
+   "question": "dispatch-overhead family: both pilots spent, r2 freeze refused (worthwhile_speedup 1.05 does not exceed 1 + 0.77). Record no confirmation and keep the conservative bit_backend.simd_min_words, or approve a new pilot addendum.",
+   "recommendation": "new pilot addendum on a quiet host",
+   "status": "resolved",
+   "raised_at": "2026-10-10T22:30Z",
+   "resolution": "Invoker 2026-10-11: repeat once on a quiet host under a new family version citing the recorded load."
+  },
+  {
+   "category": "evidence validity (contended window)",
+   "issue": "63bad95d",
+   "question": "native and portable M4RI families: single pilot each, both resolution-insufficient. Accept as the preserved outcome for REQ-09's M4RI legs, or authorize a new family version.",
+   "recommendation": "new family version on a quiet host",
+   "status": "resolved",
+   "raised_at": "2026-10-10T22:30Z",
+   "resolution": "Invoker 2026-10-11: repeat once on a quiet host under new family versions citing the recorded load."
+  },
+  {
+   "category": "criterion (bfc2ceab REQ-04)",
+   "issue": "bfc2ceab",
+   "question": "second pilot ran at load 76, freeze refused, no pilot trial left; REQ-04 is unmet literally. (a) invoker records the exploratory cost as accepted in decisions.json; (b) new family for a clean confirmation; (c) amend REQ-04.",
+   "recommendation": "(a), naming both disturbances in the ruling",
+   "status": "resolved",
+   "raised_at": "2026-10-10T22:30Z",
+   "resolution": "Invoker 2026-10-11: (a) the exploratory check cost is accepted as recorded, naming both disturbances; no new measurement."
+  },
+  {
+   "category": "evidence validity (contended window)",
+   "issue": "7dbe1393",
+   "question": "pilot resolution-insufficient (r 0.168 against 0.035) at session loads 45.7, 30.2, 13.7; all six rows favour the candidate; the addendum allows one pilot. Close REQ-02 as a recorded no-decision with the candidate unselected, or file a new family for an uncontended window; and whether matvec_parity_kernel stays in the tree meanwhile.",
+   "recommendation": "new family on a quiet host; hold the branch unmerged until then",
+   "status": "resolved",
+   "raised_at": "2026-10-10T22:30Z",
+   "resolution": "Invoker 2026-10-11: repeat the pilot once under a new family version; merge the branch with matvec_parity_kernel unselected."
+  },
+  {
+   "category": "shared infrastructure (window isolation)",
+   "issue": "1a379447",
+   "question": "nothing keeps other sessions off the host during a benchmark window; epic b4b4b9ee's session ran merges and gates through the 2026-10-09 window. The 8e53235b queue line carries a load guard (starts below a one-minute load of 2, else exits 75 and stays queued); should run-window.sh apply that guard to every job?",
+   "recommendation": "yes, in run-window.sh, so every family is protected",
+   "status": "resolved",
+   "raised_at": "2026-10-10T22:30Z",
+   "resolution": "Invoker 2026-10-11: no runner-wide guard; each queue line carries its own."
+  },
+  {
+   "category": "blocker outside the epic (jit validate)",
+   "issue": "1a379447",
+   "question": "jit validate fails with five profile-ownership errors: 2b4d4a4ba (jit:b4b4b9ee, 'move the review gates to current reviewer models') edited .jit/gates.toml without the sim-research package source. repo-validate is a gate of the story and of the epic.",
+   "recommendation": "epic b4b4b9ee repairs it through packages/sim-research (handoff-10 recipe)",
+   "status": "resolved",
+   "raised_at": "2026-10-10T22:30Z",
+   "resolution": "Invoker 2026-10-11: this lead repairs. Done at 28a64b749 (sim-research 1.2.5 carries the reviewer models; jit validate passes)."
+  },
+  {
+   "category": "gate finding vs invoker ruling",
+   "issue": "aff59c3c, bfc2ceab",
+   "question": "Cargo path dependency on dev/tools/tuning-campaign-support fails no-dev-path-coupling",
+   "status": "resolved",
+   "raised_at": "2026-10-11",
+   "resolution": "Invoker 2026-10-11: tracked exception. Issue e430f035 is the named exception with the convergence condition (crate moves under crates/); manifests cite it in a comment."
+  },
+  {
+   "category": "measurement",
+   "issue": "63bad95d M4RI pair",
+   "question": "dense harness families are a compiled enum; a new family version needs harness code",
+   "status": "resolved",
+   "raised_at": "2026-10-11",
+   "resolution": "Invoker 2026-10-11: second pilot in the same family, run id v4-r2; a load-disturbed pilot counts for the second trial."
   }
  ],
  "rework_counts": {
@@ -1908,8 +2183,21 @@
   "4337c02e": 1,
   "5cb74f81": 1,
   "1d4b05d5": 1,
-  "bfc2ceab": 1,
-  "07ae376c": 0
+  "bfc2ceab": 2,
+  "07ae376c": 0,
+  "13728e1a": 2,
+  "4767d936": 1,
+  "e918a8ee": 1,
+  "9e0cd346": 1,
+  "feb60d0d": 2,
+  "aff59c3c": 2,
+  "395fe4e2": 1,
+  "a96a4cd6": 1,
+  "e4e2ba52": 0,
+  "bad1aea8": 1,
+  "d4185e9e": 1,
+  "81e955b0": 0,
+  "151af028": 0
  },
  "surfaced_pitfalls": [
   {
@@ -2352,6 +2640,102 @@
    "subject": "Research gate 45bac0a3 advisory F1: unroll profile tables need exact invocation and RNG/version provenance links.",
    "disposition": "Resolved in profile-provenance.md and source-evidence ledger at c5393116e; exact runtime logs linked, source-derived seed/RNG declarations distinguished. Final merged CI passes; no timing/raw-data edits.",
    "criterion_named_by": "2037941f REQ05/REQ06"
+  },
+  {
+   "issue": "13728e1a",
+   "subject": "Worker report: target/release is hard-linked across pool-seeded worktrees, so an assembly regeneration read another worker's .s output; the worker generated under CARGO_TARGET_DIR=target/asm-lanes.",
+   "disposition": "Unverified by the lead and unfiled; verify against dev/scripts/regen-asm.sh and the dispatch script's seeding before filing.",
+   "criterion_named_by": null
+  },
+  {
+   "issue": "13728e1a",
+   "subject": "Worker report: LLVM lowers the masked writes of the AVX2 variable step to vmaskmovps stores; cost on Zen 3 unmeasured.",
+   "disposition": "For the routing issue c317f5ac and the story's measurement leaves; ed3d490e REQ-10 and REQ-13 name the measurement.",
+   "criterion_named_by": "ed3d490e/REQ-10"
+  },
+  {
+   "issue": null,
+   "subject": "ed3d490e REQ-09 names resume: the checkpointed production sweep (Scheduler::run_sweep_checkpointed) decodes frame by frame and never uses the batch decode stage, so 395fe4e2's resume identity is shown on a campaign built in the checkpoint_compat suite, not on a production batch-decoding campaign.",
+   "disposition": "OPEN: reconcile against ed3d490e REQ-09 before the story's gates; a criterion names the subject.",
+   "criterion_named_by": null
+  },
+  {
+   "issue": null,
+   "subject": "checkpoint_compat's AWGN, Rayleigh and Rician resume tests shorten a run and clear its completion flag instead of interrupting (the method code-review rejected for 395fe4e2).",
+   "disposition": "filed: 151af028 (story bug)",
+   "criterion_named_by": null
+  },
+  {
+   "issue": null,
+   "subject": "04b85d10's harness did not compile on main (BchEncoder and BchCode::dvb_t2 are gone); 8e53235b moved its dvb-bch-encode workload to dvb_t2_bch_code on its branch. 04b85d10's findings, source-evidence and launchers still describe the removed encoder and the pre-move directory.",
+   "disposition": "filed: 07024d65 (epic bug, after 8e53235b)",
+   "criterion_named_by": null
+  },
+  {
+   "issue": null,
+   "subject": "gf2-sim::permanent_rare_event_artifacts tests hit the 15-second cap in cargo-ci runs at load 16 to 30 (feb60d0d and 395fe4e2 gates, session 33); they pass on a quiet host.",
+   "disposition": "filed: 754208a0 (outside the epic)",
+   "criterion_named_by": null
+  },
+  {
+   "issue": null,
+   "subject": "a96a4cd6's DVB-T2 sweep mixes decode successes and failures only at 6.4 dB with 4 frames under normalized min-sum (6.2 dB fails all, 6.6 dB none).",
+   "disposition": "accepted: the test asserts the mix, so a numerical shift fails loudly.",
+   "criterion_named_by": null
+  },
+  {
+   "issue": "bad1aea8",
+   "subject": "The AFF3CT INTRA crate carries its own Rust handle beside the digest-pinned 3be770d5 handle (worker report; code-review raised nothing).",
+   "disposition": "filed: 1ca04967 (converge before measuring, invoker 2026-10-11)",
+   "criterion_named_by": null
+  },
+  {
+   "issue": "bad1aea8",
+   "subject": "Arm executables of the story's arms workspace build to different digests in different checkouts with identical sources (two workers; cause not isolated, the build directory in debug line tables suspected). The feb60d0d and bad1aea8 build and smoke records hold the digests of the worktrees that built them.",
+   "disposition": "resolved by decision: pinned worktree agent-ed3d490e-run builds and runs the story's arms (invoker 2026-10-11); d4185e9e records there",
+   "criterion_named_by": "ed3d490e/REQ-10"
+  },
+  {
+   "issue": "bad1aea8",
+   "subject": "research-review advisory: smoke-aff3ct-intra.json pins a temporary plan, addendum and INTRA quality record that are not committed.",
+   "disposition": "OPEN, advisory: the quality record belongs to 4252085a's scope per the worker.",
+   "criterion_named_by": null
+  },
+  {
+   "issue": "bad1aea8",
+   "subject": "record-gf2-arms-build.py is at schema ldpc-batch-arms-build-v3 while feb60d0d/gf2-arms-build.json was written at v2 and not regenerated.",
+   "disposition": "OPEN: regenerate with the measurement leaf that builds the arms in the campaign checkout.",
+   "criterion_named_by": null
+  },
+  {
+   "issue": "6e87c436",
+   "finding": "After the 7dbe1393 merge, `python3 -B dev/active/1a379447-zen3-cpu-performance/6e87c436/survey/make-source-evidence.py --check` fails on main (crates/gf2-core/src/matrix.rs: expected 1 occurrence of 'if let Some(fns) = crate::simd::maybe_simd() {', found 0). cargo-ci does not run it.",
+   "disposition": "open: file a follow-up bug (not yet filed)"
+  },
+  {
+   "issue": "bfc2ceab",
+   "finding": "bfc2ceab/survey/make-inventory.py fails on main whenever a merged issue adds a safe kernel function holding an unsafe block without a verdict in survey/review.py.",
+   "disposition": "standing rule: run it after every merge touching crates/gf2-kernels-simd"
+  },
+  {
+   "issue": "d4185e9e",
+   "finding": "build-identity.json keeps the label ldpc-batch-arms-build-v3 with a changed shape.",
+   "disposition": "accepted; reviewers raised no finding on it"
+  },
+  {
+   "issue": "63bad95d",
+   "finding": "On worktree-agent-63bad95d-fam: survey/make-route-inventory.py --check fails (issue 63bad95d has no declared track) and CARGO_CI_STEPS=^$ ./scripts/cargo-ci.sh fails (repository_files.py not found). Worker reports both pre-existing.",
+   "disposition": "open: verify on main when the branch merges"
+  },
+  {
+   "issue": "63bad95d",
+   "finding": "The 63bad95d dense-harness branches conflict with merged 7dbe1393 in cells.rs and the harness_contract.rs counts.",
+   "disposition": "open: resolve at merge, after their runs"
+  },
+  {
+   "issue": "1a379447",
+   "finding": "Commit 222b02396 carries a wrong co-author trailer.",
+   "disposition": "accepted as is; main history is immutable"
   }
  ],
  "notes": [
@@ -2539,7 +2923,18 @@
   "Session 31: three tuning-campaign-support::driver_launcher tests failed in one merged-tree cargo-ci run and passed in the runs before and after on the same tree; unexplained, not filed.",
   "Session 31: the 4c1e441f and ad2a6a58 survey/producing-inputs.json closures no longer reproduce from their generators after the layout move (flat paths recorded); kept as recorded evidence of measured, closed campaigns. Committed tables.md of older families differ from regeneration on main for the same reason (bfc2ceab worker report); unfiled.",
   "Session 31: a host suspend of about nine hours (05:35Z to 14:30Z) interrupted nothing; the gate chain resumed.",
-  "Session 31: second wave closed (556eb4fa, 95ca83aa, 941ac609); handoff-27.md written. A stale sccache server failed two cargo-ci gates at compile; the lead restarts the server from the home directory before a gate chain."
+  "Session 31: second wave closed (556eb4fa, 95ca83aa, 941ac609); handoff-27.md written. A stale sccache server failed two cargo-ci gates at compile; the lead restarts the server from the home directory before a gate chain.",
+  "Session 32: 2026-10-08 window collected: three pilots complete and accepted per their job outputs. Claimed 13728e1a, 4767d936, 4e68f9b2, 7dbe1393 (d0342bf64) and dispatched six fresh workers; common rules in the session scratchpad. The two open 63bad95d questions of handoff-27 stay open; the worker keeps the branch value of ple.scalar_base_max_cols.",
+  "Session 32: the host was loaded at the start of the 2026-10-08 window (launcher logs of the three pilots); one disturbed stretch set the resolution of the bfc2ceab pilot and of the 63bad95d dispatch-overhead pilot. Keep the host idle from 01:30 local before a window. P-03 and the freezer use the pilot corrected alpha, not the confirmation alpha (receipt.rs verified_pilot_alpha).",
+  "Session 32: a merge that adds a source file under crates/ fails cargo-ci family-producing-closures; regenerate with the family make-*-producing-inputs.py generators inside the merge or directly after it (done for 4e68f9b2 and 4767d936; 13728e1a carried its own).",
+  "Session 32: merge order for the dense harness cell table: worktree-agent-7dbe1393 first, worktree-agent-63bad95d-m4ri after it (textual conflicts in cells.rs, Question::ALL, tests, closure; neither family takes seeds from the other). Unfiled worker reports: dense-harness manifest fails clippy -D warnings at tests/harness_contract.rs:147 and :972 and cargo fmt --check at build.rs:33; sibling x86 kernel modules import core::arch::x86_64 unconditionally.",
+  "Session 32: common-rules told every worker to use the Opus co-author trailer; sonnet workers followed it. Wrong trailers on main: 99f1ade19 (13728e1a rework), 9d1ca38a2 (f5ae4c49), b9340fbec (83ed701d); on the pinned bfc2ceab branch: 222b02396. The rule now tells a worker to use its own session attribution.",
+  "Session 32 end: 11 story issues closed (4e68f9b2, 4767d936, 13728e1a, c317f5ac, f5ae4c49, 83ed701d, 391f5419, 86d9260e, e918a8ee, 9e0cd346, 4de9d983). feb60d0d batch_size decision for the later addendum leaf: lane cells declare batching.batch_size 1 (P-19), the wave size is in selected_path; batch_fill_ns is a zero-iteration-cap probe. aff59c3c grid accepted as baked (74 cells). Unfiled: dense-harness manifest clippy and fmt failures; sibling x86 modules import core::arch::x86_64 unconditionally; regen-asm reading hard-linked target/release (unverified).",
+  "Session 33 (2026-10-11): the 2026-10-09 window ran all seven jobs to a terminal 'complete' with acceptance Accepted per job output, but on a contended host: epic b4b4b9ee's session merged and gated on main from 00:12 to 02:53 local, and window.log records one-minute loads of 77.94 (63bad95d native-ladder confirmation), 77.63 (bfc2ceab pilot2), 25.19 (63bad95d dispatch-overhead pilot2), 13.91 and 33.35 (7dbe1393 profile and pilot), 10.28 and 5.03 (63bad95d M4RI pilots). Receipts are committed as measured; each worker records the load beside the outcome. No window ran on 2026-10-10 or is armed at session start. Claimed 8e53235b, a96a4cd6, 395fe4e2, e4e2ba52 (7a1b494ad); nine fresh workers dispatched (opus: 63bad95d-fam, bfc2ceab, 7dbe1393, 63bad95d M4RI pair, 8e53235b; sonnet: a96a4cd6, 395fe4e2, e4e2ba52, feb60d0d rework 2). Common rules in the session scratchpad.",
+  "Session 33: every family measured in the 2026-10-09 window is refused by its freezer or inconclusive (63bad95d native ladder, dispatch overhead, both M4RI families; bfc2ceab; 7dbe1393); seven open escalations recorded. Closed e4e2ba52, 395fe4e2, a96a4cd6, feb60d0d. Lead errors: code-review evaluated before cargo-ci (e4e2ba52), and cargo-ci gates started while rework workers built (feb60d0d, 395fe4e2 failed on load flakes). Gate order that worked: cargo-ci for every merged issue on a quiet host, then the reviews. progress.json is written with indent=1 and ensure_ascii=False.",
+  "Session 33: window gf2-bench-window-20261011 armed for 04:00 Europe/Helsinki (the first attempt was denied by the permission classifier; the invoker said to try again). Queue: one new job, the 8e53235b pilot, behind a load guard on its queue line. A session of another project (mealie-fi) is active on the host.",
+  "Session 33 end: bad1aea8 closed after one rework. Five story issues closed this session (e4e2ba52, 395fe4e2, a96a4cd6, feb60d0d, bad1aea8). Host quiet from 03:05 local for the 04:00 window.",
+  "Session 34 (2026-10-11): invoker rulings on the nine handoff-29 questions: repeat each disturbed family once under a new family version; bfc2ceab exploratory cost accepted; 7dbe1393 merges unselected; load guard per queue line only; lead repaired jit validate (28a64b749); aff59c3c dependency as a root workspace dependency; a96a4cd6 stage builders stay public and gain the stated route-equivalence contract (81e955b0); the INTRA arm converges on the shared AFF3CT handle before measuring (1ca04967, between d4185e9e and 4252085a); the story's arms build and run from the pinned worktree agent-ed3d490e-run. Invoker steer the same day: too much pinning and protocol; prefer the simplest, least protocol-intensive approach that meets the criteria; the focus is HPC. Filed 151af028 (checkpoint_compat resume tests), 07024d65 (stale 04b85d10 survey, lead holds it after 8e53235b), 754208a0 (rare-event artifact timeouts, outside the epic)."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -2569,36 +2964,49 @@
   "handoff-24.md",
   "handoff-25.md",
   "handoff-26.md",
-  "handoff-27.md"
+  "handoff-27.md",
+  "handoff-28.md",
+  "handoff-29.md",
+  "handoff-30.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
  },
  "benchmark_window": {
-  "unit": "gf2-bench-window-20261008",
-  "armed_for": "2026-10-08T02:00:00+03:00",
+  "unit": "gf2-bench-window-20261012",
+  "armed_for": "2026-10-12T04:00:00+03:00",
   "state_dir": ".agents/bench-window",
   "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
   "pending_jobs": {
-   "bfc2ceab": [
-    "sparse-product-check-cost pilot, 10 min, worktree agent-bfc2ceab"
+   "8e53235b": [
+    "codeword-assembly confirmation, 10 min, agent-8e53235b"
    ],
    "63bad95d": [
-    "63bad95d-profile-dispatch-overhead pilot, 10 min, worktree agent-63bad95d-fam",
-    "63bad95d-native-ladder pilot, 12 min, worktree agent-63bad95d-fam"
+    "profile-dispatch-overhead-v2 pilot, 10 min, agent-63bad95d-fam",
+    "native-ladder-v2 pilot, 12 min, agent-63bad95d-fam",
+    "native-matvec-vs-m4ri second pilot v4-r2, 25 min, agent-63bad95d-m4ri",
+    "portable-matvec-vs-m4ri second pilot v4-r2, 10 min, agent-63bad95d-pm4ri"
+   ],
+   "7dbe1393": [
+    "matvec-ragged-tail-v2 pilot v4-r1, 10 min, agent-7dbe1393"
    ]
   },
-  "note": "Verify each campaign from its own execution log, never the job rc. The 4337c02e confirmation job (key ae13fbd8b6c8b708, rc 1 on the acceptance verdict) was marked done by the lead after verifying its log. Nightly windows are authorized (handoff-25); the invoker approved these pilots on 2026-10-07."
+  "note": "Every line carries its own load guard (exit 75 above a one-minute load of 2, line stays queued). Verify each campaign from its own execution log and read window.log loads first. Count the queue lines; the lead counted seven jobs when arming."
  },
  "session_scope": {
-  "session": 31,
-  "date": "2026-10-07",
-  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Mid-session: no reuse of existing subagents; no questions while working; handoff after this and the next wave.",
+  "session": 34,
+  "date": "2026-10-11",
+  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Steer: simplest, least protocol-intensive approach; focus HPC.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
-  "disk": "100 GB free after reclaiming thirteen merged worktrees (no harvest).",
-  "peer_session": "A session of epic fa787f85 commits on main concurrently and leaves tracker files dirty between its commits; the dispatch script refuses a dirty main, so wait for its commit. Stage tracker files by name.",
-  "active_workers": {},
+  "disk": "pinned worktrees: 63bad95d-fam, 63bad95d-run, 63bad95d-m4ri, 63bad95d-pm4ri, 7dbe1393, 8e53235b, ed3d490e-run. In rework: bfc2ceab, aff59c3c-r2. Reclaimable: 81e955b0, 151af028.",
+  "peer_session": "None observed at session start (load 0.2).",
+  "active_workers": {
+   "d4185e9e": "opus, rework 1 (F1-F3 of code-review and research-review) in agent-ed3d490e-run; unmerged at handoff",
+   "bfc2ceab": "opus, rework 2 (F1 PAM scalar coverage, F2 exception comment) in agent-bfc2ceab; unmerged at handoff",
+   "aff59c3c": "sonnet, rework 2 (F1 exception comment, F2 resume_equivalent, F3 comment sweep) in agent-aff59c3c-r2; unmerged at handoff"
+  },
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
-  "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes."
+  "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes.",
+  "session_34_outcome": "Done: 81e955b0, 151af028. Merged and in rework after failed reviews: d4185e9e, bfc2ceab, aff59c3c. Merged, in progress pending measurement: 7dbe1393. Unmerged pinned branches awaiting the 2026-10-12 window: 8e53235b (75280f153), 63bad95d-fam (6d2106d1a), -m4ri (74ba66ed2), -pm4ri (a84073607)."
  }
 }

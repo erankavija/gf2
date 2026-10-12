@@ -17,9 +17,9 @@ default = []
 # Gate no code; backend selection is runtime detection.
 avx2 = []
 avx512 = []
-# Publishes the shared kernel contracts (`transpose::contract`) that this
-# crate's own tests run, so `gf2-core`'s integration tests drive every lane
-# through one copy of the cases instead of restating them.
+# Publishes the shared kernel contracts (`transpose::contract`) and the host
+# precondition (`contract`) that this crate's own tests run, so the tests of
+# dependent crates drive every lane through one copy instead of restating them.
 test-support = []
 
 [dev-dependencies]

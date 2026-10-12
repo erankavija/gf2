@@ -100,8 +100,7 @@ impl Pipeline {
     /// the graph API without a preset) or a GPU stage faults fatally.
     pub fn run(&self) -> Result<SimulationResults, StageError> {
         let scheduler = Scheduler::from_pipeline(self);
-        let handle = BatchHandle::new(0, 0);
-        scheduler.run(self, handle)
+        scheduler.run(self)
     }
 
     /// Alias for [`run`](Pipeline::run).
@@ -131,7 +130,10 @@ impl Pipeline {
     /// ([`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint))
     /// before every flush. With `resume`, existing checkpoints in
     /// `config.checkpoint_dir` are loaded: completed points contribute their
-    /// saved counters and a partial point continues. A recoverable GPU fault
+    /// saved counters and a partial point continues. A checkpoint written
+    /// under another
+    /// [`pipeline_config_hash`](crate::snr_checkpoint::pipeline_config_hash)
+    /// fails the sweep. A recoverable GPU fault
     /// aborts the sweep and leaves the last committed checkpoint, where
     /// [`run`](Pipeline::run) substitutes the CPU fallback.
     ///

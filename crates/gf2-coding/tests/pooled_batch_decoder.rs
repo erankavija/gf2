@@ -6,8 +6,8 @@ use std::sync::{Arc, Mutex};
 
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::{
-    BatchRoute, DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode, LdpcDecoder, LdpcEncoder,
-    QuasiCyclicLdpc,
+    BatchRoute, DecodedWord, DecoderConfig, LaneBackend, LdpcBatchDecoder, LdpcCode, LdpcDecoder,
+    LdpcEncoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::pooled::PooledBatchDecoder;
@@ -221,7 +221,10 @@ fn lane_decoder() -> LdpcBatchDecoder {
 #[test]
 fn pooled_ldpc_batch_decoder_satisfies_the_contract_and_equals_the_single_decoder() {
     let frames = frames_of(21);
-    assert_eq!(lane_decoder().batch_route(21), BatchRoute::Lane);
+    assert_eq!(
+        lane_decoder().batch_route(21),
+        BatchRoute::Lane(LaneBackend::detected())
+    );
     let mut reference = LdpcDecoder::new(code());
     for granules in [1, 2] {
         let mut pool = PooledBatchDecoder::with_selectors(lane_decoder, &selectors(granules));

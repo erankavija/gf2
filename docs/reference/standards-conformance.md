@@ -13,7 +13,7 @@ codeword bit order and the external evidence each conformance test consumes.
 |---|---|---|
 | BCH outer code | `bch::dvb_t2::dvb_t2_bch_code`, `DvbT2BchDecoder` | every `FrameSize` × `CodeRate`; parameters of EN 302 755 Tables 6a and 6b in [`params.rs`](../../crates/gf2-coding/src/bch/dvb_t2/params.rs) |
 | LDPC inner code | `LdpcCode::dvb_t2_normal`, `LdpcCode::dvb_t2_short` | every `FrameSize` × `CodeRate`; `(N_ldpc, K_ldpc, Q_ldpc)` in `DvbParams::for_code`, parity address tables beside it in [`ldpc/dvb_t2/`](../../crates/gf2-coding/src/ldpc/dvb_t2/) |
-| BCH + LDPC chain | `ldpc::dvb_t2::concat::DvbT2Concat` | every `FrameSize` × `CodeRate` |
+| BCH + LDPC chain | `ldpc::dvb_t2::concat::DvbT2Concat`; `DvbT2ConcatBatchDecoder` beside it for batches of FECFRAMEs | every `FrameSize` × `CodeRate` |
 | Bit interleaver (§6.1.3) | `ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver` | QPSK, 16-QAM, 64-QAM at rates 1/2, 2/3, 3/4 on both frame sizes and rate 3/5 on normal frames; QPSK is the identity, as §6.1.3 prescribes |
 
 The bit interleaver panics on other rates and has no 256-QAM mode. The cell-word
@@ -45,18 +45,19 @@ FECFRAME).
 |---|---|---|
 | [`dvb_t2_bch_verification`](../../crates/gf2-coding/tests/dvb_t2_bch_verification.rs) | VV001-CR35 | `encode(TP04) = TP05` and error-free `decode(TP05) = TP04` on every block of the first frame; TP05 begins with TP04; seeded error correction within `t` |
 | [`dvb_t2_ldpc_verification_suite`](../../crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs) | VV001-CR35 | `encode(TP05) = TP06` and error-free decode on every block of the first frame; TP06 begins with TP05; `H·c = 0`; round trip |
+| [`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs) | VV001-CR35 | error-free `decode(TP06) = TP04` on every block of the first frame, through `DvbT2Concat::decode_soft_counted` and through `DvbT2ConcatBatchDecoder` on each route |
 | [`dvb_t2_chain_tp07a`](../../crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs) | VV020-FEF, VV009-4KFFT, VV014-64QAM34 | `interleave(TP06) = TP07a` and `deinterleave(TP07a) = TP06` bit-exact (16-QAM 1/2, 64-QAM 2/3, 64-QAM 3/4, normal frame) |
 
 The `dvb_t2_bch_verification` tests outside its slow error-correction case run
 in the fast tier and pass without assertion when the vectors are absent; the
-other tests of this table are ignored by default. The BCH generator construction is
+other vector tests of this table are ignored by default. The BCH generator construction is
 checked against the standard's minimal polynomials `g₁`…`g₁₂` by unit tests in
 `bch::dvb_t2`.
 
 ```bash
 DVB_TEST_VECTORS_PATH=/path/to/streams ./scripts/cargo-budget.sh --test \
   cargo nextest run -p gf2-coding --release --profile slow --run-ignored all \
-  -E 'binary(dvb_t2_bch_verification) | binary(dvb_t2_ldpc_verification_suite) | binary(dvb_t2_chain_tp07a)'
+  -E 'binary(dvb_t2_bch_verification) | binary(dvb_t2_ldpc_verification_suite) | binary(dvb_t2_concat_batch_decoder) | binary(dvb_t2_chain_tp07a)'
 ```
 
 ## 5G NR LDPC
@@ -66,7 +67,7 @@ DVB_TEST_VECTORS_PATH=/path/to/streams ./scripts/cargo-budget.sh --test \
 | Entry point | Supported configurations |
 |---|---|
 | `QuasiCyclicLdpc::nr_5g(base_graph, z)` | BG1 and BG2 mother codes at every lifting size of TS 38.212 Table 5.3.2-1 (`nr_5g::all_lifting_sizes`) |
-| `QuasiCyclicLdpc::nr_5g_rate_matched(base_graph, target_n, target_k)`, `Nr5gRateMatchedDecoder` | shortened and punctured codes over either base graph; lifting size selected per §5.2.2 (`kb_for_z_selection`, `max_payload_for_lifting`) |
+| `QuasiCyclicLdpc::nr_5g_rate_matched(base_graph, target_n, target_k)`, `Nr5gRateMatchedDecoder`, `Nr5gRateMatchedBatchDecoder` | shortened and punctured codes over either base graph; lifting size selected per §5.2.2 (`kb_for_z_selection`, `max_payload_for_lifting`) |
 | `nr_5g::interleaver::{output_interleaver, interleave_bits, deinterleave_llrs}` | the §5.4.2.2 rate-matching bit interleaver for any `Q_m` dividing `E` |
 
 The rate-matched code pads the message with zero filler bits to `K_b·Z`,
@@ -79,16 +80,20 @@ starts at column `2Z`; redundancy versions are not modelled.
 
 ### External evidence
 
-The base-graph reference tables in
-[`data/ldpc/nr_5g/`](../../crates/gf2-coding/data/ldpc/nr_5g/) are an
-independent published copy of TS 38.212 Tables 5.3.2-2 and 5.3.2-3; their
-upstream source, pinned commit, licence and digests are in
+[`data/ldpc/nr_5g/`](../../crates/gf2-coding/data/ldpc/nr_5g/) holds two kinds
+of external data from `@/citation/Sionna2026`: the base-graph reference tables,
+an independent published copy of TS 38.212 Tables 5.3.2-2 and 5.3.2-3, and
+messages with the rate-matched codewords that Sionna's `LDPC5GEncoder` produces
+for them, for configurations on both base graphs with punctured systematic
+columns, truncated parity and filler bits. Their upstream version, licence,
+digests, format and the encoder mode that corresponds to the rate matching
+above are in
 [`PROVENANCE.md`](../../crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md), which
 also records the evidence for the §5.4.2.2 interleaver.
 
 | Test target | Asserts |
 |---|---|
-| [`nr5g_external_vectors`](../../crates/gf2-coding/tests/nr5g_external_vectors.rs) | the compiled-in shift table of every (base graph, `i_LS`) pair equals the reference; `nr_5g(bg, z)` equals the reference reduced `V mod Z` at every lifting size; substituting a wrong `i_LS` table is detected; rate-matched codes on both base graphs select the expected `(Z, i_LS)` and round-trip noiselessly |
+| [`nr5g_external_vectors`](../../crates/gf2-coding/tests/nr5g_external_vectors.rs) | the compiled-in shift table of every (base graph, `i_LS`) pair equals the reference; `nr_5g(bg, z)` equals the reference reduced `V mod Z` at every lifting size; substituting a wrong `i_LS` table is detected; for each Sionna vector configuration the rate-matched code selects Sionna's lifting size and filler count, its encoder reproduces the Sionna codewords bit for bit, and the Sionna codewords as noiseless LLRs decode to the Sionna messages through `Nr5gRateMatchedDecoder::decode_iterative` and through `Nr5gRateMatchedBatchDecoder` on each route, over a full wave and an incomplete final wave |
 | unit tests in [`interleaver.rs`](../../crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs) | permutations derived from the §5.4.2.2 loop |
 | [`nr5g_regression`](../../crates/gf2-coding/tests/nr5g_regression.rs) | bit-exact codewords for fixed rate-matched `(n, k)` pairs; fixtures generated by the library itself, so they detect change, not conformance |
 

@@ -118,7 +118,7 @@ simulates no frames and rewrites the CSV with the same deterministic columns.
 A resume with a different `--max-frames` fails with `ConfigHashMismatch`, so
 a larger budget is a fresh run;
 [Run a simulation campaign](../how-to/run-simulation-campaigns.md#checkpointed-dvb-t2-campaigns)
-lists the arguments the checkpoint hash covers and those it excludes.
+describes the checkpoint identity.
 
 ## Adapt it
 

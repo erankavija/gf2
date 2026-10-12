@@ -22,10 +22,6 @@ use gf2_core::BitVec;
 
 use crate::parallel::{FrameOutcome, WorkerCtx};
 
-/// BP iteration count recorded for a frame whose decode returns no BBFRAME
-/// estimate.
-const DECODE_HARD_FAIL_ITERS: u64 = 50;
-
 /// A DVB-T2 BICM-AWGN single-frame simulator for one MODCOD and Es/N0 point.
 ///
 /// [`DvbT2Concat`] holds its LDPC decoder behind a `Mutex`, so a simulator
@@ -216,7 +212,9 @@ impl DvbT2BicmFrameSim {
     /// because the dispatcher has already positioned that RNG. A frame is
     /// errored iff any information bit differs. A non-converged LDPC decode
     /// keeps its best-effort BBFRAME estimate, and `iterations` is the BP
-    /// iteration count on both the converged and the non-converged arm.
+    /// iteration count on both the converged and the non-converged arm. The
+    /// bit-error count is the Hamming distance between the transmitted
+    /// BBFRAME and that estimate.
     ///
     /// # Complexity
     ///
@@ -241,12 +239,16 @@ impl DvbT2BicmFrameSim {
         );
 
         let (decoded, iterations) = match self.codec.decode_soft_counted(&llrs) {
-            Ok((bbframe, iters)) => (bbframe, iters as u64),
-            Err(ConcatError::LdpcDecodeFailed {
+            Ok((bbframe, iters))
+            | Err(ConcatError::LdpcDecodeFailed {
                 bbframe,
-                iterations,
-            }) => (bbframe, iterations as u64),
-            Err(_) => (BitVec::with_capacity(self.k), DECODE_HARD_FAIL_ITERS),
+                iterations: iters,
+            }) => (bbframe, iters as u64),
+            // `DvbT2Concat::decode_soft_counted` returns only the two arms
+            // above; `Unsupported` is produced by `DvbT2Concat::new` alone.
+            Err(ConcatError::Unsupported { .. }) => {
+                unreachable!("decode_soft_counted does not return Unsupported")
+            }
         };
 
         let bit_errors = count_bit_errors(&message, &decoded) as u64;
@@ -350,6 +352,38 @@ mod tests {
     use super::*;
     use gf2_coding::ldpc::DecoderAlgorithm;
     use std::num::NonZeroUsize;
+
+    #[test]
+    fn simulate_frame_scores_a_non_converged_decode_by_hamming_distance() {
+        let sim = DvbT2BicmFrameSim::new(
+            CodeRate::Rate1_2,
+            DvbT2Modulation::Qam16,
+            -5.0,
+            DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
+            DemapMethod::ExactLogMap,
+        );
+        let outcome = sim.simulate_frame(0, &mut WorkerCtx::new(11, 0, 0));
+
+        // Replay the same RNG stream through the preparation half and the
+        // codec, which reports the failure explicitly.
+        let prep = sim.prepare_frame(0, &mut WorkerCtx::new(11, 0, 0));
+        let Err(ConcatError::LdpcDecodeFailed {
+            bbframe,
+            iterations,
+        }) = sim.codec.decode_soft_counted(&prep.llrs)
+        else {
+            panic!("a frame at -5 dB Es/N0 must not converge");
+        };
+        let expected = (0..sim.k())
+            .filter(|&i| prep.message.get(i) != bbframe.get(i))
+            .count() as u64;
+
+        assert!(outcome.errored);
+        assert!(outcome.bit_errors > 0);
+        assert_eq!(outcome.bit_errors, expected);
+        assert_eq!(outcome.iterations, iterations as u64);
+        assert_eq!(outcome.info_bits, sim.k() as u64);
+    }
 
     #[test]
     fn test_frame_sim_constructs_normal_frame() {

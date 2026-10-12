@@ -1,23 +1,24 @@
 //! 5G NR LDPC BICM-chain [`Stage`] wrappers (`@/citation/ThreeGpp2017`) over
 //! the `gf2-coding` 5G NR types ([`Nr5gRateMatchedCode`] encode,
-//! [`Nr5gRateMatchedDecoder`] decode, and the `@/citation/ThreeGpp2020` clause
-//! 5.4.2.2 [`interleaver`](gf2_coding::ldpc::nr_5g::interleaver)). Every stage
-//! is `ExecutionClass::CpuOnly` with `CpuFallback = Self` and `Scratch = ()`,
-//! except [`Nr5gDecode`], whose [`Nr5gDecodeScratch`] exposes the per-frame BP
-//! iteration counts.
+//! [`Nr5gRateMatchedBatchDecoder`] decode, and the `@/citation/ThreeGpp2020`
+//! clause 5.4.2.2 [`interleaver`](gf2_coding::ldpc::nr_5g::interleaver)). Every
+//! stage is `ExecutionClass::CpuOnly` with `CpuFallback = Self` and
+//! `Scratch = ()`, except [`Nr5gDecode`], whose [`BatchDecodeScratch`] exposes
+//! the per-frame BP iteration counts.
 
 use std::sync::Arc;
 
 use gf2_coding::ldpc::nr_5g::interleaver::{deinterleave_llrs, interleave_bits};
-use gf2_coding::ldpc::nr_5g::{Nr5gRateMatchedCode, Nr5gRateMatchedDecoder};
+use gf2_coding::ldpc::nr_5g::{Nr5gRateMatchedBatchDecoder, Nr5gRateMatchedCode};
 use gf2_coding::ldpc::DecoderAlgorithm;
 use gf2_coding::modem::DemapMethod;
-use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
-use gf2_core::BitVec;
+use gf2_coding::traits::BlockEncoder;
+use gf2_coding::tuning::{self, DecodeSelectors};
 
 use crate::batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 use crate::error::StageError;
 use crate::stage::{ExecutionClass, Stage};
+use crate::stages::batch_decode::{BatchDecode, BatchDecodeScratch};
 use crate::stages::{GrayQamDemapCore, GrayQamMapCore, DEFAULT_DEMAP_NOISE_VAR};
 
 /// 5G NR LDPC encode stage: `target_k` message bits → `target_n` codeword bits.
@@ -228,39 +229,40 @@ impl Stage<SymbolBatch, LlrBatch> for NrGrayQamDemap {
     }
 }
 
-/// Per-stage scratch for [`Nr5gDecode`]: the per-frame BP iteration counts of
-/// the most recent `process` call, in input-frame order.
-///
-/// [`Nr5gDecode::process`] clears [`iterations`](Self::iterations) and pushes
-/// one entry per input frame: the BP depth reported by
-/// [`Nr5gRateMatchedDecoder::decode_iterative`].
-#[derive(Debug, Clone, Default)]
-pub struct Nr5gDecodeScratch {
-    /// Per-frame BP iteration counts of the most recent [`Nr5gDecode::process`]
-    /// call, in input-frame order.
-    pub iterations: Vec<u64>,
-}
-
 /// 5G NR LDPC decode stage: rate-matched-order soft LLRs → recovered message
 /// bits.
 ///
-/// Wraps [`Nr5gRateMatchedDecoder::decode_iterative`] (belief propagation on the
-/// full mother code with rate-matching LLR mapping). Each input frame is `n()`
+/// Decodes each batch through a [`BatchDecode`] stage over one
+/// [`Nr5gRateMatchedBatchDecoder`] per scratch (belief propagation on the full
+/// mother code with rate-matching LLR mapping). Each input frame is `n()`
 /// LLRs; each output frame is `k()` recovered message bits. The per-frame BP
-/// iteration counts are recorded into the [`Nr5gDecodeScratch`].
+/// iteration counts are recorded into the [`BatchDecodeScratch`].
 ///
 /// A frame whose BP does not converge yields the decoder's message estimate
 /// and no stage error.
+///
+/// # Panics
+///
+/// `process` panics as [`BatchDecode`] does, and its first call on a scratch
+/// as [`Nr5gRateMatchedBatchDecoder::with_selectors`] does.
 pub struct Nr5gDecode {
     code: Arc<Nr5gRateMatchedCode>,
     algorithm: DecoderAlgorithm,
     max_iterations: usize,
+    selectors: DecodeSelectors,
+    batch: BatchDecode<DecoderFactory>,
 }
+
+type DecoderFactory = Box<dyn Fn() -> Nr5gRateMatchedBatchDecoder + Send + Sync>;
 
 impl Nr5gDecode {
     /// Builds a 5G NR decode stage over a shared rate-matched code, decoding
     /// with normalized min-sum (`alpha` = 0.75) at the given iteration cap. A
-    /// cap of zero behaves as in [`Nr5gRateMatchedDecoder`]'s `decode_iterative`.
+    /// cap of zero behaves as in [`Nr5gRateMatchedBatchDecoder`].
+    ///
+    /// # Panics
+    ///
+    /// As [`with_algorithm`](Self::with_algorithm).
     pub fn new(code: Arc<Nr5gRateMatchedCode>, max_iterations: usize) -> Self {
         Self::with_algorithm(
             code,
@@ -270,16 +272,80 @@ impl Nr5gDecode {
     }
 
     /// Builds a 5G NR decode stage with an explicit BP algorithm; the cap of
-    /// zero behaves as in [`new`](Self::new).
+    /// zero behaves as in [`new`](Self::new). The decode selectors are those
+    /// of the process-wide coding tuning section, read once here.
+    ///
+    /// # Panics
+    ///
+    /// As [`tuning::active`].
     pub fn with_algorithm(
         code: Arc<Nr5gRateMatchedCode>,
         algorithm: DecoderAlgorithm,
         max_iterations: usize,
     ) -> Self {
+        let selectors = tuning::active().section.decode().clone();
+        Self::with_selectors(code, algorithm, max_iterations, selectors)
+    }
+
+    /// Builds a 5G NR decode stage whose decoders take the given decode
+    /// selectors, as [`Nr5gRateMatchedBatchDecoder::with_selectors`] does.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
+    pub fn with_selectors(
+        code: Arc<Nr5gRateMatchedCode>,
+        algorithm: DecoderAlgorithm,
+        max_iterations: usize,
+        selectors: DecodeSelectors,
+    ) -> Self {
+        Self::build(code, algorithm, max_iterations, selectors, false)
+    }
+
+    /// Holds the lane route of every decoder on the portable backend, as
+    /// [`Nr5gRateMatchedBatchDecoder::with_portable_lanes`] does.
+    ///
+    /// The builder selects a route for equivalence tests and benchmarks; decoded
+    /// results and per-frame outcomes are identical on every route
+    /// (`docs/reference/ldpc-decoder-numerical-contract.md`).
+    #[must_use]
+    pub fn with_portable_lanes(self) -> Self {
+        Self::build(
+            self.code,
+            self.algorithm,
+            self.max_iterations,
+            self.selectors,
+            true,
+        )
+    }
+
+    fn build(
+        code: Arc<Nr5gRateMatchedCode>,
+        algorithm: DecoderAlgorithm,
+        max_iterations: usize,
+        selectors: DecodeSelectors,
+        portable: bool,
+    ) -> Self {
+        let (shared, chosen) = (code.clone(), selectors.clone());
+        let factory: DecoderFactory = Box::new(move || {
+            let decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
+                (*shared).clone(),
+                algorithm,
+                max_iterations,
+                chosen.clone(),
+            );
+            if portable {
+                decoder.with_portable_lanes()
+            } else {
+                decoder
+            }
+        });
         Self {
             code,
             algorithm,
             max_iterations,
+            selectors,
+            batch: BatchDecode::new(factory),
         }
     }
 
@@ -292,26 +358,15 @@ impl Nr5gDecode {
 }
 
 impl Stage<LlrBatch, HardDecisionBatch> for Nr5gDecode {
-    type Scratch = Nr5gDecodeScratch;
+    type Scratch = BatchDecodeScratch;
     type CpuFallback = Self;
 
     fn process(
         &self,
         input: &LlrBatch,
-        scratch: &mut Nr5gDecodeScratch,
+        scratch: &mut BatchDecodeScratch,
     ) -> Result<HardDecisionBatch, StageError> {
-        scratch.iterations.clear();
-        // The decoder owns mutable BP state, and `process` takes `&self`, so
-        // each frame builds a decoder from a clone of the shared code.
-        let mut frames: Vec<BitVec> = Vec::with_capacity(input.frames.len());
-        for llrs in &input.frames {
-            let mut decoder =
-                Nr5gRateMatchedDecoder::with_algorithm((*self.code).clone(), self.algorithm);
-            let result = decoder.decode_iterative(llrs, self.max_iterations);
-            scratch.iterations.push(result.iterations as u64);
-            frames.push(result.decoded_bits);
-        }
-        Ok(HardDecisionBatch::new(frames))
+        self.batch.process(input, scratch)
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -322,8 +377,76 @@ impl Stage<LlrBatch, HardDecisionBatch> for Nr5gDecode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
     use gf2_coding::ldpc::QuasiCyclicLdpc;
+    use gf2_coding::traits::IterativeSoftDecoder;
     use gf2_coding::Llr;
+    use gf2_core::BitVec;
+
+    /// Noise amplitudes of consecutive frames, from clean to undecodable, so
+    /// a wave holds frames that converge early, late and not at all.
+    const NOISE_LADDER: [f32; 6] = [0.8, 1.7, 4.0, 1.5, 1.9, 1.3];
+
+    /// `count` noisy transmitted words of `code`, frame `f` at its entry of
+    /// [`NOISE_LADDER`].
+    fn noisy_frames(code: &Nr5gRateMatchedCode, count: usize) -> Vec<Vec<Llr>> {
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        let mut uniform = move || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            (state >> 11) as f32 / (1u64 << 53) as f32
+        };
+        (0..count)
+            .map(|f| {
+                let sent = code.encode(&BitVec::random_seeded(code.k(), f as u64));
+                let amplitude = NOISE_LADDER[f % NOISE_LADDER.len()];
+                (0..sent.len())
+                    .map(|i| {
+                        let symbol = if sent.get(i) { -1.0 } else { 1.0 };
+                        let noise = amplitude * (uniform() + uniform() - 1.0);
+                        Llr::new(2.0 * (symbol + noise))
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+
+    #[test]
+    fn decode_matches_per_frame_decode_iterative_at_every_batch_size() {
+        const WAVE: usize = 8;
+        let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121));
+        let cap = 12;
+        for algorithm in [
+            DecoderAlgorithm::NormalizedMinSum(0.75),
+            DecoderAlgorithm::SumProduct,
+        ] {
+            let stage = Nr5gDecode::with_algorithm(code.clone(), algorithm, cap);
+            let mut scratch = BatchDecodeScratch::default();
+            let mut single = Nr5gRateMatchedDecoder::with_algorithm((*code).clone(), algorithm);
+            for count in [0, 1, WAVE - 3, WAVE, 2 * WAVE + 3] {
+                let frames = noisy_frames(&code, count);
+                let out = stage
+                    .process(&LlrBatch::new(frames.clone()), &mut scratch)
+                    .unwrap();
+
+                assert_eq!(out.frames.len(), count);
+                assert_eq!(scratch.iterations.len(), count);
+                let mut depths = std::collections::BTreeSet::new();
+                for (f, llrs) in frames.iter().enumerate() {
+                    let expected = single.decode_iterative(llrs, cap);
+                    let label = format!("{algorithm:?}, {count} frames, frame {f}");
+                    assert_eq!(out.frames[f], expected.decoded_bits, "{label}");
+                    assert_eq!(scratch.iterations[f], expected.iterations as u64, "{label}");
+                    depths.insert((expected.iterations, expected.converged));
+                }
+                if count >= WAVE {
+                    assert!(depths.len() > 2, "{algorithm:?}: {depths:?}");
+                    assert!(depths.iter().any(|(_, converged)| !converged));
+                }
+            }
+        }
+    }
 
     #[test]
     fn test_encode_decode_roundtrip_zero_message() {
@@ -343,7 +466,7 @@ mod tests {
                 }
             })
             .collect();
-        let mut scratch = Nr5gDecodeScratch::default();
+        let mut scratch = BatchDecodeScratch::default();
         let out = dec
             .process(&LlrBatch::new(vec![llrs]), &mut scratch)
             .unwrap();

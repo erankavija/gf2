@@ -33,7 +33,7 @@ serde = { version = "1", features = ["derive"], optional = true }
 [dev-dependencies]
 proptest = { workspace = true }
 criterion = { workspace = true }
-tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
+tuning-campaign-support = { workspace = true }
 # Campaign probes use the canonical dedicated-pool and effective-observation
 # seams without adding either facility to gf2-algebra's production surface.
 gf2-core = { path = "../gf2-core", features = ["test-support"] }

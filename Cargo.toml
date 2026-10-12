@@ -37,6 +37,8 @@ rayon = "1.10"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
 trybuild = "1"
+# Path dependency under dev/: tracked exception @/issue/e430f035.
+tuning-campaign-support = { path = "dev/tools/tuning-campaign-support" }
 
 [profile.release]
 lto = "thin"

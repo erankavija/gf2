@@ -4,8 +4,9 @@ use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
 use gf2_coding::bch::SystematicLayout;
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder};
 use gf2_coding::llr::Llr;
+use gf2_coding::test_support::pooled_decode;
 use gf2_coding::traits::block::BlockEncoder as CanonicalBlockEncoder;
-use gf2_coding::traits::BlockEncoder;
+use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::gf2m::Gf2mField;
 use gf2_core::BitVec;
@@ -52,8 +53,12 @@ fn test_ldpc_decoder_uses_backend_for_batch() {
         })
         .collect();
 
-    let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
+    let results = pooled_decode(&code, &llr_blocks, 10);
 
+    let mut single = LdpcDecoder::new(code.clone());
+    for (llrs, result) in llr_blocks.iter().zip(&results) {
+        assert_eq!(result, &single.decode_iterative(llrs, 10));
+    }
     assert_eq!(results.len(), 50);
     for (i, result) in results.iter().enumerate() {
         assert!(result.converged);
@@ -137,7 +142,7 @@ fn test_backend_batch_operations_empty_input() {
     assert_eq!(codewords.len(), 0);
 
     let empty_llrs: Vec<Vec<Llr>> = vec![];
-    let results = LdpcDecoder::decode_batch(&code, &empty_llrs, 10);
+    let results = pooled_decode(&code, &empty_llrs, 10);
     assert_eq!(results.len(), 0);
 }
 

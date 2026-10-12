@@ -47,6 +47,9 @@ num-bigint = { workspace = true }
 [dev-dependencies]
 gf2-core = { path = "../gf2-core", features = ["test-support"] }
 gf2-algebra = { path = "../gf2-algebra", features = ["test-support"] }
+# `test_support::ldpc_batch_routes` enumerates the decode routes the
+# batch-decode determinism suite runs.
+gf2-coding = { path = "../gf2-coding", features = ["test-support"] }
 proptest = { workspace = true }
 trybuild = { workspace = true }
 rayon = "1"

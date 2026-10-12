@@ -6,8 +6,9 @@
 //!
 //! # Cross-path resume
 //!
-//! `gpu_enabled` is part of [`config_hash`](crate::snr_checkpoint::config_hash),
-//! so a CPU-written checkpoint is rejected by a hybrid resume and vice versa.
+//! `gpu_enabled` is part of
+//! [`pipeline_config_hash`](crate::snr_checkpoint::pipeline_config_hash), so a
+//! CPU-written checkpoint is rejected by a hybrid resume and vice versa.
 //! A `gpu_enabled` config that degraded to the CPU path (no device) and is
 //! resumed where a device exists is guarded by the per-worker batch-alignment
 //! check, which rejects a `frames_in_worker` that is neither
@@ -22,8 +23,8 @@ use crate::executor::{RunPlan, Scheduler};
 use crate::frame_sim::DvbT2BicmFrameSim;
 use crate::pipeline::Pipeline;
 use crate::snr_checkpoint::{
-    config_hash, run_snr_point_checkpointed, CheckpointReader, CheckpointV2, CheckpointWriter,
-    CheckpointedRun, SweepError,
+    pipeline_config_hash, run_snr_point_checkpointed, CheckpointReader, CheckpointV2,
+    CheckpointWriter, CheckpointedRun, SweepError,
 };
 
 /// Per-stream "in-flight GPU batches" tally.
@@ -212,8 +213,10 @@ impl Scheduler {
     /// (resume via the global `frames_completed`).
     ///
     /// With `resume`, each point's `<checkpoint_dir>/snr_<NNNN>.json` is loaded
-    /// first: completed points fold their saved counters and are skipped; a
-    /// partial point resumes — on the hybrid path by restoring each worker's
+    /// first and rejected unless it carries this pipeline's
+    /// [`pipeline_config_hash`]: completed points fold their saved counters
+    /// and are skipped; a partial point resumes — on the hybrid path by
+    /// restoring each worker's
     /// strided-partition progress from `worker_states[].frames_in_worker`
     /// (worker `w` of `W` continues at global frame `w + frames_in_worker·W`;
     /// `rng_word_pos` is never read back). The
@@ -276,7 +279,7 @@ impl Scheduler {
                 "run_sweep_checkpointed requires PipelineConfig::checkpoint_dir".to_string(),
             ))
         })?;
-        let expected_hash = config_hash(config);
+        let expected_hash = pipeline_config_hash(pipeline);
         let writer = CheckpointWriter::new(&dir).map_err(SweepError::Io)?;
         let reader = CheckpointReader::new(dir, expected_hash.clone());
 

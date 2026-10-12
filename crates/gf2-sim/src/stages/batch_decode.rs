@@ -140,7 +140,7 @@ mod tests {
 
     use super::*;
     use crate::stage::erase;
-    use crate::stages::nr_5g::{Nr5gDecode, Nr5gDecodeScratch};
+    use crate::stages::nr_5g::Nr5gDecode;
 
     const K: usize = 3;
     const N: usize = 5;
@@ -338,7 +338,7 @@ mod tests {
         let batch = LlrBatch::new(frames);
 
         let reference = Nr5gDecode::with_algorithm(code.clone(), algorithm, cap);
-        let mut reference_scratch = Nr5gDecodeScratch::default();
+        let mut reference_scratch = BatchDecodeScratch::default();
         let expected = reference.process(&batch, &mut reference_scratch).unwrap();
 
         let stage = BatchDecode::new(move || {

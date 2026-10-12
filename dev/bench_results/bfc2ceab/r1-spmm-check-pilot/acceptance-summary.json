@@ -1,0 +1,154 @@
+{
+  "schema": "zen3-benchmark-acceptance-v2",
+  "receipt_sha256": "0afedb9bc20a30107230af72a9e5666057fe41490cb4335b932eca59270c803e",
+  "campaign_id": "bfc2ceab-r1-spmm-check-pilot",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "sparse-product-check-cost",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "attempt_alpha": 0.025,
+    "corrected_alpha": 0.025,
+    "per_comparison_confidence": 0.975,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 1,
+  "resumed": false,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "spmm-small-n16",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 1.0867567484396048,
+        "lower": 1.075012356363777,
+        "upper": 1.0891865677674017,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 8100397084444521638,
+        "pairs": 12
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "spmm-small-n1024",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 0.9797323991721026,
+        "lower": 0.8906948592235394,
+        "upper": 1.0733963410041347,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 4806077954280486960,
+        "pairs": 12
+      },
+      "decision": "inconclusive",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "spmm-medium-n16",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 0.9910888964213863,
+        "lower": 0.9879826718825365,
+        "upper": 0.9935747076429764,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 1805405616720976213,
+        "pairs": 12
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "spmm-medium-n1024",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 12,
+      "flagged_windows": 0,
+      "total_windows": 120,
+      "interval": {
+        "estimate": 0.9713473119899023,
+        "lower": 0.9484910962778516,
+        "upper": 0.9822011629660453,
+        "confidence": 0.975,
+        "alpha": 0.025,
+        "resamples": 10000,
+        "seed": 5139944985422271666,
+        "pairs": 12
+      },
+      "decision": "inconclusive",
+      "margins": {
+        "improvement": 1.1,
+        "equivalence": 1.05
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}

@@ -87,16 +87,15 @@ impl PrimitivePolynomialDatabase {
             14 => Some(0b100000000101011),   // x^14 + x^5 + x^3 + x + 1 (DVB-T2)
             15 => Some(0b1000000000000011),  // x^15 + x + 1
             16 => Some(0b10000000000101101), // x^16 + x^5 + x^3 + x^2 + 1 (DVB-T2)
-            // Conway polynomial `f_{2,32}` of `@/citation/Lubeck2024`, hence
-            // primitive; `test_standard_m32_is_irreducible` checks
-            // irreducibility only.
+            // Conway polynomial `f_{2,32}` of `@/citation/Lubeck2024`.
             32 => Some(0x1_0000_8299u64), // x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1
             _ => None,
         }
     }
 
     /// Returns the database's primitive trinomials of degree `m`, or an empty
-    /// vector when it holds none.
+    /// vector when it holds none. Degree 8 has none, since no primitive
+    /// trinomial of that degree exists.
     pub fn trinomials(m: usize) -> Vec<u64> {
         match m {
             2 => vec![0b111],                  // x^2 + x + 1
@@ -105,7 +104,6 @@ impl PrimitivePolynomialDatabase {
             5 => vec![0b100101],               // x^5 + x^2 + 1
             6 => vec![0b1000011],              // x^6 + x + 1
             7 => vec![0b10000011, 0b10001001], // x^7 + x + 1, x^7 + x^3 + 1
-            8 => vec![0b100010001],            // x^8 + x^4 + 1
             9 => vec![0b1000010001],           // x^9 + x^4 + 1
             10 => vec![0b10000001001],         // x^10 + x^3 + 1
             11 => vec![0b100000000101],        // x^11 + x^2 + 1
@@ -133,7 +131,7 @@ impl PrimitivePolynomialDatabase {
     ///
     /// # Strength of the guarantee
     ///
-    /// - For `m <= 16` the polynomial is **primitive**, checked by
+    /// - For `m <= 63` the polynomial is **primitive**, checked by
     ///   `test_all_database_entries_are_primitive` in `gf2m/field.rs`.
     /// - For `m = 64..=127` the polynomial is verified only **irreducible
     ///   over GF(2)**, by `test_standard_u128_entries_are_irreducible`.
@@ -244,6 +242,7 @@ impl PrimitivePolynomialDatabase {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::gf2m::Gf2mField;
 
     fn mul_mod_u128(a: u128, b: u128, m: u32, p: u128) -> u128 {
         assert!((1..=127).contains(&m));
@@ -416,9 +415,23 @@ mod tests {
     }
 
     #[test]
-    fn test_trinomials_gf8() {
-        let trinomials = PrimitivePolynomialDatabase::trinomials(8);
-        assert!(trinomials.contains(&0b100010001));
+    fn test_trinomials_are_primitive() {
+        for m in 1usize..=40 {
+            for poly in PrimitivePolynomialDatabase::trinomials(m) {
+                assert_eq!(poly >> m, 1, "m={m}: degree mismatch for {poly:#b}");
+                assert_eq!(poly.count_ones(), 3, "m={m}: {poly:#b} is not a trinomial");
+                assert_eq!(poly & 1, 1, "m={m}: {poly:#b} has no constant term");
+                assert!(
+                    Gf2mField::new_unchecked(m, poly).verify_primitive(),
+                    "m={m}: trinomial {poly:#b} is not primitive"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_trinomials_degree_8_is_empty() {
+        assert!(PrimitivePolynomialDatabase::trinomials(8).is_empty());
     }
 
     #[test]

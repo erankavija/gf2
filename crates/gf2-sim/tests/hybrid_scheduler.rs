@@ -10,7 +10,7 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
-use gf2_sim::{BatchHandle, Pipeline, Scheduler};
+use gf2_sim::{Pipeline, Scheduler};
 
 mod common;
 use common::{assert_four_columns_byte_identical, snr_point_to_counters};
@@ -55,10 +55,7 @@ fn hybrid_gpu_cpu_overlap_exceeds_50pct() {
         scheduler.gpu_active(),
         "hybrid scheduler must have an active GPU stream pool on a GPU host"
     );
-    let handle = BatchHandle::new(0, 0);
-    let (results, timeline) = scheduler
-        .run_instrumented(&pipeline, handle)
-        .expect("hybrid run");
+    let (results, timeline) = scheduler.run_instrumented(&pipeline).expect("hybrid run");
 
     assert_eq!(results.per_point.len(), 1);
     assert_eq!(results.per_point[0].frames, 384);

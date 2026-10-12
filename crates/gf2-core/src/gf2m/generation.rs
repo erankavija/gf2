@@ -11,9 +11,11 @@ pub enum GenerationStrategy {
     Trinomial,
     /// Search for pentanomials x^m + x^a + x^b + x^c + 1
     Pentanomial,
-    /// Exhaustive search on the rayon pool with the `parallel` feature, sequential without it.
+    /// Exhaustive search on a dedicated rayon pool with the `parallel`
+    /// feature, sequential without it. The results equal those of
+    /// [`Self::Exhaustive`] for every `threads`.
     ParallelExhaustive {
-        /// Unused: the search runs on the global rayon pool.
+        /// Worker count of the pool; 0 takes rayon's default.
         threads: usize,
     },
 }
@@ -22,21 +24,32 @@ pub enum GenerationStrategy {
 pub struct PrimitiveGenerator {
     degree: usize,
     strategy: GenerationStrategy,
+    /// Prime factors of 2^degree - 1, shared by every candidate check.
+    order_prime_factors: Vec<u64>,
 }
 
 impl PrimitiveGenerator {
+    /// Largest supported degree: a polynomial of degree m is a `u64` with its
+    /// leading coefficient at bit m.
+    pub const MAX_DEGREE: usize = (u64::BITS - 1) as usize;
+
     /// Create a new generator for polynomials of degree m.
     ///
     /// # Panics
     ///
-    /// Panics if m == 0 or m > 64.
+    /// Panics if m == 0 or m > [`Self::MAX_DEGREE`].
     pub fn new(degree: usize) -> Self {
         assert!(degree > 0, "Degree must be positive");
-        assert!(degree <= 64, "Degree > 64 not supported");
+        assert!(
+            degree <= Self::MAX_DEGREE,
+            "Degree must be at most {}",
+            Self::MAX_DEGREE
+        );
 
         Self {
             degree,
             strategy: GenerationStrategy::Exhaustive,
+            order_prime_factors: Gf2mField::order_prime_factors(degree),
         }
     }
 
@@ -49,82 +62,84 @@ impl PrimitiveGenerator {
     /// Find the first primitive polynomial of degree m.
     ///
     /// Returns `None` when the strategy's search space holds no primitive polynomial.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `ParallelExhaustive` pool cannot be built.
     pub fn find_first(&self) -> Option<u64> {
         match self.strategy {
             GenerationStrategy::Exhaustive | GenerationStrategy::ParallelExhaustive { .. } => {
-                self.exhaustive_search_first()
+                self.exhaustive_first(|candidate| self.is_primitive_poly(candidate))
             }
             GenerationStrategy::Trinomial => self.trinomial_search(),
             GenerationStrategy::Pentanomial => self.pentanomial_search(),
         }
     }
 
-    /// Find all primitive polynomials of degree m.
+    /// Find all primitive polynomials of degree m, in ascending order.
     ///
     /// Visits each of the `2^m` monic degree-`m` candidates.
     ///
     /// # Panics
     ///
-    /// Panics if strategy is not `Exhaustive` or `ParallelExhaustive`.
+    /// Panics if strategy is not `Exhaustive` or `ParallelExhaustive`, or if
+    /// the `ParallelExhaustive` pool cannot be built.
     pub fn find_all(&self) -> Vec<u64> {
         match self.strategy {
             GenerationStrategy::Exhaustive | GenerationStrategy::ParallelExhaustive { .. } => {
-                self.exhaustive_search_all()
+                self.exhaustive_all(|candidate| self.is_primitive_poly(candidate))
             }
             _ => panic!("find_all() only supported with exhaustive strategies"),
         }
     }
 
-    fn exhaustive_search_first(&self) -> Option<u64> {
-        #[cfg(feature = "parallel")]
-        if matches!(self.strategy, GenerationStrategy::ParallelExhaustive { .. }) {
-            return self.parallel_search_first();
-        }
-
-        let m = self.degree;
-        let high_bit = 1u64 << m;
-
-        for lower_bits in 0..(1u64 << m) {
-            let candidate = high_bit | lower_bits;
-
-            // Even weight means x + 1 divides the candidate.
-            let weight = candidate.count_ones();
-            if weight.is_multiple_of(2) {
-                continue;
-            }
-
-            if self.is_primitive_poly(candidate) {
-                return Some(candidate);
-            }
-        }
-
-        None
+    /// Above degree 1, even weight means x + 1 divides the candidate.
+    fn passes_parity_sieve(&self, candidate: u64) -> bool {
+        self.degree == 1 || candidate.count_ones() % 2 == 1
     }
 
-    fn exhaustive_search_all(&self) -> Vec<u64> {
+    /// First monic degree-m candidate, in ascending order, that `accept` takes.
+    fn exhaustive_first(&self, accept: impl Fn(u64) -> bool + Sync) -> Option<u64> {
+        let high_bit = 1u64 << self.degree;
+        let keep = |candidate: &u64| self.passes_parity_sieve(*candidate) && accept(*candidate);
+
         #[cfg(feature = "parallel")]
-        if matches!(self.strategy, GenerationStrategy::ParallelExhaustive { .. }) {
-            return self.parallel_search_all();
+        if let GenerationStrategy::ParallelExhaustive { threads } = self.strategy {
+            use rayon::prelude::*;
+            return crate::compute::field::run_in_dedicated_parallel_pool(threads, || {
+                (0..high_bit)
+                    .into_par_iter()
+                    .map(|lower_bits| high_bit | lower_bits)
+                    .find_first(keep)
+            });
         }
 
-        let m = self.degree;
-        let mut primitives = Vec::new();
-        let high_bit = 1u64 << m;
+        (0..high_bit)
+            .map(|lower_bits| high_bit | lower_bits)
+            .find(keep)
+    }
 
-        for lower_bits in 0..(1u64 << m) {
-            let candidate = high_bit | lower_bits;
+    /// Every monic degree-m candidate that `accept` takes, in ascending order.
+    fn exhaustive_all(&self, accept: impl Fn(u64) -> bool + Sync) -> Vec<u64> {
+        let high_bit = 1u64 << self.degree;
+        let keep = |candidate: &u64| self.passes_parity_sieve(*candidate) && accept(*candidate);
 
-            let weight = candidate.count_ones();
-            if weight.is_multiple_of(2) {
-                continue;
-            }
-
-            if self.is_primitive_poly(candidate) {
-                primitives.push(candidate);
-            }
+        #[cfg(feature = "parallel")]
+        if let GenerationStrategy::ParallelExhaustive { threads } = self.strategy {
+            use rayon::prelude::*;
+            return crate::compute::field::run_in_dedicated_parallel_pool(threads, || {
+                (0..high_bit)
+                    .into_par_iter()
+                    .map(|lower_bits| high_bit | lower_bits)
+                    .filter(keep)
+                    .collect()
+            });
         }
 
-        primitives
+        (0..high_bit)
+            .map(|lower_bits| high_bit | lower_bits)
+            .filter(keep)
+            .collect()
     }
 
     fn trinomial_search(&self) -> Option<u64> {
@@ -173,40 +188,8 @@ impl PrimitiveGenerator {
     }
 
     fn is_primitive_poly(&self, poly: u64) -> bool {
-        let field = Gf2mField::new_unchecked(self.degree, poly);
-        field.verify_primitive()
-    }
-
-    #[cfg(feature = "parallel")]
-    fn parallel_search_first(&self) -> Option<u64> {
-        use rayon::prelude::*;
-
-        let m = self.degree;
-        let high_bit = 1u64 << m;
-
-        (0..(1u64 << m))
-            .into_par_iter()
-            .map(|lower_bits| high_bit | lower_bits)
-            .filter(|candidate| candidate.count_ones() % 2 == 1)
-            .find_first(|&candidate| self.is_primitive_poly(candidate))
-    }
-
-    #[cfg(feature = "parallel")]
-    fn parallel_search_all(&self) -> Vec<u64> {
-        use rayon::prelude::*;
-
-        let m = self.degree;
-        let high_bit = 1u64 << m;
-
-        let mut primitives: Vec<u64> = (0..(1u64 << m))
-            .into_par_iter()
-            .map(|lower_bits| high_bit | lower_bits)
-            .filter(|candidate| candidate.count_ones() % 2 == 1)
-            .filter(|&candidate| self.is_primitive_poly(candidate))
-            .collect();
-
-        primitives.sort_unstable();
-        primitives
+        Gf2mField::new_unchecked(self.degree, poly)
+            .verify_primitive_with_factors(&self.order_prime_factors)
     }
 }
 
@@ -316,6 +299,35 @@ mod tests {
     }
 
     #[test]
+    fn test_generate_m1() {
+        let gen = PrimitiveGenerator::new(1);
+        assert_eq!(gen.find_first(), Some(0b11));
+        assert_eq!(gen.find_all(), vec![0b11]);
+    }
+
+    #[test]
+    #[should_panic(expected = "Degree must be at most 63")]
+    fn test_degree_64_is_rejected() {
+        let _ = PrimitiveGenerator::new(64);
+    }
+
+    #[test]
+    fn test_sparse_search_at_largest_degree() {
+        let m = PrimitiveGenerator::MAX_DEGREE;
+        for strategy in [
+            GenerationStrategy::Trinomial,
+            GenerationStrategy::Pentanomial,
+        ] {
+            let poly = PrimitiveGenerator::new(m)
+                .with_strategy(strategy)
+                .find_first()
+                .unwrap();
+            assert_eq!(poly >> m, 1, "{strategy:?}: {poly:#x} has degree {m}");
+            assert!(Gf2mField::new_unchecked(m, poly).verify_primitive());
+        }
+    }
+
+    #[test]
     fn test_gcd() {
         assert_eq!(gcd(12, 8), 4);
         assert_eq!(gcd(7, 5), 1);
@@ -324,27 +336,44 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "parallel")]
-    fn test_parallel_search_m5() {
-        let gen = PrimitiveGenerator::new(5)
-            .with_strategy(GenerationStrategy::ParallelExhaustive { threads: 2 });
-        let all = gen.find_all();
-        assert_eq!(all.len(), 6);
-
-        let sequential_gen =
-            PrimitiveGenerator::new(5).with_strategy(GenerationStrategy::Exhaustive);
-        let sequential_all = sequential_gen.find_all();
-        assert_eq!(all, sequential_all);
+    fn test_parallel_exhaustive_matches_exhaustive_for_every_thread_count() {
+        for m in [1usize, 2, 5, 9] {
+            let sequential =
+                PrimitiveGenerator::new(m).with_strategy(GenerationStrategy::Exhaustive);
+            for threads in [0usize, 1, 2, 3, 7] {
+                let parallel = PrimitiveGenerator::new(m)
+                    .with_strategy(GenerationStrategy::ParallelExhaustive { threads });
+                assert_eq!(
+                    parallel.find_all(),
+                    sequential.find_all(),
+                    "m={m} threads={threads}"
+                );
+                assert_eq!(
+                    parallel.find_first(),
+                    sequential.find_first(),
+                    "m={m} threads={threads}"
+                );
+            }
+        }
     }
 
     #[test]
     #[cfg(feature = "parallel")]
-    fn test_parallel_find_first_m6() {
-        let gen = PrimitiveGenerator::new(6)
-            .with_strategy(GenerationStrategy::ParallelExhaustive { threads: 4 });
-        let poly = gen.find_first().unwrap();
+    fn test_parallel_exhaustive_searches_on_a_pool_of_its_thread_count() {
+        use std::collections::BTreeSet;
+        use std::sync::Mutex;
 
-        let field = Gf2mField::new_unchecked(6, poly);
-        assert!(field.verify_primitive());
+        for threads in [1usize, 2, 3] {
+            let gen = PrimitiveGenerator::new(8)
+                .with_strategy(GenerationStrategy::ParallelExhaustive { threads });
+            let widths = Mutex::new(BTreeSet::new());
+            let reject_recording_width = |_candidate: u64| {
+                widths.lock().unwrap().insert(rayon::current_num_threads());
+                false
+            };
+            assert!(gen.exhaustive_all(reject_recording_width).is_empty());
+            assert_eq!(gen.exhaustive_first(reject_recording_width), None);
+            assert_eq!(widths.into_inner().unwrap(), BTreeSet::from([threads]));
+        }
     }
 }

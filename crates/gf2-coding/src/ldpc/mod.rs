@@ -13,4 +13,4 @@ pub use batch::{DecodedWord, LdpcBatchDecoder};
 pub use core::*;
 pub use edge_layout::EdgeLayout;
 pub use min_sum::{min_sum_check_row, MinSumRule};
-pub use route::{decide_batch_route, BatchRoute, LaneCapability};
+pub use route::{decide_batch_route, BatchRoute, LaneBackend, LaneCapability};
