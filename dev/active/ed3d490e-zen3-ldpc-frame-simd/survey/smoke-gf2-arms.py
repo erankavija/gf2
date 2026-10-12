@@ -64,11 +64,13 @@ CODES = {
     },
 }
 
+CATALOGUE = json.loads(pathlib.Path(__file__).resolve().with_name("arms.json")
+                       .read_text(encoding="utf-8"))["arms"]
 ARMS = {
     "single-frame": ("gf2-batch-single-frame-arm", {}),
     "lane-avx2": ("gf2-batch-lane-arm", {"GF2_LDPC_LANE_BACKEND": "avx2"}),
     "lane-portable": ("gf2-batch-lane-arm", {"GF2_LDPC_LANE_BACKEND": "portable"}),
-    "spa-intra": ("aff3ct-intra-arm", {}),
+    "spa-intra": ("aff3ct-intra-arm", CATALOGUE["aff3ct-spa-intra"]["environment"]),
 }
 # Plan name and description of each arm built outside the gf2 tree.
 EXTERNAL = {
