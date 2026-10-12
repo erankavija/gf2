@@ -2144,8 +2144,9 @@
    "issue": "bfc2ceab",
    "question": "code-review round 3 failed on three new findings after both earlier findings closed: F1 make-spmm-pilot-pairs.py reimplements the abtest RNG, seed, estimator and bootstrap; F2 run-spmm-check.sh and run-entry-check.sh carry private live() locators beside repository_files.py; F3 three module introductions exceed one short paragraph. Verdict: reviews/bfc2ceab-r3.md.",
    "recommendation": "authorize rework round 3 preceded by one audit of every jit:bfc2ceab-attributed file against convention-convergence, no-dev-path-coupling and non-obvious-comments (handoff-16 trap: audit at the second failed round)",
-   "status": "open",
-   "raised_at": "2026-10-12"
+   "status": "resolved",
+   "raised_at": "2026-10-12",
+   "resolution": "Invoker 2026-10-12: rework authorized. Round 3 dispatched with a full audit of every jit:bfc2ceab file; counter reset to 0."
   }
  ],
  "rework_counts": {
@@ -2198,7 +2199,7 @@
   "4337c02e": 1,
   "5cb74f81": 1,
   "1d4b05d5": 1,
-  "bfc2ceab": 2,
+  "bfc2ceab": 0,
   "07ae376c": 0,
   "13728e1a": 2,
   "4767d936": 1,
@@ -3025,7 +3026,9 @@
    "63bad95d": "opus w-63bad95d-fam-s35 (two repeat families), sonnet w-63bad95d-m4ri-s35, sonnet w-63bad95d-pm4ri-s35: commit pilots, freeze, smoke, queue confirmations",
    "d4185e9e": "opus w-d4185e9e-s35: rework 2 in agent-ed3d490e-run",
    "958639ec": "opus w-958639ec-s35 in agent-958639ec",
-   "cb8f7c36": "sonnet w-cb8f7c36-s35 in agent-cb8f7c36"
-  }
+   "cb8f7c36": "sonnet w-cb8f7c36-s35 in agent-cb8f7c36",
+   "bfc2ceab": "opus w-bfc2ceab-s35: authorized rework round 3 with audit, in agent-bfc2ceab"
+  },
+  "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected."
  }
 }
