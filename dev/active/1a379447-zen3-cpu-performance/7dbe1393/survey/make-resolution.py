@@ -1,18 +1,7 @@
 #!/usr/bin/env python3
-"""Apply the frozen pilot-resolution rule to the ragged-tail pilot (jit:7dbe1393).
+"""Apply the frozen pilot-resolution rule to a ragged-tail pilot (jit:7dbe1393).
 
-Usage: make-resolution.py <survey-analysis executable> <dense-campaign executable>
-[family], from the worktree root. The family defaults to the first ragged-tail
-family; the repeat family applies the first family's rule to its own pilot and
-writes `pilot-resolution-v2.md`.
-
-The rule is the *Margins and resolution* section of the ragged-tail addendum,
-applied through the dense story's shared `resolution_rule` and the
-lane-threshold family's comparison `budget`. Every pilot cell is confirmatory,
-so the rule's scope is the whole pilot. The record states the outcome the rule
-fixes, `eligible` or `resolution-insufficient`, and the host load each pilot
-session observed at its start. The standard output line carries the resolution
-and the outcome for the freeze.
+Usage: make-resolution.py <survey-analysis> <dense-campaign> [family]
 """
 
 import hashlib

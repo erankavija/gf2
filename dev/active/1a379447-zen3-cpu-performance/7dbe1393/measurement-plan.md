@@ -161,6 +161,46 @@ question.
   has no further attempt: the candidate kernel stays unselected behind
   `BitMatrix::matvec_parity_kernel` and production keeps its kernel.
 
+## Generators
+
+Every generator under `survey/` runs untimed from the worktree root and
+reproduces its record byte for byte on the same inputs.
+
+- `record-lane-instruction-counts.py` sends the arm the validation-position
+  request of each frozen cell (`dense-campaign validation-request`), which the
+  arm answers with one call of the measured product and no timing window, under
+  `valgrind --tool=callgrind --dump-instr=yes`. The record keeps the per-offset
+  execution counts of the lane symbols, so the arm's digest and the assembly
+  record of the same executable identify every counted instruction.
+- `make-asm-attribution.py` nests loops by removing each component's entry
+  instructions and classifies nothing by hand. Every figure is an execution
+  count divided by the cell's row count; the script fails when the two records
+  name different executables or a counted offset is not a listed instruction.
+- `make-source-evidence.py` records, per claim, the first matching line, the
+  verbatim line, the file digest and the commit that last changed the file; a
+  fragment that is absent or changes its occurrence count fails the script.
+- `make-resolution.py` applies the *Margins and resolution* section of the
+  ragged-tail addendum through the dense story's shared `resolution_rule` and
+  the lane-threshold family's comparison `budget`. Every pilot cell is
+  confirmatory, so the rule's scope is the whole pilot; the standard output
+  line carries the resolution and the outcome for the freeze. The repeat family
+  writes `pilot-resolution-v2.md`.
+- `record-freeze-refusal.sh` hands the canonical freezer the resolution
+  `make-resolution.py` derives with every margin of the pilot addendum
+  unchanged, and records the command, the freezer's output and exit status and
+  whether a confirmation addendum exists afterwards. The repeat family records
+  to `freeze-refusal-v2.txt`.
+- `record-plan-check.sh` records the runner's `check` of the plan the
+  launcher's `window --smoke` stores: it decodes the plan and the campaign
+  addendum it names and validates the addendum against the live version-4
+  schema.
+- `record-window-jobs.sh` keeps the window runner's start line, with the host
+  load averages read at that moment, and exit line of each named job key.
+- `run-boundary-suites.sh` runs the suites once with every feature, where the
+  kernel lanes and the bundle's entries exist, and once with the default
+  features, where every lane is the scalar lane; the record holds test names
+  and verdicts only.
+
 ## Limits
 
 The family measures the candidate against the SIMD lane and not against the

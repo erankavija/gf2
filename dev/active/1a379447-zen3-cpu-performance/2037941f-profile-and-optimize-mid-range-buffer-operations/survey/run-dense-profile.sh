@@ -6,7 +6,7 @@
 #
 # Without --cases the session is the frozen dense-parity baseline's. A case
 # file names another session: one `out=<directory>` line, one `title=<text>`
-# line and one `family|campaign addendum|cell|route|build` line per case. Its
+# line and one `family|campaign addendum file name|cell|route|build` line per case. Its
 # cells are profiled under `<cell>.<route>`, so one cell serves both its arms.
 set -Eeuo pipefail
 
@@ -60,6 +60,7 @@ elif [[ "${2:-}" == --cases ]]; then
             title=*) TITLE="${line#title=}" ;;
             ''|'#'*) ;;
             *) IFS='|' read -r family addendum cell route build <<<"${line}"
+               addendum="$(python3 -B "${HERE}/repo_artifacts.py" tracked "${addendum}")"
                CASES+=("${family}|${addendum}|${cell}|${route}|${build}|${cell}.${route}") ;;
         esac
     done <"${CASE_FILE}"

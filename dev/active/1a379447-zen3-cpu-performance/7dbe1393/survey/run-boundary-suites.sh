@@ -2,11 +2,6 @@
 # Run the shared matvec and fused-count suites and record the outcome (jit:7dbe1393).
 #
 # Usage: run-boundary-suites.sh, from the worktree root. Untimed.
-#
-# The suites run once with every feature, where the kernel lanes and the
-# bundle's entries exist, and once with the default features, where every
-# lane is the scalar lane. The record holds test names and verdicts only, so
-# a rerun on the same sources reproduces it byte for byte.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"

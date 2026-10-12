@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
 """Tabulate what each matvec lane executes per row and stride (jit:7dbe1393).
 
-Usage: make-asm-attribution.py, with no arguments. Untimed.
-
-The table joins two committed records of one executable: the assembly record
-`asm/simd/` (written by the dense story's `disassemble-dense.sh --out`) and
-the execution counts `lane-instruction-counts.json` (written by
-`record-lane-instruction-counts.py`). Loops are the strongly connected
-components of each symbol's control-flow graph, nested by removing a
-component's entry instructions; nothing is classified by hand. Every figure is
-an execution count divided by the cell's row count. The script fails when the
-two records name different executables or a counted offset is not an
-instruction of the listing.
+Usage: make-asm-attribution.py, with no arguments. Joins the assembly record
+`asm/simd/` with `lane-instruction-counts.json`; loops are the strongly
+connected components of each symbol's control-flow graph.
 """
 
 import json

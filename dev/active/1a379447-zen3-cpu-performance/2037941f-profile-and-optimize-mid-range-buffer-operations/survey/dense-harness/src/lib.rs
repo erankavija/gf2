@@ -27,5 +27,5 @@ pub mod wire;
 
 pub use cells::{
     cells, Cache, Cell, M4riShape, MatvecShape, Question, Workload, ADDENDUM_IDENTITY,
-    ADDENDUM_PATH, ADDENDUM_SHA256, CAMPAIGN_SEED,
+    ADDENDUM_FILE, ADDENDUM_SHA256, CAMPAIGN_SEED,
 };

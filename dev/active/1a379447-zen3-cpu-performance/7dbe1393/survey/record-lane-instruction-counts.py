@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
 """Count the instructions each matvec lane executes per stride (jit:7dbe1393).
 
-Usage: record-lane-instruction-counts.py <dense-arm> <dense-campaign>, from the
-worktree root. Untimed: no timing window opens and no lock is taken.
-
-Each case sends the arm the validation-position request of one frozen cell
-(`dense-campaign validation-request`), which the arm answers with its warm
-arrangement pass: one call of the measured product and no timing window. The
-arm runs under `valgrind --tool=callgrind --dump-instr=yes`, which counts the
-executions of every instruction. The record keeps those counts for the lane
-symbols only, by offset inside each symbol, so the arm's digest and the
-assembly record of the same executable identify every counted instruction.
-The counts are a deterministic function of the executable and the request; a
-rerun on the same executable reproduces the record byte for byte.
+Usage: record-lane-instruction-counts.py <dense-arm> <dense-campaign>. Runs the
+arm's untimed validation dispatch of each frozen cell under callgrind.
 """
 
 import hashlib
@@ -30,8 +20,6 @@ from locate import HERE, LANES, ROOT, campaign  # noqa: E402
 RECORD = HERE / "lane-instruction-counts.json"
 STRIDES = [9, 10, 62, 63, 66, 32]
 CONTROL_STRIDE = 32
-# Symbols of the three lanes: the entries, the row loops, the bundle entries
-# and the kernels.
 SYMBOLS = [
     "gf2_core::matrix::BitMatrix::matvec",
     "gf2_core::matrix::BitMatrix::matvec_with_route",

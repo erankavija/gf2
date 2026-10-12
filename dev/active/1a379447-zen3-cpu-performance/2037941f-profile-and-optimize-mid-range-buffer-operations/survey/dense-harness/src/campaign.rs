@@ -270,9 +270,20 @@ fn declaration(cell: &Cell) -> CellDeclaration {
 /// `issue` is the eight-hex short ID of the leaf that owns the campaign and
 /// `frozen_utc` is the whole-second UTC time at which it freezes the
 /// transcription; both are supplied by that leaf, so this function reads no
-/// clock.
+/// clock. The family ledger path resolves from the repository root of the
+/// working directory.
+///
+/// # Panics
+///
+/// Panics when the repository root or the question's one live ledger file
+/// cannot be resolved.
 pub fn addendum(question: Question, issue: &str, frozen_utc: &str) -> FamilyAddendum {
     let rules = rules(question);
+    let root = tuning_campaign_support::repository::repository_root()
+        .expect("the repository root resolves");
+    let ledger_path = question
+        .ledger_path(&root)
+        .expect("the family ledger resolves");
     FamilyAddendum {
         schema: ADDENDUM_SCHEMA_ID.to_owned(),
         protocol: ProtocolRef { id: PROTOCOL_ID.to_owned(), version: PROTOCOL_VERSION },
@@ -302,7 +313,7 @@ pub fn addendum(question: Question, issue: &str, frozen_utc: &str) -> FamilyAdde
             alpha: tuning_campaign_support::protocol::SHARED_SETTINGS.family_alpha,
             prior_confirmatory_trials: 0,
             prior_trials: Vec::new(),
-            ledger_path: Some(question.ledger_path().to_owned()),
+            ledger_path: Some(ledger_path),
         },
         search_budget: SearchBudget {
             max_pilot_trials_per_cell: rules.max_pilot_trials_per_cell,

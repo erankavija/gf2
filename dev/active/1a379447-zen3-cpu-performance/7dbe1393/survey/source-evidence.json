@@ -126,24 +126,24 @@
   {
    "id": "parity-bundle-field",
    "project": "gf2",
-   "commit": "5c0f21d2981553a3d6bb224714742b0153a6905a",
+   "commit": "6c6e5787043723fd874db1365ae73888d95cc806",
    "path": "crates/gf2-kernels-simd/src/lib.rs",
    "line": 125,
    "occurrences": 1,
    "verbatim": "    pub and_parity_fn: fn(&[u64], &[u64]) -> bool,",
    "why": "The bundle entry of the parity kernel, a comparator no automatic dispatch selects.",
-   "sha256": "fa726fd6067e13e618d00dd0b99a45761c02495bfa17872e7bc17147b32d6334"
+   "sha256": "f0afdef458a8612cfc2c9fda91cc60429b6b793a5f7004b9bca072bfe53b4be3"
   },
   {
    "id": "p20-tail-rule",
    "project": "gf2",
-   "commit": "24437c521dcdd13db61baf7c457d73c32372b2ba",
+   "commit": "97eb8206132b86f4068e68165cfa9fbed6c85b88",
    "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
    "line": 2153,
    "occurrences": 1,
    "verbatim": "                || f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;",
    "why": "P-20 leaves a confirmatory interval unresolved below twenty expected draws per bootstrap tail.",
-   "sha256": "c8f3dc32510822b38472eef913af508ad98b47abc6a8195e60877a0dfc736be8"
+   "sha256": "70f5c68e9a6d5f324385672671e10ae6354aaffd1f37a89510cb273d866340a3"
   },
   {
    "id": "attempt-alpha",
@@ -159,13 +159,13 @@
   {
    "id": "ragged-cell-arms",
    "project": "gf2",
-   "commit": "8a4b536d0a85c3c622245247e9f78403a1bd2af0",
+   "commit": "2f0d0d2b185ca2d35d9024b276aa196c21fc379e",
    "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs",
-   "line": 330,
+   "line": 341,
    "occurrences": 1,
    "verbatim": "        Question::MatvecRaggedTail => (Route::MatvecA.id(), Route::MatvecLaneParity.id()),",
    "why": "Every ragged-tail cell takes the selected SIMD lane as baseline and the parity-kernel lane as candidate.",
-   "sha256": "e01c57698c71c1cc93bec2b6b94776cf81feba494ba2e6a2db925bfcd0ad9b36"
+   "sha256": "f9fa66e0426a38949f137e099c6e7917a95a33e5c0028d2a3c3c46debe23e7dd"
   },
   {
    "id": "ragged-route-call",
@@ -181,13 +181,13 @@
   {
    "id": "ragged-resolution-ceiling",
    "project": "gf2",
-   "commit": "8a4b536d0a85c3c622245247e9f78403a1bd2af0",
+   "commit": "2f0d0d2b185ca2d35d9024b276aa196c21fc379e",
    "path": "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs",
-   "line": 355,
+   "line": 358,
    "occurrences": 1,
    "verbatim": "        Question::MatvecLaneThreshold | Question::MatvecRaggedTail => 0.035,",
    "why": "`verify-confirmation` refuses a ragged-tail confirmation above the family ceiling.",
-   "sha256": "23edd51714a1f4a23f2517a8aa40a25751d5b09d93341d8d988df8100c6308ea"
+   "sha256": "ff367ca9567b7fcd814f4e1002ad9c6c134fddc8b43de8e83d4d4841c2a3292d"
   }
  ]
 }
