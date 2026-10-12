@@ -585,6 +585,39 @@
       "topic": "decode-batch-callers",
       "why": "A permanent how-to page shows the inherent batch function.",
       "sha256": "b7feaae704e6d3bc700df29790801ce551d3706c90535342d928464f76449361"
+    },
+    {
+      "project": "gf2",
+      "commit": "8cfd6e6cc4d33f7d175d549547fbce344f0f17ce",
+      "path": "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/src/bin/ldpc-make-inputs.rs",
+      "line": 132,
+      "verbatim": "    let sigma = (1.0 / (2.0 * 10_f64.powf(args.esn0_db / 10.0))).sqrt();",
+      "occurrences": 1,
+      "topic": "recorded-llr-scale",
+      "why": "The bundle generator derives the noise standard deviation sigma from Es/N0 as sqrt(1/(2 Es/N0)), the per-dimension std of BPSK with unit symbol energy.",
+      "sha256": "f66be20b3934eec75e92c4f9c1709f91cf9a7b0e61731783c3da84ee877b27a7"
+    },
+    {
+      "project": "gf2",
+      "commit": "8cfd6e6cc4d33f7d175d549547fbce344f0f17ce",
+      "path": "crates/gf2-sim/src/testutil.rs",
+      "line": 117,
+      "verbatim": "        let n0 = 2.0 * sigma * sigma;",
+      "occurrences": 2,
+      "topic": "recorded-llr-scale",
+      "why": "The frame source sets n0 = 2 sigma^2 from that sigma.",
+      "sha256": "93b973b6c93d843a44706ca25f172f4f974199e0199d3c02afa3b4043bffe0e3"
+    },
+    {
+      "project": "gf2",
+      "commit": "8cfd6e6cc4d33f7d175d549547fbce344f0f17ce",
+      "path": "crates/gf2-sim/src/testutil.rs",
+      "line": 106,
+      "verbatim": "        Llr::new((2.0 * r / n0) as f32)",
+      "occurrences": 1,
+      "topic": "recorded-llr-scale",
+      "why": "The recorded LLR is 2r/n0 = r/sigma^2, half the true BPSK-AWGN LLR 2r/sigma^2 for noise std sigma; normalized min-sum is scale-invariant, sum-product is not.",
+      "sha256": "93b973b6c93d843a44706ca25f172f4f974199e0199d3c02afa3b4043bffe0e3"
     }
   ]
 }

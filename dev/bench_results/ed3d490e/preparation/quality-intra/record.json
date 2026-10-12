@@ -1,0 +1,128 @@
+{
+  "arm": "aff3ct-spa-intra",
+  "build_identity": {
+    "path": "dev/bench_results/ed3d490e/preparation/build-identity.json",
+    "sha256": "2e9b8de3673ef6f1647dfa445bece6244810ccc4c6f0e3473de502d84bc06f18"
+  },
+  "cites": [
+    "Cassagne2019"
+  ],
+  "codes": {
+    "dvb-t2-r12": {
+      "bundle": "dvb-t2-r12-waterfall",
+      "bundle_digests": {
+        "codewords_sha256": "4b70fec2970f72c57e55678192e01b5a72c3cdc4043e2330f9fa221f097dc44a",
+        "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+        "llrs_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892"
+      },
+      "bundle_seed": 42,
+      "codeword_source": "both",
+      "frozen_case": {
+        "batch_size": 8,
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "quality_frames": 128,
+        "syndrome_stopping": true
+      },
+      "linked_aff3ct": {
+        "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+        "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+      },
+      "observed_decoder": {
+        "backend": "AVX2",
+        "class": "Decoder_LDPC_BP_flooding_SPA",
+        "wave_frames": 1
+      },
+      "quality": {
+        "file": "aff3ct-spa-intra-dvb-t2-r12.json",
+        "sha256": "f18498e30eb972c0de5cae432ac50935a2e4292ab2ea5364509c8790c7cf0ef4"
+      },
+      "replayed_frames": 128,
+      "settings": {
+        "batch_size": 1,
+        "iteration_cap": 50,
+        "normalization": {
+          "factor": null,
+          "kind": "sum-product"
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "stopping": {
+          "crc": null,
+          "kind": "syndrome"
+        }
+      }
+    },
+    "nr-bg1-z384": {
+      "bundle": "nr-bg1-z384-mother",
+      "bundle_digests": {
+        "codewords_sha256": "7bb775743d7f17a807db66663185e49f2d6ab49202ed75692d090375733296af",
+        "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+        "llrs_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a"
+      },
+      "bundle_seed": 42,
+      "codeword_source": "both",
+      "frozen_case": {
+        "batch_size": 8,
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "quality_frames": 128,
+        "syndrome_stopping": true
+      },
+      "linked_aff3ct": {
+        "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+        "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529"
+      },
+      "observed_decoder": {
+        "backend": "AVX2",
+        "class": "Decoder_LDPC_BP_flooding_SPA",
+        "wave_frames": 1
+      },
+      "quality": {
+        "file": "aff3ct-spa-intra-nr-bg1-z384.json",
+        "sha256": "f253417b02ee74103e3889c72a56d4601ecd03da050b5e1fda6e8b1e825a8db8"
+      },
+      "replayed_frames": 128,
+      "settings": {
+        "batch_size": 1,
+        "iteration_cap": 50,
+        "normalization": {
+          "factor": null,
+          "kind": "sum-product"
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "stopping": {
+          "crc": null,
+          "kind": "syndrome"
+        }
+      }
+    }
+  },
+  "diagnostics_zeroed": [
+    "memory_bytes",
+    "latency_ns_p50"
+  ],
+  "executable": {
+    "name": "aff3ct-intra-quality",
+    "sha256": "e6980b590737c8da08afa7e449abb1188d73c7dc4e597e0680aeffcc1c7fa146"
+  },
+  "host": {
+    "avx2": true,
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "fma": true
+  },
+  "intervals": {
+    "ber": "Hoeffding interval over the independent frames",
+    "confidence": 0.95,
+    "fer": "Wilson score interval over the frames",
+    "method": "frame-hoeffding-95+fer-wilson-95",
+    "samples": "replayed_frames of each code"
+  },
+  "recorded_inputs": {
+    "name": "recorded-inputs.tar.gz",
+    "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba"
+  }
+}
