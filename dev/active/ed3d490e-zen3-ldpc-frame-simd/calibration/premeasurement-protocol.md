@@ -141,15 +141,18 @@ identifier.
 
 The queue estimate is the nominal target-window time plus the active time of
 the rehearsal session of §8, which holds every untimed step of every child
-and one dispatch per window. It is an estimate, not a measurement.
+and one dispatch per window, plus an allowance for the launcher's build,
+preparation, validation and publication. It is an estimate, not a
+measurement.
 
 <!-- generated:estimate -->
 | Term | Value |
 |---|---|
 | nominal target-window seconds | 462.5 |
 | active seconds of the rehearsal session (one run, unlocked host) | 431 |
+| allowance outside the session, minutes | 5 |
 | session budget seconds | 10800 |
-| estimated minutes, rounded up to a multiple of 5 | 15 |
+| estimated minutes, rounded up to a multiple of 5 | 20 |
 <!-- /generated:estimate -->
 
 ## 6. Imported owners

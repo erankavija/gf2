@@ -26,6 +26,9 @@ USIZE_MAX = (1 << 64) - 1
 DETAIL = re.compile(r"(decode\.\w+): (candidates|stratum)=(.*)")
 # Minutes the queue estimate is rounded up to.
 ESTIMATE_STEP = 5
+# Allowance for the launcher's work outside the session: build, preparation,
+# validation and publication.
+OUTSIDE_SESSION_MINUTES = 5
 
 
 def evidence(mode):
@@ -118,10 +121,12 @@ def estimate(listing, timing):
     timed = cells * timing["executions"]
     windows = timed * timing["windows"] * timing["target_ms"] / 1000
     untimed = record["active_seconds"]
-    minutes = math.ceil((windows + untimed) / 60 / ESTIMATE_STEP) * ESTIMATE_STEP
+    session = (windows + untimed) / 60
+    minutes = math.ceil((session + OUTSIDE_SESSION_MINUTES) / ESTIMATE_STEP) * ESTIMATE_STEP
     return table(("Term", "Value"), [
         ("nominal target-window seconds", windows),
         ("active seconds of the rehearsal session (one run, unlocked host)", round(untimed)),
+        ("allowance outside the session, minutes", OUTSIDE_SESSION_MINUTES),
         ("session budget seconds", timing["budget"]),
         (f"estimated minutes, rounded up to a multiple of {ESTIMATE_STEP}", minutes),
     ])
