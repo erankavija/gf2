@@ -664,7 +664,7 @@
      "id": "bfc2ceab",
      "short_id": "bfc2ceab",
      "classification": "implementation",
-     "status": "in_progress, blocked on the invoker. Branch worktree-agent-bfc2ceab at c6869fc6d: second pilot committed (launcher load 76.22), freeze refused, no pilot trial left; cost recorded as exploratory; REQ-04 not met literally. schema-versions.json stale on the branch (regenerate on the merged tree).",
+     "status": "in_progress, blocked on the invoker (escalation 2026-10-12): rework 2 merged 815a1829a with the exception citation in verification.md; cargo-ci passed; code-review round 3 failed on three new findings (reviews/bfc2ceab-r3.md)",
      "tracker_state": "in_progress"
     },
     {
@@ -972,7 +972,8 @@
      "short_id": "aff59c3c",
      "title": "Produce decode selector measurements from a coding owner harness",
      "classification": "implementation",
-     "status": "blocked: open escalation on the form of the tuning-campaign-support dependency (unchanged in session 33)."
+     "status": "done; rework 2 merged 2468bc69c, cargo-ci, code-review passed, doc-review passed on the first merged tree",
+     "tracker_state": "done"
     }
    ]
   },
@@ -1335,6 +1336,12 @@
    "type": "task",
    "placement": "outside the epic; depends on aff59c3c",
    "reason": "tracked exception to no-dev-path-coupling, invoker ruling 2026-10-11"
+  },
+  {
+   "id": "cb8f7c36",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "session 35: 6e87c436/survey/make-source-evidence.py --check fails on main after the 7dbe1393 merge (matrix.rs fragment absent); direct epic child"
   }
  ],
  "escalations": [
@@ -2131,6 +2138,14 @@
    "status": "resolved",
    "raised_at": "2026-10-11",
    "resolution": "Invoker 2026-10-11: second pilot in the same family, run id v4-r2; a load-disturbed pilot counts for the second trial."
+  },
+  {
+   "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5)",
+   "issue": "bfc2ceab",
+   "question": "code-review round 3 failed on three new findings after both earlier findings closed: F1 make-spmm-pilot-pairs.py reimplements the abtest RNG, seed, estimator and bootstrap; F2 run-spmm-check.sh and run-entry-check.sh carry private live() locators beside repository_files.py; F3 three module introductions exceed one short paragraph. Verdict: reviews/bfc2ceab-r3.md.",
+   "recommendation": "authorize rework round 3 preceded by one audit of every jit:bfc2ceab-attributed file against convention-convergence, no-dev-path-coupling and non-obvious-comments (handoff-16 trap: audit at the second failed round)",
+   "status": "open",
+   "raised_at": "2026-10-12"
   }
  ],
  "rework_counts": {
@@ -2195,9 +2210,11 @@
   "a96a4cd6": 1,
   "e4e2ba52": 0,
   "bad1aea8": 1,
-  "d4185e9e": 1,
+  "d4185e9e": 2,
   "81e955b0": 0,
-  "151af028": 0
+  "151af028": 0,
+  "cb8f7c36": 0,
+  "958639ec": 0
  },
  "surfaced_pitfalls": [
   {
@@ -2994,19 +3011,21 @@
   "note": "Every line carries its own load guard (exit 75 above a one-minute load of 2, line stays queued). Verify each campaign from its own execution log and read window.log loads first. Count the queue lines; the lead counted seven jobs when arming."
  },
  "session_scope": {
-  "session": 34,
-  "date": "2026-10-11",
-  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable. Steer: simplest, least protocol-intensive approach; focus HPC.",
+  "session": 35,
+  "date": "2026-10-12",
+  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
-  "disk": "pinned worktrees: 63bad95d-fam, 63bad95d-run, 63bad95d-m4ri, 63bad95d-pm4ri, 7dbe1393, 8e53235b, ed3d490e-run. In rework: bfc2ceab, aff59c3c-r2. Reclaimable: 81e955b0, 151af028.",
-  "peer_session": "None observed at session start (load 0.2).",
-  "active_workers": {
-   "d4185e9e": "opus, rework 1 (F1-F3 of code-review and research-review) in agent-ed3d490e-run; unmerged at handoff",
-   "bfc2ceab": "opus, rework 2 (F1 PAM scalar coverage, F2 exception comment) in agent-bfc2ceab; unmerged at handoff",
-   "aff59c3c": "sonnet, rework 2 (F1 exception comment, F2 resume_equivalent, F3 comment sweep) in agent-aff59c3c-r2; unmerged at handoff"
-  },
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes.",
-  "session_34_outcome": "Done: 81e955b0, 151af028. Merged and in rework after failed reviews: d4185e9e, bfc2ceab, aff59c3c. Merged, in progress pending measurement: 7dbe1393. Unmerged pinned branches awaiting the 2026-10-12 window: 8e53235b (75280f153), 63bad95d-fam (6d2106d1a), -m4ri (74ba66ed2), -pm4ri (a84073607)."
+  "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
+  "disk": "pinned worktrees: 63bad95d-fam, 63bad95d-run, 63bad95d-m4ri, 63bad95d-pm4ri, 7dbe1393, 8e53235b, ed3d490e-run. New: 958639ec, cb8f7c36. Reclaimed: 81e955b0, 151af028. Merged, reclaimable after their issues close: aff59c3c-r2, bfc2ceab.",
+  "active_workers": {
+   "8e53235b": "opus w-8e53235b-s35: commit confirmation, adopt word-wise assembly, merge main",
+   "7dbe1393": "sonnet w-7dbe1393-s35: commit repeat pilot, freeze or record refusal",
+   "63bad95d": "opus w-63bad95d-fam-s35 (two repeat families), sonnet w-63bad95d-m4ri-s35, sonnet w-63bad95d-pm4ri-s35: commit pilots, freeze, smoke, queue confirmations",
+   "d4185e9e": "opus w-d4185e9e-s35: rework 2 in agent-ed3d490e-run",
+   "958639ec": "opus w-958639ec-s35 in agent-958639ec",
+   "cb8f7c36": "sonnet w-cb8f7c36-s35 in agent-cb8f7c36"
+  }
  }
 }
