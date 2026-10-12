@@ -4,7 +4,7 @@
  "features": "parallel,simd,tuning-profile,test-support",
  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
  "source_sha256": "365e3fe0f701c0a2cc42d53a21348e5ba416a29d7cfeba025d5d1f02d5c433a8",
- "binary_sha256": "21068ff13f662547f264afb2156ae8664134e2b64f178ee580265162c1dcfa68",
+ "binary_sha256": "91b5428c9aa06d83bd6ce6f07043f45c7ae77b7acfa890ad013517289657952e",
  "reports_sha256": {
   "coding-capability-report.json": "c9c8d41679f701bc4ad68d903913705eda9d4e9ec01946ef7c3f9ad78dd328c1",
   "coding-list-grid.json": "903facb79cd1b687a55fbb39c6f5f3da17b243866c838e79db194e1470b0b55f",
