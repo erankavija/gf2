@@ -254,8 +254,9 @@ def configuration_rows(files):
     for path in files:
         settings = tomllib.loads(path.read_text(encoding="utf-8"))
         environment = settings.pop("env", {})
+        # `PATH` steers the drivers of the build past the version queries.
         unstated = sorted(settings) + sorted(f"env.{name}" for name in environment
-                                             if STEERING.match(name))
+                                             if name == "PATH" or STEERING.match(name))
         if unstated:
             sys.exit(f"{path} sets {unstated}, which the record does not state")
         rows.append({"path": str(path), "sha256": digest(path), "env": environment})
@@ -330,7 +331,7 @@ def main():
     records = pinned_records()
     catalogue = arms.parent / "arms.json"
     record = {
-        "schema": "ldpc-batch-arms-build-v4",
+        "schema": "ldpc-batch-arms-build-v3",
         "build_root": str(ROOT),
         "rustc": rustc,
         "cargo": output(["cargo", f"+{TOOLCHAIN}", "--version"], env=inherited),

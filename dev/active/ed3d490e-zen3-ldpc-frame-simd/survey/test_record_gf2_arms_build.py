@@ -193,7 +193,8 @@ class CargoConfigurationTest(unittest.TestCase):
     def test_a_setting_the_record_does_not_state_is_refused(self):
         for text in ("[profile.release]\nlto = false\n", "[build]\nrustflags = ['-O']\n",
                      "[target.x86_64-unknown-linux-gnu]\nlinker = 'ld'\n",
-                     "[env]\nCXXFLAGS = '-O0'\n", "include = ['other.toml']\n"):
+                     "[env]\nCXXFLAGS = '-O0'\n", "[env]\nPATH = '/opt/bin'\n",
+                     "include = ['other.toml']\n"):
             path = self.write(self.directory, "config.toml", text)
             with self.assertRaisesRegex(SystemExit, "config.toml"):
                 recorder.configuration_rows([path])
