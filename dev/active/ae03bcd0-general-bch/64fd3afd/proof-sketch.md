@@ -542,7 +542,7 @@ The first test is the executable form of L2.1, which no current test decides:
 canonical-index half of L2.7. `element_at_canonical_index` (`:554`) is private
 and reachable only through `elements()` (`:530`), and the successful uses of
 `elements()` — the module doctest (`:525`), the coordinate round trip (`:2474`),
-and the GF(9) alphabet in `crates/gf2-coding/src/bch/encode.rs:3125` — assert
+and the GF(9) alphabet in `crates/gf2-coding/src/bch/encode.rs:2798` — assert
 element count, zero at index 0, and coordinate round trips, never that position
 $i$ decodes the base-$p$ digits of $i$. The two remaining callers
 (`crates/gf2-core/src/gfpn/quotient.rs:2197`, `:2227`) exercise only the
@@ -1030,36 +1030,36 @@ Downstream issue `94597a51`.
 | Item | Line | Role |
 |---|---|---|
 | module documentation | 1–12 | the reference specification $p = -(x^{n-k} m \bmod g)$, $c = x^{n-k} m + p$ |
-| `SystematicLayout` | 346 | the two declared layouts |
-| `SystematicPlan` | 371 | generator, dimensions, symbol witness, layout |
-| `SystematicPlan::redundancy` | 391 | $\rho = n - k = \deg g$ |
-| `SystematicPlan::internal_coordinate`, `user_coordinate` | 419, 437 | checked layout maps |
-| `SystematicPlan::validate_lengths` | 455 | buffer-shape decision |
-| `SystematicPlan::to_coordinate_map` | 484 | materialized permutation |
-| `SystematicPlan::internal_at`, `user_at` | 492, 508 | the arithmetic maps and their inverses |
-| `SystematicPlan::message_at` | 523 | the user coordinate carrying message degree $d$ |
-| `SystematicPlan::low_coefficient` | 530 | $g_d$ for $d < \rho$ |
-| `trait SystematicKernel` | 1044 | the one recurrence, two representations |
-| `SystematicKernel for FieldVec<F>` | 1320 | the field-generic shift register: `reset_registers` 1324, `encode_systematic_with` 1345, loop 1360–1385 |
-| `SystematicKernel for BitVec` | 1390 | the packed `u64` shift register: `reset_registers` 1394, `encode_systematic_with` 1420 |
-| `packed_tail_mask` | 1622 | the top-word mask |
-| `packed_step` | 1638 | one packed degree: feedback, shift, mask, conditional XOR |
-| `packed_serial_reduce` | 1744 | the packed loop |
-| `packed_write_codeword` | 2024 | the packed codeword write |
-| `BchCode::systematic_plan` | 2057 | plan construction |
-| `BchCode::encode_systematic_into` | 2090 | caller-buffer entry point |
-| `BchCode::encode_systematic` | 2111 | allocating entry point |
-| `BchCode::systematic_message` | 2494 | message read-back |
-| `validate_symbol_field` | 2713 | runtime symbol-identity decision |
-| `BlockEncoder::encode_into` | 2751 | default-layout entry point |
-| `LayoutView`'s `BlockEncoder::encode_into` | 2909 | declared-layout entry point |
+| `SystematicLayout` | 82 | the two declared layouts |
+| `SystematicPlan` | 107 | generator, dimensions, symbol witness, layout |
+| `SystematicPlan::redundancy` | 127 | $\rho = n - k = \deg g$ |
+| `SystematicPlan::internal_coordinate`, `user_coordinate` | 155, 173 | checked layout maps |
+| `SystematicPlan::validate_lengths` | 191 | buffer-shape decision |
+| `SystematicPlan::to_coordinate_map` | 220 | materialized permutation |
+| `SystematicPlan::internal_at`, `user_at` | 228, 244 | the arithmetic maps and their inverses |
+| `SystematicPlan::message_at` | 259 | the user coordinate carrying message degree $d$ |
+| `SystematicPlan::low_coefficient` | 266 | $g_d$ for $d < \rho$ |
+| `trait SystematicKernel` | 729 | the one recurrence, two representations |
+| `SystematicKernel for FieldVec<F>` | 1005 | the field-generic shift register: `reset_registers` 1008, `encode_systematic_with` 1029, loop 1044–1057 |
+| `SystematicKernel for BitVec` | 1074 | the packed `u64` shift register: `reset_registers` 1077, `encode_systematic_with` 1103 |
+| `packed_tail_mask` | 1305 | the top-word mask |
+| `packed_step` | 1321 | one packed degree: feedback, shift, mask, conditional XOR |
+| `packed_serial_reduce` | 1427 | the packed loop |
+| `packed_place_codeword` | 1707 | the packed codeword placement: the message and parity as word runs |
+| `BchCode::systematic_plan` | 1746 | plan construction |
+| `BchCode::encode_systematic_into` | 1781 | caller-buffer entry point |
+| `BchCode::encode_systematic` | 1802 | allocating entry point |
+| `BchCode::systematic_message` | 2183 | message read-back |
+| `validate_symbol_field` | 2402 | runtime symbol-identity decision |
+| `BlockEncoder::encode_into` | 2439 | default-layout entry point |
+| `LayoutView`'s `BlockEncoder::encode_into` | 2593 | declared-layout entry point |
 
 The model is the reference family `EncodeFamily::PolyRemainderScalar`, which
 every single-message entry point above runs. The workspace and batch entry
 points (`encode_systematic_with` at
-`crates/gf2-coding/src/bch/encode.rs:2182`, `encode_batch_into` at `:2224`,
-`encode_batch` at `:2321`, `encode_batch_parallel_into` at `:2368`,
-`encode_batch_parallel` at `:2412`) and the batch families `TableRemainder`,
+`crates/gf2-coding/src/bch/encode.rs:1871`, `encode_batch_into` at `:1912`,
+`encode_batch` at `:2009`, `encode_batch_parallel_into` at `:2058`,
+`encode_batch_parallel` at `:2102`) and the batch families `TableRemainder`,
 `BitsliceInterleaved` and `ClmulFold` reach the obligation through
 differential tests rather than through the model; register row **A-13**
 records that boundary.
@@ -1085,7 +1085,7 @@ is exactly the $c$ of L5.1.
 
 L5.2 is the reason the existing Rust suite is already adequate for this
 obligation: `assert_encodes_a_codeword`
-(`crates/gf2-coding/src/bch/encode.rs:3067`) decides "$g$ divides the codeword
+(`crates/gf2-coding/src/bch/encode.rs:2742`) decides "$g$ divides the codeword
 polynomial" and "the message survives in the systematic coordinates", and L5.2
 says those two properties *determine* the parity. No parity-specific test is
 needed.
@@ -1110,9 +1110,9 @@ s_j \;=\; -\,\text{fb}\cdot g_0 \;+\; \sum_{i=1}^{\rho-1}\bigl(R_{i-1} - \text{f
 $$
 
 which is exactly the update at
-`crates/gf2-coding/src/bch/encode.rs:1367-1371`. Hence the register after the
+`crates/gf2-coding/src/bch/encode.rs:1052-1055`. Hence the register after the
 loop holds $s_0 = T^{\rho} m \bmod_m g$, and the written parity symbol
-$-R_i$ (`:1384`) is the coefficient of $T^{i}$ in $p$.
+$-R_i$ (`:1068`) is the coefficient of $T^{i}$ in $p$.
 
 **L5.4 (layout bijections).** Each declared layout is a bijection of
 $\{0, \ldots, n-1\}$ carrying $\{0,\ldots,k-1\}$ onto $\{\rho,\ldots,n-1\}$ and
@@ -1134,26 +1134,33 @@ $n-1-u \ge n-k = \rho$, which is $u \le k-1$.
 
 **L5.5 (message placement and survival).** With
 $\text{message\_at}(d) = \text{user}(\rho + d)$, the encoder's read at
-`crates/gf2-coding/src/bch/encode.rs:1366` and its write at `:1375-1377` are
+`crates/gf2-coding/src/bch/encode.rs:1050` and its write at `:1059-1061` are
 consistent: user coordinate $u < k$ carries message symbol $m_u$, and the
 internal coefficient at degree $\text{internal}(u)$ is $m_u$. Therefore
 `systematic_message` — a copy of the first $k$ user coordinates
-(`:2508-2513`) — recovers $m$ under every declared layout.
+(`:2197-2203`) — recovers $m$ under every declared layout.
 
 **L5.6 (the packed path agrees).** Over $\mathbb{F}_2$, negation is the identity
 and subtraction is XOR, so the `BitVec` kernel's word-level update, `packed_step`
-(`crates/gf2-coding/src/bch/encode.rs:1638-1651`) driven by
-`packed_serial_reduce` (`:1744`), computes the same register as L5.3: the
-feedback is the single bit $R_{\rho-1}$ read at `:1640`, the shift moves each
-$R_{i-1}$ to position $i$, the `tail` mask (`packed_tail_mask` at `:1622-1628`,
-applied at `:1645`) keeps the bits at degrees $\ge \rho$ in the top word clear,
+(`crates/gf2-coding/src/bch/encode.rs:1321-1334`) driven by
+`packed_serial_reduce` (`:1427`), computes the same register as L5.3: the
+feedback is the single bit $R_{\rho-1}$ read at `:1323`, the shift moves each
+$R_{i-1}$ to position $i$, the `tail` mask (`packed_tail_mask` at `:1305-1311`,
+applied at `:1328`) keeps the bits at degrees $\ge \rho$ in the top word clear,
 and the conditional XOR with the packed low coefficients applies
-$-\text{fb}\cdot g_i$ for all $i$ at once. `packed_write_codeword` (`:2024`)
-writes $R_i$ itself, which over $\mathbb{F}_2$ is $-R_i$.
+$-\text{fb}\cdot g_i$ for all $i$ at once. Production places the packed runs through
+`packed_place_codeword` (`:1707`), which copies the message as one run and
+writes the register as parity runs; over $\mathbb{F}_2$ the register $R_i$
+is itself $-R_i$. The unit test
+`the_assembly_places_the_bits_the_bit_serial_reference_writes` (`:3369`) holds
+that run placement to the per-coordinate map (`internal_at`, one bit write per
+user coordinate) that the Lean model `encodeUser` describes. The Lean
+development does not prove the run placement; `@/issue/1ce7e8a5` owns that
+question.
 
 **L5.7 (degenerate cases).** $\rho = 0 \Rightarrow g = 1$, $k = n$, and $c = m$;
 the recurrence is skipped
-(`crates/gf2-coding/src/bch/encode.rs:1360`, `:1432`). $k = 0 \Rightarrow m$ is empty and
+(`crates/gf2-coding/src/bch/encode.rs:1044`, `:1115`). $k = 0 \Rightarrow m$ is empty and
 $c = 0$.
 
 ### 3. Binding
@@ -1165,17 +1172,15 @@ extraction pipeline.
 
 | Lemma | Refinement anchor |
 |---|---|
-| L5.1, L5.2 | `assert_encodes_a_codeword` (`:3067`) with `internal_polynomial` (`:3045`), driven by `prop_binary_encoding_produces_codewords` (`:3097`), `prop_prime_base_encoding_produces_codewords` (`:3110`), `prop_extension_base_encoding_produces_codewords` (`:3123`) |
-| L5.3 | the same three property tests, plus `binary_encoding_agrees_with_the_legacy_encoder` (`:3136`), a byte-identity differential against the independent `LegacyBchEncoder` at six pinned parameter points |
-| L5.4 | `the_layout_mapping_is_a_bijection_placing_the_message_first` (`:3226`), `the_layout_materializes_as_a_coordinate_map` (`:3258`), `out_of_range_coordinates_are_typed_errors` (`:3246`) |
-| L5.5 | `every_declared_layout_round_trips_over_each_base_field` (`:3315`), `the_declared_layouts_present_one_internal_codeword` (`:3276`) |
-| L5.6 | `the_packed_path_agrees_with_the_field_generic_reference` (`:3158`), `the_packed_path_holds_at_the_word_boundaries` (`:3190`) |
-| L5.7 | `the_full_space_code_encodes_the_identity_under_the_default_layout` (`:3337`), `the_zero_dimensional_code_rejects_a_nonempty_message` (`:3353`) |
+| L5.1, L5.2 | `assert_encodes_a_codeword` (`:2742`) with `internal_polynomial` (`:2723`), driven by `prop_binary_encoding_produces_codewords` (`:2770`), `prop_prime_base_encoding_produces_codewords` (`:2783`), `prop_extension_base_encoding_produces_codewords` (`:2796`) |
+| L5.3 | the same three property tests |
+| L5.4 | `the_layout_mapping_is_a_bijection_placing_the_message_first` (`:2904`), `the_layout_materializes_as_a_coordinate_map` (`:2936`), `out_of_range_coordinates_are_typed_errors` (`:2924`) |
+| L5.5 | `every_declared_layout_round_trips_over_each_base_field` (`:2993`), `the_declared_layouts_present_one_internal_codeword` (`:2954`) |
+| L5.6 | `the_packed_path_agrees_with_the_field_generic_reference` (`:2838`), `the_packed_path_holds_at_the_word_boundaries` (`:2870`) |
+| L5.7 | `the_full_space_code_encodes_the_identity_under_the_default_layout` (`:3013`), `the_zero_dimensional_code_rejects_a_nonempty_message` (`:3029`) |
 
-`binary_encoding_agrees_with_the_legacy_encoder` (`:3136`) and
-`the_packed_path_agrees_with_the_field_generic_reference` (`:3158`) are true
-differential tests against independent implementations, so this obligation's
-refinement evidence is the strongest of the three coding-side obligations.
+`the_packed_path_agrees_with_the_field_generic_reference` (`:2838`) is a
+differential test against the independent field-generic implementation.
 **No new Rust test is required for O-5.**
 
 The landed module is `proofs/Gf2Core/Proofs/BchSystematicEncoding.lean`. Its
@@ -1217,7 +1222,7 @@ $j \in T$; that is the O-4 → O-5 edge of the diagram above.
   $i \mapsto (\text{reg}[i/64] \gg (i \bmod 64)) \land 1$, and show the word
   update induces the L5.3 update on that function. The masking step is where
   the $\rho \bmod 64 = 0$ case must be handled separately, matching the branch
-  at `crates/gf2-coding/src/bch/encode.rs:1622-1628`.
+  at `crates/gf2-coding/src/bch/encode.rs:1305-1311`.
 - **L5.7** — `Polynomial.modByMonic` by a degree-zero monic is zero; the $k=0$
   case makes the message sum empty.
 
@@ -1251,12 +1256,12 @@ statement is the one above.
 - **A-01** applies; the anchor table is the discharge, with two independent-
   implementation differentials carrying most of the weight.
 - **A-11** (buffer and identity validation out of model): `validate_lengths`
-  (`crates/gf2-coding/src/bch/encode.rs:455`) and `validate_symbol_field`
-  (`:2713`) decide caller-error conditions
+  (`crates/gf2-coding/src/bch/encode.rs:191`) and `validate_symbol_field`
+  (`:2402`) decide caller-error conditions
   the model excludes by typing — the model's message has exactly $k$
   coefficients over $B$ by construction.
 - **A-12** (packed low-coefficient words): the model takes the words
-  `reset_registers` (`crates/gf2-coding/src/bch/encode.rs:1394`) writes as the
+  `reset_registers` (`crates/gf2-coding/src/bch/encode.rs:1077`) writes as the
   hypothesis `Packed.LowSpec`.
 - **A-13** (reference family only): the workspace, batch and parallel entry
   points and the non-reference batch families are bound to the modelled path by
@@ -1288,9 +1293,9 @@ tracking status. Nothing outside this table is assumed by any section above.
 | A-08 | Cyclotomic parameters are in the representable range | O-3 | $n = 0$ and $n$ beyond `usize` are rejected with `FieldError::InvalidCyclotomicModulus` and `FieldError::CyclotomicModulusTooLarge` (`crates/gf2-core/src/field/extension.rs:2222-2243`). The model assumes $n \ge 1$ and is representation-free. |
 | A-09 | The classical BCH bound is out of scope | O-4 | L4.7 and L4.8 characterise the witnessed run; the step to a minimum-distance claim is a separate Vandermonde argument named by no downstream issue. `BchDistanceBound::minimum_distance_lower_bound` (`crates/gf2-coding/src/bch/spec.rs:531`) is defined as run length plus one, which the sketch does prove. The Vandermonde step is out of scope for `b1bd75ca` by lead decision and carries a tracked follow-up issue of its own. |
 | A-10 | Code parameters are in the representable range | O-4 | `CodeError::UnsupportedSize` at `crates/gf2-coding/src/bch/spec.rs:1244`, `:1455`, `:1498`; `FieldError::UnsupportedSize` at `:1240`. The model is representation-free. |
-| A-11 | Buffer shape and symbol identity are decided outside the model | O-5 | `SystematicPlan::validate_lengths` (`crates/gf2-coding/src/bch/encode.rs:455`) and `validate_symbol_field` (`:2713`) reject caller errors; the model's message is $k$ coefficients over $B$ by typing. |
-| A-12 | The packed path's low-coefficient words hold bit $i$ exactly when $i < \rho$ and $g_i = 1$ | O-5's L5.6 | Hypothesis `Packed.LowSpec` of the model, never an axiom. Production writes those words in `reset_registers` (`crates/gf2-coding/src/bch/encode.rs:1394-1404`); a wrong low bit changes the parity, which `the_packed_path_agrees_with_the_field_generic_reference` (`:3158`) and `the_packed_path_holds_at_the_word_boundaries` (`:3190`) decide. |
-| A-13 | Only the reference encode family is modelled | O-5 | The workspace, batch and parallel entry points are bound to the allocating path symbol for symbol by `assert_every_path_agrees` (`crates/gf2-coding/src/bch/encode.rs:3493`); the families `TableRemainder`, `BitsliceInterleaved` and `ClmulFold` are bound to the reference bit for bit by `the_kernel_families_hold_at_the_word_boundaries` (`:3658`) and the corpus of `crates/gf2-coding/tests/bch_encode_dispatch.rs`. A theorem of the model reaches them only through those differentials. |
+| A-11 | Buffer shape and symbol identity are decided outside the model | O-5 | `SystematicPlan::validate_lengths` (`crates/gf2-coding/src/bch/encode.rs:191`) and `validate_symbol_field` (`:2402`) reject caller errors; the model's message is $k$ coefficients over $B$ by typing. |
+| A-12 | The packed path's low-coefficient words hold bit $i$ exactly when $i < \rho$ and $g_i = 1$ | O-5's L5.6 | Hypothesis `Packed.LowSpec` of the model, never an axiom. Production writes those words in `reset_registers` (`crates/gf2-coding/src/bch/encode.rs:1077-1086`); a wrong low bit changes the parity, which `the_packed_path_agrees_with_the_field_generic_reference` (`:2838`) and `the_packed_path_holds_at_the_word_boundaries` (`:2870`) decide. |
+| A-13 | Only the reference encode family is modelled | O-5 | The workspace, batch and parallel entry points are bound to the allocating path symbol for symbol by `assert_every_path_agrees` (`crates/gf2-coding/src/bch/encode.rs:3156`); the families `TableRemainder`, `BitsliceInterleaved` and `ClmulFold` are bound to the reference bit for bit by `the_kernel_families_hold_at_the_word_boundaries` (`:3472`) and the corpus of `crates/gf2-coding/tests/bch_encode_dispatch.rs`. A theorem of the model reaches them only through those differentials. |
 
 ## Risks and open questions
 
