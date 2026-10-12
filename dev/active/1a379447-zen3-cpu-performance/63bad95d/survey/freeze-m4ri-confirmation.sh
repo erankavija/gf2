@@ -2,13 +2,14 @@
 # Freeze the confirmation of one M4RI comparator family of this issue
 # (jit:63bad95d).
 #
-# Usage: freeze-m4ri-confirmation.sh <level> <frozen-utc>, from the worktree root
+# Usage: freeze-m4ri-confirmation.sh <level> <frozen-utc> [<run-id>], from the worktree root
 #
 # <level> is the build level in the family identity
 # `63bad95d-<level>-matvec-vs-m4ri`; the family's prose addendum is
 # `<level>-m4ri-addendum.md` beside this directory and its margin row is
-# `<level> comparator`. The mid-range story's resolution renderer applies the
-# frozen rule to the committed pilot and writes `<level>-m4ri-pilot-resolution.md`;
+# `<level> comparator`. <run-id> names the committed pilot to freeze from
+# (default v4-r1). The mid-range story's resolution renderer applies the
+# frozen rule to the committed pilot and writes `<level>-m4ri-pilot-resolution[-<run-id>].md`;
 # the canonical freezer pins that resolution with the pilot receipt, and
 # `dense-campaign verify-confirmation` holds the result to the frozen addendum.
 # A `resolution-insufficient` record ends the family: no addendum is written.
@@ -22,7 +23,9 @@ REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
     exit 2
 }
 LEVEL="${1:?usage: freeze-m4ri-confirmation.sh <level> <YYYY-MM-DDTHH:MM:SSZ>}"
-FROZEN="${2:?usage: freeze-m4ri-confirmation.sh <level> <YYYY-MM-DDTHH:MM:SSZ>}"
+FROZEN="${2:?usage: freeze-m4ri-confirmation.sh <level> <YYYY-MM-DDTHH:MM:SSZ> [<run-id>]}"
+RUN="${3:-v4-r1}"
+[[ "${RUN}" == v4-r1 ]] && RUN_SUFFIX="" || RUN_SUFFIX="-${RUN}"
 
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
@@ -32,10 +35,10 @@ STORY="$(dirname "$(git -C "${REPO}" ls-files --full-name -- ':(glob)**/render-m
     grep -v '/inputs/')")"
 locate() { python3 -B "${REPO}/${STORY}/repo_artifacts.py" "$@"; }
 FAMILY="63bad95d-${LEVEL}-matvec-vs-m4ri"
-PILOT="v4-r1-${FAMILY}"
+PILOT="${RUN}-${FAMILY}"
 PILOT_ADDENDUM="$(locate addendum "${PILOT}")"
 ISSUE_DIR="$(dirname "${HERE#"${REPO}/"}")"
-RECORD="${ISSUE_DIR}/${LEVEL}-m4ri-pilot-resolution.md"
+RECORD="${ISSUE_DIR}/${LEVEL}-m4ri-pilot-resolution${RUN_SUFFIX}.md"
 OUTPUT="${PILOT_ADDENDUM%.json}-confirmation.json"
 ANALYSIS="$(locate containing Cargo.toml 'name = "byte-field-analysis"')"
 TARGET="${REPO}/target/18a87159-analysis"
