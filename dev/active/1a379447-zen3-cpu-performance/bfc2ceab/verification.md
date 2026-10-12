@@ -49,8 +49,23 @@ check.
 | `python3 -B survey/make-spmm-tables.py` | `spmm-check-tables.md` beside the family ledger, through the shared `campaign_tables.py` |
 | `python3 -B survey/make-inventory.py` | `inventory.md`, `inventory.json`, `decision-table.md` and `measurement-plan.md` |
 
-`make-inventory.py` states under which conditions it fails before writing; its
-`scan_rule` and `use_rule` fields state what the coverage means. Two
+`make-inventory.py` fails, before writing, when
+
+- a safe function of `gf2-kernels-simd` that holds an `unsafe` block outside
+  test code has no verdict in the review, or a verdict names no such function;
+- a use of a published pointer field in a live Rust file is unassigned, or an
+  assignment counts differently;
+- a cited claim is absent from `source-evidence.json`;
+- a witness tuple does not pass the release assertions it is recorded against;
+- the struct literals that build the sparse matrix type are not those the
+  review assigns to its constructors, or a method of that file takes
+  `&mut self`;
+- the freeze refusal record of the sparse product family pins another receipt
+  than that family's last committed pilot.
+
+It reads `witness-runs.json`, `instruction-counts.json`, the families'
+receipts and the freeze refusal record as committed. The `scan_rule` and
+`use_rule` fields of `inventory.json` state what the coverage means. Two
 consecutive runs of the record generators leave `git diff --exit-code` clean,
 and so do two runs of `regen-prototype-listing.py`, which removes the banner
 lines that carry the commit and time of a run.
@@ -108,8 +123,9 @@ The decision is the invoker's, recorded in [`decisions.json`](decisions.json);
   constructor table of `decision-table.md`), so the check does not fire for a
   product that starts at `SparseFieldMatrix::matmat`; the check stays because
   the hook that reaches the entry is a safe public trait method over slices.
-- No file under `src/x86` changes, so no kernel listing changes.
-  `gf2-core`, `gf2-algebra` and `gf2-coding` deny `unsafe_code`.
+- The checks stand in the safe wrappers outside `src/x86`, so the committed
+  kernel listings are those of the kernels the wrappers call. `gf2-core`,
+  `gf2-algebra` and `gf2-coding` deny `unsafe_code`.
 
 ### Witness calls
 
@@ -129,8 +145,12 @@ recorded witness tuple holds an operand of at least $2^{32}$ elements.
 build of the kernel crate emits between the
 [anchor tree](survey/kernel-anchor-baseline.json), which precedes the checks,
 and the working tree, under `crate_functions.RULE`. Its `function_count` and
-`differing_function_count` total the step, which spans every change to the
-crate since the anchor.
+`differing_function_count` total the step, which spans every difference of the
+crate from the anchor. `freeze-anchor COMMIT` writes the anchor record, the
+digest of every kernel-crate file at the commit, and keeps under
+`survey/inputs/kernel-anchor` the anchor bytes of the paths that differ in the
+working tree; `record before` refuses a working tree that does not hold the
+anchor's kernel crate, and `compare` refuses records of two toolchains.
 
 ### Prototypes and instruction counts
 
@@ -195,12 +215,22 @@ derived from the pilot receipt by the canonical freezer with the
   two forms, selected by `--cfg gf2_entry_checked`; the two arms are one arm
   package built from that tree with and without the flag. Each receipt's
   `inputs/producing` snapshot holds that tree with the arm, the plan
-  projection and the launcher. The live copies of the arm package
-  (`survey/entry-check-arm`), `survey/make-plan.py`, `survey/smoke-arms.sh`,
-  the two smoke records, `survey/producing-inputs.json` and the launcher are
-  those producing inputs as the stages recorded them, except the arm's test of
-  the form a build publishes, which is removed: the working tree holds one
-  form of each entry point, so its two builds of the arm do not differ.
+  projection and the launcher. The live arm package
+  (`survey/entry-check-arm`), the two smoke records and
+  `survey/producing-inputs.json` are those producing inputs as the stages
+  recorded them, without the arm's test of the form a build publishes: the
+  working tree holds one form of each entry point, so its two builds of the
+  arm do not differ.
+- Launcher. `dev/bench_results/bfc2ceab/run-entry-check.sh` has the actions
+  `build`, `window pilot|confirmation` and `freeze`. `window` is the one timed
+  action and the command a queue line carries: it refuses outside a benchmark
+  window, refuses a campaign input that differs from its committed bytes,
+  prints the execution log path before the first bounded run, resumes an
+  interrupted campaign under its own identity, and finalizes and evaluates a
+  complete campaign once; on a finalized campaign it re-evaluates and measures
+  nothing. Every numeric setting comes from the frozen addendum and the
+  protocol's shared settings; the launcher fixes campaign identities, seeds,
+  the pilot pair count and the session cell budget.
 - Outcome. The confirmation records a regression for the per-row column check
   of both sparse row interfaces and no regression for the other retained
   cells; the rows are in the `Confirmation` section of the tables. The
@@ -253,17 +283,37 @@ decision rule. The decision table names the family's committed stages.
   the shared `benchmark-ab-runner smoke` and writes
   [`survey/spmm-pilot-smoke.json`](survey/spmm-pilot-smoke.json), and
   `dev/bench_results/bfc2ceab/run-spmm-check.sh` has the actions `build`,
-  `window pilot|pilot2|confirmation` and `freeze`; `window` refuses outside a
-  benchmark window and refuses a campaign input that differs from its
-  committed bytes. `survey/make-spmm-pilot-pairs.py` sizes the second pilot
-  trial from the first pilot's receipt and writes
-  [`survey/spmm-second-pilot-pairs.json`](survey/spmm-second-pilot-pairs.json).
+  `window pilot|pilot2|confirmation` and `freeze`, with the `window` contract
+  of the entry-check launcher. `pilot` and `pilot2` are the pilot trials the
+  pilot addendum's search budget admits per cell: one addendum and one plan
+  projection under two campaign identities, seeds and pair counts, the second
+  pair count read from the sizing record.
+- Sizing of the second pilot trial. `python3 -B survey/make-spmm-pilot-pairs.py
+  <benchmark-acceptance executable>` writes
+  [`survey/spmm-second-pilot-pairs.json`](survey/spmm-second-pilot-pairs.json)
+  from the first pilot's receipt. Every interval is the evaluator's bootstrap
+  (`abtest::paired_bootstrap_speedup`, P-20), which the shared
+  `benchmark-acceptance --bootstrap` returns for the pairs, resample count,
+  seed and error rates it is given; the script requires the result at the
+  pilot's alpha to equal the acceptance summary's interval. The record holds
+  two sizings. `square_root_law` scales the first pilot's widest half-width to
+  the half-width the frozen margins need and names the pair count that asks
+  for. `undisturbed` repeats the half-widths on the pairs in which neither
+  execution exceeds its arm's fastest execution of the cell by the equivalence
+  margin and projects them to the largest pilot the protocol admits; that
+  projection is an estimate, since the subset is selected after the samples
+  are read.
 - Admissibility. A first confirmatory attempt of this family spends half the
-  family alpha over its four cells, which P-20's tail-support bound admits;
+  family alpha over its cells, which P-20's tail-support bound admits;
   the pilot addendum's family description carries the arithmetic.
-- Outcome. The family holds the two pilot trials its search budget admits and
-  no confirmation: the `freeze` action refuses the receipt of the second
-  trial, and `survey/make-spmm-freeze-refusal.py` records the refusal. The
+- Outcome. The family holds the pilot trials its search budget admits and no
+  confirmation: the `freeze` action refuses the receipt of the second trial,
+  and `survey/make-spmm-freeze-refusal.py` records the refusal: the command,
+  its exit status and standard error, the digests of the launcher, the
+  freezer, the pilot addendum and every pilot receipt, and the pilot trials
+  the ledger holds against the search budget. The record pins the launcher
+  bytes that the second trial's producing snapshot holds; the live launcher
+  refuses the same receipt with the same status and message. The
   measured cost of the per-product check is therefore exploratory; the
   decision table holds each stage's rows and the load each receipt records at
   the start of its session. REQ-04 asks for "before/after evidence under the
@@ -285,4 +335,4 @@ decision rule. The decision table names the family's committed stages.
 - `cargo clippy --release --all-targets -- -D warnings` and `cargo fmt --check`
   in `survey/check-prototype` under `RUSTUP_TOOLCHAIN=1.95.0`: exit 0.
 - `python3 -B survey/make-instruction-counts.py --self-test`: exit 0.
-- `./scripts/asm-artefact-present.sh`: exit 0, no SIMD source file changes.
+- `./scripts/asm-artefact-present.sh`: exit 0.
