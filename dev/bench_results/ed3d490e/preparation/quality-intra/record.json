@@ -110,9 +110,9 @@
     "sha256": "e6980b590737c8da08afa7e449abb1188d73c7dc4e597e0680aeffcc1c7fa146"
   },
   "host": {
-    "avx2": false,
-    "cpu_model": "",
-    "fma": false
+    "avx2": true,
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "fma": true
   },
   "intervals": {
     "ber": "Hoeffding interval over the independent frames",

@@ -38,6 +38,18 @@ class DifferencesTest(unittest.TestCase):
                          dict.fromkeys(recorder.DIAGNOSTICS, 0))
 
 
+class HostFactsTest(unittest.TestCase):
+    def test_a_cpuinfo_block_binds_model_and_flags(self):
+        text = ("processor\t: 0\nmodel name\t: Test CPU @ 1GHz\nflags\t\t: fpu avx2 fma sse\n\n"
+                "processor\t: 1\nmodel name\t: Other\nflags\t\t: fpu\n")
+        self.assertEqual(recorder.host_facts(text),
+                         {"cpu_model": "Test CPU @ 1GHz", "avx2": True, "fma": True})
+
+    def test_absent_flags_are_false(self):
+        facts = recorder.host_facts("model name\t: X\nflags\t\t: fpu\n")
+        self.assertEqual((facts["avx2"], facts["fma"]), (False, False))
+
+
 class CommittedRecordTest(unittest.TestCase):
     def test_a_second_replay_reproduces_the_committed_record(self):
         executable = recorder.smoke.ROOT / recorder.smoke.release() / recorder.EXECUTABLE

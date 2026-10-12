@@ -16,10 +16,13 @@ Usage (from the worktree root): record-intra-quality.py record|check OUT_DIR
 OUT_DIR holds `record.json`; the arms build identity is `OUT_DIR/../build-identity.json`.
 """
 
+import array
 import hashlib
 import importlib.util
 import json
+import math
 import pathlib
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -42,6 +45,9 @@ INTERVALS = {
     "confidence": 0.95,
 }
 RECORD = "record.json"
+PROBE = "llr-scale-probe.json"
+# Multipliers of the recorded LLRs the probe replays; 1 is the record itself.
+PROBE_SCALES = (1.0, 2.0, 4.0)
 
 
 def sha256(data):
@@ -73,13 +79,15 @@ def differences(replayed, committed):
     return [name for name in sorted(left.keys() | right.keys()) if left.get(name) != right.get(name)]
 
 
-def host_facts():
-    """The CPU the replay ran on, as /proc/cpuinfo reports it."""
-    text = pathlib.Path("/proc/cpuinfo").read_text(encoding="utf-8")
+def host_facts(text=None):
+    """The CPU the replay ran on, from `/proc/cpuinfo` text."""
+    if text is None:
+        text = pathlib.Path("/proc/cpuinfo").read_text(encoding="utf-8")
     first = text.split("\n\n")[0]
-    fields = dict(line.split(":", 1) for line in first.splitlines() if ":" in line)
+    fields = {key.strip(): value.strip() for key, _, value in
+              (line.partition(":") for line in first.splitlines()) if key.strip()}
     flags = fields.get("flags", "").split()
-    return {"cpu_model": fields.get("model name", "").strip(),
+    return {"cpu_model": fields.get("model name", ""),
             "avx2": "avx2" in flags, "fma": "fma" in flags}
 
 
@@ -143,6 +151,58 @@ def replays(executable, build_identity):
     return record, qualities
 
 
+def scaled_bundle(source, target, scale):
+    """A copy of the bundle `source` in `target` with every LLR multiplied by `scale`."""
+    target.mkdir(parents=True)
+    for name in ("h.alist", "codewords.bin"):
+        shutil.copy(source / name, target / name)
+    llrs = array.array("f")
+    llrs.frombytes((source / "llrs.f32").read_bytes())
+    scaled = array.array("f", (value * scale for value in llrs))
+    (target / "llrs.f32").write_bytes(scaled.tobytes())
+    manifest = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+    manifest["llrs_sha256"] = sha256(scaled.tobytes())
+    (target / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+def llr_scale(bundle):
+    """Mean recorded LLR in the direction of the sent bit, over `2/sigma^2`."""
+    manifest = json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))
+    llrs = array.array("f")
+    llrs.frombytes((bundle / "llrs.f32").read_bytes())
+    sent = (bundle / "codewords.bin").read_bytes()
+    mean = math.fsum(-value if bit else value for value, bit in zip(llrs, sent)) / len(llrs)
+    return {"sigma": manifest["sigma"], "mean_signed_llr_over_true_scale":
+            mean / (2 / manifest["sigma"] ** 2)}
+
+
+def probes(executable):
+    """The LLR-scale probe of every code, untimed."""
+    base = json.loads((smoke.ROOT / smoke.located("file", smoke.FAMILIES[FAMILY][0]))
+                      .read_text(encoding="utf-8"))
+    result = {"cites": ["Cassagne2019"], "scales": list(PROBE_SCALES), "codes": {}}
+    with tempfile.TemporaryDirectory() as temporary:
+        scratch = pathlib.Path(temporary)
+        with tarfile.open(smoke.by_digest(smoke.ARCHIVE)) as handle:
+            handle.extractall(scratch / "inputs", filter="data")
+        for cell in base["cells"]:
+            cell["code_key"] = key = next(
+                key for key in smoke.CODES if cell["cell_id"].startswith(key + "-"))
+            source = scratch / "inputs" / smoke.CODES[key]["bundle"]
+            frames = json.loads((source / "manifest.json").read_text(encoding="utf-8"))["frames"]
+            replayed = []
+            for scale in PROBE_SCALES:
+                bundle = scratch / f"scaled-{key}-{scale}"
+                scaled_bundle(source, bundle, scale)
+                quality, _ = replay(executable, case_of(cell, bundle, frames), scratch)
+                replayed.append({"scale": scale, "frames": quality["frames"],
+                                 "frame_errors": quality["frame_errors"],
+                                 "bit_errors": quality["bit_errors"],
+                                 "iterations_mean": quality["iterations"]["mean"]})
+            result["codes"][key] = {**llr_scale(source), "replays": replayed}
+    return result
+
+
 def load_build_identity(out_dir):
     path = out_dir.parent / "build-identity.json"
     data = path.read_bytes()
@@ -162,6 +222,8 @@ def record_mode(out_dir):
         record["codes"][name.removeprefix(f"{ARM}-").removesuffix(".json")]["quality"] = {
             "file": name, "sha256": sha256(encoded(quality).encode())}
     (out_dir / RECORD).write_text(encoded(record), encoding="utf-8")
+    (out_dir / PROBE).write_text(encoded(probes(smoke.ROOT / smoke.release() / EXECUTABLE)),
+                                 encoding="utf-8")
     print(out_dir / RECORD)
 
 
@@ -183,8 +245,12 @@ def check_mode(out_dir):
                   if replayed[name] != code[name]]
         print(f"{key}: second replay {'differs' if found else 'reproduces the record'}")
         failures += found
-    failures += [f"{name} differs" for name in ("executable", "build_identity", "recorded_inputs")
+    failures += [f"{name} differs" for name in
+                 ("executable", "build_identity", "recorded_inputs", "host")
                  if record[name] != committed[name]]
+    if probes(smoke.ROOT / smoke.release() / EXECUTABLE) != json.loads(
+            (out_dir / PROBE).read_text(encoding="utf-8")):
+        failures.append(f"{PROBE} differs")
     print(f"executable {record['executable']['name']} sha256 {record['executable']['sha256']}")
     for failure in failures:
         print(f"DIFFERENCE {failure}")
