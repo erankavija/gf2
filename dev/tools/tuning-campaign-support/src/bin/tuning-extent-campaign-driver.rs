@@ -369,8 +369,7 @@ impl CampaignDeclaration {
             .iter()
             .map(|owner| owner.name)
             .collect();
-        let mut declared = self.owners();
-        declared.sort_unstable();
+        let declared = self.owners();
         if measured.is_empty()
             || !measured.windows(2).all(|pair| pair[0] < pair[1])
             || declared.windows(2).any(|pair| pair[0] == pair[1])
@@ -414,13 +413,16 @@ impl CampaignDeclaration {
             .iter()
             .find(|owner| owner.name.as_str() == name)
     }
-    /// The measured owners in declaration order, then the imported ones.
+    /// The declared owners, measured and imported, in composition order.
     fn owners(&self) -> Vec<Owner> {
-        self.measured_owners
+        let mut owners: Vec<Owner> = self
+            .measured_owners
             .iter()
             .map(|owner| owner.name)
             .chain(self.imported_owners.iter().map(|owner| owner.name))
-            .collect()
+            .collect();
+        owners.sort_unstable();
+        owners
     }
     fn measures(&self, owner: Owner) -> bool {
         self.measured_owners
@@ -432,9 +434,7 @@ impl CampaignDeclaration {
     /// owner envelope of a measured owner, the committed envelope of an
     /// imported one.
     fn published_owners(&self, layout: &RepositoryLayout) -> Vec<(Owner, String)> {
-        let mut owners = self.owners();
-        owners.sort_unstable();
-        owners
+        self.owners()
             .into_iter()
             .map(|owner| {
                 let path = self.imported(owner.as_str()).map_or_else(
@@ -2207,9 +2207,8 @@ fn compose_complete(
     declaration: &CampaignDeclaration,
     log: &mut ExecutionLog,
 ) -> io::Result<()> {
-    let mut owners = declaration.owners();
-    owners.sort_unstable();
-    let inputs = owners
+    let inputs = declaration
+        .owners()
         .into_iter()
         .map(|owner| Ok((owner, artifact(&stage.join(owner.envelope()))?)))
         .collect::<io::Result<Vec<_>>>()?;
