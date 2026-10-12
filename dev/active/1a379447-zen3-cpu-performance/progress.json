@@ -664,8 +664,8 @@
      "id": "bfc2ceab",
      "short_id": "bfc2ceab",
      "classification": "implementation",
-     "status": "in_progress, blocked on the invoker (escalation 2026-10-12): rework 2 merged 815a1829a with the exception citation in verification.md; cargo-ci passed; code-review round 3 failed on three new findings (reviews/bfc2ceab-r3.md)",
-     "tracker_state": "in_progress"
+     "status": "done (session 35)",
+     "tracker_state": "done"
     },
     {
      "id": "dd359005",
@@ -710,7 +710,8 @@
      "short_id": "7dbe1393",
      "title": "Close the matvec SIMD lane gap at ragged strides",
      "classification": "implementation",
-     "status": "in_progress, blocked on the invoker. Branch worktree-agent-7dbe1393 at ca918074f: profile session (18 cases) and pilot committed; pilot resolution-insufficient (freezer refusal recorded), no confirmation; candidate kernel unselected. Not merged."
+     "status": "done (session 35)",
+     "tracker_state": "done"
     },
     {
      "short_id": "e4e2ba52",
@@ -726,7 +727,8 @@
     },
     {
      "short_id": "8e53235b",
-     "status": "in_progress: stage 1 on worktree-agent-8e53235b at d0dcfbcb2 (pinned, unmerged): BitVec::write_bits, selectable CodewordAssembly::WordWise (production stays bit-serial), family 8e53235b-bch-codeword-assembly frozen (5 exploratory whole-consumer cells) and smoked; pilot queued for the 2026-10-11 04:00 window behind a load guard."
+     "status": "done (session 35)",
+     "tracker_state": "done"
     },
     {
      "short_id": "bad1aea8",
@@ -972,7 +974,7 @@
      "short_id": "aff59c3c",
      "title": "Produce decode selector measurements from a coding owner harness",
      "classification": "implementation",
-     "status": "done; rework 2 merged 2468bc69c, cargo-ci, code-review passed, doc-review passed on the first merged tree",
+     "status": "done (session 35)",
      "tracker_state": "done"
     }
    ]
@@ -1342,6 +1344,12 @@
    "type": "bug",
    "in_epic": true,
    "reason": "session 35: 6e87c436/survey/make-source-evidence.py --check fails on main after the 7dbe1393 merge (matrix.rs fragment absent); direct epic child"
+  },
+  {
+   "id": "1ce7e8a5",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "session 35: Lean model and proof sketch describe the per-coordinate codeword write 8e53235b replaced; depends on 8e53235b"
   }
  ],
  "escalations": [
@@ -2147,6 +2155,14 @@
    "status": "resolved",
    "raised_at": "2026-10-12",
    "resolution": "Invoker 2026-10-12: rework authorized. Round 3 dispatched with a full audit of every jit:bfc2ceab file; counter reset to 0."
+  },
+  {
+   "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5)",
+   "issue": "d4185e9e",
+   "question": "code-review failed in rounds 3 and 4 after the allowance was spent",
+   "status": "resolved",
+   "raised_at": "2026-10-12",
+   "resolution": "Invoker 2026-10-12: apply the reduced invariant set, re-review with the prose finding fixed, then one authorized rework for the two remaining findings (Cargo env PATH refusal, schema identifier restored). Passed."
   }
  ],
  "rework_counts": {
@@ -2199,7 +2215,7 @@
   "4337c02e": 1,
   "5cb74f81": 1,
   "1d4b05d5": 1,
-  "bfc2ceab": 0,
+  "bfc2ceab": 3,
   "07ae376c": 0,
   "13728e1a": 2,
   "4767d936": 1,
@@ -2211,11 +2227,17 @@
   "a96a4cd6": 1,
   "e4e2ba52": 0,
   "bad1aea8": 1,
-  "d4185e9e": 2,
+  "d4185e9e": 3,
   "81e955b0": 0,
   "151af028": 0,
   "cb8f7c36": 0,
-  "958639ec": 0
+  "958639ec": 0,
+  "7dbe1393": 1,
+  "8e53235b": 1,
+  "07024d65": 1,
+  "dd50ea11": 1,
+  "1ca04967": 0,
+  "824cde7c": 0
  },
  "surfaced_pitfalls": [
   {
@@ -2754,6 +2776,20 @@
    "issue": "1a379447",
    "finding": "Commit 222b02396 carries a wrong co-author trailer.",
    "disposition": "accepted as is; main history is immutable"
+  },
+  {
+   "issue": "1ca04967",
+   "subject": "feb60d0d smoke records hold gf2 arm digests other than the build identity record's; rerun smoke-gf2-arms.py under the owning issue before the story's first freeze",
+   "origin": "pre-existing",
+   "disposition": "open; owner feb60d0d successor in story ed3d490e",
+   "criterion_named_by": "story ed3d490e arm validation leaves (5d590bac, a4476c6a)"
+  },
+  {
+   "issue": "dd50ea11",
+   "subject": "no test runs plain --stage of the validator over a complete coding stage",
+   "origin": "issue-impact",
+   "disposition": "0a77ecfc runs driver and validator end to end, untimed, before queuing",
+   "criterion_named_by": "0a77ecfc"
   }
  ],
  "notes": [
@@ -2985,31 +3021,26 @@
   "handoff-27.md",
   "handoff-28.md",
   "handoff-29.md",
-  "handoff-30.md"
+  "handoff-30.md",
+  "handoff-31.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
  },
  "benchmark_window": {
-  "unit": "gf2-bench-window-20261012",
-  "armed_for": "2026-10-12T04:00:00+03:00",
+  "unit": "gf2-bench-window-20261013",
+  "armed_for": "2026-10-13T04:00:00+03:00",
   "state_dir": ".agents/bench-window",
   "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
   "pending_jobs": {
-   "8e53235b": [
-    "codeword-assembly confirmation, 10 min, agent-8e53235b"
-   ],
    "63bad95d": [
-    "profile-dispatch-overhead-v2 pilot, 10 min, agent-63bad95d-fam",
-    "native-ladder-v2 pilot, 12 min, agent-63bad95d-fam",
-    "native-matvec-vs-m4ri second pilot v4-r2, 25 min, agent-63bad95d-m4ri",
-    "portable-matvec-vs-m4ri second pilot v4-r2, 10 min, agent-63bad95d-pm4ri"
-   ],
-   "7dbe1393": [
-    "matvec-ragged-tail-v2 pilot v4-r1, 10 min, agent-7dbe1393"
+    "profile-dispatch-overhead-v2 confirmation, 12 min, agent-63bad95d-fam",
+    "native-ladder-v2 confirmation, 12 min, agent-63bad95d-fam",
+    "native-matvec-vs-m4ri confirmation run v4-r2, 25 min, agent-63bad95d-m4ri",
+    "portable-matvec-vs-m4ri confirmation run v4-r1, 10 min, agent-63bad95d-pm4ri"
    ]
   },
-  "note": "Every line carries its own load guard (exit 75 above a one-minute load of 2, line stays queued). Verify each campaign from its own execution log and read window.log loads first. Count the queue lines; the lead counted seven jobs when arming."
+  "note": "Each line carries its load guard (exit 75 above a one-minute load of 2). Verify each campaign from its own execution log."
  },
  "session_scope": {
   "session": 35,
@@ -3019,16 +3050,9 @@
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes.",
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
-  "disk": "pinned worktrees: 63bad95d-fam, 63bad95d-run, 63bad95d-m4ri, 63bad95d-pm4ri, 7dbe1393, 8e53235b, ed3d490e-run. New: 958639ec, cb8f7c36. Reclaimed: 81e955b0, 151af028. Merged, reclaimable after their issues close: aff59c3c-r2, bfc2ceab.",
-  "active_workers": {
-   "8e53235b": "opus w-8e53235b-s35: commit confirmation, adopt word-wise assembly, merge main",
-   "7dbe1393": "sonnet w-7dbe1393-s35: commit repeat pilot, freeze or record refusal",
-   "63bad95d": "opus w-63bad95d-fam-s35 (two repeat families), sonnet w-63bad95d-m4ri-s35, sonnet w-63bad95d-pm4ri-s35: commit pilots, freeze, smoke, queue confirmations",
-   "d4185e9e": "opus w-d4185e9e-s35: rework 2 in agent-ed3d490e-run",
-   "958639ec": "opus w-958639ec-s35 in agent-958639ec",
-   "cb8f7c36": "sonnet w-cb8f7c36-s35 in agent-cb8f7c36",
-   "bfc2ceab": "opus w-bfc2ceab-s35: authorized rework round 3 with audit, in agent-bfc2ceab"
-  },
-  "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected."
+  "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run (pinned for the window), ed3d490e-run (story build tree with the staged pinned comparator). Eleven reclaimed.",
+  "active_workers": {},
+  "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
+  "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc."
  }
 }

@@ -7,3 +7,11 @@ dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-profile-dis
 dev/active/1a379447-zen3-cpu-performance/63bad95d/disturbance-record.md	evidence	Host load and per-cell dispersion of the profile-family campaigns (generated)
 dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/make-disturbance-record.py	tool	Generator of the disturbance record
 dev/active/1a379447-zen3-cpu-performance/63bad95d/campaign-findings.md	report	Campaign findings (F-06, F-07 added)
+dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2/r1-pilot/acceptance-summary.md	reference	Dispatch overhead repeat pilot acceptance summary
+dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2/r1-pilot/receipt.json	reference	Dispatch overhead repeat pilot receipt
+dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-profile-dispatch-overhead-v2-pilot-resolution.txt	reference	Dispatch overhead repeat pilot resolution record
+dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/profile-dispatch-overhead-v2-confirmation-smoke.json	reference	Dispatch overhead repeat confirmation plan smoke record
+dev/bench_results/63bad95d/63bad95d-native-ladder-v2/r1-pilot/acceptance-summary.md	reference	Native ladder repeat pilot acceptance summary
+dev/bench_results/63bad95d/63bad95d-native-ladder-v2/r1-pilot/receipt.json	reference	Native ladder repeat pilot receipt
+dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-native-ladder-v2-pilot-resolution.txt	reference	Native ladder repeat pilot resolution record
+dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/native-ladder-v2-confirmation-smoke.json	reference	Native ladder repeat confirmation plan smoke record
