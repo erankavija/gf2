@@ -976,6 +976,41 @@
      "classification": "implementation",
      "status": "done (session 35)",
      "tracker_state": "done"
+    },
+    {
+     "short_id": "4252085a",
+     "title": "Prepare the quality record of the sum-product INTRA arm",
+     "classification": "research",
+     "status": "in_progress (session 36)",
+     "tracker_state": "in_progress",
+     "dispatch": {
+      "model": "sonnet",
+      "worktree": ".agents/worktrees/agent-ed3d490e-run",
+      "branch": "worktree-agent-4252085a",
+      "base": "8cfd6e6cc",
+      "session": 36
+     }
+    },
+    {
+     "short_id": "0a77ecfc",
+     "title": "Declare the decoder calibration campaign",
+     "classification": "research",
+     "status": "in_progress (session 36)",
+     "tracker_state": "in_progress",
+     "dispatch": {
+      "model": "opus",
+      "worktree": ".agents/worktrees/agent-0a77ecfc",
+      "branch": "worktree-agent-0a77ecfc",
+      "base": "8cfd6e6cc",
+      "session": 36
+     }
+    },
+    {
+     "short_id": "05c9065e",
+     "title": "Record the peak memory of the benchmark arms",
+     "classification": "research",
+     "status": "pending: after 4252085a in agent-ed3d490e-run",
+     "tracker_state": "ready"
     }
    ]
   },
@@ -3043,9 +3078,9 @@
   "note": "Each line carries its load guard (exit 75 above a one-minute load of 2). Verify each campaign from its own execution log."
  },
  "session_scope": {
-  "session": 35,
+  "session": 36,
   "date": "2026-10-12",
-  "instruction": "Invoker: drive epic 1a379447; subagent model by task difficulty; no Fable.",
+  "instruction": "Invoker 2026-10-12 (session 36): drive epic 1a379447; subagent model by task difficulty; no Fable.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes.",
@@ -3053,6 +3088,7 @@
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run (pinned for the window), ed3d490e-run (story build tree with the staged pinned comparator). Eleven reclaimed.",
   "active_workers": {},
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
-  "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc."
+  "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
+  "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30."
  }
 }
