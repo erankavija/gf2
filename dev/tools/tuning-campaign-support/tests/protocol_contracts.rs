@@ -4149,7 +4149,7 @@ mod arm_wire {
     use serde::{Deserialize, Serialize};
     use serde_json::{json, Value};
     use tuning_campaign_support::arm::{ArmRequest, PairPosition, ARM_REQUEST_SCHEMA};
-    use tuning_campaign_support::protocol::{CacheState, PlanCell, SHARED_SETTINGS};
+    use tuning_campaign_support::protocol::{CacheState, PlanArm, PlanCell, SHARED_SETTINGS};
     use tuning_campaign_support::transport;
 
     /// The mirror of an arm that names the position with its own enumeration
@@ -4261,6 +4261,24 @@ mod arm_wire {
             case: json!({"seed": 1, "words": 4096}),
             pilot_pairs: None,
         }
+    }
+
+    #[test]
+    fn child_environment_is_the_declaration_and_the_sentinel() {
+        let arm: PlanArm = serde_json::from_value(json!({
+            "build": "native", "description": "arm", "executable": "arm", "arguments": [],
+            "environment": {"DECLARED": "1"}, "rustflags": null, "tuning_profile": null
+        }))
+        .expect("a plan arm");
+        let environment = tuning_campaign_support::arm::child_environment(&arm);
+        assert_eq!(environment["DECLARED"], "1");
+        assert_eq!(
+            environment[tuning_campaign_support::transport::FRESH_CASE_VAR],
+            tuning_campaign_support::transport::FRESH_CASE_VALUE
+        );
+        assert!(environment.keys().all(|name| name == "DECLARED"
+            || name == tuning_campaign_support::transport::FRESH_CASE_VAR
+            || tuning_campaign_support::arm::INHERITED_ENVIRONMENT.contains(&name.as_str())));
     }
 
     #[test]
