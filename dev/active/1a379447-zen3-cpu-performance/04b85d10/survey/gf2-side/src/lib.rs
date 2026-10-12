@@ -19,7 +19,7 @@
 //! [`Prepared::run`] is the body the fixed-window timing protocol calls. The
 //! separation is what keeps allocation out of a `warm-reuse` cell and inside a
 //! `fresh-alloc` one, matching the cache-state contract of
-//! `dev/active/4e732b56/workload-selection.md` section 5.
+//! `workload-selection.md` of `@/issue/4e732b56` section 5.
 
 use std::collections::BTreeMap;
 use std::hint::black_box;
@@ -508,11 +508,11 @@ impl State {
 /// distance.
 ///
 /// The two large rows are the mother codes of the DVB-T2 short and normal
-/// frames of `dev/active/4e732b56/workload-selection.md` section 2: same
+/// frames of `workload-selection.md` of `@/issue/4e732b56` section 2: same
 /// mother field, same primitive polynomial and same designed distance, hence
 /// the same generator polynomial and the same redundancy. `BinaryBchCode`
 /// constructs cyclic codes at the primitive length, so the shortened DVB-T2
-/// lengths are reached through [`BchCode`] instead and are measured by the
+/// lengths are reached through [`dvb_t2_bch_code`] instead and are measured by the
 /// `dvb-bch-encode` workload.
 fn binary_bch(
     degree: usize,
@@ -532,7 +532,7 @@ fn binary_bch(
 
 /// One declared packed-BCH mother-code row.
 ///
-/// The rows are those of `dev/active/4e732b56/workload-selection.md`
+/// The rows are those of `workload-selection.md` of `@/issue/4e732b56`
 /// section 2, registered for this survey in the survey directory's `code-rows.json`, which
 /// `tests/declared_codes.rs` checks against this table.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]

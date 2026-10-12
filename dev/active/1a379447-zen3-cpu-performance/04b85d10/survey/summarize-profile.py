@@ -53,7 +53,7 @@ PROBES = [
     ("dense-transpose", "setup: one fixture matrix materialized; dispatch: `transpose_route` only, because the block-kernel lookup is crate-private."),
     ("ldpc-syndrome, ldpc-codeword-check", "setup: construction of the declared code; unpack: allocating a `BitVec` with one bit of capacity per check and appending one bit per check, the output construction of the CSR matvec."),
     ("bch-encode-batch*", "setup: `BinaryBchCode` construction; pack: one `encode_workspace()` construction, the workspace `encode_batch_into` borrows, because the families pack messages inside the timed call; batch fill: regenerating the batch (allocation plus the fixture generator's fill), a harness cost a consumer replaces with a copy of its own data; dispatch: `selected_encode_family`, the plan construction and family selection the entry point performs per call."),
-    ("dvb-bch-encode", "setup: `BchCode::dvb_t2` construction; batch fill: regenerating the batch as above."),
+    ("dvb-bch-encode", "setup: `dvb_t2_bch_code` construction; batch fill: regenerating the batch as above."),
 ]
 
 
@@ -156,7 +156,7 @@ def main():
     print(
         "BCH rows: degree 14 is the mother field of the DVB-T2 short-frame BCH code and "
         "degree 16 that of the normal-frame code [Etsi2015] (rows T2S and T2N of "
-        "`dev/active/4e732b56/workload-selection.md`); degree 8 is its row B3. "
+        "`workload-selection.md` of `@/issue/4e732b56`); degree 8 is its row B3. "
         "`dvb-bch-encode` measures the shortened rate-1/2 frames themselves, n = 7200 short "
         "and n = 32400 normal."
     )
