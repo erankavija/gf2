@@ -15,8 +15,7 @@ whose first frame count is one too high, and for the AFF3CT arm also none.
 Group `gf2`, the default, smokes the gf2 arms. Group `aff3ct` smokes the
 AFF3CT [Cassagne2019] sum-product INTRA arm of the workspace's member package
 against the gf2 single-frame arm on the `07ca8585` comparator pilot addendum.
-No prepared quality record of that arm is committed, so the smoke replays one
-with `aff3ct-intra-quality` into `target/`.
+Its prepared quality records are the committed ones of `record-intra-quality.py`.
 
 The throwaway addenda are the `07ca8585` before/after pilot addenda with the
 family renamed and the ledger redirected into `target/`. The single-worker one
@@ -52,12 +51,16 @@ CODES = {
         "code": "dvb-t2-r12",
         "quality": ("gf2-nms-f32-dvb-t2-r12.json",
                     "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"),
+        "intra_quality": ("aff3ct-spa-intra-dvb-t2-r12.json",
+                          "f18498e30eb972c0de5cae432ac50935a2e4292ab2ea5364509c8790c7cf0ef4"),
     },
     "nr-bg1-z384": {
         "bundle": "nr-bg1-z384-mother",
         "code": "nr-bg1-r12",
         "quality": ("gf2-nms-f32-nr-bg1-z384.json",
                     "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"),
+        "intra_quality": ("aff3ct-spa-intra-nr-bg1-z384.json",
+                          "f253417b02ee74103e3889c72a56d4601ecd03da050b5e1fda6e8b1e825a8db8"),
     },
 }
 
@@ -159,30 +162,21 @@ def release():
     return located("package-directory", PACKAGE) / "target/release"
 
 
-def prepared(arm, key, case):
-    """The prepared quality record of `arm` on code `key`: the committed one of the gf2
-    decoder, or for an external arm one replay of the bundle of `case`."""
-    if arm not in EXTERNAL:
-        return by_digest(CODES[key]["quality"])
-    path = ROOT / SCRATCH / f"replayed-{arm}-{key}.json"
-    if not path.exists():
-        case_path = ROOT / SCRATCH / f"case-{arm}-{key}.json"
-        case_path.write_text(json.dumps(case), encoding="utf-8")
-        subprocess.run([str(ROOT / release() / "aff3ct-intra-quality"), str(case_path),
-                        str(path)], check=True)
-    return path
+def prepared(arm, key):
+    """The committed prepared quality record of `arm` on code `key`."""
+    return by_digest(CODES[key]["quality" if arm not in EXTERNAL else "intra_quality"])
 
 
-def differing(arm, key, case):
+def differing(arm, key):
     """A copy of the prepared quality record with one more error in frame 0."""
-    record = json.loads(prepared(arm, key, case).read_text(encoding="utf-8"))
+    record = json.loads(prepared(arm, key).read_text(encoding="utf-8"))
     record["frame_bit_errors"][0] += 1
     path = ROOT / SCRATCH / f"differing-{arm}-{key}.json"
     path.write_text(json.dumps(record), encoding="utf-8")
     return path
 
 
-UNUSABLE = {"differing": differing, "missing": lambda arm, key, case: None}
+UNUSABLE = {"differing": differing, "missing": lambda arm, key: None}
 
 
 def throwaway(group, family, base, derived, refusing=None, unusable=None):
@@ -231,7 +225,7 @@ def throwaway(group, family, base, derived, refusing=None, unusable=None):
                 build, prefix, description = ("external", *EXTERNAL[arm]) if arm in EXTERNAL else (
                     "native", f"gf2-batch-{arm}", f"gf2 LDPC batch decoder, {arm} route")
                 name = f"{prefix}-{key}"
-                quality = (UNUSABLE[unusable] if arm == refusing else prepared)(arm, key, case)
+                quality = (UNUSABLE[unusable] if arm == refusing else prepared)(arm, key)
                 arms[name] = {
                     "build": build,
                     "description": description,
