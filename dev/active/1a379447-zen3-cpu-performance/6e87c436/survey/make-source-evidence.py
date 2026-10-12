@@ -3,17 +3,26 @@
 
 Every claim names a file by package and package-relative path, a fragment of
 one line, how often the fragment occurs in the file and why the outcome relies
-on it. The script writes `source-evidence.json` beside itself with the line the
-fragment occupies, the verbatim line, the file digest and the commit that last
-changed the file. A fragment that is absent or changes its occurrence count
-fails the script.
+on it. Without arguments the script writes `source-evidence.json` beside itself
+with the line the fragment occupies, the verbatim line, the file digest and the
+commit that last changed the file; it refuses, naming every claim whose
+fragment is absent or changes its occurrence count, and leaves the ledger
+untouched. `--check` verifies the committed ledger against the file content
+each claim's digest pins, read by digest from git and never from the working
+tree, so it holds on any later tree while those blobs exist; it writes nothing.
+The commit field is informational.
 """
 
-import hashlib
-import json
-import subprocess
+import sys
 
-from locate import HERE, ROOT, repository_files
+sys.dont_write_bytecode = True
+
+import argparse  # noqa: E402
+import hashlib  # noqa: E402
+import json  # noqa: E402
+import subprocess  # noqa: E402
+
+from locate import HERE, ROOT, content_anchor, repository_files  # noqa: E402
 
 # (package, package-relative path, fragment, expected occurrences, why)
 CLAIMS = [
@@ -203,21 +212,31 @@ def last_change(path):
     ).stdout.strip()
 
 
-def main():
-    records = []
+def locate_fragment(text, fragment):
+    """The 1-based lines of `text` that contain `fragment`, and the lines."""
+    lines = text.splitlines()
+    return [index + 1 for index, line in enumerate(lines) if fragment in line], lines
+
+
+def claim_path(package, relative):
+    return f"{repository_files.package_directory(ROOT, package)}/{relative}"
+
+
+def generate():
+    records, faults = [], []
     for package, relative, fragment, occurrences, why in CLAIMS:
-        path = f"{repository_files.package_directory(ROOT, package)}/{relative}"
+        path = claim_path(package, relative)
         text = (ROOT / path).read_text()
-        lines = text.splitlines()
-        positions = [index + 1 for index, line in enumerate(lines) if fragment in line]
+        positions, lines = locate_fragment(text, fragment)
         if len(positions) != occurrences:
-            raise SystemExit(
+            faults.append(
                 f"{path}: expected {occurrences} occurrences of {fragment!r}, found {len(positions)}"
             )
+            continue
         records.append(
             {
                 "project": "gf2",
-                "commit": last_change(path),
+                "commit": None,
                 "path": path,
                 "line": positions[0],
                 "occurrences": occurrences,
@@ -226,12 +245,56 @@ def main():
                 "sha256": hashlib.sha256(text.encode()).hexdigest(),
             }
         )
+    if faults:
+        raise SystemExit(
+            "source claims do not hold on this tree, so nothing is written:\n" + "\n".join(faults)
+        )
+    for record in records:
+        record["commit"] = last_change(record["path"])
     output = HERE / "source-evidence.json"
     output.write_text(
         json.dumps({"schema": "source-evidence-v1", "issue": "6e87c436", "claims": records}, indent=2)
         + "\n"
     )
     print(f"{output.relative_to(ROOT)}: {len(records)} source claims")
+
+
+def check():
+    ledger = json.loads((HERE / "source-evidence.json").read_bytes())["claims"]
+    faults = []
+    if len(ledger) != len(CLAIMS):
+        faults.append(f"the ledger holds {len(ledger)} claims, the script defines {len(CLAIMS)}")
+    held = {}
+    for record, (_package, relative, fragment, occurrences, why) in zip(ledger, CLAIMS):
+        path = record["path"]
+        if (
+            not path.endswith(f"/{relative}")
+            or (record["occurrences"], record["why"]) != (occurrences, why)
+        ):
+            faults.append(f"{path}: the ledger row is not the script's claim of {fragment!r}")
+            continue
+        key = (path, record["sha256"])
+        if key not in held:
+            held[key] = content_anchor.history_blob(ROOT, path, record["sha256"])
+        if held[key] is None:
+            faults.append(f"{path}: no committed blob holds the pinned digest of {fragment!r}")
+            continue
+        positions, lines = locate_fragment(held[key].decode(), fragment)
+        if (
+            len(positions) != occurrences
+            or positions[0] != record["line"]
+            or lines[record["line"] - 1] != record["verbatim"]
+        ):
+            faults.append(f"{path}: the pinned content does not hold {fragment!r} as recorded")
+    if faults:
+        raise SystemExit("source-evidence.json does not verify:\n" + "\n".join(faults))
+    print(f"source-evidence.json: {len(ledger)} claims verify against their pinned content")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="verify the committed ledger; write nothing")
+    check() if parser.parse_args().check else generate()
 
 
 if __name__ == "__main__":

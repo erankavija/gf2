@@ -1,4 +1,4 @@
-"""Self-tests for the verdict's record check and the generators' refusal (jit:66698c3c).
+"""Self-tests for the verdict's record checks and the generators' refusal (jit:66698c3c, jit:cb8f7c36).
 
 Run from any directory:
     python3 verify_records_test.py
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -23,7 +24,8 @@ from locate import ROOT, repository_files  # noqa: E402
 
 SHARED = ("content_anchor", "repository_files", "rust_code_text", "asm_listing")
 SCRIPTS = (
-    "locate", "make-production-drift", "make-asm-comparison", "freeze-end-state", "verify-records"
+    "locate", "make-production-drift", "make-asm-comparison", "freeze-end-state", "verify-records",
+    "make-source-evidence",
 )
 
 
@@ -147,6 +149,84 @@ class RegenerationRefusal(unittest.TestCase):
     def test_the_pinned_tree_does_not_refuse(self):
         for generator in ("make-production-drift", "make-asm-comparison"):
             self.assertNotIn("describes the tree pinned", self.regenerate(generator).stderr)
+
+
+class SourceLedger(unittest.TestCase):
+    def check(self, *arguments):
+        return run([sys.executable, str(SURVEY / "make-source-evidence.py"), "--check", *arguments], SURVEY)
+
+    def test_the_committed_ledger_verifies_and_nothing_is_written(self):
+        def state():
+            return subprocess.run(
+                ["git", "-C", str(ROOT), "status", "--porcelain=v1", "--ignored", "-z"],
+                capture_output=True,
+            ).stdout + b"".join(p.read_bytes() for p in sorted(SURVEY.iterdir()) if p.is_file())
+
+        before = state()
+        done = self.check()
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(state(), before)
+
+    def test_an_unpinned_digest_fails_by_path(self):
+        ledger = SURVEY / "source-evidence.json"
+        original = ledger.read_bytes()
+        record = json.loads(original)
+        record["claims"][0]["sha256"] = "0" * 64
+        self.addCleanup(ledger.write_bytes, original)
+        ledger.write_text(json.dumps(record))
+        done = self.check()
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn(record["claims"][0]["path"], done.stderr)
+
+
+class SourceLedgerRegeneration(unittest.TestCase):
+    """The generator on a fixture tree where a claimed fragment is absent."""
+
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.root = Path(directory.name)
+        self.survey = self.root / "survey"
+        self.survey.mkdir()
+        (self.root / "scripts").mkdir()
+        for module in SHARED:
+            shutil.copy(ROOT / repository_files.live_file(ROOT, f"{module}.py"), self.root / "scripts")
+        shutil.copy(ROOT / repository_files.live_file(ROOT, "repo_artifacts.py"), self.survey)
+        for script in SCRIPTS:
+            shutil.copy(SURVEY / f"{script}.py", self.survey)
+        ledger = json.loads((SURVEY / "source-evidence.json").read_bytes())["claims"]
+        self.claimed = ledger[0]
+        # A ledger path under a package directory that has since moved maps to the live one.
+        live = {
+            name: repository_files.package_directory(ROOT, name)
+            for name in ("gf2-core", "gf2-kernels-simd", "dense-parity-harness")
+        }
+        for directory in live.values():
+            self.place(f"{directory}/Cargo.toml", ROOT / directory / "Cargo.toml")
+        for claim in ledger:
+            path = claim["path"]
+            if not (ROOT / path).is_file():
+                path = f"{live['dense-parity-harness']}/src/{path.split('/src/')[1]}"
+            self.place(claim["path"] if (ROOT / claim["path"]).is_file() else path, ROOT / path)
+        # The first claim's fragment is a line of the first claimed file.
+        target = self.root / self.claimed["path"]
+        target.write_text(target.read_text().replace(self.claimed["verbatim"], ""))
+        self.sentinel = '{"claims": []}\n'
+        (self.survey / "source-evidence.json").write_text(self.sentinel)
+        run(["git", "init", "-q"], self.root)
+        run(["git", "add", "-A"], self.root)
+
+    def place(self, path, source):
+        held = self.root / path
+        held.parent.mkdir(parents=True, exist_ok=True)
+        held.write_bytes(source.read_bytes())
+
+    def test_an_absent_fragment_refuses_naming_the_claim_and_leaves_the_ledger(self):
+        done = run([sys.executable, "-B", "survey/make-source-evidence.py"], self.root)
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn(self.claimed["path"], done.stderr)
+        self.assertIn(self.claimed["verbatim"].strip(), done.stderr)
+        self.assertEqual((self.survey / "source-evidence.json").read_text(), self.sentinel)
 
 
 if __name__ == "__main__":
