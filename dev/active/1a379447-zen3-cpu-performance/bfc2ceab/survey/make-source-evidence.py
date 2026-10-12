@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 """Freeze the source claims of the caller-trusted entry point review (jit:bfc2ceab).
 
-`review.py` holds the claims: an identifier the inventory cites, a file named
-by Cargo package and package-relative path (by its unique tracked file name,
-at the repository root, or in the producing snapshot of the confirmation
-receipt for a claim about the tree the family measured), a fragment of one
-line, how many lines hold it and
-why it matters. `CLEARED` rows carry one claim each, named after the function
-they clear. The script writes `source-evidence.json` beside itself with the
-first line holding the fragment, that line verbatim, the file digest and the
-commit that last changed the file. A fragment that is absent, or held by a
-different number of lines, fails the script.
-
 Usage: make-source-evidence.py, with no arguments
+
+Writes `source-evidence.json` beside itself: per claim of `review.py`, the
+first line holding its fragment, that line verbatim, the file digest and the
+commit that last changed the file. Fails when a fragment is absent or held by
+another number of lines than the claim states.
 """
 
 import hashlib

@@ -1,25 +1,11 @@
 #!/usr/bin/env python3
 """Shared projection of a `benchmark-ab-runner` plan from a frozen addendum.
 
-The argument surface, the per-cell arm pairing, the build-identity check
-against the declaration and the plan envelope are the same for every family
-and live here. A family's own generator puts this file's directory on
-`sys.path`, imports `campaign_plan` and calls one of two entry points.
-
-`project` is the general form: the family supplies the two arms of each cell,
-which may be one executable under two environments or two executables built
-with different flags, and the case the cell's arms decode.
-
-`main` is the lane-comparison form over `project`: the family supplies its
-lanes, its element representations and the entry point they name. Both arms of
-a pair are then the one executable the projection names; the environment
-selects the lane and the element representation, and the runner records that
-environment beside the executable digest, so the two arms share a build
-identity and differ only in the lane.
-
-Each case is built from the frozen addendum's own workload identity, size, seed
-and metric kind, so the plan cannot disagree with the declaration about what a
-cell measures.
+A family's generator puts this file's directory on `sys.path` and calls
+`project`, supplying the two arms and the case of each cell, or `main`, the
+lane-comparison form over `project` in which both arms are one executable under
+two environments. Every case is built from the addendum's own workload
+declaration, so a plan cannot disagree with it about what a cell measures.
 """
 
 import argparse
