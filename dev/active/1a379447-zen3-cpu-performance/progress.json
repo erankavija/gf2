@@ -981,7 +981,7 @@
      "short_id": "4252085a",
      "title": "Prepare the quality record of the sum-product INTRA arm",
      "classification": "research",
-     "status": "in_progress (session 36)",
+     "status": "merged df7603594 after one lead rework (host facts, committed arm acceptance, LLR scale probe); gates pending",
      "tracker_state": "in_progress",
      "dispatch": {
       "model": "sonnet",
@@ -989,7 +989,8 @@
       "branch": "worktree-agent-4252085a",
       "base": "8cfd6e6cc",
       "session": 36
-     }
+     },
+     "merge_commit": "df7603594"
     },
     {
      "short_id": "0a77ecfc",
@@ -1009,8 +1010,15 @@
      "short_id": "05c9065e",
      "title": "Record the peak memory of the benchmark arms",
      "classification": "research",
-     "status": "pending: after 4252085a in agent-ed3d490e-run",
-     "tracker_state": "ready"
+     "status": "in_progress (session 36)",
+     "tracker_state": "in_progress",
+     "dispatch": {
+      "model": "sonnet",
+      "worktree": ".agents/worktrees/agent-ed3d490e-run",
+      "branch": "worktree-agent-05c9065e",
+      "base": "a020f5320",
+      "session": 36
+     }
     }
    ]
   },
@@ -1385,6 +1393,12 @@
    "type": "bug",
    "in_epic": false,
    "reason": "session 35: Lean model and proof sketch describe the per-coordinate codeword write 8e53235b replaced; depends on 8e53235b"
+  },
+  {
+   "id": "11bfbfd9",
+   "type": "bug",
+   "in_epic": false,
+   "reason": "4252085a measured the recorded LDPC bundles at half the BPSK-AWGN closed-form LLR scale (gf2-sim testutil frame source computes 2r/N0 with N0 = 2 sigma^2); depends on 4252085a"
   }
  ],
  "escalations": [
@@ -2198,6 +2212,15 @@
    "status": "resolved",
    "raised_at": "2026-10-12",
    "resolution": "Invoker 2026-10-12: apply the reduced invariant set, re-review with the prose finding fixed, then one authorized rework for the two remaining findings (Cargo env PATH refusal, schema identifier restored). Passed."
+  },
+  {
+   "category": "architectural decision with trade-offs (policy item 6)",
+   "issue": "4252085a",
+   "question": "does the sum-product INTRA arm receive the recorded LLRs as they are (half the closed-form scale, FER 1 on NR), or multiplied by two inside the arm with a re-recorded quality file",
+   "recommendation": "multiply by two in the INTRA arm adapter: exact in f32, leaves the pinned bundles and the matched min-sum arms untouched, and makes the fastest-compatible comparison a comparison against a working decoder",
+   "status": "open",
+   "raised_at": "2026-10-12T19:30Z",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -2272,7 +2295,8 @@
   "07024d65": 1,
   "dd50ea11": 1,
   "1ca04967": 0,
-  "824cde7c": 0
+  "824cde7c": 0,
+  "4252085a": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2825,6 +2849,13 @@
    "origin": "issue-impact",
    "disposition": "0a77ecfc runs driver and validator end to end, untimed, before queuing",
    "criterion_named_by": "0a77ecfc"
+  },
+  {
+   "issue": "4252085a",
+   "subject": "the AFF3CT sum-product INTRA arm decodes the recorded bundles at half the true LLR scale: every NR frame fails and DVB-T2 errs above the min-sum arms; at twice the recorded LLRs it decodes every frame (quality-intra/llr-scale-probe.json)",
+   "origin": "pre-existing (c077a88b corpus, gf2-sim testutil)",
+   "disposition": "record kept as observed with the limit stated; bug 11bfbfd9 filed outside the epic; open question for the invoker on a true-scale INTRA arm",
+   "criterion_named_by": "ed3d490e REQ-10 (fastest-compatible results), 1362381c REQ-08 (fastest quality-compatible measured arms): the arm is not quality-compatible on this corpus as recorded"
   }
  ],
  "notes": [
@@ -3083,7 +3114,7 @@
   "instruction": "Invoker 2026-10-12 (session 36): drive epic 1a379447; subagent model by task difficulty; no Fable.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
-  "no_questions_rule": "Invoker 2026-10-06 (session 30): do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish; check workers every 30 minutes.",
+  "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run (pinned for the window), ed3d490e-run (story build tree with the staged pinned comparator). Eleven reclaimed.",
   "active_workers": {},
