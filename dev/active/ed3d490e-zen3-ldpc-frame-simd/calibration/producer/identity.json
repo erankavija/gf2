@@ -1,0 +1,13 @@
+{
+ "issue": "0a77ecfc",
+ "producer": "crates/gf2-coding/benches/tuning_calibration.rs",
+ "features": "parallel,simd,tuning-profile,test-support",
+ "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+ "source_sha256": "365e3fe0f701c0a2cc42d53a21348e5ba416a29d7cfeba025d5d1f02d5c433a8",
+ "binary_sha256": "91b5428c9aa06d83bd6ce6f07043f45c7ae77b7acfa890ad013517289657952e",
+ "reports_sha256": {
+  "coding-capability-report.json": "c9c8d41679f701bc4ad68d903913705eda9d4e9ec01946ef7c3f9ad78dd328c1",
+  "coding-list-grid.json": "903facb79cd1b687a55fbb39c6f5f3da17b243866c838e79db194e1470b0b55f",
+  "coding-self-check.json": "5789fe4a1e6c3e47f6b99e834b164240e5e7c41e4cbe44e9edfaf044e986366a"
+ }
+}
