@@ -981,7 +981,7 @@
      "short_id": "4252085a",
      "title": "Prepare the quality record of the sum-product INTRA arm",
      "classification": "research",
-     "status": "merged df7603594 after one lead rework (host facts, committed arm acceptance, LLR scale probe); gates pending",
+     "status": "blocked on the invoker: two reworks spent (lead review; code-review round 1), round-2 merge b30832568; cargo-ci and research-review pass at a22192d74, code-review fails on one finding (the check's arm_build projection copies the build record's inputs block)",
      "tracker_state": "in_progress",
      "dispatch": {
       "model": "sonnet",
@@ -2221,6 +2221,15 @@
    "status": "open",
    "raised_at": "2026-10-12T19:30Z",
    "resolution": null
+  },
+  {
+   "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5)",
+   "issue": "4252085a",
+   "question": "authorize rework round 3: code-review round 2 keeps one blocking finding, record-intra-quality.py arm_build copies executable.inputs (source and link input digests) into the identity the check compares",
+   "recommendation": "authorize; the change is to drop the inputs block from the projection (or converge on the shared projection 05c9065e adds), add the reviewer's test case, regenerate record.json; quality files stay byte-identical",
+   "status": "open",
+   "raised_at": "2026-10-12T20:00Z",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -2296,7 +2305,8 @@
   "dd50ea11": 1,
   "1ca04967": 0,
   "824cde7c": 0,
-  "4252085a": 1
+  "4252085a": 2,
+  "05c9065e": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2856,6 +2866,13 @@
    "origin": "pre-existing (c077a88b corpus, gf2-sim testutil)",
    "disposition": "record kept as observed with the limit stated; bug 11bfbfd9 filed outside the epic; open question for the invoker on a true-scale INTRA arm",
    "criterion_named_by": "ed3d490e REQ-10 (fastest-compatible results), 1362381c REQ-08 (fastest quality-compatible measured arms): the arm is not quality-compatible on this corpus as recorded"
+  },
+  {
+   "issue": "4252085a",
+   "subject": "the workspace arm executables embed their checkout path: a rebuild in another worktree gives different digests than build-identity.json pins, so the story's arm identity holds only in .agents/worktrees/agent-ed3d490e-run",
+   "origin": "pre-existing (d4185e9e build identity)",
+   "disposition": "advisory; the rework copied the pinned executables instead of rebuilding; a path-independent build (remap-path-prefix) is a candidate follow-up",
+   "criterion_named_by": "none in 1a379447"
   }
  ],
  "notes": [
