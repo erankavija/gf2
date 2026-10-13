@@ -5,14 +5,11 @@ THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT="$THIS_DIR/permanent-campaign-runner.sh"
 ROOT="$(cd "$THIS_DIR/../.." && pwd)"
 WORK="$(mktemp -d)"
-# The suite executes the working-copy runner against a clean temporary clone.
-# This keeps the runner's pristine-tree refusals testable while the repository
-# under development legitimately has uncommitted changes.
+# The suite executes the working-copy runner against a temporary clone, whose
+# source closure the tests change without touching the checkout under test.
 TEST_REPO="$WORK/repo"
 git clone --quiet --no-local "$ROOT" "$TEST_REPO"
-BACKUP="$WORK/README.md"
-cp "$TEST_REPO/README.md" "$BACKUP"
-trap 'cp "$BACKUP" "$TEST_REPO/README.md"; rm -rf "$WORK"' EXIT
+trap 'rm -rf "$WORK"' EXIT
 PASS=0
 
 assert_rc() { [[ "$1" -eq "$2" ]] || { echo "FAIL: $3 (expected $1, got $2)"; return 1; }; }
@@ -103,11 +100,13 @@ recorded_commands() {
 t1() {
     local d="$WORK/t1" h="$WORK/h" f="$WORK/f"; mkdir -p "$d"
     stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
-    printf '\nrunner self-test marker\n' >> "$TEST_REPO/README.md"
+    printf '\n# runner self-test marker\n' >> "$TEST_REPO/Cargo.lock"
     set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" dirty 2>&1); r=$?; set -e
-    cp "$BACKUP" "$TEST_REPO/README.md"
+    git -C "$TEST_REPO" checkout -- Cargo.lock
     assert_rc 0 "$r" t1; assert_has "$o" 'all pipeline steps completed' t1
-    echo 'PASS: unrelated tracked edit is admitted'; PASS=$((PASS + 1))
+    grep -rqx 'source_closure_dirty: true' "$d/s" \
+        || { echo 'FAIL: t1 did not record the dirty source closure'; return 1; }
+    echo 'PASS: a dirty source closure under matching binary digests is admitted'; PASS=$((PASS + 1))
 }
 
 t2() {
