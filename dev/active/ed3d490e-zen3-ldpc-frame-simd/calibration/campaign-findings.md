@@ -136,7 +136,7 @@ declares: the committed Cargo profile and features, and no `RUSTFLAGS`.
 | Build flags | `producer-rebuild/record.json` (F-06); `.agents/campaign-evidence/gf2-0a77ecfc-20261013t011147z-815998/build/coding.jsonl` for profile and features (F-05) |
 | Frozen configuration | `campaign-declaration.json` and `premeasurement-protocol.md` by the digests of the receipt's first section; `coding-list-grid.json` of the session record; `.agents/campaign-evidence/gf2-0a77ecfc-20261013t011147z-815998/coding-manifest.json` for every case |
 | Seed | `coding-list-grid.json` of the session record: seed root, derivation and every bank seed |
-| RNG implementation and version | no run-time record names them. The producer source at the recorded revision draws from `rand::rngs::StdRng`; `Cargo.lock`, whose digest `.agents/campaign-evidence/gf2-0a77ecfc-20261013t011147z-815998/campaign.json` `build_inputs` holds, fixes the `rand` version, and `producer-rebuild/build.log` names the `rand` crates compiled into the reproduced executable |
+| RNG implementation and version | No run-time record names them; `@/issue/9eb6f13c` tracks the gap. The committed records pin the seed (row above), the `Cargo.lock` digest among `.agents/campaign-evidence/gf2-0a77ecfc-20261013t011147z-815998/campaign.json` `build_inputs`, and, in `producer-rebuild/build.log`, the `rand` crates compiled into the reproduced executable |
 | Toolchain version | owner measurement block `toolchain`; `.agents/campaign-evidence/gf2-0a77ecfc-20261013t011147z-815998/campaign.json` `runtime` |
 | Run-time host facts | owner measurement block (`host`, `cpu_model`, `cpu_features`, `os_kernel`, `governor`); the `driver-diagnostic` records of the execution journal |
 
