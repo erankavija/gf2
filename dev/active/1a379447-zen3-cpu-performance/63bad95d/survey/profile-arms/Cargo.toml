@@ -1,0 +1,39 @@
+# Build-level arms of the profile families (jit:63bad95d).
+#
+# A standalone workspace: one executable serves every arm, and the launcher
+# builds it once per build level into its own target directory, so a pair
+# compares two executables that differ in RUSTFLAGS alone. `simd` gates the
+# runtime kernel dispatch the selectors route; `tuning-profile` compiles the
+# codec the profile arms install the measured owner through.
+
+[workspace]
+
+[package]
+name = "profile-build-arms"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(gf2_tuning_baked)'] }
+
+[lib]
+name = "profile_build_arms"
+path = "src/lib.rs"
+
+[[bin]]
+name = "profile-arm"
+path = "src/bin/profile-arm.rs"
+
+[dependencies]
+gf2-core = { path = "../../../../../../crates/gf2-core", features = ["simd", "tuning-profile"] }
+tuning-campaign-support = { path = "../../../../../tools/tuning-campaign-support" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+sha2 = "0.10"
+
+# The workspace release profile verbatim.
+[profile.release]
+lto = "thin"
+codegen-units = 1

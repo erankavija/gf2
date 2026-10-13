@@ -1,6 +1,6 @@
 5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c  .cargo/config.toml
 3885d6423e2fbe277c56f90a033be971140f7e9ea08ced46bf82c44fe3754f3e  Cargo.lock
-2ba6ff68cdda2a3a6cffdc80fead636e68fd8982ce4a7549664b1bc78434e8ec  Cargo.toml
+6991a6d3befac6e5b75d22b0c8ada6bf3f2fac3f461e9f44a526ce0bf2d05dba  Cargo.toml
 275c1470b141dcc5d3adcc51d9c66f39fd85646b893bcc3db9c4e660b04cef36  crates/gf2-algebra/Cargo.toml
 5f69729e6a283f84fc1ba7dab02e6a75517cd97665d4617efc4eadd9ee09b5c3  crates/gf2-algebra/data/tuning-profiles/conservative.json
 7e73f013e4c883bdb60d772f5c4c1f1ceca784247e4d9815fa7b8a87d54ca92a  crates/gf2-algebra/src/gpu.rs
@@ -129,7 +129,7 @@ bfa961de94630ae5e1af7e4fb945d59db8317db04ff34048fff3bdbb825d0d9d  crates/gf2-cod
 44030976cdc06ab6dc9b349cf28ce34de025426c5f4dd7a0d712b43b2945909d  crates/gf2-coding/src/tuning.rs
 7d5b628d61eb5a52e7c80149af278aa727b714fda8b5a9798ba4c42fdd011a43  crates/gf2-core/Cargo.toml
 b51bea8706d5b7132ad1613d432a6f978a1ca5b061f47f5dc78f2df34425ebe8  crates/gf2-core/data/tuning-profiles/conservative.json
-8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa  crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json
+1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33  crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json
 c481bf0d4d2d65d3a4069ed8b857a6ee605581015ddc6262c5c4b7fe7fb1671b  crates/gf2-core/src/alg/gauss.rs
 55440d1adccb83890bee017433ef0078b5b11dfc126effe5ca469d50842549f9  crates/gf2-core/src/alg/m4rm.rs
 6976e02bd7bbc67e5c37bd44bf488c8c06ca0f73c715772877841ff3c57c66bc  crates/gf2-core/src/alg/matmul.rs
@@ -218,7 +218,7 @@ f3d93c071ae7e15b4206d898817e34f07fff60877d9dfb4d55c828dc32ed31bc  crates/gf2-cor
 968ded10ec97e8a7bd15d05be289594761946b371bcc566c4419cb6553efaf66  crates/gf2-core/src/rng.rs
 64aa6b26a1d9ed7c944fc482939a230f8a35ee0b708af3d2411b110f89db79ea  crates/gf2-core/src/sparse.rs
 ca8fd5c2c9295ace78ccc75fc87b437dba1ac7916d74c3a3d679d811f22cd581  crates/gf2-core/src/test_scratch.rs
-6bba1103afe087df8d120ac9b8127e02bcbc895d041cef748e95169b727d469f  crates/gf2-core/src/tuning/baked.rs
+8a98aa7bd3e2f53bcd04b138087ac0e7e04062e166e5068d4946539a006b2ebe  crates/gf2-core/src/tuning/baked.rs
 7371ca8763b27bba59a4153a23606aad787237fab508f2c1898c07c7de13b719  crates/gf2-core/src/tuning/mechanism.rs
 3d3710f291ffe3c9921cf46f22ad18be35e0eeb36da3767da6f79b01bcd14f87  crates/gf2-core/src/tuning/mod.rs
 cb9f02c9cf9e29bd0ff31d9ac3f8c9befd16628e51ef40069705a4d0b2624b18  crates/gf2-core/src/tuning/profile.rs
@@ -282,7 +282,7 @@ a1f3a2ab3b456b069164f2c8eda9dfd270be72d84fbe5af017cfecd753c1c2d1  crates/gf2-ker
 598653ac42101957ded24fbb2a9ecf00bcd9218390340ab75e4b4a1990972f25  crates/gf2-kernels-simd/src/x86/shift_funnel.rs
 4165c468268e1e1877fcc63f5aa76497fc2465819a3f4598e56317e0c97b9706  crates/gf2-kernels-simd/src/x86/transpose.rs
 b762b18123538cb8731adecd25fccc87d6bead85406ac7b9d75d515163ae6b34  dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/campaign-declaration.json
-da6f2604efce4b1a2b01a666aa7273119290bfd898bf72550a5aa29e063a0931  dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/producing-build-inputs.json
+43db52c12b255a5fee0e7757c20e5d675cbb3bc2ba13ba8afcaf3d24f023e85a  dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/producing-build-inputs.json
 87c7f5ff7b1b0f1eb056684e0afa278ceb785045e6cc9681c7f29c513794230f  dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/run-campaign.sh
 7dc64abcfe37164e0406388cdf8a7174524ec87d0d402ed546960e1242126617  dev/reference_data/tuning-profiles/conservative.json
 34a10fc82f08f0518ae12e4e4c92b12fdad0279cd8be861b8af8e11653bebdb2  dev/scripts/ccx1-bench-flock.sh

@@ -11,6 +11,7 @@
 //! Nothing in this module invents a margin, limit or rule.
 
 use crate::cells::{family_cells, Cell, Question, Workload};
+use crate::external::ComparatorBuild;
 use crate::routes::Route;
 use crate::wire::Case;
 use std::collections::BTreeMap;
@@ -25,6 +26,10 @@ use tuning_campaign_support::protocol::{
 
 /// Name the external M4RI comparator arm carries in a plan.
 pub const M4RI_ARM: &str = "m4ri-mzd-mul";
+
+/// Name the external M4RI comparator arm built without host targeting carries
+/// in a plan.
+pub const M4RI_PORTABLE_ARM: &str = "m4ri-mzd-mul-portable";
 
 /// Paired executions every exploratory cell runs.
 ///
@@ -122,6 +127,56 @@ fn rules(question: Question) -> FamilyRules {
             maintenance_rationale: "Zero production lines and zero unsafe kernels; no production \
                                     change is selected from an external comparator.",
             max_pilot_trials_per_cell: 4,
+        },
+        Question::NativeMatvecVsM4ri => FamilyRules {
+            purpose: FamilyPurpose::ConsumerFamily,
+            description: "Whole-consumer comparison of public BitMatrix::matvec from the native \
+                          gf2 build with the qualified external M4RI mzd_mul, itself a \
+                          -march=native build, over mid-range and small-input qualified shapes, \
+                          both arms charging construction, conversion, execution and output. \
+                          This addendum is the pilot: every cell is exploratory and no cell \
+                          decides adoption.",
+            worthwhile_speedup: None,
+            rationale: "The comparator family holds no improvement or non-regression cell, so its \
+                        worthwhile speedup is unresolved by design.",
+            equivalence_margin: 1.05,
+            equivalence_rationale: "Five percent separates a comparable external arm from a \
+                                    recorded difference at this family's resolution, as in the \
+                                    comparator family whose cells these mirror.",
+            material_gap_threshold: Some(1.10),
+            material_gap_rationale: "A ten-percent external gap warrants attribution, not \
+                                     selection; M4RI throughput cannot authorise an incompatible \
+                                     production route.",
+            max_new_unsafe_kernels: 0,
+            max_added_source_lines: 0,
+            maintenance_rationale: "Zero production lines and zero unsafe kernels; no production \
+                                    change is selected from an external comparator.",
+            max_pilot_trials_per_cell: 2,
+        },
+        Question::PortableMatvecVsM4ri => FamilyRules {
+            purpose: FamilyPurpose::ConsumerFamily,
+            description: "Whole-consumer comparison of public BitMatrix::matvec from the \
+                          portable gf2 build with the external M4RI mzd_mul built from the \
+                          qualified source without a host-targeting flag, over mid-range and \
+                          small-input qualified shapes, both arms charging construction, \
+                          conversion, execution and output. This addendum is the pilot: every \
+                          cell is exploratory and no cell decides adoption.",
+            worthwhile_speedup: None,
+            rationale: "The comparator family holds no improvement or non-regression cell, so its \
+                        worthwhile speedup is unresolved by design.",
+            equivalence_margin: 1.05,
+            equivalence_rationale: "Five percent separates a comparable external arm from a \
+                                    recorded difference at this family's resolution, as in the \
+                                    comparator family whose cells these mirror.",
+            material_gap_threshold: Some(1.10),
+            material_gap_rationale: "A ten-percent external gap warrants attribution, not \
+                                     selection; M4RI throughput cannot authorise an incompatible \
+                                     production route.",
+            max_new_unsafe_kernels: 0,
+            max_added_source_lines: 0,
+            maintenance_rationale: "Zero production lines and zero unsafe kernels; no production \
+                                    change is selected from an external comparator.",
+            max_pilot_trials_per_cell: 2,
         },
         Question::MatvecLaneThreshold => FamilyRules {
             purpose: FamilyPurpose::ConsumerFamily,
@@ -229,7 +284,10 @@ fn size(cell: &Cell) -> BTreeMap<String, u64> {
 fn builds(cell: &Cell) -> ArmBuilds {
     match cell.workload {
         Workload::M4riGap { .. } => ArmBuilds {
-            baseline: BuildIdentity::ConservativePortable,
+            baseline: match cell.question {
+                Question::NativeMatvecVsM4ri => BuildIdentity::Native,
+                _ => BuildIdentity::ConservativePortable,
+            },
             candidate: BuildIdentity::External,
         },
         _ => ArmBuilds {
@@ -333,6 +391,8 @@ pub fn cell_arms(cell: &Cell) -> (&'static str, &'static str) {
         }
         Question::AllocatedMatvec => (Route::MatvecA.id(), Route::MatvecB.id()),
         Question::MatvecVsM4ri => (Route::M4riPeerGf2.id(), M4RI_ARM),
+        Question::NativeMatvecVsM4ri => (Route::M4riPeerGf2Native.id(), M4RI_ARM),
+        Question::PortableMatvecVsM4ri => (Route::M4riPeerGf2.id(), M4RI_PORTABLE_ARM),
         // The selected route is the baseline, so a speedup above one favours
         // the scalar lane a raised threshold would select.
         Question::MatvecLaneThreshold => (Route::MatvecA.id(), Route::MatvecLaneScalar.id()),
@@ -381,6 +441,10 @@ fn arm_description(route: Route) -> &'static str {
             "One public BitMatrix::matvec on a fresh gf2 matrix and vector, with the returned \
              BitVec allocated and released inside the measured call"
         }
+        Route::M4riPeerGf2Native => {
+            "The same public BitMatrix::matvec call and cost boundary from the executable built \
+             at the native level"
+        }
     }
 }
 
@@ -406,6 +470,10 @@ pub struct PlanInputs<'a> {
     pub scalar_executable: Option<&'a str>,
     /// External M4RI comparator executable.
     pub m4ri_executable: Option<&'a str>,
+    /// gf2 executable built at the `native` level.
+    pub native_executable: Option<&'a str>,
+    /// External M4RI comparator executable linked at the portable level.
+    pub m4ri_portable_executable: Option<&'a str>,
     /// Cells one session measures before it pauses.
     pub max_cells_per_session: Option<u32>,
 }
@@ -421,6 +489,12 @@ impl PlanInputs<'_> {
             M4RI_ARM => self
                 .m4ri_executable
                 .ok_or("the M4RI family needs the external comparator executable")?,
+            M4RI_PORTABLE_ARM => self.m4ri_portable_executable.ok_or(
+                "the portable comparator family needs the comparator executable linked portable",
+            )?,
+            name if name == Route::M4riPeerGf2Native.id() => self
+                .native_executable
+                .ok_or("the native comparator family needs the executable built native")?,
             _ => self.gf2_executable,
         };
         Ok(resolved.to_owned())
@@ -428,7 +502,7 @@ impl PlanInputs<'_> {
 
     fn arm(&self, name: &str) -> Result<PlanArm, String> {
         let executable = self.executable(name)?;
-        if name == M4RI_ARM {
+        if let Some(level) = ComparatorBuild::of_arm(name) {
             return Ok(PlanArm {
                 build: BuildIdentity::External,
                 description: "External M4RI mzd_init for A, x and y, bit-wise packing through \
@@ -438,17 +512,13 @@ impl PlanInputs<'_> {
                 executable,
                 arguments: Vec::new(),
                 environment: BTreeMap::new(),
-                rustflags: Some(
-                    "C -O3 -march=native -fPIC library build; Rust glue without a target-cpu \
-                     override"
-                        .to_owned(),
-                ),
+                rustflags: Some(level.flags().to_owned()),
                 tuning_profile: None,
             });
         }
         let route = Route::parse(name)?;
         Ok(PlanArm {
-            build: BuildIdentity::ConservativePortable,
+            build: route.build(),
             description: arm_description(route).to_owned(),
             executable,
             arguments: Vec::new(),
@@ -456,7 +526,10 @@ impl PlanInputs<'_> {
                 crate::routes::ROUTE_VAR.to_owned(),
                 route.id().to_owned(),
             )]),
-            rustflags: Some(String::new()),
+            rustflags: Some(match route.build() {
+                BuildIdentity::Native => crate::routes::NATIVE_RUSTFLAGS.to_owned(),
+                _ => String::new(),
+            }),
             tuning_profile: None,
         })
     }

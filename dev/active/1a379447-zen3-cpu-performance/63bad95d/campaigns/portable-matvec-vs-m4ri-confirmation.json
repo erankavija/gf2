@@ -1,0 +1,224 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "63bad95d-portable-matvec-vs-m4ri",
+    "issue": "63bad95d",
+    "purpose": "consumer-family",
+    "description": "Confirmatory stage of the whole-consumer comparison of public BitMatrix::matvec from the portable gf2 build with the external M4RI mzd_mul built at the equivalent targeting level. Every pilot cell is confirmatory: the fresh whole-consumer and retained-state mid-range shapes and the small inputs, both arms charging construction, conversion, execution and output, measured on fresh pairs at the resolution the committed pilot fixes. The family's only objective is the comparator gap: an outcome attributes an external difference and selects no production route."
+  },
+  "frozen": {
+    "frozen_utc": "2026-10-12T05:35:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "The comparator family holds no improvement or non-regression cell, so its worthwhile speedup is unresolved by design.",
+    "measurement_resolution": 0.038,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r2-pilot/receipt.json",
+      "sha256": "e1e4022e2c5c237bb4396e3c053790acc43813ec4a3f1c647f3bcf3d7a028a35"
+    },
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "Five percent separates a comparable external arm from a recorded difference at this family's resolution, as in the comparator family whose cells these mirror.",
+    "material_gap_threshold": 1.1,
+    "material_gap_rationale": "A ten-percent external gap warrants attribution, not selection; M4RI throughput cannot authorise an incompatible production route."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "Zero production lines and zero unsafe kernels; no production change is selected from an external comparator."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/63bad95d/portable-matvec-vs-m4ri-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "portable-m4ri-gap-65x512-warm",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "portable-matvec-vs-m4ri-portable-m4ri-gap-65x512-warm",
+        "size": {
+          "columns": 512,
+          "retained_state": 0,
+          "rows": 65,
+          "words": 8
+        },
+        "seed": 7672081787005044783
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "portable-m4ri-gap-65x4096-warm",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "portable-matvec-vs-m4ri-portable-m4ri-gap-65x4096-warm",
+        "size": {
+          "columns": 4096,
+          "retained_state": 0,
+          "rows": 65,
+          "words": 64
+        },
+        "seed": 13335509090648851657
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "portable-m4ri-gap-65x512-retained-warm",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "portable-matvec-vs-m4ri-portable-m4ri-gap-65x512-retained-warm",
+        "size": {
+          "columns": 512,
+          "retained_state": 1,
+          "rows": 65,
+          "words": 8
+        },
+        "seed": 13625264189506356630
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "portable-m4ri-gap-65x4096-retained-warm",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "portable-matvec-vs-m4ri-portable-m4ri-gap-65x4096-retained-warm",
+        "size": {
+          "columns": 4096,
+          "retained_state": 1,
+          "rows": 65,
+          "words": 64
+        },
+        "seed": 6734222009069916026
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "portable-m4ri-gap-1x1-warm",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "portable-matvec-vs-m4ri-portable-m4ri-gap-1x1-warm",
+        "size": {
+          "columns": 1,
+          "retained_state": 0,
+          "rows": 1,
+          "words": 1
+        },
+        "seed": 10284644971133057240
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "portable-m4ri-gap-64x64-warm",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "portable-matvec-vs-m4ri-portable-m4ri-gap-64x64-warm",
+        "size": {
+          "columns": 64,
+          "retained_state": 0,
+          "rows": 64,
+          "words": 1
+        },
+        "seed": 6547711948922860820
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}

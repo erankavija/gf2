@@ -1,0 +1,125 @@
+{
+ "schema": "zen3-benchmark-addendum-v4",
+ "protocol": {
+  "id": "zen3-benchmark-protocol",
+  "version": 4
+ },
+ "family": {
+  "id": "63bad95d-profile-dispatch-overhead-v2",
+  "issue": "63bad95d",
+  "purpose": "kernel-family",
+  "description": "Exploratory pilot of issue 63bad95d, protocol version 4: this addendum is the pilot and every cell is exploratory. Question: is a gf2-core build that bakes the measured core owner's selectors no worse than the conservative build on small buffers of the bit-backend entry points? The baseline arm is the conservative-portable build: default target, simd and tuning-profile features, conservative selector constants, no profile installed. The candidate arm is the tuned-portable build: the same sources and features compiled with --cfg gf2_tuning_baked, with the measured core owner the plan pins installed before the first selector read. The two arms are separate executables of one harness crate and differ in RUSTFLAGS and the installed owner alone. The baked bit_backend.simd_min_words differs between the two builds, so a cell whose buffer length lies between the two thresholds runs the scalar backend in the baseline and the SIMD backend in the candidate, and each arm reports the backend or route the library selects for its operands and the compiled threshold it observes. Every cell is kernel-isolated, warm, single-core and calibrated; operands are prepared before timing and no conversion is included. The confirmation adds the holdout cells of survey/dispatch-holdout-cells-v2.json, which no pilot measures. Frozen decision rule: the baked threshold of the measured owner is retained when no confirmatory or holdout cell records fail, and the baked threshold takes the conservative value otherwise; the rule reads the acceptance summary's recorded outcomes and nothing else. This family repeats 63bad95d-profile-dispatch-overhead, by invoker ruling, on a quiet host with the same cells, arms and settings on its own ledger: the campaigns of 63bad95d-profile-dispatch-overhead run on a loaded host, at the launcher and session load averages dev/active/1a379447-zen3-cpu-performance/63bad95d/disturbance-record.md states under 'Host load each campaign records', and their receipts stay committed as measured."
+ },
+ "frozen": {
+  "frozen_utc": "2026-10-11T09:25:36Z"
+ },
+ "effect": {
+  "worthwhile_speedup": 1.05,
+  "rationale": "Five percent of a kernel call is the smallest change a consumer dominated by these calls would act on. The confirmation refreezes the margin strictly above one plus the pilot-derived resolution.",
+  "measurement_resolution": null,
+  "resolution_evidence": null,
+  "equivalence_margin": 1.05,
+  "equivalence_rationale": "Within five percent the two builds are interchangeable for a consumer. The confirmation refreezes the margin strictly above one plus the pilot-derived resolution.",
+  "material_gap_threshold": null,
+  "material_gap_rationale": "The family holds no comparator-gap cell and declares no external gap."
+ },
+ "complexity_budget": {
+  "max_new_unsafe_kernels": 0,
+  "max_added_source_lines": 0,
+  "maintenance_rationale": "Zero added production lines and zero unsafe kernels: the family measures build configurations of committed sources, and its outcome is the value of existing baked constants."
+ },
+ "family_wise": {
+  "alpha": 0.05,
+  "prior_confirmatory_trials": 0,
+  "prior_trials": [],
+  "ledger_path": "dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2-ledger.jsonl"
+ },
+ "search_budget": {
+  "max_pilot_trials_per_cell": 2,
+  "max_confirmatory_attempts_per_candidate": 1
+ },
+ "holdout": {
+  "required": false,
+  "cells": []
+ },
+ "cells": [
+  {
+   "cell_id": "xor-inplace-4w",
+   "objective": "non-regression",
+   "role": "exploratory",
+   "workload": {
+    "identity": "profile-xor-inplace-4",
+    "size": {
+     "words": 4
+    },
+    "seed": 630401
+   },
+   "metric_kind": "kernel-isolated",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "warm",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": false,
+   "decoder": null
+  },
+  {
+   "cell_id": "and-popcount-7w",
+   "objective": "non-regression",
+   "role": "exploratory",
+   "workload": {
+    "identity": "profile-and-popcount-7",
+    "size": {
+     "words": 7
+    },
+    "seed": 630701
+   },
+   "metric_kind": "kernel-isolated",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "warm",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": false,
+   "decoder": null
+  },
+  {
+   "cell_id": "xor-inplace-8w",
+   "objective": "non-regression",
+   "role": "exploratory",
+   "workload": {
+    "identity": "profile-xor-inplace-8",
+    "size": {
+     "words": 8
+    },
+    "seed": 630801
+   },
+   "metric_kind": "kernel-isolated",
+   "scaling": "single-core-latency",
+   "core_arm": "single-core",
+   "workers": {
+    "declared": 1,
+    "nested_pools_allowed": false
+   },
+   "cache_state": "warm",
+   "builds": {
+    "baseline": "conservative-portable",
+    "candidate": "tuned-portable"
+   },
+   "conversion_costs_included": false,
+   "decoder": null
+  }
+ ]
+}

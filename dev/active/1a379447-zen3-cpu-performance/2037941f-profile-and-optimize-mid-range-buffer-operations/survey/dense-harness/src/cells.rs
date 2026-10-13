@@ -1,7 +1,9 @@
 //! The frozen cell tables of addendum `2037941f-dense-parity-v2`, of the
-//! lane-threshold addendum `4337c02e-matvec-lane-threshold-v1` and of the
+//! lane-threshold addendum `4337c02e-matvec-lane-threshold-v1`, of the
 //! ragged-tail addendum `7dbe1393-matvec-ragged-tail-v1`, whose cells the
-//! addendum `7dbe1393-matvec-ragged-tail-addendum-v2` measures again.
+//! addendum `7dbe1393-matvec-ragged-tail-addendum-v2` measures again, of the
+//! native comparator addendum `63bad95d-native-matvec-vs-m4ri-v1` and of the
+//! portable comparator addendum `63bad95d-portable-matvec-vs-m4ri-v1`.
 //!
 //! [`cells`] returns every cell the dense-parity addendum declares, in that
 //! addendum's own order: the cell-matrix sections in document order, and within
@@ -10,7 +12,9 @@
 //! the ragged-tail cells follow, each in their addendum's order. Ordinal zero
 //! carries the campaign seed; ordinal `i`
 //! carries the `i`-th subsequent output of one canonical SplitMix64 stream
-//! started at the campaign seed.
+//! started at the campaign seed. The native comparator cells and then the
+//! portable comparator cells come last and draw nothing from that stream: each
+//! carries the seed of the comparator cell it mirrors.
 //!
 //! The addendum's `scalar-reference` question owns no ledger: its cells are the
 //! allocated family's `scalar-reference` exploratory rows, whose baseline arm is
@@ -39,6 +43,11 @@ pub const COMPARATOR_PATH: &str =
 /// pinned library digest the comparator arm verifies against what it loads.
 pub const QUALIFICATION_RECORD: &str =
     "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt";
+/// Repository-relative path of the portable-level M4RI build record, whose
+/// pinned library digest the portable comparator arm verifies against what it
+/// loads.
+pub const PORTABLE_BUILD_RECORD: &str =
+    "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-portable-build-record.txt";
 /// Content identity of one frozen prose addendum.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FrozenAddendum {
@@ -97,6 +106,24 @@ pub const RAGGED_TAIL_V2_ADDENDUM: FrozenAddendum = FrozenAddendum {
     frozen_utc: "2026-10-11T09:26:12Z",
 };
 
+/// The native comparator addendum, which freezes
+/// [`Question::NativeMatvecVsM4ri`].
+pub const NATIVE_COMPARATOR_ADDENDUM: FrozenAddendum = FrozenAddendum {
+    file_name: "native-m4ri-addendum.md",
+    sha256: "3caa8d5388449800444068a2489ff399dd64d6f995cfb0d63923f3e1c51bd208",
+    identity: "63bad95d-native-matvec-vs-m4ri-v1",
+    frozen_utc: "2026-10-08T12:43:56Z",
+};
+
+/// The portable comparator addendum, which freezes
+/// [`Question::PortableMatvecVsM4ri`].
+pub const PORTABLE_COMPARATOR_ADDENDUM: FrozenAddendum = FrozenAddendum {
+    file_name: "portable-m4ri-addendum.md",
+    sha256: "308c83b13369f5aa2a86371d977fa51f65a17f0b3d6b0c1dc421ad0fb38770fd",
+    identity: "63bad95d-portable-matvec-vs-m4ri-v1",
+    frozen_utc: "2026-10-08T16:12:25Z",
+};
+
 /// Name stem of the external shared object a comparator arm loads.
 pub const COMPARATOR_LIBRARY_STEM: &str = "m4ri";
 
@@ -147,18 +174,27 @@ pub enum Question {
     MatvecRaggedTail,
     /// The cells of [`Self::MatvecRaggedTail`] again, on a ledger of their own.
     MatvecRaggedTailV2,
+    /// Whole-consumer gap of the `native` gf2 build against the external M4RI
+    /// product.
+    NativeMatvecVsM4ri,
+    /// Whole-consumer gap of the portable gf2 build against the external M4RI
+    /// product built without host targeting.
+    PortableMatvecVsM4ri,
 }
 
 impl Question {
     /// Every question: the dense-parity addendum's in document order, then the
-    /// lane-threshold addendum's and the two ragged-tail addenda's.
-    pub const ALL: [Self; 6] = [
+    /// lane-threshold addendum's, the two ragged-tail addenda's, the native
+    /// comparator addendum's and the portable comparator addendum's.
+    pub const ALL: [Self; 8] = [
         Self::IsolatedFusedParity,
         Self::AllocatedMatvec,
         Self::MatvecVsM4ri,
         Self::MatvecLaneThreshold,
         Self::MatvecRaggedTail,
         Self::MatvecRaggedTailV2,
+        Self::NativeMatvecVsM4ri,
+        Self::PortableMatvecVsM4ri,
     ];
 
     /// The frozen prose addendum that declares this question.
@@ -167,6 +203,8 @@ impl Question {
             Self::MatvecLaneThreshold => &LANE_THRESHOLD_ADDENDUM,
             Self::MatvecRaggedTail => &RAGGED_TAIL_ADDENDUM,
             Self::MatvecRaggedTailV2 => &RAGGED_TAIL_V2_ADDENDUM,
+            Self::NativeMatvecVsM4ri => &NATIVE_COMPARATOR_ADDENDUM,
+            Self::PortableMatvecVsM4ri => &PORTABLE_COMPARATOR_ADDENDUM,
             _ => &DENSE_PARITY_ADDENDUM,
         }
     }
@@ -177,6 +215,7 @@ impl Question {
             Self::MatvecLaneThreshold | Self::MatvecRaggedTail | Self::MatvecRaggedTailV2 => {
                 Self::AllocatedMatvec
             }
+            Self::NativeMatvecVsM4ri | Self::PortableMatvecVsM4ri => Self::MatvecVsM4ri,
             other => other,
         }
     }
@@ -198,6 +237,8 @@ impl Question {
             Self::MatvecLaneThreshold => "matvec-lane-threshold",
             Self::MatvecRaggedTail => "matvec-ragged-tail",
             Self::MatvecRaggedTailV2 => "matvec-ragged-tail-v2",
+            Self::NativeMatvecVsM4ri => "native-matvec-vs-m4ri",
+            Self::PortableMatvecVsM4ri => "portable-matvec-vs-m4ri",
         }
     }
 
@@ -210,6 +251,8 @@ impl Question {
             Self::MatvecLaneThreshold => "4337c02e-matvec-simd-threshold",
             Self::MatvecRaggedTail => "7dbe1393-matvec-ragged-tail",
             Self::MatvecRaggedTailV2 => "7dbe1393-matvec-ragged-tail-v2",
+            Self::NativeMatvecVsM4ri => "63bad95d-native-matvec-vs-m4ri",
+            Self::PortableMatvecVsM4ri => "63bad95d-portable-matvec-vs-m4ri",
         }
     }
 
@@ -222,6 +265,8 @@ impl Question {
             Self::MatvecLaneThreshold => "matvec-simd-threshold-ledger.jsonl",
             Self::MatvecRaggedTail => "matvec-ragged-tail-ledger.jsonl",
             Self::MatvecRaggedTailV2 => "matvec-ragged-tail-v2-ledger.jsonl",
+            Self::NativeMatvecVsM4ri => "native-matvec-vs-m4ri-ledger.jsonl",
+            Self::PortableMatvecVsM4ri => "portable-matvec-vs-m4ri-ledger.jsonl",
         }
     }
 
@@ -234,6 +279,13 @@ impl Question {
     pub fn ledger_path(self, root: &Path) -> io::Result<String> {
         locate_live(root, self.ledger_file(), |_| true)
     }
+
+    /// The families that mirror comparator cells at another build level, with
+    /// the cell-identifier prefix of each, in cell-table order.
+    pub const MIRRORS: [(Self, &'static str); 2] = [
+        (Self::NativeMatvecVsM4ri, NATIVE_CELL_PREFIX),
+        (Self::PortableMatvecVsM4ri, PORTABLE_CELL_PREFIX),
+    ];
 
     /// Resolves a family identity back to its question.
     pub fn from_family_id(id: &str) -> Option<Self> {
@@ -336,6 +388,18 @@ pub struct M4riShape {
     /// True for the two confirmatory mid-range shapes.
     pub confirmatory: bool,
 }
+
+/// Cell-identifier prefix of a native comparator cell, before the identifier
+/// of the comparator cell it mirrors.
+pub const NATIVE_CELL_PREFIX: &str = "native-";
+
+/// Cell-identifier prefix of a portable comparator cell, before the
+/// identifier of the comparator cell it mirrors.
+pub const PORTABLE_CELL_PREFIX: &str = "portable-";
+
+/// Small-input shapes the mirroring families measure beside the two mid-range
+/// shapes: the one-bit product and the full single word.
+pub const MIRRORED_SMALL_SHAPES: [&str; 2] = ["1x1", "64x64"];
 
 impl M4riShape {
     /// gf2 row stride in words.
@@ -610,7 +674,7 @@ pub fn cells() -> Vec<Cell> {
     // Ordinal zero uses the campaign seed; ordinal i the i-th subsequent
     // output of one canonical SplitMix64 stream started at that seed.
     let mut mixer = SplitMix64::new(CAMPAIGN_SEED);
-    table
+    let mut seeded: Vec<Cell> = table
         .into_iter()
         .enumerate()
         .map(|(ordinal, spec)| Cell {
@@ -623,7 +687,36 @@ pub fn cells() -> Vec<Cell> {
             scalar_reference: spec.scalar_reference,
             seed: if ordinal == 0 { CAMPAIGN_SEED } else { mixer.next_u64() },
         })
-        .collect()
+        .collect();
+
+    // Mirroring families: the mid-range shapes fresh and retained, then the
+    // small-input shapes. Each mirror keeps its original's workload and seed,
+    // so every family measures the same fixture, and every mirror is
+    // confirmatory.
+    let mirrored = |cell: &Cell| match cell.workload {
+        Workload::M4riGap { shape, retained } if cell.question == Question::MatvecVsM4ri => {
+            shape.confirmatory || (!retained && MIRRORED_SMALL_SHAPES.contains(&shape.suffix))
+        }
+        _ => false,
+    };
+    let mut mirrors: Vec<Cell> = seeded.iter().filter(|cell| mirrored(cell)).cloned().collect();
+    mirrors.sort_by_key(|cell| match cell.workload {
+        Workload::M4riGap { shape, .. } => !shape.confirmatory,
+        _ => false,
+    });
+    for (question, prefix) in Question::MIRRORS {
+        for original in &mirrors {
+            let ordinal = seeded.len();
+            seeded.push(Cell {
+                ordinal,
+                question,
+                cell_id: format!("{prefix}{}", original.cell_id),
+                anchor: true,
+                ..original.clone()
+            });
+        }
+    }
+    seeded
 }
 
 /// The frozen cells one question's family measures, in ordinal order.

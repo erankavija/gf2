@@ -237,6 +237,7 @@ SCANNED_PACKAGES = (CORE, SIMD, ALGEBRA)
 #   algorithm-limit: a retry, seed or recursion bound without a route choice
 CLASSES = {
     "N_MAX_MULTIWORD": "kernel-geometry",
+    "MAX_DEGREE": "kernel-geometry",
     "MAX_MATRIX_BYTES_FOR_L1": "selector",
     "B2_GRAY_TILE_WORDS": "kernel-geometry",
     "B2_GRAY_MAX_TILES": "kernel-geometry",
@@ -267,6 +268,15 @@ CLASSES = {
     "CSA_BLOCK_WORDS": "kernel-geometry",
 }
 
+# Named convergence exception (REQ-11): the scanned constants of class
+# `selector` keep their values outside the tuning sections until this issue
+# moves each under a section or shows it structural.
+CONVERGENCE_EXCEPTION = {
+    "name": "private-core-selector-constants",
+    "class": "selector",
+    "issue": "817fc47d",
+}
+
 # Track of each issue whose receipts the repository holds. `core-kernel` is the
 # calibration scope of this issue; the others are listed for their routes only.
 TRACKS = {
@@ -274,11 +284,14 @@ TRACKS = {
     "19513245": "core-kernel", "1c602857": "core-kernel", "1d0da41f": "core-kernel",
     "1d4fd63d": "core-kernel", "26465e6c": "core-kernel", "4337c02e": "core-kernel",
     "4c1e441f": "core-kernel",
-    "53c5a8c0": "core-kernel", "5cbb6545": "core-kernel", "65c0e13d": "core-kernel",
-    "6c6b09b1": "core-kernel", "6fb89a3c": "core-kernel", "85fc5ff4": "core-kernel",
+    "53c5a8c0": "core-kernel", "5cbb6545": "core-kernel", "63bad95d": "core-kernel",
+    "65c0e13d": "core-kernel",
+    "6c6b09b1": "core-kernel", "6fb89a3c": "core-kernel", "7dbe1393": "core-kernel",
+    "85fc5ff4": "core-kernel",
     "ad2a6a58": "core-kernel", "bfc2ceab": "core-kernel", "c7113c5a": "core-kernel",
     "e1f9a78f": "core-kernel",
-    "12fdeb5b": "coding-consumer", "9fb40c83": "coding-consumer", "eda07788": "coding-consumer",
+    "12fdeb5b": "coding-consumer", "8e53235b": "coding-consumer", "9fb40c83": "coding-consumer",
+    "eda07788": "coding-consumer",
     "07ca8585": "decoder", "3be770d5": "decoder", "c077a88b": "decoder", "f63a2464": "decoder",
     "f547c394": "protocol",
 }
@@ -308,7 +321,10 @@ OUTCOMES = {
     "mid-range": ("mid-range-findings.md", "# Mid-range buffer evidence synthesis"),
     "dense-parity": ("no-change-outcome.md", "# Dense-parity production outcome"),
     "logical-buffer": ("no-change-outcome.md", "# Logical-buffer production outcome"),
-    "tuning-campaign": ("gf2-dbd8787d-*.md", "# Extent calibration gf2-dbd8787d-"),
+    "tuning-campaign": ("gf2-63bad95d-*.md", "# Extent calibration gf2-63bad95d-"),
+    "core-calibration": ("campaign-findings.md",
+                         "# Core calibration campaign: findings (jit:63bad95d)"),
+    "lane-threshold": ("outcome.md", "# Outcome: the matvec lane-threshold confirmation"),
 }
 
 # For each selector, the measurement families whose cells contrast its two
@@ -316,11 +332,13 @@ OUTCOMES = {
 # class is derived from the families' receipts, never declared.
 EVIDENCE = [
     ("bit_backend.simd_min_words",
-     ["bit-storage-logical-consumers", "bit-storage-count-consumers", "popcount-baselines"],
+     ["bit-storage-logical-consumers", "bit-storage-count-consumers", "popcount-baselines",
+      "63bad95d-profile-dispatch-overhead", "63bad95d-profile-dispatch-overhead-v2"],
      ["bit-storage", "popcount-baselines", "popcount", "mid-range", "logical-buffer",
-      "tuning-campaign"]),
+      "tuning-campaign", "core-calibration"]),
     ("bit_matrix.matvec_simd_min_words",
-     ["2037941f-dense-allocated-matvec"], ["mid-range", "dense-parity"]),
+     ["2037941f-dense-allocated-matvec", "4337c02e-matvec-simd-threshold"],
+     ["mid-range", "dense-parity", "lane-threshold", "core-calibration"]),
     ("bit_matrix.transpose_simple_max_blocks", [], ["tuning-campaign"]),
     ("bit_matrix.transpose_macro_tile_blocks", [], ["tuning-campaign"]),
     ("field_vec.dot_chunk_len", [], ["tuning-campaign"]),
@@ -346,8 +364,8 @@ WITNESS_CONFIGURATIONS = [
     ("core-baked", "standalone `gf2-core`, `simd`, `--cfg gf2_tuning_baked`"),
     ("coding-default", "`gf2-coding` dependency build, default features"),
     ("coding-no-default-features",
-     "`gf2-coding` test build, `--no-default-features`; its self dev-dependency keeps the "
-     "default features"),
+     "`gf2-coding` test build, `--no-default-features`; its self dev-dependency disables "
+     "the default features"),
     ("sim-default", "`gf2-sim` dependency build, default features"),
 ]
 
@@ -832,7 +850,9 @@ def render(inventory):
         "## Route witnesses",
         "",
         "Each column is one build configuration on which the shared fallback contract ran; "
-        "a cell is the route its reporter named.",
+        "a cell is the route its reporter named. The contract probes each side of the "
+        "thresholds its build compiles, so an empty cell is an input that configuration "
+        "does not probe.",
         "",
     ]
     names = [row["configuration"] for row in inventory["witness_configurations"]]
@@ -851,7 +871,8 @@ def render(inventory):
         table(
             ["Entry", "Input"] + [f"`{name}`" for name in names],
             [
-                [f"`{row['entry']}`", row["input"]] + [row["routes"][name] for name in names]
+                [f"`{row['entry']}`", row["input"]]
+                + [row["routes"].get(name, "") for name in names]
                 for row in inventory["route_witnesses"]
             ],
         ),
@@ -905,6 +926,15 @@ def render(inventory):
                 for row in inventory["private_constants"]
             ],
         ),
+        "",
+        f"Convergence exception `{inventory['convergence_exception']['name']}`: the constants "
+        f"of class `{inventory['convergence_exception']['class']}` above, "
+        + ", ".join(f"`{row['id']}` (`{row['defined']}`)"
+                    for row in inventory["convergence_exception"]["constants"])
+        + ", stay outside the tuning sections at the values their definitions give. "
+        f"`@/issue/{inventory['convergence_exception']['issue']}` tracks the convergence: each "
+        "moves under a tuning section with a conservative default equal to that value, or is "
+        "classified structural with its reason.",
         "",
         table(
             ["Declared selector", "Package", "What it selects", "Source claims"],
@@ -1068,6 +1098,11 @@ def main():
         "dependency_features": features,
         "tuning": tuning,
         "private_constants": private,
+        "convergence_exception": {
+            **CONVERGENCE_EXCEPTION,
+            "constants": [{"id": row["id"], "defined": row["defined"]} for row in private
+                          if row["class"] == CONVERGENCE_EXCEPTION["class"]],
+        },
         "declared_selectors": declared,
         "selector_evidence": evidence(families, tuning["selectors"], private + declared),
         "measurement_families": families,

@@ -113,7 +113,8 @@ else
     } >"${record}"
 fi
 
-"${m4ri_compiler_command}" -std=c11 -O3 -march=native -Wall -Wextra -Werror \
+# shellcheck disable=SC2086  # the targeting flags word-split on purpose
+"${m4ri_compiler_command}" -std=c11 -O3 ${m4ri_targeting_flags} -Wall -Wextra -Werror \
     -I"${prefix}/include" "${here}/m4ri_matvec_probe.c" \
     -L"${prefix}/lib" -Wl,-rpath,"${prefix}/lib" -lm4ri -lm \
     -o "${bin}"
