@@ -18,7 +18,7 @@ use dense_parity_harness::external::{self, ComparatorBuild, LibraryIdentity};
 use dense_parity_harness::fixture::{KernelBanks, MatvecBanks};
 use dense_parity_harness::oracle;
 use dense_parity_harness::routes::{
-    build_level, route_matvec, run_windows, verify_lane, verify_shape, OutputSink, Route, WindowPlan,
+    route_matvec, run_windows, verify_lane, verify_shape, OutputSink, Route, WindowPlan,
     MAX_RETAINED_OUTPUTS,
     RETAINED_BUDGET_BYTES, RETAINED_OUTPUT_BYTES, RETAINED_PEAK_BYTES,
 };
@@ -1299,7 +1299,9 @@ fn a_route_refuses_the_build_it_cannot_serve() {
         let served = route.check_build().is_ok();
         assert_eq!(
             served,
-            route.simd_build() == cfg!(feature = "simd") && build_level() == Some(route.build()),
+            route.simd_build() == cfg!(feature = "simd")
+                && BuildIdentity::compiled(cfg!(gf2_tuning_baked), cfg!(target_feature = "avx2"))
+                    == Some(route.build()),
             "{}",
             route.id()
         );

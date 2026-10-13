@@ -46,17 +46,10 @@ REPO=$(git -C "${HERE}" rev-parse --show-toplevel)
     exit 2
 }
 
-# The one live file called $1, repository-relative: receipt input snapshots hold
-# byte copies under an `inputs` directory, and the live file lies outside them.
-live() {
-    local found
-    mapfile -t found < <(git ls-files -- ":(glob)**/$1" | grep -v '/inputs/')
-    [[ ${#found[@]} -eq 1 ]] || {
-        echo "${#found[@]} live files are called $1; exactly one must be" >&2
-        exit 2
-    }
-    printf '%s\n' "${found[0]}"
-}
+# The shared locator, found by name outside receipt input snapshots; it
+# resolves every other file this script names.
+LOCATOR=$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')
+live() { python3 -B "${LOCATOR}" file "$1"; }
 
 ISSUE=63bad95d
 RESULTS=$(realpath --relative-to="${REPO}" "${HERE}")
@@ -176,7 +169,7 @@ if [[ "${ACTION}" == freeze ]]; then
     fi
     PILOT=${RESULTS}/${FAMILY}/r${TRIAL}-pilot
     # The canonical freezer, by its name and opening among the same-named scripts.
-    FREEZER=$(python3 -B "$(live repository_files.py)" document freeze-confirmation.py \
+    FREEZER=$(python3 -B "${LOCATOR}" document freeze-confirmation.py \
         $'#!/usr/bin/env python3\n"""Freeze a confirmation addendum from its accepted pilot.')
     HOLDOUT=()
     DECLARATION=$(python3 -B -c 'import json, sys

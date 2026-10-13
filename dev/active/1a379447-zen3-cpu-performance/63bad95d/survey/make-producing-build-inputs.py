@@ -45,6 +45,7 @@ ADDED = {
         "src/ldpc_lanes.rs": "behavior",
         "src/m4rm.rs": "behavior",
         "src/shift_funnel.rs": "behavior",
+        "src/x86/ldpc_lanes.rs": "behavior",
         "src/x86/popcount.rs": "behavior",
         "src/x86/shift_funnel.rs": "behavior",
     },
@@ -62,7 +63,7 @@ def declaration(issue):
     """Root-relative paths and the one content of the campaign declaration naming `issue`."""
     found = [
         (path, json.loads((ROOT / path).read_text()))
-        for path in tracked(f"**/{DECLARATION}")
+        for path in tracked(DECLARATION)
     ]
     paths = sorted(path for path, value in found if value.get("issue") == issue)
     contents = {json.dumps(value, sort_keys=True) for _, value in found

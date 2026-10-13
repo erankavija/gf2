@@ -13,8 +13,9 @@ use gf2_core::matrix::{matvec_route, transpose_route};
 use gf2_core::tuning::{CoreTuning, CoreTuningCodec, ProfileRegistryBuilder};
 use gf2_core::{BitMatrix, BitVec};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::hint::black_box;
+use tuning_campaign_support::abtest::SplitMix64;
+use tuning_campaign_support::protocol::{sha256_hex, BuildIdentity};
 
 /// Names the build level the plan declares for an arm.
 pub const BUILD_VAR: &str = "GF2_PROFILE_BUILD";
@@ -29,56 +30,37 @@ pub const CLMUL_WORDS: usize = 9;
 /// Largest buffer length the compiled backend boundary is searched over.
 const BOUNDARY_SEARCH_WORDS: usize = 64;
 
-/// Build level of an arm.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Build {
-    /// Default target, conservative selectors, no profile.
-    ConservativePortable,
-    /// Default target, baked selectors, installed measured owner.
-    TunedPortable,
-    /// `target-cpu=native`, baked selectors, installed measured owner.
-    Native,
+/// Resolves the build level the plan declares for an arm; a level no
+/// profile arm serves is refused.
+pub fn parse_build(name: &str) -> Result<BuildIdentity, String> {
+    match serde_json::from_value(serde_json::Value::from(name)) {
+        Ok(BuildIdentity::External) | Err(_) => Err(format!("unknown {BUILD_VAR} {name:?}")),
+        Ok(build) => Ok(build),
+    }
 }
 
-impl Build {
-    /// Resolves the identity the addendum and the plan use.
-    pub fn parse(name: &str) -> Result<Self, String> {
-        match name {
-            "conservative-portable" => Ok(Self::ConservativePortable),
-            "tuned-portable" => Ok(Self::TunedPortable),
-            "native" => Ok(Self::Native),
-            other => Err(format!("unknown {BUILD_VAR} {other:?}")),
-        }
-    }
+/// Whether `build` carries the profile.
+pub fn profiled(build: BuildIdentity) -> bool {
+    build != BuildIdentity::ConservativePortable
+}
 
-    /// Whether this level carries the profile.
-    pub fn profiled(self) -> bool {
-        self != Self::ConservativePortable
+/// Refuses a level this executable's compile-time configuration is not.
+pub fn check_executable(build: BuildIdentity) -> Result<(), String> {
+    let baked = cfg!(gf2_tuning_baked);
+    let static_avx2 = cfg!(target_feature = "avx2");
+    if BuildIdentity::compiled(baked, static_avx2) == Some(build) {
+        return Ok(());
     }
-
-    /// Refuses a level this executable's compile-time configuration is not.
-    ///
-    /// The baked cfg separates the profile levels from the conservative one.
-    /// A native build is recognised by statically enabled AVX2, which the
-    /// default x86-64 target never has; a host whose native target adds no
-    /// AVX2 therefore has no native arm.
-    pub fn check_executable(self) -> Result<(), String> {
-        let baked = cfg!(gf2_tuning_baked);
-        let static_avx2 = cfg!(target_feature = "avx2");
-        if (self.profiled(), self == Self::Native) == (baked, static_avx2) {
-            return Ok(());
-        }
-        Err(format!(
-            "the plan declares {self:?}; this executable has baked={baked}, static-avx2={static_avx2}"
-        ))
-    }
+    Err(format!(
+        "the plan declares {build:?}; this executable has baked={baked}, static-avx2={static_avx2}"
+    ))
 }
 
 /// Installs the measured core owner the environment names and returns its
 /// profile identity. Call before the first selector read of the process.
 pub fn install_owner(path: &str, sha256: &str) -> Result<String, String> {
     let bytes = std::fs::read(path).map_err(|error| format!("cannot read {path}: {error}"))?;
-    let observed = format!("{:x}", Sha256::digest(&bytes));
+    let observed = sha256_hex(&bytes);
     if observed != sha256 {
         return Err(format!(
             "{path} has SHA-256 {observed}, the plan pins {sha256}"
@@ -125,27 +107,8 @@ pub enum Case {
     ClmulWide { words: usize, seed: u64 },
 }
 
-/// SplitMix64, the fixture stream of every cell.
-pub struct SplitMix64(u64);
-
-impl SplitMix64 {
-    /// Starts the stream at `seed`.
-    pub fn new(seed: u64) -> Self {
-        Self(seed)
-    }
-
-    /// The next word.
-    pub fn next_word(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        let mut z = self.0;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    }
-
-    fn words(&mut self, count: usize) -> Vec<u64> {
-        (0..count).map(|_| self.next_word()).collect()
-    }
+fn draw(rng: &mut SplitMix64, count: usize) -> Vec<u64> {
+    (0..count).map(|_| rng.next_u64()).collect()
 }
 
 fn random_matrix(rows: usize, columns: usize, rng: &mut SplitMix64) -> BitMatrix {
@@ -154,7 +117,7 @@ fn random_matrix(rows: usize, columns: usize, rng: &mut SplitMix64) -> BitMatrix
     for row in 0..rows {
         let words = matrix.row_words_mut(row);
         for word in words.iter_mut() {
-            *word = rng.next_word();
+            *word = rng.next_u64();
         }
         if tail != 0 {
             if let Some(last) = words.last_mut() {
@@ -166,7 +129,7 @@ fn random_matrix(rows: usize, columns: usize, rng: &mut SplitMix64) -> BitMatrix
 }
 
 fn random_vector(bits: usize, rng: &mut SplitMix64) -> BitVec {
-    let mut words = rng.words(bits.div_ceil(64));
+    let mut words = draw(rng, bits.div_ceil(64));
     let tail = bits % 64;
     if tail != 0 {
         if let Some(last) = words.last_mut() {
@@ -217,22 +180,22 @@ impl Workload {
                 positive("words", words)?;
                 let mut rng = SplitMix64::new(seed);
                 Ok(Self::Xor {
-                    target: rng.words(words),
-                    source: rng.words(words),
+                    target: draw(&mut rng, words),
+                    source: draw(&mut rng, words),
                 })
             }
             Case::Popcount { words, seed } => {
                 positive("words", words)?;
                 Ok(Self::Popcount {
-                    buffer: SplitMix64::new(seed).words(words),
+                    buffer: draw(&mut SplitMix64::new(seed), words),
                 })
             }
             Case::AndPopcount { words, seed } => {
                 positive("words", words)?;
                 let mut rng = SplitMix64::new(seed);
                 Ok(Self::AndPopcount {
-                    left: rng.words(words),
-                    right: rng.words(words),
+                    left: draw(&mut rng, words),
+                    right: draw(&mut rng, words),
                 })
             }
             Case::Matvec {
@@ -270,11 +233,47 @@ impl Workload {
                 let mut rng = SplitMix64::new(seed);
                 let mut left = [0u64; CLMUL_WORDS];
                 let mut right = [0u64; CLMUL_WORDS];
-                left.iter_mut().for_each(|word| *word = rng.next_word());
-                right.iter_mut().for_each(|word| *word = rng.next_word());
+                left.iter_mut().for_each(|word| *word = rng.next_u64());
+                right.iter_mut().for_each(|word| *word = rng.next_u64());
                 Ok(Self::Clmul { left, right })
             }
         }
+    }
+
+    /// SHA-256 of the operand words in declaration order, little-endian.
+    pub fn operand_digest(&self) -> String {
+        let mut bytes = Vec::new();
+        let mut push = |words: &[u64]| {
+            for word in words {
+                bytes.extend_from_slice(&word.to_le_bytes());
+            }
+        };
+        let rows = |matrix: &BitMatrix, push: &mut dyn FnMut(&[u64])| {
+            for row in 0..matrix.rows() {
+                push(matrix.row_words(row));
+            }
+        };
+        match self {
+            Self::Xor { target, source } => {
+                push(target);
+                push(source);
+            }
+            Self::Popcount { buffer } => push(buffer),
+            Self::AndPopcount { left, right } => {
+                push(left);
+                push(right);
+            }
+            Self::Matvec { matrix, vector } => {
+                rows(matrix, &mut push);
+                push(vector.words());
+            }
+            Self::Transpose { matrix } => rows(matrix, &mut push),
+            Self::Clmul { left, right } => {
+                push(left);
+                push(right);
+            }
+        }
+        sha256_hex(&bytes)
     }
 
     /// One measured call; the returned word keeps the result observable.
@@ -362,8 +361,8 @@ impl Workload {
                 let mut probes: Vec<(usize, usize)> = (0..4096)
                     .map(|_| {
                         (
-                            rng.next_word() as usize % matrix.rows(),
-                            rng.next_word() as usize % matrix.cols(),
+                            rng.next_u64() as usize % matrix.rows(),
+                            rng.next_u64() as usize % matrix.cols(),
                         )
                     })
                     .collect();

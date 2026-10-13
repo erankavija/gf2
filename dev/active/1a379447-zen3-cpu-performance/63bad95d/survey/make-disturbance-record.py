@@ -36,12 +36,12 @@ def quartiles(values):
 
 def campaigns(family):
     """The family's committed campaigns in ledger order."""
-    ledgers = tracked(f"**/{family['ledger']}")
+    ledgers = tracked(family["ledger"])
     if len(ledgers) != 1:
         raise SystemExit(f"{family['id']} has {len(ledgers)} committed ledgers")
     order = [json.loads(line)["campaign"] for line in (ROOT / ledgers[0]).read_text().splitlines()]
     found = {}
-    for path in tracked(f"**/{family['id']}/*/acceptance-summary.json"):
+    for path in tracked(f"{family['id']}/*/acceptance-summary.json"):
         directory = (ROOT / path).parent
         summary = json.loads((ROOT / path).read_text())
         found[summary["campaign_id"]] = {

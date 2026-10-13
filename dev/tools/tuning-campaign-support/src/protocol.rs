@@ -536,6 +536,21 @@ pub enum BuildIdentity {
     External,
 }
 
+impl BuildIdentity {
+    /// The gf2 level of an executable from two facts of its compilation: the
+    /// `gf2_tuning_baked` cfg and statically enabled AVX2, which marks host
+    /// targeting because the default x86-64 target never enables it. Host
+    /// targeting without the baked selectors is no level.
+    pub fn compiled(baked: bool, static_avx2: bool) -> Option<Self> {
+        match (baked, static_avx2) {
+            (false, false) => Some(Self::ConservativePortable),
+            (true, false) => Some(Self::TunedPortable),
+            (true, true) => Some(Self::Native),
+            (false, true) => None,
+        }
+    }
+}
+
 /// Worker declaration for multicore arms.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]

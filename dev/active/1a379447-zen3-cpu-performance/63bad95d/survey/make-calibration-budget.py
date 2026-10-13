@@ -73,7 +73,7 @@ def main():
     core_families = {row["family"] for row in core}
 
     ledgers = []
-    for path in tracked("**/*ledger*.jsonl"):
+    for path in tracked("*ledger*.jsonl"):
         entries = [json.loads(line) for line in (ROOT / path).read_text().splitlines() if line]
         families = sorted({entry["family"] for entry in entries})
         if len(families) > 1:

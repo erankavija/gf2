@@ -32,7 +32,7 @@ def campaigns():
     their paths in sorted order.
     """
     found, seen = [], {}
-    for path in reversed(tracked("**/gf2-*.md")):
+    for path in reversed(tracked("gf2-*.md")):
         match = RECEIPT.match(path)
         if not match:
             continue
@@ -45,7 +45,7 @@ def campaigns():
         block = DECISIONS.search((ROOT / path).read_text())
         if not block:
             continue
-        owners = tracked(f"**/gf2-core/**/{match['campaign']}.json")
+        owners = tracked(f"gf2-core/**/{match['campaign']}.json")
         if len(owners) != 1:
             raise SystemExit(f"{match['campaign']} has {len(owners)} committed core owners")
         owner_bytes = (ROOT / owners[0]).read_bytes()
@@ -127,7 +127,7 @@ def main():
     if len(subjects) != 1:
         raise SystemExit(f"{len(subjects)} published campaigns of issue {declaration['issue']}")
     subject = subjects[0]
-    conservative_path = tracked("**/gf2-core/**/tuning-profiles/conservative.json")
+    conservative_path = tracked("gf2-core/**/tuning-profiles/conservative.json")
     if len(conservative_path) != 1:
         raise SystemExit("exactly one conservative core owner must exist")
     conservative = leaves(json.loads((ROOT / conservative_path[0]).read_text()))

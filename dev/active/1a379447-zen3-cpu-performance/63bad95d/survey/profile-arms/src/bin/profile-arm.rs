@@ -7,8 +7,8 @@
 //! reference and reports no window.
 
 use profile_build_arms::{
-    compiled_simd_boundary, install_owner, Build, Case, Workload, BUILD_VAR, OWNER_SHA256_VAR,
-    OWNER_VAR,
+    check_executable, compiled_simd_boundary, install_owner, parse_build, profiled, Case, Workload,
+    BUILD_VAR, OWNER_SHA256_VAR, OWNER_VAR,
 };
 use std::hint::black_box;
 use std::io;
@@ -58,9 +58,9 @@ fn run() -> Result<(), String> {
     let request: ArmRequest =
         transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock())?;
     let case = accept(&request)?;
-    let build = Build::parse(&variable(BUILD_VAR)?)?;
-    build.check_executable()?;
-    let profile = if build.profiled() {
+    let build = parse_build(&variable(BUILD_VAR)?)?;
+    check_executable(build)?;
+    let profile = if profiled(build) {
         install_owner(&variable(OWNER_VAR)?, &variable(OWNER_SHA256_VAR)?)?
     } else {
         if std::env::var_os(OWNER_VAR).is_some() {
