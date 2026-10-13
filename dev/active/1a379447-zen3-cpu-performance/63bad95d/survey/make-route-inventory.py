@@ -321,7 +321,10 @@ OUTCOMES = {
     "mid-range": ("mid-range-findings.md", "# Mid-range buffer evidence synthesis"),
     "dense-parity": ("no-change-outcome.md", "# Dense-parity production outcome"),
     "logical-buffer": ("no-change-outcome.md", "# Logical-buffer production outcome"),
-    "tuning-campaign": ("gf2-dbd8787d-*.md", "# Extent calibration gf2-dbd8787d-"),
+    "tuning-campaign": ("gf2-63bad95d-*.md", "# Extent calibration gf2-63bad95d-"),
+    "core-calibration": ("campaign-findings.md",
+                         "# Core calibration campaign: findings (jit:63bad95d)"),
+    "lane-threshold": ("outcome.md", "# Outcome: the matvec lane-threshold confirmation"),
 }
 
 # For each selector, the measurement families whose cells contrast its two
@@ -329,11 +332,13 @@ OUTCOMES = {
 # class is derived from the families' receipts, never declared.
 EVIDENCE = [
     ("bit_backend.simd_min_words",
-     ["bit-storage-logical-consumers", "bit-storage-count-consumers", "popcount-baselines"],
+     ["bit-storage-logical-consumers", "bit-storage-count-consumers", "popcount-baselines",
+      "63bad95d-profile-dispatch-overhead", "63bad95d-profile-dispatch-overhead-v2"],
      ["bit-storage", "popcount-baselines", "popcount", "mid-range", "logical-buffer",
-      "tuning-campaign"]),
+      "tuning-campaign", "core-calibration"]),
     ("bit_matrix.matvec_simd_min_words",
-     ["2037941f-dense-allocated-matvec"], ["mid-range", "dense-parity"]),
+     ["2037941f-dense-allocated-matvec", "4337c02e-matvec-simd-threshold"],
+     ["mid-range", "dense-parity", "lane-threshold", "core-calibration"]),
     ("bit_matrix.transpose_simple_max_blocks", [], ["tuning-campaign"]),
     ("bit_matrix.transpose_macro_tile_blocks", [], ["tuning-campaign"]),
     ("field_vec.dot_chunk_len", [], ["tuning-campaign"]),

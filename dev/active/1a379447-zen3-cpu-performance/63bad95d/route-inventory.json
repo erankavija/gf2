@@ -2236,6 +2236,31 @@
        "qualifies": false
       }
      ]
+    },
+    {
+     "family": "63bad95d-profile-dispatch-overhead",
+     "issue": "63bad95d",
+     "route_contrast_roles": [
+      "exploratory"
+     ],
+     "campaigns": []
+    },
+    {
+     "family": "63bad95d-profile-dispatch-overhead-v2",
+     "issue": "63bad95d",
+     "route_contrast_roles": [
+      "confirmatory",
+      "exploratory",
+      "holdout"
+     ],
+     "campaigns": [
+      {
+       "campaign_id": "63bad95d-r1-profile-dispatch-overhead-v2-confirmation",
+       "label": "confirmation",
+       "verdict": "accepted",
+       "qualifies": true
+      }
+     ]
     }
    ],
    "outcome_documents": [
@@ -2244,13 +2269,14 @@
     "dev/active/1a379447-zen3-cpu-performance/5cbb6545/findings.md",
     "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
     "dev/active/1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md",
-    "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md",
+    "dev/active/1a379447-zen3-cpu-performance/63bad95d/campaign-findings.md"
    ]
   },
   {
    "selector": "bit_matrix.matvec_simd_min_words",
    "measured_owner_states_it": true,
-   "protocol_evidence": "exploratory",
+   "protocol_evidence": "confirmatory",
    "families": [
     {
      "family": "2037941f-dense-allocated-matvec",
@@ -2259,11 +2285,29 @@
       "exploratory"
      ],
      "campaigns": []
+    },
+    {
+     "family": "4337c02e-matvec-simd-threshold",
+     "issue": "4337c02e",
+     "route_contrast_roles": [
+      "confirmatory",
+      "exploratory"
+     ],
+     "campaigns": [
+      {
+       "campaign_id": "v4-r1-confirmation-4337c02e-matvec-simd-threshold",
+       "label": "confirmation",
+       "verdict": "rejected",
+       "qualifies": false
+      }
+     ]
     }
    ],
    "outcome_documents": [
     "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
-    "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md"
+    "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md",
+    "dev/active/1a379447-zen3-cpu-performance/4337c02e/outcome.md",
+    "dev/active/1a379447-zen3-cpu-performance/63bad95d/campaign-findings.md"
    ]
   },
   {
@@ -2272,7 +2316,7 @@
    "protocol_evidence": "none",
    "families": [],
    "outcome_documents": [
-    "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
    ]
   },
   {
@@ -2281,7 +2325,7 @@
    "protocol_evidence": "none",
    "families": [],
    "outcome_documents": [
-    "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
    ]
   },
   {
@@ -2290,7 +2334,7 @@
    "protocol_evidence": "none",
    "families": [],
    "outcome_documents": [
-    "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
    ]
   },
   {
@@ -6464,6 +6508,6 @@
  ],
  "workload_routes": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
-  "sha256": "7922c38848fadabe100329a28d710e6c3eca789ae9b70a180ed111c51a5fab7b"
+  "sha256": "10ca83a9da6364551101db19fd131a440a5fcad73335a58306a10046ebd37ad8"
  }
 }
