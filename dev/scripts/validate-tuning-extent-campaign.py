@@ -78,6 +78,7 @@ CODING_BEHAVIOR = "coding-tuning-calibration-v1"
 PRODUCING_INPUTS_SCHEMA = "tuning-campaign-producing-inputs-v1"
 DECLARATION_SCHEMA = "tuning-campaign-declaration-v1"
 DECLARATION_FILE = "campaign-declaration.json"
+PRODUCING_SNAPSHOT = "inputs/producing"
 # The owners a complete envelope composes, by declaration name, in composition
 # order; every complete envelope holds the sections of `REQUIRED_OWNERS`.
 OWNER_NAMES = {"core": "gf2-core", "algebra": "gf2-algebra", "coding": "gf2-coding"}
@@ -430,15 +431,6 @@ def git_output(root: Path, *args: str) -> str:
     return completed.stdout.decode("utf-8").strip()
 
 
-@functools.lru_cache(maxsize=None)
-def revision_file(root: Path, revision: str, relative: str) -> bytes:
-    """`relative`'s committed bytes at `revision`, independent of the checkout."""
-    completed = subprocess.run(["git", "cat-file", "blob", f"{revision}:{relative}"], cwd=root,
-                               check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    require(completed.returncode == 0, f"{relative} is absent from revision {revision}")
-    return completed.stdout
-
-
 def require_sha(value: Any, where: str) -> str:
     require(isinstance(value, str) and SHA.fullmatch(value) is not None,
             f"{where} is not a canonical SHA-256")
@@ -524,6 +516,18 @@ def locate_declaration(issue: str, root: Path) -> str:
     require(len(matches) == 1,
             f"{len(matches)} campaign declarations name issue {issue}; exactly one must")
     return next(iter(matches.values()))
+
+
+def pinned_file(root: Path, declaration: Any, relative: str, sha: str) -> bytes:
+    """`relative`'s bytes under the recorded digest `sha`: the file of the
+    checkout, or the snapshot of it the campaign keeps under `PRODUCING_SNAPSHOT`
+    beside its declaration once the file has moved on."""
+    home = Path(locate_declaration(declaration["issue"], root)).parent
+    for candidate in [root / relative, root / home / PRODUCING_SNAPSHOT / relative]:
+        if candidate.is_file() and digest(candidate.read_bytes()) == sha:
+            return candidate.read_bytes()
+    fail(f"neither {relative} nor its snapshot under {home / PRODUCING_SNAPSHOT} carries the "
+         f"recorded digest {sha}")
 
 
 def recorded_declaration(declaration: Any, identities: Any, where: str) -> tuple[str, str]:
@@ -624,11 +628,12 @@ def declared_processes(declaration: Any) -> list[tuple[str, list[str]]]:
             + [("composer", []), ("driver", [])])
 
 
-def producing_inputs(root: Path, manifest: str, revision: str | None = None) -> dict[str, Any]:
-    """The producing-input manifest of the checkout, or of `revision` when given."""
-    data = (root / manifest).read_bytes() if revision is None else revision_file(
-        root, revision, manifest)
-    value = load_json_bytes(data, "producing input manifest", canonical=False)
+def producing_inputs(root: Path, manifest: str, data: bytes | None = None) -> dict[str, Any]:
+    """The producing-input manifest `data`, or that of the checkout, whose
+    sources must then exist."""
+    recorded = data is not None
+    value = load_json_bytes(data if recorded else (root / manifest).read_bytes(),
+                            "producing input manifest", canonical=False)
     require_keys(value, ["schema", "behavior_sources", "lifecycle_sources",
                          "build_inputs"], "producing input manifest")
     require(value["schema"] == PRODUCING_INPUTS_SCHEMA,
@@ -646,22 +651,20 @@ def producing_inputs(root: Path, manifest: str, revision: str | None = None) -> 
                     and not any(character in relative for character in "*?[]"),
                     f"{name} contains a nonliteral repository path")
             source = root / path
-            require(revision is not None or source.is_file() and not source.is_symlink(),
+            require(recorded or source.is_file() and not source.is_symlink(),
                     f"{name} source is absent or linked: {relative}")
     require(set(value["behavior_sources"]) <= set(value["build_inputs"]),
             "behavior sources are not a subset of build inputs")
     require(set(value["lifecycle_sources"]) <= set(value["behavior_sources"]),
             "lifecycle sources are not a subset of behavior sources")
-    if revision is not None:
-        tracked = set(git_output(root, "ls-tree", "-r", "--name-only", revision).splitlines())
-        require(set(value["build_inputs"]) <= tracked,
-                "producing input manifest names files absent from the producing revision")
     return value
 
 
-def source_hashes(root: Path, paths: Iterable[str], revision: str | None = None) -> dict[str, str]:
-    return {relative: digest((root / relative).read_bytes() if revision is None
-                             else revision_file(root, revision, relative))
+def recorded_hashes(recorded: Any, paths: list[str], where: str) -> dict[str, str]:
+    """The digests a campaign records for exactly `paths`, in their order."""
+    require(isinstance(recorded, dict) and set(recorded) == set(paths),
+            f"{where} inventory differs from the producing manifest")
+    return {relative: require_sha(recorded[relative], f"{where} digest of {relative}")
             for relative in paths}
 
 
@@ -1487,14 +1490,16 @@ def validate_published_provenance(envelope: Any, owner: str, request: Any, confi
     section_id,behavior=OWNER_SECTIONS[owner],OWNER_BEHAVIORS[owner]
     process=next(name for name,crate in OWNER_NAMES.items() if crate==owner)+'-producer'
     measurement={'kind':'calibrated','measured_at':request['measurement']['observed_utc'],
-                 'source_revision':config['identity']['source_revision'],'source_dirty':False,
+                 'source_revision':config['identity']['source_revision'],
+                 'source_dirty':runtime['source_dirty'],
                  'harness':f'crates/{owner}/benches/tuning_calibration.rs','harness_schema':behavior,
                  'binary_sha256':config['identity']['executable_sha256'][process],
                  'toolchain':runtime['toolchain'],'host':config['identity']['host_identity'],
                  **{key:runtime[key] for key in ['cpu_model','cpu_features','os_kernel','governor','receipt']}}
     require(envelope['sections'][section_id]['measurement']==measurement,'owner measurement provenance differs from observed request')
     expected_assembly={'kind':'assembled','assembled_at':request['assembly']['observed_utc'],
-                       'source_revision':config['identity']['source_revision'],'source_dirty':False,
+                       'source_revision':config['identity']['source_revision'],
+                       'source_dirty':runtime['source_dirty'],
                        'tool':measurement['harness'],'tool_sha256':measurement['binary_sha256'],
                        'content_sha256':envelope_content(envelope['profile_id'],envelope['sections'])}
     require(envelope['assembly']==expected_assembly,'owner assembly provenance differs from observed request')
@@ -3457,6 +3462,23 @@ def validate_staging(stage: Path, campaign_config: Any,
     return staging
 
 
+def recorded_source_dirty(campaign_config: Any) -> bool:
+    """The checkout status the campaign recorded beside its source revision."""
+    return embedded(campaign_config["runtime"], "campaign runtime")["source_dirty"]
+
+
+def session_inputs(inputs: Any, where: str) -> dict[str, Any]:
+    """Preparation identity inputs without the checkout observations of their
+    session: the revision, the tree and the status, which decide no resume."""
+    require(isinstance(inputs, dict) and isinstance(inputs.get("revision"), str)
+            and isinstance(inputs.get("tree"), str), f"{where} lacks its checkout observation")
+    runtime = embedded(inputs.get("runtime"), f"{where} runtime")
+    require(isinstance(runtime, dict) and isinstance(runtime.get("source_dirty"), bool),
+            f"{where} runtime lacks its checkout status")
+    return {**{key: value for key, value in inputs.items() if key not in {"revision", "tree"}},
+            "runtime": {key: value for key, value in runtime.items() if key != "source_dirty"}}
+
+
 def expected_bootstrap_inputs(stage: Path, campaign_config: Any) -> dict[str, Any]:
     return {
         "revision": campaign_config["identity"]["source_revision"],
@@ -3582,7 +3604,7 @@ def validate_owner_publication(stage: Path, campaign: str, name: str, owner: str
     assembly_runtime = embedded(body["assembly"]["runtime"], f"{name} assembly runtime")
     require_keys(assembly_runtime, ["source_dirty", "tool", "tool_sha256"],
                  f"{name} assembly runtime")
-    require(assembly_runtime == {"source_dirty": False,
+    require(assembly_runtime == {"source_dirty": recorded_source_dirty(config),
                                  "tool": f"crates/gf2-{name}/benches/tuning_calibration.rs",
                                  "tool_sha256": producer["executable_sha256"]},
             f"{name} assembly runtime mismatch")
@@ -3731,7 +3753,8 @@ def validate_imported_owners(stage: Path, config: Any, declaration: Any,
                     and len(args) == len(prefix) + 5
                     and args[len(prefix)] == config["campaign_id"]
                     and args[len(prefix) + 2:] == [config["identity"]["source_revision"],
-                                                   "false", composer["executable_sha256"]],
+                                                   compact(recorded_source_dirty(config)).decode(),
+                                                   composer["executable_sha256"]],
                     "imported reopen composer arguments differ from the declared form")
             stamps.append(args[len(prefix) + 1])
             require_keys(exit_evidence, ["outcome", "stdout", "stderr"], "imported reopen exit")
@@ -3783,7 +3806,7 @@ def validate_envelopes(stage: Path, campaign: str, responses: dict[str, Any],
                                "tool_sha256", *owners, "candidate", "request",
                                "exit", "output"], "composition")
     require(composition["schema"] == "tuning-campaign-composition-v1"
-            and isinstance(composition["source_dirty"], bool)
+            and composition["source_dirty"] is recorded_source_dirty(config)
             and composition["source_revision"] == config["identity"]["source_revision"]
             and composition["tool_sha256"] ==
                 config["identity"]["executable_sha256"]["composer"],
@@ -3830,7 +3853,8 @@ def validate_envelopes(stage: Path, campaign: str, responses: dict[str, Any],
     profile, assembled_at, revision, dirty, tool = args[len(inputs) + 2:]
     require(profile == campaign and isinstance(assembled_at, str) and assembled_at.endswith("Z")
             and revision == composition["source_revision"]
-            and [dirty, tool] == ["false", composition["tool_sha256"]],
+            and [dirty, tool] == [compact(composition["source_dirty"]).decode(),
+                                  composition["tool_sha256"]],
             "composition command differs from exact owner inputs/provenance")
     composition_records = [record for record in records if record["event"] == "composition"
                            and record["details"].get("request") == composition["request"]]
@@ -3886,7 +3910,8 @@ def validate_envelopes(stage: Path, campaign: str, responses: dict[str, Any],
     for envelope in [*envelopes.values(), complete, candidate_complete]:
         validate_envelope_hashes(envelope)
     require(complete["assembly"] == {"kind":"assembled","assembled_at":assembled_at,
-                "source_revision":revision,"source_dirty":False,"tool":"dev/tools/tuning-profile-compose",
+                "source_revision":revision,"source_dirty":composition["source_dirty"],
+                "tool":"dev/tools/tuning-profile-compose",
                 "tool_sha256":tool,"content_sha256":envelope_content(campaign,complete["sections"])},
             "complete assembly differs from observed composer invocation")
     selectors = {name: envelopes[name]["sections"][sections[name]]["selectors"]
@@ -3990,7 +4015,8 @@ def validate_sessions(stage: Path, log_data: bytes, records: list[dict[str, Any]
     require(dirs, "campaign has no session records")
     require(not (stage / "active-preparation.json").exists(),
             "campaign retains an incomplete active preparation")
-    bootstrap = expected_bootstrap_inputs(stage, campaign_config)
+    bootstrap = session_inputs(expected_bootstrap_inputs(stage, campaign_config),
+                               "campaign bootstrap inputs")
     full_checksum = False
     for directory in dirs:
         preparation_directory = preparation_by_name[directory.name]
@@ -4022,8 +4048,9 @@ def validate_sessions(stage: Path, log_data: bytes, records: list[dict[str, Any]
                 and intent["preparer"] == descriptor["preparer"]
                 and intent["channels"] == campaign_config["channels"]
                 and intent["lock_path"] == descriptor["lock_path"]
-                and embedded(intent["identity_inputs"],
-                             f"preparation identity inputs {directory.name}") == bootstrap,
+                and session_inputs(embedded(intent["identity_inputs"],
+                                            f"preparation identity inputs {directory.name}"),
+                                   f"preparation identity inputs {directory.name}") == bootstrap,
                 f"preparation intent {directory.name} identity mismatch")
         finish_path = preparation_directory / "finish.json"
         committed_path = preparation_directory / "committed.json"
@@ -4623,15 +4650,14 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
                 ";cpus=" + compact(affinity).decode())
             and identity["host_identity"].split(";cpus=", 1)[0],
             "source or host identity is malformed")
-    # Identity sources are read at the producing revision, so any checkout
-    # containing it validates the stage. Recorded paths name the producing
-    # checkout and are informational; the validator's own identity is
-    # informational too, since checking is not measurement behavior.
+    # The protocol and the producing manifest are read under their recorded
+    # digests and the recorded input digests are the pins, so the revision,
+    # tree and status of the producing checkout decide nothing. Recorded paths
+    # name that checkout and are informational; the validator's own identity
+    # is informational too, since checking is not measurement behavior.
     root = repository_root()
-    revision = identity["source_revision"]
-    protocol_sha = digest(revision_file(root, revision, declaration["protocol"]))
-    require(protocol_sha == identity["protocol_digest"],
-            "runtime protocol digest differs from reviewed declaration")
+    protocol_sha = identity["protocol_digest"]
+    pinned_file(root, declaration, declaration["protocol"], protocol_sha)
     for name in ["protocol", "validator"]:
         recorded = require_keys(campaign_config[name], ["path", "sha256"], f"campaign {name}")
         require(set(recorded) == {"path", "sha256"} and Path(recorded["path"]).is_absolute()
@@ -4652,7 +4678,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
             and runtime["cpu_features"] == sorted(set(runtime["cpu_features"]))
             and isinstance(runtime["os_kernel"], str) and runtime["os_kernel"].strip()
             and runtime["receipt"] == campaign_config["receipt"],
-            "campaign runtime lacks clean observed host/toolchain facts")
+            "campaign runtime lacks observed host/toolchain facts")
     governors = embedded(runtime["governor"], "campaign governor observation")
     require(isinstance(governors, dict) and governors
             and all(re.fullmatch(r"cpu[0-9]+", key) and isinstance(value, str) and value
@@ -4662,25 +4688,22 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     require(channels == {"stage": str(stage), "execution_log": str(stage / "execution.log"),
                          "checkpoints": str(stage / "checkpoints")},
             "campaign channels mismatch")
-    inputs = producing_inputs(root, declaration["producing_manifest"], revision)
     producing = require_keys(campaign_config["producing_manifest"], ["path", "sha256"],
                              "campaign producing-input manifest")
     require(Path(producing["path"]).is_absolute()
-            and Path(producing["path"]).name == Path(declaration["producing_manifest"]).name
-            and producing["sha256"] == digest(revision_file(
-                root, revision, declaration["producing_manifest"])),
+            and Path(producing["path"]).name == Path(declaration["producing_manifest"]).name,
             "campaign producing-input manifest identity mismatch")
-    behavior = source_hashes(root, inputs["behavior_sources"], revision)
-    recorded_behavior = identity.get("behavior_sha256")
-    require(isinstance(recorded_behavior, dict) and set(recorded_behavior) == set(behavior)
-            and all(recorded_behavior[path] == sha for path, sha in behavior.items()
-                    if path != VALIDATOR),
-            "behavior source inventory/digests differ from the producing manifest")
-    require(campaign_config["build_inputs"] ==
-            source_hashes(root, inputs["build_inputs"], revision),
-            "build-input inventory/digests differ from the producing manifest")
-    recorded_declaration(declaration, source_hashes(root, inputs["lifecycle_sources"], revision),
-                         "lifecycle manifest")
+    inputs = producing_inputs(root, declaration["producing_manifest"], pinned_file(
+        root, declaration, declaration["producing_manifest"],
+        require_sha(producing["sha256"], "campaign producing-input manifest digest")))
+    behavior = recorded_hashes(identity.get("behavior_sha256"), inputs["behavior_sources"],
+                               "behavior source")
+    build = recorded_hashes(campaign_config["build_inputs"], inputs["build_inputs"],
+                            "build input")
+    require(all(build[path] == sha for path, sha in behavior.items()),
+            "behavior source digests differ from the build-input digests")
+    lifecycle = {path: behavior[path] for path in inputs["lifecycle_sources"]}
+    recorded_declaration(declaration, lifecycle, "lifecycle manifest")
     require(identity["process_descriptors_sha256"] == digest(compact(campaign_config["processes"])),
             "process descriptor digest mismatch")
     expected_processes = declared_processes(declaration)
@@ -4692,8 +4715,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     thresholds = validate_preflight_reports(stage, campaign_config)
     executable_map = {item["id"]: item["executable_sha256"] for item in campaign_config["processes"]}
     require(identity["executable_sha256"] == executable_map, "executable identity map mismatch")
-    require(identity["lifecycle_behavior_sha256"] ==
-            digest(compact(source_hashes(root, inputs["lifecycle_sources"], revision))),
+    require(identity["lifecycle_behavior_sha256"] == digest(compact(lifecycle)),
             "lifecycle behavior manifest digest mismatch")
     require(campaign_config["host_admission_policy"] == HOST_ADMISSION_POLICY,
             "host-admission policy differs from the reviewed declaration")
