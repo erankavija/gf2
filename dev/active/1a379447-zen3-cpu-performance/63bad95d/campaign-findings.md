@@ -14,6 +14,25 @@ verdict on the stage and on the publication is recorded in
 The producer's figures are descriptive medians with their window counts; the
 producer's rule compares a margin with a band and computes no interval.
 
+The receipt's
+[evidence index](../../../benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085-evidence.md)
+names each archived record by its path under
+`.agents/campaign-evidence/gf2-63bad95d-20261006t230547z-2073085/` on the
+producing host. The bytes of that archive, which hold the raw results, the
+run-time records, the checkpoints and the execution journal, are committed as
+[`gf2-63bad95d-20261006t230547z-2073085-evidence-archive.tar.zst`](../../../bench_results/63bad95d/gf2-63bad95d-20261006t230547z-2073085-evidence-archive.tar.zst).
+Extracted at the repository root the archive restores those paths, and the
+campaign's committed checksum manifest and the archive's own `SHA256SUMS`
+verify every file:
+
+```
+zstd -dc dev/bench_results/63bad95d/gf2-63bad95d-20261006t230547z-2073085-evidence-archive.tar.zst | tar -x
+sha256sum -c dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.sha256
+sha256sum -c .agents/campaign-evidence/gf2-63bad95d-20261006t230547z-2073085/SHA256SUMS
+```
+
+The index and the manifest keep the bytes the campaign published.
+
 ## F-01: the matvec threshold keeps its conservative value
 
 The owner states `bit_matrix.matvec_simd_min_words` at the conservative value
