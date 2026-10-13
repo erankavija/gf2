@@ -1,6 +1,7 @@
 {
   "schema": "tuning-campaign-producing-inputs-v1",
   "behavior_sources": [
+    "Cargo.lock",
     "crates/gf2-algebra/data/tuning-profiles/conservative.json",
     "crates/gf2-algebra/src/gpu.rs",
     "crates/gf2-algebra/src/gray.rs",
