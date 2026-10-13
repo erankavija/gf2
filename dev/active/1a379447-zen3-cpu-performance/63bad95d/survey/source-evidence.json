@@ -638,7 +638,7 @@
       "occurrences": 1,
       "verbatim": "# An issue (eight lowercase hex digits) selects the one campaign-declaration.json",
       "why": "The launcher runs the campaign a committed declaration names for an issue.",
-      "sha256": "ce331dcde91a0e496874a0ea66a9ddb448e83a132dfbde4f4ddfb32e1b4c186e"
+      "sha256": "d929477f3962e036e1c21e4b59a89c21f465c6f3555211ee15098e4bbf12d22d"
     },
     {
       "id": "calibration-publishes-profile-id",
@@ -649,7 +649,7 @@
       "occurrences": 1,
       "verbatim": "# are invalid. The ID becomes the emitted profiles' ProfileId, so it stays",
       "why": "The run identifier becomes the published profile's identity.",
-      "sha256": "ce331dcde91a0e496874a0ea66a9ddb448e83a132dfbde4f4ddfb32e1b4c186e"
+      "sha256": "d929477f3962e036e1c21e4b59a89c21f465c6f3555211ee15098e4bbf12d22d"
     },
     {
       "id": "calibration-matvec-field",

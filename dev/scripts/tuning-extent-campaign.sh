@@ -72,6 +72,9 @@ export GF2_CCX1_LOCK="$lock"
 export RUSTUP_TOOLCHAIN=1.95.0
 export RAYON_NUM_THREADS=4
 export CARGO_CI_NO_SCCACHE=1
+# A build takes its flags, wrapper, profile and target from this script alone.
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
+  "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}"
 # publish-campaign exits 3 while the campaign is not complete.
 publish() {
   set +e
