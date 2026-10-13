@@ -166,7 +166,7 @@ f9643f4186256f4ef75d428ff7fcd6d6284bb06715210cfe8c8c8f91d3a5b88d  crates/gf2-cor
 50fa3b9cfd3eb3f5548506b311c9c23b725df35eb0e07adda47237e5d41dd6da  crates/gf2-core/src/field/traits.rs
 8e2eefe050c06807cab762afc26e6ba3a010acc2bdbfd5ba0e23034d2a851fd5  crates/gf2-core/src/field/triangular.rs
 2679b803a256fd24794b1a9766a82a1d75766bb9c38d70175477d61cdf43e111  crates/gf2-core/src/field/two_adic.rs
-ebdb1d765509fc6b6c4ac7f8033d635f2d75e319c394b4ca5fcd90e23c23f66e  crates/gf2-core/src/field/vec.rs
+5c4b32f5374d882f6539569aff5b4979d345f1ac64ea6958d5468d0432f56bb6  crates/gf2-core/src/field/vec.rs
 e6891ea9b7057f62766d246831e176e0388f06bf7a322b452230b2c05ff2dcb9  crates/gf2-core/src/field/winograd.rs
 afc7aac4bfea55f876716527c9f9690f1e6c0d59238bde664c447cd66d73b6dc  crates/gf2-core/src/gf2m/barrett.rs
 850c7733e7a9b7924874a6a0f5e3ece47b83b752c379427fcb5a3b7b69c07a2e  crates/gf2-core/src/gf2m/batch.rs

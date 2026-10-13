@@ -511,24 +511,24 @@
     {
       "id": "dot-batch-kernel",
       "project": "gf2",
-      "commit": "529e58bd2f5b0cc48e6c6c7f81b01237b82cd222",
+      "commit": "0beffe6ab097bf110678350c3787f01f894c5493",
       "path": "crates/gf2-core/src/field/vec.rs",
       "line": 559,
       "occurrences": 1,
       "verbatim": "        let batch_fn = sample.clmul_batch_fn()?;",
       "why": "The GF(2^m) dot product takes the batch kernel whenever the bundle offers one; no length gate takes part.",
-      "sha256": "ebdb1d765509fc6b6c4ac7f8033d635f2d75e319c394b4ca5fcd90e23c23f66e"
+      "sha256": "5c4b32f5374d882f6539569aff5b4979d345f1ac64ea6958d5468d0432f56bb6"
     },
     {
       "id": "dot-chunk-read",
       "project": "gf2",
-      "commit": "529e58bd2f5b0cc48e6c6c7f81b01237b82cd222",
+      "commit": "0beffe6ab097bf110678350c3787f01f894c5493",
       "path": "crates/gf2-core/src/field/vec.rs",
       "line": 533,
       "occurrences": 1,
       "verbatim": "        self.simd_dot_product_chunked::<DOT_CHUNK_LEN_SELECTED>(rhs)",
       "why": "The dot product reads its scratch extent from the baked selection site.",
-      "sha256": "ebdb1d765509fc6b6c4ac7f8033d635f2d75e319c394b4ca5fcd90e23c23f66e"
+      "sha256": "5c4b32f5374d882f6539569aff5b4979d345f1ac64ea6958d5468d0432f56bb6"
     },
     {
       "id": "gf256-table-predicate",
