@@ -2495,8 +2495,16 @@ mod tests {
             .unwrap();
         })
         .unwrap();
-        try_emit("content-source", flat, |request| {
+        try_emit("meta-tree", flat, |request| {
             request.assembly.identity.source_sha256 = "1".repeat(64);
+        })
+        .unwrap();
+        try_emit("content-source", flat, |request| {
+            request
+                .assembly
+                .identity
+                .behavior_sha256
+                .insert(HARNESS_PATH.to_owned(), "1".repeat(64));
         })
         .unwrap_err();
     }

@@ -2036,11 +2036,24 @@ mod tests {
     }
 
     #[test]
-    fn owner_emission_accepts_provenance_that_differs_in_revision_only() {
+    fn owner_emission_accepts_provenance_that_differs_in_source_pointers_only() {
         owner_emission("emit-revision", false, |request| {
             request.assembly.identity.source_revision = "1".repeat(40);
+            request.assembly.identity.source_sha256 = "1".repeat(64);
         })
         .unwrap();
+        let refused = owner_emission("emit-input", false, |request| {
+            request
+                .assembly
+                .identity
+                .behavior_sha256
+                .insert(HARNESS_PATH.to_owned(), "1".repeat(64));
+        })
+        .unwrap_err();
+        assert!(
+            refused.contains("violates the producing contract"),
+            "{refused}"
+        );
     }
 
     #[test]
