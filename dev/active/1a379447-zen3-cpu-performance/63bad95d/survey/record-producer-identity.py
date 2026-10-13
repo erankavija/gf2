@@ -51,7 +51,7 @@ def main():
     binary = hashlib.sha256(open(executables[0], "rb").read()).hexdigest()
 
     own = str((HERE / RECORD).relative_to(ROOT))
-    earlier = [path for path in tracked(f"**/{RECORD}") if path != own]
+    earlier = [path for path in tracked(RECORD) if path != own]
     if len(earlier) != 1:
         raise SystemExit(f"{len(earlier)} earlier producer-identity records")
     before = json.loads((ROOT / earlier[0]).read_text())

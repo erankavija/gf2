@@ -62,7 +62,7 @@ def declaration(issue):
     """Root-relative paths and the one content of the campaign declaration naming `issue`."""
     found = [
         (path, json.loads((ROOT / path).read_text()))
-        for path in tracked(f"**/{DECLARATION}")
+        for path in tracked(DECLARATION)
     ]
     paths = sorted(path for path, value in found if value.get("issue") == issue)
     contents = {json.dumps(value, sort_keys=True) for _, value in found

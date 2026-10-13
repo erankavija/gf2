@@ -42,10 +42,6 @@ def package(name):
     return repository_files.package_directory(ROOT, name)
 
 
-def tracked(pattern):
-    """Sorted root-relative tracked paths matching the glob `pattern`, outside receipt snapshots."""
-    listing = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files", "--", f":(glob){pattern}"],
-        capture_output=True, check=True, text=True,
-    ).stdout.split()
-    return sorted(path for path in listing if not repository_files.is_snapshot_copy(path))
+def tracked(name):
+    """Sorted root-relative live paths matching the glob `name` at any depth."""
+    return repository_files.tracked_files(ROOT, name)
