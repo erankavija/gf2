@@ -1,12 +1,12 @@
-//! Heap-allocation census of LDPC decoding. A counting global allocator
-//! forwards to the system allocator and records requests only while a
-//! thread-local flag is set, so each count is exact for its section while other
-//! tests run in parallel. Construction and the first decode into a caller's
-//! buffer allocate; later decodes through the same decoder and prepared buffer
-//! allocate nothing. The rate-matched 5G NR batch decoder
-//! (`@/citation/ThreeGpp2017`) is counted over preparation and decoding
-//! together. The batch decoders are counted on each lane backend of the build
-//! and on the single-frame route.
+//! Heap-allocation census of LDPC decoding, counted per section of the calling
+//! thread. Construction and the first decode into a caller's buffer allocate;
+//! later decodes through the same decoder and prepared buffer allocate nothing.
+//! The rate-matched 5G NR batch decoder (`@/citation/ThreeGpp2017`) is counted
+//! over preparation and decoding together. The batch decoders are counted on
+//! each lane backend of the build and on the single-frame route.
+
+#[path = "support/thread_allocations.rs"]
+mod thread_allocations;
 
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedBatchDecoder;
 use gf2_coding::ldpc::{
@@ -17,86 +17,7 @@ use gf2_coding::llr::Llr;
 use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome, IterativeSoftDecoder};
 use gf2_core::BitVec;
-use std::alloc::{GlobalAlloc, Layout, System};
-use std::cell::Cell;
-
-thread_local! {
-    static COUNTING: Cell<bool> = const { Cell::new(false) };
-    static ALLOCATIONS: Cell<u64> = const { Cell::new(0) };
-    static REALLOCATIONS: Cell<u64> = const { Cell::new(0) };
-    static DEALLOCATIONS: Cell<u64> = const { Cell::new(0) };
-    static BYTES: Cell<u64> = const { Cell::new(0) };
-}
-
-/// Whether the calling thread is counting. False during thread-local teardown,
-/// when the flag is unreachable.
-fn counting() -> bool {
-    COUNTING.try_with(Cell::get).unwrap_or(false)
-}
-
-fn bump(counter: &'static std::thread::LocalKey<Cell<u64>>, by: u64) {
-    let _ = counter.try_with(|cell| cell.set(cell.get() + by));
-}
-
-struct Counting;
-
-// SAFETY: every method forwards to `System` with the caller's arguments
-// unchanged; the counters are thread-local `Cell`s with a `const` initializer
-// and allocate nothing themselves.
-unsafe impl GlobalAlloc for Counting {
-    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        if counting() {
-            bump(&ALLOCATIONS, 1);
-            bump(&BYTES, layout.size() as u64);
-        }
-        // SAFETY: forwarded unchanged.
-        unsafe { System.alloc(layout) }
-    }
-
-    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
-        if counting() {
-            bump(&ALLOCATIONS, 1);
-            bump(&BYTES, layout.size() as u64);
-        }
-        // SAFETY: forwarded unchanged.
-        unsafe { System.alloc_zeroed(layout) }
-    }
-
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        if counting() {
-            bump(&DEALLOCATIONS, 1);
-        }
-        // SAFETY: forwarded unchanged.
-        unsafe { System.dealloc(ptr, layout) }
-    }
-
-    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-        if counting() {
-            bump(&REALLOCATIONS, 1);
-            bump(&BYTES, new_size as u64);
-        }
-        // SAFETY: forwarded unchanged.
-        unsafe { System.realloc(ptr, layout, new_size) }
-    }
-}
-
-#[global_allocator]
-static ALLOCATOR: Counting = Counting;
-
-/// What one counted section requested.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Counts {
-    allocations: u64,
-    reallocations: u64,
-    deallocations: u64,
-    bytes: u64,
-}
-
-impl Counts {
-    fn is_zero(self) -> bool {
-        self.allocations == 0 && self.reallocations == 0 && self.deallocations == 0
-    }
-}
+use thread_allocations::{count, Counts};
 
 /// Prints one counted section as a JSON record, so a `--nocapture` run yields a
 /// machine-readable census.
@@ -106,24 +27,6 @@ fn report(phase: &str, case: &str, counts: Counts) {
 \"allocations\":{},\"reallocations\":{},\"deallocations\":{},\"bytes_requested\":{}}}",
         counts.allocations, counts.reallocations, counts.deallocations, counts.bytes
     );
-}
-
-/// Runs `body` with this thread's counters recording, and returns its value
-/// beside them.
-fn count<T>(body: impl FnOnce() -> T) -> (T, Counts) {
-    for counter in [&ALLOCATIONS, &REALLOCATIONS, &DEALLOCATIONS, &BYTES] {
-        counter.with(|cell| cell.set(0));
-    }
-    COUNTING.with(|flag| flag.set(true));
-    let value = body();
-    COUNTING.with(|flag| flag.set(false));
-    let counts = Counts {
-        allocations: ALLOCATIONS.with(Cell::get),
-        reallocations: REALLOCATIONS.with(Cell::get),
-        deallocations: DEALLOCATIONS.with(Cell::get),
-        bytes: BYTES.with(Cell::get),
-    };
-    (value, counts)
 }
 
 /// Channel LLRs with both signs and a spread of magnitudes.

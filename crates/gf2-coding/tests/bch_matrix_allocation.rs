@@ -1,10 +1,8 @@
 //! Allocation witness: `generator_matrix_into` and `parity_check_matrix_into`
-//! allocate nothing given a correctly sized buffer. The counting global
-//! allocator and its counter are process-wide, so this witness owns its test
-//! binary and runs a single test in it.
+//! reach no allocator given a correctly sized buffer.
 
-use std::alloc::{GlobalAlloc, Layout, System};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+#[path = "support/thread_allocations.rs"]
+mod thread_allocations;
 
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance};
 use gf2_coding::traits::block::{
@@ -17,53 +15,7 @@ use gf2_core::gf2m::Gf2mField;
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::QuotientField;
 use gf2_core::BitMatrix;
-
-struct CountingAllocator;
-
-static ARMED: AtomicBool = AtomicBool::new(false);
-
-static ALLOCATIONS: AtomicUsize = AtomicUsize::new(0);
-
-fn record() {
-    if ARMED.load(Ordering::Relaxed) {
-        ALLOCATIONS.fetch_add(1, Ordering::Relaxed);
-    }
-}
-
-// SAFETY: every method forwards its arguments unchanged to the system
-// allocator, which satisfies the `GlobalAlloc` contract, and the counter
-// touches no allocator of its own.
-unsafe impl GlobalAlloc for CountingAllocator {
-    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        record();
-        System.alloc(layout)
-    }
-
-    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
-        record();
-        System.alloc_zeroed(layout)
-    }
-
-    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-        record();
-        System.realloc(ptr, layout, new_size)
-    }
-
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        System.dealloc(ptr, layout)
-    }
-}
-
-#[global_allocator]
-static ALLOCATOR: CountingAllocator = CountingAllocator;
-
-fn allocations_during(body: impl FnOnce()) -> usize {
-    ALLOCATIONS.store(0, Ordering::Relaxed);
-    ARMED.store(true, Ordering::Relaxed);
-    body();
-    ARMED.store(false, Ordering::Relaxed);
-    ALLOCATIONS.load(Ordering::Relaxed)
-}
+use thread_allocations::count;
 
 /// The workload contract's B3 row, $255 \times 223$ over `GF(2^8)`.
 fn packed_code() -> BinaryBchCode {
@@ -98,18 +50,24 @@ fn caller_buffer_materialization_reaches_no_allocator() {
     let mut generator = BitMatrix::zeros(packed.k(), packed.n());
     let mut parity = BitMatrix::zeros(packed.redundancy(), packed.n());
 
-    let generator_allocations = allocations_during(|| {
+    let ((), generator_requests) = count(|| {
         packed
             .generator_matrix_into(&mut generator)
             .expect("caller generator buffer");
     });
-    let parity_allocations = allocations_during(|| {
+    let ((), parity_requests) = count(|| {
         packed
             .parity_check_matrix_into(&mut parity)
             .expect("caller parity buffer");
     });
-    assert_eq!(generator_allocations, 0, "packed generator materialization");
-    assert_eq!(parity_allocations, 0, "packed parity materialization");
+    assert!(
+        generator_requests.is_zero(),
+        "packed generator materialization requested {generator_requests:?}"
+    );
+    assert!(
+        parity_requests.is_zero(),
+        "packed parity materialization requested {parity_requests:?}"
+    );
     assert_eq!(generator, expected_generator);
     assert_eq!(parity, expected_parity);
 
@@ -122,23 +80,23 @@ fn caller_buffer_materialization_reaches_no_allocator() {
     let mut generator = FieldMatrix::zeroed(dense.k(), dense.n(), &zero);
     let mut parity = FieldMatrix::zeroed(dense.redundancy(), dense.n(), &zero);
 
-    let generator_allocations = allocations_during(|| {
+    let ((), generator_requests) = count(|| {
         dense
             .generator_matrix_into(&mut generator)
             .expect("caller generator buffer");
     });
-    let parity_allocations = allocations_during(|| {
+    let ((), parity_requests) = count(|| {
         dense
             .parity_check_matrix_into(&mut parity)
             .expect("caller parity buffer");
     });
-    assert_eq!(
-        generator_allocations, 0,
-        "field-generic generator materialization"
+    assert!(
+        generator_requests.is_zero(),
+        "field-generic generator materialization requested {generator_requests:?}"
     );
-    assert_eq!(
-        parity_allocations, 0,
-        "field-generic parity materialization"
+    assert!(
+        parity_requests.is_zero(),
+        "field-generic parity materialization requested {parity_requests:?}"
     );
     assert_eq!(generator, expected_generator);
     assert_eq!(parity, expected_parity);
