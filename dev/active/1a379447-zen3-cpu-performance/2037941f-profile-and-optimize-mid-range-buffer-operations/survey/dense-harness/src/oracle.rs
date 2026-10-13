@@ -9,8 +9,9 @@
 //! and cannot serve as a pilot.
 
 use crate::cells::{
-    Cache, MatvecShape, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS, CAMPAIGN_SEED, LANE_CONTROL_WORDS,
-    LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS, RAGGED_CONTROL_WORDS, RAGGED_WORDS,
+    family_cells, Cache, MatvecShape, Question, Workload, ALL_WORDS, ANCHOR_WORDS, BOUNDARY_BITS,
+    CAMPAIGN_SEED, LANE_CONTROL_WORDS, LANE_NEIGHBOR_WORDS, LANE_WORDS, MATVEC_ROWS,
+    RAGGED_CONTROL_WORDS, RAGGED_WORDS,
 };
 use crate::fixture::MatvecBanks;
 use crate::routes::{
@@ -211,6 +212,22 @@ fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
     Ok(())
 }
 
+/// Checks the public product on each native comparator cell's own fixture, so
+/// every build level that runs the oracle agrees with it on the bits the
+/// comparator arm is checked against.
+fn comparator_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
+    for cell in family_cells(Question::NativeMatvecVsM4ri) {
+        let Workload::M4riGap { shape, .. } = cell.workload else {
+            continue;
+        };
+        let name = format!("comparator-{}", cell.cell_id);
+        let banks = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, cell.seed);
+        let checks = check_product(&name, &banks)?;
+        report.push(OracleCase { name, checks });
+    }
+    Ok(())
+}
+
 /// Checks the isolated bundle entry against an independent count.
 fn isolated_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
     let bundle = fused_bundle()
@@ -249,6 +266,7 @@ pub fn run() -> Result<Vec<OracleCase>, String> {
     boundary_cases(&mut report)?;
     shape_cases(&mut report)?;
     anchor_cases(&mut report)?;
+    comparator_cases(&mut report)?;
     isolated_cases(&mut report)?;
     Ok(report)
 }

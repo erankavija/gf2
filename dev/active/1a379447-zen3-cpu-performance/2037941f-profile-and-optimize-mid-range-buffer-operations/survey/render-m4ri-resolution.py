@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Render the frozen M4RI comparator resolution rule from its pilot.
 
+Usage: render-m4ri-resolution.py SURVEY_ANALYSIS OUTPUT [CAMPAIGN RULES FAMILY]
+
+Without the optional arguments the record is the M4RI comparator's. A family
+that mirrors it names its pilot campaign, the tracked file name of its prose
+addendum and its row label in that addendum's margin table.
+
 The record states the outcome the rule fixes: `eligible` when the pilot-derived
 resolution is at or below the family ceiling, `resolution-insufficient` above
 it. The standard output line carries the same two values for the freeze script.
@@ -11,27 +17,29 @@ import json
 import re
 import sys
 
-from repo_artifacts import ROOT, addendum as campaign_addendum, receipt, tracked
+from repo_artifacts import ROOT, addendum as campaign_addendum, receipt as pilot_receipt, tracked
 from resolution_rule import accepted_pilot, ceiling as family_ceiling, half_widths, rounded
 
 CAMPAIGN = "v4-r1-2037941f-dense-matvec-vs-m4ri"
-PILOT = receipt(CAMPAIGN)
-ADDENDUM = campaign_addendum(CAMPAIGN)
-RULES = tracked("dense-parity-addendum.md")
+RULES_NAME = "dense-parity-addendum.md"
+FAMILY = "M4RI comparator"
 EVALUATOR = tracked("receipt.rs")
 LEDGER_RULES = tracked("trial_ledger.rs")
 # The evaluator's P-20 tail-support test and the ledger's sequential attempt
 # budget, as the sources state them; the arithmetic below follows both.
 TAIL_SUPPORT = re.compile(r"bootstrap_resamples\) \* corrected_alpha / 2\.0 < (\d+)\.0")
 ATTEMPT_ALPHA = "family.family_wise.alpha / (attempts * (attempts + 1.0))"
-CONFIRMATORY_ROW = re.compile(r"\| `(m4ri-gap-[^`]+)` \|.*\| confirmatory \|")
+CONFIRMATORY_ROW = re.compile(r"\| `((?:[a-z]+-)?m4ri-gap-[^`]+)` \|.*\| confirmatory \|")
 
 
 def main() -> None:
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: render-m4ri-resolution.py SURVEY_ANALYSIS OUTPUT")
+    if len(sys.argv) not in (3, 6):
+        raise SystemExit(__doc__)
+    campaign, rules_name, family = sys.argv[3:] or (CAMPAIGN, RULES_NAME, FAMILY)
+    PILOT = pilot_receipt(campaign)
+    RULES = tracked(rules_name)
     receipt, receipt_record = accepted_pilot(PILOT)
-    addendum = json.loads((ROOT / ADDENDUM).read_bytes())
+    addendum = json.loads((ROOT / campaign_addendum(campaign)).read_bytes())
     rules = (ROOT / RULES).read_text()
     ids = [match.group(1) for match in map(CONFIRMATORY_ROW.fullmatch, rules.splitlines()) if match]
     measured = {cell["cell_id"]: len(cell["pairs"]) for cell in receipt_record["cells"]}
@@ -60,7 +68,7 @@ def main() -> None:
         raise ValueError("canonical resolution output lacks a confirmatory cell")
     maximum = max(widths[cell_id] for cell_id in ids)
     resolution = rounded(maximum)
-    ceiling = family_ceiling(RULES, "M4RI comparator")
+    ceiling = family_ceiling(RULES, family)
     if len(ids) > capacity:
         raise ValueError("P-20 admits fewer comparisons than the family's confirmatory cells")
     eligible = resolution <= ceiling
@@ -74,13 +82,13 @@ def main() -> None:
     )
     rows = "\n".join(f"| `{cell_id}` | {measured[cell_id]} | {widths[cell_id]:.6f} |" for cell_id in ids)
     (ROOT / sys.argv[2]).write_text(
-        "# M4RI comparator pilot resolution\n\n"
+        f"# {family[0].upper()}{family[1:]} pilot resolution\n\n"
         "> **Diátaxis Type:** Reference\n\n"
         f"Source: `{PILOT}/receipt.json` (SHA-256 `{hashlib.sha256(receipt).hexdigest()}`); "
         f"frozen rule: `{RULES}`.\n\n"
         "The canonical `survey-analysis resolution` command recomputes whole-pair "
         "bootstrap intervals at the first confirmation's corrected alpha.\n\n"
-        f"Command: `survey-analysis resolution {PILOT} {alpha:g}`\n\n"
+        f"Command: `survey-analysis resolution {PILOT} {alpha:.12g}`\n\n"
         f"Ledger `{addendum['family_wise']['ledger_path']}` through the pilot: "
         f"{len(entries)} reservation(s), "
         f"{reserved} reserved comparison(s), so the confirmation is attempt $t={attempt}$ with "

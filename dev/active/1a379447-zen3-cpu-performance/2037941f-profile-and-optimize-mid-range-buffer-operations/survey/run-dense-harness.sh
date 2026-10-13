@@ -2,18 +2,21 @@
 # Launcher for the dense-parity measurement harness (jit:e1f9a78f).
 #
 # Subcommands:
-#   build [--m4ri]                     build the arms, run the crate contract and the oracle
+#   build [--m4ri] [--native]          build the arms, run the crate contract and the oracle
 #   arms                               build the gf2 arms and write no record
 #   cells --family <id> --issue <hex8> --frozen-utc <t> --output <path>
 #                                      transcribe one family into a campaign addendum
 #   smoke [--m4ri]                     untimed release smoke; the arm contract is
 #                                      tuning_campaign_support::arm::smoke
-#   window --family <id> --addendum <path> --run-id <id> [--m4ri]
+#   window --family <id> --addendum <path> --run-id <id> [--m4ri] [--native]
 #          [--confirmation] [--smoke <record>]
 #                                      timed campaign, benchmark window only;
 #                                      --confirmation runs a freezer-derived
 #                                      confirmation addendum, and --smoke drives
 #                                      the projected plan untimed instead
+#
+# `--native` adds the gf2 arm built at the native level, which the native
+# comparator family measures against the M4RI arm.
 #
 # Every numeric setting comes from the frozen addendum or the protocol's shared
 # settings; this launcher adds none. `~/.cargo/bin` is exported here because the
@@ -46,9 +49,12 @@ SMOKE_RECORD="${SURVEY}/dense-runner-smoke.txt"
 GF2_TARGET="${REPO}/target/e1f9a78f-arms"
 SCALAR_TARGET="${REPO}/target/e1f9a78f-scalar-arm"
 M4RI_TARGET="${REPO}/target/e1f9a78f-m4ri-arm"
+NATIVE_TARGET="${REPO}/target/e1f9a78f-native-arm"
 GF2_ARM="${GF2_TARGET}/release/dense-arm"
 SCALAR_ARM="${SCALAR_TARGET}/release/dense-arm"
 M4RI_ARM="${M4RI_TARGET}/release/dense-m4ri-arm"
+NATIVE_ARM="${NATIVE_TARGET}/release/dense-arm"
+NATIVE_ORACLE="${NATIVE_TARGET}/release/dense-oracle"
 CAMPAIGN_TOOL="${GF2_TARGET}/release/dense-campaign"
 ORACLE="${GF2_TARGET}/release/dense-oracle"
 SCALAR_ORACLE="${SCALAR_TARGET}/release/dense-oracle"
@@ -97,10 +103,28 @@ build_m4ri() {
     printf '%s\n' "${prefix}"
 }
 
+# The native level is the ordinary configuration under the harness's own
+# RUSTFLAGS constant, in its own target directory.
+native_rustflags() {
+    "${CAMPAIGN_TOOL}" native-rustflags
+}
+
+build_native() {
+    RUSTFLAGS="$(native_rustflags)" CARGO_TARGET_DIR="${NATIVE_TARGET}" \
+        ./scripts/cargo-budget.sh cargo build --release \
+        --manifest-path "${MANIFEST}" --bin dense-arm --bin dense-oracle
+}
+
 cmd_build() {
-    local with_m4ri=0 prefix='' invocation
+    local with_m4ri=0 with_native=0 prefix='' invocation
     invocation="$(format_invocation)"
-    [[ "${1:-}" == "--m4ri" ]] && with_m4ri=1
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --m4ri) with_m4ri=1; shift ;;
+            --native) with_native=1; shift ;;
+            *) echo "unknown build argument $1" >&2; exit 2 ;;
+        esac
+    done
     build_gf2
     # The survey harness is its own workspace, so the repository CI contract
     # never reaches it: this command is the only thing that runs its contract.
@@ -111,6 +135,7 @@ cmd_build() {
     passed="$(printf '%s\n' "${contract}" |
         awk '/^test result: ok\./ { total += $4 } END { print total + 0 }')"
     [[ "${with_m4ri}" == 1 ]] && prefix="$(build_m4ri)"
+    [[ "${with_native}" == 1 ]] && build_native
 
     local version llvm host
     version="$(rustc --version | sed 's/^rustc //')"
@@ -134,6 +159,12 @@ cmd_build() {
                 "$(sha256sum "${M4RI_ARM}" | cut -d' ' -f1)"
             printf '# libm4ri.so sha256: %s\n' \
                 "$(sha256sum "${prefix}/lib/libm4ri.so" | cut -d' ' -f1)"
+        fi
+        if [[ "${with_native}" == 1 ]]; then
+            echo "# native build: the same sources under RUSTFLAGS=$(native_rustflags)"
+            "${NATIVE_ORACLE}"
+            printf '# dense-arm (native) sha256: %s\n' \
+                "$(sha256sum "${NATIVE_ARM}" | cut -d' ' -f1)"
         fi
         local binary
         for binary in dense-arm dense-campaign dense-oracle; do
@@ -258,13 +289,14 @@ cmd_smoke() {
 }
 
 cmd_window() {
-    local family='' addendum='' run_id='' with_m4ri=0 phase=pilot smoke_record=''
+    local family='' addendum='' run_id='' with_m4ri=0 with_native=0 phase=pilot smoke_record=''
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --family) family="$2"; shift 2 ;;
             --addendum) addendum="$2"; shift 2 ;;
             --run-id) run_id="$2"; shift 2 ;;
             --m4ri) with_m4ri=1; shift ;;
+            --native) with_native=1; shift ;;
             --confirmation) phase=confirmation; shift ;;
             --smoke) smoke_record="$2"; shift 2 ;;
             *) echo "unknown window argument $1" >&2; exit 2 ;;
@@ -299,6 +331,10 @@ cmd_window() {
     if [[ "${with_m4ri}" == 1 ]]; then
         build_m4ri >/dev/null
         external=(--m4ri-executable "${M4RI_ARM}")
+    fi
+    if [[ "${with_native}" == 1 ]]; then
+        build_native
+        external+=(--native-executable "${NATIVE_ARM}")
     fi
     ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
         --bin benchmark-ab-runner --bin benchmark-acceptance
@@ -367,6 +403,9 @@ cmd_window() {
         echo "# scalar arm: ${SCALAR_ARM} sha256=$(sha256sum "${SCALAR_ARM}" | cut -d' ' -f1)"
         [[ "${with_m4ri}" == 1 ]] &&
             echo "# m4ri arm: ${M4RI_ARM} sha256=$(sha256sum "${M4RI_ARM}" | cut -d' ' -f1)"
+        [[ "${with_native}" == 1 ]] &&
+            echo "# native arm: ${NATIVE_ARM} sha256=$(sha256sum "${NATIVE_ARM}" | cut -d' ' -f1)" \
+                "rustflags=$(native_rustflags)"
         echo "# plan: ${plan} sha256=$(sha256sum "${plan}" | cut -d' ' -f1)"
         echo "# toolchain: $(rustc --version --verbose | tr '\n' ';')"
     } >>"${launch}"

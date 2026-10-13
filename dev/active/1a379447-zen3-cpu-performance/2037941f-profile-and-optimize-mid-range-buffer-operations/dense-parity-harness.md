@@ -62,8 +62,11 @@ same boundary. The variant `matvec-ragged-tail-v2` belongs to the
 [second ragged-tail addendum](../7dbe1393/matvec-ragged-tail-v2-addendum.md),
 identity `7dbe1393-matvec-ragged-tail-addendum-v2`: its family measures the
 `matvec-ragged-tail` cells again on a ledger of its own and adds no cell to
-the table (`Question::table`). `Question::addendum` names the frozen document each variant
-transcribes.
+the table (`Question::table`). The variant `native-matvec-vs-m4ri` belongs to
+the [native comparator addendum](../63bad95d/native-m4ri-addendum.md) of issue
+`63bad95d`, identity `63bad95d-native-matvec-vs-m4ri-v1`: it is measured at
+the `matvec-vs-m4ri` boundary with the gf2 arm built at the `native` level.
+`Question::addendum` names the frozen document each variant transcribes.
 `dense_parity_harness::cells()` returns the complete cell table in that order,
 then in each question's listed axis order: the normative primary product first,
 then the exact exploratory additions in document order.
@@ -75,12 +78,19 @@ then the exact exploratory additions in document order.
 | `matvec-vs-m4ri` | 8 | `m4ri-gap-{R}x{C}[-retained]-warm` |
 | `matvec-lane-threshold` | 17 | `lane-r1024-{W}w[-control]-{warm,cold,streaming}` |
 | `matvec-ragged-tail` | 6 | `ragged-r1024-{W}w[-control]-warm` |
+| `native-matvec-vs-m4ri` | 6 | `native-m4ri-gap-{R}x{C}[-retained]-warm` |
 
 A lane-threshold cell's baseline arm is `matvec-a` and its compared arm is
 `matvec-lane-scalar` in the same executable, so a speedup above one favours
 the scalar lane. A ragged-tail cell's baseline arm is `matvec-a` and its
 compared arm is `matvec-lane-parity` in the same executable, so a speedup
 above one favours the parity kernel.
+
+A native comparator cell mirrors the `matvec-vs-m4ri` cell its identifier
+names after the `native-` prefix: the same workload, cache state and seed. Its
+baseline arm is `m4ri-peer-gf2-native`, the `dense-arm` executable built with
+`routes::NATIVE_RUSTFLAGS`, and its compared arm is `m4ri-mzd-mul`. The
+mirrors follow every other cell and draw no seed from the campaign stream.
 
 The addendum's fourth question, `scalar-reference`, owns no ledger. Its cells
 are the five `matvec-r1024-{W}w-scalar-reference-warm` rows of the allocated
@@ -251,11 +261,15 @@ matrix and the vector, so the oracle shares no code with the measured route.
 | `matvec-anchor-{W}w` | the five anchors at the frozen 1024-row geometry: observed rows, columns, stride, the lane the build resolves, and every output bit |
 | `matvec-lane-{W}w` | every lane-threshold stride at the same geometry, with the same checks and the pinned scalar lane's output against the public call's |
 | `matvec-ragged-{W}w` | every ragged-tail stride at the same geometry, with the same checks and the parity-kernel entry's output against the public call's |
+| `comparator-{cell}` | every native comparator cell's own fixture: the product checks of the boundary cases |
 | `and-popcnt-{W}w` | all seven word counts: the bundle entry's count against an independent per-word count, its low bit against the row parity, and purity across two calls |
 | `m4ri-{R}x{C}` | in `dense-m4ri-arm --oracle`: every unpacked output bit against the gf2 peer, zero tail padding, the retained arm against the fresh arm, and input immutability |
+| `m4ri-cell-{cell}` | in `dense-m4ri-arm --oracle`: the same checks on every native comparator cell's own fixture |
 
 The oracle runs from both gf2 builds, so the reference arm's scalar route is
-checked against the same parity oracle as the SIMD lane.
+checked against the same parity oracle as the SIMD lane. `build --native`
+runs it from the native build as well, so on each native comparator fixture
+the native gf2 arm, the portable gf2 peer and the M4RI arm agree bit for bit.
 
 ## Logging, checkpoint, and resume
 
@@ -370,13 +384,13 @@ because the benchmark-window unit has no login shell.
 
 ```
 STORY=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations
-$STORY/survey/run-dense-harness.sh build [--m4ri]
+$STORY/survey/run-dense-harness.sh build [--m4ri] [--native]
 $STORY/survey/run-dense-harness.sh arms
 $STORY/survey/run-dense-harness.sh cells --family <family-id> --issue <8-hex> \
     --frozen-utc <YYYY-MM-DDTHH:MM:SSZ> --output <path>
 $STORY/survey/run-dense-harness.sh smoke [--m4ri]
 $STORY/survey/run-dense-harness.sh window --family <family-id> \
-    --addendum <committed campaign JSON> --run-id <id> [--m4ri] \
+    --addendum <committed campaign JSON> --run-id <id> [--m4ri] [--native] \
     [--confirmation] [--smoke <record>]
 ```
 
@@ -390,7 +404,8 @@ The launcher drives one Rust tool, `dense-campaign`, which a leaf may also call
 directly: `pins` prints the frozen addendum's path, pinned digest, identity,
 freeze time, every family ledger, the declared unavailable rows and the pin
 of each further family addendum, and fails when a document's bytes differ
-from its pin; `list` prints one family's
+from its pin; `native-rustflags` prints the native level's RUSTFLAGS; `list`
+prints one family's
 cells with their ordinals, arms and seeds; `cells`, `verify`,
 `verify-confirmation` and `plan` are the transcription, the two comparisons and
 the plan projection; `inputs` is the
@@ -407,11 +422,16 @@ untimed arrangement pass.
 runs the crate's own contract tests and both builds' semantic oracle, and writes
 `survey/dense-harness-validation.txt`. With `--m4ri` it also compiles
 `dense-m4ri-arm` against the qualified install into `target/e1f9a78f-m4ri-arm`.
+With `--native` it also compiles `dense-arm` and `dense-oracle` under the
+native level's RUSTFLAGS into `target/e1f9a78f-native-arm` and runs that
+build's oracle. `window --native` builds the same arm and passes it to the
+plan; the native comparator family needs `--m4ri --native`.
 
 `cells` writes one family's campaign JSON addendum. `--family` is one of
 `2037941f-dense-isolated-fused-parity`, `2037941f-dense-allocated-matvec`,
 `2037941f-dense-matvec-vs-m4ri`, `4337c02e-matvec-simd-threshold`,
-`7dbe1393-matvec-ragged-tail`, `7dbe1393-matvec-ragged-tail-v2`.
+`7dbe1393-matvec-ragged-tail`, `7dbe1393-matvec-ragged-tail-v2`,
+`63bad95d-native-matvec-vs-m4ri`.
 
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
 SHA-256 equals the pin the harness carries, and the campaign JSON matches

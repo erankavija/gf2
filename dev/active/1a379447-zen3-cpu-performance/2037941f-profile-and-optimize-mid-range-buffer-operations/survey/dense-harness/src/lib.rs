@@ -5,9 +5,11 @@
 //! and its untimed correctness oracle. It also carries the lane-threshold
 //! question of addendum `4337c02e-matvec-lane-threshold-v1` and the ragged-tail
 //! question of addendum `7dbe1393-matvec-ragged-tail-v1`, both measured at the
-//! allocated `matvec` boundary, and the second ragged-tail family of addendum
-//! `7dbe1393-matvec-ragged-tail-addendum-v2` on the same cells. It changes no
-//! production code and no production selection.
+//! allocated `matvec` boundary, the second ragged-tail family of addendum
+//! `7dbe1393-matvec-ragged-tail-addendum-v2` on the same cells, and the native
+//! comparator question of addendum `63bad95d-native-matvec-vs-m4ri-v1`,
+//! measured at the comparator boundary with the gf2 arm built at the `native`
+//! level. It changes no production code and no production selection.
 //!
 //! Every numeric setting reaches the harness from a frozen addendum
 //! ([`cells`]) or from `tuning_campaign_support::protocol::SHARED_SETTINGS`.

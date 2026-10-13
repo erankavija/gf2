@@ -223,6 +223,9 @@ Rules common to the families:
   resolution, with a rationale tied to the consumer.
 - **Comparator cells** select nothing; they report the gap at an equal build
   level.
+  The native comparator family `63bad95d-native-matvec-vs-m4ri` is measured
+  through its confirmation; [`native-m4ri-plan.md`](native-m4ri-plan.md) holds
+  its outcome.
 - **Core arms.** The entry points are leaf kernels without an internal worker
   pool, so every cell runs on one core.
 

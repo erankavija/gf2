@@ -9,7 +9,8 @@
 # SIMD lane the production `matvec` selector takes, and so the addendum's
 # scalar-reference arm is the same configuration built with
 # `--no-default-features`. The release profile mirrors the workspace's own
-# `conservative-portable` release settings.
+# `conservative-portable` release settings. The `native` arm is the same
+# configuration built with the RUSTFLAGS `routes::NATIVE_RUSTFLAGS` names.
 
 [workspace]
 
@@ -20,6 +21,9 @@ edition = "2021"
 rust-version = "1.95"
 publish = false
 build = "build.rs"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(gf2_tuning_baked)'] }
 
 [lib]
 name = "dense_parity_harness"
