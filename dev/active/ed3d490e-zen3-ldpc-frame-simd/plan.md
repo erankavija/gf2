@@ -182,11 +182,12 @@ Decoder selectors are calibrated as section 2 of the
 describes the mechanism: an owner producer run by the campaign launcher
 publishes a versioned owner envelope, and a protocol family of purpose
 `selector-calibration` reconfirms the profile on holdout cells. The coding
-section has one wire identity and an owner codec and no producer, and the
-campaign driver, composer and validator admit two owners (topics
-`tuning-section`, `tuning-owners`). The story adds the coding producer and the
-third owner; its campaign measures the coding owner and imports the committed
-core and algebra envelopes, so it depends on no core calibration.
+section has one wire identity, an owner codec and a producer, and the
+campaign driver, composer and validator admit `gf2-coding` as the third owner
+(topics `tuning-section`, `tuning-owners`). The story's campaign measures the
+coding owner and imports the committed core and algebra envelopes, so it
+depends on no core calibration; its
+[findings](calibration/campaign-findings.md) name the published owner.
 
 ## Generated decomposition overview
 
