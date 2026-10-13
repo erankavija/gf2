@@ -36,10 +36,10 @@ plan adds the calibration disposition.
 
 | Selector | Owner today | Evidence class | Disposition in this issue |
 |---|---|---|---|
-| `bit_matrix.matvec_simd_min_words` | core section, compile time; the measured owner states it | producer sweep; exploratory under the protocol | Retained at the conservative value: the sweep is non-monotone and `4337c02e` confirms no value (§5, §7). |
+| `bit_matrix.matvec_simd_min_words` | core section, compile time; the measured owner states it | producer sweep; confirmatory cells whose confirmation acceptance rejects | Retained at the conservative value: the sweep is non-monotone and `4337c02e` confirms no value (§5, §7). |
 | `PRODUCTION_PREFERENCE` (transpose block lane) | constant of `gf2-kernels-simd` | confirmatory; the confirmations do not qualify | Retained at its value and standing. The non-qualifying confirmations are the recorded outcome (§8). |
 | `popcount-comparator-kernels` (carry-save and scalar `POPCNT` routes) | no selector exists | confirmatory; neither confirmation qualifies | Retained as recorded. The exploratory carry-save crossover is a limit of this calibration (§8). |
-| `bit_backend.simd_min_words` | core section, compile time; the measured owner states it | producer sweep; confirmatory, not qualifying | **The one candidate.** The measured owner states a value below the conservative one and the baked constant mirrors it; the dispatch-overhead family of §6 reconfirms it (§5, §7). |
+| `bit_backend.simd_min_words` | core section, compile time; the measured owner states it | producer sweep; confirmatory, with one qualifying confirmation | **The one candidate.** The measured owner states a value below the conservative one and the baked constant mirrors it; the confirmation of `63bad95d-profile-dispatch-overhead-v2` qualifies and retains it (§5, §7). |
 | `raw-batch-default-lane`, `gf2m-batch-capability` | constants and capability checks | confirmatory | Retained: the confirmations keep the sequential lane and add no length gate. |
 | `wide-kernel-widths`, `gf256-table-predicate`, `residual-shift-capability` | structural or capability choices | confirmatory, qualifying | Retained: each route is adopted by its own qualifying receipt. |
 | `bit_matrix.transpose_simple_max_blocks`, `bit_matrix.transpose_macro_tile_blocks`, `field_vec.dot_chunk_len` | core section; the measured owner states them | none under this protocol | Retained at the measured owner's values. |
@@ -131,20 +131,41 @@ The transpose lane stays outside the profile (§8).
 
 | Arm identity | gf2 build | Selectors | Competitor targeting |
 |---|---|---|---|
-| `conservative-portable` | default target, `simd` | conservative table, no profile | portable build, its own runtime dispatch if it has one |
-| `tuned-portable` | default target, `simd`, `--cfg gf2_tuning_baked` | the candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile | the same portable build |
-| `native` | `-C target-cpu=native` added | the candidate profile | built with `-march=native` |
+| `conservative-portable` | default target, `simd` | conservative table, no profile | M4RI built at `-O3` with no targeting option (`63bad95d-portable-matvec-vs-m4ri`) |
+| `tuned-portable` | default target, `simd`, `--cfg gf2_tuning_baked` | the candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile | the comparator cells of the conservative level, whose lane the profile leaves unchanged |
+| `native` | `-C target-cpu=native` added | the candidate profile | M4RI built at `-O3 -march=native` (`63bad95d-native-matvec-vs-m4ri`) |
 
 The three are separate arms and separate executables; no cell mixes two inside
 one arm. A selector's effect is a `tuned-portable` candidate against a
 `conservative-portable` baseline, so both sides share one instruction-set
 level and differ in selectors alone. The native ladder compares `native`
-against `tuned-portable`. The plan holds no comparator-gap cell: the profile
-selects the conservative lane on the routes the committed comparator
-confirmations measure (the M4RI confirmation the
-[mid-range synthesis](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md)
-cites), so those receipts are the comparator evidence at the profile's
-selectors.
+against `tuned-portable`.
+
+The comparator-gap cells belong to two families of this issue, each frozen by
+its own addendum and measured through its confirmation. Each compares public
+`BitMatrix::matvec` with the matched M4RI product at one build level on both
+sides and selects nothing; its plan states the outcome as acceptance records
+it.
+
+| Family | gf2 arm | M4RI build | Plan and outcome |
+|---|---|---|---|
+| `63bad95d-portable-matvec-vs-m4ri` | `conservative-portable` | `-O3`, no targeting option | [`portable-m4ri-plan.md`](portable-m4ri-plan.md) |
+| `63bad95d-native-matvec-vs-m4ri` | `native` | `-O3 -march=native` | [`native-m4ri-plan.md`](native-m4ri-plan.md) |
+
+The portable family measures one gf2 arm for both portable levels: the one
+selector `BitMatrix::matvec` reads is its lane threshold, whose baked value
+equals the conservative definition (§1), so a `tuned-portable` arm executes
+the same lane at every shape.
+
+The comparison of `50f0bd42`, family `2037941f-dense-matvec-vs-m4ri`, is
+neither of these. Its
+[addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md)
+declares the gf2 arm as the `conservative-portable` build and the M4RI arm as
+the `external` build of the qualification record, which
+[`m4ri-build-pins.sh`](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh)
+compiles at its `host` level, `-O3 -march=native`. It pairs the portable gf2
+level with a host-targeted comparator and stays committed as that mixed-level
+comparison ([outcome](../50f0bd42/outcome.md)).
 
 `tuned-portable` here is defined by the profile's selectors at the portable
 instruction-set level. The polynomial host-targeting campaigns give the same
@@ -258,14 +279,19 @@ cell of each entry point.
   `63bad95d-profile-dispatch-overhead-v2` records `fail`, and takes the
   conservative value otherwise, with each receipt committed as the outcome;
   the family's addendum freezes this rule. The confirmation is accepted and
-  qualifies with no `fail` cell (F-09), so the baked value is retained;
-  integration commits the profile.
+  qualifies with no `fail` cell (F-09), so the baked value is retained:
+  the baked constants pin the owner by digest and mirror its value
+  (`tuning-baked-owner-digest`, `baked-measured-owner-test`).
 - A production change carries its before and after cells: a cell's baseline
   arm is the conservative build and its candidate arm the profile build, on
-  the same workload.
-- After the profile is committed, the route witnesses of the fallback record
-  are run again, with the profile build added, and the inventory is
-  regenerated, so the routes the production consumers execute are observed.
+  the same workload. For the baked bit-backend threshold these are the cells
+  of that confirmation
+  ([acceptance summary](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2/r1-confirmation/acceptance-summary.md)).
+- Every other selector keeps its value: no qualifying confirmation covers
+  another candidate (§1).
+- The route witnesses of the [fallback record](fallback-verification.md)
+  include the profile build, and the inventory tabulates them, so the routes
+  the production consumers execute are observed.
 
 ## 8. Decisions
 

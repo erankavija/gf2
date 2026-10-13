@@ -7,18 +7,18 @@
   "conservative-portable": {
    "rustflags": null,
    "selectors": "conservative table, no profile installed",
-   "external": "portable build of the comparator, its own runtime dispatch if it has one"
+   "external": "M4RI built at -O3 with no targeting option: family 63bad95d-portable-matvec-vs-m4ri"
   },
   "tuned-portable": {
    "rustflags": "--cfg gf2_tuning_baked",
    "selectors": "candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile",
-   "external": "the same portable comparator build as the conservative level",
+   "external": "the comparator cells of the conservative level: BitMatrix::matvec reads one selector, whose baked value equals the conservative definition",
    "definition": "Defined by the profile's selectors at the portable instruction-set level. The polynomial host-targeting campaigns of c7113c5a define the same arm identity by the instruction-set flag -C target-cpu=x86-64-v3 with no profile; the two are different levels."
   },
   "native": {
    "rustflags": "-C target-cpu=native --cfg gf2_tuning_baked",
    "selectors": "candidate profile",
-   "external": "comparator built with -march=native"
+   "external": "M4RI built at -O3 -march=native: family 63bad95d-native-matvec-vs-m4ri"
   }
  },
  "families": [
@@ -494,7 +494,7 @@
   },
   {
    "id": "63bad95d-matvec-external-ladder",
-   "reason": "Runs with the matvec holdout family, which does not run; the conservative level is the committed M4RI confirmation of the mid-range story."
+   "reason": "Runs with the matvec holdout family, which does not run. The comparator gap is measured at equal build levels by the families 63bad95d-portable-matvec-vs-m4ri and 63bad95d-native-matvec-vs-m4ri. The family 2037941f-dense-matvec-vs-m4ri of 50f0bd42 pairs the conservative-portable gf2 build with M4RI built at -O3 -march=native, as its addendum declares, and is a mixed-level comparison."
   },
   {
    "id": "transpose lane selection",

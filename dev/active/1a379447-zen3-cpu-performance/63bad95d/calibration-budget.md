@@ -43,16 +43,16 @@ One session of the offline tuning campaign has a budget of 180 minutes (`dev/act
 
 | Arm identity | RUSTFLAGS | Selectors | Competitor | Definition |
 |---|---|---|---|---|
-| `conservative-portable` | none | conservative table, no profile installed | portable build of the comparator, its own runtime dispatch if it has one |  |
-| `tuned-portable` | `--cfg gf2_tuning_baked` | candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile | the same portable comparator build as the conservative level | Defined by the profile's selectors at the portable instruction-set level. The polynomial host-targeting campaigns of c7113c5a define the same arm identity by the instruction-set flag -C target-cpu=x86-64-v3 with no profile; the two are different levels. |
-| `native` | `-C target-cpu=native --cfg gf2_tuning_baked` | candidate profile | comparator built with -march=native |  |
+| `conservative-portable` | none | conservative table, no profile installed | M4RI built at -O3 with no targeting option: family 63bad95d-portable-matvec-vs-m4ri |  |
+| `tuned-portable` | `--cfg gf2_tuning_baked` | candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile | the comparator cells of the conservative level: BitMatrix::matvec reads one selector, whose baked value equals the conservative definition | Defined by the profile's selectors at the portable instruction-set level. The polynomial host-targeting campaigns of c7113c5a define the same arm identity by the instruction-set flag -C target-cpu=x86-64-v3 with no profile; the two are different levels. |
+| `native` | `-C target-cpu=native --cfg gf2_tuning_baked` | candidate profile | M4RI built at -O3 -march=native: family 63bad95d-native-matvec-vs-m4ri |  |
 
 ## Excluded from the plan
 
 | Subject | Reason |
 |---|---|
 | 63bad95d-profile-holdout-matvec | The measured owner keeps the conservative matvec threshold (campaign-tables.md, matvec lane sweep) and 4337c02e installs no value, so the profile build and the conservative build select the same lane at every stride and the family's condition does not hold. The holdout declaration matvec-holdout-cells.json stays committed and unused. |
-| 63bad95d-matvec-external-ladder | Runs with the matvec holdout family, which does not run; the conservative level is the committed M4RI confirmation of the mid-range story. |
+| 63bad95d-matvec-external-ladder | Runs with the matvec holdout family, which does not run. The comparator gap is measured at equal build levels by the families 63bad95d-portable-matvec-vs-m4ri and 63bad95d-native-matvec-vs-m4ri. The family 2037941f-dense-matvec-vs-m4ri of 50f0bd42 pairs the conservative-portable gf2 build with M4RI built at -O3 -march=native, as its addendum declares, and is a mixed-level comparison. |
 | transpose lane selection | PRODUCTION_PREFERENCE is retained and is no candidate; the non-qualifying confirmations of 1d4fd63d and 04b85d10 are the recorded outcome. |
 | transpose external ladder | The profile selects nothing on the transpose route, so its tuned arm is the conservative arm the committed comparator confirmations measure, and REQ-09 asks for the three build levels of what this issue calibrates. The native build of the transpose entry point is covered by the native ladder's non-regression cells. |
 | carry-save count crossover | No selector exists and none is added; the exploratory crossover of 5cbb6545 is a recorded limit. |
