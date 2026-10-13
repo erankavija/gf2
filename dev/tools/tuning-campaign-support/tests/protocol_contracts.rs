@@ -4824,3 +4824,20 @@ printf 'GF2_TUNING_RESULT={"schema":"zen3-benchmark-arm-result-v1","windows":[]\
         );
     }
 }
+
+#[test]
+fn compiled_facts_name_at_most_one_gf2_level() {
+    assert_eq!(
+        BuildIdentity::compiled(false, false),
+        Some(BuildIdentity::ConservativePortable)
+    );
+    assert_eq!(
+        BuildIdentity::compiled(true, false),
+        Some(BuildIdentity::TunedPortable)
+    );
+    assert_eq!(
+        BuildIdentity::compiled(true, true),
+        Some(BuildIdentity::Native)
+    );
+    assert_eq!(BuildIdentity::compiled(false, true), None);
+}

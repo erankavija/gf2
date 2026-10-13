@@ -79,20 +79,14 @@ fn degenerate_and_foreign_cases_are_refused() {
 }
 
 #[test]
-fn a_build_level_matches_exactly_one_compile_time_configuration() {
-    let matching: Vec<_> = ["conservative-portable", "tuned-portable", "native"]
-        .into_iter()
-        .filter(|name| check_executable(parse_build(name).unwrap()).is_ok())
-        .collect();
-    let expected = match (cfg!(gf2_tuning_baked), cfg!(target_feature = "avx2")) {
-        (false, false) => vec!["conservative-portable"],
-        (true, false) => vec!["tuned-portable"],
-        (true, true) => vec!["native"],
-        (false, true) => vec![],
-    };
-    assert_eq!(matching, expected);
+fn a_level_no_profile_arm_serves_is_refused_at_the_boundary() {
     assert!(parse_build("external").is_err());
     assert!(parse_build("portable").is_err());
+    let served = ["conservative-portable", "tuned-portable", "native"]
+        .into_iter()
+        .filter(|name| check_executable(parse_build(name).unwrap()).is_ok())
+        .count();
+    assert!(served <= 1);
 }
 
 /// The operands of the cases the collected confirmations record, by digest:

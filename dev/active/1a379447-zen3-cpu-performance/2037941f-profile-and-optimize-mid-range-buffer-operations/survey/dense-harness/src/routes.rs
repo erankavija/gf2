@@ -25,20 +25,6 @@ pub const ROUTE_VAR: &str = "GF2_DENSE_ROUTE";
 /// route.
 pub const NATIVE_RUSTFLAGS: &str = "-C target-cpu=native --cfg gf2_tuning_baked";
 
-/// The build level this executable was compiled at, or `None` for a
-/// configuration that is neither level.
-///
-/// Statically enabled AVX2 marks the host target, which the default x86-64
-/// target never enables; a host whose native target adds no AVX2 therefore
-/// has no native arm.
-pub fn build_level() -> Option<BuildIdentity> {
-    match (cfg!(gf2_tuning_baked), cfg!(target_feature = "avx2")) {
-        (false, false) => Some(BuildIdentity::ConservativePortable),
-        (true, true) => Some(BuildIdentity::Native),
-        _ => None,
-    }
-}
-
 /// Retained-output residency [`OutputSink`] may hold for one timed window.
 ///
 /// The allocated boundary excludes the release, so a whole window's outputs are
@@ -175,7 +161,9 @@ impl Route {
     /// lacks it cannot stand in for the selected production route. A route
     /// likewise refuses an executable of another build level.
     pub fn check_build(self) -> Result<(), String> {
-        if self.simd_build() == cfg!(feature = "simd") && build_level() == Some(self.build()) {
+        let level =
+            BuildIdentity::compiled(cfg!(gf2_tuning_baked), cfg!(target_feature = "avx2"));
+        if self.simd_build() == cfg!(feature = "simd") && level == Some(self.build()) {
             return Ok(());
         }
         Err(format!(

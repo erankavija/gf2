@@ -45,15 +45,10 @@ pub fn profiled(build: BuildIdentity) -> bool {
 }
 
 /// Refuses a level this executable's compile-time configuration is not.
-///
-/// The baked cfg separates the profile levels from the conservative one.
-/// A native build is recognised by statically enabled AVX2, which the
-/// default x86-64 target never has; a host whose native target adds no
-/// AVX2 therefore has no native arm.
 pub fn check_executable(build: BuildIdentity) -> Result<(), String> {
     let baked = cfg!(gf2_tuning_baked);
     let static_avx2 = cfg!(target_feature = "avx2");
-    if (profiled(build), build == BuildIdentity::Native) == (baked, static_avx2) {
+    if BuildIdentity::compiled(baked, static_avx2) == Some(build) {
         return Ok(());
     }
     Err(format!(
