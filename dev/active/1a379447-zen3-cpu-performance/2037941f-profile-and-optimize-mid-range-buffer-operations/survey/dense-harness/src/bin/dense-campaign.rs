@@ -13,6 +13,7 @@
 //!                        --producing-manifest <path> --output <path>
 //!                        [--candidate-executable <path>] [--scalar-executable <path>]
 //!                        [--m4ri-executable <path>] [--native-executable <path>]
+//!                        [--m4ri-portable-executable <path>]
 //!                        [--label pilot|smoke|confirmation]
 //!                        [--max-cells-per-session <n>]
 //! dense-campaign inputs  --producing-manifest <path> [--also <path>]...
@@ -255,6 +256,7 @@ fn pins() -> Result<(), String> {
         Question::MatvecRaggedTail,
         Question::MatvecRaggedTailV2,
         Question::NativeMatvecVsM4ri,
+        Question::PortableMatvecVsM4ri,
     ] {
         let pin = question.addendum();
         println!(
@@ -361,7 +363,9 @@ fn resolution_ceiling(question: Question) -> f64 {
     match question {
         Question::IsolatedFusedParity => 0.020,
         Question::AllocatedMatvec => 0.035,
-        Question::MatvecVsM4ri | Question::NativeMatvecVsM4ri => 0.040,
+        Question::MatvecVsM4ri
+        | Question::NativeMatvecVsM4ri
+        | Question::PortableMatvecVsM4ri => 0.040,
         Question::MatvecLaneThreshold | Question::MatvecRaggedTail => 0.035,
         Question::MatvecRaggedTailV2 => resolution_ceiling(Question::MatvecRaggedTail),
     }
@@ -471,6 +475,7 @@ fn project(arguments: &Arguments) -> Result<(), String> {
             scalar_executable: arguments.optional("scalar-executable"),
             m4ri_executable: arguments.optional("m4ri-executable"),
             native_executable: arguments.optional("native-executable"),
+            m4ri_portable_executable: arguments.optional("m4ri-portable-executable"),
             max_cells_per_session: arguments
                 .number("max-cells-per-session")?
                 .map(|value| value as u32),

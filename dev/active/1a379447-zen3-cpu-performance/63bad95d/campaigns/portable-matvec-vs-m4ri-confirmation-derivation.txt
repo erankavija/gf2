@@ -1,0 +1,48 @@
+pilot receipt  dev/bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r2-pilot/receipt.json
+receipt sha256 e1e4022e2c5c237bb4396e3c053790acc43813ec4a3f1c647f3bcf3d7a028a35
+campaign       v4-r2-63bad95d-portable-matvec-vs-m4ri
+verdict        accepted (label pilot)
+family         63bad95d-portable-matvec-vs-m4ri: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+portable-m4ri-gap-65x512-warm           24   0.0026454   0.0026257   0.0027299    0.0319
+portable-m4ri-gap-65x4096-warm          24  0.00091245  0.00091181  0.00091488    0.0027
+portable-m4ri-gap-65x512-retained-warm    24    0.085532    0.085339    0.086043    0.0060
+portable-m4ri-gap-65x4096-retained-warm    24     0.19145      0.1912     0.19177    0.0016
+portable-m4ri-gap-1x1-warm              24     0.11918     0.11878     0.12196    0.0234
+portable-m4ri-gap-64x64-warm            24     0.02925    0.029209    0.029286    0.0014
+
+widest relative half-width   0.031925
+pilot-alpha floor            0.032
+supplied resolution          0.038
+derivation                   dev/active/1a379447-zen3-cpu-performance/63bad95d/portable-m4ri-pilot-resolution-v4-r2.md
+
+# Portable comparator pilot resolution
+
+> **Diátaxis Type:** Reference
+
+Source: `dev/bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r2-pilot/receipt.json` (SHA-256 `e1e4022e2c5c237bb4396e3c053790acc43813ec4a3f1c647f3bcf3d7a028a35`); frozen rule: `dev/active/1a379447-zen3-cpu-performance/63bad95d/portable-m4ri-addendum.md`.
+
+The canonical `survey-analysis resolution` command recomputes whole-pair bootstrap intervals at the first confirmation's corrected alpha.
+
+Command: `survey-analysis resolution dev/bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r2-pilot 0.00416666666667`
+
+Ledger `dev/bench_results/63bad95d/portable-matvec-vs-m4ri-ledger.jsonl` through the pilot: 2 reservation(s), 0 reserved comparison(s), so the confirmation is attempt $t=1$ with $\alpha_t=0.025$ (`dev/tools/tuning-campaign-support/src/trial_ledger.rs`). P-20 requires 20 expected bootstrap draws per tail (`dev/tools/tuning-campaign-support/src/receipt.rs`), which admits 6 further comparison(s) at 10000 resamples. The family's $m=6$ confirmatory cells give $\alpha_c=0.00416667$ and 20.8333 expected draws per tail.
+
+| Confirmatory cell | Pilot pairs | Relative half-width |
+|---|---:|---:|
+| `portable-m4ri-gap-65x512-warm` | 24 | 0.037919 |
+| `portable-m4ri-gap-65x4096-warm` | 24 | 0.003199 |
+| `portable-m4ri-gap-65x512-retained-warm` | 24 | 0.007062 |
+| `portable-m4ri-gap-65x4096-retained-warm` | 24 | 0.002236 |
+| `portable-m4ri-gap-1x1-warm` | 24 | 0.027001 |
+| `portable-m4ri-gap-64x64-warm` | 24 | 0.002489 |
+
+Largest confirmatory width: 0.037919; frozen upward rounding to 0.001: $r=0.038$. Family ceiling: 0.040.
+
+**Outcome: `eligible`.** The pilot resolves the family within its frozen ceiling. The canonical freezer pins this resolution in the confirmation addendum.
+
+frozen measurement resolution 0.038
+restated the family description for the confirmatory stage
+margins: equivalence 1.05, material gap 1.1
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/portable-matvec-vs-m4ri-confirmation.json

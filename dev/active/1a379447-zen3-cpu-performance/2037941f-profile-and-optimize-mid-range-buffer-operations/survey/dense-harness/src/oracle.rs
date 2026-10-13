@@ -212,11 +212,12 @@ fn anchor_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
     Ok(())
 }
 
-/// Checks the public product on each native comparator cell's own fixture, so
-/// every build level that runs the oracle agrees with it on the bits the
+/// Checks the public product on each mirroring comparator cell's own fixture,
+/// so every build level that runs the oracle agrees with it on the bits the
 /// comparator arm is checked against.
 fn comparator_cases(report: &mut Vec<OracleCase>) -> Result<(), String> {
-    for cell in family_cells(Question::NativeMatvecVsM4ri) {
+    let mirrors = Question::MIRRORS.into_iter().flat_map(|(question, _)| family_cells(question));
+    for cell in mirrors {
         let Workload::M4riGap { shape, .. } = cell.workload else {
             continue;
         };

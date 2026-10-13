@@ -42,9 +42,10 @@ Consequences:
 - **The committed confirmation is not a portable-against-portable result.**
   [`calibration-plan.md`](calibration-plan.md) §3 and
   `survey/planned-families.json` describe it as the conservative level with a
-  portable comparator build. No portable-level M4RI build exists in the
-  evidence. The committed confirmation measures gf2 at its lowest level
-  against M4RI at its highest, which is the least favourable pairing for gf2.
+  portable comparator build. The committed confirmation measures gf2 at its
+  lowest level against M4RI at its highest, which is the least favourable
+  pairing for gf2. The portable-level M4RI build is the comparator of the
+  family [`portable-m4ri-plan.md`](portable-m4ri-plan.md) describes.
 
 M4RI stays an external comparator: GPL code, linked only into the benchmark
 arm `dense-m4ri-arm` through the existing shim, with no M4RI source in the

@@ -94,12 +94,16 @@ def closure():
                 located("matvec-ragged-tail-v2-addendum.md"),
                 # The native comparator question's frozen addendum.
                 located("native-m4ri-addendum.md"),
+                # The portable comparator question's frozen addendum.
+                located("portable-m4ri-addendum.md"),
                 str(STORY / "m4ri-operation-match.md"),
                 str(STORY / "m4ri-probe-record.txt"),
+                str(STORY / "m4ri-portable-build-record.txt"),
                 str(SURVEY / "m4ri_matvec_arm.c"),
                 str(SURVEY / "m4ri_matvec_probe.c"),
                 str(SURVEY / "m4ri-build-pins.sh"),
                 str(SURVEY / "run-m4ri-matvec-probe.sh"),
+                str(SURVEY / "record-m4ri-build.sh"),
                 str(SURVEY / "check-m4ri-build-provenance.sh"),
             ]
             + lifecycle
