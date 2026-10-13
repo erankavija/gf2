@@ -1090,7 +1090,6 @@ fn validate_observed_provenance(
             .identity
             .behavior_sha256
             .contains_key(HARNESS_PATH)
-        || facts.source_dirty
         || facts.toolchain.trim().is_empty()
         || !facts.toolchain.contains(REQUIRED_TOOLCHAIN)
         || facts.cpu_model.trim().is_empty()
@@ -1105,7 +1104,6 @@ fn validate_observed_provenance(
         || facts.os_kernel.trim().is_empty()
         || facts.governor.trim().is_empty()
         || measurement.identity.host_identity.trim().is_empty()
-        || assembly_facts.source_dirty
         || assembly_facts.tool != HARNESS_PATH
     {
         return Err("algebra observed provenance violates the producing contract".to_owned());
@@ -1922,10 +1920,15 @@ mod tests {
         }
     }
 
-    #[test]
-    fn owner_emission_analyzes_and_strictly_reopens_the_algebra_envelope() {
-        let root = test_root("emit");
-        let (_request_scratch, request) = manifest_request("emit-request");
+    /// Emits the owner envelope of a synthetic accepted campaign whose request
+    /// records `source_dirty` and is then changed by `mutate`.
+    fn owner_emission(
+        name: &str,
+        source_dirty: bool,
+        mutate: impl FnOnce(&mut EmitOwnerRequest),
+    ) -> Result<(String, AnalysisOutput), String> {
+        let root = test_root(name);
+        let (_request_scratch, request) = manifest_request(&format!("{name}-request"));
         let manifest = campaign_manifest(ManifestRequest {
             channels: SessionChannels {
                 execution_log: root.path().join("execution.log"),
@@ -1954,7 +1957,7 @@ mod tests {
                 process: token(PROCESS).unwrap(),
                 observed_utc: "2026-09-05T00:00:00Z".to_owned(),
                 runtime: canonical_json(&MeasurementRuntime {
-                    source_dirty: false,
+                    source_dirty,
                     toolchain: "rustc 1.95.0".to_owned(),
                     cpu_model: "test-cpu".to_owned(),
                     cpu_features: vec!["test".to_owned()],
@@ -1969,7 +1972,7 @@ mod tests {
                 process: token(PROCESS).unwrap(),
                 observed_utc: "2026-09-05T00:01:00Z".to_owned(),
                 runtime: canonical_json(&AssemblyRuntime {
-                    source_dirty: false,
+                    source_dirty,
                     tool: HARNESS_PATH.to_owned(),
                     tool_sha256: producer_sha256,
                 })
@@ -1977,12 +1980,19 @@ mod tests {
             },
             output: root.path().join("algebra-owner.json"),
         };
-        let (artifact, analysis) = emit_owner(request).unwrap();
-        assert_eq!(analysis.selected, 16_384);
-        assert_eq!(analysis.decision.reason, DecisionReason::SelectedNonDefault);
+        let mut request = request;
+        mutate(&mut request);
+        let (artifact, analysis) = emit_owner(request)?;
         let bytes = fs::read(&artifact.path).unwrap();
         assert_eq!(artifact.sha256, Sha256Digest::of(&bytes));
-        let text = String::from_utf8(bytes).unwrap();
+        Ok((String::from_utf8(bytes).unwrap(), analysis))
+    }
+
+    #[test]
+    fn owner_emission_analyzes_and_strictly_reopens_the_algebra_envelope() {
+        let (text, analysis) = owner_emission("emit", false, |_| {}).unwrap();
+        assert_eq!(analysis.selected, 16_384);
+        assert_eq!(analysis.decision.reason, DecisionReason::SelectedNonDefault);
         let reopened = algebra_registry().unwrap().from_json(&text).unwrap();
         assert_eq!(reopened.profile_id().as_str(), LAUNCHER_CAMPAIGN_ID);
         assert_eq!(
@@ -1998,6 +2008,58 @@ mod tests {
                 .permanent()
                 .gray_chunk_subsets(),
             16_384
+        );
+    }
+
+    #[test]
+    fn owner_emission_from_a_dirty_checkout_proceeds_and_records_the_observation() {
+        let (text, _) = owner_emission("emit-dirty", true, |_| {}).unwrap();
+        let reopened = algebra_registry().unwrap().from_json(&text).unwrap();
+        assert!(
+            reopened
+                .verified_assembly()
+                .unwrap()
+                .provenance
+                .source_dirty
+        );
+        assert!(matches!(
+            reopened
+                .section::<AlgebraTuning>()
+                .unwrap()
+                .unwrap()
+                .measurement,
+            MeasurementProvenance::Calibrated {
+                source_dirty: true,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn owner_emission_refuses_a_changed_executable_or_protocol_by_digest() {
+        let other = "1".repeat(64);
+        let refused = owner_emission("emit-executable", false, |request| {
+            for provenance in [&mut request.measurement, &mut request.assembly] {
+                provenance
+                    .identity
+                    .executable_sha256
+                    .insert(PROCESS.to_owned(), other.clone());
+            }
+        })
+        .unwrap_err();
+        assert!(
+            refused.contains("differs from producing binary"),
+            "{refused}"
+        );
+        let refused = owner_emission("emit-protocol", false, |request| {
+            for provenance in [&mut request.measurement, &mut request.assembly] {
+                provenance.identity.protocol_digest = other.clone();
+            }
+        })
+        .unwrap_err();
+        assert!(
+            refused.contains("violates the producing contract"),
+            "{refused}"
         );
     }
 }

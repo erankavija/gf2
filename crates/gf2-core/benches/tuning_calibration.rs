@@ -1193,20 +1193,6 @@ fn collect_host_facts() -> io::Result<HostFacts> {
     })
 }
 
-/// Refuses to start a calibration whose named revision cannot reproduce its binary.
-#[cfg(test)]
-#[allow(dead_code)]
-fn require_clean_source(source_dirty: bool, source_revision: &GitRevision) -> Result<(), String> {
-    if source_dirty {
-        Err(format!(
-            "the source tree is dirty at {}; calibration aborted before any probe or timed call",
-            source_revision.as_str()
-        ))
-    } else {
-        Ok(())
-    }
-}
-
 /// Formats a UTC instant in the RFC 3339 (`@/citation/KlyneNewman2002`) form `Rfc3339Utc::parse` accepts.
 #[cfg(test)]
 #[allow(dead_code)]
@@ -6260,15 +6246,6 @@ mod tests {
     }
 
     #[test]
-    fn dirty_source_is_rejected_before_calibration_can_start() {
-        let revision = GitRevision::parse("0123456789abcdef0123456789abcdef01234567").unwrap();
-        assert_eq!(require_clean_source(false, &revision), Ok(()));
-        let error = require_clean_source(true, &revision).unwrap_err();
-        assert!(error.contains(revision.as_str()));
-        assert!(error.contains("before any probe or timed call"));
-    }
-
-    #[test]
     fn campaign_requires_exactly_four_rayon_threads() {
         assert_eq!(validate_rayon_threads(Some("4")), Ok(()));
         for value in [
@@ -10679,16 +10656,15 @@ mod campaign_owner {
     }
     fn runtime_facts(provenance: &neutral::ObservedProvenance) -> Result<RuntimeFacts, String> {
         let facts: RuntimeFacts = provenance.runtime.decode().map_err(err)?;
-        if facts.source_dirty
-            || [
-                &facts.toolchain,
-                &facts.cpu_model,
-                &facts.os_kernel,
-                &facts.governor,
-                &provenance.identity.host_identity,
-            ]
-            .iter()
-            .any(|value| value.trim().is_empty())
+        if [
+            &facts.toolchain,
+            &facts.cpu_model,
+            &facts.os_kernel,
+            &facts.governor,
+            &provenance.identity.host_identity,
+        ]
+        .iter()
+        .any(|value| value.trim().is_empty())
             || !facts.toolchain.contains("1.95.0")
             || facts.cpu_features.is_empty()
             || facts
@@ -10754,10 +10730,8 @@ mod campaign_owner {
         }
         let facts = runtime_facts(&request.measurement)?;
         let assembly_runtime: AssemblyRuntime = request.assembly.runtime.decode().map_err(err)?;
-        if assembly_runtime.source_dirty
-            || assembly_runtime.tool != "crates/gf2-core/benches/tuning_calibration.rs"
-        {
-            return Err("owner assembly source/tool identity mismatch".to_owned());
+        if assembly_runtime.tool != "crates/gf2-core/benches/tuning_calibration.rs" {
+            return Err("owner assembly tool identity mismatch".to_owned());
         }
         let binary = request
             .measurement
@@ -10774,7 +10748,7 @@ mod campaign_owner {
             measured_at: Rfc3339Utc::parse(&request.measurement.observed_utc).map_err(err)?,
             source_revision: GitRevision::parse(&request.measurement.identity.source_revision)
                 .map_err(err)?,
-            source_dirty: false,
+            source_dirty: facts.source_dirty,
             harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
                 .map_err(err)?,
             harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA).map_err(err)?,
@@ -10791,7 +10765,7 @@ mod campaign_owner {
             assembled_at: Rfc3339Utc::parse(&request.assembly.observed_utc).map_err(err)?,
             source_revision: GitRevision::parse(&request.assembly.identity.source_revision)
                 .map_err(err)?,
-            source_dirty: false,
+            source_dirty: assembly_runtime.source_dirty,
             tool: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
                 .map_err(err)?,
             tool_sha256: actual,
@@ -11431,8 +11405,12 @@ mod campaign_owner {
                 assert!(ProfileId::parse(id).is_err(), "{id}");
             }
         }
-        #[test]
-        fn owner_emission_publishes_the_launcher_named_profile_and_strictly_reopens_it() {
+        /// The emission request of a synthetic accepted campaign that records
+        /// `source_dirty`, with the scratch stage it writes into.
+        #[allow(dead_code)]
+        fn owner_emit_request(
+            source_dirty: bool,
+        ) -> (gf2_core::test_scratch::Scratch, neutral::EmitOwnerRequest) {
             require_simd_arm(simd_backend());
             let stage_scratch = scratch("gf2-core-owner-emit");
             let stage = fs::canonicalize(stage_scratch.path()).unwrap();
@@ -11476,7 +11454,7 @@ mod campaign_owner {
                     process: token("core-producer").unwrap(),
                     observed_utc: "2026-09-05T00:00:00Z".to_owned(),
                     runtime: CanonicalJson::from_serializable(&RuntimeFacts {
-                        source_dirty: false,
+                        source_dirty,
                         toolchain: "rustc 1.95.0".to_owned(),
                         cpu_model: "test-cpu".to_owned(),
                         cpu_features: vec!["avx2".to_owned(), "pclmulqdq".to_owned()],
@@ -11493,7 +11471,7 @@ mod campaign_owner {
                     process: token("core-producer").unwrap(),
                     observed_utc: "2026-09-05T00:01:00Z".to_owned(),
                     runtime: CanonicalJson::from_serializable(&AssemblyRuntime {
-                        source_dirty: false,
+                        source_dirty,
                         tool: "crates/gf2-core/benches/tuning_calibration.rs".to_owned(),
                         tool_sha256: binary.as_str().to_owned(),
                     })
@@ -11501,6 +11479,23 @@ mod campaign_owner {
                 },
                 output: stage.join("core-owner.json"),
             };
+            (stage_scratch, emit)
+        }
+        #[test]
+        fn owner_emission_refuses_by_digest_and_publishes_from_a_dirty_checkout() {
+            let (_stage, emit) = owner_emit_request(true);
+            let mut changed = emit.clone();
+            for provenance in [&mut changed.measurement, &mut changed.assembly] {
+                provenance
+                    .identity
+                    .executable_sha256
+                    .insert("core-producer".to_owned(), "1".repeat(64));
+            }
+            let refused = publish_owner(&changed).unwrap_err();
+            assert!(
+                refused.contains("differs from producing binary"),
+                "{refused}"
+            );
             let OwnerResponse::EmitOwner { artifact, .. } = publish_owner(&emit).unwrap() else {
                 panic!("owner emission returned another response");
             };
@@ -11513,6 +11508,14 @@ mod campaign_owner {
                 reopened.section.selectors(),
                 CoreTuning::CONSERVATIVE.selectors()
             );
+            assert!(matches!(
+                reopened.measurement,
+                MeasurementProvenance::Calibrated {
+                    source_dirty: true,
+                    ..
+                }
+            ));
+            assert!(reopened.assembly.source_dirty);
         }
         #[test]
         fn reporting_preflight_rejects_a_default_missing_from_an_extent_grid() {
