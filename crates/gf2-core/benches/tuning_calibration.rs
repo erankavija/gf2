@@ -8086,6 +8086,19 @@ mod tests {
         );
     }
 
+    /// Pins the retained-threshold fixtures of each field at its smallest
+    /// grid size: the seeds and the generator's stream decide these bytes.
+    #[test]
+    fn retained_fixtures_keep_their_digest_for_their_seeds() {
+        let digests = CalibratedField::ALL
+            .into_iter()
+            .map(|field| expected_operand_digest(field, field.grid()[0]).unwrap());
+        assert_eq!(
+            digest_tuple(b"retained-fixtures", digests),
+            "03bb93d425c58136c63606361b8fb74752f2ca382b638e5164de4a7fdf2d2ad6"
+        );
+    }
+
     #[test]
     fn cargo_bench_passes_a_bench_flag_the_parser_ignores() {
         let args = ["--bench", "--list-grid"].map(str::to_owned);
@@ -11283,6 +11296,20 @@ mod campaign_owner {
                 "precondition: the owner contract tests need a SIMD backend as the second \
                  arm of the bit-backend family, and this host publishes none",
             )
+        }
+        /// Pins the extent fixtures of the first cell of each field: the
+        /// seeds and the generator's stream decide these bytes.
+        #[test]
+        fn extent_fixtures_keep_their_digest_for_their_seeds() {
+            let cells = extent_cells();
+            let digests = ExtentField::ALL.into_iter().map(|field| {
+                let cell = cells.iter().find(|cell| cell.field == field).unwrap();
+                extent_operand_digest(&build_extent_fixture(cell).unwrap())
+            });
+            assert_eq!(
+                digest_tuple(b"extent-fixtures", digests),
+                "7929dfcbede84ccf3d85e36e02c69a03e77073f3d8654781c3b2d4711ce0acc0"
+            );
         }
         #[test]
         #[should_panic(expected = "precondition: the owner contract tests need a SIMD backend")]

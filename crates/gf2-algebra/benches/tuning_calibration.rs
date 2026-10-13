@@ -1988,6 +1988,21 @@ mod tests {
         Ok((String::from_utf8(bytes).unwrap(), analysis))
     }
 
+    /// Pins the fixture banks of every declared dimension: the seeds and the
+    /// generator's stream decide these bytes.
+    #[test]
+    fn fixtures_keep_their_digest_for_their_seeds() {
+        let digests: Vec<_> = DIMENSIONS
+            .iter()
+            .enumerate()
+            .map(|(shape_index, dimension)| expected_operands_digest(shape_index, *dimension))
+            .collect();
+        assert_eq!(
+            tuple_digest(b"fixtures", &digests),
+            "aed5b519a3cb51049673214296d919fbff96b9de157673e87aea72b88f4112b3"
+        );
+    }
+
     #[test]
     fn owner_emission_analyzes_and_strictly_reopens_the_algebra_envelope() {
         let (text, analysis) = owner_emission("emit", false, |_| {}).unwrap();

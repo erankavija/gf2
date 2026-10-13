@@ -2469,6 +2469,20 @@ mod tests {
         assert_eq!(decode.granules_per_task(), GRANULES_PER_TASK);
     }
 
+    /// Pins the fixture banks of the first stratum of each field: the seeds
+    /// and the generator's stream decide these bytes.
+    #[test]
+    fn fixtures_keep_their_digest_for_their_seeds() {
+        let digests: Vec<_> = Field::ALL
+            .into_iter()
+            .map(|field| expected_operands_digest(field, &field.strata()[0]).unwrap())
+            .collect();
+        assert_eq!(
+            tuple_digest(b"fixtures", &digests),
+            "9f3510ac9eaee0cfdfe84733108bd01af810dac037d9330d1c2b7a659e02152b"
+        );
+    }
+
     #[test]
     fn source_control_metadata_does_not_decide_acceptance() {
         let flat = |field| Curve::at_conservative(field);
