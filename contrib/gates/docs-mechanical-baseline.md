@@ -67,3 +67,22 @@ the flat location of the a83583e0 entry (record of @/issue/f694f59a).
 | `dev/active/7d824b2f/design.md:990` | `broken-link` | `../a83583e0/premeasurement-protocol.md` |
 | `dev/active/7d824b2f/design.md:1044` | `broken-link` | `../a83583e0/premeasurement-protocol.md` |
 | `dev/active/dbd8787d/premeasurement-protocol.md:10` | `broken-link` | `../a83583e0/premeasurement-protocol.md` |
+
+Each row of the sixth table is a link or an address in a protocol snapshot
+under `inputs/producing/`: the receipt of the campaign states the SHA-256 of
+the snapshot, and `dev/scripts/validate-tuning-extent-campaign.py` reads the
+protocol under that digest. The link text counts directory levels from the
+protocol's own location.
+
+| Location | Class | Target |
+|---|---|---|
+| `dev/active/6dc81018-field-capability-dispatch/a83583e0/inputs/producing/dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md:9` | `broken-link` | `../7d824b2f/design.md` |
+| `dev/active/6dc81018-field-capability-dispatch/a83583e0/inputs/producing/dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md:11` | `broken-link` | `../3fa7c9d0/design.md` |
+| `dev/active/6dc81018-field-capability-dispatch/a83583e0/inputs/producing/dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md:13` | `broken-link` | `../eaae1b56/premeasurement-protocol.md` |
+| `dev/active/6dc81018-field-capability-dispatch/a83583e0/inputs/producing/dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md:14` | `broken-link` | `../../benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` |
+| `dev/active/6dc81018-field-capability-dispatch/a83583e0/inputs/producing/dev/active/6dc81018-field-capability-dispatch/a83583e0/premeasurement-protocol.md:584` | `unresolved-item` | `@/inv/campaign-execution-logging` |
+| `dev/active/dbd8787d/inputs/producing/dev/active/dbd8787d/premeasurement-protocol.md:7` | `broken-link` | `../a83583e0/premeasurement-protocol.md` |
+| `dev/active/dbd8787d/inputs/producing/dev/active/dbd8787d/premeasurement-protocol.md:10` | `broken-link` | `../7d7c647c/design.md` |
+| `dev/active/dbd8787d/inputs/producing/dev/active/dbd8787d/premeasurement-protocol.md:11` | `broken-link` | `../7d824b2f/design.md` |
+| `dev/active/dbd8787d/inputs/producing/dev/active/dbd8787d/premeasurement-protocol.md:25` | `broken-link` | `producing-build-inputs.json` |
+| `dev/active/dbd8787d/inputs/producing/dev/active/dbd8787d/premeasurement-protocol.md:168` | `broken-link` | `campaign-declaration.json` |

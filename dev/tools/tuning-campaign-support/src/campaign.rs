@@ -2106,7 +2106,7 @@ impl PreparationStore {
             return Err(invalid("preparation finish descriptor/journal mismatch"));
         }
         if let PreparationJournal::Replacement { previous, .. } = &self.intent.journal {
-            if descriptor.identity != previous.identity {
+            if !descriptor.identity.resume_equivalent(&previous.identity) {
                 return Err(invalid("replacement changed campaign resume identity"));
             }
         }
@@ -5492,6 +5492,27 @@ mod publication_tests {
             }
             assert!(tmp.path().join("active-session.json").exists());
         }
+    }
+
+    #[test]
+    fn a_replacement_session_keeps_the_resume_identity_whatever_its_revision() {
+        let tmp = scratch("session-replacement-revision");
+        let (store, mut log, checksum) = closed_session(tmp.path());
+        store.retire(&mut log, &checksum).unwrap();
+        drop(log);
+        let config = preparation_config(tmp.path());
+        let finish = |change: fn(&mut ResumeIdentity)| {
+            let preparation = begin_preparation(tmp.path(), "replacement");
+            let mut descriptor = preparation_descriptor(&preparation);
+            change(&mut descriptor.identity);
+            let mut log = preparation.open_log()?;
+            preparation
+                .finish(descriptor, config.clone(), &mut log)
+                .map(drop)
+        };
+        let refused = finish(|identity| identity.protocol_digest = "b".repeat(64)).unwrap_err();
+        assert!(refused.to_string().contains("resume identity"), "{refused}");
+        finish(|identity| identity.source_revision = "b".repeat(40)).unwrap();
     }
 
     #[test]

@@ -2266,7 +2266,11 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
     stage = Path(campaign_config["channels"]["stage"])
     units = [checkpoint_files[unit["key"]][0]["case"] for manifest in campaign_config["manifests"] for unit in manifest["ordered_units"]]
     replay_acquisition(records, units)
-    require(records[0]["details"] == expected_bootstrap_inputs(stage, campaign_config),
+    # The first preparation may precede the session that wrote the campaign
+    # record, so its checkout observations may differ from the recorded ones.
+    require(session_inputs(records[0]["details"], "campaign-start")
+            == session_inputs(expected_bootstrap_inputs(stage, campaign_config),
+                              "campaign bootstrap inputs"),
             "campaign-start does not bind exact bootstrap/staging identity inputs")
     accepted: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
     progress_by_attempt: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -4612,6 +4616,36 @@ def check_declaration(issue: str) -> dict[str, Any]:
             "status": "declaration-valid", **selection_summary(thresholds, declaration)}
 
 
+def validate_pinned_inputs(campaign_config: Any, declaration: Any) -> None:
+    """The files and input digests a campaign record pins, each by content.
+
+    The protocol and the producing manifest are read under their recorded
+    digests and the recorded input digests are the pins, so the revision, tree
+    and status of the producing checkout decide nothing.
+    """
+    root, identity = repository_root(), campaign_config["identity"]
+    pinned_file(root, declaration, declaration["protocol"],
+                require_sha(identity.get("protocol_digest"), "protocol digest"))
+    producing = require_keys(campaign_config["producing_manifest"], ["path", "sha256"],
+                             "campaign producing-input manifest")
+    require(Path(producing["path"]).is_absolute()
+            and Path(producing["path"]).name == Path(declaration["producing_manifest"]).name,
+            "campaign producing-input manifest identity mismatch")
+    inputs = producing_inputs(root, declaration["producing_manifest"], pinned_file(
+        root, declaration, declaration["producing_manifest"],
+        require_sha(producing["sha256"], "campaign producing-input manifest digest")))
+    behavior = recorded_hashes(identity.get("behavior_sha256"), inputs["behavior_sources"],
+                               "behavior source")
+    build = recorded_hashes(campaign_config["build_inputs"], inputs["build_inputs"],
+                            "build input")
+    require(all(build[path] == sha for path, sha in behavior.items()),
+            "behavior source digests differ from the build-input digests")
+    lifecycle = {path: behavior[path] for path in inputs["lifecycle_sources"]}
+    recorded_declaration(declaration, lifecycle, "lifecycle manifest")
+    require(identity["lifecycle_behavior_sha256"] == digest(compact(lifecycle)),
+            "lifecycle behavior manifest digest mismatch")
+
+
 def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     stage = Path(stage_arg)
     require(stage.is_absolute() and stage.exists() and not stage.is_symlink()
@@ -4650,14 +4684,11 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
                 ";cpus=" + compact(affinity).decode())
             and identity["host_identity"].split(";cpus=", 1)[0],
             "source or host identity is malformed")
-    # The protocol and the producing manifest are read under their recorded
-    # digests and the recorded input digests are the pins, so the revision,
-    # tree and status of the producing checkout decide nothing. Recorded paths
-    # name that checkout and are informational; the validator's own identity
-    # is informational too, since checking is not measurement behavior.
-    root = repository_root()
+    # Recorded paths name the producing checkout and are informational; the
+    # validator's own identity is informational too, since checking is not
+    # measurement behavior.
     protocol_sha = identity["protocol_digest"]
-    pinned_file(root, declaration, declaration["protocol"], protocol_sha)
+    validate_pinned_inputs(campaign_config, declaration)
     for name in ["protocol", "validator"]:
         recorded = require_keys(campaign_config[name], ["path", "sha256"], f"campaign {name}")
         require(set(recorded) == {"path", "sha256"} and Path(recorded["path"]).is_absolute()
@@ -4688,22 +4719,6 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     require(channels == {"stage": str(stage), "execution_log": str(stage / "execution.log"),
                          "checkpoints": str(stage / "checkpoints")},
             "campaign channels mismatch")
-    producing = require_keys(campaign_config["producing_manifest"], ["path", "sha256"],
-                             "campaign producing-input manifest")
-    require(Path(producing["path"]).is_absolute()
-            and Path(producing["path"]).name == Path(declaration["producing_manifest"]).name,
-            "campaign producing-input manifest identity mismatch")
-    inputs = producing_inputs(root, declaration["producing_manifest"], pinned_file(
-        root, declaration, declaration["producing_manifest"],
-        require_sha(producing["sha256"], "campaign producing-input manifest digest")))
-    behavior = recorded_hashes(identity.get("behavior_sha256"), inputs["behavior_sources"],
-                               "behavior source")
-    build = recorded_hashes(campaign_config["build_inputs"], inputs["build_inputs"],
-                            "build input")
-    require(all(build[path] == sha for path, sha in behavior.items()),
-            "behavior source digests differ from the build-input digests")
-    lifecycle = {path: behavior[path] for path in inputs["lifecycle_sources"]}
-    recorded_declaration(declaration, lifecycle, "lifecycle manifest")
     require(identity["process_descriptors_sha256"] == digest(compact(campaign_config["processes"])),
             "process descriptor digest mismatch")
     expected_processes = declared_processes(declaration)
@@ -4715,8 +4730,6 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     thresholds = validate_preflight_reports(stage, campaign_config)
     executable_map = {item["id"]: item["executable_sha256"] for item in campaign_config["processes"]}
     require(identity["executable_sha256"] == executable_map, "executable identity map mismatch")
-    require(identity["lifecycle_behavior_sha256"] == digest(compact(lifecycle)),
-            "lifecycle behavior manifest digest mismatch")
     require(campaign_config["host_admission_policy"] == HOST_ADMISSION_POLICY,
             "host-admission policy differs from the reviewed declaration")
 

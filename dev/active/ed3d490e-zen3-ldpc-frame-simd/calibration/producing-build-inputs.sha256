@@ -287,7 +287,7 @@ b762b18123538cb8731adecd25fccc87d6bead85406ac7b9d75d515163ae6b34  dev/active/ed3
 3574cf0529c8c80168198664b915d2869780d7bbc573df32abd191c9bab59584  dev/reference_data/tuning-profiles/conservative.json
 34a10fc82f08f0518ae12e4e4c92b12fdad0279cd8be861b8af8e11653bebdb2  dev/scripts/ccx1-bench-flock.sh
 06ae991c689c772e0126ed3c9c33f9330fca067a4acc5631b9c84544590f280c  dev/scripts/tuning-extent-campaign.sh
-fd847acdae08d19701853ef8e60fc12642291ebf2443785dd0b2d5488f6e5337  dev/scripts/validate-tuning-extent-campaign.py
+2d8d1f7f4d8e0b449f0228d8e7dccb43554e563062cbdd60b29b0cf275e2df01  dev/scripts/validate-tuning-extent-campaign.py
 79e87fab74900712b794c5356f415b1b820f738f4006317e7f87c345e7da1230  dev/tools/tuning-campaign-support/Cargo.toml
 e9049514fad5d3194e0520eb91f5a3da379a55191dce61c6fbd5953969cdc46a  dev/tools/tuning-campaign-support/src/abtest.rs
 0846942df8a134030b58065390c51b162bccf6e06222227b5dea6935240777ae  dev/tools/tuning-campaign-support/src/arm.rs
@@ -295,7 +295,7 @@ faf5526e5980f716ffe621ff06380cbeb2be4945886823dc66136a9895427503  dev/tools/tuni
 0a62dae767cbdf75fd0de15a8dd285075d2f1bde8db57300a5d16283b9932243  dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs
 dd153baa0dc4c18448ad440231f023e32195b2ab094b96b1bfb144d94112a1b2  dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs
 fdb82b0ee0b0f52a755ba112849e4fc7d14f641d6f038175dcf9839ca55e7fb4  dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs
-a256e8346e0c16a668ad3f95c2925ccdfbee014cca42a5333b5e8695efec8b38  dev/tools/tuning-campaign-support/src/campaign.rs
+10a7837c7b4c315353028f2ead3e1ddf33687d8833e6bcaba0b33ff2d2950cbd  dev/tools/tuning-campaign-support/src/campaign.rs
 6f1f6ad82089383406bd416a98d3b4c86cd8984720511bcca7f8d03f4678fb17  dev/tools/tuning-campaign-support/src/host.rs
 2988f77e5edc0eb0a945ca505b4091de06e1005e05cb6c39a1b7ea4e8afdd6b9  dev/tools/tuning-campaign-support/src/journal.rs
 e887b256348c760c82747e2e4bd6d867cb4f4a2726603bc9c83efc24cf6b3609  dev/tools/tuning-campaign-support/src/lib.rs
