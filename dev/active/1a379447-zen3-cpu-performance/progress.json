@@ -2278,6 +2278,13 @@
    "status": "resolved",
    "raised_at": "2026-10-12T21:10Z",
    "resolution": "Invoker 2026-10-13 (session 37): keep agent-ed3d490e-run as the build tree until the story's evidence is collected; no issue filed."
+  },
+  {
+   "issue": "63bad95d",
+   "date": "2026-10-13",
+   "question": "The ruling 'ple.scalar_base_max_cols returns to 24 before the 63bad95d merge' has no production reader: default and baked builds read the constant 1, and no production crate installs an envelope. How does the merge proceed?",
+   "answer": "Merge as measured: the 63bad95d owner keeps 1; findings state both owners' values.",
+   "status": "resolved"
   }
  ],
  "rework_counts": {
@@ -2355,7 +2362,9 @@
   "824cde7c": 0,
   "4252085a": 4,
   "05c9065e": 2,
-  "0a77ecfc": 1
+  "0a77ecfc": 1,
+  "63bad95d": 1,
+  "20af7e6e": 2
  },
  "surfaced_pitfalls": [
   {
@@ -3135,7 +3144,8 @@
   "Session 33: window gf2-bench-window-20261011 armed for 04:00 Europe/Helsinki (the first attempt was denied by the permission classifier; the invoker said to try again). Queue: one new job, the 8e53235b pilot, behind a load guard on its queue line. A session of another project (mealie-fi) is active on the host.",
   "Session 33 end: bad1aea8 closed after one rework. Five story issues closed this session (e4e2ba52, 395fe4e2, a96a4cd6, feb60d0d, bad1aea8). Host quiet from 03:05 local for the 04:00 window.",
   "Session 34 (2026-10-11): invoker rulings on the nine handoff-29 questions: repeat each disturbed family once under a new family version; bfc2ceab exploratory cost accepted; 7dbe1393 merges unselected; load guard per queue line only; lead repaired jit validate (28a64b749); aff59c3c dependency as a root workspace dependency; a96a4cd6 stage builders stay public and gain the stated route-equivalence contract (81e955b0); the INTRA arm converges on the shared AFF3CT handle before measuring (1ca04967, between d4185e9e and 4252085a); the story's arms build and run from the pinned worktree agent-ed3d490e-run. Invoker steer the same day: too much pinning and protocol; prefer the simplest, least protocol-intensive approach that meets the criteria; the focus is HPC. Filed 151af028 (checkpoint_compat resume tests), 07024d65 (stale 04b85d10 survey, lead holds it after 8e53235b), 754208a0 (rare-event artifact timeouts, outside the epic).",
-  "Session 37 (2026-10-13): invoker answered the three handoff-32 questions (amend cba35553 REQ-03; one audit round for 4252085a; keep the build worktree). Both issues closed. agent-ed3d490e-run is on branch worktree-agent-4252085a-r4 at 05e7cf4b3 (merged)."
+  "Session 37 (2026-10-13): invoker answered the three handoff-32 questions (amend cba35553 REQ-03; one audit round for 4252085a; keep the build worktree). Both issues closed. agent-ed3d490e-run is on branch worktree-agent-4252085a-r4 at 05e7cf4b3 (merged).",
+  "Session 37, 2026-10-13: window collected (five jobs rc=0, quiet host); invoker approved re-arming exit-75 jobs (none). 63bad95d merged at b746b36b8, cargo-ci gate passed; code-review failed (run-profile-families.sh:98 inherited CARGO_ENCODED_RUSTFLAGS; :302 Git-status resume condition), research-review failed (core producer archive host-local, measurement-contract.md:114); rework 1 dispatched to w-63bad95d-int with a one-pass audit. 20af7e6e rework 1 (verifier read the live closure manifest; now a committed snapshot) and rework 2 (same three patterns, pre-emptive). Commit 0b45ec4ef on main has a 72-character subject (entered with the merge)."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
