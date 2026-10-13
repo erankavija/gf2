@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Untimed rehearsal of the decoder calibration campaign (jit:0a77ecfc).
 #
-# Usage: rehearse-campaign.sh [record name under rehearsal/], from a clean checkout
+# Usage: rehearse-campaign.sh [record name under rehearsal/]
 #
-# Runs the queue launcher over a throwaway stage in a clone of HEAD that
-# differs by the two stand-ins under rehearsal/: timed children report
+# Runs the queue launcher over a throwaway stage in a clone of HEAD, which
+# holds no uncommitted change of the checkout, and that differs by the two
+# stand-ins under rehearsal/: timed children report
 # constant samples without reading a clock, and a private lock file replaces
 # the host mutex. A failed rehearsal keeps its stage and clone.
 set -euo pipefail
@@ -14,10 +15,6 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(git -C "$here" rev-parse --show-toplevel)
 calibration=${here#"$repo"/}
 cd "$repo"
-if [[ -n $(git status --porcelain --untracked-files=all) ]]; then
-  echo 'the rehearsal clones HEAD; commit or remove local changes first' >&2
-  exit 2
-fi
 shopt -s nullglob
 existing=(/tmp/gf2-"$issue"-*)
 if [[ ${#existing[@]} -ne 0 ]]; then

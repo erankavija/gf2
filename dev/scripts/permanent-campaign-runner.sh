@@ -11,17 +11,17 @@
 # at(1) alternative:
 #   echo '/home/vkaskivuo/Projects/gf2/dev/scripts/permanent-campaign-runner.sh measure >> /home/vkaskivuo/Projects/gf2/target/permanent-campaign/at-measure.log 2>&1' | at 02:00 2026-08-14
 #
-# The outer logs live under target/, which prepare creates and git ignores, so
-# their creation cannot make the measure pre-flight reject its own run. The
+# The outer logs live under target/, which prepare creates and git ignores. The
 # per-step logs and CSV outputs are created under dev/studies/ only after the
-# same pre-flight check has passed.
+# measure pre-flight has matched every prepared binary to its manifest digest.
+# The revision and status of the source closure are recorded and decide nothing.
 
 set -euo pipefail
 
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
-# Tests may point repository checks at a clean fixture while executing this
-# working copy of the runner. Production uses the script's repository root.
+# Tests may point the repository observations at a fixture while executing
+# this working copy of the runner. Production uses the script's repository root.
 REPO_ROOT="${CAMPAIGN_REPO_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 SAMPLING_MANIFEST="$REPO_ROOT/dev/research/permanent-sampling-feas/Cargo.toml"
@@ -130,14 +130,6 @@ tracked_worktree_clean() {
 
 source_closure_revision() {
     git -C "$REPO_ROOT" log -1 --format=%H -- crates/ Cargo.lock
-}
-
-assert_tracked_worktree_clean() {
-    if ! tracked_worktree_clean; then
-        echo "ERROR: prepare requires a clean source closure (crates/ and Cargo.lock; tracked and untracked)" >&2
-        git -C "$REPO_ROOT" status --short --untracked-files=all -- crates/ Cargo.lock >&2
-        exit 2
-    fi
 }
 
 capture_block() {
@@ -357,7 +349,6 @@ prepare() {
     require_command sha256sum
     require_command git
     require_command rustc
-    assert_tracked_worktree_clean
     mkdir -p "$SAMPLING_TARGET_DIR" "$WAVE_TARGET_DIR" "$TARGET_ROOT"
     echo "building permanent-sampling-feas (HIP)"
     cargo +1.95.0 build --manifest-path "$SAMPLING_MANIFEST" --release --features hip --target-dir "$SAMPLING_TARGET_DIR"

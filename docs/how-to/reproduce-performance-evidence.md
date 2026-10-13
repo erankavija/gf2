@@ -120,10 +120,11 @@ Before timing each size, the harness asserts that the three backends return
 equal permanents on one fixture. Each row records `git_revision`,
 `source_dirty`, `rustc`, `cpu_model`, `kernel` and the `governor` of CPU 6. The
 harness sets `source_dirty` from `git status --porcelain --untracked-files=all`,
-so an output path inside the worktree marks every row dirty. Check that every
-row records revision `88474a74ceee817040327db164c21f9fdd5ccf84` and
-`source_dirty=false`, and that the `execution` column takes each value from $1$
-to $5$:
+so an output path inside the worktree records `true` in every row. Both columns
+point at the source to rebuild from and decide nothing about a run: the
+comparison below rests on the SHA-256 of the receipt's raw data, which the
+receipt states. Check that the `execution` column takes each value from $1$ to
+$5$; the listing also prints the recorded revision and status:
 
 ```sh
 cut -d, -f2,15,16 /tmp/f3-repro.csv | sort | uniq -c
@@ -145,8 +146,8 @@ sha256sum /tmp/f3-receipt.csv
 The claim's statistic is a ratio of pooled rates per size $n$, where a
 backend's pooled rate is its summed `matrices` over its summed `elapsed_ns`.
 Save a script that prints the batched-to-scalar and scalar-to-direct ratios
-from both files. It goes outside the worktree, where an untracked file would
-mark the rows of a later run dirty, and the redirection replaces any existing
+from both files. It goes outside the worktree, and the redirection replaces any
+existing
 `/tmp/f3-pooled.py`:
 
 ```sh

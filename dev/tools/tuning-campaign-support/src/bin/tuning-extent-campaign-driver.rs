@@ -592,7 +592,7 @@ fn report_cli(
     verify_report_response(label, &response)?;
     Ok(response)
 }
-#[derive(Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct MeasurementRuntime {
     source_dirty: bool,
@@ -610,7 +610,8 @@ struct AssemblyRuntime {
     tool: String,
     tool_sha256: String,
 }
-fn host_runtime(receipt: &str) -> io::Result<CanonicalJson> {
+/// The host facts, beside the checkout status the caller observed.
+fn host_runtime(receipt: &str, source_dirty: bool) -> io::Result<MeasurementRuntime> {
     let cpu = fs::read_to_string("/proc/cpuinfo")?;
     let value = |key: &str| {
         cpu.lines()
@@ -634,8 +635,8 @@ fn host_runtime(receipt: &str) -> io::Result<CanonicalJson> {
     if governors.is_empty() {
         return Err(invalid("CPU governor observation unavailable"));
     }
-    CanonicalJson::from_serializable(&MeasurementRuntime {
-        source_dirty: false,
+    Ok(MeasurementRuntime {
+        source_dirty,
         toolchain: command_text("rustc", &["+1.95.0", "--version"])?,
         cpu_model: value("model name")?,
         cpu_features: value("flags")?
@@ -649,13 +650,37 @@ fn host_runtime(receipt: &str) -> io::Result<CanonicalJson> {
         receipt: receipt.into(),
     })
 }
-/// The checkout's revision and tree, recorded as rebuild pointers; neither
-/// decides a start or a resume.
-fn source_state() -> io::Result<(String, String)> {
+/// The checkout's revision, tree and whether it carries uncommitted changes,
+/// recorded as rebuild pointers; none decides a start or a resume.
+fn source_state() -> io::Result<(String, String, bool)> {
     Ok((
         command_text("git", &["rev-parse", "HEAD"])?,
         command_text("git", &["rev-parse", "HEAD^{tree}"])?,
+        !command_text("git", &["status", "--porcelain", "--untracked-files=all"])?.is_empty(),
     ))
+}
+/// Whether `observed` is the host and toolchain `recorded` states. The
+/// checkout status is an observation and takes no part.
+fn same_host(observed: MeasurementRuntime, recorded: &MeasurementRuntime) -> bool {
+    MeasurementRuntime {
+        source_dirty: recorded.source_dirty,
+        ..observed
+    } == *recorded
+}
+/// The checkout a campaign records as its rebuild pointer: the revision and
+/// whether it carried uncommitted changes.
+#[derive(Clone, Copy)]
+struct RecordedSource<'a> {
+    revision: &'a str,
+    dirty: bool,
+}
+impl<'a> RecordedSource<'a> {
+    fn of(revision: &'a str, runtime: &CanonicalJson) -> io::Result<Self> {
+        Ok(Self {
+            revision,
+            dirty: runtime.decode::<MeasurementRuntime>()?.source_dirty,
+        })
+    }
 }
 /// The independent validator. Its recorded identity is informational: the
 /// driver runs the validator of the checkout it executes in, and behavior
@@ -712,7 +737,10 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
         return Err(invalid("producing source identity changed"));
     }
     if config.affinity.host_identity()? != config.identity.host_identity
-        || host_runtime(&config.receipt)? != config.runtime
+        || !same_host(
+            host_runtime(&config.receipt, source_state()?.2)?,
+            &config.runtime.decode()?,
+        )
     {
         return Err(invalid("host/toolchain/governor identity changed"));
     }
@@ -842,7 +870,7 @@ fn import_owner(
     root: &Path,
     channels: &SessionChannels,
     campaign_id: &Token,
-    revision: &str,
+    source: RecordedSource,
     composer: &ProcessDescriptor,
     imported: &ImportedOwner,
     log: &mut ExecutionLog,
@@ -887,8 +915,8 @@ fn import_owner(
     let tail = vec![
         campaign_id.as_str().to_owned(),
         utc()?,
-        revision.to_owned(),
-        "false".to_owned(),
+        source.revision.to_owned(),
+        source.dirty.to_string(),
         composer.executable_sha256.as_str().to_owned(),
     ];
     let mut commands = Vec::new();
@@ -1133,18 +1161,35 @@ struct BootstrapInputs {
     build_inputs: BTreeMap<String, String>,
     host_admission_policy: HostAdmissionPolicy,
 }
+impl BootstrapInputs {
+    /// Cites the checkout observations of `recorded`, the interrupted
+    /// preparation this session retries, so that the input digests and host
+    /// facts decide the retry.
+    fn citing_checkout_of(mut self, recorded: &Self) -> io::Result<Self> {
+        self.revision.clone_from(&recorded.revision);
+        self.tree.clone_from(&recorded.tree);
+        self.runtime = CanonicalJson::from_serializable(&MeasurementRuntime {
+            source_dirty: recorded
+                .runtime
+                .decode::<MeasurementRuntime>()?
+                .source_dirty,
+            ..self.runtime.decode()?
+        })?;
+        Ok(self)
+    }
+}
 fn bootstrap_inputs(
     channels: &SessionChannels,
     campaign_id: &Token,
     declaration: &CampaignDeclaration,
 ) -> io::Result<BootstrapInputs> {
-    let (revision, tree) = source_state()?;
+    let (revision, tree, source_dirty) = source_state()?;
     let staging: StagingManifest = read_json(&channels.stage.join("staging-manifest.json"))?;
     validate_build_source_observations(&channels.stage, &staging)?;
     let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
     let behavior = ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)?;
     let receipt = format!("dev/benchmarks/tuning_profiles/{}.md", campaign_id.as_str());
-    let runtime = host_runtime(&receipt)?;
+    let runtime = CanonicalJson::from_serializable(&host_runtime(&receipt, source_dirty)?)?;
     let affinity = CpuAffinity::observe()?;
     let repository = fs::canonicalize(".")?;
     let mut processes = Vec::new();
@@ -1260,11 +1305,15 @@ fn prepare(
             "campaign is complete; publish-campaign finishes its repository publication",
         ));
     }
-    let inputs = bootstrap_inputs(&channels, &campaign_id, &declaration)?;
+    let session_id = Token::new(session_id)?;
+    let mut inputs = bootstrap_inputs(&channels, &campaign_id, &declaration)?;
+    if let Some(recorded) = PreparationStore::interrupted_inputs(&channels, &session_id)? {
+        inputs = inputs.citing_checkout_of(&recorded.decode()?)?;
+    }
     let preparation = PreparationStore::begin(
         channels.clone(),
         campaign_id.clone(),
-        Token::new(session_id)?,
+        session_id,
         fs::canonicalize(lock)?,
         CanonicalJson::from_serializable(&inputs)?,
     )?;
@@ -1343,7 +1392,7 @@ fn prepare(
                     Path::new("."),
                     &channels,
                     &campaign_id,
-                    &revision,
+                    RecordedSource::of(&revision, &runtime)?,
                     composer,
                     imported,
                     &mut log,
@@ -2110,7 +2159,7 @@ fn emit(
                 process: producer.id.clone(),
                 observed_utc: timestamp,
                 runtime: CanonicalJson::from_serializable(&AssemblyRuntime {
-                    source_dirty: false,
+                    source_dirty: config.runtime.decode::<MeasurementRuntime>()?.source_dirty,
                     tool: format!(
                         "crates/{}/benches/tuning_calibration.rs",
                         owner.name.crate_name()
@@ -2167,7 +2216,7 @@ fn emit(
     compose_complete(
         stage,
         &config.campaign_id,
-        &config.identity.source_revision,
+        RecordedSource::of(&config.identity.source_revision, &config.runtime)?,
         &process(config, "composer")?,
         &declaration,
         log,
@@ -2184,7 +2233,7 @@ fn emit(
 fn compose_complete(
     stage: &Path,
     campaign_id: &Token,
-    source_revision: &str,
+    source: RecordedSource,
     composer: &ProcessDescriptor,
     declaration: &CampaignDeclaration,
     log: &mut ExecutionLog,
@@ -2217,8 +2266,8 @@ fn compose_complete(
             candidate.to_string_lossy().into_owned(),
             campaign_id.as_str().into(),
             utc()?,
-            source_revision.to_owned(),
-            "false".into(),
+            source.revision.to_owned(),
+            source.dirty.to_string(),
             composer.executable_sha256.as_str().into(),
         ]);
         let request = save(
@@ -2258,7 +2307,7 @@ fn compose_complete(
         File::open(&candidate)?.sync_all()?;
         File::open(&directory)?.sync_all()?;
         let composition = with_inputs(
-            json!({"schema":"tuning-campaign-composition-v1","args":args,"source_revision":source_revision,"source_dirty":false,"tool_sha256":composer.executable_sha256,"candidate":artifact(&candidate)?,"request":request,"exit":exit}),
+            json!({"schema":"tuning-campaign-composition-v1","args":args,"source_revision":source.revision,"source_dirty":source.dirty,"tool_sha256":composer.executable_sha256,"candidate":artifact(&candidate)?,"request":request,"exit":exit}),
         )?;
         save(&directory.join("response.json"), &composition)?;
         save(&candidate_record, &composition)?;
@@ -3557,6 +3606,67 @@ mod tests {
             &build_inputs
         )
         .unwrap());
+    }
+
+    #[test]
+    fn a_resume_compares_the_host_and_not_the_checkout_status() {
+        let runtime = |source_dirty, toolchain: &str| MeasurementRuntime {
+            source_dirty,
+            toolchain: toolchain.into(),
+            cpu_model: "cpu".into(),
+            cpu_features: vec!["avx2".into()],
+            os_kernel: "kernel".into(),
+            governor: "{}".into(),
+            receipt: "receipt.md".into(),
+        };
+        let recorded = runtime(false, "rustc 1.95.0");
+        assert!(same_host(runtime(true, "rustc 1.95.0"), &recorded));
+        assert!(!same_host(runtime(false, "rustc 1.96.0"), &recorded));
+        let cited = CanonicalJson::from_serializable(&runtime(true, "rustc 1.95.0")).unwrap();
+        assert!(RecordedSource::of("0", &cited).unwrap().dirty);
+    }
+
+    #[test]
+    fn a_preparation_retry_on_another_checkout_state_matches_by_its_input_digests() {
+        let identity = |name: &str| ArtifactIdentity {
+            path: PathBuf::from("/repository").join(name),
+            sha256: Sha256Digest::of(name.as_bytes()),
+        };
+        let inputs = |revision: &str, source_dirty, input: &[u8]| BootstrapInputs {
+            revision: revision.repeat(40),
+            tree: revision.repeat(40),
+            behavior: BTreeMap::new(),
+            receipt: "receipt.md".into(),
+            runtime: CanonicalJson::from_serializable(&MeasurementRuntime {
+                source_dirty,
+                toolchain: "rustc 1.95.0".into(),
+                cpu_model: "cpu".into(),
+                cpu_features: vec!["avx2".into()],
+                os_kernel: "kernel".into(),
+                governor: "{}".into(),
+                receipt: "receipt.md".into(),
+            })
+            .unwrap(),
+            processes: Vec::new(),
+            protocol: identity("protocol"),
+            validator: identity("validator"),
+            affinity: CpuAffinity::observe().unwrap(),
+            staging: identity("staging"),
+            producing_manifest: identity("manifest"),
+            build_inputs: [(
+                "input.rs".to_owned(),
+                Sha256Digest::of(input).as_str().into(),
+            )]
+            .into(),
+            host_admission_policy: HostAdmissionPolicy::declared(),
+        };
+        let recorded = inputs("a", false, b"frozen input");
+        let encoded = |inputs: BootstrapInputs| CanonicalJson::from_serializable(&inputs).unwrap();
+        let retried =
+            |inputs: BootstrapInputs| encoded(inputs.citing_checkout_of(&recorded).unwrap());
+        let intent = encoded(inputs("a", false, b"frozen input"));
+        assert_eq!(retried(inputs("b", true, b"frozen input")), intent);
+        assert_ne!(retried(inputs("a", false, b"changed input")), intent);
     }
 
     #[test]
@@ -5050,7 +5160,10 @@ mod tests {
             &repository_root().unwrap(),
             &channels,
             &campaign,
-            &revision,
+            RecordedSource {
+                revision: &revision,
+                dirty: true,
+            },
             &composer,
             &imported,
             &mut log,
@@ -5065,7 +5178,10 @@ mod tests {
             &repository_root().unwrap(),
             &channels,
             &campaign,
-            &revision,
+            RecordedSource {
+                revision: &revision,
+                dirty: true,
+            },
             &composer,
             &imported,
             &mut log,
@@ -5080,7 +5196,10 @@ mod tests {
             &repository_root().unwrap(),
             &channels,
             &campaign,
-            &revision,
+            RecordedSource {
+                revision: &revision,
+                dirty: false,
+            },
             &composer,
             &drifted,
             &mut log,
@@ -5091,6 +5210,7 @@ mod tests {
             encoded(&json!({
                 "campaign_id": campaign,
                 "identity": {"source_revision": revision},
+                "runtime": "{\"source_dirty\":true}",
                 "processes": [composer],
                 "imported_owners": [evidence],
             }))
@@ -5496,7 +5616,10 @@ mod tests {
                 &repository_root().unwrap(),
                 &channels,
                 &campaign,
-                &"0".repeat(40),
+                RecordedSource {
+                    revision: &"0".repeat(40),
+                    dirty: false,
+                },
                 &composer,
                 imported,
                 &mut log,
@@ -5540,7 +5663,7 @@ mod tests {
         let composer = stand_in(
             &root.join("composer"),
             &format!(
-                "#!/bin/sh\nPATH=/usr/bin:/bin\nset -C\necho run >> {root}/calls\ntest \"$1\" = complete || exit 2\ntest \"$(cat \"$2\" \"$3\" \"$4\")\" = corealgebracoding || exit 4\ntest \"$6 $8 $9\" = \"{campaign} {revision} false\" || exit 6\nprintf three-owner > \"$5\"\n",
+                "#!/bin/sh\nPATH=/usr/bin:/bin\nset -C\necho run >> {root}/calls\ntest \"$1\" = complete || exit 2\ntest \"$(cat \"$2\" \"$3\" \"$4\")\" = corealgebracoding || exit 4\ntest \"$6 $8 $9\" = \"{campaign} {revision} true\" || exit 6\nprintf three-owner > \"$5\"\n",
                 root = root.display(),
                 campaign = campaign.as_str(),
             ),
@@ -5553,7 +5676,10 @@ mod tests {
             compose_complete(
                 &stage,
                 &campaign,
-                &revision,
+                RecordedSource {
+                    revision: &revision,
+                    dirty: true,
+                },
                 &composer,
                 &declaration,
                 &mut log,
@@ -5566,6 +5692,7 @@ mod tests {
             b"three-owner"
         );
         let composition: Value = read_json(&stage.join("composition.json")).unwrap();
+        assert_eq!(composition["source_dirty"], json!(true));
         for owner in Owner::ALL {
             assert_eq!(
                 composition[owner.as_str()],

@@ -253,7 +253,8 @@ class CodingStage:
     """The stage and repository of a campaign that measures the coding owner
     and imports the core and algebra envelopes one committed campaign
     published. `behavior` and `section` are the identities the stage records
-    for its owner; `declared_cells` is the cell count its declaration states."""
+    for its owner; `declared_cells` is the cell count its declaration states;
+    `source_dirty` is the checkout status its campaign record observes."""
 
     CLEAN = {"outcome": "exited", "pid": 7, "exit_code": 0, "elapsed_ns": 1,
              "all_descendants_reaped": True}
@@ -263,8 +264,10 @@ class CodingStage:
 
     def __init__(self, validator, directory: Path, *,
                  behavior: str = "coding-tuning-calibration-v1",
-                 section: str = "gf2-coding/encode", declared_cells: int | None = None):
+                 section: str = "gf2-coding/encode", declared_cells: int | None = None,
+                 source_dirty: bool = False):
         self.v, self.behavior, self.section = validator, behavior, section
+        self.source_dirty = source_dirty
         self.root, self.stage = directory / "repository", directory / "stage"
         self.campaign = f"gf2-{CODING_ISSUE}-19700101t000000z-1"
         self.layout = validator.publication_layout(self.campaign)
@@ -472,7 +475,7 @@ class CodingStage:
             other = next(owner for owner in ("core", "algebra") if owner != name)
             probe = self.write(f"{directory}/probe-{other}.json", b"{}")
             probe_complete = self.write(f"{directory}/probe-complete.json", complete)
-            tail = [self.campaign, self.STAMP, self.REVISION, "false",
+            tail = [self.campaign, self.STAMP, self.REVISION, json.dumps(self.source_dirty),
                     composer["executable_sha256"]]
             inputs = {name: staged["path"], other: probe["path"]}
             commands = [[f"{other}-owner", probe["path"]],
@@ -500,7 +503,8 @@ class CodingStage:
                 "probe_complete": probe_complete, "runs": runs, f"probe_{other}": probe}))
             imported.append({"owner": declared["owner"], "source": declared["envelope"],
                              "staged": staged, "reopen": reopen})
-        runtime = {"source_dirty": False, "toolchain": "rustc 1.95.0", "cpu_model": "fixture",
+        runtime = {"source_dirty": self.source_dirty, "toolchain": "rustc 1.95.0",
+                   "cpu_model": "fixture",
                    "cpu_features": ["avx2"], "os_kernel": "fixture", "governor": "{}",
                    "receipt": receipt}
         return {"campaign_id": self.campaign, "affinity": [0], "receipt": receipt,
@@ -548,7 +552,7 @@ class CodingStage:
         stated = {item["field"].removeprefix("decode."): item["selected"]
                   for item in analysis["fields"] if item["emitted"]}
         measurement = {"kind": "calibrated", "measured_at": self.STAMP,
-                       "source_revision": self.REVISION, "source_dirty": False,
+                       "source_revision": self.REVISION, "source_dirty": self.source_dirty,
                        "harness": CODING_HARNESS, "harness_schema": self.behavior,
                        "binary_sha256": producer["executable_sha256"],
                        "toolchain": runtime["toolchain"], "host": identity["host_identity"],
@@ -567,7 +571,7 @@ class CodingStage:
                 "accepted_results": self.v.identity_for(self.stage / "coding-accepted.json"),
                 "measurement": observed(self.config["runtime"]),
                 "assembly": observed(self.v.compact({
-                    "source_dirty": False, "tool": CODING_HARNESS,
+                    "source_dirty": self.source_dirty, "tool": CODING_HARNESS,
                     "tool_sha256": producer["executable_sha256"]}).decode()),
                 "output": output["path"]}}))
         response = {"operation": "emit-owner", "artifact": output,
@@ -597,8 +601,8 @@ class CodingStage:
     def envelope(self, sections: dict, tool: str, tool_sha: str) -> dict:
         return {"profile_format_version": 2, "profile_id": self.campaign,
                 "assembly": {"kind": "assembled", "assembled_at": self.STAMP,
-                             "source_revision": self.REVISION, "source_dirty": False,
-                             "tool": tool, "tool_sha256": tool_sha,
+                             "source_revision": self.REVISION,
+                             "source_dirty": self.source_dirty, "tool": tool, "tool_sha256": tool_sha,
                              "content_sha256": self.v.envelope_content(self.campaign, sections)},
                 "sections": sections}
 
@@ -617,7 +621,7 @@ class CodingStage:
         candidate = self.write(f"{directory}/output.json", self.v.compact(self.envelope(
             sections, reference["assembly"]["tool"], composer["executable_sha256"])))
         args = ["complete", *(inputs[name]["path"] for name in owners), candidate["path"],
-                self.campaign, self.STAMP, self.REVISION, "false",
+                self.campaign, self.STAMP, self.REVISION, json.dumps(self.source_dirty),
                 composer["executable_sha256"]]
         request = self.write(f"{directory}/request.json", self.v.compact({
             "schema": "tuning-campaign-composition-request-v1", "process": composer,
@@ -632,7 +636,7 @@ class CodingStage:
                                           "exit": leave, "outcome": self.CLEAN})
         self.budget("composer", "after-result")
         record = {"schema": "tuning-campaign-composition-v1", "args": args,
-                  "source_revision": self.REVISION, "source_dirty": False,
+                  "source_revision": self.REVISION, "source_dirty": self.source_dirty,
                   "tool_sha256": composer["executable_sha256"], "candidate": candidate,
                   "request": request, "exit": leave, **inputs}
         for relative in [f"{directory}/response.json", "composition-candidate.json"]:
@@ -986,6 +990,83 @@ class CodingOwner(unittest.TestCase):
                 stage = self.staged(declared_cells=cells)
                 for check in [self.manifest, self.decisions, self.preflight, self.receipt]:
                     self.rejects(check, stage)
+
+    def test_a_campaign_recorded_from_a_dirty_checkout_is_accepted(self):
+        stage = self.staged(source_dirty=True)
+        self.composition(stage)
+        self.accepted(stage, "--stage", str(stage.stage), "--imported-owner-check")
+        complete = json.loads((stage.stage / "complete.json").read_bytes())
+        self.assertIs(complete["assembly"]["source_dirty"], True)
+
+    def test_a_checkout_status_other_than_the_recorded_one_is_rejected(self):
+        stage = self.staged()
+        runtime = {**json.loads(stage.config["runtime"]), "source_dirty": True}
+        stage.config["runtime"] = self.v.compact(runtime).decode()
+        self.rejects(self.composition, stage)
+
+
+class ContentIdentity(unittest.TestCase):
+    """The protocol and the producing manifest are read under their recorded
+    digests, and the recorded input digests are the campaign's pins."""
+
+    DECLARATION = {"issue": "0badc0de"}
+
+    @classmethod
+    def setUpClass(cls):
+        cls.v = load_validator()
+
+    def checkout(self) -> Path:
+        directory = tempfile.TemporaryDirectory(prefix="gf2-validator-content-identity-")
+        self.addCleanup(directory.cleanup)
+        located = mock.patch.object(self.v, "locate_declaration",
+                                    return_value="campaign/campaign-declaration.json")
+        located.start()
+        self.addCleanup(located.stop)
+        root = Path(directory.name).resolve()
+        (root / "campaign").mkdir()
+        (root / "campaign/protocol.md").write_bytes(b"frozen protocol")
+        return root
+
+    def pinned(self, root: Path, data: bytes) -> bytes:
+        return self.v.pinned_file(root, self.DECLARATION, "campaign/protocol.md",
+                                  hashlib.sha256(data).hexdigest())
+
+    def test_an_uncommitted_file_with_the_recorded_digest_is_read(self):
+        root = self.checkout()
+        self.assertFalse((root / ".git").exists())
+        self.assertEqual(self.pinned(root, b"frozen protocol"), b"frozen protocol")
+
+    def test_a_moved_file_is_read_from_the_campaign_snapshot(self):
+        root = self.checkout()
+        snapshot = root / "campaign" / self.v.PRODUCING_SNAPSHOT / "campaign/protocol.md"
+        snapshot.parent.mkdir(parents=True)
+        snapshot.write_bytes(b"frozen protocol")
+        (root / "campaign/protocol.md").write_bytes(b"later protocol")
+        self.assertEqual(self.pinned(root, b"frozen protocol"), b"frozen protocol")
+
+    def test_a_changed_frozen_input_is_refused_by_digest(self):
+        root = self.checkout()
+        (root / "campaign/protocol.md").write_bytes(b"changed protocol")
+        with self.assertRaisesRegex(self.v.ValidationError, "recorded digest"):
+            self.pinned(root, b"frozen protocol")
+
+    def test_recorded_digests_cover_exactly_the_manifest_paths(self):
+        sha = hashlib.sha256(b"input").hexdigest()
+        self.assertEqual(self.v.recorded_hashes({"b.rs": sha, "a.rs": sha}, ["a.rs", "b.rs"], "x"),
+                         {"a.rs": sha, "b.rs": sha})
+        for recorded in [{"a.rs": sha}, {"a.rs": sha, "b.rs": sha, "c.rs": sha},
+                         {"a.rs": sha, "b.rs": "0" * 40}]:
+            with self.assertRaises(self.v.ValidationError):
+                self.v.recorded_hashes(recorded, ["a.rs", "b.rs"], "x")
+
+    def test_a_resumed_session_on_another_checkout_state_keeps_its_identity(self):
+        def inputs(revision, dirty, behavior):
+            return {"revision": revision, "tree": revision, "behavior": {"a.rs": behavior},
+                    "runtime": self.v.compact({"source_dirty": dirty, "toolchain": "t"}).decode()}
+        first = self.v.session_inputs(inputs("1" * 40, False, "a" * 64), "first")
+        self.assertEqual(self.v.session_inputs(inputs("2" * 40, True, "a" * 64), "resumed"), first)
+        self.assertNotEqual(self.v.session_inputs(inputs("1" * 40, False, "b" * 64), "changed"),
+                            first)
 
 
 if __name__ == "__main__":
