@@ -14,11 +14,23 @@ and the complete envelope
 `dev/reference_data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json`.
 No cell of the declaration waits for a window.
 
+The receipt and its evidence index cite raw results, run-time records and the
+execution journal under `.agents/campaign-evidence/gf2-0a77ecfc-20261013t011147z-815998/`,
+a git-ignored path. Those files are committed unaltered as the one archive
+`dev/bench_results/0a77ecfc/gf2-0a77ecfc-20261013t011147z-815998-evidence-archive.tar.zst`,
+whose members keep the cited names. From the repository root:
+
+```sh
+zstd -dc dev/bench_results/0a77ecfc/gf2-0a77ecfc-20261013t011147z-815998-evidence-archive.tar.zst | tar -x
+sha256sum -c dev/benchmarks/tuning_profiles/gf2-0a77ecfc-20261013t011147z-815998.sha256
+sha256sum -c .agents/campaign-evidence/gf2-0a77ecfc-20261013t011147z-815998/SHA256SUMS
+```
+
 ## F-01: the journal accounts for every declared unit
 
 [`campaign-verification.json`](campaign-verification.json), written by
-`verify-campaign.py`, reads the execution journal under the digest the
-committed checksum manifest pins. Every declared unit starts, validates,
+`verify-campaign.py`, reads the execution journal of the extracted archive
+under the digest the committed checksum manifest pins. Every declared unit starts, validates,
 checkpoints and completes once with a clean child exit, every cell holds its
 probe and its declared timed children, every timed child reports its declared
 windows, and the journal ends in a terminal `complete` record; the record's

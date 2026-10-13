@@ -3,9 +3,10 @@
 
 Usage: verify-campaign.py [--check]
 
-Reads the execution journal and owner manifest from the host-local evidence
-archive under the digests the committed checksum manifest pins. Writes
-`campaign-verification.json`; a failed requirement writes nothing.
+Reads the execution journal and owner manifest from the evidence archive,
+extracted at the repository root from its committed tarball, under the digests
+the committed checksum manifest pins. Writes `campaign-verification.json`; a
+failed requirement writes nothing.
 """
 
 import hashlib
@@ -37,7 +38,8 @@ def one(paths, what):
 def pinned(rows, suffix):
     """The root-relative path ending in `suffix` among `rows`, read under its digest."""
     path = one([path for path in rows if path.endswith(suffix)], f"pinned rows end in {suffix}")
-    require((ROOT / path).is_file(), f"{path} of the host-local evidence archive is absent")
+    require((ROOT / path).is_file(),
+            f"{path} is absent; extract the committed *-evidence-archive.tar.zst at the repository root")
     data = (ROOT / path).read_bytes()
     require(hashlib.sha256(data).hexdigest() == rows[path], f"{path} differs from its pinned digest")
     return path, data
