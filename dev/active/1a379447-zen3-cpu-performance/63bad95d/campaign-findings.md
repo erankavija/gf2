@@ -85,12 +85,22 @@ whether the baked value is retained, and F-07 to F-09 state where the family sta
 
 ## F-04: one runtime field differs from the seam owner
 
-`ple.scalar_base_max_cols` returns to its conservative value: no grid point
-wins ([PLE scalar base sweep](campaign-tables.md#ple-scalar-base-sweep), last
-table), where the seam campaign records a crossover at the top of the grid
-with the margin the first table's last row gives. The field is read from an
-installed profile at run time and routes `FieldMatrix::ple`, which no family
-of this epic measures; the plan neither calibrates nor reconfirms it (§5).
+This owner states `ple.scalar_base_max_cols` at its conservative value: no
+grid point wins ([PLE scalar base sweep](campaign-tables.md#ple-scalar-base-sweep),
+last table), where the seam campaign records a crossover at the top of the
+grid with the margin the first table's last row gives, and its owner states
+that value ([selector table](campaign-tables.md#selectors-per-owner)). The
+field routes `FieldMatrix::ple`, which no family of this epic measures; the
+plan neither calibrates nor reconfirms it (§5).
+
+The field has no baked constant. A process reads it from the active core
+section, which is the conservative table in every build unless the process
+installs an envelope (`tuning-install-one-shot`), and no production crate
+installs one. A default build and a `gf2_tuning_baked` build therefore read
+the conservative value, and a process reads either owner's value only by
+installing that owner's envelope. The baked constants and the committed-owner
+tests name this campaign's owner as the measured core owner; the seam owner
+stays committed with its receipt.
 
 ## F-05: every other selector repeats the earlier owners
 
