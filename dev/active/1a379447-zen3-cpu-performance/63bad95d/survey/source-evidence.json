@@ -797,79 +797,79 @@
     {
       "id": "protocol-family-alpha",
       "project": "gf2",
-      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
+      "commit": "1a19c239c7762ab18b9eb89e7a08aebbe0548ec5",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 75,
       "occurrences": 1,
       "verbatim": "    family_alpha: 0.05,",
       "why": "The frozen family-wise alpha.",
-      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
+      "sha256": "aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a"
     },
     {
       "id": "protocol-bootstrap-resamples",
       "project": "gf2",
-      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
+      "commit": "1a19c239c7762ab18b9eb89e7a08aebbe0548ec5",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 76,
       "occurrences": 1,
       "verbatim": "    bootstrap_resamples: 10_000,",
       "why": "The frozen bootstrap resample count.",
-      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
+      "sha256": "aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a"
     },
     {
       "id": "protocol-confirmatory-pairs",
       "project": "gf2",
-      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
+      "commit": "1a19c239c7762ab18b9eb89e7a08aebbe0548ec5",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 77,
       "occurrences": 1,
       "verbatim": "    confirmatory_pairs: 24,",
       "why": "The frozen pair count of a confirmatory or holdout cell.",
-      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
+      "sha256": "aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a"
     },
     {
       "id": "protocol-pilot-min-pairs",
       "project": "gf2",
-      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
+      "commit": "1a19c239c7762ab18b9eb89e7a08aebbe0548ec5",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 78,
       "occurrences": 1,
       "verbatim": "    pilot_min_pairs: 6,",
       "why": "The frozen minimum pair count of an exploratory cell.",
-      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
+      "sha256": "aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a"
     },
     {
       "id": "protocol-windows-per-execution",
       "project": "gf2",
-      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
+      "commit": "1a19c239c7762ab18b9eb89e7a08aebbe0548ec5",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 80,
       "occurrences": 1,
       "verbatim": "    windows_per_execution: 5,",
       "why": "The frozen window count of one execution.",
-      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
+      "sha256": "aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a"
     },
     {
       "id": "protocol-window-target",
       "project": "gf2",
-      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
+      "commit": "1a19c239c7762ab18b9eb89e7a08aebbe0548ec5",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
       "line": 81,
       "occurrences": 1,
       "verbatim": "    window_target_ms: 100,",
       "why": "The frozen window target length.",
-      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
+      "sha256": "aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a"
     },
     {
       "id": "protocol-holdout-required",
       "project": "gf2",
-      "commit": "7b2eaa8c0278afc3cd74168c4a8ec87f2fe6b00f",
+      "commit": "1a19c239c7762ab18b9eb89e7a08aebbe0548ec5",
       "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
-      "line": 1003,
+      "line": 1018,
       "occurrences": 1,
       "verbatim": "                \"selector-calibration and final-integration families require holdout cells\".into(),",
       "why": "A selector-calibration addendum without holdout cells is rejected.",
-      "sha256": "28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9"
+      "sha256": "aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a"
     },
     {
       "id": "ledger-attempt-alpha",
