@@ -981,7 +981,7 @@
      "short_id": "4252085a",
      "title": "Prepare the quality record of the sum-product INTRA arm",
      "classification": "research",
-     "status": "blocked on the invoker: two reworks spent (lead review; code-review round 1), round-2 merge b30832568; cargo-ci and research-review pass at a22192d74, code-review fails on one finding (the check's arm_build projection copies the build record's inputs block)",
+     "status": "blocked on the invoker: three reworks spent and the same finding class three times (the check compares fields outside the closed identity set; round 3 names REPLAYED linked_aff3ct at record-intra-quality.py:66). Round-3 tree merged d9420f9de; cargo-ci pass, code-review fail, research-review not rerun; also waits for cba35553",
      "tracker_state": "in_progress",
      "dispatch": {
       "model": "sonnet",
@@ -996,8 +996,8 @@
      "short_id": "0a77ecfc",
      "title": "Declare the decoder calibration campaign",
      "classification": "research",
-     "status": "in_progress (session 36)",
-     "tracker_state": "in_progress",
+     "status": "done (session 36); reviews/0a77ecfc-r1.md; campaign queued for the 2026-10-13 window in agent-0a77ecfc (pinned at 825080820)",
+     "tracker_state": "done",
      "dispatch": {
       "model": "opus",
       "worktree": ".agents/worktrees/agent-0a77ecfc",
@@ -1010,8 +1010,8 @@
      "short_id": "05c9065e",
      "title": "Record the peak memory of the benchmark arms",
      "classification": "research",
-     "status": "in_progress (session 36)",
-     "tracker_state": "in_progress",
+     "status": "done (session 36); reviews/05c9065e-r2.md",
+     "tracker_state": "done",
      "dispatch": {
       "model": "sonnet",
       "worktree": ".agents/worktrees/agent-ed3d490e-run",
@@ -1019,6 +1019,13 @@
       "base": "a020f5320",
       "session": 36
      }
+    },
+    {
+     "short_id": "cba35553",
+     "title": "Feed the sum-product INTRA arm closed-form-scale LLRs",
+     "classification": "implementation",
+     "status": "merged d9420f9de, not gated: REQ-03 as the lead wrote it asks the catalogue to name executables by digest, which no recorder does; amendment waits for the invoker",
+     "tracker_state": "in_progress"
     }
    ]
   },
@@ -1399,6 +1406,12 @@
    "type": "bug",
    "in_epic": false,
    "reason": "4252085a measured the recorded LDPC bundles at half the BPSK-AWGN closed-form LLR scale (gf2-sim testutil frame source computes 2r/N0 with N0 = 2 sigma^2); depends on 4252085a"
+  },
+  {
+   "id": "cba35553",
+   "type": "task",
+   "in_epic": true,
+   "reason": "invoker decision 2026-10-12: the INTRA arm decodes the recorded LLRs multiplied by two; 4252085a depends on it"
   }
  ],
  "escalations": [
@@ -2218,18 +2231,53 @@
    "issue": "4252085a",
    "question": "does the sum-product INTRA arm receive the recorded LLRs as they are (half the closed-form scale, FER 1 on NR), or multiplied by two inside the arm with a re-recorded quality file",
    "recommendation": "multiply by two in the INTRA arm adapter: exact in f32, leaves the pinned bundles and the matched min-sum arms untouched, and makes the fastest-compatible comparison a comparison against a working decoder",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-12T19:30Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-12: multiply by two in the INTRA arm adapter. Task cba35553 created in the story; 4252085a depends on it and re-records the quality at the converted scale; plan DEC-13."
   },
   {
    "category": "rework exceeded MAX_REWORK_ATTEMPTS (policy item 5)",
    "issue": "4252085a",
    "question": "authorize rework round 3: code-review round 2 keeps one blocking finding, record-intra-quality.py arm_build copies executable.inputs (source and link input digests) into the identity the check compares",
    "recommendation": "authorize; the change is to drop the inputs block from the projection (or converge on the shared projection 05c9065e adds), add the reviewer's test case, regenerate record.json; quality files stay byte-identical",
-   "status": "open",
+   "status": "resolved",
    "raised_at": "2026-10-12T20:00Z",
-   "resolution": null
+   "resolution": "Invoker 2026-10-12: round 3 authorized; converge the recorder on the shared arm_build projection of 05c9065e, add the reviewer's test case, regenerate record.json."
+  },
+  {
+   "category": "carried open questions of handoff-31",
+   "issue": "1a379447",
+   "question": "staged aff3ct-throughput-arm; e430f035; make-source-evidence check as a cargo-ci step",
+   "recommendation": "keep the staged file; reject; leave out",
+   "status": "resolved",
+   "raised_at": "2026-10-12T09:17Z",
+   "resolution": "Invoker 2026-10-12: keep the staged aff3ct-throughput-arm (digest pins it, the revision is the rebuild pointer); reject e430f035 and remove the exception comments citing it; no cargo-ci step for the source-evidence check."
+  },
+  {
+   "category": "same root-cause finding repeated three times (policy item 5a) and rework exceeded (item 5)",
+   "issue": "4252085a",
+   "question": "authorize rework round 4: code-review round 3 fails on the check comparing linked_aff3ct (AFF3CT revision and static-library digest) among the REPLAYED fields, the third finding of the class 'check compares fields outside the closed identity set'",
+   "recommendation": "authorize one round that audits every field the check compares against the closed set of behavioral-evidence-validity in one pass (executable digest, build flags, frozen configuration, seed, toolchain version, observed host facts) and drops the rest, with one test per dropped field",
+   "status": "resolved",
+   "raised_at": "2026-10-12T21:10Z",
+   "resolution": "Invoker 2026-10-13 (session 37): one audit round authorized. Round 4 (opus) merged at 5d89c9805; cargo-ci and code-review pass; done."
+  },
+  {
+   "category": "issue scope change (policy item 4)",
+   "issue": "cba35553",
+   "question": "amend REQ-03, which the lead wrote stricter than the convention: 'The build identity record and the catalogue name the rebuilt INTRA executables by digest, written by their committed recorder.' The catalogue names no workspace executable by digest; the build record names them and pins the catalogue by digest",
+   "recommendation": "replace REQ-03 with: 'The build identity record names the rebuilt INTRA executables by digest and pins the catalogue that declares the factor, written by its committed recorder.' Then gate cba35553; its tree is merged",
+   "status": "resolved",
+   "raised_at": "2026-10-12T21:10Z",
+   "resolution": "Invoker 2026-10-13 (session 37): amend REQ-03 as recommended (b18fc3661). Three gates pass on main; done."
+  },
+  {
+   "category": "architectural",
+   "issue": "ed3d490e",
+   "question": "does the workspace arm build become independent of the checkout path",
+   "status": "resolved",
+   "raised_at": "2026-10-12T21:10Z",
+   "resolution": "Invoker 2026-10-13 (session 37): keep agent-ed3d490e-run as the build tree until the story's evidence is collected; no issue filed."
   }
  ],
  "rework_counts": {
@@ -2305,8 +2353,9 @@
   "dd50ea11": 1,
   "1ca04967": 0,
   "824cde7c": 0,
-  "4252085a": 2,
-  "05c9065e": 1
+  "4252085a": 4,
+  "05c9065e": 2,
+  "0a77ecfc": 1
  },
  "surfaced_pitfalls": [
   {
@@ -2873,6 +2922,20 @@
    "origin": "pre-existing (d4185e9e build identity)",
    "disposition": "advisory; the rework copied the pinned executables instead of rebuilding; a path-independent build (remap-path-prefix) is a candidate follow-up",
    "criterion_named_by": "none in 1a379447"
+  },
+  {
+   "issue": "05c9065e",
+   "subject": "05c9065e changed dev/tools/tuning-campaign-support (arm::child_environment, arm::validation_launch, benchmark-ab-runner launch); the gf2 arms link it and their build-identity inputs hashes moved while their digests reproduced in a relink trial",
+   "origin": "issue-impact",
+   "disposition": "build-identity.json regenerated by cba35553 for the INTRA package; one full regeneration with re-recorded quality-intra and peak-memory records is due after 63bad95d and the calibrated profile land and before the story's first freeze",
+   "criterion_named_by": "ed3d490e REQ-01 (measured arms with build identity)"
+  },
+  {
+   "issue": "0a77ecfc",
+   "subject": "comment trims deferred in calibration/run-campaign.sh, rehearsal/private-lock.sh and rehearsal/untimed-windows.patch because the queued campaign or the rehearsal record pins them by digest",
+   "origin": "issue-impact",
+   "disposition": "advisory; trim after the campaign's evidence is collected, with one rehearsal rerun (20af7e6e collects)",
+   "criterion_named_by": "none"
   }
  ],
  "notes": [
@@ -3071,7 +3134,8 @@
   "Session 33: every family measured in the 2026-10-09 window is refused by its freezer or inconclusive (63bad95d native ladder, dispatch overhead, both M4RI families; bfc2ceab; 7dbe1393); seven open escalations recorded. Closed e4e2ba52, 395fe4e2, a96a4cd6, feb60d0d. Lead errors: code-review evaluated before cargo-ci (e4e2ba52), and cargo-ci gates started while rework workers built (feb60d0d, 395fe4e2 failed on load flakes). Gate order that worked: cargo-ci for every merged issue on a quiet host, then the reviews. progress.json is written with indent=1 and ensure_ascii=False.",
   "Session 33: window gf2-bench-window-20261011 armed for 04:00 Europe/Helsinki (the first attempt was denied by the permission classifier; the invoker said to try again). Queue: one new job, the 8e53235b pilot, behind a load guard on its queue line. A session of another project (mealie-fi) is active on the host.",
   "Session 33 end: bad1aea8 closed after one rework. Five story issues closed this session (e4e2ba52, 395fe4e2, a96a4cd6, feb60d0d, bad1aea8). Host quiet from 03:05 local for the 04:00 window.",
-  "Session 34 (2026-10-11): invoker rulings on the nine handoff-29 questions: repeat each disturbed family once under a new family version; bfc2ceab exploratory cost accepted; 7dbe1393 merges unselected; load guard per queue line only; lead repaired jit validate (28a64b749); aff59c3c dependency as a root workspace dependency; a96a4cd6 stage builders stay public and gain the stated route-equivalence contract (81e955b0); the INTRA arm converges on the shared AFF3CT handle before measuring (1ca04967, between d4185e9e and 4252085a); the story's arms build and run from the pinned worktree agent-ed3d490e-run. Invoker steer the same day: too much pinning and protocol; prefer the simplest, least protocol-intensive approach that meets the criteria; the focus is HPC. Filed 151af028 (checkpoint_compat resume tests), 07024d65 (stale 04b85d10 survey, lead holds it after 8e53235b), 754208a0 (rare-event artifact timeouts, outside the epic)."
+  "Session 34 (2026-10-11): invoker rulings on the nine handoff-29 questions: repeat each disturbed family once under a new family version; bfc2ceab exploratory cost accepted; 7dbe1393 merges unselected; load guard per queue line only; lead repaired jit validate (28a64b749); aff59c3c dependency as a root workspace dependency; a96a4cd6 stage builders stay public and gain the stated route-equivalence contract (81e955b0); the INTRA arm converges on the shared AFF3CT handle before measuring (1ca04967, between d4185e9e and 4252085a); the story's arms build and run from the pinned worktree agent-ed3d490e-run. Invoker steer the same day: too much pinning and protocol; prefer the simplest, least protocol-intensive approach that meets the criteria; the focus is HPC. Filed 151af028 (checkpoint_compat resume tests), 07024d65 (stale 04b85d10 survey, lead holds it after 8e53235b), 754208a0 (rare-event artifact timeouts, outside the epic).",
+  "Session 37 (2026-10-13): invoker answered the three handoff-32 questions (amend cba35553 REQ-03; one audit round for 4252085a; keep the build worktree). Both issues closed. agent-ed3d490e-run is on branch worktree-agent-4252085a-r4 at 05e7cf4b3 (merged)."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -3105,7 +3169,8 @@
   "handoff-28.md",
   "handoff-29.md",
   "handoff-30.md",
-  "handoff-31.md"
+  "handoff-31.md",
+  "handoff-32.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -3121,22 +3186,28 @@
     "native-ladder-v2 confirmation, 12 min, agent-63bad95d-fam",
     "native-matvec-vs-m4ri confirmation run v4-r2, 25 min, agent-63bad95d-m4ri",
     "portable-matvec-vs-m4ri confirmation run v4-r1, 10 min, agent-63bad95d-pm4ri"
+   ],
+   "0a77ecfc": [
+    "decoder calibration campaign, 20 min, agent-0a77ecfc; exits 75 while incomplete"
    ]
   },
   "note": "Each line carries its load guard (exit 75 above a one-minute load of 2). Verify each campaign from its own execution log."
  },
  "session_scope": {
-  "session": 36,
-  "date": "2026-10-12",
-  "instruction": "Invoker 2026-10-12 (session 36): drive epic 1a379447; subagent model by task difficulty; no Fable.",
+  "session": 37,
+  "date": "2026-10-13",
+  "instruction": "Invoker 2026-10-13 (session 37): drive epic 1a379447; subagent model by task difficulty; no Fable.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
-  "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run (pinned for the window), ed3d490e-run (story build tree with the staged pinned comparator). Eleven reclaimed.",
+  "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
   "active_workers": {},
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
-  "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30."
+  "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30.",
+  "e430f035": "rejected 2026-10-12 by invoker decision; the exception comments citing it (root Cargo.toml) are removed after 0a77ecfc merges, because its producing manifest may pin that file",
+  "session_36_outcome": "Done: 05c9065e, 0a77ecfc. Merged, blocked on the invoker: cba35553 (REQ-03 amendment), 4252085a (rework round 4). Filed: 11bfbfd9 (outside the epic), cba35553. Rejected: e430f035. Window 2026-10-13 04:00 holds five jobs: four 63bad95d confirmations and the 0a77ecfc calibration campaign.",
+  "session_37": "Done: cba35553, 4252085a. 5d590bac held by the lead until 63bad95d merges and the gf2 arms build record is regenerated (its validation record names arms by build-identity digest). Window 2026-10-13 04:00 holds five jobs."
  }
 }

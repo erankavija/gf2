@@ -52,7 +52,7 @@ CODES = {
         "quality": ("gf2-nms-f32-dvb-t2-r12.json",
                     "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"),
         "intra_quality": ("aff3ct-spa-intra-dvb-t2-r12.json",
-                          "f18498e30eb972c0de5cae432ac50935a2e4292ab2ea5364509c8790c7cf0ef4"),
+                          "3fe8c404432a10f81a06853c3e8351795227968cbe5e4956fbf5e985264c6946"),
     },
     "nr-bg1-z384": {
         "bundle": "nr-bg1-z384-mother",
@@ -60,15 +60,17 @@ CODES = {
         "quality": ("gf2-nms-f32-nr-bg1-z384.json",
                     "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"),
         "intra_quality": ("aff3ct-spa-intra-nr-bg1-z384.json",
-                          "f253417b02ee74103e3889c72a56d4601ecd03da050b5e1fda6e8b1e825a8db8"),
+                          "710cec4ac7235fcf89a352ad56f6566c24719fa1c7bfc42938c765cca4ca9141"),
     },
 }
 
+CATALOGUE = json.loads(pathlib.Path(__file__).resolve().with_name("arms.json")
+                       .read_text(encoding="utf-8"))["arms"]
 ARMS = {
     "single-frame": ("gf2-batch-single-frame-arm", {}),
     "lane-avx2": ("gf2-batch-lane-arm", {"GF2_LDPC_LANE_BACKEND": "avx2"}),
     "lane-portable": ("gf2-batch-lane-arm", {"GF2_LDPC_LANE_BACKEND": "portable"}),
-    "spa-intra": ("aff3ct-intra-arm", {}),
+    "spa-intra": ("aff3ct-intra-arm", CATALOGUE["aff3ct-spa-intra"]["environment"]),
 }
 # Plan name and description of each arm built outside the gf2 tree.
 EXTERNAL = {

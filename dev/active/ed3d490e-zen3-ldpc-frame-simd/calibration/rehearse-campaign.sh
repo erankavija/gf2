@@ -3,18 +3,10 @@
 #
 # Usage: rehearse-campaign.sh, with no arguments, from a clean checkout
 #
-# Runs the queue launcher end to end over a throwaway stage in a throwaway
-# clone of HEAD, runs it again to resume the complete stage, then runs the
-# validator over the stage and its publication, and writes
-# rehearsal/record.json. The clone commits two stand-ins and nothing
-# else differs from HEAD:
-#   rehearsal/untimed-windows.patch  a timed child dispatches each window once
-#                                    and reports constants; no clock is read
-#   rehearsal/private-lock.sh        replaces the host mutex wrapper and holds
-#                                    a lock file of the rehearsal
-# The clone, its lock and its build cache stay under the checkout's target/;
-# the launcher fixes the stage at /tmp/<run-id>. A stage the validator accepts
-# is removed with the clone; a failed rehearsal keeps both for inspection.
+# Runs the queue launcher over a throwaway stage in a clone of HEAD that
+# differs by the two stand-ins under rehearsal/: timed children report
+# constant samples without reading a clock, and a private lock file replaces
+# the host mutex. A failed rehearsal keeps its stage and clone.
 set -euo pipefail
 issue=0a77ecfc
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -134,8 +126,5 @@ output = pathlib.Path(calibration) / "rehearsal" / "record.json"
 output.write_text(json.dumps(record, indent=1) + "\n")
 print(f"wrote {output}")
 PY_RECORD
-# Both directories are this run's own: the stage carries the campaign ID the
-# record names, and the clone was created above. The journal outlives them
-# beside the launcher log.
 cp "$stage/execution.log" "$stage/campaign.json" "$work/"
 rm -rf -- "$stage" "$clone"

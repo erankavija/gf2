@@ -1,9 +1,4 @@
-"""Shared locators of the decoder calibration generators (jit:0a77ecfc).
-
-Importing this module puts the shared `repository_files` and
-`producing_closure` on `sys.path`; every path resolves under the root git
-reports.
-"""
+"""Shared locators of the decoder calibration generators (jit:0a77ecfc)."""
 
 import hashlib
 import subprocess

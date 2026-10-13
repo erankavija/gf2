@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Check the peak memory recorder's statistics, structure check and replay of the committed record.
 
-The replay test needs the built arms workspace and the staged AFF3CT comparator
-and is skipped without them.
+The committed-record tests read the committed record and build record.
 """
 
 import copy
 import importlib.util
-import subprocess
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -116,20 +115,48 @@ class LaunchTest(unittest.TestCase):
         self.assertNotEqual(recorder.launch(["/bin/false"], {}, b"")[0], 0)
 
 
+class FloorTest(unittest.TestCase):
+    def shared(self, executable, script):
+        return {"executable": executable, "arguments": ["-c", script], "request": "{}",
+                "environment": {"GUARD": "1"}, "guard_variable": "GUARD"}
+
+    def test_the_floor_launch_drops_the_sentinel(self):
+        shared = self.shared("/bin/sh", 'test -n "$GUARD" && echo result')
+        recorder.arm_launch("arm", shared, False)
+        recorder.arm_launch("arm", shared, True)
+
+    def test_a_floor_launch_that_decodes_is_refused(self):
+        with self.assertRaises(SystemExit):
+            recorder.arm_launch("arm", self.shared("/bin/sh", "echo result"), True)
+
+    def test_a_validation_launch_without_one_result_line_is_refused(self):
+        with self.assertRaises(SystemExit):
+            recorder.arm_launch("arm", self.shared("/bin/sh", "true"), False)
+
+
 class CommittedRecordTest(unittest.TestCase):
-    def test_a_relaunch_stays_within_the_committed_envelope(self):
-        root = recorder.smoke.ROOT
-        records = [root / path for path in recorder.smoke.listed(recorder.RECORD)]
-        self.assertEqual(len(records), 1)
+    def setUp(self):
+        paths = recorder.smoke.listed(recorder.RECORD)
+        self.assertEqual(len(paths), 1)
+        self.record = json.loads((recorder.smoke.ROOT / paths[0]).read_text(encoding="utf-8"))
+        catalogue = recorder.build_record()[1]["catalogue"]["path"]
+        self.catalogue = json.loads((recorder.smoke.ROOT / catalogue).read_text(encoding="utf-8"))
+
+    def test_it_passes_its_structure_check(self):
         build = recorder.build_record()[1]
-        missing = [row for row in build["arms"].values()
-                   if not (root / (row["path"] if "path" in row else row["found_at"][0])).exists()]
-        if missing or not (root / "target").is_dir():
-            self.skipTest("the arms are not built")
-        run = subprocess.run([sys.executable, "-B", str(SURVEY / "record-peak-memory.py"),
-                              "check", str(records[0].parent)], cwd=root,
-                             capture_output=True, text=True)
-        self.assertEqual(run.returncode, 0, run.stdout)
+        self.assertEqual(recorder.structure_failures(self.record, build), [])
+        self.assertEqual(recorder.quality_failures(self.record), [])
+
+    def test_every_cell_states_its_own_arms_configuration(self):
+        for name, arm in self.record["arms"].items():
+            entry = self.catalogue["arms"][name]
+            for key, cell in arm["codes"].items():
+                quality = json.loads((recorder.smoke.ROOT / cell["quality"]["path"])
+                                     .read_text(encoding="utf-8"))
+                self.assertEqual(cell["effective"]["settings"], quality["settings"], (name, key))
+                self.assertEqual(cell["effective"]["catalogue"],
+                                 {field: entry.get(field) for field in recorder.CATALOGUE_FIELDS},
+                                 (name, key))
 
 
 if __name__ == "__main__":

@@ -15,23 +15,32 @@ spec.loader.exec_module(projection)
 
 BUILD = {
     "rustc": "rustc 1.95.0", "cargo": "cargo 1.95.0", "release_profile": {"opt-level": 3},
-    "build_commands": [{"environment": {"RUSTFLAGS": "-C target-cpu=native"},
-                        "argv": ["cargo", "build", "--release", "--manifest-path", "/a"]}],
+    "build_commands": [
+        {"environment": {"RUSTFLAGS": "-C target-cpu=native"},
+         "argv": ["cargo", "build", "--release", "--manifest-path", "/a"]},
+        {"environment": {"RUSTFLAGS": "-C target-cpu=native", "GF2_AFF3CT_ROOT": "/x"},
+         "argv": ["cargo", "build", "--release", "--manifest-path", "/a", "--package", "member"]}],
     "executables": {"bin": {"sha256": "a" * 64, "compiler_options": ["-O"],
                             "inputs": {"repository_files_sha256": "1" * 64,
                                        "other_files_sha256": "2" * 64,
-                                       "linked": {"/lib/x.a": "3" * 64}}}},
-    "arms": {"workspace": {"source": "workspace", "executable": "bin",
+                                       "linked": {"/lib/x.a": "3" * 64}}},
+                    "replay": {"sha256": "e" * 64, "compiler_options": ["-O"],
+                               "inputs": {"repository_files_sha256": "4" * 64,
+                                          "other_files_sha256": "5" * 64,
+                                          "linked": {"/lib/x.a": "3" * 64}}}},
+    "arms": {"workspace": {"source": "workspace", "executable": "bin", "package": "main",
                            "executable_sha256": "a" * 64},
+             "member": {"source": "workspace", "executable": "bin", "package": "member",
+                        "executable_sha256": "a" * 64},
              "pinned": {"source": "pinned", "executable": "other",
                         "executable_sha256": "b" * 64}},
 }
 
 
-def projected(edit, name="workspace"):
+def projected(edit, name="workspace", executable=None):
     build = copy.deepcopy(BUILD)
     edit(build)
-    return projection.arm_build(build, name)
+    return projection.arm_build(build, name, executable)
 
 
 class ArmBuildTest(unittest.TestCase):
@@ -67,8 +76,57 @@ class ArmBuildTest(unittest.TestCase):
         for edit in edits:
             self.assertNotEqual(projected(edit), self.base)
 
+    def test_a_command_of_another_package_does_not_matter(self):
+        def edit(build):
+            command = build["build_commands"][1]
+            command["environment"]["RUSTFLAGS"] = "-C opt-level=1"
+            command["argv"].remove("--release")
+        self.assertEqual(projected(edit), self.base)
+
+    def test_the_arms_own_command_matters(self):
+        def edit(build):
+            build["build_commands"][1]["environment"]["RUSTFLAGS"] = "-C opt-level=1"
+        self.assertNotEqual(projected(edit, "member"), projection.arm_build(BUILD, "member"))
+
+    def test_a_package_no_command_names_takes_the_commands_naming_none(self):
+        self.assertEqual(len(self.base["builds"]), 1)
+
     def test_a_pinned_arm_is_identified_by_its_digest_alone(self):
         self.assertEqual(projection.arm_build(BUILD, "pinned"), {"executable_sha256": "b" * 64})
+
+
+class PackageExecutableTest(unittest.TestCase):
+    def setUp(self):
+        self.base = projection.arm_build(BUILD, "member", "replay")
+
+    def test_it_is_identified_by_its_own_digest_and_the_arms_build(self):
+        self.assertEqual(self.base["executable_sha256"], "e" * 64)
+        self.assertEqual(self.base["builds"], projection.arm_build(BUILD, "member")["builds"])
+
+    def test_what_is_outside_its_identity_does_not_matter(self):
+        def edit(build):
+            build["executables"]["replay"]["inputs"].update(
+                repository_files_sha256="9" * 64, other_files_sha256="8" * 64,
+                linked={"/elsewhere/y.a": "7" * 64})
+            build["executables"]["bin"].update(sha256="c" * 64, compiler_options=["-O0"])
+            build["arms"]["member"]["executable_sha256"] = "c" * 64
+            build["arms"]["pinned"]["executable_sha256"] = "c" * 64
+            build["build_commands"][0]["environment"]["RUSTFLAGS"] = ""
+            build["build_commands"][1]["argv"][4] = "/b"
+        self.assertEqual(projected(edit, "member", "replay"), self.base)
+
+    def test_each_part_of_its_identity_matters(self):
+        edits = [
+            lambda build: build["executables"]["replay"].update(sha256="d" * 64),
+            lambda build: build["executables"]["replay"].update(compiler_options=["-O0"]),
+            lambda build: build.update(rustc="rustc 1.96.0"),
+            lambda build: build.update(cargo="cargo 1.96.0"),
+            lambda build: build["release_profile"].update({"opt-level": 2}),
+            lambda build: build["build_commands"][1]["environment"].update(RUSTFLAGS=""),
+            lambda build: build["build_commands"][1]["argv"].remove("--release"),
+        ]
+        for edit in edits:
+            self.assertNotEqual(projected(edit, "member", "replay"), self.base)
 
 
 if __name__ == "__main__":

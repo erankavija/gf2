@@ -2,13 +2,12 @@
 //!
 //! `aff3ct-intra-quality CASE OUT` reads the decoder case of a plan cell from
 //! the JSON file `CASE`, replays the first `quality_frames` frames of its
-//! bundle once and writes their quality record to `OUT`, the record the arm
-//! takes in `GF2_LDPC_QUALITY`.
+//! bundle once at the declared LLR factor and writes their quality record to
+//! `OUT`, the record the arm takes in `GF2_LDPC_QUALITY`.
 
-use aff3ct_intra::{prototype, replay_quality, settings};
+use aff3ct_intra::{llr_factor, load, prototype, replay_quality, settings};
 use ldpc_survey::arm::DecoderCase;
 use ldpc_throughput::aff3ct::LINKED_AFF3CT;
-use ldpc_throughput::workload::Workload;
 use std::process::ExitCode;
 
 fn run() -> Result<(), String> {
@@ -19,7 +18,8 @@ fn run() -> Result<(), String> {
     let case: DecoderCase =
         serde_json::from_slice(&std::fs::read(case).map_err(|e| format!("{case}: {e}"))?)
             .map_err(|error| format!("case does not decode: {error}"))?;
-    let workload = Workload::load(&case)?;
+    let factor = llr_factor()?;
+    let workload = load(&case, factor)?;
     let mut prototype = prototype(&workload, &case)?;
     let decoder = prototype.observed()?;
     let settings = settings(
@@ -40,6 +40,7 @@ fn run() -> Result<(), String> {
         serde_json::json!({
             "kind": "aff3ct-quality-replay",
             "decoder": decoder,
+            "llr_factor": factor,
             "linked_aff3ct": LINKED_AFF3CT,
         })
     );

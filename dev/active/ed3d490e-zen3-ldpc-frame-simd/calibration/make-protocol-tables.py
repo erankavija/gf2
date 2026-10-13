@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-"""Write the generated tables of the decoder calibration protocol (jit:0a77ecfc).
+"""Write the generated blocks of the decoder calibration protocol (jit:0a77ecfc).
 
 Usage: make-protocol-tables.py [--check]
-
-Rewrites every `<!-- generated:<name> -->` block of
-`premeasurement-protocol.md` that the document holds: the grid and the fixture
-codes from the committed grid listing of the coding producer, the declared
-counts from that listing, the self-check and the campaign-support timing
-constants, and the window estimate from those counts and the rehearsal record.
 """
 
 import json
@@ -26,8 +20,7 @@ USIZE_MAX = (1 << 64) - 1
 DETAIL = re.compile(r"(decode\.\w+): (candidates|stratum)=(.*)")
 # Minutes the queue estimate is rounded up to.
 ESTIMATE_STEP = 5
-# Allowance for the launcher's work outside the session: build, preparation,
-# validation and publication.
+# Allowance for the launcher's work outside the session.
 OUTSIDE_SESSION_MINUTES = 5
 
 

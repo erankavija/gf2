@@ -2,8 +2,9 @@
 //!
 //! The steady-state operation of the `3be770d5` AFF3CT arm on the decoder
 //! [`Handle::build_spa_intra`] builds: a prototype from the recorded AList and
-//! one AFF3CT `clone()` per pinned worker, which converts and decodes the
-//! recorded f32 LLRs inside the timed call.
+//! one AFF3CT `clone()` per pinned worker, which converts and decodes inside
+//! the timed call the recorded f32 LLRs that [`load`] multiplies by the
+//! declared [`llr_factor`].
 
 use ldpc_survey::arm::{
     self, ArmResult, ArmSettings, DecoderCase, Normalization, NormalizationKind, Precision,
@@ -21,6 +22,60 @@ pub const ARM: &str = "aff3ct-spa-intra";
 /// Iterations before syndrome detection starts: AFF3CT's default, which the
 /// pinned AFF3CT arms declare.
 pub const SYNDROME_DEPTH: i32 = 1;
+
+/// Environment variable that declares [`llr_factor`].
+pub const LLR_FACTOR_VARIABLE: &str = "GF2_AFF3CT_LLR_FACTOR";
+
+/// The factor a declaration states.
+///
+/// # Errors
+///
+/// Returns an error unless `declared` is a power of two of at least one: the
+/// factors whose product with an f32 is exact when finite.
+pub fn parse_llr_factor(declared: &str) -> Result<f32, String> {
+    let factor: f32 = declared
+        .parse()
+        .map_err(|error| format!("{LLR_FACTOR_VARIABLE}: {error}"))?;
+    if factor.is_finite() && factor >= 1.0 && factor.to_bits() & 0x007f_ffff == 0 {
+        Ok(factor)
+    } else {
+        Err(format!(
+            "{LLR_FACTOR_VARIABLE}: {declared} is not a power of two of at least one"
+        ))
+    }
+}
+
+/// The factor the environment declares. The recorded bundles carry
+/// `r/sigma^2` (`@/issue/11bfbfd9`); two gives the BPSK-AWGN closed form
+/// `2r/sigma^2`, the scale sum-product decodes.
+///
+/// # Errors
+///
+/// Returns an error when [`LLR_FACTOR_VARIABLE`] is unset or
+/// [`parse_llr_factor`] refuses it.
+pub fn llr_factor() -> Result<f32, String> {
+    let declared = std::env::var(LLR_FACTOR_VARIABLE)
+        .map_err(|_| format!("{LLR_FACTOR_VARIABLE} is unset"))?;
+    parse_llr_factor(&declared)
+}
+
+/// The digest-verified bundle of `case` with every recorded LLR multiplied by
+/// `factor`.
+///
+/// # Errors
+///
+/// As [`Workload::load`], and when a product is not finite.
+pub fn load(case: &DecoderCase, factor: f32) -> Result<Workload, String> {
+    let mut workload = Workload::load(case)?;
+    for llr in &mut workload.llrs {
+        *llr *= factor;
+    }
+    if workload.llrs.iter().all(|llr| llr.is_finite()) {
+        Ok(workload)
+    } else {
+        Err(format!("an LLR times {factor} is not finite"))
+    }
+}
 
 /// The settings the INTRA decoder decodes with, `wave` frames per decode.
 #[must_use]
@@ -108,7 +163,15 @@ struct Diagnostics {
     kind: &'static str,
     arm: &'static str,
     decoder: ObservedDecoder,
+    llr_factor: f32,
     linked_aff3ct: LinkedAff3ct,
+}
+
+fn selected_path(name: &str, factor: f32, workers: u32, threads: u32) -> String {
+    format!(
+        "{name} simd=INTRA precision=f32 llr_factor={factor}, clone per worker; {workers} pinned \
+         workers, {threads} process threads"
+    )
 }
 
 /// Runs one steady-state cell of the INTRA decoder and writes the arm result.
@@ -125,7 +188,8 @@ pub fn run() -> Result<(), String> {
         .ok_or("steady-state cells reuse prepared quality; GF2_LDPC_QUALITY is unset")?;
     let case: DecoderCase = serde_json::from_value(request.case.clone())
         .map_err(|error| format!("case does not decode: {error}"))?;
-    let workload = Workload::load(&case)?;
+    let factor = llr_factor()?;
+    let workload = load(&case, factor)?;
     check_request(&request, &case, workload.manifest.frames)?;
     let k = workload.manifest.k;
     let batch = case.batch_size as usize;
@@ -159,6 +223,7 @@ pub fn run() -> Result<(), String> {
         kind: "aff3ct-decoder-diagnostics",
         arm: ARM,
         decoder,
+        llr_factor: factor,
         linked_aff3ct: LINKED_AFF3CT,
     };
     eprintln!(
@@ -172,10 +237,11 @@ pub fn run() -> Result<(), String> {
         cache_state_applied: request.cache_state.clone(),
         workers_observed: cell.workers_observed,
         cpus_observed: arm::observed_cpus(),
-        selected_path: Some(format!(
-            "{name} simd=INTRA precision=f32, clone per worker; {} pinned workers, {} process \
-             threads",
-            cell.workers_observed, cell.threads.ready
+        selected_path: Some(selected_path(
+            &name,
+            factor,
+            cell.workers_observed,
+            cell.threads.ready,
         )),
         conversion: Some(cell.conversion),
         quality: Some(quality),
@@ -185,8 +251,59 @@ pub fn run() -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::settings;
-    use ldpc_survey::arm::NormalizationKind;
+    use super::{load, parse_llr_factor, selected_path, settings, Diagnostics, ARM};
+    use ldpc_survey::arm::{DecoderCase, NormalizationKind};
+    use ldpc_survey::{sha256_hex, BundleManifest, CodewordSource};
+    use ldpc_throughput::aff3ct::{ObservedDecoder, LINKED_AFF3CT};
+
+    const RECORDED: [f32; 4] = [0.75, -1.337, f32::MIN_POSITIVE / 4.0, 0.0];
+
+    /// One frame of n = 4 holding `llrs`, written under a directory of its own.
+    fn bundle(name: &str, llrs: [f32; 4]) -> DecoderCase {
+        let dir = std::env::temp_dir().join(format!("aff3ct-intra-{}-{name}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("bundle directory");
+        let llrs: Vec<u8> = llrs.iter().flat_map(|llr| llr.to_le_bytes()).collect();
+        let files = [
+            (ldpc_survey::ALIST_FILE, b"".as_slice()),
+            (ldpc_survey::CODEWORDS_FILE, &[0, 1, 0, 0]),
+            (ldpc_survey::LLRS_FILE, &llrs),
+        ];
+        for (file, bytes) in files {
+            std::fs::write(dir.join(file), bytes).expect("bundle file");
+        }
+        let manifest = BundleManifest {
+            schema: ldpc_survey::BUNDLE_SCHEMA.to_owned(),
+            code: "fixture".to_owned(),
+            n: 4,
+            k: 2,
+            m: 2,
+            nnz: 0,
+            h_sha256: sha256_hex(files[0].1),
+            codewords_sha256: sha256_hex(files[1].1),
+            llrs_sha256: sha256_hex(files[2].1),
+            frames: 1,
+            seed: 0,
+            esn0_db: 0.0,
+            sigma: 1.0,
+            codeword_source: CodewordSource::Both,
+            punctured_prefix: 0,
+        };
+        std::fs::write(
+            dir.join(ldpc_survey::MANIFEST_FILE),
+            serde_json::to_vec(&manifest).expect("manifest"),
+        )
+        .expect("manifest file");
+        DecoderCase {
+            bundle: dir.to_string_lossy().into_owned(),
+            code: manifest.code,
+            iteration_cap: 1,
+            normalization_factor: 1.0,
+            syndrome_stopping: false,
+            batch_size: 1,
+            quality_frames: 1,
+            decisions_out: None,
+        }
+    }
 
     #[test]
     fn the_settings_declare_sum_product_without_a_factor() {
@@ -194,5 +311,50 @@ mod tests {
         assert_eq!(declared.normalization.kind, NormalizationKind::SumProduct);
         assert_eq!(declared.normalization.factor, None);
         assert_eq!(declared.batch_size, 1);
+    }
+
+    #[test]
+    fn the_loaded_llrs_are_the_recorded_ones_doubled_exactly() {
+        let workload = load(&bundle("doubled", RECORDED), 2.0).expect("bundle");
+        let doubled: Vec<u32> = RECORDED.iter().map(|llr| (llr + llr).to_bits()).collect();
+        let loaded: Vec<u32> = workload.frames(0, 1).iter().map(|l| l.to_bits()).collect();
+        assert_eq!(loaded, doubled);
+        assert_eq!(
+            load(&bundle("kept", RECORDED), 1.0).expect("bundle").llrs,
+            RECORDED
+        );
+    }
+
+    #[test]
+    fn a_product_beyond_f32_is_refused() {
+        assert!(load(&bundle("overflow", [f32::MAX, 0.0, 0.0, 0.0]), 2.0).is_err());
+    }
+
+    #[test]
+    fn a_declared_factor_is_a_power_of_two_of_at_least_one() {
+        for (declared, factor) in [("1", 1.0), ("2", 2.0), ("4.0", 4.0)] {
+            assert_eq!(parse_llr_factor(declared), Ok(factor));
+        }
+        for declared in ["3", "0.5", "0", "-2", "inf", "NaN", ""] {
+            assert!(parse_llr_factor(declared).is_err(), "{declared:?}");
+        }
+    }
+
+    #[test]
+    fn the_selected_path_and_the_diagnostics_report_the_factor() {
+        assert!(selected_path("decoder", 2.0, 1, 2).contains("llr_factor=2"));
+        let diagnostics = serde_json::to_value(Diagnostics {
+            kind: "aff3ct-decoder-diagnostics",
+            arm: ARM,
+            decoder: ObservedDecoder {
+                class: String::new(),
+                backend: String::new(),
+                wave_frames: 1,
+            },
+            llr_factor: 2.0,
+            linked_aff3ct: LINKED_AFF3CT,
+        })
+        .expect("diagnostics");
+        assert_eq!(diagnostics["llr_factor"], 2.0);
     }
 }
