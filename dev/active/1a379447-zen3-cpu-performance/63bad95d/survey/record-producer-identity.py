@@ -22,6 +22,9 @@ from locate import HERE, ROOT, package, tracked
 
 FEATURES = "parallel,simd,test-support,tuning-profile"
 RECORD = "producer-identity.json"
+# Caller variables that would change the build this record hashes.
+INHERITED = re.compile(
+    r"RUSTFLAGS$|CARGO_ENCODED_RUSTFLAGS$|RUSTC_WRAPPER$|CARGO_(BUILD|PROFILE|TARGET)_")
 
 
 def sha256(path):
@@ -36,7 +39,8 @@ def main():
          "-p", "gf2-core", "--bench", "tuning_calibration", "--features", FEATURES,
          "--message-format", "json"],
         cwd=ROOT, capture_output=True, check=True, text=True,
-        env={**os.environ, "RUSTUP_TOOLCHAIN": "1.95.0"},
+        env={**{name: value for name, value in os.environ.items() if not INHERITED.match(name)},
+             "RUSTUP_TOOLCHAIN": "1.95.0"},
     ).stdout
     executables = [
         message["executable"] for message in map(json.loads, build.splitlines())

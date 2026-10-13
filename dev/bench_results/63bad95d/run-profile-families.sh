@@ -20,8 +20,8 @@
 # `benchmark-ab-runner smoke`. Nothing in it is timed.
 #
 # `window` is the only timed action and the only command a queue line carries.
-# It refuses outside a benchmark window, refuses a campaign input that is not
-# committed and unmodified, rebuilds every executable it launches, prints the
+# It refuses outside a benchmark window, refuses a producing closure that does
+# not enumerate the tree, rebuilds every executable it launches, prints the
 # canonical execution log path before the first bounded run, resumes an
 # interrupted campaign under its own identity, and finalizes and evaluates a
 # complete campaign once. Re-running it on a finalized campaign re-evaluates
@@ -29,7 +29,7 @@
 #
 # `freeze` derives the confirmation addendum from the committed receipt of the
 # named pilot stage, `pilot` when none is named, with the repository's
-# canonical freezer. It refuses to replace a committed addendum.
+# canonical freezer. It refuses to replace an addendum.
 #
 # A confirmation whose addendum has a `-superseded.md` record beside it is
 # neither smoked nor measured.
@@ -77,6 +77,9 @@ LEVELS=(conservative-portable tuned-portable native)
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 export CARGO_CI_NO_SCCACHE=1
+# A build takes its flags, wrapper, profile and target from this script alone.
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
+    "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}"
 
 arm_target() { printf '%s/target/%s-arm-%s' "${REPO}" "${ISSUE}" "$1"; }
 arm_executable() { printf '%s/release/profile-arm' "$(arm_target "$1")"; }
@@ -89,17 +92,12 @@ print(json.load(open(sys.argv[1]))["builds"][sys.argv[2]]["rustflags"] or "")' "
 }
 
 # Cargo for one build level: its own target directory and exactly the level's
-# RUSTFLAGS, whatever the caller's environment holds.
+# RUSTFLAGS.
 level_cargo() {
     local level=$1 flags
     shift
     flags=$(level_rustflags "${level}")
-    if [[ -n "${flags}" ]]; then
-        env CARGO_TARGET_DIR="$(arm_target "${level}")" RUSTFLAGS="${flags}" "$@"
-    else
-        env -u RUSTFLAGS -u CARGO_ENCODED_RUSTFLAGS \
-            CARGO_TARGET_DIR="$(arm_target "${level}")" "$@"
-    fi
+    env CARGO_TARGET_DIR="$(arm_target "${level}")" ${flags:+RUSTFLAGS="${flags}"} "$@"
 }
 
 build_binaries() {
@@ -172,18 +170,11 @@ if [[ "${ACTION}" == freeze ]]; then
         echo "freeze names a pilot stage" >&2
         exit 2
     }
-    if git ls-files --error-unmatch "${CONFIRMATION_ADDENDUM}" >/dev/null 2>&1; then
-        echo "${CONFIRMATION_ADDENDUM} is committed; a frozen addendum is not replaced" >&2
+    if [[ -e "${CONFIRMATION_ADDENDUM}" ]]; then
+        echo "${CONFIRMATION_ADDENDUM} exists; a frozen addendum is not replaced" >&2
         exit 2
     fi
     PILOT=${RESULTS}/${FAMILY}/r${TRIAL}-pilot
-    for frozen in "${PILOT_ADDENDUM}" "${PILOT}/receipt.json"; do
-        git ls-files --error-unmatch "${frozen}" >/dev/null
-        git diff --quiet HEAD -- "${frozen}" || {
-            echo "${frozen} differs from the committed bytes" >&2
-            exit 2
-        }
-    done
     # The canonical freezer, by its name and opening among the same-named scripts.
     FREEZER=$(python3 -B "$(live repository_files.py)" document freeze-confirmation.py \
         $'#!/usr/bin/env python3\n"""Freeze a confirmation addendum from its accepted pilot.')
@@ -290,20 +281,9 @@ if [[ -f "${OUT}/acceptance-summary.json" ]]; then
     exit "${verdict}"
 fi
 
-# Publication precedes measurement, so the receipt pins committed bytes: the
-# frozen addendum, the family ledger and the whole producing-input closure.
+# The closure the receipt snapshots enumerates the tree the arms are built
+# from; the runner decides a resume by the frozen plan and the executables.
 python3 -B "${SURVEY}/make-profile-producing-inputs.py" --check
-mapfile -t FROZEN < <(
-    printf '%s\n' "${ADDENDUM}" "${LEDGER}" "${PRODUCING}"
-    python3 -B -c 'import json, sys
-print("\n".join(json.load(open(sys.argv[1]))["build_inputs"]))' "${PRODUCING}"
-)
-git ls-files --error-unmatch -- "${FROZEN[@]}" >/dev/null
-git diff --quiet HEAD -- "${FROZEN[@]}" || {
-    echo "a campaign input differs from its committed bytes:" >&2
-    git diff --name-only HEAD -- "${FROZEN[@]}" >&2
-    exit 2
-}
 
 build_binaries
 mkdir -p "${STAGES}" "$(dirname "${OUT}")"

@@ -69,6 +69,11 @@ M4RI_PORTABLE_GENERATION=portable-v1
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 export CARGO_CI_NO_SCCACHE=1
+# A build takes its Rust and C flags, wrapper, profile and target from this
+# script and the harness build script alone.
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
+    "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}" \
+    CC CFLAGS "${!CC_@}" "${!CFLAGS_@}" TARGET_CC TARGET_CFLAGS HOST_CC HOST_CFLAGS
 
 # The M4RI installs are shared under the primary checkout's .agents/ext; one
 # is discovered, never rebuilt destructively. `build.rs` verifies the
