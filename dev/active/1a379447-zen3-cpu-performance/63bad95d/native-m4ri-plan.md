@@ -112,7 +112,7 @@ charges M4RI its bit-wise packing and unpacking, so it answers the
 whole-consumer question; a retained-state cell is the closest boundary to
 operation throughput and is no pure `mzd_mul` measurement.
 
-## Pilot outcomes
+## Pilot and confirmation outcomes
 
 The family ran two pilots under one addendum and one ledger. Run `v4-r1`
 ran on a loaded host and its record
@@ -139,6 +139,26 @@ Each plan's arm table names the native gf2 arm as the baseline and M4RI as
 the candidate, so a speedup above one favours M4RI. The pilot rows are
 exploratory; the confirmation's acceptance summary holds the family's reading
 of each cell.
+
+The confirmation, run `v4-r2-confirmation`, ran on a quiet host and is
+accepted. Its
+[acceptance summary](../../../bench_results/63bad95d/63bad95d-native-matvec-vs-m4ri/v4-r2-confirmation/acceptance-summary.md)
+records, for each of the six confirmatory cells, the decision `Regressed` and
+the outcome `Fail`; the addendum reads `regressed` as M4RI slower beyond
+equivalence, gf2 ahead. The summary records `qualifies false`, and the family
+declares no improvement or non-regression cell. The ledger line of the
+attempt is in
+[`native-matvec-vs-m4ri-ledger.jsonl`](../../../bench_results/63bad95d/native-matvec-vs-m4ri-ledger.jsonl)
+and its `execution.log` reaches the terminal `complete` record with every
+cell measured at its declared pairs. The intervals are in the generated
+[tables](../../../bench_results/63bad95d/native-m4ri-tables.md).
+
+The native gf2 build therefore keeps its position against host-targeted M4RI
+at every measured boundary, fresh and retained-state, small-input included.
+Under the adoption rule a comparator outcome selects no production change, so
+the matvec selector, the tuning profile and the production routes stay as
+they are and no M4RI route is selected. REQ-09's native comparator leg holds a
+confirmatory reading for these six boundaries.
 
 ## Execution
 
