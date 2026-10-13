@@ -1161,6 +1161,23 @@ struct BootstrapInputs {
     build_inputs: BTreeMap<String, String>,
     host_admission_policy: HostAdmissionPolicy,
 }
+impl BootstrapInputs {
+    /// Cites the checkout observations of `recorded`, the interrupted
+    /// preparation this session retries, so that the input digests and host
+    /// facts decide the retry.
+    fn citing_checkout_of(mut self, recorded: &Self) -> io::Result<Self> {
+        self.revision.clone_from(&recorded.revision);
+        self.tree.clone_from(&recorded.tree);
+        self.runtime = CanonicalJson::from_serializable(&MeasurementRuntime {
+            source_dirty: recorded
+                .runtime
+                .decode::<MeasurementRuntime>()?
+                .source_dirty,
+            ..self.runtime.decode()?
+        })?;
+        Ok(self)
+    }
+}
 fn bootstrap_inputs(
     channels: &SessionChannels,
     campaign_id: &Token,
@@ -1288,11 +1305,15 @@ fn prepare(
             "campaign is complete; publish-campaign finishes its repository publication",
         ));
     }
-    let inputs = bootstrap_inputs(&channels, &campaign_id, &declaration)?;
+    let session_id = Token::new(session_id)?;
+    let mut inputs = bootstrap_inputs(&channels, &campaign_id, &declaration)?;
+    if let Some(recorded) = PreparationStore::interrupted_inputs(&channels, &session_id)? {
+        inputs = inputs.citing_checkout_of(&recorded.decode()?)?;
+    }
     let preparation = PreparationStore::begin(
         channels.clone(),
         campaign_id.clone(),
-        Token::new(session_id)?,
+        session_id,
         fs::canonicalize(lock)?,
         CanonicalJson::from_serializable(&inputs)?,
     )?;
@@ -3603,6 +3624,49 @@ mod tests {
         assert!(!same_host(runtime(false, "rustc 1.96.0"), &recorded));
         let cited = CanonicalJson::from_serializable(&runtime(true, "rustc 1.95.0")).unwrap();
         assert!(RecordedSource::of("0", &cited).unwrap().dirty);
+    }
+
+    #[test]
+    fn a_preparation_retry_on_another_checkout_state_matches_by_its_input_digests() {
+        let identity = |name: &str| ArtifactIdentity {
+            path: PathBuf::from("/repository").join(name),
+            sha256: Sha256Digest::of(name.as_bytes()),
+        };
+        let inputs = |revision: &str, source_dirty, input: &[u8]| BootstrapInputs {
+            revision: revision.repeat(40),
+            tree: revision.repeat(40),
+            behavior: BTreeMap::new(),
+            receipt: "receipt.md".into(),
+            runtime: CanonicalJson::from_serializable(&MeasurementRuntime {
+                source_dirty,
+                toolchain: "rustc 1.95.0".into(),
+                cpu_model: "cpu".into(),
+                cpu_features: vec!["avx2".into()],
+                os_kernel: "kernel".into(),
+                governor: "{}".into(),
+                receipt: "receipt.md".into(),
+            })
+            .unwrap(),
+            processes: Vec::new(),
+            protocol: identity("protocol"),
+            validator: identity("validator"),
+            affinity: CpuAffinity::observe().unwrap(),
+            staging: identity("staging"),
+            producing_manifest: identity("manifest"),
+            build_inputs: [(
+                "input.rs".to_owned(),
+                Sha256Digest::of(input).as_str().into(),
+            )]
+            .into(),
+            host_admission_policy: HostAdmissionPolicy::declared(),
+        };
+        let recorded = inputs("a", false, b"frozen input");
+        let encoded = |inputs: BootstrapInputs| CanonicalJson::from_serializable(&inputs).unwrap();
+        let retried =
+            |inputs: BootstrapInputs| encoded(inputs.citing_checkout_of(&recorded).unwrap());
+        let intent = encoded(inputs("a", false, b"frozen input"));
+        assert_eq!(retried(inputs("b", true, b"frozen input")), intent);
+        assert_ne!(retried(inputs("a", false, b"changed input")), intent);
     }
 
     #[test]

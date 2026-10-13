@@ -1908,6 +1908,34 @@ pub struct PreparationIdentity {
     pub session_id: Token,
 }
 impl PreparationStore {
+    /// The intent an interrupted preparation left in `channels`' stage: the
+    /// active one, or that of the session whose preparation directory is `root`.
+    fn interrupted_intent(
+        channels: &SessionChannels,
+        root: &Path,
+    ) -> io::Result<Option<PreparationIntent>> {
+        let active = channels.stage.join("active-preparation.json");
+        if active.try_exists()? {
+            Ok(Some(decode::<PreparationIntent>(&fs::read(&active)?)?))
+        } else {
+            load_preparation_intent(&channels.stage, &root.join("intent.json"))
+        }
+    }
+    /// The identity inputs `session_id`'s interrupted preparation recorded, if
+    /// it left one. A retry cites the observations among them that decide
+    /// nothing, so that [`Self::begin`] compares what does.
+    pub fn interrupted_inputs(
+        channels: &SessionChannels,
+        session_id: &Token,
+    ) -> io::Result<Option<CanonicalJson>> {
+        let root = channels
+            .stage
+            .join("preparations")
+            .join(session_id.as_str());
+        Ok(Self::interrupted_intent(channels, &root)?
+            .filter(|intent| intent.session_id == *session_id)
+            .map(|intent| intent.identity_inputs))
+    }
     /// Starts or strictly reopens the same preparation. Identity inputs become
     /// the initial CampaignStart details and must bind all bootstrap behavior.
     pub fn begin(
@@ -1924,12 +1952,7 @@ impl PreparationStore {
             .stage
             .join("preparations")
             .join(session_id.as_str());
-        let active = channels.stage.join("active-preparation.json");
-        let existing = if active.try_exists()? {
-            Some(decode::<PreparationIntent>(&fs::read(&active)?)?)
-        } else {
-            load_preparation_intent(&channels.stage, &root.join("intent.json"))?
-        };
+        let existing = Self::interrupted_intent(&channels, &root)?;
         let intent = if let Some(intent) = existing {
             if intent.channels != channels
                 || intent.campaign_id != campaign_id
@@ -5337,6 +5360,37 @@ mod publication_tests {
             .unwrap();
         let checksum = store.write_checksum(&mut log, vec![]).unwrap();
         (store, log, checksum)
+    }
+
+    #[test]
+    fn an_interrupted_preparation_states_the_inputs_its_retry_must_match() {
+        let tmp = scratch("session-preparation-retry");
+        let channels = SessionChannels::for_stage(tmp.path()).unwrap();
+        let session = Token::new("session").unwrap();
+        assert_eq!(
+            PreparationStore::interrupted_inputs(&channels, &session).unwrap(),
+            None
+        );
+        drop(begin_preparation(tmp.path(), "session"));
+        let recorded = PreparationStore::interrupted_inputs(&channels, &session)
+            .unwrap()
+            .unwrap();
+        assert_eq!(recorded.as_str(), "{\"source\":\"fixed\"}");
+        assert_eq!(
+            PreparationStore::interrupted_inputs(&channels, &Token::new("other").unwrap()).unwrap(),
+            None
+        );
+        let retry = |inputs: CanonicalJson| {
+            PreparationStore::begin(
+                channels.clone(),
+                Token::new("campaign").unwrap(),
+                session.clone(),
+                "/tmp/campaign.lock".into(),
+                inputs,
+            )
+        };
+        assert!(retry(CanonicalJson::new("{\"source\":\"changed\"}").unwrap()).is_err());
+        retry(recorded).unwrap();
     }
 
     #[test]
