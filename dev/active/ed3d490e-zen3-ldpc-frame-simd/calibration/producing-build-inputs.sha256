@@ -300,7 +300,7 @@ dd153baa0dc4c18448ad440231f023e32195b2ab094b96b1bfb144d94112a1b2  dev/tools/tuni
 2988f77e5edc0eb0a945ca505b4091de06e1005e05cb6c39a1b7ea4e8afdd6b9  dev/tools/tuning-campaign-support/src/journal.rs
 e887b256348c760c82747e2e4bd6d867cb4f4a2726603bc9c83efc24cf6b3609  dev/tools/tuning-campaign-support/src/lib.rs
 9cce61426f6c3f382038d013314b2aa2846d08be8527fecf521bf3eec493e8df  dev/tools/tuning-campaign-support/src/process.rs
-28ee6ce3dd58d7557375e80c032d4cd078e3a1ce70e1f46c64e56c6fde69bdf9  dev/tools/tuning-campaign-support/src/protocol.rs
+aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a  dev/tools/tuning-campaign-support/src/protocol.rs
 6c065124bcb2ebce82c54eab409790ca85d8833c46d5176e0a6aad6bad7cca76  dev/tools/tuning-campaign-support/src/provenance.rs
 70f5c68e9a6d5f324385672671e10ae6354aaffd1f37a89510cb273d866340a3  dev/tools/tuning-campaign-support/src/receipt.rs
 6cd6230e8a77fb23934c2091833150ecef8edc5f248b02567b2deb78d9c825ba  dev/tools/tuning-campaign-support/src/repository.rs
