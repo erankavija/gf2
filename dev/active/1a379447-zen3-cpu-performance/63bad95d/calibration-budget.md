@@ -33,8 +33,8 @@ Minutes are estimates: the child count times the median child duration the commi
 
 | Stage | Children observed | Median child seconds |
 |---|---|---|
-| confirmation | 11232 | 0.581 |
-| pilot | 17472 | 0.582 |
+| confirmation | 12096 | 0.582 |
+| pilot | 17976 | 0.582 |
 | smoke | 144 | 0.588 |
 
 One session of the offline tuning campaign has a budget of 180 minutes (`dev/active/dbd8787d/premeasurement-protocol.md`, budget section).
@@ -99,6 +99,10 @@ One session of the offline tuning campaign has a budget of 180 minutes (`dev/act
 | `2037941f-logical-isolated-xor` | `dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl` | 3 | 0 | 0 | 1 | 6 |
 | `2037941f-logical-nr-construction` | `dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl` | 1 | 0 | 0 | 1 | 6 |
 | `2037941f-logical-public-row-xor` | `dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl` | 3 | 0 | 0 | 1 | 6 |
+| `63bad95d-native-ladder` | `dev/bench_results/63bad95d/63bad95d-native-ladder-ledger.jsonl` | 2 | 1 | 6 | 2 | 0 |
+| `63bad95d-native-ladder-v2` | `dev/bench_results/63bad95d/63bad95d-native-ladder-v2-ledger.jsonl` | 2 | 1 | 6 | 2 | 0 |
+| `63bad95d-profile-dispatch-overhead` | `dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-ledger.jsonl` | 2 | 0 | 0 | 1 | 6 |
+| `63bad95d-profile-dispatch-overhead-v2` | `dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2-ledger.jsonl` | 2 | 1 | 6 | 2 | 0 |
 | `and-popcnt-baselines` | `dev/bench_results/26465e6c/v3-and-popcnt-family-ledger.jsonl` | 3 | 1 | 6 | 2 | 0 |
 | `bch-genmatrix-consumer` | `dev/bench_results/6fb89a3c/v3-bch-genmatrix-family-ledger.jsonl` | 3 | 1 | 3 | 2 | 0 |
 | `bit-storage-count-consumers` | `dev/bench_results/04b85d10/v3-bit-storage-count-consumers-family-ledger.jsonl` | 4 | 1 | 5 | 2 | 0 |

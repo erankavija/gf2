@@ -17,9 +17,9 @@
   "of those, class selector": 8,
   "declared selectors outside the tuning sections": 6,
   "witness configurations": 7,
-  "committed protocol receipts": 151,
-  "core-kernel receipts": 97,
-  "core-kernel measurement families": 45
+  "committed protocol receipts": 159,
+  "core-kernel receipts": 105,
+  "core-kernel measurement families": 49
  },
  "entry_points": [
   {
@@ -4297,6 +4297,318 @@
    ]
   },
   {
+   "family": "63bad95d-native-ladder",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "63bad95d-r1-native-ladder-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "63bad95d-r1-native-ladder-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 6,
+    "exploratory/route-contrast": 6
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    }
+   ],
+   "builds": [
+    "native",
+    "tuned-portable"
+   ]
+  },
+  {
+   "family": "63bad95d-native-ladder-v2",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "63bad95d-r1-native-ladder-v2-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": true
+    },
+    {
+     "campaign_id": "63bad95d-r1-native-ladder-v2-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 6,
+    "exploratory/route-contrast": 6
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    }
+   ],
+   "builds": [
+    "native",
+    "tuned-portable"
+   ]
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "63bad95d-r1-profile-dispatch-overhead-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "63bad95d-r2-profile-dispatch-overhead-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "exploratory/route-contrast": 6
+   },
+   "contrast_roles": [
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=7/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=7/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=4/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=4/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    }
+   ],
+   "builds": [
+    "conservative-portable",
+    "tuned-portable"
+   ]
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead-v2",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "63bad95d-r1-profile-dispatch-overhead-v2-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": true
+    },
+    {
+     "campaign_id": "63bad95d-r1-profile-dispatch-overhead-v2-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 3,
+    "exploratory/route-contrast": 3,
+    "holdout/route-contrast": 3
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory",
+    "holdout"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=7/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=7/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=4/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=4/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=7/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=7/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=4/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=4/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "holdout",
+     "baseline": "gf2-core/kernels::ops::popcount/w=6/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::popcount/w=6/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "holdout",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=3/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=3/backend=scalar/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "holdout",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=5/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=5/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    }
+   ],
+   "builds": [
+    "conservative-portable",
+    "tuned-portable"
+   ]
+  },
+  {
    "family": "2037941f-logical-isal-base-gap",
    "issue": "65c0e13d",
    "track": "core-kernel",
@@ -5558,6 +5870,6 @@
  ],
  "workload_routes": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
-  "sha256": "1bd95723ce28995f698a2d6b4cb0d5011f340fd41c2ba0c0c673263b3d40e22c"
+  "sha256": "560dd9ddbe3e9c9f466cad488d961758e131a521a562d0896c4f667c473810ca"
  }
 }

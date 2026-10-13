@@ -87,6 +87,46 @@
    "cells_the_next_attempt_admits": 6
   },
   {
+   "family": "63bad95d-native-ladder",
+   "ledger": "dev/bench_results/63bad95d/63bad95d-native-ladder-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "63bad95d-native-ladder-v2",
+   "ledger": "dev/bench_results/63bad95d/63bad95d-native-ladder-v2-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead",
+   "ledger": "dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 0,
+   "reserved_comparisons": 0,
+   "next_attempt": 1,
+   "next_attempt_alpha": 0.025,
+   "cells_the_next_attempt_admits": 6
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead-v2",
+   "ledger": "dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
    "family": "and-popcnt-baselines",
    "ledger": "dev/bench_results/26465e6c/v3-and-popcnt-family-ledger.jsonl",
    "entries": 3,
@@ -379,12 +419,12 @@
  ],
  "observed_child_seconds": {
   "confirmation": {
-   "children": 11232,
-   "median_seconds": 0.581239195
+   "children": 12096,
+   "median_seconds": 0.5819857035
   },
   "pilot": {
-   "children": 17472,
-   "median_seconds": 0.5819699665
+   "children": 17976,
+   "median_seconds": 0.5821513315
   },
   "smoke": {
    "children": 144,
@@ -405,8 +445,8 @@
    "pilot_cells": 3,
    "pilot_children": 72,
    "confirmation_children": 288,
-   "estimated_pilot_minutes": 0.6983639598,
-   "estimated_confirmation_minutes": 2.789948136
+   "estimated_pilot_minutes": 0.6985815978000001,
+   "estimated_confirmation_minutes": 2.7935313768
   },
   {
    "family": "63bad95d-native-ladder",
@@ -421,8 +461,8 @@
    "pilot_cells": 6,
    "pilot_children": 144,
    "confirmation_children": 288,
-   "estimated_pilot_minutes": 1.3967279196,
-   "estimated_confirmation_minutes": 2.789948136
+   "estimated_pilot_minutes": 1.3971631956000001,
+   "estimated_confirmation_minutes": 2.7935313768
   },
   {
    "family": "63bad95d-profile-dispatch-overhead-v2",
@@ -437,8 +477,8 @@
    "pilot_cells": 3,
    "pilot_children": 72,
    "confirmation_children": 288,
-   "estimated_pilot_minutes": 0.6983639598,
-   "estimated_confirmation_minutes": 2.789948136
+   "estimated_pilot_minutes": 0.6985815978000001,
+   "estimated_confirmation_minutes": 2.7935313768
   },
   {
    "family": "63bad95d-native-ladder-v2",
@@ -453,14 +493,14 @@
    "pilot_cells": 6,
    "pilot_children": 144,
    "confirmation_children": 288,
-   "estimated_pilot_minutes": 1.3967279196,
-   "estimated_confirmation_minutes": 2.789948136
+   "estimated_pilot_minutes": 1.3971631956000001,
+   "estimated_confirmation_minutes": 2.7935313768
   }
  ],
  "planned_totals": {
   "non_exploratory_cells": 24,
-  "estimated_pilot_minutes": 4.1901837588,
-  "estimated_confirmation_minutes": 11.159792544
+  "estimated_pilot_minutes": 4.1914895868,
+  "estimated_confirmation_minutes": 11.1741255072
  },
  "offline_tuning_campaign": {
   "matvec_sweep_stride_words": [

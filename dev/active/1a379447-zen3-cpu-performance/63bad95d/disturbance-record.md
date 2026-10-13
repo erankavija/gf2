@@ -60,6 +60,17 @@ session observed_utc 2026-10-08T23:02:19.274131740Z load_average 29.55 35.04 29.
 session observed_utc 2026-10-12T01:06:00.884097739Z load_average 1.14 0.76 0.34
 ```
 
+`dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2/r1-confirmation`:
+
+```
+# started_utc: 2026-10-13T01:00:22Z
+# load_avg_start: 0.15 0.07 0.03
+# load_avg_end: 1.00 0.50 0.21
+# finished_utc: 2026-10-13T01:03:12Z
+session observed_utc 2026-10-13T01:00:24.577471602Z load_average 0.15 0.07 0.03
+session observed_utc 2026-10-13T01:01:49.472602963Z load_average 0.80 0.30 0.12
+```
+
 `dev/bench_results/63bad95d/63bad95d-native-ladder-v2/r1-pilot`:
 
 ```
@@ -69,6 +80,17 @@ session observed_utc 2026-10-12T01:06:00.884097739Z load_average 1.14 0.76 0.34
 # finished_utc: 2026-10-12T01:08:12Z
 session observed_utc 2026-10-12T01:06:47.996789224Z load_average 1.07 0.79 0.37
 session observed_utc 2026-10-12T01:07:30.317222555Z load_average 1.08 0.84 0.41
+```
+
+`dev/bench_results/63bad95d/63bad95d-native-ladder-v2/r1-confirmation`:
+
+```
+# started_utc: 2026-10-13T01:03:16Z
+# load_avg_start: 1.00 0.50 0.21
+# load_avg_end: 1.06 0.74 0.36
+# finished_utc: 2026-10-13T01:06:06Z
+session observed_utc 2026-10-13T01:03:17.643198460Z load_average 1.00 0.50 0.21
+session observed_utc 2026-10-13T01:04:41.883062963Z load_average 1.00 0.63 0.28
 ```
 
 ## `63bad95d-profile-dispatch-overhead`
@@ -159,16 +181,45 @@ Intervals are each campaign's acceptance summary rows at that campaign's correct
 | Cell | Campaign | Label | Pairs | Alpha | Estimate | Interval | Relative half-width | Decision |
 |---|---|---|---:|---:|---:|---|---:|---|
 | `xor-inplace-4w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | pilot | 12 | 0.025000 | 1.3046 | [1.2988, 1.3078] | 0.0044 | improved |
+| `xor-inplace-4w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | confirmation | 24 | 0.004167 | 1.3029 | [1.2572, 1.3091] | 0.0351 | improved |
 | `and-popcount-7w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | pilot | 12 | 0.025000 | 0.9836 | [0.9818, 0.9859] | 0.0023 | not-worse |
+| `and-popcount-7w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | confirmation | 24 | 0.004167 | 0.9857 | [0.9825, 0.9886] | 0.0032 | not-worse |
 | `xor-inplace-8w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | pilot | 12 | 0.025000 | 0.9976 | [0.9891, 1.0018] | 0.0086 | not-worse |
+| `xor-inplace-8w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | confirmation | 24 | 0.004167 | 0.9977 | [0.9924, 1.0014] | 0.0053 | not-worse |
+| `xor-inplace-5w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | confirmation | 24 | 0.004167 | 1.1373 | [1.1273, 1.1433] | 0.0089 | improved |
+| `popcount-6w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | confirmation | 24 | 0.004167 | 1.3306 | [1.3272, 1.3335] | 0.0025 | improved |
+| `xor-inplace-3w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | confirmation | 24 | 0.004167 | 0.9954 | [0.9924, 1.0024] | 0.0071 | not-worse |
 
 Raw pairs of the same receipts, descriptive: the median and the relative interquartile range of the per-pair ratio over the stated pairs, and the median and the maximum window spread over the stated executions.
 
 | Cell | Campaign | Pairs | Ratio median | Ratio relative IQR | Executions | Window spread median | Window spread maximum |
 |---|---|---:|---:|---:|---:|---:|---:|
 | `xor-inplace-4w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | 12 | 1.3042 | 0.0050 | 24 | 1.0041 | 1.0220 |
+| `xor-inplace-4w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | 24 | 1.3042 | 0.0168 | 48 | 1.0034 | 1.0206 |
 | `and-popcount-7w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | 12 | 0.9831 | 0.0019 | 24 | 1.0037 | 1.0266 |
+| `and-popcount-7w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | 24 | 0.9848 | 0.0059 | 48 | 1.0048 | 1.0222 |
 | `xor-inplace-8w` | `63bad95d-r1-profile-dispatch-overhead-v2-pilot` | 12 | 0.9958 | 0.0110 | 24 | 1.0052 | 1.0187 |
+| `xor-inplace-8w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | 24 | 0.9977 | 0.0073 | 48 | 1.0046 | 1.0235 |
+| `xor-inplace-5w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | 24 | 1.1366 | 0.0126 | 48 | 1.0040 | 1.0153 |
+| `popcount-6w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | 24 | 1.3310 | 0.0027 | 48 | 1.0052 | 1.0163 |
+| `xor-inplace-3w` | `63bad95d-r1-profile-dispatch-overhead-v2-confirmation` | 24 | 0.9985 | 0.0064 | 48 | 1.0091 | 1.0260 |
+
+### Decisions of `63bad95d-r1-profile-dispatch-overhead-v2-confirmation`
+
+Verdict `accepted`, qualifies `true`: a confirmation qualifies when every confirmatory and holdout cell passes. The frozen measurement resolution of its addendum is 0.03, the widest relative half-width of the pilot it pins at this confirmation's corrected alpha. A cell is not worse when its interval's lower bound reaches the floor, the reciprocal of its equivalence margin.
+
+| Cell | Decision | Outcome | Relative half-width | Exceeds the frozen resolution | Floor | Lower bound | Estimate reaches the floor | Ratio median reaches the floor | Ratio relative IQR over the pilot's |
+|---|---|---|---:|---|---:|---:|---|---|---:|
+| `xor-inplace-4w` | improved | pass | 0.0351 | yes | 0.9524 | 1.2572 | yes | yes | 3.3 |
+| `and-popcount-7w` | not-worse | pass | 0.0032 | no | 0.9524 | 0.9825 | yes | yes | 3.2 |
+| `xor-inplace-8w` | not-worse | pass | 0.0053 | no | 0.9524 | 0.9924 | yes | yes | 0.7 |
+| `xor-inplace-5w` | improved | pass | 0.0089 | no | 0.9524 | 1.1273 | yes | yes | not in the pilot |
+| `popcount-6w` | improved | pass | 0.0025 | no | 0.9524 | 1.3272 | yes | yes | not in the pilot |
+| `xor-inplace-3w` | not-worse | pass | 0.0071 | no | 0.9524 | 0.9924 | yes | yes | not in the pilot |
+
+The half-width of `xor-inplace-4w` (pass) exceeds the frozen resolution and the lower bound reaches the floor: the decision holds at the observed width.
+
+The half-width of `and-popcount-7w` (pass), `xor-inplace-8w` (pass), `xor-inplace-5w` (pass), `popcount-6w` (pass), `xor-inplace-3w` (pass) stays within the frozen resolution: the dispersion the pilot predicts decides these cells.
 
 ## `63bad95d-native-ladder-v2`
 
@@ -177,19 +228,46 @@ Intervals are each campaign's acceptance summary rows at that campaign's correct
 | Cell | Campaign | Label | Pairs | Alpha | Estimate | Interval | Relative half-width | Decision |
 |---|---|---|---:|---:|---:|---|---:|---|
 | `matvec-r1024-24w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0215 | [1.0065, 1.0358] | 0.0147 | not-worse |
+| `matvec-r1024-24w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | confirmation | 24 | 0.004167 | 1.0327 | [1.0227, 1.0488] | 0.0156 | not-worse |
 | `bitmatrix-transpose-8192x2048-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0035 | [0.9480, 1.0232] | 0.0553 | inconclusive |
+| `bitmatrix-transpose-8192x2048-native` | `63bad95d-r1-native-ladder-v2-confirmation` | confirmation | 24 | 0.004167 | 1.0000 | [0.9903, 1.0332] | 0.0333 | not-worse |
 | `popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0278 | [1.0253, 1.0287] | 0.0024 | not-worse |
+| `popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | confirmation | 24 | 0.004167 | 1.0277 | [1.0264, 1.0297] | 0.0020 | not-worse |
 | `and-popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0252 | [1.0239, 1.0280] | 0.0028 | not-worse |
+| `and-popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | confirmation | 24 | 0.004167 | 1.0253 | [1.0212, 1.0278] | 0.0041 | not-worse |
 | `xor-inplace-8w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0017 | [0.9530, 1.0248] | 0.0486 | not-worse |
+| `xor-inplace-8w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | confirmation | 24 | 0.004167 | 0.9979 | [0.9814, 1.0048] | 0.0166 | not-worse |
 | `clmul-wide-9w-native` | `63bad95d-r1-native-ladder-v2-pilot` | pilot | 12 | 0.025000 | 1.0629 | [1.0620, 1.0645] | 0.0016 | improved |
+| `clmul-wide-9w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | confirmation | 24 | 0.004167 | 1.0634 | [1.0619, 1.0650] | 0.0015 | not-worse |
 
 Raw pairs of the same receipts, descriptive: the median and the relative interquartile range of the per-pair ratio over the stated pairs, and the median and the maximum window spread over the stated executions.
 
 | Cell | Campaign | Pairs | Ratio median | Ratio relative IQR | Executions | Window spread median | Window spread maximum |
 |---|---|---:|---:|---:|---:|---:|---:|
 | `matvec-r1024-24w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0198 | 0.0266 | 24 | 1.0217 | 1.0603 |
+| `matvec-r1024-24w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | 24 | 1.0324 | 0.0235 | 48 | 1.0132 | 1.0918 |
 | `bitmatrix-transpose-8192x2048-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0049 | 0.0218 | 24 | 1.0054 | 1.0225 |
+| `bitmatrix-transpose-8192x2048-native` | `63bad95d-r1-native-ladder-v2-confirmation` | 24 | 1.0120 | 0.0337 | 48 | 1.0036 | 1.0190 |
 | `popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0278 | 0.0021 | 24 | 1.0031 | 1.0082 |
+| `popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | 24 | 1.0279 | 0.0027 | 48 | 1.0045 | 1.1007 |
 | `and-popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0250 | 0.0019 | 24 | 1.0049 | 1.0318 |
+| `and-popcount-1024w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | 24 | 1.0245 | 0.0033 | 48 | 1.0044 | 1.0191 |
 | `xor-inplace-8w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0022 | 0.0372 | 24 | 1.0096 | 1.1076 |
+| `xor-inplace-8w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | 24 | 0.9965 | 0.0104 | 48 | 1.0092 | 1.0312 |
 | `clmul-wide-9w-native` | `63bad95d-r1-native-ladder-v2-pilot` | 12 | 1.0627 | 0.0023 | 24 | 1.0038 | 1.0242 |
+| `clmul-wide-9w-native` | `63bad95d-r1-native-ladder-v2-confirmation` | 24 | 1.0631 | 0.0037 | 48 | 1.0038 | 1.0240 |
+
+### Decisions of `63bad95d-r1-native-ladder-v2-confirmation`
+
+Verdict `accepted`, qualifies `true`: a confirmation qualifies when every confirmatory and holdout cell passes. The frozen measurement resolution of its addendum is 0.07, the widest relative half-width of the pilot it pins at this confirmation's corrected alpha. A cell is not worse when its interval's lower bound reaches the floor, the reciprocal of its equivalence margin.
+
+| Cell | Decision | Outcome | Relative half-width | Exceeds the frozen resolution | Floor | Lower bound | Estimate reaches the floor | Ratio median reaches the floor | Ratio relative IQR over the pilot's |
+|---|---|---|---:|---|---:|---:|---|---|---:|
+| `matvec-r1024-24w-native` | not-worse | pass | 0.0156 | no | 0.9259 | 1.0227 | yes | yes | 0.9 |
+| `bitmatrix-transpose-8192x2048-native` | not-worse | pass | 0.0333 | no | 0.9259 | 0.9903 | yes | yes | 1.5 |
+| `popcount-1024w-native` | not-worse | pass | 0.0020 | no | 0.9259 | 1.0264 | yes | yes | 1.2 |
+| `and-popcount-1024w-native` | not-worse | pass | 0.0041 | no | 0.9259 | 1.0212 | yes | yes | 1.7 |
+| `xor-inplace-8w-native` | not-worse | pass | 0.0166 | no | 0.9259 | 0.9814 | yes | yes | 0.3 |
+| `clmul-wide-9w-native` | not-worse | pass | 0.0015 | no | 0.9259 | 1.0619 | yes | yes | 1.6 |
+
+The half-width of `matvec-r1024-24w-native` (pass), `bitmatrix-transpose-8192x2048-native` (pass), `popcount-1024w-native` (pass), `and-popcount-1024w-native` (pass), `xor-inplace-8w-native` (pass), `clmul-wide-9w-native` (pass) stays within the frozen resolution: the dispersion the pilot predicts decides these cells.
