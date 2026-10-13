@@ -31,7 +31,6 @@ gf2-core = { path = "../../../../../../crates/gf2-core", features = ["simd", "tu
 tuning-campaign-support = { path = "../../../../../tools/tuning-campaign-support" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1.0", features = ["float_roundtrip"] }
-sha2 = "0.10"
 
 # The workspace release profile verbatim.
 [profile.release]
