@@ -268,6 +268,15 @@ CLASSES = {
     "CSA_BLOCK_WORDS": "kernel-geometry",
 }
 
+# Named convergence exception (REQ-11): the scanned constants of class
+# `selector` keep their values outside the tuning sections until this issue
+# moves each under a section or shows it structural.
+CONVERGENCE_EXCEPTION = {
+    "name": "private-core-selector-constants",
+    "class": "selector",
+    "issue": "817fc47d",
+}
+
 # Track of each issue whose receipts the repository holds. `core-kernel` is the
 # calibration scope of this issue; the others are listed for their routes only.
 TRACKS = {
@@ -913,6 +922,15 @@ def render(inventory):
             ],
         ),
         "",
+        f"Convergence exception `{inventory['convergence_exception']['name']}`: the constants "
+        f"of class `{inventory['convergence_exception']['class']}` above, "
+        + ", ".join(f"`{row['id']}` (`{row['defined']}`)"
+                    for row in inventory["convergence_exception"]["constants"])
+        + ", stay outside the tuning sections at the values their definitions give. "
+        f"`@/issue/{inventory['convergence_exception']['issue']}` tracks the convergence: each "
+        "moves under a tuning section with a conservative default equal to that value, or is "
+        "classified structural with its reason.",
+        "",
         table(
             ["Declared selector", "Package", "What it selects", "Source claims"],
             [[f"`{row['id']}`", f"`{row['package']}`", row["what"], code(row["claims"])]
@@ -1075,6 +1093,11 @@ def main():
         "dependency_features": features,
         "tuning": tuning,
         "private_constants": private,
+        "convergence_exception": {
+            **CONVERGENCE_EXCEPTION,
+            "constants": [{"id": row["id"], "defined": row["defined"]} for row in private
+                          if row["class"] == CONVERGENCE_EXCEPTION["class"]],
+        },
         "declared_selectors": declared,
         "selector_evidence": evidence(families, tuning["selectors"], private + declared),
         "measurement_families": families,

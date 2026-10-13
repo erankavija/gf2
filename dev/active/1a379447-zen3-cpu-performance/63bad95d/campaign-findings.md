@@ -278,6 +278,19 @@ Consequences under plan §7:
 
 The production selector values are not changed by this record.
 
+## F-10: the selector-class constants outside the sections keep their values
+
+The inventory's
+[private list](route-inventory.md#thresholds-and-selectors-outside-the-tuning-sections)
+gives the scanned constants of class `selector` that no tuning section owns.
+This calibration supersedes none of them and moves none: each keeps the value
+its definition gives under the named convergence exception
+`private-core-selector-constants`, which the inventory records with the
+constants and their definitions. `@/issue/817fc47d` is the convergence
+condition (REQ-11): each constant moves under a tuning section with a
+conservative default equal to that value, or the inventory classifies it as
+structural with its reason.
+
 ## What the campaign does not decide
 
 - No protocol receipt: the producer's statistic is its own, and its decisions

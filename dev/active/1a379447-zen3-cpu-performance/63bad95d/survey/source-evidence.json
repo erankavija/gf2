@@ -555,7 +555,7 @@
     {
       "id": "tuning-baked-owner-digest",
       "project": "gf2",
-      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
+      "commit": "e7a9b9fa695f9b5c0fde8836ea4b4158b9866019",
       "path": "crates/gf2-core/src/tuning/baked.rs",
       "line": 17,
       "occurrences": 1,
@@ -610,24 +610,24 @@
     {
       "id": "calibration-fields",
       "project": "gf2",
-      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 382,
       "occurrences": 1,
       "verbatim": "    const ALL: [Self; 20] = [",
       "why": "The core producer sweeps a closed list of retained threshold fields.",
-      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
     },
     {
       "id": "calibration-bit-arm",
       "project": "gf2",
-      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 2404,
       "occurrences": 1,
       "verbatim": "                Arm::Conservative => &ScalarBackend,",
       "why": "The producer calibrates `bit_backend.simd_min_words` on the XOR of the two backends called directly.",
-      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
     },
     {
       "id": "calibration-launcher-declaration",
@@ -654,24 +654,24 @@
     {
       "id": "calibration-matvec-field",
       "project": "gf2",
-      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 667,
       "occurrences": 1,
       "verbatim": "            Self::MatvecSimdMinWords => vec![4, 7, 8, 9, 32, 63, 64, 65, 128],",
       "why": "The producer sweeps the matvec threshold over nine strides.",
-      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
     },
     {
       "id": "calibration-matvec-arms",
       "project": "gf2",
-      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 2680,
       "occurrences": 1,
       "verbatim": "            let result = matrix.matvec_with_route(vector, matvec_lane(spec.arm));",
       "why": "Each arm of the matvec sweep pins its lane through the public entry.",
-      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
     },
     {
       "id": "validator-matvec-grid",
@@ -687,13 +687,13 @@
     {
       "id": "calibration-inventory-closed",
       "project": "gf2",
-      "commit": "0495e125631d11dfec9840ca64e712805d493fee",
+      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 217,
       "occurrences": 1,
       "verbatim": "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;",
       "why": "The producer publishes only when its measured and omitted fields partition a fixed codec inventory.",
-      "sha256": "8d90b5c8d029f5a5d3a6b4f0bf16a9a0d3b322c19110fa71c5bc5de688eb6337"
+      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
     },
     {
       "id": "calibration-validator-behavior",
@@ -731,7 +731,7 @@
     {
       "id": "baked-matvec-owner-test",
       "project": "gf2",
-      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
+      "commit": "e7a9b9fa695f9b5c0fde8836ea4b4158b9866019",
       "path": "crates/gf2-core/src/tuning/baked.rs",
       "line": 128,
       "occurrences": 1,
@@ -742,7 +742,7 @@
     {
       "id": "baked-measured-owner-test",
       "project": "gf2",
-      "commit": "e637dee32a9665b0b781a42e4e72758d963cb316",
+      "commit": "e7a9b9fa695f9b5c0fde8836ea4b4158b9866019",
       "path": "crates/gf2-core/src/tuning/baked.rs",
       "line": 100,
       "occurrences": 1,

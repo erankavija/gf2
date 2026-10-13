@@ -3,7 +3,7 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "f0d93732d777cfe1036ab3216eddde8fe625eab57d451d3ebe5ceaac986306f4"
+  "sha256": "80b5cfa4ddd5ecd752216313d53feadf91dd637f4fb925eaeac0e549ad6f75c4"
  },
  "counts": {
   "entry point groups": 9,
@@ -2085,6 +2085,45 @@
    ]
   }
  ],
+ "convergence_exception": {
+  "name": "private-core-selector-constants",
+  "class": "selector",
+  "issue": "817fc47d",
+  "constants": [
+   {
+    "id": "M4RM_DEFAULT_MAX_K",
+    "defined": "crates/gf2-core/src/alg/m4rm.rs:27"
+   },
+   {
+    "id": "DEFAULT_BLOCK_ROWS",
+    "defined": "crates/gf2-core/src/sparse.rs:9"
+   },
+   {
+    "id": "PRODUCTION_PREFERENCE",
+    "defined": "crates/gf2-kernels-simd/src/transpose.rs:73"
+   },
+   {
+    "id": "K_CHUNK_CAP",
+    "defined": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:27"
+   },
+   {
+    "id": "CHUNK_VEC",
+    "defined": "crates/gf2-kernels-simd/src/x86/fp_small.rs:294"
+   },
+   {
+    "id": "K_CHUNK_CAP",
+    "defined": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:25"
+   },
+   {
+    "id": "I_TILE",
+    "defined": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:136"
+   },
+   {
+    "id": "MAX_MATRIX_BYTES_FOR_L1",
+    "defined": "crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:28"
+   }
+  ]
+ },
  "declared_selectors": [
   {
    "id": "popcount-comparator-kernels",
