@@ -51,3 +51,7 @@ gf2m::wide::clmul_wide	words=1	portable-scalar	portable
 gf2m::wide::clmul_wide	words=4	avx2+vpclmulqdq-ymm	kernel
 gf2m::wide::clmul_wide	words=9	avx2+vpclmulqdq-ymm	kernel
 gf2m::wide::clmul_wide	words=16	portable-scalar	portable
+SpBitMatrix::to_default_block_csr	block-rows	32	portable
+gfp::simd_ops::prime_gemm_k_chunk_cap	f32-cascade-tabled	1024	kernel
+gfp::simd_ops::prime_gemm_k_chunk_cap	f32-cascade-direct	1024	kernel
+gfp::simd_ops::prime_gemm_k_chunk_cap	f64-cascade	4096	kernel

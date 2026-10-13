@@ -49,11 +49,14 @@ The subject of the tables below is `gf2-63bad95d-20261006t230547z-2073085`, prod
 | `polynomial.karatsuba_max_out_len` | `128` | `128` | `128` | `128` |  |
 | `polynomial.karatsuba_min_degree` | `32` | `31` | `31` | `31` | conservative |
 | `polynomial.subproduct_min_len` | `4096` | `512` | `512` | `512` | conservative |
+| `prime_route.f32_k_chunk_cap` | `1024` | omitted | omitted | omitted |  |
 | `prime_route.f32_min_cols` | `512` | omitted | omitted | omitted |  |
 | `prime_route.f32_min_prime` | `251` | omitted | omitted | omitted |  |
+| `prime_route.f64_k_chunk_cap` | `4096` | omitted | omitted | omitted |  |
 | `prime_route.f64_min_cols` | `512` | omitted | omitted | omitted |  |
 | `soa_batch.parallel_chunk_len` | `16384` | `16384` | `16384` | `16384` |  |
 | `soa_batch.parallel_min_len` | `32768` | `65536` | `65536` | `65536` | conservative |
+| `sparse.block_csr_default_rows` | `32` | omitted | omitted | omitted |  |
 | `triangular.base_case_max_dim` | `8` | omitted | `12` | `12` | conservative, a83583e0 |
 | `triangular.trsm_blocked_min_dim` | `64` | `64` | `64` | `64` |  |
 | `triangular.trsm_panel_rows` | `64` | `64` | `64` | `64` |  |

@@ -5,46 +5,46 @@
     {
       "id": "core-default-features",
       "project": "gf2",
-      "commit": "77b55b4470ee2b75ae19116b16eec3ce8250e6cf",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 53,
       "occurrences": 1,
       "verbatim": "default = [\"rand\", \"io\"]",
       "why": "A standalone `gf2-core` build enables neither `simd` nor `tuning-profile`.",
-      "sha256": "7d5b628d61eb5a52e7c80149af278aa727b714fda8b5a9798ba4c42fdd011a43"
+      "sha256": "a3a526da1e465f4cb7649971cf9b40d6a92e1ad103be03a37eb2bb8a7f46ff9c"
     },
     {
       "id": "core-simd-optional",
       "project": "gf2",
-      "commit": "77b55b4470ee2b75ae19116b16eec3ce8250e6cf",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 57,
       "occurrences": 1,
       "verbatim": "simd = []",
       "why": "Kernel dispatch is the opt-in `simd` cargo feature.",
-      "sha256": "7d5b628d61eb5a52e7c80149af278aa727b714fda8b5a9798ba4c42fdd011a43"
+      "sha256": "a3a526da1e465f4cb7649971cf9b40d6a92e1ad103be03a37eb2bb8a7f46ff9c"
     },
     {
       "id": "core-tuning-profile-feature",
       "project": "gf2",
-      "commit": "77b55b4470ee2b75ae19116b16eec3ce8250e6cf",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 67,
       "occurrences": 1,
       "verbatim": "tuning-profile = [\"dep:serde\", \"dep:serde_json\", \"dep:sha2\"]",
       "why": "`tuning-profile` adds profile parsing only; it selects no profile.",
-      "sha256": "7d5b628d61eb5a52e7c80149af278aa727b714fda8b5a9798ba4c42fdd011a43"
+      "sha256": "a3a526da1e465f4cb7649971cf9b40d6a92e1ad103be03a37eb2bb8a7f46ff9c"
     },
     {
       "id": "core-baked-cfg-declared",
       "project": "gf2",
-      "commit": "77b55b4470ee2b75ae19116b16eec3ce8250e6cf",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 13,
       "occurrences": 1,
       "verbatim": "unexpected_cfgs = { level = \"warn\", check-cfg = ['cfg(kani)', 'cfg(verify_lean)', 'cfg(gf2_tuning_baked)'] }",
       "why": "`gf2_tuning_baked` is a declared compiler configuration and no cargo feature, so `--all-features` does not set it.",
-      "sha256": "7d5b628d61eb5a52e7c80149af278aa727b714fda8b5a9798ba4c42fdd011a43"
+      "sha256": "a3a526da1e465f4cb7649971cf9b40d6a92e1ad103be03a37eb2bb8a7f46ff9c"
     },
     {
       "id": "coding-default-simd",
@@ -126,24 +126,24 @@
     {
       "id": "ci-baked-step",
       "project": "gf2",
-      "commit": "a1cd5ebd9a1f0c901a812b60a3bc0b9be57d198a",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "scripts/cargo-ci.sh",
       "line": 329,
       "occurrences": 1,
-      "verbatim": "run_step baked-core env RUSTFLAGS=\"--cfg gf2_tuning_baked\" \"$BUDGET\" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable",
+      "verbatim": "run_step baked-core env RUSTFLAGS=\"--cfg gf2_tuning_baked\" \"$BUDGET\" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install",
       "why": "CI builds the baked configuration in one scoped step; every other step keeps the conservative constants.",
-      "sha256": "1d35f6ca7023b412183cf8833b2e7ee8fabce9fd9233fe4a3a1bf6e65539a501"
+      "sha256": "5d9a3ed3def7aab6558091408eb31e4ca8503a56459cc71298186f8bd8e8f59d"
     },
     {
       "id": "ci-feature-flags",
       "project": "gf2",
-      "commit": "a1cd5ebd9a1f0c901a812b60a3bc0b9be57d198a",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "scripts/cargo-ci.sh",
       "line": 226,
       "occurrences": 1,
       "verbatim": "  FEAT_FLAGS=\"--features simd,parallel,visualization\"",
       "why": "The workspace test step of CI enables `simd`, so it runs the shared fallback contract on the kernel build only.",
-      "sha256": "1d35f6ca7023b412183cf8833b2e7ee8fabce9fd9233fe4a3a1bf6e65539a501"
+      "sha256": "5d9a3ed3def7aab6558091408eb31e4ca8503a56459cc71298186f8bd8e8f59d"
     },
     {
       "id": "logical-bundle-detect",
@@ -544,13 +544,13 @@
     {
       "id": "tuning-baked-module-gate",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/src/tuning/mod.rs",
       "line": 33,
       "occurrences": 1,
       "verbatim": "#[cfg(any(test, gf2_tuning_baked))]",
       "why": "The baked constants compile only under test or the baked configuration.",
-      "sha256": "3d3710f291ffe3c9921cf46f22ad18be35e0eeb36da3767da6f79b01bcd14f87"
+      "sha256": "f4c3f7f3514872ef9441539abb1a6d8c9e5126051153dac60328b7e9520c7b0e"
     },
     {
       "id": "tuning-baked-owner-digest",
@@ -566,13 +566,13 @@
     {
       "id": "tuning-active-accessor",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/src/tuning/mod.rs",
-      "line": 1446,
+      "line": 1550,
       "occurrences": 1,
       "verbatim": "pub fn active() -> ActiveSection<'static, CoreTuning> {",
       "why": "Runtime selectors resolve through one process-wide accessor.",
-      "sha256": "3d3710f291ffe3c9921cf46f22ad18be35e0eeb36da3767da6f79b01bcd14f87"
+      "sha256": "f4c3f7f3514872ef9441539abb1a6d8c9e5126051153dac60328b7e9520c7b0e"
     },
     {
       "id": "tuning-install-one-shot",
@@ -610,24 +610,24 @@
     {
       "id": "calibration-fields",
       "project": "gf2",
-      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 382,
       "occurrences": 1,
       "verbatim": "    const ALL: [Self; 20] = [",
       "why": "The core producer sweeps a closed list of retained threshold fields.",
-      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
+      "sha256": "1c33c27b7087ae1ffd35591e257dd77a9aeb5eef2543174e5792f99283add8ef"
     },
     {
       "id": "calibration-bit-arm",
       "project": "gf2",
-      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 2404,
       "occurrences": 1,
       "verbatim": "                Arm::Conservative => &ScalarBackend,",
       "why": "The producer calibrates `bit_backend.simd_min_words` on the XOR of the two backends called directly.",
-      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
+      "sha256": "1c33c27b7087ae1ffd35591e257dd77a9aeb5eef2543174e5792f99283add8ef"
     },
     {
       "id": "calibration-launcher-declaration",
@@ -654,57 +654,57 @@
     {
       "id": "calibration-matvec-field",
       "project": "gf2",
-      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 667,
       "occurrences": 1,
       "verbatim": "            Self::MatvecSimdMinWords => vec![4, 7, 8, 9, 32, 63, 64, 65, 128],",
       "why": "The producer sweeps the matvec threshold over nine strides.",
-      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
+      "sha256": "1c33c27b7087ae1ffd35591e257dd77a9aeb5eef2543174e5792f99283add8ef"
     },
     {
       "id": "calibration-matvec-arms",
       "project": "gf2",
-      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 2680,
       "occurrences": 1,
       "verbatim": "            let result = matrix.matvec_with_route(vector, matvec_lane(spec.arm));",
       "why": "Each arm of the matvec sweep pins its lane through the public entry.",
-      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
+      "sha256": "1c33c27b7087ae1ffd35591e257dd77a9aeb5eef2543174e5792f99283add8ef"
     },
     {
       "id": "validator-matvec-grid",
       "project": "gf2",
-      "commit": "4b1b2f851e45909d0c2132bf5080a149c55dc6c3",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "dev/scripts/validate-tuning-extent-campaign.py",
       "line": 267,
       "occurrences": 1,
       "verbatim": "    \"bit_matrix.matvec_simd_min_words\": [4, 7, 8, 9, 32, 63, 64, 65, 128],",
       "why": "The independent validator carries the same grid.",
-      "sha256": "5b632b48fb4d9761f00b91dad32c0b667c09050825e2132f598088e9994ddcf7"
+      "sha256": "7a6fafef1133dc1f4bed8282af44a6629e43ed05dc8ecb722fc8860315087932"
     },
     {
       "id": "calibration-inventory-closed",
       "project": "gf2",
-      "commit": "0e192eaa1fbd2ee4bdd882c88aa74410884ddd43",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/benches/tuning_calibration.rs",
       "line": 217,
       "occurrences": 1,
-      "verbatim": "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;",
+      "verbatim": "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 40;",
       "why": "The producer publishes only when its measured and omitted fields partition a fixed codec inventory.",
-      "sha256": "b5223e5dfd8c5e1fd699279b8c0f155a9e192ecac06bcf807da4286fa5fa36b6"
+      "sha256": "1c33c27b7087ae1ffd35591e257dd77a9aeb5eef2543174e5792f99283add8ef"
     },
     {
       "id": "calibration-validator-behavior",
       "project": "gf2",
-      "commit": "4b1b2f851e45909d0c2132bf5080a149c55dc6c3",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "dev/scripts/validate-tuning-extent-campaign.py",
       "line": 75,
       "occurrences": 1,
       "verbatim": "CORE_BEHAVIOR = \"tuning-calibration-v4\"",
       "why": "The independent validator pins the producer's behavior token.",
-      "sha256": "5b632b48fb4d9761f00b91dad32c0b667c09050825e2132f598088e9994ddcf7"
+      "sha256": "7a6fafef1133dc1f4bed8282af44a6629e43ed05dc8ecb722fc8860315087932"
     },
     {
       "id": "matvec-lane-entry",
@@ -753,24 +753,24 @@
     {
       "id": "codec-token-value",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/src/tuning/mod.rs",
-      "line": 1474,
+      "line": 1578,
       "occurrences": 1,
       "verbatim": "const CORE_HARNESS_SCHEMA: &str = \"tuning-calibration-v4\";",
       "why": "The core codec names one producer behavior token.",
-      "sha256": "3d3710f291ffe3c9921cf46f22ad18be35e0eeb36da3767da6f79b01bcd14f87"
+      "sha256": "f4c3f7f3514872ef9441539abb1a6d8c9e5126051153dac60328b7e9520c7b0e"
     },
     {
       "id": "codec-accepts-one-token",
       "project": "gf2",
-      "commit": "dc165022502523f7dbe91c47bcf27eb57b49e38f",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/src/tuning/mod.rs",
-      "line": 1494,
+      "line": 1598,
       "occurrences": 1,
       "verbatim": "                if harness_schema.as_str() == CORE_HARNESS_SCHEMA =>",
       "why": "A calibrated core section reopens only under that token, so a new token would reject every committed measured owner.",
-      "sha256": "3d3710f291ffe3c9921cf46f22ad18be35e0eeb36da3767da6f79b01bcd14f87"
+      "sha256": "f4c3f7f3514872ef9441539abb1a6d8c9e5126051153dac60328b7e9520c7b0e"
     },
     {
       "id": "seam-token-unchanged",
@@ -929,35 +929,35 @@
     {
       "id": "contract-function",
       "project": "gf2",
-      "commit": "fccfcc6e48ce8b629c2b131dd0ed1f54184d2544",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/src/dispatch_contract.rs",
-      "line": 81,
+      "line": 83,
       "occurrences": 1,
       "verbatim": "pub fn assert_fallback_contract() -> Vec<RouteWitness> {",
       "why": "The shared fallback contract every build configuration runs.",
-      "sha256": "e31b75c0f3160dcfc203227119ab3504239f5b8ec49a831da8d8b3f9bed1e201"
+      "sha256": "c6e5ca7ae25ebdad5a3fb12537baefedd20aa80bd8b8d72f7f06b90ff872cbb1"
     },
     {
       "id": "contract-unprofiled",
       "project": "gf2",
-      "commit": "fccfcc6e48ce8b629c2b131dd0ed1f54184d2544",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/src/dispatch_contract.rs",
-      "line": 86,
+      "line": 88,
       "occurrences": 1,
       "verbatim": "            SectionResolution::FrozenBeforeInstall { .. }",
       "why": "The contract requires the conservative table of a process without a profile.",
-      "sha256": "e31b75c0f3160dcfc203227119ab3504239f5b8ec49a831da8d8b3f9bed1e201"
+      "sha256": "c6e5ca7ae25ebdad5a3fb12537baefedd20aa80bd8b8d72f7f06b90ff872cbb1"
     },
     {
       "id": "contract-missing-feature",
       "project": "gf2",
-      "commit": "fccfcc6e48ce8b629c2b131dd0ed1f54184d2544",
+      "commit": "875ff4b76fd58f68c6965b827291b70cec04e7b0",
       "path": "crates/gf2-core/src/dispatch_contract.rs",
-      "line": 254,
+      "line": 306,
       "occurrences": 1,
       "verbatim": "            \"a build without the `simd` feature takes portable routes only\"",
       "why": "The contract requires portable routes only in a build without `simd`.",
-      "sha256": "e31b75c0f3160dcfc203227119ab3504239f5b8ec49a831da8d8b3f9bed1e201"
+      "sha256": "c6e5ca7ae25ebdad5a3fb12537baefedd20aa80bd8b8d72f7f06b90ff872cbb1"
     },
     {
       "id": "contract-core-test",

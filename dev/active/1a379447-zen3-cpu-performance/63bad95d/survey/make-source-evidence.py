@@ -236,7 +236,7 @@ CLAIMS = [
      '    "bit_matrix.matvec_simd_min_words": [4, 7, 8, 9, 32, 63, 64, 65, 128],', 1,
      "The independent validator carries the same grid."),
     ("calibration-inventory-closed", CORE, "benches/tuning_calibration.rs",
-     "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;", 1,
+     "const EXPECTED_CORE_SCHEMA_FIELDS: usize = 40;", 1,
      "The producer publishes only when its measured and omitted fields partition a fixed "
      "codec inventory."),
     ("calibration-validator-behavior", None, "validate-tuning-extent-campaign.py",

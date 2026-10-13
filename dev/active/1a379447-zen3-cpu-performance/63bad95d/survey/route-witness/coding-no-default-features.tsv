@@ -39,3 +39,4 @@ gf2m::wide::clmul_wide	words=1	portable-scalar	portable
 gf2m::wide::clmul_wide	words=4	portable-scalar	portable
 gf2m::wide::clmul_wide	words=9	portable-scalar	portable
 gf2m::wide::clmul_wide	words=16	portable-scalar	portable
+SpBitMatrix::to_default_block_csr	block-rows	32	portable
