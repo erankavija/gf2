@@ -5426,11 +5426,9 @@ fn measured_fields(sweeps: &[FieldSweep]) -> Vec<SchemaField> {
 
 /// Every `selectors.<family>.<field>` key `document` states.
 ///
-/// The inventory is read off the serialized profile at run time rather than
-/// listed in this tool. A list here would be a hand-maintained copy of the
-/// schema — the staleness defect `@/inv/runtime-observed-provenance` names —
-/// and the moment it fell behind, an unswept field would be emitted with a
-/// value nothing measured.
+/// The inventory is read off the serialized profile at run time: a list here
+/// would be a hand-maintained copy of the schema, and once it fell behind an
+/// unswept field would be emitted with a value nothing measured.
 #[cfg(test)]
 #[allow(dead_code)]
 fn schema_fields(document: &str) -> Result<Vec<SchemaField>, String> {
