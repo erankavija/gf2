@@ -286,20 +286,11 @@ cmd_window() {
     ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
         --bin benchmark-ab-runner --bin benchmark-acceptance
 
-    # The closure is a snapshot of the tree it was enumerated from, so a source
-    # added to a measured crate since the last regeneration is absent from it
-    # and the guard below would never look at it.
+    # The closure every receipt snapshots enumerates the tree the executables
+    # above are built from; a source added to a measured crate since the last
+    # regeneration refuses the run. The frozen addendum's digest and the
+    # runner's comparison of the plan and the executables decide the rest.
     python3 -B "${SURVEY}/make-logical-producing-inputs.py" --check
-
-    # The producing-input closure is the manifest every receipt snapshots:
-    # harness sources, measured crate sources, campaign-support sources, every
-    # Cargo manifest and lock the executables above are built from, the closure
-    # manifest itself, the contract, the protocol and the frozen addendum. A
-    # path the closure names that git does not track, or whose bytes differ
-    # from the committed content, refuses the run. This is the last step before
-    # the launch.
-    "${CAMPAIGN_TOOL}" inputs --producing-manifest "${PRODUCING}" \
-        --also "${addendum}" --also "${ledger}"
 
     local runner acceptance campaign stage plan out lock launch invocation
     runner="$(realpath target/release/benchmark-ab-runner)"

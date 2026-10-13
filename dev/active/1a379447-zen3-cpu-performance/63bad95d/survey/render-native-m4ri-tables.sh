@@ -17,6 +17,9 @@ REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 export CARGO_CI_NO_SCCACHE=1
+# A build takes its flags, wrapper, profile and target from this script alone.
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
+    "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}"
 
 STORY="$(dirname "$(git -C "${REPO}" ls-files --full-name -- ':(glob)**/repo_artifacts.py' |
     grep -v '/inputs/')")"

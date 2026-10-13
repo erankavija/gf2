@@ -632,24 +632,24 @@
     {
       "id": "calibration-launcher-declaration",
       "project": "gf2",
-      "commit": "fb8620a819fb34d85d2e8dd73a3b99549296c351",
+      "commit": "4b1b2f851e45909d0c2132bf5080a149c55dc6c3",
       "path": "dev/scripts/tuning-extent-campaign.sh",
       "line": 4,
       "occurrences": 1,
       "verbatim": "# An issue (eight lowercase hex digits) selects the one campaign-declaration.json",
       "why": "The launcher runs the campaign a committed declaration names for an issue.",
-      "sha256": "ce331dcde91a0e496874a0ea66a9ddb448e83a132dfbde4f4ddfb32e1b4c186e"
+      "sha256": "06ae991c689c772e0126ed3c9c33f9330fca067a4acc5631b9c84544590f280c"
     },
     {
       "id": "calibration-publishes-profile-id",
       "project": "gf2",
-      "commit": "fb8620a819fb34d85d2e8dd73a3b99549296c351",
+      "commit": "4b1b2f851e45909d0c2132bf5080a149c55dc6c3",
       "path": "dev/scripts/tuning-extent-campaign.sh",
       "line": 8,
       "occurrences": 1,
       "verbatim": "# are invalid. The ID becomes the emitted profiles' ProfileId, so it stays",
       "why": "The run identifier becomes the published profile's identity.",
-      "sha256": "ce331dcde91a0e496874a0ea66a9ddb448e83a132dfbde4f4ddfb32e1b4c186e"
+      "sha256": "06ae991c689c772e0126ed3c9c33f9330fca067a4acc5631b9c84544590f280c"
     },
     {
       "id": "calibration-matvec-field",
@@ -676,13 +676,13 @@
     {
       "id": "validator-matvec-grid",
       "project": "gf2",
-      "commit": "78437ba29efde29a77192b031712342c05d1fb06",
+      "commit": "4b1b2f851e45909d0c2132bf5080a149c55dc6c3",
       "path": "dev/scripts/validate-tuning-extent-campaign.py",
       "line": 267,
       "occurrences": 1,
       "verbatim": "    \"bit_matrix.matvec_simd_min_words\": [4, 7, 8, 9, 32, 63, 64, 65, 128],",
       "why": "The independent validator carries the same grid.",
-      "sha256": "47682fccc5340c888dd881dbd82fbac552acc00bd32f38040135304655745237"
+      "sha256": "5b632b48fb4d9761f00b91dad32c0b667c09050825e2132f598088e9994ddcf7"
     },
     {
       "id": "calibration-inventory-closed",
@@ -698,13 +698,13 @@
     {
       "id": "calibration-validator-behavior",
       "project": "gf2",
-      "commit": "78437ba29efde29a77192b031712342c05d1fb06",
+      "commit": "4b1b2f851e45909d0c2132bf5080a149c55dc6c3",
       "path": "dev/scripts/validate-tuning-extent-campaign.py",
       "line": 75,
       "occurrences": 1,
       "verbatim": "CORE_BEHAVIOR = \"tuning-calibration-v4\"",
       "why": "The independent validator pins the producer's behavior token.",
-      "sha256": "47682fccc5340c888dd881dbd82fbac552acc00bd32f38040135304655745237"
+      "sha256": "5b632b48fb4d9761f00b91dad32c0b667c09050825e2132f598088e9994ddcf7"
     },
     {
       "id": "matvec-lane-entry",

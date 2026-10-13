@@ -69,6 +69,11 @@ M4RI_PORTABLE_GENERATION=portable-v1
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 export CARGO_CI_NO_SCCACHE=1
+# A build takes its Rust and C flags, wrapper, profile and target from this
+# script and the harness build script alone.
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
+    "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}" \
+    CC CFLAGS "${!CC_@}" "${!CFLAGS_@}" TARGET_CC TARGET_CFLAGS HOST_CC HOST_CFLAGS
 
 # The M4RI installs are shared under the primary checkout's .agents/ext; one
 # is discovered, never rebuilt destructively. `build.rs` verifies the
@@ -376,20 +381,11 @@ cmd_window() {
     ./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
         --bin benchmark-ab-runner --bin benchmark-acceptance
 
-    # The closure is a snapshot of the tree it was enumerated from, so a source
-    # added to a measured crate since the last regeneration is absent from it
-    # and the guard below would never look at it.
+    # The closure every receipt snapshots enumerates the tree the executables
+    # above are built from; a source added to a measured crate since the last
+    # regeneration refuses the run. The frozen addendum's digest and the
+    # runner's comparison of the plan and the executables decide the rest.
     python3 -B "${SURVEY}/make-dense-producing-inputs.py" --check
-
-    # The producing-input closure is the manifest every receipt snapshots:
-    # harness sources, measured crate sources, campaign-support sources, every
-    # Cargo manifest and lock the executables above are built from, the closure
-    # manifest itself, the contract, the protocol and the frozen addendum. A
-    # path the closure names that git does not track, or whose bytes differ
-    # from the committed content, refuses the run. This is the last step before
-    # the launch.
-    "${CAMPAIGN_TOOL}" inputs --producing-manifest "${PRODUCING}" \
-        --also "${addendum}" --also "${ledger}"
 
     local runner acceptance campaign stage plan out lock launch
     runner="$(realpath target/release/benchmark-ab-runner)"

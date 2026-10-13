@@ -16,7 +16,6 @@
 //!                        [--m4ri-portable-executable <path>]
 //!                        [--label pilot|smoke|confirmation]
 //!                        [--max-cells-per-session <n>]
-//! dense-campaign inputs  --producing-manifest <path> [--also <path>]...
 //! dense-campaign profile-request --family <id> --addendum <path>
 //!                        --cell <id> --arm <name> --cpu <n>
 //! dense-campaign validation-request --family <id> --addendum <path>
@@ -28,13 +27,9 @@
 //! changes a cell, margin, limit or rule fails closed. `verify-confirmation`
 //! holds a freezer-derived confirmation addendum to the same transcription and
 //! to the family's resolution ceiling.
-//!
-//! `inputs` refuses unless every path of the producing-input closure, plus each
-//! `--also` path, is tracked by git and identical to its committed content.
 
 use dense_parity_harness::campaign::{self, PlanInputs};
 use dense_parity_harness::cells::{family_cells, Question, UNAVAILABLE_ROWS};
-use dense_parity_harness::inputs;
 use dense_parity_harness::wire::Case;
 use std::collections::BTreeMap;
 use tuning_campaign_support::arm::{ArmRequest, PairPosition};
@@ -52,16 +47,11 @@ fn main() {
 
 struct Arguments {
     flags: BTreeMap<String, String>,
-    repeated: Vec<String>,
 }
 
 impl Arguments {
-    /// `--also` is the one repeatable flag; every other flag is given once.
-    const REPEATABLE: &'static str = "also";
-
     fn parse(raw: &[String]) -> Result<Self, String> {
         let mut flags = BTreeMap::new();
-        let mut repeated = Vec::new();
         let mut index = 0;
         while index < raw.len() {
             let name = raw[index]
@@ -72,18 +62,12 @@ impl Arguments {
                 .get(index + 1)
                 .ok_or_else(|| format!("--{name} needs a value"))?
                 .clone();
-            if name == Self::REPEATABLE {
-                repeated.push(value);
-            } else if flags.insert(name.clone(), value).is_some() {
+            if flags.insert(name.clone(), value).is_some() {
                 return Err(format!("--{name} is given twice"));
             }
             index += 2;
         }
-        Ok(Self { flags, repeated })
-    }
-
-    fn repeated(&self) -> &[String] {
-        &self.repeated
+        Ok(Self { flags })
     }
 
     fn required(&self, name: &str) -> Result<&str, String> {
@@ -145,7 +129,7 @@ fn transcribe(arguments: &Arguments) -> Result<FamilyAddendum, String> {
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     let (command, rest) = raw.split_first().ok_or(
-        "usage: dense-campaign <pins|native-rustflags|list|cells|verify|verify-confirmation|unavailable|plan|inputs|profile-request|validation-request> --flag value ...",
+        "usage: dense-campaign <pins|native-rustflags|list|cells|verify|verify-confirmation|unavailable|plan|profile-request|validation-request> --flag value ...",
     )?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
@@ -185,15 +169,6 @@ fn run() -> Result<(), String> {
         "plan" => project(&arguments),
         "profile-request" => profile_request(&arguments),
         "validation-request" => validation_request(&arguments),
-        "inputs" => {
-            let manifest = arguments.required("producing-manifest")?;
-            let checked = inputs::check(&repository_root()?, manifest, arguments.repeated())?;
-            println!(
-                "{manifest}: {} campaign inputs committed and clean",
-                checked.len()
-            );
-            Ok(())
-        }
         other => Err(format!("unknown command {other:?}")),
     }
 }

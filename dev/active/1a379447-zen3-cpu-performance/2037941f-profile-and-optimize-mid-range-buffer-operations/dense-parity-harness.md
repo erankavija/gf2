@@ -43,9 +43,7 @@ of those properties would change that target's behavioral identity, which
 The project is a standalone Cargo workspace. Its `Cargo.lock` is committed so a
 receipt pins the dependency graph it measured. It is the sibling of
 `survey/harness/`, the logical-buffer harness of issue `bb769456`, and follows
-its structure; the git closure guard `src/inputs.rs` is byte-identical in both,
-because the epic's provenance freeze holds `tuning_campaign_support` at its
-current surface.
+its structure.
 
 ## Cell identity and generation
 
@@ -328,16 +326,15 @@ shim, the shared campaign support, the canonical and archived addenda, the
 approved M4RI amendment, the matched-operation
 specification and its qualification record, the protocol and contract
 documents, and the build inputs. The build inputs carry every Cargo manifest and
-lock file a timed executable is built from and the closure manifest itself,
-which the window guard reads to decide what to check. The harness contract test
+lock file a timed executable is built from and the closure manifest itself. The harness contract test
 derives that manifest set from `cargo metadata` for both workspaces, so a new
-crate on either path fails the test rather than slipping past the guard.
+crate on either path fails the test rather than staying outside the closure.
 
 The source sections are a snapshot of the tree they were enumerated from, so
 `make-dense-producing-inputs.py --check` regenerates the closure from the
 current tree, writes nothing, and exits non-zero naming every added and removed
-path when the committed manifest differs. The window runs it immediately before
-the closure guard, so a source added to a measured crate after the last
+path when the committed manifest differs. The window runs it after the last
+build, so a source added to a measured crate after the last
 regeneration refuses the run instead of being timed outside the closure. A
 harness contract test copies the committed build inputs into a scratch tree,
 adds a source under a measured crate and asserts the refusal names it.
@@ -435,8 +432,7 @@ from its pin; `native-rustflags` prints the native level's RUSTFLAGS; `list`
 prints one family's
 cells with their ordinals, arms and seeds; `cells`, `verify`,
 `verify-confirmation` and `plan` are the transcription, the two comparisons and
-the plan projection; `inputs` is the
-producing-input closure guard. The untimed smoke and the timed run are
+the plan projection. The untimed smoke and the timed run are
 `benchmark-ab-runner` subcommands over a projected plan.
 
 `arms` compiles the gf2 arms and writes no record; the profile launcher calls
@@ -467,15 +463,12 @@ install into `target/e1f9a78f-m4ri-portable-arm` and runs that arm's
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
 SHA-256 equals the pin the harness carries, and the campaign JSON matches
 `dense-campaign verify`. It then rebuilds every executable it launches from the
-current tree, regenerates the closure with
-`make-dense-producing-inputs.py --check`, and only afterwards runs
-`dense-campaign inputs`, which refuses unless every path of the producing-input
-closure, plus the campaign JSON and the family ledger, is tracked by git and
-identical to its committed content. A source added to a measured crate stops the
-run either way: the freshness check catches one the committed closure does not
-yet name, and the guard catches one it names that git does not track. The two
-closure checks are the last steps before the launch: nothing rebuilds after
-them, so no executable can carry bytes they never saw. It then projects the
+current tree and regenerates the closure with
+`make-dense-producing-inputs.py --check`, which refuses a closure that does not
+enumerate the tree. That check is the last step before the launch: nothing
+rebuilds after it. Git status decides nothing: the runner snapshots the
+closure's bytes into the receipt and refuses a resume whose plan or executables
+differ from the first session's. It then projects the
 plan, prints the execution log path, runs the
 runner under `dev/scripts/ccx1-bench-flock.sh --full-host` until the log's
 terminal record is `complete`, finalizes the receipt under

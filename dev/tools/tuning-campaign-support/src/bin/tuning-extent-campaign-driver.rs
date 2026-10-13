@@ -649,19 +649,13 @@ fn host_runtime(receipt: &str) -> io::Result<CanonicalJson> {
         receipt: receipt.into(),
     })
 }
+/// The checkout's revision and tree, recorded as rebuild pointers; neither
+/// decides a start or a resume.
 fn source_state() -> io::Result<(String, String)> {
-    let dirty = command_text("git", &["status", "--porcelain", "--untracked-files=all"])?;
-    if !dirty.is_empty() {
-        return Err(invalid("measurement requires a clean source tree"));
-    }
     Ok((
         command_text("git", &["rev-parse", "HEAD"])?,
         command_text("git", &["rev-parse", "HEAD^{tree}"])?,
     ))
-}
-fn behavior_sources(declaration: &CampaignDeclaration) -> io::Result<BTreeMap<String, String>> {
-    let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
-    ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)
 }
 /// The independent validator. Its recorded identity is informational: the
 /// driver runs the validator of the checkout it executes in, and behavior
@@ -674,6 +668,23 @@ fn same_behavior(observed: &BTreeMap<String, String>, recorded: &BTreeMap<String
             .iter()
             .all(|(path, sha)| path == VALIDATOR || recorded.get(path) == Some(sha))
 }
+/// Whether the producing inputs under `root` carry the recorded digests. Git
+/// state takes no part, so a resume continues on any checkout whose files
+/// match.
+fn producing_inputs_hold(
+    root: &Path,
+    manifest: &str,
+    behavior: &BTreeMap<String, String>,
+    lifecycle: &str,
+    build_inputs: &BTreeMap<String, String>,
+) -> io::Result<bool> {
+    let producing = ProducingInputs::read_at(root, manifest)?;
+    Ok(same_behavior(
+        &ProducingInputs::hashes_at(root, &producing.behavior_sources)?,
+        behavior,
+    ) && ProducingInputs::capture(root, manifest)?.lifecycle_sha256()? == lifecycle
+        && ProducingInputs::hashes_at(root, &producing.build_inputs)? == *build_inputs)
+}
 fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     let declaration =
         CampaignDeclaration::for_campaign(Path::new("."), config.campaign_id.as_str())?;
@@ -684,31 +695,19 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     }
     config.channels.validate()?;
     require_affinity(&config.affinity, &CpuAffinity::observe()?)?;
-    let (revision, tree) = source_state()?;
     let producing_manifest = declaration.producing_manifest.as_str();
-    let producing = ProducingInputs::read_at(Path::new("."), producing_manifest)?;
     let staging: StagingManifest = read_json(&config.channels.stage.join("staging-manifest.json"))?;
-    let (source_before, source_after) =
-        validate_build_source_observations(&config.channels.stage, &staging)?;
-    if revision != config.identity.source_revision
-        || tree != config.source_tree
-        || Sha256Digest::of(tree.as_bytes()).as_str() != config.identity.source_sha256
-        || !same_behavior(
-            &behavior_sources(&declaration)?,
-            &config.identity.behavior_sha256,
-        )
-        || declaration
-            .recorded_in(&config.identity.behavior_sha256)
-            .is_err()
-        || ProducingInputs::capture(Path::new("."), producing_manifest)?.lifecycle_sha256()?
-            != config.identity.lifecycle_behavior_sha256
-        || ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?
-            != config.build_inputs
+    validate_build_source_observations(&config.channels.stage, &staging)?;
+    if !producing_inputs_hold(
+        Path::new("."),
+        producing_manifest,
+        &config.identity.behavior_sha256,
+        config.identity.lifecycle_behavior_sha256.as_str(),
+        &config.build_inputs,
+    )? || declaration
+        .recorded_in(&config.identity.behavior_sha256)
+        .is_err()
         || artifact(Path::new(producing_manifest))? != config.producing_manifest
-        || source_before.source_revision != revision
-        || source_before.source_tree != tree
-        || source_after.source_revision != revision
-        || source_after.source_tree != tree
     {
         return Err(invalid("producing source identity changed"));
     }
@@ -1027,10 +1026,7 @@ fn validate_canonical_stage_artifact(
     }
     Ok(())
 }
-fn validate_build_source_observations(
-    stage: &Path,
-    staging: &StagingManifest,
-) -> io::Result<(BuildSourceObservation, BuildSourceObservation)> {
+fn validate_build_source_observations(stage: &Path, staging: &StagingManifest) -> io::Result<()> {
     validate_canonical_stage_artifact(
         stage,
         &staging.source_before,
@@ -1051,14 +1047,10 @@ fn validate_build_source_observations(
         || after.schema != before.schema
         || before.phase != "before-build"
         || after.phase != "after-build"
-        || !before.porcelain.is_empty()
-        || !after.porcelain.is_empty()
-        || before.source_revision != after.source_revision
-        || before.source_tree != after.source_tree
     {
-        return Err(invalid("build source identity changed or was dirty"));
+        return Err(invalid("build source observation is not the staged one"));
     }
-    Ok((before, after))
+    Ok(())
 }
 fn validate_preflight_identities(
     stage: &Path,
@@ -1148,17 +1140,7 @@ fn bootstrap_inputs(
 ) -> io::Result<BootstrapInputs> {
     let (revision, tree) = source_state()?;
     let staging: StagingManifest = read_json(&channels.stage.join("staging-manifest.json"))?;
-    let (source_before, source_after) =
-        validate_build_source_observations(&channels.stage, &staging)?;
-    if source_before.source_revision != revision
-        || source_before.source_tree != tree
-        || source_after.source_revision != revision
-        || source_after.source_tree != tree
-    {
-        return Err(invalid(
-            "build source identity differs from preparation source",
-        ));
-    }
+    validate_build_source_observations(&channels.stage, &staging)?;
     let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
     let behavior = ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)?;
     let receipt = format!("dev/benchmarks/tuning_profiles/{}.md", campaign_id.as_str());
@@ -3480,6 +3462,131 @@ mod tests {
         );
         fs::write(&source.path, b"changed producer").unwrap();
         assert!(stage_executables(&stage, &input, &extent_declaration()).is_err());
+    }
+
+    /// A scratch git checkout with one committed producing input and its
+    /// manifest, and the digests a campaign records for them.
+    fn recorded_checkout(
+        name: &str,
+    ) -> (
+        Scratch,
+        BTreeMap<String, String>,
+        String,
+        BTreeMap<String, String>,
+    ) {
+        let root = scratch(name);
+        let (input, manifest) = ("input.rs", "producing-inputs.json");
+        fs::write(root.join(input), b"frozen input").unwrap();
+        fs::write(root.join("other.rs"), b"outside the closure").unwrap();
+        fs::write(
+            root.join(manifest),
+            serde_json::to_vec(&json!({
+                "schema": "tuning-campaign-producing-inputs-v1",
+                "behavior_sources": [input],
+                "lifecycle_sources": [input],
+                "build_inputs": [input, manifest],
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        for arguments in [
+            &["init", "--quiet"][..],
+            &["add", "--all"],
+            &[
+                "-c",
+                "user.name=driver",
+                "-c",
+                "user.email=driver@example.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "recorded checkout",
+            ],
+        ] {
+            assert!(Command::new("git")
+                .arg("-C")
+                .arg(&*root)
+                .args(arguments)
+                .status()
+                .unwrap()
+                .success());
+        }
+        let snapshot = ProducingInputs::capture(&root, manifest).unwrap();
+        let lifecycle = snapshot.lifecycle_sha256().unwrap();
+        (
+            root,
+            snapshot.behavior_sha256,
+            lifecycle,
+            snapshot.build_inputs_sha256,
+        )
+    }
+
+    #[test]
+    fn a_dirty_checkout_with_matching_input_digests_resumes() {
+        let (root, behavior, lifecycle, build_inputs) =
+            recorded_checkout("gf2-driver-dirty-resume");
+        fs::write(root.join("other.rs"), b"edited outside the closure").unwrap();
+        fs::write(root.join("untracked.rs"), b"untracked").unwrap();
+        let porcelain = Command::new("git")
+            .arg("-C")
+            .arg(&*root)
+            .args(["status", "--porcelain"])
+            .output()
+            .unwrap();
+        assert!(!porcelain.stdout.is_empty(), "the checkout is dirty");
+        assert!(producing_inputs_hold(
+            &root,
+            "producing-inputs.json",
+            &behavior,
+            &lifecycle,
+            &build_inputs
+        )
+        .unwrap());
+    }
+
+    #[test]
+    fn a_changed_frozen_input_refuses_the_resume_by_digest() {
+        let (root, behavior, lifecycle, build_inputs) =
+            recorded_checkout("gf2-driver-changed-input");
+        fs::write(root.join("input.rs"), b"changed input").unwrap();
+        assert!(!producing_inputs_hold(
+            &root,
+            "producing-inputs.json",
+            &behavior,
+            &lifecycle,
+            &build_inputs
+        )
+        .unwrap());
+    }
+
+    #[test]
+    fn a_build_source_observation_of_a_dirty_checkout_is_accepted() {
+        let stage = scratch("gf2-driver-dirty-build-source");
+        fs::create_dir(stage.join("build")).unwrap();
+        let mut observations = Vec::new();
+        for (phase, revision) in [("before", "a"), ("after", "b")] {
+            let path = stage.join(format!("build/source-{phase}.json"));
+            fs::write(
+                &path,
+                encoded(&BuildSourceObservation {
+                    schema: "tuning-campaign-build-source-v1".into(),
+                    phase: format!("{phase}-build"),
+                    source_revision: revision.repeat(40),
+                    source_tree: revision.repeat(40),
+                    porcelain: " M crates/gf2-core/src/lib.rs\n".into(),
+                })
+                .unwrap(),
+            )
+            .unwrap();
+            observations.push(artifact(&path).unwrap());
+        }
+        let staging = StagingManifest {
+            schema: "tuning-campaign-staging-v1".into(),
+            source_before: observations[0].clone(),
+            source_after: observations[1].clone(),
+            executables: BTreeMap::new(),
+        };
+        validate_build_source_observations(&stage, &staging).unwrap();
     }
 
     #[test]
