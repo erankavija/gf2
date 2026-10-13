@@ -1,0 +1,61 @@
+{
+ "issue": "0a77ecfc",
+ "campaign_id": "gf2-0a77ecfc-20261013t011147z-815998",
+ "observed_utc": "2026-10-13T15:31:18Z",
+ "source_revision": "8250808205ff481902e15efb71e3fd72cbc4202a",
+ "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc",
+ "command": [
+  "./scripts/cargo-budget.sh",
+  "cargo",
+  "+1.95.0",
+  "build",
+  "-v",
+  "--release",
+  "-p",
+  "gf2-coding",
+  "--bench",
+  "tuning_calibration",
+  "--features",
+  "parallel,simd,tuning-profile,test-support",
+  "--message-format=json"
+ ],
+ "environment": {
+  "HOME": "/home/vkaskivuo",
+  "PATH": "/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin",
+  "RUSTUP_TOOLCHAIN": "1.95.0",
+  "RAYON_NUM_THREADS": "4",
+  "CARGO_CI_NO_SCCACHE": "1"
+ },
+ "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+ "executable": {
+  "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/tuning_calibration-387f99e7e7dd86c2",
+  "sha256": "91b5428c9aa06d83bd6ce6f07043f45c7ae77b7acfa890ad013517289657952e"
+ },
+ "cargo_fingerprint": {
+  "rustflags": [],
+  "sha256": "f3f2ea3d4298bac10880ff5ac51d0b71895e3137c5fcfe3ff7ed403e61a6995e",
+  "producing_checkout_sha256": "f3f2ea3d4298bac10880ff5ac51d0b71895e3137c5fcfe3ff7ed403e61a6995e"
+ },
+ "build_log": {
+  "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/producer-rebuild/build.log",
+  "sha256": "8fdc3f016fdad7f9bb14bbdd6ba8cfa761ddd0a2b064ef67b69e0985d8f864fa"
+ },
+ "build": {
+  "rustc_invocations": 145,
+  "build_script_runs": 17,
+  "codegen_options_by_invocation_count": {
+   "-C codegen-units=1 -C linker-plugin-lto -C opt-level=3 -C strip=debuginfo": 108,
+   "-C codegen-units=1 -C lto=thin -C opt-level=3 -C strip=debuginfo": 6,
+   "-C debug-assertions=off -C embed-bitcode=no -C prefer-dynamic -C strip=debuginfo": 4,
+   "-C debug-assertions=off -C embed-bitcode=no -C strip=debuginfo": 27
+  },
+  "producer_invocation": "/home/vkaskivuo/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/bin/rustc --crate-name tuning_calibration --edition=2021 crates/gf2-coding/benches/tuning_calibration.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C opt-level=3 -C lto=thin -C codegen-units=1 --cfg test --cfg 'feature=\"default\"' --cfg 'feature=\"parallel\"' --cfg 'feature=\"sim-observability\"' --cfg 'feature=\"simd\"' --cfg 'feature=\"test-support\"' --cfg 'feature=\"tuning-profile\"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values(\"bench-csv\", \"default\", \"hip\", \"parallel\", \"sim-observability\", \"simd\", \"test-support\", \"tuning-profile\", \"visualization\"))' -C metadata=3db66c4a23507671 -C extra-filename=-387f99e7e7dd86c2 --out-dir /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps -C strip=debuginfo -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps --extern blake3=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libblake3-3231e10e615a229f.rlib --extern criterion=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libcriterion-7cee1d1f24ef2031.rlib --extern ctrlc=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libctrlc-1a9c98e93b4694ed.rlib --extern gf2_coding=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libgf2_coding-ec35d95a1aa49c83.rlib --extern gf2_coding=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libgf2_coding-ec35d95a1aa49c83.rlib --extern gf2_core=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libgf2_core-130749d8e63288a9.rlib --extern gf2_kernels_simd=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libgf2_kernels_simd-6280adfa69a6be34.rlib --extern num_cpus=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libnum_cpus-fba5de9d90085d3d.rlib --extern once_cell=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libonce_cell-8ac3c5d9bec10144.rlib --extern plotters=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libplotters-e7bd90d175dfb62b.rlib --extern proptest=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libproptest-59ec38db3e008edb.rlib --extern rand=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/librand-198503255d79c28e.rlib --extern rand_chacha=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/librand_chacha-a4a67cb4b9242910.rlib --extern rand_distr=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/librand_distr-e87cb1b66da63218.rlib --extern rayon=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/librayon-72b5bc7f37690d23.rlib --extern serde=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libserde-161e220e8f7cd052.rlib --extern serde_json=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libserde_json-4bc76e6d1457894f.rlib --extern sha2=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libsha2-1d1da5a5fa6a539b.rlib --extern tempfile=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libtempfile-336037589f808891.rlib --extern thiserror=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libthiserror-9bc4584a0fccc8f0.rlib --extern toml=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libtoml-61b6a080d8124b44.rlib --extern tracing=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libtracing-72035d3bda80d488.rlib --extern tracing_subscriber=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libtracing_subscriber-336d0bd822afaf74.rlib --extern tuning_campaign_support=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/deps/libtuning_campaign_support-75d4aa8f269ad1ef.rlib -L native=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/build/blake3-2be3a156ed49c62e/out -L native=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-0a77ecfc/target/release/build/blake3-2be3a156ed49c62e/out"
+ },
+ "recorded": {
+  "owner": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json",
+  "owner_binary_sha256": "91b5428c9aa06d83bd6ce6f07043f45c7ae77b7acfa890ad013517289657952e",
+  "owner_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "identity_binary_sha256": "91b5428c9aa06d83bd6ce6f07043f45c7ae77b7acfa890ad013517289657952e"
+ },
+ "reproduces": true
+}

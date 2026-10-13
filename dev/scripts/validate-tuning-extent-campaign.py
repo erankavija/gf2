@@ -5093,7 +5093,7 @@ def reconstruction_self_test() -> None:
             for arm in ['conservative','asymptotic']:
                 case={'identity':{'field':field},'kind':{'experiment':'threshold','spec':{'size':size,'arm':arm,'variant':'standard'}}}
                 forced=expected_forced_selectors(case)
-                require(len(flatten_selectors(forced))==37,'complete forced inventory')
+                require(len(flatten_selectors(forced))==40,'complete forced inventory')
                 for change in threshold_forcing(case):
                     require(forced[change['family']][change['field']]==change['value'],'partial/full forcing relationship')
     # A compact independently spelled seed/LCG/hash witness, rather than two

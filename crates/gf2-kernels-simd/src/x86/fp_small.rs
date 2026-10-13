@@ -276,8 +276,9 @@ pub unsafe fn fp_small_batch_sub(a: &[u8], b: &[u8], p: u8, out: &mut [u8]) {
 /// reducing modulo `p` once at the panel boundary.
 ///
 /// Each 32-bit lane gains at most `2 · (P − 1)² ≤ 125 000` per vector
-/// iteration; the accumulator is drained every 16 384 iterations, below the
-/// `2³²` lane capacity.
+/// iteration; the accumulator is drained every 16 384 iterations, where a
+/// lane and the sum of a lane pair both stay below the `2³²` lane capacity.
+/// The drain adds the four pair sums in 64 bits.
 ///
 /// # Safety
 ///
@@ -317,11 +318,8 @@ pub unsafe fn fp_small_batch_dot(a: &[u8], b: &[u8], p: u8) -> u8 {
         let s128 = _mm_add_epi32(lo, hi);
         let mut tmp = [0u32; 4];
         _mm_storeu_si128(tmp.as_mut_ptr() as *mut __m128i, s128);
-        let chunk_sum: u32 = tmp[0]
-            .wrapping_add(tmp[1])
-            .wrapping_add(tmp[2])
-            .wrapping_add(tmp[3]);
-        total = (total + chunk_sum as u64) % p_u32 as u64;
+        let chunk_sum: u64 = tmp.iter().map(|&pair| pair as u64).sum();
+        total = (total + chunk_sum) % p_u32 as u64;
 
         vec_idx = chunk_end;
     }
@@ -869,6 +867,23 @@ mod tests {
                 for i in 0..len {
                     expected = (expected + a[i] as u64 * b[i] as u64) % p as u64;
                 }
+                assert_eq!(got as u64, expected, "p={p} len={len}");
+            }
+        });
+    }
+
+    #[test]
+    fn batch_dot_of_maximal_residues_matches_the_closed_form() {
+        // The lengths bracket one full drain interval of 16 384 vectors, where
+        // the eight lanes together exceed `2³²`.
+        run_for_primes(|p| {
+            let residue = p - 1;
+            for len in [68_719usize, 68_720, 262_143, 262_144, 262_161, 600_000] {
+                let a = vec![residue; len];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2.
+                let got = unsafe { fp_small_batch_dot(&a, &a, p) };
+                let expected = len as u64 % p as u64;
                 assert_eq!(got as u64, expected, "p={p} len={len}");
             }
         });

@@ -72,7 +72,9 @@ fn witness(entry: &'static str, input: String, route: &str, portable: bool) -> R
 /// A process without an installed profile resolves the conservative table. A
 /// width below its compile-time threshold, a build without the `simd` cargo
 /// feature and a host without the kernel bundle each take the portable route;
-/// the thresholds are the conservative ones unless the build is baked.
+/// the thresholds are the conservative ones unless the build is baked. The
+/// default block-CSR layout takes the conservative row count, and in a `simd`
+/// build the prime-field cascades receive the conservative chunk caps.
 ///
 /// # Panics
 ///
@@ -247,6 +249,56 @@ pub fn assert_fallback_contract() -> Vec<RouteWitness> {
     wide(9, wide_kernels.as_ref().map(|fns| fns.wide571.name));
     let _: [u64; 32] = clmul_wide(&[3u64; 16], &[5u64; 16]);
     wide(16, None);
+
+    let block_rows = crate::sparse::SpBitMatrix::identity(1)
+        .to_default_block_csr()
+        .block_rows();
+    assert_eq!(
+        block_rows,
+        active.sparse().block_csr_default_rows(),
+        "default block-CSR rows"
+    );
+    witnesses.push(witness(
+        "SpBitMatrix::to_default_block_csr",
+        "block-rows".to_owned(),
+        &block_rows.to_string(),
+        true,
+    ));
+
+    #[cfg(feature = "simd")]
+    {
+        use crate::gfp::simd_ops::{prime_gemm_k_chunk_cap, PrimeGemmRoute};
+        let prime_route = active.prime_route();
+        for (route, input, expected) in [
+            (
+                PrimeGemmRoute::F32CascadeTabled,
+                "f32-cascade-tabled",
+                prime_route.f32_k_chunk_cap(),
+            ),
+            (
+                PrimeGemmRoute::F32CascadeDirect,
+                "f32-cascade-direct",
+                prime_route.f32_k_chunk_cap(),
+            ),
+            (
+                PrimeGemmRoute::F64Cascade,
+                "f64-cascade",
+                prime_route.f64_k_chunk_cap(),
+            ),
+        ] {
+            assert_eq!(
+                prime_gemm_k_chunk_cap(route),
+                Some(expected),
+                "k-chunk cap of {input}"
+            );
+            witnesses.push(witness(
+                "gfp::simd_ops::prime_gemm_k_chunk_cap",
+                input.to_owned(),
+                &expected.to_string(),
+                false,
+            ));
+        }
+    }
 
     if !simd {
         assert!(

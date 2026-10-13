@@ -49,9 +49,9 @@ epic measures; the inventory's
 [selector table](route-inventory.md#selectors-the-tuning-sections-own) lists
 them, and the [private list](route-inventory.md#thresholds-and-selectors-outside-the-tuning-sections)
 gives every scanned constant outside the sections with its class and read
-sites. Its selector-class constants keep their values under the named
-convergence exception `private-core-selector-constants`, which the inventory
-states below that list and `@/issue/817fc47d` tracks (REQ-11); this
+sites. The named convergence exception `private-core-selector-constants`
+(REQ-11, `@/issue/817fc47d`) covers the selector-class constants of that list,
+and the inventory states its extent below the list; this
 calibration supersedes no private threshold. The decoder and BCH encode selectors belong to the coding-owned section
 (`coding-tuning-section`) and are outside this issue (REQ-12).
 

@@ -372,7 +372,7 @@ fn small_prime_gemm_row_panel_rejects_wrapping_shape() {
 /// Runs the whole-product cases over one pointer of the shape
 /// `(a, bt, m, k, n, p, c)`.
 macro_rules! whole_gemm_cases {
-    ($kernel:expr, $name:literal, $one:expr, $p:expr, $zero:expr) => {{
+    ($kernel:expr, $name:expr, $one:expr, $p:expr, $zero:expr) => {{
         let kernel = $kernel;
         let (m, k, n) = OVERFLOWING;
         let mut c = [$zero; 1];
@@ -403,14 +403,18 @@ fn small_prime_panel_gemm_rejects_wrapping_shape() {
 #[test]
 fn small_prime_f32_gemm_rejects_wrapping_shape() {
     let fns = detected!(fp_small_f32::detect());
-    whole_gemm_cases!(fns.batch_gemm_fn, "fp_small_f32_gemm", 1f32, 7u8, 0u8);
-    whole_gemm_cases!(
-        fns.batch_gemm_route_a_fn,
-        "fp_small_f32_gemm_route_a",
-        1f32,
-        7u8,
-        0u8
-    );
+    for (kernel, name) in [
+        (fns.batch_gemm_fn, "fp_small_f32_gemm"),
+        (fns.batch_gemm_route_a_fn, "fp_small_f32_gemm_route_a"),
+    ] {
+        let capped = |a: &[f32], bt: &[f32], m, k, n, p, c: &mut [u8]| {
+            kernel(a, bt, m, k, n, p, fp_small_f32::K_CHUNK_CAP, c)
+        };
+        whole_gemm_cases!(capped, name, 1f32, 7u8, 0u8);
+        rejects(name, "k_chunk_cap", || {
+            kernel(&[1f32; 1], &[1f32; 1], 1, 1, 1, 7, 0, &mut [0u8; 1])
+        });
+    }
 }
 
 #[test]
@@ -428,7 +432,16 @@ fn medium_prime_gemm_panel_rejects_wrapping_shape() {
 #[test]
 fn medium_prime_f64_gemm_rejects_wrapping_shape() {
     let fns = detected!(fp_medium_f64::detect());
-    whole_gemm_cases!(fns.batch_gemm_fn, "fp_medium_f64_gemm", 1f64, 257u16, 0u16);
+    let kernel = fns.batch_gemm_fn;
+    let capped = |a: &[f64], bt: &[f64], m, k, n, p, c: &mut [u16]| {
+        kernel(a, bt, m, k, n, p, fp_medium_f64::K_CHUNK_CAP, c)
+    };
+    whole_gemm_cases!(capped, "fp_medium_f64_gemm", 1f64, 257u16, 0u16);
+    for cap in [0, fp_medium_f64::K_CHUNK_CAP_MAX + 1] {
+        rejects("fp_medium_f64_gemm", "k_chunk_cap", || {
+            kernel(&[1f64; 1], &[1f64; 1], 1, 1, 1, 257, cap, &mut [0u16; 1])
+        });
+    }
 }
 
 /// One contract for both precisions, over the scalar and the detected bundle.

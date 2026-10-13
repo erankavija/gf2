@@ -153,9 +153,12 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
         "charpoly.keller_gehrig_min_dim".to_owned(),
         "ple.panel_byte_lane_max_cols".to_owned(),
         "ple.panel_u16_lane_max_cols".to_owned(),
+        "prime_route.f32_k_chunk_cap".to_owned(),
         "prime_route.f32_min_cols".to_owned(),
         "prime_route.f32_min_prime".to_owned(),
+        "prime_route.f64_k_chunk_cap".to_owned(),
         "prime_route.f64_min_cols".to_owned(),
+        "sparse.block_csr_default_rows".to_owned(),
     ]);
     assert!(stated.is_subset(&inventory));
     assert_eq!(
@@ -171,4 +174,71 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
         registry.to_json(&prepared, &assembly).unwrap(),
         MEASURED_OWNER
     );
+}
+
+/// The selectors `@/issue/817fc47d` brings under the core section, with the
+/// values of the constants they take over.
+const CONVERGED_SELECTORS: [(&str, usize); 3] = [
+    ("prime_route.f32_k_chunk_cap", 1024),
+    ("prime_route.f64_k_chunk_cap", 4096),
+    ("sparse.block_csr_default_rows", 32),
+];
+
+fn converged_values(section: &CoreTuning) -> [usize; 3] {
+    [
+        section.prime_route().f32_k_chunk_cap(),
+        section.prime_route().f64_k_chunk_cap(),
+        section.sparse().block_csr_default_rows(),
+    ]
+}
+
+/// Every committed core owner: the conservative projection first, then the
+/// measured owners.
+const COMMITTED_OWNERS: [(&str, &str); 6] = [
+    ("conservative", CONSERVATIVE_OWNER),
+    (
+        "gf2-389aa4de-20260901-040229-2742533",
+        include_str!("../data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json"),
+    ),
+    (
+        "gf2-eaae1b56-20260904-215231-898522",
+        include_str!("../data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"),
+    ),
+    (
+        "gf2-a83583e0-20260930t230000z-2728298",
+        include_str!("../data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json"),
+    ),
+    (
+        "gf2-dbd8787d-20261001t230000z-2601601",
+        include_str!("../data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json"),
+    ),
+    ("gf2-63bad95d-20261006t230547z-2073085", MEASURED_OWNER),
+];
+
+#[test]
+fn committed_owners_resolve_the_converged_selectors_to_their_conservative_values() {
+    let expected = CONVERGED_SELECTORS.map(|(_, value)| value);
+    assert_eq!(converged_values(&CoreTuning::CONSERVATIVE), expected);
+
+    let registry = registry();
+    let mut reopened = BTreeSet::new();
+    for (name, text) in COMMITTED_OWNERS {
+        let stated = stated_selector_fields(text);
+        for (selector, _) in CONVERGED_SELECTORS {
+            assert_eq!(
+                stated.contains(selector),
+                name == "conservative",
+                "{name} and {selector}"
+            );
+        }
+        // The codec refuses an owner of an earlier harness schema whole; the
+        // owners it reopens carry the conservative values for what they omit.
+        if let Ok(prepared) = registry.from_json(text) {
+            let section = prepared.section::<CoreTuning>().unwrap().unwrap().section;
+            assert_eq!(converged_values(section), expected, "{name}");
+            reopened.insert(name);
+        }
+    }
+    assert!(reopened.contains("conservative"));
+    assert!(reopened.contains("gf2-63bad95d-20261006t230547z-2073085"));
 }

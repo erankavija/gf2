@@ -214,10 +214,10 @@ const DEFAULT_TARGET_MS: u64 = tuning_campaign_support::timing::TARGET.as_millis
 #[cfg(test)]
 #[allow(dead_code)]
 const EXPECTED_MEASURED_FIELDS: usize = 20;
-const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;
+const EXPECTED_CORE_SCHEMA_FIELDS: usize = 40;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_OMITTED_FIELDS: usize = 17;
+const EXPECTED_OMITTED_FIELDS: usize = 20;
 #[cfg(test)]
 #[allow(dead_code)]
 const EXPECTED_GRID_ARM_CELLS: usize = 378;
@@ -8158,7 +8158,7 @@ mod campaign_owner {
     const CORE_FIELDS: usize = 31;
     /// Core codec leaves outside the measured set; derived from the codec
     /// complement and asserted, not a second schema registry.
-    const CORE_OMITTED_FIELDS: usize = 6;
+    const CORE_OMITTED_FIELDS: usize = 9;
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(rename_all = "snake_case")]
@@ -11987,7 +11987,7 @@ mod campaign_owner {
             assert_eq!(measured.len(), CORE_FIELDS);
             let all = complete_selector_value(&CoreTuning::CONSERVATIVE).unwrap();
             let leaves = flatten_selectors(&all).unwrap();
-            assert_eq!(leaves.len(), 37);
+            assert_eq!(leaves.len(), 40);
             assert_eq!(
                 leaves
                     .iter()

@@ -514,6 +514,7 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
             let tables = build_small_prime_tables::<P>();
             let from_mont_f32 = tables.from_mont_f32.as_slice();
             let to_mont = tables.to_mont.as_slice();
+            let k_chunk_cap = f32_k_chunk_cap();
             GEMM_SMALL_F32_A_SCRATCH.with_borrow_mut(|a_f32_scratch| {
                 GEMM_SMALL_F32_BT_SCRATCH.with_borrow_mut(|bt_f32_scratch| {
                     GEMM_SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8_scratch| {
@@ -539,6 +540,7 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                             k,
                             n,
                             p_u8,
+                            k_chunk_cap,
                             out_u8_scratch,
                         );
 
@@ -602,7 +604,8 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
             let mut out_u8 = vec![0u8; m * n];
             let a_f32: Vec<f32> = a.iter().map(|x| x.value() as f32).collect();
             let bt_f32: Vec<f32> = b_t.iter().map(|x| x.value() as f32).collect();
-            (fns_f32.batch_gemm_fn)(&a_f32, &bt_f32, m, k, n, p_u8, &mut out_u8);
+            let k_chunk_cap = f32_k_chunk_cap();
+            (fns_f32.batch_gemm_fn)(&a_f32, &bt_f32, m, k, n, p_u8, k_chunk_cap, &mut out_u8);
             for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
                 *slot = Fp::<P>::new(byte as u64);
             }
@@ -1305,6 +1308,38 @@ pub fn prime_gemm_route<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemm
     prime_gemm_select::<P>(m, k, n)
 }
 
+#[cfg(feature = "simd")]
+fn f32_k_chunk_cap() -> usize {
+    crate::tuning::active().prime_route().f32_k_chunk_cap()
+}
+
+#[cfg(feature = "simd")]
+fn f64_k_chunk_cap() -> usize {
+    crate::tuning::active().prime_route().f64_k_chunk_cap()
+}
+
+/// Reports the k-axis chunk cap the dispatchers pass to the kernel of
+/// `route`: `prime_route.f32_k_chunk_cap` or `prime_route.f64_k_chunk_cap` of
+/// the active [`crate::tuning::CoreTuning`] for a cascade arm, `None` for an
+/// arm whose kernel takes no cap.
+///
+/// The dispatchers read the same two accessors, so the reported cap is the
+/// one the kernel receives.
+#[cfg(feature = "simd")]
+#[must_use]
+pub fn prime_gemm_k_chunk_cap(route: PrimeGemmRoute) -> Option<usize> {
+    match route {
+        PrimeGemmRoute::F32CascadeTabled | PrimeGemmRoute::F32CascadeDirect => {
+            Some(f32_k_chunk_cap())
+        }
+        PrimeGemmRoute::F64Cascade => Some(f64_k_chunk_cap()),
+        PrimeGemmRoute::U8Panel
+        | PrimeGemmRoute::ByteLaneBaseline
+        | PrimeGemmRoute::U16Panel
+        | PrimeGemmRoute::Deferred => None,
+    }
+}
+
 /// Records the arm a dispatcher executed, for the production-dispatch witness.
 ///
 /// The dispatchers store their arm at its kernel-invocation site, so a test
@@ -1450,6 +1485,7 @@ fn fp_medium_f64_try_gemm<const P: u64>(
     let Some(fns_f64) = crate::simd::maybe_fp_medium_f64() else {
         return false;
     };
+    let k_chunk_cap = f64_k_chunk_cap();
     GEMM_MEDIUM_F64_A_SCRATCH.with_borrow_mut(|a_f64| {
         GEMM_MEDIUM_F64_BT_SCRATCH.with_borrow_mut(|bt_f64| {
             GEMM_MEDIUM_OUT_SCRATCH.with_borrow_mut(|out_u16| {
@@ -1464,7 +1500,7 @@ fn fp_medium_f64_try_gemm<const P: u64>(
                     *dst = src.value() as f64;
                 }
 
-                (fns_f64.batch_gemm_fn)(a_f64, bt_f64, m, k, n, P as u16, out_u16);
+                (fns_f64.batch_gemm_fn)(a_f64, bt_f64, m, k, n, P as u16, k_chunk_cap, out_u16);
 
                 for (slot, &word) in out.iter_mut().zip(out_u16.iter()) {
                     *slot = Fp::<P>::new(word as u64);

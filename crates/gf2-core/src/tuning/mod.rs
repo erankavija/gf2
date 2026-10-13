@@ -239,6 +239,8 @@ pub enum ProfileFamily {
     Polynomial,
     /// The prime-route selector family.
     PrimeRoute,
+    /// The sparse-matrix selector family.
+    Sparse,
 }
 
 impl fmt::Display for ProfileFamily {
@@ -262,6 +264,7 @@ impl ProfileFamily {
             Self::Charpoly => "charpoly",
             Self::Polynomial => "polynomial",
             Self::PrimeRoute => "prime_route",
+            Self::Sparse => "sparse",
         }
     }
 }
@@ -347,6 +350,12 @@ pub enum ProfileField {
     F32MinCols,
     /// The F64 column-count threshold.
     F64MinCols,
+    /// The k-axis chunk cap of the F32 route.
+    F32KChunkCap,
+    /// The k-axis chunk cap of the F64 route.
+    F64KChunkCap,
+    /// The row count per block of the default block-CSR layout.
+    BlockCsrDefaultRows,
 }
 
 impl fmt::Display for ProfileField {
@@ -395,6 +404,9 @@ impl ProfileField {
             Self::F32MinPrime => "f32_min_prime",
             Self::F32MinCols => "f32_min_cols",
             Self::F64MinCols => "f64_min_cols",
+            Self::F32KChunkCap => "f32_k_chunk_cap",
+            Self::F64KChunkCap => "f64_k_chunk_cap",
+            Self::BlockCsrDefaultRows => "block_csr_default_rows",
         }
     }
 }
@@ -1176,23 +1188,52 @@ pub struct PrimeRouteSelectors {
     f32_min_prime: usize,
     f32_min_cols: usize,
     f64_min_cols: usize,
+    f32_k_chunk_cap: usize,
+    f64_k_chunk_cap: usize,
 }
 
 impl PrimeRouteSelectors {
     /// Builds a validated prime-route selector family.
     ///
-    /// Every `usize` bound is admissible: zero opens the floating-point route
-    /// to every prime or output width, and a bound above the largest supported
-    /// prime or width closes it.
+    /// Every `usize` route bound is admissible: zero opens the floating-point
+    /// route to every prime or output width, and a bound above the largest
+    /// supported prime or width closes it.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when a chunk cap is zero,
+    /// because the k-axis walk must advance, or when `f64_k_chunk_cap` exceeds
+    /// [`gf2_kernels_simd::fp_medium_f64::K_CHUNK_CAP_MAX`], above which a
+    /// chunk's sum leaves the f64 exact-integer range.
     pub fn try_new(
         f32_min_prime: usize,
         f32_min_cols: usize,
         f64_min_cols: usize,
+        f32_k_chunk_cap: usize,
+        f64_k_chunk_cap: usize,
     ) -> Result<Self, ProfileError> {
+        if f32_k_chunk_cap == 0 {
+            return Err(out_of_range(
+                ProfileFamily::PrimeRoute,
+                ProfileField::F32KChunkCap,
+                f32_k_chunk_cap as u64,
+            ));
+        }
+        if f64_k_chunk_cap == 0
+            || f64_k_chunk_cap > gf2_kernels_simd::fp_medium_f64::K_CHUNK_CAP_MAX
+        {
+            return Err(out_of_range(
+                ProfileFamily::PrimeRoute,
+                ProfileField::F64KChunkCap,
+                f64_k_chunk_cap as u64,
+            ));
+        }
         Ok(Self {
             f32_min_prime,
             f32_min_cols,
             f64_min_cols,
+            f32_k_chunk_cap,
+            f64_k_chunk_cap,
         })
     }
 
@@ -1209,6 +1250,57 @@ impl PrimeRouteSelectors {
     /// Returns the minimum F64 route column count.
     pub fn f64_min_cols(&self) -> usize {
         self.f64_min_cols
+    }
+
+    /// Returns the k-axis chunk cap of the F32 route.
+    ///
+    /// The kernel reduces its accumulators after every
+    /// `min(floor(2^24 / (p-1)²), cap)` steps, so the cap bounds the packed
+    /// B-panel slice one chunk reads.
+    pub fn f32_k_chunk_cap(&self) -> usize {
+        self.f32_k_chunk_cap
+    }
+
+    /// Returns the k-axis chunk cap of the F64 route.
+    ///
+    /// The kernel reduces its accumulators after every `min(k, cap)` steps,
+    /// so the cap bounds the packed B-panel slice one chunk reads.
+    pub fn f64_k_chunk_cap(&self) -> usize {
+        self.f64_k_chunk_cap
+    }
+}
+
+/// Selector values for sparse GF(2) matrices.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SparseSelectors {
+    block_csr_default_rows: usize,
+}
+
+impl SparseSelectors {
+    /// Builds a validated sparse-matrix selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when
+    /// `block_csr_default_rows` is zero because a block holds at least one
+    /// row.
+    pub fn try_new(block_csr_default_rows: usize) -> Result<Self, ProfileError> {
+        if block_csr_default_rows == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Sparse,
+                ProfileField::BlockCsrDefaultRows,
+                block_csr_default_rows as u64,
+            ));
+        }
+        Ok(Self {
+            block_csr_default_rows,
+        })
+    }
+
+    /// Returns the rows per block of
+    /// [`crate::sparse::SpBitMatrix::to_default_block_csr`].
+    pub fn block_csr_default_rows(&self) -> usize {
+        self.block_csr_default_rows
     }
 }
 
@@ -1239,6 +1331,8 @@ pub struct CoreSelectors {
     pub polynomial: PolynomialSelectors,
     /// Prime-field route selectors.
     pub prime_route: PrimeRouteSelectors,
+    /// Sparse-matrix selectors.
+    pub sparse: SparseSelectors,
 }
 
 impl CoreSelectors {
@@ -1305,6 +1399,11 @@ impl CoreSelectors {
             f32_min_prime: crate::gfp::simd_ops::N_THRESH_PRIME as usize,
             f32_min_cols: crate::gfp::simd_ops::F32_MIN_COLS,
             f64_min_cols: crate::gfp::simd_ops::F64_MIN_COLS,
+            f32_k_chunk_cap: gf2_kernels_simd::fp_small_f32::K_CHUNK_CAP,
+            f64_k_chunk_cap: gf2_kernels_simd::fp_medium_f64::K_CHUNK_CAP,
+        },
+        sparse: SparseSelectors {
+            block_csr_default_rows: crate::sparse::DEFAULT_BLOCK_ROWS,
         },
     };
 }
@@ -1414,6 +1513,11 @@ impl CoreTuning {
     pub fn prime_route(&self) -> &PrimeRouteSelectors {
         &self.selectors.prime_route
     }
+
+    /// Returns the sparse-matrix selector family.
+    pub fn sparse(&self) -> &SparseSelectors {
+        &self.selectors.sparse
+    }
 }
 
 impl TuningSection for CoreTuning {
@@ -1457,8 +1561,8 @@ struct CorePresence {
 #[cfg(feature = "tuning-profile")]
 impl CorePresence {
     const COMPLETE: Self = Self {
-        families: (1 << 12) - 1,
-        fields: (1 << 37) - 1,
+        families: (1 << 13) - 1,
+        fields: (1 << 40) - 1,
     };
 
     const fn family(self, bit: u16) -> bool {
@@ -1588,6 +1692,13 @@ impl SectionCodec<CoreTuning> for CoreTuningCodec {
             Present::Value(Some(prime_route)) => prime_route,
             Present::Value(None) => {
                 return Err(SectionError::InvalidBody("null prime_route family".into()))
+            }
+        };
+        let sparse = match selectors.sparse {
+            Present::Missing => JsonSparse::default(),
+            Present::Value(Some(sparse)) => sparse,
+            Present::Value(None) => {
+                return Err(SectionError::InvalidBody("null sparse family".into()))
             }
         };
         let bit_backend = BitBackendSelectors::try_new(
@@ -1790,6 +1901,27 @@ impl SectionCodec<CoreTuning> for CoreTuningCodec {
                 .unwrap_or(CoreTuning::CONSERVATIVE.selectors.prime_route.f32_min_cols),
             section_optional(prime_route.f64_min_cols)?
                 .unwrap_or(CoreTuning::CONSERVATIVE.selectors.prime_route.f64_min_cols),
+            section_optional(prime_route.f32_k_chunk_cap)?.unwrap_or(
+                CoreTuning::CONSERVATIVE
+                    .selectors
+                    .prime_route
+                    .f32_k_chunk_cap,
+            ),
+            section_optional(prime_route.f64_k_chunk_cap)?.unwrap_or(
+                CoreTuning::CONSERVATIVE
+                    .selectors
+                    .prime_route
+                    .f64_k_chunk_cap,
+            ),
+        )
+        .map_err(core_section_error)?;
+        let sparse = SparseSelectors::try_new(
+            section_optional(sparse.block_csr_default_rows)?.unwrap_or(
+                CoreTuning::CONSERVATIVE
+                    .selectors
+                    .sparse
+                    .block_csr_default_rows,
+            ),
         )
         .map_err(core_section_error)?;
         let selectors = CoreSelectors {
@@ -1805,6 +1937,7 @@ impl SectionCodec<CoreTuning> for CoreTuningCodec {
             charpoly,
             polynomial,
             prime_route,
+            sparse,
         };
         Ok(CoreTuning {
             selectors,
@@ -1954,8 +2087,11 @@ fn core_presence(selectors: &JsonSelectors) -> CorePresence {
             f32_min_prime => 1 << 34,
             f32_min_cols => 1 << 35,
             f64_min_cols => 1 << 36,
+            f32_k_chunk_cap => 1 << 37,
+            f64_k_chunk_cap => 1 << 38,
         ]
     );
+    family!(sparse, 1 << 12, [block_csr_default_rows => 1 << 39]);
     presence
 }
 
@@ -2083,7 +2219,14 @@ fn encode_core_body(
             "f32_min_prime" => 1 << 34 => selectors.prime_route.f32_min_prime,
             "f32_min_cols" => 1 << 35 => selectors.prime_route.f32_min_cols,
             "f64_min_cols" => 1 << 36 => selectors.prime_route.f64_min_cols,
+            "f32_k_chunk_cap" => 1 << 37 => selectors.prime_route.f32_k_chunk_cap,
+            "f64_k_chunk_cap" => 1 << 38 => selectors.prime_route.f64_k_chunk_cap,
         ]
+    );
+    family!(
+        "sparse",
+        1 << 12,
+        ["block_csr_default_rows" => 1 << 39 => selectors.sparse.block_csr_default_rows]
     );
 }
 
@@ -2226,6 +2369,7 @@ struct JsonSelectors {
     charpoly: Present<JsonCharpoly>,
     polynomial: Present<JsonPolynomial>,
     prime_route: Present<JsonPrimeRoute>,
+    sparse: Present<JsonSparse>,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -2335,4 +2479,13 @@ struct JsonPrimeRoute {
     f32_min_prime: Present<usize>,
     f32_min_cols: Present<usize>,
     f64_min_cols: Present<usize>,
+    f32_k_chunk_cap: Present<usize>,
+    f64_k_chunk_cap: Present<usize>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+struct JsonSparse {
+    block_csr_default_rows: Present<usize>,
 }

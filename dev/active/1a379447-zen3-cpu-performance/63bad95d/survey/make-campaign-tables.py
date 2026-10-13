@@ -46,6 +46,9 @@ def campaigns():
         if not block:
             continue
         owners = tracked(f"gf2-core/**/{match['campaign']}.json")
+        if not owners:
+            # A campaign of another producer publishes no core owner.
+            continue
         if len(owners) != 1:
             raise SystemExit(f"{match['campaign']} has {len(owners)} committed core owners")
         owner_bytes = (ROOT / owners[0]).read_bytes()
