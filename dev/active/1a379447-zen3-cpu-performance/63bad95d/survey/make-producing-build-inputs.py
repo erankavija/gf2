@@ -45,6 +45,7 @@ ADDED = {
         "src/ldpc_lanes.rs": "behavior",
         "src/m4rm.rs": "behavior",
         "src/shift_funnel.rs": "behavior",
+        "src/x86/ldpc_lanes.rs": "behavior",
         "src/x86/popcount.rs": "behavior",
         "src/x86/shift_funnel.rs": "behavior",
     },
