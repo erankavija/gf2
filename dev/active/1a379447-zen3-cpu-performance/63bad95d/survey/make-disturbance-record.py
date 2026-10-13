@@ -110,7 +110,9 @@ def family_section(lines, family, entries):
         "| Decision |",
         "|---|---|---|---:|---:|---:|---|---:|---|",
     ]
-    cells = [cell["cell_id"] for cell in entries[0]["summary"]["cells"]]
+    cells = list(dict.fromkeys(
+        cell["cell_id"] for entry in entries for cell in entry["summary"]["cells"]
+    ))
     for cell_id in cells:
         for entry in entries:
             for cell in entry["summary"]["cells"]:
@@ -177,23 +179,29 @@ def confirmation_section(lines, entry, rows, entries, raw):
         "| Ratio relative IQR over the pilot's |",
         "|---|---|---|---:|---|---:|---:|---|---|---:|",
     ]
-    widened, shifted, within = [], [], []
+    widened, shifted, within, wide_pass = [], [], [], []
     for cell in summary["cells"]:
         interval = cell["interval"]
         floor = 1.0 / cell["margins"]["equivalence"]
         width = half_width(interval)
         exceeds = width > resolution
         reaches = interval["estimate"] >= floor
-        row, before = rows[cell["cell_id"]], pilot[cell["cell_id"]]
+        row, before = rows[cell["cell_id"]], pilot.get(cell["cell_id"])
+        iqr_ratio = (
+            "not in the pilot" if before is None
+            else f"{row['ratio_iqr'] / before['ratio_iqr']:.1f}"
+        )
         lines.append(
             f"| `{cell['cell_id']}` | {cell['decision']} | {cell['outcome']} | {width:.4f} "
             f"| {'yes' if exceeds else 'no'} | {floor:.4f} | {interval['lower']:.4f} "
             f"| {'yes' if reaches else 'no'} "
             f"| {'yes' if row['ratio_median'] >= floor else 'no'} "
-            f"| {row['ratio_iqr'] / before['ratio_iqr']:.1f} |"
+            f"| {iqr_ratio} |"
         )
         if not exceeds:
             within.append(cell)
+        elif cell["outcome"] == "pass":
+            wide_pass.append(cell)
         elif reaches:
             widened.append(cell)
         else:
@@ -215,6 +223,12 @@ def confirmation_section(lines, entry, rows, entries, raw):
             f"The estimate of {names(shifted)} lies below the floor and the half-width exceeds "
             "the frozen resolution: the interval is too wide to decide the cell, and the ratio "
             "median column states whether the middle of its pairs reaches the floor.",
+            "",
+        ]
+    if wide_pass:
+        lines += [
+            f"The half-width of {names(wide_pass)} exceeds the frozen resolution and the lower "
+            "bound reaches the floor: the decision holds at the observed width.",
             "",
         ]
     if within:
