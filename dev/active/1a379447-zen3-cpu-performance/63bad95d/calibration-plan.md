@@ -208,8 +208,8 @@ The campaigns of the first two families run on a loaded host
 ([disturbance record](disturbance-record.md#host-load-each-campaign-records)).
 By invoker ruling each is repeated once under a family that names it in the
 `repeats` field of `planned-families.json` and cites that record in its
-addendum; [`campaign-findings.md`](campaign-findings.md) (F-06 to F-08)
-states the outcomes of the repeated families and where the repeats stand.
+addendum; [`campaign-findings.md`](campaign-findings.md) (F-06 to F-09)
+states the outcomes of the repeated families and of their confirmations.
 
 The harness is `survey/profile-arms`: one executable built once per build
 level, which refuses a request for a level it is not, installs the pinned
@@ -252,8 +252,11 @@ cell of each entry point.
   single boundary expresses a result.
 - The baked bit-backend threshold mirrors the measured owner. It is retained
   when no confirmatory or holdout cell of the confirmation of
-  `63bad95d-profile-dispatch-overhead-v2` records `fail`, and takes the conservative value otherwise, with each
-  receipt committed as the outcome; the family's addendum freezes this rule.
+  `63bad95d-profile-dispatch-overhead-v2` records `fail`, and takes the
+  conservative value otherwise, with each receipt committed as the outcome;
+  the family's addendum freezes this rule. The confirmation is accepted and
+  qualifies with no `fail` cell (F-09), so the baked value is retained;
+  integration commits the profile.
 - A production change carries its before and after cells: a cell's baseline
   arm is the conservative build and its candidate arm the profile build, on
   the same workload.

@@ -81,7 +81,7 @@ value (`tuning-baked-owner-digest`, `baked-measured-owner-test`). The default
 build keeps the conservative constant. The profile-dispatch-overhead family
 (plan §6) measures the profile build against the conservative build on both
 sides of the two thresholds; plan §7 states how its confirmation decides
-whether the baked value is retained, and F-07 states where the family stands.
+whether the baked value is retained, and F-07 to F-09 state where the family stands.
 
 ## F-04: one runtime field differs from the seam owner
 
@@ -132,7 +132,7 @@ do not depend on it. The receipt stays committed as measured, and this record
 claims no native-build result for the inconclusive cells.
 
 By invoker ruling the disturbed stage is repeated once on a quiet host:
-F-08 states the repeat family and where it stands.
+F-08 states the repeat family and F-09 its outcome.
 
 ## F-07: the dispatch-overhead family has no confirmation
 
@@ -165,7 +165,7 @@ spent by the two pilot lines of the
 and the family's one confirmatory attempt is unspent. The retention rule of
 plan §7 for the baked bit-backend threshold reads a dispatch-overhead
 confirmation, and none exists. By invoker ruling the family is repeated on a
-quiet host (F-08).
+quiet host (F-08, F-09).
 
 ## F-08: both disturbed families are repeated under their own ledgers
 
@@ -235,15 +235,48 @@ Every arm of every cell of each confirmation is smoked through the shared
 runner
 ([native ladder](survey/native-ladder-v2-confirmation-smoke.json),
 [dispatch overhead](survey/profile-dispatch-overhead-v2-confirmation-smoke.json)),
-and each confirmation is a line of the benchmark-window queue that starts only
-on a quiet host. Each ledger holds its pilot's line and no confirmatory
-reservation
+and each confirmation ran as a line of the benchmark-window queue that starts
+only on a quiet host. Each ledger holds its pilot's line and its confirmation's
+line
 ([native ladder](../../../bench_results/63bad95d/63bad95d-native-ladder-v2-ledger.jsonl),
-[dispatch overhead](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2-ledger.jsonl)).
-No repeat confirmation has a receipt or an outcome. The native-build result
-for the inconclusive cells of F-06 and the retention decision of plan §7 are
-read from the acceptance summaries of those confirmations, which
-`@/issue/63bad95d` owns.
+[dispatch overhead](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2-ledger.jsonl)),
+and each family's one confirmatory attempt is spent. F-09 states the outcomes.
+
+## F-09: both repeat confirmations are accepted and qualify
+
+Each repeat confirmation runs on a quiet host
+([load table](disturbance-record.md#host-load-each-campaign-records)). Its
+execution log holds every declared cell started, checkpointed and completed
+once at its declared pairs with status `measured` and a terminal `complete`
+record (`dev/scripts/verify-campaign-log.py`, with the receipt and plan beside
+the log). The acceptance summaries record verdict, qualification and finding
+count
+([dispatch overhead](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2/r1-confirmation/acceptance-summary.md),
+[native ladder](../../../bench_results/63bad95d/63bad95d-native-ladder-v2/r1-confirmation/acceptance-summary.md)).
+
+Every confirmatory and holdout cell of both confirmations records `pass`; no
+cell records `fail`, `not-material`, `regressed` or `not-confirmatory`. The
+dispatch-overhead summary records an improvement for some cells and
+not-worse for the others (the decision column names each); the native-ladder summary records not-worse for every cell, the
+family claiming no improvement. Interval and raw-pair rows, and each cell's
+half-width against the frozen resolution, are in the
+[disturbance record](disturbance-record.md#decisions-of-63bad95d-r1-profile-dispatch-overhead-v2-confirmation)
+([native ladder](disturbance-record.md#decisions-of-63bad95d-r1-native-ladder-v2-confirmation)).
+The holdout cells have no pilot row, so the disturbance record marks their
+dispersion comparison as absent.
+
+Consequences under plan §7:
+
+- The dispatch-overhead confirmation records no `fail`, so the baked
+  `bit_backend.simd_min_words` retains the measured owner's value.
+- The native-ladder confirmation resolves the cells F-06 leaves inconclusive
+  on a quiet host: the native build is not worse than the tuned-portable build
+  on every cell of the repeat family. The receipt of
+  `63bad95d-native-ladder` stays as measured and takes no part in this
+  decision.
+- The matvec threshold and the other conservative values are unchanged.
+
+The production selector values are not changed by this record.
 
 ## What the campaign does not decide
 
