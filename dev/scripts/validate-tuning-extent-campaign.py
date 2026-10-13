@@ -4920,8 +4920,13 @@ def expected_evidence_index(stage: Path, declaration: Any) -> str:
     text += (f"| Complete envelope | `{layout['complete.json']}` | "
              f"`{digest((stage / 'complete.json').read_bytes())}` |\n"
              f"| Receipt | `{layout['receipt.md']}` | "
-             f"`{digest((stage / 'receipt.md').read_bytes())}` |\n\n"
-             "Re-validation on the producing host: `python3 dev/scripts/"
+             f"`{digest((stage / 'receipt.md').read_bytes())}` |\n\n")
+    for owner in declaration["measured_owners"]:
+        rng = config.get("fixture_generators", {}).get(owner["name"])
+        if rng is not None:
+            text += (f"Owner `{owner['owner']}` draws its fixtures from "
+                     f"`{rng['implementation']}`, version `{rng['version']}`.\n\n")
+    text += ("Re-validation on the producing host: `python3 dev/scripts/"
              "validate-tuning-extent-campaign.py --stage <stage> --publication <checkout>`.\n")
     return text
 

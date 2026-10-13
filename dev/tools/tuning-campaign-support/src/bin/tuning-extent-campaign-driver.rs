@@ -2045,6 +2045,7 @@ struct EvidenceIdentity<'a> {
     declaration_path: &'a str,
     declaration_sha256: &'a str,
     imported: &'a [ImportedOwnerEvidence],
+    fixture_generators: &'a BTreeMap<String, FixtureGenerator>,
 }
 impl<'a> EvidenceIdentity<'a> {
     fn of(config: &'a CampaignConfig, declaration: &CampaignDeclaration) -> io::Result<Self> {
@@ -2057,6 +2058,7 @@ impl<'a> EvidenceIdentity<'a> {
             declaration_path,
             declaration_sha256,
             imported: &config.imported_owners,
+            fixture_generators: &config.fixture_generators,
         })
     }
 }
@@ -2109,12 +2111,23 @@ fn render_evidence_index(
         ));
     }
     text.push_str(&format!(
-        "| Complete envelope | `{}` | `{}` |\n| Receipt | `{}` | `{}` |\n\nRe-validation on the producing host: `python3 dev/scripts/validate-tuning-extent-campaign.py --stage <stage> --publication <checkout>`.\n",
+        "| Complete envelope | `{}` | `{}` |\n| Receipt | `{}` | `{}` |\n\n",
         layout.complete(),
         Sha256Digest::of(&fs::read(stage.join("complete.json"))?).as_str(),
         layout.receipt(),
         Sha256Digest::of(&fs::read(stage.join("receipt.md"))?).as_str()
     ));
+    for owner in &declaration.measured_owners {
+        if let Some(rng) = identity.fixture_generators.get(owner.name.as_str()) {
+            text.push_str(&format!(
+                "Owner `{}` draws its fixtures from `{}`, version `{}`.\n\n",
+                owner.owner.as_str(),
+                rng.implementation,
+                rng.version
+            ));
+        }
+    }
+    text.push_str("Re-validation on the producing host: `python3 dev/scripts/validate-tuning-extent-campaign.py --stage <stage> --publication <checkout>`.\n");
     Ok(text)
 }
 fn candidate_directory(
@@ -4556,10 +4569,18 @@ mod tests {
             let protocol = Sha256Digest::of(b"protocol");
             let declaration_sha = declaration.sha256.clone().unwrap();
             let revision = "0".repeat(40);
+            let fixture_generators = BTreeMap::from([(
+                "core".to_owned(),
+                FixtureGenerator {
+                    implementation: "gf2_core::rng::Lcg".into(),
+                    version: "gf2-core 0.1.0".into(),
+                },
+            )]);
             fs::write(
                 stage.join("campaign.json"),
                 encoded(&json!({
                     "campaign_id": campaign,
+                    "fixture_generators": fixture_generators,
                     "protocol": {"path": "/repository/protocol.md", "sha256": protocol},
                     "identity": {"source_revision": revision,
                                  "behavior_sha256": {RECORDED_DECLARATION: declaration_sha}},
@@ -4626,6 +4647,7 @@ mod tests {
                         declaration_path: RECORDED_DECLARATION,
                         declaration_sha256: declaration_sha.as_str(),
                         imported: &imported_owners,
+                        fixture_generators: &fixture_generators,
                     },
                     &declaration,
                 )
@@ -4832,6 +4854,9 @@ mod tests {
     fn evidence_index_presence_and_content_follow_the_declaration() {
         let mut fixture = PublicationFixture::with(seam_declaration());
         let mut forged = fixture.evidence_index.clone().unwrap();
+        assert!(String::from_utf8_lossy(&forged).contains(
+            "Owner `gf2-core` draws its fixtures from `gf2_core::rng::Lcg`, version `gf2-core 0.1.0`.\n"
+        ));
         forged.extend_from_slice(b"| Forged | `x` | `y` |\n");
         let correct = fixture.evidence_index.replace(forged);
         let repository = fixture.repository("forged");
@@ -5939,6 +5964,7 @@ mod tests {
                     declaration_path: RECORDED_DECLARATION,
                     declaration_sha256: declaration_sha.as_str(),
                     imported: &imported_owners,
+                    fixture_generators: &BTreeMap::new(),
                 },
                 &declaration,
             )
