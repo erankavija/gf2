@@ -1076,6 +1076,24 @@ mod tests {
     }
 
     #[test]
+    fn test_dot_product_small_prime_max_residues_long_vector() {
+        use crate::gfp::Fp;
+        // The byte-lane kernel drains its accumulators every 262 144
+        // elements. An interval of `P - 1` sums past `2³²` for `P >= 131`,
+        // from 68 720 elements at `P = 251`; `P = 127` stays below it.
+        fn check<const P: u64>() {
+            let p_minus_1 = Fp::<P>::new(P - 1);
+            for n in [68_719usize, 68_720, 262_144, 262_161, 600_000] {
+                let a = FieldVec::from(vec![p_minus_1; n]);
+                assert_eq!(a.dot_product(&a), Fp::<P>::new(n as u64 % P), "P={P} n={n}");
+            }
+        }
+        check::<127>();
+        check::<131>();
+        check::<251>();
+    }
+
+    #[test]
     fn test_dot_product_fp65521_long_vector() {
         use crate::gfp::Fp;
         let n = 10000;
