@@ -61,7 +61,7 @@ def main():
         help="compare the closure at output with this tree's instead of writing it",
     )
     arguments = parser.parse_args()
-    owners = tracked("**/gf2-core/**/tuning-profiles/gf2-63bad95d-*.json")
+    owners = tracked("gf2-core/**/tuning-profiles/gf2-63bad95d-*.json")
     behavior = set()
     for directory in (f"{CORE}/src", f"{KERNELS}/src", f"{TOOL}/src", f"{ARMS}/src"):
         behavior.update(producing_closure.rust_sources(ROOT, directory))

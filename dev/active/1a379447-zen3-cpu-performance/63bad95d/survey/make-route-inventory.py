@@ -603,7 +603,7 @@ def receipts(selector_sites):
     """Every committed protocol receipt: its arms' reported paths and its contrasts."""
     current = {}
     campaigns, families = [], {}
-    for path in tracked("**/receipt.json"):
+    for path in tracked("receipt.json"):
         record = json.loads(read(path))
         if record.get("schema") != "zen3-benchmark-receipt-v1":
             continue

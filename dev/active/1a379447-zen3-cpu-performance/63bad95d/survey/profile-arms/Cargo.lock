@@ -198,7 +198,6 @@ dependencies = [
  "gf2-core",
  "serde",
  "serde_json",
- "sha2",
  "tuning-campaign-support",
 ]
 

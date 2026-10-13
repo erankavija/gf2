@@ -33,6 +33,12 @@ sha256sum -c .agents/campaign-evidence/gf2-63bad95d-20261006t230547z-2073085/SHA
 
 The index and the manifest keep the bytes the campaign published.
 
+The campaign record pins its producing manifest by digest. The pinned bytes
+are committed as
+[`inputs/producing/.../producing-build-inputs.json`](inputs/producing/dev/active/1a379447-zen3-cpu-performance/63bad95d/producing-build-inputs.json);
+the live [`producing-build-inputs.json`](producing-build-inputs.json) follows
+the current tree through `survey/make-producing-build-inputs.py`.
+
 ## F-01: the matvec threshold keeps its conservative value
 
 The owner states `bit_matrix.matvec_simd_min_words` at the conservative value

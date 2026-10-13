@@ -25,7 +25,7 @@ OWNER_SHA256_VAR = "GF2_PROFILE_OWNER_SHA256"
 
 def measured_owner(issue):
     """Root-relative path, profile identity and digest of the issue's measured core owner."""
-    owners = tracked(f"**/gf2-core/**/tuning-profiles/gf2-{issue}-*.json")
+    owners = tracked(f"gf2-core/**/tuning-profiles/gf2-{issue}-*.json")
     if len(owners) != 1:
         raise SystemExit(f"{len(owners)} measured core owners of issue {issue}; exactly one must exist")
     content = (ROOT / owners[0]).read_bytes()
