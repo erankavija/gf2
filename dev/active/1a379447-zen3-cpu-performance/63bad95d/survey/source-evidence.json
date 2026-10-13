@@ -632,7 +632,7 @@
     {
       "id": "calibration-launcher-declaration",
       "project": "gf2",
-      "commit": "fb8620a819fb34d85d2e8dd73a3b99549296c351",
+      "commit": "1bd0c61d1b4d0b5be9a17e7437d70432c9b3d40b",
       "path": "dev/scripts/tuning-extent-campaign.sh",
       "line": 4,
       "occurrences": 1,
@@ -643,7 +643,7 @@
     {
       "id": "calibration-publishes-profile-id",
       "project": "gf2",
-      "commit": "fb8620a819fb34d85d2e8dd73a3b99549296c351",
+      "commit": "1bd0c61d1b4d0b5be9a17e7437d70432c9b3d40b",
       "path": "dev/scripts/tuning-extent-campaign.sh",
       "line": 8,
       "occurrences": 1,
