@@ -37,11 +37,16 @@ GF2_ARM="${GF2_TARGET}/release/logical-arm"
 ISAL_ARM="${ISAL_TARGET}/release/logical-isal-arm"
 CAMPAIGN_TOOL="${GF2_TARGET}/release/logical-campaign"
 ORACLE="${GF2_TARGET}/release/logical-oracle"
+ISAL_RECORD="${STORY}/isal-arm-build-record.txt"
+ISAL_LOG="${STORY}/isal-arm-build.log"
 ISAL_PIN=7c3479e0a9dac17f448603ec1ad64c7c625f530c
 
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 export CARGO_CI_NO_SCCACHE=1
+# A build takes its flags, wrapper, profile and target from this script alone.
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
+    "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}"
 
 # The pinned ISA-L checkout is shared under the primary checkout's .agents/ext;
 # it is discovered, never rebuilt destructively.
@@ -78,11 +83,16 @@ build_isal() {
 }
 
 cmd_build() {
-    local with_isal=0 source='' invocation
+    local with_isal=0 source='' invocation stage
     # The record states the invocation that produced it, so the launcher's own
     # arguments are passed through rather than reconstructed.
     invocation="${LAUNCHER} build${*:+ $*}"
     [[ "${1:-}" == "--isal" ]] && with_isal=1
+    # The three committed records are replaced together, only after every step
+    # has succeeded.
+    mkdir -p "${GF2_TARGET}"
+    stage="$(mktemp -d "${GF2_TARGET}/build-stage.XXXXXX")"
+    trap 'rm -rf "${stage}"' EXIT
     build_gf2
     # The survey harness is its own workspace, so the repository CI contract
     # never reaches it: this command is the only thing that runs its contract.
@@ -93,7 +103,7 @@ cmd_build() {
     passed="$(printf '%s\n' "${contract}" |
         awk '/^test result: ok\./ { total += $4 } END { print total + 0 }')"
     if [[ "${with_isal}" == 1 ]]; then
-        source="$(build_isal)" || return
+        source="$(GF2_ISAL_STAGE="${stage}" build_isal)" || return
     fi
 
     local version llvm host
@@ -120,8 +130,13 @@ cmd_build() {
             printf '# %s sha256: %s\n' \
                 "${binary}" "$(sha256sum "${GF2_TARGET}/release/${binary}" | cut -d' ' -f1)"
         done
-    } >"${VALIDATION}"
-    cat "${VALIDATION}"
+    } >"${stage}/${VALIDATION##*/}"
+    cat "${stage}/${VALIDATION##*/}"
+    mv "${stage}/${VALIDATION##*/}" "${VALIDATION}"
+    if [[ "${with_isal}" == 1 ]]; then
+        mv "${stage}/${ISAL_RECORD##*/}" "${ISAL_RECORD}"
+        [[ ! -e "${stage}/${ISAL_LOG##*/}" ]] || mv "${stage}/${ISAL_LOG##*/}" "${ISAL_LOG}"
+    fi
     echo "harness validation record: ${VALIDATION}" >&2
 }
 
