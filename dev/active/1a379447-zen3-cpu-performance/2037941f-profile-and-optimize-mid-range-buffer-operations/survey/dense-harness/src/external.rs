@@ -26,7 +26,6 @@ pub enum ComparatorBuild {
 }
 
 impl ComparatorBuild {
-    /// Every level.
     pub const ALL: [Self; 2] = [Self::Host, Self::Portable];
 
     /// The value of `GF2_M4RI_LEVEL` that selects this level in `build.rs`.
