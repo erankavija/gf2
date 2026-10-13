@@ -8086,6 +8086,19 @@ mod tests {
         );
     }
 
+    /// Pins the retained-threshold fixtures of each field at its smallest
+    /// grid size: the seeds and the generator's stream decide these bytes.
+    #[test]
+    fn retained_fixtures_keep_their_digest_for_their_seeds() {
+        let digests = CalibratedField::ALL
+            .into_iter()
+            .map(|field| expected_operand_digest(field, field.grid()[0]).unwrap());
+        assert_eq!(
+            digest_tuple(b"retained-fixtures", digests),
+            "03bb93d425c58136c63606361b8fb74752f2ca382b638e5164de4a7fdf2d2ad6"
+        );
+    }
+
     #[test]
     fn cargo_bench_passes_a_bench_flag_the_parser_ignores() {
         let args = ["--bench", "--list-grid"].map(str::to_owned);
@@ -10795,6 +10808,7 @@ mod campaign_owner {
                 sha256: Sha256Digest::of(json.as_bytes()),
             },
             decisions: CanonicalJson::from_serializable(&decisions).map_err(err)?,
+            rng: Some(fixture_generator()?),
         })
     }
 
@@ -10872,6 +10886,15 @@ mod campaign_owner {
         cpu_features: Vec<String>,
         required_features: String,
         required_threads: String,
+        rng: seed::FixtureGenerator,
+    }
+    /// The workspace lock file of this build, which names the fixture generator's
+    /// package versions.
+    const BUILD_LOCK: &str = include_str!("../../../Cargo.lock");
+    /// The generator of every retained and extent fixture.
+    fn fixture_generator() -> Result<seed::FixtureGenerator, String> {
+        seed::FixtureGenerator::locked::<Lcg>(BUILD_LOCK, env!("CARGO_PKG_NAME"), &[&[]])
+            .map_err(err)
     }
     impl CapabilityReport {
         fn validate(&self) -> Result<(), String> {
@@ -10961,6 +10984,7 @@ mod campaign_owner {
             cpu_features: cpu_features(),
             required_features: REQUIRED_FEATURES.to_owned(),
             required_threads: REQUIRED_RAYON_THREADS.to_owned(),
+            rng: fixture_generator()?,
         };
         report.validate()?;
         CanonicalJson::from_serializable(&report).map_err(err)
@@ -11284,6 +11308,20 @@ mod campaign_owner {
                  arm of the bit-backend family, and this host publishes none",
             )
         }
+        /// Pins the extent fixtures of the first cell of each field: the
+        /// seeds and the generator's stream decide these bytes.
+        #[test]
+        fn extent_fixtures_keep_their_digest_for_their_seeds() {
+            let cells = extent_cells();
+            let digests = ExtentField::ALL.into_iter().map(|field| {
+                let cell = cells.iter().find(|cell| cell.field == field).unwrap();
+                extent_operand_digest(&build_extent_fixture(cell).unwrap())
+            });
+            assert_eq!(
+                digest_tuple(b"extent-fixtures", digests),
+                "7929dfcbede84ccf3d85e36e02c69a03e77073f3d8654781c3b2d4711ce0acc0"
+            );
+        }
         #[test]
         #[should_panic(expected = "precondition: the owner contract tests need a SIMD backend")]
         fn a_missing_simd_arm_fails_on_the_stated_precondition() {
@@ -11513,9 +11551,11 @@ mod campaign_owner {
                 refused.contains("differs from producing binary"),
                 "{refused}"
             );
-            let OwnerResponse::EmitOwner { artifact, .. } = publish_owner(&emit).unwrap() else {
+            let OwnerResponse::EmitOwner { artifact, rng, .. } = publish_owner(&emit).unwrap()
+            else {
                 panic!("owner emission returned another response");
             };
+            assert_eq!(rng, Some(fixture_generator().unwrap()));
             let bytes = fs::read(&artifact.path).unwrap();
             assert_eq!(artifact.sha256, Sha256Digest::of(&bytes));
             let reopened =
@@ -11577,6 +11617,11 @@ mod campaign_owner {
                 && dot.batch_clmul_scalar_clmul_and_barrett
                     == (dot.effective_chunk == dot.candidate_chunk)));
             report.ordinary_companions.validate().unwrap();
+            assert_eq!(report.rng.implementation, "gf2_core::rng::Lcg");
+            assert_eq!(
+                report.rng.version,
+                concat!("gf2-core ", env!("CARGO_PKG_VERSION"))
+            );
         }
         #[test]
         fn capability_preflight_rejects_every_missing_mandatory_prerequisite() {

@@ -38,7 +38,9 @@ use tuning_campaign_support::campaign::{
     THREAD_CONTRACT, TOOLCHAIN_CONTRACT,
 };
 use tuning_campaign_support::journal::{atomic_write_new, CHECKPOINT_SCHEMA, JOURNAL_SCHEMA};
-use tuning_campaign_support::seed::{bank_role, fixture_seed, EXTENT_SEED_ROOT, SEED_DERIVATION};
+use tuning_campaign_support::seed::{
+    bank_role, fixture_seed, FixtureGenerator, EXTENT_SEED_ROOT, SEED_DERIVATION,
+};
 use tuning_campaign_support::statistics::{
     analyze_extent, execution_median, CandidateSeries, ExtentDecision,
 };
@@ -47,6 +49,9 @@ use tuning_campaign_support::transport::{
     read_guarded_case, write_result_line, FRESH_CASE_VALUE, FRESH_CASE_VAR,
 };
 
+/// The workspace lock file of this build, which names the fixture generator's
+/// package versions.
+const BUILD_LOCK: &str = include_str!("../../../Cargo.lock");
 const OWNER: &str = "gf2-algebra";
 const OWNER_PROTOCOL: &str = "algebra-tuning-campaign-v1";
 const BEHAVIOR_TOKEN: &str = "algebra-tuning-calibration-v1";
@@ -201,6 +206,9 @@ struct ReportOutput {
     accepted_results: u64,
     windows: u64,
     details: Vec<String>,
+    /// The fixture generator, stated by the capability report.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    rng: Option<FixtureGenerator>,
 }
 
 struct FixtureBank {
@@ -1252,7 +1260,14 @@ fn report(mode: &str, scope: &str, details: Vec<String>) -> Result<ReportOutput,
         accepted_results: counts.accepted_results,
         windows: counts.windows,
         details,
+        rng: None,
     })
+}
+
+/// The generator of [`fixture_banks`].
+fn fixture_generator() -> Result<FixtureGenerator, String> {
+    FixtureGenerator::locked::<Lcg>(BUILD_LOCK, env!("CARGO_PKG_NAME"), &[&["gf2-core"]])
+        .map_err(|error| error.to_string())
 }
 
 fn codec_inventory() -> Result<Vec<String>, String> {
@@ -1318,16 +1333,19 @@ fn capability_report() -> Result<ReportOutput, String> {
     if width != POOL_THREADS {
         return Err(format!("dedicated pool exposed width {width}"));
     }
-    report(
-        "capability-report",
-        "representative-capabilities-no-grid-execution",
-        vec![
-            format!("dedicated-pool-threads={width}"),
-            format!("required-features={REQUIRED_FEATURES}"),
-            "full-grid-checked=false".to_owned(),
-            "profile-installation=not-performed".to_owned(),
-        ],
-    )
+    Ok(ReportOutput {
+        rng: Some(fixture_generator()?),
+        ..report(
+            "capability-report",
+            "representative-capabilities-no-grid-execution",
+            vec![
+                format!("dedicated-pool-threads={width}"),
+                format!("required-features={REQUIRED_FEATURES}"),
+                "full-grid-checked=false".to_owned(),
+                "profile-installation=not-performed".to_owned(),
+            ],
+        )?
+    })
 }
 
 fn owner_operation(operation: OwnerOperation) -> Result<OwnerResponse, String> {
@@ -1360,6 +1378,7 @@ fn owner_operation(operation: OwnerOperation) -> Result<OwnerResponse, String> {
             Ok(OwnerResponse::EmitOwner {
                 artifact,
                 decisions: canonical_json(&analysis)?,
+                rng: Some(fixture_generator()?),
             })
         }
     }
@@ -1986,6 +2005,31 @@ mod tests {
         let bytes = fs::read(&artifact.path).unwrap();
         assert_eq!(artifact.sha256, Sha256Digest::of(&bytes));
         Ok((String::from_utf8(bytes).unwrap(), analysis))
+    }
+
+    #[test]
+    fn the_capability_report_names_the_fixture_generator_and_its_locked_version() {
+        let rng = capability_report().unwrap().rng.unwrap();
+        assert_eq!(rng.implementation, "gf2_core::rng::Lcg");
+        let version = rng.version.strip_prefix("gf2-core ").unwrap();
+        assert!(version.starts_with(|first: char| first.is_ascii_digit()));
+        assert_eq!(self_check().unwrap().rng, None);
+        assert_eq!(list_grid().unwrap().rng, None);
+    }
+
+    /// Pins the fixture banks of every declared dimension: the seeds and the
+    /// generator's stream decide these bytes.
+    #[test]
+    fn fixtures_keep_their_digest_for_their_seeds() {
+        let digests: Vec<_> = DIMENSIONS
+            .iter()
+            .enumerate()
+            .map(|(shape_index, dimension)| expected_operands_digest(shape_index, *dimension))
+            .collect();
+        assert_eq!(
+            tuple_digest(b"fixtures", &digests),
+            "aed5b519a3cb51049673214296d919fbff96b9de157673e87aea72b88f4112b3"
+        );
     }
 
     #[test]

@@ -9,6 +9,7 @@ use crate::journal::{
     atomic_write_new, CheckpointStore, CompletedUnit, ExecutionLog, JournalEvent, JournalRecord,
     PendingRecovery, ResumeIdentity, TerminalState,
 };
+use crate::seed::FixtureGenerator;
 use crate::timing::{self, TimingSample, EXECUTIONS, MAX_CALLS, WINDOWS};
 use crate::transport::{self, FRESH_CASE_VALUE, FRESH_CASE_VAR};
 use serde::de::{self, DeserializeOwned, MapAccess, SeqAccess, Visitor};
@@ -919,6 +920,9 @@ pub enum OwnerResponse {
     EmitOwner {
         artifact: ArtifactIdentity,
         decisions: CanonicalJson,
+        /// The generator of the fixtures the decisions were measured on.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        rng: Option<FixtureGenerator>,
     },
 }
 

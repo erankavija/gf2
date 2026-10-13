@@ -25,6 +25,7 @@ use tuning_campaign_support::journal::{
 };
 use tuning_campaign_support::process::{live_group, ProcessResult};
 use tuning_campaign_support::provenance::ProducingInputs;
+use tuning_campaign_support::seed::FixtureGenerator;
 use tuning_campaign_support::transport;
 
 static SESSION_START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -502,6 +503,18 @@ struct CampaignConfig {
     host_admission_policy: HostAdmissionPolicy,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     imported_owners: Vec<ImportedOwnerEvidence>,
+    /// The fixture generator each measured owner's capability report states.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    fixture_generators: BTreeMap<String, FixtureGenerator>,
+}
+/// The fixture generator the capability report `evidence` states.
+fn stated_generator(evidence: &CanonicalJson) -> io::Result<FixtureGenerator> {
+    let report: Value = serde_json::from_str(evidence.as_str()).map_err(invalid)?;
+    serde_json::from_value(report.get("rng").cloned().unwrap_or(Value::Null)).map_err(|error| {
+        invalid(format!(
+            "capability report names no fixture generator: {error}"
+        ))
+    })
 }
 fn process(config: &CampaignConfig, id: &str) -> io::Result<ProcessDescriptor> {
     config
@@ -1353,11 +1366,15 @@ fn prepare(
         };
         let mut manifests = Vec::new();
         let mut preflight_reports = BTreeMap::new();
+        let mut fixture_generators = BTreeMap::new();
         for (i, owner) in declaration.measured_owners.iter().enumerate() {
             let name = owner.name.as_str();
             request.processes = vec![processes[i].clone()];
             for label in ["self-check", "list-grid", "capability-report"] {
                 let response = report_cli(&processes[i], label, Some(&mut log))?;
+                if let OwnerResponse::CapabilityReport { evidence } = &response {
+                    fixture_generators.insert(name.to_owned(), stated_generator(evidence)?);
+                }
                 let key = format!("{name}-{label}");
                 let saved = save(&channels.stage.join(format!("{key}.json")), &response)?;
                 if preflight_reports.insert(key, saved).is_some() {
@@ -1446,6 +1463,7 @@ fn prepare(
             producing_manifest,
             build_inputs,
             preflight_reports,
+            fixture_generators,
             host_admission_policy: HostAdmissionPolicy::declared(),
             imported_owners,
         };
@@ -1994,10 +2012,16 @@ fn render_receipt(
     )?);
     receipt.push_str("\n## Raw result index\n\n");
     receipt.push_str(&format!("Preparation CPU affinity: `{}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n",facts.affinity));
-    for [owner, protocol, behavior, executable] in &facts.owners {
+    for ([owner, protocol, behavior, executable], response) in facts.owners.iter().zip(responses) {
         receipt.push_str(&format!(
             "Owner `{owner}` uses protocol `{protocol}` and behavior `{behavior}`; executable `{executable}`.\n\n"
         ));
+        if let OwnerResponse::EmitOwner { rng: Some(rng), .. } = response {
+            receipt.push_str(&format!(
+                "Owner `{owner}` draws its fixtures from `{}`, version `{}`.\n\n",
+                rng.implementation, rng.version
+            ));
+        }
     }
     let counts = &facts.counts;
     receipt.push_str(&format!("Accepted accounting: {} cells, {} probes, {} timed children, {} accepted results, {} raw windows, {} timing progress records. Observed {} attempts, {} orchestration actions, {} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n",counts.cells,counts.probes,counts.timed_children,counts.accepted_results,counts.windows,counts.progress_records,facts.attempts,facts.orchestration,facts.sessions));
@@ -2021,6 +2045,7 @@ struct EvidenceIdentity<'a> {
     declaration_path: &'a str,
     declaration_sha256: &'a str,
     imported: &'a [ImportedOwnerEvidence],
+    fixture_generators: &'a BTreeMap<String, FixtureGenerator>,
 }
 impl<'a> EvidenceIdentity<'a> {
     fn of(config: &'a CampaignConfig, declaration: &CampaignDeclaration) -> io::Result<Self> {
@@ -2033,6 +2058,7 @@ impl<'a> EvidenceIdentity<'a> {
             declaration_path,
             declaration_sha256,
             imported: &config.imported_owners,
+            fixture_generators: &config.fixture_generators,
         })
     }
 }
@@ -2085,12 +2111,23 @@ fn render_evidence_index(
         ));
     }
     text.push_str(&format!(
-        "| Complete envelope | `{}` | `{}` |\n| Receipt | `{}` | `{}` |\n\nRe-validation on the producing host: `python3 dev/scripts/validate-tuning-extent-campaign.py --stage <stage> --publication <checkout>`.\n",
+        "| Complete envelope | `{}` | `{}` |\n| Receipt | `{}` | `{}` |\n\n",
         layout.complete(),
         Sha256Digest::of(&fs::read(stage.join("complete.json"))?).as_str(),
         layout.receipt(),
         Sha256Digest::of(&fs::read(stage.join("receipt.md"))?).as_str()
     ));
+    for owner in &declaration.measured_owners {
+        if let Some(rng) = identity.fixture_generators.get(owner.name.as_str()) {
+            text.push_str(&format!(
+                "Owner `{}` draws its fixtures from `{}`, version `{}`.\n\n",
+                owner.owner.as_str(),
+                rng.implementation,
+                rng.version
+            ));
+        }
+    }
+    text.push_str("Re-validation on the producing host: `python3 dev/scripts/validate-tuning-extent-campaign.py --stage <stage> --publication <checkout>`.\n");
     Ok(text)
 }
 fn candidate_directory(
@@ -2185,11 +2222,18 @@ fn emit(
             )?;
             let response = operation(&producer, &request, Some(log))?;
             let OwnerResponse::EmitOwner {
-                artifact: output, ..
+                artifact: output,
+                rng,
+                ..
             } = &response
             else {
                 return Err(invalid("owner emitted wrong response"));
             };
+            if rng.as_ref() != config.fixture_generators.get(name) {
+                return Err(invalid(
+                    "owner emission and campaign record state different fixture generators",
+                ));
+            }
             if artifact(&directory.join("output.json"))? != *output {
                 return Err(invalid("owner candidate path/digest differs from request"));
             }
@@ -2202,6 +2246,7 @@ fn emit(
         let OwnerResponse::EmitOwner {
             artifact: owner,
             decisions,
+            ..
         } = &response
         else {
             return Err(invalid("owner emission returned wrong operation"));
@@ -3642,6 +3687,23 @@ mod tests {
     }
 
     #[test]
+    fn a_capability_report_must_name_its_fixture_generator() {
+        let report = |rng: Value| CanonicalJson::from_serializable(&json!({"rng": rng})).unwrap();
+        assert_eq!(
+            stated_generator(&report(
+                json!({"implementation": "x::Rng", "version": "x 1.0.0"})
+            ))
+            .unwrap(),
+            FixtureGenerator {
+                implementation: "x::Rng".into(),
+                version: "x 1.0.0".into(),
+            }
+        );
+        assert!(stated_generator(&CanonicalJson::new("{}").unwrap()).is_err());
+        assert!(stated_generator(&report(json!({"implementation": "x::Rng"}))).is_err());
+    }
+
+    #[test]
     fn a_resume_compares_the_host_and_not_the_checkout_status() {
         let runtime = |source_dirty, toolchain: &str| MeasurementRuntime {
             source_dirty,
@@ -3879,6 +3941,7 @@ mod tests {
             preflight_reports: BTreeMap::new(),
             host_admission_policy: HostAdmissionPolicy::declared(),
             imported_owners: vec![],
+            fixture_generators: BTreeMap::new(),
         };
         let mut log = ExecutionLog::create_new(&stage, campaign.as_str(), "first-session").unwrap();
         log.append(JournalEvent::CampaignStart, None, json!({}))
@@ -4506,10 +4569,18 @@ mod tests {
             let protocol = Sha256Digest::of(b"protocol");
             let declaration_sha = declaration.sha256.clone().unwrap();
             let revision = "0".repeat(40);
+            let fixture_generators = BTreeMap::from([(
+                "core".to_owned(),
+                FixtureGenerator {
+                    implementation: "gf2_core::rng::Lcg".into(),
+                    version: "gf2-core 0.1.0".into(),
+                },
+            )]);
             fs::write(
                 stage.join("campaign.json"),
                 encoded(&json!({
                     "campaign_id": campaign,
+                    "fixture_generators": fixture_generators,
                     "protocol": {"path": "/repository/protocol.md", "sha256": protocol},
                     "identity": {"source_revision": revision,
                                  "behavior_sha256": {RECORDED_DECLARATION: declaration_sha}},
@@ -4576,6 +4647,7 @@ mod tests {
                         declaration_path: RECORDED_DECLARATION,
                         declaration_sha256: declaration_sha.as_str(),
                         imported: &imported_owners,
+                        fixture_generators: &fixture_generators,
                     },
                     &declaration,
                 )
@@ -4782,6 +4854,9 @@ mod tests {
     fn evidence_index_presence_and_content_follow_the_declaration() {
         let mut fixture = PublicationFixture::with(seam_declaration());
         let mut forged = fixture.evidence_index.clone().unwrap();
+        assert!(String::from_utf8_lossy(&forged).contains(
+            "Owner `gf2-core` draws its fixtures from `gf2_core::rng::Lcg`, version `gf2-core 0.1.0`.\n"
+        ));
         forged.extend_from_slice(b"| Forged | `x` | `y` |\n");
         let correct = fixture.evidence_index.replace(forged);
         let repository = fixture.repository("forged");
@@ -4930,10 +5005,15 @@ mod tests {
             OwnerResponse::EmitOwner {
                 artifact: artifact.clone(),
                 decisions: CanonicalJson::from_serializable(&decisions).unwrap(),
+                rng: Some(FixtureGenerator {
+                    implementation: "x::Rng".into(),
+                    version: "x 1.0.0".into(),
+                }),
             },
             OwnerResponse::EmitOwner {
                 artifact,
                 decisions: CanonicalJson::from_serializable(&json!({"selected":65536})).unwrap(),
+                rng: None,
             },
         ];
         let facts = ReceiptFacts {
@@ -4962,6 +5042,13 @@ mod tests {
         .unwrap();
         assert!(receipt.contains(Sha256Digest::of(&decisions).as_str()));
         assert!(!receipt.contains("elapsed_ns"));
+        assert_eq!(
+            receipt
+                .lines()
+                .filter(|line| line.contains("draws its fixtures from"))
+                .collect::<Vec<_>>(),
+            ["Owner `gf2-core` draws its fixtures from `x::Rng`, version `x 1.0.0`."]
+        );
         assert!(receipt.contains("sample_count"));
         assert!(receipt.contains(Sha256Digest::of(index.as_bytes()).as_str()));
         assert!(!receipt.contains("size-4301-standard"));
@@ -5031,6 +5118,10 @@ mod tests {
                 sha256: Sha256Digest::of(b"core"),
             },
             decisions: CanonicalJson::from_serializable(&json!({"schema":"core-tuning-campaign-v4","retained_thresholds":[{"points":[{"size":8,"conservative":arm}]}],"gemm":{"selected":[32,64],"reason":"structural-schedule-tie"}})).unwrap(),
+            rng: Some(FixtureGenerator {
+                implementation: "gf2_core::rng::Lcg".into(),
+                version: "gf2-core 0.1.0".into(),
+            }),
         }];
         let protocol = ArtifactIdentity {
             path: PathBuf::from("/repository/dev/active/dbd8787d/premeasurement-protocol.md"),
@@ -5873,6 +5964,7 @@ mod tests {
                     declaration_path: RECORDED_DECLARATION,
                     declaration_sha256: declaration_sha.as_str(),
                     imported: &imported_owners,
+                    fixture_generators: &BTreeMap::new(),
                 },
                 &declaration,
             )

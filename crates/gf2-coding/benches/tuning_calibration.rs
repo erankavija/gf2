@@ -45,13 +45,18 @@ use tuning_campaign_support::campaign::{
     MANIFEST_SCHEMA, RESULT_SCHEMA, THREAD_CONTRACT, TOOLCHAIN_CONTRACT,
 };
 use tuning_campaign_support::journal::{atomic_write_new, CHECKPOINT_SCHEMA, JOURNAL_SCHEMA};
-use tuning_campaign_support::seed::{bank_role, fixture_seed, EXTENT_SEED_ROOT, SEED_DERIVATION};
+use tuning_campaign_support::seed::{
+    bank_role, fixture_seed, FixtureGenerator, EXTENT_SEED_ROOT, SEED_DERIVATION,
+};
 use tuning_campaign_support::statistics::{
     analyze_extent, execution_median, CandidateSeries, DecisionReason, ExtentDecision,
 };
 use tuning_campaign_support::timing::{TimingSample, EXECUTIONS, FIXTURE_BANKS, WINDOWS};
 use tuning_campaign_support::transport::{read_guarded_case, write_result_line, FRESH_CASE_VAR};
 
+/// The workspace lock file of this build, which names the fixture generator's
+/// package versions.
+const BUILD_LOCK: &str = include_str!("../../../Cargo.lock");
 const OWNER: &str = "gf2-coding";
 const OWNER_PROTOCOL: &str = "coding-tuning-campaign-v1";
 const BEHAVIOR_TOKEN: &str = CodingTuningCodec::HARNESS_SCHEMA;
@@ -512,6 +517,9 @@ struct ReportOutput {
     accepted_results: u64,
     windows: u64,
     details: Vec<String>,
+    /// The fixture generator, stated by the capability report.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    rng: Option<FixtureGenerator>,
     inventory: Vec<InventoryEntry>,
 }
 
@@ -1640,8 +1648,20 @@ fn report(
         accepted_results: counts.accepted_results,
         windows: counts.windows,
         details,
+        rng: None,
         inventory,
     })
+}
+
+/// The generator of [`bank_frames`]: `StdRng` draws through `rand_chacha`,
+/// and `rand_distr` shapes the channel noise.
+fn fixture_generator() -> Result<FixtureGenerator, String> {
+    FixtureGenerator::locked::<StdRng>(
+        BUILD_LOCK,
+        env!("CARGO_PKG_NAME"),
+        &[&["rand"], &["rand", "rand_chacha"], &["rand_distr"]],
+    )
+    .map_err(|error| error.to_string())
 }
 
 fn codec_inventory() -> Result<Vec<String>, String> {
@@ -1807,19 +1827,22 @@ fn capability_report() -> Result<ReportOutput, String> {
     if width != POOL_THREADS {
         return Err(format!("dedicated pool exposed width {width}"));
     }
-    report(
-        "capability-report",
-        "representative-capabilities-no-grid-execution",
-        vec![
-            format!("dedicated-pool-threads={width}"),
-            format!("lane-backend={}", backend_name(LaneBackend::detected())),
-            format!("lanes={LANES}"),
-            format!("required-features={FEATURE_CONTRACT}"),
-            "full-grid-checked=false".to_owned(),
-            "profile-installation=not-performed".to_owned(),
-        ],
-        Vec::new(),
-    )
+    Ok(ReportOutput {
+        rng: Some(fixture_generator()?),
+        ..report(
+            "capability-report",
+            "representative-capabilities-no-grid-execution",
+            vec![
+                format!("dedicated-pool-threads={width}"),
+                format!("lane-backend={}", backend_name(LaneBackend::detected())),
+                format!("lanes={LANES}"),
+                format!("required-features={FEATURE_CONTRACT}"),
+                "full-grid-checked=false".to_owned(),
+                "profile-installation=not-performed".to_owned(),
+            ],
+            Vec::new(),
+        )?
+    })
 }
 
 fn owner_operation(operation: OwnerOperation) -> Result<OwnerResponse, String> {
@@ -1852,6 +1875,7 @@ fn owner_operation(operation: OwnerOperation) -> Result<OwnerResponse, String> {
             Ok(OwnerResponse::EmitOwner {
                 artifact,
                 decisions: canonical_json(&analysis)?,
+                rng: Some(fixture_generator()?),
             })
         }
     }
@@ -2467,6 +2491,40 @@ mod tests {
         assert_eq!(decode.lane_min_frames(), winner);
         assert_eq!(decode.lane_max_edges(), LANE_MAX_EDGES);
         assert_eq!(decode.granules_per_task(), GRANULES_PER_TASK);
+    }
+
+    #[test]
+    fn the_capability_report_names_the_fixture_generator_and_its_locked_versions() {
+        let rng = capability_report().unwrap().rng.unwrap();
+        assert_eq!(rng.implementation, "rand::rngs::std::StdRng");
+        let packages: Vec<_> = rng
+            .version
+            .split(", ")
+            .map(|package| package.split_once(' ').unwrap())
+            .collect();
+        assert_eq!(
+            packages.iter().map(|(name, _)| *name).collect::<Vec<_>>(),
+            ["rand", "rand_chacha", "rand_distr"]
+        );
+        assert!(packages
+            .iter()
+            .all(|(_, version)| version.starts_with(|first: char| first.is_ascii_digit())));
+        assert_eq!(self_check().unwrap().rng, None);
+        assert_eq!(list_grid().unwrap().rng, None);
+    }
+
+    /// Pins the fixture banks of the first stratum of each field: the seeds
+    /// and the generator's stream decide these bytes.
+    #[test]
+    fn fixtures_keep_their_digest_for_their_seeds() {
+        let digests: Vec<_> = Field::ALL
+            .into_iter()
+            .map(|field| expected_operands_digest(field, &field.strata()[0]).unwrap())
+            .collect();
+        assert_eq!(
+            tuple_digest(b"fixtures", &digests),
+            "9f3510ac9eaee0cfdfe84733108bd01af810dac037d9330d1c2b7a659e02152b"
+        );
     }
 
     #[test]
