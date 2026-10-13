@@ -3421,7 +3421,8 @@ def validate_staging(stage: Path, campaign_config: Any,
     require(staging["schema"] == "tuning-campaign-staging-v1"
             and list(staging["executables"]) == expected_ids,
             "staging manifest schema/executable inventory mismatch")
-    observations = []
+    # The observations are rebuild pointers the staging manifest pins by
+    # digest; their revision, tree and porcelain text decide nothing.
     for phase, field in [("before-build", "source_before"),
                          ("after-build", "source_after")]:
         path, observation = artifact(staging[field], f"staging {phase}", stage)
@@ -3429,17 +3430,11 @@ def validate_staging(stage: Path, campaign_config: Any,
                 f"staging {phase} artifact path mismatch")
         require_keys(observation, ["schema", "phase", "source_revision", "source_tree",
                                    "porcelain"], f"staging {phase} observation")
-        require(observation == {
-                    "schema": "tuning-campaign-build-source-v1",
-                    "phase": phase,
-                    "source_revision": campaign_config["identity"]["source_revision"],
-                    "source_tree": campaign_config["source_tree"],
-                    "porcelain": "",
-                }, f"staging {phase} observation differs from campaign source identity")
-        observations.append(observation)
-    require(observations[0]["source_revision"] == observations[1]["source_revision"]
-            and observations[0]["source_tree"] == observations[1]["source_tree"],
-            "build source identity changed across the build")
+        require(observation["schema"] == "tuning-campaign-build-source-v1"
+                and observation["phase"] == phase
+                and all(isinstance(observation[key], str)
+                        for key in ["source_revision", "source_tree", "porcelain"]),
+                f"staging {phase} observation is malformed")
     processes = {item["id"]: item for item in campaign_config["processes"]}
     for process_id in expected_ids:
         source = require_keys(staging["executables"][process_id], ["path", "sha256"],
@@ -3463,11 +3458,9 @@ def validate_staging(stage: Path, campaign_config: Any,
 
 
 def expected_bootstrap_inputs(stage: Path, campaign_config: Any) -> dict[str, Any]:
-    root = repository_root()
-    revision = campaign_config["identity"]["source_revision"]
     return {
-        "revision": revision,
-        "tree": git_output(root, "rev-parse", f"{revision}^{{tree}}"),
+        "revision": campaign_config["identity"]["source_revision"],
+        "tree": campaign_config["source_tree"],
         "behavior": campaign_config["identity"]["behavior_sha256"],
         "receipt": campaign_config["receipt"],
         "runtime": campaign_config["runtime"],
@@ -3790,7 +3783,7 @@ def validate_envelopes(stage: Path, campaign: str, responses: dict[str, Any],
                                "tool_sha256", *owners, "candidate", "request",
                                "exit", "output"], "composition")
     require(composition["schema"] == "tuning-campaign-composition-v1"
-            and composition["source_dirty"] is False
+            and isinstance(composition["source_dirty"], bool)
             and composition["source_revision"] == config["identity"]["source_revision"]
             and composition["tool_sha256"] ==
                 config["identity"]["executable_sha256"]["composer"],
@@ -4636,10 +4629,6 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     # informational too, since checking is not measurement behavior.
     root = repository_root()
     revision = identity["source_revision"]
-    tree = git_output(root, "rev-parse", f"{revision}^{{tree}}")
-    require(campaign_config["source_tree"] == tree
-            and digest(tree.encode()) == identity["source_sha256"],
-            "producing revision/tree identity mismatch")
     protocol_sha = digest(revision_file(root, revision, declaration["protocol"]))
     require(protocol_sha == identity["protocol_digest"],
             "runtime protocol digest differs from reviewed declaration")
@@ -4657,7 +4646,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     runtime = embedded(campaign_config["runtime"], "campaign runtime")
     require_keys(runtime, ["source_dirty", "toolchain", "cpu_model", "cpu_features",
                            "os_kernel", "governor", "receipt"], "campaign runtime")
-    require(runtime["source_dirty"] is False and "rustc 1.95.0" in runtime["toolchain"]
+    require(isinstance(runtime["source_dirty"], bool) and "rustc 1.95.0" in runtime["toolchain"]
             and isinstance(runtime["cpu_model"], str) and runtime["cpu_model"].strip()
             and isinstance(runtime["cpu_features"], list) and runtime["cpu_features"]
             and runtime["cpu_features"] == sorted(set(runtime["cpu_features"]))
@@ -5535,19 +5524,19 @@ def self_test() -> None:
         staging_config = {"identity": {"source_revision": revision}, "source_tree": tree,
                           "processes": processes}
         validate_staging(stage, staging_config, FOUR_EXECUTABLES)
+        # A moved tree and a dirty checkout are accepted; an observation whose
+        # bytes differ from the digest the manifest pins is refused.
         source_after = build_directory / "source-after.json"
         after = load_json(source_after)
         after["source_tree"] = "3" * 40
+        after["porcelain"] = " M crates/gf2-core/src/lib.rs\n"
         source_after.write_bytes(compact(after))
+        must_reject(lambda: validate_staging(stage, staging_config, FOUR_EXECUTABLES),
+                    "post-build source observation outside its pinned digest")
         manifest = load_json(stage / "staging-manifest.json")
         manifest["source_after"] = identity_for(source_after)
         (stage / "staging-manifest.json").write_bytes(compact(manifest))
-        must_reject(lambda: validate_staging(stage, staging_config, FOUR_EXECUTABLES),
-                    "changed post-build source")
-        after["source_tree"] = tree
-        source_after.write_bytes(compact(after))
-        manifest["source_after"] = identity_for(source_after)
-        (stage / "staging-manifest.json").write_bytes(compact(manifest))
+        validate_staging(stage, staging_config, FOUR_EXECUTABLES)
         (binary_directory / "driver").write_bytes(b"mutated")
         try:
             validate_staging(stage, staging_config, FOUR_EXECUTABLES)

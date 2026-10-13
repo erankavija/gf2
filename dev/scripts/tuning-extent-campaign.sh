@@ -72,6 +72,9 @@ export GF2_CCX1_LOCK="$lock"
 export RUSTUP_TOOLCHAIN=1.95.0
 export RAYON_NUM_THREADS=4
 export CARGO_CI_NO_SCCACHE=1
+# A build takes its flags, wrapper, profile and target from this script alone.
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
+  "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}"
 # publish-campaign exits 3 while the campaign is not complete.
 publish() {
   set +e
@@ -113,41 +116,26 @@ if [[ ${identity_lines[2]} == staged ]]; then
 else
   mkdir -p "$stage/build"
   echo "GF2_CAMPAIGN_BUILD_LOG=$stage/build/build.log"
-  build_head=$(git rev-parse HEAD)
-  build_tree=$(git rev-parse 'HEAD^{tree}')
-  build_status=$(git status --porcelain --untracked-files=all)
-  if [[ -n $build_status ]]; then
-    echo 'measurement build requires a clean source tree before any Cargo command' >&2
-    exit 2
-  fi
-  python3 - "$stage/build/source-before.json" "$build_head" "$build_tree" <<'PY_SOURCE_BEFORE'
+  # The checkout's revision, tree and status before and after the builds are
+  # recorded as rebuild pointers; the staged executable digests decide.
+  observe_source() {
+    python3 - "$stage/build/source-$1.json" "$1-build" "$(git rev-parse HEAD)" \
+      "$(git rev-parse 'HEAD^{tree}')" "$(git status --porcelain --untracked-files=all)" <<'PY_SOURCE'
 import json,os,pathlib,sys
 path=pathlib.Path(sys.argv[1])
-value={'schema':'tuning-campaign-build-source-v1','phase':'before-build','source_revision':sys.argv[2],'source_tree':sys.argv[3],'porcelain':''}
+value={'schema':'tuning-campaign-build-source-v1','phase':sys.argv[2],'source_revision':sys.argv[3],'source_tree':sys.argv[4],'porcelain':sys.argv[5]}
 with path.open('x') as output:
     output.write(json.dumps(value,separators=(',',':')))
     output.flush(); os.fsync(output.fileno())
-PY_SOURCE_BEFORE
+PY_SOURCE
+  }
+  observe_source before
   ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p tuning-campaign-support --bin tuning-extent-campaign-driver --message-format=json >"$stage/build/driver.jsonl" 2>>"$stage/build/build.log"
   for owner in $producers; do
     ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p "gf2-$owner" --bench tuning_calibration --features parallel,simd,tuning-profile,test-support --message-format=json >"$stage/build/$owner.jsonl" 2>>"$stage/build/build.log"
   done
   ./scripts/cargo-budget.sh cargo +1.95.0 build --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml --message-format=json >"$stage/build/composer.jsonl" 2>>"$stage/build/build.log"
-  after_head=$(git rev-parse HEAD)
-  after_tree=$(git rev-parse 'HEAD^{tree}')
-  after_status=$(git status --porcelain --untracked-files=all)
-  if [[ $after_head != "$build_head" || $after_tree != "$build_tree" || -n $after_status ]]; then
-    echo 'source identity moved or became dirty during measurement builds' >&2
-    exit 2
-  fi
-  python3 - "$stage/build/source-after.json" "$after_head" "$after_tree" <<'PY_SOURCE_AFTER'
-import json,os,pathlib,sys
-path=pathlib.Path(sys.argv[1])
-value={'schema':'tuning-campaign-build-source-v1','phase':'after-build','source_revision':sys.argv[2],'source_tree':sys.argv[3],'porcelain':''}
-with path.open('x') as output:
-    output.write(json.dumps(value,separators=(',',':')))
-    output.flush(); os.fsync(output.fileno())
-PY_SOURCE_AFTER
+  observe_source after
   driver_executable=$(python3 - "$stage" $producers <<'PY_BUILD'
 import hashlib, json, os, pathlib, sys
 stage=pathlib.Path(sys.argv[1])

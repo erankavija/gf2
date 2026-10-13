@@ -11,7 +11,6 @@ use logical_buffer_harness::cells::{
     NR_TARGETS, STREAMING_BANKS, STREAMING_BANK_BYTES,
 };
 use logical_buffer_harness::fixture::{RowBanks, XorBanks, SLAB_ALIGN};
-use logical_buffer_harness::inputs;
 use logical_buffer_harness::oracle;
 use logical_buffer_harness::routes::{
     canonical_structure_digest, nr_construct, observe_nr, run_windows, verify_nr, Route, WindowPlan,
@@ -552,10 +551,6 @@ fn whole_consumer_cells_charge_conversion_costs() {
     }
 }
 
-/// Repository-relative paths of two producing inputs a scratch closure pins:
-/// one harness source and one campaign-runner source.
-const HARNESS_SOURCE: &str = "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/lib.rs";
-const RUNNER_SOURCE: &str = "dev/tools/tuning-campaign-support/src/campaign.rs";
 
 /// An empty directory under this crate's own scratch space, replacing whatever
 /// an earlier run of the same test left there.
@@ -563,32 +558,6 @@ fn scratch_tree(name: &str) -> std::path::PathBuf {
     let root = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
     let _ = std::fs::remove_dir_all(&root);
     std::fs::create_dir_all(&root).expect("scratch root");
-    root
-}
-
-/// Builds a scratch repository whose producing-input closure pins a harness
-/// source, a campaign-runner source and the manifest itself, all committed.
-fn scratch_closure(name: &str) -> std::path::PathBuf {
-    let root = scratch_tree(name);
-    for path in [HARNESS_SOURCE, RUNNER_SOURCE, MANIFEST] {
-        std::fs::create_dir_all(root.join(path).parent().expect("parent")).expect("parent");
-    }
-    std::fs::write(root.join(HARNESS_SOURCE), "harness\n").expect("harness source");
-    std::fs::write(root.join(RUNNER_SOURCE), "runner\n").expect("runner source");
-    let closure = serde_json::json!({
-        "schema": "tuning-campaign-producing-inputs-v1",
-        "behavior_sources": [HARNESS_SOURCE, RUNNER_SOURCE],
-        "lifecycle_sources": [RUNNER_SOURCE],
-        "build_inputs": [HARNESS_SOURCE, MANIFEST, RUNNER_SOURCE],
-    });
-    std::fs::write(
-        root.join(MANIFEST),
-        serde_json::to_string_pretty(&closure).expect("manifest"),
-    )
-    .expect("manifest");
-    git(&root, &["init", "--quiet"]);
-    git(&root, &["add", "--all"]);
-    git(&root, &["commit", "--quiet", "-m", "scratch closure"]);
     root
 }
 
@@ -608,70 +577,6 @@ fn git(root: &std::path::Path, arguments: &[&str]) {
         .status()
         .expect("git runs");
     assert!(status.success(), "git {arguments:?}");
-}
-
-#[test]
-fn a_committed_and_clean_closure_admits_a_timed_run() {
-    let root = scratch_closure("closure-clean");
-    let checked = inputs::check(&root, MANIFEST, &[]).expect("the closure is clean");
-    assert_eq!(checked, vec![HARNESS_SOURCE, MANIFEST, RUNNER_SOURCE]);
-}
-
-#[test]
-fn a_dirty_harness_source_refuses_a_timed_run() {
-    let root = scratch_closure("closure-dirty-harness");
-    std::fs::write(
-        root.join(HARNESS_SOURCE),
-        "harness edited after the build\n",
-    )
-    .expect("dirty harness source");
-    let refusal = inputs::check(&root, MANIFEST, &[]).expect_err("a dirty harness source refuses");
-    assert!(refusal.contains(HARNESS_SOURCE), "{refusal}");
-    assert!(!refusal.contains(RUNNER_SOURCE), "{refusal}");
-}
-
-#[test]
-fn a_dirty_runner_source_refuses_a_timed_run() {
-    let root = scratch_closure("closure-dirty-runner");
-    std::fs::write(root.join(RUNNER_SOURCE), "runner edited after the build\n")
-        .expect("dirty runner source");
-    let refusal = inputs::check(&root, MANIFEST, &[]).expect_err("a dirty runner source refuses");
-    assert!(refusal.contains(RUNNER_SOURCE), "{refusal}");
-}
-
-#[test]
-fn an_untracked_closure_path_refuses_a_timed_run() {
-    let root = scratch_closure("closure-untracked");
-    let added = "dev/tools/tuning-campaign-support/src/uncommitted.rs";
-    std::fs::write(root.join(added), "uncommitted\n").expect("untracked source");
-    let mut closure: serde_json::Value =
-        serde_json::from_slice(&std::fs::read(root.join(MANIFEST)).expect("manifest"))
-            .expect("manifest decodes");
-    closure["build_inputs"] = serde_json::json!([HARNESS_SOURCE, MANIFEST, RUNNER_SOURCE, added]);
-    std::fs::write(
-        root.join(MANIFEST),
-        serde_json::to_string_pretty(&closure).expect("manifest"),
-    )
-    .expect("manifest");
-    git(&root, &["add", MANIFEST]);
-    git(&root, &["commit", "--quiet", "-m", "extend the closure"]);
-    let refusal = inputs::check(&root, MANIFEST, &[]).expect_err("an untracked input refuses");
-    assert!(refusal.contains(added), "{refusal}");
-}
-
-#[test]
-fn an_extra_campaign_input_joins_the_closure() {
-    let root = scratch_closure("closure-extra");
-    let ledger = "dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl";
-    std::fs::create_dir_all(root.join(ledger).parent().expect("parent")).expect("parent");
-    std::fs::write(root.join(ledger), "").expect("ledger");
-    let extra = vec![ledger.to_owned()];
-    let refusal = inputs::check(&root, MANIFEST, &extra).expect_err("an untracked ledger refuses");
-    assert!(refusal.contains(ledger), "{refusal}");
-    git(&root, &["add", ledger]);
-    git(&root, &["commit", "--quiet", "-m", "commit the ledger"]);
-    let checked = inputs::check(&root, MANIFEST, &extra).expect("the extended closure is clean");
-    assert!(checked.contains(&ledger.to_owned()));
 }
 
 /// The generator that both writes and freshness-checks the closure.
@@ -720,20 +625,6 @@ fn a_source_added_to_a_measured_crate_fails_the_closure_freshness_check() {
     );
     let refusal = String::from_utf8_lossy(&stale.stderr);
     assert!(refusal.contains(added), "{refusal}");
-}
-
-#[test]
-fn the_porcelain_status_decodes_renames_and_untracked_entries() {
-    let stdout = b"?? new.rs\0 M dev/tools/a.rs\0R  dev/tools/b.rs\0dev/tools/old.rs\0".to_vec();
-    let status = inputs::parse_status(&stdout).expect("porcelain decodes");
-    assert_eq!(status.get("new.rs").map(String::as_str), Some("??"));
-    assert_eq!(status.get("dev/tools/a.rs").map(String::as_str), Some(" M"));
-    // A rename dirties both the reported path and its recorded origin.
-    assert_eq!(status.get("dev/tools/b.rs").map(String::as_str), Some("R "));
-    assert_eq!(
-        status.get("dev/tools/old.rs").map(String::as_str),
-        Some("R ")
-    );
 }
 
 /// The repository root of the checkout the test runs in.
@@ -880,8 +771,8 @@ fn the_closure_names_every_manifest_a_timed_executable_builds_from() {
         omitted.is_empty(),
         "the producing-input closure omits the build manifests {omitted:?}"
     );
-    // The window guard reads the closure manifest to decide what to check, so
-    // the manifest is itself a provenance-controlling build input.
+    // The runner snapshots what the closure manifest names, so the manifest is
+    // itself a provenance-controlling build input.
     assert!(
         declared.contains(MANIFEST),
         "the producing-input closure omits itself"

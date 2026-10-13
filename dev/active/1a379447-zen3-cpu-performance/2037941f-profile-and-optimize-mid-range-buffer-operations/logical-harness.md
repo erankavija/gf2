@@ -208,16 +208,16 @@ executable is built from — the harness workspace manifest and lock, the
 manifests of `gf2-core`, `gf2-coding` and `gf2-kernels-simd`, and the root
 workspace manifest, root lock and `dev/tools/tuning-campaign-support` manifest
 that the window's `--locked -p tuning-campaign-support` build resolves — and the
-closure manifest itself, which the window guard reads to decide what to check.
+closure manifest itself.
 The harness contract test derives that manifest set from `cargo metadata` for
 both workspaces, so a new crate on either path fails the test rather than
-slipping past the guard.
+staying outside the closure.
 
 The source sections are a snapshot of the tree they were enumerated from, so
 `make-logical-producing-inputs.py --check` regenerates the closure from the
 current tree, writes nothing, and exits non-zero naming every added and removed
-path when the committed manifest differs. The window runs it immediately before
-the closure guard, so a source added to a measured crate after the last
+path when the committed manifest differs. The window runs it after the last
+build, so a source added to a measured crate after the last
 regeneration refuses the run instead of being timed outside the closure. A
 harness contract test copies the committed build inputs into a scratch tree,
 adds a source under a measured crate and asserts the refusal names it.
@@ -250,7 +250,7 @@ call directly: `pins` prints the frozen addendum's path, pinned digest,
 identity, freeze time and the four family ledgers, and fails when the document's
 bytes differ from the pin; `list` prints one family's cells with their ordinals
 and seeds; `cells`, `verify` and `plan` are the transcription, the comparison
-and the plan projection; `inputs` is the producing-input closure guard.
+and the plan projection.
 
 `build` compiles the gf2 arms `conservative-portable` into
 `target/bb769456-arms`, runs the crate's own contract tests and the semantic
@@ -276,15 +276,12 @@ executables, and times nothing.
 `window` refuses unless `GF2_BENCH_WINDOW=1`, the frozen prose addendum's
 SHA-256 equals the pin the harness carries, and the campaign JSON matches
 `logical-campaign verify`. It then rebuilds every executable it launches from
-the current tree, regenerates the closure with
-`make-logical-producing-inputs.py --check`, and only afterwards runs
-`logical-campaign inputs`, which refuses unless every path of the
-producing-input closure, plus the campaign JSON and the family ledger, is
-tracked by git and identical to its committed content. A source added to a
-measured crate stops the run either way: the freshness check catches one the
-committed closure does not yet name, and the guard catches one it names that
-git does not track. The two closure checks are the last steps before the launch:
-nothing rebuilds after them, so no executable can carry bytes they never saw. It then projects the plan, prints the execution log path, runs
+the current tree and regenerates the closure with
+`make-logical-producing-inputs.py --check`, which refuses a closure that does
+not enumerate the tree. That check is the last step before the launch:
+nothing rebuilds after it. Git status decides nothing: the runner snapshots
+the closure's bytes into the receipt and refuses a resume whose plan or
+executables differ from the first session's. It then projects the plan, prints the execution log path, runs
 the runner under `dev/scripts/ccx1-bench-flock.sh --full-host` until the log's
 terminal record is `complete`, finalizes the receipt under
 `dev/bench_results/2037941f/<family>/<run-id>-pilot`, and evaluates it with
