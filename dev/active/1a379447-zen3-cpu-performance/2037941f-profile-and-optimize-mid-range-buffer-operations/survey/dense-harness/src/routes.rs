@@ -11,12 +11,33 @@ use gf2_kernels_simd::LogicalFns;
 use std::hint::black_box;
 use std::io;
 use std::time::Duration;
+use tuning_campaign_support::protocol::BuildIdentity;
 use tuning_campaign_support::timing::{
     execution_windows_fixed_or_calibrated, TimingProgress, TimingSample,
 };
 
 /// Environment variable selecting one gf2 route in `dense-arm`.
 pub const ROUTE_VAR: &str = "GF2_DENSE_ROUTE";
+
+/// `RUSTFLAGS` of the `native` build level: the host's instruction set and
+/// the baked selectors. `BitMatrix::matvec` reads its lane threshold at
+/// compile time, so the baked configuration is the whole profile on this
+/// route.
+pub const NATIVE_RUSTFLAGS: &str = "-C target-cpu=native --cfg gf2_tuning_baked";
+
+/// The build level this executable was compiled at, or `None` for a
+/// configuration that is neither level.
+///
+/// Statically enabled AVX2 marks the host target, which the default x86-64
+/// target never enables; a host whose native target adds no AVX2 therefore
+/// has no native arm.
+pub fn build_level() -> Option<BuildIdentity> {
+    match (cfg!(gf2_tuning_baked), cfg!(target_feature = "avx2")) {
+        (false, false) => Some(BuildIdentity::ConservativePortable),
+        (true, true) => Some(BuildIdentity::Native),
+        _ => None,
+    }
+}
 
 /// Retained-output residency [`OutputSink`] may hold for one timed window.
 ///
@@ -66,11 +87,13 @@ pub enum Route {
     MatvecLaneScalar,
     /// Allocated `BitMatrix::matvec_parity_kernel`.
     MatvecLaneParity,
+    /// gf2 side of the external M4RI comparison from the `native` build.
+    M4riPeerGf2Native,
 }
 
 impl Route {
     /// Every route, in declaration order.
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::AndPopcntA,
         Self::AndPopcntB,
         Self::MatvecA,
@@ -79,6 +102,7 @@ impl Route {
         Self::M4riPeerGf2,
         Self::MatvecLaneScalar,
         Self::MatvecLaneParity,
+        Self::M4riPeerGf2Native,
     ];
 
     /// The arm name the plan gives this route.
@@ -92,6 +116,7 @@ impl Route {
             Self::M4riPeerGf2 => "m4ri-peer-gf2",
             Self::MatvecLaneScalar => "matvec-lane-scalar",
             Self::MatvecLaneParity => "matvec-lane-parity",
+            Self::M4riPeerGf2Native => "m4ri-peer-gf2-native",
         }
     }
 
@@ -104,7 +129,15 @@ impl Route {
             | Self::MatvecScalarReference
             | Self::MatvecLaneScalar
             | Self::MatvecLaneParity => Question::AllocatedMatvec,
-            Self::M4riPeerGf2 => Question::MatvecVsM4ri,
+            Self::M4riPeerGf2 | Self::M4riPeerGf2Native => Question::MatvecVsM4ri,
+        }
+    }
+
+    /// The build level this route's executable is compiled at.
+    pub fn build(self) -> BuildIdentity {
+        match self {
+            Self::M4riPeerGf2Native => BuildIdentity::Native,
+            _ => BuildIdentity::ConservativePortable,
         }
     }
 
@@ -139,16 +172,21 @@ impl Route {
     ///
     /// The reference arm is the ordinary configuration with `simd` removed, so
     /// a build that carries the feature cannot stand in for it and a build that
-    /// lacks it cannot stand in for the selected production route.
+    /// lacks it cannot stand in for the selected production route. A route
+    /// likewise refuses an executable of another build level.
     pub fn check_build(self) -> Result<(), String> {
-        if self.simd_build() == cfg!(feature = "simd") {
+        if self.simd_build() == cfg!(feature = "simd") && build_level() == Some(self.build()) {
             return Ok(());
         }
         Err(format!(
-            "{} needs the {} build; this executable carries simd={}",
+            "{} needs the {} {:?} build; this executable carries simd={}, baked={}, \
+             static-avx2={}",
             self.id(),
             if self.simd_build() { "simd" } else { "scalar-reference" },
-            cfg!(feature = "simd")
+            self.build(),
+            cfg!(feature = "simd"),
+            cfg!(gf2_tuning_baked),
+            cfg!(target_feature = "avx2")
         ))
     }
 }

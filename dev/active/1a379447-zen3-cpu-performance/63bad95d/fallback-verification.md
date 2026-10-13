@@ -73,8 +73,10 @@ exit status. What the configurations establish:
   every input.
 - **`--all-features` and the baked profile.** `core-all-features` reports the
   baked configuration absent and the same routes as `core-simd`; only
-  `core-baked` reports it present. The baked routes equal the conservative
-  ones because every baked constant currently equals its conservative value
+  `core-baked` reports it present. The baked routes differ from the
+  conservative ones at the buffer lengths between the baked and the
+  conservative bit-backend threshold, the one baked constant that differs from
+  its conservative value
   (inventory, [selector table](route-inventory.md#selectors-the-tuning-sections-own)).
 - **Unknown host.** Every configuration reports the core section as frozen
   before installation, which is the conservative table.
@@ -82,9 +84,10 @@ exit status. What the configurations establish:
   (`coding-default-simd`, `coding-simd-forwards`) and keeps the conservative
   thresholds. Its ordinary build without default features resolves `gf2-core`
   to the feature set of the standalone default build (dependency-features
-  record), which `core-default` witnesses. The package's own test build cannot
-  reach that feature set: its self dev-dependency keeps the default features,
-  so `coding-no-default-features` reports the kernel routes.
+  record), which `core-default` witnesses. The package's own test build
+  without default features reaches the same feature set, because its self
+  dev-dependency disables the default features, so
+  `coding-no-default-features` reports the portable routes.
 - **`gf2-sim`.** It has no default feature (`sim-default-empty`) and takes
   `gf2-coding` and `gf2-algebra` with theirs (`sim-depends-coding-defaults`,
   `sim-depends-algebra-defaults`), so every `gf2-sim` build enables

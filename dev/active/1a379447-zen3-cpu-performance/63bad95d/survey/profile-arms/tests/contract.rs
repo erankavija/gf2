@@ -1,0 +1,95 @@
+//! Contract of the profile arms: every declared operation agrees with its
+//! portable reference at the word-boundary shapes, and a case round-trips the
+//! canonical wire form.
+
+use profile_build_arms::{Build, Case, Workload, CLMUL_WORDS};
+
+fn cases() -> Vec<Case> {
+    let mut cases = Vec::new();
+    for words in [1, 2, 3, 4, 5, 7, 8, 9, 63, 64, 65, 1024] {
+        let seed = words as u64;
+        cases.push(Case::XorInplace { words, seed });
+        cases.push(Case::Popcount { words, seed });
+        cases.push(Case::AndPopcount { words, seed });
+    }
+    for columns in [1, 63, 64, 65, 448, 512, 1535, 1536] {
+        cases.push(Case::Matvec {
+            rows: 65,
+            columns,
+            seed: columns as u64,
+        });
+        cases.push(Case::Transpose {
+            rows: 130,
+            columns,
+            seed: columns as u64,
+        });
+    }
+    cases.push(Case::ClmulWide {
+        words: CLMUL_WORDS,
+        seed: 9,
+    });
+    cases
+}
+
+#[test]
+fn every_operation_matches_its_portable_reference() {
+    for case in cases() {
+        let mut workload = Workload::build(&case).unwrap();
+        workload
+            .verify()
+            .unwrap_or_else(|error| panic!("{case:?}: {error}"));
+        // A measured call leaves the operands a later call can use.
+        workload.call();
+        workload.call();
+        if !matches!(case, Case::XorInplace { .. }) {
+            workload
+                .verify()
+                .unwrap_or_else(|error| panic!("{case:?} after calls: {error}"));
+        }
+    }
+}
+
+#[test]
+fn a_case_round_trips_the_canonical_wire_form() {
+    for case in cases() {
+        let text = serde_json::to_string(&case).unwrap();
+        assert_eq!(serde_json::from_str::<Case>(&text).unwrap(), case);
+    }
+    assert!(serde_json::from_str::<Case>(r#"{"operation":"xor-inplace","words":4}"#).is_err());
+    assert!(serde_json::from_str::<Case>(
+        r#"{"operation":"xor-inplace","words":4,"seed":1,"x":0}"#
+    )
+    .is_err());
+}
+
+#[test]
+fn degenerate_and_foreign_cases_are_refused() {
+    assert!(Workload::build(&Case::Popcount { words: 0, seed: 0 }).is_err());
+    assert!(Workload::build(&Case::Matvec {
+        rows: 0,
+        columns: 8,
+        seed: 0
+    })
+    .is_err());
+    assert!(Workload::build(&Case::ClmulWide {
+        words: CLMUL_WORDS + 1,
+        seed: 0
+    })
+    .is_err());
+}
+
+#[test]
+fn a_build_level_matches_exactly_one_compile_time_configuration() {
+    let matching: Vec<_> = ["conservative-portable", "tuned-portable", "native"]
+        .into_iter()
+        .filter(|name| Build::parse(name).unwrap().check_executable().is_ok())
+        .collect();
+    let expected = match (cfg!(gf2_tuning_baked), cfg!(target_feature = "avx2")) {
+        (false, false) => vec!["conservative-portable"],
+        (true, false) => vec!["tuned-portable"],
+        (true, true) => vec!["native"],
+        (false, true) => vec![],
+    };
+    assert_eq!(matching, expected);
+    assert!(Build::parse("external").is_err());
+}

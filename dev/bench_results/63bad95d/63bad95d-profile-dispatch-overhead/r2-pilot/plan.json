@@ -1,0 +1,77 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "63bad95d-r2-profile-dispatch-overhead-pilot",
+  "issue": "63bad95d",
+  "label": "pilot",
+  "campaign_seed": 2026100730,
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-profile-dispatch-overhead-pilot.json",
+  "producing_manifest": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/profile-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "conservative-portable": {
+      "build": "conservative-portable",
+      "description": "profile-arm, conservative-portable: conservative table, no profile installed",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-63bad95d-fam/target/63bad95d-arm-conservative-portable/release/profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_PROFILE_BUILD": "conservative-portable"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "tuned-portable": {
+      "build": "tuned-portable",
+      "description": "profile-arm, tuned-portable: candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-63bad95d-fam/target/63bad95d-arm-tuned-portable/release/profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_PROFILE_BUILD": "tuned-portable",
+        "GF2_PROFILE_OWNER": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-63bad95d-fam/crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json",
+        "GF2_PROFILE_OWNER_SHA256": "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33"
+      },
+      "rustflags": "--cfg gf2_tuning_baked",
+      "tuning_profile": {
+        "id": "gf2-63bad95d-20261006t230547z-2073085",
+        "sha256": "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33"
+      }
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "xor-inplace-4w",
+      "baseline_arm": "conservative-portable",
+      "candidate_arm": "tuned-portable",
+      "case": {
+        "operation": "xor-inplace",
+        "words": 4,
+        "seed": 630401
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "and-popcount-7w",
+      "baseline_arm": "conservative-portable",
+      "candidate_arm": "tuned-portable",
+      "case": {
+        "operation": "and-popcount",
+        "words": 7,
+        "seed": 630701
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "xor-inplace-8w",
+      "baseline_arm": "conservative-portable",
+      "candidate_arm": "tuned-portable",
+      "case": {
+        "operation": "xor-inplace",
+        "words": 8,
+        "seed": 630801
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 3
+}

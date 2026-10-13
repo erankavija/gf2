@@ -2,18 +2,24 @@
 
 > **Diátaxis Type:** Research
 
-This plan freezes no addendum, queues no campaign and changes no threshold. It
-rests on three generated records and one ledger:
+The core campaign this plan declares is published;
+[`campaign-findings.md`](campaign-findings.md) states what it decides, and the
+plan below is the plan those findings leave. It rests on four generated
+records and one ledger:
 
 - the [route inventory](route-inventory.md) (`survey/make-route-inventory.py`),
   cited by section;
 - the [calibration budget](calibration-budget.md)
   (`survey/make-calibration-budget.py`), which holds every count, corrected
   alpha, tail-draw value and minute estimate this plan refers to;
+- the [campaign tables](campaign-tables.md) (`survey/make-campaign-tables.py`),
+  which hold every published selector value and sweep figure;
 - the planned families and cells,
   [`survey/planned-families.json`](survey/planned-families.json), which the
-  budget record tabulates, with the holdout declaration
-  [`survey/matvec-holdout-cells.json`](survey/matvec-holdout-cells.json);
+  budget record tabulates and from which `survey/make-family-addenda.py`
+  projects the pilot addenda and each dispatch family's holdout declaration
+  ([`survey/dispatch-holdout-cells.json`](survey/dispatch-holdout-cells.json),
+  [`survey/dispatch-holdout-cells-v2.json`](survey/dispatch-holdout-cells-v2.json));
 - [`survey/source-evidence.json`](survey/source-evidence.json), whose claim
   identifiers appear in backticks.
 
@@ -30,10 +36,10 @@ plan adds the calibration disposition.
 
 | Selector | Owner today | Evidence class | Disposition in this issue |
 |---|---|---|---|
-| `bit_matrix.matvec_simd_min_words` | core section, compile time; the measured owner omits it | exploratory | **The one candidate.** `4337c02e` confirms the value; this issue reconfirms the profile on held-out strides (§4, §6). |
+| `bit_matrix.matvec_simd_min_words` | core section, compile time; the measured owner states it | producer sweep; confirmatory cells whose confirmation acceptance rejects | Retained at the conservative value: the sweep is non-monotone and `4337c02e` confirms no value (§5, §7). |
 | `PRODUCTION_PREFERENCE` (transpose block lane) | constant of `gf2-kernels-simd` | confirmatory; the confirmations do not qualify | Retained at its value and standing. The non-qualifying confirmations are the recorded outcome (§8). |
 | `popcount-comparator-kernels` (carry-save and scalar `POPCNT` routes) | no selector exists | confirmatory; neither confirmation qualifies | Retained as recorded. The exploratory carry-save crossover is a limit of this calibration (§8). |
-| `bit_backend.simd_min_words` | core section, compile time; the measured owner states it | confirmatory | Retained. Small-input cells of §6 guard it. |
+| `bit_backend.simd_min_words` | core section, compile time; the measured owner states it | producer sweep; confirmatory, with one qualifying confirmation | **The one candidate.** The measured owner states a value below the conservative one and the baked constant mirrors it; the confirmation of `63bad95d-profile-dispatch-overhead-v2` qualifies and retains it (§5, §7). |
 | `raw-batch-default-lane`, `gf2m-batch-capability` | constants and capability checks | confirmatory | Retained: the confirmations keep the sequential lane and add no length gate. |
 | `wide-kernel-widths`, `gf256-table-predicate`, `residual-shift-capability` | structural or capability choices | confirmatory, qualifying | Retained: each route is adopted by its own qualifying receipt. |
 | `bit_matrix.transpose_simple_max_blocks`, `bit_matrix.transpose_macro_tile_blocks`, `field_vec.dot_chunk_len` | core section; the measured owner states them | none under this protocol | Retained at the measured owner's values. |
@@ -43,7 +49,10 @@ epic measures; the inventory's
 [selector table](route-inventory.md#selectors-the-tuning-sections-own) lists
 them, and the [private list](route-inventory.md#thresholds-and-selectors-outside-the-tuning-sections)
 gives every scanned constant outside the sections with its class and read
-sites. The decoder and BCH encode selectors belong to the coding-owned section
+sites. Its selector-class constants keep their values under the named
+convergence exception `private-core-selector-constants`, which the inventory
+states below that list and `@/issue/817fc47d` tracks (REQ-11); this
+calibration supersedes no private threshold. The decoder and BCH encode selectors belong to the coding-owned section
 (`coding-tuning-section`) and are outside this issue (REQ-12).
 
 A domain where no candidate wins, or where the confirmed strides do not form
@@ -74,8 +83,8 @@ The mapping this plan uses:
 
 | REQ-08 clause | Carried by |
 |---|---|
-| Calibrate candidate selectors using the frozen protocol | Protocol families: the threshold confirmation of `4337c02e` and the committed lane-selection confirmation of `1d4fd63d` are the calibration evidence; the families of §6 measure the resulting profile. |
-| Independently reconfirm the resulting profile | The holdout families of §6, whose cells no calibration family measured. |
+| Calibrate candidate selectors using the frozen protocol | The dispatch-overhead family of §6, a selector-calibration family whose pilot and confirmation measure the profile's one changed baked selector; the lane-selection confirmation of `1d4fd63d` and the rejected threshold confirmation of `4337c02e` are the recorded protocol outcomes for the two lanes the profile leaves conservative. |
+| Independently reconfirm the resulting profile | The holdout cells of that family, which no pilot and no producer sweep measures. |
 | Commit the versioned profile with producing-tool behavioral identity and linked receipts | An owner envelope of the offline tuning system and the baked constants that pin it. |
 
 What the offline tuning system does for this issue:
@@ -98,10 +107,10 @@ What the offline tuning system does for this issue:
   the producer sweeps and publishes a new owner envelope, a complete envelope
   and a receipt; one session's budget is in the
   [budget record](calibration-budget.md#planned-families).
-- **The baked constant follows the owner.** The baked matvec threshold is held
-  equal to the conservative value while no measured owner states the field
-  (`baked-matvec-conservative-test`); it mirrors the published owner under the
-  adoption rule of §7.
+- **The baked constants follow the owner.** The baked constants pin the
+  published owner by digest (`tuning-baked-owner-digest`) and mirror the
+  values it states, the matvec threshold included (`baked-matvec-owner-test`,
+  `baked-measured-owner-test`).
 
 What stays outside that system:
 
@@ -122,18 +131,41 @@ The transpose lane stays outside the profile (§8).
 
 | Arm identity | gf2 build | Selectors | Competitor targeting |
 |---|---|---|---|
-| `conservative-portable` | default target, `simd` | conservative table, no profile | portable build, its own runtime dispatch if it has one |
-| `tuned-portable` | default target, `simd`, `--cfg gf2_tuning_baked` | the candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile | the same portable build |
-| `native` | `-C target-cpu=native` added | the candidate profile | built with `-march=native` |
+| `conservative-portable` | default target, `simd` | conservative table, no profile | M4RI built at `-O3` with no targeting option (`63bad95d-portable-matvec-vs-m4ri`) |
+| `tuned-portable` | default target, `simd`, `--cfg gf2_tuning_baked` | the candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile | the comparator cells of the conservative level, whose lane the profile leaves unchanged |
+| `native` | `-C target-cpu=native` added | the candidate profile | M4RI built at `-O3 -march=native` (`63bad95d-native-matvec-vs-m4ri`) |
 
 The three are separate arms and separate executables; no cell mixes two inside
 one arm. A selector's effect is a `tuned-portable` candidate against a
 `conservative-portable` baseline, so both sides share one instruction-set
 level and differ in selectors alone. The native ladder compares `native`
-against `tuned-portable`. Each comparator-gap cell pairs gf2 and the external
-library at one level; the conservative level is committed evidence (the M4RI
-confirmation the [mid-range synthesis](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md)
-cites).
+against `tuned-portable`.
+
+The comparator-gap cells belong to two families of this issue, each frozen by
+its own addendum and measured through its confirmation. Each compares public
+`BitMatrix::matvec` with the matched M4RI product at one build level on both
+sides and selects nothing; its plan states the outcome as acceptance records
+it.
+
+| Family | gf2 arm | M4RI build | Plan and outcome |
+|---|---|---|---|
+| `63bad95d-portable-matvec-vs-m4ri` | `conservative-portable` | `-O3`, no targeting option | [`portable-m4ri-plan.md`](portable-m4ri-plan.md) |
+| `63bad95d-native-matvec-vs-m4ri` | `native` | `-O3 -march=native` | [`native-m4ri-plan.md`](native-m4ri-plan.md) |
+
+The portable family measures one gf2 arm for both portable levels: the one
+selector `BitMatrix::matvec` reads is its lane threshold, whose baked value
+equals the conservative definition (§1), so a `tuned-portable` arm executes
+the same lane at every shape.
+
+The comparison of `50f0bd42`, family `2037941f-dense-matvec-vs-m4ri`, is
+neither of these. Its
+[addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md)
+declares the gf2 arm as the `conservative-portable` build and the M4RI arm as
+the `external` build of the qualification record, which
+[`m4ri-build-pins.sh`](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh)
+compiles at its `host` level, `-O3 -march=native`. It pairs the portable gf2
+level with a host-targeted comparator and stays committed as that mixed-level
+comparison ([outcome](../50f0bd42/outcome.md)).
 
 `tuned-portable` here is defined by the profile's selectors at the portable
 instruction-set level. The polynomial host-targeting campaigns give the same
@@ -144,49 +176,40 @@ levels, and a result of one is no result of the other.
 
 ## 4. Overlap with `4337c02e`
 
-`4337c02e` stays a separate family that feeds this issue.
+`4337c02e` is a separate family on its own ledger: the allocated
+whole-`matvec` cells at the strides whose exploratory rows favour the scalar
+lane and at their neighbours. This issue owns the producer sweep by which a
+threshold reaches the tuning system and the one edit that would install a
+value, the baked constant with its measured owner; `4337c02e` changes no
+selector constant, which keeps its REQ-05 (one source of the threshold) and
+this issue's REQ-11 consistent.
 
-- It owns the allocated whole-`matvec` cells at the strides whose exploratory
-  rows favour the scalar lane and at their neighbours, their frozen margins
-  and the confirmation. Its outcome is a threshold value, or no change.
-- This issue owns the profile that carries the value, the producer sweep by
-  which the value reaches the tuning system (§2, §8) and the reconfirmation on
-  strides `4337c02e` does not measure (§6).
-- The two families ask different questions on different workloads, each on
-  its own ledger; the budget record's ledger table shows what the existing
-  allocated-`matvec` ledger still admits.
-- One edit installs the value: the baked constant with its measured owner,
-  made in this issue. `4337c02e` changes no selector constant, which keeps its
-  REQ-05 (one source of the threshold) and this issue's REQ-11 consistent.
-
-Ordering:
-
-1. The strides of `63bad95d-profile-holdout-matvec` are fixed in
-   [`survey/matvec-holdout-cells.json`](survey/matvec-holdout-cells.json),
-   which lists the reserved and the held-out strides; `4337c02e` declares no
-   cell at a reserved stride.
-2. `4337c02e` runs its pilot and confirmation and publishes its outcome.
-3. The producer sweep and a full core campaign publish the measured owner
-   that states the threshold.
-4. This issue freezes its families against that owner and measures.
-
-If `4337c02e` records no change, the matvec families of §6 do not run and the
-conservative threshold is recorded as retained.
+`4337c02e` records no change: its confirmation receipt is rejected by
+acceptance and it installs no value. The matvec families therefore do not run
+(the plan record's exclusion table), the holdout declaration
+[`survey/matvec-holdout-cells.json`](survey/matvec-holdout-cells.json) stays
+committed and unused, and the conservative threshold is retained.
 
 ## 5. Calibration evidence and the profile
 
-The candidate profile differs from the conservative table, in the entry points
-this epic measures, in one selector: the matvec threshold. Its calibration
-evidence has two parts, the confirmation of `4337c02e` under the frozen
-protocol and the retained-threshold sweep of the offline tuning producer; the
-measured owner states the sweep's value, and the baked constant mirrors the
-owner. The holdout family of §6 measures the profile on strides neither part
-uses.
+The profile is the measured owner of this issue's campaign. Among the baked
+constants it differs from the conservative table in one selector,
+`bit_backend.simd_min_words`; the [selector table](campaign-tables.md#selectors-per-owner)
+gives every value and the [sweep tables](campaign-tables.md#bit-backend-threshold-sweep)
+the producer's evidence for it. The dispatch-overhead family of §6 measures
+the profile build against the conservative build on both sides of the two
+thresholds, with holdout cells at operation and length pairs the producer does
+not time.
+
+The owner states the matvec threshold at its conservative value
+([matvec lane sweep](campaign-tables.md#matvec-lane-sweep)).
 
 The owner also restates every other field the producer sweeps, because one
-campaign measures the whole core section. Those fields route entry points
-outside this epic's families, and this plan neither calibrates nor reconfirms
-them.
+campaign measures the whole core section. Those fields are read from an
+installed profile at run time and route entry points outside this epic's
+families; this plan neither calibrates nor reconfirms them.
+[`campaign-findings.md`](campaign-findings.md) names the one whose value
+differs between this owner and the owner of the seam campaign.
 
 ## 6. Families and cells
 
@@ -200,55 +223,75 @@ generator refuses a family above it.
 
 | Family | Purpose | What its cells decide |
 |---|---|---|
-| `63bad95d-profile-holdout-matvec` | selector calibration | The profile's matvec threshold, on strides and cache states `4337c02e` does not measure. |
-| `63bad95d-profile-dispatch-overhead` | selector calibration | Non-regression of small inputs at entry points whose selection the profile leaves unchanged. |
+| `63bad95d-profile-dispatch-overhead` | selector calibration | Non-regression of small inputs of the bit-backend entry points, the profile build against the conservative build, on both sides of the two thresholds. |
 | `63bad95d-native-ladder` | consumer family | The native build against the portable profile build, one primary workload per entry-point group. |
-| `63bad95d-matvec-external-ladder` | consumer family | The gap to the matched M4RI operation at the tuned and native levels. |
+| `63bad95d-profile-dispatch-overhead-v2` | selector calibration | Repeats `63bad95d-profile-dispatch-overhead` on a quiet host: the same cells, arms and settings on its own ledger. |
+| `63bad95d-native-ladder-v2` | consumer family | Repeats `63bad95d-native-ladder` on a quiet host: the same cells, arms and settings on its own ledger. |
+
+The campaigns of the first two families run on a loaded host
+([disturbance record](disturbance-record.md#host-load-each-campaign-records)).
+By invoker ruling each is repeated once under a family that names it in the
+`repeats` field of `planned-families.json` and cites that record in its
+addendum; [`campaign-findings.md`](campaign-findings.md) (F-06 to F-09)
+states the outcomes of the repeated families and of their confirmations.
+
+The harness is `survey/profile-arms`: one executable built once per build
+level, which refuses a request for a level it is not, installs the pinned
+owner on the profile levels and reports the routes it observes.
+`dev/bench_results/63bad95d/run-profile-families.sh` builds, smokes, launches
+and freezes the campaigns.
 
 Rules common to the families:
 
-- **Pilot.** Each family has one exploratory pilot of its non-holdout cells at
-  the pair count `planned-families.json` declares; the canonical freezer
+- **Pilot.** Each family pilots its non-holdout cells at the pair count
+  `planned-families.json` declares, within the pilot trials per cell its
+  pilot addendum's search budget declares; the canonical freezer
   `dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py` derives the confirmation
-  addendum from the committed pilot receipt.
+  addendum from the committed receipt of the pilot trial it names. The
+  dispatch-overhead family takes a second trial; the
+  [supersession record](campaigns/63bad95d-profile-dispatch-overhead-confirmation-superseded.md)
+  of the confirmation frozen from its first states why.
 - **Holdout.** Holdout cells are declared in a holdout record before the
   pilot runs and attached by the freezer; no sample of a holdout workload
-  exists before the confirmation. The matvec declaration is committed.
-- **Objectives.** Every cell of the three gf2 families is a non-regression
-  cell. The improvement claim for the threshold is the confirmation of
-  `4337c02e`; the holdout family shows the profile is not worse where that
-  confirmation did not look.
+  exists before the confirmation.
+- **Objectives.** Every cell is a non-regression cell. The improvement claim
+  for the bit-backend threshold is the producer's crossover decision; the
+  family shows the profile build is not worse.
 - **Margins.** Each family freezes its worthwhile-effect and equivalence
   margins from its own pilot, strictly above one plus the pilot-derived
   resolution, with a rationale tied to the consumer.
-- **Comparator cells** select nothing; they report the gap at an equal build
-  level.
 - **Core arms.** The entry points are leaf kernels without an internal worker
   pool, so every cell runs on one core.
 
-The budget record's exclusion table states why the plan holds no transpose
-family: the lane is no candidate, and the profile selects nothing on the
-transpose route, so a tuned transpose arm is the conservative arm that the
-committed comparator confirmations measure. The native ladder keeps
-non-regression cells of the transpose entry point.
+The budget record's exclusion table states why the plan holds no matvec
+family and no transpose family: the profile selects the conservative lane on
+both routes, so a tuned arm is the conservative arm that the committed
+comparator confirmations measure. The native ladder keeps a non-regression
+cell of each entry point.
 
 ## 7. Adoption and preserved conservative values
 
-- The threshold enters the baked constants only if the confirmation of
-  `4337c02e` qualifies, the measured owner states a value consistent with it,
-  and the holdout and dispatch-overhead families qualify.
-- Otherwise the baked threshold keeps its conservative value, and each
-  receipt is committed as the outcome.
-- The matvec threshold is a single boundary. If the strides `4337c02e`
-  confirms for the scalar lane do not form one interval that starts at the
-  conservative threshold, no threshold expresses the result and the
-  conservative value stays.
-- A production change carries its before and after cells: each holdout cell's
-  baseline arm is the route before the change and its candidate arm the route
-  after it, on the same workload.
-- After the profile is committed, the route witnesses of the fallback record
-  are run again, with the profile build added, and the inventory is
-  regenerated, so the routes the production consumers execute are observed.
+- The matvec threshold keeps its conservative value: the producer's sweep is
+  non-monotone and the protocol confirmation of `4337c02e` is rejected, so no
+  single boundary expresses a result.
+- The baked bit-backend threshold mirrors the measured owner. It is retained
+  when no confirmatory or holdout cell of the confirmation of
+  `63bad95d-profile-dispatch-overhead-v2` records `fail`, and takes the
+  conservative value otherwise, with each receipt committed as the outcome;
+  the family's addendum freezes this rule. The confirmation is accepted and
+  qualifies with no `fail` cell (F-09), so the baked value is retained:
+  the baked constants pin the owner by digest and mirror its value
+  (`tuning-baked-owner-digest`, `baked-measured-owner-test`).
+- A production change carries its before and after cells: a cell's baseline
+  arm is the conservative build and its candidate arm the profile build, on
+  the same workload. For the baked bit-backend threshold these are the cells
+  of that confirmation
+  ([acceptance summary](../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2/r1-confirmation/acceptance-summary.md)).
+- Every other selector keeps its value: no qualifying confirmation covers
+  another candidate (§1).
+- The route witnesses of the [fallback record](fallback-verification.md)
+  include the profile build, and the inventory tabulates them, so the routes
+  the production consumers execute are observed.
 
 ## 8. Decisions
 
@@ -256,12 +299,9 @@ non-regression cells of the transpose entry point.
    standing as a kernel-crate constant. It is no calibration candidate, and
    the non-qualifying confirmations of `1d4fd63d` and `04b85d10` are the
    recorded outcome. The plan holds no cell that selects a lane.
-2. **Matvec threshold.** The offline tuning producer gains a
-   retained-threshold sweep of `bit_matrix.matvec_simd_min_words`, and a full
-   core campaign publishes the measured owner. The change covers the
-   producer's behavior token and counts, the independent validator, a protocol
-   document that amends the executed one by reference, and the campaign
-   declaration.
+2. **Matvec threshold.** The offline tuning producer sweeps
+   `bit_matrix.matvec_simd_min_words` as a retained threshold, and the full
+   core campaign publishes the measured owner that states it.
 3. **Carry-save crossover.** No selector is added. The exploratory crossover
    of the carry-save count routes is a recorded limit of this calibration.
 4. **Tuned level.** `tuned-portable` is defined by profile selectors (§3).

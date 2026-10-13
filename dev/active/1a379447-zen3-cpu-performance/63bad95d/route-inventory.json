@@ -3,7 +3,7 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "46cc58c437d1caf50d2651157c868bb50b6d22c52d6b1dada3939c68441d6501"
+  "sha256": "80b5cfa4ddd5ecd752216313d53feadf91dd637f4fb925eaeac0e549ad6f75c4"
  },
  "counts": {
   "entry point groups": 9,
@@ -11,15 +11,15 @@
   "routes": 21,
   "selectors of the core tuning section": 37,
   "core selectors selected at compile time": 8,
-  "core selectors the measured owner states": 30,
+  "core selectors the measured owner states": 31,
   "scanned constants a tuning section owns": 51,
-  "scanned constants outside the tuning sections": 37,
+  "scanned constants outside the tuning sections": 39,
   "of those, class selector": 8,
   "declared selectors outside the tuning sections": 6,
   "witness configurations": 7,
-  "committed protocol receipts": 155,
-  "core-kernel receipts": 101,
-  "core-kernel measurement families": 47
+  "committed protocol receipts": 175,
+  "core-kernel receipts": 119,
+  "core-kernel measurement families": 56
  },
  "entry_points": [
   {
@@ -409,12 +409,12 @@
    "configuration": "core-baked",
    "description": "standalone `gf2-core`, `simd`, `--cfg gf2_tuning_baked`",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-baked.tsv",
-   "record_sha256": "1b34395171f89fbd9d38578d45d5dd579fafaa3436fece0b0c492d4de7cdaa68",
+   "record_sha256": "ce940bc2d20c999855936852150dae9c639331532691412f8d384eefcbfbcb80",
    "simd_feature": "true",
    "baked_selectors": "true",
    "core_section_resolution": "frozen-before-install",
-   "rows": 41,
-   "kernel_rows": 24
+   "rows": 53,
+   "kernel_rows": 33
   },
   {
    "configuration": "coding-default",
@@ -429,14 +429,14 @@
   },
   {
    "configuration": "coding-no-default-features",
-   "description": "`gf2-coding` test build, `--no-default-features`; its self dev-dependency keeps the default features",
+   "description": "`gf2-coding` test build, `--no-default-features`; its self dev-dependency disables the default features",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/coding-no-default-features.tsv",
-   "record_sha256": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
-   "simd_feature": "true",
+   "record_sha256": "b78409ccfed4d1bfbac2b946f216f205e5c3690953644e9e2f78da2dcafbbc84",
+   "simd_feature": "false",
    "baked_selectors": "false",
    "core_section_resolution": "frozen-before-install",
    "rows": 41,
-   "kernel_rows": 24
+   "kernel_rows": 0
   },
   {
    "configuration": "sim-default",
@@ -562,7 +562,7 @@
     "core-default": "scalar",
     "core-simd": "scalar",
     "core-all-features": "scalar",
-    "core-baked": "scalar",
+    "core-baked": "simd",
     "coding-default": "scalar",
     "coding-no-default-features": "scalar",
     "sim-default": "scalar"
@@ -575,7 +575,7 @@
     "core-default": "scalar",
     "core-simd": "scalar",
     "core-all-features": "scalar",
-    "core-baked": "scalar",
+    "core-baked": "simd-nibble-lut",
     "coding-default": "scalar",
     "coding-no-default-features": "scalar",
     "sim-default": "scalar"
@@ -588,7 +588,7 @@
     "core-default": "scalar",
     "core-simd": "scalar",
     "core-all-features": "scalar",
-    "core-baked": "scalar",
+    "core-baked": "simd-nibble-lut",
     "coding-default": "scalar",
     "coding-no-default-features": "scalar",
     "sim-default": "scalar"
@@ -616,7 +616,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -629,7 +629,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -642,7 +642,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -655,7 +655,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -668,7 +668,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -681,7 +681,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -694,7 +694,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -707,7 +707,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -720,7 +720,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -733,7 +733,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -746,7 +746,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -759,7 +759,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -772,7 +772,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -785,7 +785,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -798,7 +798,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -811,7 +811,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -824,7 +824,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -837,7 +837,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -850,7 +850,7 @@
     "core-all-features": "simd-nibble-lut",
     "core-baked": "simd-nibble-lut",
     "coding-default": "simd-nibble-lut",
-    "coding-no-default-features": "simd-nibble-lut",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd-nibble-lut"
    }
   },
@@ -863,7 +863,7 @@
     "core-all-features": "simd",
     "core-baked": "simd",
     "coding-default": "simd",
-    "coding-no-default-features": "simd",
+    "coding-no-default-features": "scalar",
     "sim-default": "simd"
    }
   },
@@ -876,7 +876,7 @@
     "core-all-features": "avx2-bit-twiddle",
     "core-baked": "avx2-bit-twiddle",
     "coding-default": "avx2-bit-twiddle",
-    "coding-no-default-features": "avx2-bit-twiddle",
+    "coding-no-default-features": "scalar-bit-twiddle",
     "sim-default": "avx2-bit-twiddle"
    }
   },
@@ -889,7 +889,7 @@
     "core-all-features": "residual-bmi2-funnel",
     "core-baked": "residual-bmi2-funnel",
     "coding-default": "residual-bmi2-funnel",
-    "coding-no-default-features": "residual-bmi2-funnel",
+    "coding-no-default-features": "residual-scalar-funnel",
     "sim-default": "residual-bmi2-funnel"
    }
   },
@@ -915,7 +915,7 @@
     "core-all-features": "avx2+vpclmulqdq-ymm",
     "core-baked": "avx2+vpclmulqdq-ymm",
     "coding-default": "avx2+vpclmulqdq-ymm",
-    "coding-no-default-features": "avx2+vpclmulqdq-ymm",
+    "coding-no-default-features": "portable-scalar",
     "sim-default": "avx2+vpclmulqdq-ymm"
    }
   },
@@ -928,7 +928,7 @@
     "core-all-features": "avx2+vpclmulqdq-ymm",
     "core-baked": "avx2+vpclmulqdq-ymm",
     "coding-default": "avx2+vpclmulqdq-ymm",
-    "coding-no-default-features": "avx2+vpclmulqdq-ymm",
+    "coding-no-default-features": "portable-scalar",
     "sim-default": "avx2+vpclmulqdq-ymm"
    }
   },
@@ -943,6 +943,90 @@
     "coding-default": "portable-scalar",
     "coding-no-default-features": "portable-scalar",
     "sim-default": "portable-scalar"
+   }
+  },
+  {
+   "entry": "kernels::select_backend_for_size",
+   "input": "words=3",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "kernels::ops::popcount",
+   "input": "words=3",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "kernels::ops::and_popcount",
+   "input": "words=3",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "BitMatrix::matvec",
+   "input": "words=3",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "kernels::select_backend_for_size",
+   "input": "words=4",
+   "routes": {
+    "core-baked": "simd"
+   }
+  },
+  {
+   "entry": "kernels::ops::popcount",
+   "input": "words=4",
+   "routes": {
+    "core-baked": "simd-nibble-lut"
+   }
+  },
+  {
+   "entry": "kernels::ops::and_popcount",
+   "input": "words=4",
+   "routes": {
+    "core-baked": "simd-nibble-lut"
+   }
+  },
+  {
+   "entry": "BitMatrix::matvec",
+   "input": "words=4",
+   "routes": {
+    "core-baked": "scalar"
+   }
+  },
+  {
+   "entry": "kernels::select_backend_for_size",
+   "input": "words=5",
+   "routes": {
+    "core-baked": "simd"
+   }
+  },
+  {
+   "entry": "kernels::ops::popcount",
+   "input": "words=5",
+   "routes": {
+    "core-baked": "simd-nibble-lut"
+   }
+  },
+  {
+   "entry": "kernels::ops::and_popcount",
+   "input": "words=5",
+   "routes": {
+    "core-baked": "simd-nibble-lut"
+   }
+  },
+  {
+   "entry": "BitMatrix::matvec",
+   "input": "words=5",
+   "routes": {
+    "core-baked": "scalar"
    }
   }
  ],
@@ -1022,20 +1106,20 @@
   "core_section": "gf2-core/selectors",
   "conservative_profile": "crates/gf2-core/data/tuning-profiles/conservative.json",
   "measured_owner": {
-   "path": "crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json",
-   "sha256": "8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa",
+   "path": "crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json",
+   "sha256": "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33",
    "harness": "crates/gf2-core/benches/tuning_calibration.rs",
    "harness_schema": "tuning-calibration-v4",
-   "binary_sha256": "d68a2fc2b36e3e3b2e39e438bbd43f9d39c60e181cb52da1b26a6d84973a27ff",
-   "recorded_receipt": "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+   "binary_sha256": "d1dbabe8f4ea42e3b5b4cdbb54642addc12a1602e93233f859706a1d8e49f256",
+   "recorded_receipt": "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
   },
   "selectors": [
    {
     "selector": "bit_backend.simd_min_words",
     "conservative": 8,
     "selection": "compile-time",
-    "baked": 8,
-    "measured_owner": 8,
+    "baked": 4,
+    "measured_owner": 4,
     "read_sites": [
      "crates/gf2-core/src/kernels/backend.rs:78"
     ]
@@ -1045,7 +1129,7 @@
     "conservative": 8,
     "selection": "compile-time",
     "baked": 8,
-    "measured_owner": null,
+    "measured_owner": 8,
     "read_sites": [
      "crates/gf2-core/src/matrix.rs:18"
     ]
@@ -1272,7 +1356,7 @@
     "conservative": 1,
     "selection": "runtime-profile",
     "baked": null,
-    "measured_owner": 24,
+    "measured_owner": 1,
     "read_sites": [
      "crates/gf2-core/src/field/ple.rs:281",
      "crates/gf2-core/src/field/ple.rs:360"
@@ -1661,6 +1745,17 @@
    ]
   },
   {
+   "id": "MAX_DEGREE",
+   "package": "gf2-core",
+   "defined": "crates/gf2-core/src/gf2m/generation.rs:34",
+   "definition": "pub const MAX_DEGREE: usize = (u64::BITS - 1) as usize;",
+   "class": "kernel-geometry",
+   "read_sites": [
+    "crates/gf2-core/src/gf2m/generation.rs:44",
+    "crates/gf2-core/src/gf2m/generation.rs:46"
+   ]
+  },
+  {
    "id": "UNROLL",
    "package": "gf2-core",
    "defined": "crates/gf2-core/src/kernels/scalar/logical.rs:21",
@@ -1783,6 +1878,14 @@
    ]
   },
   {
+   "id": "POPCOUNT_CSA_BLOCK_WORDS",
+   "package": "gf2-kernels-simd",
+   "defined": "crates/gf2-kernels-simd/src/lib.rs:58",
+   "definition": "pub const POPCOUNT_CSA_BLOCK_WORDS: usize = x86::popcount::CSA_BLOCK_WORDS;",
+   "class": "kernel-geometry",
+   "read_sites": []
+  },
+  {
    "id": "PRODUCTION_PREFERENCE",
    "package": "gf2-kernels-simd",
    "defined": "crates/gf2-kernels-simd/src/transpose.rs:73",
@@ -1801,10 +1904,10 @@
    "read_sites": [
     "crates/gf2-kernels-simd/src/x86/avx2.rs:181",
     "crates/gf2-kernels-simd/src/x86/avx2.rs:219",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:688",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:718",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:819",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:829"
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:749",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:779",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:885",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:895"
    ]
   },
   {
@@ -1816,9 +1919,9 @@
    "read_sites": [
     "crates/gf2-kernels-simd/src/x86/avx2.rs:222",
     "crates/gf2-kernels-simd/src/x86/avx2.rs:224",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:696",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:705",
-    "crates/gf2-kernels-simd/src/x86/avx2.rs:725"
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:757",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:766",
+    "crates/gf2-kernels-simd/src/x86/avx2.rs:786"
    ]
   },
   {
@@ -1953,7 +2056,9 @@
    "defined": "crates/gf2-kernels-simd/src/x86/popcount.rs:21",
    "definition": "pub const CSA_BLOCK_WORDS: usize = CSA_BLOCK_VECTORS * WORDS_PER_VECTOR;",
    "class": "kernel-geometry",
-   "read_sites": []
+   "read_sites": [
+    "crates/gf2-kernels-simd/src/lib.rs:58"
+   ]
   },
   {
    "id": "N_MAX_MULTIWORD",
@@ -1980,6 +2085,45 @@
    ]
   }
  ],
+ "convergence_exception": {
+  "name": "private-core-selector-constants",
+  "class": "selector",
+  "issue": "817fc47d",
+  "constants": [
+   {
+    "id": "M4RM_DEFAULT_MAX_K",
+    "defined": "crates/gf2-core/src/alg/m4rm.rs:27"
+   },
+   {
+    "id": "DEFAULT_BLOCK_ROWS",
+    "defined": "crates/gf2-core/src/sparse.rs:9"
+   },
+   {
+    "id": "PRODUCTION_PREFERENCE",
+    "defined": "crates/gf2-kernels-simd/src/transpose.rs:73"
+   },
+   {
+    "id": "K_CHUNK_CAP",
+    "defined": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:27"
+   },
+   {
+    "id": "CHUNK_VEC",
+    "defined": "crates/gf2-kernels-simd/src/x86/fp_small.rs:294"
+   },
+   {
+    "id": "K_CHUNK_CAP",
+    "defined": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:25"
+   },
+   {
+    "id": "I_TILE",
+    "defined": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:136"
+   },
+   {
+    "id": "MAX_MATRIX_BYTES_FOR_L1",
+    "defined": "crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:28"
+   }
+  ]
+ },
  "declared_selectors": [
   {
    "id": "popcount-comparator-kernels",
@@ -2092,6 +2236,31 @@
        "qualifies": false
       }
      ]
+    },
+    {
+     "family": "63bad95d-profile-dispatch-overhead",
+     "issue": "63bad95d",
+     "route_contrast_roles": [
+      "exploratory"
+     ],
+     "campaigns": []
+    },
+    {
+     "family": "63bad95d-profile-dispatch-overhead-v2",
+     "issue": "63bad95d",
+     "route_contrast_roles": [
+      "confirmatory",
+      "exploratory",
+      "holdout"
+     ],
+     "campaigns": [
+      {
+       "campaign_id": "63bad95d-r1-profile-dispatch-overhead-v2-confirmation",
+       "label": "confirmation",
+       "verdict": "accepted",
+       "qualifies": true
+      }
+     ]
     }
    ],
    "outcome_documents": [
@@ -2100,13 +2269,14 @@
     "dev/active/1a379447-zen3-cpu-performance/5cbb6545/findings.md",
     "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
     "dev/active/1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md",
-    "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md",
+    "dev/active/1a379447-zen3-cpu-performance/63bad95d/campaign-findings.md"
    ]
   },
   {
    "selector": "bit_matrix.matvec_simd_min_words",
-   "measured_owner_states_it": false,
-   "protocol_evidence": "exploratory",
+   "measured_owner_states_it": true,
+   "protocol_evidence": "confirmatory",
    "families": [
     {
      "family": "2037941f-dense-allocated-matvec",
@@ -2115,11 +2285,29 @@
       "exploratory"
      ],
      "campaigns": []
+    },
+    {
+     "family": "4337c02e-matvec-simd-threshold",
+     "issue": "4337c02e",
+     "route_contrast_roles": [
+      "confirmatory",
+      "exploratory"
+     ],
+     "campaigns": [
+      {
+       "campaign_id": "v4-r1-confirmation-4337c02e-matvec-simd-threshold",
+       "label": "confirmation",
+       "verdict": "rejected",
+       "qualifies": false
+      }
+     ]
     }
    ],
    "outcome_documents": [
     "dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md",
-    "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md"
+    "dev/active/1a379447-zen3-cpu-performance/6e87c436/no-change-outcome.md",
+    "dev/active/1a379447-zen3-cpu-performance/4337c02e/outcome.md",
+    "dev/active/1a379447-zen3-cpu-performance/63bad95d/campaign-findings.md"
    ]
   },
   {
@@ -2128,7 +2316,7 @@
    "protocol_evidence": "none",
    "families": [],
    "outcome_documents": [
-    "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
    ]
   },
   {
@@ -2137,7 +2325,7 @@
    "protocol_evidence": "none",
    "families": [],
    "outcome_documents": [
-    "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
    ]
   },
   {
@@ -2146,7 +2334,7 @@
    "protocol_evidence": "none",
    "families": [],
    "outcome_documents": [
-    "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
    ]
   },
   {
@@ -2486,6 +2674,68 @@
     "conservative-portable",
     "external",
     "native"
+   ]
+  },
+  {
+   "family": "8e53235b-bch-codeword-assembly",
+   "issue": "8e53235b",
+   "track": "coding-consumer",
+   "campaigns": [
+    {
+     "campaign_id": "8e53235b-r1-codeword-assembly-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": true
+    },
+    {
+     "campaign_id": "8e53235b-r1-codeword-assembly-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 5,
+    "exploratory/route-contrast": 5
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "current/PolyRemainderScalar",
+     "candidate": "current/PolyRemainderScalar/word-wise"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "family-pinned/BitsliceInterleaved",
+     "candidate": "family-pinned/BitsliceInterleaved/word-wise"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "family-pinned/ClmulFold",
+     "candidate": "family-pinned/ClmulFold/word-wise"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "current/PolyRemainderScalar",
+     "candidate": "current/PolyRemainderScalar/word-wise"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "family-pinned/BitsliceInterleaved",
+     "candidate": "family-pinned/BitsliceInterleaved/word-wise"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "family-pinned/ClmulFold",
+     "candidate": "family-pinned/ClmulFold/word-wise"
+    }
+   ],
+   "builds": [
+    "conservative-portable"
    ]
   },
   {
@@ -4350,6 +4600,388 @@
    ]
   },
   {
+   "family": "63bad95d-native-ladder",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "63bad95d-r1-native-ladder-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "63bad95d-r1-native-ladder-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 6,
+    "exploratory/route-contrast": 6
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    }
+   ],
+   "builds": [
+    "native",
+    "tuned-portable"
+   ]
+  },
+  {
+   "family": "63bad95d-native-ladder-v2",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "63bad95d-r1-native-ladder-v2-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": true
+    },
+    {
+     "campaign_id": "63bad95d-r1-native-ladder-v2-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 6,
+    "exploratory/route-contrast": 6
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/BitMatrix::transpose+release/rows=8192/cols=2048/route=MacroTiled { macro_tile_blocks: 8 }/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    }
+   ],
+   "builds": [
+    "native",
+    "tuned-portable"
+   ]
+  },
+  {
+   "family": "63bad95d-native-matvec-vs-m4ri",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "v4-r1-63bad95d-native-matvec-vs-m4ri",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "v4-r2-63bad95d-native-matvec-vs-m4ri",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "v4-r2-confirmation-63bad95d-native-matvec-vs-m4ri",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/external-comparator": 6,
+    "exploratory/external-comparator": 12
+   },
+   "contrast_roles": [],
+   "contrasted_routes": [],
+   "builds": [
+    "external",
+    "native"
+   ]
+  },
+  {
+   "family": "63bad95d-portable-matvec-vs-m4ri",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "v4-r1-63bad95d-portable-matvec-vs-m4ri",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "v4-r1-confirmation-63bad95d-portable-matvec-vs-m4ri",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "v4-r2-63bad95d-portable-matvec-vs-m4ri",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/external-comparator": 6,
+    "exploratory/external-comparator": 12
+   },
+   "contrast_roles": [],
+   "contrasted_routes": [],
+   "builds": [
+    "conservative-portable",
+    "external"
+   ]
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "63bad95d-r1-profile-dispatch-overhead-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "63bad95d-r2-profile-dispatch-overhead-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "exploratory/route-contrast": 6
+   },
+   "contrast_roles": [
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=7/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=7/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=4/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=4/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    }
+   ],
+   "builds": [
+    "conservative-portable",
+    "tuned-portable"
+   ]
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead-v2",
+   "issue": "63bad95d",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "63bad95d-r1-profile-dispatch-overhead-v2-confirmation",
+     "label": "confirmation",
+     "verdict": "accepted",
+     "qualifies": true
+    },
+    {
+     "campaign_id": "63bad95d-r1-profile-dispatch-overhead-v2-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "confirmatory/route-contrast": 3,
+    "exploratory/route-contrast": 3,
+    "holdout/route-contrast": 3
+   },
+   "contrast_roles": [
+    "confirmatory",
+    "exploratory",
+    "holdout"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=7/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=7/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=4/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=4/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "confirmatory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::and_popcount/w=7/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::and_popcount/w=7/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=4/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=4/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "holdout",
+     "baseline": "gf2-core/kernels::ops::popcount/w=6/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::popcount/w=6/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "holdout",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=3/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=3/backend=scalar/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    },
+    {
+     "role": "holdout",
+     "baseline": "gf2-core/kernels::ops::xor_inplace/w=5/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+     "candidate": "gf2-core/kernels::ops::xor_inplace/w=5/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085"
+    }
+   ],
+   "builds": [
+    "conservative-portable",
+    "tuned-portable"
+   ]
+  },
+  {
    "family": "2037941f-logical-isal-base-gap",
    "issue": "65c0e13d",
    "track": "core-kernel",
@@ -4670,6 +5302,114 @@
    ]
   },
   {
+   "family": "7dbe1393-matvec-ragged-tail",
+   "issue": "7dbe1393",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "v4-r1-7dbe1393-matvec-ragged-tail",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "exploratory/route-contrast": 6
+   },
+   "contrast_roles": [
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=10w/shape=full/rows=1024/cols=640/base%64=0/retain=289262/banks=1x82000B/working-set=82000B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=10w/shape=full/rows=1024/cols=640/base%64=0/retain=289262/banks=1x82000B/working-set=82000B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=62w/shape=full/rows=1024/cols=3968/base%64=16/retain=289262/banks=1x508400B/working-set=508400B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=62w/shape=full/rows=1024/cols=3968/base%64=16/retain=289262/banks=1x508400B/working-set=508400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+    }
+   ],
+   "builds": [
+    "conservative-portable"
+   ]
+  },
+  {
+   "family": "7dbe1393-matvec-ragged-tail-v2",
+   "issue": "7dbe1393",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "v4-r1-7dbe1393-matvec-ragged-tail-v2",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "exploratory/route-contrast": 6
+   },
+   "contrast_roles": [
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=10w/shape=full/rows=1024/cols=640/base%64=0/retain=289262/banks=1x82000B/working-set=82000B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=10w/shape=full/rows=1024/cols=640/base%64=0/retain=289262/banks=1x82000B/working-set=82000B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=32w/shape=full/rows=1024/cols=2048/base%64=16/retain=289262/banks=1x262400B/working-set=262400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=62w/shape=full/rows=1024/cols=3968/base%64=16/retain=289262/banks=1x508400B/working-set=508400B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=62w/shape=full/rows=1024/cols=3968/base%64=16/retain=289262/banks=1x508400B/working-set=508400B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=63w/shape=full/rows=1024/cols=4032/base%64=16/retain=289262/banks=1x516600B/working-set=516600B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=66w/shape=full/rows=1024/cols=4224/base%64=16/retain=289262/banks=1x541200B/working-set=541200B"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "gf2-core/BitMatrix::matvec/simd-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B",
+     "candidate": "gf2-core/BitMatrix::matvec/parity-kernel-lane/stride=9w/shape=full/rows=1024/cols=576/base%64=0/retain=289262/banks=1x73800B/working-set=73800B"
+    }
+   ],
+   "builds": [
+    "conservative-portable"
+   ]
+  },
+  {
    "family": "bitvec-residual-shift-profile",
    "issue": "85fc5ff4",
    "track": "core-kernel",
@@ -4856,6 +5596,56 @@
      "role": "exploratory",
      "baseline": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=current",
      "candidate": "gf2-core/gemm<Fp<7>>/n=32/route=ByteLaneBaseline/entry-form=checked"
+    }
+   ],
+   "builds": [
+    "conservative-portable"
+   ]
+  },
+  {
+   "family": "sparse-product-check-cost",
+   "issue": "bfc2ceab",
+   "track": "core-kernel",
+   "campaigns": [
+    {
+     "campaign_id": "bfc2ceab-r1-spmm-check-pilot",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    },
+    {
+     "campaign_id": "bfc2ceab-r1-spmm-check-pilot2",
+     "label": "pilot",
+     "verdict": "accepted",
+     "qualifies": false
+    }
+   ],
+   "contrast_cells": {
+    "exploratory/route-contrast": 8
+   },
+   "contrast_roles": [
+    "exploratory"
+   ],
+   "contrasted_routes": [
+    {
+     "role": "exploratory",
+     "baseline": "sparse product Fp<65521>/rows=1024/nnz=8163/dense-cols=1024/form=unchecked",
+     "candidate": "sparse product Fp<65521>/rows=1024/nnz=8163/dense-cols=1024/form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "sparse product Fp<65521>/rows=1024/nnz=8167/dense-cols=16/form=unchecked",
+     "candidate": "sparse product Fp<65521>/rows=1024/nnz=8167/dense-cols=16/form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "sparse product Fp<7>/rows=1024/nnz=8152/dense-cols=16/form=unchecked",
+     "candidate": "sparse product Fp<7>/rows=1024/nnz=8152/dense-cols=16/form=checked"
+    },
+    {
+     "role": "exploratory",
+     "baseline": "sparse product Fp<7>/rows=1024/nnz=8158/dense-cols=1024/form=unchecked",
+     "candidate": "sparse product Fp<7>/rows=1024/nnz=8158/dense-cols=1024/form=checked"
     }
    ],
    "builds": [
@@ -5718,6 +6508,6 @@
  ],
  "workload_routes": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
-  "sha256": "de7e9401d735c116e5ce5995119063bc88dc386c282a6a4dc59cd7e84285d3ba"
+  "sha256": "10ca83a9da6364551101db19fd131a440a5fcad73335a58306a10046ebd37ad8"
  }
 }

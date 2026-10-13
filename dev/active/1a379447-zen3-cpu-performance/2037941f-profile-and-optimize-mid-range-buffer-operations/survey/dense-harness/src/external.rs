@@ -7,10 +7,88 @@
 //! mappings, hashes the object it actually loaded, and refuses a timed run
 //! whose object is not the one the qualification record pins.
 
-use crate::cells::M4riShape;
+use crate::campaign::{M4RI_ARM, M4RI_PORTABLE_ARM};
+use crate::cells::{M4riShape, Question, PORTABLE_BUILD_RECORD, QUALIFICATION_RECORD};
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 use tuning_campaign_support::protocol::sha256_hex;
+
+/// Targeting level of the external build a comparator arm links.
+///
+/// The library and the C shim of one arm share a level: `build.rs` compiles
+/// the shim for the host only against the host-targeted install.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ComparatorBuild {
+    /// The qualified install, compiled with `-march=native`.
+    Host,
+    /// The same source, compiler and configuration without a targeting flag.
+    Portable,
+}
+
+impl ComparatorBuild {
+    /// Every level.
+    pub const ALL: [Self; 2] = [Self::Host, Self::Portable];
+
+    /// The value of `GF2_M4RI_LEVEL` that selects this level in `build.rs`.
+    pub fn id(self) -> &'static str {
+        match self {
+            Self::Host => "host",
+            Self::Portable => "portable",
+        }
+    }
+
+    /// Resolves a `GF2_M4RI_LEVEL` value.
+    pub fn parse(id: &str) -> Result<Self, String> {
+        Self::ALL
+            .into_iter()
+            .find(|level| level.id() == id)
+            .ok_or_else(|| format!("{id:?} is no comparator build level"))
+    }
+
+    /// The plan name of the arm linked at this level.
+    pub fn arm(self) -> &'static str {
+        match self {
+            Self::Host => M4RI_ARM,
+            Self::Portable => M4RI_PORTABLE_ARM,
+        }
+    }
+
+    /// The level whose arm carries the plan name `arm`.
+    pub fn of_arm(arm: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|level| level.arm() == arm)
+    }
+
+    /// Repository-relative path of the committed record that pins this
+    /// level's installed library digest.
+    pub fn record(self) -> &'static str {
+        match self {
+            Self::Host => QUALIFICATION_RECORD,
+            Self::Portable => PORTABLE_BUILD_RECORD,
+        }
+    }
+
+    /// The build flags a plan records for this level's arm.
+    pub fn flags(self) -> &'static str {
+        match self {
+            Self::Host => {
+                "C -O3 -march=native -fPIC library build; Rust glue without a target-cpu override"
+            }
+            Self::Portable => {
+                "C -O3 -fPIC library build; Rust glue without a target-cpu override"
+            }
+        }
+    }
+
+    /// The level of the comparator arm `question`'s cells run against, or
+    /// `None` for a question without an external arm.
+    pub fn of_question(question: Question) -> Option<Self> {
+        match question {
+            Question::MatvecVsM4ri | Question::NativeMatvecVsM4ri => Some(Self::Host),
+            Question::PortableMatvecVsM4ri => Some(Self::Portable),
+            _ => None,
+        }
+    }
+}
 
 /// This process's mapping table.
 const SELF_MAPS: &str = "/proc/self/maps";

@@ -10,17 +10,20 @@
 //! M4RI is linked dynamically, as the executed qualification linked it, so the
 //! arm's own digest does not pin the library the loader resolves. Every entry
 //! point below therefore reads this process's mappings, hashes the object it
-//! loaded, and refuses unless that digest is the one the qualification record
+//! loaded, and refuses unless that digest is the one the linked level's record
 //! pins; the identity it observed travels in the provenance it reports.
 //!
-//! `--backend` reports the linked entry point, the qualified shapes and that
-//! identity. `--oracle` runs the comparator's semantic cases against the gf2
+//! One executable links one build level of M4RI, the one `GF2_M4RI_LEVEL`
+//! named to `build.rs`, and serves only the plan arm of that level.
+//!
+//! `--backend` reports the linked entry point, the qualified shapes, the
+//! linked level, the shim's compile command and that identity. `--oracle` runs the comparator's semantic cases against the gf2
 //! peer. With no argument the executable is a child-v2 campaign arm.
 
 use dense_parity_harness::cells::{
-    Cache, Workload, COMPARATOR_LIBRARY_STEM, M4RI_SHAPES, QUALIFICATION_RECORD,
+    family_cells, Cache, M4riShape, Question, Workload, COMPARATOR_LIBRARY_STEM, M4RI_SHAPES,
 };
-use dense_parity_harness::external::{self, LibraryIdentity};
+use dense_parity_harness::external::{self, ComparatorBuild, LibraryIdentity};
 use dense_parity_harness::fixture::MatvecBanks;
 use dense_parity_harness::oracle::OracleCase;
 use dense_parity_harness::routes::{observe_output, run_windows, WindowPlan};
@@ -116,19 +119,24 @@ impl Drop for RetainedState {
     }
 }
 
-/// The loaded M4RI object, refused unless it is the qualified one.
+/// The M4RI build level this executable links.
+fn linked() -> Result<ComparatorBuild, String> {
+    ComparatorBuild::parse(env!("GF2_M4RI_LEVEL"))
+}
+
+/// The loaded M4RI object, refused unless it is the linked level's install.
 ///
-/// `build.rs` reads the pinned digest from the qualification record and passes
-/// it here, so no prior figure is typed in this source.
+/// `build.rs` reads the pinned digest from that level's record and passes it
+/// here, so no prior figure is typed in this source.
 fn qualified() -> Result<LibraryIdentity, String> {
     external::qualified_library(
         COMPARATOR_LIBRARY_STEM,
         env!("GF2_M4RI_PINNED_SHA256"),
-        QUALIFICATION_RECORD,
+        linked()?.record(),
     )
 }
 
-fn backend_record(library: &LibraryIdentity) -> String {
+fn backend_record(level: ComparatorBuild, library: &LibraryIdentity) -> String {
     let shapes = M4RI_SHAPES
         .iter()
         .map(|shape| format!("{}x{}", shape.rows, shape.cols))
@@ -138,94 +146,117 @@ fn backend_record(library: &LibraryIdentity) -> String {
         "{{\"library\":\"m4ri\",\"entrypoint\":\"mzd_mul\",\"matched_operation\":\
          \"mzd_mul(y, A, x, 0)\",\"coordinates\":\"mzd_write_bit/mzd_read_bit\",\
          \"qualified_shapes\":\"{shapes}\",\"comparator\":\"{}\",\
+         \"build_level\":\"{}\",\"build_record\":\"{}\",\"shim_command\":\"{}\",\
          \"loaded_library\":\"{}\",\"loaded_sha256\":\"{}\"}}",
         dense_parity_harness::cells::COMPARATOR_PATH,
+        level.id(),
+        level.record(),
+        env!("GF2_M4RI_SHIM_COMMAND"),
         library.path,
         library.sha256
     )
 }
 
-/// The comparator's semantic cases against the gf2 peer.
-fn oracle() -> Result<Vec<OracleCase>, String> {
+/// The comparator's semantic cases against the gf2 peer: every qualified
+/// shape, then the own fixture of each mirroring cell the linked level serves.
+fn oracle(level: ComparatorBuild) -> Result<Vec<OracleCase>, String> {
     let mut report = Vec::new();
     for shape in M4RI_SHAPES {
         let name = format!("m4ri-{}x{}", shape.rows, shape.cols);
         let seed = dense_parity_harness::cells::CAMPAIGN_SEED ^ ((shape.cols as u64) << 24);
-        let banks = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, seed);
-        let item = banks.item(0, 0);
-        let rows_words = row_major_words(&item.matrix);
-        let x_words = item.vector.words().to_vec();
-        let mut checks = 0;
-
-        // The shim sets bits into a zeroed buffer, so every set word it
-        // leaves behind came from an `mzd_read_bit` of the product.
-        let mut y_words = vec![0_u64; shape.rows.div_ceil(64)];
-        // SAFETY: as `fresh_operation`.
-        let status = unsafe {
-            gf2_m4ri_fresh_call(
-                rows_words.as_ptr(),
-                x_words.as_ptr(),
-                shape.rows as i32,
-                shape.cols as i32,
-                y_words.as_mut_ptr(),
-            )
-        };
-        if status != 0 {
-            return Err(format!("FAIL {name}: gf2_m4ri_fresh_call returned {status}"));
+        report.push(oracle_case(name, shape, seed)?);
+    }
+    let served = Question::MIRRORS
+        .into_iter()
+        .filter(|(question, _)| ComparatorBuild::of_question(*question) == Some(level))
+        .flat_map(|(question, _)| family_cells(question));
+    for cell in served {
+        if let Workload::M4riGap { shape, .. } = cell.workload {
+            report.push(oracle_case(format!("m4ri-cell-{}", cell.cell_id), shape, cell.seed)?);
         }
-        checks += 1;
-
-        let peer = item.matrix.matvec(&item.vector);
-        let external = BitVec::from_words(y_words.clone(), shape.rows);
-        for row in 0..shape.rows {
-            if external.get(row) != peer.get(row) {
-                return Err(format!("FAIL {name}: row {row} differs from the gf2 peer"));
-            }
-            checks += 1;
-        }
-        let tail = shape.rows % 64;
-        if tail != 0 && y_words[y_words.len() - 1] >> tail != 0 {
-            return Err(format!("FAIL {name}: the unpacked output carries tail padding"));
-        }
-        checks += 1;
-
-        // The retained arm converts once and still produces the same product.
-        let retained = RetainedState::new(&rows_words, &x_words, shape.rows, shape.cols)
-            .ok_or_else(|| format!("FAIL {name}: retained conversion failed"))?;
-        let first = retained
-            .call()
-            .ok_or_else(|| format!("FAIL {name}: the retained call failed"))?;
-        let second = retained
-            .call()
-            .ok_or_else(|| format!("FAIL {name}: the retained call failed twice"))?;
-        if first != second || first != observe_output(&peer) {
-            return Err(format!("FAIL {name}: the retained arm differs from the gf2 peer"));
-        }
-        checks += 2;
-
-        let fresh = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, seed);
-        if row_major_words(&fresh.item(0, 0).matrix) != rows_words
-            || fresh.item(0, 0).vector.words() != x_words
-        {
-            return Err(format!("FAIL {name}: an input changed"));
-        }
-        checks += 2;
-        report.push(OracleCase { name, checks });
     }
     Ok(report)
+}
+
+/// Checks the fresh and the retained product of one fixture against the peer.
+fn oracle_case(name: String, shape: M4riShape, seed: u64) -> Result<OracleCase, String> {
+    let banks = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, seed);
+    let item = banks.item(0, 0);
+    let rows_words = row_major_words(&item.matrix);
+    let x_words = item.vector.words().to_vec();
+    let mut checks = 0;
+
+    // The shim sets bits into a zeroed buffer, so every set word it
+    // leaves behind came from an `mzd_read_bit` of the product.
+    let mut y_words = vec![0_u64; shape.rows.div_ceil(64)];
+    // SAFETY: as `fresh_operation`.
+    let status = unsafe {
+        gf2_m4ri_fresh_call(
+            rows_words.as_ptr(),
+            x_words.as_ptr(),
+            shape.rows as i32,
+            shape.cols as i32,
+            y_words.as_mut_ptr(),
+        )
+    };
+    if status != 0 {
+        return Err(format!("FAIL {name}: gf2_m4ri_fresh_call returned {status}"));
+    }
+    checks += 1;
+
+    let peer = item.matrix.matvec(&item.vector);
+    let external = BitVec::from_words(y_words.clone(), shape.rows);
+    for row in 0..shape.rows {
+        if external.get(row) != peer.get(row) {
+            return Err(format!("FAIL {name}: row {row} differs from the gf2 peer"));
+        }
+        checks += 1;
+    }
+    let tail = shape.rows % 64;
+    if tail != 0 && y_words[y_words.len() - 1] >> tail != 0 {
+        return Err(format!("FAIL {name}: the unpacked output carries tail padding"));
+    }
+    checks += 1;
+
+    // The retained arm converts once and still produces the same product.
+    let retained = RetainedState::new(&rows_words, &x_words, shape.rows, shape.cols)
+        .ok_or_else(|| format!("FAIL {name}: retained conversion failed"))?;
+    let first = retained
+        .call()
+        .ok_or_else(|| format!("FAIL {name}: the retained call failed"))?;
+    let second = retained
+        .call()
+        .ok_or_else(|| format!("FAIL {name}: the retained call failed twice"))?;
+    if first != second || first != observe_output(&peer) {
+        return Err(format!("FAIL {name}: the retained arm differs from the gf2 peer"));
+    }
+    checks += 2;
+
+    let fresh = MatvecBanks::build(shape.rows, shape.cols, Cache::Warm, seed);
+    if row_major_words(&fresh.item(0, 0).matrix) != rows_words
+        || fresh.item(0, 0).vector.words() != x_words
+    {
+        return Err(format!("FAIL {name}: an input changed"));
+    }
+    checks += 2;
+    Ok(OracleCase { name, checks })
 }
 
 fn main() {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let outcome = match arguments.as_slice() {
         [] => run(),
-        [flag] if flag == "--backend" => qualified().map(|library| {
-            println!("{}", backend_record(&library));
+        [flag] if flag == "--backend" => linked().and_then(|level| {
+            let library = qualified()?;
+            println!("{}", backend_record(level, &library));
+            Ok(())
         }),
-        [flag] if flag == "--oracle" => qualified().and_then(|_| oracle()).map(|report| {
-            for case in report {
+        [flag] if flag == "--oracle" => linked().and_then(|level| {
+            qualified()?;
+            for case in oracle(level)? {
                 println!("{case}");
             }
+            Ok(())
         }),
         _ => Err("usage: dense-m4ri-arm [--backend | --oracle]".to_owned()),
     };
@@ -250,6 +281,15 @@ fn run() -> Result<(), String> {
             "every comparator cell declares the warm cache state; {} declares {}",
             request.cell_id,
             cache.id()
+        ));
+    }
+    let level = linked()?;
+    if request.arm != level.arm() {
+        return Err(format!(
+            "this executable links the {} M4RI build and serves {}, not {}",
+            level.id(),
+            level.arm(),
+            request.arm
         ));
     }
     let library = qualified()?;

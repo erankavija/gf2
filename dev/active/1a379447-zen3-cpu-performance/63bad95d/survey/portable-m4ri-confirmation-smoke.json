@@ -1,0 +1,167 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "v4-r1-confirmation-63bad95d-portable-matvec-vs-m4ri",
+  "issue": "63bad95d",
+  "family": "63bad95d-portable-matvec-vs-m4ri",
+  "plan_sha256": "5af9380b564befcc7eb2287f26561085bc6b986dffad29083cd5987edccf0944",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/portable-matvec-vs-m4ri-confirmation.json",
+  "addendum_sha256": "b760839e3549031fc3dbe50b1edeef61d25e9fc96bcbdd8fca0b328763e33a84",
+  "cells": [
+    {
+      "cell_id": "portable-m4ri-gap-65x512-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "011e2a4857fa8ebca7d6244b4c26383ee45611f43fdcdea9733fbf4d20d33c80",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul-portable",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-portable-arm/release/dense-m4ri-arm",
+          "executable_sha256": "6e5e0e739f132db8a3d14a2cef2fbef5afcd453a60fa2d2ce891dea9cd72646a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1/lib/libm4ri.so.2.0.1/sha256=535d54b0a8becd450a85718cd85f5bbce96446e8e5a22533de920f932efefb81",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "portable-m4ri-gap-65x4096-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "011e2a4857fa8ebca7d6244b4c26383ee45611f43fdcdea9733fbf4d20d33c80",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul-portable",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-portable-arm/release/dense-m4ri-arm",
+          "executable_sha256": "6e5e0e739f132db8a3d14a2cef2fbef5afcd453a60fa2d2ce891dea9cd72646a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1/lib/libm4ri.so.2.0.1/sha256=535d54b0a8becd450a85718cd85f5bbce96446e8e5a22533de920f932efefb81",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "portable-m4ri-gap-65x512-retained-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "011e2a4857fa8ebca7d6244b4c26383ee45611f43fdcdea9733fbf4d20d33c80",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=8w/rows=65/cols=512/base%64=0/banks=1x4224B/working-set=4224B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul-portable",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-portable-arm/release/dense-m4ri-arm",
+          "executable_sha256": "6e5e0e739f132db8a3d14a2cef2fbef5afcd453a60fa2d2ce891dea9cd72646a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=512/words=8/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1/lib/libm4ri.so.2.0.1/sha256=535d54b0a8becd450a85718cd85f5bbce96446e8e5a22533de920f932efefb81",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "portable-m4ri-gap-65x4096-retained-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "011e2a4857fa8ebca7d6244b4c26383ee45611f43fdcdea9733fbf4d20d33c80",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/simd-lane/stride=64w/rows=65/cols=4096/base%64=0/banks=1x33792B/working-set=33792B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul-portable",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-portable-arm/release/dense-m4ri-arm",
+          "executable_sha256": "6e5e0e739f132db8a3d14a2cef2fbef5afcd453a60fa2d2ce891dea9cd72646a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/retained-state/rows=65/cols=4096/words=64/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1/lib/libm4ri.so.2.0.1/sha256=535d54b0a8becd450a85718cd85f5bbce96446e8e5a22533de920f932efefb81",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "portable-m4ri-gap-1x1-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "011e2a4857fa8ebca7d6244b4c26383ee45611f43fdcdea9733fbf4d20d33c80",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=1/cols=1/base%64=0/banks=1x16B/working-set=16B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul-portable",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-portable-arm/release/dense-m4ri-arm",
+          "executable_sha256": "6e5e0e739f132db8a3d14a2cef2fbef5afcd453a60fa2d2ce891dea9cd72646a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=1/cols=1/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1/lib/libm4ri.so.2.0.1/sha256=535d54b0a8becd450a85718cd85f5bbce96446e8e5a22533de920f932efefb81",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "portable-m4ri-gap-64x64-warm",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "m4ri-peer-gf2",
+          "role": "validation",
+          "executable": "target/e1f9a78f-arms/release/dense-arm",
+          "executable_sha256": "011e2a4857fa8ebca7d6244b4c26383ee45611f43fdcdea9733fbf4d20d33c80",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/scalar-lane/stride=1w/rows=64/cols=64/base%64=0/banks=1x520B/working-set=520B",
+          "windows": 0
+        },
+        {
+          "arm": "m4ri-mzd-mul-portable",
+          "role": "validation",
+          "executable": "target/e1f9a78f-m4ri-portable-arm/release/dense-m4ri-arm",
+          "executable_sha256": "6e5e0e739f132db8a3d14a2cef2fbef5afcd453a60fa2d2ce891dea9cd72646a",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "m4ri/mzd_mul(y,A,x,0)/fresh-whole-consumer/rows=64/cols=64/words=1/coordinates=mzd_write_bit+mzd_read_bit/loaded=/home/vkaskivuo/Projects/gf2/.agents/ext/92385645/prefix-portable-v1/lib/libm4ri.so.2.0.1/sha256=535d54b0a8becd450a85718cd85f5bbce96446e8e5a22533de920f932efefb81",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
