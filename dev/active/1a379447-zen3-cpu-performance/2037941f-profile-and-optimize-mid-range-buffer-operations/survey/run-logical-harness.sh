@@ -92,7 +92,7 @@ cmd_build() {
     # has succeeded.
     mkdir -p "${GF2_TARGET}"
     stage="$(mktemp -d "${GF2_TARGET}/build-stage.XXXXXX")"
-    trap 'rm -rf "${stage}"' EXIT
+    trap "rm -rf '${stage}'" EXIT
     build_gf2
     # The survey harness is its own workspace, so the repository CI contract
     # never reaches it: this command is the only thing that runs its contract.
