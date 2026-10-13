@@ -10707,7 +10707,10 @@ mod campaign_owner {
             &request.manifest_sha256,
             true,
         )?;
-        if request.measurement.identity != request.assembly.identity
+        if !request
+            .measurement
+            .identity
+            .resume_equivalent(&request.assembly.identity)
             || request.measurement.process != request.assembly.process
             || request.measurement.identity.protocol_digest
                 != input.request.protocol_sha256.as_str()
@@ -11482,8 +11485,9 @@ mod campaign_owner {
             (stage_scratch, emit)
         }
         #[test]
-        fn owner_emission_refuses_by_digest_and_publishes_from_a_dirty_checkout() {
-            let (_stage, emit) = owner_emit_request(true);
+        fn owner_emission_refuses_by_digest_and_ignores_the_checkout_state() {
+            let (_stage, mut emit) = owner_emit_request(true);
+            emit.assembly.identity.source_revision = "1".repeat(40);
             let mut changed = emit.clone();
             for provenance in [&mut changed.measurement, &mut changed.assembly] {
                 provenance
@@ -11516,6 +11520,7 @@ mod campaign_owner {
                 }
             ));
             assert!(reopened.assembly.source_dirty);
+            assert_eq!(reopened.assembly.source_revision.as_str(), "1".repeat(40));
         }
         #[test]
         fn reporting_preflight_rejects_a_default_missing_from_an_extent_grid() {

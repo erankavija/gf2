@@ -1080,7 +1080,7 @@ fn validate_observed_provenance(
         .case
         .decode()
         .map_err(|error| error.to_string())?;
-    if measurement.identity != assembly.identity
+    if !measurement.identity.resume_equivalent(&assembly.identity)
         || measurement.process.as_str() != PROCESS
         || assembly.process.as_str() != PROCESS
         || measurement.identity.feature_contract != FEATURE_CONTRACT
@@ -2033,6 +2033,14 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[test]
+    fn owner_emission_accepts_provenance_that_differs_in_revision_only() {
+        owner_emission("emit-revision", false, |request| {
+            request.assembly.identity.source_revision = "1".repeat(40);
+        })
+        .unwrap();
     }
 
     #[test]
