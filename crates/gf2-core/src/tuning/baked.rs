@@ -11,14 +11,15 @@
 )]
 
 /// `bit_backend.simd_min_words`, from the calibration receipt
-/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
+/// `dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md`
 /// and the measured core owner
-/// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
-/// with SHA-256 `8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa`.
-pub(crate) const SIMD_MIN_WORDS: usize = 8;
+/// `crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json`
+/// with SHA-256 `1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33`.
+pub(crate) const SIMD_MIN_WORDS: usize = 4;
 
 /// `bit_matrix.matvec_simd_min_words`, mirroring
-/// `crate::matrix::MATVEC_SIMD_MIN_WORDS`: the core section's conservative
+/// `crate::matrix::MATVEC_SIMD_MIN_WORDS`, from the receipt cited at
+/// [`SIMD_MIN_WORDS`]: its non-monotone lane sweep keeps the conservative
 /// value.
 pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
 
@@ -58,7 +59,7 @@ mod tests {
     use sha2::{Digest, Sha256};
 
     const MEASURED_FORMAT2: &[u8] =
-        include_bytes!("../../data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json");
+        include_bytes!("../../data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json");
 
     #[test]
     fn default_constant_matches_conservative_table() {
@@ -72,7 +73,7 @@ mod tests {
     fn current_measured_owner_has_the_pinned_content_hash() {
         assert_eq!(
             format!("{:x}", Sha256::digest(MEASURED_FORMAT2)),
-            "8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa"
+            "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33"
         );
     }
 
@@ -122,18 +123,19 @@ mod tests {
         );
     }
 
-    fn assert_matches_conservative(baked: u64, conservative_default: u64) {
-        assert_eq!(baked, conservative_default);
+    #[cfg(feature = "tuning-profile")]
+    #[test]
+    fn baked_matvec_threshold_matches_the_strict_measured_owner() {
+        assert_eq!(
+            MATVEC_SIMD_MIN_WORDS,
+            measured_owner_section()
+                .bit_matrix()
+                .matvec_simd_min_words()
+        );
     }
 
-    #[test]
-    fn matvec_simd_min_words_matches_conservative_section() {
-        assert_matches_conservative(
-            MATVEC_SIMD_MIN_WORDS as u64,
-            CoreTuning::CONSERVATIVE
-                .bit_matrix()
-                .matvec_simd_min_words() as u64,
-        );
+    fn assert_matches_conservative(baked: u64, conservative_default: u64) {
+        assert_eq!(baked, conservative_default);
     }
 
     #[test]

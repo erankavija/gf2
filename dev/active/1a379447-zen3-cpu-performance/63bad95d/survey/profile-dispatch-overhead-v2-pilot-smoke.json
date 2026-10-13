@@ -1,0 +1,89 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "63bad95d-profile-dispatch-overhead-v2-pilot-arms-smoke",
+  "issue": "63bad95d",
+  "family": "63bad95d-profile-dispatch-overhead-v2",
+  "plan_sha256": "f7026b9e4be3abd8815788a7bfc0d98f95ef45d9be7f9a366f45273232b90233",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-profile-dispatch-overhead-v2-pilot.json",
+  "addendum_sha256": "ac676b2413bd4a6a079ca70f5dcbe10e467a7b89d64a388cc5a12b7b930ead3c",
+  "cells": [
+    {
+      "cell_id": "xor-inplace-4w",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "conservative-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-conservative-portable/release/profile-arm",
+          "executable_sha256": "bc11c2960584183e3dc12cd0ec04bcf99f0313050f82a06b4f246cd8d6d3192b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=4/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+          "windows": 0
+        },
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=4/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "and-popcount-7w",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "conservative-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-conservative-portable/release/profile-arm",
+          "executable_sha256": "bc11c2960584183e3dc12cd0ec04bcf99f0313050f82a06b4f246cd8d6d3192b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::and_popcount/w=7/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+          "windows": 0
+        },
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::and_popcount/w=7/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-inplace-8w",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "conservative-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-conservative-portable/release/profile-arm",
+          "executable_sha256": "bc11c2960584183e3dc12cd0ec04bcf99f0313050f82a06b4f246cd8d6d3192b",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+          "windows": 0
+        },
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/63bad95d-arm-tuned-portable/release/profile-arm",
+          "executable_sha256": "939187ed1691b82ec7a4985c8c13409e2170b2eb1cdae194532ad92c1a054e77",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=8/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}

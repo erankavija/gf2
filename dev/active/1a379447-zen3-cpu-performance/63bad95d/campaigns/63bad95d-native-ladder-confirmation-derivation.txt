@@ -1,0 +1,45 @@
+pilot receipt  dev/bench_results/63bad95d/63bad95d-native-ladder/r1-pilot/receipt.json
+receipt sha256 64d235e6b11ab384158cee74004baca4be90e379dccf3ef0dba8d9612406934d
+campaign       63bad95d-r1-native-ladder-pilot
+verdict        accepted (label pilot)
+family         63bad95d-native-ladder: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+matvec-r1024-24w-native                 12      1.0282      1.0008      1.0323    0.0266
+bitmatrix-transpose-8192x2048-native    12     0.99251     0.98765      1.0089    0.0166
+popcount-1024w-native                   12      1.0268      1.0236       1.041    0.0138
+and-popcount-1024w-native               12      1.0236      1.0211      1.0261    0.0025
+xor-inplace-8w-native                   12     0.99804     0.97819      1.0283    0.0303
+clmul-wide-9w-native                    12      1.0788      1.0202      1.1057    0.0543
+
+widest relative half-width   0.054331
+pilot-alpha floor            0.06
+supplied resolution          0.07
+derivation                   dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-native-ladder-pilot-resolution.txt
+
+# command: cargo run --release --manifest-path dev/active/1a379447-zen3-cpu-performance/eda07788/survey/analysis/Cargo.toml --bin bootstrap-resolution -- dev/bench_results/63bad95d/63bad95d-native-ladder/r1-pilot/receipt.json 0.004166666666666667
+# The confirmation's corrected alpha, 0.05 / (1 * 2) / 6 for six confirmatory cells on attempt 1.
+# receipt sha256 64d235e6b11ab384158cee74004baca4be90e379dccf3ef0dba8d9612406934d
+receipt dev/bench_results/63bad95d/63bad95d-native-ladder/r1-pilot/receipt.json
+campaign 63bad95d-r1-native-ladder-pilot seed 2026100711
+alpha 0.004166666666666667 confidence 0.995833 resamples 10000
+
+cell                                                 estimate    lower    upper  rel_half     shift
+matvec-r1024-24w-native                                1.0282   0.9903   1.0341    0.0369    0.0003
+bitmatrix-transpose-8192x2048-native                   0.9925   0.9826   1.0103    0.0180    0.0008
+popcount-1024w-native                                  1.0268   1.0224   1.0441    0.0168    0.0004
+and-popcount-1024w-native                              1.0236   1.0203   1.0273    0.0036    0.0002
+xor-inplace-8w-native                                  0.9980   0.9734   1.0459    0.0479    0.0000
+clmul-wide-9w-native                                   1.0788   1.0079   1.1100    0.0657    0.0013
+
+widest relative half-width: 0.065686 (clmul-wide-9w-native)
+largest endpoint shift:     0.001269 (clmul-wide-9w-native)
+larger of the two rounded up to two decimals: 0.07
+
+frozen measurement resolution 0.07
+replaced worthwhile_speedup 1.05 -> 1.08
+replaced equivalence_margin 1.05 -> 1.08
+restated the family description for the confirmatory stage
+restated purpose consumer-family -> consumer-family
+margins: equivalence 1.08, material gap None
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-native-ladder-confirmation.json

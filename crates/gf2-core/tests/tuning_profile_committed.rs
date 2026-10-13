@@ -9,7 +9,7 @@ use gf2_core::tuning::{
 
 const CONSERVATIVE_OWNER: &str = include_str!("../data/tuning-profiles/conservative.json");
 const MEASURED_OWNER: &str =
-    include_str!("../data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json");
+    include_str!("../data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json");
 
 fn registry() -> gf2_core::tuning::ProfileRegistry {
     ProfileRegistryBuilder::new()
@@ -71,7 +71,7 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
     let prepared = registry.from_json(MEASURED_OWNER).unwrap();
     assert_eq!(
         prepared.profile_id().as_str(),
-        "gf2-dbd8787d-20261001t230000z-2601601"
+        "gf2-63bad95d-20261006t230547z-2073085"
     );
     assert_eq!(
         prepared.section_ids().collect::<Vec<_>>(),
@@ -90,7 +90,7 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
         } => {
             assert_eq!(
                 source_revision.as_str(),
-                "87b5b733cfe48080df53aff8603574b9e0fc82af"
+                "65f178adc91add5c63b8ffe12dc7d4123dea0b5d"
             );
             assert!(!source_dirty);
             assert_eq!(
@@ -100,18 +100,19 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
             assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
             assert_eq!(
                 binary_sha256.as_str(),
-                "d68a2fc2b36e3e3b2e39e438bbd43f9d39c60e181cb52da1b26a6d84973a27ff"
+                "d1dbabe8f4ea42e3b5b4cdbb54642addc12a1602e93233f859706a1d8e49f256"
             );
             assert_eq!(
                 receipt.as_str(),
-                "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+                "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
             );
         }
         MeasurementProvenance::Inherited => panic!("measured owner is not inherited"),
     }
 
     let section = measured.section;
-    assert_eq!(section.bit_backend().simd_min_words(), 8);
+    assert_eq!(section.bit_backend().simd_min_words(), 4);
+    assert_eq!(section.bit_matrix().matvec_simd_min_words(), 8);
     let polynomial = section.polynomial();
     assert_eq!(polynomial.karatsuba_min_degree(), 31);
     assert_eq!(polynomial.karatsuba_max_out_len(), 128);
@@ -137,7 +138,7 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
     assert_eq!(section.triangular().base_case_max_dim(), 12);
     assert_eq!(section.ple().panel_base_max_cols(), 128);
     assert_eq!(section.ple().blocked_back_sub_min_dim(), 64);
-    assert_eq!(section.ple().scalar_base_max_cols(), 24);
+    assert_eq!(section.ple().scalar_base_max_cols(), 1);
     assert_eq!(section.gemm().axpy_fast_path_min_volume(), 512);
     assert_eq!(section.gemm().winograd_min_dim(), 128);
     assert_eq!(
@@ -149,7 +150,6 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
     let inventory = codec_selector_fields();
     let stated = stated_selector_fields(MEASURED_OWNER);
     let omitted = BTreeSet::from([
-        "bit_matrix.matvec_simd_min_words".to_owned(),
         "charpoly.keller_gehrig_min_dim".to_owned(),
         "ple.panel_byte_lane_max_cols".to_owned(),
         "ple.panel_u16_lane_max_cols".to_owned(),

@@ -87,6 +87,96 @@
    "cells_the_next_attempt_admits": 6
   },
   {
+   "family": "4337c02e-matvec-simd-threshold",
+   "ledger": "dev/bench_results/4337c02e/matvec-simd-threshold-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "63bad95d-native-ladder",
+   "ledger": "dev/bench_results/63bad95d/63bad95d-native-ladder-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "63bad95d-native-ladder-v2",
+   "ledger": "dev/bench_results/63bad95d/63bad95d-native-ladder-v2-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "63bad95d-native-matvec-vs-m4ri",
+   "ledger": "dev/bench_results/63bad95d/native-matvec-vs-m4ri-ledger.jsonl",
+   "entries": 3,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "63bad95d-portable-matvec-vs-m4ri",
+   "ledger": "dev/bench_results/63bad95d/portable-matvec-vs-m4ri-ledger.jsonl",
+   "entries": 3,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead",
+   "ledger": "dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 0,
+   "reserved_comparisons": 0,
+   "next_attempt": 1,
+   "next_attempt_alpha": 0.025,
+   "cells_the_next_attempt_admits": 6
+  },
+  {
+   "family": "63bad95d-profile-dispatch-overhead-v2",
+   "ledger": "dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead-v2-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "7dbe1393-matvec-ragged-tail",
+   "ledger": "dev/bench_results/7dbe1393/matvec-ragged-tail-ledger.jsonl",
+   "entries": 1,
+   "reservations_spending_a_comparison": 0,
+   "reserved_comparisons": 0,
+   "next_attempt": 1,
+   "next_attempt_alpha": 0.025,
+   "cells_the_next_attempt_admits": 6
+  },
+  {
+   "family": "7dbe1393-matvec-ragged-tail-v2",
+   "ledger": "dev/bench_results/7dbe1393/matvec-ragged-tail-v2-ledger.jsonl",
+   "entries": 1,
+   "reservations_spending_a_comparison": 0,
+   "reserved_comparisons": 0,
+   "next_attempt": 1,
+   "next_attempt_alpha": 0.025,
+   "cells_the_next_attempt_admits": 6
+  },
+  {
    "family": "and-popcnt-baselines",
    "ledger": "dev/bench_results/26465e6c/v3-and-popcnt-family-ledger.jsonl",
    "entries": 3,
@@ -148,7 +238,7 @@
   },
   {
    "family": "bitvec-residual-shift-profile",
-   "ledger": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
+   "ledger": "dev/active/1a379447-zen3-cpu-performance/c04dd4ac-zen3-shifts-and-permutations/shift-profile-trial-ledger.jsonl",
    "entries": 1,
    "reservations_spending_a_comparison": 0,
    "reserved_comparisons": 0,
@@ -209,6 +299,16 @@
   {
    "family": "bytefield-consumer-vector",
    "ledger": "dev/bench_results/19513245/vector-family-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 1,
+   "reserved_comparisons": 6,
+   "next_attempt": 2,
+   "next_attempt_alpha": 0.008333333333333333,
+   "cells_the_next_attempt_admits": 0
+  },
+  {
+   "family": "caller-trusted-entry-check-cost",
+   "ledger": "dev/bench_results/bfc2ceab/entry-check-family-ledger.jsonl",
    "entries": 2,
    "reservations_spending_a_comparison": 1,
    "reserved_comparisons": 6,
@@ -317,6 +417,16 @@
    "cells_the_next_attempt_admits": 0
   },
   {
+   "family": "sparse-product-check-cost",
+   "ledger": "dev/bench_results/bfc2ceab/spmm-check-family-ledger.jsonl",
+   "entries": 2,
+   "reservations_spending_a_comparison": 0,
+   "reserved_comparisons": 0,
+   "next_attempt": 1,
+   "next_attempt_alpha": 0.025,
+   "cells_the_next_attempt_admits": 6
+  },
+  {
    "family": "transpose-lane-selection",
    "ledger": "dev/bench_results/1d4fd63d/transpose-lane-selection-family-ledger.jsonl",
    "entries": 3,
@@ -379,12 +489,12 @@
  ],
  "observed_child_seconds": {
   "confirmation": {
-   "children": 11232,
-   "median_seconds": 0.581239195
+   "children": 13248,
+   "median_seconds": 0.5812952524999999
   },
   "pilot": {
-   "children": 17472,
-   "median_seconds": 0.5819699665
+   "children": 21024,
+   "median_seconds": 0.5822907989999999
   },
   "smoke": {
    "children": 144,
@@ -392,22 +502,6 @@
   }
  },
  "planned_families": [
-  {
-   "family": "63bad95d-profile-holdout-matvec",
-   "purpose": "selector-calibration",
-   "non_exploratory_cells": 6,
-   "holdout_cells": 3,
-   "small_input_cells": 0,
-   "attempt": 1,
-   "attempt_alpha": 0.025,
-   "corrected_alpha": 0.004166666666666667,
-   "expected_draws_per_tail": 20.833333333333332,
-   "pilot_cells": 3,
-   "pilot_children": 72,
-   "confirmation_children": 288,
-   "estimated_pilot_minutes": 0.6983639598,
-   "estimated_confirmation_minutes": 2.789948136
-  },
   {
    "family": "63bad95d-profile-dispatch-overhead",
    "purpose": "selector-calibration",
@@ -421,8 +515,8 @@
    "pilot_cells": 3,
    "pilot_children": 72,
    "confirmation_children": 288,
-   "estimated_pilot_minutes": 0.6983639598,
-   "estimated_confirmation_minutes": 2.789948136
+   "estimated_pilot_minutes": 0.6987489587999999,
+   "estimated_confirmation_minutes": 2.790217212
   },
   {
    "family": "63bad95d-native-ladder",
@@ -437,30 +531,46 @@
    "pilot_cells": 6,
    "pilot_children": 144,
    "confirmation_children": 288,
-   "estimated_pilot_minutes": 1.3967279196,
-   "estimated_confirmation_minutes": 2.789948136
+   "estimated_pilot_minutes": 1.3974979175999998,
+   "estimated_confirmation_minutes": 2.790217212
   },
   {
-   "family": "63bad95d-matvec-external-ladder",
-   "purpose": "consumer-family",
-   "non_exploratory_cells": 4,
-   "holdout_cells": 0,
-   "small_input_cells": 0,
+   "family": "63bad95d-profile-dispatch-overhead-v2",
+   "purpose": "selector-calibration",
+   "non_exploratory_cells": 6,
+   "holdout_cells": 3,
+   "small_input_cells": 6,
    "attempt": 1,
    "attempt_alpha": 0.025,
-   "corrected_alpha": 0.00625,
-   "expected_draws_per_tail": 31.25,
-   "pilot_cells": 4,
-   "pilot_children": 96,
-   "confirmation_children": 192,
-   "estimated_pilot_minutes": 0.9311519464,
-   "estimated_confirmation_minutes": 1.8599654239999999
+   "corrected_alpha": 0.004166666666666667,
+   "expected_draws_per_tail": 20.833333333333332,
+   "pilot_cells": 3,
+   "pilot_children": 72,
+   "confirmation_children": 288,
+   "estimated_pilot_minutes": 0.6987489587999999,
+   "estimated_confirmation_minutes": 2.790217212
+  },
+  {
+   "family": "63bad95d-native-ladder-v2",
+   "purpose": "consumer-family",
+   "non_exploratory_cells": 6,
+   "holdout_cells": 0,
+   "small_input_cells": 1,
+   "attempt": 1,
+   "attempt_alpha": 0.025,
+   "corrected_alpha": 0.004166666666666667,
+   "expected_draws_per_tail": 20.833333333333332,
+   "pilot_cells": 6,
+   "pilot_children": 144,
+   "confirmation_children": 288,
+   "estimated_pilot_minutes": 1.3974979175999998,
+   "estimated_confirmation_minutes": 2.790217212
   }
  ],
  "planned_totals": {
-  "non_exploratory_cells": 22,
-  "estimated_pilot_minutes": 3.7246077856,
-  "estimated_confirmation_minutes": 10.229809832
+  "non_exploratory_cells": 24,
+  "estimated_pilot_minutes": 4.192493752799999,
+  "estimated_confirmation_minutes": 11.160868848
  },
  "offline_tuning_campaign": {
   "matvec_sweep_stride_words": [

@@ -115,22 +115,21 @@ profile: each arm calls its lane directly (`calibration-matvec-field`,
 - **Declaration.** [`campaign-declaration.json`](campaign-declaration.json)
   names `63bad95d`; `survey/make-producing-build-inputs.py` writes its
   producing manifest (`calibration-launcher-declaration`).
-- **Baked constant.** After publication, `tuning::baked::MATVEC_SIMD_MIN_WORDS`
-  mirrors the measured owner, the unit test that holds it at the conservative
-  value (`baked-matvec-conservative-test`) becomes a measured-owner match, and
-  the baked route witness follows. The conservative constant does not change.
+- **Baked constant.** `tuning::baked::MATVEC_SIMD_MIN_WORDS` mirrors the
+  measured owner, held by a measured-owner unit test
+  (`baked-matvec-owner-test`). The conservative constant does not change.
 
 ## 4. Relation to the protocol confirmation
 
 The sweep and the confirmation of `4337c02e` are separate measurements of one
-boundary. The baked threshold changes only when the two agree: every stride
-the confirmation records as improved for the scalar lane lies below the
-owner's threshold, and no stride it records for the SIMD lane lies below it.
-A disagreement keeps the conservative value and both records are committed.
+boundary. The baked threshold would differ from the conservative value only
+if the two agreed: every stride the confirmation records as improved for the
+scalar lane below the owner's threshold, and no stride it records for the
+SIMD lane below it.
 
-## 5. Order of work
-
-1. One queue line runs the full core campaign; it reads no result of
-   `4337c02e` and can run before or after that confirmation.
-2. The baked constant and its witnesses follow the campaign and the
-   confirmation of `4337c02e`, under the rule of §4.
+Neither condition is met. The confirmation receipt of `4337c02e` is rejected
+by acceptance and installs no value
+(`dev/active/1a379447-zen3-cpu-performance/4337c02e/outcome.md`), and the
+owner states the conservative value from a non-monotone sweep
+([campaign tables](campaign-tables.md#matvec-lane-sweep)). The baked constant
+equals the conservative value, and both records are committed.

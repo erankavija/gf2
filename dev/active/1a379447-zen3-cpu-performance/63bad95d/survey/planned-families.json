@@ -1,7 +1,7 @@
 {
- "schema": "calibration-plan-families-v1",
+ "schema": "calibration-plan-families-v2",
  "issue": "63bad95d",
- "status": "plan record; no addendum is frozen from it",
+ "status": "plan record; survey/make-family-addenda.py projects the pilot addenda and the holdout declarations from it",
  "pilot_pairs": 12,
  "builds": {
   "conservative-portable": {
@@ -23,132 +23,50 @@
  },
  "families": [
   {
-   "id": "63bad95d-profile-holdout-matvec",
-   "purpose": "selector-calibration",
-   "selector": "bit_matrix.matvec_simd_min_words",
-   "question": "Does the profile's matvec threshold help the allocated whole product at strides the threshold confirmation did not measure?",
-   "condition": "Runs only when the confirmation of 4337c02e yields a threshold other than the conservative value. Every cell stays in the family; at a stride where both builds select one lane the cell records build-to-build dispersion.",
-   "objective_rule": "Every cell is a non-regression cell; the improvement claim is the confirmation of 4337c02e.",
-   "cells": [
-    {
-     "cell_id": "matvec-r1024-16w-warm",
-     "role": "confirmatory",
-     "objective": "non-regression",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::matvec, 1024 rows, 16-word stride",
-     "small_input": false,
-     "size": {
-      "rows": 1024,
-      "columns": 1024,
-      "words": 16
-     },
-     "seed": 631601
-    },
-    {
-     "cell_id": "matvec-r1024-48w-warm",
-     "role": "confirmatory",
-     "objective": "non-regression",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::matvec, 1024 rows, 48-word stride",
-     "small_input": false,
-     "size": {
-      "rows": 1024,
-      "columns": 3072,
-      "words": 48
-     },
-     "seed": 634801
-    },
-    {
-     "cell_id": "matvec-r1024-16w-streaming",
-     "role": "confirmatory",
-     "objective": "non-regression",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "streaming",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::matvec, 1024 rows, 16-word stride, rotating banks",
-     "small_input": false,
-     "size": {
-      "rows": 1024,
-      "columns": 1024,
-      "words": 16
-     },
-     "seed": 631602
-    },
-    {
-     "cell_id": "matvec-r1024-12w-warm",
-     "role": "holdout",
-     "objective": "non-regression",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::matvec, 1024 rows, 12-word stride",
-     "small_input": false,
-     "size": {
-      "rows": 1024,
-      "columns": 768,
-      "words": 12
-     },
-     "seed": 631201
-    },
-    {
-     "cell_id": "matvec-r1024-24w-tail1-warm",
-     "role": "holdout",
-     "objective": "non-regression",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::matvec, 1024 rows, 24-word stride, one bit short of the word boundary",
-     "small_input": false,
-     "size": {
-      "rows": 1024,
-      "columns": 1535,
-      "words": 24
-     },
-     "seed": 632401
-    },
-    {
-     "cell_id": "matvec-r1024-40w-streaming",
-     "role": "holdout",
-     "objective": "non-regression",
-     "metric_kind": "whole-consumer",
-     "core_arm": "single-core",
-     "cache_state": "streaming",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::matvec, 1024 rows, 40-word stride, rotating banks",
-     "small_input": false,
-     "size": {
-      "rows": 1024,
-      "columns": 2560,
-      "words": 40
-     },
-     "seed": 634001
-    }
-   ],
-   "holdout_declaration": "matvec-holdout-cells.json"
-  },
-  {
    "id": "63bad95d-profile-dispatch-overhead",
    "purpose": "selector-calibration",
-   "selector": "entries whose selection the profile leaves unchanged",
-   "question": "Does the profile build leave small inputs of the unchanged entry points no worse?",
-   "condition": "Runs when the profile differs from the conservative table in at least one selector.",
-   "objective_rule": "Every cell is a non-regression cell.",
+   "pilot_purpose": "kernel-family",
+   "selector": "bit_backend.simd_min_words",
+   "question": "Is the profile build no worse than the conservative build on small buffers, on both sides of the bit-backend threshold the measured owner states?",
+   "condition": "Runs when the baked constants of the profile differ from the conservative table.",
+   "objective_rule": "Every cell is a non-regression cell; the improvement claim is the producer's crossover decision.",
+   "ledger": "63bad95d-profile-dispatch-overhead-ledger.jsonl",
+   "holdout_declaration": "dispatch-holdout-cells.json",
    "cells": [
+    {
+     "cell_id": "xor-inplace-4w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 4 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 4,
+      "seed": 630401
+     }
+    },
+    {
+     "cell_id": "and-popcount-7w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::and_popcount, 7 words",
+     "small_input": true,
+     "case": {
+      "operation": "and-popcount",
+      "words": 7,
+      "seed": 630701
+     }
+    },
     {
      "cell_id": "xor-inplace-8w",
      "role": "confirmatory",
@@ -159,34 +77,15 @@
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
      "workload": "kernels::ops::xor_inplace, 8 words",
-     "small_input": true
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 8,
+      "seed": 630801
+     }
     },
     {
-     "cell_id": "popcount-8w",
-     "role": "confirmatory",
-     "objective": "non-regression",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "kernels::ops::popcount, 8 words",
-     "small_input": true
-    },
-    {
-     "cell_id": "clmul-wide-4w-owned",
-     "role": "confirmatory",
-     "objective": "non-regression",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "conservative-portable",
-     "candidate_build": "tuned-portable",
-     "workload": "gf2m::wide::clmul_wide, 4 words",
-     "small_input": true
-    },
-    {
-     "cell_id": "xor-inplace-1w",
+     "cell_id": "xor-inplace-5w",
      "role": "holdout",
      "objective": "non-regression",
      "metric_kind": "kernel-isolated",
@@ -194,11 +93,16 @@
      "cache_state": "warm",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
-     "workload": "kernels::ops::xor_inplace, 1 word",
-     "small_input": true
+     "workload": "kernels::ops::xor_inplace, 5 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 5,
+      "seed": 630501
+     }
     },
     {
-     "cell_id": "and-popcount-7w",
+     "cell_id": "popcount-6w",
      "role": "holdout",
      "objective": "non-regression",
      "metric_kind": "kernel-isolated",
@@ -206,30 +110,42 @@
      "cache_state": "warm",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
-     "workload": "kernels::ops::and_popcount, 7 words",
-     "small_input": true
+     "workload": "kernels::ops::popcount, 6 words",
+     "small_input": true,
+     "case": {
+      "operation": "popcount",
+      "words": 6,
+      "seed": 630601
+     }
     },
     {
-     "cell_id": "matvec-r64-1w",
+     "cell_id": "xor-inplace-3w",
      "role": "holdout",
      "objective": "non-regression",
-     "metric_kind": "whole-consumer",
+     "metric_kind": "kernel-isolated",
      "core_arm": "single-core",
      "cache_state": "warm",
      "baseline_build": "conservative-portable",
      "candidate_build": "tuned-portable",
-     "workload": "BitMatrix::matvec, 64 rows, 1-word stride",
-     "small_input": true
+     "workload": "kernels::ops::xor_inplace, 3 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 3,
+      "seed": 630301
+     }
     }
    ]
   },
   {
    "id": "63bad95d-native-ladder",
    "purpose": "consumer-family",
+   "pilot_purpose": "consumer-family",
    "selector": "build configuration",
    "question": "Is the native build of the profile no worse than its portable build on one primary workload per entry-point group?",
-   "condition": "Runs for the committed profile; when the profile equals the conservative table the baseline arm is the conservative portable build.",
+   "condition": "Runs for the committed profile.",
    "objective_rule": "Every cell is a non-regression cell.",
+   "ledger": "63bad95d-native-ladder-ledger.jsonl",
    "cells": [
     {
      "cell_id": "matvec-r1024-24w-native",
@@ -241,7 +157,13 @@
      "baseline_build": "tuned-portable",
      "candidate_build": "native",
      "workload": "BitMatrix::matvec, 1024 rows, 24-word stride",
-     "small_input": false
+     "small_input": false,
+     "case": {
+      "operation": "matvec",
+      "rows": 1024,
+      "columns": 1536,
+      "seed": 632411
+     }
     },
     {
      "cell_id": "bitmatrix-transpose-8192x2048-native",
@@ -253,19 +175,13 @@
      "baseline_build": "tuned-portable",
      "candidate_build": "native",
      "workload": "BitMatrix::transpose, 8192 x 2048",
-     "small_input": false
-    },
-    {
-     "cell_id": "transpose-block-1024-native",
-     "role": "confirmatory",
-     "objective": "non-regression",
-     "metric_kind": "kernel-isolated",
-     "core_arm": "single-core",
-     "cache_state": "warm",
-     "baseline_build": "tuned-portable",
-     "candidate_build": "native",
-     "workload": "64x64 block transpose, 1024 blocks",
-     "small_input": false
+     "small_input": false,
+     "case": {
+      "operation": "transpose",
+      "rows": 8192,
+      "columns": 2048,
+      "seed": 638211
+     }
     },
     {
      "cell_id": "popcount-1024w-native",
@@ -277,7 +193,29 @@
      "baseline_build": "tuned-portable",
      "candidate_build": "native",
      "workload": "kernels::ops::popcount, 1024 words",
-     "small_input": false
+     "small_input": false,
+     "case": {
+      "operation": "popcount",
+      "words": 1024,
+      "seed": 631011
+     }
+    },
+    {
+     "cell_id": "and-popcount-1024w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::and_popcount, 1024 words",
+     "small_input": false,
+     "case": {
+      "operation": "and-popcount",
+      "words": 1024,
+      "seed": 631021
+     }
     },
     {
      "cell_id": "xor-inplace-8w-native",
@@ -289,10 +227,15 @@
      "baseline_build": "tuned-portable",
      "candidate_build": "native",
      "workload": "kernels::ops::xor_inplace, 8 words",
-     "small_input": true
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 8,
+      "seed": 630811
+     }
     },
     {
-     "cell_id": "clmul-wide-9w-owned-native",
+     "cell_id": "clmul-wide-9w-native",
      "role": "confirmatory",
      "objective": "non-regression",
      "metric_kind": "kernel-isolated",
@@ -301,70 +244,258 @@
      "baseline_build": "tuned-portable",
      "candidate_build": "native",
      "workload": "gf2m::wide::clmul_wide, 9 words",
-     "small_input": false
+     "small_input": false,
+     "case": {
+      "operation": "clmul-wide",
+      "words": 9,
+      "seed": 630911
+     }
     }
    ]
   },
   {
-   "id": "63bad95d-matvec-external-ladder",
-   "purpose": "consumer-family",
-   "selector": "bit_matrix.matvec_simd_min_words",
-   "question": "How far is the profile's dense product from the matched M4RI operation when both sides build at the same level?",
-   "condition": "Runs with the matvec holdout family at the two shapes the M4RI operation match qualifies; the conservative level is the committed M4RI confirmation of the mid-range story.",
-   "objective_rule": "Every cell is a comparator-gap cell with the external library as candidate; it selects nothing.",
+   "id": "63bad95d-profile-dispatch-overhead-v2",
+   "repeats": "63bad95d-profile-dispatch-overhead",
+   "purpose": "selector-calibration",
+   "pilot_purpose": "kernel-family",
+   "selector": "bit_backend.simd_min_words",
+   "question": "Is the profile build no worse than the conservative build on small buffers, on both sides of the bit-backend threshold the measured owner states?",
+   "condition": "Runs when the baked constants of the profile differ from the conservative table.",
+   "objective_rule": "Every cell is a non-regression cell; the improvement claim is the producer's crossover decision.",
+   "ledger": "63bad95d-profile-dispatch-overhead-v2-ledger.jsonl",
+   "holdout_declaration": "dispatch-holdout-cells-v2.json",
    "cells": [
     {
-     "cell_id": "matvec-qualified-shape-a-vs-m4ri-tuned",
+     "cell_id": "xor-inplace-4w",
      "role": "confirmatory",
-     "objective": "comparator-gap",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 4 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 4,
+      "seed": 630401
+     }
+    },
+    {
+     "cell_id": "and-popcount-7w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::and_popcount, 7 words",
+     "small_input": true,
+     "case": {
+      "operation": "and-popcount",
+      "words": 7,
+      "seed": 630701
+     }
+    },
+    {
+     "cell_id": "xor-inplace-8w",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 8 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 8,
+      "seed": 630801
+     }
+    },
+    {
+     "cell_id": "xor-inplace-5w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 5 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 5,
+      "seed": 630501
+     }
+    },
+    {
+     "cell_id": "popcount-6w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::popcount, 6 words",
+     "small_input": true,
+     "case": {
+      "operation": "popcount",
+      "words": 6,
+      "seed": 630601
+     }
+    },
+    {
+     "cell_id": "xor-inplace-3w",
+     "role": "holdout",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "conservative-portable",
+     "candidate_build": "tuned-portable",
+     "workload": "kernels::ops::xor_inplace, 3 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 3,
+      "seed": 630301
+     }
+    }
+   ]
+  },
+  {
+   "id": "63bad95d-native-ladder-v2",
+   "repeats": "63bad95d-native-ladder",
+   "purpose": "consumer-family",
+   "pilot_purpose": "consumer-family",
+   "selector": "build configuration",
+   "question": "Is the native build of the profile no worse than its portable build on one primary workload per entry-point group?",
+   "condition": "Runs for the committed profile.",
+   "objective_rule": "Every cell is a non-regression cell.",
+   "ledger": "63bad95d-native-ladder-v2-ledger.jsonl",
+   "cells": [
+    {
+     "cell_id": "matvec-r1024-24w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
      "metric_kind": "whole-consumer",
      "core_arm": "single-core",
      "cache_state": "warm",
      "baseline_build": "tuned-portable",
-     "candidate_build": "external",
-     "workload": "matched M4RI product, first qualified shape",
-     "small_input": false
+     "candidate_build": "native",
+     "workload": "BitMatrix::matvec, 1024 rows, 24-word stride",
+     "small_input": false,
+     "case": {
+      "operation": "matvec",
+      "rows": 1024,
+      "columns": 1536,
+      "seed": 632411
+     }
     },
     {
-     "cell_id": "matvec-qualified-shape-b-vs-m4ri-tuned",
+     "cell_id": "bitmatrix-transpose-8192x2048-native",
      "role": "confirmatory",
-     "objective": "comparator-gap",
+     "objective": "non-regression",
      "metric_kind": "whole-consumer",
      "core_arm": "single-core",
      "cache_state": "warm",
      "baseline_build": "tuned-portable",
-     "candidate_build": "external",
-     "workload": "matched M4RI product, second qualified shape",
-     "small_input": false
+     "candidate_build": "native",
+     "workload": "BitMatrix::transpose, 8192 x 2048",
+     "small_input": false,
+     "case": {
+      "operation": "transpose",
+      "rows": 8192,
+      "columns": 2048,
+      "seed": 638211
+     }
     },
     {
-     "cell_id": "matvec-qualified-shape-a-vs-m4ri-native",
+     "cell_id": "popcount-1024w-native",
      "role": "confirmatory",
-     "objective": "comparator-gap",
-     "metric_kind": "whole-consumer",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
      "core_arm": "single-core",
      "cache_state": "warm",
-     "baseline_build": "native",
-     "candidate_build": "external",
-     "workload": "matched M4RI product, first qualified shape",
-     "small_input": false
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::popcount, 1024 words",
+     "small_input": false,
+     "case": {
+      "operation": "popcount",
+      "words": 1024,
+      "seed": 631011
+     }
     },
     {
-     "cell_id": "matvec-qualified-shape-b-vs-m4ri-native",
+     "cell_id": "and-popcount-1024w-native",
      "role": "confirmatory",
-     "objective": "comparator-gap",
-     "metric_kind": "whole-consumer",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
      "core_arm": "single-core",
      "cache_state": "warm",
-     "baseline_build": "native",
-     "candidate_build": "external",
-     "workload": "matched M4RI product, second qualified shape",
-     "small_input": false
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::and_popcount, 1024 words",
+     "small_input": false,
+     "case": {
+      "operation": "and-popcount",
+      "words": 1024,
+      "seed": 631021
+     }
+    },
+    {
+     "cell_id": "xor-inplace-8w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "kernels::ops::xor_inplace, 8 words",
+     "small_input": true,
+     "case": {
+      "operation": "xor-inplace",
+      "words": 8,
+      "seed": 630811
+     }
+    },
+    {
+     "cell_id": "clmul-wide-9w-native",
+     "role": "confirmatory",
+     "objective": "non-regression",
+     "metric_kind": "kernel-isolated",
+     "core_arm": "single-core",
+     "cache_state": "warm",
+     "baseline_build": "tuned-portable",
+     "candidate_build": "native",
+     "workload": "gf2m::wide::clmul_wide, 9 words",
+     "small_input": false,
+     "case": {
+      "operation": "clmul-wide",
+      "words": 9,
+      "seed": 630911
+     }
     }
    ]
   }
  ],
  "excluded": [
+  {
+   "id": "63bad95d-profile-holdout-matvec",
+   "reason": "The measured owner keeps the conservative matvec threshold (campaign-tables.md, matvec lane sweep) and 4337c02e installs no value, so the profile build and the conservative build select the same lane at every stride and the family's condition does not hold. The holdout declaration matvec-holdout-cells.json stays committed and unused."
+  },
+  {
+   "id": "63bad95d-matvec-external-ladder",
+   "reason": "Runs with the matvec holdout family, which does not run; the conservative level is the committed M4RI confirmation of the mid-range story."
+  },
   {
    "id": "transpose lane selection",
    "reason": "PRODUCTION_PREFERENCE is retained and is no candidate; the non-qualifying confirmations of 1d4fd63d and 04b85d10 are the recorded outcome."

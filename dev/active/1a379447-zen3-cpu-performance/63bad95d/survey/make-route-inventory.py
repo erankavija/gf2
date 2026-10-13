@@ -237,6 +237,7 @@ SCANNED_PACKAGES = (CORE, SIMD, ALGEBRA)
 #   algorithm-limit: a retry, seed or recursion bound without a route choice
 CLASSES = {
     "N_MAX_MULTIWORD": "kernel-geometry",
+    "MAX_DEGREE": "kernel-geometry",
     "MAX_MATRIX_BYTES_FOR_L1": "selector",
     "B2_GRAY_TILE_WORDS": "kernel-geometry",
     "B2_GRAY_MAX_TILES": "kernel-geometry",
@@ -274,11 +275,14 @@ TRACKS = {
     "19513245": "core-kernel", "1c602857": "core-kernel", "1d0da41f": "core-kernel",
     "1d4fd63d": "core-kernel", "26465e6c": "core-kernel", "4337c02e": "core-kernel",
     "4c1e441f": "core-kernel",
-    "53c5a8c0": "core-kernel", "5cbb6545": "core-kernel", "65c0e13d": "core-kernel",
-    "6c6b09b1": "core-kernel", "6fb89a3c": "core-kernel", "85fc5ff4": "core-kernel",
+    "53c5a8c0": "core-kernel", "5cbb6545": "core-kernel", "63bad95d": "core-kernel",
+    "65c0e13d": "core-kernel",
+    "6c6b09b1": "core-kernel", "6fb89a3c": "core-kernel", "7dbe1393": "core-kernel",
+    "85fc5ff4": "core-kernel",
     "ad2a6a58": "core-kernel", "bfc2ceab": "core-kernel", "c7113c5a": "core-kernel",
     "e1f9a78f": "core-kernel",
-    "12fdeb5b": "coding-consumer", "9fb40c83": "coding-consumer", "eda07788": "coding-consumer",
+    "12fdeb5b": "coding-consumer", "8e53235b": "coding-consumer", "9fb40c83": "coding-consumer",
+    "eda07788": "coding-consumer",
     "07ca8585": "decoder", "3be770d5": "decoder", "c077a88b": "decoder", "f63a2464": "decoder",
     "f547c394": "protocol",
 }
@@ -346,8 +350,8 @@ WITNESS_CONFIGURATIONS = [
     ("core-baked", "standalone `gf2-core`, `simd`, `--cfg gf2_tuning_baked`"),
     ("coding-default", "`gf2-coding` dependency build, default features"),
     ("coding-no-default-features",
-     "`gf2-coding` test build, `--no-default-features`; its self dev-dependency keeps the "
-     "default features"),
+     "`gf2-coding` test build, `--no-default-features`; its self dev-dependency disables "
+     "the default features"),
     ("sim-default", "`gf2-sim` dependency build, default features"),
 ]
 
@@ -832,7 +836,9 @@ def render(inventory):
         "## Route witnesses",
         "",
         "Each column is one build configuration on which the shared fallback contract ran; "
-        "a cell is the route its reporter named.",
+        "a cell is the route its reporter named. The contract probes each side of the "
+        "thresholds its build compiles, so an empty cell is an input that configuration "
+        "does not probe.",
         "",
     ]
     names = [row["configuration"] for row in inventory["witness_configurations"]]
@@ -851,7 +857,8 @@ def render(inventory):
         table(
             ["Entry", "Input"] + [f"`{name}`" for name in names],
             [
-                [f"`{row['entry']}`", row["input"]] + [row["routes"][name] for name in names]
+                [f"`{row['entry']}`", row["input"]]
+                + [row["routes"].get(name, "") for name in names]
                 for row in inventory["route_witnesses"]
             ],
         ),

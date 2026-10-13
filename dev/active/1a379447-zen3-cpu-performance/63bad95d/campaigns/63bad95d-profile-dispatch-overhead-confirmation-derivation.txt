@@ -1,0 +1,46 @@
+pilot receipt  dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead/r1-pilot/receipt.json
+receipt sha256 09e1f1dcbd9e768e5fc8b639d015aca8e5b1b7f61fbdacd3958e9a1236b1c5ea
+campaign       63bad95d-r1-profile-dispatch-overhead-pilot
+verdict        accepted (label pilot)
+family         63bad95d-profile-dispatch-overhead: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+xor-inplace-4w                          12      1.3049      1.2647      1.3193    0.0309
+and-popcount-7w                         12      1.0064     0.68644      1.0729    0.3179
+xor-inplace-8w                          12      1.0024     0.97956       1.029    0.0265
+
+widest relative half-width   0.317903
+pilot-alpha floor            0.32
+supplied resolution          0.40
+derivation                   dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-profile-dispatch-overhead-pilot-resolution.txt
+
+# command: cargo run --release --manifest-path dev/active/1a379447-zen3-cpu-performance/eda07788/survey/analysis/Cargo.toml --bin bootstrap-resolution -- dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead/r1-pilot/receipt.json 0.004166666666666667
+# The confirmation's corrected alpha, 0.05 / (1 * 2) / 6 for three confirmatory and three holdout cells on attempt 1.
+# receipt sha256 09e1f1dcbd9e768e5fc8b639d015aca8e5b1b7f61fbdacd3958e9a1236b1c5ea
+receipt dev/bench_results/63bad95d/63bad95d-profile-dispatch-overhead/r1-pilot/receipt.json
+campaign 63bad95d-r1-profile-dispatch-overhead-pilot seed 2026100710
+alpha 0.004166666666666667 confidence 0.995833 resamples 10000
+
+cell                                                 estimate    lower    upper  rel_half     shift
+xor-inplace-4w                                         1.3049   1.2579   1.3235    0.0360    0.0006
+and-popcount-7w                                        1.0064   0.6100   1.0729    0.3939    0.0045
+xor-inplace-8w                                         1.0024   0.9759   1.0387    0.0362    0.0000
+
+widest relative half-width: 0.393880 (and-popcount-7w)
+largest endpoint shift:     0.004476 (and-popcount-7w)
+larger of the two rounded up to two decimals: 0.40
+
+frozen measurement resolution 0.40
+replaced worthwhile_speedup 1.05 -> 1.41
+replaced equivalence_margin 1.05 -> 1.41
+restated the family description for the confirmatory stage
+restated purpose kernel-family -> selector-calibration
+
+holdout declaration dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/dispatch-holdout-cells.json
+declaration sha256  a5674edf9d1f01a722e605cb5a8ad9855424ffcee7bf8410b216fd3636c84011
+holdout cell        xor-inplace-5w
+holdout cell        popcount-6w
+holdout cell        xor-inplace-3w
+holdout rationale   The declared cells are measured by no pilot of this family, and the offline producer's bit-backend sweep times none of these operation and length pairs, so no sample of a held-out workload takes part in selecting the threshold or in sizing the confirmation's resolution. Each cell is a non-regression cell of the profile build against the conservative build.
+margins: equivalence 1.41, material gap None
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/63bad95d/campaigns/63bad95d-profile-dispatch-overhead-confirmation.json
