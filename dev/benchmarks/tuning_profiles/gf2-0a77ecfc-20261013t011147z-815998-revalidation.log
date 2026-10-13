@@ -1,0 +1,4 @@
+# python3 -B dev/scripts/validate-tuning-extent-campaign.py --stage /tmp/gf2-0a77ecfc-20261013t011147z-815998  (at cb74ffb6bac327b92c72b0c397d13728a4a42485)
+GF2_TUNING_VALIDATION={"schema":"tuning-extent-campaign-validation-v1","campaign_id":"gf2-0a77ecfc-20261013t011147z-815998","status":"complete-valid","cells":74,"accepted_results":444,"windows":1850,"execution_log_sha256":"50a93b4a4b9f7a02bb64bd1fb14630e44009fb52376eaa59bf8dd4ffde1bc523","coding_manifest_sha256":"eb5e18cbed93c959e769bfa880c1b701d1d98f6c5bd914ae7eb8f99f72c5d241"}
+# python3 -B dev/scripts/validate-tuning-extent-campaign.py --stage /tmp/gf2-0a77ecfc-20261013t011147z-815998 --publication <producing checkout>
+GF2_TUNING_VALIDATION={"schema":"tuning-extent-campaign-publication-v1","campaign_id":"gf2-0a77ecfc-20261013t011147z-815998","status":"published","entries":1397}

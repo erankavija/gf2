@@ -10,10 +10,10 @@ citation must name the cited record's bytes and outcome, and the committed
 tuning profiles must hold what the outcome says: after `no-change`, every
 profile stating the selector holds the value of its conservative definition.
 
-No campaign measures the coding owner yet, so `CodingStage` builds the stage
-of one from synthetic timings: it measures `gf2-coding` and imports the
-committed core and algebra envelopes. The validator must accept its parts and
-reject a stage that differs from the declared owner in one identity.
+`CodingStage` builds the stage of a coding campaign from synthetic timings: it
+measures `gf2-coding` and imports the committed core and algebra envelopes.
+The validator must accept its parts and reject a stage that differs from the
+declared owner in one identity.
 
 Run from any directory:
     python3 validate_tuning_extent_campaign_test.py
