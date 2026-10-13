@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 """Write the producing manifest of the decoder calibration and its digests (jit:0a77ecfc).
 
-`--check` compares the digests with the tree of the commit that last changed
-the digest record, so the record keeps naming the declared tree.
-
 Usage: make-calibration-producing-inputs.py [--check]
 """
 
 import argparse
 import hashlib
 import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -72,34 +68,21 @@ def included(sources):
     return found
 
 
-def committed(revision, path):
-    return subprocess.run(
-        ["git", "-C", str(ROOT), "show", f"{revision}:{path}"], capture_output=True, check=True,
-    ).stdout
-
-
-def digest_lines(paths, read):
-    return "".join(f"{hashlib.sha256(read(path)).hexdigest()}  {path}\n" for path in paths)
+def digest_lines(paths):
+    return "".join(
+        f"{hashlib.sha256((ROOT / path).read_bytes()).hexdigest()}  {path}\n" for path in paths)
 
 
 def check_digests(paths):
-    """Compares the digest record with the tree it was written from."""
+    """Exits non-zero, naming each moved row, when the digest record differs from this tree."""
     relative = str(DIGESTS.relative_to(ROOT))
-    revision = subprocess.run(
-        ["git", "-C", str(ROOT), "log", "-1", "--format=%H", "--", relative],
-        capture_output=True, check=True, text=True,
-    ).stdout.strip()
-    dirty = subprocess.run(
-        ["git", "-C", str(ROOT), "status", "--porcelain", "--", relative],
-        capture_output=True, check=True, text=True,
-    ).stdout
-    if revision and not dirty:
-        expected = digest_lines(paths, lambda path: committed(revision, path))
-    else:
-        expected = digest_lines(paths, lambda path: (ROOT / path).read_bytes())
-    if not DIGESTS.is_file() or DIGESTS.read_text() != expected:
-        raise SystemExit(f"{relative} differs from its declared tree; regenerate it with {GENERATOR}")
-    print(f"{relative}: pins its declared tree")
+    recorded = DIGESTS.read_text().splitlines() if DIGESTS.is_file() else []
+    expected = digest_lines(paths).splitlines()
+    if recorded != expected:
+        moved = sorted({line.split("  ", 1)[-1] for line in set(recorded) ^ set(expected)})
+        raise SystemExit("\n".join(
+            [f"{relative} does not pin this tree; regenerate it with {GENERATOR}", *moved]))
+    print(f"{relative}: pins this tree")
 
 
 def main():
@@ -121,7 +104,7 @@ def main():
     if arguments.check:
         check_digests(pinned)
     else:
-        DIGESTS.write_text(digest_lines(pinned, lambda path: (ROOT / path).read_bytes()))
+        DIGESTS.write_text(digest_lines(pinned))
         print(f"wrote {DIGESTS.relative_to(ROOT)}: {len(pinned)} digests")
 
 
