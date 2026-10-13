@@ -3583,14 +3583,47 @@ mod tests {
             .output()
             .unwrap();
         assert!(!porcelain.stdout.is_empty(), "the checkout is dirty");
-        assert!(producing_inputs_hold(
-            &root,
-            "producing-inputs.json",
-            &behavior,
-            &lifecycle,
-            &build_inputs
-        )
-        .unwrap());
+        let holds = || {
+            producing_inputs_hold(
+                &root,
+                "producing-inputs.json",
+                &behavior,
+                &lifecycle,
+                &build_inputs,
+            )
+            .unwrap()
+        };
+        assert!(holds());
+        let tree = || {
+            command_text(
+                "git",
+                &["-C", root.to_str().unwrap(), "rev-parse", "HEAD^{tree}"],
+            )
+        };
+        let recorded = tree().unwrap();
+        for arguments in [
+            &["add", "--all"][..],
+            &[
+                "-c",
+                "user.name=driver",
+                "-c",
+                "user.email=driver@example.invalid",
+                "commit",
+                "--quiet",
+                "-m",
+                "moved tree",
+            ],
+        ] {
+            assert!(Command::new("git")
+                .arg("-C")
+                .arg(&*root)
+                .args(arguments)
+                .status()
+                .unwrap()
+                .success());
+        }
+        assert_ne!(tree().unwrap(), recorded, "the tree moved");
+        assert!(holds());
     }
 
     #[test]

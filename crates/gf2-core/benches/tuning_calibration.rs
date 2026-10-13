@@ -10699,6 +10699,15 @@ mod campaign_owner {
     /// Analyzes, emits and strictly reopens the owner envelope once
     /// [`emit_owner`] has admitted the campaign environment.
     fn publish_owner(request: &neutral::EmitOwnerRequest) -> Result<OwnerResponse, String> {
+        let mismatch = || "owner provenance differs from measured campaign identity".to_owned();
+        if !request
+            .measurement
+            .identity
+            .resume_equivalent(&request.assembly.identity)
+            || request.measurement.process != request.assembly.process
+        {
+            return Err(mismatch());
+        }
         let bundle: neutral::AcceptedResultsBundle =
             request.accepted_results.read().map_err(err)?;
         let input = AnalysisInput::new(
@@ -10707,15 +10716,8 @@ mod campaign_owner {
             &request.manifest_sha256,
             true,
         )?;
-        if !request
-            .measurement
-            .identity
-            .resume_equivalent(&request.assembly.identity)
-            || request.measurement.process != request.assembly.process
-            || request.measurement.identity.protocol_digest
-                != input.request.protocol_sha256.as_str()
-        {
-            return Err("owner provenance differs from measured campaign identity".to_owned());
+        if request.measurement.identity.protocol_digest != input.request.protocol_sha256.as_str() {
+            return Err(mismatch());
         }
         let parent = request
             .output
@@ -11488,6 +11490,17 @@ mod campaign_owner {
         fn owner_emission_refuses_by_digest_and_ignores_the_checkout_state() {
             let (_stage, mut emit) = owner_emit_request(true);
             emit.assembly.identity.source_revision = "1".repeat(40);
+            emit.assembly.identity.source_sha256 = "1".repeat(64);
+            let mut changed = emit.clone();
+            changed.assembly.identity.behavior_sha256.insert(
+                "crates/gf2-core/benches/tuning_calibration.rs".to_owned(),
+                "1".repeat(64),
+            );
+            let refused = publish_owner(&changed).unwrap_err();
+            assert!(
+                refused.contains("differs from measured campaign identity"),
+                "{refused}"
+            );
             let mut changed = emit.clone();
             for provenance in [&mut changed.measurement, &mut changed.assembly] {
                 provenance

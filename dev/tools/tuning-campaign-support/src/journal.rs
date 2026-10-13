@@ -1343,7 +1343,8 @@ pub struct ResumeIdentity {
     /// Informational source-control locator.
     #[serde(default)]
     pub source_revision: String,
-    /// Digest of the complete selected producing-input content snapshot.
+    /// Digest locating the source the recorder ran from: the producing-input
+    /// snapshot, or a source-control tree. Informational, as the revision is.
     pub source_sha256: String,
     /// Digest of the fixed ordered unit manifest.
     pub ordered_work_manifest_sha256: String,
@@ -1367,10 +1368,11 @@ pub struct ResumeIdentity {
 
 impl ResumeIdentity {
     /// Whether two identities describe the same measurement behavior and
-    /// inputs; `source_revision` is not compared.
+    /// inputs. The source pointers `source_revision` and `source_sha256` are
+    /// not compared: a recorder may derive either from source control, and
+    /// the behavior and lifecycle digests carry the producing inputs.
     pub fn resume_equivalent(&self, other: &Self) -> bool {
         self.protocol_digest == other.protocol_digest
-            && self.source_sha256 == other.source_sha256
             && self.ordered_work_manifest_sha256 == other.ordered_work_manifest_sha256
             && self.process_descriptors_sha256 == other.process_descriptors_sha256
             && self.executable_sha256 == other.executable_sha256

@@ -117,16 +117,28 @@ fn changed_producing_digest_rejects_before_mutating_checkpoint_evidence() {
     let unit_before = fs::read(&unit_path).unwrap();
 
     let mut changed = original;
-    changed.source_sha256 = digest(b'8');
-    assert!(CheckpointStore::resume(&root, "campaign", changed).is_err());
-    let mut changed = identity();
-    changed.source_sha256 = digest(b'8');
+    changed
+        .behavior_sha256
+        .insert("producer".into(), digest(b'8'));
+    assert!(CheckpointStore::resume(&root, "campaign", changed.clone()).is_err());
     assert!(CheckpointStore::initialize_with(&root, "campaign", changed, publish).is_err());
     assert_eq!(
         fs::read(root.join("manifest.json")).unwrap(),
         manifest_before
     );
     assert_eq!(fs::read(unit_path).unwrap(), unit_before);
+}
+
+#[test]
+fn another_source_pointer_resumes_the_same_producing_inputs() {
+    let scratch = scratch("gf2-checkpoint-provenance");
+    let root = scratch.path().join("checkpoints");
+    drop(CheckpointStore::initialize_with(&root, "campaign", identity(), publish).unwrap());
+    let mut moved = identity();
+    moved.source_revision = "b".repeat(40);
+    moved.source_sha256 = digest(b'8');
+    CheckpointStore::initialize_with(&root, "campaign", moved.clone(), publish).unwrap();
+    CheckpointStore::resume(&root, "campaign", moved).unwrap();
 }
 
 #[test]

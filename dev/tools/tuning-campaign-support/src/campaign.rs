@@ -5495,7 +5495,7 @@ mod publication_tests {
     }
 
     #[test]
-    fn a_replacement_session_keeps_the_resume_identity_whatever_its_revision() {
+    fn a_replacement_session_keeps_the_resume_identity_whatever_its_source_pointers() {
         let tmp = scratch("session-replacement-revision");
         let (store, mut log, checksum) = closed_session(tmp.path());
         store.retire(&mut log, &checksum).unwrap();
@@ -5510,9 +5510,18 @@ mod publication_tests {
                 .finish(descriptor, config.clone(), &mut log)
                 .map(drop)
         };
-        let refused = finish(|identity| identity.protocol_digest = "b".repeat(64)).unwrap_err();
+        let refused = finish(|identity| {
+            identity
+                .behavior_sha256
+                .insert("producer".into(), "b".repeat(64));
+        })
+        .unwrap_err();
         assert!(refused.to_string().contains("resume identity"), "{refused}");
-        finish(|identity| identity.source_revision = "b".repeat(40)).unwrap();
+        finish(|identity| {
+            identity.source_revision = "b".repeat(40);
+            identity.source_sha256 = "b".repeat(64);
+        })
+        .unwrap();
     }
 
     #[test]
