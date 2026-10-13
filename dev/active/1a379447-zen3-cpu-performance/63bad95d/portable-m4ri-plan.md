@@ -153,6 +153,31 @@ with its derivation record beside it. The confirmation addendum restates the
 family description for the confirmatory stage. The smoke of its plan is
 [`survey/portable-m4ri-confirmation-smoke.json`](survey/portable-m4ri-confirmation-smoke.json).
 
+## Confirmation outcome
+
+The confirmation `v4-r1-confirmation` is committed beside its
+[acceptance summary](../../../bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r1-confirmation/acceptance-summary.md)
+and execution log. The log carries one `cell-start` and one `cell-complete`
+per cell of the frozen addendum, every cell `measured` at its declared pairs,
+and a terminal `complete` record. The summary's verdict is `Accepted` with
+`qualifies=false`, recorded as measured; the ledger line for the attempt is
+sequence 2 of
+[`portable-matvec-vs-m4ri-ledger.jsonl`](../../../bench_results/63bad95d/portable-matvec-vs-m4ri-ledger.jsonl).
+
+Each of the six cells records decision `regressed` and outcome `Fail`. By the
+decision rule, `regressed` reads as M4RI slower beyond equivalence at equal
+targeting: gf2 ahead at every boundary. `Fail` is the evaluator's outcome for
+the compared arm, M4RI, which does not clear the improvement claim over the
+gf2 baseline; it is not a defect of the gf2 route. Speedups and intervals are
+in the summary's cell table, with the sample count of each cell.
+
+No production source, tuning profile or selector changes. Comparator cells select
+nothing ([`calibration-plan.md`](calibration-plan.md), rules common to the
+families), and the confirmation does not qualify, so the production selector
+keeps its value. The portable comparator leg of
+REQ-09 is answered for the `BitMatrix::matvec` boundaries the six cells cover.
+The one-attempt rule makes the outcome terminal for the family.
+
 ## Execution
 
 | Step | Command | Window |
@@ -163,7 +188,7 @@ family description for the confirmatory stage. The smoke of its plan is
 | Pilot (`v4-r1`, `v4-r2`) | this family's queue lines in [`queue.tsv`](../bench-window/queue.tsv) | each its own window |
 | Freeze the confirmation from the committed `v4-r2` receipt | `survey/freeze-m4ri-confirmation.sh portable <frozen-utc> v4-r2` | none |
 | Confirmation plan smoke | `run-dense-harness.sh window ... --m4ri-portable --confirmation --smoke <record>` | none |
-| Confirmation | this family's `--confirmation` queue line in [`queue.tsv`](../bench-window/queue.tsv) | next |
+| Confirmation (`v4-r1-confirmation`) | this family's `--confirmation` queue line in [`queue.tsv`](../bench-window/queue.tsv) | measured |
 
 The untimed validation record is
 [`dense-harness-validation.txt`](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt):
