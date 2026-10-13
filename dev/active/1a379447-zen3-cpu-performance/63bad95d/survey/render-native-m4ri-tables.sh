@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Render the interval tables of the native M4RI comparator family's pilots
+# Render the interval tables of the native M4RI comparator family's pilots and confirmation
 # (jit:63bad95d) with the canonical generator, `survey-analysis tables`.
 # It reads committed bytes and times nothing; `repo_artifacts.py` locates the
 # receipts, the generator and the output directory at run time.
@@ -29,4 +29,5 @@ TARGET="${REPO}/target/18a87159-analysis"
 CARGO_TARGET_DIR="${TARGET}" ./scripts/cargo-budget.sh cargo build --release \
     --manifest-path "${ANALYSIS}"
 "${TARGET}/release/survey-analysis" tables "${RESULTS}/native-m4ri-tables.md" \
-    "$(locate receipt "v4-r1-${FAMILY}")" "$(locate receipt "v4-r2-${FAMILY}")"
+    "$(locate receipt "v4-r1-${FAMILY}")" "$(locate receipt "v4-r2-${FAMILY}")" \
+    "$(locate receipt "v4-r2-confirmation-${FAMILY}")"
