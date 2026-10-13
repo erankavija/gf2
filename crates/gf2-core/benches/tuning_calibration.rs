@@ -10888,9 +10888,13 @@ mod campaign_owner {
         required_threads: String,
         rng: seed::FixtureGenerator,
     }
+    /// The workspace lock file of this build, which names the fixture generator's
+    /// package versions.
+    const BUILD_LOCK: &str = include_str!("../../../Cargo.lock");
     /// The generator of every retained and extent fixture.
     fn fixture_generator() -> Result<seed::FixtureGenerator, String> {
-        seed::FixtureGenerator::locked::<Lcg>(env!("CARGO_PKG_NAME"), &[&[]]).map_err(err)
+        seed::FixtureGenerator::locked::<Lcg>(BUILD_LOCK, env!("CARGO_PKG_NAME"), &[&[]])
+            .map_err(err)
     }
     impl CapabilityReport {
         fn validate(&self) -> Result<(), String> {

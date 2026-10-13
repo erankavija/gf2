@@ -49,6 +49,9 @@ use tuning_campaign_support::transport::{
     read_guarded_case, write_result_line, FRESH_CASE_VALUE, FRESH_CASE_VAR,
 };
 
+/// The workspace lock file of this build, which names the fixture generator's
+/// package versions.
+const BUILD_LOCK: &str = include_str!("../../../Cargo.lock");
 const OWNER: &str = "gf2-algebra";
 const OWNER_PROTOCOL: &str = "algebra-tuning-campaign-v1";
 const BEHAVIOR_TOKEN: &str = "algebra-tuning-calibration-v1";
@@ -1263,7 +1266,7 @@ fn report(mode: &str, scope: &str, details: Vec<String>) -> Result<ReportOutput,
 
 /// The generator of [`fixture_banks`].
 fn fixture_generator() -> Result<FixtureGenerator, String> {
-    FixtureGenerator::locked::<Lcg>(env!("CARGO_PKG_NAME"), &[&["gf2-core"]])
+    FixtureGenerator::locked::<Lcg>(BUILD_LOCK, env!("CARGO_PKG_NAME"), &[&["gf2-core"]])
         .map_err(|error| error.to_string())
 }
 

@@ -26,9 +26,6 @@ pub const fn fixture_seed(seed_root: u64, field_tag: u64, shape_key: u64, role: 
     value ^ (value >> 31)
 }
 
-/// The workspace lock file of the build, embedded when this crate compiles.
-const BUILD_LOCK: &str = include_str!("../../../../Cargo.lock");
-
 /// The generator a producer draws its fixtures from, as its executable
 /// states it.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
@@ -42,15 +39,14 @@ pub struct FixtureGenerator {
 }
 
 impl FixtureGenerator {
-    /// Names the generator type `G` and resolves, in the workspace
-    /// `Cargo.lock` this crate embeds at build, the version of each package of
-    /// `packages`: a chain of dependency names leading from the workspace
-    /// package `consumer`, the empty chain being `consumer` itself.
-    pub fn locked<G>(consumer: &str, packages: &[&[&str]]) -> std::io::Result<Self> {
+    /// Names the generator type `G` and resolves, in the `Cargo.lock` text
+    /// `lock` the caller embeds at build, the version of each package of
+    /// `packages`: a chain of dependency names leading from the package
+    /// `consumer`, the empty chain being `consumer` itself.
+    pub fn locked<G>(lock: &str, consumer: &str, packages: &[&[&str]]) -> std::io::Result<Self> {
         Ok(Self {
             implementation: std::any::type_name::<G>().to_owned(),
-            version: locked_versions(BUILD_LOCK, consumer, packages)
-                .map_err(std::io::Error::other)?,
+            version: locked_versions(lock, consumer, packages).map_err(std::io::Error::other)?,
         })
     }
 }
@@ -177,14 +173,12 @@ version = "0.9.0"
     }
 
     #[test]
-    fn the_build_lock_resolves_this_crate() {
+    fn a_generator_is_named_by_its_type_path_and_locked_versions() {
         struct Marker;
         let generator =
-            FixtureGenerator::locked::<Marker>("tuning-campaign-support", &[&[]]).unwrap();
+            FixtureGenerator::locked::<Marker>(LOCK, "consumer", &[&["stream"]]).unwrap();
         assert!(generator.implementation.ends_with("Marker"));
-        assert_eq!(
-            generator.version,
-            concat!("tuning-campaign-support ", env!("CARGO_PKG_VERSION"))
-        );
+        assert_eq!(generator.version, "stream 0.8.5");
+        assert!(FixtureGenerator::locked::<Marker>(LOCK, "consumer", &[&["absent"]]).is_err());
     }
 }

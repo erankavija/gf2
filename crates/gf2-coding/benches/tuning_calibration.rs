@@ -54,6 +54,9 @@ use tuning_campaign_support::statistics::{
 use tuning_campaign_support::timing::{TimingSample, EXECUTIONS, FIXTURE_BANKS, WINDOWS};
 use tuning_campaign_support::transport::{read_guarded_case, write_result_line, FRESH_CASE_VAR};
 
+/// The workspace lock file of this build, which names the fixture generator's
+/// package versions.
+const BUILD_LOCK: &str = include_str!("../../../Cargo.lock");
 const OWNER: &str = "gf2-coding";
 const OWNER_PROTOCOL: &str = "coding-tuning-campaign-v1";
 const BEHAVIOR_TOKEN: &str = CodingTuningCodec::HARNESS_SCHEMA;
@@ -1654,6 +1657,7 @@ fn report(
 /// and `rand_distr` shapes the channel noise.
 fn fixture_generator() -> Result<FixtureGenerator, String> {
     FixtureGenerator::locked::<StdRng>(
+        BUILD_LOCK,
         env!("CARGO_PKG_NAME"),
         &[&["rand"], &["rand", "rand_chacha"], &["rand_distr"]],
     )
