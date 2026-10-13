@@ -1871,6 +1871,7 @@ fn owner_operation(operation: OwnerOperation) -> Result<OwnerResponse, String> {
             Ok(OwnerResponse::EmitOwner {
                 artifact,
                 decisions: canonical_json(&analysis)?,
+                rng: Some(fixture_generator()?),
             })
         }
     }

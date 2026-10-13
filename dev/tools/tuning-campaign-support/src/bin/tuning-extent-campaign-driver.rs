@@ -2012,10 +2012,16 @@ fn render_receipt(
     )?);
     receipt.push_str("\n## Raw result index\n\n");
     receipt.push_str(&format!("Preparation CPU affinity: `{}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n",facts.affinity));
-    for [owner, protocol, behavior, executable] in &facts.owners {
+    for ([owner, protocol, behavior, executable], response) in facts.owners.iter().zip(responses) {
         receipt.push_str(&format!(
             "Owner `{owner}` uses protocol `{protocol}` and behavior `{behavior}`; executable `{executable}`.\n\n"
         ));
+        if let OwnerResponse::EmitOwner { rng: Some(rng), .. } = response {
+            receipt.push_str(&format!(
+                "Owner `{owner}` draws its fixtures from `{}`, version `{}`.\n\n",
+                rng.implementation, rng.version
+            ));
+        }
     }
     let counts = &facts.counts;
     receipt.push_str(&format!("Accepted accounting: {} cells, {} probes, {} timed children, {} accepted results, {} raw windows, {} timing progress records. Observed {} attempts, {} orchestration actions, {} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n",counts.cells,counts.probes,counts.timed_children,counts.accepted_results,counts.windows,counts.progress_records,facts.attempts,facts.orchestration,facts.sessions));
@@ -2203,11 +2209,18 @@ fn emit(
             )?;
             let response = operation(&producer, &request, Some(log))?;
             let OwnerResponse::EmitOwner {
-                artifact: output, ..
+                artifact: output,
+                rng,
+                ..
             } = &response
             else {
                 return Err(invalid("owner emitted wrong response"));
             };
+            if rng.as_ref() != config.fixture_generators.get(name) {
+                return Err(invalid(
+                    "owner emission and campaign record state different fixture generators",
+                ));
+            }
             if artifact(&directory.join("output.json"))? != *output {
                 return Err(invalid("owner candidate path/digest differs from request"));
             }
@@ -2220,6 +2233,7 @@ fn emit(
         let OwnerResponse::EmitOwner {
             artifact: owner,
             decisions,
+            ..
         } = &response
         else {
             return Err(invalid("owner emission returned wrong operation"));
@@ -4966,10 +4980,15 @@ mod tests {
             OwnerResponse::EmitOwner {
                 artifact: artifact.clone(),
                 decisions: CanonicalJson::from_serializable(&decisions).unwrap(),
+                rng: Some(FixtureGenerator {
+                    implementation: "x::Rng".into(),
+                    version: "x 1.0.0".into(),
+                }),
             },
             OwnerResponse::EmitOwner {
                 artifact,
                 decisions: CanonicalJson::from_serializable(&json!({"selected":65536})).unwrap(),
+                rng: None,
             },
         ];
         let facts = ReceiptFacts {
@@ -4998,6 +5017,13 @@ mod tests {
         .unwrap();
         assert!(receipt.contains(Sha256Digest::of(&decisions).as_str()));
         assert!(!receipt.contains("elapsed_ns"));
+        assert_eq!(
+            receipt
+                .lines()
+                .filter(|line| line.contains("draws its fixtures from"))
+                .collect::<Vec<_>>(),
+            ["Owner `gf2-core` draws its fixtures from `x::Rng`, version `x 1.0.0`."]
+        );
         assert!(receipt.contains("sample_count"));
         assert!(receipt.contains(Sha256Digest::of(index.as_bytes()).as_str()));
         assert!(!receipt.contains("size-4301-standard"));
@@ -5067,6 +5093,10 @@ mod tests {
                 sha256: Sha256Digest::of(b"core"),
             },
             decisions: CanonicalJson::from_serializable(&json!({"schema":"core-tuning-campaign-v4","retained_thresholds":[{"points":[{"size":8,"conservative":arm}]}],"gemm":{"selected":[32,64],"reason":"structural-schedule-tie"}})).unwrap(),
+            rng: Some(FixtureGenerator {
+                implementation: "gf2_core::rng::Lcg".into(),
+                version: "gf2-core 0.1.0".into(),
+            }),
         }];
         let protocol = ArtifactIdentity {
             path: PathBuf::from("/repository/dev/active/dbd8787d/premeasurement-protocol.md"),

@@ -2996,7 +2996,7 @@ def validate_decisions(bundles: dict[str, Any], responses: dict[str, Any],
 
 def validate_core_decisions(core_bundle: Any, core_response: Any, declaration: Any,
                             thresholds: dict[str, list[int]]) -> dict[str, Any]:
-    require_keys(core_response, ["operation", "artifact", "decisions"], "core owner response")
+    response_keys(core_response, "core owner response")
     require(core_response["operation"] == "emit-owner", "owner responses are not emit-owner")
     core_decisions = embedded(core_response["decisions"], "core decisions")
     require_keys(core_decisions, ["schema", "retained_thresholds", "extents", "gemm",
@@ -3088,8 +3088,7 @@ def validate_core_decisions(core_bundle: Any, core_response: Any, declaration: A
 
 def validate_algebra_decisions(algebra_bundle: Any, algebra_response: Any,
                                declaration: Any) -> dict[str, Any]:
-    require_keys(algebra_response, ["operation", "artifact", "decisions"],
-                 "algebra owner response")
+    response_keys(algebra_response, "algebra owner response")
     require(algebra_response["operation"] == "emit-owner", "owner responses are not emit-owner")
     algebra_decisions = embedded(algebra_response["decisions"], "algebra decisions")
     require_keys(algebra_decisions, ["schema", "field", "selected", "decision",
@@ -3135,8 +3134,7 @@ def validate_coding_decisions(coding_bundle: Any, coding_response: Any,
     """Recomputes each decode field's extent decision over its strata. A field
     is emitted when the decision selects a candidate other than its
     conservative value."""
-    require_keys(coding_response, ["operation", "artifact", "decisions"],
-                 "coding owner response")
+    response_keys(coding_response, "coding owner response")
     require(coding_response["operation"] == "emit-owner", "owner responses are not emit-owner")
     coding_decisions = embedded(coding_response["decisions"], "coding decisions")
     require_keys(coding_decisions, ["schema", "fields", "accepted_result_count"],
@@ -3257,6 +3255,13 @@ def stated_generator(evidence: Any, owner: str, where: str) -> None:
             and [entry[0] for entry in locked] == packages
             and all(len(entry) == 2 and LOCKED_VERSION.match(entry[1]) for entry in locked),
             f"{where} does not name the {owner} fixture generator at locked versions")
+
+
+def response_keys(response: Any, where: str) -> None:
+    """An owner emission response, which may state the fixture generator."""
+    require(isinstance(response, dict), f"{where} must be an object")
+    require_keys({key: value for key, value in response.items() if key != "rng"},
+                 ["operation", "artifact", "decisions"], where)
 
 
 def stated_generators(responses: dict[str, Any]) -> dict[str, Any]:
@@ -3655,6 +3660,8 @@ def validate_owner_publication(stage: Path, campaign: str, name: str, owner: str
     require(response_path.read_bytes() == (stage / f"{name}-owner-response.json").read_bytes(),
             f"{name} durable response differs from accepted root response")
     require(load_json(response_path) == response, f"{name} candidate response mismatch")
+    require(response.get("rng") == config.get("fixture_generators", {}).get(name),
+            f"{name} owner emission and campaign record state different fixture generators")
 
     starts = [record for record in records if record["event"] == "orchestration-start"
               and record["details"].get("kind") == "orchestration-start"
@@ -4388,8 +4395,10 @@ def validate_receipt_text(text: str, projection: Any, config: Any, bundles: list
     expected+=cited_rows(stage,layout,declaration,cited_sources(declaration,config,stage))
     expected+="\n## Raw result index\n\n"
     expected+=f"Preparation CPU affinity: `{config['affinity']}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n"
-    for manifest in config['manifests']:
+    for manifest,owner in zip(config['manifests'],projection['owners']):
         expected+=f"Owner `{manifest['owner']}` uses protocol `{manifest['owner_protocol']}` and behavior `{manifest['behavior_token']}`; executable `{manifest['processes'][0]['executable_sha256']}`.\n\n"
+        if owner.get('rng') is not None:
+            expected+=f"Owner `{manifest['owner']}` draws its fixtures from `{owner['rng']['implementation']}`, version `{owner['rng']['version']}`.\n\n"
     c=projection['counts']
     expected+=f"Accepted accounting: {c['cells']} cells, {c['probes']} probes, {c['timed_children']} timed children, {c['accepted_results']} accepted results, {c['windows']} raw windows, {c['progress_records']} timing progress records. Observed {projection['attempts']} attempts, {projection['orchestration']} orchestration actions, {projection['sessions']} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n"
     expected+=f"The archived `{layout['archive']}/{RAW_RESULT_INDEX}` lists every accepted raw key with its field, stratum, candidate and task; SHA-256 `{digest(raw_result_index(bundles).encode())}`.\n"

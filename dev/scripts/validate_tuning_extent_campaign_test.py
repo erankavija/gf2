@@ -509,6 +509,7 @@ class CodingStage:
                    "cpu_features": ["avx2"], "os_kernel": "fixture", "governor": "{}",
                    "receipt": receipt}
         return {"campaign_id": self.campaign, "affinity": [0], "receipt": receipt,
+                **({"fixture_generators": {"coding": self.rng}} if self.rng else {}),
                 "identity": {"source_revision": self.REVISION, "host_identity": "host;cpus=[0]",
                              "executable_sha256": {process["id"]: process["executable_sha256"]
                                                    for process in self.processes},
@@ -576,7 +577,8 @@ class CodingStage:
                     "tool_sha256": producer["executable_sha256"]}).decode()),
                 "output": output["path"]}}))
         response = {"operation": "emit-owner", "artifact": output,
-                    "decisions": self.v.compact(analysis).decode()}
+                    "decisions": self.v.compact(analysis).decode(),
+                    **({"rng": self.rng} if self.rng else {})}
         stdout = b"GF2_TUNING_RESULT=" + self.v.compact(response)
         write = self.event("owner-write", {"owner": "gf2-coding", "request": request})
         self.budget("coding-producer", "before-launch")
@@ -756,6 +758,8 @@ class CodingStage:
                  "observations are recorded in each session journal and must equal this set."
                  f"\n\nOwner `gf2-coding` uses protocol `coding-tuning-campaign-v1` and behavior "
                  f"`{self.behavior}`; executable `{self.processes[0]['executable_sha256']}`.\n\n"
+                 + (f"Owner `gf2-coding` draws its fixtures from `{self.rng['implementation']}`, "
+                    f"version `{self.rng['version']}`.\n\n" if self.rng else "") +
                  f"Accepted accounting: {counts['cells']} cells, {counts['probes']} probes, "
                  f"{counts['timed_children']} timed children, {counts['accepted_results']} "
                  f"accepted results, {counts['windows']} raw windows, "
@@ -1025,6 +1029,27 @@ class CodingOwner(unittest.TestCase):
                        {"version": None}, {"revision": "x"}]:
             with self.subTest(change=change):
                 self.rejects(self.preflight, self.staged(rng={**self.STATED, **change}))
+
+    def test_the_emission_and_the_receipt_state_the_generator_of_the_campaign_record(self):
+        stage = self.staged(rng=self.STATED)
+        self.composition(stage)
+        self.receipt(stage)
+        self.assertIn("draws its fixtures from `rand::rngs::std::StdRng`, version "
+                      f"`{self.STATED['version']}`", (stage.stage / "receipt.md").read_text())
+        self.assertNotIn("draws its fixtures", (self.staged().stage / "receipt.md").read_text())
+        del stage.config["fixture_generators"]
+        self.rejects(self.composition, stage)
+        unstated = self.staged()
+        unstated.config["fixture_generators"] = {"coding": self.STATED}
+        self.rejects(self.composition, unstated)
+
+    def test_a_receipt_without_the_stated_generator_is_rejected(self):
+        stage = self.staged(rng=self.STATED)
+        receipt = stage.stage / "receipt.md"
+        text = receipt.read_text()
+        line = next(line for line in text.splitlines() if "draws its fixtures" in line)
+        receipt.write_text(text.replace(line + "\n\n", ""))
+        self.rejects(self.receipt, stage)
 
     def test_a_report_of_another_mode_states_no_generator(self):
         stage = self.staged(rng=self.STATED)

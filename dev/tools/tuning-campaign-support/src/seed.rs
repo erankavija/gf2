@@ -42,9 +42,10 @@ pub struct FixtureGenerator {
 }
 
 impl FixtureGenerator {
-    /// Names the generator type `G` with the versions the build resolved for
-    /// `packages`. Each package is a chain of dependency names leading from
-    /// the workspace package `consumer`; the empty chain is `consumer`.
+    /// Names the generator type `G` and resolves, in the workspace
+    /// `Cargo.lock` this crate embeds at build, the version of each package of
+    /// `packages`: a chain of dependency names leading from the workspace
+    /// package `consumer`, the empty chain being `consumer` itself.
     pub fn locked<G>(consumer: &str, packages: &[&[&str]]) -> std::io::Result<Self> {
         Ok(Self {
             implementation: std::any::type_name::<G>().to_owned(),

@@ -10808,6 +10808,7 @@ mod campaign_owner {
                 sha256: Sha256Digest::of(json.as_bytes()),
             },
             decisions: CanonicalJson::from_serializable(&decisions).map_err(err)?,
+            rng: Some(fixture_generator()?),
         })
     }
 
@@ -11546,9 +11547,11 @@ mod campaign_owner {
                 refused.contains("differs from producing binary"),
                 "{refused}"
             );
-            let OwnerResponse::EmitOwner { artifact, .. } = publish_owner(&emit).unwrap() else {
+            let OwnerResponse::EmitOwner { artifact, rng, .. } = publish_owner(&emit).unwrap()
+            else {
                 panic!("owner emission returned another response");
             };
+            assert_eq!(rng, Some(fixture_generator().unwrap()));
             let bytes = fs::read(&artifact.path).unwrap();
             assert_eq!(artifact.sha256, Sha256Digest::of(&bytes));
             let reopened =
