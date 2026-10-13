@@ -2,7 +2,9 @@
 //! raw, pooled CSV windows with explicit execution and fixture coordinates, so a
 //! baseline and a candidate compare cell by cell. The cells call the bit-backend and
 //! polynomial entry points at sizes around each selector default, use only public
-//! `gf2-core` APIs and install no tuning profile.
+//! `gf2-core` APIs and install no tuning profile. The layout audit reads the
+//! recorded revision and checkout status as pointers only: holding each arm's
+//! source and executables fixed is the caller's part.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
