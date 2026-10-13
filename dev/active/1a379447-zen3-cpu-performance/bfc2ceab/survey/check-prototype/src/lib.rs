@@ -455,7 +455,8 @@ pub fn gemm_row_panel_checked(
 }
 
 macro_rules! whole_gemm_prototype {
-    ($current:ident, $checked:ident, $kernel:ty, $name:literal, $input:ty, $modulus:ty, $output:ty) => {
+    ($current:ident, $checked:ident, $kernel:ty, $name:literal, $input:ty, $modulus:ty, $output:ty
+     $(, cap = $cap:expr)?) => {
         #[inline(never)]
         pub fn $current(
             kernel: $kernel,
@@ -467,7 +468,7 @@ macro_rules! whole_gemm_prototype {
             p: $modulus,
             c: &mut [$output],
         ) {
-            kernel(a, bt, m, k, n, p, c)
+            kernel(a, bt, m, k, n, p $(, $cap)?, c)
         }
 
         #[inline(never)]
@@ -484,7 +485,7 @@ macro_rules! whole_gemm_prototype {
             assert_shape($name, "a", a.len(), m, k);
             assert_shape($name, "bt", bt.len(), n, k);
             assert_shape($name, "c", c.len(), m, n);
-            kernel(a, bt, m, k, n, p, c)
+            kernel(a, bt, m, k, n, p $(, $cap)?, c)
         }
     };
 }
@@ -505,7 +506,8 @@ whole_gemm_prototype!(
     "fp_small_f32_gemm",
     f32,
     u8,
-    u8
+    u8,
+    cap = gf2_kernels_simd::fp_small_f32::K_CHUNK_CAP
 );
 whole_gemm_prototype!(
     medium_panel_gemm_current,
@@ -523,7 +525,8 @@ whole_gemm_prototype!(
     "fp_medium_f64_gemm",
     f64,
     u16,
-    u16
+    u16,
+    cap = gf2_kernels_simd::fp_medium_f64::K_CHUNK_CAP
 );
 
 macro_rules! pam_prototype {
