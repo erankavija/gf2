@@ -1278,7 +1278,7 @@ fn print_comparison(baseline: &Path, candidate: &Path, comparison: &Comparison) 
     );
 }
 
-/// One arm of a layout ensemble: one revision measured from several builds,
+/// One arm of a layout ensemble: one source measured from several builds,
 /// keyed by the execution index each build records.
 ///
 /// A build occupies one execution index, so the `execution` column separates builds
@@ -1287,7 +1287,6 @@ fn print_comparison(baseline: &Path, candidate: &Path, comparison: &Comparison) 
 struct EnsembleArm {
     schema_version: String,
     revisions: BTreeSet<String>,
-    dirty_builds: BTreeSet<u32>,
     zero_execution: bool,
     builds: BTreeMap<u32, BTreeMap<String, CellStat>>,
 }
@@ -1308,13 +1307,14 @@ fn even_member(execution: u32) -> bool {
 }
 
 impl EnsembleArm {
-    /// The one revision every row of a well-formed arm records.
+    /// The revisions the rows record, joined by `+`: a rebuild pointer that
+    /// decides nothing.
     fn revision(&self) -> String {
         self.revisions
             .iter()
-            .next()
-            .cloned()
-            .unwrap_or_else(|| "unknown".to_owned())
+            .map(String::as_str)
+            .collect::<Vec<_>>()
+            .join("+")
     }
 
     /// Pooled ns/call for `cell` over the builds whose index satisfies `keep`,
@@ -1361,8 +1361,6 @@ impl EnsembleArm {
 #[derive(Debug, PartialEq, Eq)]
 enum AuditError {
     Schema { found: String },
-    Dirty { build: u32 },
-    Revision { first: String, second: String },
     CellSet { build: u32 },
     Identity(IdentityMismatch),
     Degenerate { cell: String, build: u32 },
@@ -1379,8 +1377,6 @@ impl AuditError {
     fn class(&self) -> &'static str {
         match self {
             Self::Schema { .. } => "schema mismatch",
-            Self::Dirty { .. } => "dirty source row",
-            Self::Revision { .. } => "arm spans several revisions",
             Self::CellSet { .. } => "not the pinned set",
             Self::Identity(_) => "selector identity mismatch",
             Self::Degenerate { .. } => "degenerate cell",
@@ -1400,14 +1396,6 @@ impl fmt::Display for AuditError {
             Self::Schema { found } => {
                 write!(f, "schema mismatch: found={found} expected={SCHEMA_VERSION}")
             }
-            Self::Dirty { build } => write!(
-                f,
-                "build {build} records source_dirty=true; an ensemble arm gates on a clean tree"
-            ),
-            Self::Revision { first, second } => write!(
-                f,
-                "one arm records two revisions: {first} and {second}; each arm is one revision built several ways"
-            ),
             Self::CellSet { build } => write!(
                 f,
                 "build {build} does not carry the {SCHEMA_VERSION} pinned set"
@@ -1519,7 +1507,7 @@ fn root_mean_square(values: &[f64]) -> f64 {
     (values.iter().map(|value| value * value).sum::<f64>() / values.len() as f64).sqrt()
 }
 
-/// Reads one ensemble arm: several builds of one revision, one execution index
+/// Reads one ensemble arm: several builds of one source, one execution index
 /// each, all carrying the pinned set.
 fn load_ensemble(path: &Path) -> Result<EnsembleArm, String> {
     let resolved = resolve_repository_path(path);
@@ -1542,7 +1530,6 @@ fn load_ensemble(path: &Path) -> Result<EnsembleArm, String> {
         "calls",
         "elapsed_ns",
         "git_revision",
-        "source_dirty",
     ] {
         if !columns.contains_key(required) {
             return Err(format!("receipt header lacks {required}"));
@@ -1550,7 +1537,6 @@ fn load_ensemble(path: &Path) -> Result<EnsembleArm, String> {
     }
     let mut schema_version = None;
     let mut revisions = BTreeSet::new();
-    let mut dirty_builds = BTreeSet::new();
     let mut zero_execution = false;
     let mut builds: BTreeMap<u32, BTreeMap<String, CellStat>> = BTreeMap::new();
     for row in rows.iter().skip(1) {
@@ -1567,9 +1553,6 @@ fn load_ensemble(path: &Path) -> Result<EnsembleArm, String> {
             .map_err(|_| "invalid execution index".to_owned())?;
         if execution == 0 {
             zero_execution = true;
-        }
-        if csv_value(row, &columns, "source_dirty")? != "false" {
-            dirty_builds.insert(execution);
         }
         let cell = csv_value(row, &columns, "cell")?.to_owned();
         let stat = CellStat {
@@ -1607,14 +1590,14 @@ fn load_ensemble(path: &Path) -> Result<EnsembleArm, String> {
     Ok(EnsembleArm {
         schema_version: schema_version.ok_or_else(|| "receipt has no data rows".to_owned())?,
         revisions,
-        dirty_builds,
         zero_execution,
         builds,
     })
 }
 
-/// Rejects an arm that is not one revision's pinned set measured from several
-/// clean builds, so no dispersion is computed from rows that mix them.
+/// Rejects an arm that is not the pinned set measured on one code path from
+/// several builds, so no dispersion is computed from rows that mix them. The
+/// recorded revision and checkout status take no part.
 fn check_arm(arm: &EnsembleArm) -> Result<(), AuditError> {
     if arm.schema_version != SCHEMA_VERSION {
         return Err(AuditError::Schema {
@@ -1623,20 +1606,6 @@ fn check_arm(arm: &EnsembleArm) -> Result<(), AuditError> {
     }
     if arm.zero_execution {
         return Err(AuditError::ExecutionIndex);
-    }
-    if let Some(build) = arm.dirty_builds.iter().next() {
-        return Err(AuditError::Dirty { build: *build });
-    }
-    let mut recorded = arm.revisions.iter();
-    let first = recorded
-        .next()
-        .cloned()
-        .unwrap_or_else(|| "unknown".to_owned());
-    if let Some(second) = recorded.next() {
-        return Err(AuditError::Revision {
-            first,
-            second: second.clone(),
-        });
     }
     let pinned = pinned_cell_ids();
     let mut first: Option<&BTreeMap<String, CellStat>> = None;
@@ -3090,33 +3059,31 @@ mod tests {
         );
     }
 
+    /// The recorded revision and checkout status are rebuild pointers: an arm
+    /// whose rows record a dirty checkout or two revisions gets the audit of
+    /// the same measurements recorded from one clean revision.
     #[test]
-    fn layout_audit_rejects_a_dirty_arm() {
-        let arm = parse_ensemble(&ensemble_csv(&first_rung(), "reference", true, |_, _| {
-            1_000.0
-        }));
+    fn layout_audit_ignores_the_recorded_revision_and_checkout_status() {
+        let rate = |member: u32, _: &str| 1_000.0 + f64::from(member);
         let (baseline, rebuild) = natural_pair(1.0);
-        assert_eq!(
-            audit_layout(&arm, &arm, Some((&baseline, &rebuild)))
-                .unwrap_err()
-                .class(),
-            "dirty source row"
-        );
-    }
-
-    #[test]
-    fn layout_audit_rejects_an_arm_spanning_two_revisions() {
-        let mut text = ensemble_csv(&first_rung()[..64], "reference", false, |_, _| 1_000.0);
-        let second = ensemble_csv(&first_rung()[64..], "other", false, |_, _| 1_000.0);
+        let audit = |arm: &EnsembleArm| {
+            let audit = audit_layout(arm, arm, Some((&baseline, &rebuild))).unwrap();
+            (
+                audit.set_layout_se,
+                audit.set_margin,
+                audit.null_geomean,
+                audit.passed,
+            )
+        };
+        let clean = parse_ensemble(&ensemble_csv(&first_rung(), "reference", false, rate));
+        let dirty = parse_ensemble(&ensemble_csv(&first_rung(), "reference", true, rate));
+        let mut text = ensemble_csv(&first_rung()[..64], "reference", false, rate);
+        let second = ensemble_csv(&first_rung()[64..], "other", true, rate);
         text.push_str(second.split_once('\n').expect("header is present").1);
-        let arm = parse_ensemble(&text);
-        let (baseline, rebuild) = natural_pair(1.0);
-        assert_eq!(
-            audit_layout(&arm, &arm, Some((&baseline, &rebuild)))
-                .unwrap_err()
-                .class(),
-            "arm spans several revisions"
-        );
+        let mixed = parse_ensemble(&text);
+        assert_eq!(mixed.revision(), "other+reference");
+        assert_eq!(audit(&dirty), audit(&clean));
+        assert_eq!(audit(&mixed), audit(&clean));
     }
 
     /// Member `j` records execution `j+1`, so a row at execution 0 names no
