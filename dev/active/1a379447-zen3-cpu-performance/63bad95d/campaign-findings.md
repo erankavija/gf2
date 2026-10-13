@@ -315,16 +315,15 @@ The production selector values are not changed by this record.
 
 ## F-10: the selector-class constants outside the sections keep their values
 
-The inventory's
+This calibration supersedes no threshold outside the tuning sections and moves
+none. The named convergence exception `private-core-selector-constants`
+(REQ-11) covers the scanned constants of class `selector` that no tuning
+section owns; the inventory's
 [private list](route-inventory.md#thresholds-and-selectors-outside-the-tuning-sections)
-gives the scanned constants of class `selector` that no tuning section owns.
-This calibration supersedes none of them and moves none: each keeps the value
-its definition gives under the named convergence exception
-`private-core-selector-constants`, which the inventory records with the
-constants and their definitions. `@/issue/817fc47d` is the convergence
-condition (REQ-11): each constant moves under a tuning section with a
-conservative default equal to that value, or the inventory classifies it as
-structural with its reason.
+states its extent. `@/issue/817fc47d` is the convergence condition: a tuning
+section owns each constant with a conservative default equal to the value its
+definition gives, or the inventory classifies it as structural with its
+reason.
 
 ## What the campaign does not decide
 

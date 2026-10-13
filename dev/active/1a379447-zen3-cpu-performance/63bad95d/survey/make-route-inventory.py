@@ -233,15 +233,17 @@ SCANNED_PACKAGES = (CORE, SIMD, ALGEBRA)
 
 # Class of each scanned constant no tuning section owns.
 #   selector: chooses between routes or bounds one for performance
+#   structural: named like a selector and shown to select nothing a profile
+#     could move; `STRUCTURAL` states why
 #   kernel-geometry: a structural extent of one kernel or data layout
 #   algorithm-limit: a retry, seed or recursion bound without a route choice
 CLASSES = {
     "N_MAX_MULTIWORD": "kernel-geometry",
     "MAX_DEGREE": "kernel-geometry",
-    "MAX_MATRIX_BYTES_FOR_L1": "selector",
+    "MAX_MATRIX_BYTES_FOR_L1": "structural",
     "B2_GRAY_TILE_WORDS": "kernel-geometry",
     "B2_GRAY_MAX_TILES": "kernel-geometry",
-    "M4RM_DEFAULT_MAX_K": "selector",
+    "M4RM_DEFAULT_MAX_K": "structural",
     "M4RM_TILE_ROWS": "kernel-geometry",
     "M4RM_TILE_WORDS": "kernel-geometry",
     "KG_MAX_RETRIES": "algorithm-limit",
@@ -252,25 +254,45 @@ CLASSES = {
     "MAX_SEEDS": "algorithm-limit",
     "MAX_ITERATIONS": "algorithm-limit",
     "MAX_RETRIES": "algorithm-limit",
-    "DEFAULT_BLOCK_ROWS": "selector",
     "AXPY_UNROLL": "kernel-geometry",
     "PANEL_SCRATCH_COLS": "kernel-geometry",
     "POPCOUNT_CSA_BLOCK_WORDS": "kernel-geometry",
-    "PRODUCTION_PREFERENCE": "selector",
+    "PRODUCTION_PREFERENCE": "structural",
     "LANE_BLOCK": "kernel-geometry",
     "FP_MEDIUM_PANEL_MR": "kernel-geometry",
     "FP_MEDIUM_PANEL_NR": "kernel-geometry",
-    "K_CHUNK_CAP": "selector",
-    "CHUNK_VEC": "selector",
-    "I_TILE": "selector",
+    "K_CHUNK_CAP_MAX": "kernel-geometry",
+    "CHUNK_VEC": "structural",
+    "I_TILE": "structural",
     "WORDS_PER_VECTOR": "kernel-geometry",
     "CSA_BLOCK_VECTORS": "kernel-geometry",
     "CSA_BLOCK_WORDS": "kernel-geometry",
 }
 
-# Named convergence exception (REQ-11): the scanned constants of class
-# `selector` keep their values outside the tuning sections until this issue
-# moves each under a section or shows it structural.
+# Why each constant of class `structural` selects nothing a profile could move.
+STRUCTURAL = {
+    "M4RM_DEFAULT_MAX_K":
+        "Panel-width cap of the reference schedule a unit test of its module compares "
+        "`multiply` against; no production code reads it.",
+    "PRODUCTION_PREFERENCE":
+        "Capability walk of the kernel crate: `detect` takes the first lane the processor "
+        "can run, so the order selects by processor feature at every size. The kernel crate "
+        "lies below the tuning mechanism, whose selectors are unsigned extents and "
+        "thresholds.",
+    "CHUNK_VEC":
+        "Drain interval of the 32-bit lane accumulators of `fp_small_batch_dot`: lane "
+        "exactness bounds it, the accumulators stay in registers, and no route depends on it.",
+    "I_TILE":
+        "Row count of the hand-unrolled loop body of the GF(2^m) product kernel, which names "
+        "four accumulator rows; another count is another kernel.",
+    "MAX_MATRIX_BYTES_FOR_L1":
+        "Operand of one compile-time assertion that the widest multi-word matrix fits half of "
+        "`L1D_BYTES`; no run-time code reads it.",
+}
+
+# Named convergence exception (REQ-11): a scanned constant of class `selector`
+# keeps its value outside the tuning sections until this issue moves it under
+# a section or shows it structural.
 CONVERGENCE_EXCEPTION = {
     "name": "private-core-selector-constants",
     "class": "selector",
@@ -560,6 +582,13 @@ def private_constants(sections):
                 )
     if unclassified:
         raise SystemExit("scanned constants without a class:\n" + "\n".join(unclassified))
+    structural = {row["id"] for row in rows if row["class"] == "structural"}
+    if structural != set(STRUCTURAL):
+        raise SystemExit(
+            f"structural constants and their reasons differ: {sorted(structural ^ set(STRUCTURAL))}")
+    for row in rows:
+        if row["class"] == "structural":
+            row["reason"] = STRUCTURAL[row["id"]]
     return rows, owned_scanned
 
 
@@ -806,6 +835,21 @@ def code(items):
     return ", ".join(f"`{item}`" for item in items) if items else "—"
 
 
+def exception_statement(exception):
+    """The state of the named convergence exception over its remaining constants."""
+    head = f"Convergence exception `{exception['name']}` (`@/issue/{exception['issue']}`)"
+    if not exception["constants"]:
+        return (f"{head} is closed: no scanned constant of class `{exception['class']}` lies "
+                "outside the tuning sections.")
+    return (
+        f"{head}: the constants of class `{exception['class']}` above, "
+        + ", ".join(f"`{row['id']}` (`{row['defined']}`)" for row in exception["constants"])
+        + ", stay outside the tuning sections at the values their definitions give. Each moves "
+        "under a tuning section with a conservative default equal to that value, or is "
+        "classified structural with its reason."
+    )
+
+
 def render(inventory):
     out = [
         "# Dispatch route inventory of the core kernels",
@@ -927,14 +971,16 @@ def render(inventory):
             ],
         ),
         "",
-        f"Convergence exception `{inventory['convergence_exception']['name']}`: the constants "
-        f"of class `{inventory['convergence_exception']['class']}` above, "
-        + ", ".join(f"`{row['id']}` (`{row['defined']}`)"
-                    for row in inventory["convergence_exception"]["constants"])
-        + ", stay outside the tuning sections at the values their definitions give. "
-        f"`@/issue/{inventory['convergence_exception']['issue']}` tracks the convergence: each "
-        "moves under a tuning section with a conservative default equal to that value, or is "
-        "classified structural with its reason.",
+        "Constants of class `structural`, each with the reason it selects nothing a profile "
+        "could move and every read site outside unit-test modules:",
+        "",
+        table(
+            ["Constant", "Defined", "Reason", "Read sites"],
+            [[f"`{row['id']}`", f"`{row['defined']}`", row["reason"], code(row["read_sites"])]
+             for row in inventory["private_constants"] if row["class"] == "structural"],
+        ),
+        "",
+        exception_statement(inventory["convergence_exception"]),
         "",
         table(
             ["Declared selector", "Package", "What it selects", "Source claims"],
@@ -1083,6 +1129,7 @@ def main():
             "scanned constants a tuning section owns": owned_scanned,
             "scanned constants outside the tuning sections": len(private),
             "of those, class selector": sum(row["class"] == "selector" for row in private),
+            "of those, class structural": sum(row["class"] == "structural" for row in private),
             "declared selectors outside the tuning sections": len(declared),
             "witness configurations": len(configurations),
             "committed protocol receipts": len(campaigns),

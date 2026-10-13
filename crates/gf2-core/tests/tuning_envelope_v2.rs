@@ -699,13 +699,13 @@ fn programmatic_core_conservative_encoding_declares_the_canonical_inventory() {
     let selectors = sections["gf2-core/selectors"]["selectors"]
         .as_object()
         .unwrap();
-    assert_eq!(selectors.len(), 12);
+    assert_eq!(selectors.len(), 13);
     assert_eq!(
         selectors
             .values()
             .map(|family| family.as_object().unwrap().len())
             .sum::<usize>(),
-        37
+        40
     );
 }
 

@@ -14,13 +14,21 @@
 /// every `(i, j) ∈ [0, m) × [0, n)`, where `bt` is the row-major
 /// transpose of the right operand (length `n * k`). Inputs are `f32`
 /// lanes carrying canonical residues in `[0, p)`; outputs are
-/// canonical bytes in `[0, p)`; `p` is an odd prime in `[3, 251]`.
+/// canonical bytes in `[0, p)`; `p` is an odd prime in `[3, 251]`. The
+/// argument after `p` is the k-axis chunk cap: the kernel reduces its
+/// accumulators after every `min(floor(2^24 / (p-1)²), cap)` steps.
 ///
 /// # Panics
 ///
-/// Panics unless `a.len() == m * k`, `bt.len() == n * k` and
-/// `c.len() == m * n`.
-pub type SmallPrimeF32GemmFn = fn(&[f32], &[f32], usize, usize, usize, u8, &mut [u8]);
+/// Panics unless `a.len() == m * k`, `bt.len() == n * k`,
+/// `c.len() == m * n` and the cap is positive.
+pub type SmallPrimeF32GemmFn = fn(&[f32], &[f32], usize, usize, usize, u8, usize, &mut [u8]);
+
+/// Conservative default of the tuning profile's `prime_route.f32_k_chunk_cap`
+/// in `gf2-core`: it keeps the B-panel slice one chunk reads at
+/// `1024 · 24 · 4` bytes = 96 KiB. For `p = 251` the exactness bound
+/// `floor(2^24 / (p-1)²) = 268` binds first.
+pub const K_CHUNK_CAP: usize = 1024;
 
 /// Bundle of small-prime f32-FMA SIMD batch operations.
 ///
@@ -64,17 +72,28 @@ fn detect_x86() -> Option<SmallPrimeF32Fns> {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn batch_gemm_safe(a: &[f32], bt: &[f32], m: usize, k: usize, n: usize, p: u8, c: &mut [u8]) {
+#[allow(clippy::too_many_arguments)]
+fn batch_gemm_safe(
+    a: &[f32],
+    bt: &[f32],
+    m: usize,
+    k: usize,
+    n: usize,
+    p: u8,
+    k_chunk_cap: usize,
+    c: &mut [u8],
+) {
     crate::entry_check::assert_shape("fp_small_f32_gemm", "a", a.len(), m, k);
     crate::entry_check::assert_shape("fp_small_f32_gemm", "bt", bt.len(), n, k);
     crate::entry_check::assert_shape("fp_small_f32_gemm", "c", c.len(), m, n);
     // SAFETY: `detect_x86` only returns this pointer when AVX2 and FMA3 are available
     // at runtime. The assertions above keep the shape products from wrapping
     // in the kernel's own length assertions.
-    unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm(a, bt, m, k, n, p, c) }
+    unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm(a, bt, m, k, n, p, k_chunk_cap, c) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[allow(clippy::too_many_arguments)]
 fn batch_gemm_route_a_safe(
     a: &[f32],
     bt: &[f32],
@@ -82,6 +101,7 @@ fn batch_gemm_route_a_safe(
     k: usize,
     n: usize,
     p: u8,
+    k_chunk_cap: usize,
     c: &mut [u8],
 ) {
     crate::entry_check::assert_shape("fp_small_f32_gemm_route_a", "a", a.len(), m, k);
@@ -90,7 +110,9 @@ fn batch_gemm_route_a_safe(
     // SAFETY: `detect_x86` only returns this pointer when AVX2 and FMA3 are available
     // at runtime. The assertions above keep the shape products from wrapping
     // in the kernel's own length assertions.
-    unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm_route_a(a, bt, m, k, n, p, c) }
+    unsafe {
+        crate::x86::fp_small_f32::fp_small_f32_gemm_route_a(a, bt, m, k, n, p, k_chunk_cap, c)
+    }
 }
 
 #[cfg(test)]
@@ -153,7 +175,7 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
-                (fns.batch_gemm_fn)(&a_f, &bt_f, m, k, n, p, &mut got);
+                (fns.batch_gemm_fn)(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got);
                 let expected = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, expected, "p={p} m={m} k={k} n={n}");
             }
@@ -188,7 +210,7 @@ mod tests {
                 let a_f = u8_to_f32(&a);
                 let bt_f = u8_to_f32(&bt);
                 let mut got = vec![0u8; m * n];
-                (fns.batch_gemm_route_a_fn)(&a_f, &bt_f, m, k, n, p, &mut got);
+                (fns.batch_gemm_route_a_fn)(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got);
                 let expected = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, expected, "route-A p={p} m={m} k={k} n={n}");
             }
@@ -201,7 +223,7 @@ mod tests {
         let a: Vec<f32> = vec![];
         let bt: Vec<f32> = vec![];
         let mut out: Vec<u8> = vec![];
-        (fns.batch_gemm_fn)(&a, &bt, 0, 0, 0, 7, &mut out);
+        (fns.batch_gemm_fn)(&a, &bt, 0, 0, 0, 7, K_CHUNK_CAP, &mut out);
         assert!(out.is_empty());
     }
 }

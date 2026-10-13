@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 # Runs the shared dispatch fallback contract on each build configuration the
-# route inventory covers and records what its reporters answer (jit:63bad95d).
+# route inventory covers and records what its reporters answer (jit:63bad95d),
+# and runs the suites of the selectors jit:817fc47d brings under the core
+# section with and without `simd`, on an unbaked and a baked build.
 #
-# Untimed: no timing window, no host lock, no ignored test. Each configuration
-# writes `test-logs/<name>.txt` (toolchain, command, output, exit status) and
-# `route-witness/<name>.tsv` (entry, input, route, kind) beside this script;
-# `route-witness/dependency-features.tsv` holds the features cargo resolves for
-# the kernel packages in each package's ordinary dependency build.
+# Untimed: no timing window, no host lock, no ignored test. Each run writes
+# `test-logs/<name>.txt` (toolchain, command, output, exit status) beside this
+# script; a witness configuration also writes `route-witness/<name>.tsv`
+# (entry, input, route, kind). `route-witness/dependency-features.tsv` holds
+# the features cargo resolves for the kernel packages in each package's
+# ordinary dependency build.
 #
-# Usage: run-route-witnesses.sh, from any directory of the checkout.
+# Usage: run-route-witnesses.sh [witnesses|selectors], from any directory of
+# the checkout; without an argument both sets run.
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -22,10 +26,19 @@ logs=$here/test-logs
 records=$here/route-witness
 mkdir -p "$logs" "$records"
 
-# witness NAME ENVIRONMENT CARGO_ARGUMENTS...
+set_selected=${1:-all}
+case $set_selected in
+  all | witnesses | selectors) ;;
+  *)
+    echo "usage: run-route-witnesses.sh [witnesses|selectors]" >&2
+    exit 2
+    ;;
+esac
+
+# logged NAME ENVIRONMENT CARGO_ARGUMENTS...
 # ENVIRONMENT is `-` or one `NAME=value` assignment; a second target directory
 # keeps a build with other compiler flags from evicting the ordinary cache.
-witness() {
+logged() {
   local name=$1 assignment=$2
   shift 2
   local -a environment=()
@@ -47,9 +60,31 @@ witness() {
     echo "$name: exit $status, see ${log#"$root"/}" >&2
     return "$status"
   fi
-  grep -a $'^GF2_ROUTE_WITNESS\t' "$log" | cut -f2- >"$records/$name.tsv"
-  echo "$name: $(wc -l <"$records/$name.tsv") witness rows"
 }
+
+witness() {
+  logged "$@"
+  grep -a $'^GF2_ROUTE_WITNESS\t' "$logs/$1.txt" | cut -f2- >"$records/$1.tsv"
+  echo "$1: $(wc -l <"$records/$1.tsv") witness rows"
+}
+
+if [[ $set_selected != witnesses ]]; then
+  suites=(--test dispatch_fallback --test tuning_profile_committed --test tuning_envelope_v2
+    --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install)
+  logged selectors-unbaked-portable - -p gf2-core --features test-support,tuning-profile \
+    "${suites[@]}"
+  logged selectors-unbaked-simd - -p gf2-core --features simd,test-support,tuning-profile \
+    "${suites[@]}"
+  logged selectors-baked-portable 'RUSTFLAGS=--cfg gf2_tuning_baked' -p gf2-core \
+    --features test-support,tuning-profile "${suites[@]}"
+  logged selectors-baked-simd 'RUSTFLAGS=--cfg gf2_tuning_baked' -p gf2-core \
+    --features simd,test-support,tuning-profile "${suites[@]}"
+  logged selectors-kernels - -p gf2-kernels-simd --all-features
+  echo "selectors: five suite logs"
+fi
+if [[ $set_selected == selectors ]]; then
+  exit 0
+fi
 
 witness core-default - -p gf2-core --test dispatch_fallback
 witness core-simd - -p gf2-core --features simd --test dispatch_fallback

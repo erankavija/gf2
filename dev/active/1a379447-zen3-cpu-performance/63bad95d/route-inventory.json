@@ -3,18 +3,19 @@
  "issue": "63bad95d",
  "source_evidence": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/source-evidence.json",
-  "sha256": "7f162c7c59d9010c184b4b29017d3fd01b1303687b3cd250554e786e8501aec3"
+  "sha256": "7f47da513cd1d1327c948158c2da9f8bc4a4a6bd36b56556f62dbcc47ccc6c16"
  },
  "counts": {
   "entry point groups": 9,
   "public entry points": 24,
   "routes": 21,
-  "selectors of the core tuning section": 37,
+  "selectors of the core tuning section": 40,
   "core selectors selected at compile time": 8,
   "core selectors the measured owner states": 31,
-  "scanned constants a tuning section owns": 51,
-  "scanned constants outside the tuning sections": 39,
-  "of those, class selector": 8,
+  "scanned constants a tuning section owns": 54,
+  "scanned constants outside the tuning sections": 37,
+  "of those, class selector": 0,
+  "of those, class structural": 5,
   "declared selectors outside the tuning sections": 6,
   "witness configurations": 7,
   "committed protocol receipts": 175,
@@ -376,78 +377,78 @@
    "configuration": "core-default",
    "description": "standalone `gf2-core`, default features",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-default.tsv",
-   "record_sha256": "b78409ccfed4d1bfbac2b946f216f205e5c3690953644e9e2f78da2dcafbbc84",
+   "record_sha256": "e9e8821e457c2c22cc44df8a6ff78c2bbc40220a1b46f8b103efe5bad187578c",
    "simd_feature": "false",
    "baked_selectors": "false",
    "core_section_resolution": "frozen-before-install",
-   "rows": 41,
+   "rows": 42,
    "kernel_rows": 0
   },
   {
    "configuration": "core-simd",
    "description": "standalone `gf2-core`, `simd`",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-simd.tsv",
-   "record_sha256": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+   "record_sha256": "c8accee9662ae50b94544cd087e25803cc72c97b15ba612507ae3d35fbf8f062",
    "simd_feature": "true",
    "baked_selectors": "false",
    "core_section_resolution": "frozen-before-install",
-   "rows": 41,
-   "kernel_rows": 24
+   "rows": 45,
+   "kernel_rows": 27
   },
   {
    "configuration": "core-all-features",
    "description": "standalone `gf2-core`, `--all-features`",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-all-features.tsv",
-   "record_sha256": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+   "record_sha256": "c8accee9662ae50b94544cd087e25803cc72c97b15ba612507ae3d35fbf8f062",
    "simd_feature": "true",
    "baked_selectors": "false",
    "core_section_resolution": "frozen-before-install",
-   "rows": 41,
-   "kernel_rows": 24
+   "rows": 45,
+   "kernel_rows": 27
   },
   {
    "configuration": "core-baked",
    "description": "standalone `gf2-core`, `simd`, `--cfg gf2_tuning_baked`",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/core-baked.tsv",
-   "record_sha256": "ce940bc2d20c999855936852150dae9c639331532691412f8d384eefcbfbcb80",
+   "record_sha256": "02b52a8a3297bf629a8f0f497be504cced1eb1dcc44776ea2d8eb964e222cef1",
    "simd_feature": "true",
    "baked_selectors": "true",
    "core_section_resolution": "frozen-before-install",
-   "rows": 53,
-   "kernel_rows": 33
+   "rows": 57,
+   "kernel_rows": 36
   },
   {
    "configuration": "coding-default",
    "description": "`gf2-coding` dependency build, default features",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/coding-default.tsv",
-   "record_sha256": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+   "record_sha256": "c8accee9662ae50b94544cd087e25803cc72c97b15ba612507ae3d35fbf8f062",
    "simd_feature": "true",
    "baked_selectors": "false",
    "core_section_resolution": "frozen-before-install",
-   "rows": 41,
-   "kernel_rows": 24
+   "rows": 45,
+   "kernel_rows": 27
   },
   {
    "configuration": "coding-no-default-features",
    "description": "`gf2-coding` test build, `--no-default-features`; its self dev-dependency disables the default features",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/coding-no-default-features.tsv",
-   "record_sha256": "b78409ccfed4d1bfbac2b946f216f205e5c3690953644e9e2f78da2dcafbbc84",
+   "record_sha256": "e9e8821e457c2c22cc44df8a6ff78c2bbc40220a1b46f8b103efe5bad187578c",
    "simd_feature": "false",
    "baked_selectors": "false",
    "core_section_resolution": "frozen-before-install",
-   "rows": 41,
+   "rows": 42,
    "kernel_rows": 0
   },
   {
    "configuration": "sim-default",
    "description": "`gf2-sim` dependency build, default features",
    "record": "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/route-witness/sim-default.tsv",
-   "record_sha256": "72fd949742dd1abb67583dccafc854b9ec3cc749d2de77ef8c94ee8dda9bb5fa",
+   "record_sha256": "c8accee9662ae50b94544cd087e25803cc72c97b15ba612507ae3d35fbf8f062",
    "simd_feature": "true",
    "baked_selectors": "false",
    "core_section_resolution": "frozen-before-install",
-   "rows": 41,
-   "kernel_rows": 24
+   "rows": 45,
+   "kernel_rows": 27
   }
  ],
  "route_witnesses": [
@@ -946,6 +947,52 @@
    }
   },
   {
+   "entry": "SpBitMatrix::to_default_block_csr",
+   "input": "block-rows",
+   "routes": {
+    "core-default": "32",
+    "core-simd": "32",
+    "core-all-features": "32",
+    "core-baked": "32",
+    "coding-default": "32",
+    "coding-no-default-features": "32",
+    "sim-default": "32"
+   }
+  },
+  {
+   "entry": "gfp::simd_ops::prime_gemm_k_chunk_cap",
+   "input": "f32-cascade-tabled",
+   "routes": {
+    "core-simd": "1024",
+    "core-all-features": "1024",
+    "core-baked": "1024",
+    "coding-default": "1024",
+    "sim-default": "1024"
+   }
+  },
+  {
+   "entry": "gfp::simd_ops::prime_gemm_k_chunk_cap",
+   "input": "f32-cascade-direct",
+   "routes": {
+    "core-simd": "1024",
+    "core-all-features": "1024",
+    "core-baked": "1024",
+    "coding-default": "1024",
+    "sim-default": "1024"
+   }
+  },
+  {
+   "entry": "gfp::simd_ops::prime_gemm_k_chunk_cap",
+   "input": "f64-cascade",
+   "routes": {
+    "core-simd": "4096",
+    "core-all-features": "4096",
+    "core-baked": "4096",
+    "coding-default": "4096",
+    "sim-default": "4096"
+   }
+  },
+  {
    "entry": "kernels::select_backend_for_size",
    "input": "words=3",
    "routes": {
@@ -1417,6 +1464,16 @@
     ]
    },
    {
+    "selector": "prime_route.f32_k_chunk_cap",
+    "conservative": 1024,
+    "selection": "runtime-profile",
+    "baked": null,
+    "measured_owner": null,
+    "read_sites": [
+     "crates/gf2-core/src/gfp/simd_ops.rs:1313"
+    ]
+   },
+   {
     "selector": "prime_route.f32_min_cols",
     "conservative": 512,
     "selection": "compile-time",
@@ -1437,13 +1494,23 @@
     ]
    },
    {
+    "selector": "prime_route.f64_k_chunk_cap",
+    "conservative": 4096,
+    "selection": "runtime-profile",
+    "baked": null,
+    "measured_owner": null,
+    "read_sites": [
+     "crates/gf2-core/src/gfp/simd_ops.rs:1318"
+    ]
+   },
+   {
     "selector": "prime_route.f64_min_cols",
     "conservative": 512,
     "selection": "compile-time",
     "baked": 512,
     "measured_owner": null,
     "read_sites": [
-     "crates/gf2-core/src/gfp/simd_ops.rs:1163"
+     "crates/gf2-core/src/gfp/simd_ops.rs:1166"
     ]
    },
    {
@@ -1471,6 +1538,16 @@
      "crates/gf2-core/src/gfpn/batch.rs:252",
      "crates/gf2-core/src/gfpn/batch.rs:346",
      "crates/gf2-core/src/gfpn/batch.rs:379"
+    ]
+   },
+   {
+    "selector": "sparse.block_csr_default_rows",
+    "conservative": 32,
+    "selection": "runtime-profile",
+    "baked": null,
+    "measured_owner": null,
+    "read_sites": [
+     "crates/gf2-core/src/sparse.rs:940"
     ]
    },
    {
@@ -1593,8 +1670,9 @@
    "package": "gf2-core",
    "defined": "crates/gf2-core/src/alg/m4rm.rs:27",
    "definition": "const M4RM_DEFAULT_MAX_K: usize = 8;",
-   "class": "selector",
-   "read_sites": []
+   "class": "structural",
+   "read_sites": [],
+   "reason": "Panel-width cap of the reference schedule a unit test of its module compares `multiply` against; no production code reads it."
   },
   {
    "id": "M4RM_TILE_ROWS",
@@ -1631,7 +1709,7 @@
     "crates/gf2-core/src/alg/m4rm.rs:1305",
     "crates/gf2-core/src/alg/m4rm.rs:1308",
     "crates/gf2-core/src/alg/m4rm.rs:1313",
-    "crates/gf2-core/src/tuning/mod.rs:788"
+    "crates/gf2-core/src/tuning/mod.rs:800"
    ]
   },
   {
@@ -1836,13 +1914,14 @@
    ]
   },
   {
-   "id": "DEFAULT_BLOCK_ROWS",
-   "package": "gf2-core",
-   "defined": "crates/gf2-core/src/sparse.rs:9",
-   "definition": "const DEFAULT_BLOCK_ROWS: usize = 32;",
-   "class": "selector",
+   "id": "K_CHUNK_CAP_MAX",
+   "package": "gf2-kernels-simd",
+   "defined": "crates/gf2-kernels-simd/src/fp_medium_f64.rs:30",
+   "definition": "pub const K_CHUNK_CAP_MAX: usize = 1 << 21;",
+   "class": "kernel-geometry",
    "read_sites": [
-    "crates/gf2-core/src/sparse.rs:936"
+    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:16",
+    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:75"
    ]
   },
   {
@@ -1890,10 +1969,11 @@
    "package": "gf2-kernels-simd",
    "defined": "crates/gf2-kernels-simd/src/transpose.rs:73",
    "definition": "pub const PRODUCTION_PREFERENCE: [TransposeLane; 2] = [TransposeLane::Avx2BitTwiddle, TransposeLane::Scalar];",
-   "class": "selector",
+   "class": "structural",
    "read_sites": [
     "crates/gf2-kernels-simd/src/transpose.rs:149"
-   ]
+   ],
+   "reason": "Capability walk of the kernel crate: `detect` takes the first lane the processor can run, so the order selects by processor feature at every size. The kernel crate lies below the tuning mechanism, whose selectors are unsigned extents and thresholds."
   },
   {
    "id": "M4RM_TILE_ROWS",
@@ -1974,51 +2054,27 @@
    ]
   },
   {
-   "id": "K_CHUNK_CAP",
-   "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:27",
-   "definition": "const K_CHUNK_CAP: usize = 4096;",
-   "class": "selector",
-   "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:116",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:25",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:111",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:250"
-   ]
-  },
-  {
    "id": "CHUNK_VEC",
    "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/fp_small.rs:294",
+   "defined": "crates/gf2-kernels-simd/src/x86/fp_small.rs:295",
    "definition": "const CHUNK_VEC: usize = 16384;",
-   "class": "selector",
+   "class": "structural",
    "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/fp_small.rs:304"
-   ]
-  },
-  {
-   "id": "K_CHUNK_CAP",
-   "package": "gf2-kernels-simd",
-   "defined": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:25",
-   "definition": "const K_CHUNK_CAP: usize = 1024;",
-   "class": "selector",
-   "read_sites": [
-    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:27",
-    "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:116",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:111",
-    "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:250"
-   ]
+    "crates/gf2-kernels-simd/src/x86/fp_small.rs:305"
+   ],
+   "reason": "Drain interval of the 32-bit lane accumulators of `fp_small_batch_dot`: lane exactness bounds it, the accumulators stay in registers, and no route depends on it."
   },
   {
    "id": "I_TILE",
    "package": "gf2-kernels-simd",
    "defined": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:136",
    "definition": "const I_TILE: usize = 4;",
-   "class": "selector",
+   "class": "structural",
    "read_sites": [
     "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:141",
     "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:161"
-   ]
+   ],
+   "reason": "Row count of the hand-unrolled loop body of the GF(2^m) product kernel, which names four accumulator rows; another count is another kernel."
   },
   {
    "id": "WORDS_PER_VECTOR",
@@ -2079,50 +2135,18 @@
    "package": "gf2-algebra",
    "defined": "crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:28",
    "definition": "pub const MAX_MATRIX_BYTES_FOR_L1: usize = L1D_BYTES / 2;",
-   "class": "selector",
+   "class": "structural",
    "read_sites": [
     "crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:39"
-   ]
+   ],
+   "reason": "Operand of one compile-time assertion that the widest multi-word matrix fits half of `L1D_BYTES`; no run-time code reads it."
   }
  ],
  "convergence_exception": {
   "name": "private-core-selector-constants",
   "class": "selector",
   "issue": "817fc47d",
-  "constants": [
-   {
-    "id": "M4RM_DEFAULT_MAX_K",
-    "defined": "crates/gf2-core/src/alg/m4rm.rs:27"
-   },
-   {
-    "id": "DEFAULT_BLOCK_ROWS",
-    "defined": "crates/gf2-core/src/sparse.rs:9"
-   },
-   {
-    "id": "PRODUCTION_PREFERENCE",
-    "defined": "crates/gf2-kernels-simd/src/transpose.rs:73"
-   },
-   {
-    "id": "K_CHUNK_CAP",
-    "defined": "crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:27"
-   },
-   {
-    "id": "CHUNK_VEC",
-    "defined": "crates/gf2-kernels-simd/src/x86/fp_small.rs:294"
-   },
-   {
-    "id": "K_CHUNK_CAP",
-    "defined": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:25"
-   },
-   {
-    "id": "I_TILE",
-    "defined": "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:136"
-   },
-   {
-    "id": "MAX_MATRIX_BYTES_FOR_L1",
-    "defined": "crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:28"
-   }
-  ]
+  "constants": []
  },
  "declared_selectors": [
   {
@@ -6508,6 +6532,6 @@
  ],
  "workload_routes": {
   "path": "dev/active/1a379447-zen3-cpu-performance/63bad95d/workload-routes.jsonl",
-  "sha256": "ec2f87980751af8350dea6a08854dd3f0c8b6c660422e066d75f0d1f1b17fb17"
+  "sha256": "4fbf37f00120c01d645e89ba9d941c8971c7979de6c5f656c7b8c7278d8db77b"
  }
 }
