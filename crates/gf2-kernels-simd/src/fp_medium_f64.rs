@@ -10,13 +10,24 @@
 /// every `(i, j) ∈ [0, m) × [0, n)`, where `bt` is the row-major
 /// transpose of the right operand (length `n * k`). Inputs are `f64`
 /// lanes carrying canonical residues in `[0, p)`; outputs are
-/// canonical u16 cells in `[0, p)`.
+/// canonical u16 cells in `[0, p)`. The argument after `p` is the k-axis
+/// chunk cap: the kernel reduces its accumulators after every
+/// `min(k, cap)` steps.
 ///
 /// # Panics
 ///
-/// Panics unless `a.len() == m * k`, `bt.len() == n * k` and
-/// `c.len() == m * n`.
-pub type FpMediumF64GemmFn = fn(&[f64], &[f64], usize, usize, usize, u16, &mut [u16]);
+/// Panics unless `a.len() == m * k`, `bt.len() == n * k`,
+/// `c.len() == m * n` and the cap lies in `1..=`[`K_CHUNK_CAP_MAX`].
+pub type FpMediumF64GemmFn = fn(&[f64], &[f64], usize, usize, usize, u16, usize, &mut [u16]);
+
+/// Conservative default of the tuning profile's `prime_route.f64_k_chunk_cap`
+/// in `gf2-core`: it keeps the B-panel slice one chunk reads at
+/// `4096 · 12 · 8` bytes = 384 KiB.
+pub const K_CHUNK_CAP: usize = 4096;
+
+/// Largest admissible k-axis chunk cap: with `(p-1)² < 2^32`, `2^21` products
+/// per chunk keep every lane below `2^53`, the f64 exact-integer range.
+pub const K_CHUNK_CAP_MAX: usize = 1 << 21;
 
 /// Bundle of medium-prime f64-FMA SIMD batch operations.
 ///
@@ -55,14 +66,24 @@ fn detect_x86() -> Option<FpMediumF64Fns> {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn batch_gemm_safe(a: &[f64], bt: &[f64], m: usize, k: usize, n: usize, p: u16, c: &mut [u16]) {
+#[allow(clippy::too_many_arguments)]
+fn batch_gemm_safe(
+    a: &[f64],
+    bt: &[f64],
+    m: usize,
+    k: usize,
+    n: usize,
+    p: u16,
+    k_chunk_cap: usize,
+    c: &mut [u16],
+) {
     crate::entry_check::assert_shape("fp_medium_f64_gemm", "a", a.len(), m, k);
     crate::entry_check::assert_shape("fp_medium_f64_gemm", "bt", bt.len(), n, k);
     crate::entry_check::assert_shape("fp_medium_f64_gemm", "c", c.len(), m, n);
     // SAFETY: `detect_x86` only returns this pointer when AVX2 and FMA3 are available
     // at runtime. The assertions above keep the shape products from wrapping
     // in the kernel's own length assertions.
-    unsafe { crate::x86::fp_medium_f64::fp_medium_f64_gemm(a, bt, m, k, n, p, c) }
+    unsafe { crate::x86::fp_medium_f64::fp_medium_f64_gemm(a, bt, m, k, n, p, k_chunk_cap, c) }
 }
 
 #[cfg(test)]
@@ -125,7 +146,7 @@ mod tests {
                 let a_f = u16_to_f64(&a);
                 let bt_f = u16_to_f64(&bt);
                 let mut got = vec![0u16; m * n];
-                (fns.batch_gemm_fn)(&a_f, &bt_f, m, k, n, p, &mut got);
+                (fns.batch_gemm_fn)(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got);
                 let expected = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, expected, "p={p} m={m} k={k} n={n}");
             }
@@ -138,7 +159,7 @@ mod tests {
         let a: Vec<f64> = vec![];
         let bt: Vec<f64> = vec![];
         let mut out: Vec<u16> = vec![];
-        (fns.batch_gemm_fn)(&a, &bt, 0, 0, 0, 65521, &mut out);
+        (fns.batch_gemm_fn)(&a, &bt, 0, 0, 0, 65521, K_CHUNK_CAP, &mut out);
         assert!(out.is_empty());
     }
 }

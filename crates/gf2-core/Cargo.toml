@@ -436,6 +436,14 @@ required-features = ["tuning-profile"]
 name = "tuning_profile_ple_u16_lane_install"
 required-features = ["tuning-profile"]
 
+[[test]]
+name = "tuning_profile_sparse_block_rows_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_prime_k_chunk_install"
+required-features = ["tuning-profile"]
+
 # ── Issue `aa904331` (epic `6dc81018`) — M4RM schedule route observation ──
 #
 # One installed profile per binary, because `tuning::install` is one-shot per

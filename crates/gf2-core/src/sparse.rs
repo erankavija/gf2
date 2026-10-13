@@ -6,7 +6,9 @@ use crate::{matrix::BitMatrix, BitVec};
 use gf2_kernels_simd::prefetch_read_l1;
 use std::fmt;
 
-const DEFAULT_BLOCK_ROWS: usize = 32;
+/// Conservative default for `sparse.block_csr_default_rows()` in the active
+/// [`crate::tuning::CoreTuning`].
+pub(crate) const DEFAULT_BLOCK_ROWS: usize = 32;
 const DEFAULT_PREFETCH_DISTANCE: usize = 0;
 
 /// A row-major sparse matrix in Compressed Sparse Row (CSR) format over GF(2).
@@ -926,14 +928,16 @@ impl SpBitMatrix {
         block_csr_from_csr(self, block_rows)
     }
 
-    /// Converts this CSR matrix to the default block-CSR matvec layout.
+    /// Converts this CSR matrix to the block-CSR matvec layout whose rows per
+    /// block are `sparse.block_csr_default_rows()` of the active
+    /// [`crate::tuning::CoreTuning`].
     ///
     /// # Complexity
     ///
     /// O(rows + nnz) time and memory.
     #[inline]
     pub fn to_default_block_csr(&self) -> SpBitMatrixBlockCsr {
-        self.to_block_csr(DEFAULT_BLOCK_ROWS)
+        self.to_block_csr(crate::tuning::active().sparse().block_csr_default_rows())
     }
 
     /// Returns a Reverse Cuthill-McKee row/column reordered copy of this matrix.

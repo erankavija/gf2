@@ -18,12 +18,6 @@ use core::arch::x86_64::*;
 const M_R: usize = 4;
 const N_R: usize = 24;
 
-/// k-chunk cap in f32 lanes; the k-chunk size is
-/// `min(k, k_max(p), K_CHUNK_CAP)`. At 1024 the B-panel slice consumed per
-/// chunk is `K_CHUNK_CAP · N_R · 4 byte = 96 KB`.
-/// For `p = 251` the per-prime `k_max = 268` binds first.
-const K_CHUNK_CAP: usize = 1024;
-
 /// Outer-N panel grouping for the cache-blocked loop nest: the number of
 /// B panels that fit a 16 MB L3 budget, sharing one A-pack across every
 /// panel in the group.
@@ -44,7 +38,11 @@ fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
 /// every `(i, j) ∈ [0, m) × [0, n)`. Inputs `a` and `bt` carry
 /// canonical residues (value `< p`) one per `f32` lane; `bt` is the
 /// row-major transpose of the right operand (length `n * k`, so row
-/// `j` holds column `j` of B).
+/// `j` holds column `j` of B). The accumulators are reduced after every
+/// `min(k_max(p), k_chunk_cap)` steps of the k axis, where
+/// `k_max(p) = floor(2^24 / (p-1)²)` keeps a chunk's sum an exact f32
+/// integer; `k_chunk_cap` bounds the B-panel slice one chunk reads at
+/// `k_chunk_cap · N_R · 4` bytes.
 ///
 /// # Safety
 ///
@@ -57,7 +55,8 @@ fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
 ///
 /// # Panics
 ///
-/// Panics if any slice length disagrees with `m`, `k`, `n`.
+/// Panics if any slice length disagrees with `m`, `k`, `n`, or if
+/// `k_chunk_cap` is zero.
 #[target_feature(enable = "avx2,fma")]
 pub unsafe fn fp_small_f32_gemm(
     a: &[f32],
@@ -66,8 +65,10 @@ pub unsafe fn fp_small_f32_gemm(
     k: usize,
     n: usize,
     p: u8,
+    k_chunk_cap: usize,
     c: &mut [u8],
 ) {
+    assert!(k_chunk_cap > 0, "fp_small_f32_gemm: k_chunk_cap");
     assert_eq!(a.len(), m * k, "fp_small_f32_gemm: a shape");
     assert_eq!(bt.len(), n * k, "fp_small_f32_gemm: bt shape");
     assert_eq!(c.len(), m * n, "fp_small_f32_gemm: c shape");
@@ -108,7 +109,7 @@ pub unsafe fn fp_small_f32_gemm(
     // FMA accumulations an f32 lane absorbs within the exact-integer range
     // `[0, 2^24]`; 268 for `p = 251`.
     let k_max = compute_k_max(p);
-    let k_chunk = k_max.min(K_CHUNK_CAP);
+    let k_chunk = k_max.min(k_chunk_cap);
 
     // A-pack (per row-tile): `a_pack_f32[t*M_R + i] = a[(i_blk + i) * k + t]`,
     // so the inner kernel reads the M_EFF a-rows as `_mm256_broadcast_ss`
@@ -210,7 +211,8 @@ pub unsafe fn fp_small_f32_gemm(
 ///
 /// # Panics
 ///
-/// Panics if any slice length disagrees with `m`, `k`, `n`.
+/// Panics if any slice length disagrees with `m`, `k`, `n`, or if
+/// `k_chunk_cap` is zero.
 #[target_feature(enable = "avx2,fma")]
 pub unsafe fn fp_small_f32_gemm_route_a(
     a: &[f32],
@@ -219,8 +221,10 @@ pub unsafe fn fp_small_f32_gemm_route_a(
     k: usize,
     n: usize,
     p: u8,
+    k_chunk_cap: usize,
     c: &mut [u8],
 ) {
+    assert!(k_chunk_cap > 0, "fp_small_f32_gemm_route_a: k_chunk_cap");
     assert_eq!(a.len(), m * k, "fp_small_f32_gemm_route_a: a shape");
     assert_eq!(bt.len(), n * k, "fp_small_f32_gemm_route_a: bt shape");
     assert_eq!(c.len(), m * n, "fp_small_f32_gemm_route_a: c shape");
@@ -247,7 +251,7 @@ pub unsafe fn fp_small_f32_gemm_route_a(
 
     let p_i32 = p as i32;
     let k_max = compute_k_max(p);
-    let k_chunk = k_max.min(K_CHUNK_CAP);
+    let k_chunk = k_max.min(k_chunk_cap);
     let mut a_pack_f32: Vec<f32> = vec![0.0; M_R * k];
 
     let n_c_panels = n_c_panels_outer(n_panels, k);
@@ -896,6 +900,7 @@ unsafe fn store_and_reduce_tile(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::fp_small_f32::K_CHUNK_CAP;
 
     fn run_for_primes(test: impl Fn(u8)) {
         crate::contract::require(&[(
@@ -953,9 +958,34 @@ mod tests {
                 let mut got = vec![0u8; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} m={m} k={k} n={n}");
+            }
+        });
+    }
+
+    #[test]
+    fn both_kernels_match_scalar_at_every_chunk_cap() {
+        run_for_primes(|p| {
+            let (m, k, n) = (5, 300, 25);
+            let a: Vec<u8> = (0..(m * k) as u32)
+                .map(|i| ((i * 17 + 1) % p as u32) as u8)
+                .collect();
+            let bt: Vec<u8> = (0..(n * k) as u32)
+                .map(|i| ((i * 23 + 5) % p as u32) as u8)
+                .collect();
+            let (a_f, bt_f) = (u8_to_f32(&a), u8_to_f32(&bt));
+            let want = scalar_gemm(&a, &bt, m, k, n, p);
+            for cap in [1, 2, 267, 268, 269, usize::MAX] {
+                let mut got = vec![0u8; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
+                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, cap, &mut got) };
+                assert_eq!(got, want, "p={p} cap={cap}");
+                // SAFETY: as above.
+                unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, cap, &mut got) };
+                assert_eq!(got, want, "route A p={p} cap={cap}");
             }
         });
     }
@@ -981,7 +1011,7 @@ mod tests {
                 let mut got = vec![0u8; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} k={k}");
             }
@@ -1006,7 +1036,7 @@ mod tests {
                 let mut got = vec![0u8; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} n={n}");
             }
@@ -1031,7 +1061,7 @@ mod tests {
                 let mut got = vec![0u8; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe { fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} m={m}");
             }
@@ -1045,7 +1075,7 @@ mod tests {
         crate::contract::require(&[("avx2+fma", avail)]);
         let mut out: Vec<u8> = vec![];
         // SAFETY: AVX2 and FMA were detected above.
-        unsafe { fp_small_f32_gemm(&[], &[], 0, 0, 0, 7, &mut out) };
+        unsafe { fp_small_f32_gemm(&[], &[], 0, 0, 0, 7, K_CHUNK_CAP, &mut out) };
         assert!(out.is_empty());
     }
 
@@ -1076,7 +1106,9 @@ mod tests {
                 let mut got = vec![0u8; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe {
+                    fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got)
+                };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "route-A p={p} m={m} k={k} n={n}");
             }
@@ -1103,7 +1135,9 @@ mod tests {
                 let mut got = vec![0u8; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe {
+                    fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got)
+                };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "route-A p={p} k={k}");
             }
@@ -1127,7 +1161,9 @@ mod tests {
                 let mut got = vec![0u8; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe {
+                    fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got)
+                };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "route-A p={p} n={n}");
             }
@@ -1151,7 +1187,9 @@ mod tests {
                 let mut got = vec![0u8; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe {
+                    fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got)
+                };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "route-A p={p} m={m}");
             }
@@ -1165,7 +1203,7 @@ mod tests {
         crate::contract::require(&[("avx2+fma", avail)]);
         let mut out: Vec<u8> = vec![];
         // SAFETY: AVX2 and FMA were detected above.
-        unsafe { fp_small_f32_gemm_route_a(&[], &[], 0, 0, 0, 7, &mut out) };
+        unsafe { fp_small_f32_gemm_route_a(&[], &[], 0, 0, 0, 7, K_CHUNK_CAP, &mut out) };
         assert!(out.is_empty());
     }
 
@@ -1197,8 +1235,17 @@ mod tests {
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
                 unsafe {
-                    fp_small_f32_gemm_route_a(&a_f, &bt_f, m, k, n, p, &mut got_route_a);
-                    fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, &mut got_existing);
+                    fp_small_f32_gemm_route_a(
+                        &a_f,
+                        &bt_f,
+                        m,
+                        k,
+                        n,
+                        p,
+                        K_CHUNK_CAP,
+                        &mut got_route_a,
+                    );
+                    fp_small_f32_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got_existing);
                 };
                 assert_eq!(
                     got_route_a, got_existing,

@@ -13,6 +13,7 @@
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
 
+use crate::fp_medium_f64::K_CHUNK_CAP_MAX;
 use core::arch::x86_64::*;
 
 /// Inner `m × n` register-tile dimensions. With f64 at 4 lanes per ymm,
@@ -20,11 +21,6 @@ use core::arch::x86_64::*;
 /// broadcast = 16/16 register file.
 const M_R: usize = 4;
 const N_R: usize = 12;
-
-/// k-axis chunk cap. With `(p-1)² ≤ 2^32`, up to `2^53 / 2^32 = 2^21` MACs
-/// per chunk stay within the f64 exact-integer range; capping at 4096 keeps
-/// each B-panel slice at `k · N_R · 8 byte ≤ 384 KB`.
-const K_CHUNK_CAP: usize = 4096;
 
 /// Outer-N panel grouping for the cache-blocked loop nest: the number of
 /// B panels that fit a 16 MB L3 budget, sharing one A-pack across every
@@ -46,7 +42,9 @@ fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
 /// every `(i, j) ∈ [0, m) × [0, n)`. Inputs `a` and `bt` carry
 /// canonical residues (value `< p`) one per `f64` lane; `bt` is the
 /// row-major transpose of the right operand (length `n * k`, so row
-/// `j` holds column `j` of B).
+/// `j` holds column `j` of B). The accumulators are reduced after every
+/// `min(k, k_chunk_cap)` steps of the k axis, so `k_chunk_cap` bounds the
+/// B-panel slice one chunk reads at `k_chunk_cap · N_R · 8` bytes.
 ///
 /// # Safety
 ///
@@ -59,7 +57,9 @@ fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
 ///
 /// # Panics
 ///
-/// Panics if any slice length disagrees with `m`, `k`, `n`.
+/// Panics if any slice length disagrees with `m`, `k`, `n`, or if
+/// `k_chunk_cap` is outside `1..=`[`K_CHUNK_CAP_MAX`], the range in which a
+/// chunk's sum stays an exact f64 integer.
 #[target_feature(enable = "avx2,fma")]
 pub unsafe fn fp_medium_f64_gemm(
     a: &[f64],
@@ -68,8 +68,13 @@ pub unsafe fn fp_medium_f64_gemm(
     k: usize,
     n: usize,
     p: u16,
+    k_chunk_cap: usize,
     c: &mut [u16],
 ) {
+    assert!(
+        (1..=K_CHUNK_CAP_MAX).contains(&k_chunk_cap),
+        "fp_medium_f64_gemm: k_chunk_cap"
+    );
     assert_eq!(a.len(), m * k, "fp_medium_f64_gemm: a shape");
     assert_eq!(bt.len(), n * k, "fp_medium_f64_gemm: bt shape");
     assert_eq!(c.len(), m * n, "fp_medium_f64_gemm: c shape");
@@ -111,9 +116,7 @@ pub unsafe fn fp_medium_f64_gemm(
 
     let n_c_panels = n_c_panels_outer(n_panels, k);
 
-    // `floor(2^53 / (p-1)²)` exceeds 2^21 for every medium prime, so
-    // K_CHUNK_CAP is the binding chunk bound.
-    let k_chunk = K_CHUNK_CAP.min(k);
+    let k_chunk = k_chunk_cap.min(k);
 
     let p_f64 = p as f64;
     let p_inv_f64 = 1.0_f64 / p_f64;
@@ -256,8 +259,8 @@ unsafe fn run_one_panel<const M_EFF: usize>(
 ) {
     // 12 f64 SIMD accumulators (4 × 3 — 4 rows × 3 ymm-of-4-lanes per
     // row = 12 cells per row). At chunk end each lane carries the exact
-    // integer dot product `Σ a · b` for that cell. With k ≤ K_CHUNK_CAP
-    // = 4096 and (p-1)² ≤ 2^32, the lane value is ≤ 2^44, exactly
+    // integer dot product `Σ a · b` for that cell. With `k_chunk` ≤
+    // `K_CHUNK_CAP_MAX` and (p-1)² ≤ 2^32, the lane value is ≤ 2^53, exactly
     // representable in f64.
     let mut acc00 = _mm256_setzero_pd();
     let mut acc01 = _mm256_setzero_pd();
@@ -272,8 +275,8 @@ unsafe fn run_one_panel<const M_EFF: usize>(
     let mut acc31 = _mm256_setzero_pd();
     let mut acc32 = _mm256_setzero_pd();
 
-    // For k ≤ K_CHUNK_CAP the entire k-axis is one chunk (no
-    // intermediate reductions). For k > K_CHUNK_CAP we apply a
+    // For k ≤ k_chunk the entire k-axis is one chunk (no
+    // intermediate reductions). For k > k_chunk we apply a
     // vectorised f64 Barrett reduction between chunks and re-add the
     // canonical-range remainder into a fresh accumulator. This keeps
     // every intermediate lane ≤ k_chunk · (p-1)² ≤ 2^53.
@@ -512,6 +515,7 @@ unsafe fn store_and_reduce_tile<const M_EFF: usize>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::fp_medium_f64::K_CHUNK_CAP;
 
     fn run_for_primes(test: impl Fn(u16)) {
         crate::contract::require(&[(
@@ -570,7 +574,7 @@ mod tests {
                 let mut got = vec![0u16; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} m={m} k={k} n={n}");
             }
@@ -579,7 +583,7 @@ mod tests {
 
     #[test]
     fn gemm_matches_scalar_k_chunk_boundary() {
-        // k around `K_CHUNK_CAP = 4096` boundary to exercise the
+        // k around the `K_CHUNK_CAP` boundary to exercise the
         // multi-chunk Barrett path.
         run_for_primes(|p| {
             for &k in &[
@@ -598,9 +602,32 @@ mod tests {
                 let mut got = vec![0u16; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} k={k}");
+            }
+        });
+    }
+
+    #[test]
+    fn gemm_matches_scalar_at_every_chunk_cap() {
+        run_for_primes(|p| {
+            let (m, k, n) = (5, 67, 13);
+            let a: Vec<u16> = (0..(m * k) as u32)
+                .map(|i| ((i * 17 + 1) % p as u32) as u16)
+                .collect();
+            let bt: Vec<u16> = (0..(n * k) as u32)
+                .map(|i| ((i * 23 + 5) % p as u32) as u16)
+                .collect();
+            let want = scalar_gemm(&a, &bt, m, k, n, p);
+            for cap in [1, 2, 66, 67, 68, K_CHUNK_CAP_MAX] {
+                let mut got = vec![0u16; m * n];
+                // SAFETY: `run_for_primes` runs this closure only after
+                // detecting AVX2 and FMA.
+                unsafe {
+                    fp_medium_f64_gemm(&u16_to_f64(&a), &u16_to_f64(&bt), m, k, n, p, cap, &mut got)
+                };
+                assert_eq!(got, want, "p={p} cap={cap}");
             }
         });
     }
@@ -623,7 +650,7 @@ mod tests {
                 let mut got = vec![0u16; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} n={n}");
             }
@@ -648,7 +675,7 @@ mod tests {
                 let mut got = vec![0u16; m * n];
                 // SAFETY: `run_for_primes` runs this closure only after
                 // detecting AVX2 and FMA.
-                unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got) };
                 let want = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, want, "p={p} m={m}");
             }
@@ -662,7 +689,7 @@ mod tests {
         crate::contract::require(&[("avx2+fma", avail)]);
         let mut out: Vec<u16> = vec![];
         // SAFETY: AVX2 and FMA were detected above.
-        unsafe { fp_medium_f64_gemm(&[], &[], 0, 0, 0, 65521, &mut out) };
+        unsafe { fp_medium_f64_gemm(&[], &[], 0, 0, 0, 65521, K_CHUNK_CAP, &mut out) };
         assert!(out.is_empty());
     }
 
@@ -693,7 +720,9 @@ mod tests {
                         let bt_f = u16_to_f64(&bt);
                         let mut got = vec![0u16; m * n];
                         // SAFETY: AVX2 and FMA were detected above.
-                        unsafe { fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, &mut got) };
+                        unsafe {
+                            fp_medium_f64_gemm(&a_f, &bt_f, m, k, n, p, K_CHUNK_CAP, &mut got)
+                        };
                         let want = scalar_gemm(&a, &bt, m, k, n, p);
                         assert_eq!(got, want, "p={p} m={m} k={k} n={n}");
                     }
