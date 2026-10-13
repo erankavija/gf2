@@ -3,17 +3,9 @@
 
 Usage: verify-campaign.py [--check]
 
-Reads the campaign's execution journal and owner manifest from the host-local
-evidence archive, each under the digest the committed checksum manifest pins,
-and requires that every declared unit starts, validates, checkpoints and
-completes once with a clean child exit, that every cell holds its declared
-probe and timed children, that every timed child reports its declared windows,
-and that the journal ends in a terminal `complete` record. It then requires
-that the measurement block of the committed coding owner envelope names the
-producer, behaviour token and executable of `producer/identity.json`, the
-producer reports and the producing manifest the campaign record pins.
-
-Writes `campaign-verification.json`; a failed requirement writes nothing.
+Reads the execution journal and owner manifest from the host-local evidence
+archive under the digests the committed checksum manifest pins. Writes
+`campaign-verification.json`; a failed requirement writes nothing.
 """
 
 import hashlib
