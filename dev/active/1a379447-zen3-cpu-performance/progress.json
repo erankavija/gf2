@@ -2292,6 +2292,13 @@
    "question": "The Git-clean-tree condition of CR-F2 also sits in the tuning campaign driver, its validator, the shared launcher and the dense harness guard. Where is it fixed?",
    "answer": "In the 63bad95d rework. The remaining conditions (producers' source_dirty, validator reconstruction at the recorded revision, selector_non_regression.rs, permanent-campaign-runner.sh) are issue 815703a1 within the epic, kept out of the rework.",
    "status": "resolved"
+  },
+  {
+   "issue": "20af7e6e",
+   "date": "2026-10-13",
+   "question": "Research-review fails on missing build-flags evidence for the decoder campaign after three lead-ordered rework rounds. Authorize a fourth?",
+   "answer": "Authorized: attach build-flags evidence bound to the recorded producer digest; a digest that does not reproduce returns to the invoker.",
+   "status": "resolved"
   }
  ],
  "rework_counts": {
@@ -2371,7 +2378,7 @@
   "05c9065e": 2,
   "0a77ecfc": 1,
   "63bad95d": 2,
-  "20af7e6e": 2
+  "20af7e6e": 4
  },
  "surfaced_pitfalls": [
   {
