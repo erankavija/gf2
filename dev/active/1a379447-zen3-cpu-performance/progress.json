@@ -2299,6 +2299,13 @@
    "question": "Research-review fails on missing build-flags evidence for the decoder campaign after three lead-ordered rework rounds. Authorize a fourth?",
    "answer": "Authorized: attach build-flags evidence bound to the recorded producer digest; a digest that does not reproduce returns to the invoker.",
    "status": "resolved"
+  },
+  {
+   "issue": "1a379447",
+   "date": "2026-10-14",
+   "question": "Interview on open decisions of session 37.",
+   "answer": "RNG statement beside the owner (9eb6f13c option B). selector_non_regression: holding arm executables fixed is the caller's part, no digest guard. PRODUCTION_PREFERENCE accepted as structural. a83583e0 full-stage refusal recorded and left. Resume scope of the driver filed in the epic (d93a1c7e, after 17e08faa). Survey tool failures and the bfc2ceab prototype repair fixed in the epic (d11a45d4); flaky BCH allocation test fixed in the epic (ec4e71ca). The 72-character subject of 0b45ec4ef: nothing further.",
+   "status": "resolved"
   }
  ],
  "rework_counts": {
@@ -2380,7 +2387,8 @@
   "63bad95d": 2,
   "20af7e6e": 4,
   "817fc47d": 1,
-  "815703a1": 2
+  "815703a1": 2,
+  "9eb6f13c": 1
  },
  "surfaced_pitfalls": [
   {
@@ -3164,7 +3172,8 @@
   "Session 37, 2026-10-13: window collected (five jobs rc=0, quiet host); invoker approved re-arming exit-75 jobs (none). 63bad95d merged at b746b36b8, cargo-ci gate passed; code-review failed (run-profile-families.sh:98 inherited CARGO_ENCODED_RUSTFLAGS; :302 Git-status resume condition), research-review failed (core producer archive host-local, measurement-contract.md:114); rework 1 dispatched to w-63bad95d-int with a one-pass audit. 20af7e6e rework 1 (verifier read the live closure manifest; now a committed snapshot) and rework 2 (same three patterns, pre-emptive). Commit 0b45ec4ef on main has a 72-character subject (entered with the merge).",
   "Session 37, 2026-10-13 afternoon: 63bad95d rework 1 merged at c56c3278f; cargo-ci and research-review pass; code-review round 2 fails on profile-arms/src/lib.rs:129 (private SplitMix64) and :34 (parallel Build enum); advisory F4/F5 on the driver belong to 815703a1. Rework 2 dispatched. Workers stalled twice after starting cargo-ci in the background; a 30-minute stall check runs in the session. Unverified worker reports of failures on main: run-logical-harness.sh build --isal (pinned addendum digest), make-mid-range-tables.py (two index.txt files match one name).",
   "Session 37: 63bad95d done at f8ed59d3e after two rework rounds (verdict reviews/63bad95d-r2.md). 20af7e6e at a4fd0c390 awaits the lead's cargo-ci, merge and gates. 815703a1 filed in the epic. One intermittent failure of gf2-coding bch_matrix_allocation caller_buffer_materialization_reaches_no_allocator in a worker's cargo-ci; five isolated reruns and a full rerun passed.",
-  "Session 37 evening: 20af7e6e done at 8d606de6a (reviews/20af7e6e-r4.md); 817fc47d done at 19aedabfb (reviews/817fc47d-r1.md), including a fix of fp_small_batch_dot (wrapping u32 drain sum, primes 131-251). Filed in the epic: 815703a1 (in progress, tip e9ec2e91c, awaiting cargo-ci), 9eb6f13c (RNG in producer reports, after 815703a1), 17e08faa (runtime records defined once, after 9eb6f13c). Order: 815703a1, 9eb6f13c, 17e08faa, then regenerate the gf2 arms build record in agent-ed3d490e-run and dispatch 5d590bac. 807ddab2 is rejected in the tracker. Reclaimed agent-63bad95d-int, -fam, -m4ri, -pm4ri."
+  "Session 37 evening: 20af7e6e done at 8d606de6a (reviews/20af7e6e-r4.md); 817fc47d done at 19aedabfb (reviews/817fc47d-r1.md), including a fix of fp_small_batch_dot (wrapping u32 drain sum, primes 131-251). Filed in the epic: 815703a1 (in progress, tip e9ec2e91c, awaiting cargo-ci), 9eb6f13c (RNG in producer reports, after 815703a1), 17e08faa (runtime records defined once, after 9eb6f13c). Order: 815703a1, 9eb6f13c, 17e08faa, then regenerate the gf2 arms build record in agent-ed3d490e-run and dispatch 5d590bac. 807ddab2 is rejected in the tracker. Reclaimed agent-63bad95d-int, -fam, -m4ri, -pm4ri.",
+  "Session 37 night: 815703a1 done at 81734321a (reviews/815703a1-r2.md). 9eb6f13c merged at b6e363c40, cargo-ci passes, code-review fails on the algebra fixture pin (rework 1 dispatched to w-815703a1 in agent-9eb6f13c). Open epic children: 9eb6f13c, 17e08faa (after it), d93a1c7e (after 17e08faa), d11a45d4, ec4e71ca, 1362381c; story ed3d490e: regenerate the gf2 arms build record after d93a1c7e merges, then 5d590bac. Workers go idle without reporting when cargo-ci outlives their foreground limit; the lead runs cargo-ci in the worker's worktree itself. A lead CI run in a worktree a worker is still editing gives false failures: wait for the worker's explicit stop first."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
