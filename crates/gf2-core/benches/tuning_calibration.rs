@@ -10885,6 +10885,11 @@ mod campaign_owner {
         cpu_features: Vec<String>,
         required_features: String,
         required_threads: String,
+        rng: seed::FixtureGenerator,
+    }
+    /// The generator of every retained and extent fixture.
+    fn fixture_generator() -> Result<seed::FixtureGenerator, String> {
+        seed::FixtureGenerator::locked::<Lcg>(env!("CARGO_PKG_NAME"), &[&[]]).map_err(err)
     }
     impl CapabilityReport {
         fn validate(&self) -> Result<(), String> {
@@ -10974,6 +10979,7 @@ mod campaign_owner {
             cpu_features: cpu_features(),
             required_features: REQUIRED_FEATURES.to_owned(),
             required_threads: REQUIRED_RAYON_THREADS.to_owned(),
+            rng: fixture_generator()?,
         };
         report.validate()?;
         CanonicalJson::from_serializable(&report).map_err(err)
@@ -11604,6 +11610,11 @@ mod campaign_owner {
                 && dot.batch_clmul_scalar_clmul_and_barrett
                     == (dot.effective_chunk == dot.candidate_chunk)));
             report.ordinary_companions.validate().unwrap();
+            assert_eq!(report.rng.implementation, "gf2_core::rng::Lcg");
+            assert_eq!(
+                report.rng.version,
+                concat!("gf2-core ", env!("CARGO_PKG_VERSION"))
+            );
         }
         #[test]
         fn capability_preflight_rejects_every_missing_mandatory_prerequisite() {

@@ -25,6 +25,7 @@ use tuning_campaign_support::journal::{
 };
 use tuning_campaign_support::process::{live_group, ProcessResult};
 use tuning_campaign_support::provenance::ProducingInputs;
+use tuning_campaign_support::seed::FixtureGenerator;
 use tuning_campaign_support::transport;
 
 static SESSION_START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -502,6 +503,18 @@ struct CampaignConfig {
     host_admission_policy: HostAdmissionPolicy,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     imported_owners: Vec<ImportedOwnerEvidence>,
+    /// The fixture generator each measured owner's capability report states.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    fixture_generators: BTreeMap<String, FixtureGenerator>,
+}
+/// The fixture generator the capability report `evidence` states.
+fn stated_generator(evidence: &CanonicalJson) -> io::Result<FixtureGenerator> {
+    let report: Value = serde_json::from_str(evidence.as_str()).map_err(invalid)?;
+    serde_json::from_value(report.get("rng").cloned().unwrap_or(Value::Null)).map_err(|error| {
+        invalid(format!(
+            "capability report names no fixture generator: {error}"
+        ))
+    })
 }
 fn process(config: &CampaignConfig, id: &str) -> io::Result<ProcessDescriptor> {
     config
@@ -1353,11 +1366,15 @@ fn prepare(
         };
         let mut manifests = Vec::new();
         let mut preflight_reports = BTreeMap::new();
+        let mut fixture_generators = BTreeMap::new();
         for (i, owner) in declaration.measured_owners.iter().enumerate() {
             let name = owner.name.as_str();
             request.processes = vec![processes[i].clone()];
             for label in ["self-check", "list-grid", "capability-report"] {
                 let response = report_cli(&processes[i], label, Some(&mut log))?;
+                if let OwnerResponse::CapabilityReport { evidence } = &response {
+                    fixture_generators.insert(name.to_owned(), stated_generator(evidence)?);
+                }
                 let key = format!("{name}-{label}");
                 let saved = save(&channels.stage.join(format!("{key}.json")), &response)?;
                 if preflight_reports.insert(key, saved).is_some() {
@@ -1446,6 +1463,7 @@ fn prepare(
             producing_manifest,
             build_inputs,
             preflight_reports,
+            fixture_generators,
             host_admission_policy: HostAdmissionPolicy::declared(),
             imported_owners,
         };
@@ -3642,6 +3660,23 @@ mod tests {
     }
 
     #[test]
+    fn a_capability_report_must_name_its_fixture_generator() {
+        let report = |rng: Value| CanonicalJson::from_serializable(&json!({"rng": rng})).unwrap();
+        assert_eq!(
+            stated_generator(&report(
+                json!({"implementation": "x::Rng", "version": "x 1.0.0"})
+            ))
+            .unwrap(),
+            FixtureGenerator {
+                implementation: "x::Rng".into(),
+                version: "x 1.0.0".into(),
+            }
+        );
+        assert!(stated_generator(&CanonicalJson::new("{}").unwrap()).is_err());
+        assert!(stated_generator(&report(json!({"implementation": "x::Rng"}))).is_err());
+    }
+
+    #[test]
     fn a_resume_compares_the_host_and_not_the_checkout_status() {
         let runtime = |source_dirty, toolchain: &str| MeasurementRuntime {
             source_dirty,
@@ -3879,6 +3914,7 @@ mod tests {
             preflight_reports: BTreeMap::new(),
             host_admission_policy: HostAdmissionPolicy::declared(),
             imported_owners: vec![],
+            fixture_generators: BTreeMap::new(),
         };
         let mut log = ExecutionLog::create_new(&stage, campaign.as_str(), "first-session").unwrap();
         log.append(JournalEvent::CampaignStart, None, json!({}))

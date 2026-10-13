@@ -89,6 +89,13 @@ OWNER_BEHAVIORS = {"gf2-core": CORE_BEHAVIOR, "gf2-algebra": ALGEBRA_BEHAVIOR,
                    "gf2-coding": CODING_BEHAVIOR}
 OWNER_SECTIONS = {"gf2-core": "gf2-core/selectors", "gf2-algebra": "gf2-algebra/permanent",
                   "gf2-coding": "gf2-coding/encode"}
+# The generator of each owner's fixtures and the packages defining its stream.
+FIXTURE_GENERATORS = {
+    "gf2-core": ("gf2_core::rng::Lcg", ["gf2-core"]),
+    "gf2-algebra": ("gf2_core::rng::Lcg", ["gf2-core"]),
+    "gf2-coding": ("rand::rngs::std::StdRng", ["rand", "rand_chacha", "rand_distr"]),
+}
+LOCKED_VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+[0-9A-Za-z.+-]*\Z")
 OWNER_PHASES = {"gf2-core": ["retained-thresholds", "core-extents", "m4rm-joint"],
                 "gf2-algebra": ["algebra-extent"], "gf2-coding": ["decode-extent"]}
 # Profile ID of the forced envelope a fresh child installs.
@@ -3230,7 +3237,37 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> dict[str, l
     for name in expected_names:
         path, responses[name] = artifact(reports[name], f"{name} preflight report", stage)
         require(path == stage / f"{name}.json", f"{name} preflight report path mismatch")
+    require(campaign_config.get("fixture_generators", {}) == stated_generators(responses),
+            "campaign record and capability reports state different fixture generators")
     return validate_preflight_responses(responses, declaration)
+
+
+def stated_generator(evidence: Any, owner: str, where: str) -> None:
+    """Removes the fixture generator a capability report may state and checks
+    that it names the owner's generator and a locked version of each package
+    defining it."""
+    rng = evidence.pop("rng", None)
+    if rng is None:
+        return
+    require_keys(rng, ["implementation", "version"], f"{where} fixture generator")
+    implementation, packages = FIXTURE_GENERATORS[owner]
+    locked = [entry.split(" ") for entry in rng["version"].split(", ")] if isinstance(
+        rng["version"], str) else []
+    require(rng["implementation"] == implementation
+            and [entry[0] for entry in locked] == packages
+            and all(len(entry) == 2 and LOCKED_VERSION.match(entry[1]) for entry in locked),
+            f"{where} does not name the {owner} fixture generator at locked versions")
+
+
+def stated_generators(responses: dict[str, Any]) -> dict[str, Any]:
+    """The fixture generator of each owner whose capability report states one."""
+    stated = {}
+    for name, response in responses.items():
+        owner, mode = name.split("-", 1)
+        rng = embedded(response["evidence"], f"{name} preflight evidence").get("rng")
+        if mode == "capability-report" and rng is not None:
+            stated[owner] = rng
+    return stated
 
 
 def validate_preflight_responses(responses: dict[str, Any],
@@ -3253,6 +3290,8 @@ def validate_preflight_responses(responses: dict[str, Any],
         require_keys(response, ["operation", "evidence"], f"{name} preflight response")
         require(response["operation"] == mode, f"{name} returned the wrong CLI report mode")
         evidence = embedded(response["evidence"], f"{name} preflight evidence")
+        if mode == "capability-report":
+            stated_generator(evidence, OWNER_NAMES[owner], name)
         if owner == "coding":
             require_keys(evidence, ["schema", "mode", "scope", "owner", "owner_protocol",
                                     "behavior_token", "seed_schema", "raw_sample_schema",
@@ -4658,7 +4697,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     require(isinstance(campaign, str) and RUN_ID.fullmatch(campaign) is not None
             and stage.name == campaign, "campaign ID/stage name mismatch")
     declaration = load_declaration(campaign)
-    require(set(campaign_config) - {"imported_owners"} == {
+    require(set(campaign_config) - {"imported_owners", "fixture_generators"} == {
                 "schema", "campaign_id", "channels", "identity", "manifests", "processes",
                 "runtime", "protocol", "validator", "receipt", "affinity", "source_tree",
                 "producing_manifest", "build_inputs", "preflight_reports",

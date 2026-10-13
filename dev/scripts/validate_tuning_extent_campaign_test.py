@@ -254,7 +254,8 @@ class CodingStage:
     and imports the core and algebra envelopes one committed campaign
     published. `behavior` and `section` are the identities the stage records
     for its owner; `declared_cells` is the cell count its declaration states;
-    `source_dirty` is the checkout status its campaign record observes."""
+    `source_dirty` is the checkout status its campaign record observes; `rng`
+    is the fixture generator its capability report states, if any."""
 
     CLEAN = {"outcome": "exited", "pid": 7, "exit_code": 0, "elapsed_ns": 1,
              "all_descendants_reaped": True}
@@ -265,9 +266,9 @@ class CodingStage:
     def __init__(self, validator, directory: Path, *,
                  behavior: str = "coding-tuning-calibration-v1",
                  section: str = "gf2-coding/encode", declared_cells: int | None = None,
-                 source_dirty: bool = False):
+                 source_dirty: bool = False, rng: dict | None = None):
         self.v, self.behavior, self.section = validator, behavior, section
-        self.source_dirty = source_dirty
+        self.source_dirty, self.rng = source_dirty, rng
         self.root, self.stage = directory / "repository", directory / "stage"
         self.campaign = f"gf2-{CODING_ISSUE}-19700101t000000z-1"
         self.layout = validator.publication_layout(self.campaign)
@@ -658,6 +659,8 @@ class CodingStage:
                         "raw_sample_schema": "raw-timing-samples-v3", "cells": counts["cells"],
                         "accepted_results": counts["accepted_results"],
                         "windows": counts["windows"], "details": details,
+                        **({"rng": self.rng} if self.rng and mode == "capability-report"
+                           else {}),
                         "inventory": inventory}
             response = {"operation": mode, "evidence": self.v.compact(evidence).decode()}
             self.write(f"coding-{mode}.json", self.v.compact(response))
@@ -1003,6 +1006,32 @@ class CodingOwner(unittest.TestCase):
         runtime = {**json.loads(stage.config["runtime"]), "source_dirty": True}
         stage.config["runtime"] = self.v.compact(runtime).decode()
         self.rejects(self.composition, stage)
+
+
+    # A capability report may state the fixture generator of its owner.
+    STATED = {"implementation": "rand::rngs::std::StdRng",
+              "version": "rand 0.8.5, rand_chacha 0.3.1, rand_distr 0.4.3"}
+
+    def test_the_stated_generator_is_accepted_and_read_from_the_capability_report(self):
+        stage = self.staged(rng=self.STATED)
+        self.preflight(stage)
+        self.assertEqual(self.v.stated_generators(stage.reports), {"coding": self.STATED})
+        self.assertEqual(self.v.stated_generators(self.staged().reports), {})
+
+    def test_another_generator_or_an_unlocked_version_is_rejected(self):
+        for change in [{"implementation": "gf2_core::rng::Lcg"},
+                       {"version": "rand 0.8.5, rand_distr 0.4.3"},
+                       {"version": "rand 0.8, rand_chacha 0.3.1, rand_distr 0.4.3"},
+                       {"version": None}, {"revision": "x"}]:
+            with self.subTest(change=change):
+                self.rejects(self.preflight, self.staged(rng={**self.STATED, **change}))
+
+    def test_a_report_of_another_mode_states_no_generator(self):
+        stage = self.staged(rng=self.STATED)
+        listing = stage.reports["coding-list-grid"]
+        evidence = {**json.loads(listing["evidence"]), "rng": self.STATED}
+        listing["evidence"] = self.v.compact(evidence).decode()
+        self.rejects(self.preflight, stage)
 
 
 class CommittedPins(unittest.TestCase):
