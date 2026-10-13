@@ -2292,6 +2292,13 @@
    "question": "The Git-clean-tree condition of CR-F2 also sits in the tuning campaign driver, its validator, the shared launcher and the dense harness guard. Where is it fixed?",
    "answer": "In the 63bad95d rework. The remaining conditions (producers' source_dirty, validator reconstruction at the recorded revision, selector_non_regression.rs, permanent-campaign-runner.sh) are issue 815703a1 within the epic, kept out of the rework.",
    "status": "resolved"
+  },
+  {
+   "issue": "20af7e6e",
+   "date": "2026-10-13",
+   "question": "Research-review fails on missing build-flags evidence for the decoder campaign after three lead-ordered rework rounds. Authorize a fourth?",
+   "answer": "Authorized: attach build-flags evidence bound to the recorded producer digest; a digest that does not reproduce returns to the invoker.",
+   "status": "resolved"
   }
  ],
  "rework_counts": {
@@ -2371,7 +2378,7 @@
   "05c9065e": 2,
   "0a77ecfc": 1,
   "63bad95d": 2,
-  "20af7e6e": 2
+  "20af7e6e": 4
  },
  "surfaced_pitfalls": [
   {
@@ -3153,7 +3160,8 @@
   "Session 34 (2026-10-11): invoker rulings on the nine handoff-29 questions: repeat each disturbed family once under a new family version; bfc2ceab exploratory cost accepted; 7dbe1393 merges unselected; load guard per queue line only; lead repaired jit validate (28a64b749); aff59c3c dependency as a root workspace dependency; a96a4cd6 stage builders stay public and gain the stated route-equivalence contract (81e955b0); the INTRA arm converges on the shared AFF3CT handle before measuring (1ca04967, between d4185e9e and 4252085a); the story's arms build and run from the pinned worktree agent-ed3d490e-run. Invoker steer the same day: too much pinning and protocol; prefer the simplest, least protocol-intensive approach that meets the criteria; the focus is HPC. Filed 151af028 (checkpoint_compat resume tests), 07024d65 (stale 04b85d10 survey, lead holds it after 8e53235b), 754208a0 (rare-event artifact timeouts, outside the epic).",
   "Session 37 (2026-10-13): invoker answered the three handoff-32 questions (amend cba35553 REQ-03; one audit round for 4252085a; keep the build worktree). Both issues closed. agent-ed3d490e-run is on branch worktree-agent-4252085a-r4 at 05e7cf4b3 (merged).",
   "Session 37, 2026-10-13: window collected (five jobs rc=0, quiet host); invoker approved re-arming exit-75 jobs (none). 63bad95d merged at b746b36b8, cargo-ci gate passed; code-review failed (run-profile-families.sh:98 inherited CARGO_ENCODED_RUSTFLAGS; :302 Git-status resume condition), research-review failed (core producer archive host-local, measurement-contract.md:114); rework 1 dispatched to w-63bad95d-int with a one-pass audit. 20af7e6e rework 1 (verifier read the live closure manifest; now a committed snapshot) and rework 2 (same three patterns, pre-emptive). Commit 0b45ec4ef on main has a 72-character subject (entered with the merge).",
-  "Session 37, 2026-10-13 afternoon: 63bad95d rework 1 merged at c56c3278f; cargo-ci and research-review pass; code-review round 2 fails on profile-arms/src/lib.rs:129 (private SplitMix64) and :34 (parallel Build enum); advisory F4/F5 on the driver belong to 815703a1. Rework 2 dispatched. Workers stalled twice after starting cargo-ci in the background; a 30-minute stall check runs in the session. Unverified worker reports of failures on main: run-logical-harness.sh build --isal (pinned addendum digest), make-mid-range-tables.py (two index.txt files match one name)."
+  "Session 37, 2026-10-13 afternoon: 63bad95d rework 1 merged at c56c3278f; cargo-ci and research-review pass; code-review round 2 fails on profile-arms/src/lib.rs:129 (private SplitMix64) and :34 (parallel Build enum); advisory F4/F5 on the driver belong to 815703a1. Rework 2 dispatched. Workers stalled twice after starting cargo-ci in the background; a 30-minute stall check runs in the session. Unverified worker reports of failures on main: run-logical-harness.sh build --isal (pinned addendum digest), make-mid-range-tables.py (two index.txt files match one name).",
+  "Session 37: 63bad95d done at f8ed59d3e after two rework rounds (verdict reviews/63bad95d-r2.md). 20af7e6e at a4fd0c390 awaits the lead's cargo-ci, merge and gates. 815703a1 filed in the epic. One intermittent failure of gf2-coding bch_matrix_allocation caller_buffer_materialization_reaches_no_allocator in a worker's cargo-ci; five isolated reruns and a full rerun passed."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
