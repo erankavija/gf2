@@ -59,13 +59,13 @@ PROFILES = (
     ("Dense baseline", "# Dense baseline profile attribution", "execution.log"),
 )
 
-# Annotated release disassembly: a tracked name, or a name with the header line
-# that identifies the listing.
+# Annotated release disassembly: a tracked name, or a name with the lines
+# that identify the listing.
 LISTINGS = (
     ("Logical campaign arm", ("index.txt", "# binary: logical-arm")),
     ("Logical profile driver", ("index.txt", "# binary: logical-profile")),
-    ("Dense arm, `simd` feature", ("index.txt", "e1f9a78f-arms/release/dense-arm")),
-    ("Dense arm, scalar build", ("index.txt", "e1f9a78f-scalar-arm/release/dense-arm")),
+    ("Dense arm, `simd` feature", ("index.txt", "# Dense baseline release assembly", "e1f9a78f-arms/release/dense-arm")),
+    ("Dense arm, scalar build", ("index.txt", "# Dense baseline release assembly", "e1f9a78f-scalar-arm/release/dense-arm")),
     ("AVX2 XOR body, baseline", "baseline-avx2-xor.asm.txt"),
     ("AVX2 XOR body, factor 2", "unroll2-avx2-xor.asm.txt"),
     ("AVX2 XOR body, factor 4", "unroll4-avx2-xor.asm.txt"),
@@ -76,7 +76,7 @@ BINARY_DIGEST = re.compile(r"^# (?:binary )?sha256: ([0-9a-f]{64})$", re.M)
 FAILED_PROFILE_REQUEST = "request=5059d6056c63d6f270fe246457f11cc6a5f54b0e8f5a7dc4f566abb7b987647a"
 
 # Story criterion, locator and role of each disposition artifact. A locator is a
-# unique tracked name, a (name, content line) pair, or a callable returning the
+# unique tracked name, a (name, content lines...) tuple, or a callable returning the
 # root-relative path.
 ARTIFACTS = (
     ("REQ-01", "logical-buffer-addendum.md", "frozen logical-buffer addendum with its amendments"),
