@@ -34,9 +34,13 @@ The `owner_envelope` block of the verification record holds the harness path,
 the behaviour token and the producer executable digest of the published
 owner. They equal the producer, behaviour token and executable of
 [`producer/identity.json`](producer/identity.json) and the producer reports
-beside it, and the harness is a behaviour source and a build input of
-[`producing-build-inputs.json`](producing-build-inputs.json), which the
-campaign record pins by digest.
+beside it, and the harness is a behaviour source and a build input of the
+producing manifest the campaign record pins by digest. Those bytes are
+committed as
+[`inputs/producing/…/producing-build-inputs.json`](inputs/producing/dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/producing-build-inputs.json);
+the record's `producing_manifest` entry holds the path and the digest. The
+live [`producing-build-inputs.json`](producing-build-inputs.json) enumerates
+the current tree and is no input of this campaign.
 
 ## F-03: two lane bounds are selected and stated
 

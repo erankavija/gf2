@@ -19,6 +19,9 @@ from locate import CALIBRATION, HERE, ISSUE, ROOT, emit, sha256, tracked
 
 OUTPUT = HERE / "campaign-verification.json"
 SECTION = "gf2-coding/encode"
+# The live producing manifest follows the tree; the campaign's pin is the
+# committed snapshot of this directory name with the pinned digest.
+SNAPSHOT = "inputs/producing"
 
 
 def require(condition, message):
@@ -104,7 +107,9 @@ def envelope_checks(owner, campaign, checksums):
     measurement = json.loads((ROOT / owner).read_text())["sections"][SECTION]["measurement"]
     identity = json.loads((HERE / "producer" / "identity.json").read_text())
     listing = json.loads(json.loads((HERE / "producer" / "coding-list-grid.json").read_text())["evidence"])
-    manifest_path = f"{CALIBRATION}/producing-build-inputs.json"
+    pin = campaign["producing_manifest"]["sha256"]
+    manifest_path = one([path for path in tracked(f"**/{SNAPSHOT}/**/producing-build-inputs.json")
+                         if sha256(path) == pin], "committed snapshots of the pinned producing manifest")
     manifest = json.loads((ROOT / manifest_path).read_text())
     (producer,) = [process for process in campaign["processes"] if process["id"] == "coding-producer"]
 
@@ -116,10 +121,9 @@ def envelope_checks(owner, campaign, checksums):
     require(measurement["binary_sha256"] == identity["binary_sha256"] == producer["executable_sha256"],
             "the producer executable is not the recorded one")
     require(measurement["toolchain"] == identity["toolchain"], "the toolchain is not the recorded one")
-    require(campaign["producing_manifest"]["sha256"] == sha256(manifest_path),
-            "the campaign record pins another producing manifest")
     return {"path": owner, "sha256": checksums[owner],
-            **{key: measurement[key] for key in ("harness", "harness_schema", "binary_sha256", "receipt")}}
+            **{key: measurement[key] for key in ("harness", "harness_schema", "binary_sha256", "receipt")},
+            "producing_manifest": {"path": manifest_path, "sha256": pin}}
 
 
 def main():

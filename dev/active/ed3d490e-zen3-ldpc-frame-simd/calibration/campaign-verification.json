@@ -56,6 +56,10 @@
   "harness": "crates/gf2-coding/benches/tuning_calibration.rs",
   "harness_schema": "coding-tuning-calibration-v1",
   "binary_sha256": "91b5428c9aa06d83bd6ce6f07043f45c7ae77b7acfa890ad013517289657952e",
-  "receipt": "dev/benchmarks/tuning_profiles/gf2-0a77ecfc-20261013t011147z-815998.md"
+  "receipt": "dev/benchmarks/tuning_profiles/gf2-0a77ecfc-20261013t011147z-815998.md",
+  "producing_manifest": {
+   "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/inputs/producing/dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/producing-build-inputs.json",
+   "sha256": "da6f2604efce4b1a2b01a666aa7273119290bfd898bf72550a5aa29e063a0931"
+  }
  }
 }
