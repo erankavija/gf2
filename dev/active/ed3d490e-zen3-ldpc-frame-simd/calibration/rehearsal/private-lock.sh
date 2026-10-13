@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 # Rehearsal stand-in for the host mutex wrapper (jit:0a77ecfc).
-#
 # Usage: private-lock.sh [--full-host] <command> [args...]
-#
-# Holds the lock file GF2_CCX1_LOCK names across the command, as the wrapper it
-# replaces in the rehearsal clone does, and refuses the host mutex path. It
-# pins no CPU and raises no priority.
+# Holds the lock file GF2_CCX1_LOCK names and refuses the host mutex path.
 set -euo pipefail
 if [[ ${1:-} == --full-host ]]; then
   shift

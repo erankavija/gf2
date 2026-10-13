@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Untimed rehearsal of the decoder calibration campaign (jit:0a77ecfc).
 #
-# Usage: rehearse-campaign.sh, with no arguments, from a clean checkout
+# Usage: rehearse-campaign.sh [record name under rehearsal/], from a clean checkout
 #
 # Runs the queue launcher over a throwaway stage in a clone of HEAD that
 # differs by the two stand-ins under rehearsal/: timed children report
@@ -9,6 +9,7 @@
 # the host mutex. A failed rehearsal keeps its stage and clone.
 set -euo pipefail
 issue=0a77ecfc
+record=${1:-record.json}
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(git -C "$here" rev-parse --show-toplevel)
 calibration=${here#"$repo"/}
@@ -73,7 +74,7 @@ if [[ $status -ne 0 || $resumed -ne 0 || $validation -ne 0 ]]; then
     "stage $stage and $work are kept" >&2
   exit 1
 fi
-python3 -B - "$stage" "$clone" "$work" "$revision" "$calibration" "$issue" "$status" "$resumed" <<'PY_RECORD'
+python3 -B - "$stage" "$clone" "$work" "$revision" "$calibration" "$issue" "$status" "$resumed" "$record" <<'PY_RECORD'
 import collections, hashlib, json, pathlib, subprocess, sys
 stage, clone, work = map(pathlib.Path, sys.argv[1:4])
 revision, calibration, issue = sys.argv[4:7]
@@ -122,7 +123,7 @@ record = {
     "published_paths": sorted(line[3:].replace(config["campaign_id"], "<run-id>")
                               for line in published),
 }
-output = pathlib.Path(calibration) / "rehearsal" / "record.json"
+output = pathlib.Path(calibration) / "rehearsal" / sys.argv[9]
 output.write_text(json.dumps(record, indent=1) + "\n")
 print(f"wrote {output}")
 PY_RECORD
