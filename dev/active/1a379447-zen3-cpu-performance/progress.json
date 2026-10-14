@@ -2313,6 +2313,13 @@
    "question": "The receipt-pinned bytes of logical-buffer-addendum.md predate Amendments 2 and 3 (invoker rulings on 65c0e13d); the first ruling (restore the pinned bytes) would remove them. What now?",
    "answer": "Keep the amendments and repointed links in the live addendum; the harness constant takes the live digest; receipts keep their snapshots.",
    "status": "resolved"
+  },
+  {
+   "issue": "1a379447",
+   "date": "2026-10-15",
+   "question": "Benchmark window policy this session",
+   "answer": "Invoker (session 38): no benchmark window policy this session; benchmarks may run at any time if needed.",
+   "status": "resolved"
   }
  ],
  "rework_counts": {
@@ -3247,7 +3254,11 @@
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
-  "active_workers": {},
+  "active_workers": {
+   "69dd39f1": "agent-69dd39f1",
+   "17e08faa": "agent-17e08faa",
+   "4976531f": "agent-4976531f"
+  },
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
   "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30.",
@@ -3255,6 +3266,7 @@
   "session_36_outcome": "Done: 05c9065e, 0a77ecfc. Merged, blocked on the invoker: cba35553 (REQ-03 amendment), 4252085a (rework round 4). Filed: 11bfbfd9 (outside the epic), cba35553. Rejected: e430f035. Window 2026-10-13 04:00 holds five jobs: four 63bad95d confirmations and the 0a77ecfc calibration campaign.",
   "session_37": "Done: cba35553, 4252085a. 5d590bac held by the lead until 63bad95d merges and the gf2 arms build record is regenerated (its validation record names arms by build-identity digest). Window 2026-10-13 04:00 holds five jobs.",
   "session_37_end": "Session 37 ended 2026-10-14 with handoff-33.md. In progress: 9eb6f13c rework 1 (agent-9eb6f13c), d11a45d4 (agent-d11a45d4, invoker rulings: restore the logical addendum to the pinned bytes; REQ-01 amended), ec4e71ca (agent-ec4e71ca). Next: 17e08faa, d93a1c7e, arms build record, 5d590bac.",
-  "standing_rule_2026_10_14": "Invoker, 2026-10-14: take the lightest approach in terms of protocols and follow the project invariants. Applies to every lead and worker decision; offer the invoker the lightest compliant option as the recommendation."
+  "standing_rule_2026_10_14": "Invoker, 2026-10-14: take the lightest approach in terms of protocols and follow the project invariants. Applies to every lead and worker decision; offer the invoker the lightest compliant option as the recommendation.",
+  "session_38": "Done: 9eb6f13c, ec4e71ca, d11a45d4 (lead added the ec4e71ca cause record with reproduce.sh, and the d11a45d4 record of the addendum identity and a forced failing build). Dispatched 69dd39f1 (sonnet), 17e08faa (opus), 4976531f (opus)."
  }
 }
