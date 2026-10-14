@@ -92,13 +92,17 @@ tuning::install(registry.from_json(&std::fs::read_to_string(profile_path)?)?)?;
 
 ### Admit the BCH encode families
 
-Under the conservative `gf2-coding` section, batch BCH encoding runs the
+The `gf2-coding` section, `CodingTuning`, holds two selector families:
+`encode` for BCH batch encoding and `decode` for LDPC batch decoding
+([Route LDPC batch decoding](#route-ldpc-batch-decoding)). Under the
+conservative section, batch BCH encoding runs the
 scalar reference recurrence for every code. The table, bit-sliced and
 carry-less-multiply fold families, the last two through the
 `gf2_kernels_simd::bch_encode` kernels, run only from the bounds an installed
 `CodingTuning` sets. Every family writes the same codeword bits
 ([algorithm families](../../crates/gf2-coding/src/bch/encode.rs)). Take the
-bounds from a measurement on the target host:
+bounds from a measurement on the target host. The sample sets the `encode`
+family and takes the `decode` family from the conservative section:
 
 ```rust
 use gf2_coding::tuning::{CodingSelectors, CodingTuning, EncodeSelectors};
@@ -116,6 +120,68 @@ let prepared = PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance 
     .build()?;
 tuning::install(prepared)?;
 ```
+
+### Route LDPC batch decoding
+
+`BatchSoftDecoder` decodes a batch of frames, each a slice of `f32` LLRs, into
+caller-provided `BitVec` words and `DecodeOutcome`s in input order. Its scope
+is soft-decision whole-frame block decoding. `LdpcBatchDecoder` implements it
+for `gf2-coding`'s LDPC codes in waves of eight frames (`LANES`), each frame
+stopping as the single-frame decoder `LdpcDecoder` stops it. Each wave takes
+one of two routes, which
+[`BatchRoute`](../../crates/gf2-coding/src/ldpc/route.rs) names:
+
+- `Lane` runs the wave in the lane kernels, one frame per lane. The kernels are
+  the AVX2 ones when `gf2-coding` is built with the `simd` feature and the host
+  reports AVX2, and the portable ones otherwise; the two backends write the
+  same bits.
+- `SingleFrame` decodes each frame on `LdpcDecoder`.
+
+The route follows from the algorithm and the decode family of the coding
+section. A wave takes `Lane` when the algorithm is of the min-sum family
+(`MinSum`, `NormalizedMinSum`, `OffsetMinSum`), the wave holds at least
+`lane_min_frames` frames, and the code has at most `lane_max_edges`
+Tanner-graph edges. `SumProduct` takes `SingleFrame`. `granules_per_task` is
+the number of `batch_granularity` frame groups in a task of
+`PooledBatchDecoder` ([Decode LDPC frames in parallel](#decode-ldpc-frames-in-parallel)).
+The conservative family closes the lane route, so a process that installs no
+section decodes every wave frame by frame. Take the bounds from a measurement
+on the target host; the committed coding envelope under
+`crates/gf2-coding/data/tuning-profiles/` records the calibration campaign's
+selectors with their provenance, and registering `CodingTuning` with
+`CodingTuningCodec` in the profile registry above installs one.
+`LdpcBatchDecoder::new` reads the family once at construction;
+`with_selectors` takes one explicitly.
+
+`batch_route(frames)` reports the route of a wave of `frames` frames without
+decoding: a batch longer than eight frames takes `batch_route(8)` in each full
+wave and `batch_route(r)` in a final wave of `r` frames. The frames of a wave
+decode as in the single-frame decoder
+([numerical contract](../reference/ldpc-decoder-numerical-contract.md)), so the
+selectors move time only. The sample opens the lane route for every wave,
+checks the route and decodes through the trait
+([rustdoc example](../../crates/gf2-coding/src/ldpc/batch.rs) with the code and
+`frames` built):
+
+```rust
+let selectors = DecodeSelectors::try_new(1, usize::MAX, 1)?;
+let decoder = LdpcBatchDecoder::with_selectors(
+    code,
+    DecoderConfig::default(),
+    20,
+    DecodedWord::Codeword,
+    selectors,
+);
+assert!(matches!(decoder.batch_route(frames.len()), BatchRoute::Lane(_)));
+
+let mut decoder: Box<dyn BatchSoftDecoder> = Box::new(decoder);
+let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+let mut decoded = vec![BitVec::new(); views.len()];
+let mut outcomes = vec![DecodeOutcome::default(); views.len()];
+decoder.decode_batch(&views, &mut decoded, &mut outcomes);
+```
+
+`with_portable_lanes()` holds the portable kernels on an AVX2 host.
 
 ## Thread parallelism
 

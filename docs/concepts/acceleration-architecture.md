@@ -55,17 +55,32 @@ detected bundle is used:
   tuning profile. A runtime profile does not move these boundaries.
 - **Runtime tuning selectors.** Algorithm schedules (M4RM tiers and panel
   widths, PLE, triangular solves, polynomial arithmetic, BCH encode family,
-  parallel thresholds) read the process-wide tuning authority in
-  `gf2_core::tuning`. `tuning::install` accepts one `PreparedEnvelope` of
+  parallel thresholds, LDPC batch decode route) read the process-wide tuning
+  authority in `gf2_core::tuning`. `tuning::install` accepts one `PreparedEnvelope` of
   crate-owned sections (`CoreTuning`, `CodingTuning`, `AlgebraTuning`) before
   first access; a section read before installation resolves to its owner's
   conservative defaults for the rest of the process.
 
+The `CodingTuning` section carries an `encode` family for BCH batch encoding
+and a `decode` family, `lane_min_frames`, `lane_max_edges` and
+`granules_per_task`, for LDPC batch decoding. `LdpcBatchDecoder` splits a batch
+into waves of eight frames and gives each wave a route through
+`gf2_coding::ldpc::decide_batch_route`: the lane kernels of
+`gf2_kernels_simd::ldpc_lanes`, or frame by frame on `LdpcDecoder`. The lane
+route requires a min-sum-family algorithm, at least `lane_min_frames` frames
+in the wave and at most `lane_max_edges` edges in the code. Its backend is AVX2
+when `gf2-coding` is built with `simd` and the host reports AVX2, and the
+portable kernels otherwise; both backends and the single-frame route return
+equal results ([numerical contract](../reference/ldpc-decoder-numerical-contract.md)).
+`granules_per_task` sizes the tasks of `PooledBatchDecoder`
+([Parallelism](#parallelism)).
+
 Route reporters run the dispatcher's own selector and report its decision
 without executing it: `gf2_core::matrix::matvec_route`,
 `gf2_core::alg::m4rm::m4rm_schedule_route` and
-`gf2_core::gfp::simd_ops::prime_gemm_route`. Hot loops that repeat one
-operation width resolve the route once, as
+`gf2_core::gfp::simd_ops::prime_gemm_route`, and
+`LdpcBatchDecoder::batch_route` for a wave of LDPC frames. Hot loops that
+repeat one operation width resolve the route once, as
 `gf2_core::kernels::ops::resolve_xor_inplace` does for row XOR.
 
 ### Equivalence evidence

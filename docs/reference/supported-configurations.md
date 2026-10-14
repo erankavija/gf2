@@ -48,6 +48,43 @@ device yields `HipError::NoDevice`, which that dispatcher reports as
 `FatalError::DeviceUnavailable`. The kernel set is listed in the
 [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs).
 
+## Batch decoding
+
+`gf2_coding::traits::BatchSoftDecoder` decodes a batch of whole frames of
+`f32` LLRs (`gf2_coding::llr::Llr`) into caller-provided words and per-frame
+`DecodeOutcome`s in input order. Its scope is soft-decision whole-frame block
+decoding; hard-decision and streaming decoding have their own entry points.
+
+| Implementer | Path | Granularity |
+|---|---|---|
+| every `SoftDecoder` | blanket implementation over `decode_soft_with_result` | 1 |
+| `IterativeBatchDecoder` | `gf2_coding::traits` | 1 |
+| `LdpcBatchDecoder` | `gf2_coding::ldpc` | 8 frames per wave |
+| `Nr5gRateMatchedBatchDecoder` | `gf2_coding::ldpc::nr_5g` | that of the inner `LdpcBatchDecoder` |
+| `DvbT2ConcatBatchDecoder` | `gf2_coding::ldpc::dvb_t2::concat` | that of the inner `LdpcBatchDecoder` |
+| `PooledBatchDecoder` | `gf2_coding::pooled` | that of the inner decoder; wraps one inner decoder per rayon worker |
+
+`LdpcBatchDecoder` routes each wave by the algorithm and the decode selectors
+of the coding tuning section
+([route selection](../how-to/select-acceleration.md#route-ldpc-batch-decoding)):
+
+- The min-sum family (`MinSum`, `NormalizedMinSum`, `OffsetMinSum`) takes the
+  lane route when the wave and the code satisfy `lane_min_frames` and
+  `lane_max_edges`.
+- `SumProduct` takes the single-frame route.
+- The lane route runs AVX2 kernels when `gf2-coding` is built with `simd` and
+  the host reports AVX2. On a host without AVX2, or in a build without `simd`,
+  it runs the portable kernels, which write the same bits; the selectors
+  decide the route on every host.
+- The conservative decode family selects the single-frame route for every
+  wave.
+
+Every route returns each frame's word and outcome equal to those of the
+single-frame decoder under the
+[numerical contract](ldpc-decoder-numerical-contract.md).
+The committed coding envelope under `crates/gf2-coding/data/tuning-profiles/`
+records the decode selectors of the calibration campaign.
+
 ## Cargo features
 
 Each crate's `[features]` table, linked below, defines and documents its
