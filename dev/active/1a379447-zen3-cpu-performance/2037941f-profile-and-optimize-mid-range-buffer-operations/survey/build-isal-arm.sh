@@ -86,8 +86,9 @@ recorded_object_digest="$(sed -n 's/^object_sha256=//p' "${record}" 2>/dev/null 
 if [[ -n "${GF2_ISAL_STAGE:-}" ]]; then
     [[ "${current_log}" == "${log}" ]] || mv "${next_log}" "${GF2_ISAL_STAGE}/${log##*/}"
     mv "${next_record}" "${GF2_ISAL_STAGE}/${record##*/}"
+    printf 'ISA-L arm build provenance staged for %s\n' "${record#"${repo}/"}" >&2
 else
     [[ "${current_log}" == "${log}" ]] || mv "${next_log}" "${log}"
     mv "${next_record}" "${record}"
+    printf 'ISA-L arm build provenance: %s\n' "${record#"${repo}/"}" >&2
 fi
-printf 'ISA-L arm build provenance: %s\n' "${record#"${repo}/"}" >&2
