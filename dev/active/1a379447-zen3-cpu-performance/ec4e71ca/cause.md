@@ -8,9 +8,10 @@ test's counting window. The failures observed under the shim count 2 or 4
 allocations, and the same assertions hold in every run once only the test
 thread is counted.
 
-The witness counts through `crates/gf2-coding/tests/support/thread_allocations.rs`,
-a thread-local counter shared with the LDPC allocation census, and asserts that
-the measured path requests no allocation, reallocation or deallocation.
+The witness counts through the thread-local counter of
+`dev/tools/thread-allocations`, which every allocation test of `gf2-core` and
+`gf2-coding` shares, and asserts that the measured path requests no
+allocation, reallocation or deallocation.
 
 ## Evidence
 

@@ -29,11 +29,19 @@ nextest=(cargo nextest run -p "$package" --cargo-profile ci-test --profile ci)
 "$budget" "${nextest[@]}" --test "$binary" --no-run >/dev/null 2>&1
 
 summary() {
-  # nextest closes each stress iteration with one "Stress test" line that
-  # names the failed tests of that iteration, if any.
-  local label=$1 log=$2 failed
-  failed=$(grep -c '^ *Stress test \[.*[0-9] failed' "$log" || true)
-  printf '%s %s: %d of %d runs failed\n' "$binary" "$label" "$failed" "$runs"
+  # nextest's closing line reads "N/M stress run iterations: P passed, F failed";
+  # a run set that did not complete every iteration is an error, not a count.
+  local label=$1 log=$2 line completed failed
+  line=$(grep -E '^ *Summary .* stress run iterations:' "$log" || true)
+  completed=$(sed -nE 's/.* ([0-9]+)\/[0-9]+ stress run iterations:.*/\1/p' <<<"$line")
+  failed=$(sed -nE 's/.* ([0-9]+) failed.*/\1/p' <<<"$line")
+  if [ "${completed:-0}" -ne "$runs" ]; then
+    printf '%s %s: %s of %d iterations completed; log:\n' "$binary" "$label" \
+      "${completed:-0}" "$runs" >&2
+    tail -n 20 "$log" >&2
+    exit 1
+  fi
+  printf '%s %s: %d of %d runs failed\n' "$binary" "$label" "${failed:-0}" "$runs"
 }
 
 for delay in "${delays[@]}"; do
