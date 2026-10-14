@@ -3254,6 +3254,7 @@
   "e430f035": "rejected 2026-10-12 by invoker decision; the exception comments citing it (root Cargo.toml) are removed after 0a77ecfc merges, because its producing manifest may pin that file",
   "session_36_outcome": "Done: 05c9065e, 0a77ecfc. Merged, blocked on the invoker: cba35553 (REQ-03 amendment), 4252085a (rework round 4). Filed: 11bfbfd9 (outside the epic), cba35553. Rejected: e430f035. Window 2026-10-13 04:00 holds five jobs: four 63bad95d confirmations and the 0a77ecfc calibration campaign.",
   "session_37": "Done: cba35553, 4252085a. 5d590bac held by the lead until 63bad95d merges and the gf2 arms build record is regenerated (its validation record names arms by build-identity digest). Window 2026-10-13 04:00 holds five jobs.",
-  "session_37_end": "Session 37 ended 2026-10-14 with handoff-33.md. In progress: 9eb6f13c rework 1 (agent-9eb6f13c), d11a45d4 (agent-d11a45d4, invoker rulings: restore the logical addendum to the pinned bytes; REQ-01 amended), ec4e71ca (agent-ec4e71ca). Next: 17e08faa, d93a1c7e, arms build record, 5d590bac."
+  "session_37_end": "Session 37 ended 2026-10-14 with handoff-33.md. In progress: 9eb6f13c rework 1 (agent-9eb6f13c), d11a45d4 (agent-d11a45d4, invoker rulings: restore the logical addendum to the pinned bytes; REQ-01 amended), ec4e71ca (agent-ec4e71ca). Next: 17e08faa, d93a1c7e, arms build record, 5d590bac.",
+  "standing_rule_2026_10_14": "Invoker, 2026-10-14: take the lightest approach in terms of protocols and follow the project invariants. Applies to every lead and worker decision; offer the invoker the lightest compliant option as the recommendation."
  }
 }

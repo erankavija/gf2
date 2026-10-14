@@ -57,6 +57,8 @@ Traps of `handoff-32.md` and earlier remain in force.
 
 - **Do NOT describe a frozen-file restore by its last commit alone.** The lead told the invoker the logical addendum differed from its pin by two link repoints; it also held Amendments 2 and 3, added after the pin. Diff the pinned bytes against the live file in full before offering a restore.
 
+- **Standing rule (invoker, 2026-10-14): the lightest approach in terms of protocols, within the project invariants.** Prefer changing a pin or a generated record over restoring frozen bytes, a reproduction record over a rerun, a filed issue over a protocol addition; add no schema, checker, ledger or version unless a criterion names it.
+
 ## Open questions needing invoker input
 
 None.
