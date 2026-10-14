@@ -63,15 +63,11 @@ detected bundle is used:
 
 The `CodingTuning` section carries an `encode` family for BCH batch encoding
 and a `decode` family, `lane_min_frames`, `lane_max_edges` and
-`granules_per_task`, for LDPC batch decoding. `LdpcBatchDecoder` splits a batch
-into waves of eight frames and gives each wave a route through
+`granules_per_task`, for LDPC batch decoding. `LdpcBatchDecoder` gives each wave of a batch a route through
 `gf2_coding::ldpc::decide_batch_route`: the lane kernels of
-`gf2_kernels_simd::ldpc_lanes`, or frame by frame on `LdpcDecoder`. The lane
-route requires a min-sum-family algorithm, at least `lane_min_frames` frames
-in the wave and at most `lane_max_edges` edges in the code. Its backend is AVX2
-when `gf2-coding` is built with `simd` and the host reports AVX2, and the
-portable kernels otherwise; both backends and the single-frame route return
-equal results ([numerical contract](../reference/ldpc-decoder-numerical-contract.md)).
+`gf2_kernels_simd::ldpc_lanes`, or frame by frame on `LdpcDecoder`. The
+conditions are in
+[Route LDPC batch decoding](../how-to/select-acceleration.md#route-ldpc-batch-decoding).
 `granules_per_task` sizes the tasks of `PooledBatchDecoder`
 ([Parallelism](#parallelism)).
 
