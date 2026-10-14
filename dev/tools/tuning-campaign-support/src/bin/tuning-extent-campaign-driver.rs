@@ -681,29 +681,56 @@ impl<'a> RecordedSource<'a> {
 /// driver runs the validator of the checkout it executes in, and behavior
 /// identity comparisons exclude it, since checking is not measurement.
 const VALIDATOR: &str = "dev/scripts/validate-tuning-extent-campaign.py";
-/// Behavior identity equality over the same inventory, ignoring [`VALIDATOR`].
-fn same_behavior(observed: &BTreeMap<String, String>, recorded: &BTreeMap<String, String>) -> bool {
-    observed.len() == recorded.len()
-        && observed
-            .iter()
-            .all(|(path, sha)| path == VALIDATOR || recorded.get(path) == Some(sha))
+/// Refuses unless `observed` carries the `recorded` digest of every `kind`
+/// input other than [`VALIDATOR`], naming the first input that differs.
+fn require_recorded(
+    kind: &str,
+    observed: &BTreeMap<String, String>,
+    recorded: &BTreeMap<String, String>,
+) -> io::Result<()> {
+    let digest = |map: &BTreeMap<String, String>, path: &str| {
+        map.get(path).map_or("absent", String::as_str).to_owned()
+    };
+    match observed
+        .keys()
+        .chain(recorded.keys())
+        .find(|path| path.as_str() != VALIDATOR && observed.get(*path) != recorded.get(*path))
+    {
+        None => Ok(()),
+        Some(path) => Err(invalid(format!(
+            "{kind} {path} changed: recorded {}, observed {}",
+            digest(recorded, path),
+            digest(observed, path)
+        ))),
+    }
 }
-/// Whether the producing inputs under `root` carry the recorded digests. Git
-/// state takes no part, so a resume continues on any checkout whose files
-/// match.
-fn producing_inputs_hold(
+/// Refuses a resume unless the behavior and lifecycle sources under `root`
+/// carry the recorded digests. The other build inputs, the producing manifest
+/// and Git state take no part: the staged executable digests bind what was
+/// built from them.
+fn require_behavior_sources(
     root: &Path,
     manifest: &str,
     behavior: &BTreeMap<String, String>,
     lifecycle: &str,
-    build_inputs: &BTreeMap<String, String>,
-) -> io::Result<bool> {
+) -> io::Result<()> {
     let producing = ProducingInputs::read_at(root, manifest)?;
-    Ok(same_behavior(
+    require_recorded(
+        "behavior source",
         &ProducingInputs::hashes_at(root, &producing.behavior_sources)?,
         behavior,
-    ) && ProducingInputs::capture(root, manifest)?.lifecycle_sha256()? == lifecycle
-        && ProducingInputs::hashes_at(root, &producing.build_inputs)? == *build_inputs)
+    )?;
+    let observed = Sha256Digest::of(&encoded(&ProducingInputs::hashes_at(
+        root,
+        &producing.lifecycle_sources,
+    )?)?);
+    if observed.as_str() != lifecycle {
+        return Err(invalid(format!(
+            "lifecycle sources changed: recorded {lifecycle}, observed {}",
+            observed.as_str()
+        )));
+    }
+    Ok(())
 }
 fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     let declaration =
@@ -715,22 +742,15 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     }
     config.channels.validate()?;
     require_affinity(&config.affinity, &CpuAffinity::observe()?)?;
-    let producing_manifest = declaration.producing_manifest.as_str();
     let staging: StagingManifest = read_json(&config.channels.stage.join("staging-manifest.json"))?;
     validate_build_source_observations(&config.channels.stage, &staging)?;
-    if !producing_inputs_hold(
+    require_behavior_sources(
         Path::new("."),
-        producing_manifest,
+        &declaration.producing_manifest,
         &config.identity.behavior_sha256,
         config.identity.lifecycle_behavior_sha256.as_str(),
-        &config.build_inputs,
-    )? || declaration
-        .recorded_in(&config.identity.behavior_sha256)
-        .is_err()
-        || artifact(Path::new(producing_manifest))? != config.producing_manifest
-    {
-        return Err(invalid("producing source identity changed"));
-    }
+    )?;
+    declaration.recorded_in(&config.identity.behavior_sha256)?;
     if config.affinity.host_identity()? != config.identity.host_identity
         || !same_host(
             host_runtime(&config.receipt, source_state()?.2)?,
@@ -1157,12 +1177,32 @@ struct BootstrapInputs {
     host_admission_policy: HostAdmissionPolicy,
 }
 impl BootstrapInputs {
-    /// Cites the checkout observations of `recorded`, the interrupted
-    /// preparation this session retries, so that the input digests and host
-    /// facts decide the retry.
-    fn citing_checkout_of(mut self, recorded: &Self) -> io::Result<Self> {
+    /// The inputs of a retry of `recorded`, the interrupted preparation this
+    /// session retries. Refuses a differing staged executable or behavior
+    /// source by name, then cites the checkout observations, the other build
+    /// inputs, the producing manifest and the validator of `recorded`, which
+    /// decide nothing, so that [`PreparationStore::begin`] compares the rest.
+    fn retrying(mut self, recorded: &Self) -> io::Result<Self> {
+        let executables = |inputs: &Self| -> BTreeMap<String, String> {
+            inputs
+                .processes
+                .iter()
+                .map(|p| (p.id.as_str().into(), p.executable_sha256.as_str().into()))
+                .collect()
+        };
+        require_recorded(
+            "staged executable",
+            &executables(&self),
+            &executables(recorded),
+        )?;
+        require_recorded("behavior source", &self.behavior, &recorded.behavior)?;
         self.revision.clone_from(&recorded.revision);
         self.tree.clone_from(&recorded.tree);
+        self.behavior.clone_from(&recorded.behavior);
+        self.validator.clone_from(&recorded.validator);
+        self.producing_manifest
+            .clone_from(&recorded.producing_manifest);
+        self.build_inputs.clone_from(&recorded.build_inputs);
         self.runtime = CanonicalJson::from_serializable(&MeasurementRuntime {
             source_dirty: recorded
                 .runtime
@@ -1303,7 +1343,7 @@ fn prepare(
     let session_id = Token::new(session_id)?;
     let mut inputs = bootstrap_inputs(&channels, &campaign_id, &declaration)?;
     if let Some(recorded) = PreparationStore::interrupted_inputs(&channels, &session_id)? {
-        inputs = inputs.citing_checkout_of(&recorded.decode()?)?;
+        inputs = inputs.retrying(&recorded.decode()?)?;
     }
     let preparation = PreparationStore::begin(
         channels.clone(),
@@ -1329,6 +1369,8 @@ fn prepare(
         protocol,
         validator,
         affinity,
+        producing_manifest,
+        build_inputs,
         ..
     } = inputs;
     let config_path = channels.stage.join("campaign.json");
@@ -1399,8 +1441,6 @@ fn prepare(
             })
             .collect::<io::Result<Vec<_>>>()?;
         let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
-        let build_inputs = ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?;
-        let producing_manifest = artifact(Path::new(&declaration.producing_manifest))?;
         let lifecycle_behavior =
             ProducingInputs::hashes_at(Path::new("."), &producing.lifecycle_sources)?;
         let identity = ResumeIdentity {
@@ -3540,31 +3580,30 @@ mod tests {
         assert!(stage_executables(&stage, &input, &extent_declaration()).is_err());
     }
 
-    /// A scratch git checkout with one committed producing input and its
-    /// manifest, and the digests a campaign records for them.
-    fn recorded_checkout(
-        name: &str,
-    ) -> (
-        Scratch,
-        BTreeMap<String, String>,
-        String,
-        BTreeMap<String, String>,
-    ) {
-        let root = scratch(name);
-        let (input, manifest) = ("input.rs", "producing-inputs.json");
-        fs::write(root.join(input), b"frozen input").unwrap();
-        fs::write(root.join("other.rs"), b"outside the closure").unwrap();
+    /// The producing-input manifest of [`recorded_checkout`], selecting
+    /// `build_inputs` beside its one behavior source `input.rs`.
+    fn write_producing_manifest(root: &Path, build_inputs: &[&str]) {
         fs::write(
-            root.join(manifest),
+            root.join("producing-inputs.json"),
             serde_json::to_vec(&json!({
                 "schema": "tuning-campaign-producing-inputs-v1",
-                "behavior_sources": [input],
-                "lifecycle_sources": [input],
-                "build_inputs": [input, manifest],
+                "behavior_sources": ["input.rs"],
+                "lifecycle_sources": ["input.rs"],
+                "build_inputs": build_inputs,
             }))
             .unwrap(),
         )
         .unwrap();
+    }
+    /// A scratch git checkout with one committed behavior source, one other
+    /// build input and their manifest, and the behavior and lifecycle digests
+    /// a campaign records for them.
+    fn recorded_checkout(name: &str) -> (Scratch, BTreeMap<String, String>, String) {
+        let root = scratch(name);
+        fs::write(root.join("input.rs"), b"frozen input").unwrap();
+        fs::write(root.join("support.rs"), b"test support").unwrap();
+        fs::write(root.join("other.rs"), b"outside the closure").unwrap();
+        write_producing_manifest(&root, &["input.rs", "producing-inputs.json", "support.rs"]);
         for arguments in [
             &["init", "--quiet"][..],
             &["add", "--all"],
@@ -3587,20 +3626,14 @@ mod tests {
                 .unwrap()
                 .success());
         }
-        let snapshot = ProducingInputs::capture(&root, manifest).unwrap();
+        let snapshot = ProducingInputs::capture(&root, "producing-inputs.json").unwrap();
         let lifecycle = snapshot.lifecycle_sha256().unwrap();
-        (
-            root,
-            snapshot.behavior_sha256,
-            lifecycle,
-            snapshot.build_inputs_sha256,
-        )
+        (root, snapshot.behavior_sha256, lifecycle)
     }
 
     #[test]
     fn a_dirty_checkout_with_matching_input_digests_resumes() {
-        let (root, behavior, lifecycle, build_inputs) =
-            recorded_checkout("gf2-driver-dirty-resume");
+        let (root, behavior, lifecycle) = recorded_checkout("gf2-driver-dirty-resume");
         fs::write(root.join("other.rs"), b"edited outside the closure").unwrap();
         fs::write(root.join("untracked.rs"), b"untracked").unwrap();
         let porcelain = Command::new("git")
@@ -3611,14 +3644,7 @@ mod tests {
             .unwrap();
         assert!(!porcelain.stdout.is_empty(), "the checkout is dirty");
         let holds = || {
-            producing_inputs_hold(
-                &root,
-                "producing-inputs.json",
-                &behavior,
-                &lifecycle,
-                &build_inputs,
-            )
-            .unwrap()
+            require_behavior_sources(&root, "producing-inputs.json", &behavior, &lifecycle).is_ok()
         };
         assert!(holds());
         let tree = || {
@@ -3654,18 +3680,61 @@ mod tests {
     }
 
     #[test]
-    fn a_changed_frozen_input_refuses_the_resume_by_digest() {
-        let (root, behavior, lifecycle, build_inputs) =
-            recorded_checkout("gf2-driver-changed-input");
-        fs::write(root.join("input.rs"), b"changed input").unwrap();
-        assert!(!producing_inputs_hold(
+    fn an_edited_build_input_outside_the_behavior_sources_resumes() {
+        let (root, behavior, lifecycle) = recorded_checkout("gf2-driver-edited-build-input");
+        fs::write(root.join("support.rs"), b"edited test support").unwrap();
+        write_producing_manifest(
             &root,
-            "producing-inputs.json",
-            &behavior,
-            &lifecycle,
-            &build_inputs
-        )
-        .unwrap());
+            &[
+                "input.rs",
+                "other.rs",
+                "producing-inputs.json",
+                "support.rs",
+            ],
+        );
+        require_behavior_sources(&root, "producing-inputs.json", &behavior, &lifecycle).unwrap();
+    }
+
+    #[test]
+    fn a_changed_behavior_source_refuses_the_resume_by_name() {
+        let (root, behavior, lifecycle) = recorded_checkout("gf2-driver-changed-input");
+        fs::write(root.join("input.rs"), b"changed input").unwrap();
+        let refusal =
+            require_behavior_sources(&root, "producing-inputs.json", &behavior, &lifecycle)
+                .unwrap_err()
+                .to_string();
+        let observed = Sha256Digest::of(b"changed input");
+        assert!(
+            refusal.contains("input.rs")
+                && refusal.contains(&behavior["input.rs"])
+                && refusal.contains(observed.as_str()),
+            "{refusal}"
+        );
+    }
+
+    #[test]
+    fn a_changed_staged_executable_refuses_the_resume_by_name() {
+        let stage = scratch("gf2-driver-changed-executable");
+        let path = stage.join("producer");
+        fs::write(&path, b"staged producer").unwrap();
+        let staged = artifact(&path).unwrap();
+        let process = ProcessDescriptor {
+            id: Token::new("producer").unwrap(),
+            executable: staged.path.clone(),
+            executable_sha256: staged.sha256.clone(),
+            arguments: vec![],
+            environment: measurement_environment(),
+            working_directory: fs::canonicalize(".").unwrap(),
+        };
+        process.verify_staged().unwrap();
+        fs::write(&path, b"rebuilt producer").unwrap();
+        let refusal = process.verify_staged().unwrap_err().to_string();
+        assert!(
+            refusal.contains(staged.path.to_str().unwrap())
+                && refusal.contains(staged.sha256.as_str())
+                && refusal.contains(Sha256Digest::of(b"rebuilt producer").as_str()),
+            "{refusal}"
+        );
     }
 
     #[test]
@@ -3704,46 +3773,76 @@ mod tests {
     }
 
     #[test]
-    fn a_preparation_retry_on_another_checkout_state_matches_by_its_input_digests() {
+    fn a_preparation_retry_matches_by_its_executable_and_behavior_digests() {
         let identity = |name: &str| ArtifactIdentity {
             path: PathBuf::from("/repository").join(name),
             sha256: Sha256Digest::of(name.as_bytes()),
         };
-        let inputs = |revision: &str, source_dirty, input: &[u8]| BootstrapInputs {
-            revision: revision.repeat(40),
-            tree: revision.repeat(40),
-            behavior: BTreeMap::new(),
-            receipt: "receipt.md".into(),
-            runtime: CanonicalJson::from_serializable(&MeasurementRuntime {
-                source_dirty,
-                toolchain: "rustc 1.95.0".into(),
-                cpu_model: "cpu".into(),
-                cpu_features: vec!["avx2".into()],
-                os_kernel: "kernel".into(),
-                governor: "{}".into(),
-                receipt: "receipt.md".into(),
-            })
-            .unwrap(),
-            processes: Vec::new(),
-            protocol: identity("protocol"),
-            validator: identity("validator"),
-            affinity: CpuAffinity::observe().unwrap(),
-            staging: identity("staging"),
-            producing_manifest: identity("manifest"),
-            build_inputs: [(
-                "input.rs".to_owned(),
-                Sha256Digest::of(input).as_str().into(),
-            )]
-            .into(),
-            host_admission_policy: HostAdmissionPolicy::declared(),
+        let digests = |path: &str, bytes: &[u8]| -> BTreeMap<String, String> {
+            [(path.to_owned(), Sha256Digest::of(bytes).as_str().into())].into()
         };
-        let recorded = inputs("a", false, b"frozen input");
+        let producer = artifact(Path::new("/usr/bin/env")).unwrap();
+        let inputs =
+            |revision: &str, source_dirty, behavior: &[u8], support: &[u8], executable: &[u8]| {
+                BootstrapInputs {
+                    revision: revision.repeat(40),
+                    tree: revision.repeat(40),
+                    behavior: digests("behavior.rs", behavior),
+                    receipt: "receipt.md".into(),
+                    runtime: CanonicalJson::from_serializable(&MeasurementRuntime {
+                        source_dirty,
+                        toolchain: "rustc 1.95.0".into(),
+                        cpu_model: "cpu".into(),
+                        cpu_features: vec!["avx2".into()],
+                        os_kernel: "kernel".into(),
+                        governor: "{}".into(),
+                        receipt: "receipt.md".into(),
+                    })
+                    .unwrap(),
+                    processes: vec![ProcessDescriptor {
+                        id: Token::new("producer").unwrap(),
+                        executable: producer.path.clone(),
+                        executable_sha256: Sha256Digest::of(executable),
+                        arguments: vec![],
+                        environment: measurement_environment(),
+                        working_directory: PathBuf::from("/repository"),
+                    }],
+                    protocol: identity("protocol"),
+                    validator: identity(revision),
+                    affinity: CpuAffinity::observe().unwrap(),
+                    staging: identity("staging"),
+                    producing_manifest: identity(revision),
+                    build_inputs: digests("support.rs", support),
+                    host_admission_policy: HostAdmissionPolicy::declared(),
+                }
+            };
+        let frozen = |revision, source_dirty, support: &[u8]| {
+            inputs(revision, source_dirty, b"frozen", support, b"producer")
+        };
+        let recorded = frozen("a", false, b"support");
         let encoded = |inputs: BootstrapInputs| CanonicalJson::from_serializable(&inputs).unwrap();
-        let retried =
-            |inputs: BootstrapInputs| encoded(inputs.citing_checkout_of(&recorded).unwrap());
-        let intent = encoded(inputs("a", false, b"frozen input"));
-        assert_eq!(retried(inputs("b", true, b"frozen input")), intent);
-        assert_ne!(retried(inputs("a", false, b"changed input")), intent);
+        let intent = encoded(frozen("a", false, b"support"));
+        assert_eq!(
+            encoded(
+                frozen("b", true, b"edited support")
+                    .retrying(&recorded)
+                    .unwrap()
+            ),
+            intent
+        );
+        for (changed, name) in [
+            (
+                inputs("a", false, b"changed", b"support", b"producer"),
+                "behavior source behavior.rs",
+            ),
+            (
+                inputs("a", false, b"frozen", b"support", b"rebuilt"),
+                "staged executable producer",
+            ),
+        ] {
+            let refusal = changed.retrying(&recorded).err().unwrap().to_string();
+            assert!(refusal.contains(name), "{refusal}");
+        }
     }
 
     #[test]

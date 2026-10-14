@@ -394,15 +394,24 @@ impl ProcessDescriptor {
         Ok(())
     }
     /// Reopens staged paths and verifies their canonical identity and bytes.
+    /// A digest mismatch names the executable and both digests.
     pub fn verify_staged(&self) -> io::Result<()> {
         self.validate()?;
         if fs::canonicalize(&self.executable)? != self.executable
             || fs::canonicalize(&self.working_directory)? != self.working_directory
             || !self.working_directory.is_dir()
             || !self.executable.is_file()
-            || Sha256Digest::of(&fs::read(&self.executable)?) != self.executable_sha256
         {
             return Err(invalid("staged process identity mismatch"));
+        }
+        let observed = Sha256Digest::of(&fs::read(&self.executable)?);
+        if observed != self.executable_sha256 {
+            return Err(invalid(format!(
+                "staged executable {} changed: recorded {}, observed {}",
+                self.executable.display(),
+                self.executable_sha256.as_str(),
+                observed.as_str()
+            )));
         }
         Ok(())
     }
