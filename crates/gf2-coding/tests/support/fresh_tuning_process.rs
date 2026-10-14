@@ -21,11 +21,21 @@ use gf2_core::tuning::{CompiledProfileProvenance, PreparedEnvelope, ProfileId, S
 use gf2_core::BitVec;
 
 #[cfg(feature = "tuning-profile")]
+use gf2_coding::ldpc::{
+    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDecoder, LdpcCode,
+    LdpcDecoder,
+};
+#[cfg(feature = "tuning-profile")]
+use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
+#[cfg(feature = "tuning-profile")]
 use gf2_coding::tuning::CodingTuningCodec;
 #[cfg(feature = "tuning-profile")]
 use gf2_core::tuning::{
-    AssemblyProvenance, GitRevision, ProfileRegistryBuilder, RepoRelPath, Rfc3339Utc, Sha256,
+    AssemblyProvenance, GitRevision, ProfileRegistry, ProfileRegistryBuilder, RepoRelPath,
+    Rfc3339Utc, Sha256,
 };
+#[cfg(feature = "tuning-profile")]
+use gf2_kernels_simd::ldpc_lanes::LANES;
 
 const SENTINEL: &str = "GF2_TUNING_FRESH_CASE";
 const SENTINEL_VALUE: &str = "child-v1";
@@ -80,6 +90,14 @@ pub enum FreshProcessCase {
     /// JSON.
     #[cfg(feature = "tuning-profile")]
     DecodeFamilyEncoded,
+    /// [`MEASURED_OWNER`] installed, with the batch decoder's routes
+    /// reported on either side of its decode selectors.
+    #[cfg(feature = "tuning-profile")]
+    MeasuredOwnerRoutes,
+    /// [`MEASURED_OWNER`] installed, with the batch decoder held to the
+    /// shared batch contract on the LDPC batch suite's frames.
+    #[cfg(feature = "tuning-profile")]
+    MeasuredOwnerDecode,
 }
 
 impl FreshProcessCase {
@@ -99,6 +117,10 @@ impl FreshProcessCase {
             Self::DecodeFamilyCompiled => "decode-family-compiled",
             #[cfg(feature = "tuning-profile")]
             Self::DecodeFamilyEncoded => "decode-family-encoded",
+            #[cfg(feature = "tuning-profile")]
+            Self::MeasuredOwnerRoutes => "measured-owner-routes",
+            #[cfg(feature = "tuning-profile")]
+            Self::MeasuredOwnerDecode => "measured-owner-decode",
         }
     }
 
@@ -128,6 +150,10 @@ impl FreshProcessCase {
             Some("decode-family-compiled") => Ok(Self::DecodeFamilyCompiled),
             #[cfg(feature = "tuning-profile")]
             Some("decode-family-encoded") => Ok(Self::DecodeFamilyEncoded),
+            #[cfg(feature = "tuning-profile")]
+            Some("measured-owner-routes") => Ok(Self::MeasuredOwnerRoutes),
+            #[cfg(feature = "tuning-profile")]
+            Some("measured-owner-decode") => Ok(Self::MeasuredOwnerDecode),
             _ => Err("fresh-process case has an unknown case name".to_owned()),
         }
     }
@@ -294,14 +320,32 @@ fn compiled_envelope(selectors: CodingSelectors) -> PreparedEnvelope {
     .unwrap()
 }
 
+/// The registry of the coding owner codec alone.
 #[cfg(feature = "tuning-profile")]
-fn encoded_envelope(selectors: CodingSelectors) -> PreparedEnvelope {
-    let typed = compiled_envelope(selectors);
-    let registry = ProfileRegistryBuilder::new()
+pub fn coding_registry() -> ProfileRegistry {
+    ProfileRegistryBuilder::new()
         .register::<CodingTuning, CodingTuningCodec>()
         .unwrap()
         .build()
-        .unwrap();
+        .unwrap()
+}
+
+/// The committed coding owner envelope of the decoder calibration campaign
+/// `@/issue/20af7e6e`.
+#[cfg(feature = "tuning-profile")]
+pub const MEASURED_OWNER: &str =
+    include_str!("../../data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json");
+
+/// [`MEASURED_OWNER`] read through the owner codec.
+#[cfg(feature = "tuning-profile")]
+pub fn measured_owner() -> PreparedEnvelope {
+    coding_registry().from_json(MEASURED_OWNER).unwrap()
+}
+
+#[cfg(feature = "tuning-profile")]
+fn encoded_envelope(selectors: CodingSelectors) -> PreparedEnvelope {
+    let typed = compiled_envelope(selectors);
+    let registry = coding_registry();
     let assembly = AssemblyProvenance {
         assembled_at: Rfc3339Utc::parse("2026-09-01T00:00:00Z").unwrap(),
         source_revision: GitRevision::parse("0123456789abcdef0123456789abcdef01234567").unwrap(),
@@ -359,6 +403,10 @@ pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
         FreshProcessCase::DecodeFamilyEncoded => {
             execute_install_child(encoded_envelope(selectors_carrying_a_decode_family()))
         }
+        #[cfg(feature = "tuning-profile")]
+        FreshProcessCase::MeasuredOwnerRoutes => execute_measured_routes_child(),
+        #[cfg(feature = "tuning-profile")]
+        FreshProcessCase::MeasuredOwnerDecode => execute_measured_decode_child(),
     }
 }
 
@@ -506,6 +554,103 @@ fn execute_allocation_child(
         "family": code.selected_encode_family(layout, BATCH).name(),
         "workspace_shape_stable_from_creation": workspace_stable,
         "scratch_shape_stable_after_first_batch": scratch_stable,
+        "resolution": "installed",
+    })
+}
+
+/// A batch route as the child reports it and the parent compares it.
+#[cfg(feature = "tuning-profile")]
+pub fn route_report(route: BatchRoute) -> serde_json::Value {
+    format!("{route:?}").into()
+}
+
+/// Installs [`MEASURED_OWNER`] and returns its decode family.
+#[cfg(feature = "tuning-profile")]
+fn install_measured_owner() -> &'static DecodeSelectors {
+    gf2_core::tuning::install(measured_owner()).unwrap();
+    let active = tuning::active();
+    assert!(matches!(
+        active.resolution,
+        SectionResolution::Installed { .. }
+    ));
+    active.section.decode()
+}
+
+/// A code of exactly `edges` Tanner-graph edges, each variable of degree one
+/// over eight checks; only its edge count matters to a route.
+#[cfg(feature = "tuning-profile")]
+fn code_with_edges(edges: usize) -> LdpcCode {
+    const CHECKS: usize = 8;
+    let coordinates: Vec<(usize, usize)> = (0..edges).map(|v| (v % CHECKS, v)).collect();
+    LdpcCode::from_edges(CHECKS, edges, &coordinates)
+}
+
+/// Reports, for codes at the decode family's edge bound and one edge past
+/// it, the route of every wave size up to two waves, on the detected lane
+/// backend and held on the portable one.
+#[cfg(feature = "tuning-profile")]
+fn execute_measured_routes_child() -> serde_json::Value {
+    let decode = install_measured_owner();
+    let bound = decode.lane_max_edges();
+    let mut routes = Vec::new();
+    for edges in [bound, bound + 1] {
+        let decoder = LdpcBatchDecoder::new(
+            code_with_edges(edges),
+            DecoderConfig::default(),
+            test_support::LDPC_BATCH_CAP,
+            DecodedWord::Codeword,
+        );
+        let detected: Vec<BatchRoute> = (0..=2 * LANES)
+            .map(|frames| decoder.batch_route(frames))
+            .collect();
+        let portable = decoder.with_portable_lanes();
+        for (frames, detected) in detected.into_iter().enumerate() {
+            routes.push(serde_json::json!({
+                "edges": edges,
+                "frames": frames,
+                "detected": route_report(detected),
+                "portable": route_report(portable.batch_route(frames)),
+            }));
+        }
+    }
+    serde_json::json!({
+        "decode": decode_report(decode),
+        "routes": routes,
+        "resolution": "installed",
+    })
+}
+
+/// Holds the installed decoder of every min-sum rule to the shared batch
+/// contract against the single-frame decoder, and reports the route of each
+/// wave size of the suite's code.
+#[cfg(feature = "tuning-profile")]
+fn execute_measured_decode_child() -> serde_json::Value {
+    let decode = install_measured_owner();
+    let code = test_support::ldpc_batch_code();
+    let frames = test_support::ldpc_batch_frames();
+    let cap = test_support::LDPC_BATCH_CAP;
+    for algorithm in [
+        DecoderAlgorithm::MinSum,
+        DecoderAlgorithm::NormalizedMinSum(0.75),
+        DecoderAlgorithm::OffsetMinSum(0.5),
+    ] {
+        let config = DecoderConfig::new(algorithm, true);
+        let mut decoder = LdpcBatchDecoder::new(code.clone(), config, cap, DecodedWord::Codeword);
+        let mut single = LdpcDecoder::with_config(code.clone(), config);
+        batch_soft_decoder_contract(
+            &mut decoder,
+            |llrs| single.decode_to_codeword(llrs, cap),
+            &frames,
+            ConvergenceMix::EarlyLateAndNonConverging,
+        );
+    }
+    let decoder = LdpcBatchDecoder::new(code, DecoderConfig::default(), cap, DecodedWord::Codeword);
+    let wave_routes: Vec<serde_json::Value> = (0..=LANES)
+        .map(|frames| route_report(decoder.batch_route(frames)))
+        .collect();
+    serde_json::json!({
+        "decode": decode_report(decode),
+        "wave_routes": wave_routes,
         "resolution": "installed",
     })
 }
