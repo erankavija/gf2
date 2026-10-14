@@ -30,6 +30,8 @@ tempfile = { version = "3", optional = true }
 
 [dev-dependencies]
 tuning-campaign-support = { workspace = true }
+# Per-thread counting allocator of the allocation-witness tests.
+thread-allocations = { workspace = true }
 criterion = { workspace = true }
 gf2-core = { path = ".", features = ["test-support"] }
 # The shared population-count suite calls each kernel of the detected bundle

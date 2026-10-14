@@ -7,6 +7,7 @@ members = [
 	"crates/gf2-kernels-simd",
 	"crates/gf2-sim",
 	"dev/tools/tuning-campaign-support",
+	"dev/tools/thread-allocations",
 ]
 # HIP crate excluded from default workspace — requires ROCm/hipcc.
 # Build explicitly: cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml
@@ -37,6 +38,7 @@ rayon = "1.10"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
 trybuild = "1"
+thread-allocations = { path = "dev/tools/thread-allocations" }
 tuning-campaign-support = { path = "dev/tools/tuning-campaign-support" }
 
 [profile.release]

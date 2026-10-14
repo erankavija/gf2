@@ -40,6 +40,8 @@ num_cpus = "1.17.0"
 serde_json = "1.0"
 # Campaign mechanics of the `tuning_calibration` owner producer.
 tuning-campaign-support = { workspace = true }
+# Per-thread counting allocator of the allocation-witness tests.
+thread-allocations = { workspace = true }
 # Digests the ETSI verification streams the oracle-agreement suite reads, so
 # the run receipt carries the identity of the exact bytes that were compared.
 sha2 = "0.10"

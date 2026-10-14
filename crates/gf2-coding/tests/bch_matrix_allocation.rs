@@ -1,9 +1,6 @@
 //! Allocation witness: `generator_matrix_into` and `parity_check_matrix_into`
 //! reach no allocator given a correctly sized buffer.
 
-#[path = "support/thread_allocations.rs"]
-mod thread_allocations;
-
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance};
 use gf2_coding::traits::block::{
     BlockCode, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
@@ -15,7 +12,10 @@ use gf2_core::gf2m::Gf2mField;
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::QuotientField;
 use gf2_core::BitMatrix;
-use thread_allocations::count;
+use thread_allocations::{count, CountingAllocator};
+
+#[global_allocator]
+static ALLOCATOR: CountingAllocator = CountingAllocator;
 
 /// The workload contract's B3 row, $255 \times 223$ over `GF(2^8)`.
 fn packed_code() -> BinaryBchCode {

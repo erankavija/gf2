@@ -5,9 +5,6 @@
 //! over preparation and decoding together. The batch decoders are counted on
 //! each lane backend of the build and on the single-frame route.
 
-#[path = "support/thread_allocations.rs"]
-mod thread_allocations;
-
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedBatchDecoder;
 use gf2_coding::ldpc::{
     BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcBatchDecoder,
@@ -17,7 +14,10 @@ use gf2_coding::llr::Llr;
 use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome, IterativeSoftDecoder};
 use gf2_core::BitVec;
-use thread_allocations::{count, Counts};
+use thread_allocations::{count, CountingAllocator, Counts};
+
+#[global_allocator]
+static ALLOCATOR: CountingAllocator = CountingAllocator;
 
 /// Prints one counted section as a JSON record, so a `--nocapture` run yields a
 /// machine-readable census.

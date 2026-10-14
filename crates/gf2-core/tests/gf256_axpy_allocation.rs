@@ -1,66 +1,16 @@
 //! Allocation witness for the GF(2^8) cached-table axpy lane: a call allocates
-//! nothing. The counting global allocator and its counter are process-wide, so
-//! this witness owns its test binary; `unsafe` appears only in the
-//! [`GlobalAlloc`] implementation.
+//! nothing.
 
 #![cfg(feature = "test-support")]
-
-use std::alloc::{GlobalAlloc, Layout, System};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use gf2_core::field::FieldVec;
 use gf2_core::gf2m::{
     last_gf256_table_lane, Gf2mField, Gf2mWide, Gf2mWideConfig, GF256_TABLE_LANE,
 };
-
-/// Forwards to the system allocator and counts every allocating call made
-/// while [`ARMED`] is set.
-struct CountingAllocator;
-
-static ARMED: AtomicBool = AtomicBool::new(false);
-
-static ALLOCATIONS: AtomicUsize = AtomicUsize::new(0);
-
-fn record() {
-    if ARMED.load(Ordering::Relaxed) {
-        ALLOCATIONS.fetch_add(1, Ordering::Relaxed);
-    }
-}
-
-// SAFETY: every method forwards its arguments unchanged to the system
-// allocator, which satisfies the `GlobalAlloc` contract, and the counter
-// touches no allocator of its own.
-unsafe impl GlobalAlloc for CountingAllocator {
-    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        record();
-        System.alloc(layout)
-    }
-
-    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
-        record();
-        System.alloc_zeroed(layout)
-    }
-
-    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-        record();
-        System.realloc(ptr, layout, new_size)
-    }
-
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        System.dealloc(ptr, layout)
-    }
-}
+use thread_allocations::{count, CountingAllocator};
 
 #[global_allocator]
 static ALLOCATOR: CountingAllocator = CountingAllocator;
-
-fn allocations_during(body: impl FnOnce()) -> usize {
-    ALLOCATIONS.store(0, Ordering::Relaxed);
-    ARMED.store(true, Ordering::Relaxed);
-    body();
-    ARMED.store(false, Ordering::Relaxed);
-    ALLOCATIONS.load(Ordering::Relaxed)
-}
 
 /// GF(2^8) under `x^8 + x^4 + x^3 + x^2 + 1` (0x11D).
 struct Gf256Poly11dCfg;
@@ -102,11 +52,11 @@ fn neither_representation_allocates_on_the_table_lane() {
     wide_y.axpy(&wide_coefficient, &wide_x);
     assert_eq!(last_gf256_table_lane(), GF256_TABLE_LANE);
 
-    let element_allocations = allocations_during(|| y.axpy(&coefficient, &x));
+    let ((), element) = count(|| y.axpy(&coefficient, &x));
     assert_eq!(last_gf256_table_lane(), GF256_TABLE_LANE);
-    let wide_allocations = allocations_during(|| wide_y.axpy(&wide_coefficient, &wide_x));
+    let ((), wide) = count(|| wide_y.axpy(&wide_coefficient, &wide_x));
     assert_eq!(last_gf256_table_lane(), GF256_TABLE_LANE);
 
-    assert_eq!(element_allocations, 0);
-    assert_eq!(wide_allocations, 0);
+    assert_eq!(element.allocations + element.reallocations, 0);
+    assert_eq!(wide.allocations + wide.reallocations, 0);
 }
