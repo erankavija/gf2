@@ -503,60 +503,23 @@ impl BatchSoftDecoder for LdpcBatchDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::channel::AwgnChannel;
-    use crate::ldpc::{DecoderAlgorithm, LdpcEncoder, QuasiCyclicLdpc};
-    use crate::test_support::{ldpc_batch_routes as routes, ldpc_lane_backends};
+    use crate::ldpc::{DecoderAlgorithm, LdpcEncoder};
+    use crate::test_support::{
+        ldpc_batch_code as code, ldpc_batch_frames as frames, ldpc_batch_routes as routes,
+        ldpc_lane_backends, LDPC_BATCH_CAP as CAP, LDPC_BATCH_FRAMES as FRAMES,
+    };
     use crate::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
     use crate::traits::{BlockEncoder, DecoderResult, IterativeSoftDecoder};
     use rand::rngs::StdRng;
     use rand::SeedableRng;
 
     const SEED: u64 = 0x5cb7_4f81;
-    const CAP: usize = 20;
-
-    /// Frames of the test set: two full waves and a final wave of one frame.
-    const FRAMES: usize = 2 * LANES + 1;
-
-    /// Noise deviations from clean to undecodable, interleaved so that a wave
-    /// holds frames of each kind.
-    const SIGMAS: [f64; 6] = [0.45, 0.9, 1.6, 0.8, 1.4, 0.95];
 
     const MIN_SUM_FAMILY: [DecoderAlgorithm; 3] = [
         DecoderAlgorithm::MinSum,
         DecoderAlgorithm::NormalizedMinSum(0.75),
         DecoderAlgorithm::OffsetMinSum(0.5),
     ];
-
-    /// A (96, 48) quasi-cyclic code of column weight three.
-    fn code() -> LdpcCode {
-        let base = vec![
-            vec![0, 3, 7, 1, 0, -1],
-            vec![5, 0, 11, -1, 2, 9],
-            vec![9, 13, 0, 6, -1, 4],
-        ];
-        LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::new(base, 16))
-    }
-
-    /// [`FRAMES`] random codewords of [`code`], each through AWGN of the
-    /// deviation [`SIGMAS`] gives its index.
-    fn frames() -> Vec<Vec<Llr>> {
-        let encoder = LdpcEncoder::new(code());
-        let mut rng = StdRng::seed_from_u64(SEED);
-        (0..FRAMES)
-            .map(|f| {
-                let codeword = encoder.encode(&BitVec::random(encoder.k(), &mut rng));
-                let sigma = SIGMAS[f % SIGMAS.len()];
-                let channel = AwgnChannel::from_variance(sigma * sigma);
-                let scale = 2.0 / channel.variance();
-                (0..codeword.len())
-                    .map(|i| {
-                        let symbol = if codeword.get(i) { -1.0 } else { 1.0 };
-                        Llr::new((scale * channel.transmit(symbol, &mut rng)) as f32)
-                    })
-                    .collect()
-            })
-            .collect()
-    }
 
     /// [`FRAMES`] random messages and the noiseless LLRs of their codewords.
     fn noiseless_frames() -> (Vec<BitVec>, Vec<Vec<Llr>>) {

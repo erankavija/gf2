@@ -16,8 +16,10 @@ use crate::bch::matrix::{CachedMatrices, MatrixFill};
 use crate::bch::spec::{
     BchCode, BchLength, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent, RootSelection,
 };
+use crate::channel::AwgnChannel;
 use crate::error::CodeError;
-use crate::ldpc::{BatchRoute, LaneBackend};
+use crate::ldpc::{BatchRoute, LaneBackend, LdpcCode, LdpcEncoder, QuasiCyclicLdpc};
+use crate::llr::Llr;
 use crate::product::ExtendedBchComponent;
 use crate::traits::block::{
     BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
@@ -34,6 +36,7 @@ use gf2_core::gf2m::{Gf2mElement, Gf2mField};
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{QuotientElement, QuotientField};
 use gf2_core::{BitMatrix, BitVec};
+use gf2_kernels_simd::ldpc_lanes::LANES;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::path::{Path, PathBuf};
@@ -170,6 +173,50 @@ pub fn ldpc_batch_routes() -> Vec<(DecodeSelectors, LaneBackend, BatchRoute)> {
         BatchRoute::SingleFrame,
     ));
     routes
+}
+
+/// The iteration cap of the LDPC batch suite, under which
+/// [`ldpc_batch_frames`] holds early, late and non-converging frames.
+pub const LDPC_BATCH_CAP: usize = 20;
+
+/// The frames of [`ldpc_batch_frames`]: two full waves and a final wave of
+/// one frame.
+pub const LDPC_BATCH_FRAMES: usize = 2 * LANES + 1;
+
+/// The code of the LDPC batch suite, a (96, 48) quasi-cyclic code of column
+/// weight three.
+pub fn ldpc_batch_code() -> LdpcCode {
+    let base = vec![
+        vec![0, 3, 7, 1, 0, -1],
+        vec![5, 0, 11, -1, 2, 9],
+        vec![9, 13, 0, 6, -1, 4],
+    ];
+    LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::new(base, 16))
+}
+
+/// The frame set of the LDPC batch suite: [`LDPC_BATCH_FRAMES`] seeded
+/// random codewords of [`ldpc_batch_code`], each through AWGN of a deviation
+/// cycling from clean to undecodable, so that a wave holds frames of each
+/// kind.
+pub fn ldpc_batch_frames() -> Vec<Vec<Llr>> {
+    const SIGMAS: [f64; 6] = [0.45, 0.9, 1.6, 0.8, 1.4, 0.95];
+    use crate::traits::BlockEncoder as _;
+    let encoder = LdpcEncoder::new(ldpc_batch_code());
+    let mut rng = StdRng::seed_from_u64(0x5cb7_4f81);
+    (0..LDPC_BATCH_FRAMES)
+        .map(|f| {
+            let codeword = encoder.encode(&BitVec::random(encoder.k(), &mut rng));
+            let sigma = SIGMAS[f % SIGMAS.len()];
+            let channel = AwgnChannel::from_variance(sigma * sigma);
+            let scale = 2.0 / channel.variance();
+            (0..codeword.len())
+                .map(|i| {
+                    let symbol = if codeword.get(i) { -1.0 } else { 1.0 };
+                    Llr::new((scale * channel.transmit(symbol, &mut rng)) as f32)
+                })
+                .collect()
+        })
+        .collect()
 }
 
 /// Builds the generic eBCH(16,11) fixture used by library tests.
