@@ -100,15 +100,42 @@ fn main() {
         }
         "medium-f64-gemm" => {
             let fns = fp_medium_f64::detect().expect("AVX2 and FMA");
-            (fns.batch_gemm_fn)(&[], &[1.0; 4], m, k, n, 65521, &mut []);
+            (fns.batch_gemm_fn)(
+                &[],
+                &[1.0; 4],
+                m,
+                k,
+                n,
+                65521,
+                fp_medium_f64::K_CHUNK_CAP,
+                &mut [],
+            );
         }
         "small-f32-gemm" => {
             let fns = fp_small_f32::detect().expect("AVX2 and FMA");
-            (fns.batch_gemm_fn)(&[], &[1.0; 4], m, k, n, 7, &mut []);
+            (fns.batch_gemm_fn)(
+                &[],
+                &[1.0; 4],
+                m,
+                k,
+                n,
+                7,
+                fp_small_f32::K_CHUNK_CAP,
+                &mut [],
+            );
         }
         "small-f32-gemm-route-a" => {
             let fns = fp_small_f32::detect().expect("AVX2 and FMA");
-            (fns.batch_gemm_route_a_fn)(&[], &[1.0; 4], m, k, n, 7, &mut []);
+            (fns.batch_gemm_route_a_fn)(
+                &[],
+                &[1.0; 4],
+                m,
+                k,
+                n,
+                7,
+                fp_small_f32::K_CHUNK_CAP,
+                &mut [],
+            );
         }
         "control" => {
             // A call that meets every condition, so the record shows a clean exit.

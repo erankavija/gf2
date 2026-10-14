@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # Build the pinned ISA-L campaign arm and retain its compiler evidence.
+#
+# The build record and verbose log reach their committed paths only after the
+# whole build succeeds. With GF2_ISAL_STAGE set to a directory the finished
+# files are left there for the caller to publish.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,10 +25,14 @@ record="${repo}/dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-op
 log="${repo}/dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-arm-build.log"
 mkdir -p "${target}"
 next_log="$(mktemp "${target}/isal-build.XXXXXX")"
-trap 'rm -f "${next_log}"' EXIT
+next_record="$(mktemp "${target}/isal-record.XXXXXX")"
+trap 'rm -f "${next_log}" "${next_record}"' EXIT
 unset MAKEFLAGS GNUMAKEFLAGS MFLAGS MAKEFILES
 export CC="${isal_compiler_command}" CC_ENABLE_DEBUG_OUTPUT=1 CARGO_CI_NO_SCCACHE=1
 export RUSTUP_TOOLCHAIN=1.95
+# A build takes its flags, wrapper, profile and target from this script alone.
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
+    "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}"
 GF2_ISAL_SOURCE="${source_root}" CARGO_TARGET_DIR="${target}" \
     ./scripts/cargo-budget.sh cargo build -vv --release --locked --features isal \
     --manifest-path "${here}/harness/Cargo.toml" --bin logical-isal-arm \
@@ -44,8 +52,9 @@ if [[ -n "${compile_line}" ]]; then
         echo 'ISA-L compile ran through sccache rather than the pinned compiler directly' >&2
         exit 1
     }
-    mv "${next_log}" "${log}"
+    current_log="${next_log}"
 else
+    current_log="${log}"
     [[ -f "${record}" && -f "${log}" ]] || {
         echo 'ISA-L compile transcript is missing and no retained build record exists' >&2
         exit 1
@@ -63,7 +72,7 @@ recorded_object_digest="$(sed -n 's/^object_sha256=//p' "${record}" 2>/dev/null 
     printf 'make_override_channels=%s\nmake_override_state=cleared\n' "${isal_make_channels}"
     printf 'compile_driver=%s\n' "${isal_compiler_command}"
     printf 'verbose_build_log=%s\nverbose_build_log_sha256=%s\n' \
-        "${log#"${repo}/"}" "$(sha256sum "${log}" | cut -d' ' -f1)"
+        "${log#"${repo}/"}" "$(sha256sum "${current_log}" | cut -d' ' -f1)"
     for object in "${objects[@]}"; do
         producer="$(isal_object_producers "${object}")"
         digest="$(sha256sum "${object}" | cut -d' ' -f1)"
@@ -73,5 +82,13 @@ recorded_object_digest="$(sed -n 's/^object_sha256=//p' "${record}" 2>/dev/null 
             "${object#"${repo}/"}" "${digest}" "${producer}"
     done
     printf 'arm=%s\narm_sha256=%s\n' "${arm#"${repo}/"}" "${arm_digest}"
-} >"${record}"
-printf 'ISA-L arm build provenance: %s\n' "${record#"${repo}/"}" >&2
+} >"${next_record}"
+if [[ -n "${GF2_ISAL_STAGE:-}" ]]; then
+    [[ "${current_log}" == "${log}" ]] || mv "${next_log}" "${GF2_ISAL_STAGE}/${log##*/}"
+    mv "${next_record}" "${GF2_ISAL_STAGE}/${record##*/}"
+    printf 'ISA-L arm build provenance staged for %s\n' "${record#"${repo}/"}" >&2
+else
+    [[ "${current_log}" == "${log}" ]] || mv "${next_log}" "${log}"
+    mv "${next_record}" "${record}"
+    printf 'ISA-L arm build provenance: %s\n' "${record#"${repo}/"}" >&2
+fi

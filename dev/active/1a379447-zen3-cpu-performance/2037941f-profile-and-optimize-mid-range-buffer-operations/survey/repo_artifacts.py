@@ -2,11 +2,11 @@
 """Runtime location of the repository root and of the artifacts below it.
 
 The root is the git checkout holding this file. An artifact is located by what
-it is: a tracked file name, a line of its content, or the campaign a receipt
+it is: a tracked file name, lines of its content, or the campaign a receipt
 records. Receipt input snapshots hold byte copies of live files and are never
 a location.
 
-Usage: repo_artifacts.py tracked NAME | containing NAME TEXT
+Usage: repo_artifacts.py tracked NAME | containing NAME TEXT...
                          | receipt CAMPAIGN | addendum CAMPAIGN | ledger CAMPAIGN
 """
 
@@ -43,14 +43,15 @@ def tracked(name):
     return _one(listing.splitlines(), name)
 
 
-def containing(name, text):
-    """The one tracked file called `name` that holds `text`."""
+def containing(name, *texts):
+    """The one tracked file called `name` that holds every line of `texts`."""
+    patterns = [argument for text in texts for argument in ("-e", text)]
     found = subprocess.run(
-        ["git", "-C", str(ROOT), "grep", "-l", "--full-name", "-F", "-e", text, "--",
-         f":(glob)**/{name}"],
+        ["git", "-C", str(ROOT), "grep", "-l", "--full-name", "-F", "--all-match", *patterns,
+         "--", f":(glob)**/{name}"],
         capture_output=True, text=True,
     ).stdout
-    return _one(found.splitlines(), f"{name} holding {text!r}")
+    return _one(found.splitlines(), f"{name} holding {' and '.join(map(repr, texts))}")
 
 
 def receipt(campaign):
