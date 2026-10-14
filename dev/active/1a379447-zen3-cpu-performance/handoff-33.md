@@ -55,6 +55,8 @@ Traps of `handoff-32.md` and earlier remain in force.
 - **`jit doc add` refuses binaries and paths deeper than its budget;** use `--skip-scan` for Markdown that links a deep snapshot, and cite archives from a linked document.
 - **Restart sccache from the home directory before every lead CI run.** A server started under a worker's deleted temp directory failed builds with "No such file or directory".
 
+- **Do NOT describe a frozen-file restore by its last commit alone.** The lead told the invoker the logical addendum differed from its pin by two link repoints; it also held Amendments 2 and 3, added after the pin. Diff the pinned bytes against the live file in full before offering a restore.
+
 ## Open questions needing invoker input
 
 None.
@@ -66,4 +68,3 @@ None.
 - Rulings: `progress.json` `escalations` (session 37 entries, including the interview of 2026-10-14)
 - Campaign archives: `dev/bench_results/63bad95d/*-evidence-archive.tar.zst`, `dev/bench_results/0a77ecfc/*-evidence-archive.tar.zst`
 - Window: `bench-window/run-window.sh`, `bench-window/queue.tsv`; state `.agents/bench-window/`
-- **Do NOT describe a frozen-file restore by its last commit alone.** The lead told the invoker the logical addendum differed from its pin by two link repoints; it also held Amendments 2 and 3, added after the pin. Diff the pinned bytes against the live file in full before offering a restore.
