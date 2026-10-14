@@ -55,14 +55,19 @@ device yields `HipError::NoDevice`, which that dispatcher reports as
 `DecodeOutcome`s in input order. Its scope is soft-decision whole-frame block
 decoding; hard-decision and streaming decoding have their own entry points.
 
-| Implementer | Path | Granularity |
-|---|---|---|
-| every `SoftDecoder` | blanket implementation over `decode_soft_with_result` | 1 |
-| `IterativeBatchDecoder` | `gf2_coding::traits` | 1 |
-| `LdpcBatchDecoder` | `gf2_coding::ldpc` | 8 frames per wave |
-| `Nr5gRateMatchedBatchDecoder` | `gf2_coding::ldpc::nr_5g` | that of the inner `LdpcBatchDecoder` |
-| `DvbT2ConcatBatchDecoder` | `gf2_coding::ldpc::dvb_t2::concat` | that of the inner `LdpcBatchDecoder` |
-| `PooledBatchDecoder` | `gf2_coding::pooled` | that of the inner decoder; wraps one inner decoder per rayon worker |
+The implementers are the blanket implementation over every `SoftDecoder`
+([`traits.rs`](../../crates/gf2-coding/src/traits.rs)) and these types:
+
+- [`IterativeBatchDecoder`](../../crates/gf2-coding/src/traits.rs), in
+  `gf2_coding::traits`.
+- [`LdpcBatchDecoder`](../../crates/gf2-coding/src/ldpc/batch.rs), in
+  `gf2_coding::ldpc`.
+- [`Nr5gRateMatchedBatchDecoder`](../../crates/gf2-coding/src/ldpc/nr_5g/batch.rs),
+  in `gf2_coding::ldpc::nr_5g`.
+- [`DvbT2ConcatBatchDecoder`](../../crates/gf2-coding/src/ldpc/dvb_t2/concat/batch.rs),
+  in `gf2_coding::ldpc::dvb_t2::concat`.
+- [`PooledBatchDecoder`](../../crates/gf2-coding/src/pooled.rs), in
+  `gf2_coding::pooled`, over an inner implementer per rayon worker.
 
 `LdpcBatchDecoder` routes each wave by the algorithm and the decode selectors
 of the coding tuning section
@@ -76,11 +81,8 @@ of the coding tuning section
   the host reports AVX2. On a host without AVX2, or in a build without `simd`,
   it runs the portable kernels, which write the same bits; the selectors
   decide the route on every host.
-- The conservative decode family selects the single-frame route for every
-  wave.
 
-Every route returns each frame's word and outcome equal to those of the
-single-frame decoder under the
+Each frame's word and outcome equal the single-frame decoder's under the
 [numerical contract](ldpc-decoder-numerical-contract.md).
 The committed coding envelope under `crates/gf2-coding/data/tuning-profiles/`
 records the decode selectors of the calibration campaign.

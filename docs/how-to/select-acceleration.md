@@ -148,8 +148,9 @@ The conservative family closes the lane route, so a process that installs no
 section decodes every wave frame by frame. Take the bounds from a measurement
 on the target host; the committed coding envelope under
 `crates/gf2-coding/data/tuning-profiles/` records the calibration campaign's
-selectors with their provenance, and registering `CodingTuning` with
-`CodingTuningCodec` in the profile registry above installs one.
+selectors with their provenance. With `gf2-coding`'s `tuning-profile`
+feature enabled, registering `CodingTuning` with `CodingTuningCodec` in the
+profile registry above installs one.
 `LdpcBatchDecoder::new` reads the family once at construction;
 `with_selectors` takes one explicitly.
 
@@ -201,15 +202,10 @@ sized by `RAYON_NUM_THREADS`, or a pool the caller installs.
 
 `PooledBatchDecoder` implements `BatchSoftDecoder` over one inner decoder per
 worker of the rayon pool current at construction and returns decoded words and
-`DecodeOutcome`s in input order. With `LdpcBatchDecoder` as the inner decoder,
-each worker decodes waves of eight frames. A wave runs on the lane kernels or
-frame by frame on `LdpcDecoder`, as the decode selectors of the coding tuning
-section choose. The lane kernels are the AVX2 ones when `gf2-coding` is built
-with `simd` and the host reports AVX2, and the portable ones otherwise.
+`DecodeOutcome`s in input order. With `LdpcBatchDecoder` as the inner decoder, each worker decodes its waves
+on the routes of [Route LDPC batch decoding](#route-ldpc-batch-decoding).
 `parallel` spreads the waves over the workers; without it the pool decodes on
-the calling thread. Each frame's word and outcome equal those of the
-single-frame decoder
-([numerical contract](../reference/ldpc-decoder-numerical-contract.md)).
+the calling thread.
 
 Construct the pool and decode inside the installed rayon pool
 ([`ldpc_parallel_batch.rs`](../../crates/gf2-coding/examples/ldpc_parallel_batch.rs)
