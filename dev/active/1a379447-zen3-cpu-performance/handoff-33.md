@@ -8,7 +8,7 @@
 
 - Epic: `1a379447` — state: backlog in the tracker (derived; work is in progress)
 - Wave in progress: wave 4 of 7 (story `ed3d490e` runs its own layers inside it)
-- Children summary (label `epic:zen3-cpu-performance`): 131 done, 3 in_progress, 36 backlog/ready, 26 rejected. Direct children: 27 of 31 done; open `d11a45d4`, `ec4e71ca` (in progress), `d93a1c7e`, `1362381c`; `9eb6f13c` and `17e08faa` sit under `d93a1c7e` in the reduced graph.
+- Children summary (label `epic:zen3-cpu-performance`): 131 done, 3 in_progress, 36 backlog/ready, 26 rejected. Direct children: 27 of 32 done; open `d11a45d4`, `ec4e71ca` (in progress), `d93a1c7e`, `69dd39f1`, `1362381c`; `9eb6f13c` and `17e08faa` sit under `d93a1c7e` in the reduced graph.
 - Active claims (`agent:worker`): `9eb6f13c` (rework 1, branch `worktree-agent-9eb6f13c`), `d11a45d4` (branch `worktree-agent-d11a45d4`), `ec4e71ca` (branch `worktree-agent-ec4e71ca`). Each worker was told to commit, stop and send its report.
 - Open escalations: none.
 - Progress file: `progress.json` in this directory
@@ -21,13 +21,18 @@
 - `817fc47d`: three selectors moved under the tuning sections, five structural; fixed `fp_small_batch_dot` (wrapping `u32` drain sum, primes 131 to 251).
 - `815703a1`: remaining Git-state conditions removed; `resume_equivalent` compares no source pointer; protocol snapshots of `dbd8787d` and `a83583e0` committed.
 - `9eb6f13c` merged at `b6e363c40` (option B: RNG stated beside the owner); cargo-ci passes; code-review failed on the algebra fixture pin. Rework 1 in `agent-9eb6f13c`, tip `3ab3ebf82` at last check.
-- Filed in the epic: `815703a1`, `9eb6f13c`, `17e08faa`, `d93a1c7e`, `d11a45d4`, `ec4e71ca`.
+- Filed in the epic: `815703a1`, `9eb6f13c`, `17e08faa`, `d93a1c7e`, `d11a45d4`, `ec4e71ca`, `69dd39f1`.
 - `d11a45d4` REQ-01 amended (`52fba47d7`) by the invoker.
 - Reclaimed `agent-63bad95d-int`, `-fam`, `-m4ri`, `-pm4ri`, `agent-817fc47d`.
 
 ## What to do next
 
-- [ ] Read the reports of `w-815703a1` (9eb6f13c rework 1), `w-d11a45d4` and `w-ec4e71ca`, or the branch tips if a report is missing. Run `./scripts/cargo-ci.sh` in each worktree yourself with nothing else running there, then merge and gate: `9eb6f13c` (cargo-ci, code-review), `d11a45d4` and `ec4e71ca` (cargo-ci, code-review).
+- [ ] Run `./scripts/cargo-ci.sh` yourself on a quiet host in each worktree, then merge and gate (cargo-ci, code-review):
+  - `9eb6f13c` rework 1, tip `3ab3ebf82`: the algebra pin test digests `fixture_banks` through the shared `bank_values`; pinned digest unchanged. The worker's two cargo-ci runs failed only on per-test TIMEOUTs under host load 20 to 40.
+  - `ec4e71ca`, tip `827f36387`, done: the counter was process-wide and caught libtest's main thread (reproduced 171/200 with an `LD_PRELOAD` delayed-spawn shim, scratchpad `ec4e/delay.c`); now thread-local in `crates/gf2-coding/tests/support/thread_allocations.rs`; 200/200 alone and beside package runs. Not CI-run.
+  - `d11a45d4`: report not received at handoff; read the branch tip. Rulings sent to the worker: restore `logical-buffer-addendum.md` to the receipt-pinned bytes (290685bf) with its two links baselined in `contrib/gates/docs-mechanical-baseline.md`, correct the two citations of 817f1028, commit the regenerated `mid-range-tables.md` (REQ-01 amended).
+- [ ] `69dd39f1` (gf2-core allocation witnesses per test thread), after `ec4e71ca`: the same race exposes `gf256_gemm_allocation` and `gf256_axpy_allocation`.
+- [ ] Host load: a worker's leaked busy loops held load near 127 from 00:47 to 00:59 EEST on 2026-10-14; read nothing timed from that interval.
 - [ ] `17e08faa` (runtime records defined once), then `d93a1c7e` (resume on unchanged executables); both change `tuning-campaign-support`; serialize.
 - [ ] After `d93a1c7e` merges: in `agent-ed3d490e-run` run `survey/record-gf2-arms-build.py`, `record-intra-quality.py record`, `record-peak-memory.py record`, re-register the records; then dispatch `5d590bac`.
 - [ ] Story `ed3d490e` remaining leaves up to `6230e0b6`; then `1362381c`; then epic completion (Section 10).
