@@ -55,19 +55,20 @@ device yields `HipError::NoDevice`, which that dispatcher reports as
 `DecodeOutcome`s in input order. Its scope is soft-decision whole-frame block
 decoding; hard-decision and streaming decoding have their own entry points.
 
-The implementers are the blanket implementation over every `SoftDecoder`
-([`traits.rs`](../../crates/gf2-coding/src/traits.rs)) and these types:
+By category, the implementers include:
 
-- [`IterativeBatchDecoder`](../../crates/gf2-coding/src/traits.rs), in
-  `gf2_coding::traits`.
-- [`LdpcBatchDecoder`](../../crates/gf2-coding/src/ldpc/batch.rs), in
-  `gf2_coding::ldpc`.
-- [`Nr5gRateMatchedBatchDecoder`](../../crates/gf2-coding/src/ldpc/nr_5g/batch.rs),
-  in `gf2_coding::ldpc::nr_5g`.
-- [`DvbT2ConcatBatchDecoder`](../../crates/gf2-coding/src/ldpc/dvb_t2/concat/batch.rs),
-  in `gf2_coding::ldpc::dvb_t2::concat`.
-- [`PooledBatchDecoder`](../../crates/gf2-coding/src/pooled.rs), in
-  `gf2_coding::pooled`, over an inner implementer per rayon worker.
+- every `SoftDecoder`, through the blanket implementation in
+  `gf2_coding::traits`, and `gf2_coding::traits::IterativeBatchDecoder` over an
+  `IterativeSoftDecoder`;
+- the LDPC batch decoder `gf2_coding::ldpc::LdpcBatchDecoder`, the only
+  implementer with a lane route;
+- decoders that wrap a batch decoder and delegate to it: the rate-matched NR
+  decoder in `gf2_coding::ldpc::nr_5g`, the DVB-T2 concatenation in
+  `gf2_coding::ldpc::dvb_t2::concat`, and `gf2_coding::pooled::PooledBatchDecoder`.
+
+The Implementors section of the rustdoc of the
+[`BatchSoftDecoder`](../../crates/gf2-coding/src/traits.rs) trait lists the
+complete set.
 
 `LdpcBatchDecoder` routes each wave by the algorithm and the decode selectors
 of the coding tuning section
