@@ -39,10 +39,11 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256 as Sha256Hasher};
 use tuning_campaign_support::campaign::{
     execution_with_progress, measurement_environment, AcceptedResult, AcceptedResultsBundle,
-    ArtifactIdentity, CandidateBlock, CanonicalJson, ChildOutcome, ChildResult, DeclaredCounts,
-    EmitOwnerRequest, LaunchUnit, ManifestRequest, OwnerManifest, OwnerOperation, OwnerResponse,
-    Sha256Digest, Task, Token, UnitIdentity, ACCEPTED_RESULTS_SCHEMA, FEATURE_CONTRACT,
-    MANIFEST_SCHEMA, RESULT_SCHEMA, THREAD_CONTRACT, TOOLCHAIN_CONTRACT,
+    ArtifactIdentity, AssemblyRuntime, CandidateBlock, CanonicalJson, ChildOutcome, ChildResult,
+    DeclaredCounts, EmitOwnerRequest, LaunchUnit, ManifestRequest, MeasurementRuntime,
+    OwnerManifest, OwnerOperation, OwnerResponse, Sha256Digest, Task, Token, UnitIdentity,
+    ACCEPTED_RESULTS_SCHEMA, FEATURE_CONTRACT, MANIFEST_SCHEMA, RESULT_SCHEMA, THREAD_CONTRACT,
+    TOOLCHAIN_CONTRACT,
 };
 use tuning_campaign_support::journal::{atomic_write_new, CHECKPOINT_SCHEMA, JOURNAL_SCHEMA};
 use tuning_campaign_support::seed::{
@@ -1397,26 +1398,6 @@ fn emitted_section(stated: &[(Field, usize)]) -> Result<CodingTuning, String> {
         .map_err(|error| format!("emitted coding body is not canonical: {error}"))?;
     CodingTuningCodec::decode_body(body)
         .map_err(|error| format!("emitted coding section is invalid: {error}"))
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct MeasurementRuntime {
-    source_dirty: bool,
-    toolchain: String,
-    cpu_model: String,
-    cpu_features: Vec<String>,
-    os_kernel: String,
-    governor: String,
-    receipt: String,
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct AssemblyRuntime {
-    source_dirty: bool,
-    tool: String,
-    tool_sha256: String,
 }
 
 fn measurement_provenance(request: &EmitOwnerRequest) -> Result<MeasurementProvenance, String> {
