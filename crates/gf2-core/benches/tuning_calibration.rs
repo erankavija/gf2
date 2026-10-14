@@ -9505,8 +9505,8 @@ mod campaign_owner {
     }
 
     use neutral::{
-        CanonicalJson, LaunchUnit, OwnerManifest, OwnerOperation, OwnerResponse, Sha256Digest,
-        Task, Token, UnitIdentity,
+        AssemblyRuntime, CanonicalJson, LaunchUnit, MeasurementRuntime, OwnerManifest,
+        OwnerOperation, OwnerResponse, Sha256Digest, Task, Token, UnitIdentity,
     };
     use tuning_campaign_support::campaign as neutral;
 
@@ -10649,26 +10649,10 @@ mod campaign_owner {
         ))
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-    #[serde(deny_unknown_fields)]
-    struct RuntimeFacts {
-        source_dirty: bool,
-        toolchain: String,
-        cpu_model: String,
-        cpu_features: Vec<String>,
-        os_kernel: String,
-        governor: String,
-        receipt: String,
-    }
-    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-    #[serde(deny_unknown_fields)]
-    struct AssemblyRuntime {
-        source_dirty: bool,
-        tool: String,
-        tool_sha256: String,
-    }
-    fn runtime_facts(provenance: &neutral::ObservedProvenance) -> Result<RuntimeFacts, String> {
-        let facts: RuntimeFacts = provenance.runtime.decode().map_err(err)?;
+    fn runtime_facts(
+        provenance: &neutral::ObservedProvenance,
+    ) -> Result<MeasurementRuntime, String> {
+        let facts: MeasurementRuntime = provenance.runtime.decode().map_err(err)?;
         if [
             &facts.toolchain,
             &facts.cpu_model,
@@ -11496,7 +11480,7 @@ mod campaign_owner {
                     identity: identity.clone(),
                     process: token("core-producer").unwrap(),
                     observed_utc: "2026-09-05T00:00:00Z".to_owned(),
-                    runtime: CanonicalJson::from_serializable(&RuntimeFacts {
+                    runtime: CanonicalJson::from_serializable(&MeasurementRuntime {
                         source_dirty,
                         toolchain: "rustc 1.95.0".to_owned(),
                         cpu_model: "test-cpu".to_owned(),

@@ -605,24 +605,6 @@ fn report_cli(
     verify_report_response(label, &response)?;
     Ok(response)
 }
-#[derive(PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct MeasurementRuntime {
-    source_dirty: bool,
-    toolchain: String,
-    cpu_model: String,
-    cpu_features: Vec<String>,
-    os_kernel: String,
-    governor: String,
-    receipt: String,
-}
-#[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct AssemblyRuntime {
-    source_dirty: bool,
-    tool: String,
-    tool_sha256: String,
-}
 /// The host facts, beside the checkout status the caller observed.
 fn host_runtime(receipt: &str, source_dirty: bool) -> io::Result<MeasurementRuntime> {
     let cpu = fs::read_to_string("/proc/cpuinfo")?;
