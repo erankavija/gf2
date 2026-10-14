@@ -100,26 +100,31 @@ def arm_launch(name, shared, floor):
     return peak, launcher
 
 
-def runner_launches(rows, files, batches):
-    runner, _ = smoke.build_runner()
-    shutil.rmtree(SCRATCH, ignore_errors=True)
-    (SCRATCH / "inputs").mkdir(parents=True)
+def arm_plans(rows, files, batches, group=GROUP, family=FAMILY, label="peak-memory",
+              scratch=SCRATCH):
+    """Per arm and code, the throwaway plan of the arm against a smoke arm and its cell ids.
+
+    The plan holds every cell of the smoke family `family` on the code at the batch `batches`
+    gives the arm; the recorded bundles are extracted afresh under `scratch`.
+    """
+    shutil.rmtree(scratch, ignore_errors=True)
+    (scratch / "inputs").mkdir(parents=True)
     with tarfile.open(smoke.by_digest(smoke.ARCHIVE)) as handle:
-        handle.extractall(SCRATCH / "inputs", filter="data")
-    base = family_batches()
+        handle.extractall(scratch / "inputs", filter="data")
+    base = family_batches(family)
     extra = sorted(set(batches.values()) - set(base.values()))
     derived = [("", None, "single-frame", "lane-avx2"),
                *((f"-b{size}", size, "single-frame", "lane-avx2") for size in extra)]
-    smoke.SCRATCH = SCRATCH
-    plan_path = smoke.throwaway(GROUP, "peak-memory", smoke.FAMILIES[FAMILY][0], derived)
+    smoke.SCRATCH = scratch
+    plan_path = smoke.throwaway(group, label, smoke.FAMILIES[family][0], derived)
     base = json.loads(plan_path.read_text(encoding="utf-8"))
-    launches = {}
+    plans = {}
     for (name, key), row in sorted(rows.items()):
         # The runner refuses a plan arm no cell uses: one plan per arm, against a smoke arm.
         arm = f"{name}-{key}"
         partner = next(f"{partner}-{key}" for partner in PARTNERS if f"{partner}-{key}" != arm)
-        cell = next(cell for cell in base["cells"] if cell["cell_id"].startswith(key + "-")
-                    and cell["case"]["batch_size"] == batches[name, key])
+        cells = [cell for cell in base["cells"] if cell["cell_id"].startswith(key + "-")
+                 and cell["case"]["batch_size"] == batches[name, key]]
         plan = {**base, "arms": {partner: base["arms"][partner], arm: {
             "build": "native",  # the addendum declares native builds
             "description": f"{name} on {key}", "executable": str(executable_of(row)),
@@ -127,12 +132,20 @@ def runner_launches(rows, files, batches):
             "environment": {**row["environment"],
                             QUALITY_ENVIRONMENT: str(smoke.ROOT / files[name, key][0])},
             "rustflags": smoke.RUSTFLAGS, "tuning_profile": None}},
-            "cells": [{**cell, "baseline_arm": arm, "candidate_arm": partner}],
-            "max_cells_per_session": 1}
+            "cells": [{**cell, "baseline_arm": arm, "candidate_arm": partner} for cell in cells],
+            "max_cells_per_session": len(cells)}
         path = plan_path.with_name(f"{arm}.plan.json")
         path.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
+        plans[name, key] = path, arm, [cell["cell_id"] for cell in cells]
+    return plans
+
+
+def runner_launches(rows, files, batches):
+    runner, _ = smoke.build_runner()
+    launches = {}
+    for (name, key), (path, arm, (cell_id,)) in arm_plans(rows, files, batches).items():
         launches[name, key] = json.loads(subprocess.run(
-            [runner, "launch", str(path), cell["cell_id"], arm], check=True,
+            [runner, "launch", str(path), cell_id, arm], check=True,
             capture_output=True, text=True, cwd=smoke.ROOT).stdout)
     return launches
 
@@ -207,8 +220,8 @@ def host():
             "cpus_available": len(os.sched_getaffinity(0))}
 
 
-def family_batches():
-    family = json.loads((smoke.ROOT / smoke.located("file", smoke.FAMILIES[FAMILY][0]))
+def family_batches(family=FAMILY):
+    family = json.loads((smoke.ROOT / smoke.located("file", smoke.FAMILIES[family][0]))
                         .read_text(encoding="utf-8"))
     return {next(key for key in smoke.CODES if cell["cell_id"].startswith(key + "-")):
             cell["workload"]["size"]["timed_batch"] for cell in family["cells"]}
