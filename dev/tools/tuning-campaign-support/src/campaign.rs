@@ -781,6 +781,28 @@ pub struct ObservedProvenance {
     pub observed_utc: String,
     pub runtime: CanonicalJson,
 }
+/// The `runtime` of measurement provenance: the host and toolchain facts the
+/// driver observes, beside the checkout status and the receipt path.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct MeasurementRuntime {
+    pub source_dirty: bool,
+    pub toolchain: String,
+    pub cpu_model: String,
+    pub cpu_features: Vec<String>,
+    pub os_kernel: String,
+    /// JSON object of each CPU's scaling governor.
+    pub governor: String,
+    pub receipt: String,
+}
+/// The `runtime` of assembly provenance: the tool that assembles the receipt.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct AssemblyRuntime {
+    pub source_dirty: bool,
+    pub tool: String,
+    pub tool_sha256: String,
+}
 
 /// Request for an owner to declare its exact work against staged identities.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]

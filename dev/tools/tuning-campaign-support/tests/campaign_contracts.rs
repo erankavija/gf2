@@ -26,6 +26,43 @@ fn opaque_cases_preserve_order_but_reject_noncanonical_and_duplicate_keys() {
     assert!(Token::new("bad/path").is_err());
 }
 
+/// Committed session records, campaign records and receipts carry these bytes.
+#[test]
+fn runtime_records_keep_their_exchanged_bytes() {
+    let measurement = CanonicalJson::from_serializable(&MeasurementRuntime {
+        source_dirty: true,
+        toolchain: "rustc 1.95.0".into(),
+        cpu_model: "AMD Ryzen".into(),
+        cpu_features: vec!["avx2".into(), "sse2".into()],
+        os_kernel: "Linux 6.1".into(),
+        governor: r#"{"cpu0":"performance"}"#.into(),
+        receipt: "receipt.json".into(),
+    })
+    .unwrap();
+    assert_eq!(
+        measurement.as_str(),
+        r#"{"source_dirty":true,"toolchain":"rustc 1.95.0","cpu_model":"AMD Ryzen","cpu_features":["avx2","sse2"],"os_kernel":"Linux 6.1","governor":"{\"cpu0\":\"performance\"}","receipt":"receipt.json"}"#
+    );
+    let assembly = CanonicalJson::from_serializable(&AssemblyRuntime {
+        source_dirty: false,
+        tool: "validator".into(),
+        tool_sha256: "ab".repeat(32),
+    })
+    .unwrap();
+    assert_eq!(
+        assembly.as_str(),
+        r#"{"source_dirty":false,"tool":"validator","tool_sha256":"abababababababababababababababababababababababababababababababab"}"#
+    );
+    assert_eq!(
+        measurement
+            .decode::<MeasurementRuntime>()
+            .unwrap()
+            .cpu_features,
+        ["avx2", "sse2"]
+    );
+    assert!(assembly.decode::<AssemblyRuntime>().is_ok());
+}
+
 #[test]
 fn progress_rejects_probe_wrong_identity_and_out_of_order_events() {
     let timed = identity(Task::Measure { execution: 0 });
