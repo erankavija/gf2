@@ -649,18 +649,24 @@ fn tuple_digest(label: &[u8], values: &[String]) -> String {
     format!("{:x}", hash.finalize())
 }
 
+/// The entries of fixture bank `bank`, row-major: the one stream the
+/// measured matrices and their expected digest are built from.
+fn bank_values(shape_index: usize, dimension: usize, bank: usize) -> Vec<Fp<3>> {
+    let mut rng = Lcg::new(fixture_seed(
+        EXTENT_SEED_ROOT,
+        FIELD_TAG,
+        shape_index as u64,
+        bank_role(MATRIX_ROLE, bank),
+    ));
+    (0..dimension * dimension)
+        .map(|_| Fp::<3>::new(rng.next_u64() % 3))
+        .collect()
+}
+
 fn fixture_banks(shape_index: usize, dimension: usize) -> Vec<FixtureBank> {
     (0..FIXTURE_BANKS)
         .map(|bank| {
-            let mut rng = Lcg::new(fixture_seed(
-                EXTENT_SEED_ROOT,
-                FIELD_TAG,
-                shape_index as u64,
-                bank_role(MATRIX_ROLE, bank),
-            ));
-            let values: Vec<_> = (0..dimension * dimension)
-                .map(|_| Fp::<3>::new(rng.next_u64() % 3))
-                .collect();
+            let values = bank_values(shape_index, dimension, bank);
             let input_sha256 = fixture_input_digest(dimension, bank, &values);
             let matrix = Bipedal3Matrix::from_row_major(&values, dimension, dimension);
             let serial = permanent_bipedal3(&matrix);
@@ -837,16 +843,7 @@ fn run_fresh_child() -> Result<(), String> {
 fn expected_operands_digest(shape_index: usize, dimension: usize) -> String {
     let digests: Vec<_> = (0..FIXTURE_BANKS)
         .map(|bank| {
-            let mut rng = Lcg::new(fixture_seed(
-                EXTENT_SEED_ROOT,
-                FIELD_TAG,
-                shape_index as u64,
-                bank_role(MATRIX_ROLE, bank),
-            ));
-            let values: Vec<_> = (0..dimension * dimension)
-                .map(|_| Fp::<3>::new(rng.next_u64() % 3))
-                .collect();
-            fixture_input_digest(dimension, bank, &values)
+            fixture_input_digest(dimension, bank, &bank_values(shape_index, dimension, bank))
         })
         .collect();
     tuple_digest(b"gf2-a83583e0-operands-v1", &digests)
@@ -2017,14 +2014,31 @@ mod tests {
         assert_eq!(list_grid().unwrap().rng, None);
     }
 
-    /// Pins the fixture banks of every declared dimension: the seeds and the
+    /// Pins the matrices [`fixture_banks`] hands the measurement, read back
+    /// entry by entry, for every declared dimension: the seeds and the
     /// generator's stream decide these bytes.
     #[test]
     fn fixtures_keep_their_digest_for_their_seeds() {
         let digests: Vec<_> = DIMENSIONS
             .iter()
             .enumerate()
-            .map(|(shape_index, dimension)| expected_operands_digest(shape_index, *dimension))
+            .map(|(shape_index, dimension)| {
+                let banks: Vec<_> = fixture_banks(shape_index, *dimension)
+                    .iter()
+                    .enumerate()
+                    .map(|(bank, fixture)| {
+                        let measured = fixture.matrix.to_row_major();
+                        assert_eq!(
+                            fixture_input_digest(*dimension, bank, &measured),
+                            fixture.input_sha256
+                        );
+                        fixture.input_sha256.clone()
+                    })
+                    .collect();
+                let operands = tuple_digest(b"gf2-a83583e0-operands-v1", &banks);
+                assert_eq!(operands, expected_operands_digest(shape_index, *dimension));
+                operands
+            })
             .collect();
         assert_eq!(
             tuple_digest(b"fixtures", &digests),
