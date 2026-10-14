@@ -30,7 +30,7 @@
 - [ ] Run `./scripts/cargo-ci.sh` yourself on a quiet host in each worktree, then merge and gate (cargo-ci, code-review):
   - `9eb6f13c` rework 1, tip `3ab3ebf82`: the algebra pin test digests `fixture_banks` through the shared `bank_values`; pinned digest unchanged. The worker's two cargo-ci runs failed only on per-test TIMEOUTs under host load 20 to 40.
   - `ec4e71ca`, tip `827f36387`, done: the counter was process-wide and caught libtest's main thread (reproduced 171/200 with an `LD_PRELOAD` delayed-spawn shim, scratchpad `ec4e/delay.c`); now thread-local in `crates/gf2-coding/tests/support/thread_allocations.rs`; 200/200 alone and beside package runs. Not CI-run.
-  - `d11a45d4`: report not received at handoff; read the branch tip. Rulings sent to the worker: restore `logical-buffer-addendum.md` to the receipt-pinned bytes (290685bf) with its two links baselined in `contrib/gates/docs-mechanical-baseline.md`, correct the two citations of 817f1028, commit the regenerated `mid-range-tables.md` (REQ-01 amended).
+  - `d11a45d4`: invoker ruling (corrected, 2026-10-14): the live `logical-buffer-addendum.md` keeps Amendments 2 and 3 (invoker rulings of 2026-09-27 on `65c0e13d`) and its repointed links; the harness constant at `cells.rs:17` takes the live digest 817f1028; receipts keep their snapshots of 290685bf. The worker's tip `c1d2fdda0` restored the old bytes instead and was told to drop that commit and repin; verify the final tip carries the amendments, no restore commit in its history and no new baseline rows for the addendum. REQ-01 amended: `mid-range-tables.md` is the generator's output.
 - [ ] `69dd39f1` (gf2-core allocation witnesses per test thread), after `ec4e71ca`: the same race exposes `gf256_gemm_allocation` and `gf256_axpy_allocation`.
 - [ ] Host load: a worker's leaked busy loops held load near 127 from 00:47 to 00:59 EEST on 2026-10-14; read nothing timed from that interval.
 - [ ] `17e08faa` (runtime records defined once), then `d93a1c7e` (resume on unchanged executables); both change `tuning-campaign-support`; serialize.
@@ -66,3 +66,4 @@ None.
 - Rulings: `progress.json` `escalations` (session 37 entries, including the interview of 2026-10-14)
 - Campaign archives: `dev/bench_results/63bad95d/*-evidence-archive.tar.zst`, `dev/bench_results/0a77ecfc/*-evidence-archive.tar.zst`
 - Window: `bench-window/run-window.sh`, `bench-window/queue.tsv`; state `.agents/bench-window/`
+- **Do NOT describe a frozen-file restore by its last commit alone.** The lead told the invoker the logical addendum differed from its pin by two link repoints; it also held Amendments 2 and 3, added after the pin. Diff the pinned bytes against the live file in full before offering a restore.

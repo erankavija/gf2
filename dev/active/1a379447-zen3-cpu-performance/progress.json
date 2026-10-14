@@ -2306,6 +2306,13 @@
    "question": "Interview on open decisions of session 37.",
    "answer": "RNG statement beside the owner (9eb6f13c option B). selector_non_regression: holding arm executables fixed is the caller's part, no digest guard. PRODUCTION_PREFERENCE accepted as structural. a83583e0 full-stage refusal recorded and left. Resume scope of the driver filed in the epic (d93a1c7e, after 17e08faa). Survey tool failures and the bfc2ceab prototype repair fixed in the epic (d11a45d4); flaky BCH allocation test fixed in the epic (ec4e71ca). The 72-character subject of 0b45ec4ef: nothing further.",
    "status": "resolved"
+  },
+  {
+   "issue": "d11a45d4",
+   "date": "2026-10-14",
+   "question": "The receipt-pinned bytes of logical-buffer-addendum.md predate Amendments 2 and 3 (invoker rulings on 65c0e13d); the first ruling (restore the pinned bytes) would remove them. What now?",
+   "answer": "Keep the amendments and repointed links in the live addendum; the harness constant takes the live digest; receipts keep their snapshots.",
+   "status": "resolved"
   }
  ],
  "rework_counts": {
