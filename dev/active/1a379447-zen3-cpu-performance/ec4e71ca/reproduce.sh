@@ -29,11 +29,11 @@ nextest=(cargo nextest run -p "$package" --cargo-profile ci-test --profile ci)
 "$budget" "${nextest[@]}" --test "$binary" --no-run >/dev/null 2>&1
 
 summary() {
-  # nextest prints one PASS line per passing run; failures repeat in its summary.
-  local label=$1 log=$2 passed
-  passed=$(grep -c '^ *PASS \[' "$log" || true)
-  printf '%s %s: %d of %d runs failed\n' "$binary" "$label" \
-    "$((runs - passed))" "$runs"
+  # nextest closes each stress iteration with one "Stress test" line that
+  # names the failed tests of that iteration, if any.
+  local label=$1 log=$2 failed
+  failed=$(grep -c '^ *Stress test \[.*[0-9] failed' "$log" || true)
+  printf '%s %s: %d of %d runs failed\n' "$binary" "$label" "$failed" "$runs"
 }
 
 for delay in "${delays[@]}"; do
