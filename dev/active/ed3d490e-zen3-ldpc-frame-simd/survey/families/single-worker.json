@@ -33,6 +33,11 @@
     "pilot_pairs": 12,
     "max_cells_per_session": 1
   },
+  "confirmation": {
+    "id": "d0d2c1bd-ldpc-batch-single-worker-confirmation",
+    "seed": 106895025,
+    "max_cells_per_session": 1
+  },
   "codes": {
     "dvb-t2-r12": {
       "code_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
