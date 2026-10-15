@@ -3,7 +3,7 @@
   "declaration": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/aff3ct-fastest.json",
   "ledger": {
     "path": "dev/bench_results/ed3d490e/aff3ct-fastest/ledger.jsonl",
-    "reservations": 0,
+    "reservations": 1,
     "spending_reservations": 0,
     "prior_comparisons": 0
   },

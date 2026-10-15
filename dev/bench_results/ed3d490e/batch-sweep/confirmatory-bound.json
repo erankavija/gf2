@@ -3,7 +3,7 @@
   "declaration": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/batch-sweep.json",
   "ledger": {
     "path": "dev/bench_results/ed3d490e/batch-sweep/ledger.jsonl",
-    "reservations": 0,
+    "reservations": 1,
     "spending_reservations": 0,
     "prior_comparisons": 0
   },
