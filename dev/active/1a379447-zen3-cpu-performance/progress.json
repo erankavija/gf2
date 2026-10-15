@@ -2987,6 +2987,11 @@
    "origin": "issue-impact",
    "disposition": "advisory; trim after the campaign's evidence is collected, with one rehearsal rerun (20af7e6e collects)",
    "criterion_named_by": "none"
+  },
+  {
+   "issue": "3f3efdcf",
+   "date": "2026-10-15",
+   "finding": "code-review advisory: shorten the module orientation of 3be770d5/survey/harness/src/profile.rs (non-obvious-comments); left unchanged because the file is included into pinned profiling executables."
   }
  ],
  "notes": [
@@ -3259,9 +3264,9 @@
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
   "active_workers": {
-   "3f3efdcf": "agent-ed3d490e-run (record regeneration)",
-   "2a69b276": "agent-2a69b276 (generator path fix)",
-   "dbea4e10": "agent-dbea4e10 (rework 1)"
+   "c103a288": "agent-ed3d490e-run",
+   "2a3b479d": "agent-2a3b479d",
+   "859bc8cb": "agent-859bc8cb"
   },
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
@@ -3271,7 +3276,7 @@
   "session_37": "Done: cba35553, 4252085a. 5d590bac held by the lead until 63bad95d merges and the gf2 arms build record is regenerated (its validation record names arms by build-identity digest). Window 2026-10-13 04:00 holds five jobs.",
   "session_37_end": "Session 37 ended 2026-10-14 with handoff-33.md. In progress: 9eb6f13c rework 1 (agent-9eb6f13c), d11a45d4 (agent-d11a45d4, invoker rulings: restore the logical addendum to the pinned bytes; REQ-01 amended), ec4e71ca (agent-ec4e71ca). Next: 17e08faa, d93a1c7e, arms build record, 5d590bac.",
   "standing_rule_2026_10_14": "Invoker, 2026-10-14: take the lightest approach in terms of protocols and follow the project invariants. Applies to every lead and worker decision; offer the invoker the lightest compliant option as the recommendation.",
-  "session_38": "Done: 9eb6f13c, ec4e71ca, d11a45d4, 17e08faa, 4976531f, 69dd39f1, d93a1c7e, 5afa8d76, 5d590bac (two reworks), a4476c6a (lead docstring trim). Dispatched 3f3efdcf (opus, agent-ed3d490e-run), 4d8fd613 and dbea4e10 (opus, own worktrees).",
+  "session_38": "Done: 9eb6f13c, ec4e71ca, d11a45d4, 17e08faa, 4976531f, 69dd39f1, d93a1c7e, 5afa8d76, 5d590bac, a4476c6a, 4d8fd613, dbea4e10 (rework 1), 3f3efdcf, 2a69b276. Dispatched c103a288 (opus, agent-ed3d490e-run), 2a3b479d (opus), 859bc8cb (sonnet). Next: the six family freezes after c103a288 merges (build record changes).",
   "notes_for_2a3b479d": "3f3efdcf: profile-session.sh calls ${BIN}/ldpc-profile; the recorder refuses a workspace binary of that pinned name, so the 2a3b479d launcher gives a BIN directory where ldpc-profile links to ldpc-batch-profile."
  }
 }
