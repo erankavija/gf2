@@ -4,8 +4,8 @@
 Each setting comes from the declaration, the protocol's frozen shared settings table, the
 recorded input bundles or the arms' build identity record; the generator holds none. A cell is
 the declaration's `cell` overlaid with its own entry; a family's declaration is
-`families/<family>.json` beside this script. The plan names absolute host paths, including the
-bundles extracted beside it; one declaration and one output directory give the same bytes.
+`families/<family>.json` beside this script. The plan names its addendum relative to the repository root when
+it lies inside it, and the bundles extracted beside it by absolute host path; one declaration and one output directory give the same bytes.
 
 Usage (from the worktree root): make-family.py DECLARATION OUT_DIR
 """
@@ -224,6 +224,14 @@ def plan(declaration, cells, manifests, catalogue, build, addendum_path):
     }
 
 
+def repository_path(path):
+    """`path` relative to the repository root, the form the runner pins; absolute outside it."""
+    try:
+        return path.relative_to(smoke.ROOT)
+    except ValueError:
+        return path
+
+
 def write(path, document):
     partial = path.with_name(f".{path.name}.partial")
     partial.write_text(json.dumps(document, indent="  ") + "\n", encoding="utf-8")
@@ -242,7 +250,7 @@ def generate(declaration_path, out_dir):
                         shared_settings(addendum_schema))
     write(out_dir / ADDENDUM, document)
     write(out_dir / PLAN, plan(declaration, cells, manifests, catalogue, build,
-                               out_dir / ADDENDUM))
+                               repository_path(out_dir / ADDENDUM)))
 
 
 def main():

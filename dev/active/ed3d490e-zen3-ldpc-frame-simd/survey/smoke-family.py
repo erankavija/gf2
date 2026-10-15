@@ -40,17 +40,6 @@ def timed(record):
             for entry in cell["arms"] if entry["windows"] != 0]
 
 
-def project(declaration, scratch):
-    """Projects `declaration` into `scratch`, whose plan names its addendum relative to the
-    repository root as the runner's input pin requires."""
-    generator.generate(declaration, scratch)
-    path = scratch / generator.PLAN
-    plan = json.loads(path.read_text(encoding="utf-8"))
-    plan["addendum"] = str(pathlib.Path(plan["addendum"]).relative_to(smoke.ROOT))
-    generator.write(path, plan)
-    return path
-
-
 def smoke_plan(plan, scratch, record):
     """Checks and smokes `plan` under `scratch`, returning the runner's smoke record."""
     runner, environment = smoke.build_runner()
@@ -70,7 +59,8 @@ def smoke_family(declaration, out):
     # A removal the last run left unfinished; its record was written.
     shutil.rmtree(scratch.with_name(scratch.name + ".removed"), ignore_errors=True)
     scratch.mkdir(parents=True, exist_ok=True)
-    observed = smoke_plan(project(declaration, scratch), scratch, scratch / "smoke.json")
+    generator.generate(declaration, scratch)
+    observed = smoke_plan(scratch / generator.PLAN, scratch, scratch / "smoke.json")
     out = pathlib.Path(out).resolve()
     validation.write_record(out.parent, [{"family": family, "smoke": observed}], out.name)
     validation.remove_stages(scratch)

@@ -49,7 +49,8 @@ class SmokeFamilyTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, SCRATCH / "family", ignore_errors=True)
 
     def project(self):
-        plan = runner.project(SAMPLE, self.directory)
+        generator.generate(SAMPLE, self.directory)
+        plan = self.directory / generator.PLAN
         fake_arms(plan, workload())
         return plan
 
