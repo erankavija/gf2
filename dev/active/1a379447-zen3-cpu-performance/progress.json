@@ -3008,6 +3008,11 @@
    "issue": "3f3efdcf",
    "date": "2026-10-15",
    "finding": "code-review advisory: shorten the module orientation of 3be770d5/survey/harness/src/profile.rs (non-obvious-comments); left unchanged because the file is included into pinned profiling executables."
+  },
+  {
+   "issue": "c103a288",
+   "date": "2026-10-15",
+   "finding": "research-review advisory F1: peak-memory.json:3315 build citation names a historical build-record digest without locating that version (claims-trace-to-artifacts); measurement identities valid."
   }
  ],
  "notes": [
@@ -3280,8 +3285,7 @@
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
   "active_workers": {
-   "c103a288": "agent-ed3d490e-run",
-   "2a3b479d": "agent-2a3b479d"
+   "freezes": "agent-ed3d490e-run (a91e7cef, a7ae2623, 9bcc7e73, 493dba5a, caabc4e1, 37aa7254)"
   },
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
