@@ -1,0 +1,455 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "ldpc-batch-multicore-v1",
+    "issue": "a7ae2623",
+    "purpose": "decoder-family",
+    "description": "Exploratory pilot of the before-after question of the lane route at several worker counts. The baseline arm is the gf2-coding LDPC batch decoder on the single-frame route under the conservative decode selectors, the production decoder before the change; the candidate arm is the same decoder on the lane route with the AVX2 lane backend, under selectors that open the lane route to every wave size and edge count. Both arms are native builds of the story's arms workspace, launched by the executable digests of dev/bench_results/ed3d490e/preparation/build-identity.json. The measured operation is the steady-state decode of 3be770d5: every worker is a thread pinned to one resolved CPU and owns one decoder built before timing, and a timed call makes every worker decode the cell's per-worker batch, workload.size.timed_batch, of the first recorded frames, including LLR conversion, lane transposition in and out, dispatch to the workers and extraction of the information-window decisions, in fixed waves of eight lanes with per-frame termination. Per-worker work is identical, so a call measures saturation without a load-imbalance tail. Per code, the cells are sustained-throughput cells at six physical cores, twelve physical cores and twenty-four logical CPUs, one full wave per worker and call. Each cell names its core arm only: the runner resolves the CPU identities at run time through the protocol resolver, host::resolve_core_arm, inside the observed affinity mask and topology, and every arm child reports the affinity it observed. Both arms decode f32 flooding normalized min-sum at the declared factor, iteration cap and syndrome stopping, and every timed execution checks each worker's per-frame bit errors against the prepared c077a88b quality record of the single-frame decode, which each lane frame equals bit for bit; decoder.batching.batch_size is that record's single-frame decode, the setting P-19 compares with each arm's report. No nested pool is declared. The family declares the largest confirmatory cell count its first ledger attempt admits, as dev/bench_results/ed3d490e/multicore/confirmatory-bound.json derives. This pilot observes the measurement resolution that the family's confirmation freezes; it decides nothing."
+  },
+  "frozen": {
+    "frozen_utc": "2026-10-15T03:37:35Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "A pilot observes the resolution that later fixes this family's margins.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "A pilot decides nothing, so it declares no equivalence margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The family has no comparator-gap cell."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 2,
+    "max_added_source_lines": 2400,
+    "maintenance_rationale": "The change is the lane route: the lane kernel bundle of gf2-kernels-simd (ldpc_lanes.rs), its AVX2 check and variable steps (x86/ldpc_lanes.rs), which are the two unsafe kernels, the LDPC batch decoder (ldpc/batch.rs) and its route decision (ldpc/route.rs) of gf2-coding. The source budget is the line count of those four files at freeze, 2318 (derived: wc -l), rounded up to the next hundred."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/ed3d490e/multicore/ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 2,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-lane-p6-b8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 6,
+          "timed_frames": 48,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 6,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "recorded-inputs.tar.gz (SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba) bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-lane-p12-b8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 12,
+          "timed_frames": 96,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "recorded-inputs.tar.gz (SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba) bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-lane-l24-b8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 24,
+          "timed_frames": 192,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "logical-cpus-24",
+      "workers": {
+        "declared": 24,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "recorded-inputs.tar.gz (SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba) bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-lane-p6-b8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 6,
+          "timed_frames": 48,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 6,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "recorded-inputs.tar.gz (SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba) bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-lane-p12-b8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 12,
+          "timed_frames": 96,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "recorded-inputs.tar.gz (SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba) bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-lane-l24-b8",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 24,
+          "timed_frames": 192,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "logical-cpus-24",
+      "workers": {
+        "declared": 24,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "recorded-inputs.tar.gz (SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba) bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        },
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null
+      }
+    }
+  ]
+}
