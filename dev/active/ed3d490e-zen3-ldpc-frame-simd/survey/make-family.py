@@ -3,7 +3,8 @@
 
 Each setting comes from the declaration, the protocol's frozen shared settings table, the
 recorded input bundles or the arms' build identity record; the generator holds none. A cell is
-the declaration's `cell` overlaid with its own entry; a family's declaration is
+the declaration's `cell` overlaid with its own entry, and its `case` overrides the runner case
+its decoder block derives, where the arms' shared case differs from that block; a family's declaration is
 `families/<family>.json` beside this script. The plan names its addendum relative to the repository root when
 it lies inside it, and the bundles extracted beside it by absolute host path; one declaration and one output directory give the same bytes.
 
@@ -207,6 +208,7 @@ def plan(declaration, cells, manifests, catalogue, build, addendum_path):
                 "syndrome_stopping": decoder["stopping"]["kind"] == "syndrome",
                 "batch_size": declared["timed_batch"],
                 "quality_frames": manifests[key]["manifest"]["frames"],
+                **declared.get("case", {}),
             },
             "pilot_pairs": declaration["campaign"]["pilot_pairs"],
         })
