@@ -4,40 +4,24 @@
   "ledger": {
     "path": "dev/bench_results/ed3d490e/batch-sweep/ledger.jsonl",
     "reservations": 0,
-    "spending_reservations": 0
+    "spending_reservations": 0,
+    "prior_comparisons": 0
   },
   "read": {
     "family_alpha": {
       "value": 0.05,
-      "source": "dev/active/1a379447-zen3-cpu-performance/f547c394/protocol.md, Frozen shared settings"
+      "source": "protocol::SHARED_SETTINGS"
     },
     "bootstrap_resamples": {
       "value": 10000,
-      "source": "dev/active/1a379447-zen3-cpu-performance/f547c394/protocol.md, Frozen shared settings"
+      "source": "protocol::SHARED_SETTINGS"
     },
     "tail_draws": {
       "value": 20.0,
-      "source": "dev/tools/tuning-campaign-support/src/receipt.rs"
+      "source": "receipt::MIN_TAIL_DRAWS"
     }
   },
-  "cited": [
-    {
-      "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
-      "verbatim": "let attempts = entries.iter().filter(|e| e.comparisons > 0).count().max(1) as f64;"
-    },
-    {
-      "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
-      "verbatim": "Ok(family.family_wise.alpha / (attempts * (attempts + 1.0)))"
-    },
-    {
-      "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
-      "verbatim": "corrected_alpha: attempt_alpha / f64::from(comparisons),"
-    },
-    {
-      "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
-      "verbatim": "|| f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;"
-    }
-  ],
+  "computed_by": "benchmark-acceptance --next-attempt, trial_ledger::next_attempt",
   "attempt": {
     "value": 1,
     "kind": "derived",
@@ -51,7 +35,7 @@
   "max_confirmatory_cells": {
     "value": 6,
     "kind": "derived",
-    "formula": "largest m with bootstrap_resamples * (attempt_alpha / m) / 2 >= tail_draws"
+    "formula": "largest m with bootstrap_resamples * (attempt_alpha / (prior_comparisons + m)) / 2 >= tail_draws"
   },
   "declared_cells": {
     "value": 6,

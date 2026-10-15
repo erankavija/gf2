@@ -38,7 +38,8 @@ class BoundTest(unittest.TestCase):
 
     def admits(self, document, m):
         read = document["read"]
-        corrected = document["attempt_alpha"]["value"] / m
+        comparisons = document["ledger"]["prior_comparisons"] + m
+        corrected = document["attempt_alpha"]["value"] / comparisons
         return read["bootstrap_resamples"]["value"] * corrected / 2 >= read["tail_draws"]["value"]
 
     def test_the_bound_is_the_largest_count_with_tail_support(self):
@@ -49,20 +50,31 @@ class BoundTest(unittest.TestCase):
         self.assertFalse(self.admits(document, bound + 1))
         self.assertEqual(document["attempt"]["value"], 1)
 
-    def test_a_spending_reservation_moves_the_next_attempt(self):
+    def test_a_spent_attempt_moves_the_next_attempt(self):
         first = self.record(self.declaration)
-        self.ledger.write_text(json.dumps({"comparisons": 1}) + "\n" +
-                               json.dumps({"comparisons": 0}) + "\n", encoding="utf-8")
-        second = self.record(self.declaration)
+        spent = {"sequence": 0, "predecessor": "0" * 64,
+                 "family": self.declaration["family"]["id"], "campaign": "spent-attempt",
+                 "addendum_sha256": "a" * 64, "comparisons": 1, "protocol_version": 4,
+                 "candidates": ["b" * 64]}
+        self.ledger.write_text(json.dumps(spent) + "\n", encoding="utf-8")
+        second = self.record(dict(self.declaration, cells=[]))
         self.assertEqual(second["attempt"]["value"], first["attempt"]["value"] + 1)
+        self.assertEqual(second["ledger"]["prior_comparisons"], spent["comparisons"])
         self.assertLess(second["attempt_alpha"]["value"], first["attempt_alpha"]["value"])
-        self.assertLessEqual(second["max_confirmatory_cells"]["value"],
-                             first["max_confirmatory_cells"]["value"])
+        bound = second["max_confirmatory_cells"]["value"]
+        self.assertTrue(bound == 0 or self.admits(second, bound))
+        self.assertFalse(self.admits(second, bound + 1))
 
-    def test_every_cited_line_is_in_its_source(self):
-        document = self.record(self.declaration)
-        for cited in document["cited"]:
-            self.assertIn(cited["verbatim"], (ROOT / cited["path"]).read_text(encoding="utf-8"))
+    def test_committed_bounds_regenerate_byte_identically(self):
+        for declaration in sorted((SURVEY / "families").glob("*.json")):
+            ledger = json.loads(declaration.read_text(encoding="utf-8"))["family_wise"]["ledger_path"]
+            committed = (ROOT / ledger).with_name("confirmatory-bound.json")
+            if not committed.exists():
+                continue
+            with self.subTest(declaration.name):
+                out = SCRATCH / f"{declaration.stem}.json"
+                recorder.record(declaration, out)
+                self.assertEqual(out.read_bytes(), committed.read_bytes())
 
     def test_a_declaration_beyond_the_bound_is_refused(self):
         bound = self.record(self.declaration)["max_confirmatory_cells"]["value"]

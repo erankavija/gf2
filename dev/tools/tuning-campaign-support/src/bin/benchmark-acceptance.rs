@@ -5,16 +5,20 @@
 //! accepted, 1 when it is rejected, and 2 on a usage or I/O error.
 //! `benchmark-acceptance --bootstrap` reads an `abtest::BootstrapRequest` from
 //! standard input and prints its intervals, so a sizing script takes the
-//! evaluator's bootstrap of the pairs it names.
+//! evaluator's bootstrap of the pairs it names. `benchmark-acceptance
+//! --next-attempt <ledger.jsonl> <family-id>` prints the next confirmatory
+//! attempt that family ledger admits at the frozen shared settings.
 
 use std::env;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
 use tuning_campaign_support::abtest::BootstrapRequest;
+use tuning_campaign_support::protocol::SHARED_SETTINGS;
 use tuning_campaign_support::receipt::{
-    evaluate, render_markdown, Verdict, SUMMARY_JSON_FILE, SUMMARY_MARKDOWN_FILE,
+    evaluate, render_markdown, Verdict, MIN_TAIL_DRAWS, SUMMARY_JSON_FILE, SUMMARY_MARKDOWN_FILE,
 };
+use tuning_campaign_support::trial_ledger;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,6 +27,12 @@ fn main() {
             usage();
         }
         bootstrap();
+    }
+    if args.get(1).map(String::as_str) == Some("--next-attempt") {
+        match args.as_slice() {
+            [_, _, ledger, family] => next_attempt(ledger, family),
+            _ => usage(),
+        }
     }
     let mut receipt_dir: Option<PathBuf> = None;
     for arg in args.iter().skip(1) {
@@ -89,7 +99,35 @@ fn bootstrap() -> ! {
     }
 }
 
+fn next_attempt(ledger: &str, family: &str) -> ! {
+    let printed = fs::read(ledger)
+        .and_then(|bytes| trial_ledger::next_attempt(&bytes, family, &SHARED_SETTINGS))
+        .map_err(|error| error.to_string())
+        .and_then(|next| {
+            serde_json::to_string_pretty(&serde_json::json!({
+                "next_attempt": next,
+                "family_alpha": SHARED_SETTINGS.family_alpha,
+                "bootstrap_resamples": SHARED_SETTINGS.bootstrap_resamples,
+                "min_tail_draws": MIN_TAIL_DRAWS,
+            }))
+            .map_err(|error| error.to_string())
+        });
+    match printed {
+        Ok(json) => {
+            println!("{json}");
+            std::process::exit(0);
+        }
+        Err(error) => {
+            eprintln!("benchmark-acceptance: {error}");
+            std::process::exit(2);
+        }
+    }
+}
+
 fn usage() -> ! {
-    eprintln!("usage: benchmark-acceptance <receipt-dir> | --bootstrap < request.json");
+    eprintln!(
+        "usage: benchmark-acceptance <receipt-dir> | --bootstrap < request.json | \
+         --next-attempt <ledger.jsonl> <family-id>"
+    );
     std::process::exit(2);
 }
