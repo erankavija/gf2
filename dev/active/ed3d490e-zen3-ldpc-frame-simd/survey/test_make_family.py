@@ -98,6 +98,18 @@ class GeneratorTest(unittest.TestCase):
             self.assertEqual(case["batch_size"], merged["timed_batch"])
             self.assertEqual(cell["decoder"]["batching"], merged["decoder"]["batching"])
 
+    def test_a_declared_case_overrides_the_derived_case_only(self):
+        changed = copy.deepcopy(self.declaration)
+        derived = self.declaration["cell"]["decoder"]["normalization"]["factor"]
+        changed["cells"][0]["case"] = {"normalization_factor": derived + 1}
+        before, before_plan = self.generate(name="before")
+        after, after_plan = self.generate(changed, name="after")
+        self.assertEqual(after_plan["cells"][0]["case"]["normalization_factor"], derived + 1)
+        unchanged = [{key: value for key, value in cell["case"].items() if key != "bundle"}
+                     for cell in (before_plan["cells"][1], after_plan["cells"][1])]
+        self.assertEqual(*unchanged)
+        self.assertEqual(after["cells"], before["cells"])
+
     def test_shared_settings_come_from_the_protocol(self):
         settings = generator.shared_settings(generator.schema())
         addendum, _ = self.generate()
