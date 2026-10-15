@@ -41,19 +41,21 @@ def staged_smoke(runner, environment, plan, stage, record):
         sys.exit(f"{plan}: the staged smoke exited {status}")
 
 
-def write_record(out_dir, rows):
+def write_record(out_dir, rows, name=RECORD):
     """Writes the record beside itself and renames it into place."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    partial = out_dir / f".{RECORD}.partial"
+    partial = out_dir / f".{name}.partial"
     partial.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
                        encoding="utf-8")
-    partial.replace(out_dir / RECORD)
+    partial.replace(out_dir / name)
 
 
-def remove_stages():
+def remove_stages(scratch=None):
     """Removes the stages as a whole, so an interrupted removal leaves none half-removed."""
-    SCRATCH.rename(REMOVED)
-    shutil.rmtree(REMOVED)
+    scratch = scratch or SCRATCH
+    removed = REMOVED if scratch == SCRATCH else scratch.with_name(scratch.name + ".removed")
+    scratch.rename(removed)
+    shutil.rmtree(removed)
 
 
 def lines(build_path, family, plans, qualities, runner, environment):
