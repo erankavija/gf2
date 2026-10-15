@@ -2422,7 +2422,8 @@
   "dbea4e10": 1,
   "2a3b479d": 2,
   "2a69b276": 1,
-  "a4476c6a": 1
+  "a4476c6a": 1,
+  "f434ddd3": 1
  },
  "surfaced_pitfalls": [
   {
@@ -3013,6 +3014,11 @@
    "issue": "c103a288",
    "date": "2026-10-15",
    "finding": "research-review advisory F1: peak-memory.json:3315 build citation names a historical build-record digest without locating that version (claims-trace-to-artifacts); measurement identities valid."
+  },
+  {
+   "issue": "f434ddd3",
+   "date": "2026-10-15",
+   "finding": "research-review advisory F2: profile-dry-session.md:4 says the outputs carry no timing figure, but the driver json keeps timing fields; wording only."
   }
  ],
  "notes": [
