@@ -91,12 +91,16 @@ COPY_SYMBOLS = ("memcpy", "memmove", "memset")
 # outward, each the call site of the level inside it; the first location a
 # rule covers names the category, and locations no rule covers (library
 # iterators, bit-vector helpers) pass the decision outward. The spans are the
-# functions of the sources the producing manifest pins: gf2-coding and
-# gf2-core at this worktree's revision, AFF3CT at the recorded commit.
+# functions of the sources the producing manifest pins: gf2-coding, gf2-core
+# and gf2-kernels-simd at this worktree's revision, AFF3CT at the recorded
+# commit.
 CORE = "crates/gf2-coding/src/ldpc/core.rs"
 LLR = "crates/gf2-coding/src/llr.rs"
 SIMD_LLR = "crates/gf2-kernels-simd/src/llr.rs"
 SPARSE = "crates/gf2-core/src/sparse.rs"
+LANE_PORTABLE = "crates/gf2-kernels-simd/src/ldpc_lanes.rs"
+LANE_AVX2 = "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs"
+BATCH = "crates/gf2-coding/src/ldpc/batch.rs"
 FLOODING = "Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx"
 LOCATION_RULES = [
     ("allocator", "/library/alloc/src/alloc.rs", 0, 10**9),
@@ -118,6 +122,16 @@ LOCATION_RULES = [
     ("min-sum-reduction", LLR, 491, 494),
     ("min-sum-dispatch", SIMD_LLR, 89, 91),
     ("min-sum-reduction", SIMD_LLR, 119, 181),
+    ("lane-check-step", LANE_PORTABLE, 246, 316),
+    ("lane-check-step", LANE_AVX2, 29, 45),
+    ("lane-check-step", LANE_AVX2, 123, 163),
+    ("lane-check-step", LANE_AVX2, 170, 203),
+    ("lane-variable-step", LANE_PORTABLE, 324, 375),
+    ("lane-variable-step", LANE_AVX2, 49, 88),
+    ("lane-variable-step", LANE_AVX2, 218, 266),
+    ("lane-transpose-in", BATCH, 376, 385),
+    ("lane-transpose-out", BATCH, 430, 456),
+    ("lane-syndrome", BATCH, 462, 473),
     ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/gf2.rs", 0, 10**9),
     ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9),
     ("dispatch", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/pool.rs", 0, 10**9),
@@ -581,6 +595,18 @@ SHAPES = [
      ("7", "[unknown]", None, "[unknown]", None)),
 ]
 
+# One inline-chain sample per lane category, on the line of its kernel's body;
+# the library frame ahead of it passes the decision outward.
+LANE_SAMPLES = [
+    ("lane-check-step", LANE_PORTABLE, 300),
+    ("lane-check-step", LANE_AVX2, 150),
+    ("lane-variable-step", LANE_PORTABLE, 350),
+    ("lane-variable-step", LANE_AVX2, 240),
+    ("lane-transpose-in", BATCH, 380),
+    ("lane-transpose-out", BATCH, 440),
+    ("lane-syndrome", BATCH, 468),
+]
+
 
 def write_case(root, label, listing, recorded):
     """A one-session profile directory carrying one record case."""
@@ -602,6 +628,10 @@ def self_test():
         groups = groups.groups() if groups else None
         if groups != expected:
             sys.exit(f"self-test: {line!r} parsed as {groups}, expected {expected}")
+    for category, path, line in LANE_SAMPLES:
+        got = categorize([("core::iter::next", "/library/core/src/iter/mod.rs", 1), ("f", path, line)])
+        if got != category:
+            sys.exit(f"self-test: {path}:{line} categorized as {got}, expected {category}")
     listing = [line for line, _ in SHAPES]
     label = "gf2-dvb-w1"
     with tempfile.TemporaryDirectory() as directory:
