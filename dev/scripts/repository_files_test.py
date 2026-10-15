@@ -112,6 +112,15 @@ class LiveFile(Fixture):
         self.write(f"r/{SNAPSHOT_DIRECTORY}/x/tool.sh", b"copy\n")
         self.assertEqual(live_file(self.root, "tool.sh"), "x/tool.sh")
 
+    def test_path_suffix_selects_one_of_several_files_of_a_name(self):
+        self.write("x/a/record.json", b"")
+        self.write("y/b/record.json", b"")
+        self.write(f"r/{SNAPSHOT_DIRECTORY}/x/a/record.json", b"")
+        self.assertEqual(live_file(self.root, "a/record.json"), "x/a/record.json")
+        for suffix in ("record.json", "c/record.json", "x/a"):
+            with self.assertRaises(LookupError):
+                live_file(self.root, suffix)
+
     def test_absent_and_repeated_names_are_rejected(self):
         self.write("x/twice.sh", b"")
         self.write("y/twice.sh", b"")

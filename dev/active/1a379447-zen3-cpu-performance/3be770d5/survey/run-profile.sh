@@ -1,17 +1,9 @@
 #!/usr/bin/env bash
-# Repeated profile series of the steady-state LDPC arms (jit:3be770d5).
-#
-# Runs profile-session.sh `REPETITIONS` times, each session inside its own
-# `ccx1-bench-flock.sh --full-host` invocation, because the cases
-# include 12- and 24-worker rows the six-core pin cannot serve and a queued
-# sibling gets the host between sessions. The repetitions give every profile
-# figure an interval: per-session figures are summarized by the median over
-# the sessions with its order-statistic interval, sampled shares by Wilson
-# intervals over the pooled samples.
-#
-# Builds finish before this script: it measures the executables the
-# preparation build identity records and refuses a session when their digests
-# differ. profile-series.sh states the execution log and resumption.
+# Repeated profile series of the steady-state LDPC arms (jit:3be770d5), over
+# the executables the preparation build identity pins. Sessions take the full
+# host because the cases include 12- and 24-worker rows; the repetitions give
+# each figure an interval: the median over sessions with its order-statistic
+# interval, sampled shares by Wilson intervals over the pooled samples.
 #
 # Usage (from the worktree root):
 #   <this directory>/run-profile.sh <output-dir>

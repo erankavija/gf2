@@ -1,17 +1,8 @@
 #!/usr/bin/env bash
-# Re-sampled steady-state profile of the changed decoder (jit:07ca8585).
-#
-# The predecessor `3be770d5` ranks the levers this issue spends, and its
-# refutation rule for that ranking is a re-sampled profile rather than a clock:
-# a lever the change spends must lose its sampled share once the change is in.
-# This series is that re-sampling. It runs the predecessor's own session script,
-# case set and arm catalogue unchanged, so the case identities and the sampled
-# quantities are the ones the ranking was derived from, and it measures the
-# `after` generation of the harness this issue built, whose executables the
-# kernel preparation build identity beside this script pins. Every session runs
-# under `--full-host` because the case set includes 12- and 24-worker rows a
-# six-core pin cannot serve. profile-series.sh states the execution log,
-# resumption and refusals.
+# Re-sampled steady-state profile of the changed decoder (jit:07ca8585): the
+# `3be770d5` session script, case set and arm catalogue, unchanged, so the
+# sampled quantities are the ones its lever ranking was derived from, over the
+# executables the kernel build identity beside this script pins.
 #
 # Usage (from the worktree root):
 #   <this directory>/run-profile-resample.sh <output-dir>
@@ -21,12 +12,13 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${repo}" && pwd -P)" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
 IDENTITY="${HERE}/preparation/kernel-build-identity.json"
+FILES="$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')"
 # shellcheck disable=SC1090
-source "${repo}/$(git ls-files -- ':(glob)**/profile-series.sh' ':(exclude,glob)**/inputs/**')"
+source "${repo}/$(python3 -B "${FILES}" file profile-series.sh)"
 PREDECESSOR="${repo}/$(dirname "$(series_located profile-session.sh)")"
 QUALITY="${repo}/$(series_quality "${HERE}/preparation/build-identity.json")"
-# Nine is the predecessor's session count, kept so the two series' medians carry
-# the same order-statistic interval.
+# The predecessor's session count, so both series' medians carry the same
+# order-statistic interval.
 REPETITIONS=9
 EXECUTABLES=(ldpc-profile ldpc-alloc-census)
 SESSION_FILES=(profile-session.sh profile-cases.tsv arms.json)
