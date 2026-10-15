@@ -1,0 +1,33 @@
+# gf2 arm of the LDPC batch decoder under the committed coding envelope
+# (jit:c103a288).
+#
+# A member outside the default build that the build record builds alone: its
+# `tuning-profile` feature of `gf2-coding` would otherwise unify into the
+# other arms' builds and move the digests of their executables.
+
+# The path dependencies below count directory levels to the harness crates and
+# the workspace crates: the named exception `harness-path-dependencies` to
+# `@/inv/no-dev-path-coupling`, which ends under `@/issue/58a4bb51`.
+
+[package]
+name = "ldpc-batch-tuned-arm"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+ldpc-survey-harness = { path = "../../../../1a379447-zen3-cpu-performance/c077a88b/survey/harness" }
+ldpc-throughput-harness = { path = "../../../../1a379447-zen3-cpu-performance/3be770d5/survey/harness" }
+tuning-campaign-support = { path = "../../../../../tools/tuning-campaign-support" }
+gf2-coding = { path = "../../../../../../crates/gf2-coding", features = ["tuning-profile"] }
+gf2-core = { path = "../../../../../../crates/gf2-core", features = ["tuning-profile"] }
+gf2-kernels-simd = { path = "../../../../../../crates/gf2-kernels-simd" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[[bin]]
+name = "gf2-batch-tuned-arm"
+path = "src/main.rs"
+
+[dev-dependencies]
+gf2-coding = { path = "../../../../../../crates/gf2-coding", features = ["tuning-profile", "test-support"] }

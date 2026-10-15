@@ -16,9 +16,10 @@
 # The AFF3CT arm of the comparison is the member package `aff3ct-intra`, built
 # on request alone: it needs the staged AFF3CT tree. The profile driver is the
 # member package `batch-profile`, which keeps its dependencies out of the arms'
-# package.
+# package. The arm under the committed coding envelope is the member package
+# `tuned-profile`, built on request alone: its `gf2-coding` features differ.
 [workspace]
-members = ["aff3ct-intra", "batch-profile"]
+members = ["aff3ct-intra", "batch-profile", "tuned-profile"]
 default-members = [".", "batch-profile"]
 
 [package]
