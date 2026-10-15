@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""The batch decoder profile launcher's refusals and resumption, timing nothing.
+"""The profile series launchers' refusals and resumption, timing nothing.
 
-Each test runs a copy of the launcher beside a copy of its build record that
+Each test runs a copy of a launcher beside a copy of its build record that
 pins a fake driver, through the real acquisition wrapper on private lock files
 and the real session script, with a `perf` that only runs the profiled command.
 """
@@ -22,6 +22,9 @@ HERE = Path(__file__).resolve().parent
 ROOT = Path(subprocess.run(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
                            check=True, capture_output=True, text=True).stdout.strip())
 LAUNCHER = HERE / "run-profile.sh"
+RESAMPLE = Path(subprocess.run(
+    ["git", "-C", str(ROOT), "ls-files", "--", ":(glob)**/run-profile-resample.sh",
+     ":(exclude,glob)**/inputs/**"], check=True, capture_output=True, text=True).stdout.strip())
 RECORD = HERE / "preparation/build-identity.json"
 DRIVER = "ldpc-batch-profile"
 CASES = ("stat\tsf-dvb-w1\tgf2-batch-single-frame\tdvb-t2-r12\tsingle-core\t8\t1\n"
@@ -193,6 +196,24 @@ class ProfileLauncherTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertIn(f"differs from {DRIVER}", result.stderr)
         self.assertEqual(self.sandbox.records(), [["rep-01", "start"], ["rep-01", "done"]])
+
+
+    def test_resample_refuses_an_executable_differing_from_its_record(self):
+        bench = self.sandbox.directory / "resample"
+        (bench / "preparation").mkdir(parents=True)
+        launcher = bench / RESAMPLE.name
+        shutil.copy2(ROOT / RESAMPLE, launcher)
+        source = ROOT / RESAMPLE.parent / "preparation/kernel-build-identity.json"
+        record = json.loads(source.read_text(encoding="utf-8"))
+        pinned = record["profile_resample"]["executables"]
+        record["profile_resample"]["executables"] = {name: "0" * 64 for name in pinned}
+        (bench / "preparation" / source.name).write_text(json.dumps(record))
+        result = subprocess.run([str(launcher), str(self.sandbox.out)], cwd=ROOT,
+                                env=self.sandbox.env, capture_output=True, text=True, timeout=60)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertLogFirst(result)
+        self.assertIn(f"differs from {bench / 'preparation' / source.name}", result.stderr)
+        self.assertEqual(self.sandbox.records(), [])
 
 
 if __name__ == "__main__":

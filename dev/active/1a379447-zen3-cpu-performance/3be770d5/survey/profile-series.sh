@@ -15,6 +15,12 @@
 
 series_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 series_load() { cut -d' ' -f1-3 /proc/loadavg; }
+series_digest() { sha256sum "$1" | cut -d' ' -f1; }
+# Usage: series_recorded <json-record> <key>... prints the value at that key path.
+series_recorded() {
+    python3 -c 'import functools, json, sys
+print(functools.reduce(lambda node, key: node[key], sys.argv[2:], json.load(open(sys.argv[1]))))' "$@"
+}
 
 # Usage (from the worktree root):
 #   profile_series <output-dir> <bin-dir> <session-script> <repetitions> <host-title>

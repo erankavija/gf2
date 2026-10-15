@@ -33,12 +33,9 @@ FILES="$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inpu
 located() { python3 -B "${FILES}" file "$1"; }
 SESSION="${REPO}/$(located profile-session.sh)"
 PEAK="${REPO}/$(located record-peak-memory.py)"
-# The build record's value at the key path given as arguments.
-recorded() {
-    python3 -c 'import functools, json, sys
-print(functools.reduce(lambda node, key: node[key], sys.argv[2:], json.load(open(sys.argv[1]))))' \
-        "${RECORD}" "$@"
-}
+# shellcheck disable=SC1090
+source "${REPO}/$(located profile-series.sh)"
+recorded() { series_recorded "${RECORD}" "$@"; }
 EXPECTED="$(recorded executables "${DRIVER}" sha256)"
 CATALOGUE="${REPO}/$(recorded catalogue path)"
 mkdir -p "${SCRATCH}"
@@ -46,16 +43,15 @@ BIN="$(mktemp -d "${SCRATCH}/bin.XXXXXX")"
 trap 'rm -rf "${BIN}"' EXIT
 ln -s "${REPO}/$(recorded isolation target_directory)/release/${DRIVER}" "${BIN}/ldpc-profile"
 
-digest() { sha256sum "$1" | cut -d' ' -f1; }
 series_identity() {
     local target
     target="$(readlink -m "${BIN}/ldpc-profile")"
-    if [[ "$(digest "${target}")" != "${EXPECTED}" ]]; then
+    if [[ "$(series_digest "${target}")" != "${EXPECTED}" ]]; then
         echo "${target} differs from ${DRIVER} in ${RECORD}" >&2
         return 2
     fi
-    echo "ldpc-profile=${EXPECTED} profile-session.sh=$(digest "${SESSION}")" \
-        "cases=$(digest "${CASES}") arms.json=$(digest "${CATALOGUE}")"
+    echo "ldpc-profile=${EXPECTED} profile-session.sh=$(series_digest "${SESSION}")" \
+        "cases=$(series_digest "${CASES}") arms.json=$(series_digest "${CATALOGUE}")"
 }
 series_cases() {
     python3 -B - "${CASES}" "${PEAK}" "${RECORD}" "${SCRATCH}" <<'PY'
@@ -93,8 +89,6 @@ for line in open(cases, encoding="utf-8"):
                      str(smoke.ROOT / quality[arm, code][0]), env]))
 PY
 }
-# shellcheck disable=SC1090
-source "${REPO}/$(located profile-series.sh)"
 profile_series "${OUT}" "${BIN}" "${SESSION}" "${REPETITIONS}" \
     "LDPC batch decoder profile host record - produced by run-profile.sh"
 echo "profile written to ${OUT}" >&2

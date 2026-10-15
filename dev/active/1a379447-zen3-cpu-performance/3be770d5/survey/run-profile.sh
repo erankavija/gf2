@@ -35,20 +35,20 @@ mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 
-digest() { sha256sum "$1" | cut -d' ' -f1; }
+# shellcheck disable=SC1091
+source "${HERE}/profile-series.sh"
 series_identity() {
     local binary file recorded line=""
     for binary in "${EXECUTABLES[@]}"; do
-        recorded="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["executables"][sys.argv[2]])' \
-            "${IDENTITY}" "${binary}")"
-        if [[ "$(digest "${BIN}/${binary}")" != "${recorded}" ]]; then
+        recorded="$(series_recorded "${IDENTITY}" executables "${binary}")"
+        if [[ "$(series_digest "${BIN}/${binary}")" != "${recorded}" ]]; then
             echo "${binary} differs from the preparation build identity" >&2
             return 2
         fi
         line+="${line:+ }${binary}=${recorded}"
     done
     for file in "${SESSION_FILES[@]}"; do
-        line+=" ${file}=$(digest "${HERE}/${file}")"
+        line+=" ${file}=$(series_digest "${HERE}/${file}")"
     done
     echo "${line}"
 }
@@ -68,8 +68,6 @@ for line in open(cases):
                      f"{quality}/{arm}-{code}.json", env]))
 PY
 }
-# shellcheck disable=SC1091
-source "${HERE}/profile-series.sh"
 profile_series "${OUT}" "${BIN}" "${HERE}/profile-session.sh" "${REPETITIONS}" \
     "steady-state LDPC profile host record - produced by run-profile.sh"
 
