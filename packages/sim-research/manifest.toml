@@ -1,7 +1,7 @@
 [profile]
 manifest-version = 2
 id = "sim-research"
-version = "1.2.6"
+version = "1.2.7"
 compatible-jit = ">=1.0.0, <2.0.0"
 
 [[dependency]]
@@ -364,6 +364,48 @@ command = "./scripts/cargo-ci.sh"
 timeout_seconds = 900
 pass_context = false
 env = {}
+
+[contribution.value.inputs]
+roots = [
+    ".cargo",
+    ".config",
+    ".gitattributes",
+    ".github",
+    ".gitignore",
+    ".research",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "Cargo.lock",
+    "Cargo.toml",
+    "LICENSE-MIT",
+    "README.md",
+    "benches",
+    "benchmarks",
+    "contrib",
+    "crates",
+    "dev",
+    "docs",
+    "packages",
+    "patches",
+    "proofs",
+    "scripts",
+    "tests",
+]
+exclude = [
+    "**/target",
+    "**/__pycache__",
+    "proofs/.lake",
+    "proofs/build",
+    "proofs/scratch",
+    "crates/gf2-core/benchmarks-cpp/build",
+    "dev/active/**/handoff*.md",
+    "dev/active/**/findings.md",
+    "dev/active/**/verification.md",
+    "dev/active/**/investigation.md",
+    "dev/active/**/dispatch-*.md",
+    "dev/active/**/rework-*.md",
+    "dev/active/**/progress.json",
+]
 
 [[contribution]]
 kind = "keyed-array"

@@ -32,7 +32,11 @@
 
 ## Traps — do not repeat these
 
-Traps of `handoff-33.md` and earlier remain in force.
+Traps of `handoff-33.md` and earlier remain in force, except these, which are retired:
+
+- **cargo-ci repeats and HEAD ordering.** `cargo-ci` declares `[gates.inputs]` in `.jit/gates.toml`, so an evaluation over unchanged inputs reuses the prior verdict across issues and HEAD moves, and `.jit/` writes do not invalidate it. Gate several issues with `jit gate evaluate-many cargo-ci <ids>...`. Gate only merged, committed trees: three checks read HEAD or the index, which the digest does not see.
+- **Lock staggering.** jit queues on lock contention with a 60 s default wait (`JIT_LOCK_TIMEOUT`); the 5 s bootstrap-lock timeout no longer exists.
+- **Reading `.jit/issues/*.json` for gates.** `jit issue show <id> --json` lists them under `gates`; `gates_required` was removed from that shape.
 
 - **Do NOT end a gate chain's `&&` on `| tail`.** `jit gate evaluate ... | tail -1 && jit gate evaluate ... code-review` started code-review on a failed cargo-ci; the pipe returned tail's status. Use `scratchpad/gate-chain.sh`'s pattern: capture `$?` before filtering.
 - **Do NOT loop over an unquoted `$files` in zsh.** `for f in $files` ran once on the whole string and linked nothing; three gates started on unlinked evidence. Pipe into `while read -r f`.
