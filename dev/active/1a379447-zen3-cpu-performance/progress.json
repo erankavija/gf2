@@ -3033,6 +3033,11 @@
    "issue": "f434ddd3",
    "date": "2026-10-15",
    "finding": "research-review advisory F2: profile-dry-session.md:4 says the outputs carry no timing figure, but the driver json keeps timing fields; wording only."
+  },
+  {
+   "issue": "a80062a1",
+   "date": "2026-10-15",
+   "finding": "research-review advisory F1: gate evidence does not itself show the byte-for-byte acceptance-summary reproduction of REQ-02 (worker reports the re-run left the receipt directory byte-identical)."
   }
  ],
  "notes": [
@@ -3304,9 +3309,7 @@
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
-  "active_workers": {
-   "collect": "agent-ed3d490e-run (d0d2c1bd, 093ae4d0, fb65bb3f, 87a6bb36, a80062a1)"
-  },
+  "active_workers": {},
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
   "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30.",
