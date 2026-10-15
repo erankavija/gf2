@@ -368,6 +368,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ldpc-batch-profile"
+version = "0.0.0"
+dependencies = [
+ "ldpc-batch-arms",
+ "ldpc-survey-harness",
+ "ldpc-throughput-harness",
+ "serde_json",
+ "tuning-campaign-support",
+]
+
+[[package]]
 name = "ldpc-survey-harness"
 version = "0.0.0"
 dependencies = [

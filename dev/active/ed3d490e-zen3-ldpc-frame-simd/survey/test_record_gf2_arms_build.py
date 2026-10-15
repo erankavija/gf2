@@ -218,6 +218,16 @@ class BuildEnvironmentTest(unittest.TestCase):
         self.assertEqual(environment["CXX"], recorder.CXX)
 
 
+class LinkedMembersTest(unittest.TestCase):
+    def test_only_members_outside_the_default_build_link_the_aff3ct_tree(self):
+        metadata = {"packages": [{"id": "arms", "name": "ldpc-batch-arms"},
+                                 {"id": "profile", "name": "ldpc-batch-profile"},
+                                 {"id": "intra", "name": "ldpc-aff3ct-intra-arm"}],
+                    "workspace_default_members": ["arms", "profile"]}
+        self.assertEqual(recorder.linked_members(metadata),
+                         ["--package", "ldpc-aff3ct-intra-arm"])
+
+
 @unittest.skipUnless(os.environ.get("GF2_AFF3CT_ROOT"), "needs the staged AFF3CT tree")
 class ReproductionTest(unittest.TestCase):
     def test_a_second_run_over_an_unchanged_build_reproduces_the_record(self):
