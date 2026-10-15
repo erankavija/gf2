@@ -1,0 +1,22 @@
+pilot receipt  dev/bench_results/ed3d490e/aff3ct-matched/493dba5a-ldpc-batch-aff3ct-matched-pilot/receipt.json
+receipt sha256 f47e9c20adbda10b88e9db3479ed14c54ccf12b09c83cd39180a4cd56c066d77
+campaign       493dba5a-ldpc-batch-aff3ct-matched-pilot
+verdict        accepted (label pilot)
+family         ldpc-batch-aff3ct-matched-v1: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+dvb-t2-r12-matched-w1-b8                12     0.37982     0.37126     0.38032    0.0225
+dvb-t2-r12-matched-w1-b1                12       1.896      1.8355      1.9619    0.0347
+dvb-t2-r12-matched-p12-b8               12      3.2289      3.1454      3.2384    0.0259
+nr-bg1-z384-matched-w1-b8               12     0.31021     0.30656     0.32406    0.0446
+nr-bg1-z384-matched-w1-b1               12      1.9627      1.8693      1.9756    0.0476
+nr-bg1-z384-matched-p12-b8              12      1.2693       1.207      1.3062    0.0492
+
+widest relative half-width   0.049156
+frozen measurement resolution 0.05
+restated worthwhile_speedup rationale; value None unchanged
+replaced equivalence_margin None -> 1.1
+replaced material_gap_threshold None -> 1.25
+restated the family description for the confirmatory stage
+margins: equivalence 1.1, material gap 1.25
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/87a6bb36/addendum.json
