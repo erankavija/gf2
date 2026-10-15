@@ -1,0 +1,21 @@
+pilot receipt  dev/bench_results/ed3d490e/multicore/a7ae2623-ldpc-batch-multicore-pilot/receipt.json
+receipt sha256 9e33fc9584bf899f8c0c28c5a23b4bf0e042a1ca642e4033fa46b2c199476347
+campaign       a7ae2623-ldpc-batch-multicore-pilot
+verdict        accepted (label pilot)
+family         ldpc-batch-multicore-v1: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+dvb-t2-r12-lane-p6-b8                   12     0.83333     0.83026     0.83649    0.0038
+dvb-t2-r12-lane-p12-b8                  12     0.55764     0.55563     0.56712    0.0170
+dvb-t2-r12-lane-l24-b8                  12     0.32994     0.32837     0.33183    0.0057
+nr-bg1-z384-lane-p6-b8                  12      1.5036      1.4243      1.5589    0.0527
+nr-bg1-z384-lane-p12-b8                 12      1.2076       1.181      1.2364    0.0239
+nr-bg1-z384-lane-l24-b8                 12     0.35647     0.35545     0.35826    0.0050
+
+widest relative half-width   0.052736
+frozen measurement resolution 0.06
+replaced worthwhile_speedup None -> 1.1
+replaced equivalence_margin None -> 1.08
+restated the family description for the confirmatory stage
+margins: equivalence 1.08, material gap None
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/093ae4d0/addendum.json
