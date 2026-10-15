@@ -53,13 +53,17 @@ def protocol_identity(addendum_schema):
     return {"id": protocol["id"]["const"], "version": protocol["version"]["const"]}
 
 
-def shared_settings(addendum_schema):
-    """The shared settings table of the protocol document of the schema's version."""
+def protocol_document(addendum_schema):
+    """Root-relative path of the protocol document of the schema's version."""
     files = repository_files()
     version = protocol_identity(addendum_schema)["version"]
-    path = files.document(smoke.ROOT, "protocol*.md",
+    return files.document(smoke.ROOT, "protocol*.md",
                           files.PROTOCOL_OPENING + f"{version}.".encode())
-    text = (smoke.ROOT / path).read_text(encoding="utf-8")
+
+
+def shared_settings(addendum_schema):
+    """The shared settings table of the protocol document of the schema's version."""
+    text = (smoke.ROOT / protocol_document(addendum_schema)).read_text(encoding="utf-8")
     _, _, following = text.partition(SHARED_SECTION)
     section, _, _ = following.partition("\n## ")
     return {match["name"]: json.loads(match["value"])
