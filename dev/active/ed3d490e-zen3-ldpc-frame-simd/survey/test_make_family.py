@@ -43,6 +43,18 @@ class GeneratorTest(unittest.TestCase):
                                  env=environment, capture_output=True, text=True)
         self.assertEqual(checked.returncode, 0, checked.stderr)
 
+    def test_a_plan_inside_the_repository_names_its_addendum_relative_to_it(self):
+        out_dir = smoke.ROOT / "target" / "make-family-test"
+        self.addCleanup(shutil.rmtree, out_dir, ignore_errors=True)
+        generator.generate(SAMPLE, out_dir)
+        plan = json.loads((out_dir / generator.PLAN).read_text(encoding="utf-8"))
+        self.assertFalse(Path(plan["addendum"]).is_absolute())
+        self.assertEqual(smoke.ROOT / plan["addendum"], out_dir / generator.ADDENDUM)
+        runner, environment = smoke.build_runner()
+        checked = subprocess.run([runner, "check", str(out_dir / generator.PLAN)],
+                                 env=environment, capture_output=True, text=True)
+        self.assertEqual(checked.returncode, 0, checked.stderr)
+
     def test_two_runs_write_identical_bytes(self):
         self.generate()
         first = {name: (self.directory / "out" / name).read_bytes()
