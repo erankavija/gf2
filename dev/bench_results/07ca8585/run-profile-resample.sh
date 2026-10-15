@@ -14,16 +14,17 @@
 # resumption and refusals.
 #
 # Usage (from the worktree root):
-#   dev/bench_results/07ca8585/run-profile-resample.sh <output-dir>
+#   <this directory>/run-profile-resample.sh <output-dir>
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${repo}" && pwd -P)" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
 IDENTITY="${HERE}/preparation/kernel-build-identity.json"
-FILES="$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')"
-PREDECESSOR="${repo}/$(dirname "$(python3 -B "${FILES}" file profile-session.sh)")"
-QUALITY="${repo}/dev/bench_results/c077a88b/v3-preparation/quality"
+# shellcheck disable=SC1090
+source "${repo}/$(git ls-files -- ':(glob)**/profile-series.sh' ':(exclude,glob)**/inputs/**')"
+PREDECESSOR="${repo}/$(dirname "$(series_located profile-session.sh)")"
+QUALITY="${repo}/$(series_quality "${HERE}/preparation/build-identity.json")"
 # Nine is the predecessor's session count, kept so the two series' medians carry
 # the same order-statistic interval.
 REPETITIONS=9
@@ -33,8 +34,6 @@ SESSION_FILES=(profile-session.sh profile-cases.tsv arms.json)
 OUT="${1:?usage: run-profile-resample.sh <output-dir>}"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 
-# shellcheck disable=SC1091
-source "${PREDECESSOR}/profile-series.sh"
 recorded() { series_recorded "${IDENTITY}" "$@"; }
 BIN="${repo}/$(recorded profile_resample target_dir)"
 INPUTS="${repo}/$(recorded inputs extracted_to)"

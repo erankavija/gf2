@@ -203,6 +203,7 @@ class ProfileLauncherTest(unittest.TestCase):
         (bench / "preparation").mkdir(parents=True)
         launcher = bench / RESAMPLE.name
         shutil.copy2(ROOT / RESAMPLE, launcher)
+        shutil.copy2(ROOT / RESAMPLE.parent / "preparation/build-identity.json", bench / "preparation")
         source = ROOT / RESAMPLE.parent / "preparation/kernel-build-identity.json"
         record = json.loads(source.read_text(encoding="utf-8"))
         pinned = record["profile_resample"]["executables"]

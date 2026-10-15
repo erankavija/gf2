@@ -2,7 +2,7 @@
 # Repeated profile series of the steady-state LDPC arms (jit:3be770d5).
 #
 # Runs profile-session.sh `REPETITIONS` times, each session inside its own
-# `dev/scripts/ccx1-bench-flock.sh --full-host` invocation, because the cases
+# `ccx1-bench-flock.sh --full-host` invocation, because the cases
 # include 12- and 24-worker rows the six-core pin cannot serve and a queued
 # sibling gets the host between sessions. The repetitions give every profile
 # figure an interval: per-session figures are summarized by the median over
@@ -14,7 +14,7 @@
 # differ. profile-series.sh states the execution log and resumption.
 #
 # Usage (from the worktree root):
-#   dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/run-profile.sh <output-dir>
+#   <this directory>/run-profile.sh <output-dir>
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,8 +22,6 @@ REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
 BIN="${REPO}/target/ldpc-throughput/release"
 INPUTS="${REPO}/target/ldpc-inputs"
-QUALITY="${REPO}/dev/bench_results/c077a88b/v3-preparation/quality"
-IDENTITY="${REPO}/dev/bench_results/3be770d5/preparation/build-identity.json"
 # Nine is the smallest session count whose order-statistic interval for a
 # median at 95% coverage excludes the extreme sessions ([x(2), x(8)], 96.1%).
 REPETITIONS=9
@@ -31,12 +29,14 @@ EXECUTABLES=(ldpc-profile ldpc-alloc-census)
 SESSION_FILES=(profile-session.sh profile-cases.tsv arms.json)
 
 OUT="${1:?usage: run-profile.sh <output-dir>}"
+# shellcheck disable=SC1091
+source "${HERE}/profile-series.sh"
+IDENTITY="${REPO}/$(series_located 3be770d5/preparation/build-identity.json)"
+QUALITY="${REPO}/$(series_quality "${IDENTITY}")"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 
-# shellcheck disable=SC1091
-source "${HERE}/profile-series.sh"
 series_identity() {
     local binary file recorded line=""
     for binary in "${EXECUTABLES[@]}"; do

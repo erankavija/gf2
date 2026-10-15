@@ -12,7 +12,7 @@
 # refusals.
 #
 # Usage (from the worktree root):
-#   dev/bench_results/ed3d490e/run-profile.sh <case-file> <output-dir>
+#   <this directory>/run-profile.sh <case-file> <output-dir>
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,12 +29,10 @@ REPETITIONS=9
 SCRATCH="${REPO}/target/ldpc-batch-profile-series"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 
-FILES="$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')"
-located() { python3 -B "${FILES}" file "$1"; }
-SESSION="${REPO}/$(located profile-session.sh)"
-PEAK="${REPO}/$(located record-peak-memory.py)"
 # shellcheck disable=SC1090
-source "${REPO}/$(located profile-series.sh)"
+source "${REPO}/$(git ls-files -- ':(glob)**/profile-series.sh' ':(exclude,glob)**/inputs/**')"
+SESSION="${REPO}/$(series_located profile-session.sh)"
+PEAK="${REPO}/$(series_located record-peak-memory.py)"
 recorded() { series_recorded "${RECORD}" "$@"; }
 EXPECTED="$(recorded executables "${DRIVER}" sha256)"
 CATALOGUE="${REPO}/$(recorded catalogue path)"

@@ -16,6 +16,24 @@
 series_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 series_load() { cut -d' ' -f1-3 /proc/loadavg; }
 series_digest() { sha256sum "$1" | cut -d' ' -f1; }
+# Usage (from the worktree root): series_located <path-suffix> prints the
+# root-relative path of the one live tracked file ending in that suffix.
+series_located() {
+    local found
+    found="$(git ls-files -- ":(glob)**/$1" ':(exclude,glob)**/inputs/**')"
+    if [[ -z "${found}" || "${found}" == *$'\n'* ]]; then
+        echo "exactly one live file must end in $1" >&2
+        return 2
+    fi
+    echo "${found}"
+}
+# Usage: series_quality <build-record> prints the one directory holding the
+# record's prepared quality files.
+series_quality() {
+    python3 -c 'import json, pathlib, sys
+(directory,) = {str(pathlib.Path(path).parent) for path in json.load(open(sys.argv[1]))["prepared_quality"]}
+print(directory)' "$1"
+}
 # Usage: series_recorded <json-record> <key>... prints the value at that key path.
 series_recorded() {
     python3 -c 'import functools, json, sys
@@ -26,14 +44,13 @@ print(functools.reduce(lambda node, key: node[key], sys.argv[2:], json.load(open
 #   profile_series <output-dir> <bin-dir> <session-script> <repetitions> <host-title>
 profile_series() {
     local out="$1" bin="$2" session="$3" repetitions="$4" title="$5"
-    local files wrapper log identity first current index rep starts statuses
+    local wrapper log identity first current index rep starts statuses
     mkdir -p "${out}"
     out="$(cd "${out}" && pwd)"
     log="${out}/repetitions.log"
     touch "${log}"
     echo "profile execution log: ${log}" >&2
-    files="$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')"
-    wrapper="$(python3 -B "${files}" file ccx1-bench-flock.sh)"
+    wrapper="$(series_located ccx1-bench-flock.sh)"
 
     identity="$(series_identity)" || return 2
     first="$(sed -n 's/^rep-[0-9]* start [^ ]* \(.*\) load=.*/\1/p' "${log}" | head -n 1)"
