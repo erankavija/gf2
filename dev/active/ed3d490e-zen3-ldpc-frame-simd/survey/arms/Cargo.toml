@@ -14,10 +14,12 @@
 # `@/inv/no-dev-path-coupling`, which ends under `@/issue/58a4bb51`.
 
 # The AFF3CT arm of the comparison is the member package `aff3ct-intra`, built
-# on request alone: it needs the staged AFF3CT tree.
+# on request alone: it needs the staged AFF3CT tree. The profile driver is the
+# member package `batch-profile`, which keeps its dependencies out of the arms'
+# package.
 [workspace]
-members = ["aff3ct-intra"]
-default-members = ["."]
+members = ["aff3ct-intra", "batch-profile"]
+default-members = [".", "batch-profile"]
 
 [package]
 name = "ldpc-batch-arms"

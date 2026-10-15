@@ -286,6 +286,12 @@ def aff3ct_identity(root, records):
             "static_library_pinned_by": pinning}
 
 
+def linked_members(metadata):
+    default = set(metadata["workspace_default_members"])
+    return [argument for package in metadata["packages"] if package["id"] not in default
+            for argument in ("--package", package["name"])]
+
+
 def main():
     if len(sys.argv) != 3:
         sys.exit(__doc__)
@@ -309,13 +315,12 @@ def main():
     release = pathlib.Path(metadata["target_directory"]).relative_to(ROOT) / "release"
     binaries = sorted(target["name"] for package in metadata["packages"]
                       for target in package["targets"] if "bin" in target["kind"])
-    members = [argument for package in metadata["packages"] if package["name"] != PACKAGE
-               for argument in ("--package", package["name"])]
+    members = linked_members(metadata)
 
     build = ["./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build", "--offline",
              "--locked", "--release", "--manifest-path", str(manifest),
              "--config", f"target.{host}.linker={json.dumps(str(linker))}"]
-    # The default members build without the AFF3CT tree; the member packages link it.
+    # The default members build without the AFF3CT tree; the other members link it.
     commands = [{"environment": ENVIRONMENT, "argv": build},
                 {"environment": {**ENVIRONMENT, AFF3CT_VARIABLE: str(aff3ct)},
                  "argv": build + members}]

@@ -232,6 +232,41 @@
           "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
         }
       }
+    },
+    "ldpc-batch-profile": {
+      "sha256": "647f1526ee1851bf9e0bd8b4ed94008e4b01079f6da723f74c95b27b7eb6c483",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
+      "inputs": {
+        "repository_files_sha256": "7aa7500c2e1d7c7d5d7863c67a282d01ad3f86a5208823c930565c7c607b7edd",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
+      }
     }
   },
   "aff3ct": {
@@ -357,8 +392,8 @@
   },
   "isolation": {
     "workspace_root": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms",
-    "manifest_sha256": "90000107c9e122b83b71fb8fc86ed20c1d448dae41029fec8d8374120cd0a09d",
-    "lockfile_sha256": "4f33bde03579adb68a2a1bc61b223fbb25b690a803da4cb27c26d4e637dafa3a",
+    "manifest_sha256": "058e1a448c91ef339603b4bab9d2323a6fcc420a31e0124750682f3832683db7",
+    "lockfile_sha256": "fca9f54c76ce9d74ace5abac0af2067d4c487107bc37661b890ce7de4c7a3160",
     "target_directory": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target",
     "declared_names": [
       "aff3ct-intra-arm",
@@ -368,6 +403,7 @@
       "gf2-batch-single-frame-arm",
       "ldpc-aff3ct-intra-arm",
       "ldpc-batch-arms",
+      "ldpc-batch-profile",
       "ldpc_batch_arms"
     ],
     "names_shared_with_pinned_executables": [],
