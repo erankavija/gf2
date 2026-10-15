@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-"""Runner smoke record of the batch decoder benchmark arms (jit:a4476c6a).
+"""Runner smoke record of the batch decoder arms [Cassagne2019] (jit:a4476c6a).
 
-Drives each arm through `benchmark-ab-runner smoke` over a throwaway plan of the single-worker
-family's own cell on every recorded code, one untimed dispatch in the validation position and no
-timing window [Cassagne2019]. The record names each arm by the digest of the build identity
-record and states the runner's entry for the arm. Each arm stages under its own directory, which
-a rerun resumes and the runner re-exports, so no completed dispatch repeats; the stages are
-removed once the record is written. The plan builder, staged smoke, atomic write and stage
-removal are those of `record-arm-validation.py`.
+One untimed validation-position dispatch per arm and code through `benchmark-ab-runner smoke`;
+staging, resume and atomic write are those of `record-arm-validation.py`.
 
 Usage (from the worktree root): record-arm-smoke.py OUT_DIR
 """
@@ -32,7 +27,6 @@ GROUP = {"issue": "a4476c6a", "subject": "runner smoke of the benchmark arms", "
 
 
 def entries(build_path, plans, runner, environment):
-    """The record entry of each arm: the runner's smoke entry of its one dispatch."""
     rows = []
     for (name, key), (plan, arm, cells) in sorted(plans.items()):
         stage, record = plan.with_suffix(".stage"), plan.with_suffix(".smoke.json")
@@ -64,10 +58,8 @@ def main():
         path = smoke.ROOT / files[arm][0]
         if peak.sha256_file(path) != files[arm][1]:
             sys.exit(f"{path} differs from its pinned digest")
-        # The quality file states the frames per SIMD wave the arm needs.
         settings = json.loads(path.read_text(encoding="utf-8"))["settings"]
         batches[arm] = max(declared[arm[1]], settings["batch_size"])
-    # A cleanup the last run left unfinished; its record was written.
     shutil.rmtree(SCRATCH.with_name(SCRATCH.name + ".removed"), ignore_errors=True)
     runner, environment = smoke.build_runner()
     plans = peak.arm_plans(rows, files, batches, GROUP, FAMILY, "arm-smoke", SCRATCH)

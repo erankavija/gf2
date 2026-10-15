@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Check the runner smoke record beside the build record.
-
-The committed-record tests read the committed record and the build record.
-"""
+"""Checks the committed runner smoke record against the build record."""
 
 import importlib.util
 import json
