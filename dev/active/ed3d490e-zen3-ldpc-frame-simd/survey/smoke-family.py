@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """Untimed smoke of a protocol family's plan through the shared runner (jit:2a69b276).
 
-Projects the declaration with `make-family.py` into a scratch directory, drives
-`benchmark-ab-runner check` and the staged smoke of `record-arm-validation.py` over the plan, and
-writes the smoke record to `RECORD`. It runs one untimed dispatch per arm, with no host lock,
-ledger or receipt, and fails when an arm reports a timing window. The scratch directory is
-keyed by the family, so a rerun resumes the stage without repeating a completed dispatch, and
-it is removed once the record is written.
+Fails when an arm opens a timing window; the scratch stage is keyed by family so a rerun
+resumes it.
 
 Usage (from the worktree root): smoke-family.py DECLARATION RECORD
 """
@@ -35,13 +31,11 @@ SCRATCH = pathlib.Path("target/family-smoke")
 
 
 def timed(record):
-    """The `cell/arm` names of the record's arms that opened a timing window."""
     return [f"{cell['cell_id']}/{entry['arm']}" for cell in record["cells"]
             for entry in cell["arms"] if entry["windows"] != 0]
 
 
 def smoke_plan(plan, scratch, record):
-    """Checks and smokes `plan` under `scratch`, returning the runner's smoke record."""
     runner, environment = smoke.build_runner()
     subprocess.run([runner, "check", str(plan)], check=True, env=environment)
     validation.staged_smoke(runner, environment, plan, scratch / "stage", record)
@@ -52,11 +46,9 @@ def smoke_plan(plan, scratch, record):
 
 
 def smoke_family(declaration, out):
-    """Smokes the family `declaration` projects and writes its record to `out`."""
     declaration = pathlib.Path(declaration)
     family = json.loads(declaration.read_text(encoding="utf-8"))["family"]["id"]
     scratch = smoke.ROOT / SCRATCH / family
-    # A removal the last run left unfinished; its record was written.
     shutil.rmtree(scratch.with_name(scratch.name + ".removed"), ignore_errors=True)
     scratch.mkdir(parents=True, exist_ok=True)
     generator.generate(declaration, scratch)
