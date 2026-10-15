@@ -42,7 +42,7 @@ profile_series() {
     # outside the mutex.
     series_cases >"${out}/cases.expanded.tsv"
     identity="$(series_identity "${out}/cases.expanded.tsv")" || return 2
-    first="$(sed -n 's/^rep-[0-9]* start [^ ]* \(.*\) load=.*/\1/p' "${log}" | head -n 1)"
+    first="$(sed -n '/^rep-[0-9]* start [^ ]* .* load=/{s/^rep-[0-9]* start [^ ]* \(.*\) load=.*/\1/p;q;}' "${log}")"
     if [[ -n "${first}" && "${first}" != "${identity}" ]]; then
         echo "the series identity changed since the first session" >&2
         echo "first:   ${first}" >&2

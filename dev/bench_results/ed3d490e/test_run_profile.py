@@ -232,8 +232,23 @@ class ProfileLauncherTest(unittest.TestCase):
             record["arms"][LANE_ARM]["environment"] = {"GF2_LDPC_LANE_BACKEND": "portable"}
         self.assertResumeRefused(lambda: self.sandbox.pin(edit=portable))
 
-    def test_refuses_to_resume_over_a_differing_inherited_variable(self):
+    def test_refuses_to_resume_over_a_differing_effective_inherited_variable(self):
         self.assertResumeRefused(lambda: None, GF2_LDPC_LANE_BACKEND="portable")
+
+    def assertResumes(self, result):
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(self.sandbox.records()[-2:], [["rep-01", "start"], ["rep-01", "discarded"]])
+
+    def test_resumes_over_an_inherited_variable_the_session_overrides(self):
+        self.first_session_discarded()
+        self.assertResumes(self.sandbox.run(FAIL="1", RAYON_NUM_THREADS="7"))
+
+    def test_resumes_over_an_execution_log_longer_than_a_pipe_buffer(self):
+        log = self.first_session_discarded()
+        with self.sandbox.log.open("a") as appended:
+            appended.write(log * 2000)
+        self.assertGreater(self.sandbox.log.stat().st_size, 1 << 20)
+        self.assertResumes(self.sandbox.run(FAIL="1"))
 
     def test_refuses_to_resume_over_a_differing_quality_file(self):
         def edit():

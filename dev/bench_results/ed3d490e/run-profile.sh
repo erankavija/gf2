@@ -39,9 +39,24 @@ BIN="$(mktemp -d "${SCRATCH}/bin.XXXXXX")"
 trap 'rm -rf "${BIN}"' EXIT
 ln -s "${REPO}/$(recorded isolation target_directory)/release/${DRIVER}" "${BIN}/ldpc-profile"
 
+# The driver's GF2_LDPC_ and RAYON_ variables as the session runs it: the
+# launching shell's, under the assignments the session script's `env` line
+# makes, under the case's pairs. The quality path is pinned by its digest.
+effective_environment() {
+    python3 -c 'import os, re, sys
+session, pairs = sys.argv[1:]
+line = re.search(r"^\s*env ((?:[A-Z0-9_]+=\S+ )+)\$\{envpairs\}", open(session).read(), re.M)
+if line is None:
+    sys.exit("no env line assigns the driver environment in " + session)
+effective = {k: v for k, v in os.environ.items() if k.startswith(("GF2_LDPC_", "RAYON_"))}
+effective.update(pair.split("=", 1) for pair in line.group(1).split())
+effective.update(pair.split("=", 1) for pair in pairs.split())
+effective.pop("GF2_LDPC_QUALITY", None)
+print(",".join(f"{k}={v}".replace(" ", "+") for k, v in sorted(effective.items())))' \
+        "${SESSION}" "$1"
+}
 series_identity() {
-    local target line inherited kind label route bundle quality env
-    local quality_digest bundle_digest
+    local target line kind label route bundle quality env quality_digest bundle_digest effective
     target="$(readlink -m "${BIN}/ldpc-profile")"
     if [[ "$(series_digest "${target}")" != "${EXPECTED}" ]]; then
         echo "${target} differs from ${DRIVER} in ${RECORD}" >&2
@@ -49,14 +64,12 @@ series_identity() {
     fi
     line="ldpc-profile=${EXPECTED} profile-session.sh=$(series_digest "${SESSION}")"
     line+=" cases=$(series_digest "${CASES}") arms.json=$(series_digest "${CATALOGUE}")"
-    # The driver's variables a case does not set come from the launching shell.
-    inherited="$(env | grep -E '^(GF2_LDPC_|RAYON_)' | sort | tr '\n ' ',+' || true)"
-    line+=" inherited=${inherited:-none}"
     # The bundle manifest pins the digests of the files the driver loads.
     while IFS=$'\t' read -r kind label route bundle _ _ _ _ quality env; do
         quality_digest="$(series_digest "${quality}")" || return 2
         bundle_digest="$(series_digest "${bundle}/manifest.json")" || return 2
-        line+=" ${kind}/${label}=route:${route},env:${env// /+},quality:${quality_digest},bundle:${bundle_digest}"
+        effective="$(effective_environment "${env}")" || return 2
+        line+=" ${kind}/${label}=route:${route},env:${effective},quality:${quality_digest},bundle:${bundle_digest}"
     done <"$1"
     echo "${line}"
 }
