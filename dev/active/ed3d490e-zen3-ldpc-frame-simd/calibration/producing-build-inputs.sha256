@@ -293,7 +293,7 @@ e9049514fad5d3194e0520eb91f5a3da379a55191dce61c6fbd5953969cdc46a  dev/tools/tuni
 0846942df8a134030b58065390c51b162bccf6e06222227b5dea6935240777ae  dev/tools/tuning-campaign-support/src/arm.rs
 faf5526e5980f716ffe621ff06380cbeb2be4945886823dc66136a9895427503  dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs
 4207eca00852859fba22ddbfb8f90cd09ea00aeb2ea5ce0a0a1502b8b9b2e50c  dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs
-dd153baa0dc4c18448ad440231f023e32195b2ab094b96b1bfb144d94112a1b2  dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs
+abd6fdddd537a782865951d37c7b790247d12bb3cce9228b60d7ac3958f6935b  dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs
 294064b743af4822954c69076b1836162034bc7945a883f6ad3fc2c6d454572e  dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs
 2a183786f1c40536a5b31301e480b984d61c605aff2978f5b2d0c844c61b6366  dev/tools/tuning-campaign-support/src/campaign.rs
 6f1f6ad82089383406bd416a98d3b4c86cd8984720511bcca7f8d03f4678fb17  dev/tools/tuning-campaign-support/src/host.rs
@@ -302,7 +302,7 @@ e887b256348c760c82747e2e4bd6d867cb4f4a2726603bc9c83efc24cf6b3609  dev/tools/tuni
 9cce61426f6c3f382038d013314b2aa2846d08be8527fecf521bf3eec493e8df  dev/tools/tuning-campaign-support/src/process.rs
 aa9bf5e4e2fd70e963fb78be5cd08fcd2f4b77c22832c243204028de45ea169a  dev/tools/tuning-campaign-support/src/protocol.rs
 6c065124bcb2ebce82c54eab409790ca85d8833c46d5176e0a6aad6bad7cca76  dev/tools/tuning-campaign-support/src/provenance.rs
-70f5c68e9a6d5f324385672671e10ae6354aaffd1f37a89510cb273d866340a3  dev/tools/tuning-campaign-support/src/receipt.rs
+474d9984d82ffc55b73097124da68a126106a816991e4ffbfeb828f6fe45ddda  dev/tools/tuning-campaign-support/src/receipt.rs
 6cd6230e8a77fb23934c2091833150ecef8edc5f248b02567b2deb78d9c825ba  dev/tools/tuning-campaign-support/src/repository.rs
 de332b75493f471baaf30dbbb202cb12502712610e87426ca101c7a3b942b35e  dev/tools/tuning-campaign-support/src/schema.rs
 710d637002124db365883b819ef2b9493131c80faf46f68db2cc3e80d5753adb  dev/tools/tuning-campaign-support/src/scratch.rs
@@ -310,7 +310,7 @@ de332b75493f471baaf30dbbb202cb12502712610e87426ca101c7a3b942b35e  dev/tools/tuni
 dfaa40a9e3669bd4e9b965c276709db4478c76c0920c52faaca4b641a974e1a8  dev/tools/tuning-campaign-support/src/statistics.rs
 89cb80fed0f9f1879c1c6d082efbbf5cdca0651b6540bd4617b7383cdf7bbd18  dev/tools/tuning-campaign-support/src/timing.rs
 6a9b2a335e149b1a12241da1f1ccfef87fe111ad5fd985db75af2c493be88468  dev/tools/tuning-campaign-support/src/transport.rs
-4b8abb212518f2726132401db766712f18cba473108170e54e8e6289d167d811  dev/tools/tuning-campaign-support/src/trial_ledger.rs
+da21ee573361929597c36f2162439fb43f1612f0e224ae8f8e193561b41f3a3b  dev/tools/tuning-campaign-support/src/trial_ledger.rs
 a44648a971c312dd763fd1c2f8eb83fdf2c432b2fc32015842a6c43be603ff23  dev/tools/tuning-profile-compose/Cargo.lock
 81fb09332308012de9862d54bcc85a422ab27015f46830855e63321129cc240b  dev/tools/tuning-profile-compose/Cargo.toml
 39ac0499268eacc2fd0b601d58c5f7bf146d5d5e48883e622e7e4968c2885e6d  dev/tools/tuning-profile-compose/src/main.rs
