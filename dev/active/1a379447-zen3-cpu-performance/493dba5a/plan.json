@@ -1,0 +1,163 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "493dba5a-ldpc-batch-aff3ct-matched-pilot",
+  "issue": "493dba5a",
+  "label": "pilot",
+  "campaign_seed": 1228782170,
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/493dba5a/addendum.json",
+  "producing_manifest": "dev/active/1a379447-zen3-cpu-performance/f547c394/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "aff3ct-flooding-nms-f32-dvb-t2-r12": {
+      "build": "external",
+      "description": "AFF3CT [Cassagne2019] flooding normalized min-sum, one clone per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/target/ldpc-throughput/release/aff3ct-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "aff3ct-flooding-nms-f32-nr-bg1-z384": {
+      "build": "external",
+      "description": "AFF3CT [Cassagne2019] flooding normalized min-sum, one clone per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/target/ldpc-throughput/release/aff3ct-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-batch-lane-avx2-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder on the lane route, AVX2 lane backend",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_LANE_BACKEND": "avx2",
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-batch-lane-avx2-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder on the lane route, AVX2 lane backend",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_LANE_BACKEND": "avx2",
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-matched-w1-b8",
+      "baseline_arm": "gf2-batch-lane-avx2-dvb-t2-r12",
+      "candidate_arm": "aff3ct-flooding-nms-f32-dvb-t2-r12",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/1a379447-zen3-cpu-performance/493dba5a/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-matched-w1-b1",
+      "baseline_arm": "gf2-batch-lane-avx2-dvb-t2-r12",
+      "candidate_arm": "aff3ct-flooding-nms-f32-dvb-t2-r12",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/1a379447-zen3-cpu-performance/493dba5a/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-matched-p12-b8",
+      "baseline_arm": "gf2-batch-lane-avx2-dvb-t2-r12",
+      "candidate_arm": "aff3ct-flooding-nms-f32-dvb-t2-r12",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/1a379447-zen3-cpu-performance/493dba5a/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-matched-w1-b8",
+      "baseline_arm": "gf2-batch-lane-avx2-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/1a379447-zen3-cpu-performance/493dba5a/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-matched-w1-b1",
+      "baseline_arm": "gf2-batch-lane-avx2-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/1a379447-zen3-cpu-performance/493dba5a/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-matched-p12-b8",
+      "baseline_arm": "gf2-batch-lane-avx2-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/1a379447-zen3-cpu-performance/493dba5a/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 1
+}
