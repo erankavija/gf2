@@ -2,7 +2,10 @@
 //! Reservations precede measurement and never disappear after a failure. Each
 //! exact JSON line binds its predecessor. A receipt freezes the entire prefix,
 //! including its reservation; no supplied prior-trial count decides correction.
-use crate::protocol::{sha256_hex, ArtifactPin, CellRole, FamilyAddendum};
+use crate::protocol::{
+    sha256_hex, ArtifactPin, CellRole, FamilyAddendum, SharedSettings, PROTOCOL_VERSION,
+};
+use crate::receipt::tail_supported;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeSet,
@@ -213,8 +216,75 @@ pub fn verify(
 pub fn attempt_alpha(pin: &ArtifactPin, dir: &Path, family: &FamilyAddendum) -> io::Result<f64> {
     let bytes = pin.verify_content(dir).map_err(invalid)?;
     let entries = decode(&bytes, &family.family.id)?;
+    Ok(attempt_budget(&entries, family.family_wise.alpha))
+}
+
+fn attempt_budget(entries: &[Reservation], alpha: f64) -> f64 {
     let attempts = entries.iter().filter(|e| e.comparisons > 0).count().max(1) as f64;
-    Ok(family.family_wise.alpha / (attempts * (attempts + 1.0)))
+    alpha / (attempts * (attempts + 1.0))
+}
+
+/// The next confirmatory attempt on a family ledger.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct NextAttempt {
+    /// Reservations the ledger holds.
+    pub reservations: usize,
+    /// Those that spend comparisons.
+    pub spending_reservations: usize,
+    /// Confirmatory and holdout comparisons those reserved.
+    pub prior_comparisons: u32,
+    /// The attempt's sequence number among spending reservations.
+    pub attempt: usize,
+    /// The attempt's share of the family alpha.
+    pub attempt_alpha: f64,
+    /// Largest confirmatory and holdout cell count whose corrected alpha keeps
+    /// P-20's tail support; zero when none does.
+    pub max_cells: u32,
+}
+
+/// Evaluates one more reservation on the ledger `bytes` as acceptance counts
+/// it: an attempt of its own in [`attempt_alpha`], whose cells join every
+/// comparison the chain already holds in the Bonferroni divisor of [`verify`].
+pub fn next_attempt(
+    bytes: &[u8],
+    family: &str,
+    settings: &SharedSettings,
+) -> io::Result<NextAttempt> {
+    let entries = decode(bytes, family)?;
+    let with = |cells: u32| {
+        let mut chain = entries.clone();
+        chain.push(Reservation {
+            sequence: entries.len() as u64,
+            predecessor: String::new(),
+            family: family.to_owned(),
+            campaign: String::new(),
+            addendum_sha256: String::new(),
+            comparisons: cells,
+            protocol_version: PROTOCOL_VERSION,
+            candidates: Vec::new(),
+        });
+        chain
+    };
+    let attempt_alpha = attempt_budget(&with(1), settings.family_alpha);
+    let mut max_cells = 0;
+    while tail_supported(
+        settings.bootstrap_resamples,
+        attempt_alpha / f64::from(comparisons(&with(max_cells + 1))?),
+    ) {
+        max_cells += 1;
+    }
+    let spending_reservations = entries.iter().filter(|e| e.comparisons > 0).count();
+    Ok(NextAttempt {
+        reservations: entries.len(),
+        spending_reservations,
+        prior_comparisons: entries
+            .iter()
+            .try_fold(0u32, |n, e| n.checked_add(e.comparisons))
+            .ok_or_else(|| invalid("family comparison count overflow"))?,
+        attempt: spending_reservations + 1,
+        attempt_alpha,
+        max_cells,
+    })
 }
 
 /// Canonical attempted candidate identities from the frozen plan and arm

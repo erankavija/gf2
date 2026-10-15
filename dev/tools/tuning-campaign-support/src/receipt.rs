@@ -43,6 +43,15 @@ pub const LOG_FILE: &str = "execution.log";
 pub const CHECKPOINT_DIR: &str = "checkpoints";
 /// Exact runner plan copied beside the receipt.
 pub const PLAN_FILE: &str = "plan.json";
+/// Expected bootstrap draws each tail of a non-exploratory interval needs (P-20).
+pub const MIN_TAIL_DRAWS: f64 = 20.0;
+
+/// Whether `resamples` bootstrap draws leave [`MIN_TAIL_DRAWS`] expected draws
+/// in each tail at the per-comparison `corrected_alpha` (P-20).
+#[must_use]
+pub fn tail_supported(resamples: u32, corrected_alpha: f64) -> bool {
+    f64::from(resamples) * corrected_alpha / 2.0 >= MIN_TAIL_DRAWS
+}
 
 /// Source identity at measurement time.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -2150,7 +2159,7 @@ pub fn evaluate_version(
                 .as_ref()
                 .and_then(|a| a.effect.measurement_resolution);
             endpoint_unresolved = resolution.is_none_or(|r| endpoint_shift > r)
-                || f64::from(settings.bootstrap_resamples) * corrected_alpha / 2.0 < 20.0;
+                || !tail_supported(settings.bootstrap_resamples, corrected_alpha);
             if endpoint_unresolved {
                 e.note("P-20", Some(id), "bootstrap endpoints lack declared numerical resolution or twenty tail replicates");
             }
