@@ -88,7 +88,7 @@ struct WaveRoute {
     frames: usize,
     route: String,
 }
-
+// A copy of the arms' worker under @/issue/e5f8b3ae: a `lib.rs` change moves pinned digests.
 /// One worker's reused default-constructed decoder and buffers.
 struct TunedWorker {
     decoder: LdpcBatchDecoder,
@@ -189,7 +189,7 @@ struct Diagnostics<'a> {
     workspace_bytes: Vec<usize>,
     conversion: arm::ConversionCosts,
 }
-
+// A copy of the arms' cell under @/issue/e5f8b3ae: a `lib.rs` change moves pinned digests.
 fn run() -> Result<(), String> {
     let envelope = install_envelope()?;
     let request = arm::read_request()?;

@@ -73,8 +73,7 @@
       "environment": {
         "CARGO_CI_NO_SCCACHE": "1",
         "RUSTFLAGS": "-C target-cpu=native",
-        "CXX": "c++",
-        "GF2_AFF3CT_ROOT": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct"
+        "CXX": "c++"
       },
       "argv": [
         "./scripts/cargo-budget.sh",
@@ -265,7 +264,7 @@
       ],
       "compiler_options": [],
       "inputs": {
-        "repository_files_sha256": "35cc90d73f8c36fd813d84ae1f7c385331ba3e15fdefa112b9cdf48838d91d77",
+        "repository_files_sha256": "b7d6f17da19f5c7dac6ae98a455f9952d7e2364775526ca1f1a79b774677861a",
         "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
