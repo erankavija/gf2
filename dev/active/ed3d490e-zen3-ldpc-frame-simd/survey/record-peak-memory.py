@@ -207,8 +207,13 @@ def arm_identity(build, name):
     return {**arm_build.arm_build(build, name), "environment": build["arms"][name]["environment"]}
 
 
+def executable_path(row):
+    """Where the build record found the arm's executable, without checking it."""
+    return smoke.ROOT / (row["path"] if "path" in row else row["found_at"][0])
+
+
 def executable_of(row):
-    path = smoke.ROOT / (row["path"] if "path" in row else row["found_at"][0])
+    path = executable_path(row)
     if sha256_file(path) != row["executable_sha256"]:
         sys.exit(f"{path} differs from its pinned digest")
     return path
