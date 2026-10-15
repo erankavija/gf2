@@ -35,8 +35,8 @@ use tuning_campaign_support::host::{
     inherited_lock, resolve_core_arm, CpuAffinity, HostObservation,
 };
 use tuning_campaign_support::journal::{
-    atomic_replace, atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, JournalRecord,
-    ResumeIdentity, TerminalState,
+    atomic_replace, atomic_write_new, remove_stale_temporaries, CheckpointStore, ExecutionLog,
+    JournalEvent, JournalRecord, ResumeIdentity, TerminalState,
 };
 use tuning_campaign_support::protocol::{
     sha256_hex, ArtifactPin, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan, SharedInput,
@@ -1159,7 +1159,9 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
     };
     let mut bytes = serde_json::to_vec_pretty(&receipt)?;
     bytes.push(b'\n');
-    fs::write(out_dir.join(RECEIPT_FILE), bytes)?;
+    // Written last and atomically: a receipt that exists is a finished finalize.
+    remove_stale_temporaries(&out_dir.join(RECEIPT_FILE))?;
+    atomic_replace(&out_dir.join(RECEIPT_FILE), &bytes)?;
     let _ = root;
     println!(
         "GF2_BENCHMARK_RECEIPT={}",

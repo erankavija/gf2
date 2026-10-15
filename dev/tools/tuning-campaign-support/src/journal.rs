@@ -1812,6 +1812,34 @@ pub fn atomic_replace(path: &Path, bytes: &[u8]) -> io::Result<()> {
     atomic_write(path, bytes, true)
 }
 
+/// Removes the temporary siblings an interrupted atomic write of `path` left,
+/// and nothing else. Only a sole writer of `path` may call it.
+pub fn remove_stale_temporaries(path: &Path) -> io::Result<()> {
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let Some(prefix) = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(temporary_prefix)
+    else {
+        return Ok(());
+    };
+    for entry in fs::read_dir(parent)? {
+        let entry = entry?;
+        if entry
+            .file_name()
+            .to_str()
+            .is_some_and(|name| name.starts_with(&prefix))
+        {
+            fs::remove_file(entry.path())?;
+        }
+    }
+    Ok(())
+}
+
+fn temporary_prefix(file_name: &str) -> String {
+    format!(".{file_name}.tmp-")
+}
+
 fn atomic_write(path: &Path, bytes: &[u8], replace: bool) -> io::Result<()> {
     let parent = path.parent().unwrap_or_else(|| Path::new("."));
     atomic_write_at(path, bytes, replace, parent)
@@ -1840,7 +1868,8 @@ fn atomic_write_at(
     let mut reserved = None;
     for attempt in 0..128_u8 {
         let temporary = temporary_parent.join(format!(
-            ".{file_name}.tmp-{}-{nonce}-{attempt}",
+            "{}{}-{nonce}-{attempt}",
+            temporary_prefix(file_name),
             std::process::id()
         ));
         match OpenOptions::new()

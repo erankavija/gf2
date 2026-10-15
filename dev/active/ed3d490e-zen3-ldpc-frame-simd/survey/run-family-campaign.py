@@ -1,16 +1,8 @@
 #!/usr/bin/env python3
-"""Benchmark-window launcher of a protocol family of the batch decoder story (jit:dbea4e10).
-
-Runs `PLAN` in `benchmark-ab-runner run` sessions under the plan's lock wrapper until its stage
-completes, then finalizes, verifies and evaluates the receipt beside the family ledger. The
-plan's campaign ID fixes the stage and the receipt, so the same command resumes an interrupted
-campaign without repeating a completed cell. It refuses outside the benchmark window, an addendum
-differing from its committed bytes, and an arm executable whose digest `BUILD_IDENTITY` does not
-name. `--untimed` runs the same stage through the runner's staged smoke, with no window, lock,
-ledger or receipt.
-
-Usage (from the worktree root): run-family-campaign.py PLAN BUILD_IDENTITY [--untimed]
-"""
+"""Usage (from the worktree root): run-family-campaign.py PLAN BUILD_IDENTITY [--untimed].
+Runs a story family's plan in the benchmark window (jit:dbea4e10); the plan's campaign ID fixes
+the stage and receipt, so rerunning resumes without repeating a completed cell. `--untimed` runs
+the stage as the runner's staged smoke."""
 
 import importlib.util
 import json
@@ -35,7 +27,6 @@ WINDOW = "GF2_BENCH_WINDOW"
 
 
 def committed(path):
-    """Whether git tracks `path` with the working-tree bytes of HEAD."""
     def quiet(*command):
         return subprocess.run(["git", "-C", str(smoke.ROOT), *command, "--", str(path)],
                               capture_output=True).returncode == 0
@@ -43,7 +34,6 @@ def committed(path):
 
 
 def unidentified(plan, build_identity):
-    """Plan arms whose executable digest no arm of the build identity record names."""
     pinned = {arm["executable_sha256"] for arm in build_identity["arms"].values()}
     absent = []
     for name, arm in sorted(plan["arms"].items()):
@@ -57,7 +47,6 @@ def unidentified(plan, build_identity):
 
 
 def genesis(ledger):
-    """Creates the family ledger's empty genesis file unless the ledger exists."""
     ledger.parent.mkdir(parents=True, exist_ok=True)
     try:
         ledger.open("x").close()
@@ -66,16 +55,14 @@ def genesis(ledger):
 
 
 def stage_complete(verifier, log):
-    """Whether the stage journalled its terminal `complete` record."""
     try:
         return verifier.stage_complete(str(log))
     except ValueError:
-        # A torn trailing append, which the next session recovers.
+        # A torn trailing append; the next session recovers it.
         return False
 
 
 def timed(plan_path, plan, campaign, ledger):
-    """Runs the stage's sessions in the window, then finalizes and evaluates its receipt."""
     runner, environment = smoke.build_runner("benchmark-acceptance")
     acceptance = pathlib.Path(runner).with_name("benchmark-acceptance")
     verifier = load(smoke.ROOT / smoke.located("file", "verify-campaign-log.py"))
@@ -89,7 +76,7 @@ def timed(plan_path, plan, campaign, ledger):
         status = subprocess.run(session, env=environment).returncode
         if status not in (0, validation.PAUSED):
             sys.exit(f"session exited {status}; the same command resumes {stage}")
-    # The runner writes the receipt last, so a finalize it lacks is repeated in full.
+    # The runner writes the receipt last and atomically.
     if not (out / "receipt.json").exists():
         subprocess.run([runner, "finalize", str(stage), str(out)], check=True)
     print(verifier.verify(str(out / "execution.log"), str(out / "receipt.json"),

@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Check the family launcher's refusals untimed and its resumption on an untimed fake family.
-
-The fake family's arms are the runner package's synthetic workload; one of them waits at a gate,
-which holds a session open until the test interrupts the launcher.
-"""
+"""The family launcher's refusals, and its resumption of a fake family interrupted mid-cell."""
 
 import importlib.util
 import json
@@ -39,7 +35,6 @@ exec {workload}
 
 
 def addendum(ledger, role):
-    """A version-4 kernel family over the synthetic workload, one cell per `CELLS`."""
     cell = {
         "objective": "improvement", "role": role,
         "workload": {"identity": "xor-fold", "size": {"words": 64}, "seed": 1},
@@ -71,7 +66,6 @@ def addendum(ledger, role):
 
 
 def plan(campaign_id, addendum_path, lock, label, workload, gated, gate, reached):
-    """Plan of `addendum`: one cell per session, the gated arm the candidate of `GATED_CELL`."""
     def arm(executable, environment):
         return {"build": "conservative-portable", "description": "synthetic workload",
                 "executable": str(executable), "arguments": [], "environment": environment,
@@ -92,7 +86,6 @@ def plan(campaign_id, addendum_path, lock, label, workload, gated, gate, reached
 
 
 class Fixture:
-    """A fake family under `SCRATCH`, or under `root` for a repository of its own."""
 
     def __init__(self, test, label="pilot", root=None):
         self.root = root or ROOT
@@ -119,7 +112,6 @@ class Fixture:
         self.identify(Workload.path, self.gated)
 
     def identify(self, *executables):
-        """Writes a build identity record naming the digests of `executables`."""
         arms = {f"arm-{index}": {"executable_sha256": peak.sha256_file(path)}
                 for index, path in enumerate(executables)}
         self.identity.write_text(json.dumps({"arms": arms}), encoding="utf-8")
@@ -141,7 +133,6 @@ class Fixture:
 
 
 class Workload:
-    """The synthetic workload arm, built once."""
     path = None
 
     @classmethod
