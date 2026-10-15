@@ -3277,7 +3277,8 @@
   "handoff-29.md",
   "handoff-30.md",
   "handoff-31.md",
-  "handoff-32.md"
+  "handoff-32.md",
+  "handoff-34.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -3324,6 +3325,6 @@
    "859bc8cb": "waiting on invoker ruling on REQ-02 (escalations, 2026-10-15); branch worktree-agent-859bc8cb d27193d4b unmerged",
    "37aa7254": "waiting on invoker ruling (escalations, 2026-10-15); nothing committed"
   },
-  "window_run": "Session 38 (invoker: no window policy this session): the lead runs bench-window/run-window.sh in-session on a quiet host for f434ddd3 (profile series), a91e7cef, a7ae2623, 9bcc7e73, 493dba5a, caabc4e1 pilots; collection issues d0d2c1bd, 093ae4d0, fb65bb3f, 87a6bb36, a80062a1 claimed by the lead. Ran 2026-10-15 04:37-05:13Z, window rc 0: profile series 9 sessions complete; five pilots complete at declared pairs, each Accepted (caabc4e1 with 6 findings). Collection dispatched to w-collect on worktree-agent-collect."
+  "window_run": "Session 38 (invoker: no window policy this session): the lead runs bench-window/run-window.sh in-session on a quiet host for f434ddd3 (profile series), a91e7cef, a7ae2623, 9bcc7e73, 493dba5a, caabc4e1 pilots; collection issues d0d2c1bd, 093ae4d0, fb65bb3f, 87a6bb36, a80062a1 claimed by the lead. Ran 2026-10-15 04:37-05:13Z, window rc 0: profile series 9 sessions complete; five pilots complete at declared pairs, each Accepted (caabc4e1 with 6 findings). Collection dispatched to w-collect on worktree-agent-collect. Confirmations ran 06:15-06:50Z (d0d2c1bd, 093ae4d0, 87a6bb36 queue lines): each complete and Accepted, qualifies=false; collection issues 32bfe9f8, a03daf3f, 7eddc5e2 claimed by the lead, not dispatched."
  }
 }
