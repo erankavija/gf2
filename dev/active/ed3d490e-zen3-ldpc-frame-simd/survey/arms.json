@@ -54,6 +54,18 @@
       },
       "package": "ldpc-batch-arms"
     },
+    "gf2-batch-tuned": {
+      "source": "workspace",
+      "executable": "gf2-batch-tuned-arm",
+      "build": "native",
+      "comparison": "candidate",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope",
+      "environment": {},
+      "package": "ldpc-batch-tuned-arm"
+    },
     "aff3ct-flooding-nms-f32": {
       "source": "pinned",
       "executable": "aff3ct-throughput-arm",

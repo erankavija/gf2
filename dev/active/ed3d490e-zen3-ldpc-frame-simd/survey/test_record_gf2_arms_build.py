@@ -218,14 +218,19 @@ class BuildEnvironmentTest(unittest.TestCase):
         self.assertEqual(environment["CXX"], recorder.CXX)
 
 
-class LinkedMembersTest(unittest.TestCase):
-    def test_only_members_outside_the_default_build_link_the_aff3ct_tree(self):
-        metadata = {"packages": [{"id": "arms", "name": "ldpc-batch-arms"},
-                                 {"id": "profile", "name": "ldpc-batch-profile"},
-                                 {"id": "intra", "name": "ldpc-aff3ct-intra-arm"}],
-                    "workspace_default_members": ["arms", "profile"]}
-        self.assertEqual(recorder.linked_members(metadata),
-                         ["--package", "ldpc-aff3ct-intra-arm"])
+class SeparateMembersTest(unittest.TestCase):
+    def test_each_member_outside_the_default_build_builds_alone(self):
+        def package(name, features=()):
+            return {"id": name, "name": name,
+                    "dependencies": [{"name": HARNESS, "features": list(features)}]}
+
+        metadata = {"packages": [package("ldpc-batch-arms"), package("ldpc-batch-profile"),
+                                 package("ldpc-aff3ct-intra-arm", ["aff3ct"]),
+                                 package("ldpc-batch-tuned-arm")],
+                    "workspace_default_members": ["ldpc-batch-arms", "ldpc-batch-profile"]}
+        self.assertEqual(recorder.separate_members(metadata),
+                         [(["--package", "ldpc-aff3ct-intra-arm"], True),
+                          (["--package", "ldpc-batch-tuned-arm"], False)])
 
 
 @unittest.skipUnless(os.environ.get("GF2_AFF3CT_ROOT"), "needs the staged AFF3CT tree")

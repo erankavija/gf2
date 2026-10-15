@@ -68,6 +68,28 @@
         "--package",
         "ldpc-aff3ct-intra-arm"
       ]
+    },
+    {
+      "environment": {
+        "CARGO_CI_NO_SCCACHE": "1",
+        "RUSTFLAGS": "-C target-cpu=native",
+        "CXX": "c++"
+      },
+      "argv": [
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--config",
+        "target.x86_64-unknown-linux-gnu.linker=\"dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh\"",
+        "--package",
+        "ldpc-batch-tuned-arm"
+      ]
     }
   ],
   "release_profile": {
@@ -88,7 +110,7 @@
         "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
       ],
       "inputs": {
-        "repository_files_sha256": "ed4a7e377fc17e5123f6584b3fbcd91f00d1881dc2f8a4e892fe2719c63cb76c",
+        "repository_files_sha256": "f3cc793a598d1146abb29df632efe1db45b940b1a031be10cd1aba4a510ea0f1",
         "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -131,7 +153,7 @@
         "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
       ],
       "inputs": {
-        "repository_files_sha256": "a5241d8e9b2240eeb15af9c64ed501f71c8dbec1e37a38febba66a12b17dfc23",
+        "repository_files_sha256": "b3af8691f7fd03032034950307ad29958a762b13fb7442cc715458dafb1615e3",
         "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -172,7 +194,7 @@
       ],
       "compiler_options": [],
       "inputs": {
-        "repository_files_sha256": "703a0e38419d13cb1879066b85da9a4f1638d2925a7e8a63fa21f86a9f5ddbde",
+        "repository_files_sha256": "1abc4d4c0ca5a9485d3ce4e6306c23b2086077cd5c8bce24a62b1797663b832d",
         "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -207,7 +229,42 @@
       ],
       "compiler_options": [],
       "inputs": {
-        "repository_files_sha256": "e883be357f54889b09b0cb99087ab97af6a562f8eeee9673688df7350f1e6e64",
+        "repository_files_sha256": "924aa2e86e731589b1df49124d9be9ed993a2eb7dfa6133bde54f7567d649f4a",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
+      }
+    },
+    "gf2-batch-tuned-arm": {
+      "sha256": "cbd1cc20edf3beaa5d39348314332c8cca38cb4b34d5dac2924153a079994ff5",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
+      "inputs": {
+        "repository_files_sha256": "b7d6f17da19f5c7dac6ae98a455f9952d7e2364775526ca1f1a79b774677861a",
         "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -242,7 +299,7 @@
       ],
       "compiler_options": [],
       "inputs": {
-        "repository_files_sha256": "7aa7500c2e1d7c7d5d7863c67a282d01ad3f86a5208823c930565c7c607b7edd",
+        "repository_files_sha256": "4b0035daf3d99e16e6052a0e3ec06085c8ea59950ed256e0087cbfaa717f2451",
         "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "linked": {
           "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
@@ -290,7 +347,7 @@
   },
   "catalogue": {
     "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json",
-    "sha256": "5ac545032d33d3f376e9249f6b08bca22ff11575cd1e7d8e22816a2eafca2c78"
+    "sha256": "50e77a40959163278b4df5dcd9f75888dabc204d3f9e90d579ba3531126651fe"
   },
   "arms": {
     "aff3ct-flooding-nms-f32": {
@@ -388,12 +445,20 @@
       "package": "ldpc-batch-arms",
       "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
       "executable_sha256": "8bf89e432b7ac18d6734052b04f90b4e398058ae2dd62c90814b94e29594aeb0"
+    },
+    "gf2-batch-tuned": {
+      "source": "workspace",
+      "executable": "gf2-batch-tuned-arm",
+      "environment": {},
+      "package": "ldpc-batch-tuned-arm",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+      "executable_sha256": "cbd1cc20edf3beaa5d39348314332c8cca38cb4b34d5dac2924153a079994ff5"
     }
   },
   "isolation": {
     "workspace_root": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms",
-    "manifest_sha256": "058e1a448c91ef339603b4bab9d2323a6fcc420a31e0124750682f3832683db7",
-    "lockfile_sha256": "fca9f54c76ce9d74ace5abac0af2067d4c487107bc37661b890ce7de4c7a3160",
+    "manifest_sha256": "4a7e2fca8a879ffbe983e23efb7d0d179841f493fcad8fc3a66d8f42ae6c0216",
+    "lockfile_sha256": "84cc3b99130d0a1fc0cde55f9e8feb6853cbcfad18db2616b6ac160c2cf7fd4e",
     "target_directory": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target",
     "declared_names": [
       "aff3ct-intra-arm",
@@ -401,9 +466,11 @@
       "aff3ct_intra",
       "gf2-batch-lane-arm",
       "gf2-batch-single-frame-arm",
+      "gf2-batch-tuned-arm",
       "ldpc-aff3ct-intra-arm",
       "ldpc-batch-arms",
       "ldpc-batch-profile",
+      "ldpc-batch-tuned-arm",
       "ldpc_batch_arms"
     ],
     "names_shared_with_pinned_executables": [],
