@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Check the validation record beside the build record against it and the smoke families."""
+"""Check the staged smoke's resumption and the validation record beside the build record.
+
+The committed-record tests read the committed record, the build record and the smoke families.
+"""
 
 import importlib.util
 import json
+import os
+import shutil
 import sys
+import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
@@ -14,6 +20,63 @@ spec = importlib.util.spec_from_file_location("arm_validation", SURVEY / "record
 recorder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recorder)
 peak, smoke = recorder.peak, recorder.smoke
+
+
+# A staged smoke that pauses (exit 3) on its first `PAUSES` calls, counted in `COUNT`, then completes.
+RUNNER = """#!/bin/sh
+echo >> "$COUNT"
+stage=$4
+mkdir -p "$stage"
+if [ "$(wc -l < "$COUNT")" -le "$PAUSES" ]; then
+    echo '{"event": "paused"}' >> "$stage/execution.log"
+    exit 3
+fi
+echo '{"event": "complete"}' >> "$stage/execution.log"
+cp "$2" "$stage/plan.json"
+printf '{"cells": []}' > "$6"
+"""
+
+
+class StagedSmokeTest(unittest.TestCase):
+    def setUp(self):
+        self.directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.directory)
+        self.runner = self.directory / "runner"
+        self.runner.write_text(RUNNER, encoding="utf-8")
+        self.runner.chmod(0o755)
+        self.plan = self.directory / "arm.plan.json"
+        self.plan.write_text("{}", encoding="utf-8")
+        self.stage, self.record = self.directory / "arm.stage", self.directory / "arm.smoke.json"
+        self.count = self.directory / "count"
+
+    def smoke(self, pauses):
+        environment = {**os.environ, "COUNT": str(self.count), "PAUSES": str(pauses)}
+        recorder.staged_smoke(str(self.runner), environment, self.plan, self.stage, self.record)
+        return len(self.count.read_text(encoding="utf-8").splitlines()) if self.count.exists() else 0
+
+    def test_a_paused_stage_is_resumed_until_it_completes(self):
+        self.assertEqual(self.smoke(pauses=2), 3)
+        self.assertTrue(recorder.complete(self.stage))
+
+    def test_a_complete_stage_is_reused_without_a_dispatch(self):
+        self.smoke(pauses=0)
+        self.count.unlink()
+        self.assertEqual(self.smoke(pauses=0), 0)
+
+    def test_a_complete_stage_of_another_plan_is_refused(self):
+        self.smoke(pauses=0)
+        self.plan.write_text('{"changed": true}', encoding="utf-8")
+        with self.assertRaises(SystemExit):
+            self.smoke(pauses=0)
+
+    def test_a_complete_stage_of_another_executable_is_refused(self):
+        executable = self.directory / "arm"
+        executable.write_bytes(b"built")
+        self.smoke(pauses=0)
+        self.record.write_text(json.dumps({"cells": [{"arms": [{
+            "executable": str(executable), "executable_sha256": "0" * 64}]}]}), encoding="utf-8")
+        with self.assertRaises(SystemExit):
+            self.smoke(pauses=0)
 
 
 class CommittedRecordTest(unittest.TestCase):

@@ -105,10 +105,10 @@ def arm_plans(rows, files, batches, group=GROUP, family=FAMILY, label="peak-memo
     """Per arm and code, the throwaway plan of the arm against a smoke arm and its cell ids.
 
     The plan holds every cell of the smoke family `family` on the code at the batch `batches`
-    gives the arm; the recorded bundles are extracted afresh under `scratch`.
+    gives the arm. The recorded bundles are extracted under `scratch`, which keeps the rest of
+    its contents, so a caller's stages there resume.
     """
-    shutil.rmtree(scratch, ignore_errors=True)
-    (scratch / "inputs").mkdir(parents=True)
+    (scratch / "inputs").mkdir(parents=True, exist_ok=True)
     with tarfile.open(smoke.by_digest(smoke.ARCHIVE)) as handle:
         handle.extractall(scratch / "inputs", filter="data")
     base = family_batches(family)
