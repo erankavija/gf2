@@ -35,8 +35,8 @@ use tuning_campaign_support::host::{
     inherited_lock, resolve_core_arm, CpuAffinity, HostObservation,
 };
 use tuning_campaign_support::journal::{
-    atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, JournalRecord, ResumeIdentity,
-    TerminalState,
+    atomic_replace, atomic_write_new, CheckpointStore, ExecutionLog, JournalEvent, JournalRecord,
+    ResumeIdentity, TerminalState,
 };
 use tuning_campaign_support::protocol::{
     sha256_hex, ArtifactPin, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan, SharedInput,
@@ -949,6 +949,31 @@ fn open_stage(stage: &Path) -> io::Result<Stage> {
     })
 }
 
+/// The record of a stage whose validation session completed for this plan and
+/// these executables, which a complete stage cannot resume to export again;
+/// `None` while the stage has work left or a journal append to recover.
+fn completed_smoke(stage: &Path, plan_path: &Path) -> io::Result<Option<SmokeRecord>> {
+    let Ok(log) = fs::read(stage.join(LOG_FILE)) else {
+        return Ok(None);
+    };
+    let (plan, plan_bytes) = read_plan(plan_path)?;
+    let complete = log.ends_with(b"\n")
+        && ExecutionLog::validate_prefix(&log, &plan.campaign_id).is_ok_and(|records| {
+            validation_stage(&records)
+                && records.last().map(|record| record.event) == Some(JournalEvent::Complete)
+        });
+    if !complete {
+        return Ok(None);
+    }
+    let staged = open_stage(stage)?;
+    if staged.plan_bytes != plan_bytes || staged.facts.arms != arm_records(&plan)? {
+        return Err(invalid(
+            "the stage completed under another plan or other executables",
+        ));
+    }
+    staged_record(stage).map(Some)
+}
+
 /// The smoke's record of a completed validation stage, read from the
 /// checkpoints the session accepted.
 fn staged_record(stage: &Path) -> io::Result<SmokeRecord> {
@@ -1188,11 +1213,14 @@ fn smoke(plan_path: &Path, record_path: Option<&Path>, stage: Option<&Path>) -> 
                 Some(tuning_campaign_support::arm::smoke(&root, plan_path)?),
             )
         }
-        Some(stage) => {
-            let code = run_session(stage, plan_path, SessionDispatch::Validation)?;
-            let record = (code == 0).then(|| staged_record(stage)).transpose()?;
-            (code, record)
-        }
+        Some(stage) => match completed_smoke(stage, plan_path)? {
+            Some(record) => (0, Some(record)),
+            None => {
+                let code = run_session(stage, plan_path, SessionDispatch::Validation)?;
+                let record = (code == 0).then(|| staged_record(stage)).transpose()?;
+                (code, record)
+            }
+        },
     };
     let Some(record) = record else {
         return Ok(code);
@@ -1206,7 +1234,7 @@ fn smoke(plan_path: &Path, record_path: Option<&Path>, stage: Option<&Path>) -> 
         {
             fs::create_dir_all(parent)?;
         }
-        fs::write(path, bytes)?;
+        atomic_replace(path, &bytes)?;
     }
     let dispatches: usize = record.cells.iter().map(|cell| cell.arms.len()).sum();
     let windows: usize = record
@@ -1263,7 +1291,8 @@ fn usage() -> ! {
          receipt, and fails an arm that reports a timing window. --stage \
          drives those dispatches through the session loop, execution log and \
          checkpoints, pausing at the plan\'s cells-per-session budget and \
-         resuming without repeating a completed cell; finalize refuses such a \
+         resuming without repeating a completed cell, and a complete stage \
+         exports its record again without a dispatch; finalize refuses such a \
          stage. launch prints how the runner starts one arm in that position, \
          without starting it."
     );

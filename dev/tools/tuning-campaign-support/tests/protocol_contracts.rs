@@ -4363,7 +4363,8 @@ mod arm_wire {
 }
 
 #[test]
-fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
+fn staged_smoke_pauses_resumes_reexports_and_finalize_refuses_the_stage() {
+    use std::io::Write as _;
     use tuning_campaign_support::arm::{PairPosition, SmokeRecord};
     let root = scratch("staged-smoke");
     let repo = root.join("repo");
@@ -4470,6 +4471,14 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
     assert_eq!(paused.last().unwrap().event, JournalEvent::Paused);
     assert!(!record.exists(), "a paused staged smoke wrote its record");
 
+    // An append the interruption tore off is recovered by the resume.
+    let mut torn = fs::OpenOptions::new()
+        .append(true)
+        .open(stage.join(LOG_FILE))
+        .unwrap();
+    torn.write_all(b"{\"schema\":\"tuning-campaign-jou")
+        .unwrap();
+    drop(torn);
     let second = smoke();
     assert_eq!(
         second.status.code(),
@@ -4529,6 +4538,31 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
         .iter()
         .flat_map(|cell| &cell.arms)
         .all(|arm| arm.windows == 0 && arm.role == PairPosition::Validation));
+
+    // A complete stage exports its record again from its checkpoints, dispatching nothing.
+    let exported = fs::read(&record).unwrap();
+    let log = fs::read(stage.join(LOG_FILE)).unwrap();
+    fs::write(&record, &exported[..exported.len() / 2]).unwrap();
+    let third = smoke();
+    assert_eq!(
+        third.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&third.stderr)
+    );
+    assert_eq!(fs::read(&record).unwrap(), exported);
+    assert_eq!(fs::read(stage.join(LOG_FILE)).unwrap(), log);
+
+    let mut changed = plan.clone();
+    changed["campaign_seed"] = json!(12);
+    fs::write(&plan_path, serde_json::to_vec_pretty(&changed).unwrap()).unwrap();
+    let other = smoke();
+    assert!(!other.status.success());
+    assert!(
+        String::from_utf8_lossy(&other.stderr).contains("another plan"),
+        "{}",
+        String::from_utf8_lossy(&other.stderr)
+    );
 
     let refused = Command::new(runner)
         .args(["finalize"])

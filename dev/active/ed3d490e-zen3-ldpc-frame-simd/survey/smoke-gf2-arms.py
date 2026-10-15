@@ -269,8 +269,13 @@ def throwaway(group, family, base, derived, refusing=None, unusable=None):
 
 
 def child_diagnostics(stage):
-    """The child-diagnostic events of a stage's execution log."""
-    lines = (stage / "execution.log").read_text(encoding="utf-8").splitlines()
+    """The child-diagnostic events of a stage's execution log.
+
+    A trailing line without its newline is an append an interruption tore off; the runner
+    recovers it when it resumes the stage, so it is not read here.
+    """
+    text = (stage / "execution.log").read_text(encoding="utf-8")
+    lines = text.splitlines()[:text.count("\n")]
     return [event for event in map(json.loads, lines) if event["event"] == "child-diagnostic"]
 
 
