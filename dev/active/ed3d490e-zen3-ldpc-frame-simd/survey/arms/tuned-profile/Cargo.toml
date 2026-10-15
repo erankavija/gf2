@@ -3,7 +3,8 @@
 #
 # A member outside the default build that the build record builds alone: its
 # `tuning-profile` feature of `gf2-coding` would otherwise unify into the
-# other arms' builds and move the digests of their executables.
+# other arms' builds and move the digests of their executables. It repeats the
+# cell of the arms' library, whose change moves those digests too.
 
 # The path dependencies below count directory levels to the harness crates and
 # the workspace crates: the named exception `harness-path-dependencies` to
