@@ -7,8 +7,10 @@ the declaration's `cell` overlaid with its own entry, and its `case` overrides t
 its decoder block derives, where the arms' shared case differs from that block; a family's declaration is
 `families/<family>.json` beside this script. The plan names its addendum relative to the repository root when
 it lies inside it, and the bundles extracted beside it by absolute host path; one declaration and one output directory give the same bytes.
+`--confirmation` plans the declaration's `confirmation` campaign over the cells of the confirmation
+addendum the canonical freezer wrote to OUT_DIR, which the generator reads and never writes.
 
-Usage (from the worktree root): make-family.py DECLARATION OUT_DIR
+Usage (from the worktree root): make-family.py DECLARATION OUT_DIR [--confirmation]
 """
 
 import importlib.util
@@ -27,6 +29,8 @@ smoke, arm_build = peak.smoke, peak.arm_build
 ADDENDUM = "addendum.json"
 PLAN = "plan.json"
 INPUTS = "inputs"
+# The declaration block that identifies the campaign of each plan label.
+CAMPAIGN = {"pilot": "campaign", "confirmation": "confirmation"}
 # `protocol::PLAN_SCHEMA_ID` of the campaign support crate.
 PLAN_SCHEMA = "zen3-benchmark-plan-v1"
 SHARED_SECTION = "## Frozen shared settings"
@@ -173,8 +177,9 @@ def rustflags(build, name):
     return flags
 
 
-def plan(declaration, cells, manifests, catalogue, build, addendum_path):
+def plan(declaration, cells, manifests, catalogue, build, addendum_path, label):
     files = peak.quality_files(build)
+    campaign = declaration[CAMPAIGN[label]]
     arms, planned = {}, []
     for declared in cells:
         key = declared["code"]
@@ -210,14 +215,13 @@ def plan(declaration, cells, manifests, catalogue, build, addendum_path):
                 "quality_frames": manifests[key]["manifest"]["frames"],
                 **declared.get("case", {}),
             },
-            "pilot_pairs": declaration["campaign"]["pilot_pairs"],
+            "pilot_pairs": campaign.get("pilot_pairs"),
         })
-    campaign = declaration["campaign"]
     return {
         "schema": PLAN_SCHEMA,
         "campaign_id": campaign["id"],
         "issue": declaration["family"]["issue"],
-        "label": "pilot",
+        "label": label,
         "campaign_seed": campaign["seed"],
         "addendum": str(addendum_path),
         "producing_manifest": str(smoke.located("shared-producing-manifest")),
@@ -244,30 +248,38 @@ def write(path, document):
     partial.replace(path)
 
 
-def generate(declaration_path, out_dir):
+def generate(declaration_path, out_dir, confirmation=False):
     out_dir = pathlib.Path(out_dir).resolve()
     declaration = json.loads(pathlib.Path(declaration_path).read_text(encoding="utf-8"))
     _, build = peak.build_record()
     catalogue = json.loads((smoke.ROOT / build["catalogue"]["path"]).read_text(encoding="utf-8"))
     manifests = bundles(catalogue, out_dir)
     cells = [merged(declaration["cell"], cell) for cell in declaration["cells"]]
-    addendum_schema = schema()
-    document = addendum(declaration, cells, manifests, catalogue["arms"], addendum_schema,
-                        shared_settings(addendum_schema))
-    write(out_dir / ADDENDUM, document)
+    if confirmation:
+        frozen = json.loads((out_dir / ADDENDUM).read_text(encoding="utf-8"))
+        cells = [cell for cell in cells
+                 if cell["cell_id"] in {entry["cell_id"] for entry in frozen["cells"]}]
+    else:
+        addendum_schema = schema()
+        write(out_dir / ADDENDUM, addendum(declaration, cells, manifests, catalogue["arms"],
+                                           addendum_schema, shared_settings(addendum_schema)))
     write(out_dir / PLAN, plan(declaration, cells, manifests, catalogue, build,
-                               repository_path(out_dir / ADDENDUM)))
+                               repository_path(out_dir / ADDENDUM),
+                               "confirmation" if confirmation else "pilot"))
 
 
 def main():
     match sys.argv:
         case [_, declaration, out_dir]:
-            out_dir = pathlib.Path(out_dir).resolve()
+            confirmation = False
+        case [_, declaration, out_dir, "--confirmation"]:
+            confirmation = True
         case _:
             sys.exit(__doc__)
+    out_dir = pathlib.Path(out_dir).resolve()
     if pathlib.Path.cwd() != smoke.ROOT:
         sys.exit("invoke from the worktree root")
-    generate(declaration, out_dir)
+    generate(declaration, out_dir, confirmation)
     print(out_dir / ADDENDUM, out_dir / PLAN)
 
 

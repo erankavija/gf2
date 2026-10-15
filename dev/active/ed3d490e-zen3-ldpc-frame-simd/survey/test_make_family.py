@@ -155,6 +155,39 @@ class GeneratorTest(unittest.TestCase):
             self.assertEqual(size["timed_frames"], size["timed_batch"] * size["workers"])
             self.assertEqual(cell["decoder"]["input"]["llr_sha256"], manifest["llrs_sha256"])
 
+    def test_a_confirmation_plans_its_frozen_cells_at_the_confirmatory_count(self):
+        pilot, pilot_plan = self.generate()
+        declaration = copy.deepcopy(self.declaration)
+        declaration["confirmation"] = {"id": "generator-sample-confirmation",
+                                       "seed": declaration["campaign"]["seed"] + 1,
+                                       "max_cells_per_session":
+                                           declaration["campaign"]["max_cells_per_session"]}
+        frozen = copy.deepcopy(pilot)
+        frozen["cells"] = [{**cell, "role": "confirmatory"} for cell in pilot["cells"][1:]]
+        path = self.directory / "confirmation.json"
+        path.write_text(json.dumps(declaration), encoding="utf-8")
+        out_dir = self.directory / "confirmation"
+        out_dir.mkdir()
+        frozen_bytes = json.dumps(frozen).encode()
+        (out_dir / generator.ADDENDUM).write_bytes(frozen_bytes)
+        generator.generate(path, out_dir, confirmation=True)
+        plan = json.loads((out_dir / generator.PLAN).read_text(encoding="utf-8"))
+        self.assertEqual((out_dir / generator.ADDENDUM).read_bytes(), frozen_bytes)
+        self.assertEqual((plan["label"], plan["campaign_id"], plan["campaign_seed"]),
+                         ("confirmation", declaration["confirmation"]["id"],
+                          declaration["confirmation"]["seed"]))
+        self.assertEqual(plan["addendum"], str(out_dir / generator.ADDENDUM))
+        self.assertEqual([cell["cell_id"] for cell in plan["cells"]],
+                         [cell["cell_id"] for cell in frozen["cells"]])
+        self.assertTrue(all(cell["pilot_pairs"] is None for cell in plan["cells"]))
+
+        def measured(cell):
+            return {**{key: value for key, value in cell.items() if key != "pilot_pairs"},
+                    "case": {key: value for key, value in cell["case"].items()
+                             if key != "bundle"}}
+        self.assertEqual(list(map(measured, plan["cells"])),
+                         list(map(measured, pilot_plan["cells"][1:])))
+
     def test_the_generator_holds_no_numeric_literal(self):
         tree = ast.parse((SURVEY / "make-family.py").read_text(encoding="utf-8"))
         numbers = [node.value for node in ast.walk(tree) if isinstance(node, ast.Constant)
