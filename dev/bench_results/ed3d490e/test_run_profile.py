@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """The profile series launchers' refusals and resumption, timing nothing.
 
-Each test runs a copy of a launcher beside a copy of its build record that
-pins a fake driver, through the real acquisition wrapper on private lock files
-and the real session script, with a `perf` that only runs the profiled command.
+A launcher copy runs beside a build record copy that pins a fake driver and
+sandbox quality files, through the real acquisition wrapper on private lock
+files and the real session script, with a `perf` that only runs its command.
 """
 
 import hashlib
@@ -22,18 +22,26 @@ HERE = Path(__file__).resolve().parent
 ROOT = Path(subprocess.run(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
                            check=True, capture_output=True, text=True).stdout.strip())
 LAUNCHER = HERE / "run-profile.sh"
-RESAMPLE = Path(subprocess.run(
-    ["git", "-C", str(ROOT), "ls-files", "--", ":(glob)**/run-profile-resample.sh",
-     ":(exclude,glob)**/inputs/**"], check=True, capture_output=True, text=True).stdout.strip())
+
+def located(name):
+    """Root-relative path `repository_files.py file` prints for `name`."""
+    def run(*command):
+        return subprocess.run(command, cwd=ROOT, check=True, capture_output=True,
+                              text=True).stdout.strip()
+    files = run("git", "ls-files", "--", ":(glob)**/repository_files.py",
+                ":(exclude,glob)**/inputs/**")
+    return Path(run("python3", "-B", files, "file", name))
+
+
+RESAMPLE = located("run-profile-resample.sh")
 RECORD = HERE / "preparation/build-identity.json"
+LANE_ARM = "gf2-batch-lane-avx2"
 DRIVER = "ldpc-batch-profile"
 CASES = ("stat\tsf-dvb-w1\tgf2-batch-single-frame\tdvb-t2-r12\tsingle-core\t8\t1\n"
          "record\tlane-nr-w1\tgf2-batch-lane-avx2\tnr-bg1-z384\tsingle-core\t8\t1\n")
-# Driver runs per session: two stat counter groups and one record case.
+# Two stat counter groups and one record case.
 RUNS_PER_SESSION = 3
 REPETITIONS = 9
-# Counts its runs; blocks at run BLOCK_AT, fails while FAIL is set, and edits
-# its own bytes at run EDIT_AT.
 FAKE_DRIVER = """#!/bin/sh
 n=$(( $(cat "$COUNTER" 2>/dev/null || echo 0) + 1 ))
 echo "$n" > "$COUNTER"
@@ -77,15 +85,36 @@ class Sandbox:
                     "GF2_CCX1_LOCK": str(directory / "lock"),
                     "GF2_CCX1_TURNSTILE": str(directory / "turnstile"),
                     "COUNTER": str(directory / "runs"), "REACHED": str(self.reached)}
-        for name in ("FAIL", "BLOCK_AT", "EDIT_AT"):
+        for name in ("FAIL", "BLOCK_AT", "EDIT_AT", "GF2_LDPC_LANE_BACKEND"):
             self.env.pop(name, None)
+        self.quality = self.prepared_quality()
         self.pin()
 
-    def pin(self, digest=None):
+    def prepared_quality(self):
+        """Copies the record of pinned quality files and the files it names into the sandbox."""
+        build = json.loads(RECORD.read_text(encoding="utf-8"))
+        source = ROOT / build["arms"]["aff3ct-flooding-nms-f32"]["pinned_by"]["record"]
+        pinned = json.loads(source.read_text(encoding="utf-8"))
+        directory = self.directory / "quality"
+        directory.mkdir()
+        files = {}
+        for path, digest in pinned["prepared_quality"].items():
+            shutil.copy2(ROOT / path, directory)
+            files[str((directory / Path(path).name).relative_to(ROOT))] = digest
+        pinned["prepared_quality"] = files
+        self.pinned_quality = directory / source.name
+        self.pinned_quality.write_text(json.dumps(pinned))
+        return directory
+
+    def pin(self, digest=None, edit=lambda record: None):
         """Writes the sandbox build record, pinning `digest` or the fake driver's."""
         record = json.loads(RECORD.read_text(encoding="utf-8"))
         record["executables"][DRIVER]["sha256"] = digest or sha256(self.driver)
         record["isolation"]["target_directory"] = str(self.driver.parent.parent.relative_to(ROOT))
+        for row in record["arms"].values():
+            if row.get("pinned_by"):
+                row["pinned_by"]["record"] = str(self.pinned_quality.relative_to(ROOT))
+        edit(record)
         (self.bench / "preparation" / RECORD.name).write_text(json.dumps(record))
 
     def command(self):
@@ -171,32 +200,61 @@ class ProfileLauncherTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stderr)
         return self.sandbox.log.read_text()
 
-    def test_refuses_to_resume_over_a_differing_executable(self):
+    def assertResumeRefused(self, change, **env):
         log = self.first_session_discarded()
-        with self.sandbox.driver.open("a") as driver:
-            driver.write("# rebuilt\n")
-        self.sandbox.pin()
-        result = self.sandbox.run()
+        change()
+        result = self.sandbox.run(**env)
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertLogFirst(result)
         self.assertIn("changed since the first session", result.stderr)
         self.assertEqual(self.sandbox.log.read_text(), log)
 
+    def test_refuses_to_resume_over_a_differing_executable(self):
+        def rebuild():
+            with self.sandbox.driver.open("a") as driver:
+                driver.write("# rebuilt\n")
+            self.sandbox.pin()
+        self.assertResumeRefused(rebuild)
+
     def test_refuses_to_resume_over_a_differing_case_file(self):
-        log = self.first_session_discarded()
-        with self.sandbox.cases.open("a") as cases:
-            cases.write("# edited\n")
-        result = self.sandbox.run()
-        self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertIn("changed since the first session", result.stderr)
-        self.assertEqual(self.sandbox.log.read_text(), log)
+        def edit():
+            with self.sandbox.cases.open("a") as cases:
+                cases.write("# edited\n")
+        self.assertResumeRefused(edit)
+
+    def test_refuses_to_resume_over_a_differing_route(self):
+        def reroute(record):
+            record["arms"][LANE_ARM]["executable"] = "gf2-batch-single-frame-arm"
+        self.assertResumeRefused(lambda: self.sandbox.pin(edit=reroute))
+
+    def test_refuses_to_resume_over_a_differing_backend_environment(self):
+        def portable(record):
+            record["arms"][LANE_ARM]["environment"] = {"GF2_LDPC_LANE_BACKEND": "portable"}
+        self.assertResumeRefused(lambda: self.sandbox.pin(edit=portable))
+
+    def test_refuses_to_resume_over_a_differing_inherited_variable(self):
+        self.assertResumeRefused(lambda: None, GF2_LDPC_LANE_BACKEND="portable")
+
+    def test_refuses_to_resume_over_a_differing_quality_file(self):
+        def edit():
+            with (self.sandbox.quality / "gf2-nms-f32-nr-bg1-z384.json").open("a") as quality:
+                quality.write("\n")
+        self.assertResumeRefused(edit)
+
+    def test_refuses_to_resume_over_a_differing_bundle(self):
+        expanded = (self.sandbox.out / "cases.expanded.tsv")
+        def edit():
+            manifest = Path(expanded.read_text().splitlines()[0].split("\t")[3]) / "manifest.json"
+            original = manifest.read_bytes()
+            self.addCleanup(manifest.write_bytes, original)
+            manifest.write_bytes(original + b"\n")
+        self.assertResumeRefused(edit)
 
     def test_refuses_a_session_after_the_executable_changes(self):
         result = self.sandbox.run(EDIT_AT=str(RUNS_PER_SESSION))
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertIn(f"differs from {DRIVER}", result.stderr)
         self.assertEqual(self.sandbox.records(), [["rep-01", "start"], ["rep-01", "done"]])
-
 
     def test_resample_refuses_an_executable_differing_from_its_record(self):
         bench = self.sandbox.directory / "resample"

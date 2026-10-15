@@ -1,40 +1,26 @@
 # shellcheck shell=bash
-# Session loop of a repeated profile series, sourced by the series launchers.
-#
-# `profile_series` runs profile-session.sh once per repetition, each session
-# inside its own `ccx1-bench-flock.sh --full-host` invocation. The launcher
-# defines `series_identity`, which refuses executables that differ from their
-# build record and prints the identity a session's start record carries, and
-# `series_cases`, which prints the expanded cases. `repetitions.log` is the
-# series' append-only execution log: each session's start with that identity,
-# its completion, and the discard of a session that did not finish or whose
-# every case failed. A re-run with the same output directory resumes after the
-# last completed session, re-runs an unfinished one whole, and refuses to
-# resume, or to start a session, when the identity differs from the first
-# session's record.
+# Session loop of a repeated profile series, sourced by its launchers, which
+# define `series_cases` (prints the expanded cases) and `series_identity
+# <expanded-cases>` (refuses a differing executable, prints the identity).
+# `repetitions.log` is the append-only execution log; a re-run resumes after
+# the last completed session, re-runs an unfinished one whole, and refuses any
+# session whose identity differs from the first session's.
 
 series_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 series_load() { cut -d' ' -f1-3 /proc/loadavg; }
 series_digest() { sha256sum "$1" | cut -d' ' -f1; }
-# Usage (from the worktree root): series_located <path-suffix> prints the
-# root-relative path of the one live tracked file ending in that suffix.
+# Usage (from the worktree root): series_located <name-or-path-suffix>
 series_located() {
-    local found
-    found="$(git ls-files -- ":(glob)**/$1" ':(exclude,glob)**/inputs/**')"
-    if [[ -z "${found}" || "${found}" == *$'\n'* ]]; then
-        echo "exactly one live file must end in $1" >&2
-        return 2
-    fi
-    echo "${found}"
+    python3 -B "$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')" \
+        file "$1"
 }
-# Usage: series_quality <build-record> prints the one directory holding the
-# record's prepared quality files.
+# Usage: series_quality <build-record>
 series_quality() {
     python3 -c 'import json, pathlib, sys
 (directory,) = {str(pathlib.Path(path).parent) for path in json.load(open(sys.argv[1]))["prepared_quality"]}
 print(directory)' "$1"
 }
-# Usage: series_recorded <json-record> <key>... prints the value at that key path.
+# Usage: series_recorded <json-record> <key>...
 series_recorded() {
     python3 -c 'import functools, json, sys
 print(functools.reduce(lambda node, key: node[key], sys.argv[2:], json.load(open(sys.argv[1]))))' "$@"
@@ -52,10 +38,13 @@ profile_series() {
     echo "profile execution log: ${log}" >&2
     wrapper="$(series_located ccx1-bench-flock.sh)"
 
-    identity="$(series_identity)" || return 2
+    # Case names resolve to arguments, environments and prepared quality
+    # outside the mutex.
+    series_cases >"${out}/cases.expanded.tsv"
+    identity="$(series_identity "${out}/cases.expanded.tsv")" || return 2
     first="$(sed -n 's/^rep-[0-9]* start [^ ]* \(.*\) load=.*/\1/p' "${log}" | head -n 1)"
     if [[ -n "${first}" && "${first}" != "${identity}" ]]; then
-        echo "an executable or case file changed since the first session" >&2
+        echo "the series identity changed since the first session" >&2
         echo "first:   ${first}" >&2
         echo "current: ${identity}" >&2
         return 2
@@ -88,10 +77,6 @@ profile_series() {
         { echo; echo "## resumed $(series_now)"; uptime; } >>"${out}/host.txt"
     fi
 
-    # Case names resolve to arguments, environments and prepared quality
-    # outside the mutex.
-    series_cases >"${out}/cases.expanded.tsv"
-
     for index in $(seq 1 "${repetitions}"); do
         rep="rep-$(printf '%02d' "${index}")"
         if grep -q "^${rep} done " "${log}"; then
@@ -104,19 +89,17 @@ profile_series() {
             echo "${rep} discarded $(series_now) unfinished start(s) ${starts}; partial output removed, the session re-runs whole" >>"${log}"
         fi
         rm -rf "${out:?}/${rep}"
-        current="$(series_identity)" || return 2
+        current="$(series_identity "${out}/cases.expanded.tsv")" || return 2
         if [[ "${current}" != "${identity}" ]]; then
-            echo "an executable or case file changed during the series; ${rep} does not start" >&2
+            echo "the series identity changed during the series; ${rep} does not start" >&2
             return 2
         fi
         echo "${rep} start $(series_now) ${identity} load=[$(series_load)]" >>"${log}"
         GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "./${wrapper}" --full-host \
             bash "${session}" "${out}/${rep}" "${bin}" "${out}/cases.expanded.tsv" \
             "$([[ "${index}" == 1 ]] && echo yes || echo no)"
-        # profile-session.sh records each case's exit status and keeps going,
-        # so a summary can exclude one failed case. A session in which every
-        # case failed carries no figure at all, and continuing spends the rest
-        # of the window on the same failure.
+        # A session whose every case failed carries no figure, and the next
+        # session would repeat the failure.
         statuses="$(cat "${out}/${rep}"/stat/*.status "${out}/${rep}"/record/*.status 2>/dev/null || true)"
         if ! grep -q '^0$' <<<"${statuses}"; then
             echo "${rep} discarded $(series_now) every profiled case failed" >>"${log}"
