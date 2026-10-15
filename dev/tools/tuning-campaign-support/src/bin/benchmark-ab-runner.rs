@@ -1159,7 +1159,8 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
     };
     let mut bytes = serde_json::to_vec_pretty(&receipt)?;
     bytes.push(b'\n');
-    fs::write(out_dir.join(RECEIPT_FILE), bytes)?;
+    // Written last and atomically: a receipt that exists is a finished finalize.
+    atomic_replace(&out_dir.join(RECEIPT_FILE), &bytes)?;
     let _ = root;
     println!(
         "GF2_BENCHMARK_RECEIPT={}",

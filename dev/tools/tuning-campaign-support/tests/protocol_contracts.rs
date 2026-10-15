@@ -2655,6 +2655,24 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         "{}",
         String::from_utf8_lossy(&finalize.stderr)
     );
+    // A finalize interrupted before its receipt rename leaves torn outputs and
+    // no receipt; finalizing again reproduces the receipt.
+    let receipt_bytes = fs::read(out.join(RECEIPT_FILE)).unwrap();
+    fs::remove_file(out.join(RECEIPT_FILE)).unwrap();
+    fs::write(out.join(LOG_FILE), b"{\"torn\"").unwrap();
+    let refinalized = Command::new(runner)
+        .args(["finalize"])
+        .arg(&stage)
+        .arg(&out)
+        .current_dir(&repo)
+        .output()
+        .unwrap();
+    assert!(
+        refinalized.status.success(),
+        "{}",
+        String::from_utf8_lossy(&refinalized.stderr)
+    );
+    assert_eq!(fs::read(out.join(RECEIPT_FILE)).unwrap(), receipt_bytes);
     let summary = evaluate(&out).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(
