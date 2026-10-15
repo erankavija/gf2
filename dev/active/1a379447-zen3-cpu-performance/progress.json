@@ -3258,7 +3258,9 @@
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
   "active_workers": {
-   "5d590bac": "agent-ed3d490e-run"
+   "3f3efdcf": "agent-ed3d490e-run",
+   "4d8fd613": "agent-4d8fd613",
+   "dbea4e10": "agent-dbea4e10"
   },
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
@@ -3268,6 +3270,6 @@
   "session_37": "Done: cba35553, 4252085a. 5d590bac held by the lead until 63bad95d merges and the gf2 arms build record is regenerated (its validation record names arms by build-identity digest). Window 2026-10-13 04:00 holds five jobs.",
   "session_37_end": "Session 37 ended 2026-10-14 with handoff-33.md. In progress: 9eb6f13c rework 1 (agent-9eb6f13c), d11a45d4 (agent-d11a45d4, invoker rulings: restore the logical addendum to the pinned bytes; REQ-01 amended), ec4e71ca (agent-ec4e71ca). Next: 17e08faa, d93a1c7e, arms build record, 5d590bac.",
   "standing_rule_2026_10_14": "Invoker, 2026-10-14: take the lightest approach in terms of protocols and follow the project invariants. Applies to every lead and worker decision; offer the invoker the lightest compliant option as the recommendation.",
-  "session_38": "Done: 9eb6f13c, ec4e71ca, d11a45d4, 17e08faa, 4976531f, 69dd39f1 (lead fixed CR F1/F2 in 8e3876ef2), d93a1c7e. Done: 5afa8d76 (two doc-review reworks). Dispatched 5d590bac (opus) in agent-ed3d490e-run on branch worktree-agent-5d590bac; step 1 regenerates the preparation records."
+  "session_38": "Done: 9eb6f13c, ec4e71ca, d11a45d4, 17e08faa, 4976531f, 69dd39f1, d93a1c7e, 5afa8d76, 5d590bac (two reworks), a4476c6a (lead docstring trim). Dispatched 3f3efdcf (opus, agent-ed3d490e-run), 4d8fd613 and dbea4e10 (opus, own worktrees)."
  }
 }
