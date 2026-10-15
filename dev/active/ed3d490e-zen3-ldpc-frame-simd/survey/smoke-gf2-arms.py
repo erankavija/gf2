@@ -300,13 +300,15 @@ def diagnostics(stage):
     return rows
 
 
-def build_runner():
-    """Path of the built runner and the environment its plans run under."""
+def build_runner(*others):
+    """Path of the built runner and the environment its plans run under; `others` names further
+    binaries of the runner's package to build beside it."""
     environment = {**os.environ, "CARGO_CI_NO_SCCACHE": "1", "RAYON_NUM_THREADS": "1",
                    "RUSTUP_TOOLCHAIN": TOOLCHAIN}
+    binaries = [flag for name in ("benchmark-ab-runner", *others) for flag in ("--bin", name)]
     subprocess.run(["./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build", "--offline",
-                    "--release", "-p", "tuning-campaign-support", "--bin",
-                    "benchmark-ab-runner"], check=True, env=environment)
+                    "--release", "-p", "tuning-campaign-support", *binaries],
+                   check=True, env=environment)
     return str(ROOT / "target/release/benchmark-ab-runner"), environment
 
 
