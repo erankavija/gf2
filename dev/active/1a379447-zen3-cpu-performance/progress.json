@@ -2333,6 +2333,19 @@
    ],
    "status": "open",
    "raised_at": "2026-10-15"
+  },
+  {
+   "issue": "37aa7254",
+   "date": "2026-10-15",
+   "category": "issue scope change (policy item 4) and missing prerequisite",
+   "question": "The decode selector holdout family cannot be frozen as specified. (1) REQ-01 asks for a pilot addendum with purpose `selector-calibration`, but the protocol (protocol.rs validation) admits that purpose only with holdout-role cells of 24 pairs each, which spend the ledger's first attempt inside a pilot; the 63bad95d precedent freezes the pilot under a kernel-family purpose and converts it at confirmation with `freeze-confirmation.py --purpose/--holdout-cells`. (2) No portable arms exist: c103a288's tuned arm `gf2-batch-tuned-arm` is a native build (catalogue `build: native`) although its issue calls it the tuned-portable side, and there is no conservative-portable arm; building portable variants into the recorded arms target would overwrite the recorded executables. (3) make-family.py emits a null tuning_profile and needs a field naming the envelope.",
+   "options": [
+    "A (recommended): amend 37aa7254 REQ-01 to 'A pilot addendum is committed for the decode selector holdout whose confirmation is derived with purpose selector-calibration and its holdout cells by freeze-confirmation.py, as the 63bad95d families do'; file a task in the story that builds the conservative-portable and tuned-portable arms into their own target directory through record-gf2-arms-build.py; extend make-family.py with a tuning_profile field",
+    "B: keep REQ-01 and spend the ledger's first attempt in the pilot",
+    "C: reject 37aa7254 and its pilot/confirmation leaves (67517a7b, 7695aaee), recording the holdout as not measured"
+   ],
+   "status": "open",
+   "raised_at": "2026-10-15"
   }
  ],
  "rework_counts": {
@@ -2423,7 +2436,8 @@
   "2a3b479d": 2,
   "2a69b276": 1,
   "a4476c6a": 1,
-  "f434ddd3": 1
+  "f434ddd3": 1,
+  "a91e7cef": 1
  },
  "surfaced_pitfalls": [
   {
@@ -3304,7 +3318,8 @@
   "session_38": "Done: 9eb6f13c, ec4e71ca, d11a45d4, 17e08faa, 4976531f, 69dd39f1, d93a1c7e, 5afa8d76, 5d590bac, a4476c6a, 4d8fd613, dbea4e10 (rework 1), 3f3efdcf, 2a69b276. Dispatched c103a288 (opus, agent-ed3d490e-run), 2a3b479d (opus), 859bc8cb (sonnet). Next: the six family freezes after c103a288 merges (build record changes).",
   "notes_for_2a3b479d": "3f3efdcf: profile-session.sh calls ${BIN}/ldpc-profile; the recorder refuses a workspace binary of that pinned name, so the 2a3b479d launcher gives a BIN directory where ldpc-profile links to ldpc-batch-profile.",
   "blocked": {
-   "859bc8cb": "waiting on invoker ruling on REQ-02 (escalations, 2026-10-15); branch worktree-agent-859bc8cb d27193d4b unmerged"
+   "859bc8cb": "waiting on invoker ruling on REQ-02 (escalations, 2026-10-15); branch worktree-agent-859bc8cb d27193d4b unmerged",
+   "37aa7254": "waiting on invoker ruling (escalations, 2026-10-15); nothing committed"
   }
  }
 }
