@@ -36,7 +36,7 @@ NOT_BEHAVIOR = {"make-addenda.py", "record-preparation.py", "summarize-profile.p
                 "freeze-addendum.py", "validate.py",
                 "validate-arms.py", "intervals.py", "make-source-evidence.py",
                 "session-conditions.py", "source-evidence.json",
-                "run-profile.sh", "profile-session.sh", "profile-cases.tsv"}
+                "run-profile.sh", "profile-series.sh", "profile-session.sh", "profile-cases.tsv"}
 
 
 def sha(path):
