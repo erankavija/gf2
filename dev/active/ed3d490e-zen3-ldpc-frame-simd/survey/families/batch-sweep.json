@@ -1,0 +1,123 @@
+{
+  "family": {
+    "id": "ldpc-batch-size-sweep-v1",
+    "issue": "9bcc7e73",
+    "purpose": "decoder-family",
+    "description": "Exploratory family that sweeps the per-worker batch size of the lane route on one worker. It is exploratory and has no confirmation: it describes how the fixed-wave policy's cost varies with batch fill, a question no adoption decision rests on, because the before-after families decide adoption on their own ledgers and the decoder calibration campaign places the decode selectors; its cells therefore stay pilot cells and select nothing. The baseline arm is the gf2-coding LDPC batch decoder on the single-frame route under the conservative decode selectors; the candidate arm is the same decoder on the lane route with the AVX2 lane backend, under selectors that open the lane route to every wave size and edge count. Both arms are native builds of the story's arms workspace, launched by the executable digests of dev/bench_results/ed3d490e/preparation/build-identity.json. The measured operation is the steady-state decode of 3be770d5: one worker thread pinned to the resolved CPU owns one decoder built before timing, and a timed call decodes the cell's per-worker batch, workload.size.timed_batch, of the first recorded frames, including LLR conversion, lane transposition in and out, dispatch and extraction of the information-window decisions, in fixed waves of eight lanes with per-frame termination. On both codes the batch sizes lie below, at and above the wave width: half a wave, one full wave and four full waves. Both arms decode f32 flooding normalized min-sum at the declared factor, iteration cap and syndrome stopping, and every timed execution checks each frame's bit errors against the prepared c077a88b quality record of the single-frame decode, which each lane frame equals bit for bit; decoder.batching.batch_size is that record's single-frame decode, the setting P-19 compares with each arm's report. No nested pool is declared. The family declares no more cells than its first ledger attempt admits, as dev/bench_results/ed3d490e/batch-sweep/confirmatory-bound.json derives."
+  },
+  "frozen_utc": "2026-10-15T03:38:05Z",
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "An exploratory family declares no worthwhile speedup.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "An exploratory family decides nothing, so it declares no equivalence margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The family has no comparator-gap cell."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": null,
+    "maintenance_rationale": "The family adopts nothing; the before-after families carry the lane route's budget."
+  },
+  "family_wise": {
+    "ledger_path": "dev/bench_results/ed3d490e/batch-sweep/ledger.jsonl",
+    "prior_trials": []
+  },
+  "max_pilot_trials_per_cell": 2,
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "campaign": {
+    "id": "9bcc7e73-ldpc-batch-size-sweep-pilot",
+    "seed": 2613870195,
+    "pilot_pairs": 12,
+    "max_cells_per_session": 1
+  },
+  "codes": {
+    "dvb-t2-r12": {
+      "code_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+      "workload_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs"
+    },
+    "nr-bg1-z384": {
+      "code_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+      "workload_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs"
+    }
+  },
+  "cell": {
+    "objective": "improvement",
+    "metric_kind": "whole-consumer",
+    "scaling": "sustained-throughput",
+    "core_arm": "single-core",
+    "workers": {
+      "declared": 1,
+      "nested_pools_allowed": false
+    },
+    "cache_state": "warm",
+    "conversion_costs_included": true,
+    "baseline": "gf2-batch-single-frame",
+    "candidate": "gf2-batch-lane-avx2",
+    "timed_batch": 8,
+    "size": {
+      "timed_fixture_banks": 1
+    },
+    "decoder": {
+      "arm_kind": "matched-algorithm",
+      "precision": "f32",
+      "schedule": "flooding",
+      "normalization": {
+        "kind": "normalized-min-sum",
+        "factor": 0.75
+      },
+      "iteration_cap": 50,
+      "stopping": {
+        "kind": "syndrome",
+        "crc": null
+      },
+      "batching": {
+        "batch_size": 1,
+        "batch_fill_included": true
+      },
+      "quality_tolerance": {
+        "fer_ratio_max": 1.0
+      },
+      "rate_matching": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-lane-w1-b4",
+      "code": "dvb-t2-r12",
+      "timed_batch": 4,
+      "objective": "non-regression"
+    },
+    {
+      "cell_id": "dvb-t2-r12-lane-w1-b8",
+      "code": "dvb-t2-r12",
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "dvb-t2-r12-lane-w1-b32",
+      "code": "dvb-t2-r12",
+      "timed_batch": 32
+    },
+    {
+      "cell_id": "nr-bg1-z384-lane-w1-b4",
+      "code": "nr-bg1-z384",
+      "timed_batch": 4,
+      "objective": "non-regression"
+    },
+    {
+      "cell_id": "nr-bg1-z384-lane-w1-b8",
+      "code": "nr-bg1-z384",
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "nr-bg1-z384-lane-w1-b32",
+      "code": "nr-bg1-z384",
+      "timed_batch": 32
+    }
+  ]
+}
