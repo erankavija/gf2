@@ -48,18 +48,8 @@ cmp $s/$d/acceptance-summary.md $d/acceptance-summary.md
 
 ## Outcome per cell
 
-Each row names the cell's row in the acceptance summary's *Cells* table and
-the decision and outcome its `cells[]` entry records. The objective comes from
-the addendum.
-
-| Cell | Objective | Decision | Outcome | Lane route on one worker |
-|---|---|---|---|---|
-| `dvb-t2-r12-lane-w1-b8` | improvement | `improved` | `pass` | qualifies in sustained throughput |
-| `dvb-t2-r12-lane-w1-b1` | non-regression | `not-worse` | `pass` | single-frame latency not regressed |
-| `dvb-t2-r12-lane-w1-b11` | non-regression | `improved` | `pass` | incomplete wave not regressed |
-| `nr-bg1-z384-lane-w1-b8` | improvement | `improved` | `pass` | qualifies in sustained throughput |
-| `nr-bg1-z384-lane-w1-b1` | non-regression | `regressed` | `fail` | single-frame latency regressed |
-| `nr-bg1-z384-lane-w1-b11` | non-regression | `improved` | `pass` | incomplete wave not regressed |
+The generated [outcome table](outcome.md) lists each cell's objective, arms,
+decision and outcome as the acceptance summary's `cells[]` entry records them.
 
 `qualifies` requires every confirmatory cell to pass (protocol, *Outcomes and
 completeness*), so the single-frame latency regression on the NR code keeps the
