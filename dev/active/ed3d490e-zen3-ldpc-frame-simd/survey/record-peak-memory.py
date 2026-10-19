@@ -164,10 +164,14 @@ BUILD_RECORD = "build-identity.json"
 
 
 def build_records():
-    """Each live build record of the arms catalogue with its path."""
+    """Each live build record of the arms catalogue with its path: one no other record supersedes."""
     found = [(smoke.ROOT / path, json.loads((smoke.ROOT / path).read_text(encoding="utf-8")))
              for path in smoke.listed(BUILD_RECORD)]
-    return [(path, record) for path, record in found if "catalogue" in record]
+    found = [(path, record) for path, record in found if "catalogue" in record]
+    superseded = {(smoke.ROOT / record["supersedes"]["path"], record["supersedes"]["sha256"])
+                  for _, record in found if "supersedes" in record}
+    return [(path, record) for path, record in found
+            if (path, hashlib.sha256(path.read_bytes()).hexdigest()) not in superseded]
 
 
 def build_record(directory):
