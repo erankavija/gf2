@@ -57,18 +57,9 @@ values above one favour the candidate (protocol, *Estimator and interval*), and
 every cell is a comparator-gap cell of the addendum, so `improved` and its
 `pass` mean a material gap in AFF3CT's favour and `regressed` and its `fail`
 mean AFF3CT is slower than the gf2 lane route beyond the equivalence margin
-(protocol, *Decision rule*). Each row names the cell's row in the acceptance
-summary's *Cells* table and the decision and outcome its `cells[]` entry
-records.
-
-| Cell | Baseline | Candidate | Decision | Outcome | Gap direction |
-|---|---|---|---|---|---|
-| `dvb-t2-r12-matched-w1-b8` | gf2 lane | AFF3CT | `regressed` | `fail` | gf2 lane faster |
-| `dvb-t2-r12-matched-w1-b1` | gf2 lane | AFF3CT | `improved` | `pass` | AFF3CT faster, material |
-| `dvb-t2-r12-matched-p12-b8` | gf2 lane | AFF3CT | `improved` | `pass` | AFF3CT faster, material |
-| `nr-bg1-z384-matched-w1-b8` | gf2 lane | AFF3CT | `regressed` | `fail` | gf2 lane faster |
-| `nr-bg1-z384-matched-w1-b1` | gf2 lane | AFF3CT | `improved` | `pass` | AFF3CT faster, material |
-| `nr-bg1-z384-matched-p12-b8` | gf2 lane | AFF3CT | `not-worse` | `not-material` | no material gap established |
+(protocol, *Decision rule*). The generated [outcome table](outcome.md) lists
+each cell's objective, arms, decision and outcome as the acceptance summary's
+`cells[]` entry records them.
 
 `qualifies` requires every confirmatory cell to pass (protocol, *Outcomes and
 completeness*), so the receipt does not qualify. The margins stay as frozen
