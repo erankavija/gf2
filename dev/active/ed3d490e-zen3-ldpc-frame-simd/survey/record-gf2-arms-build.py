@@ -6,9 +6,11 @@ from the commands it runs and the files it reads; no value is a clock reading.
 Given the staged AFF3CT [Cassagne2019] tree `AFF3CT_ROOT`, it records the native
 flavour: the catalogue's native and external arms, host-targeted. Given
 `--portable`, it records the portable arms, built for the target's baseline
-into a target directory of their own.
+into a target directory of their own. `--supersedes` names, by root-relative path, the record
+this one replaces; the record pins it by digest, and the arms tooling reads only the replacement.
 
-Usage (from the worktree root): record-gf2-arms-build.py OUT_DIR AFF3CT_ROOT|--portable
+Usage (from the worktree root):
+  record-gf2-arms-build.py OUT_DIR AFF3CT_ROOT|--portable [--supersedes RECORD]
 """
 
 import hashlib
@@ -346,17 +348,27 @@ def write_record(out_dir, record):
     partial.replace(out_dir / RECORD)
 
 
-def main():
-    match sys.argv[1:]:
+def arguments(argv):
+    """OUT_DIR, flavour, AFF3CT tree and the identity of the superseded record, if any."""
+    supersedes = None
+    match argv:
+        case [*rest, "--supersedes", superseded]:
+            supersedes = {"path": superseded, "sha256": digest(ROOT / superseded)}
+        case rest:
+            pass
+    match rest:
         case [out_dir, "--portable"]:
-            flavour, aff3ct = "portable", None
-        case [out_dir, aff3ct]:
-            flavour, aff3ct = "native", pathlib.Path(aff3ct).resolve()
+            return pathlib.Path(out_dir), "portable", None, supersedes
+        case [out_dir, aff3ct] if not aff3ct.startswith("--"):
+            return pathlib.Path(out_dir), "native", pathlib.Path(aff3ct).resolve(), supersedes
         case _:
             sys.exit(__doc__)
+
+
+def main():
     if pathlib.Path.cwd() != ROOT:
         sys.exit("invoke from the worktree root")
-    out_dir = pathlib.Path(out_dir)
+    out_dir, flavour, aff3ct, supersedes = arguments(sys.argv[1:])
     arms = located("package-directory", PACKAGE)
     manifest = arms / "Cargo.toml"
     catalogue = arms.parent / "arms.json"
@@ -412,6 +424,7 @@ def main():
             for name in binaries},
         **({} if aff3ct is None else {"aff3ct": aff3ct_identity(aff3ct, records)}),
         "catalogue": {"path": str(catalogue), "sha256": digest(catalogue)},
+        **({} if supersedes is None else {"supersedes": supersedes}),
         "arms": arm_rows(named, rows, records, executables, release),
         "isolation": isolation(metadata, arms, rows),
         "pinned_records": records,

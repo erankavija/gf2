@@ -2348,6 +2348,25 @@
    "status": "resolved",
    "raised_at": "2026-10-15",
    "resolution": "Invoker (session 39, 2026-10-20): option A; REQ-01 amended to the 63bad95d pattern; task dba82422 filed for the two portable arms and the make-family.py tuning_profile field, and 37aa7254 depends on it."
+  },
+  {
+   "issue": "1a379447",
+   "date": "2026-10-20",
+   "question": "Session rule",
+   "answer": "Invoker (session 39): do not stop to ask questions; an issue needing input is blocked and its question recorded for the next session; write the handoff when no work remains that does not wait for input; check workers every 30 minutes.",
+   "status": "resolved"
+  },
+  {
+   "issue": "262ca018",
+   "date": "2026-10-20",
+   "category": "shared infrastructure (policy item 7)",
+   "question": "262ca018 adds steps to scripts/cargo-ci.sh so the CI contract runs the story's survey test_*.py and --self-test modes. Approve implementing this change to the shared CI contract?",
+   "options": [
+    "A (recommended): approve; implement as filed",
+    "B: reject 262ca018 and keep survey tests manual"
+   ],
+   "status": "open",
+   "raised_at": "2026-10-20"
   }
  ],
  "rework_counts": {
@@ -2442,7 +2461,8 @@
   "a91e7cef": 1,
   "32bfe9f8": 1,
   "a03daf3f": 1,
-  "7eddc5e2": 1
+  "7eddc5e2": 1,
+  "92c53589": 1
  },
  "surfaced_pitfalls": [
   {

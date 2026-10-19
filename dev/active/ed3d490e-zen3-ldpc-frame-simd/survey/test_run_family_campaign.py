@@ -227,6 +227,31 @@ class RefusalTest(unittest.TestCase):
         fixture.identify(Workload.path)
         self.assert_refused(fixture.run("--untimed"), fixture, "gated")
 
+    def test_an_arm_no_build_identity_of_several_names_is_refused(self):
+        fixture = Fixture(self)
+        fixture.identify(Workload.path)
+        other = fixture.directory / "other-identity.json"
+        other.write_text(json.dumps({"arms": {}}), encoding="utf-8")
+        result = subprocess.run(
+            [sys.executable, str(LAUNCHER), str(fixture.plan), str(fixture.identity), str(other),
+             "--untimed"], cwd=ROOT, capture_output=True, text=True)
+        self.assert_refused(result, fixture, "gated")
+
+
+class SeveralIdentitiesTest(unittest.TestCase):
+    def test_arms_of_one_plan_may_be_named_by_several_build_identities(self):
+        fixture = Fixture(self)
+        fixture.identify(Workload.path)
+        gated = fixture.directory / "gated-identity.json"
+        gated.write_text(json.dumps({"arms": {"gated": {
+            "executable_sha256": peak.sha256_file(fixture.gated)}}}), encoding="utf-8")
+        fixture.gate.touch()
+        result = subprocess.run(
+            [sys.executable, str(LAUNCHER), str(fixture.plan), str(fixture.identity), str(gated),
+             "--untimed"], cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(Counter(cells(fixture.journal(), "cell-complete")), Counter(CELLS))
+
 
 class GenesisTest(unittest.TestCase):
     def test_the_ledger_genesis_is_created_once(self):
