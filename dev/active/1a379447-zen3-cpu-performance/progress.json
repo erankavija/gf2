@@ -2331,8 +2331,9 @@
     "B: rebuild and re-pin the profiling executable and regenerate the committed summaries (rewrites committed evidence)",
     "C: reject 859bc8cb and drop the lane categories from the summary task 3bb47302"
    ],
-   "status": "open",
-   "raised_at": "2026-10-15"
+   "status": "resolved",
+   "raised_at": "2026-10-15",
+   "resolution": "Invoker (session 39, 2026-10-20): option A; REQ-02 amended to old-vs-new summarizer byte identity."
   },
   {
    "issue": "37aa7254",
@@ -2344,8 +2345,9 @@
     "B: keep REQ-01 and spend the ledger's first attempt in the pilot",
     "C: reject 37aa7254 and its pilot/confirmation leaves (67517a7b, 7695aaee), recording the holdout as not measured"
    ],
-   "status": "open",
-   "raised_at": "2026-10-15"
+   "status": "resolved",
+   "raised_at": "2026-10-15",
+   "resolution": "Invoker (session 39, 2026-10-20): option A; REQ-01 amended to the 63bad95d pattern; task dba82422 filed for the two portable arms and the make-family.py tuning_profile field, and 37aa7254 depends on it."
   }
  ],
  "rework_counts": {
