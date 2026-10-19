@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 SURVEY = Path(__file__).resolve().parent
@@ -203,6 +204,12 @@ class CargoConfigurationTest(unittest.TestCase):
 
 
 class BuildEnvironmentTest(unittest.TestCase):
+    def test_the_portable_flavour_builds_without_rustflags(self):
+        inherited = {"RUSTFLAGS": "-C target-cpu=native", "PATH": "/bin"}
+        self.assertNotIn("RUSTFLAGS", recorder.build_environment(inherited, "portable"))
+        self.assertEqual(recorder.build_environment(inherited, "native")["RUSTFLAGS"],
+                         recorder.FLAVOURS["native"]["rustflags"])
+
     def test_inherited_compiler_settings_do_not_reach_the_build(self):
         steering = ["CXX", "CC", "CXXFLAGS", "CFLAGS", "HOST_CXX", "TARGET_CXXFLAGS",
                     "CXX_x86_64_unknown_linux_gnu", "CXXFLAGS_x86_64-unknown-linux-gnu",
@@ -211,11 +218,13 @@ class BuildEnvironmentTest(unittest.TestCase):
                     "CARGO_INCREMENTAL", "CARGO_HOST_LINKER", "CARGO_UNSTABLE_BUILD_STD",
                     "LD_RUN_PATH", "GCC_EXEC_PREFIX", "COMPILER_PATH", "GF2_AFF3CT_ROOT"]
         inherited = {**{name: "inherited" for name in steering}, "PATH": "/bin", "HOME": "/home"}
-        environment = recorder.build_environment(inherited)
-        self.assertEqual({name: value for name, value in environment.items()
-                          if value == "inherited"}, {})
-        self.assertEqual(environment, {"PATH": "/bin", "HOME": "/home", **recorder.ENVIRONMENT})
-        self.assertEqual(environment["CXX"], recorder.CXX)
+        for flavour in recorder.FLAVOURS:
+            environment = recorder.build_environment(inherited, flavour)
+            self.assertEqual({name: value for name, value in environment.items()
+                              if value == "inherited"}, {})
+            self.assertEqual(environment, {"PATH": "/bin", "HOME": "/home",
+                                           **recorder.environment(flavour)})
+            self.assertEqual(environment["CXX"], recorder.CXX)
 
 
 class SeparateMembersTest(unittest.TestCase):
@@ -231,6 +240,67 @@ class SeparateMembersTest(unittest.TestCase):
         self.assertEqual(recorder.separate_members(metadata),
                          [(["--package", "ldpc-aff3ct-intra-arm"], True),
                           (["--package", "ldpc-batch-tuned-arm"], False)])
+
+
+def metadata(*packages):
+    """Cargo metadata of `(name, default member, features of its harness dependency, binaries)`."""
+    return {"packages": [{"id": name, "name": name,
+                          "dependencies": [{"name": HARNESS, "features": list(features)}],
+                          "targets": [{"name": binary, "kind": ["bin"]} for binary in binaries]}
+                         for name, _, features, binaries in packages],
+            "workspace_default_members": [name for name, default, _, _ in packages if default]}
+
+
+ARMS = metadata(("ldpc-batch-arms", True, (), ("single-arm", "lane-arm")),
+                ("ldpc-batch-profile", True, (), ("profile",)),
+                ("ldpc-aff3ct-intra-arm", False, ("aff3ct",), ("intra-arm",)),
+                ("ldpc-batch-tuned-arm", False, (), ("tuned-arm",)))
+CATALOGUE = {"single": {"build": "native", "package": "ldpc-batch-arms"},
+             "intra": {"build": "external", "package": "ldpc-aff3ct-intra-arm"},
+             "pinned": {"build": "external"},
+             "single-portable": {"build": "portable", "package": "ldpc-batch-arms"},
+             "tuned-portable": {"build": "portable", "package": "ldpc-batch-tuned-arm"}}
+
+
+class FlavourTest(unittest.TestCase):
+    def test_each_flavour_records_the_arms_of_its_builds(self):
+        self.assertEqual(sorted(recorder.flavour_arms(CATALOGUE, "native")),
+                         ["intra", "pinned", "single"])
+        self.assertEqual(sorted(recorder.flavour_arms(CATALOGUE, "portable")),
+                         ["single-portable", "tuned-portable"])
+
+    def test_the_native_flavour_builds_the_default_members_then_each_other_member_alone(self):
+        commands = recorder.build_commands(
+            "native", ["build"], ARMS, recorder.flavour_arms(CATALOGUE, "native"), "/aff3ct")
+        self.assertEqual([command["argv"] for command in commands],
+                         [["build"], ["build", "--package", "ldpc-aff3ct-intra-arm"],
+                          ["build", "--package", "ldpc-batch-tuned-arm"]])
+        self.assertEqual([command["environment"].get(recorder.AFF3CT_VARIABLE)
+                          for command in commands], [None, "/aff3ct", None])
+        self.assertEqual(recorder.built_binaries(ARMS, commands),
+                         ["intra-arm", "lane-arm", "profile", "single-arm", "tuned-arm"])
+
+    def test_the_portable_flavour_builds_the_package_of_each_arm_alone_without_rustflags(self):
+        commands = recorder.build_commands(
+            "portable", ["build"], ARMS, recorder.flavour_arms(CATALOGUE, "portable"), None)
+        self.assertEqual([command["argv"] for command in commands],
+                         [["build", "--package", "ldpc-batch-arms"],
+                          ["build", "--package", "ldpc-batch-tuned-arm"]])
+        self.assertTrue(all("RUSTFLAGS" not in command["environment"] for command in commands))
+        self.assertEqual(recorder.built_binaries(ARMS, commands),
+                         ["lane-arm", "single-arm", "tuned-arm"])
+
+
+class WriteRecordTest(unittest.TestCase):
+    def test_an_interrupted_write_keeps_the_previous_record(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            out_dir = Path(temporary)
+            recorder.write_record(out_dir, {"record": 1})
+            written = (out_dir / recorder.RECORD).read_bytes()
+            with unittest.mock.patch.object(Path, "replace", side_effect=KeyboardInterrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    recorder.write_record(out_dir, {"record": 2})
+            self.assertEqual((out_dir / recorder.RECORD).read_bytes(), written)
 
 
 @unittest.skipUnless(os.environ.get("GF2_AFF3CT_ROOT"), "needs the staged AFF3CT tree")
