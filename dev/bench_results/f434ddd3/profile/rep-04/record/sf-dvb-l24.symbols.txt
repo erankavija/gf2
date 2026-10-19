@@ -1,0 +1,40 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 15K of event 'cycles:u'
+# Event count (approx.): 63692589151
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    96.78%         15410  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     2.36%           375  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.35%            56  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.08%            12  libc.so.6           [.] 0x000000000017654a
+     0.07%            11  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.06%            10  libc.so.6           [.] 0x0000000000176540
+     0.05%             8  libc.so.6           [.] 0x0000000000176524
+     0.04%             7  libc.so.6           [.] 0x000000000017652e
+     0.03%             5  libc.so.6           [.] 0x0000000000176e13
+     0.03%             4  libc.so.6           [.] 0x0000000000176e09
+     0.03%             4  [unknown]           [k] 0xffffffffb3e92438
+     0.02%             3  libc.so.6           [.] 0x000000000017653b
+     0.02%             3  libc.so.6           [.] 0x0000000000176e04
+     0.02%             3  [unknown]           [k] 0xffffffffb3a015f0
+     0.01%             2  libc.so.6           [.] 0x0000000000176e0e
+     0.01%             2  [unknown]           [k] 0xffffffffb4faad26
+     0.01%             1  libc.so.6           [.] 0x0000000000176533
+     0.01%             1  [unknown]           [k] 0xffffffffb3a01ca6
+     0.01%             1  [unknown]           [k] 0xffffffffb3e92424
+     0.01%             1  [unknown]           [k] 0xffffffffb3e9636f
+     0.01%             1  [unknown]           [k] 0xffffffffb3e98142
+     0.01%             1  [unknown]           [k] 0xffffffffb4f94987
+     0.01%             1  [unknown]           [k] 0xffffffffb4f97fd3
+     0.01%             1  [unknown]           [k] 0xffffffffb4faab8a
+
+
+#
+# (Tip: To count events every 1000 msec: perf stat -I 1000)
+#

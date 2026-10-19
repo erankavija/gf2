@@ -1,0 +1,40 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 15K of event 'cycles:u'
+# Event count (approx.): 63668588929
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    96.98%         15436  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     2.15%           342  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.42%            67  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.07%            11  libc.so.6           [.] 0x000000000017654a
+     0.06%             9  libc.so.6           [.] 0x0000000000176540
+     0.04%             7  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.04%             6  libc.so.6           [.] 0x0000000000176e04
+     0.04%             6  libc.so.6           [.] 0x0000000000176e09
+     0.03%             5  libc.so.6           [.] 0x000000000017652e
+     0.03%             4  libc.so.6           [.] 0x0000000000176e13
+     0.02%             3  libc.so.6           [.] 0x0000000000176524
+     0.02%             3  libc.so.6           [.] 0x0000000000176e0e
+     0.02%             3  [unknown]           [k] 0xffffffffb3a015f0
+     0.01%             2  libc.so.6           [.] 0x000000000017653b
+     0.01%             2  libc.so.6           [.] 0x0000000000176545
+     0.01%             2  [unknown]           [k] 0xffffffffb3e92438
+     0.01%             2  [unknown]           [k] 0xffffffffb4f935bc
+     0.01%             1  libc.so.6           [.] 0x0000000000176529
+     0.01%             1  [unknown]           [k] 0xffffffffb3a01d22
+     0.01%             1  [unknown]           [k] 0xffffffffb3d29aea
+     0.01%             1  [unknown]           [k] 0xffffffffb3d79723
+     0.01%             1  [unknown]           [k] 0xffffffffb3dfae53
+     0.01%             1  [unknown]           [k] 0xffffffffb3e1b266
+     0.01%             1  [unknown]           [k] 0xffffffffb4f94948
+
+
+#
+# (Tip: Show individual samples with: perf script)
+#

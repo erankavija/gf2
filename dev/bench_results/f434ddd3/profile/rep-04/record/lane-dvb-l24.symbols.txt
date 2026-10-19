@@ -1,0 +1,59 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 54K of event 'cycles:u'
+# Event count (approx.): 216057998518
+#
+# Overhead       Samples  Shared Object       Symbol                                                        
+# ........  ............  ..................  ..............................................................
+#
+    74.23%         40094  ldpc-batch-profile  [.] gf2_kernels_simd::x86::ldpc_lanes::lane_variable_step_avx2
+    22.61%         12211  ldpc-batch-profile  [.] gf2_kernels_simd::x86::ldpc_lanes::lane_check_step_avx2
+     1.63%           879  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.73%           392  ldpc-batch-profile  [.] gf2_kernels_simd::ldpc_lanes::assert_prefix_offsets
+     0.18%            98  libc.so.6           [.] 0x0000000000176e13
+     0.14%            78  libc.so.6           [.] 0x0000000000176e09
+     0.10%            54  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.07%            37  libc.so.6           [.] 0x000000000017654a
+     0.06%            34  [unknown]           [k] 0xffffffffb3a015f0
+     0.04%            24  libc.so.6           [.] 0x0000000000176529
+     0.03%            16  libc.so.6           [.] 0x0000000000176533
+     0.03%            15  libc.so.6           [.] 0x0000000000176540
+     0.03%            14  libc.so.6           [.] 0x0000000000176e04
+     0.02%            13  libc.so.6           [.] 0x0000000000176e0e
+     0.02%             9  libc.so.6           [.] 0x0000000000176524
+     0.01%             8  libc.so.6           [.] 0x000000000017652e
+     0.01%             5  [unknown]           [k] 0xffffffffb3d79723
+     0.01%             4  [unknown]           [k] 0xffffffffb3e98142
+     0.00%             2  libc.so.6           [.] 0x000000000017653b
+     0.00%             2  [unknown]           [k] 0xffffffffb3dfa6f2
+     0.00%             2  [unknown]           [k] 0xffffffffb3e92438
+     0.00%             2  [unknown]           [k] 0xffffffffb4fa9043
+     0.00%             1  ldpc-batch-profile  [.] gf2_kernels_simd::ldpc_lanes::assert_variable_step_lengths
+     0.00%             1  libc.so.6           [.] 0x0000000000176545
+     0.00%             1  [unknown]           [k] 0xffffffffb3a015f4
+     0.00%             1  [unknown]           [k] 0xffffffffb3a01ca6
+     0.00%             1  [unknown]           [k] 0xffffffffb3a01cac
+     0.00%             1  [unknown]           [k] 0xffffffffb3a01cc1
+     0.00%             1  [unknown]           [k] 0xffffffffb3cf7bf7
+     0.00%             1  [unknown]           [k] 0xffffffffb3dfa6e8
+     0.00%             1  [unknown]           [k] 0xffffffffb3e1b266
+     0.00%             1  [unknown]           [k] 0xffffffffb3e91664
+     0.00%             1  [unknown]           [k] 0xffffffffb3e92424
+     0.00%             1  [unknown]           [k] 0xffffffffb3e98114
+     0.00%             1  [unknown]           [k] 0xffffffffb3e98122
+     0.00%             1  [unknown]           [k] 0xffffffffb4f793d7
+     0.00%             1  [unknown]           [k] 0xffffffffb4f79585
+     0.00%             1  [unknown]           [k] 0xffffffffb4f935bc
+     0.00%             1  [unknown]           [k] 0xffffffffb4f935e5
+     0.00%             1  [unknown]           [k] 0xffffffffb4f935f4
+     0.00%             1  [unknown]           [k] 0xffffffffb4f9715e
+     0.00%             1  [unknown]           [k] 0xffffffffb4f97166
+     0.00%             1  [unknown]           [k] 0xffffffffb4fa9034
+
+
+#
+# (Tip: Customize output of perf script with: perf script -F event,ip,sym)
+#

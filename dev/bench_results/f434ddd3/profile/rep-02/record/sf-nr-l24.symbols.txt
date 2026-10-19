@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 7K of event 'cycles:u'
+# Event count (approx.): 28412262811
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    98.20%          6975  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.20%            85  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.38%            27  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.07%             5  [unknown]           [k] 0xffffffffb3a015f0
+     0.03%             2  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.01%             1  libc.so.6           [.] 0x0000000000176e0e
+     0.01%             1  [unknown]           [k] 0xffffffffb3d29ae4
+     0.01%             1  [unknown]           [k] 0xffffffffb3dfa7b7
+     0.01%             1  [unknown]           [k] 0xffffffffb3e9169f
+     0.01%             1  [unknown]           [k] 0xffffffffb3e9478f
+     0.01%             1  [unknown]           [k] 0xffffffffb3e98122
+     0.01%             1  [unknown]           [k] 0xffffffffb3e98142
+     0.01%             1  [unknown]           [k] 0xffffffffb3eaa4a4
+     0.01%             1  [unknown]           [k] 0xffffffffb4fa9034
+
+
+#
+# (Tip: To show time in nanoseconds in record/report add --ns)
+#

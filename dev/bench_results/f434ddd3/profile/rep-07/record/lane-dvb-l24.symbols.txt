@@ -1,0 +1,62 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 54K of event 'cycles:u'
+# Event count (approx.): 216522002810
+#
+# Overhead       Samples  Shared Object       Symbol                                                        
+# ........  ............  ..................  ..............................................................
+#
+    74.58%         40370  ldpc-batch-profile  [.] gf2_kernels_simd::x86::ldpc_lanes::lane_variable_step_avx2
+    22.31%         12077  ldpc-batch-profile  [.] gf2_kernels_simd::x86::ldpc_lanes::lane_check_step_avx2
+     1.62%           877  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.69%           371  ldpc-batch-profile  [.] gf2_kernels_simd::ldpc_lanes::assert_prefix_offsets
+     0.18%            95  libc.so.6           [.] 0x0000000000176e09
+     0.14%            75  libc.so.6           [.] 0x0000000000176e13
+     0.10%            56  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.06%            33  [unknown]           [k] 0xffffffffb3a015f0
+     0.05%            28  libc.so.6           [.] 0x000000000017654a
+     0.05%            27  libc.so.6           [.] 0x0000000000176533
+     0.04%            23  libc.so.6           [.] 0x0000000000176540
+     0.03%            18  libc.so.6           [.] 0x0000000000176529
+     0.03%            14  libc.so.6           [.] 0x0000000000176e0e
+     0.02%            13  libc.so.6           [.] 0x0000000000176e04
+     0.02%             9  libc.so.6           [.] 0x0000000000176524
+     0.01%             6  libc.so.6           [.] 0x000000000017652e
+     0.01%             3  libc.so.6           [.] 0x000000000017653b
+     0.01%             3  [unknown]           [k] 0xffffffffb3d3298d
+     0.00%             2  libc.so.6           [.] 0x0000000000176545
+     0.00%             2  [unknown]           [k] 0xffffffffb3e1b266
+     0.00%             2  [unknown]           [k] 0xffffffffb3e92424
+     0.00%             2  [unknown]           [k] 0xffffffffb3e98142
+     0.00%             1  ldpc-batch-profile  [.] gf2_kernels_simd::ldpc_lanes::assert_variable_step_lengths
+     0.00%             1  [unknown]           [k] 0xffffffffb3a015f4
+     0.00%             1  [unknown]           [k] 0xffffffffb3a01602
+     0.00%             1  [unknown]           [k] 0xffffffffb3a01d30
+     0.00%             1  [unknown]           [k] 0xffffffffb3d32984
+     0.00%             1  [unknown]           [k] 0xffffffffb3d79723
+     0.00%             1  [unknown]           [k] 0xffffffffb3dd22a5
+     0.00%             1  [unknown]           [k] 0xffffffffb3dfa6e3
+     0.00%             1  [unknown]           [k] 0xffffffffb3dfaec2
+     0.00%             1  [unknown]           [k] 0xffffffffb3e1c9a7
+     0.00%             1  [unknown]           [k] 0xffffffffb3e90a25
+     0.00%             1  [unknown]           [k] 0xffffffffb3e92438
+     0.00%             1  [unknown]           [k] 0xffffffffb3e94763
+     0.00%             1  [unknown]           [k] 0xffffffffb3e97d04
+     0.00%             1  [unknown]           [k] 0xffffffffb3e98104
+     0.00%             1  [unknown]           [k] 0xffffffffb3ed4694
+     0.00%             1  [unknown]           [k] 0xffffffffb4f793d7
+     0.00%             1  [unknown]           [k] 0xffffffffb4f935bc
+     0.00%             1  [unknown]           [k] 0xffffffffb4f935e5
+     0.00%             1  [unknown]           [k] 0xffffffffb4f94956
+     0.00%             1  [unknown]           [k] 0xffffffffb4f97fcc
+     0.00%             1  [unknown]           [k] 0xffffffffb4fa9034
+     0.00%             1  [unknown]           [k] 0xffffffffb4fa9043
+     0.00%             1  [unknown]           [k] 0xffffffffb4faab86
+
+
+#
+# (Tip: To add Node.js USDT(User-Level Statically Defined Tracing): perf buildid-cache --add `which node`)
+#

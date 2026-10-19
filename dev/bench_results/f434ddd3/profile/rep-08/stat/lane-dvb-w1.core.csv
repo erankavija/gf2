@@ -1,0 +1,7 @@
+# started on Thu Oct 15 07:42:44 2026
+
+367514432,,cycles:u,77261580,100.00,,
+718241252,,instructions:u,77261580,100.00,,
+99884619,,branches:u,77261580,100.00,,
+142390,,branch-misses:u,77261580,100.00,,
+2058593,,stalled-cycles-frontend:u,77261580,100.00,,
