@@ -48,19 +48,8 @@ cmp $s/$d/acceptance-summary.md $d/acceptance-summary.md
 
 ## Outcome per cell
 
-Each row names the cell's row in the acceptance summary's *Cells* table and
-the decision and outcome its `cells[]` entry records. Every cell is an
-improvement cell of the addendum; the CPU set is the one the runner resolved,
-in the summary's *CPUs* column.
-
-| Cell | Core arm | Decision | Outcome | Lane route qualifies |
-|---|---|---|---|---|
-| `dvb-t2-r12-lane-p6-b8` | six physical cores | `regressed` | `fail` | no |
-| `dvb-t2-r12-lane-p12-b8` | twelve physical cores | `regressed` | `fail` | no |
-| `dvb-t2-r12-lane-l24-b8` | twenty-four logical CPUs | `regressed` | `fail` | no |
-| `nr-bg1-z384-lane-p6-b8` | six physical cores | `improved` | `pass` | yes |
-| `nr-bg1-z384-lane-p12-b8` | twelve physical cores | `improved` | `pass` | yes |
-| `nr-bg1-z384-lane-l24-b8` | twenty-four logical CPUs | `regressed` | `fail` | no |
+The generated [outcome table](outcome.md) lists each cell's objective, arms,
+decision and outcome as the acceptance summary's `cells[]` entry records them.
 
 `qualifies` requires every confirmatory cell to pass (protocol, *Outcomes and
 completeness*), so the receipt does not qualify. The margins stay as frozen
