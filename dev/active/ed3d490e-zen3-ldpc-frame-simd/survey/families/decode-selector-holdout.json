@@ -1,0 +1,92 @@
+{
+  "family": {
+    "id": "ldpc-batch-decode-selector-holdout-v1",
+    "issue": "37aa7254",
+    "purpose": "decoder-family",
+    "description": "Exploratory pilot of the decode selector reconfirmation: this addendum is the pilot and every cell is exploratory. Question: does the gf2-coding LDPC batch decoder of default construction under the committed coding owner envelope crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json, whose calibrated decode selectors route a wave to the lane kernels or to the single-frame decoder, decode faster than, or no slower than, the same decoder under the conservative decode selectors, which route every wave to the single-frame decoder? The baseline arm of a selector cell is the conservative-portable build of the single-frame arm with no envelope installed; its candidate is the tuned-portable build of the tuned-profile arm, which installs that envelope before its first selector read and reports the route of each wave size. Native cells compare the native build of the tuned-profile arm, under the same envelope, with the tuned-portable arm. The portable arms are launched by the executable digests of dev/bench_results/ed3d490e/preparation-portable-build-tree/build-identity.json and the native arm by those of dev/bench_results/ed3d490e/preparation/build-identity.json. The measured operation is the steady-state decode of 3be770d5: one worker thread pinned to the resolved CPU builds its decoder, with its lane workspace sized to the edge layout, before timing, and a timed call decodes the cell's per-worker batch, workload.size.timed_batch, of the first recorded frames in fixed waves of eight lanes with per-frame termination, including batch fill, LLR conversion, lane transposition in and out, the lane workspace traffic of every wave, dispatch and extraction of the information-window decisions. Both arms decode f32 flooding normalized min-sum at the declared factor, iteration cap and syndrome stopping, and every timed execution checks each frame's bit errors against the prepared c077a88b quality record of the single-frame decode, which each lane frame equals bit for bit; decoder.batching.batch_size is that record's single-frame decode, the setting P-19 compares with each arm's report. The pilot cells are on the DVB-T2 code, one full wave per call. The confirmation adds the holdout cells of holdout-cells.json beside this addendum, which no pilot measures, on the NR code, seed and batch sizes that record shows absent from the calibration inventory. No nested pool is declared. The family declares no more confirmatory and holdout cells than its first ledger attempt admits, as dev/bench_results/ed3d490e/decode-selector-holdout/confirmatory-bound.json derives. Frozen decision rule: the envelope's decode selectors are retained when no conservative-portable against tuned-portable cell of the confirmation records fail, and take their conservative values otherwise; native cells report the build flavour and do not enter the rule, which reads the acceptance summary's recorded outcomes and nothing else. This pilot observes the measurement resolution that the family's confirmation freezes; it decides nothing."
+  },
+  "frozen_utc": "2026-10-19T23:26:17Z",
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "A pilot observes the resolution that later fixes this family's margins.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": null,
+    "equivalence_rationale": "A pilot decides nothing, so it declares no equivalence margin.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The family has no comparator-gap cell."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "Zero added source lines and zero unsafe kernels: the family measures committed arms under the committed envelope, and its outcome retains or withdraws that envelope's decode selectors."
+  },
+  "family_wise": {
+    "ledger_path": "dev/bench_results/ed3d490e/decode-selector-holdout/ledger.jsonl",
+    "prior_trials": []
+  },
+  "max_pilot_trials_per_cell": 2,
+  "holdout": {"required": false, "cells": []},
+  "campaign": {
+    "id": "37aa7254-ldpc-batch-decode-selector-holdout-pilot",
+    "seed": 3493933566,
+    "pilot_pairs": 12,
+    "max_cells_per_session": 1
+  },
+  "tuning_profiles": {
+    "gf2-batch-tuned-portable": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json",
+    "gf2-batch-tuned": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json"
+  },
+  "codes": {
+    "dvb-t2-r12": {
+      "code_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+      "workload_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs"
+    },
+    "nr-bg1-z384": {
+      "code_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+      "workload_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs"
+    }
+  },
+  "cell": {
+    "objective": "improvement",
+    "metric_kind": "whole-consumer",
+    "scaling": "sustained-throughput",
+    "core_arm": "single-core",
+    "workers": {"declared": 1, "nested_pools_allowed": false},
+    "cache_state": "warm",
+    "conversion_costs_included": true,
+    "baseline": "gf2-batch-conservative-portable",
+    "candidate": "gf2-batch-tuned-portable",
+    "timed_batch": 8,
+    "size": {"timed_fixture_banks": 1},
+    "decoder": {
+      "arm_kind": "matched-algorithm",
+      "precision": "f32",
+      "schedule": "flooding",
+      "normalization": {"kind": "normalized-min-sum", "factor": 0.75},
+      "iteration_cap": 50,
+      "stopping": {"kind": "syndrome", "crc": null},
+      "batching": {"batch_size": 1, "batch_fill_included": true},
+      "quality_tolerance": {"fer_ratio_max": 1.0},
+      "rate_matching": null
+    }
+  },
+  "cells": [
+    {"cell_id": "dvb-t2-r12-tuned-w1-b8", "code": "dvb-t2-r12"},
+    {"cell_id": "dvb-t2-r12-native-w1-b8", "code": "dvb-t2-r12", "objective": "non-regression",
+     "baseline": "gf2-batch-tuned-portable", "candidate": "gf2-batch-tuned"}
+  ],
+  "holdout_declaration": {
+    "inventory": "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/producer/coding-list-grid.json",
+    "rationale": "The declared cells are measured by no pilot of this family, and their code, recorded-input seed and per-worker batch size are absent from the calibration list-grid inventory this record pins, as its absence entries show, so no sample of a held-out workload takes part in selecting the decode selectors or in sizing the confirmation's resolution. The cells are a two-wave selector cell, a small-batch and an incomplete-wave non-regression selector cell, and a two-wave native non-regression cell.",
+    "cells": [
+      {"cell_id": "nr-bg1-z384-tuned-w1-b16", "code": "nr-bg1-z384", "timed_batch": 16},
+      {"cell_id": "nr-bg1-z384-tuned-w1-b5", "code": "nr-bg1-z384", "objective": "non-regression",
+       "scaling": "single-core-latency", "timed_batch": 5},
+      {"cell_id": "nr-bg1-z384-tuned-w1-b13", "code": "nr-bg1-z384", "objective": "non-regression",
+       "timed_batch": 13},
+      {"cell_id": "nr-bg1-z384-native-w1-b16", "code": "nr-bg1-z384", "objective": "non-regression",
+       "baseline": "gf2-batch-tuned-portable", "candidate": "gf2-batch-tuned", "timed_batch": 16}
+    ]
+  }
+}
