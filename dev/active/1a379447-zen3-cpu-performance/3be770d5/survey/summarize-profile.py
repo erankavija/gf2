@@ -2,8 +2,10 @@
 """Project the repeated steady-state LDPC profile (jit:3be770d5).
 
 Reads every completed `rep-*` session of a run-profile.sh output directory and
-writes one JSON summary and its Markdown projection. Every figure is computed
-from the files beside it; nothing is typed in.
+writes one JSON summary and its Markdown projection. A session is completed
+when the series' execution log records it done after a start under the first
+session's identity; a done session under another identity stops the summary.
+Every figure is computed from the files beside it; nothing is typed in.
 
 Sampled shares. Each record case is sampled once every fixed number of
 user-space cycles, so each sample stands for the same number of cycles.
@@ -11,8 +13,9 @@ Samples are pooled over the sessions per code address. Addresses in the
 harness executable are resolved to their inline chains with `addr2line -a -f
 -i -C`: source locations from the innermost code outward, each the call site
 of the level inside it. The first location a rule covers names the address's
-category; the rules are source spans of the pinned files. Addresses in other
-objects (libc) are categorized by symbol. A category's share is its pooled samples
+category; the rules are source spans of the files each harness executable was
+built from (RULES_BY_HARNESS). Addresses in other objects (libc) are
+categorized by symbol. A category's share is its pooled samples
 over the pooled total of the case, with a Wilson 95% interval [Wilson1927]
 that treats pooled samples as independent draws; the per-session range shows
 the variation between sessions and is descriptive. `attribution.tsv` lists
@@ -34,9 +37,10 @@ Counters and throughput. Each stat case records two counter groups in two
 runs per session. A session's per-worker time per frame is the mean of its
 two runs; counter ratios come from the run that counted them. Per-session
 figures are summarized by the median over the sessions with the
-order-statistic interval of `intervals.median_interval`. Scaling and gap
-ratios are ratios of medians over sessions with the percentile bootstrap of
-`intervals.bootstrap_ratio`, seeded per ratio from its identifier.
+order-statistic interval of `intervals.median_interval`. Scaling and
+route-pair (ROUTE_PAIRS) ratios are ratios of medians over sessions with the
+percentile bootstrap of `intervals.bootstrap_ratio`, seeded per ratio from its
+identifier.
 
 Allocation census. The first session's counting-allocator records are
 checked against the structural prediction of `edge-costs.py`: one
@@ -73,7 +77,6 @@ IDENTITY = REPO / "dev/bench_results/3be770d5/preparation/build-identity.json"
 EXPECTED_BINARY_SHA256 = None
 STRUCTURE = REPO / "dev/bench_results/3be770d5/preparation/structural-costs.json"
 CODE_KEYS = {"dvb-t2-r12": "dvb-t2-r12", "nr-bg1-r12": "nr-bg1-z384"}
-HARNESS_DSO = "/ldpc-profile"
 # perf prints `symbol+0xoff (object+0xoff)` per sample, and `[unknown]
 # ([unknown])` for an instruction pointer it has no map for, so both
 # offsets are optional. UNMAPPED names the second shape's category.
@@ -85,15 +88,18 @@ RUST_HASH = re.compile(r"::h[0-9a-f]{16}$")
 ALLOCATOR_SYMBOLS = ("malloc", "free", "_int_malloc", "_int_free", "cfree", "tcache",
                      "unlink_chunk", "malloc_consolidate", "__libc_malloc", "__libc_free")
 COPY_SYMBOLS = ("memcpy", "memmove", "memset")
+# Arm pairs whose time per frame is compared at each code and worker count.
+ROUTE_PAIRS = [("gf2", "aff3ct", "gf2 over AFF3CT flooding time per frame"),
+               ("lane", "single-frame", "lane route over single-frame route time per frame")]
 
 # Location rules: (category, source path suffix, first line, last line). An
 # address's inline chain is a list of source locations from the innermost code
 # outward, each the call site of the level inside it; the first location a
 # rule covers names the category, and locations no rule covers (library
 # iterators, bit-vector helpers) pass the decision outward. The spans are the
-# functions of the sources the producing manifest pins: gf2-coding, gf2-core
-# and gf2-kernels-simd at this worktree's revision, AFF3CT at the recorded
-# commit.
+# functions of the sources a harness executable was built from: gf2-coding,
+# gf2-core and gf2-kernels-simd at the revision of its profile, AFF3CT at the
+# recorded commit.
 CORE = "crates/gf2-coding/src/ldpc/core.rs"
 LLR = "crates/gf2-coding/src/llr.rs"
 SIMD_LLR = "crates/gf2-kernels-simd/src/llr.rs"
@@ -101,11 +107,28 @@ SPARSE = "crates/gf2-core/src/sparse.rs"
 LANE_PORTABLE = "crates/gf2-kernels-simd/src/ldpc_lanes.rs"
 LANE_AVX2 = "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs"
 BATCH = "crates/gf2-coding/src/ldpc/batch.rs"
+MIN_SUM = "crates/gf2-coding/src/ldpc/min_sum.rs"
 FLOODING = "Module/Decoder/LDPC/BP/Flooding/Decoder_LDPC_BP_flooding.hxx"
-LOCATION_RULES = [
+ALLOCATOR_RULES = [
     ("allocator", "/library/alloc/src/alloc.rs", 0, 10**9),
     ("allocator", "/library/alloc/src/raw_vec/mod.rs", 0, 10**9),
     ("allocator", "/library/alloc/src/raw_vec.rs", 0, 10**9),
+]
+HARNESS_RULES = [
+    ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/gf2.rs", 0, 10**9),
+    ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9),
+    ("dispatch", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/pool.rs", 0, 10**9),
+    ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx", 0, 10**9),
+    ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/NMS/Update_rule_NMS.hxx", 0, 10**9),
+    ("aff3ct-syndrome", "Tools/Code/LDPC/Syndrome/LDPC_syndrome.hxx", 0, 10**9),
+    ("aff3ct-syndrome", "Module/Decoder/LDPC/BP/Decoder_LDPC_BP.hxx", 0, 10**9),
+    ("aff3ct-check-node", FLOODING, 234, 257),
+    ("aff3ct-variable-node", FLOODING, 205, 230),
+    ("aff3ct-posterior", FLOODING, 261, 282),
+    ("aff3ct-decode-loop", FLOODING, 0, 10**9),
+]
+# The steady-state profile's executable (3be770d5).
+STEADY_RULES = ALLOCATOR_RULES + [
     ("edge-position-search", CORE, 1290, 1295),
     ("edge-position-search", CORE, 1298, 1305),
     ("message-reset", CORE, 1331, 1341),
@@ -122,6 +145,9 @@ LOCATION_RULES = [
     ("min-sum-reduction", LLR, 491, 494),
     ("min-sum-dispatch", SIMD_LLR, 89, 91),
     ("min-sum-reduction", SIMD_LLR, 119, 181),
+] + HARNESS_RULES
+# The batch decoder profile's executable (f434ddd3).
+BATCH_RULES = ALLOCATOR_RULES + [
     ("lane-check-step", LANE_PORTABLE, 246, 316),
     ("lane-check-step", LANE_AVX2, 29, 45),
     ("lane-check-step", LANE_AVX2, 123, 163),
@@ -132,18 +158,24 @@ LOCATION_RULES = [
     ("lane-transpose-in", BATCH, 376, 385),
     ("lane-transpose-out", BATCH, 430, 457),
     ("lane-syndrome", BATCH, 462, 475),
-    ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/gf2.rs", 0, 10**9),
-    ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9),
-    ("dispatch", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/pool.rs", 0, 10**9),
-    ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx", 0, 10**9),
-    ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/NMS/Update_rule_NMS.hxx", 0, 10**9),
-    ("aff3ct-syndrome", "Tools/Code/LDPC/Syndrome/LDPC_syndrome.hxx", 0, 10**9),
-    ("aff3ct-syndrome", "Module/Decoder/LDPC/BP/Decoder_LDPC_BP.hxx", 0, 10**9),
-    ("aff3ct-check-node", FLOODING, 234, 257),
-    ("aff3ct-variable-node", FLOODING, 205, 230),
-    ("aff3ct-posterior", FLOODING, 261, 282),
-    ("aff3ct-decode-loop", FLOODING, 0, 10**9),
-]
+    ("lane-decode-other", BATCH, 365, 458),
+    ("batch-wave-dispatch", BATCH, 285, 363),
+    ("batch-wave-dispatch", BATCH, 493, 501),
+    ("min-sum-reduction", MIN_SUM, 26, 32),
+    ("min-sum-reduction", MIN_SUM, 96, 145),
+    ("check-node-loop", CORE, 605, 621),
+    ("variable-node-update", CORE, 628, 647),
+    ("syndrome-termination", CORE, 656, 671),
+    ("message-reset", CORE, 734, 742),
+    # Call sites of the decode loop: their inlined callees carry no line.
+    ("check-node-loop", CORE, 751, 751),
+    ("variable-node-update", CORE, 752, 752),
+    ("syndrome-termination", CORE, 754, 754),
+    ("syndrome-termination", CORE, 761, 761),
+    ("decode-loop-other", CORE, 725, 782),
+] + HARNESS_RULES
+RULES_BY_HARNESS = {"/ldpc-profile": STEADY_RULES, "/ldpc-batch-profile": BATCH_RULES}
+HARNESS_DSOS = tuple(RULES_BY_HARNESS)
 
 
 def short(function):
@@ -151,10 +183,10 @@ def short(function):
     return function if function.startswith("<") else function.split("<")[0]
 
 
-def categorize(chain):
+def categorize(chain, rules):
     """Category of an inline chain of (function, path, line), innermost first."""
     for _, path, line in chain:
-        for category, suffix, first, last in LOCATION_RULES:
+        for category, suffix, first, last in rules:
             if path.endswith(suffix) and first <= line <= last:
                 return category
     return "other"
@@ -178,8 +210,19 @@ def seed_of(identifier):
 
 
 def completed_sessions(root):
-    log = (root / "repetitions.log").read_text(encoding="utf-8").splitlines()
-    done = {line.split()[0] for line in log if len(line.split()) > 1 and line.split()[1] == "done"}
+    identities, done, first = {}, set(), None
+    for line in (root / "repetitions.log").read_text(encoding="utf-8").splitlines():
+        fields = line.split(" ", 3)
+        if len(fields) < 2 or not fields[0].startswith("rep-"):
+            continue
+        if fields[1] == "start":
+            identity = fields[3].rsplit(" load=", 1)[0] if len(fields) > 3 else ""
+            first = identity if first is None else first
+            identities[fields[0]] = identity
+        elif fields[1] == "done":
+            if identities.get(fields[0]) != first:
+                sys.exit(f"{root}: {fields[0]} is done without a start under the first session's identity")
+            done.add(fields[0])
     sessions = sorted(path for path in root.glob("rep-*") if path.is_dir() and path.name in done)
     if not sessions:
         sys.exit(f"no completed session under {root}")
@@ -272,13 +315,15 @@ def scaling_summary(cases, per_session):
             ratios.append({"id": identifier, "kind": "per-worker slowdown against one worker",
                            "numerator": label, "denominator": base, "estimate": estimate,
                            "lower": lower, "upper": upper, "seed": seed_of(identifier)})
-        if arm == "gf2":
-            other = labels.get(("aff3ct", code, core_arm))
+        for numerator, denominator, kind in ROUTE_PAIRS:
+            if arm != numerator:
+                continue
+            other = labels.get((denominator, code, core_arm))
             other_values = per_session[other].get("ns_per_frame_per_worker", []) if other else []
             if other and len(values) >= 2 and len(other_values) >= 2:
                 identifier = f"gap:{label}"
                 estimate, lower, upper = bootstrap_ratio(values, other_values, seed_of(identifier))
-                ratios.append({"id": identifier, "kind": "gf2 over AFF3CT flooding time per frame",
+                ratios.append({"id": identifier, "kind": kind,
                                "numerator": label, "denominator": other, "estimate": estimate,
                                "lower": lower, "upper": upper, "seed": seed_of(identifier)})
     return ratios
@@ -410,7 +455,7 @@ def record_summary(root, sessions, cases):
                 address = int(offset, 16) if offset is not None else None
                 key = (dso, address, symbol)
                 counts[key] += int(samples)
-                if address is not None and dso.endswith(HARNESS_DSO):
+                if address is not None and dso.endswith(HARNESS_DSOS):
                     harness_offsets[address] = symbol
             listed = sum(counts.values())
             if int(total.group(1)) != listed:
@@ -435,9 +480,10 @@ def record_summary(root, sessions, cases):
             # unprivileged session cannot map. They are recorded samples and
             # count toward the case total.
             return UNMAPPED
-        if dso.endswith(HARNESS_DSO):
+        if dso.endswith(HARNESS_DSOS):
             chain = (chains or {}).get(offset, [])
-            category = categorize(chain)
+            rules = next(rules for name, rules in RULES_BY_HARNESS.items() if dso.endswith(name))
+            category = categorize(chain, rules)
             if category != "other":
                 return category
             return "other:" + (pathlib.Path(chain[0][1]).name if chain else symbol or "[unknown]")
@@ -460,7 +506,7 @@ def record_summary(root, sessions, cases):
                 by_category[category] += samples
                 session_categories[category] += samples
                 rows[(dso, offset, symbol, category)] += samples
-                chain = (chains or {}).get(offset) if offset is not None and dso.endswith(HARNESS_DSO) else None
+                chain = (chains or {}).get(offset) if offset is not None and dso.endswith(HARNESS_DSOS) else None
                 inner = (f"{pathlib.Path(chain[0][1]).name}:{chain[0][2]} in {short(chain[1][0] if len(chain) > 1 else chain[0][0])}"
                          if chain else f"{symbol} ({pathlib.Path(dso).name})")
                 lines[inner] += samples
@@ -483,7 +529,7 @@ def record_summary(root, sessions, cases):
     with (root / "attribution.tsv").open("w", encoding="utf-8") as output:
         output.write("samples\tdso\toffset\tsymbol\tcategory\tinline chain (innermost first)\n")
         for (dso, offset, symbol, category), samples in sorted(rows.items(), key=lambda item: -item[1]):
-            chain = (chains or {}).get(offset, []) if offset is not None and dso.endswith(HARNESS_DSO) else []
+            chain = (chains or {}).get(offset, []) if offset is not None and dso.endswith(HARNESS_DSOS) else []
             text = " <- ".join(f"{short(f)} {pathlib.Path(p).name}:{n}".strip() for f, p, n in chain)
             where = f"{offset:#x}" if offset is not None else "unmapped"
             output.write(f"{samples}\t{pathlib.Path(dso).name}\t{where}\t{symbol}\t{category}\t{text}\n")
@@ -595,9 +641,9 @@ SHAPES = [
      ("7", "[unknown]", None, "[unknown]", None)),
 ]
 
-# One inline-chain sample per lane category, on the line of its kernel's body;
-# the library frame ahead of it passes the decision outward.
-LANE_SAMPLES = [
+# One inline-chain sample per batch decoder profile category, on a line of its
+# span; the library frame ahead of it passes the decision outward.
+SPAN_SAMPLES = [
     ("lane-check-step", LANE_PORTABLE, 300),
     ("lane-check-step", LANE_AVX2, 150),
     ("lane-variable-step", LANE_PORTABLE, 350),
@@ -605,12 +651,22 @@ LANE_SAMPLES = [
     ("lane-transpose-in", BATCH, 380),
     ("lane-transpose-out", BATCH, 440),
     ("lane-syndrome", BATCH, 468),
+    ("lane-decode-other", BATCH, 391),
+    ("batch-wave-dispatch", BATCH, 323),
+    ("min-sum-reduction", MIN_SUM, 29),
+    ("min-sum-reduction", MIN_SUM, 129),
+    ("check-node-loop", CORE, 608),
+    ("variable-node-update", CORE, 640),
+    ("syndrome-termination", CORE, 658),
+    ("message-reset", CORE, 738),
+    ("variable-node-update", CORE, 752),
+    ("decode-loop-other", CORE, 770),
 ]
 
 
-def write_case(root, label, listing, recorded):
+def write_case(root, label, listing, recorded, log="rep-01 start 0 x load=[0]\nrep-01 done 0 load=[0]\n"):
     """A one-session profile directory carrying one record case."""
-    (root / "repetitions.log").write_text("rep-01 start 0 x\nrep-01 done 0 x\nseries done 0 sessions=1\n")
+    (root / "repetitions.log").write_text(log + "series done 0 sessions=1\n")
     (root / "cases.expanded.tsv").write_text(
         "\t".join(["record", label, "gf2", "bundle", "dvb-t2-r12", "single-core", "8", "1", "quality"]) + "\n")
     stem = root / "rep-01" / "record" / label
@@ -628,8 +684,8 @@ def self_test():
         groups = groups.groups() if groups else None
         if groups != expected:
             sys.exit(f"self-test: {line!r} parsed as {groups}, expected {expected}")
-    for category, path, line in LANE_SAMPLES:
-        got = categorize([("core::iter::next", "/library/core/src/iter/mod.rs", 1), ("f", path, line)])
+    for category, path, line in SPAN_SAMPLES:
+        got = categorize([("core::iter::next", "/library/core/src/iter/mod.rs", 1), ("f", path, line)], BATCH_RULES)
         if got != category:
             sys.exit(f"self-test: {path}:{line} categorized as {got}, expected {category}")
     listing = [line for line, _ in SHAPES]
@@ -651,6 +707,22 @@ def self_test():
     with tempfile.TemporaryDirectory() as directory:
         root = pathlib.Path(directory)
         BINARY = root / "absent-executable"
+        # Unresolved harness samples keep their symbol; other objects' samples name the object.
+        write_case(root, label, ["5\tlane::kernel+0x1 (/opt/ldpc-batch-profile+0x10)"], 5)
+        summary, _ = record_summary(root, completed_sessions(root), read_cases(root))
+        got = [row["category"] for row in summary[label]["categories"]]
+        if got != ["other:lane::kernel"]:
+            sys.exit(f"self-test: a batch profiler sample categorized as {got}")
+    cases = {("stat", f"{arm}-w1"): {"arm": arm, "code": "c", "core_arm": "single-core"}
+             for arm in ("lane", "single-frame")}
+    per_session = {f"{arm}-w1": {"ns_per_frame_per_worker": [float(v) for v in values]}
+                   for arm, values in (("lane", (2, 2, 2)), ("single-frame", (4, 4, 4)))}
+    pairs = [(r["numerator"], r["denominator"], r["estimate"]) for r in scaling_summary(cases, per_session)]
+    if pairs != [("lane-w1", "single-frame-w1", 0.5)]:
+        sys.exit(f"self-test: route pairs {pairs}, expected lane-w1 over single-frame-w1 at 0.5")
+    with tempfile.TemporaryDirectory() as directory:
+        root = pathlib.Path(directory)
+        BINARY = root / "absent-executable"
         # One sample of the listing withheld: the rule is equality, so this
         # stops the summary rather than reporting shares over 22 of 23.
         write_case(root, label, listing, 23)
@@ -660,6 +732,16 @@ def self_test():
             print(f"self-test: the total rule rejects an incomplete listing ({stop})")
         else:
             sys.exit("self-test: a listing short of its recorded total was accepted")
+    with tempfile.TemporaryDirectory() as directory:
+        root = pathlib.Path(directory)
+        write_case(root, label, listing, 22, log="rep-00 start 0 x load=[0]\nrep-00 done 0 load=[0]\n"
+                                                 "rep-01 start 0 y load=[0]\nrep-01 done 0 load=[0]\n")
+        try:
+            completed_sessions(root)
+        except SystemExit as stop:
+            print(f"self-test: the log rule rejects a session under another identity ({stop})")
+        else:
+            sys.exit("self-test: a session done under another identity was accepted")
     print("self-test: ok")
 
 
