@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Record the peak memory of the batch decoder benchmark arms (jit:05c9065e).
 
-`record` launches each arm of `arms.json` on each recorded code, untimed, as `benchmark-ab-runner
-launch` prints, and writes `peak-memory.json`, which states the method. `check` compares the
-record's arm identities with the committed build record and recomputes its statistics; it
-launches nothing and writes nothing.
+`record` launches each arm of the build record in OUT_DIR on each recorded code, untimed, as
+`benchmark-ab-runner launch` prints, and writes `peak-memory.json`, which states the method.
+`check` compares the record's arm identities with that build record and recomputes its
+statistics; it launches nothing and writes nothing.
 
 Usage (from the worktree root): record-peak-memory.py record|check OUT_DIR
 """
@@ -160,13 +160,35 @@ def committed(name, matches):
     return smoke.ROOT / found[0][0], found[0][1]
 
 
-def build_record():
-    return committed("build-identity.json", lambda record: "catalogue" in record)
+BUILD_RECORD = "build-identity.json"
+
+
+def build_records():
+    """Each live build record of the arms catalogue with its path."""
+    found = [(smoke.ROOT / path, json.loads((smoke.ROOT / path).read_text(encoding="utf-8")))
+             for path in smoke.listed(BUILD_RECORD)]
+    return [(path, record) for path, record in found if "catalogue" in record]
+
+
+def build_record(directory):
+    """The build record of the arms catalogue in `directory`."""
+    path = pathlib.Path(directory).resolve() / BUILD_RECORD
+    record = json.loads(path.read_text(encoding="utf-8"))
+    if "catalogue" not in record:
+        sys.exit(f"{path} is no build record of the arms catalogue")
+    return path, record
+
+
+def catalogue_of(build_identity):
+    return json.loads((smoke.ROOT / build_identity["catalogue"]["path"])
+                      .read_text(encoding="utf-8"))["arms"]
 
 
 def quality_files(build_identity):
-    record = json.loads((smoke.ROOT / build_identity["arms"]["aff3ct-flooding-nms-f32"][
-        "pinned_by"]["record"]).read_text(encoding="utf-8"))
+    # The pinned arms' record carries the prepared quality; the catalogue pins it by digest.
+    (pin,) = {arm["pinned_by"]["sha256"] for arm in catalogue_of(build_identity).values()
+              if arm["source"] == "pinned"}
+    record = json.loads(smoke.by_digest((BUILD_RECORD, pin)).read_text(encoding="utf-8"))
     pinned = {pathlib.Path(path).name: (pathlib.Path(path), digest)
               for path, digest in record[QUALITY_PIN].items()}
     intra_path, intra_record = committed(
@@ -186,11 +208,13 @@ def quality_files(build_identity):
 
 
 def catalogued(build_identity):
-    catalogue = json.loads((smoke.ROOT / build_identity["catalogue"]["path"])
-                           .read_text(encoding="utf-8"))
-    if catalogue["arms"].keys() != build_identity["arms"].keys():
+    """The catalogue's arms, once the build record holds every arm of the builds it records."""
+    catalogue = catalogue_of(build_identity)
+    builds = {catalogue[name]["build"] for name in build_identity["arms"] if name in catalogue}
+    if {name for name, arm in catalogue.items() if arm["build"] in builds} != \
+            build_identity["arms"].keys():
         sys.exit("the build identity and the catalogue name different arms")
-    return catalogue["arms"]
+    return catalogue
 
 
 def effective(name, entry, settings):
@@ -270,7 +294,7 @@ def cited(path):
 
 
 def record_mode(out_dir):
-    build_path, build = build_record()
+    build_path, build = build_record(out_dir)
     observed = observe(build, LAUNCHES)
     arms = {}
     for name, row in sorted(build["arms"].items()):
@@ -337,7 +361,7 @@ def quality_failures(record):
 
 def check_mode(out_dir):
     record = json.loads((out_dir / RECORD).read_text(encoding="utf-8"))
-    _, build = build_record()
+    _, build = build_record(out_dir)
     failures = structure_failures(record, build) + quality_failures(record)
     for failure in failures:
         print(f"DIFFERENCE {failure}")

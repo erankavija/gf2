@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Validation record of the batch decoder benchmark arms (jit:5d590bac).
 
-Drives each arm with its prepared quality file through the runner's staged smoke on every cell
-of `FAMILIES` at a batch of every recorded frame; the arm fails when a worker breaks its
-placement or decodes other bit errors than the file records [Cassagne2019]. Each family stages
-under its own directory, which a rerun resumes and the runner re-exports, so no completed
-dispatch repeats; the stages are removed once the record is written.
+Drives each arm of the build record in OUT_DIR with its prepared quality file through the
+runner's staged smoke on every cell of `FAMILIES` at a batch of every recorded frame; the arm
+fails when a worker breaks its placement or decodes other bit errors than the file records
+[Cassagne2019]. Each family stages under its own directory, which a rerun resumes and the runner
+re-exports, so no completed dispatch repeats; the stages are removed once the record is written.
 
 Usage (from the worktree root): record-arm-validation.py OUT_DIR
 """
@@ -97,7 +97,7 @@ def main():
     if pathlib.Path.cwd() != smoke.ROOT:
         sys.exit("invoke from the worktree root")
     out_dir = pathlib.Path(sys.argv[1]).resolve()
-    build_path, build = peak.build_record()
+    build_path, build = peak.build_record(out_dir)
     peak.catalogued(build)
     files = peak.quality_files(build)
     rows = {(name, key): row for name, row in build["arms"].items() for key in smoke.CODES}
