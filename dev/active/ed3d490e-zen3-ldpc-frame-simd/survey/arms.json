@@ -66,6 +66,30 @@
       "environment": {},
       "package": "ldpc-batch-tuned-arm"
     },
+    "gf2-batch-conservative-portable": {
+      "source": "workspace",
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "portable",
+      "comparison": "baseline",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "gf2-coding LdpcBatchDecoder under the conservative decode selectors, no envelope installed, portable build",
+      "environment": {},
+      "package": "ldpc-batch-arms"
+    },
+    "gf2-batch-tuned-portable": {
+      "source": "workspace",
+      "executable": "gf2-batch-tuned-arm",
+      "build": "portable",
+      "comparison": "candidate",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope, portable build",
+      "environment": {},
+      "package": "ldpc-batch-tuned-arm"
+    },
     "aff3ct-flooding-nms-f32": {
       "source": "pinned",
       "executable": "aff3ct-throughput-arm",
