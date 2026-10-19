@@ -3,7 +3,7 @@
 
 Creates the family ledger's genesis through the launcher and records the next attempt the shared
 evaluator derives from that ledger, `benchmark-acceptance --next-attempt`. The recorder fails when
-the declaration names more cells than that attempt admits.
+the declaration names more confirmatory and holdout cells than that attempt admits.
 
 Usage (from the worktree root): record-confirmatory-bound.py DECLARATION RECORD
 """
@@ -44,7 +44,8 @@ def record(declaration_path, out):
     launcher.genesis(ledger)
     evaluated = next_attempt(ledger, declaration["family"]["id"])
     attempt = evaluated["next_attempt"]
-    declared = len(declaration["cells"])
+    declared = (len(declaration["cells"])
+                + len(declaration.get("holdout_declaration", {}).get("cells", [])))
     if declared > attempt["max_cells"]:
         sys.exit(f"the declaration names {declared} cells; the attempt admits "
                  f"{attempt['max_cells']}")
