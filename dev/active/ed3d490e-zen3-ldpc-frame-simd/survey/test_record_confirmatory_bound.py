@@ -8,6 +8,7 @@ import shutil
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SURVEY = Path(__file__).resolve().parent
 sys.dont_write_bytecode = True
@@ -17,6 +18,7 @@ recorder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recorder)
 ROOT = recorder.smoke.ROOT
 SCRATCH = ROOT / "target/record-confirmatory-bound-test"
+next_attempt = recorder.next_attempt
 
 
 class BoundTest(unittest.TestCase):
@@ -72,8 +74,15 @@ class BoundTest(unittest.TestCase):
             if not committed.exists():
                 continue
             with self.subTest(declaration.name):
+                # The committed record read the ledger prefix of its own reservation count.
+                count = json.loads(committed.read_text(encoding="utf-8"))["ledger"]["reservations"]
+                prefix = SCRATCH / f"{declaration.stem}.ledger.jsonl"
+                lines = (ROOT / ledger).read_text(encoding="utf-8").splitlines(keepends=True)
+                prefix.write_text("".join(lines[:count]), encoding="utf-8")
                 out = SCRATCH / f"{declaration.stem}.json"
-                recorder.record(declaration, out)
+                with mock.patch.object(recorder, "next_attempt",
+                                       lambda _, family, prefix=prefix: next_attempt(prefix, family)):
+                    recorder.record(declaration, out)
                 self.assertEqual(out.read_bytes(), committed.read_bytes())
 
     def test_a_declaration_beyond_the_bound_is_refused(self):
@@ -84,6 +93,19 @@ class BoundTest(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.record(crowded)
 
+
+    def test_holdout_cells_count_against_the_bound(self):
+        bound = self.record(self.declaration)["max_confirmatory_cells"]["value"]
+        cell = self.declaration["cells"][0]
+        held = copy.deepcopy(self.declaration)
+        held["cells"] = [dict(cell, cell_id="confirmatory")]
+        held["holdout_declaration"] = {
+            "inventory": "unread", "rationale": "unread",
+            "cells": [dict(cell, cell_id=f"holdout-{index}") for index in range(bound - 1)]}
+        self.assertEqual(self.record(held)["declared_cells"]["value"], bound)
+        held["holdout_declaration"]["cells"].append(dict(cell, cell_id="holdout-beyond"))
+        with self.assertRaises(SystemExit):
+            self.record(held)
 
 if __name__ == "__main__":
     unittest.main()

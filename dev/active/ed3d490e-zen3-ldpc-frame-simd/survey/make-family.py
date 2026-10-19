@@ -12,6 +12,11 @@ addendum the canonical freezer wrote to OUT_DIR, which the generator reads and n
 The declaration's optional `tuning_profiles` names, per arm, the root-relative envelope file the arm
 installs; the plan pins it by profile id and digest, and it makes a portable arm's build
 `tuned-portable`, which is `conservative-portable` otherwise.
+The declaration's optional `holdout_declaration` lists cells no pilot measures; the pilot run writes
+them to `holdout-cells.json`, the declaration `freeze-confirmation.py --holdout-cells` appends, with
+each cell's code (frame length, edges), seed and batch shown absent from the named calibration
+list-grid inventory, and refuses a cell the inventory holds. `--confirmation` plans the frozen
+holdout cells with the confirmatory ones.
 
 Usage (from the worktree root): make-family.py DECLARATION OUT_DIR [--confirmation]
 """
@@ -32,6 +37,7 @@ smoke, arm_build = peak.smoke, peak.arm_build
 
 ADDENDUM = "addendum.json"
 PLAN = "plan.json"
+HOLDOUT = "holdout-cells.json"
 INPUTS = "inputs"
 # The declaration block that identifies the campaign of each plan label.
 CAMPAIGN = {"pilot": "campaign", "confirmation": "confirmation"}
@@ -191,6 +197,50 @@ def addendum(declaration, cells, manifests, arms, addendum_schema, settings, pro
     }
 
 
+def calibration_inventory(path):
+    """Codes, seeds and batch sizes of a calibration list-grid record's inventory."""
+    record = json.loads((smoke.ROOT / path).read_bytes())
+    strata = json.loads(record["evidence"])["inventory"]
+    codes = {(stratum["frame_len"], stratum["edges"]) for stratum in strata}
+    seeds = {seed for stratum in strata for seed in
+             (stratum["seeds"]["root"], *(stream["seed"] for stream in stratum["seeds"]["streams"]))}
+    return {"path": str(path),
+            "sha256": hashlib.sha256((smoke.ROOT / path).read_bytes()).hexdigest(),
+            "codes": [{"frame_len": frame_len, "edges": edges}
+                      for frame_len, edges in sorted(codes)],
+            "seeds": sorted(seeds),
+            "batch_frames": sorted({batch for stratum in strata
+                                    for batch in stratum["batch_frames"]})}
+
+
+def holdout_record(declaration, cells, manifests, arms, settings, profiles):
+    """The holdout declaration of the cells no pilot measures, refused where the inventory holds one."""
+    holdout = declaration["holdout_declaration"]
+    inventory = calibration_inventory(holdout["inventory"])
+    pilot = {cell["cell_id"] for cell in cells}
+    addendum_cells, absence = [], []
+    for declared in holdout["cells"]:
+        if declared["cell_id"] in pilot:
+            sys.exit(f"holdout cell {declared['cell_id']} is also a pilot cell")
+        manifest = manifests[declared["code"]]["manifest"]
+        absent = {"cell_id": declared["cell_id"],
+                  "code": {"frame_len": manifest["n"], "edges": manifest["nnz"]},
+                  "seed": manifest["seed"], "batch_frames": declared["timed_batch"]}
+        held = [name for name, value, inventoried in
+                (("code", absent["code"], inventory["codes"]),
+                 ("seed", absent["seed"], inventory["seeds"]),
+                 ("batch", absent["batch_frames"], inventory["batch_frames"]))
+                if value in inventoried]
+        if held:
+            sys.exit(f"the calibration inventory holds the {', '.join(held)} of holdout cell "
+                     f"{declared['cell_id']}")
+        absence.append(absent)
+        addendum_cells.append({**addendum_cell(declared, declaration["codes"], manifests, arms,
+                                               settings, profiles), "role": "holdout"})
+    return {"family": declaration["family"]["id"], "rationale": holdout["rationale"],
+            "inventory": inventory, "absence": absence, "addendum_cells": addendum_cells}
+
+
 def rustflags(build, name):
     """The RUSTFLAGS the build record states for the arm's executable."""
     row = build["arms"][name]
@@ -282,15 +332,22 @@ def generate(declaration_path, out_dir, confirmation=False):
     profiles = tuning_profiles(declaration, catalogue["arms"])
     manifests = bundles(catalogue, out_dir)
     cells = [merged(declaration["cell"], cell) for cell in declaration["cells"]]
+    held = [merged(declaration["cell"], cell)
+            for cell in declaration.get("holdout_declaration", {}).get("cells", [])]
     if confirmation:
         frozen = json.loads((out_dir / ADDENDUM).read_text(encoding="utf-8"))
-        cells = [cell for cell in cells
-                 if cell["cell_id"] in {entry["cell_id"] for entry in frozen["cells"]}]
+        declared = {cell["cell_id"]: cell for cell in cells + held}
+        cells = [declared[entry["cell_id"]] for entry in frozen["cells"]]
     else:
         addendum_schema = schema()
+        settings = shared_settings(addendum_schema)
+        if held:
+            write(out_dir / HOLDOUT, holdout_record(
+                {**declaration, "holdout_declaration": {**declaration["holdout_declaration"],
+                                                        "cells": held}},
+                cells, manifests, catalogue["arms"], settings, profiles))
         write(out_dir / ADDENDUM, addendum(declaration, cells, manifests, catalogue["arms"],
-                                           addendum_schema, shared_settings(addendum_schema),
-                                           profiles))
+                                           addendum_schema, settings, profiles))
     write(out_dir / PLAN, plan(declaration, cells, manifests, catalogue, records, profiles,
                                repository_path(out_dir / ADDENDUM),
                                "confirmation" if confirmation else "pilot"))

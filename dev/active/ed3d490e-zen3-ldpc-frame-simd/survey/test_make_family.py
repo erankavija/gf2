@@ -234,6 +234,103 @@ class GeneratorTest(unittest.TestCase):
         self.assertEqual(list(map(measured, plan["cells"])),
                          list(map(measured, pilot_plan["cells"][1:])))
 
+    def inventory(self, frame_len=0, edges=0, seed=0, batch=0):
+        """A calibration list-grid record of one stratum, in the producer's form."""
+        entry = {"field": "decode.lane_min_frames", "code": "inventory-code",
+                 "frame_len": frame_len, "edges": edges, "batch_frames": [batch],
+                 "seeds": {"root": seed, "streams": [{"bank": 0, "role": 0, "seed": seed}]}}
+        path = self.directory / f"inventory-{frame_len}-{edges}-{seed}-{batch}.json"
+        path.write_text(json.dumps({"operation": "list-grid",
+                                    "evidence": json.dumps({"inventory": [entry]})}),
+                        encoding="utf-8")
+        return path
+
+    def with_holdout(self, inventory):
+        declaration = copy.deepcopy(self.declaration)
+        holdout = dict(declaration["cells"][1], cell_id="nr-bg1-z384-lane-b5-w1", timed_batch=5)
+        declaration["holdout_declaration"] = {"inventory": str(inventory),
+                                              "rationale": "fresh inputs", "cells": [holdout]}
+        return declaration
+
+    def holdout_record(self, declaration, name="out"):
+        addendum, plan = self.generate(declaration, name=name)
+        record = self.directory / name / generator.HOLDOUT
+        return addendum, plan, json.loads(record.read_text(encoding="utf-8"))
+
+    def test_the_holdout_record_is_the_freezers_declaration_of_cells_no_pilot_measures(self):
+        addendum, plan, record = self.holdout_record(self.with_holdout(self.inventory()))
+        self.assertEqual(record["family"], addendum["family"]["id"])
+        self.assertEqual(record["rationale"], "fresh inputs")
+        (cell,) = record["addendum_cells"]
+        self.assertEqual((cell["cell_id"], cell["role"]), ("nr-bg1-z384-lane-b5-w1", "holdout"))
+        self.assertEqual(cell["workload"]["size"]["timed_batch"], 5)
+        pilot = {entry["cell_id"] for entry in addendum["cells"]}
+        self.assertNotIn(cell["cell_id"], pilot)
+        self.assertEqual({entry["cell_id"] for entry in plan["cells"]}, pilot)
+        self.assertEqual({key: value for key, value in cell.items() if key != "role"},
+                         {key: value for key, value in addendum["cells"][1].items()
+                          if key != "role"} | {"cell_id": cell["cell_id"],
+                                               "workload": cell["workload"]})
+
+    def test_the_holdout_record_shows_each_cell_absent_from_the_inventory(self):
+        inventory = self.inventory()
+        _, _, record = self.holdout_record(self.with_holdout(inventory))
+        self.assertEqual(record["inventory"]["sha256"],
+                         hashlib.sha256(inventory.read_bytes()).hexdigest())
+        (absent,) = record["absence"]
+        (cell,) = record["addendum_cells"]
+        size = cell["workload"]["size"]
+        self.assertEqual(absent, {"cell_id": cell["cell_id"],
+                                  "code": {"frame_len": size["n"],
+                                           "edges": absent["code"]["edges"]},
+                                  "seed": cell["workload"]["seed"],
+                                  "batch_frames": size["timed_batch"]})
+        self.assertNotIn(absent["code"], record["inventory"]["codes"])
+        self.assertNotIn(absent["seed"], record["inventory"]["seeds"])
+        self.assertNotIn(absent["batch_frames"], record["inventory"]["batch_frames"])
+
+    def test_a_holdout_cell_the_inventory_holds_is_refused(self):
+        _, _, record = self.holdout_record(self.with_holdout(self.inventory()))
+        (absent,) = record["absence"]
+        for present in ({"frame_len": absent["code"]["frame_len"],
+                         "edges": absent["code"]["edges"]},
+                        {"seed": absent["seed"]}, {"batch": absent["batch_frames"]}):
+            with self.subTest(present=present), self.assertRaises(SystemExit):
+                self.generate(self.with_holdout(self.inventory(**present)), name="present")
+
+    def test_a_holdout_cell_that_is_also_a_pilot_cell_is_refused(self):
+        declaration = self.with_holdout(self.inventory())
+        declaration["holdout_declaration"]["cells"][0]["cell_id"] = \
+            declaration["cells"][0]["cell_id"]
+        with self.assertRaises(SystemExit):
+            self.generate(declaration)
+
+    def test_a_confirmation_plans_its_frozen_holdout_cells(self):
+        declaration = self.with_holdout(self.inventory())
+        pilot, _, record = self.holdout_record(declaration)
+        declaration["confirmation"] = {"id": "generator-sample-confirmation",
+                                       "seed": declaration["campaign"]["seed"] + 1,
+                                       "max_cells_per_session":
+                                           declaration["campaign"]["max_cells_per_session"]}
+        frozen = copy.deepcopy(pilot)
+        frozen["cells"] = ([{**cell, "role": "confirmatory"} for cell in pilot["cells"]]
+                           + record["addendum_cells"])
+        path = self.directory / "confirmation.json"
+        path.write_text(json.dumps(declaration), encoding="utf-8")
+        out_dir = self.directory / "confirmation"
+        out_dir.mkdir()
+        (out_dir / generator.ADDENDUM).write_text(json.dumps(frozen), encoding="utf-8")
+        generator.generate(path, out_dir, confirmation=True)
+        plan = json.loads((out_dir / generator.PLAN).read_text(encoding="utf-8"))
+        self.assertEqual([cell["cell_id"] for cell in plan["cells"]],
+                         [cell["cell_id"] for cell in frozen["cells"]])
+        self.assertEqual(plan["cells"][-1]["case"]["batch_size"], 5)
+        self.assertFalse((out_dir / generator.HOLDOUT).exists())
+
+    def test_a_declaration_without_holdout_cells_writes_no_holdout_record(self):
+        self.generate()
+        self.assertFalse((self.directory / "out" / generator.HOLDOUT).exists())
+
     def test_the_generator_holds_no_numeric_literal(self):
         tree = ast.parse((SURVEY / "make-family.py").read_text(encoding="utf-8"))
         numbers = [node.value for node in ast.walk(tree) if isinstance(node, ast.Constant)

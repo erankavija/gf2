@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Usage (from the worktree root): run-family-campaign.py PLAN BUILD_IDENTITY [--untimed].
+"""Usage (from the worktree root): run-family-campaign.py PLAN BUILD_IDENTITY... [--untimed].
 Runs a story family's plan in the benchmark window (jit:dbea4e10); the plan's campaign ID fixes
-the stage and receipt, so rerunning resumes without repeating a completed cell. `--untimed` runs
-the stage as the runner's staged smoke."""
+the stage and receipt, so rerunning resumes without repeating a completed cell. Every arm's
+executable digest must be one a named build identity record pins. `--untimed` runs the stage as
+the runner's staged smoke."""
 
 import importlib.util
 import json
@@ -33,8 +34,9 @@ def committed(path):
     return quiet("ls-files", "--error-unmatch") and quiet("diff", "--quiet", "HEAD")
 
 
-def unidentified(plan, build_identity):
-    pinned = {arm["executable_sha256"] for arm in build_identity["arms"].values()}
+def unidentified(plan, build_identities):
+    pinned = {arm["executable_sha256"] for build_identity in build_identities
+              for arm in build_identity["arms"].values()}
     absent = []
     for name, arm in sorted(plan["arms"].items()):
         try:
@@ -89,21 +91,23 @@ def main():
     untimed = "--untimed" in arguments
     if untimed:
         arguments.remove("--untimed")
-    if len(arguments) != 2:
+    if len(arguments) < 2:
         sys.exit(__doc__)
     if pathlib.Path.cwd() != smoke.ROOT:
         sys.exit("invoke from the worktree root")
     # The benchmark window has no login shell.
     os.environ["PATH"] = f"{pathlib.Path.home() / '.cargo/bin'}{os.pathsep}{os.environ['PATH']}"
-    plan_path, identity_path = (pathlib.Path(argument) for argument in arguments)
+    plan_path, *identity_paths = (pathlib.Path(argument) for argument in arguments)
     if not untimed and os.environ.get(WINDOW) != "1":
         sys.exit(f"{WINDOW} is unset: a timed campaign runs only in the benchmark window")
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     if not untimed and not committed(plan["addendum"]):
         sys.exit(f"{plan['addendum']} is uncommitted or differs from its committed bytes")
-    absent = unidentified(plan, json.loads(identity_path.read_text(encoding="utf-8")))
+    absent = unidentified(plan, [json.loads(path.read_text(encoding="utf-8"))
+                                 for path in identity_paths])
     if absent:
-        sys.exit(f"{identity_path} names no executable digest of arms {', '.join(absent)}")
+        sys.exit(f"{', '.join(map(str, identity_paths))} name no executable digest of arms "
+                 f"{', '.join(absent)}")
     campaign = smoke.ROOT / "target/campaigns" / plan["campaign_id"]
     if untimed:
         runner, environment = smoke.build_runner()

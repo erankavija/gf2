@@ -303,6 +303,28 @@ class WriteRecordTest(unittest.TestCase):
             self.assertEqual((out_dir / recorder.RECORD).read_bytes(), written)
 
 
+class ArgumentsTest(unittest.TestCase):
+    def test_a_superseded_record_is_named_by_path_and_digest(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / "target") as directory:
+            superseded = Path(directory) / recorder.RECORD
+            superseded.write_text("{}\n", encoding="utf-8")
+            relative = superseded.relative_to(ROOT)
+            out_dir, flavour, aff3ct, supersedes = recorder.arguments(
+                ["out", "--portable", "--supersedes", str(relative)])
+            self.assertEqual((out_dir, flavour, aff3ct), (Path("out"), "portable", None))
+            self.assertEqual(supersedes, {"path": str(relative),
+                                          "sha256": recorder.digest(superseded)})
+
+    def test_without_a_superseded_record_the_record_names_none(self):
+        self.assertIsNone(recorder.arguments(["out", "--portable"])[3])
+        self.assertEqual(recorder.arguments(["out", "/aff3ct"])[1:3],
+                         ("native", Path("/aff3ct").resolve()))
+
+    def test_a_missing_superseded_record_is_refused(self):
+        with self.assertRaises(FileNotFoundError):
+            recorder.arguments(["out", "--portable", "--supersedes", "target/absent.json"])
+
+
 @unittest.skipUnless(os.environ.get("GF2_AFF3CT_ROOT"), "needs the staged AFF3CT tree")
 class ReproductionTest(unittest.TestCase):
     def test_a_second_run_over_an_unchanged_build_reproduces_the_record(self):

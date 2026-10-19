@@ -5,11 +5,15 @@ The committed-record tests read the committed record and build record.
 """
 
 import copy
+import hashlib
 import importlib.util
 import json
+import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SURVEY = Path(__file__).resolve().parent
 sys.dont_write_bytecode = True
@@ -137,6 +141,22 @@ class FloorTest(unittest.TestCase):
 class BuildRecordsTest(unittest.TestCase):
     def setUp(self):
         self.records = recorder.build_records()
+
+    def test_a_superseded_build_record_is_not_live(self):
+        directory = Path(tempfile.mkdtemp(dir=recorder.smoke.ROOT / "target"))
+        self.addCleanup(shutil.rmtree, directory)
+        old, new = directory / "old.json", directory / "new.json"
+        old.write_text(json.dumps({"catalogue": {}, "arms": {}}), encoding="utf-8")
+        supersedes = {"path": str(old.relative_to(recorder.smoke.ROOT)),
+                      "sha256": hashlib.sha256(old.read_bytes()).hexdigest()}
+        new.write_text(json.dumps({"catalogue": {}, "arms": {}, "supersedes": supersedes}),
+                       encoding="utf-8")
+        listed = [str(path.relative_to(recorder.smoke.ROOT)) for path in (new, old)]
+        with mock.patch.object(recorder.smoke, "listed", return_value=listed):
+            self.assertEqual([path for path, _ in recorder.build_records()], [new])
+            old.write_text(json.dumps({"catalogue": {}, "arms": {}, "changed": True}),
+                           encoding="utf-8")
+            self.assertEqual([path for path, _ in recorder.build_records()], [new, old])
 
     def test_each_build_record_covers_every_catalogue_arm_of_the_builds_it_records(self):
         covered = set()

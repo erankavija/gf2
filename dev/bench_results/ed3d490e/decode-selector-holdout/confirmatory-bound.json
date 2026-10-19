@@ -1,0 +1,45 @@
+{
+  "family": "ldpc-batch-decode-selector-holdout-v1",
+  "declaration": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/families/decode-selector-holdout.json",
+  "ledger": {
+    "path": "dev/bench_results/ed3d490e/decode-selector-holdout/ledger.jsonl",
+    "reservations": 0,
+    "spending_reservations": 0,
+    "prior_comparisons": 0
+  },
+  "read": {
+    "family_alpha": {
+      "value": 0.05,
+      "source": "protocol::SHARED_SETTINGS"
+    },
+    "bootstrap_resamples": {
+      "value": 10000,
+      "source": "protocol::SHARED_SETTINGS"
+    },
+    "tail_draws": {
+      "value": 20.0,
+      "source": "receipt::MIN_TAIL_DRAWS"
+    }
+  },
+  "computed_by": "benchmark-acceptance --next-attempt, trial_ledger::next_attempt",
+  "attempt": {
+    "value": 1,
+    "kind": "derived",
+    "formula": "spending_reservations + 1, this attempt's own reservation"
+  },
+  "attempt_alpha": {
+    "value": 0.025,
+    "kind": "derived",
+    "formula": "family_alpha / (attempt * (attempt + 1))"
+  },
+  "max_confirmatory_cells": {
+    "value": 6,
+    "kind": "derived",
+    "formula": "largest m with bootstrap_resamples * (attempt_alpha / (prior_comparisons + m)) / 2 >= tail_draws"
+  },
+  "declared_cells": {
+    "value": 6,
+    "kind": "descriptive",
+    "source": "cells of the declaration"
+  }
+}
