@@ -220,7 +220,7 @@ def completed_sessions(root):
             first = identity if first is None else first
             identities[fields[0]] = identity
         elif fields[1] == "done":
-            if identities.get(fields[0]) != first:
+            if fields[0] not in identities or identities[fields[0]] != first:
                 sys.exit(f"{root}: {fields[0]} is done without a start under the first session's identity")
             done.add(fields[0])
     sessions = sorted(path for path in root.glob("rep-*") if path.is_dir() and path.name in done)
@@ -742,6 +742,15 @@ def self_test():
             print(f"self-test: the log rule rejects a session under another identity ({stop})")
         else:
             sys.exit("self-test: a session done under another identity was accepted")
+    with tempfile.TemporaryDirectory() as directory:
+        root = pathlib.Path(directory)
+        write_case(root, label, listing, 22, log="rep-01 done 0 load=[0]\n")
+        try:
+            completed_sessions(root)
+        except SystemExit as stop:
+            print(f"self-test: the log rule rejects a session done without a start ({stop})")
+        else:
+            sys.exit("self-test: a session done without a start was accepted")
     print("self-test: ok")
 
 
