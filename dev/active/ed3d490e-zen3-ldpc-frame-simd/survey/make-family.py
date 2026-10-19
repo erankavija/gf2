@@ -2,17 +2,21 @@
 """Pilot addendum and runner plan of one batch decoder family from its declaration (jit:4d8fd613).
 
 Each setting comes from the declaration, the protocol's frozen shared settings table, the
-recorded input bundles or the arms' build identity record; the generator holds none. A cell is
+recorded input bundles or the arms' build identity records; the generator holds none. A cell is
 the declaration's `cell` overlaid with its own entry, and its `case` overrides the runner case
 its decoder block derives, where the arms' shared case differs from that block; a family's declaration is
 `families/<family>.json` beside this script. The plan names its addendum relative to the repository root when
 it lies inside it, and the bundles extracted beside it by absolute host path; one declaration and one output directory give the same bytes.
 `--confirmation` plans the declaration's `confirmation` campaign over the cells of the confirmation
 addendum the canonical freezer wrote to OUT_DIR, which the generator reads and never writes.
+The declaration's optional `tuning_profiles` names, per arm, the root-relative envelope file the arm
+installs; the plan pins it by profile id and digest, and it makes a portable arm's build
+`tuned-portable`, which is `conservative-portable` otherwise.
 
 Usage (from the worktree root): make-family.py DECLARATION OUT_DIR [--confirmation]
 """
 
+import hashlib
 import importlib.util
 import json
 import pathlib
@@ -98,7 +102,26 @@ def bundles(catalogue, out_dir):
     return found
 
 
-def addendum_cell(declared, codes, manifests, arms, settings):
+def tuning_profiles(declaration, catalogue):
+    """Per arm the declaration names, the identity of the tuning profile it installs."""
+    profiles = {}
+    for name, path in declaration.get("tuning_profiles", {}).items():
+        if name not in catalogue:
+            sys.exit(f"the declaration names a tuning profile of the uncatalogued arm {name}")
+        envelope = (smoke.ROOT / path).read_bytes()
+        profiles[name] = {"id": json.loads(envelope)["profile_id"],
+                          "sha256": hashlib.sha256(envelope).hexdigest()}
+    return profiles
+
+
+def build_identity(arm, profile):
+    """The protocol build identity of a catalogue arm installing `profile`."""
+    if arm["build"] != "portable":
+        return arm["build"]
+    return "conservative-portable" if profile is None else "tuned-portable"
+
+
+def addendum_cell(declared, codes, manifests, arms, settings, profiles):
     bundle = manifests[declared["code"]]
     manifest = bundle["manifest"]
     archive, archive_sha256 = smoke.ARCHIVE
@@ -119,7 +142,8 @@ def addendum_cell(declared, codes, manifests, arms, settings):
             "seed": manifest["seed"],
         },
         **carried,
-        "builds": {role: arms[declared[role]]["build"] for role in ("baseline", "candidate")},
+        "builds": {role: build_identity(arms[declared[role]], profiles.get(declared[role]))
+                   for role in ("baseline", "candidate")},
         "conversion_costs_included": declared["conversion_costs_included"],
         "decoder": {
             "arm_kind": decoder["arm_kind"],
@@ -141,7 +165,7 @@ def addendum_cell(declared, codes, manifests, arms, settings):
     }
 
 
-def addendum(declaration, cells, manifests, arms, addendum_schema, settings):
+def addendum(declaration, cells, manifests, arms, addendum_schema, settings, profiles):
     family_wise = declaration["family_wise"]
     return {
         "schema": addendum_schema["properties"]["schema"]["const"],
@@ -162,7 +186,7 @@ def addendum(declaration, cells, manifests, arms, addendum_schema, settings):
                 settings["max_confirmatory_attempts_per_candidate"],
         },
         "holdout": declaration["holdout"],
-        "cells": [addendum_cell(cell, declaration["codes"], manifests, arms, settings)
+        "cells": [addendum_cell(cell, declaration["codes"], manifests, arms, settings, profiles)
                   for cell in cells],
     }
 
@@ -177,8 +201,9 @@ def rustflags(build, name):
     return flags
 
 
-def plan(declaration, cells, manifests, catalogue, build, addendum_path, label):
-    files = peak.quality_files(build)
+def plan(declaration, cells, manifests, catalogue, records, profiles, addendum_path, label):
+    builds = {name: build for build in records for name in build["arms"]}
+    files = {arm: quality for build in records for arm, quality in peak.quality_files(build).items()}
     campaign = declaration[CAMPAIGN[label]]
     arms, planned = {}, []
     for declared in cells:
@@ -186,17 +211,17 @@ def plan(declaration, cells, manifests, catalogue, build, addendum_path, label):
         names = []
         for role in ("baseline", "candidate"):
             name = declared[role]
-            row = build["arms"][name]
+            row = builds[name]["arms"][name]
             quality, _ = files[name, key]
             arms[f"{name}-{key}"] = {
-                "build": catalogue["arms"][name]["build"],
+                "build": build_identity(catalogue["arms"][name], profiles.get(name)),
                 "description": catalogue["arms"][name]["description"],
                 "executable": str(peak.executable_path(row)),
                 "arguments": [],
                 "environment": {**row["environment"],
                                 peak.QUALITY_ENVIRONMENT: str(smoke.ROOT / quality)},
-                "rustflags": rustflags(build, name),
-                "tuning_profile": None,
+                "rustflags": rustflags(builds[name], name),
+                "tuning_profile": profiles.get(name),
             }
             names.append(f"{name}-{key}")
         baseline, candidate = names
@@ -251,8 +276,10 @@ def write(path, document):
 def generate(declaration_path, out_dir, confirmation=False):
     out_dir = pathlib.Path(out_dir).resolve()
     declaration = json.loads(pathlib.Path(declaration_path).read_text(encoding="utf-8"))
-    _, build = peak.build_record()
-    catalogue = json.loads((smoke.ROOT / build["catalogue"]["path"]).read_text(encoding="utf-8"))
+    records = [build for _, build in peak.build_records()]
+    (catalogue_path,) = {build["catalogue"]["path"] for build in records}
+    catalogue = json.loads((smoke.ROOT / catalogue_path).read_text(encoding="utf-8"))
+    profiles = tuning_profiles(declaration, catalogue["arms"])
     manifests = bundles(catalogue, out_dir)
     cells = [merged(declaration["cell"], cell) for cell in declaration["cells"]]
     if confirmation:
@@ -262,8 +289,9 @@ def generate(declaration_path, out_dir, confirmation=False):
     else:
         addendum_schema = schema()
         write(out_dir / ADDENDUM, addendum(declaration, cells, manifests, catalogue["arms"],
-                                           addendum_schema, shared_settings(addendum_schema)))
-    write(out_dir / PLAN, plan(declaration, cells, manifests, catalogue, build,
+                                           addendum_schema, shared_settings(addendum_schema),
+                                           profiles))
+    write(out_dir / PLAN, plan(declaration, cells, manifests, catalogue, records, profiles,
                                repository_path(out_dir / ADDENDUM),
                                "confirmation" if confirmation else "pilot"))
 
