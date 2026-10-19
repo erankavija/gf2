@@ -24,7 +24,7 @@ after a start under the first session's identity, and stops when a case's
 address listing and recorded sample total disagree. Its categories for this
 series are the spans of `BATCH_RULES` in
 `dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/summarize-profile.py`,
-chosen by the profiling executable's name; the spanned files have no
+chosen by the profiling executable's recorded digest; the spanned files have no
 difference between the revision `host.txt` records and the revision that
 commits the spans (`git diff <revision> HEAD -- <spanned files>` is empty).
 The session script makes `rep-01/callgraph/` only for the steady-state

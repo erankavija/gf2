@@ -21,7 +21,9 @@ SIMD as a comparator estimate with no gf2 mechanism, and the
 [re-sampled profile](../../bench_results/07ca8585/v4-r1-resampled-profile/profile.md)
 leaves the shared check-node loop as the dominant named decoder work after the
 canonical layout and shared reduction of
-[`07ca8585`](../1a379447-zen3-cpu-performance/07ca8585/findings.md). Code claims are in
+[`07ca8585`](../1a379447-zen3-cpu-performance/07ca8585/findings.md); the
+[recategorization record](../1a379447-zen3-cpu-performance/92c53589/record.md)
+contradicts that statement in part. Code claims are in
 [survey/source-evidence.json](survey/source-evidence.json), cited below by
 topic; the register-width forms the kernel needs compile at Rust 1.95 and agree
 with the canonical scalar statements in the

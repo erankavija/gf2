@@ -13,8 +13,9 @@ Samples are pooled over the sessions per code address. Addresses in the
 harness executable are resolved to their inline chains with `addr2line -a -f
 -i -C`: source locations from the innermost code outward, each the call site
 of the level inside it. The first location a rule covers names the address's
-category; the rules are source spans of the files each harness executable was
-built from (RULES_BY_HARNESS). Addresses in other objects (libc) are
+category; the rules are source spans of the files the harness executable was
+built from, selected by the executable's recorded digest
+(RULES_BY_EXECUTABLE). Addresses in other objects (libc) are
 categorized by symbol. A category's share is its pooled samples
 over the pooled total of the case, with a Wilson 95% interval [Wilson1927]
 that treats pooled samples as independent draws; the per-session range shows
@@ -47,6 +48,7 @@ checked against the structural prediction of `edge-costs.py`: one
 allocation per edge per iteration plus two syndrome vectors per check.
 
 Usage: summarize-profile.py <profile-dir> --json FILE --markdown FILE
+[--attribution FILE]; the address listing defaults to the profile directory.
 """
 
 import argparse
@@ -114,19 +116,26 @@ ALLOCATOR_RULES = [
     ("allocator", "/library/alloc/src/raw_vec/mod.rs", 0, 10**9),
     ("allocator", "/library/alloc/src/raw_vec.rs", 0, 10**9),
 ]
-HARNESS_RULES = [
-    ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/gf2.rs", 0, 10**9),
-    ("conversion-output", "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9),
-    ("dispatch", "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/pool.rs", 0, 10**9),
-    ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx", 0, 10**9),
-    ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/NMS/Update_rule_NMS.hxx", 0, 10**9),
-    ("aff3ct-syndrome", "Tools/Code/LDPC/Syndrome/LDPC_syndrome.hxx", 0, 10**9),
-    ("aff3ct-syndrome", "Module/Decoder/LDPC/BP/Decoder_LDPC_BP.hxx", 0, 10**9),
-    ("aff3ct-check-node", FLOODING, 234, 257),
-    ("aff3ct-variable-node", FLOODING, 205, 230),
-    ("aff3ct-posterior", FLOODING, 261, 282),
-    ("aff3ct-decode-loop", FLOODING, 0, 10**9),
-]
+
+
+def harness_rules(active):
+    """Harness and comparator rules, with the harness sources under `active`."""
+    return [
+        ("conversion-output", f"{active}/3be770d5/survey/harness/src/gf2.rs", 0, 10**9),
+        ("conversion-output", f"{active}/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9),
+        ("dispatch", f"{active}/3be770d5/survey/harness/src/pool.rs", 0, 10**9),
+        ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx", 0, 10**9),
+        ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/NMS/Update_rule_NMS.hxx", 0, 10**9),
+        ("aff3ct-syndrome", "Tools/Code/LDPC/Syndrome/LDPC_syndrome.hxx", 0, 10**9),
+        ("aff3ct-syndrome", "Module/Decoder/LDPC/BP/Decoder_LDPC_BP.hxx", 0, 10**9),
+        ("aff3ct-check-node", FLOODING, 234, 257),
+        ("aff3ct-variable-node", FLOODING, 205, 230),
+        ("aff3ct-posterior", FLOODING, 261, 282),
+        ("aff3ct-decode-loop", FLOODING, 0, 10**9),
+    ]
+
+
+HARNESS_RULES = harness_rules("dev/active/1a379447-zen3-cpu-performance")
 # The steady-state profile's executable (3be770d5).
 STEADY_RULES = ALLOCATOR_RULES + [
     ("edge-position-search", CORE, 1290, 1295),
@@ -146,6 +155,24 @@ STEADY_RULES = ALLOCATOR_RULES + [
     ("min-sum-dispatch", SIMD_LLR, 89, 91),
     ("min-sum-reduction", SIMD_LLR, 119, 181),
 ] + HARNESS_RULES
+# The allocation-free update's re-sampled profile executable (07ca8585),
+# built from 20a3c7b195e25b70a18ba7a8d9d571a1d9a30335: the layout of
+# BATCH_RULES at that revision's lines. Its harness paths start at the issue
+# directory: the shim is reached through a relative include.
+UPDATE_RULES = ALLOCATOR_RULES + [
+    ("min-sum-reduction", MIN_SUM, 65, 71),
+    ("min-sum-reduction", MIN_SUM, 109, 158),
+    ("check-node-loop", CORE, 1170, 1193),
+    ("variable-node-update", CORE, 1200, 1221),
+    ("syndrome-termination", CORE, 1230, 1245),
+    ("message-reset", CORE, 1331, 1337),
+    # Call sites of the decode loop: their inlined callees carry no line.
+    ("check-node-loop", CORE, 1345, 1345),
+    ("variable-node-update", CORE, 1346, 1346),
+    ("syndrome-termination", CORE, 1348, 1348),
+    ("syndrome-termination", CORE, 1355, 1355),
+    ("decode-loop-other", CORE, 1323, 1373),
+] + harness_rules("")
 # The batch decoder profile's executable (f434ddd3).
 BATCH_RULES = ALLOCATOR_RULES + [
     ("lane-check-step", LANE_PORTABLE, 246, 316),
@@ -174,8 +201,14 @@ BATCH_RULES = ALLOCATOR_RULES + [
     ("syndrome-termination", CORE, 761, 761),
     ("decode-loop-other", CORE, 725, 782),
 ] + HARNESS_RULES
-RULES_BY_HARNESS = {"/ldpc-profile": STEADY_RULES, "/ldpc-batch-profile": BATCH_RULES}
-HARNESS_DSOS = tuple(RULES_BY_HARNESS)
+# Keyed by the executable digest a series' resolution records, or for a
+# resolution without one, the build identity's digest `resolve` verified.
+RULES_BY_EXECUTABLE = {
+    "2ba24e5a81aa4193ede75e51270b2c49968d8af43f942014ef323254a489f017": STEADY_RULES,
+    "4349a556571af45fc6af56b4b15effde9223fee4934f6c7f264304f0fd291aa9": UPDATE_RULES,
+    "647f1526ee1851bf9e0bd8b4ed94008e4b01079f6da723f74c95b27b7eb6c483": BATCH_RULES,
+}
+HARNESS_DSOS = ("/ldpc-profile", "/ldpc-batch-profile")
 
 
 def short(function):
@@ -385,12 +418,24 @@ def to_address(offset, segments, mode):
     return offset
 
 
+def expected_digest():
+    if EXPECTED_BINARY_SHA256 is not None:
+        return EXPECTED_BINARY_SHA256
+    return json.loads(IDENTITY.read_text())["executables"]["ldpc-profile"]
+
+
+def rules_of(resolution):
+    """Location rules of the executable a resolution's chains came from."""
+    digest = resolution.get("executable_sha256") or expected_digest()
+    if digest not in RULES_BY_EXECUTABLE:
+        sys.exit(f"no source spans for the profiling executable {digest}")
+    return RULES_BY_EXECUTABLE[digest]
+
+
 def resolve(offsets):
     """Inline chains of harness offsets, with the offset convention chosen by
     agreement between perf's symbols and the executable's symbol table."""
-    expected = EXPECTED_BINARY_SHA256
-    if expected is None:
-        expected = json.loads(IDENTITY.read_text())["executables"]["ldpc-profile"]
+    expected = expected_digest()
     if not BINARY.exists() or sha(BINARY) != expected:
         return None, {"resolved": False, "reason": "the profiled executable is not available unchanged"}
     segments, table = load_segments(BINARY), symbol_table(BINARY)
@@ -430,7 +475,7 @@ def resolve(offsets):
                     **({"executable_sha256": expected} if EXPECTED_BINARY_SHA256 is not None else {})}
 
 
-def record_summary(root, sessions, cases):
+def record_summary(root, sessions, cases, attribution=None):
     histograms, totals = {}, {}
     harness_offsets = {}
     for (kind, label), case in cases.items():
@@ -471,6 +516,7 @@ def record_summary(root, sessions, cases):
     elif chains is not None:
         cache.write_text(json.dumps({"resolution": resolution,
                                      "chains": {str(k): v for k, v in chains.items()}}) + "\n")
+    rules = rules_of(resolution) if chains is not None else []
 
     def category_of(dso, offset, symbol):
         if offset is None:
@@ -482,7 +528,6 @@ def record_summary(root, sessions, cases):
             return UNMAPPED
         if dso.endswith(HARNESS_DSOS):
             chain = (chains or {}).get(offset, [])
-            rules = next(rules for name, rules in RULES_BY_HARNESS.items() if dso.endswith(name))
             category = categorize(chain, rules)
             if category != "other":
                 return category
@@ -526,7 +571,7 @@ def record_summary(root, sessions, cases):
         summary[label] = dict(cases[("record", label)], sessions=len(sessions_counts),
                               total_samples=pooled_total, session_totals=totals[label],
                               categories=categories, top_innermost=top)
-    with (root / "attribution.tsv").open("w", encoding="utf-8") as output:
+    with (attribution or root / "attribution.tsv").open("w", encoding="utf-8") as output:
         output.write("samples\tdso\toffset\tsymbol\tcategory\tinline chain (innermost first)\n")
         for (dso, offset, symbol, category), samples in sorted(rows.items(), key=lambda item: -item[1]):
             chain = (chains or {}).get(offset, []) if offset is not None and dso.endswith(HARNESS_DSOS) else []
@@ -662,6 +707,20 @@ SPAN_SAMPLES = [
     ("variable-node-update", CORE, 752),
     ("decode-loop-other", CORE, 770),
 ]
+UPDATE_SPAN_SAMPLES = [
+    ("min-sum-reduction", MIN_SUM, 68),
+    ("min-sum-reduction", MIN_SUM, 142),
+    ("check-node-loop", CORE, 1173),
+    ("variable-node-update", CORE, 1216),
+    ("syndrome-termination", CORE, 1238),
+    ("message-reset", CORE, 1336),
+    ("check-node-loop", CORE, 1345),
+    ("variable-node-update", CORE, 1346),
+    ("syndrome-termination", CORE, 1355),
+    ("decode-loop-other", CORE, 1365),
+    ("conversion-output", "/w/dev/active/3be770d5/survey/harness/src/gf2.rs", 63),
+    ("conversion-output", "/w/dev/active/3be770d5/survey/harness/../../../c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 9),
+]
 
 
 def write_case(root, label, listing, recorded, log="rep-01 start 0 x load=[0]\nrep-01 done 0 load=[0]\n"):
@@ -684,10 +743,35 @@ def self_test():
         groups = groups.groups() if groups else None
         if groups != expected:
             sys.exit(f"self-test: {line!r} parsed as {groups}, expected {expected}")
-    for category, path, line in SPAN_SAMPLES:
-        got = categorize([("core::iter::next", "/library/core/src/iter/mod.rs", 1), ("f", path, line)], BATCH_RULES)
-        if got != category:
-            sys.exit(f"self-test: {path}:{line} categorized as {got}, expected {category}")
+    for rules, samples in ((BATCH_RULES, SPAN_SAMPLES), (UPDATE_RULES, UPDATE_SPAN_SAMPLES)):
+        for category, path, line in samples:
+            got = categorize([("core::iter::next", "/library/core/src/iter/mod.rs", 1), ("f", path, line)], rules)
+            if got != category:
+                sys.exit(f"self-test: {path}:{line} categorized as {got}, expected {category}")
+    # The same executable name and chain take the spans of the recorded digest.
+    chain = [["", CORE, 0], ["decode_codeword_into", CORE, 1346]]
+    digests = {id(rules): digest for digest, rules in RULES_BY_EXECUTABLE.items()}
+    for digest, expected in ((digests[id(UPDATE_RULES)], "variable-node-update"),
+                             (digests[id(STEADY_RULES)], "decode-loop-other"), ("0" * 64, None)):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            BINARY = root / "absent-executable"
+            write_case(root, "gf2-dvb-w1", ["5\tdecode+0x1 (/opt/ldpc-profile+0x10)"], 5)
+            (root / "attribution-chains.json").write_text(json.dumps(
+                {"resolution": {"resolved": True, "executable_sha256": digest}, "chains": {"16": chain}}))
+            try:
+                summary, _ = record_summary(root, completed_sessions(root), read_cases(root),
+                                            root / "listing.tsv")
+            except SystemExit as stop:
+                if expected is not None:
+                    raise
+                print(f"self-test: an executable without spans stops the summary ({stop})")
+                continue
+            got = [row["category"] for row in summary["gf2-dvb-w1"]["categories"]]
+            if expected is None or got != [expected]:
+                sys.exit(f"self-test: executable {digest[:8]} categorized the chain as {got}, expected {expected}")
+            if (root / "attribution.tsv").exists() or not (root / "listing.tsv").exists():
+                sys.exit("self-test: the address listing ignored its named path")
     listing = [line for line, _ in SHAPES]
     label = "gf2-dvb-w1"
     with tempfile.TemporaryDirectory() as directory:
@@ -760,6 +844,7 @@ def main():
     parser.add_argument("root", nargs="?", type=pathlib.Path)
     parser.add_argument("--json", type=pathlib.Path)
     parser.add_argument("--markdown", type=pathlib.Path)
+    parser.add_argument("--attribution", type=pathlib.Path)
     parser.add_argument("--binary", type=pathlib.Path)
     parser.add_argument("--binary-sha256")
     parser.add_argument("--self-test", action="store_true")
@@ -780,7 +865,7 @@ def main():
     sessions = completed_sessions(root)
     cases = read_cases(root)
     stats, per_session = stat_summary(root, sessions, cases)
-    records, resolution = record_summary(root, sessions, cases)
+    records, resolution = record_summary(root, sessions, cases, args.attribution)
     summary = {
         "schema": "ldpc-steady-profile-summary-v1",
         "source": str(root.relative_to(REPO)) if root.is_relative_to(REPO) else str(root),

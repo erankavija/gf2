@@ -261,6 +261,11 @@ execution log records every bounded session. Thus the sampled categories for
 the levers this issue spends disappear without converting the remaining gap
 into a claim of optimality.
 
+These tables categorize the series with the spans of the `3be770d5`
+executable. The summary categorized with the spans of the series' own
+executable contradicts the paragraph's category statements in part; the
+[recategorization record](../92c53589/record.md) states which.
+
 ### The three REQ-10 granularities
 
 REQ-10 asks for the matched comparison at three granularities over the same
