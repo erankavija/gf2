@@ -1,0 +1,45 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 22K of event 'cycles:u'
+# Event count (approx.): 91488846264
+#
+# Overhead       Samples  Shared Object       Symbol                                                        
+# ........  ............  ..................  ..............................................................
+#
+    72.35%         16547  ldpc-batch-profile  [.] gf2_kernels_simd::x86::ldpc_lanes::lane_variable_step_avx2
+    24.78%          5668  ldpc-batch-profile  [.] gf2_kernels_simd::x86::ldpc_lanes::lane_check_step_avx2
+     1.44%           329  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.71%           163  ldpc-batch-profile  [.] gf2_kernels_simd::ldpc_lanes::assert_prefix_offsets
+     0.22%            50  libc.so.6           [.] 0x0000000000176e0e
+     0.16%            37  libc.so.6           [.] 0x0000000000176e04
+     0.07%            17  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.06%            13  [unknown]           [k] 0xffffffffb3a015f0
+     0.03%             8  libc.so.6           [.] 0x00000000001765c1
+     0.03%             6  libc.so.6           [.] 0x00000000001765ca
+     0.02%             5  libc.so.6           [.] 0x00000000001765aa
+     0.02%             5  libc.so.6           [.] 0x0000000000176e09
+     0.01%             3  libc.so.6           [.] 0x0000000000176e13
+     0.01%             2  libc.so.6           [.] 0x00000000001765b3
+     0.01%             2  libc.so.6           [.] 0x00000000001765bc
+     0.01%             2  [unknown]           [k] 0xffffffffb3e98142
+     0.01%             2  [unknown]           [k] 0xffffffffb4fa90f4
+     0.01%             2  [unknown]           [k] 0xffffffffb4faab86
+     0.00%             1  libc.so.6           [.] 0x0000000000176533
+     0.00%             1  libc.so.6           [.] 0x0000000000176545
+     0.00%             1  libc.so.6           [.] 0x00000000001765a5
+     0.00%             1  [unknown]           [k] 0xffffffffb3cf7bf0
+     0.00%             1  [unknown]           [k] 0xffffffffb3e92438
+     0.00%             1  [unknown]           [k] 0xffffffffb4f935bc
+     0.00%             1  [unknown]           [k] 0xffffffffb4f97f94
+     0.00%             1  [unknown]           [k] 0xffffffffb4f97fd3
+     0.00%             1  [unknown]           [k] 0xffffffffb4fa9034
+     0.00%             1  [unknown]           [k] 0xffffffffb4fa9043
+     0.00%             1  [unknown]           [k] 0xffffffffb4fa905b
+
+
+#
+# (Tip: To not accumulate CPU time of children symbols add --no-children)
+#

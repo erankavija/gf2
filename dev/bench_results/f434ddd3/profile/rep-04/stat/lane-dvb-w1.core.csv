@@ -1,0 +1,7 @@
+# started on Thu Oct 15 07:39:45 2026
+
+366985265,,cycles:u,77491000,100.00,,
+718241253,,instructions:u,77491000,100.00,,
+99884620,,branches:u,77491000,100.00,,
+142615,,branch-misses:u,77491000,100.00,,
+2018396,,stalled-cycles-frontend:u,77491000,100.00,,

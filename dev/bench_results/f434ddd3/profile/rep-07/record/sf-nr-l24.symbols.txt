@@ -1,0 +1,27 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 7K of event 'cycles:u'
+# Event count (approx.): 28652265031
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    98.23%          7036  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.34%            96  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.27%            19  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.07%             5  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.01%             1  [unknown]           [k] 0xffffffffb3e1b266
+     0.01%             1  [unknown]           [k] 0xffffffffb3e1c9a7
+     0.01%             1  [unknown]           [k] 0xffffffffb3e90a70
+     0.01%             1  [unknown]           [k] 0xffffffffb3e90ad3
+     0.01%             1  [unknown]           [k] 0xffffffffb3e92424
+     0.01%             1  [unknown]           [k] 0xffffffffb3e98142
+     0.01%             1  [unknown]           [k] 0xffffffffb3f09450
+
+
+#
+# (Tip: For memory address profiling, try: perf mem record / perf mem report)
+#
