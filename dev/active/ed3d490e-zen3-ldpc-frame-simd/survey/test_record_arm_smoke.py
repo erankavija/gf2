@@ -45,26 +45,30 @@ class StagesTest(unittest.TestCase):
 
 
 class CommittedRecordTest(unittest.TestCase):
-    def setUp(self):
-        self.build_path, self.build = peak.build_record()
-        text = (self.build_path.parent / recorder.RECORD).read_text(encoding="utf-8")
-        self.record = json.loads(text)
+    """Each build record's smoke record beside it."""
+
+    def records(self):
+        for build_path, build in peak.build_records():
+            text = (build_path.parent / recorder.RECORD).read_text(encoding="utf-8")
+            with self.subTest(build=str(build_path)):
+                yield build_path, build, json.loads(text)
 
     def test_every_arm_has_one_untimed_dispatch_on_each_code(self):
-        found = sorted((entry["arm"], entry["code"]) for entry in self.record["arms"])
-        self.assertEqual(found, sorted((name, key) for name in self.build["arms"]
-                                       for key in smoke.CODES))
-        for entry in self.record["arms"]:
-            self.assertEqual((entry["smoke"]["role"], entry["smoke"]["windows"]),
-                             ("validation", 0))
+        for _, build, record in self.records():
+            found = sorted((entry["arm"], entry["code"]) for entry in record["arms"])
+            self.assertEqual(found, sorted((name, key) for name in build["arms"]
+                                           for key in smoke.CODES))
+            for entry in record["arms"]:
+                self.assertEqual((entry["smoke"]["role"], entry["smoke"]["windows"]),
+                                 ("validation", 0))
 
     def test_each_entry_names_its_arm_by_the_build_record(self):
-        cited = peak.cited(self.build_path)
-        for entry in self.record["arms"]:
-            self.assertEqual(entry["build_identity"], cited)
-            self.assertEqual(entry["smoke"]["executable_sha256"],
-                             self.build["arms"][entry["arm"]]["executable_sha256"])
-
+        for build_path, build, record in self.records():
+            cited = peak.cited(build_path)
+            for entry in record["arms"]:
+                self.assertEqual(entry["build_identity"], cited)
+                self.assertEqual(entry["smoke"]["executable_sha256"],
+                                 build["arms"][entry["arm"]]["executable_sha256"])
 
 if __name__ == "__main__":
     unittest.main()

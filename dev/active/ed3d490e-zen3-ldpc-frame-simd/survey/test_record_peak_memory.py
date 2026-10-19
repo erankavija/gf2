@@ -134,16 +134,48 @@ class FloorTest(unittest.TestCase):
             recorder.arm_launch("arm", self.shared("/bin/sh", "true"), False)
 
 
+class BuildRecordsTest(unittest.TestCase):
+    def setUp(self):
+        self.records = recorder.build_records()
+
+    def test_each_build_record_covers_every_catalogue_arm_of_the_builds_it_records(self):
+        covered = set()
+        for path, build in self.records:
+            with self.subTest(path=str(path)):
+                catalogue = recorder.catalogued(build)
+                self.assertTrue(covered.isdisjoint(build["arms"]))
+                covered |= build["arms"].keys()
+        self.assertEqual(covered, catalogue.keys())
+
+    def test_a_build_record_missing_an_arm_of_its_builds_is_refused(self):
+        for path, build in self.records:
+            with self.subTest(path=str(path)):
+                partial = copy.deepcopy(build)
+                partial["arms"].popitem()
+                with self.assertRaises(SystemExit):
+                    recorder.catalogued(partial)
+
+    def test_every_arm_of_every_build_record_has_a_quality_file_on_each_code(self):
+        for path, build in self.records:
+            files = recorder.quality_files(build)
+            self.assertEqual(set(files), {(name, key) for name in build["arms"] for key in CODES})
+
+    def test_a_build_record_is_found_by_its_directory(self):
+        for path, build in self.records:
+            self.assertEqual(recorder.build_record(path.parent), (path, build))
+
+
 class CommittedRecordTest(unittest.TestCase):
     def setUp(self):
         paths = recorder.smoke.listed(recorder.RECORD)
         self.assertEqual(len(paths), 1)
         self.record = json.loads((recorder.smoke.ROOT / paths[0]).read_text(encoding="utf-8"))
-        catalogue = recorder.build_record()[1]["catalogue"]["path"]
+        self.directory = (recorder.smoke.ROOT / paths[0]).parent
+        catalogue = recorder.build_record(self.directory)[1]["catalogue"]["path"]
         self.catalogue = json.loads((recorder.smoke.ROOT / catalogue).read_text(encoding="utf-8"))
 
     def test_it_passes_its_structure_check(self):
-        build = recorder.build_record()[1]
+        build = recorder.build_record(self.directory)[1]
         self.assertEqual(recorder.structure_failures(self.record, build), [])
         self.assertEqual(recorder.quality_failures(self.record), [])
 

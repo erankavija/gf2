@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Record the build identity of the batch decoder arms (jit:ed3d490e).
 
-Builds the arms workspace beside this script against the staged AFF3CT
-[Cassagne2019] tree `AFF3CT_ROOT` and writes `build-identity.json` from the
-commands it runs and the files it reads; no value is a clock reading.
+Builds the arms workspace beside this script and writes `build-identity.json`
+from the commands it runs and the files it reads; no value is a clock reading.
+Given the staged AFF3CT [Cassagne2019] tree `AFF3CT_ROOT`, it records the native
+flavour: the catalogue's native and external arms, host-targeted. Given
+`--portable`, it records the portable arms, built for the target's baseline
+into a target directory of their own.
 
-Usage (from the worktree root): record-gf2-arms-build.py OUT_DIR AFF3CT_ROOT
+Usage (from the worktree root): record-gf2-arms-build.py OUT_DIR AFF3CT_ROOT|--portable
 """
 
 import hashlib
@@ -18,10 +21,16 @@ import sys
 import tomllib
 
 TOOLCHAIN = "1.95"
-RUSTFLAGS = "-C target-cpu=native"
 PACKAGE = "ldpc-batch-arms"
 CXX = "c++"
-ENVIRONMENT = {"CARGO_CI_NO_SCCACHE": "1", "RUSTFLAGS": RUSTFLAGS, "CXX": CXX}
+RECORD = "build-identity.json"
+# Per flavour: its RUSTFLAGS, its target directory inside the arms workspace (None: the
+# workspace's own) and the catalogue builds whose arms it records.
+FLAVOURS = {
+    "native": {"rustflags": "-C target-cpu=native", "target": None,
+               "builds": ("native", "external")},
+    "portable": {"rustflags": None, "target": "target/portable", "builds": ("portable",)},
+}
 AFF3CT_VARIABLE = "GF2_AFF3CT_ROOT"
 # The arms workspace's linker driver and its suffix for the linker's dependency file.
 LINKER = "link-inputs-cc.sh"
@@ -263,9 +272,15 @@ def configuration_rows(files):
     return rows
 
 
-def build_environment(inherited):
+def environment(flavour):
+    rustflags = FLAVOURS[flavour]["rustflags"]
+    return {"CARGO_CI_NO_SCCACHE": "1", **({"RUSTFLAGS": rustflags} if rustflags else {}),
+            "CXX": CXX}
+
+
+def build_environment(inherited, flavour):
     kept = {name: value for name, value in inherited.items() if not STEERING.match(name)}
-    return {**kept, **ENVIRONMENT}
+    return {**kept, **environment(flavour)}
 
 
 def aff3ct_identity(root, records):
@@ -294,18 +309,64 @@ def separate_members(metadata):
             for package in metadata["packages"] if package["id"] not in default]
 
 
+def flavour_arms(catalogue, flavour):
+    return {name: arm for name, arm in catalogue.items()
+            if arm["build"] in FLAVOURS[flavour]["builds"]}
+
+
+def build_commands(flavour, build, metadata, named, aff3ct):
+    """The native flavour builds the default members, then each other member alone, so its
+    dependency features unify with no other package's and only a member that links AFF3CT sees
+    the tree; the portable flavour builds the package of each of its arms alone."""
+    variables = environment(flavour)
+    if flavour != "native":
+        return [{"environment": variables, "argv": build + ["--package", package]}
+                for package in sorted({arm["package"] for arm in named.values()})]
+    return [{"environment": variables, "argv": build},
+            *({"environment": {**variables, **({AFF3CT_VARIABLE: str(aff3ct)} if links else {})},
+               "argv": build + member} for member, links in separate_members(metadata))]
+
+
+def built_binaries(metadata, commands):
+    """Binary targets of the packages a command names, and of the default members when a command
+    names none."""
+    named = [{argv[index + 1] for index, word in enumerate(argv[:-1]) if word == "--package"}
+             for argv in (command["argv"] for command in commands)]
+    default = set(metadata["workspace_default_members"]) if not all(named) else set()
+    return sorted(target["name"] for package in metadata["packages"]
+                  if package["name"] in set().union(*named) or package["id"] in default
+                  for target in package["targets"] if "bin" in target["kind"])
+
+
+def write_record(out_dir, record):
+    """Writes the record beside itself and renames it into place."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    partial = out_dir / f".{RECORD}.partial"
+    partial.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    partial.replace(out_dir / RECORD)
+
+
 def main():
-    if len(sys.argv) != 3:
-        sys.exit(__doc__)
+    match sys.argv[1:]:
+        case [out_dir, "--portable"]:
+            flavour, aff3ct = "portable", None
+        case [out_dir, aff3ct]:
+            flavour, aff3ct = "native", pathlib.Path(aff3ct).resolve()
+        case _:
+            sys.exit(__doc__)
     if pathlib.Path.cwd() != ROOT:
         sys.exit("invoke from the worktree root")
-    out_dir = pathlib.Path(sys.argv[1])
-    aff3ct = pathlib.Path(sys.argv[2]).resolve()
+    out_dir = pathlib.Path(out_dir)
     arms = located("package-directory", PACKAGE)
     manifest = arms / "Cargo.toml"
+    catalogue = arms.parent / "arms.json"
+    named = flavour_arms(json.loads(catalogue.read_text(encoding="utf-8"))["arms"], flavour)
+    target = FLAVOURS[flavour]["target"]
+    target_dir = [] if target is None else [
+        "--config", f"build.target-dir={json.dumps(str(arms / target))}"]
     _, before = pinned_executables()
 
-    inherited = build_environment(os.environ)
+    inherited = build_environment(os.environ, flavour)
     configuration = configuration_rows(cargo_configuration(
         ROOT, pathlib.Path(inherited.get("CARGO_HOME") or pathlib.Path.home() / ".cargo")))
     rustc = output(["rustc", f"+{TOOLCHAIN}", "--version", "--verbose"], env=inherited)
@@ -313,21 +374,14 @@ def main():
     linker = arms / LINKER
     metadata = json.loads(output(
         ["cargo", f"+{TOOLCHAIN}", "metadata", "--offline", "--locked", "--no-deps",
-         "--format-version", "1", "--manifest-path", str(manifest)], env=inherited))
+         "--format-version", "1", "--manifest-path", str(manifest), *target_dir], env=inherited))
     release = pathlib.Path(metadata["target_directory"]).relative_to(ROOT) / "release"
-    binaries = sorted(target["name"] for package in metadata["packages"]
-                      for target in package["targets"] if "bin" in target["kind"])
-    members = separate_members(metadata)
 
     build = ["./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build", "--offline",
              "--locked", "--release", "--manifest-path", str(manifest),
-             "--config", f"target.{host}.linker={json.dumps(str(linker))}"]
-    # Each member outside the default build builds alone, so its dependency features unify
-    # with no other package's; only a member that links AFF3CT sees the tree.
-    commands = [{"environment": ENVIRONMENT, "argv": build},
-                *({"environment": {**ENVIRONMENT, **({AFF3CT_VARIABLE: str(aff3ct)} if links
-                                                      else {})},
-                   "argv": build + member} for member, links in members)]
+             "--config", f"target.{host}.linker={json.dumps(str(linker))}", *target_dir]
+    commands = build_commands(flavour, build, metadata, named, aff3ct)
+    binaries = built_binaries(metadata, commands)
     for command in commands:
         subprocess.run(command["argv"], check=True, env={**inherited, **command["environment"]})
     rows, after = pinned_executables()
@@ -338,7 +392,6 @@ def main():
         refuse_newer(release / name, [linker])
     executables = {name: digest(release / name) for name in binaries}
     records = pinned_records()
-    catalogue = arms.parent / "arms.json"
     record = {
         "schema": "ldpc-batch-arms-build-v3",
         "build_root": str(ROOT),
@@ -357,18 +410,15 @@ def main():
                    "inputs": inputs(release / name, release / f"{name}.d",
                                     link_rules(release / name), ROOT, ROOT / release.parent)}
             for name in binaries},
-        "aff3ct": aff3ct_identity(aff3ct, records),
+        **({} if aff3ct is None else {"aff3ct": aff3ct_identity(aff3ct, records)}),
         "catalogue": {"path": str(catalogue), "sha256": digest(catalogue)},
-        "arms": arm_rows(json.loads(catalogue.read_text(encoding="utf-8"))["arms"], rows,
-                         records, executables, release),
+        "arms": arm_rows(named, rows, records, executables, release),
         "isolation": isolation(metadata, arms, rows),
         "pinned_records": records,
         "pinned_executables": rows,
     }
-    out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / "build-identity.json"
-    path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
-    print(path)
+    write_record(out_dir, record)
+    print(out_dir / RECORD)
 
 
 if __name__ == "__main__":

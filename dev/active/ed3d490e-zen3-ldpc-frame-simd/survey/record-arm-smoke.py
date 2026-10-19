@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Runner smoke record of the batch decoder arms [Cassagne2019] (jit:a4476c6a).
 
-One untimed validation-position dispatch per arm and code through `benchmark-ab-runner smoke`;
-staging, resume and atomic write are those of `record-arm-validation.py`.
+One untimed validation-position dispatch per arm of the build record in OUT_DIR and code through
+`benchmark-ab-runner smoke`; staging, resume and atomic write are those of
+`record-arm-validation.py`.
 
 Usage (from the worktree root): record-arm-smoke.py OUT_DIR
 """
@@ -48,7 +49,7 @@ def main():
     if pathlib.Path.cwd() != smoke.ROOT:
         sys.exit("invoke from the worktree root")
     out_dir = pathlib.Path(sys.argv[1]).resolve()
-    build_path, build = peak.build_record()
+    build_path, build = peak.build_record(out_dir)
     peak.catalogued(build)
     files = peak.quality_files(build)
     rows = {(name, key): row for name, row in build["arms"].items() for key in smoke.CODES}

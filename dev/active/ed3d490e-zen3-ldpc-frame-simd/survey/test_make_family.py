@@ -3,6 +3,7 @@
 
 import ast
 import copy
+import hashlib
 import importlib.util
 import json
 import shutil
@@ -20,6 +21,9 @@ spec = importlib.util.spec_from_file_location("make_family", SURVEY / "make-fami
 generator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(generator)
 peak, smoke = generator.peak, generator.smoke
+CONSERVATIVE, TUNED = "gf2-batch-conservative-portable", "gf2-batch-tuned-portable"
+ENVELOPE = Path(smoke.output(["git", "-C", str(smoke.ROOT), "ls-files",
+                              "crates/gf2-coding/data/tuning-profiles/*.json"]))
 
 
 class GeneratorTest(unittest.TestCase):
@@ -125,7 +129,8 @@ class GeneratorTest(unittest.TestCase):
                              moved["quality_confidence"])
 
     def test_arms_follow_the_build_identity_record(self):
-        build_path, build = peak.build_record()
+        build_path, build = next((path, build) for path, build in peak.build_records()
+                                 if self.declaration["cell"]["candidate"] in build["arms"])
         _, plan = self.generate()
         for cell in plan["cells"]:
             for role in ("baseline", "candidate"):
@@ -139,11 +144,52 @@ class GeneratorTest(unittest.TestCase):
         name = self.declaration["cell"]["candidate"]
         moved["arms"][name]["path"] += "-moved"
         moved["arms"][name]["environment"]["GF2_GENERATOR_PROBE"] = "moved"
-        with mock.patch.object(peak, "build_record", return_value=(build_path, moved)):
+        records = [(path, moved if path == build_path else record)
+                   for path, record in peak.build_records()]
+        with mock.patch.object(peak, "build_records", return_value=records):
             _, plan = self.generate(name="moved")
         arm = plan["arms"][plan["cells"][0]["candidate_arm"]]
         self.assertTrue(arm["executable"].endswith("-moved"))
         self.assertEqual(arm["environment"]["GF2_GENERATOR_PROBE"], "moved")
+
+    def portable(self, profiles):
+        declaration = copy.deepcopy(self.declaration)
+        declaration["cell"].update(baseline=CONSERVATIVE, candidate=TUNED)
+        declaration["tuning_profiles"] = profiles
+        return declaration
+
+    def test_a_named_tuning_profile_reaches_the_plan_and_the_addendum_build(self):
+        addendum, plan = self.generate(self.portable({TUNED: str(ENVELOPE)}))
+        envelope = (smoke.ROOT / ENVELOPE).read_bytes()
+        named = {"id": json.loads(envelope)["profile_id"],
+                 "sha256": hashlib.sha256(envelope).hexdigest()}
+        for cell, planned in zip(addendum["cells"], plan["cells"]):
+            self.assertEqual(cell["builds"], {"baseline": "conservative-portable",
+                                              "candidate": "tuned-portable"})
+            self.assertEqual(plan["arms"][planned["candidate_arm"]]["tuning_profile"], named)
+            baseline = plan["arms"][planned["baseline_arm"]]
+            self.assertEqual((baseline["build"], baseline["tuning_profile"]),
+                             ("conservative-portable", None))
+            self.assertIsNone(baseline["rustflags"])
+        self.assert_checked(plan)
+
+    def test_a_portable_arm_without_a_named_profile_is_conservative(self):
+        addendum, plan = self.generate(self.portable({}))
+        for cell in addendum["cells"]:
+            self.assertEqual(set(cell["builds"].values()), {"conservative-portable"})
+        self.assertTrue(all(arm["tuning_profile"] is None for arm in plan["arms"].values()))
+
+    def test_a_profile_of_an_uncatalogued_arm_is_refused(self):
+        with self.assertRaises(SystemExit):
+            self.generate(self.portable({"uncatalogued": str(ENVELOPE)}))
+
+    def assert_checked(self, plan):
+        path = self.directory / "checked.plan.json"
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        runner, environment = smoke.build_runner()
+        checked = subprocess.run([runner, "check", str(path)], env=environment,
+                                 capture_output=True, text=True)
+        self.assertEqual(checked.returncode, 0, checked.stderr)
 
     def test_workload_sizes_come_from_the_recorded_bundles(self):
         addendum, plan = self.generate()
