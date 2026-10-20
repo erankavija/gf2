@@ -21,6 +21,7 @@ holdout cells with the confirmatory ones.
 Usage (from the worktree root): make-family.py DECLARATION OUT_DIR [--confirmation]
 """
 
+import functools
 import hashlib
 import importlib.util
 import json
@@ -70,8 +71,13 @@ def protocol_identity(addendum_schema):
 
 def protocol_document(addendum_schema):
     """Root-relative path of the protocol document of the schema's version."""
+    return versioned_protocol_document(protocol_identity(addendum_schema)["version"])
+
+
+# Asked once per process, as the smoke module's repository lookups are.
+@functools.cache
+def versioned_protocol_document(version):
     files = repository_files()
-    version = protocol_identity(addendum_schema)["version"]
     return files.document(smoke.ROOT, "protocol*.md",
                           files.PROTOCOL_OPENING + f"{version}.".encode())
 
