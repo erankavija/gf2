@@ -20,8 +20,8 @@ their named function there.
 `dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/summarize-profile.py`
 holds the spans of `20a3c7b1`: the layout of `BATCH_RULES` (`min_sum.rs` and the
 `core.rs` update, variable, syndrome, reset and decode-loop functions with the
-decode loop's call sites) at that revision's lines, and the harness paths of
-that revision. `RULES_BY_EXECUTABLE` selects a series' rules by the executable
+decode loop's call sites) at that revision's lines, with the comparator shim's
+rule and the harness rules every executable shares. `RULES_BY_EXECUTABLE` selects a series' rules by the executable
 digest its resolution records, or for a resolution without one, by the build
 identity digest the summarizer verified. A series whose chains record a digest
 is resolved only under that executable, and a different `--binary-sha256`
