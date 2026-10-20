@@ -33,6 +33,11 @@
     "pilot_pairs": 12,
     "max_cells_per_session": 1
   },
+  "confirmation": {
+    "id": "67517a7b-ldpc-batch-decode-selector-holdout-confirmation",
+    "seed": 1867184989,
+    "max_cells_per_session": 1
+  },
   "tuning_profiles": {
     "gf2-batch-tuned-portable": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json",
     "gf2-batch-tuned": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json"
