@@ -117,25 +117,23 @@ ALLOCATOR_RULES = [
     ("allocator", "/library/alloc/src/raw_vec.rs", 0, 10**9),
 ]
 
-
-def harness_rules(active):
-    """Harness and comparator rules, with the harness sources under `active`."""
-    return [
-        ("conversion-output", f"{active}/3be770d5/survey/harness/src/gf2.rs", 0, 10**9),
-        ("conversion-output", f"{active}/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9),
-        ("dispatch", f"{active}/3be770d5/survey/harness/src/pool.rs", 0, 10**9),
-        ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx", 0, 10**9),
-        ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/NMS/Update_rule_NMS.hxx", 0, 10**9),
-        ("aff3ct-syndrome", "Tools/Code/LDPC/Syndrome/LDPC_syndrome.hxx", 0, 10**9),
-        ("aff3ct-syndrome", "Module/Decoder/LDPC/BP/Decoder_LDPC_BP.hxx", 0, 10**9),
-        ("aff3ct-check-node", FLOODING, 234, 257),
-        ("aff3ct-variable-node", FLOODING, 205, 230),
-        ("aff3ct-posterior", FLOODING, 261, 282),
-        ("aff3ct-decode-loop", FLOODING, 0, 10**9),
-    ]
-
-
-HARNESS_RULES = harness_rules("dev/active/1a379447-zen3-cpu-performance")
+# Harness and comparator rules. A harness path is its suffix from the issue
+# directory on, which every location of the harness sources shares.
+HARNESS_RULES = [
+    ("conversion-output", "/3be770d5/survey/harness/src/gf2.rs", 0, 10**9),
+    ("dispatch", "/3be770d5/survey/harness/src/pool.rs", 0, 10**9),
+    ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/MS/Update_rule_MS.hxx", 0, 10**9),
+    ("aff3ct-min-sum-update", "Tools/Code/LDPC/Update_rule/NMS/Update_rule_NMS.hxx", 0, 10**9),
+    ("aff3ct-syndrome", "Tools/Code/LDPC/Syndrome/LDPC_syndrome.hxx", 0, 10**9),
+    ("aff3ct-syndrome", "Module/Decoder/LDPC/BP/Decoder_LDPC_BP.hxx", 0, 10**9),
+    ("aff3ct-check-node", FLOODING, 234, 257),
+    ("aff3ct-variable-node", FLOODING, 205, 230),
+    ("aff3ct-posterior", FLOODING, 261, 282),
+    ("aff3ct-decode-loop", FLOODING, 0, 10**9),
+]
+# The comparator shim, reached through a relative include. STEADY_RULES omits
+# it: the steady-state summaries record its samples under `other:`.
+SHIM_RULES = [("conversion-output", "/c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 0, 10**9)]
 # The steady-state profile's executable (3be770d5).
 STEADY_RULES = ALLOCATOR_RULES + [
     ("edge-position-search", CORE, 1290, 1295),
@@ -157,8 +155,7 @@ STEADY_RULES = ALLOCATOR_RULES + [
 ] + HARNESS_RULES
 # The allocation-free update's re-sampled profile executable (07ca8585),
 # built from 20a3c7b195e25b70a18ba7a8d9d571a1d9a30335: the layout of
-# BATCH_RULES at that revision's lines. Its harness paths start at the issue
-# directory: the shim is reached through a relative include.
+# BATCH_RULES at that revision's lines.
 UPDATE_RULES = ALLOCATOR_RULES + [
     ("min-sum-reduction", MIN_SUM, 65, 71),
     ("min-sum-reduction", MIN_SUM, 109, 158),
@@ -172,7 +169,7 @@ UPDATE_RULES = ALLOCATOR_RULES + [
     ("syndrome-termination", CORE, 1348, 1348),
     ("syndrome-termination", CORE, 1355, 1355),
     ("decode-loop-other", CORE, 1323, 1373),
-] + harness_rules("")
+] + SHIM_RULES + HARNESS_RULES
 # The batch decoder profile's executable (f434ddd3).
 BATCH_RULES = ALLOCATOR_RULES + [
     ("lane-check-step", LANE_PORTABLE, 246, 316),
@@ -200,7 +197,7 @@ BATCH_RULES = ALLOCATOR_RULES + [
     ("syndrome-termination", CORE, 754, 754),
     ("syndrome-termination", CORE, 761, 761),
     ("decode-loop-other", CORE, 725, 782),
-] + HARNESS_RULES
+] + SHIM_RULES + HARNESS_RULES
 # Keyed by the executable digest a series' resolution records, or for a
 # resolution without one, the build identity's digest `resolve` verified.
 RULES_BY_EXECUTABLE = {
@@ -729,8 +726,14 @@ UPDATE_SPAN_SAMPLES = [
     ("variable-node-update", CORE, 1346),
     ("syndrome-termination", CORE, 1355),
     ("decode-loop-other", CORE, 1365),
+]
+# Harness chains of builds before and after the move under the epic directory.
+HARNESS_SAMPLES = [
     ("conversion-output", "/w/dev/active/3be770d5/survey/harness/src/gf2.rs", 63),
-    ("conversion-output", "/w/dev/active/3be770d5/survey/harness/../../../c077a88b/survey/harness/cpp/aff3ct_shim.cpp", 9),
+    ("dispatch", "/w/dev/active/3be770d5/survey/harness/src/pool.rs", 40),
+    ("conversion-output", "/w/dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/gf2.rs", 63),
+    ("dispatch", "/w/dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/pool.rs", 40),
+    ("other", "/w/dev/active/3be770d5/survey/harness/src/bin/ldpc-profile.rs", 40),
 ]
 
 
@@ -754,7 +757,12 @@ def self_test():
         groups = groups.groups() if groups else None
         if groups != expected:
             sys.exit(f"self-test: {line!r} parsed as {groups}, expected {expected}")
-    for rules, samples in ((BATCH_RULES, SPAN_SAMPLES), (UPDATE_RULES, UPDATE_SPAN_SAMPLES)):
+    shim = "/w/dev/active/3be770d5/survey/harness/../../../c077a88b/survey/harness/cpp/aff3ct_shim.cpp"
+    for rules, samples in ((BATCH_RULES, SPAN_SAMPLES), (UPDATE_RULES, UPDATE_SPAN_SAMPLES),
+                           *((rules, HARNESS_SAMPLES) for rules in RULES_BY_EXECUTABLE.values()),
+                           *((rules, [(category, shim, 9)]) for rules, category in
+                             ((STEADY_RULES, "other"), (UPDATE_RULES, "conversion-output"),
+                              (BATCH_RULES, "conversion-output")))):
         for category, path, line in samples:
             got = categorize([("core::iter::next", "/library/core/src/iter/mod.rs", 1), ("f", path, line)], rules)
             if got != category:
