@@ -1,20 +1,10 @@
 #!/usr/bin/env python3
-"""Regenerate the committed steady-state profile series from their committed
-chains and compare them with their committed summaries (jit:70a63a20).
-
-Each series is the directory of a committed `attribution-chains.json` beside
-the summarizer's `preparation` directory. It is copied to its own repository
-path inside a scratch repository that holds the working-tree summarizer and a
-link to that `preparation` directory, so the summary records the series path
-the committed one records. The pinned executable is absent there, so the
-summarizer reuses the committed chains.
-
-`comparison.tsv` beside this script receives one line per record case,
-`series<TAB>case<TAB>categories identical|different`, followed by one line
-per remaining byte difference, `series<TAB>file<TAB>location`: a JSON path of
-`profile-summary.json`, or a committed line number of a text file. The script
-exits non-zero when a case's categories differ or the summarizer fails.
-Usage: reproduce-steady-summaries.py
+"""Regenerate the steady-state profile series from their committed chains in a
+scratch repository and compare them with their committed summaries
+(jit:70a63a20). Writes `comparison.tsv` beside this script: one
+`series<TAB>case<TAB>categories identical|different` line per record case, then
+one `series<TAB>file<TAB>location` line per remaining byte difference; exits
+non-zero when a case's categories differ or the summarizer fails.
 """
 
 import difflib
