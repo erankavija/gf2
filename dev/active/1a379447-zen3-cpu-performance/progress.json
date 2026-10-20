@@ -733,6 +733,54 @@
     {
      "short_id": "bad1aea8",
      "status": "done. Session 33: merged at a82eea0a2, rework 1 at ad461cb37 (buffer validation before the AFF3CT FFI call); cargo-ci, code-review, research-review pass; review reviews/bad1aea8-r2.md."
+    },
+    {
+     "short_id": "859bc8cb",
+     "status": "done (session 39): REQ-02 amended by invoker; lead fixes e8f24fa37; gates pass first round."
+    },
+    {
+     "short_id": "32bfe9f8",
+     "status": "done (session 39): collected; rework 1 generated outcome tables (make-collection-outcome.py); gates pass."
+    },
+    {
+     "short_id": "a03daf3f",
+     "status": "done (session 39): collected; rework 1 generated outcome tables; gates pass."
+    },
+    {
+     "short_id": "7eddc5e2",
+     "status": "done (session 39): collected; rework 1 generated outcome tables; gates pass."
+    },
+    {
+     "short_id": "3bb47302",
+     "status": "done (session 39): profile series committed and summarized; lead fix 1ecd0f20c (orphan done record); gates pass."
+    },
+    {
+     "short_id": "dba82422",
+     "status": "done (session 39): portable arms; its record preparation-portable/ is superseded by preparation-portable-build-tree/ (37aa7254)."
+    },
+    {
+     "short_id": "37aa7254",
+     "status": "done (session 39): REQ-01 amended by invoker; holdout pilot frozen and queued; rework 1 retention rule requires qualifies; gates pass."
+    },
+    {
+     "short_id": "92c53589",
+     "status": "done (session 39): 07ca8585 profile recategorized under its own spans; contradictions recorded; rework 1 executable guard."
+    },
+    {
+     "short_id": "6ca89655",
+     "status": "rejected (session 39): REQ-02 misstated by the lead before any work; superseded by 70a63a20."
+    },
+    {
+     "short_id": "70a63a20",
+     "status": "done (session 39): harness rules by location-independent suffix."
+    },
+    {
+     "short_id": "67517a7b",
+     "status": "ready: waits for the benchmark window to run the 37aa7254 queue line."
+    },
+    {
+     "short_id": "262ca018",
+     "status": "ready: blocked on invoker approval (shared CI contract change)."
     }
    ]
   },
@@ -1412,6 +1460,36 @@
    "type": "task",
    "in_epic": true,
    "reason": "invoker decision 2026-10-12: the INTRA arm decodes the recorded LLRs multiplied by two; 4252085a depends on it"
+  },
+  {
+   "id": "dba82422",
+   "type": "simulation",
+   "in_epic": true,
+   "reason": "invoker ruling 2026-10-20 option A on 37aa7254: portable holdout arms and tuning_profiles field"
+  },
+  {
+   "id": "92c53589",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "3bb47302 worker: 07ca8585 profile categorized with another revision's spans"
+  },
+  {
+   "id": "262ca018",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "confirmation rework worker: CI runs none of the story survey tests"
+  },
+  {
+   "id": "6ca89655",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "92c53589 worker: harness rule paths stale after the dev/active move; rejected, superseded by 70a63a20"
+  },
+  {
+   "id": "70a63a20",
+   "type": "bug",
+   "in_epic": true,
+   "reason": "supersedes 6ca89655 with achievable REQ-02"
   }
  ],
  "escalations": [
@@ -3064,6 +3142,11 @@
    "issue": "a80062a1",
    "date": "2026-10-15",
    "finding": "research-review advisory F1: gate evidence does not itself show the byte-for-byte acceptance-summary reproduction of REQ-02 (worker reports the re-run left the receipt directory byte-identical)."
+  },
+  {
+   "issue": "70a63a20",
+   "date": "2026-10-20",
+   "finding": "STEADY_RULES omit the comparator shim rule so the committed v4-r1-steady-profile categories reproduce; that summary records the shim's samples under other:aff3ct_shim.cpp and other:stl_vector.h (70a63a20/record.md)."
   }
  ],
  "notes": [
@@ -3304,7 +3387,8 @@
   "handoff-30.md",
   "handoff-31.md",
   "handoff-32.md",
-  "handoff-34.md"
+  "handoff-34.md",
+  "handoff-35.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -3328,9 +3412,9 @@
   "note": "Each line carries its load guard (exit 75 above a one-minute load of 2). Verify each campaign from its own execution log."
  },
  "session_scope": {
-  "session": 37,
-  "date": "2026-10-13",
-  "instruction": "Invoker 2026-10-13 (session 37): drive epic 1a379447; subagent model by task difficulty; no Fable.",
+  "session": 39,
+  "date": "2026-10-20",
+  "instruction": "Invoker 2026-10-20 (session 39): drive epic 1a379447; subagent model by task difficulty; no Fable. Do not stop to ask; block and record; check workers every 30 minutes; write the handoff when nothing remains that does not wait for input.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
