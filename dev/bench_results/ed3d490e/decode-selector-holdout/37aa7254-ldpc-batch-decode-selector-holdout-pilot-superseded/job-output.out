@@ -1,0 +1,11 @@
+/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/1a379447-zen3-cpu-performance/37aa7254/addendum.json /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/1a379447-zen3-cpu-performance/37aa7254/plan.json
+cargo-budget: 24 jobs (1 live, 24 cpus)
+    Finished `release` profile [optimized] target(s) in 0.07s
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/target/campaigns/37aa7254-ldpc-batch-decode-selector-holdout-pilot/stage/execution.log
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/target/campaigns/37aa7254-ldpc-batch-decode-selector-holdout-pilot/stage/execution.log
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/target/campaigns/37aa7254-ldpc-batch-decode-selector-holdout-pilot/stage/execution.log
+GF2_BENCHMARK_RECEIPT=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot/receipt.json
+execution log: 2 declared cells, each started once, checkpointed once and completed once at its declared pairs, terminal record 'complete'
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
