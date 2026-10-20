@@ -2453,6 +2453,13 @@
    "question": "Benchmark window for the holdout pilot",
    "answer": "Invoker (session 40): in-session window run. The first run overlapped the lead's survey-test timing loop; the lead discarded it (receipt, stage, ledger line, done marker; copy in the session scratchpad) and reran it at 19:38Z on a quiet host.",
    "status": "resolved"
+  },
+  {
+   "issue": "1a379447",
+   "date": "2026-10-20",
+   "question": "Session rule",
+   "answer": "Invoker (session 40): do not stop to ask; a task needing input is blocked and its question recorded for the next session; write the handoff when no work remains that does not wait for input; check workers every 30 minutes. The holdout confirmation runs in-session once the host is quiet.",
+   "status": "resolved"
   }
  ],
  "rework_counts": {
