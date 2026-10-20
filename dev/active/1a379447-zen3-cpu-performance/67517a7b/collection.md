@@ -17,7 +17,11 @@ holds the receipt, execution log, checkpoints, plan, input snapshots and the
 whose cell table lists each cell's pairs, interval and outcome. Its frozen
 addendum is [`37aa7254/addendum.json`](../37aa7254/addendum.json). The
 [family ledger](../../../bench_results/ed3d490e/decode-selector-holdout/ledger.jsonl)
-holds the pilot's exploratory reservation, which spends no comparison.
+holds the pilot's exploratory reservation, which spends no comparison. An
+earlier window run of the same campaign is preserved as a superseded attempt.
+Its [attempt record](superseded-pilot-attempt.md) states the contradiction of
+its deleted ledger line with the protocol's append-only ledger and its
+consequence for the confirmation's P-20 bound.
 
 ## Verification
 
