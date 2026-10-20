@@ -92,7 +92,8 @@ class Fixture:
         self.directory = Path(tempfile.mkdtemp(dir=SCRATCH if root is None else root))
         test.addCleanup(shutil.rmtree, self.directory, ignore_errors=True)
         relative = self.directory.relative_to(self.root)
-        self.campaign_id = "launcher-fixture-" + self.directory.name.lower().replace("_", "-")
+        # A temporary name may hold `_` anywhere; its hex digits are always a kebab-case word.
+        self.campaign_id = "launcher-fixture-" + self.directory.name.encode().hex()
         self.campaign = ROOT / "target/campaigns" / self.campaign_id
         test.addCleanup(shutil.rmtree, self.campaign, ignore_errors=True)
         self.ledger = self.directory / "ledger.jsonl"

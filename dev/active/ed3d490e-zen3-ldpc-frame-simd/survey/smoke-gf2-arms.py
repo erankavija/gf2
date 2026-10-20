@@ -27,6 +27,7 @@ AVX2 one. The recorded bundles and the prepared quality records are the
 Usage (from the worktree root): smoke-gf2-arms.py OUT_DIR [gf2|aff3ct]
 """
 
+import functools
 import hashlib
 import json
 import os
@@ -138,12 +139,15 @@ def output(command):
 ROOT = pathlib.Path(output(["git", "rev-parse", "--show-toplevel"]))
 
 
+# Each lookup walks the work tree; a process asks each once, since its inputs stay in place.
+@functools.cache
 def listed(name):
     """Root-relative files git lists under the name `name`."""
-    return output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
-                   "--exclude-standard", "--", f":(glob)**/{name}"]).splitlines()
+    return tuple(output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
+                         "--exclude-standard", "--", f":(glob)**/{name}"]).splitlines())
 
 
+@functools.cache
 def located(*query):
     """Root-relative path the repository-file helper prints for `query`."""
     helper = min(listed("repository_files.py"), key=len)
