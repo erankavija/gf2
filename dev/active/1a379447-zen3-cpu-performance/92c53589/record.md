@@ -23,8 +23,11 @@ holds the spans of `20a3c7b1`: the layout of `BATCH_RULES` (`min_sum.rs` and the
 decode loop's call sites) at that revision's lines, and the harness paths of
 that revision. `RULES_BY_EXECUTABLE` selects a series' rules by the executable
 digest its resolution records, or for a resolution without one, by the build
-identity digest the summarizer verified; the self-test categorizes one chain of
-one executable name under two digests and stops on a digest without spans.
+identity digest the summarizer verified. A series whose chains record a digest
+is resolved only under that executable, and a different `--binary-sha256`
+stops the summary before the chains are touched. The self-test categorizes one
+chain of one executable name under two digests, stops on a digest without
+spans, and refuses a mismatching `--binary-sha256` with the chains unchanged.
 
 ## Regenerated summary
 

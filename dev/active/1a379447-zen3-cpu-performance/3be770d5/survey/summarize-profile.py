@@ -424,6 +424,13 @@ def expected_digest():
     return json.loads(IDENTITY.read_text())["executables"]["ldpc-profile"]
 
 
+def recorded_digest(cache):
+    """The executable digest a series' cached chains record, if any."""
+    if not cache.exists():
+        return None
+    return json.loads(cache.read_text())["resolution"].get("executable_sha256")
+
+
 def rules_of(resolution):
     """Location rules of the executable a resolution's chains came from."""
     digest = resolution.get("executable_sha256") or expected_digest()
@@ -432,10 +439,11 @@ def rules_of(resolution):
     return RULES_BY_EXECUTABLE[digest]
 
 
-def resolve(offsets):
+def resolve(offsets, recorded=None):
     """Inline chains of harness offsets, with the offset convention chosen by
-    agreement between perf's symbols and the executable's symbol table."""
-    expected = expected_digest()
+    agreement between perf's symbols and the executable's symbol table. A
+    series whose chains record an executable digest resolves only under it."""
+    expected = recorded or expected_digest()
     if not BINARY.exists() or sha(BINARY) != expected:
         return None, {"resolved": False, "reason": "the profiled executable is not available unchanged"}
     segments, table = load_segments(BINARY), symbol_table(BINARY)
@@ -472,7 +480,7 @@ def resolve(offsets):
             chain[0] = ("", chain[0][1], chain[0][2])
     return chains, {"resolved": True, "offset_convention": mode, "symbol_agreement": votes,
                     "addresses": len(addresses), "executable": str(BINARY.relative_to(REPO)),
-                    **({"executable_sha256": expected} if EXPECTED_BINARY_SHA256 is not None else {})}
+                    **({"executable_sha256": expected} if recorded or EXPECTED_BINARY_SHA256 else {})}
 
 
 def record_summary(root, sessions, cases, attribution=None):
@@ -507,8 +515,11 @@ def record_summary(root, sessions, cases, attribution=None):
                 sys.exit(f"{stem}: {listed} listed samples against {total.group(1)} recorded")
             histograms[label].append(counts)
             totals[label].append(listed)
-    chains, resolution = resolve(harness_offsets)
     cache = root / "attribution-chains.json"
+    recorded = recorded_digest(cache)
+    if recorded and EXPECTED_BINARY_SHA256 and recorded != EXPECTED_BINARY_SHA256:
+        sys.exit(f"{cache}: chains of executable {recorded}, not of --binary-sha256 {EXPECTED_BINARY_SHA256}")
+    chains, resolution = resolve(harness_offsets, recorded)
     if chains is None and cache.exists():
         stored = json.loads(cache.read_text())
         chains = {int(k): [tuple(frame) for frame in v] for k, v in stored["chains"].items()}
@@ -737,7 +748,7 @@ def write_case(root, label, listing, recorded, log="rep-01 start 0 x load=[0]\nr
 
 def self_test():
     """Parsing shapes and the total rule, against synthesized listings."""
-    global BINARY
+    global BINARY, EXPECTED_BINARY_SHA256
     for line, expected in SHAPES:
         groups = ADDRESS_LINE.match(line)
         groups = groups.groups() if groups else None
@@ -835,6 +846,25 @@ def self_test():
             print(f"self-test: the log rule rejects a session done without a start ({stop})")
         else:
             sys.exit("self-test: a session done without a start was accepted")
+    with tempfile.TemporaryDirectory() as directory:
+        root = pathlib.Path(directory)
+        BINARY = root / "absent-executable"
+        write_case(root, label, listing, 22)
+        cache = root / "attribution-chains.json"
+        cache.write_text(json.dumps({"resolution": {"resolved": True, "executable_sha256": "1" * 64},
+                                     "chains": {}}))
+        before = cache.read_bytes()
+        EXPECTED_BINARY_SHA256 = "2" * 64
+        try:
+            record_summary(root, completed_sessions(root), read_cases(root))
+        except SystemExit as stop:
+            print(f"self-test: a --binary-sha256 other than the series' executable is refused ({stop})")
+        else:
+            sys.exit("self-test: chains were taken under an executable the series does not record")
+        finally:
+            EXPECTED_BINARY_SHA256 = None
+        if cache.read_bytes() != before:
+            sys.exit("self-test: a mismatching executable rewrote the series' chains")
     print("self-test: ok")
 
 
