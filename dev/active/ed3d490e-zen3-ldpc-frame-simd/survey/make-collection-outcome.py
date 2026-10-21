@@ -4,7 +4,10 @@
 Reads the receipt's acceptance summary, its plan and the addendum snapshot the receipt pins, and
 writes one row per summary cell: role and objective from the addendum, arms from the plan,
 decision and outcome as the evaluator records them, and the interpretation INTERPRETATION
-declares for the cell's objective and outcome. The receipt directory is the one named by
+declares for the cell's objective and outcome. When the addendum declares holdout cells, a
+second table names each cell's baseline and candidate builds from the plan's arms and states for
+each holdout cell whether the calibrated profile holds on the held-out inputs, which it does
+exactly when the recorded outcome is `pass`. The receipt directory is the one named by
 CAMPAIGN_ID among the repository's receipts.
 
 Usage (from the worktree root): make-collection-outcome.py CAMPAIGN_ID OUT
@@ -48,6 +51,7 @@ INTERPRETATION = {
     ("comparator-gap", "fail"): "baseline faster beyond the equivalence margin",
     ("comparator-gap", "inconclusive"): "interval spans a margin",
 }
+HOLDOUT = "holdout"
 
 
 def read(path):
@@ -73,7 +77,8 @@ def render(directory, place):
     summary = read(directory / "acceptance-summary.json")
     pinned = read(directory / "receipt.json")["addendum"]
     declared = {cell["cell_id"]: cell for cell in read(directory / pinned["snapshot"])["cells"]}
-    planned = {cell["cell_id"]: cell for cell in read(directory / "plan.json")["cells"]}
+    plan = read(directory / "plan.json")
+    planned = {cell["cell_id"]: cell for cell in plan["cells"]}
     rows = []
     for cell in summary["cells"]:
         identity = cell["cell_id"]
@@ -101,11 +106,27 @@ def render(directory, place):
         f"{generator.repository_path(place)}` regenerates it.", "",
         f"Source: verdict `{summary['verdict']}`, qualifies `{str(summary['qualifies']).lower()}`, "
         f"{len(summary['findings'])} findings.", "",
-        "| " + " | ".join(header) + " |",
-        "|" + "---|" * len(header),
-        *("| " + " | ".join(row) + " |" for row in rows),
+        *table(header, rows),
     ]
+    if any(declared[cell["cell_id"]]["role"] == HOLDOUT for cell in summary["cells"]):
+        builds = []
+        for cell in summary["cells"]:
+            identity, role = cell["cell_id"], declared[cell["cell_id"]]["role"]
+            arms = (plan["arms"][planned[identity][side]]["build"]
+                    for side in ("baseline_arm", "candidate_arm"))
+            holds = ("holds" if cell["outcome"] == "pass" else "does not hold") \
+                if role == HOLDOUT else "not a holdout cell"
+            builds.append([f"`{identity}`", role, *(f"`{build}`" for build in arms),
+                           f"`{cell['outcome']}`", holds])
+        lines += ["", "## Builds and holdout", "", *table(
+            ["Cell", "Role", "Baseline build", "Candidate build", "Outcome",
+             "Profile on held-out inputs"], builds)]
     return "\n".join(lines) + "\n"
+
+
+def table(header, rows):
+    return ["| " + " | ".join(header) + " |", "|" + "---|" * len(header),
+            *("| " + " | ".join(row) + " |" for row in rows)]
 
 
 def write(path, text):
