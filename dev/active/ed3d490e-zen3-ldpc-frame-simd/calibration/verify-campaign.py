@@ -3,15 +3,17 @@
 
 Usage: verify-campaign.py [--check]
 
-Reads the execution journal and owner manifest from the evidence archive,
-extracted at the repository root from its committed tarball, under the digests
-the committed checksum manifest pins. Writes `campaign-verification.json`; a
-failed requirement writes nothing.
+Reads the execution journal and owner manifest of the evidence archive under
+the digests the committed checksum manifest pins: from its extraction at the
+repository root when present, otherwise from the committed tarball. Writes
+`campaign-verification.json`; a failed requirement writes nothing.
 """
 
+import functools
 import hashlib
 import json
 import sys
+import tarfile
 from collections import Counter
 
 sys.dont_write_bytecode = True  # a check writes nothing, however invoked
@@ -35,12 +37,19 @@ def one(paths, what):
     return paths[0]
 
 
+@functools.cache
+def archived():
+    """The regular members of the committed evidence tarball, by root-relative name."""
+    archive = one(tracked(f"**/gf2-{ISSUE}-*-evidence-archive.tar.zst"), f"evidence archives of {ISSUE}")
+    with tarfile.open(ROOT / archive, "r:zst") as tar:
+        return {member.name: tar.extractfile(member).read() for member in tar if member.isfile()}
+
+
 def pinned(rows, suffix):
     """The root-relative path ending in `suffix` among `rows`, read under its digest."""
     path = one([path for path in rows if path.endswith(suffix)], f"pinned rows end in {suffix}")
-    require((ROOT / path).is_file(),
-            f"{path} is absent; extract the committed *-evidence-archive.tar.zst at the repository root")
-    data = (ROOT / path).read_bytes()
+    data = (ROOT / path).read_bytes() if (ROOT / path).is_file() else archived().get(path)
+    require(data is not None, f"{path} is neither extracted nor a member of the evidence archive")
     require(hashlib.sha256(data).hexdigest() == rows[path], f"{path} differs from its pinned digest")
     return path, data
 
@@ -128,12 +137,19 @@ def envelope_checks(owner, campaign, checksums):
             "producing_manifest": {"path": manifest_path, "sha256": pin}}
 
 
-def main():
+def evidence():
+    """The checksum manifest's path, the campaign id, the manifest's rows and the archive's rows."""
     checksum_path = one(tracked(f"**/gf2-{ISSUE}-*.sha256"), f"checksum manifests of {ISSUE}")
     campaign_id = checksum_path.rsplit("/", 1)[1].removesuffix(".sha256")
     checksums = checksum_rows((ROOT / checksum_path).read_text())
-    journal_path, journal = pinned(checksums, "/execution.log")
     archive = checksum_rows(pinned(checksums, "/SHA256SUMS")[1].decode())
+    return checksum_path, campaign_id, checksums, archive
+
+
+def verification():
+    """The verification record; a failed requirement exits."""
+    checksum_path, campaign_id, checksums, archive = evidence()
+    journal_path, journal = pinned(checksums, "/execution.log")
     manifest_path, manifest = pinned(archive, "/coding-manifest.json")
     campaign = json.loads(pinned(archive, f"{campaign_id}/campaign.json")[1])
     records = [json.loads(line) for line in journal.decode().splitlines()]
@@ -153,7 +169,11 @@ def main():
         "journal": journal_checks(records, json.loads(manifest), listing, measured["cells"]),
         "owner_envelope": envelope_checks(owner, campaign, checksums),
     }
-    emit(OUTPUT, json.dumps(record, indent=1) + "\n", sys.argv[1:] == ["--check"],
+    return record
+
+
+def main():
+    emit(OUTPUT, json.dumps(verification(), indent=1) + "\n", sys.argv[1:] == ["--check"],
          f"{CALIBRATION}/verify-campaign.py")
 
 
