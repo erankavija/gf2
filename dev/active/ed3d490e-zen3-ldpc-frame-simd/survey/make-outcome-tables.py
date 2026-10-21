@@ -10,8 +10,11 @@ Every campaign's execution log is verified before anything is rendered, by
 summarizer's `verified_sessions`; a campaign that does not verify stops the run and nothing is
 written.
 
-Cells are parted by their addendum's `decoder.arm_kind` (PARTS), so matched-algorithm and
-fastest-compatible results never share a table. An arm's time per call is the median of the
+Cells are parted (PARTS, `part_of`): the `selector-calibration` family apart, cells with an
+external arm by their addendum's `decoder.arm_kind`, so AFF3CT matched-algorithm and
+fastest-compatible results never share a table, and the remaining gf2 before-after cells. Peak
+memory is shown only in the record's own rows, with the configuration each was measured in.
+An arm's time per call is the median of the
 receipt's per-execution `ns_per_call` with the order-statistic interval of the profile
 summarizer's `median_interval`, and its throughput is frames per call over that time.
 
@@ -43,9 +46,21 @@ verifier = outcome.load(smoke.ROOT / smoke.located("file", "verify-campaign-log.
 CALIBRATION = SURVEY.parent / "calibration"
 TITLE = "# Outcome tables of the inter-frame LDPC decoder"
 PARTS = {
-    "matched-algorithm": "Matched-algorithm results",
-    "fastest-quality-compatible": "Fastest-compatible results",
+    "matched-algorithm": ("AFF3CT matched-algorithm results",
+                          "Cells with an external AFF3CT [Cassagne2019] arm whose addendum "
+                          "declares `decoder.arm_kind` `matched-algorithm`."),
+    "fastest-quality-compatible": ("AFF3CT fastest-compatible results",
+                                   "Cells with an external AFF3CT [Cassagne2019] arm whose "
+                                   "addendum declares `decoder.arm_kind` "
+                                   "`fastest-quality-compatible`."),
+    "before-after": ("Before-after results of the lane route",
+                     "Cells of `decoder-family` addenda whose arms are all gf2 builds."),
+    "selector-calibration": ("Decode selector holdout",
+                             "Cells of the `selector-calibration` family, which reconfirms the "
+                             "calibrated decode profile of the campaign below on holdout inputs."),
 }
+SELECTOR_CALIBRATION = "selector-calibration"
+BEFORE_AFTER = "before-after"
 SINGLE_CORE = "single-core"
 EXTERNAL = "external"
 DECODER_REPORT = "batch-decoder-diagnostics"
@@ -100,12 +115,21 @@ def identity(arm, code):
     return arm["executable_sha256"], json.dumps(environment, sort_keys=True), code
 
 
+def part_of(purpose, declared, sides):
+    if purpose == SELECTOR_CALIBRATION:
+        return SELECTOR_CALIBRATION
+    if any(side["build"] == EXTERNAL for side in sides):
+        return declared["decoder"]["arm_kind"]
+    return BEFORE_AFTER
+
+
 def campaign(directory):
     """The verified campaign in `directory`: its summary and, per cell, outcome and arm sides."""
     verifier.verify(str(directory / "execution.log"), str(directory / "receipt.json"),
                     str(directory / "plan.json"))
     summary, _, cells = outcome.outcomes(directory)
     receipt = read(directory / "receipt.json")
+    purpose = read(directory / receipt["addendum"]["snapshot"])["family"]["purpose"]
     measured = {cell["cell_id"]: cell for cell in receipt["cells"]}
     reports = defaultdict(list)
     for row in smoke.diagnostics(directory):
@@ -132,7 +156,7 @@ def campaign(directory):
                                      for size in report["workspace_bytes"]}) or None,
                 "quality": measured[identifier]["decoder_quality"][side],
             })
-        rows.append({**cell, "part": cell["declared"]["decoder"]["arm_kind"],
+        rows.append({**cell, "part": part_of(purpose, cell["declared"], sides),
                      "family": summary["family"]["family_id"], "batch": case["batch_size"],
                      "code": case["code"], "sides": sides})
     return {"directory": directory, "summary": summary, "cells": rows}
@@ -145,12 +169,15 @@ def peak_memory(results):
     if len(found) != 1:
         sys.exit(f"{len(found)} peak-memory records under {results}; exactly one must exist")
     record = read(found[0])
-    rows = {}
-    for arm in record["arms"].values():
+    rows = []
+    for name, arm in sorted(record["arms"].items()):
         environment = json.dumps(arm["identity"].get("environment", {}), sort_keys=True)
         for measured in arm["codes"].values():
-            rows[arm["identity"]["executable_sha256"], environment,
-                 measured["case"]["code"]] = measured["samples_kib"]
+            rows.append({"arm": name, "batch": measured["case"]["batch_size"],
+                         "declared_by": measured["batch_frames_source"]["declared_by"],
+                         "identity": (arm["identity"]["executable_sha256"], environment,
+                                      measured["case"]["code"]),
+                         "samples": measured["samples_kib"]})
     return {"path": found[0], "method": record["method"], "rows": rows}
 
 
@@ -218,15 +245,26 @@ def arm_rows(cells):
             yield cell, side
 
 
-def peak(side, memory):
-    samples = memory["rows"].get(side["identity"])
-    if samples is None:
-        return "no row of the peak-memory record"
-    text, coverage = spread(samples)
-    return f"{text} ({len(samples)}, {coverage:.3f})"
+def peak_rows(cells, memory):
+    """The record's rows whose arm identity is an arm of `cells`, each in its own configuration,
+    and the arms of `cells` the record has no row for."""
+    arms = defaultdict(set)
+    for _, side in arm_rows(cells):
+        arms[side["identity"]].add(side["arm"])
+    rows = []
+    for row in memory["rows"]:
+        if row["identity"] in arms:
+            text, coverage = spread(row["samples"])
+            rows.append([f"`{row['arm']}`", f"`{row['identity'][2]}`", str(row["batch"]),
+                         row["declared_by"], str(len(row["samples"])), text, f"{coverage:.3f}",
+                         ", ".join(f"`{arm}`" for arm in sorted(arms[row["identity"]]))])
+    recorded = {row["identity"] for row in memory["rows"]}
+    absent = sorted({arm for identity, names in arms.items() if identity not in recorded
+                     for arm in names})
+    return rows, absent
 
 
-def measurement_rows(cells, memory):
+def measurement_rows(cells):
     rows = []
     for cell, side in arm_rows(cells):
         frames = frames_per_call(cell, side)
@@ -239,7 +277,6 @@ def measurement_rows(cells, memory):
             workers(side), str(cell["batch"]), str(frames) if frames else "varies", executions,
             time, throughput(side, frames) if frames else "n/a", fill,
             ", ".join(map(str, side["workspace"])) if side["workspace"] else "not reported",
-            peak(side, memory),
         ])
     return rows
 
@@ -329,8 +366,9 @@ def or_absent(rows, header, absent):
 
 def part(place, kind, cells, memory):
     method = memory["method"]
-    lines = [f"## {PARTS[kind]}", "",
-             f"Cells whose addendum declares `decoder.arm_kind` `{kind}`.", "",
+    title, criterion = PARTS[kind]
+    peaks, absent = peak_rows(cells, memory)
+    lines = [f"## {title}", "", criterion, "",
              "### Outcomes", "",
              "Speedup and interval are the acceptance summary's: the baseline arm's median time "
              "per call over the candidate arm's, above 1 favouring the candidate, with the "
@@ -347,14 +385,22 @@ def part(place, kind, cells, memory):
              "and over the interval's ends. Batch fill is the arm's per-execution "
              "`conversion.batch_fill_ns`, the median of its stage probes of the decoder call at a "
              "zero iteration cap, summarized the same way. Lane workspace is the decoder's "
-             "`workspace_bytes` per worker as the arm's diagnostics report it. Peak RSS is the "
-             f"{method['quantity']} ({method['scope']}) in the row of "
-             f"{link(place, memory['path'])} with the arm's executable digest, environment and "
-             "code, in KiB, median [order-statistic interval] (launches, coverage).", "",
+             "`workspace_bytes` per worker as the arm's diagnostics report it.", "",
              *table(["Family", "Cell", "Side", "Arm", "Build", "Core arm", "Workers", "Batch",
                      "Frames per call", "Executions", "Time per call, ns",
-                     "Throughput, frames/s", "Batch fill, ns", "Lane workspace, bytes per worker",
-                     "Peak RSS, KiB"], measurement_rows(cells, memory)), "",
+                     "Throughput, frames/s", "Batch fill, ns", "Lane workspace, bytes per worker"],
+                    measurement_rows(cells)), "",
+             "### Peak memory", "",
+             f"The rows of {link(place, memory['path'])} whose executable digest, environment and "
+             "code are those of an arm of this part. Each row is its own configuration, not that "
+             f"of any cell above: the {method['quantity']} ({method['scope']}), measured at "
+             f"position \"{method['position']}\" for the batch the Scope column names, in KiB, "
+             "median [order-statistic interval] over the launches.", "",
+             *or_absent(peaks, ["Record arm", "Code", "Batch", "Scope", "Launches",
+                                "Peak RSS, KiB", "Coverage", "Arms of this part"],
+                        "The record has no row for an arm of this part."), "",
+             *([f"Arms of this part without a row of the record: "
+                f"{', '.join(f'`{arm}`' for arm in absent)}.", ""] if absent else []),
              "### Single-frame latency", "",
              "Arms of cells that decode a batch of one frame on one worker; time per call in "
              "nanoseconds as above.", "",
@@ -398,7 +444,7 @@ def campaign_rows(place, campaigns):
         rows.append([
             f"`{summary['family']['family_id']}`",
             link(place, directory, f"`{summary['campaign_id']}`"), summary["label"],
-            ", ".join(PARTS[kind] for kind in kinds), f"`{summary['verdict']}`",
+            ", ".join(PARTS[kind][0] for kind in kinds), f"`{summary['verdict']}`",
             f"`{str(summary['qualifies']).lower()}`", str(len(summary["findings"])),
             str(summary["sessions"]), link(place, directory / "execution.log", "verified"),
         ])
