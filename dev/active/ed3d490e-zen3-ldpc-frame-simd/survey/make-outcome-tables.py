@@ -1,22 +1,9 @@
 #!/usr/bin/env python3
 """Outcome tables of the inter-frame LDPC decoder (jit:7211ae53).
 
-Writes one Markdown file from the committed evidence of the story's results directory, the
-directory OUT lies in: the campaign each family ledger there names last, with its acceptance
-summary, receipt, plan and execution log; the peak-memory record there; the decoder calibration
-campaign; and the profile series whose summary names a profiling executable of the story's arms.
-Every campaign's execution log is verified before anything is rendered, by
-`verify-campaign-log.py`, by the calibration's `verify-campaign.py` and by the profile
-summarizer's `verified_sessions`; a campaign that does not verify stops the run and nothing is
-written.
-
-Cells are parted (PARTS, `part_of`): the `selector-calibration` family apart, cells with an
-external arm by their addendum's `decoder.arm_kind`, so AFF3CT matched-algorithm and
-fastest-compatible results never share a table, and the remaining gf2 before-after cells. Peak
-memory is shown only in the record's own rows, with the configuration each was measured in.
-An arm's time per call is the median of the
-receipt's per-execution `ns_per_call` with the order-statistic interval of the profile
-summarizer's `median_interval`, and its throughput is frames per call over that time.
+Writes one Markdown file from the committed evidence of the results directory OUT lies in, after
+verifying every campaign's execution log; a campaign that does not verify stops the run and
+nothing is written.
 
 Usage (from the worktree root): make-outcome-tables.py OUT
 """
