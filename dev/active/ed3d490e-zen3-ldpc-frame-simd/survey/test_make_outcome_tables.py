@@ -22,7 +22,7 @@ QUALITY = {"frames": 8, "frame_errors": 0, "fer": 0.0, "fer_interval": [0.0, 0.3
            "settings": {"precision": "f32", "schedule": "flooding",
                         "normalization": {"kind": "normalized-min-sum", "factor": 0.75},
                         "stopping": {"kind": "syndrome"}, "iteration_cap": 10}}
-MATCHED, FASTEST = tables.PARTS
+MATCHED, FASTEST, BEFORE_AFTER, SELECTOR = tables.PARTS
 
 
 def write(path, document):
@@ -30,9 +30,9 @@ def write(path, document):
     path.write_text(json.dumps(document), encoding="utf-8")
 
 
-def constructed(directory, cells, arms):
-    """A campaign directory whose cells are (cell_id, arm_kind, baseline, candidate) and whose arms
-    map a name to (build, reports stage probes)."""
+def constructed(directory, cells, arms, purpose="decoder-family"):
+    """A campaign directory of a family of `purpose` whose cells are (cell_id, arm_kind, baseline,
+    candidate) and whose arms map a name to (build, reports stage probes)."""
     def execution(arm, index):
         return {"arm": arm, "ns_per_call": 1000.0 + index, "workers_observed": 1,
                 "conversion": {"batch_fill_ns": 10 + index}}
@@ -46,7 +46,7 @@ def constructed(directory, cells, arms):
                    "pairs": [{"baseline": execution(baseline, index),
                               "candidate": execution(candidate, index)} for index in range(PAIRS)]}
                   for cell, _, baseline, candidate in cells]})
-    write(directory / "inputs" / "frozen.json", {"cells": [
+    write(directory / "inputs" / "frozen.json", {"family": {"purpose": purpose}, "cells": [
         {"cell_id": cell, "objective": "improvement", "role": "exploratory",
          "decoder": {"arm_kind": kind}} for cell, kind, _, _ in cells]})
     write(directory / "plan.json", {
@@ -85,20 +85,29 @@ class ConstructedCampaignTest(unittest.TestCase):
             "native": ("native", False), "external": ("external", False)}
     CELLS = [("tuned-cell", MATCHED, "conservative", "tuned"),
              ("native-cell", MATCHED, "tuned", "native"),
+             ("matched-cell", MATCHED, "native", "external"),
              ("fastest-cell", FASTEST, "native", "external")]
-    MEMORY = {"rows": {}, "method": {"quantity": "peak", "scope": "process"},
-              "path": SURVEY / "peak-memory.json"}
+    PARTED = {"tuned-cell": BEFORE_AFTER, "native-cell": BEFORE_AFTER,
+              "matched-cell": MATCHED, "fastest-cell": FASTEST}
+    # One record row per arm, each measured at a batch no constructed cell decodes.
+    MEMORY = {"method": {"quantity": "peak", "scope": "process", "position": "validation"},
+              "path": SURVEY / "peak-memory.json",
+              "rows": [{"arm": f"record-{name}", "batch": 97, "declared_by": "record scope",
+                        "identity": (name, "{}", "code"),
+                        "samples": [987000 + 100 * index + launch for launch in range(20)]}
+                       for index, name in enumerate(("conservative", "native", "external"))]}
 
     def setUp(self):
         scratch = tempfile.TemporaryDirectory()
         self.addCleanup(scratch.cleanup)
-        self.directory = constructed(Path(scratch.name) / "campaign", self.CELLS, self.ARMS)
+        self.scratch = Path(scratch.name)
+        self.directory = constructed(self.scratch / "campaign", self.CELLS, self.ARMS)
 
     def part(self, kind, cells):
         return "\n".join(tables.part(self.directory / "tables.md", kind, cells, self.MEMORY))
 
-    def measurement_rows(self, text):
-        section = text.split("### Arm measurements\n", 1)[1].split("\n### ", 1)[0]
+    def rows(self, text, heading):
+        section = text.split(f"### {heading}\n", 1)[1].split("\n### ", 1)[0]
         return [[field.strip() for field in line.strip("|").split("|")]
                 for line in section.splitlines() if line.startswith("| `")]
 
@@ -115,13 +124,38 @@ class ConstructedCampaignTest(unittest.TestCase):
         cells = tables.campaign(self.directory)["cells"]
         for kind in tables.PARTS:
             text = self.part(kind, [cell for cell in cells if cell["part"] == kind])
-            for identifier, cell_kind, _, _ in self.CELLS:
-                self.assertEqual(f"`{identifier}`" in text, cell_kind == kind, (kind, identifier))
+            for identifier, _, _, _ in self.CELLS:
+                self.assertEqual(f"`{identifier}`" in text, self.PARTED[identifier] == kind,
+                                 (kind, identifier))
+
+    def test_a_selector_calibration_family_has_a_part_of_its_own(self):
+        directory = constructed(self.scratch / "holdout", self.CELLS, self.ARMS,
+                                tables.SELECTOR_CALIBRATION)
+        self.assertEqual({cell["part"] for cell in tables.campaign(directory)["cells"]},
+                         {SELECTOR})
+
+    def test_peak_memory_appears_only_in_its_own_configuration(self):
+        cells = tables.campaign(self.directory)["cells"]
+        for kind in tables.PARTS:
+            selected = [cell for cell in cells if cell["part"] == kind]
+            if not selected:
+                continue
+            text = self.part(kind, selected)
+            for row in self.rows(text, "Arm measurements"):
+                self.assertFalse(any("9870" in field or "9871" in field or "9872" in field
+                                     for field in row), row)
+            arms = {side["arm"] for cell in selected for side in cell["sides"]}
+            for row in self.rows(text, "Peak memory"):
+                record = next(entry for entry in self.MEMORY["rows"]
+                              if f"`{entry['arm']}`" == row[0])
+                self.assertEqual(row[2:4], [str(record["batch"]), record["declared_by"]])
+                self.assertIn(f"`{record['identity'][0]}`", row[7])
+                self.assertIn(record["identity"][0], arms)
 
     def test_each_build_has_rows_of_its_own(self):
         cells = [cell for cell in tables.campaign(self.directory)["cells"]
-                 if cell["part"] == MATCHED]
-        rows = self.measurement_rows(self.part(MATCHED, cells))
+                 if cell["part"] == BEFORE_AFTER]
+        rows = self.rows(self.part(BEFORE_AFTER, cells), "Arm measurements")
         builds = {build for build, _ in self.ARMS.values()}
         seen = [{build for build in builds if f"`{build}`" in row} for row in rows]
         self.assertTrue(all(len(found) == 1 for found in seen))
@@ -129,13 +163,12 @@ class ConstructedCampaignTest(unittest.TestCase):
 
     def test_a_quantity_an_arm_does_not_report_is_stated_unmeasured(self):
         cells = [cell for cell in tables.campaign(self.directory)["cells"]
-                 if cell["part"] == MATCHED]
-        rows = self.measurement_rows(self.part(MATCHED, cells))
-        for row in rows:
-            fill, memory = row[12], row[14]
+                 if cell["part"] == BEFORE_AFTER]
+        text = self.part(BEFORE_AFTER, cells)
+        for row in self.rows(text, "Arm measurements"):
             probed = row[4] == "`conservative-portable`"
-            self.assertEqual(fill[0].isdigit(), probed, row)
-            self.assertFalse(memory[0].isdigit(), row)
+            self.assertEqual(row[12][0].isdigit(), probed, row)
+        self.assertIn("without a row of the record: `tuned`", text)
 
 
 class SeriesLogTest(unittest.TestCase):
