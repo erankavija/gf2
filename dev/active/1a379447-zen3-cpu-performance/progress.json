@@ -1490,6 +1490,18 @@
    "type": "bug",
    "in_epic": true,
    "reason": "supersedes 6ca89655 with achievable REQ-02"
+  },
+  {
+   "id": "d06a99ed",
+   "type": "task",
+   "in_epic": false,
+   "reason": "6230e0b6 R-01: committed envelope opens the lane route at every worker count; multicore confirmation records it failing at several workers; depends on 6230e0b6; epic membership awaits the invoker"
+  },
+  {
+   "id": "f768c925",
+   "type": "task",
+   "in_epic": false,
+   "reason": "6230e0b6 R-04: fixed-wave policy cost unmeasured, contradicting plan DEC-08; depends on 6230e0b6"
   }
  ],
  "escalations": [
@@ -2460,6 +2472,19 @@
    "question": "Session rule",
    "answer": "Invoker (session 40): do not stop to ask; a task needing input is blocked and its question recorded for the next session; write the handoff when no work remains that does not wait for input; check workers every 30 minutes. The holdout confirmation runs in-session once the host is quiet.",
    "status": "resolved"
+  },
+  {
+   "issue": "ed3d490e",
+   "date": "2026-10-21",
+   "category": "story success criteria (policy items 3/5)",
+   "question": "The 6230e0b6 outcome record gives story ed3d490e REQ-10 and REQ-13 as PARTLY MET and REQ-01 adoption as open. (1) R-01: the committed decode envelope opens the lane route at every worker count; selector calibration and holdout measured one worker; the multicore confirmation records the lane route failing on DVB-T2 at 6+ workers and on NR at 24 logical CPUs. (2) REQ-10: AFF3CT INTRA/INTER modes have only the one-worker exploratory pilot; AFF3CT batch fill and workspace are unavailable. (3) R-04: the cost of fixed waves is unmeasured. The lead filed d06a99ed (worker-aware lane route) and f768c925 (fixed-wave cost) as follow-ups depending on 6230e0b6, outside the epic.",
+   "options": [
+    "A (recommended): bring d06a99ed into the story as a blocker of ed3d490e (closes REQ-13/REQ-01 adoption); accept REQ-10's unavailable AFF3CT cells as recorded outcomes; keep f768c925 outside the epic",
+    "B: accept all three gaps as recorded, close the story with REQ-10/REQ-13 partly met (amends story criteria), d06a99ed and f768c925 stay outside the epic",
+    "C: bring both follow-ups into the story and also require further AFF3CT INTRA/INTER cells for REQ-10"
+   ],
+   "status": "open",
+   "raised_at": "2026-10-21"
   }
  ],
  "rework_counts": {
