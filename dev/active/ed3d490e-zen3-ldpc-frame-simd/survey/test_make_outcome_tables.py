@@ -163,12 +163,7 @@ class CommittedTablesTest(unittest.TestCase):
             if committed.split("\n", 1)[0] != tables.TITLE:
                 continue
             with self.subTest(path):
-                place = ROOT / path
-                campaigns = [tables.campaign(directory)
-                             for directory in tables.outcome_directories(place.parent)]
-                text = tables.render(place, campaigns, tables.peak_memory(place.parent),
-                                     tables.calibration(), tables.profile(tables.profile_summary()))
-                self.assertEqual(text, committed)
+                self.assertEqual(tables.tables(ROOT / path), committed)
 
 
 if __name__ == "__main__":

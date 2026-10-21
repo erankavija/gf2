@@ -494,17 +494,20 @@ def render(place, campaigns, memory, calibrated, series):
     return "\n".join(lines) + "\n"
 
 
+def tables(place):
+    """The tables of the results directory `place` lies in, every campaign verified first."""
+    campaigns = [campaign(directory) for directory in outcome_directories(place.parent)]
+    series = profile(profile_summary())
+    return render(place, campaigns, peak_memory(place.parent), calibration(), series)
+
+
 def main():
     if len(sys.argv) != 2:
         sys.exit(__doc__)
     if pathlib.Path.cwd() != smoke.ROOT:
         sys.exit("invoke from the worktree root")
     out = pathlib.Path(sys.argv[1]).resolve()
-    results = out.parent
-    campaigns = [campaign(directory) for directory in outcome_directories(results)]
-    series = profile(profile_summary())
-    text = render(out, campaigns, peak_memory(results), calibration(), series)
-    outcome.write(out, text)
+    outcome.write(out, tables(out))
     print(generator.repository_path(out))
 
 
