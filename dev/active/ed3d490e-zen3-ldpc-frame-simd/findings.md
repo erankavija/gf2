@@ -105,8 +105,9 @@ under selectors that open the lane route to every wave size and edge count.
   exploratory and decides nothing; the per-frame times by batch size are in
   *Before-after results of the lane route › Batch-size sweep*.
 
-The batch-size sweep and the physical-core and SMT cells of the story compare
-the lane route with the single-frame route only.
+The batch-size sweep and the physical-core and SMT cells of the before-after
+families compare the lane route with the single-frame route only; the
+twelve-core AFF3CT cells follow in the matched comparison.
 
 ### Lane route against AFF3CT, matched algorithm
 
