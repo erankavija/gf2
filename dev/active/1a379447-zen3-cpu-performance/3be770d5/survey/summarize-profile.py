@@ -259,6 +259,21 @@ def completed_sessions(root):
     return sessions
 
 
+SERIES_DONE = re.compile(r"^series done \S+ sessions=(\d+)$")
+
+
+def verified_sessions(root):
+    """The completed sessions of a finished series: its log ends in the terminal
+    `series done` record of exactly that many sessions."""
+    sessions = completed_sessions(root)
+    lines = (root / "repetitions.log").read_text(encoding="utf-8").splitlines()
+    terminal = SERIES_DONE.match(lines[-1]) if lines else None
+    if terminal is None or int(terminal.group(1)) != len(sessions):
+        sys.exit(f"{root}: the log does not end in a series done record of its "
+                 f"{len(sessions)} completed sessions")
+    return sessions
+
+
 def read_cases(root):
     cases = {}
     for line in (root / "cases.expanded.tsv").read_text().splitlines():

@@ -14,6 +14,7 @@ Usage (from the worktree root): make-collection-outcome.py CAMPAIGN_ID OUT
                                 make-collection-outcome.py --self-test
 """
 
+import functools
 import importlib.util
 import json
 import os
@@ -50,6 +51,9 @@ INTERPRETATION = {
     ("comparator-gap", "not-material"): "no material gap established",
     ("comparator-gap", "fail"): "baseline faster beyond the equivalence margin",
     ("comparator-gap", "inconclusive"): "interval spans a margin",
+    ("improvement", "pilot"): "exploratory cell, no decision",
+    ("non-regression", "pilot"): "exploratory cell, no decision",
+    ("comparator-gap", "pilot"): "exploratory cell, no decision",
 }
 HOLDOUT = "holdout"
 
@@ -58,11 +62,15 @@ def read(path):
     return json.loads(path.read_bytes())
 
 
-def receipt_directory(campaign):
+@functools.cache
+def receipt_directories():
     files = generator.repository_files()
-    found = [smoke.ROOT / pathlib.Path(path).parent
-             for path in files.tracked_files(smoke.ROOT, "receipt.json")
-             if pathlib.Path(path).parent.name == campaign]
+    return tuple(smoke.ROOT / pathlib.Path(path).parent
+                 for path in files.tracked_files(smoke.ROOT, "receipt.json"))
+
+
+def receipt_directory(campaign):
+    found = [directory for directory in receipt_directories() if directory.name == campaign]
     if len(found) != 1:
         sys.exit(f"{len(found)} receipt directories are called {campaign}; exactly one must be")
     return found[0]
@@ -72,26 +80,40 @@ def link(place, target):
     return pathlib.Path(os.path.relpath(target, place.parent)).as_posix()
 
 
-def render(directory, place):
-    """The outcome table of the receipt in `directory`, written to be read at `place`."""
+def outcomes(directory):
+    """The summary, the plan and, per summary cell in summary order, the cell's addendum
+    declaration, plan entry, summary entry and interpretation."""
     summary = read(directory / "acceptance-summary.json")
     pinned = read(directory / "receipt.json")["addendum"]
     declared = {cell["cell_id"]: cell for cell in read(directory / pinned["snapshot"])["cells"]}
     plan = read(directory / "plan.json")
     planned = {cell["cell_id"]: cell for cell in plan["cells"]}
-    rows = []
+    cells = []
     for cell in summary["cells"]:
         identity = cell["cell_id"]
         objective = declared[identity]["objective"]
         if (objective, cell["outcome"]) not in INTERPRETATION:
             raise KeyError(f"{identity}: no interpretation of outcome {cell['outcome']} "
                            f"for objective {objective}")
-        rows.append([
-            f"`{identity}`", declared[identity]["role"], objective, cell["core_arm"],
-            f"`{planned[identity]['baseline_arm']}`", f"`{planned[identity]['candidate_arm']}`",
-            f"`{cell['decision']}`", f"`{cell['outcome']}`",
-            INTERPRETATION[(objective, cell["outcome"])],
-        ])
+        cells.append({"declared": declared[identity], "planned": planned[identity],
+                      "summary": cell,
+                      "interpretation": INTERPRETATION[(objective, cell["outcome"])]})
+    return summary, plan, cells
+
+
+def render(directory, place):
+    """The outcome table of the receipt in `directory`, written to be read at `place`."""
+    summary, plan, cells = outcomes(directory)
+    pinned = read(directory / "receipt.json")["addendum"]
+    declared = {cell["summary"]["cell_id"]: cell["declared"] for cell in cells}
+    planned = {cell["summary"]["cell_id"]: cell["planned"] for cell in cells}
+    rows = [[
+        f"`{cell['summary']['cell_id']}`", cell["declared"]["role"],
+        cell["declared"]["objective"], cell["summary"]["core_arm"],
+        f"`{cell['planned']['baseline_arm']}`", f"`{cell['planned']['candidate_arm']}`",
+        f"`{cell['summary']['decision']}`", f"`{cell['summary']['outcome']}`",
+        cell["interpretation"],
+    ] for cell in cells]
     header = ["Cell", "Role", "Objective", "Core arm", "Baseline arm", "Candidate arm",
               "Decision", "Outcome", "Interpretation"]
     lines = [
