@@ -108,8 +108,8 @@ The cached baseline recorder then completes successfully.
 ## Preparation verdict
 
 Both unchanged Rust 1.95 native release recorders complete. Their
-[before](preparation-before/build-identity.json) and
-[after](preparation-after/build-identity.json) records name distinct tuned
+[before](before-build.json) and
+[after](after-build.json) records name distinct tuned
 executables. Both isolated source checkouts are clean.
 
 The existing runner's `check` accepts the generated
@@ -133,3 +133,27 @@ Extracted bundle directories are reproducible from the committed archive by
 `prepare.py` and are locally ignored; the generated plans and validation records
 remain durable. F1 is still OPEN: this preparation provides no current timing
 sample, interval or acceptance outcome. The queued window supplies that evidence.
+
+## Catalogue integration correction
+
+The two comparison snapshots are [before-build.json](before-build.json) and
+[after-build.json](after-build.json), with the recorder's bytes preserved.
+The survey's `record-peak-memory.py::build_records` discovers active catalogue
+owners by the exact basename `build-identity.json`; their arm sets must be
+disjoint, and each owner has its catalogue-wide smoke and validation records.
+These before/after snapshots describe the same catalogue at different source
+revisions, so they are explicit comparison inputs rather than active owners.
+Registering them as owners causes ambiguous arm selection and incorrectly
+requires catalogue-wide evidence beside each comparison snapshot.
+
+The family composition helper and launcher consume both snapshots through
+explicit path arguments and retain executable-digest verification. No active
+owner is superseded, and no shared discovery rule, schema, gate or test changes.
+Recorder reproduction runs in ignored target output directories and copies
+its unchanged output to the explicit comparison filenames.
+
+The affected family-generator, smoke, validation and peak-memory suites pass
+all 56 tests after staging the comparison snapshot renames. Explicit-path
+untimed validation again passes twelve dispatches across six cells, with zero
+timing windows. The canonical live calibration manifest regeneration passes
+all seven family closure checks; historical receipt inputs remain unchanged.

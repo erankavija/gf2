@@ -11,8 +11,8 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 survey=$(realpath "$1")
 freezer=$(realpath "$2")
 cd "$repo"
-before="$here/preparation-before/build-identity.json"
-after="$here/preparation-after/build-identity.json"
+before="$here/before-build.json"
+after="$here/after-build.json"
 pilot="$repo/dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot"
 
 python3 "$survey/run-family-campaign.py" "$here/pilot/plan.json" "$before" "$after"

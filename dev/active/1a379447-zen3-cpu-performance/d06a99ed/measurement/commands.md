@@ -17,10 +17,12 @@ mkdir -p "$before/target/pinned/release" "$after/target/pinned/release"
 # These links already exist. The unchanged recorder checks the catalogue digest.
 [ -e "$before/target/pinned/release/aff3ct-throughput-arm" ] || ln -s "$pinned" "$before/target/pinned/release/aff3ct-throughput-arm"
 [ -e "$after/target/pinned/release/aff3ct-throughput-arm" ] || ln -s "$pinned" "$after/target/pinned/release/aff3ct-throughput-arm"
-(cd "$before" && python3 "$survey/record-gf2-arms-build.py" "$repo/$m/preparation-before" "$aff3ct")
-(cd "$after" && python3 "$survey/record-gf2-arms-build.py" "$repo/$m/preparation-after" "$aff3ct")
-python3 "$m/prepare.py" "$survey/make-family.py" "$m/preparation-before/build-identity.json" "$m/preparation-after/build-identity.json" "$m/pilot"
-python3 "$survey/run-family-campaign.py" "$m/pilot/plan.json" "$m/preparation-before/build-identity.json" "$m/preparation-after/build-identity.json" --untimed
+(cd "$before" && python3 "$survey/record-gf2-arms-build.py" "$repo/target/d06a99ed-builds/before-record" "$aff3ct")
+cp "$repo/target/d06a99ed-builds/before-record/build-identity.json" "$m/before-build.json"
+(cd "$after" && python3 "$survey/record-gf2-arms-build.py" "$repo/target/d06a99ed-builds/after-record" "$aff3ct")
+cp "$repo/target/d06a99ed-builds/after-record/build-identity.json" "$m/after-build.json"
+python3 "$m/prepare.py" "$survey/make-family.py" "$m/before-build.json" "$m/after-build.json" "$m/pilot"
+python3 "$survey/run-family-campaign.py" "$m/pilot/plan.json" "$m/before-build.json" "$m/after-build.json" --untimed
 ```
 
 The lead commits the declaration, build records and generated pilot addendum
